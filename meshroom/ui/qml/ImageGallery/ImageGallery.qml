@@ -481,13 +481,13 @@ Panel {
                         verticalAlignment: Text.AlignVCenter
                         text: {
                             if (nbMeshroomScenes != nbDraggedFiles && nbMeshroomScenes != 0) {
-                                return "Do not mix project and images"
+                                return "Cannot Add Projects And Images Together"
                             }
 
                             if (nbMeshroomScenes == 1 && nbMeshroomScenes == nbDraggedFiles) {
                                 return "Load Project"
                             } else if (nbMeshroomScenes == nbDraggedFiles) {
-                                return "Only one project"
+                                return "Only One Project"
                             } else {
                                 return "Add Images"
                             }
@@ -936,7 +936,7 @@ Panel {
         icon.text: MaterialIcons.error
         icon.color: "#F44336"
 
-        title: "Different types of files"
+        title: "Different File Types"
         text: "Do not mix .mg files and other types of files."
         standardButtons: Dialog.Ok
 

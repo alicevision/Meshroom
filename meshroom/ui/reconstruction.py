@@ -789,7 +789,7 @@ class Reconstruction(UIGraph):
             if len(filesByType["meshroomScenes"]) > 1:
                 self.error.emit(
                     Message(
-                    "Too many Meshroom Scenes",
+                    "Too Many Meshroom Scenes",
                     "A single Meshroom scene (.mg file) can be imported at once."
                     )
                 )

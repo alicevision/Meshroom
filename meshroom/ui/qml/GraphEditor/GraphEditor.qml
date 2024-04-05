@@ -747,7 +747,7 @@ Item {
         icon.text: MaterialIcons.error
         icon.color: "#F44336"
 
-        title: "Different types of files"
+        title: "Different File Types"
         text: "Do not mix .mg files and other types of files."
         standardButtons: Dialog.Ok
 

@@ -28,6 +28,9 @@ Panel {
     property int defaultCellSize: 160
     property bool readOnly: false
 
+    property int nbMeshroomScenes: 0
+    property int nbDraggedFiles: 0
+
     signal removeImageRequest(var attribute)
     signal allViewpointsCleared()
     signal filesDropped(var drop, var augmentSfm)
@@ -438,10 +441,23 @@ Panel {
                 anchors.fill: parent
                 enabled: !m.readOnly && !intrinsicsFilterButton.checked
                 keys: ["text/uri-list"]
-                // TODO: onEntered: call specific method to filter files based on extension
+                onEntered: {
+                    nbMeshroomScenes = 0
+                    nbDraggedFiles = drag.urls.length
+
+                    drag.urls.forEach(function(file) {
+                        if (file.endsWith(".mg")) {
+                            nbMeshroomScenes++
+                        }
+                    })
+                }
                 onDropped: {
                     var augmentSfm = augmentArea.hovered
-                    root.filesDropped(drop, augmentSfm)
+                    if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
+                        root.filesDropped(drop, augmentSfm)
+                    } else {
+                        errorDialog.open()
+                    }
                 }
 
                 // Background opacifier
@@ -463,7 +479,19 @@ Panel {
                         Layout.fillHeight: true
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        text: "Add Images"
+                        text: {
+                            if (nbMeshroomScenes != nbDraggedFiles && nbMeshroomScenes != 0) {
+                                return "Cannot Add Projects And Images Together"
+                            }
+
+                            if (nbMeshroomScenes == 1 && nbMeshroomScenes == nbDraggedFiles) {
+                                return "Load Project"
+                            } else if (nbMeshroomScenes == nbDraggedFiles) {
+                                return "Only One Project"
+                            } else {
+                                return "Add Images"
+                            }
+                        }
                         font.bold: true
                         background: Rectangle {
                             color: parent.hovered ? parent.palette.highlight : parent.palette.window
@@ -483,7 +511,17 @@ Panel {
                         text: "Augment Reconstruction"
                         font.bold: true
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        visible: m.viewpoints ? m.viewpoints.count > 0 : false
+                        visible: {
+                            if (nbMeshroomScenes > 0) {
+                                return false
+                            }
+
+                            if (m.viewpoints) {
+                                return m.viewpoints.count > 0
+                            } else {
+                                return false
+                            }
+                        }
                         background: Rectangle {
                             color: parent.hovered ? palette.highlight : palette.window
                             opacity: 0.8
@@ -890,5 +928,20 @@ Panel {
             to: 250
             implicitWidth: 70
         }
+    }
+
+    MessageDialog {
+        id: errorDialog
+
+        icon.text: MaterialIcons.error
+        icon.color: "#F44336"
+
+        title: "Different File Types"
+        text: "Do not mix .mg files and other types of files."
+        standardButtons: Dialog.Ok
+
+        parent: Overlay.overlay
+
+        onAccepted: close()
     }
 }

@@ -1186,6 +1186,16 @@ ApplicationWindow {
                         _reconstruction.forceNodesStatusUpdate();
                         computeManager.submit(node)
                     }
+                    onFilesDropped: {
+                        var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
+                        if (filesByType["meshroomScenes"].length == 1) {
+                            ensureSaved(function() {
+                                _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
+                            })
+                        } else {
+                            _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
+                        }
+                    }
                 }
 
                 TaskManager {

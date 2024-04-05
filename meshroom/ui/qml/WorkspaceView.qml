@@ -80,7 +80,16 @@ Item {
                 cameraInitIndex: reconstruction ? reconstruction.cameraInitIndex : -1
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onAllViewpointsCleared: { reconstruction.removeAllImages(); reconstruction.selectedViewId = "-1" }
-                onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
+                onFilesDropped: {
+                    var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
+                    if (filesByType["meshroomScenes"].length == 1) {
+                        ensureSaved(function() {
+                            reconstruction.handleFilesUrl(filesByType, augmentSfm ? null : cameraInit)
+                        })
+                    } else {
+                        reconstruction.handleFilesUrl(filesByType, augmentSfm ? null : cameraInit)
+                    }
+                }
             }
             LiveSfmView {
                 visible: settings_UILayout.showLiveReconstruction

@@ -6,9 +6,9 @@ from meshroom.core.utils import VERBOSE_LEVEL
 class LidarMeshing(desc.AVCommandLineNode):
     commandLine = 'aliceVision_lidarMeshing {allParams}'
 
-    # size = desc.DynamicNodeSize('input')
-    # parallelization = desc.Parallelization(blockSize=2)
-    # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
+    size = desc.StaticNodeSize(10)
+    parallelization = desc.Parallelization(blockSize=1)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeFullSize}'
 
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE

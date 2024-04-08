@@ -160,12 +160,77 @@ FloatingPane {
             }
         }
 
-        Label {
-            id: frameLabel
+        Item {
+            Layout.preferredWidth: previousFrameButton.width + frameMetrics.width + nextFrameButton.width
+            Layout.preferredHeight: frameInput.height
 
-            text: m.frame
-            Layout.preferredWidth: frameMetrics.width
+            MouseArea {
+                id: mouseAreaFrameLabel
+
+                anchors.fill: parent
+
+                hoverEnabled: true
+
+                onEntered: {
+                    previousFrameButton.opacity = 1
+                    nextFrameButton.opacity = 1
+                }
+
+                onExited: {
+                    previousFrameButton.opacity = 0
+                    nextFrameButton.opacity = 0
+                } 
+
+                MaterialToolButton {
+                    id: previousFrameButton
+
+                    anchors.verticalCenter: mouseAreaFrameLabel.verticalCenter
+
+                    opacity: 0
+                    
+                    text: MaterialIcons.navigate_before
+                    ToolTip.text: "Previous Frame"
+
+                    onClicked: {
+                        m.frame -= 1;
+                    }
+                }
+
+                TextInput {
+                    id: frameInput
+
+                    anchors.horizontalCenter: mouseAreaFrameLabel.horizontalCenter
+
+                    color: palette.text
+                    horizontalAlignment: Text.AlignHCenter
+
+                    text: m.frame
+                    Layout.preferredWidth: frameMetrics.width
+
+                    onEditingFinished: {
+                        m.frame = parseInt(text);
+                        focus = false;
+                    }
+                }
+
+                MaterialToolButton {
+                    id: nextFrameButton
+
+                    anchors.right: mouseAreaFrameLabel.right
+                    anchors.verticalCenter: mouseAreaFrameLabel.verticalCenter
+
+                    opacity: 0
+
+                    text: MaterialIcons.navigate_next
+                    ToolTip.text: "Next Frame"
+
+                    onClicked: {
+                        m.frame += 1;
+                    }
+                }
+            }
         }
+
     
         Slider {
             id: frameSlider
@@ -175,13 +240,18 @@ FloatingPane {
             stepSize: 1
             snapMode: Slider.SnapAlways
             live: true
-            enabled: !m.playing
 
             from: 0
             to: sortedViewIds.length - 1
 
             onValueChanged: {
                 m.frame = value;
+            }
+
+            ToolTip {
+                parent: frameSlider.handle
+                visible: frameSlider.hovered
+                text: m.frame
             }
 
             onPressedChanged: {
@@ -222,23 +292,18 @@ FloatingPane {
         }
 
         RowLayout {
-            Label {
-                text: "FPS:"
-                ToolTip.text: "Frame Per Second"
-            }
+            TextInput {
+                id: fpsTextInput
 
-            SpinBox {
-                id: fpsSpinBox
+                color: palette.text
 
-                Layout.preferredWidth: fpsMetrics.width + up.implicitIndicatorWidth
+                Layout.preferredWidth: fpsMetrics.width
 
-                from: 1
-                to: 60
-                stepSize: 1
-                value: m.fps
+                text: !focus ? m.fps + " FPS" : m.fps
 
-                onValueChanged: {
-                    m.fps = value;
+                onEditingFinished: {
+                    m.fps = parseInt(text);
+                    focus = false;
                 }
             }
         }
@@ -260,14 +325,14 @@ FloatingPane {
     TextMetrics {
         id: frameMetrics
 
-        font: frameLabel.font
+        font: frameInput.font
         text: "10000"
     }
 
     TextMetrics {
         id: fpsMetrics
 
-        font: fpsSpinBox.font
-        text: "100"
+        font: fpsTextInput.font
+        text: "100 FPS"
     }
 }

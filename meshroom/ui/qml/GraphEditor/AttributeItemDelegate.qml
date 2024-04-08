@@ -348,7 +348,14 @@ RowLayout {
                 inputModel: attribute.values
 
                 Component.onCompleted: {
-                    currentIndex = find(attribute.value)
+                    // if value not in list, override the text and precise it is not valid
+                    var idx = find(attribute.value)
+                    if (idx === -1) {
+                        displayText = attribute.value
+                        validValue = false
+                    } else {
+                        currentIndex = idx
+                    }
                 }
 
                 onEditingFinished: function(value) {

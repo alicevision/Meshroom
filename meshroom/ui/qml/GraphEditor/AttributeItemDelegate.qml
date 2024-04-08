@@ -345,7 +345,7 @@ RowLayout {
             id: comboBox_component
 
             FilterComboBox {
-                inputModel: attribute.desc.values
+                inputModel: attribute.values
 
                 Component.onCompleted: {
                     currentIndex = find(attribute.value)
@@ -362,7 +362,7 @@ RowLayout {
                         // but if only reopen the combo box, keep the current value
                         
                         //convert all values of desc values as string
-                        var valuesAsString = attribute.desc.values.map(function(value) {
+                        var valuesAsString = attribute.values.map(function(value) {
                             return value.toString()
                         })
                         if (valuesAsString.includes(attribute.value) || attribute.value === attribute.desc.value) {

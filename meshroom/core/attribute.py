@@ -410,7 +410,7 @@ class ChoiceParam(Attribute):
 
     def conformValue(self, val):
         """ Conform 'val' to the correct type and check for its validity """
-        return self.desc._valueType(val)
+        return self.desc.conformValue(val)
 
     def validateValue(self, value):
         if self.desc.exclusive:

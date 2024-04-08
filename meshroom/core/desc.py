@@ -314,9 +314,9 @@ class ChoiceParam(Param):
                                           semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage)
 
     def conformValue(self, value):
-        """ Conform 'val' to the correct type and check for its validity """
-        if not isinstance(value, self._valueType):
-            raise ValueError('ChoiceParam value should be a {} (param:{}, value:{}, type:{})'.format(self._valueType, self.name, value, type(value)))
+        """ Conform 'value' to the correct type and check for its validity """
+        # Bypassing the validation allows to have values that are not initially in the list of choices
+        # We cannot return _valueType(value) because some casts are not possible (e.g. str -> int)
         return value
 
     def validateValue(self, value):
@@ -326,8 +326,6 @@ class ChoiceParam(Param):
         if isinstance(value, str):
             value = value.split(',')
 
-        if not isinstance(value, Iterable):
-            raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
     def checkValueTypes(self):

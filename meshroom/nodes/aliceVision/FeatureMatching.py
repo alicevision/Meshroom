@@ -81,7 +81,7 @@ then it checks the number of features that validates this model and iterate thro
                         "For Binary based descriptors:\n"
                         " - BRUTE_FORCE_HAMMING: BruteForce Hamming matching",
             value="ANN_L2",
-            values=("BRUTE_FORCE_L2", "ANN_L2", "CASCADE_HASHING_L2", "FAST_CASCADE_HASHING_L2", "BRUTE_FORCE_HAMMING"),
+            values=["BRUTE_FORCE_L2", "ANN_L2", "CASCADE_HASHING_L2", "FAST_CASCADE_HASHING_L2", "BRUTE_FORCE_HAMMING"],
             exclusive=True,
             uid=[0],
             advanced=True,

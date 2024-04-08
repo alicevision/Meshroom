@@ -879,6 +879,19 @@ class BaseNode(BaseObject):
     def _updateChunks(self):
         pass
 
+    def onAttributeChanged(self, attr):
+        """ When an attribute changed, a specific function can be defined in the descriptor and be called.
+
+        Args:
+            attr (Attribute): attribute that has changed
+        """
+        paramName = attr.name[:1].upper() + attr.name[1:]
+        methodName = f'on{paramName}Changed'
+        if hasattr(self.nodeDesc, methodName):
+            m = getattr(self.nodeDesc, methodName)
+            if callable(m):
+                m(self)
+
     def updateInternals(self, cacheDir=None):
         """ Update Node's internal parameters and output attributes.
 
@@ -1245,6 +1258,14 @@ class Node(BaseNode):
                 self.attributesPerUid[uidIndex].add(attr)
 
         self.setAttributeValues(kwargs)
+        self.optionalCallOnDescriptor("onNodeCreated")
+
+    def optionalCallOnDescriptor(self, methodName, *args, **kwargs):
+        """ Call of optional method defined in the descriptor. By now there is the onNodeCreated existing. """
+        if hasattr(self.nodeDesc, methodName):
+            m = getattr(self.nodeDesc, methodName)
+            if callable(m):
+                m(self, *args, **kwargs)
 
     def setAttributeValues(self, values):
         # initialize attribute values

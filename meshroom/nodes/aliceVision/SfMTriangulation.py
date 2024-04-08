@@ -135,7 +135,7 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             label="Inter File Extension",
             description="Extension of the intermediate file export.",
             value=".abc",
-            values=(".abc", ".ply"),
+            values=[".abc", ".ply"],
             exclusive=True,
             uid=[],
             advanced=True,

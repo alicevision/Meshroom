@@ -25,7 +25,7 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             label="Mesh Type",
             description="File type for the output mesh.",
             value="obj",
-            values=("gltf", "obj", "fbx", "stl"),
+            values=["gltf", "obj", "fbx", "stl"],
             exclusive=True,
             uid=[0],
             group="",

@@ -313,12 +313,11 @@ class ChoiceParam(Param):
         super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced,
                                           semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage)
 
-    def conformValue(self, val):
-        """ Conform 'val' to the correct type and check for its validity """
-        val = self._valueType(val)
-        if val not in self.values:
-            raise ValueError('ChoiceParam value "{}" is not in "{}".'.format(val, str(self.values)))
-        return val
+    def conformValue(self, value):
+        """ Conform 'value' to the correct type and check for its validity """
+        # Bypassing the validation allows to have values that are not initially in the list of choices
+        # We cannot return _valueType(value) because some casts are not possible (e.g. str -> int)
+        return value
 
     def validateValue(self, value):
         if self.exclusive:
@@ -327,8 +326,6 @@ class ChoiceParam(Param):
         if isinstance(value, str):
             value = value.split(',')
 
-        if not isinstance(value, Iterable):
-            raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
     def checkValueTypes(self):
@@ -573,7 +570,6 @@ class Node(object):
             BaseNode.updateInternals
         """
         pass
-
     @classmethod
     def postUpdate(cls, node):
         """ Method call after node's internal update on invalidation.

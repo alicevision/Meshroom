@@ -217,7 +217,7 @@ Intrinsic = [
                     " - estimated: estimated from metadata and/or sensor width.\n"
                     " - unknown: unknown camera parameters (can still have default value guess).\n"
                     " - none: not set.",
-        values=("calibrated", "estimated", "unknown", "none"),
+        values=["calibrated", "estimated", "unknown", "none"],
         value="none",
         exclusive=True,
         uid=[0],
@@ -230,7 +230,7 @@ Intrinsic = [
                     " - estimated: estimated from a database of generic calibration.\n"
                     " - unknown: unknown camera parameters (can still have default value guess).\n"
                     " - none: not set.",
-        values=("calibrated", "estimated", "unknown", "none"),
+        values=["calibrated", "estimated", "unknown", "none"],
         value="none",
         exclusive=True,
         uid=[0],

@@ -256,7 +256,7 @@ FocusScope {
             let vp = getViewpoint(_reconstruction.pickedViewId)
             let attr = getAttributeByName(displayedNode, outputAttribute.name)
             let path = attr ? attr.value : ""
-            let resolved = vp ? resolve(path, vp) : ""
+            let resolved = vp ? resolve(path, vp) : path
             return Filepath.stringToUrl(resolved)
         }
 

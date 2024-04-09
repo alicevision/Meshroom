@@ -50,6 +50,7 @@ class Status(Enum):
     STOPPED = 4
     KILLED = 5
     SUCCESS = 6
+    INPUT = 7
 
 
 class ExecMode(Enum):
@@ -784,7 +785,7 @@ class BaseNode(BaseObject):
 
     def hasStatus(self, status):
         if not self._chunks:
-            return False
+            return (status == Status.INPUT)
         for chunk in self._chunks:
             if chunk.status.status != status:
                 return False
@@ -792,6 +793,9 @@ class BaseNode(BaseObject):
 
     def _isComputed(self):
         return self.hasStatus(Status.SUCCESS)
+
+    def _isComputable(self):
+        return self.getGlobalStatus() != Status.INPUT
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -987,6 +991,8 @@ class BaseNode(BaseObject):
         Returns:
             Status: the node global status
         """
+        if isinstance(self.nodeDesc, desc.InputNode):
+            return Status.INPUT
         chunksStatus = [chunk.status.status for chunk in self._chunks]
 
         anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
@@ -1223,6 +1229,7 @@ class BaseNode(BaseObject):
     globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)
     isExternal = Property(bool, isExtern, notify=globalExecModeChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
+    isComputable = Property(bool, _isComputable, notify=globalStatusChanged)
     aliveChanged = Signal()
     alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)
     lockedChanged = Signal()
@@ -1348,6 +1355,8 @@ class Node(BaseNode):
 
     def _updateChunks(self):
         """ Update Node's computation task splitting into NodeChunks based on its description """
+        if isinstance(self.nodeDesc, desc.InputNode):
+            return
         self.setSize(self.nodeDesc.size.computeSize(self))
         if self.isParallelized:
             try:

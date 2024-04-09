@@ -598,6 +598,13 @@ class Node(object):
     def processChunk(self, chunk):
         raise NotImplementedError('No processChunk implementation on node: "{}"'.format(chunk.node.name))
 
+class InputNode(Node):
+    """
+    Node that does not need to be processed, it is just a placeholder for inputs.
+    """
+    def processChunk(self, chunk):
+        pass
+
 
 class CommandLineNode(Node):
     """

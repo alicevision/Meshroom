@@ -256,7 +256,7 @@ FocusScope {
             let vp = getViewpoint(_reconstruction.pickedViewId)
             let attr = getAttributeByName(displayedNode, outputAttribute.name)
             let path = attr ? attr.value : ""
-            let resolved = vp ? resolve(path, vp) : ""
+            let resolved = vp ? resolve(path, vp) : path
             return Filepath.stringToUrl(resolved)
         }
 
@@ -732,15 +732,16 @@ FocusScope {
                             height: contentHeight
                         }
 
-                        // button to clear currently displayed node
+                        // button to clear currently displayed file
                         MaterialToolButton {
-                            id: clearDisplayedNode
+                            id: clearViewerButton
                             text: MaterialIcons.close
-                            ToolTip.text: "Clear node"
-                            enabled: root.displayedNode
-                            visible: root.displayedNode
+                            ToolTip.text: root.useExternal ? "Close external file" : "Clear node"
+                            enabled: root.displayedNode || root.useExternal
+                            visible: root.displayedNode || root.useExternal
                             onClicked: {
-                                root.displayedNode = null
+                                if (root.displayedNode) root.displayedNode = null
+                                if (root.useExternal) root.useExternal = false
                             }
                         }
                     }

@@ -11,3 +11,4 @@ SearchBar 1.0 SearchBar.qml
 TabPanel 1.0 TabPanel.qml
 TextFileViewer 1.0 TextFileViewer.qml
 ExifOrientedViewer 1.0 ExifOrientedViewer.qml
+FilterComboBox 1.0 FilterComboBox.qml

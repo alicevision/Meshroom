@@ -4,6 +4,7 @@ import QtQuick.Controls 2.2
 import QtQuick.Dialogs 1.3
 import MaterialIcons 2.2
 import Utils 1.0
+import Controls 1.0
 
 /**
   Instantiate a control to visualize and edit an Attribute based on its type.
@@ -342,16 +343,41 @@ RowLayout {
 
         Component {
             id: comboBox_component
-            ComboBox {
-                id: combo
-                enabled: root.editable
-                model: attribute.values
-                Component.onCompleted: currentIndex = find(attribute.value)
-                onActivated: _reconstruction.setAttribute(attribute, currentText)
+
+            FilterComboBox {
+                inputModel: attribute.values
+
+                Component.onCompleted: {
+                    // if value not in list, override the text and precise it is not valid
+                    var idx = find(attribute.value)
+                    if (idx === -1) {
+                        displayText = attribute.value
+                        validValue = false
+                    } else {
+                        currentIndex = idx
+                    }
+                }
+
+                onEditingFinished: function(value) {
+                    _reconstruction.setAttribute(attribute, value)
+                }
+
                 Connections {
                     target: attribute
                     function onValueChanged() {
-                        combo.currentIndex = combo.find(attribute.value)
+                        // when reset, clear and find the current index
+                        // but if only reopen the combo box, keep the current value
+                        
+                        //convert all values of desc values as string
+                        var valuesAsString = attribute.values.map(function(value) {
+                            return value.toString()
+                        })
+                        if (valuesAsString.includes(attribute.value) || attribute.value === attribute.desc.value) {
+                            filterText.clear()
+                            validValue = true
+                            displayText = currentText
+                            currentIndex = find(attribute.value) 
+                        }
                     }
                 }
             }

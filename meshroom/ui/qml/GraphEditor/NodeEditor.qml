@@ -335,6 +335,7 @@ Panel {
 
         TabBar {
             id: tabBar
+            visible: root.node !== null
 
             Layout.fillWidth: true
             width: childrenRect.width
@@ -347,16 +348,22 @@ Panel {
                 rightPadding: leftPadding
             }
             TabButton {
+                visible: node != null && node.isComputable
+                width: !visible ? 0 : tabBar.width / tabBar.count
                 text: "Log"
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
+                visible: node != null && node.isComputable
+                width: !visible ? 0 : tabBar.width / tabBar.count
                 text: "Statistics"
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
+                visible: node != null && node.isComputable
+                width: !visible ? 0 : tabBar.width / tabBar.count
                 text: "Status"
                 leftPadding: 8
                 rightPadding: leftPadding

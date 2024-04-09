@@ -175,7 +175,7 @@ FocusScope {
         }
 
         // node must be computed or at least running
-        if (!node.isPartiallyFinished()) {
+        if (node.isComputable && !node.isPartiallyFinished()) {
             return false
         }
 

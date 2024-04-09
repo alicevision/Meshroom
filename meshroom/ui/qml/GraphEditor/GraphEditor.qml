@@ -448,6 +448,8 @@ Item {
 
                 MenuItem {
                     text: "Compute"
+                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                    height: visible ? implicitHeight : 0
                     enabled: nodeMenu.canComputeNode && (nodeMenu.canSubmitOrCompute%2 == 1) //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
                     onTriggered: {
                         computeRequest(nodeMenu.currentNode)
@@ -456,7 +458,7 @@ Item {
                 MenuItem {
                     text: "Submit"
                     enabled: nodeMenu.canComputeNode && nodeMenu.canSubmitOrCompute > 1
-                    visible: uigraph ? uigraph.canSubmit : false
+                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : uigraph ? uigraph.canSubmit : false
                     height: visible ? implicitHeight : 0
                     onTriggered: submitRequest(nodeMenu.currentNode)
                 }
@@ -476,9 +478,13 @@ Item {
                 }
                 MenuItem {
                     text: "Open Folder"
+                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                    height: visible ? implicitHeight : 0
                     onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
                 }
-                MenuSeparator {}
+                MenuSeparator {
+                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                }
                 MenuItem {
                     text: "Cut Node(s)"
                     enabled: true
@@ -542,9 +548,13 @@ Item {
                         }
                     }
                 }
-                MenuSeparator {}
+                MenuSeparator {
+                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                }
                 MenuItem {
                     text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
+                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                    height: visible ? implicitHeight : 0
                     enabled: {
                         if (!nodeMenu.currentNode)
                             return false

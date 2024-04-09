@@ -28,7 +28,7 @@ Item {
     property point position: Qt.point(x, y)
     /// Styling
     property color shadowColor: "#cc000000"
-    readonly property color defaultColor: isCompatibilityNode ? "#444" : activePalette.base
+    readonly property color defaultColor: isCompatibilityNode ? "#444" : !node.isComputable ? "#BA3D69" : activePalette.base
     property color baseColor: defaultColor
 
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
@@ -328,7 +328,7 @@ Item {
                             MaterialLabel {
                                 id: nodeImageOutput
                                 visible: (node.hasImageOutput || node.has3DOutput)
-                                         && ["SUCCESS"].includes(node.globalStatus) && node.chunks.count > 0
+                                         && ((["SUCCESS"].includes(node.globalStatus) && node.chunks.count > 0) || !node.isComputable)
                                 text: MaterialIcons.visibility
                                 padding: 2
                                 font.pointSize: 7
@@ -367,6 +367,7 @@ Item {
 
                 // Node Chunks
                NodeChunks {
+                   visible: node.isComputable
                    defaultColor: Colors.sysPalette.mid
                    implicitHeight: 3
                    width: parent.width

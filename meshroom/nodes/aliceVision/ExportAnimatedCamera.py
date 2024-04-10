@@ -75,7 +75,7 @@ Based on the input image filenames, it will recognize the input video sequence t
             name="correctPrincipalPoint",
             label="Correct Principal Point",
             description="Correct principal point.",
-            value=True,
+            value=False,
             uid=[0],
         ),
         desc.ChoiceParam(

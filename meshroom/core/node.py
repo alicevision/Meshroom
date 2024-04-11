@@ -50,7 +50,7 @@ class Status(Enum):
     STOPPED = 4
     KILLED = 5
     SUCCESS = 6
-    INPUT = 7
+    INPUT = 7 # special status for input nodes
 
 
 class ExecMode(Enum):

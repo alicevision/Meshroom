@@ -206,6 +206,7 @@ RowLayout {
         Component {
             id: textField_component
             TextField {
+                id: textField
                 readOnly: !root.editable
                 text: attribute.value
                 selectByMouse: true
@@ -227,6 +228,38 @@ RowLayout {
                         else if (drop.hasText && drop.text != '')
                             setTextFieldAttribute(drop.text)
                     }
+
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.AllButtons
+                    onClicked: {
+                        if (mouse.button == Qt.RightButton) {
+                            var menu = menuCopy.createObject(parameterLabel)
+                            menu.parent = parameterLabel
+                            menu.popup()
+                        } else {
+                            textField.forceActiveFocus()
+                        }
+                    }
+
+                    property Component menuCopy : Menu {
+                        MenuItem {
+                            text: "Copy"
+                            enabled: attribute.value != ""
+                            onTriggered: {
+                                Clipboard.clear()
+                                Clipboard.setText(attribute.value)
+                            }
+                        }
+                        MenuItem {
+                            text: "Paste"
+                            enabled: Clipboard.getText() != "" && !readOnly
+                            onTriggered: {
+                                setTextFieldAttribute(Clipboard.getText())
+                            }
+                        }
+                    } 
                 }
             }
         }

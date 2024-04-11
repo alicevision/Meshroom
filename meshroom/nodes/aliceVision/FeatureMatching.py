@@ -205,7 +205,7 @@ then it checks the number of features that validates this model and iterate thro
         desc.BoolParam(
             name="exportDebugFiles",
             label="Export Debug Files",
-            description="Expor debug files (svg, dot).",
+            description="Export debug files (svg, dot).",
             value=False,
             uid=[],
             advanced=True,

@@ -59,7 +59,7 @@ FloatingPane {
         }
 
         onPlayingChanged: {
-            syncSelected = syncButton.checked || !playing;
+            syncSelected = syncViewersMenuItem.checked || !playing;
             if(playing && (frame + 1 >= sortedViewIds.length))
             {
                 frame = 0;
@@ -264,29 +264,53 @@ FloatingPane {
         MaterialToolButton {
             id: syncButton
 
-            checkable: true
-            checked: false
             text: MaterialIcons.sync
-            ToolTip.text: "Sync Viewers and Sequence Player"
-
-            onCheckedChanged: {
-                // if playing, update the syncSelected property
-                if (m.playing) {
-                    m.syncSelected = checked;
-                }
-            }
-        }
-
-        MaterialToolButton {
-            id: sync3DButton
-
+            font.pointSize: 11
+            padding: 2
+            onClicked: syncViewerMenu.open()
             checkable: true
-            checked: false
-            text: MaterialIcons.sync_alt
-            ToolTip.text: "Sync 3D Viewer and Sequence Player"
+            checked: syncViewerMenu.visible
 
-            onCheckedChanged: {
-                m.sync3DSelected = checked;
+            Menu {
+                id: syncViewerMenu
+                width: 270
+                y: parent.height
+                x: -width + parent.width
+
+                MenuItem {
+                    id: syncViewersMenuItem
+                    text: "Sync Viewers with Sequence Player"
+                    checkable: true
+                    onCheckedChanged: {
+                        // if playing, update the syncSelected property
+                        if (m.playing) {
+                            m.syncSelected = checked
+                        }
+
+                        if (checked)
+                            sync3DMenuItem.checked = false
+                    }
+
+                    ToolTip.text: "The Image Gallery and 3D Viewer will be updated at the same time as the Sequence Player."
+                    ToolTip.visible: hovered
+                    ToolTip.delay: 100
+                }
+
+                MenuItem {
+                    id: sync3DMenuItem
+                    text: "Sync 3D VIewer with Sequence Player"
+                    checkable: true
+                    onCheckedChanged: {
+                        m.sync3DSelected = checked
+
+                        if (checked)
+                            syncViewersMenuItem.checked = false
+                    }
+
+                    ToolTip.text: "The 3D Viewer will be updated at the same time as the Sequence Player."
+                    ToolTip.visible: hovered
+                    ToolTip.delay: 100
+                }
             }
         }
     }

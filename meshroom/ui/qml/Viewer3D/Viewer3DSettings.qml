@@ -51,6 +51,7 @@ Item {
     property bool displayOrigin: false
     // Camera
     property bool syncViewpointCamera: false
+    property bool syncWithPickedViewId: false  // Sync active camera with picked view ID from sequence player if the setting is enabled
     property bool viewpointImageOverlay: true
     property real viewpointImageOverlayOpacity: 0.5
     readonly property bool showViewpointImageOverlay: syncViewpointCamera && viewpointImageOverlay

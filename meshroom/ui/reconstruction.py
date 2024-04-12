@@ -1115,12 +1115,21 @@ class Reconstruction(UIGraph):
             # Reconstruction has ownership of Viewpoint object - destroy it when not needed anymore
             self._selectedViewpoint.deleteLater()
         self._selectedViewpoint = ViewpointWrapper(viewpointAttribute, self) if viewpointAttribute else None
+        self.selectedViewpointChanged.emit()
 
     def setPickedViewId(self, viewId):
         if viewId == self._pickedViewId:
             return
         self._pickedViewId = viewId
         self.pickedViewIdChanged.emit()
+    
+    @Slot(str)
+    def updateSelectedViewpoint(self, viewId):
+        """ Update the currently set viewpoint if the provided view ID corresponds to one. """
+        vp = None
+        if self.viewpoints:
+            vp = next((v for v in self.viewpoints if str(v.viewId.value) == viewId), None)
+        self._setSelectedViewpoint(vp)
 
     def reconstructedCamerasCount(self):
         """ Get the number of reconstructed cameras in the current context. """
@@ -1166,7 +1175,8 @@ class Reconstruction(UIGraph):
 
     selectedViewIdChanged = Signal()
     selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)
-    selectedViewpoint = Property(ViewpointWrapper, lambda self: self._selectedViewpoint, notify=selectedViewIdChanged)
+    selectedViewpointChanged = Signal()
+    selectedViewpoint = Property(ViewpointWrapper, lambda self: self._selectedViewpoint, notify=selectedViewpointChanged)
     pickedViewIdChanged = Signal()
     pickedViewId = Property(str, lambda self: self._pickedViewId, setPickedViewId, notify=pickedViewIdChanged)
 

@@ -392,7 +392,7 @@ Item {
 
                                 delegate: Loader {
                                     id: outputLoader
-                                    active: object.isOutput && isFileAttributeBaseType(object)
+                                    active: object.isOutput && isFileAttributeBaseType(object) && object.desc.visible
                                     anchors.right: parent.right
                                     width: outputs.width
 

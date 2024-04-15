@@ -57,7 +57,7 @@ class RippleSubmitter(BaseSubmitter):
             maxProcessors = 2
         
         #Specify some constraints
-        requirements = "!\"rs*\",@.mem>25{gpu}".format(gpu=gpudict[node.nodeDesc.gpu.name])
+        requirements = "!\"rs*\",!\"rr*\",@.mem>25{gpu}".format(gpu=gpudict[node.nodeDesc.gpu.name])
 
         #specify which node to wait before launching the current one
         waitsFor = []

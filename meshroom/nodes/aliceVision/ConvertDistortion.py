@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "1.0"
 
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
@@ -10,7 +10,7 @@ class ConvertDistortion(desc.AVCommandLineNode):
 
     category = 'Utils'
     documentation = '''
-    Convert distortions between different models
+    Convert distortions between different models.
     '''
 
     inputs = [
@@ -23,8 +23,8 @@ class ConvertDistortion(desc.AVCommandLineNode):
         ),
         desc.ChoiceParam(
             name="from",
-            label="from",
-            description="Distortion model to convert from",
+            label="From",
+            description="Distortion model to convert from.",
             value="distortion",
             values=["distortion", "undistortion"],
             exclusive=True,
@@ -32,8 +32,8 @@ class ConvertDistortion(desc.AVCommandLineNode):
         ),
         desc.ChoiceParam(
             name="to",
-            label="to",
-            description="Distortion model to convert to",
+            label="To",
+            description="Distortion model to convert to.",
             value="undistortion",
             values=["distortion", "undistortion"],
             exclusive=True,

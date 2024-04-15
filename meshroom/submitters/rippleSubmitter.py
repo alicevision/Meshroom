@@ -52,6 +52,7 @@ class RippleSubmitter(BaseSubmitter):
             minProcessors = 2
             #if more than 2 are available without waiting, use 3 or 4
             maxProcessors = 4
+            requirements = requirements + ",!\"rr*\""
         elif Level.NORMAL in (node.nodeDesc.ram, node.nodeDesc.cpu):
             #if 2 are available, otherwise 1
             maxProcessors = 2

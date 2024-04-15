@@ -44,6 +44,9 @@ class RippleSubmitter(BaseSubmitter):
             "INTENSIVE":",gpu16G"
         }
 
+        #Specify some constraints
+        requirements = "!\"rs*\",@.mem>25{gpu}".format(gpu=gpudict[node.nodeDesc.gpu.name])
+        
         #decide if we need multiple slots
         minProcessors = 1
         maxProcessors = 1
@@ -52,12 +55,10 @@ class RippleSubmitter(BaseSubmitter):
             minProcessors = 2
             #if more than 2 are available without waiting, use 3 or 4
             maxProcessors = 4
+            requirements = requirements + ",!\"rr*\""
         elif Level.NORMAL in (node.nodeDesc.ram, node.nodeDesc.cpu):
             #if 2 are available, otherwise 1
             maxProcessors = 2
-        
-        #Specify some constraints
-        requirements = "!\"rs*\",@.mem>25{gpu}".format(gpu=gpudict[node.nodeDesc.gpu.name])
 
         #specify which node to wait before launching the current one
         waitsFor = []

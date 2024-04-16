@@ -27,6 +27,7 @@ FloatingPane {
     readonly property alias syncFeaturesSelected: m.syncFeaturesSelected
     property bool loading: fetchButton.checked || m.playing
     property alias settings_SequencePlayer: settings_SequencePlayer
+    property alias frameId: m.frame
 
     Settings {
         id: settings_SequencePlayer
@@ -94,7 +95,7 @@ FloatingPane {
         id: timer
 
         repeat: true
-        running: m.playing
+        running: m.playing && root.visible
         interval: 1000 / m.fps
 
         onTriggered: {

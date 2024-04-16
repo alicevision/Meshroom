@@ -30,6 +30,8 @@ FocusScope {
     property bool enableSequencePlayer: enableSequencePlayerAction.checked
 
     readonly property alias sync3DSelected: sequencePlayer.sync3DSelected
+    property var sequence: []
+    property int currentFrame: sequencePlayer.frameId
 
     QtObject {
         id: m
@@ -181,7 +183,7 @@ FocusScope {
         }
 
         // node must have at least one output attribute with the image semantic
-        if (!node.hasImageOutput) {
+        if (!node.hasImageOutput && !node.hasSequenceOutput) {
             return false
         }
 
@@ -223,7 +225,6 @@ FocusScope {
         return undefined
     }
 
-
     function getImageFile() {
         // Entry point for getting the image file URL
 
@@ -234,6 +235,11 @@ FocusScope {
         if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
             let vp = getViewpoint(_reconstruction.pickedViewId)
             let path = vp ? vp.childAttribute("path").value : ""
+            return Filepath.stringToUrl(path)
+        }
+
+        if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput) {
+            var path = sequence[currentFrame]
             return Filepath.stringToUrl(path)
         }
 
@@ -253,17 +259,24 @@ FocusScope {
         // ordered by path
 
         let objs = []
-        for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
-            objs.push(_reconstruction.viewpoints.at(i))
-        }
-        objs.sort((a, b) => { return a.childAttribute("path").value < b.childAttribute("path").value ? -1 : 1; })
 
-        let seq = [];
-        for (let i = 0; i < objs.length; i++) {
-            seq.push(Filepath.resolve(path_template, objs[i]))
-        }
+        if (displayedNode && displayedNode.hasSequenceOutput) {
+            objs = Filepath.resolve(path_template, null)
+            //order by path
+            objs.sort()
+            return objs
+        } else {
+            for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
+                objs.push(_reconstruction.viewpoints.at(i))
+            }
+            objs.sort((a, b) => { return a.childAttribute("path").value < b.childAttribute("path").value ? -1 : 1; })
+            let seq = [];
+            for (let i = 0; i < objs.length; i++) {
+                seq.push(Filepath.resolve(path_template, objs[i]))
+            }
 
-        return seq
+            return seq
+        }
     }
 
     function getSequence() {
@@ -300,12 +313,23 @@ FocusScope {
                 if (attr.isOutput && attr.desc.semantic === "image" && attr.enabled) {
                     names.push(attr.name)
                 }
+
+                if (attr.isOutput && attr.desc.semantic === "sequence" && attr.enabled) {
+                    names.push(attr.name)
+                }
             }
         }
-        if (!displayedNode || displayedNode.isComputable) names.push("gallery")
-        outputAttribute.names = names
 
-        root.source = getImageFile()
+        if (!displayedNode || displayedNode.isComputable) names.push("gallery")
+
+        outputAttribute.names = names
+        if (displayedNode && !displayedNode.hasSequenceOutput) {
+
+            root.source = getImageFile()
+        } else {
+            root.sequence = getSequence()
+            enableSequencePlayerAction.checked = true
+        }
     }
 
     Connections {
@@ -457,11 +481,11 @@ FocusScope {
                                 'sfmRequired': Qt.binding(function() { return displayLensDistortionViewer.checked ? true : false }),
                                 'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
                                 'canBeHovered': false,
-                                'idView': Qt.binding(function() { return (_reconstruction ? _reconstruction.selectedViewId : -1) }),
+                                'idView': Qt.binding(function() { return ((root.displayedNode && !root.displayedNode.hasSequenceOutput && _reconstruction) ? _reconstruction.selectedViewId : -1) }),
                                 'cropFisheye': false,
-                                'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? getSequence() : []) }),
+                                'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
-                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction }),
+                                'useSequence': Qt.binding(function() { return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) }),
                                 'fetchingSequence': Qt.binding(function() { return sequencePlayer.loading }),
                                 'memoryLimit': Qt.binding(function() { return sequencePlayer.settings_SequencePlayer.maxCacheMemory }),
                                 })
@@ -1434,7 +1458,7 @@ FocusScope {
                     id: sequencePlayer
                     anchors.margins: 0
                     Layout.fillWidth: true
-                    sortedViewIds: (root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? buildOrderedSequence("<VIEW_ID>") : []
+                    sortedViewIds: { return (root.enableSequencePlayer && (root.displayedNode && root.displayedNode.hasSequenceOutput)) ? root.sequence : (_reconstruction && _reconstruction.viewpoints.count > 0) ? buildOrderedSequence("<VIEW_ID>") : [] }
                     viewer: floatImageViewerLoader.status === Loader.Ready ? floatImageViewerLoader.item : null
                     visible: root.enableSequencePlayer
                     enabled: root.enableSequencePlayer

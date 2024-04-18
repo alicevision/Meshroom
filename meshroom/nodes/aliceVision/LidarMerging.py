@@ -11,7 +11,7 @@ class LidarMerging(desc.AVCommandLineNode):
 
     category = 'Dense Reconstruction'
     documentation = '''
-    This node merge meshes into one
+    This node merge several meshes into one.
     '''
 
     inputs = [
@@ -36,9 +36,9 @@ class LidarMerging(desc.AVCommandLineNode):
     outputs = [
         desc.File(
             name="output",
-            label="Mesh path output",
-            description="Output directory for mesh",
+            label="Mesh Path Output",
+            description="Output directory for mesh.",
             value=desc.Node.internalFolder + "output.obj",
             uid=[],
-        )
+        ),
     ]

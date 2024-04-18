@@ -15,7 +15,7 @@ class LidarDecimating(desc.AVCommandLineNode):
 
     category = 'Dense Reconstruction'
     documentation = '''
-    This node simplifies previously reconstructed meshes
+    This node simplifies previously reconstructed meshes from Lidar.
     '''
 
     inputs = [
@@ -28,8 +28,8 @@ class LidarDecimating(desc.AVCommandLineNode):
         ),
         desc.FloatParam(
             name="errorLimit",
-            label="Error limit",
-            description="Maximal distance allowed",
+            label="Error Limit",
+            description="Maximal distance (in meters) allowed.",
             value=0.001,
             range=(0.0, 1.0, 0.001),
             uid=[0],
@@ -48,15 +48,15 @@ class LidarDecimating(desc.AVCommandLineNode):
     outputs = [
         desc.File(
             name="output",
-            label="Sub-Meshes directory",
-            description="Output directory for sub-meshes",
+            label="Sub-Meshes Directory",
+            description="Output directory for sub-meshes.",
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name="outputJson",
-            label="Scene description",
-            description="Output Scene description.",
+            label="Scene Description",
+            description="Output scene description.",
             value=desc.Node.internalFolder + "scene.json",
             uid=[],
         ),

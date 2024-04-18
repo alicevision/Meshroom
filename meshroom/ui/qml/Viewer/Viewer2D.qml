@@ -1096,6 +1096,9 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayLensDistortionViewer
+
+                            property int numberChanges: null
+                            property bool previousChecked: null
                             property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('sfmData').node : null
                             property bool isComputed: {
                                 if (!activeNode)
@@ -1125,6 +1128,22 @@ FocusScope {
                                     displayPanoramaViewer.checked = false
                                 } else if (!checked) {
                                     displayHDR.checked = true
+                                }
+                            }
+
+                            onActiveNodeChanged: {
+                                numberChanges += 1
+                            }
+
+                            onEnabledChanged: {
+                                if (!enabled) {
+                                    previousChecked = checked
+                                    checked = false
+                                    numberChanges = 0
+                                }
+
+                                if (enabled && (numberChanges == 1) && previousChecked) {
+                                    checked = true
                                 }
                             }
                         }

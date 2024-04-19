@@ -72,7 +72,7 @@ ComboBox {
             filterTextArea.forceActiveFocus()
 
             if (mapToGlobal(popup.x, popup.y).y + root.implicitHeight * (model.length + 1) > _window.contentItem.height) {
-                y = -root.implicitHeight * (model.length + 1)
+                y = -((combo.height * (combo.model.length + 1) > _window.contentItem.height) ? _window.contentItem.height*2/3 : combo.height * (combo.model.length + 1))
             } else {
                 y = 0
             }
@@ -137,15 +137,19 @@ ComboBox {
         }
 
         ListView {
+            id: listView
             clip: true
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: filterTextArea.bottom
 
-            implicitHeight: contentHeight
+            implicitHeight: (combo.height * (combo.model.length + 1) > _window.contentItem.height) ? _window.contentItem.height*2/3 : contentHeight
             model: combo.popup.visible ? combo.delegateModel : null
 
-            ScrollIndicator.vertical: ScrollIndicator {}
+            ScrollBar.vertical: ScrollBar {
+                visible: listView.contentHeight > listView.height
+                policy: ScrollBar.AlwaysOn
+            }
         }
     }
 

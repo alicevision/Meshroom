@@ -6,16 +6,16 @@ from meshroom.core.utils import VERBOSE_LEVEL
 class LidarMeshing(desc.AVCommandLineNode):
     commandLine = 'aliceVision_lidarMeshing {allParams}'
 
-    # size = desc.DynamicNodeSize('input')
-    # parallelization = desc.Parallelization(blockSize=2)
-    # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
+    size = desc.StaticNodeSize(10)
+    parallelization = desc.Parallelization(blockSize=1)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeFullSize}'
 
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
     category = 'Dense Reconstruction'
     documentation = '''
-    This node creates a dense geometric surface representation of the lidar measurements.
+    This node creates a dense geometric surface representation of the Lidar measurements.
     '''
 
     inputs = [
@@ -76,19 +76,19 @@ class LidarMeshing(desc.AVCommandLineNode):
                             name="x", label="x", description="Euler X rotation.",
                             value=0.0,
                             uid=[0],
-                            range=(-90.0, 90.0, 1.0)
+                            range=(-90.0, 90.0, 1.0),
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Euler Y rotation.",
                             value=0.0,
                             uid=[0],
-                            range=(-180.0, 180.0, 1.0)
+                            range=(-180.0, 180.0, 1.0),
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Euler Z rotation.",
                             value=0.0,
                             uid=[0],
-                            range=(-180.0, 180.0, 1.0)
+                            range=(-180.0, 180.0, 1.0),
                         ),
                     ],
                     joinChar=",",
@@ -137,15 +137,15 @@ class LidarMeshing(desc.AVCommandLineNode):
     outputs = [
         desc.File(
             name="output",
-            label="Sub-Meshes directory",
+            label="Sub-Meshes Directory",
             description="Output directory for sub-meshes",
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name="outputJson",
-            label="Scene description",
-            description="Output Scene description.",
+            label="Scene Description",
+            description="Output scene description.",
             value=desc.Node.internalFolder + "scene.json",
             uid=[],
         ),

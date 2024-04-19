@@ -31,7 +31,7 @@ FocusScope {
 
     readonly property alias sync3DSelected: sequencePlayer.sync3DSelected
     property var sequence: []
-    property int currentFrame: sequencePlayer.frameId
+    property alias currentFrame: sequencePlayer.frameId
 
     QtObject {
         id: m
@@ -261,6 +261,7 @@ FocusScope {
         let objs = []
 
         if (displayedNode && displayedNode.hasSequenceOutput) {
+            currentFrame = 0
             objs = Filepath.resolve(path_template, null)
             //order by path
             objs.sort()
@@ -310,11 +311,7 @@ FocusScope {
             // store attr name for output attributes that represent images
             for (var i = 0; i < displayedNode.attributes.count; i++) {
                 var attr = displayedNode.attributes.at(i)
-                if (attr.isOutput && attr.desc.semantic === "image" && attr.enabled) {
-                    names.push(attr.name)
-                }
-
-                if (attr.isOutput && attr.desc.semantic === "sequence" && attr.enabled) {
+                if (attr.isOutput && (attr.desc.semantic === "image" || attr.desc.semantic === "sequence") && attr.enabled) {
                     names.push(attr.name)
                 }
             }
@@ -324,7 +321,6 @@ FocusScope {
 
         outputAttribute.names = names
         if (displayedNode && !displayedNode.hasSequenceOutput) {
-
             root.source = getImageFile()
         } else {
             root.sequence = getSequence()
@@ -1359,6 +1355,7 @@ FocusScope {
 
                             onNameChanged: {
                                 root.source = getImageFile()
+                                root.sequence = getSequence()
                             }
                         }
 
@@ -1462,6 +1459,7 @@ FocusScope {
                     viewer: floatImageViewerLoader.status === Loader.Ready ? floatImageViewerLoader.item : null
                     visible: root.enableSequencePlayer
                     enabled: root.enableSequencePlayer
+                    isOutputSequence: root.displayedNode && root.displayedNode.hasSequenceOutput
                 }
             }
         }

@@ -23,6 +23,7 @@ FloatingPane {
     // Exposed properties
     property var sortedViewIds: []
     property var viewer: null
+    property bool isOutputSequence: false
     readonly property alias sync3DSelected: m.sync3DSelected
     readonly property alias syncFeaturesSelected: m.syncFeaturesSelected
     property bool loading: fetchButton.checked || m.playing
@@ -35,6 +36,8 @@ FloatingPane {
     }
 
     function updateReconstructionView() {
+        if (isOutputSequence)
+            return
         if (_reconstruction && m.frame >= 0 && m.frame < sortedViewIds.length) {
             if (!m.playing && !frameSlider.pressed){
                 _reconstruction.selectedViewId = sortedViewIds[m.frame];
@@ -44,6 +47,12 @@ FloatingPane {
                     _reconstruction.updateSelectedViewpoint(_reconstruction.pickedViewId);
                 }
             }
+        }
+    }
+
+    onIsOutputSequenceChanged: {
+        if (!isOutputSequence) {
+            frameId = 0
         }
     }
 

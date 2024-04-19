@@ -319,7 +319,7 @@ FocusScope {
                 }
             }
         }
-        names.push("gallery")
+        if (!displayedNode || displayedNode.isComputable) names.push("gallery")
         outputAttribute.names = names
 
         root.source = getImageFile()

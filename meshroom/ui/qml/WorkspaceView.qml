@@ -81,13 +81,12 @@ Item {
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onAllViewpointsCleared: { reconstruction.removeAllImages(); reconstruction.selectedViewId = "-1" }
                 onFilesDropped: {
-                    var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
-                    if (filesByType["meshroomScenes"].length == 1) {
+                    if (drop["meshroomScenes"].length == 1) {
                         ensureSaved(function() {
-                            reconstruction.handleFilesUrl(filesByType, augmentSfm ? null : cameraInit)
+                            reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)
                         })
                     } else {
-                        reconstruction.handleFilesUrl(filesByType, augmentSfm ? null : cameraInit)
+                        reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)
                     }
                 }
             }

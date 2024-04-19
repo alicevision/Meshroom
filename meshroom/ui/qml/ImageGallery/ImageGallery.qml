@@ -28,6 +28,7 @@ Panel {
     property int defaultCellSize: 160
     property bool readOnly: false
 
+    property var filesByType: {}
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
 
@@ -442,19 +443,14 @@ Panel {
                 enabled: !m.readOnly && !intrinsicsFilterButton.checked
                 keys: ["text/uri-list"]
                 onEntered: {
-                    nbMeshroomScenes = 0
                     nbDraggedFiles = drag.urls.length
-
-                    drag.urls.forEach(function(file) {
-                        if (file.endsWith(".mg")) {
-                            nbMeshroomScenes++
-                        }
-                    })
+                    filesByType = _reconstruction.getFilesByTypeFromDrop(drag.urls)
+                    nbMeshroomScenes = filesByType["meshroomScenes"].length
                 }
                 onDropped: {
                     var augmentSfm = augmentArea.hovered
                     if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
-                        root.filesDropped(drop, augmentSfm)
+                        root.filesDropped(filesByType, augmentSfm)
                     } else {
                         errorDialog.open()
                     }

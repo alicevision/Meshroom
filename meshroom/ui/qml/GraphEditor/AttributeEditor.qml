@@ -25,7 +25,7 @@ ListView {
     ScrollBar.vertical: ScrollBar { id: scrollBar }
 
     delegate: Loader {
-        active: object.enabled && (
+        active: (object.enabled || object.hasOutputConnections) && (
             !objectsHideable
             || ((!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)
             && (object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)

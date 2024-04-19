@@ -387,12 +387,14 @@ Item {
                             id: outputs
                             width: parent.width
                             spacing: 3
+
                             Repeater {
                                 model: node ? node.attributes : undefined
 
                                 delegate: Loader {
                                     id: outputLoader
-                                    active: object.isOutput && isFileAttributeBaseType(object) && object.desc.visible
+                                    active: object.isOutput && isFileAttributeBaseType(object)
+                                    visible: object.enabled || object.hasOutputConnections
                                     anchors.right: parent.right
                                     width: outputs.width
 
@@ -421,9 +423,11 @@ Item {
 
                             Repeater {
                                 model: node ? node.attributes : undefined
+
                                 delegate: Loader {
                                     id: inputLoader
                                     active: !object.isOutput && isFileAttributeBaseType(object)
+                                    visible: object.enabled
                                     width: inputs.width
 
                                     sourceComponent: AttributePin {
@@ -483,6 +487,7 @@ Item {
                                     delegate: Loader {
                                         id: paramLoader
                                         active: !object.isOutput && !isFileAttributeBaseType(object)
+                                        visible: object.enabled || object.isLink || object.hasOutputConnections
                                         property bool isFullyActive: (m.displayParams || object.isLink || object.hasOutputConnections)
                                         width: parent.width
 

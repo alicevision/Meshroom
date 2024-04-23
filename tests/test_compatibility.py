@@ -131,6 +131,26 @@ class SampleNodeV6(desc.Node):
         desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
     ]
 
+class SampleInputNodeV1(desc.InputNode):
+    """ Version 1 Sample Input Node """
+    inputs = [
+        desc.StringParam(name='path', label='path', description='', value='', uid=[])  # No impact on UID
+    ]
+    outputs = [
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+    ]
+
+class SampleInputNodeV2(desc.InputNode):
+    """ Changes from V1:
+        * 'path' has been renamed to 'in'
+    """
+    inputs = [
+        desc.StringParam(name='in', label='path', description='', value='', uid=[])  # No impact on UID
+    ]
+    outputs = [
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+    ]
+
 def test_unknown_node_type():
     """
     Test compatibility behavior for unknown node type.
@@ -285,37 +305,49 @@ def test_description_conflict():
 def test_upgradeAllNodes():
     registerNodeType(SampleNodeV1)
     registerNodeType(SampleNodeV2)
+    registerNodeType(SampleInputNodeV1)
+    registerNodeType(SampleInputNodeV2)
 
     g = Graph('')
     n1 = g.addNewNode("SampleNodeV1")
     n2 = g.addNewNode("SampleNodeV2")
+    n3 = g.addNewNode("SampleInputNodeV1")
+    n4 = g.addNewNode("SampleInputNodeV2")
     n1Name = n1.name
     n2Name = n2.name
+    n3Name = n3.name
+    n4Name = n4.name
     graphFile = os.path.join(tempfile.mkdtemp(), "test_description_conflict.mg")
     g.save(graphFile)
 
-    # make SampleNodeV2 an unknown type
+    # make SampleNodeV2 and SampleInputNodeV2 an unknown type
     unregisterNodeType(SampleNodeV2)
-    # replace SampleNodeV1 by SampleNodeV2
+    unregisterNodeType(SampleInputNodeV2)
+    # replace SampleNodeV1 by SampleNodeV2 and SampleInputNodeV1 by SampleInputNodeV2
     meshroom.core.nodesDesc[SampleNodeV1.__name__] = SampleNodeV2
+    meshroom.core.nodesDesc[SampleInputNodeV1.__name__] = SampleInputNodeV2
 
     # reload file
     g = loadGraph(graphFile)
     os.remove(graphFile)
 
     # both nodes are CompatibilityNodes
-    assert len(g.compatibilityNodes) == 2
+    assert len(g.compatibilityNodes) == 4
     assert g.node(n1Name).canUpgrade      # description conflict
     assert not g.node(n2Name).canUpgrade  # unknown type
+    assert g.node(n3Name).canUpgrade      # description conflict
+    assert not g.node(n4Name).canUpgrade  # unknown type
 
     # upgrade all upgradable nodes
     g.upgradeAllNodes()
 
-    # only the node with an unknown type has not been upgraded
-    assert len(g.compatibilityNodes) == 1
+    # only the nodes with an unknown type have not been upgraded
+    assert len(g.compatibilityNodes) == 2
     assert n2Name in g.compatibilityNodes.keys()
+    assert n4Name in g.compatibilityNodes.keys()
 
     unregisterNodeType(SampleNodeV1)
+    unregisterNodeType(SampleInputNodeV1)
 
 def test_conformUpgrade():
     registerNodeType(SampleNodeV5)

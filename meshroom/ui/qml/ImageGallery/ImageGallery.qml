@@ -674,7 +674,7 @@ Panel {
 
             Label {
                 id: groupName
-                text: root.cameraInit ? root.cameraInit.label : ""
+                text: root.cameraInit ? "<b>" + root.cameraInit.label + "</b>" + (root.cameraInit.label !== root.cameraInit.defaultLabel ? " (" + root.cameraInit.defaultLabel + ")" : "") : ""
                 font.pointSize: 8
             }
         }

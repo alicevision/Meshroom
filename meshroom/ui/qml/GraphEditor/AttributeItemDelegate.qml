@@ -179,6 +179,8 @@ RowLayout {
 
         sourceComponent: {
             switch (attribute.type) {
+                case "PushButtonParam":
+                    return pushButton_component
                 case "ChoiceParam":
                     return attribute.desc.exclusive ? comboBox_component : multiChoice_component
                 case "IntParam": return slider_component
@@ -200,6 +202,17 @@ RowLayout {
                     return color_component
                 default:
                     return textField_component
+            }
+        }
+
+        Component {
+            id: pushButton_component
+            Button {
+                text: attribute.desc.label
+                enabled: root.editable
+                onClicked: {
+                    attribute.clicked()
+                }
             }
         }
 

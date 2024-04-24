@@ -31,6 +31,8 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
         cls = ListAttribute
     elif isinstance(description, desc.ChoiceParam):
         cls = ChoiceParam
+    elif isinstance(description, desc.PushButtonParam):
+        cls = PushButtonParam
     else:
         cls = Attribute
     attr = cls(node, description, isOutput, root, parent)
@@ -398,6 +400,13 @@ def raiseIfLink(func):
         return func(attr, *args, **kwargs)
     return wrapper
 
+class PushButtonParam(Attribute):
+    def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
+        super(PushButtonParam, self).__init__(node, attributeDesc, isOutput, root, parent)
+    
+    @Slot()
+    def clicked(self):
+        self.node.onAttributeClicked(self)
 
 class ChoiceParam(Attribute):
 

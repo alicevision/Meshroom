@@ -301,6 +301,15 @@ class FloatParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
+class PushButtonParam(Param):
+    """
+    """
+    def __init__(self, name, label, description, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True):
+        super(PushButtonParam, self).__init__(name=name, label=label, description=description, value="", uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+    def validateValue(self, value):
+        pass
+    def checkValueTypes(self):
+        pass
 
 class ChoiceParam(Param):
     """

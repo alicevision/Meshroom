@@ -14,6 +14,7 @@ import types
 import uuid
 from collections import defaultdict, namedtuple
 from enum import Enum
+import inspect
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
@@ -1704,6 +1705,13 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
 
             # verify that all inputs match their descriptions
             for attrName, value in inputs.items():
+                paramName = attrName[:1].upper() + attrName[1:]
+                functionName = f'on{paramName}Clicked'
+                if hasattr(nodeDesc, functionName):
+                    m = inspect.getsource(getattr(nodeDesc, functionName))
+                    if value != m:
+                        compatibilityIssue = CompatibilityIssue.DescriptionConflict
+                        break
                 if not CompatibilityNode.attributeDescFromName(nodeDesc.inputs, attrName, value):
                     compatibilityIssue = CompatibilityIssue.DescriptionConflict
                     break

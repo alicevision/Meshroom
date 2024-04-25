@@ -18,6 +18,7 @@ Entity {
 
     EntityWithGizmo {
         id: boundingBoxEntity
+        gizmoEnabled: root.currentMeshingNode ?  root.currentMeshingNode.attribute("useBoundingBox").value : true
         sceneCameraController: root.sceneCameraController
         frontLayerComponent: root.frontLayerComponent
         window: root.window

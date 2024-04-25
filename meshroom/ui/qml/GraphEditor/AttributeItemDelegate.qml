@@ -78,7 +78,7 @@ RowLayout {
                         var tooltip = ""
                         if (!object.validValue && object.desc.errorMessage !== "")
                             tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
-                        tooltip += "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.desc.description)
+                        tooltip += "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.description)
                         return tooltip
                     }
                     visible: parameterMA.containsMouse
@@ -208,7 +208,7 @@ RowLayout {
         Component {
             id: pushButton_component
             Button {
-                text: attribute.desc.label
+                text: attribute.label
                 enabled: root.editable
                 onClicked: {
                     attribute.clicked()

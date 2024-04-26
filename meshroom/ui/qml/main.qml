@@ -1001,7 +1001,7 @@ ApplicationWindow {
                 }
 
                 function viewIn3D(attribute, mouse) {
-                    if (!panel3dViewer || !attribute.node.has3DOutput)
+                    if (!panel3dViewer || (!attribute.node.has3DOutput && !attribute.node.hasAttribute("useBoundingBox")))
                         return false
                     var loaded = panel3dViewer.viewer3D.view(attribute)
 

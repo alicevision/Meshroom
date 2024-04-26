@@ -568,7 +568,7 @@ FocusScope {
                 // note: requires QtAliceVision plugin - use a Loader to evaluate plugin availability at runtime
                 ExifOrientedViewer {
                     id: featuresViewerLoader
-                    active: displayFeatures.checked
+                    active: displayFeatures.checked && !useExternal
                     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("featureProvider").node : null
                     width: imgContainer.width
                     height: imgContainer.height
@@ -1192,10 +1192,11 @@ FocusScope {
                             text: MaterialIcons.scatter_plot
                             font.pointSize: 11
                             Layout.minimumWidth: 0
-                            checkable: true
+                            checkable: true && !useExternal
                             checked: false
-                            enabled: root.aliceVisionPluginAvailable && !displayPanoramaViewer.checked
+                            enabled: root.aliceVisionPluginAvailable && !displayPanoramaViewer.checked && !useExternal
                             onEnabledChanged : {
+                                if (useExternal) return
                                 if (enabled == false) checked = false
                             }
                         }

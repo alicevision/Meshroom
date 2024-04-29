@@ -451,6 +451,56 @@ Item {
                     }
                 }
                 MenuItem {
+                    text: "Delete Data and Compute"
+                    enabled: {
+                        if (!nodeMenu.currentNode)
+                            return false
+                        // Check if the current node is locked (needed because it does not belong to its own duplicates list)
+                        if (nodeMenu.currentNode.locked)
+                            return false
+                        // Check if at least one of the duplicate nodes is locked
+                        for (let i = 0; i < nodeMenu.currentNode.duplicates.count; ++i) {
+                            if (nodeMenu.currentNode.duplicates.at(i).locked)
+                                return false
+                        }
+                        return true
+                    }
+
+                    function showConfirmationDialog() {
+                        uigraph.forceNodesStatusUpdate()
+                        var obj = deleteDataAndComputeDialog.createObject(root,
+                                           {
+                                               "node": nodeMenu.currentNode,
+                                           })
+                        obj.open()
+                        nodeMenu.close()
+                    }
+
+                    onTriggered: showConfirmationDialog()
+
+                    // Confirmation dialog for node cache deletion
+                    Component {
+                        id: deleteDataAndComputeDialog
+                        MessageDialog  {
+                            property var node
+
+                            focus: true
+                            modal: false
+                            header.visible: false
+
+                            text: "Delete Data of '" + node.label + "' and Compute?"
+                            helperText: "Warning: This operation can not be undone."
+                            standardButtons: Dialog.Yes | Dialog.Cancel
+
+                            onAccepted: {
+                                uigraph.clearData(uigraph.selectedNodes)
+                                computeRequest(node)
+                            }
+                            onClosed: destroy()
+                        }
+                    }
+                }
+                MenuItem {
                     text: "Submit"
                     enabled: nodeMenu.canComputeNode && nodeMenu.canSubmitOrCompute > 1
                     visible: uigraph ? uigraph.canSubmit : false

@@ -930,6 +930,10 @@ class Graph(BaseObject):
         for edge in self.getEdges(dependenciesOnly=dependenciesOnly):
             nodeEdges[edge.src.node].add(edge.dst.node)
 
+        # sort the edges
+        for node in nodeEdges:
+            nodeEdges[node] = sorted(nodeEdges[node], key=lambda item: item.name)
+        
         return nodeEdges
 
     def dfs(self, visitor, startNodes=None, longestPathFirst=False):

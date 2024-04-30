@@ -1004,7 +1004,7 @@ class Reconstruction(UIGraph):
         for category, node in nodesByCategory.items():
             self.activeNodes.get(category).node = node
             if category == 'sfm':
-                self.setSfm(node)
+                self.setActiveNode(self.lastSfmNode())
         for node in nodes:
             if node is None:
                 continue

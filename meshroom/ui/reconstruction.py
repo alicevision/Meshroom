@@ -169,7 +169,7 @@ class ViewpointWrapper(QObject):
 
     initialParamsChanged = Signal()
     sfmParamsChanged = Signal()
-    denseSceneParamsChanged = Signal()
+    undistortedImageParamsChanged = Signal()
     internalChanged = Signal()
 
     def __init__(self, viewpointAttribute, reconstruction):
@@ -194,16 +194,18 @@ class ViewpointWrapper(QObject):
         # PrepareDenseScene
         self._undistortedImagePath = ''
         self._activeNode_PrepareDenseScene = self._reconstruction.activeNodes.get("PrepareDenseScene")
+        self._activeNode_ExportAnimatedCamera = self._reconstruction.activeNodes.get("ExportAnimatedCamera")
 
         # update internally cached variables
         self._updateInitialParams()
         self._updateSfMParams()
-        self._updateDenseSceneParams()
+        self._updateUndistortedImageParams()
 
         # trigger internal members updates when reconstruction members changes
         self._reconstruction.cameraInitChanged.connect(self._updateInitialParams)
         self._reconstruction.sfmReportChanged.connect(self._updateSfMParams)
-        self._activeNode_PrepareDenseScene.nodeChanged.connect(self._updateDenseSceneParams)
+        self._activeNode_PrepareDenseScene.nodeChanged.connect(self._updateUndistortedImageParams)
+        self._activeNode_ExportAnimatedCamera.nodeChanged.connect(self._updateUndistortedImageParams)
 
     def _updateInitialParams(self):
         """ Update internal members depending on CameraInit. """
@@ -235,15 +237,20 @@ class ViewpointWrapper(QObject):
             self._reconstructed = self._R is not None
         self.sfmParamsChanged.emit()
 
-    def _updateDenseSceneParams(self):
-        """ Update internal members depending on PrepareDenseScene. """
+    def _updateUndistortedImageParams(self):
+        """ Update internal members depending on PrepareDenseScene or ExportAnimatedCamera. """
         # undistorted image path
-        if not self._activeNode_PrepareDenseScene.node:
+        if not self._activeNode_PrepareDenseScene.node or not self._activeNode_ExportAnimatedCamera.node:
+        # if not self._activeNode_PrepareDenseScene.node:
             self._undistortedImagePath = ''
+        if self._activeNode_ExportAnimatedCamera.node:
+            basename = "{}_{}".format(self._viewpoint.intrinsicId.value, os.path.basename(self._viewpoint.path.value))
+            filename = "{}.{}".format(os.path.splitext(basename)[0], self._activeNode_ExportAnimatedCamera.node.undistortedImageType.value)
+            self._undistortedImagePath = os.path.join(self._activeNode_ExportAnimatedCamera.node.output.value, "undistort", filename)
         else:
             filename = "{}.{}".format(self._viewpoint.viewId.value, self._activeNode_PrepareDenseScene.node.outputFileType.value)
             self._undistortedImagePath = os.path.join(self._activeNode_PrepareDenseScene.node.output.value, filename)
-        self.denseSceneParamsChanged.emit()
+        self.undistortedImageParamsChanged.emit()
 
     # Get the underlying Viewpoint attribute wrapped by this Viewpoint.
     attribute = Property(QObject, lambda self: self._viewpoint, constant=True)
@@ -350,7 +357,7 @@ class ViewpointWrapper(QObject):
             sensorHeight = self.solvedIntrinsics["sensorHeight"]
             return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
 
-    @Property(type=QUrl, notify=denseSceneParamsChanged)
+    @Property(type=QUrl, notify=undistortedImageParamsChanged)
     def undistortedImageSource(self):
         """ Get path to undistorted image source if available. """
         return QUrl.fromLocalFile(self._undistortedImagePath)

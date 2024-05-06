@@ -126,9 +126,9 @@ then it checks the number of features that validates this model and iterate thro
         desc.IntParam(
             name="maxIteration",
             label="Max Iterations",
-            description="Maximum number of iterations allowed in the ransac step.",
-            value=2048,
-            range=(1, 20000, 1),
+            description="Maximum number of iterations allowed in the Ransac step.",
+            value=50000,
+            range=(1, 100000, 1),
             uid=[0],
             advanced=True,
         ),
@@ -205,7 +205,7 @@ then it checks the number of features that validates this model and iterate thro
         desc.BoolParam(
             name="exportDebugFiles",
             label="Export Debug Files",
-            description="Expor debug files (svg, dot).",
+            description="Export debug files (svg, dot).",
             value=False,
             uid=[],
             advanced=True,

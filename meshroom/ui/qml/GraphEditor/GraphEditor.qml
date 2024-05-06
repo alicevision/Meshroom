@@ -130,6 +130,9 @@ Item {
             }
         } else if (event.key === Qt.Key_D) {
             duplicateNode(event.modifiers === Qt.AltModifier)
+        } else if (event.key === Qt.Key_X && event.modifiers === Qt.ControlModifier) {
+            copyNodes()
+            uigraph.removeNodes(uigraph.selectedNodes)
         } else if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
             copyNodes()
         } else if (event.key === Qt.Key_V && event.modifiers === Qt.ControlModifier) {
@@ -491,6 +494,16 @@ Item {
                     onTriggered: {
                         copyNodes()
                         pasteNodes()
+                    }
+                }
+                MenuItem {
+                    text: "Cut Node(s)"
+                    enabled: true
+                    ToolTip.text: "Copy selection to the clipboard and remove it"
+                    ToolTip.visible: hovered
+                    onTriggered: {
+                        copyNodes()
+                        uigraph.removeNodes(uigraph.selectedNodes)
                     }
                 }
                 MenuItem {

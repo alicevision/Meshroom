@@ -193,7 +193,8 @@ class Attribute(BaseObject):
             convertedValue = self.validateValue(value)
             self._value = convertedValue
 
-        self.node.onAttributeChanged(self)
+        if not self.node.isCompatibilityNode:
+            self.node.onAttributeChanged(self)
         # Request graph update when input parameter value is set
         # and parent node belongs to a graph
         # Output attributes value are set internally during the update process,

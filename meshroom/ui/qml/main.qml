@@ -559,6 +559,38 @@ ApplicationWindow {
     }
 
     Action {
+        id: cutAction
+
+        property string tooltip: {
+            var s = "Copy selected node"
+            s += (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s (" : " (") + getSelectedNodesName()
+            s += ") to the clipboard and remove them from the graph"
+            return s
+        }
+        text: "Cut Node" + (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s " : " ")
+        enabled: _reconstruction ? _reconstruction.selectedNodes.count > 0 : false
+        onTriggered: {
+            graphEditor.copyNodes()
+            graphEditor.uigraph.removeNodes(graphEditor.uigraph.selectedNodes)
+        }
+
+        function getSelectedNodesName()
+        {
+            if (!_reconstruction)
+                return ""
+            var nodesName = ""
+            for (var i = 0; i < _reconstruction.selectedNodes.count; i++)
+            {
+                if (nodesName !== "")
+                    nodesName += ", "
+                var node = _reconstruction.selectedNodes.at(i)
+                nodesName += node.name
+            }
+            return nodesName
+        }
+    }
+
+    Action {
         id: loadTemplateAction
 
         property string tooltip: "Load a template like a regular project file (any \"Publish\" node will be displayed)"
@@ -803,6 +835,11 @@ ApplicationWindow {
                 action: pasteAction
                 ToolTip.visible: hovered
                 ToolTip.text: pasteAction.tooltip
+            }
+            MenuItem {
+                action: cutAction
+                ToolTip.visible: hovered
+                ToolTip.text: cutAction.tooltip
             }
         }
         Menu {

@@ -291,30 +291,14 @@ Panel {
                     }
 
                     function sendRemoveRequest() {
-                        if (!readOnly) {
-                            // look if the viewpoint's intrinsic is used by another viewpoint
-                            var intrinsicId = object.value.get('intrinsicId').value
-                            var intrinsicUsed = false
-                            for (var i = 0; i < m.viewpoints.count; ++i) {
-                                if (m.viewpoints.at(i) != object && m.viewpoints.at(i).value.get("intrinsicId").value === intrinsicId) {
-                                    intrinsicUsed = true
-                                    break
-                                }
-                            }
-                            if (!intrinsicUsed) {
-                                //find the intrinsic and remove it
-                                for (var i = 0; i < m.intrinsics.count; ++i) {
-                                    if (m.intrinsics.at(i).value.get("intrinsicId").value === intrinsicId) {
-                                        _reconstruction.removeAttribute(m.intrinsics.at(i))
-                                        break
-                                    }
-                                }
-                            }
-                            removeImageRequest(object)
-                            // If the last image has been removed, make sure the viewpoints and intrinsics are reset
-                            if (m.viewpoints.count === 0)
-                                allViewpointsCleared()
-                        }
+                        if (readOnly)
+                            return
+
+                        removeImageRequest(object)
+                        
+                        // If the last image has been removed, make sure the viewpoints and intrinsics are reset
+                        if (m.viewpoints.count === 0)
+                            allViewpointsCleared()
                     }
 
                     function removeAllImages() {

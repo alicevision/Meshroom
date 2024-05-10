@@ -78,7 +78,7 @@ Item {
                 cameraInit: reconstruction ? reconstruction.cameraInit : null
                 tempCameraInit: reconstruction ? reconstruction.tempCameraInit : null
                 cameraInitIndex: reconstruction ? reconstruction.cameraInitIndex : -1
-                onRemoveImageRequest: reconstruction.removeAttribute(attribute)
+                onRemoveImageRequest: reconstruction.removeImage(attribute)
                 onAllViewpointsCleared: { reconstruction.removeAllImages(); reconstruction.selectedViewId = "-1" }
                 onFilesDropped: {
                     if (drop["meshroomScenes"].length == 1) {

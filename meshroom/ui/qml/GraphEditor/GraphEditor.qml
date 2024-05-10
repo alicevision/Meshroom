@@ -480,6 +480,16 @@ Item {
                 }
                 MenuSeparator {}
                 MenuItem {
+                    text: "Cut Node(s)"
+                    enabled: true
+                    ToolTip.text: "Copy selection to the clipboard and remove it"
+                    ToolTip.visible: hovered
+                    onTriggered: {
+                        copyNodes()
+                        uigraph.removeNodes(uigraph.selectedNodes)
+                    }
+                }
+                MenuItem {
                     text: "Copy Node(s)"
                     enabled: true
                     ToolTip.text: "Copy selection to the clipboard"
@@ -494,16 +504,6 @@ Item {
                     onTriggered: {
                         copyNodes()
                         pasteNodes()
-                    }
-                }
-                MenuItem {
-                    text: "Cut Node(s)"
-                    enabled: true
-                    ToolTip.text: "Copy selection to the clipboard and remove it"
-                    ToolTip.visible: hovered
-                    onTriggered: {
-                        copyNodes()
-                        uigraph.removeNodes(uigraph.selectedNodes)
                     }
                 }
                 MenuItem {

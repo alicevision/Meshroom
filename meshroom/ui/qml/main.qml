@@ -521,43 +521,21 @@ ApplicationWindow {
         enabled: _reconstruction ? _reconstruction.undoStack.canRedo && !_reconstruction.undoStack.lockedRedo : false
         onTriggered: _reconstruction.undoStack.redo()
     }
-    Action {
-        id: copyAction
 
-        property string tooltip: {
-            var s = "Copy selected node"
-            s += (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s (" : " (") + getSelectedNodesName()
-            s += ") to the clipboard"
-            return s
-        }
-        text: "Copy Node" + (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s " : " ")
-        enabled: _reconstruction ? _reconstruction.selectedNodes.count > 0 : false
-        onTriggered: graphEditor.copyNodes()
-
-        function getSelectedNodesName()
+    function getSelectedNodesName()
+    {
+        if (!_reconstruction)
+            return ""
+        var nodesName = ""
+        for (var i = 0; i < _reconstruction.selectedNodes.count; i++)
         {
-            if (!_reconstruction)
-                return ""
-            var nodesName = ""
-            for (var i = 0; i < _reconstruction.selectedNodes.count; i++)
-            {
-                if (nodesName !== "")
-                    nodesName += ", "
-                var node = _reconstruction.selectedNodes.at(i)
-                nodesName += node.name
-            }
-            return nodesName
+            if (nodesName !== "")
+                nodesName += ", "
+            var node = _reconstruction.selectedNodes.at(i)
+            nodesName += node.name
         }
+        return nodesName
     }
-
-    Action {
-        id: pasteAction
-
-        property string tooltip: "Paste the clipboard content to the project if it contains valid nodes"
-        text: "Paste Node(s)"
-        onTriggered: graphEditor.pasteNodes()
-    }
-
     Action {
         id: cutAction
 
@@ -573,22 +551,30 @@ ApplicationWindow {
             graphEditor.copyNodes()
             graphEditor.uigraph.removeNodes(graphEditor.uigraph.selectedNodes)
         }
-
-        function getSelectedNodesName()
-        {
-            if (!_reconstruction)
-                return ""
-            var nodesName = ""
-            for (var i = 0; i < _reconstruction.selectedNodes.count; i++)
-            {
-                if (nodesName !== "")
-                    nodesName += ", "
-                var node = _reconstruction.selectedNodes.at(i)
-                nodesName += node.name
-            }
-            return nodesName
-        }
     }
+
+    Action {
+        id: copyAction
+
+        property string tooltip: {
+            var s = "Copy selected node"
+            s += (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s (" : " (") + getSelectedNodesName()
+            s += ") to the clipboard"
+            return s
+        }
+        text: "Copy Node" + (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s " : " ")
+        enabled: _reconstruction ? _reconstruction.selectedNodes.count > 0 : false
+        onTriggered: graphEditor.copyNodes()
+    }
+
+    Action {
+        id: pasteAction
+
+        property string tooltip: "Paste the clipboard content to the project if it contains valid nodes"
+        text: "Paste Node(s)"
+        onTriggered: graphEditor.pasteNodes()
+    }
+
 
     Action {
         id: loadTemplateAction
@@ -827,6 +813,11 @@ ApplicationWindow {
                 ToolTip.text: redoAction.tooltip
             }
             MenuItem {
+                action: cutAction
+                ToolTip.visible: hovered
+                ToolTip.text: cutAction.tooltip
+            }
+            MenuItem {
                 action: copyAction
                 ToolTip.visible: hovered
                 ToolTip.text: copyAction.tooltip
@@ -835,11 +826,6 @@ ApplicationWindow {
                 action: pasteAction
                 ToolTip.visible: hovered
                 ToolTip.text: pasteAction.tooltip
-            }
-            MenuItem {
-                action: cutAction
-                ToolTip.visible: hovered
-                ToolTip.text: cutAction.tooltip
             }
         }
         Menu {

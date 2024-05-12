@@ -521,6 +521,38 @@ ApplicationWindow {
         enabled: _reconstruction ? _reconstruction.undoStack.canRedo && !_reconstruction.undoStack.lockedRedo : false
         onTriggered: _reconstruction.undoStack.redo()
     }
+
+    function getSelectedNodesName()
+    {
+        if (!_reconstruction)
+            return ""
+        var nodesName = ""
+        for (var i = 0; i < _reconstruction.selectedNodes.count; i++)
+        {
+            if (nodesName !== "")
+                nodesName += ", "
+            var node = _reconstruction.selectedNodes.at(i)
+            nodesName += node.name
+        }
+        return nodesName
+    }
+    Action {
+        id: cutAction
+
+        property string tooltip: {
+            var s = "Copy selected node"
+            s += (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s (" : " (") + getSelectedNodesName()
+            s += ") to the clipboard and remove them from the graph"
+            return s
+        }
+        text: "Cut Node" + (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s " : " ")
+        enabled: _reconstruction ? _reconstruction.selectedNodes.count > 0 : false
+        onTriggered: {
+            graphEditor.copyNodes()
+            graphEditor.uigraph.removeNodes(graphEditor.uigraph.selectedNodes)
+        }
+    }
+
     Action {
         id: copyAction
 
@@ -533,21 +565,6 @@ ApplicationWindow {
         text: "Copy Node" + (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s " : " ")
         enabled: _reconstruction ? _reconstruction.selectedNodes.count > 0 : false
         onTriggered: graphEditor.copyNodes()
-
-        function getSelectedNodesName()
-        {
-            if (!_reconstruction)
-                return ""
-            var nodesName = ""
-            for (var i = 0; i < _reconstruction.selectedNodes.count; i++)
-            {
-                if (nodesName !== "")
-                    nodesName += ", "
-                var node = _reconstruction.selectedNodes.at(i)
-                nodesName += node.name
-            }
-            return nodesName
-        }
     }
 
     Action {
@@ -557,6 +574,7 @@ ApplicationWindow {
         text: "Paste Node(s)"
         onTriggered: graphEditor.pasteNodes()
     }
+
 
     Action {
         id: loadTemplateAction
@@ -793,6 +811,11 @@ ApplicationWindow {
                 action: redoAction
                 ToolTip.visible: hovered
                 ToolTip.text: redoAction.tooltip
+            }
+            MenuItem {
+                action: cutAction
+                ToolTip.visible: hovered
+                ToolTip.text: cutAction.tooltip
             }
             MenuItem {
                 action: copyAction

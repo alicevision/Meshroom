@@ -617,6 +617,7 @@ class Graph(BaseObject):
                 attributes = {}
                 attributes.update(data[key].get("inputs", {}))
                 attributes.update(data[key].get("outputs", {}))
+                attributes.update(data[key].get("internalInputs", {}))
 
                 node = Node(nodeType, position=position[positionCnt], **attributes)
                 self._addNode(node, key)

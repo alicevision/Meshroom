@@ -1258,6 +1258,7 @@ class Node(BaseNode):
                 self.attributesPerUid[uidIndex].add(attr)
 
         self.setAttributeValues(kwargs)
+        self.setInternalAttributeValues(kwargs)
         self.optionalCallOnDescriptor("onNodeCreated")
 
     def optionalCallOnDescriptor(self, methodName, *args, **kwargs):
@@ -1270,6 +1271,9 @@ class Node(BaseNode):
     def setAttributeValues(self, values):
         # initialize attribute values
         for k, v in values.items():
+            if not self.hasAttribute(k):
+                # skip missing attributes
+                continue
             attr = self.attribute(k)
             if attr.isInput:
                 attr.value = v
@@ -1286,6 +1290,15 @@ class Node(BaseNode):
                     attr.upgradeValue(v)
                 except ValueError:
                     pass
+
+    def setInternalAttributeValues(self, values):
+        # initialize internal attribute values
+        for k, v in values.items():
+            if not self.hasInternalAttribute(k):
+                # skip missing attributes
+                continue
+            attr = self.internalAttribute(k)
+            attr.value = v
 
     def upgradeInternalAttributeValues(self, values):
         # initialize internal attibute values

@@ -130,7 +130,9 @@ FloatingPane {
             ToolTip.text: "Previous Frame"
 
             onClicked: {
-                m.frame -= 1;
+                if (m.frame > 0) {
+                    m.frame -= 1;
+                }
             }
         }
 
@@ -161,7 +163,9 @@ FloatingPane {
             ToolTip.text: "Next Frame"
 
             onClicked: {
-                m.frame += 1;
+                if (m.frame < sortedViewIds.length - 1) {
+                    m.frame += 1;
+                }
             }
         }
 
@@ -197,7 +201,9 @@ FloatingPane {
                     ToolTip.text: "Previous Frame"
 
                     onClicked: {
-                        m.frame -= 1;
+                        if (m.frame > 0) {
+                            m.frame -= 1;
+                        }
                     }
                 }
 
@@ -213,7 +219,9 @@ FloatingPane {
                     Layout.preferredWidth: frameMetrics.width
 
                     onEditingFinished: {
-                        m.frame = parseInt(text);
+                        // We first assign the frame to the entered text even if it is an invalid frame number. We do it for extreme cases, for example without doing it, if we are at 0, and put a negative number, m.frame would be still 0 and nothing happens but we will still see the wrong number
+                        m.frame = parseInt(text) 
+                        m.frame = Math.min((sortedViewIds.length - 1), Math.max(0, parseInt(text)));
                         focus = false;
                     }
                 }
@@ -230,7 +238,9 @@ FloatingPane {
                     ToolTip.text: "Next Frame"
 
                     onClicked: {
-                        m.frame += 1;
+                        if (m.frame < sortedViewIds.length - 1) {
+                            m.frame += 1;
+                        }
                     }
                 }
             }

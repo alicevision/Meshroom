@@ -14,7 +14,6 @@ import types
 import uuid
 from collections import defaultdict, namedtuple
 from enum import Enum
-import inspect
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
@@ -1686,7 +1685,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
             # do not perform that check for internal attributes because there is no point in
             # raising compatibility issues if their number differs: in that case, it is only useful
             # if some internal attributes do not exist or are invalid
-            if not template and (sorted([attr.name for attr in nodeDesc.inputs]) != sorted(inputs.keys()) or \
+            if not template and (sorted([attr.name for attr in nodeDesc.inputs if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or \
                     sorted([attr.name for attr in nodeDesc.outputs]) != sorted(outputs.keys())):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
 
@@ -1705,13 +1704,6 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
 
             # verify that all inputs match their descriptions
             for attrName, value in inputs.items():
-                paramName = attrName[:1].upper() + attrName[1:]
-                functionName = f'on{paramName}Clicked'
-                if hasattr(nodeDesc, functionName):
-                    m = inspect.getsource(getattr(nodeDesc, functionName))
-                    if value != m:
-                        compatibilityIssue = CompatibilityIssue.DescriptionConflict
-                        break
                 if not CompatibilityNode.attributeDescFromName(nodeDesc.inputs, attrName, value):
                     compatibilityIssue = CompatibilityIssue.DescriptionConflict
                     break

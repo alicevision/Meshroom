@@ -6,7 +6,6 @@ import re
 import weakref
 import types
 import logging
-import inspect
 
 from collections.abc import Iterable, Sequence
 from string import Template
@@ -428,14 +427,6 @@ def raiseIfLink(func):
 class PushButtonParam(Attribute):
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         super(PushButtonParam, self).__init__(node, attributeDesc, isOutput, root, parent)
-    
-    def getExportValue(self):
-        """ Return the function defined of the PushButtonParam """
-        paramName = self.name[:1].upper() + self.name[1:]
-        methodName = f'on{paramName}Clicked'
-        if hasattr(self.node.nodeDesc, methodName):
-            return inspect.getsource(getattr(self.node.nodeDesc, methodName))
-        return f'def {methodName}:\n pass'
 
     @Slot()
     def clicked(self):

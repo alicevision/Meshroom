@@ -32,6 +32,7 @@ FocusScope {
     readonly property alias sync3DSelected: sequencePlayer.sync3DSelected
     property var sequence: []
     property alias currentFrame: sequencePlayer.frameId
+    property alias frameRange: sequencePlayer.frameRange
 
     QtObject {
         id: m
@@ -228,6 +229,7 @@ FocusScope {
     function getImageFile() {
         // Entry point for getting the image file URL
 
+        let attr = getAttributeByName(displayedNode, outputAttribute.name)
         if (useExternal) {
             return sourceExternal
         }
@@ -238,8 +240,8 @@ FocusScope {
             return Filepath.stringToUrl(path)
         }
 
-        if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput) {
-            var path = sequence[currentFrame]
+        if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput && (attr.desc.semantic === "imageList" || attr.desc.semantic === "sequence")) {
+            var path = sequence[currentFrame-frameRange.min]
             return Filepath.stringToUrl(path)
         }
 
@@ -259,12 +261,19 @@ FocusScope {
         // ordered by path
 
         let objs = []
+        let attr = getAttributeByName(displayedNode, outputAttribute.name)
 
-        if (displayedNode && displayedNode.hasSequenceOutput) {
-            currentFrame = 0
+        if (displayedNode && displayedNode.hasSequenceOutput && (attr.desc.semantic === "imageList" || attr.desc.semantic === "sequence")) {
             objs = Filepath.resolve(path_template, null)
             //order by path
             objs.sort()
+            // reset current frame to 0 if it is imageList but not sequence
+            if (attr.desc.semantic === "imageList")
+                frameRange.min = 0
+                frameRange.max = objs.length-1
+                currentFrame = 0
+            if (attr.desc.semantic === "sequence")
+                currentFrame = frameRange.min
             return objs
         } else {
             for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
@@ -311,7 +320,7 @@ FocusScope {
             // store attr name for output attributes that represent images
             for (var i = 0; i < displayedNode.attributes.count; i++) {
                 var attr = displayedNode.attributes.at(i)
-                if (attr.isOutput && (attr.desc.semantic === "image" || attr.desc.semantic === "sequence") && attr.enabled) {
+                if (attr.isOutput && (attr.desc.semantic === "image" || attr.desc.semantic === "sequence" || attr.desc.semantic === "imageList") && attr.enabled) {
                     names.push(attr.name)
                 }
             }
@@ -481,7 +490,10 @@ FocusScope {
                                 'cropFisheye': false,
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
-                                'useSequence': Qt.binding(function() { return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) }),
+                                'useSequence': Qt.binding(function() { 
+                                    let attr = getAttributeByName(root.displayedNode, outputAttribute.name)
+                                    return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput)) && (attr.desc.semantic === "imageList" || attr.desc.semantic === "sequence")) 
+                                }),
                                 'fetchingSequence': Qt.binding(function() { return sequencePlayer.loading }),
                                 'memoryLimit': Qt.binding(function() { return sequencePlayer.settings_SequencePlayer.maxCacheMemory }),
                                 })

@@ -144,4 +144,4 @@ class FilepathHelper(QObject):
         """
         if extension is None:
             extension = ".*"
-        return [self.removeExtension(FilepathHelper, self.basename(FilepathHelper, f)) for f in glob.glob(os.path.join(folderPath, f"*{extension}")) if os.path.isfile(f)]
+        return [self.basename(FilepathHelper, f) for f in glob.glob(os.path.join(folderPath, f"*{extension}")) if os.path.isfile(f)]

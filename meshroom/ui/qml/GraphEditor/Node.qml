@@ -149,7 +149,7 @@ Item {
         Rectangle {
             anchors.fill: nodeContent
             anchors.margins: -border.width
-            visible: root.mainSelected || root.hovered
+            visible: root.mainSelected || root.hovered || root.selected
             border.width: 2.5
             border.color: root.mainSelected ? activePalette.highlight : Qt.darker(activePalette.highlight, 1.5)
             opacity: 0.9
@@ -183,7 +183,7 @@ Item {
                     id: header
                     width: parent.width
                     height: headerLayout.height
-                    color: root.mainSelected ? activePalette.highlight : root.selected ? Qt.darker(activePalette.highlight, 1.1): root.baseColor
+                    color: root.baseColor
                     radius: background.radius
 
                     // Fill header's bottom radius

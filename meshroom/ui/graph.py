@@ -831,8 +831,7 @@ class UIGraph(QObject):
 
             if not intrinsicUsed:
                 #find the intrinsic and remove it
-                for x in range(len(self.cameraInit.attribute("intrinsics"))):
-                    intrinsic = self.cameraInit.attribute("intrinsics").at(x)
+                for intrinsic in self.cameraInit.attribute("intrinsics"):
                     if intrinsic.getExportValue()["intrinsicId"] == intrinsicId:
                         self.removeAttribute(intrinsic)
                         break

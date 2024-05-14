@@ -1289,7 +1289,7 @@ class BaseNode(BaseObject):
         Return True if at least one attribute has the 'sequence' semantic (and can thus be loaded in the 2D Viewer), False otherwise.
         """
         for attr in self._attributes:
-            if attr.enabled and attr.isOutput and attr.desc.semantic == "sequence":
+            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or attr.desc.semantic == "imageList"):
                 return True
         return False
 

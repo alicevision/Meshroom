@@ -149,7 +149,7 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             label="Frames",
             description="Frames rendered in Blender.",
             semantic="image",
-            value=desc.Node.internalFolder + "<FILENAME>_preview.jpg",
+            value=desc.Node.internalFolder + "<FILESTEM>_preview.jpg",
             uid=[],
             group="",
         ),

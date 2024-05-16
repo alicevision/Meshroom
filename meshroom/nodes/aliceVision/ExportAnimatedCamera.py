@@ -109,7 +109,8 @@ Based on the input image filenames, it will recognize the input video sequence t
             name="outputUndistorted",
             label="Undistorted Images",
             description="Output undistorted images.",
-            value=desc.Node.internalFolder + "undistort",
+            semantic="image",
+            value=desc.Node.internalFolder + "undistort/" + "<INTRINSIC_ID>_<FILESTEM>.{undistortedImageTypeValue}",
             group="",  # exclude from command line
             uid=[],
         ),

@@ -892,6 +892,19 @@ class BaseNode(BaseObject):
             if callable(m):
                 m(self)
 
+    def onAttributeClicked(self, attr):
+        """ When an attribute is clicked, a specific function can be defined in the descriptor and be called.
+
+        Args:
+            attr (Attribute): attribute that has been clicked
+        """
+        paramName = attr.name[:1].upper() + attr.name[1:]
+        methodName = f'on{paramName}Clicked'
+        if hasattr(self.nodeDesc, methodName):
+            m = getattr(self.nodeDesc, methodName)
+            if callable(m):
+                m(self)
+
     def updateInternals(self, cacheDir=None):
         """ Update Node's internal parameters and output attributes.
 
@@ -1685,7 +1698,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
             # do not perform that check for internal attributes because there is no point in
             # raising compatibility issues if their number differs: in that case, it is only useful
             # if some internal attributes do not exist or are invalid
-            if not template and (sorted([attr.name for attr in nodeDesc.inputs]) != sorted(inputs.keys()) or \
+            if not template and (sorted([attr.name for attr in nodeDesc.inputs if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or \
                     sorted([attr.name for attr in nodeDesc.outputs]) != sorted(outputs.keys())):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
 

@@ -31,6 +31,8 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
         cls = ListAttribute
     elif isinstance(description, desc.ChoiceParam):
         cls = ChoiceParam
+    elif isinstance(description, desc.PushButtonParam):
+        cls = PushButtonParam
     else:
         cls = Attribute
     attr = cls(node, description, isOutput, root, parent)
@@ -65,6 +67,7 @@ class Attribute(BaseObject):
         self._label = attributeDesc.label
         self._enabled = True
         self._validValue = True
+        self._description = attributeDesc.description
 
         # invalidation value for output attributes
         self._invalidationValue = ""
@@ -209,6 +212,21 @@ class Attribute(BaseObject):
 
         self.valueChanged.emit()
         self.validValueChanged.emit()
+
+    def _set_label(self, label):
+        if self._label == label:
+            return
+        self._label = label
+        self.labelChanged.emit()
+
+    def _get_description(self):
+        return self._description
+
+    def _set_description(self, desc):
+        if self._description == desc:
+            return
+        self._description = desc
+        self.descriptionChanged.emit()
 
     def upgradeValue(self, exportedValue):
         self._set_value(exportedValue)
@@ -362,14 +380,22 @@ class Attribute(BaseObject):
     fullName = Property(str, getFullName, constant=True)
     fullNameToNode = Property(str, getFullNameToNode, constant=True)
     fullNameToGraph = Property(str, getFullNameToGraph, constant=True)
-    label = Property(str, getLabel, constant=True)
+    labelChanged = Signal()
+    label = Property(str, getLabel, _set_label, notify=labelChanged)
     fullLabel = Property(str, getFullLabel, constant=True)
     fullLabelToNode = Property(str, getFullLabelToNode, constant=True)
     fullLabelToGraph = Property(str, getFullLabelToGraph, constant=True)
     type = Property(str, getType, constant=True)
     baseType = Property(str, getType, constant=True)
     isReadOnly = Property(bool, _isReadOnly, constant=True)
+
+    # description of the attribute
+    descriptionChanged = Signal()
+    description = Property(str, _get_description, _set_description, notify=descriptionChanged)
+
+    # definition of the attribute
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
+    
     valueChanged = Signal()
     value = Property(Variant, _get_value, _set_value, notify=valueChanged)
     valueStr = Property(Variant, getValueStr, notify=valueChanged)
@@ -399,6 +425,13 @@ def raiseIfLink(func):
         return func(attr, *args, **kwargs)
     return wrapper
 
+class PushButtonParam(Attribute):
+    def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
+        super(PushButtonParam, self).__init__(node, attributeDesc, isOutput, root, parent)
+
+    @Slot()
+    def clicked(self):
+        self.node.onAttributeClicked(self)
 
 class ChoiceParam(Attribute):
 

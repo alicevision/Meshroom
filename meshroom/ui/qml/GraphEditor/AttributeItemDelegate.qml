@@ -78,7 +78,7 @@ RowLayout {
                         var tooltip = ""
                         if (!object.validValue && object.desc.errorMessage !== "")
                             tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
-                        tooltip += "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.desc.description)
+                        tooltip += "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.description)
                         return tooltip
                     }
                     visible: parameterMA.containsMouse
@@ -179,6 +179,8 @@ RowLayout {
 
         sourceComponent: {
             switch (attribute.type) {
+                case "PushButtonParam":
+                    return pushButton_component
                 case "ChoiceParam":
                     return attribute.desc.exclusive ? comboBox_component : multiChoice_component
                 case "IntParam": return slider_component
@@ -200,6 +202,17 @@ RowLayout {
                     return color_component
                 default:
                     return textField_component
+            }
+        }
+
+        Component {
+            id: pushButton_component
+            Button {
+                text: attribute.label
+                enabled: root.editable
+                onClicked: {
+                    attribute.clicked()
+                }
             }
         }
 

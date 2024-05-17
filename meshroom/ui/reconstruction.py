@@ -665,6 +665,8 @@ class Reconstruction(UIGraph):
         nodes = self._graph.dfsOnDiscover(startNodes=[startNode], filterTypes=nodeTypes, reverse=True)[0]
         if not nodes:
             return None
+        # order the nodes according to their depth in the graph, then according to their name
+        nodes.sort(key=lambda n: (n.depth, n.name))
         node = nodes[-1]
         if preferredStatus:
             node = next((n for n in reversed(nodes) if n.getGlobalStatus() == preferredStatus), node)

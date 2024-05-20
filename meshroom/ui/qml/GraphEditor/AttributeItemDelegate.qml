@@ -302,6 +302,7 @@ RowLayout {
                     id: color_checkbox
                     Layout.alignment: Qt.AlignLeft
                     checked: node && node.color === "" ? false : true
+                    checkable: root.editable
                     text: "Custom Color"
                     onClicked: {
                         if (checked) {
@@ -315,9 +316,9 @@ RowLayout {
                     id: colorText
                     Layout.alignment: Qt.AlignLeft
                     implicitWidth: 100
-                    enabled: color_checkbox.checked
-                    visible: enabled
-                    text: enabled ? attribute.value : ""
+                    enabled: color_checkbox.checked && root.editable
+                    visible: color_checkbox.checked
+                    text: color_checkbox.checked ? attribute.value : ""
                     selectByMouse: true
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: setTextFieldAttribute(text)
@@ -335,6 +336,7 @@ RowLayout {
                     color: color_checkbox.checked ? attribute.value : ""
 
                     MouseArea {
+                        enabled: root.editable
                         anchors.fill: parent
                         onClicked: colorDialog.open()
                     }

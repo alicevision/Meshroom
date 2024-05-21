@@ -29,7 +29,7 @@ FloatingPane {
     property bool loading: fetchButton.checked || m.playing
     property alias settings_SequencePlayer: settings_SequencePlayer
     property alias frameId: m.frame
-    property var frameRange: {"min" : 0, "max" : sortedViewIds.length - 1}
+    property var frameRange: {"min" : 0, "max" : 0}
 
     Settings {
         id: settings_SequencePlayer

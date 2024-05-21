@@ -5,6 +5,7 @@ from PySide2.QtCore import QObject, Slot
 
 import os
 import glob
+import re
 
 
 class FilepathHelper(QObject):
@@ -144,4 +145,26 @@ class FilepathHelper(QObject):
         """
         if extension is None:
             extension = ".*"
-        return [self.basename(FilepathHelper, f) for f in glob.glob(os.path.join(folderPath, f"*{extension}")) if os.path.isfile(f)]
+        return [self.basename(f) for f in glob.glob(os.path.join(folderPath, f"*{extension}")) if os.path.isfile(f)]
+    
+    @Slot(str, result="QVariantList")
+    def resolveSequence(self, path):
+        """
+        Get id of each file in the sequence.
+        """
+        replacements = self.getFilenamesFromFolder(self.dirname(path), self.extension(path))
+
+        ids = []
+        for i in replacements:
+            # convert basename to regex
+            splitBefore = self.basename(path).split("(")
+            splitAfter = splitBefore[1].split(")")
+            id = re.search("["+splitBefore[0]+"]("+splitAfter[0]+")["+splitAfter[1]+"]", i)
+            if id:
+                # put id in replacements as key of replacements[i]
+                ids.append(id[1])
+
+        ids.sort()
+
+        resolved = [path.replace(self.basename(path), replacement) for replacement in replacements]
+        return ids, resolved

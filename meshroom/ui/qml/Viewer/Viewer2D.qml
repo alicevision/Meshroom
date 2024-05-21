@@ -229,7 +229,7 @@ FocusScope {
     function getImageFile() {
         // Entry point for getting the image file URL
 
-        let attr = getAttributeByName(displayedNode, outputAttribute.name)
+        let attr = displayedNode ? getAttributeByName(displayedNode, outputAttribute.name) : undefined
         if (useExternal) {
             return sourceExternal
         }
@@ -261,20 +261,28 @@ FocusScope {
         // ordered by path
 
         let objs = []
-        let attr = getAttributeByName(displayedNode, outputAttribute.name)
+        let attr = displayedNode ? getAttributeByName(displayedNode, outputAttribute.name) : undefined
 
         if (displayedNode && displayedNode.hasSequenceOutput && (attr.desc.semantic === "imageList" || attr.desc.semantic === "sequence")) {
-            objs = Filepath.resolve(path_template, null)
+            let sequence = Filepath.resolveSequence(path_template)
+            let ids = sequence[0]
+            let resolved = sequence[1]
+
             //order by path
-            objs.sort()
+            resolved.sort()
             // reset current frame to 0 if it is imageList but not sequence
-            if (attr.desc.semantic === "imageList")
+            if (attr.desc.semantic === "imageList") {
                 frameRange.min = 0
-                frameRange.max = objs.length-1
+                frameRange.max = resolved.length-1
                 currentFrame = 0
-            if (attr.desc.semantic === "sequence")
+            }
+
+            if (attr.desc.semantic === "sequence") {
+                frameRange.min = ids[0]
+                frameRange.max = ids[ids.length-1]
                 currentFrame = frameRange.min
-            return objs
+            }
+            return resolved
         } else {
             for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
                 objs.push(_reconstruction.viewpoints.at(i))
@@ -284,6 +292,10 @@ FocusScope {
             for (let i = 0; i < objs.length; i++) {
                 seq.push(Filepath.resolve(path_template, objs[i]))
             }
+
+            frameRange.min = 0
+            frameRange.max = seq.length-1
+            currentFrame = 0
 
             return seq
         }
@@ -491,7 +503,7 @@ FocusScope {
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
                                 'useSequence': Qt.binding(function() { 
-                                    let attr = getAttributeByName(root.displayedNode, outputAttribute.name)
+                                    let attr = root.displayedNode ? getAttributeByName(root.displayedNode, outputAttribute.name) : undefined
                                     return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput)) && (attr.desc.semantic === "imageList" || attr.desc.semantic === "sequence")) 
                                 }),
                                 'fetchingSequence': Qt.binding(function() { return sequencePlayer.loading }),

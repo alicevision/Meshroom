@@ -150,8 +150,20 @@ Item {
             anchors.fill: nodeContent
             anchors.margins: -border.width
             visible: root.mainSelected || root.hovered || root.selected
-            border.width: 2.5
-            border.color: root.mainSelected ? activePalette.highlight : Qt.darker(activePalette.highlight, 1.5)
+            border.width: {
+                if(root.mainSelected)
+                    return 3
+                if(root.selected)
+                    return 2.5
+                return 2
+            }
+            border.color: {
+                if(root.mainSelected)
+                    return activePalette.highlight
+                if(root.selected)
+                    return Qt.darker(activePalette.highlight, 1.2)
+                return Qt.lighter(activePalette.base, 3)
+            }
             opacity: 0.9
             radius: background.radius + border.width
             color: "transparent"

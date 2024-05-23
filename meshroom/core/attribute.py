@@ -479,6 +479,9 @@ class ListAttribute(Attribute):
     def __len__(self):
         return len(self._value)
 
+    def __iter__(self):
+        return iter(self._value)
+
     def getBaseType(self):
         return self.attributeDesc.elementDesc.__class__.__name__
 

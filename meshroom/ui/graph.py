@@ -816,6 +816,29 @@ class UIGraph(QObject):
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
+    @Slot(Attribute)
+    def removeImage(self, image):
+        with self.groupedGraphModification("Remove Image"):
+            # look if the viewpoint's intrinsic is used by another viewpoint
+            # if not, remove it
+            intrinsicId = image.intrinsicId.value
+
+            intrinsicUsed = False
+            for intrinsic in self.cameraInit.attribute("viewpoints").getExportValue():
+                if image.getExportValue() != intrinsic and intrinsic['intrinsicId'] == intrinsicId:
+                    intrinsicUsed = True
+                    break
+
+            if not intrinsicUsed:
+                #find the intrinsic and remove it
+                for intrinsic in self.cameraInit.attribute("intrinsics"):
+                    if intrinsic.getExportValue()["intrinsicId"] == intrinsicId:
+                        self.removeAttribute(intrinsic)
+                        break
+
+            # After every check we finally remove the attribute
+            self.removeAttribute(image)
+
     @Slot()
     def removeAllImages(self):
         with self.groupedGraphModification("Remove All Images"):

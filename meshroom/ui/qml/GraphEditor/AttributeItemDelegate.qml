@@ -211,9 +211,9 @@ RowLayout {
                 text: attribute.value
                 selectByMouse: true
                 onEditingFinished: setTextFieldAttribute(text)
+                persistentSelection: true
                 onAccepted: {
                     setTextFieldAttribute(text)
-                    root.forceActiveFocus()
                 }
                 Component.onDestruction: {
                     if (activeFocus)
@@ -232,15 +232,11 @@ RowLayout {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    acceptedButtons: Qt.AllButtons
-                    onClicked: {
-                        if (mouse.button == Qt.RightButton) {
-                            var menu = menuCopy.createObject(parameterLabel)
-                            menu.parent = parameterLabel
-                            menu.popup()
-                        } else {
-                            textField.forceActiveFocus()
-                        }
+                    acceptedButtons: Qt.RightButton
+                    onClicked: {     
+                        var menu = menuCopy.createObject(parameterLabel)
+                        menu.parent = parameterLabel
+                        menu.popup()
                     }
 
                     property Component menuCopy : Menu {
@@ -248,8 +244,10 @@ RowLayout {
                             text: "Copy"
                             enabled: attribute.value != ""
                             onTriggered: {
-                                Clipboard.clear()
-                                Clipboard.setText(attribute.value)
+                                // if no selection, select all
+                                if (textField.selectionStart === textField.selectionEnd)
+                                    textField.selectAll()
+                                textField.copy()
                             }
                         }
                         MenuItem {

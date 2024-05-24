@@ -5,7 +5,7 @@ from PySide2.QtCore import QObject, Slot
 
 import os
 import glob
-import re
+import pyseq
 
 
 class FilepathHelper(QObject):
@@ -146,25 +146,24 @@ class FilepathHelper(QObject):
         if extension is None:
             extension = ".*"
         return [self.basename(f) for f in glob.glob(os.path.join(folderPath, f"*{extension}")) if os.path.isfile(f)]
-    
+
     @Slot(str, result="QVariantList")
     def resolveSequence(self, path):
         """
         Get id of each file in the sequence.
         """
-        replacements = self.getFilenamesFromFolder(self.dirname(path), self.extension(path))
+        # use of pyseq to get the sequences
+        seq = pyseq.get_sequences(self.asStr(path))
 
-        ids = []
-        for i in replacements:
-            # convert basename to regex
-            splitBefore = self.basename(path).split("(")
-            splitAfter = splitBefore[1].split(")")
-            id = re.search("["+splitBefore[0]+"]("+splitAfter[0]+")["+splitAfter[1]+"]", i)
-            if id:
-                # put id in replacements as key of replacements[i]
-                ids.append(id[1])
+        ids = [[s.start(), s.end()] for s in seq]
 
-        ids.sort()
+        folder = self.dirname(path)
 
-        resolved = [path.replace(self.basename(path), replacement) for replacement in replacements]
+        missingFiles = [s.missing() for s in seq]
+        
+        # create the resolved path for each sequence and if a frame is missing add a empty string
+        resolved = [[os.path.join(folder, s.head() + str(s.format("%p") % frame) + s.tail()) if frame not in missingFiles[seq.index(s)]
+                     else "" for frame in range(ids[seq.index(s)][0], ids[seq.index(s)][1] + 1)] if s.frames()
+                     else os.path.join(folder, s.head())
+                    for s in seq]
         return ids, resolved

@@ -268,20 +268,26 @@ FocusScope {
             let ids = sequence[0]
             let resolved = sequence[1]
 
-            //order by path
-            resolved.sort()
             // reset current frame to 0 if it is imageList but not sequence
             if (attr.desc.semantic === "imageList") {
+                // concat in one array all sequences in resolved
+                resolved = [].concat.apply([], resolved)
                 frameRange.min = 0
                 frameRange.max = resolved.length-1
                 currentFrame = 0
             }
 
             if (attr.desc.semantic === "sequence") {
+                // if there is several sequences, take the first one
+                resolved = resolved[0]
+                ids = ids[0]
                 frameRange.min = ids[0]
                 frameRange.max = ids[ids.length-1]
                 currentFrame = frameRange.min
             }
+            //order by path
+            resolved.sort()
+
             return resolved
         } else {
             for (let i = 0; i < _reconstruction.viewpoints.count; i++) {

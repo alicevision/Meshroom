@@ -215,6 +215,13 @@ RowLayout {
                 property bool memoryActiveFocus: false
                 onAccepted: {
                     setTextFieldAttribute(text)
+                    parameterLabel.forceActiveFocus()
+                }
+                Keys.onPressed: (event)=> {
+                    if ((event.key == Qt.Key_Escape)) {
+                        event.accepted = true
+                        parameterLabel.forceActiveFocus()
+                    }
                 }
                 Component.onDestruction: {
                     if (activeFocus)

@@ -211,7 +211,8 @@ RowLayout {
                 text: attribute.value
                 selectByMouse: true
                 onEditingFinished: setTextFieldAttribute(text)
-                persistentSelection: true
+                persistentSelection: false
+                property bool memoryActiveFocus: false
                 onAccepted: {
                     setTextFieldAttribute(text)
                 }
@@ -233,10 +234,21 @@ RowLayout {
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.RightButton
-                    onClicked: {     
-                        var menu = menuCopy.createObject(parameterLabel)
-                        menu.parent = parameterLabel
+                    onClicked: (mouse)=> {
+                        // Do not loose the selection during the right click
+                        textField.persistentSelection = true
+                        // We store the status of the activeFocus before opening the popup
+                        textField.memoryActiveFocus = textField.activeFocus
+                        var menu = menuCopy.createObject(textField)
+                        menu.parent = textField
                         menu.popup()
+                        if(textField.memoryActiveFocus) {
+                            // If the focus was active, we continue to display the cursor
+                            // to explain that we will insert the new text in this position (in case of "Paste" action)
+                            textField.cursorVisible = true
+                        }
+                        // We do not want the selection to be globally persistent
+                        textField.persistentSelection = false
                     }
 
                     property Component menuCopy : Menu {
@@ -244,17 +256,31 @@ RowLayout {
                             text: "Copy"
                             enabled: attribute.value != ""
                             onTriggered: {
-                                // if no selection, select all
-                                if (textField.selectionStart === textField.selectionEnd)
-                                    textField.selectAll()
-                                textField.copy()
+                                if (textField.selectionStart === textField.selectionEnd) {
+                                    // If no selection
+                                    Clipboard.clear()
+                                    Clipboard.setText(attribute.value)
+                                } else {
+                                    // copy selection only
+                                    textField.copy()
+                                }
                             }
                         }
                         MenuItem {
                             text: "Paste"
                             enabled: Clipboard.getText() != "" && !readOnly
                             onTriggered: {
-                                setTextFieldAttribute(Clipboard.getText())
+                                if (textField.memoryActiveFocus) {
+                                    // replace the selected text with the clipboard
+                                    // or if there is no selection insert at the cursor position
+                                    var before = textField.text.substr(0, textField.selectionStart)
+                                    var after = textField.text.substr(textField.selectionEnd, textField.text.length)
+                                    setTextFieldAttribute(before + Clipboard.getText() + after)
+                                    // set the cursor at the end of the added text
+                                    textField.cursorPosition = before.length + Clipboard.getText().length
+                                } else {
+                                    setTextFieldAttribute(Clipboard.getText())
+                                }
                             }
                         }
                     } 

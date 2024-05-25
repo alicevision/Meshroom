@@ -112,6 +112,21 @@ RowLayout {
                                 updateAttributeLabel()
                             }
                         }
+                        MenuItem {
+                            text: "Copy"
+                            enabled: attribute.value != ""
+                            onTriggered: {
+                                Clipboard.clear()
+                                Clipboard.setText(attribute.value)
+                            }
+                        }
+                        MenuItem {
+                            text: "Paste"
+                            enabled: Clipboard.getText() != "" && root.editable
+                            onTriggered: {
+                                _reconstruction.setAttribute(attribute, Clipboard.getText())
+                            }
+                        }
 
                         MenuSeparator {
                             visible: paramMenu.isFileAttribute
@@ -236,7 +251,6 @@ RowLayout {
                         else if (drop.hasText && drop.text != '')
                             setTextFieldAttribute(drop.text)
                     }
-
                 }
                 MouseArea {
                     anchors.fill: parent

@@ -1217,8 +1217,7 @@ FocusScope {
                             id: displayLightingCircleLoader
                             property var activeNode: _reconstruction.activeNodes.get('SphereDetection').node
                             ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
-                            text: MaterialIcons.vignette
-                            // text: MaterialIcons.panorama_fish_eye
+                            text: MaterialIcons.location_searching
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true

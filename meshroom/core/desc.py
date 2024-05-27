@@ -144,11 +144,11 @@ class GroupAttribute(Attribute):
             # invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
             # if invalidKeys:
             #     raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
-            if self._groupDesc:
+            if self._groupDesc and value.keys():
                 commonKeys = set(value.keys()).intersection([attr.name for attr in self._groupDesc])
                 if not commonKeys:
-                    raise ValueError('Value contains no key that matches with the group description: {}'.format(commonKeys))
-        elif isinstance(value, (list, tuple)):
+                    raise ValueError(f'Value contains no key that matches with the group description (name={self.name}, values={value.keys()}, desc={[attr.name for attr in self._groupDesc]})')
+        elif isinstance(value, (list, tuple, set)):
             if len(value) != len(self._groupDesc):
                 raise ValueError('Value contains incoherent number of values: desc size: {}, value size: {}'.format(len(self._groupDesc), len(value)))
         else:

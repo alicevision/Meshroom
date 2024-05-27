@@ -317,18 +317,28 @@ class ChoiceParam(Param):
     def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, semantic='',
                  enabled=True, validValue=True, errorMessage="", visible=True):
         assert values
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced,
+                                          semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage, visible=visible)
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
-        self._valueType = type(self._values[0])  # cast to value type
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced,
-                                          semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage, visible=visible)
+        if self._values:
+            # Look at the type of the first element of the possible values
+            assert isinstance(self._values, list)
+            self._valueType = type(self._values[0])
+        elif not exclusive:
+            # Possible values may be defined later, so use the value to define the type.
+            # if non exclusive, it is a list
+            assert isinstance(self._value, list)
+            self._valueType = type(self._value[0])
+        else:
+            self._valueType = type(self._value)
 
     def conformValue(self, value):
         """ Conform 'value' to the correct type and check for its validity """
-        # Bypassing the validation allows to have values that are not initially in the list of choices
-        # We cannot return _valueType(value) because some casts are not possible (e.g. str -> int)
-        return value
+        # We do not check that the value is in the list of values.
+        # This allows to have a value that is not in the list of possible values.
+        return self._valueType(value)
 
     def validateValue(self, value):
         if self.exclusive:
@@ -336,6 +346,9 @@ class ChoiceParam(Param):
 
         if isinstance(value, str):
             value = value.split(',')
+
+        if not isinstance(value, Iterable):
+            raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{}).'.format(self.name, value, type(value)))
 
         return [self.conformValue(v) for v in value]
 

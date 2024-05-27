@@ -509,6 +509,8 @@ class Reconstruction(UIGraph):
                     "Data might have been lost in the process.",
                     "Open it with the corresponding version of Meshroom to recover your data."
                 ))
+            
+            self.graph.fileDateVersion = os.path.getmtime(filepath)
             return status
         except FileNotFoundError as e:
             self.error.emit(

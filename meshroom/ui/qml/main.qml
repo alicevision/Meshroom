@@ -368,6 +368,36 @@ ApplicationWindow {
             onDiscarded: close()
             onAccepted: saveAsAction.trigger()
         }
+
+        MessageDialog {
+            id: fileModifiedDialog
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "File Modified"
+            text: "The file has been modified by another instance."
+            detailedText: "Do you want to overwrite the file?"
+
+            // Add a reload file button next to the save button
+            footer: DialogButtonBox {
+                position: DialogButtonBox.Footer
+                standardButtons: Dialog.Save | Dialog.Cancel
+                
+                Button {
+                    text: "Reload File"
+
+                    onClicked: {
+                        _reconstruction.loadUrl(_reconstruction.graph.filepath)
+                        fileModifiedDialog.close()
+                    }
+                }
+            }
+
+            onAccepted: _reconstruction.save()
+            onDiscarded: close()
+        }
     }
 
     FileDialog {
@@ -715,7 +745,14 @@ ApplicationWindow {
                 enabled: _reconstruction ? (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean : false
                 onTriggered: {
                     if (_reconstruction.graph.filepath) {
-                        _reconstruction.save()
+                        // get current time date
+                        var date = _reconstruction.graph.getFileDateVersionFromPath(_reconstruction.graph.filepath)
+
+                        // check if the file has been modified by another instance
+                        if (_reconstruction.graph.fileDateVersion !== date) {
+                            fileModifiedDialog.open()
+                        } else
+                            _reconstruction.save()
                     } else {
                         initFileDialogFolder(saveFileDialog)
                         saveFileDialog.open()

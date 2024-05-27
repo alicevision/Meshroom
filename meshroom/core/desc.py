@@ -30,11 +30,16 @@ class Attribute(BaseObject):
         self._validValue = validValue
         self._errorMessage = errorMessage
         self._visible = visible
+        self._isExpression = isinstance(self._value, str) and "{" in self._value
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
     value = Property(Variant, lambda self: self._value, constant=True)
+    # isExpression:
+    #   The value of the attribute's descriptor is a static string expression that should be evaluated at runtime.
+    #   This property only makes sense for output attributes.
+    isExpression = Property(bool, lambda self: self._isExpression, constant=True)
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
     advanced = Property(bool, lambda self: self._advanced, constant=True)

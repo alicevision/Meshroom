@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
 import Controls 1.0
+import Utils 1.0
 
 FocusScope {
     id: root
@@ -639,30 +640,84 @@ FocusScope {
 
                 // LightingCalibration: display circle
                 ExifOrientedViewer {
+                    property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node 
+    
                     anchors.centerIn: parent
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node
                     active: displayLightingCircleLoader.checked && activeNode
 
                     sourceComponent: CircleGizmo {
+                        property var jsonFolder: activeNode.attribute("output").value
+                        property var json: null
+                        property var currentViewId: _reconstruction.selectedViewId
+                        property var nodeCircleX: activeNode.attribute("sphereCenter.x").value
+                        property var nodeCircleY: activeNode.attribute("sphereCenter.y").value
+                        property var nodeCircleRadius: activeNode.attribute("sphereRadius").value
+                        
                         width: imgContainer.width
                         height: imgContainer.height
-
-                        readOnly: false
-
-                        circleX: activeNode.attribute("sphereCenter.x").value
-                        circleY: activeNode.attribute("sphereCenter.y").value
-                        circleRadius: activeNode.attribute("sphereRadius").value
-
+                        readOnly: activeNode.attribute("autoDetect").value
+                        circleX: nodeCircleX
+                        circleY: nodeCircleY
+                        circleRadius: nodeCircleRadius
                         circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))
-                        onMoved: {
-                            _reconstruction.setAttribute(
-                                activeNode.attribute("sphereCenter"),
-                                JSON.stringify([xoffset, yoffset])
-                            )
+
+                        onJsonFolderChanged: {
+                            json = null
+                            if(activeNode.attribute("autoDetect").value) {
+                                // auto detection enabled
+                                var jsonPath = activeNode.attribute("output").value + "/detection.json"
+                                Request.get(Filepath.stringToUrl(jsonPath), function(xhr) {
+                                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                                        try {
+                                            json = JSON.parse(xhr.responseText)
+                                        } catch(exc) {
+                                            console.warn("Failed to parse SphereDetection JSON file: " + jsonPath)
+                                        }
+                                    }
+                                    updateGizmo()
+                                })
+                            }
                         }
+
+                        onCurrentViewIdChanged: { updateGizmo() }
+                        onNodeCircleXChanged : { updateGizmo() }
+                        onNodeCircleYChanged : { updateGizmo() }
+                        onNodeCircleRadiusChanged : { updateGizmo() }
+
+                        function updateGizmo() {
+                            if(activeNode.attribute("autoDetect").value) {
+                                // update gizmo from auto detection json file
+                                if(json) { 
+                                    // json file found
+                                    var data = json[currentViewId]
+                                    if(data && data[0]) { 
+                                        // current view id found
+                                        circleX = data[0].x
+                                        circleY= data[0].y
+                                        circleRadius = data[0].r
+                                        return
+                                    }
+                                }
+                                // no auto detection data
+                                circleX = -1
+                                circleY= -1
+                                circleRadius = 0
+                            }
+                            else {
+                                // update gizmo from node manual parameters
+                                circleX = nodeCircleX
+                                circleY = nodeCircleY
+                                circleRadius = nodeCircleRadius
+                            }
+                        }
+
+                        onMoved: {
+                            _reconstruction.setAttribute(activeNode.attribute("sphereCenter"), JSON.stringify([xoffset, yoffset]))
+                        }
+
                         onIncrementRadius: {
                             _reconstruction.setAttribute(activeNode.attribute("sphereRadius"), activeNode.attribute("sphereRadius").value + radiusOffset)
                         }
@@ -1217,8 +1272,7 @@ FocusScope {
                             id: displayLightingCircleLoader
                             property var activeNode: _reconstruction.activeNodes.get('SphereDetection').node
                             ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
-                            text: MaterialIcons.vignette
-                            // text: MaterialIcons.panorama_fish_eye
+                            text: MaterialIcons.location_searching
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true

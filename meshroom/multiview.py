@@ -130,6 +130,7 @@ def findFilesByTypeInFolder(folder, recursive=False):
 
     output = FilesByType()
     for currentFolder in inputFolders:
+        currentFolder = os.path.abspath(currentFolder)
         if os.path.isfile(currentFolder):
             output.addFile(currentFolder)
             continue

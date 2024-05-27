@@ -170,6 +170,7 @@ class MeshroomApp(QApplication):
                 "Invalid value: '{}'".format(args.project))
 
         if args.project:
+            args.project = os.path.abspath(args.project)
             r.load(args.project)
             self.addRecentProjectFile(args.project)
         else:

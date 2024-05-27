@@ -63,7 +63,6 @@ class Attribute(BaseObject):
         self._node = weakref.ref(node)
         self.attributeDesc = attributeDesc
         self._isOutput = isOutput
-        self._value = copy.copy(attributeDesc.value)
         self._label = attributeDesc.label
         self._enabled = True
         self._validValue = True
@@ -71,6 +70,10 @@ class Attribute(BaseObject):
 
         # invalidation value for output attributes
         self._invalidationValue = ""
+
+        self._value = None  # Needs to be created before setting the value
+        # do not emit "value changed" on initialization
+        self._set_value(copy.copy(attributeDesc.value), emitSignals=False)
 
     @property
     def node(self):
@@ -183,18 +186,24 @@ class Attribute(BaseObject):
             return self.getLinkParam().value
         return self._value
 
-    def _set_value(self, value):
+    def _set_value(self, value, emitSignals=True):
         if self._value == value:
             return
 
         if isinstance(value, Attribute) or Attribute.isLinkExpression(value):
             # if we set a link to another attribute
             self._value = value
+        elif isinstance(value, types.FunctionType):
+            # evaluate the function
+            self._value = value(self)
         else:
             # if we set a new value, we use the attribute descriptor validator to check the validity of the value
             # and apply some conversion if needed
             convertedValue = self.validateValue(value)
             self._value = convertedValue
+
+        if not emitSignals:
+            return
 
         if not self.node.isCompatibilityNode:
             self.node.onAttributeChanged(self)
@@ -232,7 +241,7 @@ class Attribute(BaseObject):
         self._set_value(exportedValue)
 
     def resetValue(self):
-        self._value = self.attributeDesc.value
+        self.value = self.defaultValue()
 
     def requestGraphUpdate(self):
         if self.node.graph:
@@ -326,9 +335,9 @@ class Attribute(BaseObject):
     def getExportValue(self):
         if self.isLink:
             return self.getLinkParam().asLinkExpr()
-        if self.isOutput:
+        if self.isOutput and self.desc.isExpression:
             return self.defaultValue()
-        return self._value
+        return self.value
 
     def getEvalValue(self):
         '''
@@ -497,7 +506,7 @@ class ListAttribute(Attribute):
     def resetValue(self):
         self._value = ListModel(parent=self)
 
-    def _set_value(self, value):
+    def _set_value(self, value, emitSignals=True):
         if self.node.graph:
             self.remove(0, len(self))
         # Link to another attribute
@@ -505,8 +514,13 @@ class ListAttribute(Attribute):
             self._value = value
         # New value
         else:
+            # During initialization self._value may not be set
+            if self._value is None:
+                self._value = ListModel(parent=self)
             newValue = self.desc.validateValue(value)
             self.extend(newValue)
+        if not emitSignals:
+            return
         self.requestGraphUpdate()
 
     def upgradeValue(self, exportedValues):
@@ -647,7 +661,7 @@ class GroupAttribute(Attribute):
             except KeyError:
                 raise AttributeError(key)
 
-    def _set_value(self, exportedValue):
+    def _set_value(self, exportedValue, emitSignals=True):
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values

@@ -747,16 +747,14 @@ class BaseNode(BaseObject):
             if attr.isInput:
                 continue  # skip inputs
 
-            # Only consider File attributes for command output parameters
-            if not isinstance(attr.attributeDesc, desc.File):
-                continue
-
-            try:
-                defaultValue = attr.defaultValue()
-            except AttributeError as e:
-                # If we load an old scene, the lambda associated to the 'value' could try to access other params that could not exist yet
-                logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
-            else:
+            # Apply expressions for File attributes
+            if attr.attributeDesc.isExpression:
+                defaultValue = ""
+                try:
+                    defaultValue = attr.defaultValue()
+                except AttributeError as e:
+                    # If we load an old scene, the lambda associated to the 'value' could try to access other params that could not exist yet
+                    logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
                 try:
                     attr.value = defaultValue.format(**self._cmdVars)
                     attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
@@ -1295,8 +1293,7 @@ class Node(BaseNode):
                 # skip missing attributes
                 continue
             attr = self.attribute(k)
-            if attr.isInput:
-                attr.value = v
+            attr.value = v
 
     def upgradeAttributeValues(self, values):
         # initialize attribute values
@@ -1305,11 +1302,10 @@ class Node(BaseNode):
                 # skip missing attributes
                 continue
             attr = self.attribute(k)
-            if attr.isInput:
-                try:
-                    attr.upgradeValue(v)
-                except ValueError:
-                    pass
+            try:
+                attr.upgradeValue(v)
+            except ValueError:
+                pass
 
     def setInternalAttributeValues(self, values):
         # initialize internal attribute values
@@ -1327,11 +1323,10 @@ class Node(BaseNode):
                 # skip missing atributes
                 continue
             attr = self.internalAttribute(k)
-            if attr.isInput:
-                try:
-                    attr.upgradeValue(v)
-                except ValueError:
-                    pass
+            try:
+                attr.upgradeValue(v)
+            except ValueError:
+                pass
 
     def toDict(self):
         inputs = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
@@ -1741,7 +1736,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
                     break
 
     if compatibilityIssue is None:
-        node = Node(nodeType, position, **inputs)
+        node = Node(nodeType, position, **inputs, **outputs)
         node.setInternalAttributeValues(internalInputs)
     else:
         logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))

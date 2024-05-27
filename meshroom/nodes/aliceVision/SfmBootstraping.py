@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
@@ -20,18 +20,6 @@ class SfMBootStraping(desc.AVCommandLineNode):
             value="",
             uid=[0],
         ),
-        desc.ListAttribute(
-            elementDesc=desc.File(
-                name="featuresFolder",
-                label="Features Folder",
-                description="",
-                value="",
-                uid=[0],
-            ),
-            name="featuresFolders",
-            label="Features Folders",
-            description="Folder(s) containing the extracted features and descriptors.",
-        ),
         desc.File(
             name="tracksFilename",
             label="Tracks File",
@@ -45,16 +33,6 @@ class SfMBootStraping(desc.AVCommandLineNode):
             description="Information on pairs.",
             value="",
             uid=[0],
-        ),
-        desc.ChoiceParam(
-            name="describerTypes",
-            label="Describer Types",
-            description="Describer types used to describe an image.",
-            values=DESCRIBER_TYPES,
-            value=["dspsift"],
-            exclusive=False,
-            uid=[0],
-            joinChar=",",
         ),
         desc.ChoiceParam(
             name="verboseLevel",

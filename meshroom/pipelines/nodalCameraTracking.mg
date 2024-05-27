@@ -17,9 +17,9 @@
             "Publish": "1.3",
             "DistortionCalibration": "4.0",
             "ImageSegmentation": "1.2",
-            "RelativePoseEstimating": "1.0",
+            "RelativePoseEstimating": "2.0",
             "FeatureExtraction": "1.3",
-            "NodalSfM": "1.0",
+            "NodalSfM": "2.0",
             "TracksBuilding": "1.0"
         }
     },
@@ -106,7 +106,6 @@
             ],
             "inputs": {
                 "input": "{TracksBuilding_1.input}",
-                "featuresFolders": "{TracksBuilding_1.featuresFolders}",
                 "tracksFilename": "{TracksBuilding_1.output}",
                 "enforcePureRotation": true
             },
@@ -122,7 +121,6 @@
             ],
             "inputs": {
                 "input": "{RelativePoseEstimating_1.input}",
-                "featuresFolders": "{RelativePoseEstimating_1.featuresFolders}",
                 "tracksFilename": "{RelativePoseEstimating_1.tracksFilename}",
                 "pairs": "{RelativePoseEstimating_1.output}"
             },

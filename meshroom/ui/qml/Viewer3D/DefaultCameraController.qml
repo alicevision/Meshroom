@@ -81,17 +81,42 @@ Entity {
                 return
             }
             if (zooming) { // zoom with alt + RMD
-                d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.1
-                var tz = axisMX.value * root.translateSpeed * d
                 mouseHandler.hasMoved = true
-                root.camera.translate(Qt.vector3d(0, 0, tz).times(dt), Camera.DontTranslateViewCenter)
+                d = root.camera.viewCenter.minus(root.camera.position).length() // Distance between camera position and center position
+                var zoomPower = 0.2
+                var tz = axisMX.value * root.translateSpeed * zoomPower // Translation to apply depending on user action (mouse move), bigger absolute value means we'll zoom/dezoom more
+                var tzThreshold = 0.001
+
+                // We forbid too big zoom, as it means the distance between camera and center would be too low and we'll have no translation after (due to float representation)
+                if (tz >= 0.9 * d)
+                    return
+
+                // We forbid too small zoom as it means we are getting very close to center position and next zoom may lead to similar problem as previous cases (no translation), problem occurs only if tz > 0 (when we zoom)
+                if (tz > 0 && tz <= tzThreshold)
+                    return
+
+                root.camera.translate(Qt.vector3d(0, 0, tz), Camera.DontTranslateViewCenter)
                 return
             }
         }
+
         onDoubleClicked: mouseDoubleClicked(mouse)
         onWheel: {
-            var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.2
-            var tz = (wheel.angleDelta.y / 120) * d
+            var d = root.camera.viewCenter.minus(root.camera.position).length() // Distance between camera position and center position
+            var zoomPower = 0.2
+            var angleStep = 120 // wheel.angleDelta.y = +- 120 * number of wheel rotations
+            var tz = (wheel.angleDelta.y / angleStep) * d * zoomPower // Translation to apply depending on user action (mouse wheel), bigger absolute value means we'll zoom/dezoom more
+            var tzThreshold = 0.001
+
+            // We forbid too big zoom, as it means the distance between camera and center would be too low and we'll have no translation after (due to float representation)
+            if (tz >= 0.9 * d) {
+                return
+            }
+
+            // We forbid too small zoom as it means we are getting very close to center position and next zoom may lead to similar problem as previous cases (no translation), problem occurs only if tz > 0 (when we zoom)
+            if (tz > 0 && tz <= tzThreshold) {
+                return
+            }
             root.camera.translate(Qt.vector3d(0, 0, tz), Camera.DontTranslateViewCenter)
         }
     }

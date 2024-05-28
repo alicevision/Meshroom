@@ -406,7 +406,7 @@ Item {
 
                                 delegate: Loader {
                                     id: outputLoader
-                                    active: object.isOutput && isFileAttributeBaseType(object) && object.desc.visible
+                                    active: object.isOutput && object.desc.visible
                                     visible: object.enabled || object.hasOutputConnections
                                     anchors.right: parent.right
                                     width: outputs.width

@@ -6,6 +6,7 @@ from enum import Enum
 import math
 import os
 import psutil
+import types
 import ast
 import distutils.util
 import shlex
@@ -30,7 +31,7 @@ class Attribute(BaseObject):
         self._validValue = validValue
         self._errorMessage = errorMessage
         self._visible = visible
-        self._isExpression = isinstance(self._value, str) and "{" in self._value
+        self._isExpression = (isinstance(self._value, str) and "{" in self._value) or isinstance(self._value, types.FunctionType)
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
@@ -698,7 +699,7 @@ class AVCommandLineNode(CommandLineNode):
     cmdCore = ''
 
     def __init__(self):
-        
+
         if AVCommandLineNode.cgroupParsed is False:
 
             AVCommandLineNode.cmdMem = ''

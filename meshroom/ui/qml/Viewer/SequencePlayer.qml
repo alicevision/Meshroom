@@ -347,17 +347,17 @@ FloatingPane {
         }
 
         MaterialToolButton {
-            id: syncButton
+            id: infoButton
 
-            text: MaterialIcons.sync
+            text: MaterialIcons.settings
             font.pointSize: 11
             padding: 2
-            onClicked: syncViewerMenu.open()
+            onClicked: infoMenu.open()
             checkable: true
-            checked: syncViewerMenu.visible
+            checked: infoMenu.visible
 
             Menu {
-                id: syncViewerMenu
+                id: infoMenu
                 width: 270
                 y: parent.height
                 x: -width + parent.width
@@ -395,6 +395,10 @@ FloatingPane {
                     ToolTip.text: "The 3D Viewer will be updated at the same time as the Sequence Player."
                     ToolTip.visible: hovered
                     ToolTip.delay: 100
+                }
+
+                MenuItem {
+                    text: "Max Available Memory : " + viewer.maxAvailableRam + " GB"
                 }
             }
         }

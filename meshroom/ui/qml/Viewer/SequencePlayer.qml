@@ -23,7 +23,7 @@ FloatingPane {
     property var sortedViewIds: []
     property var viewer: null
     readonly property alias sync3DSelected: m.sync3DSelected
-    property alias loading: fetchButton.checked
+    property bool loading: fetchButton.checked || m.playing
 
     function updateReconstructionView() {
         if (_reconstruction && m.frame >= 0 && m.frame < sortedViewIds.length) {
@@ -330,7 +330,7 @@ FloatingPane {
             text: MaterialIcons.download_for_offline
             ToolTip.text: "Fetch"
             checkable: true
-            checked: false
+            checked: loading
         }
 
         MaterialToolButton {

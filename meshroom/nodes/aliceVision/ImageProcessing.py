@@ -12,8 +12,9 @@ def outputImagesValueFunct(attr):
     outputExt =  ('.' + attr.node.extension.value) if attr.node.extension.value else None
 
     if inputExt in ['.abc', '.sfm']:
+        fileStem = '<FILENAME>' if attr.node.keepImageFilename.value else '<VIEW_ID>'
         # If we have an SfM in input
-        return desc.Node.internalFolder + '<VIEW_ID>' + (outputExt or '.*')
+        return desc.Node.internalFolder + fileStem + (outputExt or '.*')
 
     if inputExt:
         # if we have one or multiple files in input

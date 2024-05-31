@@ -98,3 +98,22 @@ class FilepathHelper(QObject):
     def fileSizeMB(self, path):
         """ Returns the file size in MB. """
         return QFileInfo(self.asStr(path)).size() / (1024*1024)
+
+    @Slot(str, QObject, result=str)
+    def resolve(self, path, vp):
+        # Resolve dynamic path that depends on viewpoint
+
+        replacements = {
+            "<VIEW_ID>": str(vp.childAttribute("viewId").value),
+            "<INTRINSIC_ID>": str(vp.childAttribute("intrinsicId").value),
+            "<POSE_ID>": str(vp.childAttribute("poseId").value),
+            "<PATH>": vp.childAttribute("path").value,
+            "<FILENAME>": FilepathHelper.basename(FilepathHelper, vp.childAttribute("path").value),
+            "<FILESTEM>": FilepathHelper.removeExtension(FilepathHelper, FilepathHelper.basename(FilepathHelper, vp.childAttribute("path").value)),
+        }
+
+        resolved = path
+        for key in replacements:
+            resolved = resolved.replace(key, replacements[key])
+
+        return resolved

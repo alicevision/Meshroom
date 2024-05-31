@@ -17,6 +17,7 @@ from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
+from meshroom.ui.components.filepath import FilepathHelper
 
 
 class Message(QObject):
@@ -169,8 +170,10 @@ class ViewpointWrapper(QObject):
 
     initialParamsChanged = Signal()
     sfmParamsChanged = Signal()
-    denseSceneParamsChanged = Signal()
+    undistortedImageParamsChanged = Signal()
     internalChanged = Signal()
+    principalPointCorrectedChanged = Signal()
+    uvCenterOffsetChanged = Signal()
 
     def __init__(self, viewpointAttribute, reconstruction):
         """
@@ -194,16 +197,21 @@ class ViewpointWrapper(QObject):
         # PrepareDenseScene
         self._undistortedImagePath = ''
         self._activeNode_PrepareDenseScene = self._reconstruction.activeNodes.get("PrepareDenseScene")
+        self._activeNode_ExportAnimatedCamera = self._reconstruction.activeNodes.get("ExportAnimatedCamera")
+        self._principalPointCorrected = False
+        self.principalPointCorrectedChanged.connect(self.uvCenterOffsetChanged)
+        self.sfmParamsChanged.connect(self.uvCenterOffsetChanged)
 
         # update internally cached variables
         self._updateInitialParams()
         self._updateSfMParams()
-        self._updateDenseSceneParams()
+        self._updateUndistortedImageParams()
 
         # trigger internal members updates when reconstruction members changes
         self._reconstruction.cameraInitChanged.connect(self._updateInitialParams)
         self._reconstruction.sfmReportChanged.connect(self._updateSfMParams)
-        self._activeNode_PrepareDenseScene.nodeChanged.connect(self._updateDenseSceneParams)
+        self._activeNode_PrepareDenseScene.nodeChanged.connect(self._updateUndistortedImageParams)
+        self._activeNode_ExportAnimatedCamera.nodeChanged.connect(self._updateUndistortedImageParams)
 
     def _updateInitialParams(self):
         """ Update internal members depending on CameraInit. """
@@ -235,15 +243,20 @@ class ViewpointWrapper(QObject):
             self._reconstructed = self._R is not None
         self.sfmParamsChanged.emit()
 
-    def _updateDenseSceneParams(self):
-        """ Update internal members depending on PrepareDenseScene. """
+    def _updateUndistortedImageParams(self):
+        """ Update internal members depending on PrepareDenseScene or ExportAnimatedCamera. """
         # undistorted image path
-        if not self._activeNode_PrepareDenseScene.node:
-            self._undistortedImagePath = ''
+        if self._activeNode_ExportAnimatedCamera.node:
+            self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_ExportAnimatedCamera.node.outputUndistorted.value, self._viewpoint)
+            self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value
+        elif self._activeNode_PrepareDenseScene.node:
+            self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_PrepareDenseScene.node.undistorted.value, self._viewpoint)
+            self._principalPointCorrected = False
         else:
-            filename = "{}.{}".format(self._viewpoint.viewId.value, self._activeNode_PrepareDenseScene.node.outputFileType.value)
-            self._undistortedImagePath = os.path.join(self._activeNode_PrepareDenseScene.node.output.value, filename)
-        self.denseSceneParamsChanged.emit()
+            self._undistortedImagePath = ''
+            self._principalPointCorrected = False
+        self.undistortedImageParamsChanged.emit()
+        self.principalPointCorrectedChanged.emit()
 
     # Get the underlying Viewpoint attribute wrapped by this Viewpoint.
     attribute = Property(QObject, lambda self: self._viewpoint, constant=True)
@@ -327,10 +340,10 @@ class ViewpointWrapper(QObject):
         """ Get camera up vector. """
         return QVector3D(0.0, 1.0, 0.0)
 
-    @Property(type=QVector2D, notify=sfmParamsChanged)
+    @Property(type=QVector2D, notify=uvCenterOffsetChanged)
     def uvCenterOffset(self):
         """ Get UV offset corresponding to the camera principal point. """
-        if not self.solvedIntrinsics:
+        if not self.solvedIntrinsics or self._principalPointCorrected:
             return None
         pp = self.solvedIntrinsics["principalPoint"]
         # compute principal point offset in UV space
@@ -350,7 +363,7 @@ class ViewpointWrapper(QObject):
             sensorHeight = self.solvedIntrinsics["sensorHeight"]
             return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
 
-    @Property(type=QUrl, notify=denseSceneParamsChanged)
+    @Property(type=QUrl, notify=undistortedImageParamsChanged)
     def undistortedImageSource(self):
         """ Get path to undistorted image source if available. """
         return QUrl.fromLocalFile(self._undistortedImagePath)

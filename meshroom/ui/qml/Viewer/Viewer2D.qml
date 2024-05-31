@@ -223,24 +223,6 @@ FocusScope {
         return undefined
     }
 
-    function resolve(path, vp) {
-        // Resolve dynamic path that depends on viewpoint
-
-        let replacements = {
-            "<VIEW_ID>": vp.childAttribute("viewId").value,
-            "<INTRINSIC_ID>": vp.childAttribute("intrinsicId").value,
-            "<POSE_ID>": vp.childAttribute("poseId").value,
-            "<PATH>": vp.childAttribute("path").value,
-            "<FILENAME>": Filepath.removeExtension(Filepath.basename(vp.childAttribute("path").value)),
-        }
-
-        let resolved = path;
-        for (let key in replacements) {
-            resolved = resolved.replace(key, replacements[key])
-        }
-
-        return resolved;
-    }
 
     function getImageFile() {
         // Entry point for getting the image file URL
@@ -259,7 +241,7 @@ FocusScope {
             let vp = getViewpoint(_reconstruction.pickedViewId)
             let attr = getAttributeByName(displayedNode, outputAttribute.name)
             let path = attr ? attr.value : ""
-            let resolved = vp ? resolve(path, vp) : path
+            let resolved = vp ? Filepath.resolve(path, vp) : path
             return Filepath.stringToUrl(resolved)
         }
 
@@ -278,7 +260,7 @@ FocusScope {
 
         let seq = [];
         for (let i = 0; i < objs.length; i++) {
-            seq.push(resolve(path_template, objs[i]))
+            seq.push(Filepath.resolve(path_template, objs[i]))
         }
 
         return seq
@@ -1087,7 +1069,7 @@ FocusScope {
                         property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
 
                         sourceComponent: CameraResponseGraph {
-                            responsePath: resolve(path, vp)
+                            responsePath: Filepath.resolve(path, vp)
                         }
                     }
                 }

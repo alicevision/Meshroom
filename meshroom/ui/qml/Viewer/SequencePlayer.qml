@@ -23,11 +23,13 @@ FloatingPane {
     property var sortedViewIds: []
     property var viewer: null
     readonly property alias sync3DSelected: m.sync3DSelected
+    readonly property alias syncFeaturesSelected: m.syncFeaturesSelected
     property bool loading: fetchButton.checked || m.playing
+    property int maxCacheMemory: 2
 
     function updateReconstructionView() {
         if (_reconstruction && m.frame >= 0 && m.frame < sortedViewIds.length) {
-            if (m.syncSelected) {
+            if (!m.playing){
                 _reconstruction.selectedViewId = sortedViewIds[m.frame];
             } else {
                 _reconstruction.pickedViewId = sortedViewIds[m.frame];
@@ -45,7 +47,7 @@ FloatingPane {
         id: m
 
         property int frame: 0
-        property bool syncSelected: true
+        property bool syncFeaturesSelected: true
         property bool sync3DSelected: false
         property bool playing: false
         property bool repeat: false
@@ -55,13 +57,10 @@ FloatingPane {
             updateReconstructionView();
         }
 
-        onSyncSelectedChanged: {
-            updateReconstructionView();
-        }
-
         onPlayingChanged: {
-            syncSelected = syncViewersMenuItem.checked || !playing;
-            if(playing && (frame + 1 >= sortedViewIds.length))
+            if(!playing){
+                updateReconstructionView();
+            }else if(playing && (frame + 1 >= sortedViewIds.length))
             {
                 frame = 0;
             }
@@ -122,53 +121,7 @@ FloatingPane {
     // - "Repeat" button
     RowLayout {
 
-        anchors.fill: parent
-
-        MaterialToolButton {
-            id: prevButton
-
-            text: MaterialIcons.skip_previous
-            ToolTip.text: "Previous Frame"
-
-            onClicked: {
-                if (m.frame > 0) {
-                    m.frame -= 1;
-                }
-            }
-        }
-
-        MaterialToolButton {
-            id: playButton
-
-            checkable: true
-            checked: false
-            text: checked ? MaterialIcons.pause : MaterialIcons.play_arrow
-            ToolTip.text: checked ? "Pause Player" : "Play Sequence"
-
-            onCheckedChanged: {
-                m.playing = checked;
-            }
-
-            Connections {
-                target: m
-                function onPlayingChanged() {
-                    playButton.checked = m.playing;
-                }
-            }
-        }
-
-        MaterialToolButton {
-            id: nextButton
-
-            text: MaterialIcons.skip_next
-            ToolTip.text: "Next Frame"
-
-            onClicked: {
-                if (m.frame < sortedViewIds.length - 1) {
-                    m.frame += 1;
-                }
-            }
-        }
+        anchors.fill: parent 
 
         Item {
             Layout.preferredWidth: previousFrameButton.width + frameMetrics.width + nextFrameButton.width
@@ -193,6 +146,8 @@ FloatingPane {
 
                 MaterialToolButton {
                     id: previousFrameButton
+
+                    width: 10
 
                     anchors.verticalCenter: mouseAreaFrameLabel.verticalCenter
 
@@ -230,6 +185,8 @@ FloatingPane {
                 MaterialToolButton {
                     id: nextFrameButton
 
+                    width: 10
+
                     anchors.right: mouseAreaFrameLabel.right
                     anchors.verticalCenter: mouseAreaFrameLabel.verticalCenter
 
@@ -243,6 +200,27 @@ FloatingPane {
                             m.frame += 1;
                         }
                     }
+                }
+            }
+        }
+
+        MaterialToolButton {
+            id: playButton
+
+            checkable: true
+            checked: false
+            text: checked ? MaterialIcons.pause_circle : MaterialIcons.play_circle
+            font.pointSize: 20
+            ToolTip.text: checked ? "Pause Player" : "Play Sequence"
+
+            onCheckedChanged: {
+                m.playing = checked;
+            }
+
+            Connections {
+                target: m
+                function onPlayingChanged() {
+                    playButton.checked = m.playing;
                 }
             }
         }
@@ -268,10 +246,6 @@ FloatingPane {
                 parent: frameSlider.handle
                 visible: frameSlider.hovered
                 text: m.frame
-            }
-
-            onPressedChanged: {
-                m.syncSelected = !pressed;
             }
 
             Connections {
@@ -327,7 +301,7 @@ FloatingPane {
         MaterialToolButton {
             id: fetchButton
 
-            text: MaterialIcons.download_for_offline
+            text: MaterialIcons.subscriptions
             ToolTip.text: "Fetch"
             checkable: true
             checked: loading
@@ -356,50 +330,140 @@ FloatingPane {
             checkable: true
             checked: infoMenu.visible
 
-            Menu {
+            Popup {
                 id: infoMenu
-                width: 270
                 y: parent.height
                 x: -width + parent.width
 
-                MenuItem {
-                    id: syncViewersMenuItem
-                    text: "Sync Viewers with Sequence Player"
-                    checkable: true
-                    onCheckedChanged: {
-                        // if playing, update the syncSelected property
-                        if (m.playing) {
-                            m.syncSelected = checked
+                contentItem: GridLayout {
+                        layoutDirection: Qt.LeftToRight
+                        columns: 2
+
+                        Column {
+                            id: syncColumn
+                            Layout.alignment: Qt.AlignTop
+
+                            Text {
+                                text: "<b>Synchronisation:</b>"
+                                color: palette.text
+                            }
+
+
+                            CheckBox {
+                                id: syncFeaturePointsCheckBox
+                                text: "Sync Feature Points"
+                                checkable: true
+                                checked: m.syncFeaturesSelected
+                                onCheckedChanged: {
+                                    m.syncFeaturesSelected = checked
+                                }
+
+                                ToolTip.text: "The Feature points will be updated at the same time as the Sequence Player."
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 100
+                            }
+
+                            CheckBox {
+                                id: sync3DCheckBox
+                                text: "Sync 3D Viewer"
+                                checkable: true
+                                onCheckedChanged: {
+                                    m.sync3DSelected = checked
+                                }
+
+                                ToolTip.text: "The 3D Viewer will be updated at the same time as the Sequence Player."
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 100
+                            }
                         }
 
-                        if (checked)
-                            sync3DMenuItem.checked = false
+                        Column {
+                            id: cacheColumn
+                            Layout.alignment: Qt.AlignTop
+
+                            Text {
+                                text: "<b>Cache:</b>"
+                                color: palette.text
+                            }
+
+                            // max cache memory limit
+                            Row {
+                                height: sync3DCheckBox.height
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "Max Cache Memory: "
+                                    color: palette.text
+                                }
+                                
+                                TextField {
+                                    id: maxCacheMemoryInput
+
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: palette.text
+
+                                    text: !focus ? maxCacheMemory + " GB" : maxCacheMemory
+
+                                    onEditingFinished: {
+                                        maxCacheMemory = parseInt(text);
+                                        focus = false;
+                                    }
+                                }
+                            }
+
+                            Text {
+                                height: sync3DCheckBox.height
+                                verticalAlignment: Text.AlignVCenter
+                                text: "Available Memory: " + viewer.ramInfo.x + " GB"
+                                color: palette.text
+                            }
+
+                            Text {
+                                height: sync3DCheckBox.height
+                                verticalAlignment: Text.AlignVCenter
+                                text:{
+                                    // number of cached frames is the difference between the first and last frame of all intervals in the cache
+                                    let cachedFrames = viewer.cachedFrames;
+                                    let cachedFramesCount = 0;
+                                    for (let i = 0; i < cachedFrames.length; i++) {
+                                        cachedFramesCount += cachedFrames[i].y - cachedFrames[i].x + 1;
+                                    }
+                                    return "Cached Frames: " + (viewer ? cachedFramesCount : "0") + " / " + sortedViewIds.length
+                                }
+                                color: palette.text
+                            }
+
+                            // do beautiful progress bar
+                            ProgressBar {
+                                id: cacheProgressBar
+
+                                width: parent.width
+
+                                from: 0
+                                to: viewer ? viewer.ramInfo.x : 0
+
+                                value: viewer ? maxCacheMemory : 0
+
+                                ToolTip.text: "Max cache memory set: " + maxCacheMemory + " GB" + "\n" + "on available memory: "+ viewer.ramInfo.x + " GB"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 100
+                            }
+
+                            ProgressBar {
+                                id: occupiedCacheProgressBar
+
+                                width: parent.width
+
+                                from: 0
+                                to: maxCacheMemory
+                                value: viewer.ramInfo.y
+
+                                ToolTip.text: "Occupied cache: "+ viewer.ramInfo.y + " GB" + "\n" +"On max cache memory set: " + maxCacheMemory + " GB"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 100
+                            }
+                            
+                        }
                     }
-
-                    ToolTip.text: "The Image Gallery and 3D Viewer will be updated at the same time as the Sequence Player."
-                    ToolTip.visible: hovered
-                    ToolTip.delay: 100
-                }
-
-                MenuItem {
-                    id: sync3DMenuItem
-                    text: "Sync 3D VIewer with Sequence Player"
-                    checkable: true
-                    onCheckedChanged: {
-                        m.sync3DSelected = checked
-
-                        if (checked)
-                            syncViewersMenuItem.checked = false
-                    }
-
-                    ToolTip.text: "The 3D Viewer will be updated at the same time as the Sequence Player."
-                    ToolTip.visible: hovered
-                    ToolTip.delay: 100
-                }
-
-                MenuItem {
-                    text: "Max Available Memory : " + viewer.maxAvailableRam + " GB"
-                }
             }
         }
     }

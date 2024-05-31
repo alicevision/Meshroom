@@ -52,7 +52,7 @@ Repeater {
 
     /// Current view ID
     property var currentViewId
-    property bool sync3DSelected: false
+    property bool syncFeaturesSelected: false
 
     /// Time window
     property bool enableTimeWindow: false
@@ -76,7 +76,7 @@ Repeater {
         matchColor: Colors.orange
         landmarkColor: Colors.red
         describerType: modelData
-        currentViewId: sync3DSelected ? _reconstruction.pickedViewId : root.currentViewId
+        currentViewId: syncFeaturesSelected ? _reconstruction.pickedViewId : root.currentViewId
         enableTimeWindow: root.enableTimeWindow
         timeWindow: root.timeWindow
         mfeatures: root.features

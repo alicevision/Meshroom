@@ -933,7 +933,7 @@ class Graph(BaseObject):
 
         for edge in self.getEdges(dependenciesOnly=dependenciesOnly):
             nodeEdges[edge.src.node].add(edge.dst.node)
-
+        
         return nodeEdges
 
     def dfs(self, visitor, startNodes=None, longestPathFirst=False):
@@ -1114,7 +1114,7 @@ class Graph(BaseObject):
         self._computationBlocked.clear()
 
         compatNodes = []
-        visitor = Visitor(reverse=False, dependenciesOnly=True)
+        visitor = Visitor(reverse=False, dependenciesOnly=False)
 
         def discoverVertex(vertex, graph):
             # initialize depths

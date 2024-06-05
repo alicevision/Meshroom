@@ -63,7 +63,6 @@ class Attribute(BaseObject):
         self._node = weakref.ref(node)
         self.attributeDesc = attributeDesc
         self._isOutput = isOutput
-        self._value = copy.copy(attributeDesc.value)
         self._label = attributeDesc.label
         self._enabled = True
         self._validValue = True
@@ -71,6 +70,10 @@ class Attribute(BaseObject):
 
         # invalidation value for output attributes
         self._invalidationValue = ""
+
+        self._value = None
+        # do not emit value changed on initialization
+        self.resetValue(emitSignals=False)
 
     @property
     def node(self):
@@ -116,7 +119,7 @@ class Attribute(BaseObject):
 
     def getLabel(self):
         return self._label
-    
+
     @Slot(str, result=bool)
     def matchText(self, text):
         return self.fullLabel.lower().find(text.lower()) > -1
@@ -183,18 +186,24 @@ class Attribute(BaseObject):
             return self.getLinkParam().value
         return self._value
 
-    def _set_value(self, value):
+    def _set_value(self, value, emitSignals=True):
         if self._value == value:
             return
 
         if isinstance(value, Attribute) or Attribute.isLinkExpression(value):
             # if we set a link to another attribute
             self._value = value
+        elif isinstance(value, types.FunctionType):
+            # evaluate the function
+            self._value = value(self)
         else:
             # if we set a new value, we use the attribute descriptor validator to check the validity of the value
             # and apply some conversion if needed
             convertedValue = self.validateValue(value)
             self._value = convertedValue
+
+        if not emitSignals:
+            return
 
         if not self.node.isCompatibilityNode:
             self.node.onAttributeChanged(self)
@@ -231,8 +240,8 @@ class Attribute(BaseObject):
     def upgradeValue(self, exportedValue):
         self._set_value(exportedValue)
 
-    def resetValue(self):
-        self._value = self.attributeDesc.value
+    def resetValue(self, emitSignals=True):
+        self._set_value(copy.copy(self.defaultValue()), emitSignals=emitSignals)
 
     def requestGraphUpdate(self):
         if self.node.graph:
@@ -326,9 +335,9 @@ class Attribute(BaseObject):
     def getExportValue(self):
         if self.isLink:
             return self.getLinkParam().asLinkExpr()
-        if self.isOutput:
+        if self.isOutput and self.desc.isExpression:
             return self.defaultValue()
-        return self._value
+        return self.value
 
     def getEvalValue(self):
         '''
@@ -395,7 +404,7 @@ class Attribute(BaseObject):
 
     # definition of the attribute
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
-    
+
     valueChanged = Signal()
     value = Property(Variant, _get_value, _set_value, notify=valueChanged)
     valueStr = Property(Variant, getValueStr, notify=valueChanged)
@@ -474,9 +483,10 @@ class ListAttribute(Attribute):
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         super(ListAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
-        self._value = ListModel(parent=self)
 
     def __len__(self):
+        if self._value is None:
+            return 0
         return len(self._value)
 
     def __iter__(self):
@@ -494,10 +504,12 @@ class ListAttribute(Attribute):
     def index(self, item):
         return self._value.indexOf(item)
 
-    def resetValue(self):
+    def resetValue(self, emitSignals=True):
         self._value = ListModel(parent=self)
+        if emitSignals:
+            self.valueChanged.emit()
 
-    def _set_value(self, value):
+    def _set_value(self, value, emitSignals=True):
         if self.node.graph:
             self.remove(0, len(self))
         # Link to another attribute
@@ -505,8 +517,13 @@ class ListAttribute(Attribute):
             self._value = value
         # New value
         else:
+            # During initialization self._value may not be set
+            if self._value is None:
+                self._value = ListModel(parent=self)
             newValue = self.desc.validateValue(value)
             self.extend(newValue)
+        if not emitSignals:
+            return
         self.requestGraphUpdate()
 
     def upgradeValue(self, exportedValues):
@@ -533,6 +550,8 @@ class ListAttribute(Attribute):
 
     @raiseIfLink
     def insert(self, index, value):
+        if self._value is None:
+            self._value = ListModel(parent=self)
         values = value if isinstance(value, list) else [value]
         attrs = [attributeFactory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
         self._value.insert(index, attrs)
@@ -542,10 +561,12 @@ class ListAttribute(Attribute):
 
     @raiseIfLink
     def extend(self, values):
-        self.insert(len(self._value), values)
+        self.insert(len(self), values)
 
     @raiseIfLink
     def remove(self, index, count=1):
+        if self._value is None:
+            return
         if self.node.graph:
             from meshroom.core.graph import GraphModification
             with GraphModification(self.node.graph):
@@ -628,7 +649,6 @@ class GroupAttribute(Attribute):
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         super(GroupAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
-        self._value = DictModel(keyAttrName='name', parent=self)
 
         subAttributes = []
         for subAttrDesc in self.attributeDesc.groupDesc:
@@ -647,7 +667,7 @@ class GroupAttribute(Attribute):
             except KeyError:
                 raise AttributeError(key)
 
-    def _set_value(self, exportedValue):
+    def _set_value(self, exportedValue, emitSignals=True):
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
@@ -675,6 +695,11 @@ class GroupAttribute(Attribute):
                 self._value.get(attrDesc.name).upgradeValue(v)
         else:
             raise AttributeError("Failed to set on GroupAttribute: {}".format(str(value)))
+
+    def resetValue(self, emitSignals=True):
+        self._value = DictModel(keyAttrName='name', parent=self)
+        if emitSignals:
+            self.valueChanged.emit()
 
     @Slot(str, result=Attribute)
     def childAttribute(self, key):
@@ -728,7 +753,7 @@ class GroupAttribute(Attribute):
                 strEnd = self.attributeDesc.brackets[1]
             else:
                 raise AttributeError("Incorrect brackets on GroupAttribute: {}".format(self.attributeDesc.brackets))
-        
+
         # particular case when using space separator
         spaceSep = self.attributeDesc.joinChar == ' '
 

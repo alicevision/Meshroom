@@ -333,8 +333,11 @@ class TaskManager(BaseObject):
         """
         ready = []
         computed = []
+        inputNodes = []
         for node in toNodes:
-            if context == "COMPUTATION":
+            if not node.isComputable:
+                inputNodes.append(node)
+            elif context == "COMPUTATION":
                 if graph.canCompute(node) and graph.canSubmitOrCompute(node) % 2 == 1:
                     ready.append(node)
                 elif node.isComputed:
@@ -347,7 +350,7 @@ class TaskManager(BaseObject):
             else:
                 raise ValueError("Argument 'context' must be: 'COMPUTATION' or 'SUBMITTING'")
 
-        if len(ready) + len(computed) != len(toNodes):
+        if len(ready) + len(computed) + len(inputNodes) != len(toNodes):
             toNodes.clear()
             toNodes.extend(ready)
             return False

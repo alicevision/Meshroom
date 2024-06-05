@@ -335,6 +335,9 @@ Panel {
 
         TabBar {
             id: tabBar
+            visible: root.node !== null
+
+            property bool isComputable: root.node !== null && root.node.isComputable
 
             Layout.fillWidth: true
             width: childrenRect.width
@@ -347,16 +350,22 @@ Panel {
                 rightPadding: leftPadding
             }
             TabButton {
+                visible: tabBar.isComputable
+                width: !visible ? 0 : tabBar.width / tabBar.count
                 text: "Log"
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
+                visible: tabBar.isComputable
+                width: !visible ? 0 : tabBar.width / tabBar.count
                 text: "Statistics"
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
+                visible: tabBar.isComputable
+                width: !visible ? 0 : tabBar.width / tabBar.count
                 text: "Status"
                 leftPadding: 8
                 rightPadding: leftPadding
@@ -371,6 +380,12 @@ Panel {
                 padding: 4
                 leftPadding: 8
                 rightPadding: leftPadding
+            }
+
+            onIsComputableChanged: {
+                if (!isComputable) {
+                    tabBar.currentIndex = 0
+                }
             }
         }
     }

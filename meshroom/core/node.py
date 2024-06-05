@@ -50,6 +50,7 @@ class Status(Enum):
     STOPPED = 4
     KILLED = 5
     SUCCESS = 6
+    INPUT = 7 # special status for input nodes
 
 
 class ExecMode(Enum):
@@ -746,16 +747,14 @@ class BaseNode(BaseObject):
             if attr.isInput:
                 continue  # skip inputs
 
-            # Only consider File attributes for command output parameters
-            if not isinstance(attr.attributeDesc, desc.File):
-                continue
-
-            try:
-                defaultValue = attr.defaultValue()
-            except AttributeError as e:
-                # If we load an old scene, the lambda associated to the 'value' could try to access other params that could not exist yet
-                logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
-            else:
+            # Apply expressions for File attributes
+            if attr.attributeDesc.isExpression:
+                defaultValue = ""
+                try:
+                    defaultValue = attr.defaultValue()
+                except AttributeError as e:
+                    # If we load an old scene, the lambda associated to the 'value' could try to access other params that could not exist yet
+                    logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
                 try:
                     attr.value = defaultValue.format(**self._cmdVars)
                     attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
@@ -784,7 +783,7 @@ class BaseNode(BaseObject):
 
     def hasStatus(self, status):
         if not self._chunks:
-            return False
+            return (status == Status.INPUT)
         for chunk in self._chunks:
             if chunk.status.status != status:
                 return False
@@ -792,6 +791,9 @@ class BaseNode(BaseObject):
 
     def _isComputed(self):
         return self.hasStatus(Status.SUCCESS)
+
+    def _isComputable(self):
+        return self.getGlobalStatus() != Status.INPUT
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -987,6 +989,8 @@ class BaseNode(BaseObject):
         Returns:
             Status: the node global status
         """
+        if isinstance(self.nodeDesc, desc.InputNode):
+            return Status.INPUT
         chunksStatus = [chunk.status.status for chunk in self._chunks]
 
         anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
@@ -1223,6 +1227,7 @@ class BaseNode(BaseObject):
     globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)
     isExternal = Property(bool, isExtern, notify=globalExecModeChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
+    isComputable = Property(bool, _isComputable, notify=globalStatusChanged)
     aliveChanged = Signal()
     alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)
     lockedChanged = Signal()
@@ -1288,8 +1293,7 @@ class Node(BaseNode):
                 # skip missing attributes
                 continue
             attr = self.attribute(k)
-            if attr.isInput:
-                attr.value = v
+            attr.value = v
 
     def upgradeAttributeValues(self, values):
         # initialize attribute values
@@ -1298,11 +1302,10 @@ class Node(BaseNode):
                 # skip missing attributes
                 continue
             attr = self.attribute(k)
-            if attr.isInput:
-                try:
-                    attr.upgradeValue(v)
-                except ValueError:
-                    pass
+            try:
+                attr.upgradeValue(v)
+            except ValueError:
+                pass
 
     def setInternalAttributeValues(self, values):
         # initialize internal attribute values
@@ -1320,11 +1323,10 @@ class Node(BaseNode):
                 # skip missing atributes
                 continue
             attr = self.internalAttribute(k)
-            if attr.isInput:
-                try:
-                    attr.upgradeValue(v)
-                except ValueError:
-                    pass
+            try:
+                attr.upgradeValue(v)
+            except ValueError:
+                pass
 
     def toDict(self):
         inputs = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
@@ -1348,6 +1350,8 @@ class Node(BaseNode):
 
     def _updateChunks(self):
         """ Update Node's computation task splitting into NodeChunks based on its description """
+        if isinstance(self.nodeDesc, desc.InputNode):
+            return
         self.setSize(self.nodeDesc.size.computeSize(self))
         if self.isParallelized:
             try:
@@ -1732,7 +1736,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
                     break
 
     if compatibilityIssue is None:
-        node = Node(nodeType, position, **inputs)
+        node = Node(nodeType, position, **inputs, **outputs)
         node.setInternalAttributeValues(internalInputs)
     else:
         logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))

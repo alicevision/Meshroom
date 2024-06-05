@@ -6,6 +6,7 @@ from enum import Enum
 import math
 import os
 import psutil
+import types
 import ast
 import distutils.util
 import shlex
@@ -30,11 +31,16 @@ class Attribute(BaseObject):
         self._validValue = validValue
         self._errorMessage = errorMessage
         self._visible = visible
+        self._isExpression = (isinstance(self._value, str) and "{" in self._value) or isinstance(self._value, types.FunctionType)
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
     value = Property(Variant, lambda self: self._value, constant=True)
+    # isExpression:
+    #   The value of the attribute's descriptor is a static string expression that should be evaluated at runtime.
+    #   This property only makes sense for output attributes.
+    isExpression = Property(bool, lambda self: self._isExpression, constant=True)
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
     advanced = Property(bool, lambda self: self._advanced, constant=True)
@@ -144,11 +150,11 @@ class GroupAttribute(Attribute):
             # invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
             # if invalidKeys:
             #     raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
-            if self._groupDesc:
+            if self._groupDesc and value.keys():
                 commonKeys = set(value.keys()).intersection([attr.name for attr in self._groupDesc])
                 if not commonKeys:
-                    raise ValueError('Value contains no key that matches with the group description: {}'.format(commonKeys))
-        elif isinstance(value, (list, tuple)):
+                    raise ValueError(f'Value contains no key that matches with the group description (name={self.name}, values={value.keys()}, desc={[attr.name for attr in self._groupDesc]})')
+        elif isinstance(value, (list, tuple, set)):
             if len(value) != len(self._groupDesc):
                 raise ValueError('Value contains incoherent number of values: desc size: {}, value size: {}'.format(len(self._groupDesc), len(value)))
         else:
@@ -317,18 +323,28 @@ class ChoiceParam(Param):
     def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, semantic='',
                  enabled=True, validValue=True, errorMessage="", visible=True):
         assert values
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced,
+                                          semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage, visible=visible)
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
-        self._valueType = type(self._values[0])  # cast to value type
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced,
-                                          semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage, visible=visible)
+        if self._values:
+            # Look at the type of the first element of the possible values
+            assert isinstance(self._values, list)
+            self._valueType = type(self._values[0])
+        elif not exclusive:
+            # Possible values may be defined later, so use the value to define the type.
+            # if non exclusive, it is a list
+            assert isinstance(self._value, list)
+            self._valueType = type(self._value[0])
+        else:
+            self._valueType = type(self._value)
 
     def conformValue(self, value):
         """ Conform 'value' to the correct type and check for its validity """
-        # Bypassing the validation allows to have values that are not initially in the list of choices
-        # We cannot return _valueType(value) because some casts are not possible (e.g. str -> int)
-        return value
+        # We do not check that the value is in the list of values.
+        # This allows to have a value that is not in the list of possible values.
+        return self._valueType(value)
 
     def validateValue(self, value):
         if self.exclusive:
@@ -336,6 +352,9 @@ class ChoiceParam(Param):
 
         if isinstance(value, str):
             value = value.split(',')
+
+        if not isinstance(value, Iterable):
+            raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{}).'.format(self.name, value, type(value)))
 
         return [self.conformValue(v) for v in value]
 
@@ -598,6 +617,13 @@ class Node(object):
     def processChunk(self, chunk):
         raise NotImplementedError('No processChunk implementation on node: "{}"'.format(chunk.node.name))
 
+class InputNode(Node):
+    """
+    Node that does not need to be processed, it is just a placeholder for inputs.
+    """
+    def processChunk(self, chunk):
+        pass
+
 
 class CommandLineNode(Node):
     """
@@ -673,7 +699,7 @@ class AVCommandLineNode(CommandLineNode):
     cmdCore = ''
 
     def __init__(self):
-        
+
         if AVCommandLineNode.cgroupParsed is False:
 
             AVCommandLineNode.cmdMem = ''

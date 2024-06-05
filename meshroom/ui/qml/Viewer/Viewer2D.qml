@@ -176,7 +176,7 @@ FocusScope {
         }
 
         // node must be computed or at least running
-        if (!node.isPartiallyFinished()) {
+        if (node.isComputable && !node.isPartiallyFinished()) {
             return false
         }
 
@@ -302,7 +302,7 @@ FocusScope {
                 }
             }
         }
-        names.push("gallery")
+        if (!displayedNode || displayedNode.isComputable) names.push("gallery")
         outputAttribute.names = names
 
         root.source = getImageFile()

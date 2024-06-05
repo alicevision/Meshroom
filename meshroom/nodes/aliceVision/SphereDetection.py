@@ -91,9 +91,9 @@ Spheres can be automatically detected or manually defined in the interface.
     outputs = [
         desc.File(
             name="output",
-            label="Output Folder",
+            label="Output Path",
             description="Sphere detection information will be written here.",
-            value=desc.Node.internalFolder,
-            uid=[],
-        ),
+            value=desc.Node.internalFolder + "/detection.json",
+            uid=[]
+        )
     ]

@@ -1320,6 +1320,9 @@ class Graph(BaseObject):
         if path != self._filepath and setupProjectFile:
             self._setFilepath(path)
 
+        # update the file date version
+        self._fileDateVersion = os.path.getmtime(path)
+
     def getNonDefaultInputAttributes(self):
         """
         Instead of getting all the inputs and internal attribute keys, only get the keys of

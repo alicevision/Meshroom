@@ -110,6 +110,7 @@ class FilepathHelper(QObject):
             "<PATH>": vp.childAttribute("path").value,
             "<FILENAME>": FilepathHelper.basename(FilepathHelper, vp.childAttribute("path").value),
             "<FILESTEM>": FilepathHelper.removeExtension(FilepathHelper, FilepathHelper.basename(FilepathHelper, vp.childAttribute("path").value)),
+            "<EXTENSION>": FilepathHelper.extension(FilepathHelper, vp.childAttribute("path").value),
         }
 
         resolved = path

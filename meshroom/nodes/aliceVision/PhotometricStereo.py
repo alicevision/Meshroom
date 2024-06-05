@@ -39,7 +39,7 @@ The lighting conditions are assumed to be known.
             label="Spherical Harmonics Order",
             description="Order of the spherical harmonics:\n"
                         " - 0: directional.\n"
-                        " - 1: directional + ambiant.\n"
+                        " - 1: directional + ambient.\n"
                         " - 2: second order spherical harmonics.",
             values=["0", "1", "2"],
             value="0",
@@ -48,9 +48,9 @@ The lighting conditions are assumed to be known.
             uid=[0],
         ),
         desc.BoolParam(
-            name="removeAmbiant",
-            label="Remove Ambiant Light",
-            description="True if the ambiant light is to be removed on the PS images, false otherwise.",
+            name="removeAmbient",
+            label="Remove Ambient Light",
+            description="True if the ambient light is to be removed on the PS images, false otherwise.",
             value=False,
             advanced=True,
             uid=[0],
@@ -92,14 +92,6 @@ The lighting conditions are assumed to be known.
             uid=[],
         ),
         desc.File(
-            name="outputSfmData",
-            label="SfMData",
-            description="Output path for the SfMData file.",
-            value=desc.Node.internalFolder + "/sfmData.sfm",
-            uid=[],
-            group="", # remove from command line
-        ),
-        desc.File(
             name="outputSfmDataAlbedo",
             label="SfMData Albedo",
             description="Output SfMData file containing the albedo information.",
@@ -115,6 +107,14 @@ The lighting conditions are assumed to be known.
             uid=[],
             group="",  # remove from command line
         ),
+        desc.File(
+            name="outputSfmDataNormalPNG",
+            label="SfMData Normal PNG",
+            description="Output SfMData file containing the normal maps information.",
+            value=desc.Node.internalFolder + "/normalMapsPNG.sfm",
+            uid=[],
+            group="", # remove from command line
+        ),
         # these attributes are only here to describe more accurately the output of the node
         # by specifying that it generates 2 sequences of images
         # (see in Viewer2D.qml how these attributes can be used)
@@ -128,6 +128,15 @@ The lighting conditions are assumed to be known.
             group="",  # do not export on the command line
         ),
         desc.File(
+            name="normalsPNG",
+            label="Normal Maps Camera (in false colors)",
+            description="Generated normal maps in the camera coordinate system (in false colors).",
+            semantic="image",
+            value=desc.Node.internalFolder + "<POSE_ID>_normals.png",
+            uid=[],
+            group="", # do not export on the command line
+        ),
+        desc.File(
             name="normalsWorld",
             label="Normal Maps World",
             description="Generated normal maps in the world coordinate system.",
@@ -136,6 +145,7 @@ The lighting conditions are assumed to be known.
             uid=[],
             group="",  # do not export on the command line
         ),
+        
         desc.File(
             name="albedo",
             label="Albedo Maps",

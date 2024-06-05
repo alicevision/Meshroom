@@ -21,7 +21,7 @@ Can also be used to calibrate a lighting dome (RTI type).
             uid=[0],
         ),
         desc.File(
-            name="inputJSON",
+            name="inputDetection",
             label="Sphere Detection File",
             description="Input JSON file containing sphere centers and radiuses.",
             value="",

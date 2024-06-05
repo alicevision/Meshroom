@@ -247,7 +247,7 @@ class ViewpointWrapper(QObject):
         """ Update internal members depending on PrepareDenseScene or ExportAnimatedCamera. """
         # undistorted image path
         if self._activeNode_ExportAnimatedCamera.node:
-            self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_ExportAnimatedCamera.node.outputUndistorted.value, self._viewpoint)
+            self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_ExportAnimatedCamera.node.outputImages.value, self._viewpoint)
             self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value
         elif self._activeNode_PrepareDenseScene.node:
             self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_PrepareDenseScene.node.undistorted.value, self._viewpoint)

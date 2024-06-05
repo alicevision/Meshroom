@@ -107,10 +107,18 @@ Based on the input image filenames, it will recognize the input video sequence t
         ),
         desc.File(
             name="outputUndistorted",
+            label="Undistorted Folder",
+            description="Output undistorted folder.",
+            value=desc.Node.internalFolder + "undistort/",
+            group="",  # exclude from command line
+            uid=[],
+        ),
+        desc.File(
+            name="outputImages",
             label="Undistorted Images",
             description="Output undistorted images.",
-            semantic="image",
             value=desc.Node.internalFolder + "undistort/" + "<INTRINSIC_ID>_<FILESTEM>.{undistortedImageTypeValue}",
+            semantic="image",
             group="",  # exclude from command line
             uid=[],
         ),

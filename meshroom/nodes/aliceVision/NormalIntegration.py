@@ -47,10 +47,12 @@ Evaluate a depth map from a normals map (currently in development)
 
     outputs = [
         desc.File(
-            name="outputPath",
-            label="Output Path",
-            description="Path to the output folder.",
-            value=desc.Node.internalFolder,
+            name="depthMap",
+            label="Depth Map Camera",
+            description="Generated depth in the camera coordinate system.",
+            semantic="image",
+            value=desc.Node.internalFolder + "<POSE_ID>_depthMap.exr",
             uid=[],
-        ),
+            group="", # do not export on the command line
+        )
     ]

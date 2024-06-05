@@ -34,6 +34,13 @@ Can also be used to calibrate a lighting dome (RTI type).
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name="ellipticEstimation",
+            label="Use elliptic estimation",
+            description="Consider the right projection of the sphere. Fit the circle tool on the small axe of the ellipse.",
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name="method",
             label="Calibration Method",

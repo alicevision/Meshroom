@@ -151,7 +151,7 @@ The lighting conditions are assumed to be known.
             label="Albedo Maps",
             description="Generated albedo maps.",
             semantic="image",
-            value=desc.Node.internalFolder + "<POSE_ID>_albedo.exr",
+            value=desc.Node.internalFolder + "<POSE_ID>_albedo.png",
             uid=[],
             group="",  # do not export on the command line
         ),

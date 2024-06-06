@@ -328,10 +328,11 @@ Item {
                             MaterialLabel {
                                 id: nodeImageOutput
                                 visible: (node.hasImageOutput || node.has3DOutput)
-                                         && ((["SUCCESS"].includes(node.globalStatus) && node.chunks.count > 0) || !node.isComputable)
                                 text: MaterialIcons.visibility
                                 padding: 2
                                 font.pointSize: 7
+                                property bool displayable: ((["SUCCESS"].includes(node.globalStatus) && node.chunks.count > 0) || !node.isComputable)
+                                color: displayable ? palette.text : Qt.darker(palette.text, 1.8)
 
                                 ToolTip {
                                     id: nodeImageOutputTooltip
@@ -339,11 +340,11 @@ Item {
                                     visible: nodeImageOutputMA.containsMouse && nodeImageOutput.visible
                                     text: {
                                         if (node.hasImageOutput && !node.has3DOutput)
-                                            return "Double-click on this node to load its outputs in the Image Viewer."
+                                            return nodeImageOutput.displayable ? "Double-click on this node to load its outputs in the Image Viewer." : "This node has image outputs."
                                         else if (node.has3DOutput && !node.hasImageOutput)
-                                            return "Double-click on this node to load its outputs in the 3D Viewer."
+                                            return nodeImageOutput.displayable ? "Double-click on this node to load its outputs in the 3D Viewer." : "This node has 3D outputs."
                                         else  // Handle case where a node might have both 2D and 3D outputs
-                                            return "Double-click on this node to load its outputs in the Image or 3D Viewer."
+                                            return nodeImageOutput.displayable ? "Double-click on this node to load its outputs in the Image or 3D Viewer." : "This node has image and 3D outputs."
                                     }
                                     implicitWidth: 500
                                     delay: 300

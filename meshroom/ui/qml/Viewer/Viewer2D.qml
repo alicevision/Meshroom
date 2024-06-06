@@ -1459,4 +1459,57 @@ FocusScope {
                 fit()
         }
     }
+
+    // Actions for RGBA filters
+    Action {
+        id: rFilterAction
+
+        shortcut: "R"
+        onTriggered: {
+            if (hdrImageToolbar.channelModeValue !== 'r') {
+                hdrImageToolbar.channelModeValue = 'r'
+            } else {
+                hdrImageToolbar.channelModeValue = 'rgba'
+            }
+        }
+    }
+
+    Action {
+        id: gFilterAction
+
+        shortcut: "G"
+        onTriggered: {
+            if (hdrImageToolbar.channelModeValue !== 'g') {
+                hdrImageToolbar.channelModeValue = 'g'
+            } else {
+                hdrImageToolbar.channelModeValue = 'rgba'
+            }
+        }
+    }
+
+    Action {
+        id: bFilterAction
+
+        shortcut: "B"
+        onTriggered: {
+            if (hdrImageToolbar.channelModeValue !== 'b') {
+                hdrImageToolbar.channelModeValue = 'b'
+            } else {
+                hdrImageToolbar.channelModeValue = 'rgba'
+            }
+        }
+    }
+
+    Action {
+        id: aFilterAction
+
+        shortcut: "A"
+        onTriggered: {
+            if (hdrImageToolbar.channelModeValue !== 'a') {
+                hdrImageToolbar.channelModeValue = 'a'
+            } else {
+                hdrImageToolbar.channelModeValue = 'rgba'
+            }
+        }
+    }
 }

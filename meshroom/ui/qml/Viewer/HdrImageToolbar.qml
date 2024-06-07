@@ -21,7 +21,7 @@ FloatingPane {
     property real slidersPowerValue: 4.0
     property real gainValue: Math.pow(gainCtrl.value, slidersPowerValue)
     property real gammaValue: Math.pow(gammaCtrl.value, slidersPowerValue)
-    property string channelModeValue: channelsCtrl.value
+    property alias channelModeValue: channelsCtrl.value
     property variant colorRGBA: null
 
     property bool colorPickerVisible: true
@@ -49,6 +49,10 @@ FloatingPane {
 
             property var channels: ["rgba", "rgb", "r", "g", "b","a"]
             property string value: channels[currentIndex]
+
+            onValueChanged: {
+                currentIndex = channels.indexOf(value)
+            }
 
             model: channels
         }

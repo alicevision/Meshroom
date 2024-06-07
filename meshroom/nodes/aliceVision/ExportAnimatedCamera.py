@@ -120,6 +120,7 @@ Based on the input image filenames, it will recognize the input video sequence t
             value=desc.Node.internalFolder + "undistort/" + "<INTRINSIC_ID>_<FILESTEM>.{undistortedImageTypeValue}",
             semantic="image",
             group="",  # exclude from command line
+            enabled=lambda node: node.exportUndistortedImages.value,
             uid=[],
         ),
     ]

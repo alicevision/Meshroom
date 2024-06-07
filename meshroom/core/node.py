@@ -750,7 +750,7 @@ class BaseNode(BaseObject):
             # Apply expressions for File attributes
             if attr.attributeDesc.isExpression:
                 defaultValue = ""
-                # Do not evaluate expression for disabled attributes (the expression may refer to other attributes that are not yet defined)
+                # Do not evaluate expression for disabled attributes (the expression may refer to other attributes that are not defined)
                 if attr.enabled:
                     try:
                         defaultValue = attr.defaultValue()

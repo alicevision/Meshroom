@@ -81,7 +81,7 @@ def test_multiviewPipeline():
         for node in graph1.nodes:
             otherNode = otherGraph.node(node.name)
             for key, attr in node.attributes.items():
-                if attr.isOutput:
+                if attr.isOutput and attr.enabled:
                     otherAttr = otherNode.attribute(key)
                     assert attr.uid() != otherAttr.uid()
 
@@ -91,7 +91,7 @@ def test_multiviewPipeline():
         otherNode = graph2b.node(node.name)
         for key, attr in node.attributes.items():
             otherAttr = otherNode.attribute(key)
-            if attr.isOutput:
+            if attr.isOutput and attr.enabled:
                 assert attr.uid() == otherAttr.uid()
             else:
                 for uidIndex in attr.desc.uid:
@@ -103,7 +103,7 @@ def test_multiviewPipeline():
         otherNode = graph4b.node(node.name)
         for key, attr in node.attributes.items():
             otherAttr = otherNode.attribute(key)
-            if attr.isOutput:
+            if attr.isOutput and attr.enabled:
                 assert attr.uid() == otherAttr.uid()
             else:
                 for uidIndex in attr.desc.uid:

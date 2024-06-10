@@ -999,12 +999,25 @@ class Reconstruction(UIGraph):
         for category, nodeTypes in self.activeNodeCategories.items():
             if node.nodeType in nodeTypes:
                 self.activeNodes.get(category).node = node
+
                 if category == 'sfm':
                     self.setSfm(node)
 
                 # if the active node is a CameraInit node, update the camera init index
                 if node.nodeType == "CameraInit":
                     self.setCameraInitIndex(self._cameraInits.indexOf(node))
+
+        # get all nodes that are input nodes of the active node
+        inputNodes = node.getInputNodes(recursive=True, dependenciesOnly=True)
+        inputCameraInitNodes = [n for n in inputNodes if n.nodeType == "CameraInit"]
+        # if the current camera init node is not the same as the camera init node of the active node
+        if inputCameraInitNodes and self.cameraInit not in inputCameraInitNodes:
+            # set the camera init node of the active node as the current camera init node
+            # if multiple camera init, select one arbitrarily (the one with more viewpoints)
+            inputCameraInitNodes.sort(key=lambda n: len(n.viewpoints.value), reverse=True)
+            cameraInitNode = inputCameraInitNodes[0]
+            self.setCameraInitIndex(self._cameraInits.indexOf(cameraInitNode))
+            self.setSelectedViewId(self.viewpoints[0].viewId.value)
         self.activeNodes.get(node.nodeType).node = node
 
     @Slot(QObject)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding:utf-8
+from collections.abc import Iterable
 import logging
 import os
 import json
@@ -625,6 +626,8 @@ class UIGraph(QObject):
 
     def filterNodes(self, nodes):
         """Filter out the nodes that do not exist on the graph."""
+        if not isinstance(nodes, Iterable):
+            nodes = [nodes]
         return [ n for n in nodes if n in self._graph.nodes.values() ]
 
     @Slot(Node, QPoint, QObject)
@@ -698,7 +701,7 @@ class UIGraph(QObject):
             with self.groupedGraphModification("Node duplication", disableUpdates=True):
                 duplicates = self.push(commands.DuplicateNodesCommand(self._graph, nodes))
             # move nodes below the bounding box formed by the duplicated node(s)
-            bbox = self._layout.boundingBox(duplicates)
+            bbox = self._layout.boundingBox(nodes)
 
             for n in duplicates:
                 idx = duplicates.index(n)

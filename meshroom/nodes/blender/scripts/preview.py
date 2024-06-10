@@ -144,26 +144,33 @@ def initCompositing(useBackground, useMasks):
     '''Initialize Blender compositing graph for adding background image to render.'''
     bpy.context.scene.render.film_transparent = True
     bpy.context.scene.use_nodes = True
-    nodeAlphaOver = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeAlphaOver")
-    nodeSetAlpha = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeSetAlpha")
-    nodeBackground = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
-    nodeMask = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
+
     nodeRender = bpy.context.scene.node_tree.nodes['Render Layers']
+    nodeMask = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
+    nodeMask.use_straight_alpha_output = False
+    # nodeMask.colorspace = 'Non-Color' # how to set the colorspace?
+
+    nodeRenderMasked = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeSetAlpha")
+    nodeRenderMasked.mode = "APPLY"  # "REPLACE_ALPHA"
+
+    nodeBackground = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
+
+    nodeRenderOnBackground = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeAlphaOver")
     nodeComposite = bpy.context.scene.node_tree.nodes['Composite']
     if useBackground and useMasks:
-        bpy.context.scene.node_tree.links.new(nodeBackground.outputs['Image'], nodeAlphaOver.inputs[1])
-        bpy.context.scene.node_tree.links.new(nodeRender.outputs['Image'], nodeSetAlpha.inputs['Image'])
-        bpy.context.scene.node_tree.links.new(nodeMask.outputs['Image'], nodeSetAlpha.inputs['Alpha'])
-        bpy.context.scene.node_tree.links.new(nodeSetAlpha.outputs['Image'], nodeAlphaOver.inputs[2])
-        bpy.context.scene.node_tree.links.new(nodeAlphaOver.outputs['Image'], nodeComposite.inputs['Image'])
+        bpy.context.scene.node_tree.links.new(nodeRender.outputs['Image'], nodeRenderMasked.inputs['Image'])
+        bpy.context.scene.node_tree.links.new(nodeMask.outputs['Image'], nodeRenderMasked.inputs['Alpha'])
+        bpy.context.scene.node_tree.links.new(nodeBackground.outputs['Image'], nodeRenderOnBackground.inputs[1])
+        bpy.context.scene.node_tree.links.new(nodeRenderMasked.outputs['Image'], nodeRenderOnBackground.inputs[2])
+        bpy.context.scene.node_tree.links.new(nodeRenderOnBackground.outputs['Image'], nodeComposite.inputs['Image'])
     elif useBackground:
-        bpy.context.scene.node_tree.links.new(nodeBackground.outputs['Image'], nodeAlphaOver.inputs[1])
-        bpy.context.scene.node_tree.links.new(nodeRender.outputs['Image'], nodeAlphaOver.inputs[2])
-        bpy.context.scene.node_tree.links.new(nodeAlphaOver.outputs['Image'], nodeComposite.inputs['Image'])
+        bpy.context.scene.node_tree.links.new(nodeBackground.outputs['Image'], nodeRenderOnBackground.inputs[1])
+        bpy.context.scene.node_tree.links.new(nodeRender.outputs['Image'], nodeRenderOnBackground.inputs[2])
+        bpy.context.scene.node_tree.links.new(nodeRenderOnBackground.outputs['Image'], nodeComposite.inputs['Image'])
     elif useMasks:
-        bpy.context.scene.node_tree.links.new(nodeRender.outputs['Image'], nodeSetAlpha.inputs['Image'])
-        bpy.context.scene.node_tree.links.new(nodeMask.outputs['Image'], nodeSetAlpha.inputs['Alpha'])
-        bpy.context.scene.node_tree.links.new(nodeSetAlpha.outputs['Image'], nodeComposite.inputs['Image'])
+        bpy.context.scene.node_tree.links.new(nodeRender.outputs['Image'], nodeRenderMasked.inputs['Image'])
+        bpy.context.scene.node_tree.links.new(nodeMask.outputs['Image'], nodeRenderMasked.inputs['Alpha'])
+        bpy.context.scene.node_tree.links.new(nodeRenderMasked.outputs['Image'], nodeComposite.inputs['Image'])
     return nodeBackground, nodeMask
 
 
@@ -192,14 +199,16 @@ def setupBackground(view, folderUndistorted, nodeBackground):
 
 def setupMask(view, folderMasks, nodeMask):
     '''Retrieve mask corresponding to view and use it in compositing graph.'''
-    matches = glob.glob(folderMasks + '/*' + view['viewId'] + "*") # try with viewId
+    matches = glob.glob(folderMasks + '/' + view['viewId'] + ".???") # try with viewId
     if len(matches) == 0:
         baseImgName = os.path.splitext(os.path.basename(view['path']))[0]
-        matches = glob.glob(folderMasks + '/*' + baseImgName + "*") # try with image name
+        matches = glob.glob(folderMasks + '/' + baseImgName + ".???") # try with image name
     if len(matches) == 0:
         # no background image found
+        print(f"Failed to find mask for viewId={view['viewId']}")
         return None
     maskPath = matches[0]
+    print(f"maskPath={maskPath} for viewId={view['viewId']}")
     mask = bpy.data.images.load(filepath=maskPath)
     nodeMask.image = mask
     return mask
@@ -208,7 +217,7 @@ def setupMask(view, folderMasks, nodeMask):
 def loadModel(filename):
     '''Load model in Alembic of OBJ format. Make sure orientation matches camera orientation.'''
     if filename.lower().endswith('.obj'):
-        bpy.ops.import_scene.obj(filepath=filename, axis_forward='Y', axis_up='Z')
+        bpy.ops.wm.obj_import(filepath=filename, forward_axis='Y', up_axis='Z')
         meshName = os.path.splitext(os.path.basename(filename))[0]
         return bpy.data.objects[meshName], bpy.data.meshes[meshName]
     elif filename.lower().endswith('.abc'):

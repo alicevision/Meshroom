@@ -1512,4 +1512,14 @@ FocusScope {
             }
         }
     }
+
+    // Actions for Metadata overlay
+    Action {
+        id: metadataAction
+
+        shortcut: "I"
+        onTriggered: {
+            metadataCB.checked = !metadataCB.checked
+        }
+    }
 }

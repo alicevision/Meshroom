@@ -403,4 +403,15 @@ FloatingPane {
         font: fpsTextInput.font
         text: "100 FPS"
     }
+
+    // Action to play/pause the sequence player
+    Action {
+        id: playPauseAction
+
+        shortcut: "Space"
+
+        onTriggered: {
+            m.playing = !m.playing;
+        }
+    }
 }

@@ -71,15 +71,17 @@ Bounded box sizes can be increased by a ratio from 0 to 100%
         desc.StringParam(
             name="prompt",
             label="Prompt",
-            description="What to segment.",
+            description="What to segment, separated by point or one item per line",
             value="person",
+            semantic="multiline",
             uid=[0],
         ),
         desc.StringParam(
             name="synonyms",
             label="Synonyms",
-            description="Synonyms to prompt separated by commas. eg: man,woman,boy,girl can be used as synonyms of person",
-            value="man,woman,boy,girl,human,people",
+            description="Synonyms to prompt separated by commas or one item per line. eg: man,woman,boy,girl,human,people can be used as synonyms of person",
+            value="man\nwoman\nboy\ngirl\nhuman\npeople",
+            semantic="multiline",
             uid=[0],
         ),
         desc.BoolParam(
@@ -119,11 +121,29 @@ Bounded box sizes can be increased by a ratio from 0 to 100%
             uid=[0],
         ),
         desc.ChoiceParam(
+            name="extension",
+            label="Output File Extension",
+            description="Output image file extension.\n"
+                        "If unset, the output file extension will match the input's if possible.",
+            value="exr",
+            values=["exr", "png", "jpg"],
+            exclusive=True,
+            uid=[0],
+            group='', # remove from command line params
+        ),
+        desc.BoolParam(
+            name="outputBboxImage",
+            label="Output Bounded Box Image",
+            description="Write source image with bounded boxes baked in.",
+            value=False,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
-            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            description="Verbosity level (fatal, error, warning, info, debug).",
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
+            values=["fatal", "error", "warning", "info", "debug"],
             exclusive=True,
             uid=[],
         )
@@ -142,13 +162,13 @@ Bounded box sizes can be increased by a ratio from 0 to 100%
             label="Masks",
             description="Generated segmentation masks.",
             semantic="image",
-            value=lambda attr: desc.Node.internalFolder + "<VIEW_ID>.exr" if not attr.node.keepFilename.value else desc.Node.internalFolder + "<FILENAME>.exr",
+            value=lambda attr: desc.Node.internalFolder + ("<FILENAME>" if attr.node.keepFilename.value else "<VIEW_ID>") + "." + attr.node.extension.value,
             group="",
             uid=[],
         ),
     ]
 
-    def resolvedPaths(self, inputSfm, outDir, keepFilename):
+    def resolvedPaths(self, inputSfm, outDir, keepFilename, ext):
         paths = {}
         dataAV = av.sfmData.SfMData()
         if av.sfmDataIO.load(dataAV, inputSfm, av.sfmDataIO.ALL) and os.path.isdir(outDir):
@@ -156,11 +176,11 @@ Bounded box sizes can be increased by a ratio from 0 to 100%
             for id, v in views.items():
                 inputFile = v.getImage().getImagePath()
                 if keepFilename:
-                    outputFileMask = os.path.join(outDir, Path(inputFile).stem + '.exr')
-                    outputFileBoxes = os.path.join(outDir, "bboxes_" + Path(inputFile).stem + '.jpg')
+                    outputFileMask = os.path.join(outDir, Path(inputFile).stem + '.' + ext)
+                    outputFileBoxes = os.path.join(outDir, Path(inputFile).stem + "_bboxes" + '.jpg')
                 else:
-                    outputFileMask = os.path.join(outDir, str(id) + '.exr')
-                    outputFileBoxes = os.path.join(outDir, "bboxes_" + str(id) + '.exr')
+                    outputFileMask = os.path.join(outDir, str(id) + '.' + ext)
+                    outputFileBoxes = os.path.join(outDir, str(id) + "_bboxes" + '.jpg')
                 paths[inputFile] = (outputFileMask, outputFileBoxes)
 
         return paths
@@ -177,7 +197,7 @@ Bounded box sizes can be increased by a ratio from 0 to 100%
 
             chunk.logger.info('Chunk range from {} to {}'.format(chunk.range.start, chunk.range.last))
 
-            outFiles = self.resolvedPaths(chunk.node.input.value, chunk.node.output.value, chunk.node.keepFilename.value)
+            outFiles = self.resolvedPaths(chunk.node.input.value, chunk.node.output.value, chunk.node.keepFilename.value, chunk.node.extension.value)
 
             if not os.path.exists(chunk.node.output.value):
                 os.mkdir(chunk.node.output.value)
@@ -190,6 +210,11 @@ Bounded box sizes can be increased by a ratio from 0 to 100%
                                                      SAM_CHECKPOINT_PATH = chunk.node.segmentationModelPath.value,
                                                      useGPU = chunk.node.useGpu.value)
 
+            prompt = chunk.node.prompt.value.replace('\n','.')
+            chunk.logger.debug('prompt: {}'.format(prompt))
+            synonyms = chunk.node.synonyms.value.replace('\n',',')
+            chunk.logger.debug('synonyms: {}'.format(synonyms))
+
             for k, (iFile, oFile) in enumerate(outFiles.items()):
                 if k >= chunk.range.start and k <= chunk.range.last:
                     img = image.loadImage(iFile)
@@ -201,15 +226,17 @@ Bounded box sizes can be increased by a ratio from 0 to 100%
                                                            invert = chunk.node.maskInvert.value,
                                                            verbose = False)
 
+                    chunk.logger.debug('image: {}'.format(iFile))
                     chunk.logger.debug('tags: {}'.format(tags))
                     chunk.logger.debug('bboxes: {}'.format(bboxes))
 
                     image.writeImage(oFile[0], mask)
 
-                    imgBoxes = (img * 255.0).astype('uint8')
-                    for bbox in bboxes:
-                        imgBoxes = image.addRectangle(imgBoxes, bbox)
-                    image.writeImage(oFile[1], imgBoxes)
+                    if (chunk.node.outputBboxImage.value):
+                        imgBoxes = (img * 255.0).astype('uint8')
+                        for bbox in bboxes:
+                            imgBoxes = image.addRectangle(imgBoxes, bbox)
+                        image.writeImage(oFile[1], imgBoxes)
 
             del processor
             torch.cuda.empty_cache()
@@ -218,5 +245,8 @@ Bounded box sizes can be increased by a ratio from 0 to 100%
             chunk.logManager.end()
 
     def stopProcess(sel, chunk):
-        del processor
+        try:
+            del processor
+        except:
+            pass
 

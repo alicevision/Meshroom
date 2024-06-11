@@ -404,6 +404,7 @@ class NodeChunk(BaseObject):
         global runningProcesses
         runningProcesses[self.name] = self
         self._status.initStartCompute()
+        exceptionStatus = None
         startTime = time.time()
         self.upgradeStatusTo(Status.RUNNING)
         self.statThread = stats.StatisticsThread(self)
@@ -411,17 +412,17 @@ class NodeChunk(BaseObject):
         try:
             self.node.nodeDesc.processChunk(self)
         except Exception as e:
-            self._status.elapsedTime = time.time() - startTime
             if self._status.status != Status.STOPPED:
-                self.upgradeStatusTo(Status.ERROR)
+                exceptionStatus = Status.ERROR
             raise
         except (KeyboardInterrupt, SystemError, GeneratorExit) as e:
-            self._status.elapsedTime = time.time() - startTime
-            self.upgradeStatusTo(Status.STOPPED)
+            exceptionStatus = Status.STOPPED
             raise
         finally:
             self._status.initEndCompute()
             self._status.elapsedTime = time.time() - startTime
+            if exceptionStatus is not None:
+                self.upgradeStatusTo(exceptionStatus)
             logging.info(' - elapsed time: {}'.format(self._status.elapsedTimeStr))
             # ask and wait for the stats thread to stop
             self.statThread.stopRequest()

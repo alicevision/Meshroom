@@ -1639,7 +1639,7 @@ class CompatibilityNode(BaseNode):
         try:
             upgradedAttrValues = node.nodeDesc.upgradeAttributeValues(attrValues, self.version)
         except Exception as e:
-            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, str(e)))
+            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, repr(e)))
             upgradedAttrValues = attrValues
 
         if not isinstance(upgradedAttrValues, dict):

@@ -755,7 +755,7 @@ class InitNode:
         """
         for attrName in attributeNames:
             if node.hasAttribute(attrName):
-                node.attribute(attrName).resetValue()
+                node.attribute(attrName).resetToDefaultValue()
 
     def extendAttributes(self, node, attributesDict):
         """

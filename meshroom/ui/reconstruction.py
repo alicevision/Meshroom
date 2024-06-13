@@ -924,10 +924,10 @@ class Reconstruction(UIGraph):
         if rebuild:
             # if rebuilding all intrinsics, for each Viewpoint:
             for vp in cameraInitCopy.viewpoints.value:
-                vp.intrinsicId.resetValue()  # reset intrinsic assignation
-                vp.metadata.resetValue()  # and metadata (to clear any previous 'SensorWidth' entries)
+                vp.intrinsicId.resetToDefaultValue()  # reset intrinsic assignation
+                vp.metadata.resetToDefaultValue()  # and metadata (to clear any previous 'SensorWidth' entries)
             # reset existing intrinsics list
-            cameraInitCopy.intrinsics.resetValue()
+            cameraInitCopy.intrinsics.resetToDefaultValue()
 
         try:
             self.setBuildingIntrinsics(True)

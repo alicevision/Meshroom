@@ -378,12 +378,12 @@ class RemoveImagesCommand(GraphCommand):
     def redoImpl(self):
         for i in range(len(self.cameraInits)):
             # Reset viewpoints
-            self.cameraInits[i].viewpoints.resetValue()
+            self.cameraInits[i].viewpoints.resetToDefaultValue()
             self.cameraInits[i].viewpoints.valueChanged.emit()
             self.cameraInits[i].viewpoints.requestGraphUpdate()
 
             # Reset intrinsics
-            self.cameraInits[i].intrinsics.resetValue()
+            self.cameraInits[i].intrinsics.resetToDefaultValue()
             self.cameraInits[i].intrinsics.valueChanged.emit()
             self.cameraInits[i].intrinsics.requestGraphUpdate()
 

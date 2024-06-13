@@ -1272,13 +1272,13 @@ class Node(BaseNode):
         self._internalFolder = self.nodeDesc.internalFolder
 
         for attrDesc in self.nodeDesc.inputs:
-            self._attributes.add(attributeFactory(attrDesc, None, False, self))
+            self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))
 
         for attrDesc in self.nodeDesc.outputs:
-            self._attributes.add(attributeFactory(attrDesc, None, True, self))
+            self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=True, node=self))
 
         for attrDesc in self.nodeDesc.internalInputs:
-            self._internalAttributes.add(attributeFactory(attrDesc, None, False, self))
+            self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))
 
         # List attributes per uid
         for attr in self._attributes:
@@ -1292,8 +1292,6 @@ class Node(BaseNode):
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)
 
-        self.setAttributeValues(kwargs)
-        self.setInternalAttributeValues(kwargs)
         self.optionalCallOnDescriptor("onNodeCreated")
 
     def optionalCallOnDescriptor(self, methodName, *args, **kwargs):

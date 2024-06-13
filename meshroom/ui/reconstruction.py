@@ -1020,7 +1020,7 @@ class Reconstruction(UIGraph):
                     nodesByCategory[category] = node
         for category, node in nodesByCategory.items():
             self.activeNodes.get(category).node = node
-            if category == 'sfm':
+            if category == 'sfm' and not self._graph.dirtyTopology:
                 self.setActiveNode(self.lastSfmNode())
         for node in nodes:
             if node is None:

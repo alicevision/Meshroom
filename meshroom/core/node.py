@@ -1648,13 +1648,8 @@ class CompatibilityNode(BaseNode):
 
         node.upgradeAttributeValues(upgradedAttrValues)
 
-        try:
-            upgradedIntAttrValues = node.nodeDesc.upgradeAttributeValues(intAttrValues, self.version)
-        except Exception as e:
-            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, str(e)))
-            upgradedIntAttrValues = intAttrValues
+        node.upgradeInternalAttributeValues(intAttrValues)
 
-        node.upgradeInternalAttributeValues(upgradedIntAttrValues)
         return node
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)

@@ -1746,8 +1746,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
                     break
 
     if compatibilityIssue is None:
-        node = Node(nodeType, position, **inputs, **outputs)
-        node.setInternalAttributeValues(internalInputs)
+        node = Node(nodeType, position, **inputs, **internalInputs, **outputs)
     else:
         logging.debug("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
         node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)

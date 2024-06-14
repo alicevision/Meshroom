@@ -404,6 +404,7 @@ class NodeChunk(BaseObject):
         global runningProcesses
         runningProcesses[self.name] = self
         self._status.initStartCompute()
+        exceptionStatus = None
         startTime = time.time()
         self.upgradeStatusTo(Status.RUNNING)
         self.statThread = stats.StatisticsThread(self)
@@ -412,14 +413,16 @@ class NodeChunk(BaseObject):
             self.node.nodeDesc.processChunk(self)
         except Exception as e:
             if self._status.status != Status.STOPPED:
-                self.upgradeStatusTo(Status.ERROR)
+                exceptionStatus = Status.ERROR
             raise
         except (KeyboardInterrupt, SystemError, GeneratorExit) as e:
-            self.upgradeStatusTo(Status.STOPPED)
+            exceptionStatus = Status.STOPPED
             raise
         finally:
             self._status.initEndCompute()
             self._status.elapsedTime = time.time() - startTime
+            if exceptionStatus is not None:
+                self.upgradeStatusTo(exceptionStatus)
             logging.info(' - elapsed time: {}'.format(self._status.elapsedTimeStr))
             # ask and wait for the stats thread to stop
             self.statThread.stopRequest()
@@ -805,6 +808,13 @@ class BaseNode(BaseObject):
             shutil.rmtree(self.internalFolder)
             self.updateStatusFromCache()
 
+    @Slot(result=str)
+    def getStartDateTime(self):
+        """ Return the date (str) of the first running chunk """
+        dateTime = [chunk._status.startDateTime for chunk in self._chunks if chunk._status.status
+                    not in (Status.NONE, Status.SUBMITTED) and chunk._status.startDateTime != ""]
+        return min(dateTime) if len(dateTime) != 0 else ""
+
     def isAlreadySubmitted(self):
         for chunk in self._chunks:
             if chunk.isAlreadySubmitted():
@@ -826,6 +836,11 @@ class BaseNode(BaseObject):
             if chunk.isRunning():
                 return True
         return False
+
+    @Slot(result=bool)
+    def isRunning(self):
+        """ Return True if at least one chunk of this Node is running, False otherwise. """
+        return any(chunk.isRunning() for chunk in self._chunks)
 
     @Slot(result=bool)
     def isFinishedOrRunning(self):

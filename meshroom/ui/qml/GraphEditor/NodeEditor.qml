@@ -15,8 +15,10 @@ Panel {
     id: root
 
     property variant node
+    property string globalStatus : node !== null ? node.globalStatus : ""
     property bool readOnly: false
     property bool isCompatibilityNode: node && node.compatibilityIssue !== undefined
+    property string nodeStartDateTime: ""
 
     signal attributeDoubleClicked(var mouse, var attribute)
     signal upgradeRequest()
@@ -24,30 +26,45 @@ Panel {
     title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" + (node.label !== node.defaultLabel ? " (" + node.defaultLabel + ")" : "") : "")
     icon: MaterialLabel { text: MaterialIcons.tune }
 
+    onGlobalStatusChanged: {
+        nodeStartDateTime = ""
+        if (node !== null && node.isRunning()) {
+            timer.start()
+        }
+        else {
+            timer.stop()
+            if (node !== null && (node.isFinishedOrRunning() || globalStatus == "ERROR")) {
+                computationInfo.text = Format.getTimeStr(node.elapsedTime)
+            }
+            else{
+                computationInfo.text =  ""
+            }
+        }
+    }
+
     headerBar: RowLayout {
         Label {
-            text: {
-                if (node !== null && node.isSubmittedOrRunning()) {
-                    // Some chunks might be submitted but they'll all run eventually
-                    if (node.elapsedTime > 0) { // At least a chunk is done running
-                        return "Running for: " + Format.getTimeStr(node.elapsedTime)
-                    } else {
-                        return (node.chunks.count > 1) ? "First chunk running" : "Node running"
+            id: computationInfo
+            color: node ? Colors.statusColors[node.globalStatus] : palette.text
+            Timer {
+                id: timer
+                interval: 2500
+                triggeredOnStart: true
+                repeat: true
+                running: node !== null && node.isRunning()
+                onTriggered: {
+                    if (nodeStartDateTime === "") {
+                        nodeStartDateTime = new Date(node.getStartDateTime()).getTime()
                     }
-                } else if (node !== null && node.isFinishedOrRunning()) {
-                    /* Either all chunks finished running or the last one is running
-                        * Placed inside an "else if" instead of "else" to avoid entering the functions
-                        * when there is no real use */
-                    return Format.getTimeStr(node.elapsedTime)
-                } else {
-                    return ""
+                    var now = new Date().getTime()
+                    parent.text = Format.getTimeStr((now-nodeStartDateTime)/1000)
                 }
             }
             padding: 2
             font.italic: true
             visible: {
                 if (node !== null) {
-                    if ((node.isFinishedOrRunning() || node.isSubmittedOrRunning())) {
+                    if (node.isFinishedOrRunning() || node.isSubmittedOrRunning() || node.globalStatus=="ERROR") {
                         return true
                     }
                 }
@@ -184,7 +201,10 @@ Panel {
                 MenuItem {
                     enabled: root.node !== null
                     text: "Clear Pending Status"
-                    onClicked: node.clearSubmittedChunks()
+                    onClicked: {
+                        node.clearSubmittedChunks()
+                        timer.stop()
+                    }
                 }
             }
         }

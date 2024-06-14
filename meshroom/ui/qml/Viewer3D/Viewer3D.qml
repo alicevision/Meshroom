@@ -20,7 +20,7 @@ FocusScope {
     readonly property alias mainCamera: mainCamera
 
     readonly property vector3d defaultCamPosition: Qt.vector3d(12.0, 10.0, -12.0)
-    readonly property vector3d defaultCamUpVector: Qt.vector3d(0.0, 1.0, 0.0)
+    readonly property vector3d defaultCamUpVector: Qt.vector3d(-0.358979, 0.861550, 0.358979) // should be accurate, consistent with camera view center
     readonly property vector3d defaultCamViewCenter: Qt.vector3d(0.0, 0.0, 0.0)
 
     readonly property var viewpoint: _reconstruction ? _reconstruction.selectedViewpoint : null

@@ -16,15 +16,6 @@ Entity {
         nearPlane : 0.1
         farPlane : 10000.0
         viewCenter: Qt.vector3d(0.0, 0.0, -1.0)
-
-        // Scene light, attached to the camera
-        Entity {
-            components: [
-                PointLight {
-                    color: "white"
-                }
-            ]
-        }
     }
 
     components: [

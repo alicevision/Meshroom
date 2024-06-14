@@ -70,6 +70,12 @@ FloatingPane {
                         checked: Viewer3DSettings.displayOrigin
                         onClicked: Viewer3DSettings.displayOrigin = !Viewer3DSettings.displayOrigin
                     }
+                    MaterialToolButton {
+                        text: MaterialIcons.light_mode
+                        ToolTip.text: "Display Light Controller"
+                        checked: Viewer3DSettings.displayLightController
+                        onClicked: Viewer3DSettings.displayLightController = !Viewer3DSettings.displayLightController
+                    }
                 }
                 MaterialLabel {
                     text: MaterialIcons.grain

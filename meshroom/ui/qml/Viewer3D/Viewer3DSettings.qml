@@ -51,6 +51,7 @@ Item {
     property bool displayGrid: true
     property bool displayGizmo: true
     property bool displayOrigin: false
+    property bool displayLightController: false
     // Camera
     property bool syncViewpointCamera: false
     property bool syncWithPickedViewId: false  // Sync active camera with picked view ID from sequence player if the setting is enabled

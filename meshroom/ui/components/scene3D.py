@@ -354,7 +354,23 @@ class Transformations3DHelper(QObject):
         U = M * quaternion * M
 
         return U.toEulerAngles()
-
+    
+    @Slot(QVector3D, QVector3D, float, float, result=QVector3D)
+    def getRotatedCameraViewVector(self, camereViewVector, cameraUpVector, pitch, yaw):
+        """ Compute the rotated camera view vector with given pitch and yaw (in degrees).
+            Args:
+                camereViewVector (QVector3D): Camera view vector, the displacement from the camera position to its target
+                cameraUpVector (QVector3D): Camera up vector, the direction the top of the camera is facing
+                pitch (float): Rotation pitch (in degrees)
+                yaw (float): Rotation yaw (in degrees)
+            Returns:
+                QVector3D: rotated camera view vector
+        """
+        cameraSideVector = QVector3D.crossProduct(camereViewVector, cameraUpVector)
+        yawRot = QQuaternion.fromAxisAndAngle(cameraUpVector, yaw)
+        pitchRot = QQuaternion.fromAxisAndAngle(cameraSideVector, pitch)
+        return (yawRot * pitchRot).rotatedVector(camereViewVector)
+    
     @Slot(QVector3D, QMatrix4x4, Qt3DRender.QCamera, QSize, result=float)
     def computeScaleUnitFromModelMatrix(self, axis, modelMat, camera, windowSize):
         """ Compute the length of the screen projected vector axis unit transformed by the model matrix.

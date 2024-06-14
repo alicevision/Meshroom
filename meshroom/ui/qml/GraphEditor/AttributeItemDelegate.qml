@@ -210,7 +210,7 @@ RowLayout {
                 case "GroupAttribute":
                     return groupAttribute_component
                 case "StringParam":
-                    if (attribute.desc.semantic === 'multiline')
+                    if (attribute.desc.semantic.includes('multiline'))
                         return textArea_component
                     return textField_component
                 case "ColorParam":
@@ -329,7 +329,7 @@ RowLayout {
                 // Fixed background for the flickable object
                 color: palette.base
                 width: parent.width
-                height: 70
+                height: attribute.desc.semantic.includes("large") ? 400 : 70
 
                 Flickable {
                     width: parent.width

@@ -45,6 +45,7 @@ Panel {
     headerBar: RowLayout {
         Label {
             id: computationInfo
+            color: node ? Colors.statusColors[node.globalStatus] : palette.text
             Timer {
                 id: timer
                 interval: 2500

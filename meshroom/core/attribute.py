@@ -375,7 +375,13 @@ class Attribute(BaseObject):
 
     def defaultValue(self):
         if isinstance(self.desc.value, types.FunctionType):
-            return self.desc.value(self)
+            try:
+                return self.desc.value(self)
+            except Exception as e:
+                if not self.node.isCompatibilityNode:
+                    # log message only if we are not in compatibility mode
+                    logging.warning("Failed to evaluate default value (node lambda) for attribute '{}': {}".format(self.name, e))
+                return None
         # Need to force a copy, for the case where the value is a list (avoid reference to the desc value)
         return copy.copy(self.desc.value)
 

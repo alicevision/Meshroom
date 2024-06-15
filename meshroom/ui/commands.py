@@ -378,12 +378,12 @@ class RemoveImagesCommand(GraphCommand):
     def redoImpl(self):
         for i in range(len(self.cameraInits)):
             # Reset viewpoints
-            self.cameraInits[i].viewpoints.resetValue()
+            self.cameraInits[i].viewpoints.resetToDefaultValue()
             self.cameraInits[i].viewpoints.valueChanged.emit()
             self.cameraInits[i].viewpoints.requestGraphUpdate()
 
             # Reset intrinsics
-            self.cameraInits[i].intrinsics.resetValue()
+            self.cameraInits[i].intrinsics.resetToDefaultValue()
             self.cameraInits[i].intrinsics.valueChanged.emit()
             self.cameraInits[i].intrinsics.requestGraphUpdate()
 
@@ -434,7 +434,8 @@ class UpgradeNodeCommand(GraphCommand):
         self.graph.removeNode(self.nodeName)
         # recreate compatibility node
         with GraphModification(self.graph):
-            node = nodeFactory(self.nodeDict)
+            # We come back from an upgrade, so we enforce uidConflict=True as there was a uid conflict before
+            node = nodeFactory(self.nodeDict, name=self.nodeName, uidConflict=True)
             self.graph.addNode(node, self.nodeName)
             # recreate out edges
             for dstAttr, srcAttr in self.outEdges.items():

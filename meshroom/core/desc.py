@@ -32,6 +32,7 @@ class Attribute(BaseObject):
         self._errorMessage = errorMessage
         self._visible = visible
         self._isExpression = (isinstance(self._value, str) and "{" in self._value) or isinstance(self._value, types.FunctionType)
+        self._valueType = None
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
@@ -228,6 +229,7 @@ class File(Attribute):
     """
     def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True):
         super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+        self._valueType = str
 
     def validateValue(self, value):
         if not isinstance(value, str):
@@ -247,6 +249,7 @@ class BoolParam(Param):
     """
     def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True):
         super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+        self._valueType = bool
 
     def validateValue(self, value):
         try:
@@ -270,6 +273,7 @@ class IntParam(Param):
         self._range = range
         super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
             validValue=validValue, errorMessage=errorMessage, visible=visible)
+        self._valueType = int
 
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
@@ -293,6 +297,7 @@ class FloatParam(Param):
         self._range = range
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
             validValue=validValue, errorMessage=errorMessage, visible=visible)
+        self._valueType = float
 
     def validateValue(self, value):
         try:
@@ -312,6 +317,8 @@ class PushButtonParam(Param):
     """
     def __init__(self, name, label, description, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True):
         super(PushButtonParam, self).__init__(name=name, label=label, description=description, value=None, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+        self._valueType = None
+
     def validateValue(self, value):
         pass
     def checkValueTypes(self):
@@ -373,6 +380,7 @@ class StringParam(Param):
     def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, uidIgnoreValue=None, validValue=True, errorMessage="", visible=True):
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
             uidIgnoreValue=uidIgnoreValue, validValue=validValue, errorMessage=errorMessage, visible=visible)
+        self._valueType = str
 
     def validateValue(self, value):
         if not isinstance(value, str):
@@ -390,6 +398,7 @@ class ColorParam(Param):
     """
     def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True):
         super(ColorParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+        self._valueType = str
 
     def validateValue(self, value):
         if not isinstance(value, str) or len(value.split(" ")) > 1:
@@ -746,7 +755,7 @@ class InitNode:
         """
         for attrName in attributeNames:
             if node.hasAttribute(attrName):
-                node.attribute(attrName).resetValue()
+                node.attribute(attrName).resetToDefaultValue()
 
     def extendAttributes(self, node, attributesDict):
         """

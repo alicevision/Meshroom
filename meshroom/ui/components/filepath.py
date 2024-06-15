@@ -103,14 +103,15 @@ class FilepathHelper(QObject):
     def resolve(self, path, vp):
         # Resolve dynamic path that depends on viewpoint
 
+        vpPath = vp.childAttribute("path").value
         replacements = {
             "<VIEW_ID>": str(vp.childAttribute("viewId").value),
             "<INTRINSIC_ID>": str(vp.childAttribute("intrinsicId").value),
             "<POSE_ID>": str(vp.childAttribute("poseId").value),
-            "<PATH>": vp.childAttribute("path").value,
-            "<FILENAME>": FilepathHelper.basename(FilepathHelper, vp.childAttribute("path").value),
-            "<FILESTEM>": FilepathHelper.removeExtension(FilepathHelper, FilepathHelper.basename(FilepathHelper, vp.childAttribute("path").value)),
-            "<EXTENSION>": FilepathHelper.extension(FilepathHelper, vp.childAttribute("path").value),
+            "<PATH>": vpPath,
+            "<FILENAME>": FilepathHelper.basename(FilepathHelper, vpPath),
+            "<FILESTEM>": FilepathHelper.removeExtension(FilepathHelper, FilepathHelper.basename(FilepathHelper, vpPath)),
+            "<EXTENSION>": FilepathHelper.extension(FilepathHelper, vpPath),
         }
 
         resolved = path

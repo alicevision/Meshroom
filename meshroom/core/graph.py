@@ -268,7 +268,7 @@ class Graph(BaseObject):
 
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
-        
+
         self._fileDateVersion = os.path.getmtime(filepath)
 
         self.header = fileData.get(Graph.IO.Keys.Header, {})
@@ -551,13 +551,13 @@ class Graph(BaseObject):
                     # find top-level links
                     if Attribute.isLinkExpression(attr.value):
                         skippedEdges[attr] = attr.value
-                        attr.resetValue()
+                        attr.resetToDefaultValue()
                     # find links in ListAttribute children
                     elif isinstance(attr, ListAttribute):
                         for child in attr.value:
                             if Attribute.isLinkExpression(child.value):
                                 skippedEdges[child] = child.value
-                                child.resetValue()
+                                child.resetToDefaultValue()
         return node, skippedEdges
 
     def duplicateNodes(self, srcNodes):
@@ -933,7 +933,7 @@ class Graph(BaseObject):
 
         for edge in self.getEdges(dependenciesOnly=dependenciesOnly):
             nodeEdges[edge.src.node].add(edge.dst.node)
-        
+
         return nodeEdges
 
     def dfs(self, visitor, startNodes=None, longestPathFirst=False):
@@ -1548,7 +1548,7 @@ class Graph(BaseObject):
     @property
     def fileDateVersion(self):
         return self._fileDateVersion
-    
+
     @fileDateVersion.setter
     def fileDateVersion(self, value):
         self._fileDateVersion = value

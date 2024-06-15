@@ -38,6 +38,8 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
     attr = cls(node, description, isOutput, root, parent)
     if value is not None:
         attr.value = value
+    else:
+        attr.resetToDefaultValue()
     return attr
 
 
@@ -72,8 +74,7 @@ class Attribute(BaseObject):
         self._invalidationValue = ""
 
         self._value = None
-        # do not emit value changed on initialization
-        self.resetValue(emitSignals=False)
+        self.initValue()
 
     @property
     def node(self):
@@ -240,7 +241,11 @@ class Attribute(BaseObject):
     def upgradeValue(self, exportedValue):
         self._set_value(exportedValue)
 
-    def resetValue(self, emitSignals=True):
+    def initValue(self):
+        if self.desc._valueType is not None:
+            self._value = self.desc._valueType()
+
+    def resetToDefaultValue(self, emitSignals=True):
         self._set_value(copy.copy(self.defaultValue()), emitSignals=emitSignals)
 
     def requestGraphUpdate(self):
@@ -321,7 +326,7 @@ class Attribute(BaseObject):
             return
         if isinstance(v, Attribute):
             g.addEdge(v, self)
-            self.resetValue()
+            self.resetToDefaultValue()
         elif self.isInput and Attribute.isLinkExpression(v):
             # value is a link to another attribute
             link = v[1:-1]
@@ -330,7 +335,7 @@ class Attribute(BaseObject):
                 g.addEdge(g.node(linkNode).attribute(linkAttr), self)
             except KeyError as err:
                 logging.warning('Connect Attribute from Expression failed.\nExpression: "{exp}"\nError: "{err}".'.format(exp=v, err=err))
-            self.resetValue()
+            self.resetToDefaultValue()
 
     def getExportValue(self):
         if self.isLink:
@@ -370,7 +375,13 @@ class Attribute(BaseObject):
 
     def defaultValue(self):
         if isinstance(self.desc.value, types.FunctionType):
-            return self.desc.value(self)
+            try:
+                return self.desc.value(self)
+            except Exception as e:
+                if not self.node.isCompatibilityNode:
+                    # log message only if we are not in compatibility mode
+                    logging.warning("Failed to evaluate default value (node lambda) for attribute '{}': {}".format(self.name, e))
+                return None
         # Need to force a copy, for the case where the value is a list (avoid reference to the desc value)
         return copy.copy(self.desc.value)
 
@@ -504,7 +515,10 @@ class ListAttribute(Attribute):
     def index(self, item):
         return self._value.indexOf(item)
 
-    def resetValue(self, emitSignals=True):
+    def initValue(self):
+        self.resetToDefaultValue(emitSignals=False)
+
+    def resetToDefaultValue(self, emitSignals=True):
         self._value = ListModel(parent=self)
         if emitSignals:
             self.valueChanged.emit()
@@ -650,14 +664,6 @@ class GroupAttribute(Attribute):
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         super(GroupAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
 
-        subAttributes = []
-        for subAttrDesc in self.attributeDesc.groupDesc:
-            childAttr = attributeFactory(subAttrDesc, None, self.isOutput, self.node, self)
-            subAttributes.append(childAttr)
-            childAttr.valueChanged.connect(self.valueChanged)
-
-        self._value.reset(subAttributes)
-
     def __getattr__(self, key):
         try:
             return super(GroupAttribute, self).__getattr__(key)
@@ -696,10 +702,18 @@ class GroupAttribute(Attribute):
         else:
             raise AttributeError("Failed to set on GroupAttribute: {}".format(str(value)))
 
-    def resetValue(self, emitSignals=True):
+    def initValue(self):
         self._value = DictModel(keyAttrName='name', parent=self)
-        if emitSignals:
-            self.valueChanged.emit()
+        subAttributes = []
+        for subAttrDesc in self.attributeDesc.groupDesc:
+            childAttr = attributeFactory(subAttrDesc, None, self.isOutput, self.node, self)
+            subAttributes.append(childAttr)
+            childAttr.valueChanged.connect(self.valueChanged)
+        self._value.reset(subAttributes)
+
+    def resetToDefaultValue(self, emitSignals=True):
+        for attrDesc in self.desc._groupDesc:
+            self._value.get(attrDesc.name).resetToDefaultValue()
 
     @Slot(str, result=Attribute)
     def childAttribute(self, key):

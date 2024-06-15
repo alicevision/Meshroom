@@ -424,7 +424,8 @@ class Reconstruction(UIGraph):
                 "SfMAlignment"],
         # All nodes generating a sfmData file
         "sfmData": ["CameraInit", "DistortionCalibration", "StructureFromMotion", "GlobalSfM",
-                    "PanoramaEstimation", "SfMTransfer", "SfMTransform", "SfMAlignment"],
+                    "PanoramaEstimation", "SfMTransfer", "SfMTransform", "SfMAlignment",
+                    "ApplyCalibration"],
         # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
         # Nodes that can be used to provide features folders to the UI
@@ -496,10 +497,11 @@ class Reconstruction(UIGraph):
             self._activeNodes.get(key).node = None
 
     def onCameraInitChanged(self):
+        if self._cameraInit is None:
+            return
         # Update active nodes when CameraInit changes
         nodes = self._graph.dfsOnDiscover(startNodes=[self._cameraInit], reverse=True)[0]
         self.setActiveNodes(nodes)
-        self.resetActiveNodePerCategory()
 
     @Slot()
     @Slot(str)
@@ -574,8 +576,8 @@ class Reconstruction(UIGraph):
         self.selectedViewId = "-1"
         self.tempCameraInit = None
         self.updateCameraInits()
-        self.sfm = self.lastSfmNode()
         self.resetActiveNodePerCategory()
+        self.sfm = self.lastSfmNode()
         if not self._graph:
             return
 
@@ -601,9 +603,6 @@ class Reconstruction(UIGraph):
 
         if self.cameraInit is None or self.cameraInit not in cameraInits:
             self.cameraInit = cameraInits[0] if cameraInits else None
-
-        # Manually emit the signal to ensure the active CameraInit index is always up-to-date in the UI
-        self.cameraInitChanged.emit()
 
     def getCameraInitIndex(self):
         if not self._cameraInit:
@@ -924,10 +923,10 @@ class Reconstruction(UIGraph):
         if rebuild:
             # if rebuilding all intrinsics, for each Viewpoint:
             for vp in cameraInitCopy.viewpoints.value:
-                vp.intrinsicId.resetValue()  # reset intrinsic assignation
-                vp.metadata.resetValue()  # and metadata (to clear any previous 'SensorWidth' entries)
+                vp.intrinsicId.resetToDefaultValue()  # reset intrinsic assignation
+                vp.metadata.resetToDefaultValue()  # and metadata (to clear any previous 'SensorWidth' entries)
             # reset existing intrinsics list
-            cameraInitCopy.intrinsics.resetValue()
+            cameraInitCopy.intrinsics.resetToDefaultValue()
 
         try:
             self.setBuildingIntrinsics(True)

@@ -24,7 +24,7 @@ def test_formatting_listOfFiles():
     n1.featuresFolders.extend("single value with space")
     assert n1.featuresFolders.getValueStr() == '"single value with space"'
 
-    n1.featuresFolders.resetValue()
+    n1.featuresFolders.resetToDefaultValue()
     assert n1.featuresFolders.getValueStr() == ''
 
     n1.featuresFolders.extend(inputImages)

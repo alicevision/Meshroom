@@ -760,13 +760,14 @@ class BaseNode(BaseObject):
                     except AttributeError as e:
                         # If we load an old scene, the lambda associated to the 'value' could try to access other params that could not exist yet
                         logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
-                    try:
-                        attr.value = defaultValue.format(**self._cmdVars)
-                        attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
-                    except KeyError as e:
-                        logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
-                    except ValueError as e:
-                        logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                    if defaultValue is not None:
+                        try:
+                            attr.value = defaultValue.format(**self._cmdVars)
+                            attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
+                        except KeyError as e:
+                            logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                        except ValueError as e:
+                            logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
 
             v = attr.getValueStr(withQuotes=True)
 
@@ -1272,13 +1273,13 @@ class Node(BaseNode):
         self._internalFolder = self.nodeDesc.internalFolder
 
         for attrDesc in self.nodeDesc.inputs:
-            self._attributes.add(attributeFactory(attrDesc, None, False, self))
+            self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))
 
         for attrDesc in self.nodeDesc.outputs:
-            self._attributes.add(attributeFactory(attrDesc, None, True, self))
+            self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=True, node=self))
 
         for attrDesc in self.nodeDesc.internalInputs:
-            self._internalAttributes.add(attributeFactory(attrDesc, None, False, self))
+            self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))
 
         # List attributes per uid
         for attr in self._attributes:
@@ -1292,8 +1293,6 @@ class Node(BaseNode):
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)
 
-        self.setAttributeValues(kwargs)
-        self.setInternalAttributeValues(kwargs)
         self.optionalCallOnDescriptor("onNodeCreated")
 
     def optionalCallOnDescriptor(self, methodName, *args, **kwargs):
@@ -1641,7 +1640,7 @@ class CompatibilityNode(BaseNode):
         try:
             upgradedAttrValues = node.nodeDesc.upgradeAttributeValues(attrValues, self.version)
         except Exception as e:
-            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, str(e)))
+            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, repr(e)))
             upgradedAttrValues = attrValues
 
         if not isinstance(upgradedAttrValues, dict):
@@ -1650,13 +1649,8 @@ class CompatibilityNode(BaseNode):
 
         node.upgradeAttributeValues(upgradedAttrValues)
 
-        try:
-            upgradedIntAttrValues = node.nodeDesc.upgradeAttributeValues(intAttrValues, self.version)
-        except Exception as e:
-            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, str(e)))
-            upgradedIntAttrValues = intAttrValues
+        node.upgradeInternalAttributeValues(intAttrValues)
 
-        node.upgradeInternalAttributeValues(upgradedIntAttrValues)
         return node
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
@@ -1753,8 +1747,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
                     break
 
     if compatibilityIssue is None:
-        node = Node(nodeType, position, **inputs, **outputs)
-        node.setInternalAttributeValues(internalInputs)
+        node = Node(nodeType, position, **inputs, **internalInputs, **outputs)
     else:
         logging.debug("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
         node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)

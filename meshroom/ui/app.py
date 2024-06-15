@@ -258,8 +258,8 @@ class MeshroomApp(QApplication):
         # add the new value in the first place
         projects.insert(0, projectFileNorm)
 
-        # keep only the 20 first elements
-        projects = projects[0:20]
+        # keep only the 40 first elements
+        projects = projects[0:40]
 
         settings = QSettings()
         settings.beginGroup("RecentFiles")

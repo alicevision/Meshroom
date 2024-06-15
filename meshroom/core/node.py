@@ -1756,7 +1756,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
         node = Node(nodeType, position, **inputs, **outputs)
         node.setInternalAttributeValues(internalInputs)
     else:
-        logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
+        logging.debug("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
         node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)
         # retro-compatibility: no internal folder saved
         # can't spawn meaningful CompatibilityNode with precomputed outputs

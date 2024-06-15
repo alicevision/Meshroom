@@ -539,7 +539,7 @@ class Reconstruction(UIGraph):
                     ""
                 )
             )
-            logging.error("Error while loading '{}': No Such File.".format(os.path.basename(filepath)))
+            logging.error("Error while loading '{}': No Such File.".format(filepath))
             return False
         except Exception as e:
             import traceback
@@ -551,6 +551,7 @@ class Reconstruction(UIGraph):
                     trace
                 )
             )
+            logging.error("Error while loading '{}'.".format(filepath))
             logging.error(trace)
             return False
 

@@ -608,7 +608,7 @@ class BaseNode(BaseObject):
                     assert isinstance(att, ListAttribute)
                     att = att.value.at(int(idx))
         else:
-            att = self._attributes.get(name)
+            att = self._attributes.getr(name)
         return att
 
     @Slot(str, result=Attribute)
@@ -1756,7 +1756,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
         node = Node(nodeType, position, **inputs, **outputs)
         node.setInternalAttributeValues(internalInputs)
     else:
-        logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
+        logging.debug("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
         node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)
         # retro-compatibility: no internal folder saved
         # can't spawn meaningful CompatibilityNode with precomputed outputs

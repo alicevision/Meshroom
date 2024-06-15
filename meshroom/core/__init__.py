@@ -286,7 +286,7 @@ def registerNodeType(nodeType):
     """
     global nodesDesc
     if nodeType.__name__ in nodesDesc:
-        raise RuntimeError("Node Desc {} is already registered.".format(nodeType.__name__))
+        logging.error("Node Desc {} is already registered.".format(nodeType.__name__))
     nodesDesc[nodeType.__name__] = nodeType
 
 
@@ -314,7 +314,7 @@ def loadAllNodes(folder):
 def registerSubmitter(s):
     global submitters
     if s.name in submitters:
-        raise RuntimeError("Submitter {} is already registered.".format(s.name))
+        logging.error("Submitter {} is already registered.".format(s.name))
     submitters[s.name] = s
 
 

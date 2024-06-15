@@ -14,7 +14,7 @@ import meshroom.common
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
-from meshroom.core.node import Node, CompatibilityNode, Status, Position
+from meshroom.core.node import Node, CompatibilityNode, Status, Position, CompatibilityIssue
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
 from meshroom.ui.components.filepath import FilepathHelper
@@ -246,15 +246,20 @@ class ViewpointWrapper(QObject):
     def _updateUndistortedImageParams(self):
         """ Update internal members depending on PrepareDenseScene or ExportAnimatedCamera. """
         # undistorted image path
-        if self._activeNode_ExportAnimatedCamera.node:
-            self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_ExportAnimatedCamera.node.outputImages.value, self._viewpoint)
-            self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value
-        elif self._activeNode_PrepareDenseScene.node:
-            self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_PrepareDenseScene.node.undistorted.value, self._viewpoint)
-            self._principalPointCorrected = False
-        else:
+        try:
+            if self._activeNode_ExportAnimatedCamera.node:
+                self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_ExportAnimatedCamera.node.outputImages.value, self._viewpoint)
+                self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value
+            elif self._activeNode_PrepareDenseScene.node:
+                self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_PrepareDenseScene.node.undistorted.value, self._viewpoint)
+                self._principalPointCorrected = False
+            else:
+                self._undistortedImagePath = ''
+                self._principalPointCorrected = False
+        except Exception as e:
             self._undistortedImagePath = ''
             self._principalPointCorrected = False
+            logging.info("Failed to retrieve undistorted images path.")
         self.undistortedImageParamsChanged.emit()
         self.principalPointCorrectedChanged.emit()
 
@@ -415,11 +420,11 @@ class Reconstruction(UIGraph):
     """
     activeNodeCategories = {
         # All nodes generating a sfm scene (3D reconstruction or panorama)
-        "sfm": ["StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform",
+        "sfm": ["StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransform",
                 "SfMAlignment"],
         # All nodes generating a sfmData file
-        "sfmData": ["CameraInit", "DistortionCalibration", "StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform",
-                "SfMAlignment"],
+        "sfmData": ["CameraInit", "DistortionCalibration", "StructureFromMotion", "GlobalSfM",
+                    "PanoramaEstimation", "SfMTransfer", "SfMTransform", "SfMAlignment"],
         # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
         # Nodes that can be used to provide features folders to the UI
@@ -482,9 +487,9 @@ class Reconstruction(UIGraph):
     def initActiveNodes(self):
         # Create all possible entries
         for category, _ in self.activeNodeCategories.items():
-            self._activeNodes.add(ActiveNode(category, self))
+            self._activeNodes.add(ActiveNode(category, parent=self))
         for nodeType, _ in meshroom.core.nodesDesc.items():
-            self._activeNodes.add(ActiveNode(nodeType, self))
+            self._activeNodes.add(ActiveNode(nodeType, parent=self))
 
     def clearActiveNodes(self):
         for key in self._activeNodes.keys():
@@ -494,6 +499,7 @@ class Reconstruction(UIGraph):
         # Update active nodes when CameraInit changes
         nodes = self._graph.dfsOnDiscover(startNodes=[self._cameraInit], reverse=True)[0]
         self.setActiveNodes(nodes)
+        self.resetActiveNodePerCategory()
 
     @Slot()
     @Slot(str)
@@ -522,7 +528,7 @@ class Reconstruction(UIGraph):
                     "Data might have been lost in the process.",
                     "Open it with the corresponding version of Meshroom to recover your data."
                 ))
-            
+
             self.graph.fileDateVersion = os.path.getmtime(filepath)
             return status
         except FileNotFoundError as e:
@@ -533,7 +539,7 @@ class Reconstruction(UIGraph):
                     ""
                 )
             )
-            logging.error("Error while loading '{}': No Such File.".format(os.path.basename(filepath)))
+            logging.error("Error while loading '{}': No Such File.".format(filepath))
             return False
         except Exception as e:
             import traceback
@@ -545,6 +551,7 @@ class Reconstruction(UIGraph):
                     trace
                 )
             )
+            logging.error("Error while loading '{}'.".format(filepath))
             logging.error(trace)
             return False
 
@@ -565,13 +572,12 @@ class Reconstruction(UIGraph):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
         self.selectedViewId = "-1"
-        self.sfm = None
         self.tempCameraInit = None
         self.updateCameraInits()
+        self.sfm = self.lastSfmNode()
+        self.resetActiveNodePerCategory()
         if not self._graph:
             return
-
-        self.setSfm(self.lastSfmNode())
 
         # TODO: listen specifically for cameraInit creation/deletion
         self._graph.nodes.countChanged.connect(self.updateCameraInits)
@@ -611,6 +617,12 @@ class Reconstruction(UIGraph):
     def setCameraInitIndex(self, idx):
         camInit = self._cameraInits[idx] if self._cameraInits else None
         self.cameraInit = camInit
+        # Update the active viewpoint accordingly
+        if self.viewpoints:
+            self.setSelectedViewId(self.viewpoints[0].viewId.value)
+
+    def setCameraInitNode(self, node):
+        self.setCameraInitIndex(self._cameraInits.indexOf(node))
 
     @Slot()
     def clearTempCameraInit(self):
@@ -632,7 +644,7 @@ class Reconstruction(UIGraph):
         self.tempCameraInit = tmpCameraInit
         rootNode = self.graph.dfsOnFinish([node])[0][0]
         if rootNode.nodeType == "CameraInit":
-            self.setCameraInitIndex(self._cameraInits.indexOf(rootNode))
+            self.setCameraInitNode(rootNode)
 
     @Slot(QObject, result=QVector3D)
     def getAutoFisheyeCircle(self, panoramaInit):
@@ -994,39 +1006,53 @@ class Reconstruction(UIGraph):
     liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
 
     @Slot(QObject)
-    def setActiveNode(self, node):
-        """ Set node as the active node of its type. """
-        for category, nodeTypes in self.activeNodeCategories.items():
-            if node.nodeType in nodeTypes:
-                self.activeNodes.get(category).node = node
-                if category == 'sfm':
-                    self.setSfm(node)
+    def setActiveNode(self, node, categories=True, inputs=True):
+        """ Set node as the active node of its type and of its categories.
+        Also upgrade related input nodes.
+        """
+        if categories:
+            for category, nodeTypes in self.activeNodeCategories.items():
+                if node.nodeType in nodeTypes:
+                    self.activeNodes.getr(category).node = node
 
-                # if the active node is a CameraInit node, update the camera init index
-                if node.nodeType == "CameraInit":
-                    self.setCameraInitIndex(self._cameraInits.indexOf(node))
-        self.activeNodes.get(node.nodeType).node = node
+                    if category == "sfmData":
+                        self.setSfm(node)
+
+        if node.nodeType == "CameraInit":
+            # if the active node is a CameraInit node, update the camera init index
+            self.setCameraInitNode(node)
+        elif inputs:
+            # Update the input node to ensure that it is part of the dependency of the new active node.
+            # Retrieve all nodes that are input nodes of the new active node
+            inputNodes = node.getInputNodes(recursive=True, dependenciesOnly=True)
+            inputCameraInitNodes = [n for n in inputNodes if n.nodeType == "CameraInit"]
+            # if the current camera init node is not the same as the camera init node of the active node
+            if inputCameraInitNodes and self.cameraInit not in inputCameraInitNodes:
+                # set the camera init node of the active node as the current camera init node
+                # if multiple camera init, select one arbitrarily (the one with more viewpoints)
+                inputCameraInitNodes.sort(key=lambda n: len(n.viewpoints.value), reverse=True)
+                cameraInitNode = inputCameraInitNodes[0]
+                self.setCameraInitNode(cameraInitNode)
+
+        # Set the new active node (if it is not an unknown type)
+        unknownType = isinstance(node, CompatibilityNode) and node.issue == CompatibilityIssue.UnknownNodeType
+        if not unknownType:
+            self.activeNodes.get(node.nodeType).node = node
 
     @Slot(QObject)
     def setActiveNodes(self, nodes):
         """ Set node as the active node of its type. """
+        for node in nodes:
+            if node is None:
+                continue
+            self.setActiveNode(node, categories=False, inputs=False)
+
+    def resetActiveNodePerCategory(self):
         # Setup the active node per category only once, on the last one
         nodesByCategory = {}
-        for node in nodes:
-            if node is None:
-                continue
-            for category, nodeTypes in self.activeNodeCategories.items():
-                if node.nodeType in nodeTypes:
-                    nodesByCategory[category] = node
-        for category, node in nodesByCategory.items():
+        for category, nodeTypes in self.activeNodeCategories.items():
+            node = self.lastNodeOfType(nodeTypes, self._cameraInit, Status.SUCCESS)
             self.activeNodes.get(category).node = node
-            if category == 'sfm' and not self._graph.dirtyTopology:
-                self.setActiveNode(self.lastSfmNode())
-        for node in nodes:
-            if node is None:
-                continue
-            if not isinstance(node, CompatibilityNode):
-                self.activeNodes.get(node.nodeType).node = node
 
     def updateSfMResults(self):
         """
@@ -1139,7 +1165,7 @@ class Reconstruction(UIGraph):
             return
         self._pickedViewId = viewId
         self.pickedViewIdChanged.emit()
-    
+
     @Slot(str)
     def updateSelectedViewpoint(self, viewId):
         """ Update the currently set viewpoint if the provided view ID corresponds to one. """

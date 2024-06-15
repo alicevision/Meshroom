@@ -43,7 +43,9 @@ class QObjectListModel(QtCore.QAbstractListModel):
         return self.size() > 0
 
     def __getitem__(self, index):
-        """ Enables the [] operator """
+        """ Enables the [] operator.
+        Only accepts index (integer).
+        """
         return self._objects[index]
 
     def data(self, index, role):
@@ -96,9 +98,17 @@ class QObjectListModel(QtCore.QAbstractListModel):
     @QtCore.Slot(str, result=QtCore.QObject)
     def get(self, key):
         """
-        Raises a KeyError if key is not in the map.
         :param key:
-        :return:
+        :return: the value or None if not found
+        """
+        return self._objectByKey.get(key)
+
+    @QtCore.Slot(str, result=QtCore.QObject)
+    def getr(self, key):
+        """
+        Get or raise an error if the key does not exists.
+        :param key:
+        :return: the value
         """
         return self._objectByKey[key]
 

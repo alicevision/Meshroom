@@ -237,6 +237,7 @@ def test_description_conflict():
         if isinstance(srcNode.nodeDesc, SampleNodeV1):
             # V1 => V2: 'input' has been renamed to 'in'
             assert len(compatNode.attributes) == 3
+            assert list(compatNode.attributes.keys()) == ["input", "paramA", "output"]
             assert hasattr(compatNode, "input")
             assert not hasattr(compatNode, "in")
 
@@ -244,6 +245,7 @@ def test_description_conflict():
             upgradedNode = g.upgradeNode(nodeName)[0]
             assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV2)
 
+            assert list(upgradedNode.attributes.keys()) == ["in", "paramA", "output"]
             assert not hasattr(upgradedNode, "input")
             assert hasattr(upgradedNode, "in")
             # check uid has changed (not the same set of attributes)

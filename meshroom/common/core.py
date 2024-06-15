@@ -9,6 +9,9 @@ class CoreDictModel:
     def __len__(self):
         return len(self._objects)
 
+    def __bool__(self):
+        return bool(self._objects)
+
     def __iter__(self):
         """ Enables iteration over the list of objects. """
         return iter(self._objects.values())
@@ -26,12 +29,18 @@ class CoreDictModel:
     def objects(self):
         return self._objects
 
-    # TODO: operator[]
     def get(self, key):
         """
-        Raises a KeyError if key is not in the map.
         :param key:
-        :return:
+        :return: the value or None if not found
+        """
+        return self._objects.get(key)
+
+    def getr(self, key):
+        """
+        Get or raise an error if the key does not exists.
+        :param key:
+        :return: the value
         """
         return self._objects[key]
 

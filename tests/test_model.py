@@ -18,26 +18,24 @@ class DummyNode(QObject):
     name = Property(str, getName)
 
 
-def test_coreModel_add_remove():
-    m = CoreDictModel(keyAttrName='name')
-    node = DummyNode("DummyNode_1")
-    m.add(node)
-    assert len(m) == 1
-    assert m.get("DummyNode_1") == node
+def test_DictModel_add_remove():
+    for DictModel in (CoreDictModel, QObjectListModel):
+        m = DictModel(keyAttrName='name')
+        node = DummyNode("DummyNode_1")
+        m.add(node)
+        assert len(m) == 1
+        assert len(m.keys()) == 1
+        assert len(m.values()) == 1
+        assert m.get("DummyNode_1") == node
 
-    m.pop("DummyNode_1")
-    assert len(m) == 0
+        assert m.get("something") == None
+        with pytest.raises(KeyError):
+            m.getr("something")
 
-
-def test_listModel_add_remove():
-    m = QObjectListModel(keyAttrName='name')
-    node = DummyNode("DummyNode_1")
-    m.add(node)
-    assert len(m) == 1
-    assert m.get("DummyNode_1") == node
-
-    m.remove(node)
-    assert len(m) == 0
+        m.pop("DummyNode_1")
+        assert len(m) == 0
+        assert len(m.keys()) == 0
+        assert len(m.values()) == 0
 
 
 def test_listModel_typed_add():

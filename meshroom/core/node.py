@@ -608,7 +608,7 @@ class BaseNode(BaseObject):
                     assert isinstance(att, ListAttribute)
                     att = att.value.at(int(idx))
         else:
-            att = self._attributes.get(name)
+            att = self._attributes.getr(name)
         return att
 
     @Slot(str, result=Attribute)

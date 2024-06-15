@@ -496,10 +496,11 @@ class Reconstruction(UIGraph):
             self._activeNodes.get(key).node = None
 
     def onCameraInitChanged(self):
+        if self._cameraInit is None:
+            return
         # Update active nodes when CameraInit changes
         nodes = self._graph.dfsOnDiscover(startNodes=[self._cameraInit], reverse=True)[0]
         self.setActiveNodes(nodes)
-        self.resetActiveNodePerCategory()
 
     @Slot()
     @Slot(str)
@@ -574,8 +575,8 @@ class Reconstruction(UIGraph):
         self.selectedViewId = "-1"
         self.tempCameraInit = None
         self.updateCameraInits()
-        self.sfm = self.lastSfmNode()
         self.resetActiveNodePerCategory()
+        self.sfm = self.lastSfmNode()
         if not self._graph:
             return
 

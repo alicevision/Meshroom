@@ -602,9 +602,6 @@ class Reconstruction(UIGraph):
         if self.cameraInit is None or self.cameraInit not in cameraInits:
             self.cameraInit = cameraInits[0] if cameraInits else None
 
-        # Manually emit the signal to ensure the active CameraInit index is always up-to-date in the UI
-        self.cameraInitChanged.emit()
-
     def getCameraInitIndex(self):
         if not self._cameraInit:
             # No CameraInit node

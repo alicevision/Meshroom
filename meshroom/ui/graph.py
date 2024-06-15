@@ -375,7 +375,6 @@ class UIGraph(QObject):
             oldGraph.deleteLater()
 
         self._graph.updated.connect(self.onGraphUpdated)
-        self._graph.update()
         self._taskManager.update(self._graph)
         # perform auto-layout if graph does not provide nodes positions
         if Graph.IO.Features.NodesPositions not in self._graph.fileFeatures:

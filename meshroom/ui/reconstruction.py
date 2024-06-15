@@ -424,7 +424,8 @@ class Reconstruction(UIGraph):
                 "SfMAlignment"],
         # All nodes generating a sfmData file
         "sfmData": ["CameraInit", "DistortionCalibration", "StructureFromMotion", "GlobalSfM",
-                    "PanoramaEstimation", "SfMTransfer", "SfMTransform", "SfMAlignment"],
+                    "PanoramaEstimation", "SfMTransfer", "SfMTransform", "SfMAlignment",
+                    "ApplyCalibration"],
         # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
         # Nodes that can be used to provide features folders to the UI

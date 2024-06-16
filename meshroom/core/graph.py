@@ -1292,14 +1292,18 @@ class Graph(BaseObject):
         self.header[Graph.IO.Keys.ReleaseVersion] = meshroom.__version__
         self.header[Graph.IO.Keys.FileVersion] = Graph.IO.__version__
 
-        # store versions of node types present in the graph (excluding CompatibilityNode instances)
+        # Store versions of node types present in the graph (excluding CompatibilityNode instances)
+        # and remove duplicates
         usedNodeTypes = set([n.nodeDesc.__class__ for n in self._nodes if isinstance(n, Node)])
-
-        self.header[Graph.IO.Keys.NodesVersions] = {
+        # Convert to node types to "name: version"
+        nodesVersions = {
             "{}".format(p.__name__): meshroom.core.nodeVersion(p, "0.0")
             for p in usedNodeTypes
         }
-
+        # Sort them by name (to avoid random order changing from one save to another)
+        nodesVersions = dict(sorted(nodesVersions.items()))
+        # Add it the header
+        self.header[Graph.IO.Keys.NodesVersions] = nodesVersions
         self.header["template"] = template
 
         data = {}

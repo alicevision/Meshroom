@@ -705,7 +705,18 @@ class BaseNode(BaseObject):
         # For now, the only index that is used is "0", so there will be a single iteration of the loop below
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             # UID is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this UID
-            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes if a.enabled and a.value != a.uidIgnoreValue]
+            uidAttributes = []
+            for a in associatedAttributes:
+                if not a.enabled:
+                    continue  # disabled params do not contribute to the uid
+                dynamicOutputAttr = a.isLink and a.getLinkParam(recursive=True).desc.isDynamicValue
+                # For dynamic output attributes, the UID does not depend on the attribute value.
+                # In particular, when loading a project file, the UIDs are updated first,
+                # and the node status and the dynamic output values are not yet loaded,
+                # so we should not read the attribute value.
+                if not dynamicOutputAttr and a.value == a.uidIgnoreValue:
+                    continue  # for non-dynamic attributes, check if the value should be ignored
+                uidAttributes.append((a.getName(), a.uid(uidIndex)))
             uidAttributes.sort()
             # Adding the node type prevents ending up with two identical UIDs for different node types that have the exact same list of attributes
             uidAttributes.append(self.nodeType)

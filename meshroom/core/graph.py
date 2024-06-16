@@ -341,8 +341,13 @@ class Graph(BaseObject):
         for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
             node = self.node(nodeName)
 
-            savedUid = nodeData.get("uids", "").get("0", "")  # Node's UID from the graph file
-            graphUid = node._uids.get(0)  # Node's UID from the graph itself
+            savedUid = nodeData.get("uids", {})  # Node's UID from the graph file
+            # JSON enfore keys to be strings, see
+            # https://docs.python.org/3.8/library/json.html#json.dump
+            # We know our keys are integers, so we convert them back to int.
+            savedUid = {int(k): v for k, v in savedUid.items()}
+
+            graphUid = node._uids  # Node's UID from the graph itself
             if savedUid != graphUid and graphUid is not None:
                 # Different UIDs, remove the existing node from the graph and replace it with a CompatibilityNode
                 logging.debug("UID conflict detected for {}".format(nodeName))

@@ -477,7 +477,7 @@ class BaseNode(BaseObject):
     # i.e: a.b, a[0], a[0].b.c[1]
     attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
 
-    def __init__(self, nodeType, position=None, parent=None, **kwargs):
+    def __init__(self, nodeType, position=None, parent=None, uids=None, **kwargs):
         """
         Create a new Node instance based on the given node description.
         Any other keyword argument will be used to initialize this node's attributes.
@@ -502,7 +502,7 @@ class BaseNode(BaseObject):
         self.graph = None
         self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)
-        self._uids = dict()
+        self._uids = uids if uids else {}
         self._cmdVars = {}
         self._size = 0
         self._position = position or Position()
@@ -1332,8 +1332,8 @@ class Node(BaseNode):
     """
     A standard Graph node based on a node type.
     """
-    def __init__(self, nodeType, position=None, parent=None, **kwargs):
-        super(Node, self).__init__(nodeType, position, parent, **kwargs)
+    def __init__(self, nodeType, position=None, parent=None, uids=None, **kwargs):
+        super(Node, self).__init__(nodeType, position, parent=parent, uids=uids, **kwargs)
 
         if not self.nodeDesc:
             raise UnknownNodeTypeError(nodeType)
@@ -1764,6 +1764,11 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
     version = nodeDict.get("version", None)
     internalFolder = nodeDict.get("internalFolder", None)
     position = Position(*nodeDict.get("position", []))
+    uids = nodeDict.get("uids", {})
+    # JSON enfore keys to be strings, see
+    # https://docs.python.org/3.8/library/json.html#json.dump
+    # We know our keys are integers, so we convert them back to int.
+    uids = {int(k): v for k, v in uids.items()}
 
     compatibilityIssue = None
 
@@ -1824,7 +1829,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
                     break
 
     if compatibilityIssue is None:
-        node = Node(nodeType, position, **inputs, **internalInputs, **outputs)
+        node = Node(nodeType, position, uids=uids, **inputs, **internalInputs, **outputs)
     else:
         logging.debug("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
         node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)

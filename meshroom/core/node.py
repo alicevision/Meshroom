@@ -959,7 +959,6 @@ class BaseNode(BaseObject):
         }
         self._computeUids()
         self._buildCmdVars()
-        self.updateOutputAttr()
         if self.nodeDesc:
             self.nodeDesc.postUpdate(self)
         # Notify internal folder change if needed

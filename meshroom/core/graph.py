@@ -14,7 +14,7 @@ import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
-from meshroom.core.attribute import Attribute, ListAttribute
+from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import StopGraphVisit, StopBranchVisit
 from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
 
@@ -320,7 +320,10 @@ class Graph(BaseObject):
             # that were computed.
             if not isTemplate:  # UIDs are not stored in templates
                 self._evaluateUidConflicts(graphData)
-                self._applyExpr()
+                try:
+                    self._applyExpr()
+                except Exception as e:
+                    logging.warning(e)
 
         return True
 
@@ -338,8 +341,13 @@ class Graph(BaseObject):
         for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
             node = self.node(nodeName)
 
-            savedUid = nodeData.get("uids", "").get("0", "")  # Node's UID from the graph file
-            graphUid = node._uids.get(0)  # Node's UID from the graph itself
+            savedUid = nodeData.get("uids", {})  # Node's UID from the graph file
+            # JSON enfore keys to be strings, see
+            # https://docs.python.org/3.8/library/json.html#json.dump
+            # We know our keys are integers, so we convert them back to int.
+            savedUid = {int(k): v for k, v in savedUid.items()}
+
+            graphUid = node._uids  # Node's UID from the graph itself
             if savedUid != graphUid and graphUid is not None:
                 # Different UIDs, remove the existing node from the graph and replace it with a CompatibilityNode
                 logging.debug("UID conflict detected for {}".format(nodeName))
@@ -548,12 +556,16 @@ class Graph(BaseObject):
             skippedEdges = {}
             if not withEdges:
                 for n, attr in node.attributes.items():
+                    if attr.isOutput:
+                        # edges are declared in input with an expression linking
+                        # to another param (which could be an output)
+                        continue
                     # find top-level links
                     if Attribute.isLinkExpression(attr.value):
                         skippedEdges[attr] = attr.value
                         attr.resetToDefaultValue()
                     # find links in ListAttribute children
-                    elif isinstance(attr, ListAttribute):
+                    elif isinstance(attr, (ListAttribute, GroupAttribute)):
                         for child in attr.value:
                             if Attribute.isLinkExpression(child.value):
                                 skippedEdges[child] = child.value
@@ -584,6 +596,7 @@ class Graph(BaseObject):
 
             # re-create edges taking into account what has been duplicated
             for attr, linkExpression in duplicateEdges.items():
+                logging.warning("attr={} linkExpression={}".format(attr.fullName, linkExpression))
                 link = linkExpression[1:-1]  # remove starting '{' and trailing '}'
                 # get source node and attribute name
                 edgeSrcNodeName, edgeSrcAttrName = link.split(".", 1)
@@ -1625,6 +1638,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
 
     for n, node in enumerate(nodes):
         try:
+            node.preprocess()
             multiChunks = len(node.chunks) > 1
             for c, chunk in enumerate(node.chunks):
                 if multiChunks:
@@ -1635,6 +1649,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                     print('\n[{node}/{nbNodes}] {nodeName}'.format(
                         node=n + 1, nbNodes=len(nodes), nodeName=node.nodeType))
                 chunk.process(forceCompute)
+            node.postprocess()
         except Exception as e:
             logging.error("Error on node computation: {}".format(e))
             graph.clearSubmittedNodes()

@@ -273,11 +273,18 @@ class Attribute(BaseObject):
         # 'uidIndex' should be in 'self.desc.uid' but in the case of linked attribute
         # it will not be the case (so we cannot have an assert).
         if self.isOutput:
-            # only dependent on the hash of its value without the cache folder
-            return hashValue(self._invalidationValue)
+            if self.desc.isDynamicValue:
+                # If the attribute is a dynamic output, the UID is derived from the node UID.
+                # To guarantee that each output attribute receives a unique ID, we add the attribute name to it.
+                return hashValue((self.name, self.node._uids.get(uidIndex)))
+            else:
+                # only dependent on the hash of its value without the cache folder
+                return hashValue(self._invalidationValue)
         if self.isLink:
-            return self.getLinkParam().uid(uidIndex)
+            linkParam = self.getLinkParam(recursive=True)
+            return linkParam.uid(uidIndex)
         if isinstance(self._value, (list, tuple, set,)):
+            # non-exclusive choice param
             # hash of sorted values hashed
             return hashValue([hashValue(v) for v in sorted(self._value)])
         return hashValue(self._value)

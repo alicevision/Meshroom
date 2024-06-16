@@ -477,7 +477,7 @@ class BaseNode(BaseObject):
     # i.e: a.b, a[0], a[0].b.c[1]
     attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
 
-    def __init__(self, nodeType, position=None, parent=None, **kwargs):
+    def __init__(self, nodeType, position=None, parent=None, uids=None, **kwargs):
         """
         Create a new Node instance based on the given node description.
         Any other keyword argument will be used to initialize this node's attributes.
@@ -502,7 +502,7 @@ class BaseNode(BaseObject):
         self.graph = None
         self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)
-        self._uids = dict()
+        self._uids = uids if uids else {}
         self._cmdVars = {}
         self._size = 0
         self._position = position or Position()
@@ -686,6 +686,10 @@ class BaseNode(BaseObject):
     def minDepth(self):
         return self.graph.getDepth(self, minimal=True)
 
+    @property
+    def valuesFile(self):
+        return os.path.join(self.graph.cacheDir, self.internalFolder, 'values')
+
     def getInputNodes(self, recursive, dependenciesOnly):
         return self.graph.getInputNodes(self, recursive=recursive, dependenciesOnly=dependenciesOnly)
 
@@ -701,7 +705,18 @@ class BaseNode(BaseObject):
         # For now, the only index that is used is "0", so there will be a single iteration of the loop below
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             # UID is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this UID
-            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes if a.enabled and a.value != a.uidIgnoreValue]
+            uidAttributes = []
+            for a in associatedAttributes:
+                if not a.enabled:
+                    continue  # disabled params do not contribute to the uid
+                dynamicOutputAttr = a.isLink and a.getLinkParam(recursive=True).desc.isDynamicValue
+                # For dynamic output attributes, the UID does not depend on the attribute value.
+                # In particular, when loading a project file, the UIDs are updated first,
+                # and the node status and the dynamic output values are not yet loaded,
+                # so we should not read the attribute value.
+                if not dynamicOutputAttr and a.value == a.uidIgnoreValue:
+                    continue  # for non-dynamic attributes, check if the value should be ignored
+                uidAttributes.append((a.getName(), a.uid(uidIndex)))
             uidAttributes.sort()
             # Adding the node type prevents ending up with two identical UIDs for different node types that have the exact same list of attributes
             uidAttributes.append(self.nodeType)
@@ -972,8 +987,11 @@ class BaseNode(BaseObject):
         """
         Update node status based on status file content/existence.
         """
+        s = self.globalStatus
         for chunk in self._chunks:
             chunk.updateStatusFromCache()
+        # logging.warning("updateStatusFromCache: {}, status: {} => {}".format(self.name, s, self.globalStatus))
+        self.updateOutputAttr()
 
     def submit(self, forceCompute=False):
         for chunk in self._chunks:
@@ -988,9 +1006,79 @@ class BaseNode(BaseObject):
     def processIteration(self, iteration):
         self._chunks[iteration].process()
 
+    def preprocess(self):
+        pass
+
     def process(self, forceCompute=False):
         for chunk in self._chunks:
             chunk.process(forceCompute)
+
+    def postprocess(self):
+        self.saveOutputAttr()
+
+    def updateOutputAttr(self):
+        if not self.nodeDesc:
+            return
+        if not self.nodeDesc.hasDynamicOutputAttribute:
+            return
+        # logging.warning("updateOutputAttr: {}, status: {}".format(self.name, self.globalStatus))
+        if self.getGlobalStatus() == Status.SUCCESS:
+            self.loadOutputAttr()
+        else:
+            self.resetOutputAttr()
+
+    def resetOutputAttr(self):
+        if not self.nodeDesc.hasDynamicOutputAttribute:
+            return
+        # logging.warning("resetOutputAttr: {}".format(self.name))
+        for output in self.nodeDesc.outputs:
+            if output.isDynamicValue:
+                if self.hasAttribute(output.name):
+                    self.attribute(output.name).value = None
+                else:
+                    logging.warning(f"resetOutputAttr: Missing dynamic output attribute: {self.name}.{output.name}")
+
+    def loadOutputAttr(self):
+        """ Load output attributes with dynamic values from a values.json file.
+        """
+        if not self.nodeDesc.hasDynamicOutputAttribute:
+            return
+        valuesFile = self.valuesFile
+        if not os.path.exists(valuesFile):
+            logging.warning("No output attr file: {}".format(valuesFile))
+            return
+
+        # logging.warning("load output attr: {}, value: {}".format(self.name, valuesFile))
+        with open(valuesFile, 'r') as jsonFile:
+            data = json.load(jsonFile)
+
+        # logging.warning(data)
+        for output in self.nodeDesc.outputs:
+            if output.isDynamicValue:
+                if self.hasAttribute(output.name):
+                    self.attribute(output.name).value = data[output.name]
+                else:
+                    logging.warning(f"loadOutputAttr: Missing dynamic output attribute: {self.name}.{output.name}")
+
+    def saveOutputAttr(self):
+        """ Save output attributes with dynamic values into a values.json file.
+        """
+        if not self.nodeDesc.hasDynamicOutputAttribute:
+            return
+        data = {}
+        for output in self.nodeDesc.outputs:
+            if output.isDynamicValue:
+                if self.hasAttribute(output.name):
+                    data[output.name] = self.attribute(output.name).value
+                else:
+                    logging.warning(f"saveOutputAttr: Missing dynamic output attribute: {self.name}.{output.name}")
+
+        valuesFile = self.valuesFile
+        # logging.warning("save output attr: {}, value: {}".format(self.name, valuesFile))
+        valuesFilepathWriting = getWritingFilepath(valuesFile)
+        with open(valuesFilepathWriting, 'w') as jsonFile:
+            json.dump(data, jsonFile, indent=4)
+        renameWritingToFinalPath(valuesFilepathWriting, valuesFile)
 
     def endSequence(self):
         pass
@@ -1227,6 +1315,7 @@ class BaseNode(BaseObject):
     comment = Property(str, getComment, notify=internalAttributesChanged)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
+    valuesFile = Property(str, valuesFile.fget, notify=internalFolderChanged)
     depthChanged = Signal()
     depth = Property(int, depth.fget, notify=depthChanged)
     minDepth = Property(int, minDepth.fget, notify=depthChanged)
@@ -1262,8 +1351,8 @@ class Node(BaseNode):
     """
     A standard Graph node based on a node type.
     """
-    def __init__(self, nodeType, position=None, parent=None, **kwargs):
-        super(Node, self).__init__(nodeType, position, parent, **kwargs)
+    def __init__(self, nodeType, position=None, parent=None, uids=None, **kwargs):
+        super(Node, self).__init__(nodeType, position, parent=parent, uids=uids, **kwargs)
 
         if not self.nodeDesc:
             raise UnknownNodeTypeError(nodeType)
@@ -1281,12 +1370,19 @@ class Node(BaseNode):
         for attrDesc in self.nodeDesc.internalInputs:
             self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))
 
-        # List attributes per uid
+        # Declare events for specific output attributes
         for attr in self._attributes:
             if attr.isOutput and attr.desc.semantic == "image":
                 attr.enabledChanged.connect(self.outputAttrEnabledChanged)
-            for uidIndex in attr.attributeDesc.uid:
-                self.attributesPerUid[uidIndex].add(attr)
+
+        # List attributes per uid
+        for attr in self._attributes:
+            if attr.isInput:
+                for uidIndex in attr.attributeDesc.uid:
+                    self.attributesPerUid[uidIndex].add(attr)
+            else:
+                if attr.attributeDesc.uid:
+                    logging.error(f"Output Attribute should not contain a UID: '{nodeType}.{attr.name}'")
 
         # Add internal attributes with a UID to the list
         for attr in self._internalAttributes:
@@ -1347,7 +1443,7 @@ class Node(BaseNode):
     def toDict(self):
         inputs = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
         internalInputs = {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
-        outputs = ({k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isOutput})
+        outputs = ({k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isOutput and not v.desc.isDynamicValue})
 
         return {
             'nodeType': self.nodeType,
@@ -1422,6 +1518,10 @@ class CompatibilityNode(BaseNode):
         self.outputs = self.nodeDict.get("outputs", {})
         self._internalFolder = self.nodeDict.get("internalFolder", "")
         self._uids = self.nodeDict.get("uids", {})
+        # JSON enfore keys to be strings, see
+        # https://docs.python.org/3.8/library/json.html#json.dump
+        # We know our keys are integers, so we convert them back to int.
+        self._uids = {int(k): v for k, v in self._uids.items()}
 
         # restore parallelization settings
         self.parallelization = self.nodeDict.get("parallelization", {})
@@ -1687,6 +1787,11 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
     version = nodeDict.get("version", None)
     internalFolder = nodeDict.get("internalFolder", None)
     position = Position(*nodeDict.get("position", []))
+    uids = nodeDict.get("uids", {})
+    # JSON enfore keys to be strings, see
+    # https://docs.python.org/3.8/library/json.html#json.dump
+    # We know our keys are integers, so we convert them back to int.
+    uids = {int(k): v for k, v in uids.items()}
 
     compatibilityIssue = None
 
@@ -1714,7 +1819,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
             # raising compatibility issues if their number differs: in that case, it is only useful
             # if some internal attributes do not exist or are invalid
             if not template and (sorted([attr.name for attr in nodeDesc.inputs if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or \
-                    sorted([attr.name for attr in nodeDesc.outputs]) != sorted(outputs.keys())):
+                    sorted([attr.name for attr in nodeDesc.outputs if not attr.isDynamicValue]) != sorted(outputs.keys())):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
 
             # check whether there are any internal attributes that are invalidating in the node description: if there
@@ -1747,7 +1852,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
                     break
 
     if compatibilityIssue is None:
-        node = Node(nodeType, position, **inputs, **internalInputs, **outputs)
+        node = Node(nodeType, position, uids=uids, **inputs, **internalInputs, **outputs)
     else:
         logging.debug("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
         node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)

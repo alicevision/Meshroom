@@ -128,6 +128,8 @@ def validateNodeDesc(nodeDesc):
             errors.append(err)
 
     for param in nodeDesc.outputs:
+        if param.value is None:
+            continue
         err = param.checkValueTypes()
         if err:
             errors.append(err)

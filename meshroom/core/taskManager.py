@@ -50,6 +50,7 @@ class TaskThread(Thread):
             except TypeError:
                 continue
 
+            node.preprocess()
             for cId, chunk in enumerate(node.chunks):
                 if chunk.isFinishedOrRunning() or not self.isRunning():
                     continue
@@ -78,6 +79,7 @@ class TaskThread(Thread):
                                 # Node already removed (for instance a global clear of _nodesToProcess)
                                 pass
                             n.clearSubmittedChunks()
+            node.postprocess()
 
             if stopAndRestart:
                 break

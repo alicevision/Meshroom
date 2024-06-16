@@ -32,6 +32,7 @@ class Attribute(BaseObject):
         self._errorMessage = errorMessage
         self._visible = visible
         self._isExpression = (isinstance(self._value, str) and "{" in self._value) or isinstance(self._value, types.FunctionType)
+        self._isDynamicValue = (self._value is None)
         self._valueType = None
 
     name = Property(str, lambda self: self._name, constant=True)
@@ -39,9 +40,13 @@ class Attribute(BaseObject):
     description = Property(str, lambda self: self._description, constant=True)
     value = Property(Variant, lambda self: self._value, constant=True)
     # isExpression:
-    #   The value of the attribute's descriptor is a static string expression that should be evaluated at runtime.
+    #   The default value of the attribute's descriptor is a static string expression that should be evaluated at runtime.
     #   This property only makes sense for output attributes.
     isExpression = Property(bool, lambda self: self._isExpression, constant=True)
+    # isDynamicValue
+    #   The default value of the attribute's descriptor is None, so it's not an input value,
+    #   but an output value that is computed during the Node's process execution.
+    isDynamicValue = Property(bool, lambda self: self._isDynamicValue, constant=True)
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
     advanced = Property(bool, lambda self: self._advanced, constant=True)
@@ -99,6 +104,8 @@ class ListAttribute(Attribute):
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def validateValue(self, value):
+        if value is None:
+            return value
         if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
             raise ValueError("ListAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
@@ -138,6 +145,8 @@ class GroupAttribute(Attribute):
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def validateValue(self, value):
+        if value is None:
+            return value
         """ Ensure value is compatible with the group description and convert value if needed. """
         if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
@@ -232,6 +241,8 @@ class File(Attribute):
         self._valueType = str
 
     def validateValue(self, value):
+        if value is None:
+            return value
         if not isinstance(value, str):
             raise ValueError('File only supports string input  (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return os.path.normpath(value).replace('\\', '/') if value else ''
@@ -252,6 +263,8 @@ class BoolParam(Param):
         self._valueType = bool
 
     def validateValue(self, value):
+        if value is None:
+            return value
         try:
             if isinstance(value, str):
                 # use distutils.util.strtobool to handle (1/0, true/false, on/off, y/n)
@@ -276,6 +289,8 @@ class IntParam(Param):
         self._valueType = int
 
     def validateValue(self, value):
+        if value is None:
+            return value
         # handle unsigned int values that are translated to int by shiboken and may overflow
         try:
             return int(value)
@@ -300,6 +315,8 @@ class FloatParam(Param):
         self._valueType = float
 
     def validateValue(self, value):
+        if value is None:
+            return value
         try:
             return float(value)
         except:
@@ -320,7 +337,7 @@ class PushButtonParam(Param):
         self._valueType = None
 
     def validateValue(self, value):
-        pass
+        return value
     def checkValueTypes(self):
         pass
 
@@ -354,6 +371,8 @@ class ChoiceParam(Param):
         return self._valueType(value)
 
     def validateValue(self, value):
+        if value is None:
+            return value
         if self.exclusive:
             return self.conformValue(value)
 
@@ -383,6 +402,8 @@ class StringParam(Param):
         self._valueType = str
 
     def validateValue(self, value):
+        if value is None:
+            return value
         if not isinstance(value, str):
             raise ValueError('StringParam value should be a string (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
@@ -401,6 +422,8 @@ class ColorParam(Param):
         self._valueType = str
 
     def validateValue(self, value):
+        if value is None:
+            return value
         if not isinstance(value, str) or len(value.split(" ")) > 1:
             raise ValueError('ColorParam value should be a string containing either an SVG name or an hexadecimal '
                              'color code (param: {}, value: {}, type: {})'.format(self.name, value, type(value)))
@@ -594,7 +617,8 @@ class Node(object):
     category = 'Other'
 
     def __init__(self):
-        pass
+        super(Node, self).__init__()
+        self.hasDynamicOutputAttribute = any(output.isDynamicValue for output in self.outputs)
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
         return attrValues
@@ -630,6 +654,9 @@ class InputNode(Node):
     """
     Node that does not need to be processed, it is just a placeholder for inputs.
     """
+    def __init__(self):
+        super(InputNode, self).__init__()
+
     def processChunk(self, chunk):
         pass
 
@@ -640,6 +667,9 @@ class CommandLineNode(Node):
     commandLine = ''  # need to be defined on the node
     parallelization = None
     commandLineRange = ''
+
+    def __init__(self):
+        super(CommandLineNode, self).__init__()
 
     def buildCommandLine(self, chunk):
 
@@ -708,6 +738,7 @@ class AVCommandLineNode(CommandLineNode):
     cmdCore = ''
 
     def __init__(self):
+        super(AVCommandLineNode, self).__init__()
 
         if AVCommandLineNode.cgroupParsed is False:
 
@@ -730,9 +761,9 @@ class AVCommandLineNode(CommandLineNode):
         return commandLineString + AVCommandLineNode.cmdMem + AVCommandLineNode.cmdCore
 
 # Test abstract node
-class InitNode:
+class InitNode(object):
     def __init__(self):
-        pass
+        super(InitNode, self).__init__()
 
     def initialize(self, node, inputs, recursiveInputs):
         """

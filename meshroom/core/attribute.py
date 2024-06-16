@@ -274,8 +274,9 @@ class Attribute(BaseObject):
         # it will not be the case (so we cannot have an assert).
         if self.isOutput:
             if self.desc.isDynamicValue:
-                # if it is dynamic, the uid is the one from the node itself
-                return self.node._uids.get(uidIndex)
+                # If the attribute is a dynamic output, the UID is derived from the node UID.
+                # To guarantee that each output attribute receives a unique ID, we add the attribute name to it.
+                return hashValue((self.name, self.node._uids.get(uidIndex)))
             else:
                 # only dependent on the hash of its value without the cache folder
                 return hashValue(self._invalidationValue)

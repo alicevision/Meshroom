@@ -1278,7 +1278,9 @@ class Graph(BaseObject):
                 node._applyExpr()
 
     def toDict(self):
-        return {k: node.toDict() for k, node in self._nodes.objects.items()}
+        nodes = {k: node.toDict() for k, node in self._nodes.objects.items()}
+        nodes = dict(sorted(nodes.items()))
+        return nodes
 
     @Slot(result=str)
     def asString(self):

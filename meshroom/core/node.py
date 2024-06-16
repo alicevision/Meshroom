@@ -1518,6 +1518,10 @@ class CompatibilityNode(BaseNode):
         self.outputs = self.nodeDict.get("outputs", {})
         self._internalFolder = self.nodeDict.get("internalFolder", "")
         self._uids = self.nodeDict.get("uids", {})
+        # JSON enfore keys to be strings, see
+        # https://docs.python.org/3.8/library/json.html#json.dump
+        # We know our keys are integers, so we convert them back to int.
+        self._uids = {int(k): v for k, v in self._uids.items()}
 
         # restore parallelization settings
         self.parallelization = self.nodeDict.get("parallelization", {})

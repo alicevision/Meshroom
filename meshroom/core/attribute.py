@@ -276,8 +276,10 @@ class Attribute(BaseObject):
             # only dependent on the hash of its value without the cache folder
             return hashValue(self._invalidationValue)
         if self.isLink:
-            return self.getLinkParam().uid(uidIndex)
+            linkParam = self.getLinkParam(recursive=True)
+            return linkParam.uid(uidIndex)
         if isinstance(self._value, (list, tuple, set,)):
+            # non-exclusive choice param
             # hash of sorted values hashed
             return hashValue([hashValue(v) for v in sorted(self._value)])
         return hashValue(self._value)

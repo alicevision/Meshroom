@@ -11,6 +11,8 @@ FocusScope {
     clip: true
 
     property var displayedNode: null
+    property var displayedAttr: (displayedNode && outputAttribute.name != "gallery") ? getAttributeByName(displayedNode, outputAttribute.name) : null
+    property var displayedAttrValue: displayedAttr ? displayedAttr.value : ""
 
     property bool useExternal: false
     property url sourceExternal
@@ -227,28 +229,28 @@ FocusScope {
     }
 
     function getImageFile() {
-        // Entry point for getting the image file URL
-
-        let attr = displayedNode ? getAttributeByName(displayedNode, outputAttribute.name) : undefined
         if (useExternal) {
+            // Entry point for getting the image file from an external URL
             return sourceExternal
         }
 
         if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
+            // Entry point for getting the image file from the gallery
             let vp = getViewpoint(_reconstruction.pickedViewId)
             let path = vp ? vp.childAttribute("path").value : ""
             return Filepath.stringToUrl(path)
         }
 
-        if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput && (attr.desc.semantic === "imageList" || attr.desc.semantic === "sequence")) {
+        if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput && displayedAttr && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
+            // Entry point for getting the image file from a sequence defined by an output attribute
             var path = sequence[currentFrame-frameRange.min]
             return Filepath.stringToUrl(path)
         }
 
         if (_reconstruction) {
+            // Entry point for getting the image file from an output attribute and associated to the current viewpoint
             let vp = getViewpoint(_reconstruction.pickedViewId)
-            let attr = getAttributeByName(displayedNode, outputAttribute.name)
-            let path = attr ? attr.value : ""
+            let path = displayedAttr ? displayedAttr.value : ""
             let resolved = vp ? Filepath.resolve(path, vp) : path
             return Filepath.stringToUrl(resolved)
         }
@@ -261,15 +263,15 @@ FocusScope {
         // ordered by path
 
         let objs = []
-        let attr = displayedNode ? getAttributeByName(displayedNode, outputAttribute.name) : undefined
+        let displayedAttr = displayedNode ? getAttributeByName(displayedNode, outputAttribute.name) : undefined
 
-        if (displayedNode && displayedNode.hasSequenceOutput && (attr.desc.semantic === "imageList" || attr.desc.semantic === "sequence")) {
+        if (displayedNode && displayedNode.hasSequenceOutput && displayedAttr && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
             let sequence = Filepath.resolveSequence(path_template)
             let ids = sequence[0]
             let resolved = sequence[1]
 
             // reset current frame to 0 if it is imageList but not sequence
-            if (attr.desc.semantic === "imageList") {
+            if (displayedAttr.desc.semantic === "imageList") {
                 // concat in one array all sequences in resolved
                 resolved = [].concat.apply([], resolved)
                 frameRange.min = 0
@@ -277,16 +279,15 @@ FocusScope {
                 currentFrame = 0
             }
 
-            if (attr.desc.semantic === "sequence") {
-                // if there is several sequences, take the first one
-                resolved = resolved[0]
+            if (displayedAttr.desc.semantic === "sequence") {
+                // if there is several sequences, take the first one, else take the only one
+                if (typeof resolved[0] === "object")
+                    resolved = resolved[0]
                 ids = ids[0]
                 frameRange.min = ids[0]
                 frameRange.max = ids[ids.length-1]
                 currentFrame = frameRange.min
             }
-            //order by path
-            resolved.sort()
 
             return resolved
         } else {
@@ -319,9 +320,7 @@ FocusScope {
         }
 
         if (_reconstruction) {
-            let attr = getAttributeByName(displayedNode, outputAttribute.name)
-            let path_template = attr ? attr.value : ""
-            return buildOrderedSequence(path_template)
+            return buildOrderedSequence(displayedAttrValue)
         }
 
         return []
@@ -347,9 +346,14 @@ FocusScope {
         if (!displayedNode || displayedNode.isComputable) names.push("gallery")
 
         outputAttribute.names = names
+    }
+
+    onDisplayedAttrValueChanged: {
         if (displayedNode && !displayedNode.hasSequenceOutput) {
             root.source = getImageFile()
+            root.sequence = []
         } else {
+            root.source = ""
             root.sequence = getSequence()
             enableSequencePlayerAction.checked = true
         }
@@ -488,9 +492,9 @@ FocusScope {
 
                     onActiveChanged: {
                         if (active) {
-                            // Instantiate and initialize a FLoatImage component dynamically using Loader.setSource
+                            // Instantiate and initialize a FloatImage component dynamically using Loader.setSource
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
-                            setSource("FloatImage.qml", {
+                            floatImageViewerLoader.setSource("FloatImage.qml", {
                                 'source':  Qt.binding(function() { return getImageFile() }),
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
                                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
@@ -517,7 +521,7 @@ FocusScope {
                                 })
                           } else {
                                 // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
-                                setSource("", {})
+                                floatImageViewerLoader.setSource("", {})
                                 fittedOnce = false
                           }
                     }

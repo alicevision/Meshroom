@@ -11,7 +11,7 @@ FocusScope {
     clip: true
 
     property var displayedNode: null
-    property var displayedAttr: (displayedNode && outputAttribute.name != "gallery") ? getAttributeByName(displayedNode, outputAttribute.name) : null
+    property var displayedAttr: (displayedNode && outputAttribute.name != "gallery") ? displayedNode.attributes.get(outputAttribute.name) : null
     property var displayedAttrValue: displayedAttr ? displayedAttr.value : ""
 
     property bool useExternal: false
@@ -214,20 +214,6 @@ FocusScope {
         return undefined
     }
 
-    function getAttributeByName(node, attrName) {
-        // Get attribute from given node by name
-        // This requires to loop over all atributes
-
-        for (var i = 0; i < node.attributes.count; i++) {
-            var attr = node.attributes.at(i)
-            if (attr.name == attrName) {
-                return attr
-            }
-        }
-
-        return undefined
-    }
-
     function getImageFile() {
         if (useExternal) {
             // Entry point for getting the image file from an external URL
@@ -263,7 +249,6 @@ FocusScope {
         // ordered by path
 
         let objs = []
-        let displayedAttr = displayedNode ? getAttributeByName(displayedNode, outputAttribute.name) : undefined
 
         if (displayedNode && displayedNode.hasSequenceOutput && displayedAttr && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
             let sequence = Filepath.resolveSequence(path_template)
@@ -513,7 +498,7 @@ FocusScope {
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
                                 'useSequence': Qt.binding(function() { 
-                                    let attr = root.displayedNode ? getAttributeByName(root.displayedNode, outputAttribute.name) : undefined
+                                    let attr = root.displayedNode ? root.displayedNode.attributes.get(outputAttribute.name) : undefined
                                     return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput)) && (attr.desc.semantic === "imageList" || attr.desc.semantic === "sequence")) 
                                 }),
                                 'fetchingSequence': Qt.binding(function() { return sequencePlayer.loading }),

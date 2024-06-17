@@ -4,6 +4,7 @@
 import os
 import json
 import logging
+import getpass
 
 import simpleFarm
 from meshroom.core.desc import Level
@@ -106,6 +107,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
                 tags=mainTags,
                 requirements={'service': str(','.join(allRequirements))},
                 environment=self.environment,
+                user=os.environ.get('USER', os.environ.get('FARM_USER', getpass.getuser())),
                 )
 
         nodeNameToTask = {}

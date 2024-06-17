@@ -5,32 +5,57 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "FeatureMatching": "2.0",
-            "ExportAnimatedCamera": "2.0",
-            "ScenePreview": "2.0",
-            "ConvertSfMFormat": "2.0",
-            "ImageMatching": "2.0",
             "CameraInit": "10.0",
-            "Publish": "1.3",
-            "ImageSegmentation": "1.2",
-            "RelativePoseEstimating": "2.0",
+            "ConvertSfMFormat": "2.0",
+            "ExportAnimatedCamera": "2.0",
             "FeatureExtraction": "1.3",
+            "FeatureMatching": "2.0",
+            "ImageMatching": "2.0",
+            "ImageSegmentation": "1.2",
             "NodalSfM": "2.0",
+            "Publish": "1.3",
+            "RelativePoseEstimating": "2.0",
+            "ScenePreview": "2.0",
             "TracksBuilding": "1.0"
         }
     },
     "graph": {
-        "ImageMatching_1": {
-            "nodeType": "ImageMatching",
+        "CameraInit_1": {
+            "nodeType": "CameraInit",
             "position": [
-                400,
+                -200,
+                0
+            ],
+            "inputs": {},
+            "internalInputs": {
+                "color": "#80766f"
+            }
+        },
+        "ConvertSfMFormat_1": {
+            "nodeType": "ConvertSfMFormat",
+            "position": [
+                1400,
+                200
+            ],
+            "inputs": {
+                "input": "{NodalSfM_1.output}",
+                "fileExt": "sfm",
+                "structure": false,
+                "observations": false
+            },
+            "internalInputs": {
+                "color": "#4c594c"
+            }
+        },
+        "ExportAnimatedCamera_1": {
+            "nodeType": "ExportAnimatedCamera",
+            "position": [
+                1400,
                 0
             ],
             "inputs": {
-                "input": "{FeatureExtraction_1.input}",
-                "featuresFolders": [
-                    "{FeatureExtraction_1.output}"
-                ]
+                "input": "{NodalSfM_1.output}",
+                "exportUndistortedImages": true
             },
             "internalInputs": {
                 "color": "#80766f"
@@ -46,17 +71,6 @@
                 "input": "{ImageSegmentation_1.input}",
                 "masksFolder": "{ImageSegmentation_1.output}"
             },
-            "internalInputs": {
-                "color": "#80766f"
-            }
-        },
-        "CameraInit_1": {
-            "nodeType": "CameraInit",
-            "position": [
-                -200,
-                0
-            ],
-            "inputs": {},
             "internalInputs": {
                 "color": "#80766f"
             }
@@ -77,33 +91,32 @@
                 "color": "#80766f"
             }
         },
-        "TracksBuilding_1": {
-            "nodeType": "TracksBuilding",
+        "ImageMatching_1": {
+            "nodeType": "ImageMatching",
             "position": [
-                800,
+                400,
                 0
             ],
             "inputs": {
-                "input": "{FeatureMatching_1.input}",
-                "featuresFolders": "{FeatureMatching_1.featuresFolders}",
-                "matchesFolders": [
-                    "{FeatureMatching_1.output}"
+                "input": "{FeatureExtraction_1.input}",
+                "featuresFolders": [
+                    "{FeatureExtraction_1.output}"
                 ]
             },
             "internalInputs": {
                 "color": "#80766f"
             }
         },
-        "RelativePoseEstimating_1": {
-            "nodeType": "RelativePoseEstimating",
+        "ImageSegmentation_1": {
+            "nodeType": "ImageSegmentation",
             "position": [
-                1000,
+                0,
                 0
             ],
             "inputs": {
-                "input": "{TracksBuilding_1.input}",
-                "tracksFilename": "{TracksBuilding_1.output}",
-                "enforcePureRotation": true
+                "input": "{CameraInit_1.output}",
+                "maskInvert": true,
+                "keepFilename": true
             },
             "internalInputs": {
                 "color": "#80766f"
@@ -124,34 +137,32 @@
                 "color": "#80766f"
             }
         },
-        "ExportAnimatedCamera_1": {
-            "nodeType": "ExportAnimatedCamera",
+        "Publish_1": {
+            "nodeType": "Publish",
             "position": [
-                1400,
+                1800,
                 0
             ],
             "inputs": {
-                "input": "{NodalSfM_1.output}",
-                "exportUndistortedImages": true
+                "inputFiles": [
+                    "{ExportAnimatedCamera_1.output}",
+                    "{ScenePreview_1.output}"
+                ]
+            }
+        },
+        "RelativePoseEstimating_1": {
+            "nodeType": "RelativePoseEstimating",
+            "position": [
+                1000,
+                0
+            ],
+            "inputs": {
+                "input": "{TracksBuilding_1.input}",
+                "tracksFilename": "{TracksBuilding_1.output}",
+                "enforcePureRotation": true
             },
             "internalInputs": {
                 "color": "#80766f"
-            }
-        },
-        "ConvertSfMFormat_1": {
-            "nodeType": "ConvertSfMFormat",
-            "position": [
-                1400,
-                200
-            ],
-            "inputs": {
-                "input": "{NodalSfM_1.output}",
-                "fileExt": "sfm",
-                "structure": false,
-                "observations": false
-            },
-            "internalInputs": {
-                "color": "#4c594c"
             }
         },
         "ScenePreview_1": {
@@ -174,29 +185,18 @@
                 "color": "#4c594c"
             }
         },
-        "Publish_1": {
-            "nodeType": "Publish",
+        "TracksBuilding_1": {
+            "nodeType": "TracksBuilding",
             "position": [
-                1800,
+                800,
                 0
             ],
             "inputs": {
-                "inputFiles": [
-                    "{ExportAnimatedCamera_1.output}",
-                    "{ScenePreview_1.output}"
+                "input": "{FeatureMatching_1.input}",
+                "featuresFolders": "{FeatureMatching_1.featuresFolders}",
+                "matchesFolders": [
+                    "{FeatureMatching_1.output}"
                 ]
-            }
-        },
-        "ImageSegmentation_1": {
-            "nodeType": "ImageSegmentation",
-            "position": [
-                0,
-                0
-            ],
-            "inputs": {
-                "input": "{CameraInit_1.output}",
-                "maskInvert": true,
-                "keepFilename": true
             },
             "internalInputs": {
                 "color": "#80766f"

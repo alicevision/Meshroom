@@ -520,6 +520,7 @@ class Reconstruction(UIGraph):
 
     @Slot(str, result=bool)
     def load(self, filepath, setupProjectFile=True, publishOutputs=False):
+        logging.info(f"Load project file: '{filepath}'")
         try:
             status = super(Reconstruction, self).loadGraph(filepath, setupProjectFile, publishOutputs)
             # warn about pre-release projects being automatically upgraded

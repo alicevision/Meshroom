@@ -1,15 +1,15 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "PhotometricStereo": "1.0",
             "CameraInit": "10.0",
-            "SphereDetection": "1.0",
             "LightingCalibration": "1.0",
-            "Publish": "1.3"
+            "PhotometricStereo": "1.0",
+            "Publish": "1.3",
+            "SphereDetection": "1.0"
         }
     },
     "graph": {
@@ -20,17 +20,6 @@
                 0
             ],
             "inputs": {}
-        },
-        "SphereDetection_1": {
-            "nodeType": "SphereDetection",
-            "position": [
-                200,
-                0
-            ],
-            "inputs": {
-                "input": "{CameraInit_1.output}",
-                "autoDetect": true
-            }
         },
         "LightingCalibration_1": {
             "nodeType": "LightingCalibration",
@@ -69,6 +58,17 @@
                     "{PhotometricStereo_1.albedo}",
                     "{PhotometricStereo_1.outputSfmDataAlbedo}"
                 ]
+            }
+        },
+        "SphereDetection_1": {
+            "nodeType": "SphereDetection",
+            "position": [
+                200,
+                0
+            ],
+            "inputs": {
+                "input": "{CameraInit_1.output}",
+                "autoDetect": true
             }
         }
     }

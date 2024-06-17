@@ -1,42 +1,51 @@
 {
     "header": {
         "nodesVersions": {
-            "StructureFromMotion": "3.3",
-            "FeatureMatching": "2.0",
-            "Meshing": "7.0",
             "CameraInit": "10.0",
-            "Texturing": "6.0",
-            "Publish": "1.3",
-            "MeshFiltering": "3.0",
             "FeatureExtraction": "1.3",
+            "FeatureMatching": "2.0",
+            "ImageMatching": "2.0",
+            "MeshFiltering": "3.0",
+            "Meshing": "7.0",
             "PrepareDenseScene": "3.1",
-            "ImageMatching": "2.0"
+            "Publish": "1.3",
+            "StructureFromMotion": "3.3",
+            "Texturing": "6.0"
         },
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true
     },
     "graph": {
-        "Texturing_1": {
-            "nodeType": "Texturing",
+        "CameraInit_1": {
+            "nodeType": "CameraInit",
             "position": [
-                1600,
+                0,
+                0
+            ],
+            "inputs": {}
+        },
+        "FeatureExtraction_1": {
+            "nodeType": "FeatureExtraction",
+            "position": [
+                200,
                 0
             ],
             "inputs": {
-                "input": "{Meshing_1.output}",
-                "imagesFolder": "{PrepareDenseScene_1.output}",
-                "inputMesh": "{MeshFiltering_1.outputMesh}"
+                "input": "{CameraInit_1.output}"
             }
         },
-        "Meshing_1": {
-            "nodeType": "Meshing",
+        "FeatureMatching_1": {
+            "nodeType": "FeatureMatching",
             "position": [
-                1200,
+                600,
                 0
             ],
             "inputs": {
-                "input": "{PrepareDenseScene_1.input}"
+                "input": "{ImageMatching_1.input}",
+                "featuresFolders": "{ImageMatching_1.featuresFolders}",
+                "imagePairsList": "{ImageMatching_1.output}",
+                "describerTypes": "{FeatureExtraction_1.describerTypes}"
             }
         },
         "ImageMatching_1": {
@@ -52,14 +61,48 @@
                 ]
             }
         },
-        "FeatureExtraction_1": {
-            "nodeType": "FeatureExtraction",
+        "MeshFiltering_1": {
+            "nodeType": "MeshFiltering",
             "position": [
-                200,
+                1400,
                 0
             ],
             "inputs": {
-                "input": "{CameraInit_1.output}"
+                "inputMesh": "{Meshing_1.outputMesh}"
+            }
+        },
+        "Meshing_1": {
+            "nodeType": "Meshing",
+            "position": [
+                1200,
+                0
+            ],
+            "inputs": {
+                "input": "{PrepareDenseScene_1.input}"
+            }
+        },
+        "PrepareDenseScene_1": {
+            "nodeType": "PrepareDenseScene",
+            "position": [
+                1000,
+                0
+            ],
+            "inputs": {
+                "input": "{StructureFromMotion_1.output}"
+            }
+        },
+        "Publish_1": {
+            "nodeType": "Publish",
+            "position": [
+                1800,
+                0
+            ],
+            "inputs": {
+                "inputFiles": [
+                    "{Texturing_1.outputMesh}",
+                    "{Texturing_1.outputMaterial}",
+                    "{Texturing_1.outputTextures}"
+                ]
             }
         },
         "StructureFromMotion_1": {
@@ -77,59 +120,16 @@
                 "describerTypes": "{FeatureMatching_1.describerTypes}"
             }
         },
-        "CameraInit_1": {
-            "nodeType": "CameraInit",
+        "Texturing_1": {
+            "nodeType": "Texturing",
             "position": [
-                0,
-                0
-            ],
-            "inputs": {}
-        },
-        "MeshFiltering_1": {
-            "nodeType": "MeshFiltering",
-            "position": [
-                1400,
+                1600,
                 0
             ],
             "inputs": {
-                "inputMesh": "{Meshing_1.outputMesh}"
-            }
-        },
-        "FeatureMatching_1": {
-            "nodeType": "FeatureMatching",
-            "position": [
-                600,
-                0
-            ],
-            "inputs": {
-                "input": "{ImageMatching_1.input}",
-                "featuresFolders": "{ImageMatching_1.featuresFolders}",
-                "imagePairsList": "{ImageMatching_1.output}",
-                "describerTypes": "{FeatureExtraction_1.describerTypes}"
-            }
-        },
-        "Publish_1": {
-            "nodeType": "Publish",
-            "position": [
-                1800,
-                0
-            ],
-            "inputs": {
-                "inputFiles": [
-                    "{Texturing_1.outputMesh}",
-                    "{Texturing_1.outputMaterial}",
-                    "{Texturing_1.outputTextures}"
-                ]
-            }
-        },
-        "PrepareDenseScene_1": {
-            "nodeType": "PrepareDenseScene",
-            "position": [
-                1000,
-                0
-            ],
-            "inputs": {
-                "input": "{StructureFromMotion_1.output}"
+                "input": "{Meshing_1.output}",
+                "imagesFolder": "{PrepareDenseScene_1.output}",
+                "inputMesh": "{MeshFiltering_1.outputMesh}"
             }
         }
     }

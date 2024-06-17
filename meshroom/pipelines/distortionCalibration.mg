@@ -1,18 +1,26 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "ExportDistortion": "1.0",
             "CameraInit": "10.0",
             "CheckerboardDetection": "1.0",
             "DistortionCalibration": "4.0",
+            "ExportDistortion": "1.0",
             "Publish": "1.3"
         }
     },
     "graph": {
+        "CameraInit_1": {
+            "nodeType": "CameraInit",
+            "position": [
+                0,
+                0
+            ],
+            "inputs": {}
+        },
         "CheckerboardDetection_1": {
             "nodeType": "CheckerboardDetection",
             "position": [
@@ -56,14 +64,6 @@
                     "{ExportDistortion_1.output}"
                 ]
             }
-        },
-        "CameraInit_1": {
-            "nodeType": "CameraInit",
-            "position": [
-                0,
-                0
-            ],
-            "inputs": {}
         }
     }
 }

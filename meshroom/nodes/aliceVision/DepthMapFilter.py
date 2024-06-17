@@ -150,4 +150,14 @@ This allows to filter unstable points before starting the fusion of all depth ma
             uid=[],
             group="",  # do not export on the command line
         ),
+        desc.File(
+            name="normal",
+            label="Normal Maps",
+            description="Normal maps.",
+            semantic="image",
+            value=desc.Node.internalFolder + "<VIEW_ID>_normalMap.exr",
+            uid=[],
+            enabled=lambda node: node.computeNormalMaps.value,
+            group="",  # do not export on the command line
+        ),
     ]

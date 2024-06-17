@@ -596,7 +596,7 @@ class Graph(BaseObject):
 
             # re-create edges taking into account what has been duplicated
             for attr, linkExpression in duplicateEdges.items():
-                logging.warning("attr={} linkExpression={}".format(attr.fullName, linkExpression))
+                # logging.warning("attr={} linkExpression={}".format(attr.fullName, linkExpression))
                 link = linkExpression[1:-1]  # remove starting '{' and trailing '}'
                 # get source node and attribute name
                 edgeSrcNodeName, edgeSrcAttrName = link.split(".", 1)

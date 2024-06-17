@@ -37,9 +37,9 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
         cls = Attribute
     attr = cls(node, description, isOutput, root, parent)
     if value is not None:
-        attr.value = value
+        attr._set_value(value, emitSignals=False)
     else:
-        attr.resetToDefaultValue()
+        attr.resetToDefaultValue(emitSignals=False)
     return attr
 
 

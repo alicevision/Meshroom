@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.11
 import Controls 1.0
 import MaterialIcons 2.2
 import Utils 1.0
+import Qt.labs.settings 1.0
 
 /**
  * The Sequence Player is a UI for manipulating
@@ -25,7 +26,12 @@ FloatingPane {
     readonly property alias sync3DSelected: m.sync3DSelected
     readonly property alias syncFeaturesSelected: m.syncFeaturesSelected
     property bool loading: fetchButton.checked || m.playing
-    property int maxCacheMemory: 2
+    property alias settings_SequencePlayer: settings_SequencePlayer
+
+    Settings {
+        id: settings_SequencePlayer
+        property int maxCacheMemory: viewer ? viewer.ramInfo.x/4 : 0
+    }
 
     function updateReconstructionView() {
         if (_reconstruction && m.frame >= 0 && m.frame < sortedViewIds.length) {
@@ -48,7 +54,7 @@ FloatingPane {
 
         property int frame: 0
         property bool syncFeaturesSelected: true
-        property bool sync3DSelected: false
+        property bool sync3DSelected: true
         property bool playing: false
         property bool repeat: false
         property real fps: 24
@@ -367,6 +373,7 @@ FloatingPane {
                                 id: sync3DCheckBox
                                 text: "Sync 3D Viewer"
                                 checkable: true
+                                checked: m.sync3DSelected
                                 onCheckedChanged: {
                                     m.sync3DSelected = checked
                                 }
@@ -401,10 +408,10 @@ FloatingPane {
                                     anchors.verticalCenter: parent.verticalCenter
                                     color: palette.text
 
-                                    text: !focus ? maxCacheMemory + " GB" : maxCacheMemory
+                                    text: !focus ? settings_SequencePlayer.maxCacheMemory + " GB" : settings_SequencePlayer.maxCacheMemory
 
                                     onEditingFinished: {
-                                        maxCacheMemory = parseInt(text);
+                                        settings_SequencePlayer.maxCacheMemory = parseInt(text);
                                         focus = false;
                                     }
                                 }
@@ -441,9 +448,9 @@ FloatingPane {
                                 from: 0
                                 to: viewer ? viewer.ramInfo.x : 0
 
-                                value: viewer ? maxCacheMemory : 0
+                                value: viewer ? settings_SequencePlayer.maxCacheMemory : 0
 
-                                ToolTip.text: "Max cache memory set: " + maxCacheMemory + " GB" + "\n" + "on available memory: "+ viewer.ramInfo.x + " GB"
+                                ToolTip.text: "Max cache memory set: " + settings_SequencePlayer.maxCacheMemory + " GB" + "\n" + "on available memory: "+ viewer.ramInfo.x + " GB"
                                 ToolTip.visible: hovered
                                 ToolTip.delay: 100
                             }
@@ -454,10 +461,10 @@ FloatingPane {
                                 width: parent.width
 
                                 from: 0
-                                to: maxCacheMemory
+                                to: settings_SequencePlayer.maxCacheMemory
                                 value: viewer.ramInfo.y
 
-                                ToolTip.text: "Occupied cache: "+ viewer.ramInfo.y + " GB" + "\n" +"On max cache memory set: " + maxCacheMemory + " GB"
+                                ToolTip.text: "Occupied cache: "+ viewer.ramInfo.y + " GB" + "\n" +"On max cache memory set: " + settings_SequencePlayer.maxCacheMemory + " GB"
                                 ToolTip.visible: hovered
                                 ToolTip.delay: 100
                             }

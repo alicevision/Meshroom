@@ -35,7 +35,7 @@ FloatingPane {
 
     function updateReconstructionView() {
         if (_reconstruction && m.frame >= 0 && m.frame < sortedViewIds.length) {
-            if (!m.playing){
+            if (!m.playing && !frameSlider.pressed){
                 _reconstruction.selectedViewId = sortedViewIds[m.frame];
             } else {
                 _reconstruction.pickedViewId = sortedViewIds[m.frame];
@@ -246,6 +246,12 @@ FloatingPane {
 
             onValueChanged: {
                 m.frame = value;
+            }
+
+            onPressedChanged: {
+                if (!pressed) {
+                    updateReconstructionView();
+                }
             }
 
             ToolTip {

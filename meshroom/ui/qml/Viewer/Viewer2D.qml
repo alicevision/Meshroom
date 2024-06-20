@@ -461,7 +461,9 @@ FocusScope {
                                 'cropFisheye': false,
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? getSequence() : []) }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
-                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction })
+                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction }),
+                                'fetchingSequence': Qt.binding(function() { return sequencePlayer.loading }),
+                                'memoryLimit': Qt.binding(function() { return sequencePlayer.settings_SequencePlayer.maxCacheMemory }),
                                 })
                           } else {
                                 // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -569,7 +571,7 @@ FocusScope {
                                 'features': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null }),
                                 'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null }),
                                 'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null }),
-                                'sync3DSelected': Qt.binding(function() { return sequencePlayer.sync3DSelected }),
+                                'syncFeaturesSelected': Qt.binding(function() { return sequencePlayer.syncFeaturesSelected }),
                             })
                         } else {
                             // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

@@ -45,7 +45,7 @@ Panel {
     headerBar: RowLayout {
         Label {
             id: computationInfo
-            color: node ? Colors.statusColors[node.globalStatus] : palette.text
+            color: node && node.isComputable ? Colors.statusColors[node.globalStatus] : palette.text
             Timer {
                 id: timer
                 interval: 2500
@@ -64,7 +64,7 @@ Panel {
             font.italic: true
             visible: {
                 if (node !== null) {
-                    if (node.isFinishedOrRunning() || node.isSubmittedOrRunning() || node.globalStatus=="ERROR") {
+                    if (node.isComputable && (node.isFinishedOrRunning() || node.isSubmittedOrRunning() || node.globalStatus=="ERROR")) {
                         return true
                     }
                 }

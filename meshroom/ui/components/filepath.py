@@ -4,6 +4,8 @@ from PySide2.QtCore import QUrl, QFileInfo
 from PySide2.QtCore import QObject, Slot
 
 import os
+import glob
+import pyseq
 
 
 class FilepathHelper(QObject):
@@ -103,19 +105,65 @@ class FilepathHelper(QObject):
     def resolve(self, path, vp):
         # Resolve dynamic path that depends on viewpoint
 
-        vpPath = vp.childAttribute("path").value
-        replacements = {
-            "<VIEW_ID>": str(vp.childAttribute("viewId").value),
-            "<INTRINSIC_ID>": str(vp.childAttribute("intrinsicId").value),
-            "<POSE_ID>": str(vp.childAttribute("poseId").value),
-            "<PATH>": vpPath,
-            "<FILENAME>": FilepathHelper.basename(FilepathHelper, vpPath),
-            "<FILESTEM>": FilepathHelper.removeExtension(FilepathHelper, FilepathHelper.basename(FilepathHelper, vpPath)),
-            "<EXTENSION>": FilepathHelper.extension(FilepathHelper, vpPath),
-        }
+        replacements = {}
+        if vp == None:
+            replacements = FilepathHelper.getFilenamesFromFolder(FilepathHelper, FilepathHelper.dirname(FilepathHelper, path), FilepathHelper.extension(FilepathHelper, path))
+            resolved = [path for i in range(len(replacements))]
+            for key in replacements:
+                for i in range(len(resolved)):
+                    resolved[i] = resolved[i].replace("<FRAMEID>", replacements[i])
+            return resolved
+        else:
+
+            vpPath = vp.childAttribute("path").value
+            filename = FilepathHelper.basename(FilepathHelper, vpPath)
+            replacements = {
+                "<VIEW_ID>": str(vp.childAttribute("viewId").value),
+                "<INTRINSIC_ID>": str(vp.childAttribute("intrinsicId").value),
+                "<POSE_ID>": str(vp.childAttribute("poseId").value),
+                "<PATH>": vpPath,
+                "<FILENAME>": filename,
+                "<FILESTEM>": FilepathHelper.removeExtension(FilepathHelper, filename),
+                "<EXTENSION>": FilepathHelper.extension(FilepathHelper, filename),
+            }
 
         resolved = path
         for key in replacements:
             resolved = resolved.replace(key, replacements[key])
 
         return resolved
+    
+    @Slot(str, result="QVariantList")
+    @Slot(str, str, result="QVariantList")
+    def getFilenamesFromFolder(self, folderPath: str, extension: str = None):
+        """
+        Get all filenames from a folder with a specific extension.
+
+        :param folderPath: Path to the folder.
+        :param extension: Extension of the files to get.
+        :return: List of filenames.
+        """
+        if extension is None:
+            extension = ".*"
+        return [self.basename(f) for f in glob.glob(os.path.join(folderPath, f"*{extension}")) if os.path.isfile(f)]
+
+    @Slot(str, result="QVariantList")
+    def resolveSequence(self, path):
+        """
+        Get id of each file in the sequence.
+        """
+        # use of pyseq to get the sequences
+        seq = pyseq.get_sequences(self.asStr(path))
+
+        ids = [[s.start(), s.end()] for s in seq]
+
+        folder = self.dirname(path)
+
+        missingFiles = [s.missing() for s in seq]
+        
+        # create the resolved path for each sequence and if a frame is missing add a empty string
+        resolved = [[os.path.join(folder, s.head() + str(s.format("%p") % frame) + s.tail()) if frame not in missingFiles[seq.index(s)]
+                     else "" for frame in range(ids[seq.index(s)][0], ids[seq.index(s)][1] + 1)] if s.frames()
+                     else os.path.join(folder, s.head())
+                    for s in seq]
+        return ids, resolved

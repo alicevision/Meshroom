@@ -150,3 +150,4 @@ def setupEnvironment(backend=Backend.STANDALONE):
 
 
 os.environ["QML_XHR_ALLOW_FILE_READ"] = '1'
+os.environ["PYSEQ_STRICT_PAD"] = '1'

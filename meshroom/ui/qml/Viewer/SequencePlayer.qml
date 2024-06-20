@@ -190,6 +190,8 @@ FloatingPane {
 
                     color: palette.text
                     horizontalAlignment: Text.AlignHCenter
+                    selectByMouse: true
+
                     text: m.frame
 
                     onEditingFinished: {
@@ -308,6 +310,7 @@ FloatingPane {
                 id: fpsTextInput
 
                 Layout.preferredWidth: fpsMetrics.width
+                selectByMouse: true
 
                 text: !focus ? m.fps + " FPS" : m.fps
                 color: palette.text

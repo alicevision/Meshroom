@@ -1,7 +1,7 @@
 {
     "header": {
         "nodesVersions": {
-            "CameraInit": "10.0",
+            "CameraInit": "11.0",
             "FeatureExtraction": "1.3",
             "FeatureMatching": "2.0",
             "ImageMatching": "2.0",

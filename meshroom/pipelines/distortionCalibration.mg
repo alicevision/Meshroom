@@ -5,9 +5,9 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "CameraInit": "10.0",
+            "CameraInit": "11.0",
             "CheckerboardDetection": "1.0",
-            "DistortionCalibration": "4.0",
+            "DistortionCalibration": "5.0",
             "ExportDistortion": "1.0",
             "Publish": "1.3"
         }
@@ -29,6 +29,7 @@
             ],
             "inputs": {
                 "input": "{CameraInit_1.output}",
+                "useNestedGrids": true,
                 "exportDebugImages": true
             }
         },

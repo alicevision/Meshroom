@@ -6,10 +6,10 @@
         "template": true,
         "nodesVersions": {
             "ApplyCalibration": "1.0",
-            "CameraInit": "10.0",
+            "CameraInit": "11.0",
             "CheckerboardDetection": "1.0",
             "ConvertSfMFormat": "2.0",
-            "DistortionCalibration": "4.0",
+            "DistortionCalibration": "5.0",
             "ExportAnimatedCamera": "2.0",
             "ExportDistortion": "1.0",
             "FeatureExtraction": "1.3",

@@ -5,7 +5,7 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "CameraInit": "10.0",
+            "CameraInit": "11.0",
             "LightingCalibration": "1.0",
             "PhotometricStereo": "1.0",
             "Publish": "1.3",

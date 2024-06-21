@@ -6,7 +6,7 @@
         "template": true,
         "nodesVersions": {
             "ApplyCalibration": "1.0",
-            "CameraInit": "10.0",
+            "CameraInit": "11.0",
             "ConvertSfMFormat": "2.0",
             "DepthMap": "5.0",
             "DepthMapFilter": "4.0",

@@ -1,7 +1,7 @@
 {
     "header": {
         "nodesVersions": {
-            "CameraInit": "10.0",
+            "CameraInit": "11.0",
             "LdrToHdrCalibration": "3.1",
             "LdrToHdrMerge": "4.1",
             "LdrToHdrSampling": "4.0",

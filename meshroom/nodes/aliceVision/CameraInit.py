@@ -1,4 +1,4 @@
-__version__ = "10.0"
+__version__ = "11.0"
 
 import os
 import json
@@ -138,12 +138,9 @@ Intrinsic = [
                      " - radialk3pt: radial distortion with three parameters and normalized with the sum of parameters (Best for equidistant cameras).\n"
                      " - brown: distortion with 3 radial and 2 tangential parameters.\n"
                      " - fisheye1: distortion with 1 parameter suited for fisheye optics (like 120deg FoV).\n"
-                     " - fisheye4: distortion with 4 parameters suited for fisheye optics (like 120deg FoV).\n"
-                     " - 3deanamorphic4: Pinhole camera with 4 anamorphic distortion coefficients.\n"
-                     " - 3declassicld: Pinhole camera with 10 anamorphic distortion coefficients.\n"
-                     " - 3deradial4: Pinhole camera with 3DE radial4 model.\n",
+                     " - fisheye4: distortion with 4 parameters suited for fisheye optics (like 120deg FoV).\n",
         value="radialk3",
-        values=["none", "radialk1", "radialk3", "radialk3pt", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3declassicld", "3deradial4"],
+        values=["none", "radialk1", "radialk3", "radialk3pt", "brown", "fisheye4", "fisheye1"],
         exclusive=True,
         uid=[0],
     ),
@@ -551,11 +548,6 @@ The needed metadata are:
             intrinsic['distortionType'] = "radialk3"
             intrinsic['undistortionType'] = "none"
         
-        elif itype == "3deradial4":
-            intrinsic['type'] = "pinhole"
-            intrinsic['distortionType'] = "3deradial4"
-            intrinsic['undistortionType'] = "none"
-
         elif itype == "brown":
             intrinsic['type'] = "pinhole"
             intrinsic['distortionType'] = "brown"
@@ -569,16 +561,6 @@ The needed metadata are:
         elif itype == "fisheye1":
             intrinsic['type'] = "pinhole"
             intrinsic['distortionType'] = "fisheye1"
-            intrinsic['undistortionType'] = "none"
-        
-        elif itype == "3deanamorphic4":
-            intrinsic['type'] = "pinhole"
-            intrinsic['distortionType'] = "none"
-            intrinsic['undistortionType'] = "3deanamorphic4"
-
-        elif itype == "3declassicld":
-            intrinsic['type'] = "pinhole"
-            intrinsic['distortionType'] = "3declassicld"
             intrinsic['undistortionType'] = "none"
         
         elif itype == "equidistant":

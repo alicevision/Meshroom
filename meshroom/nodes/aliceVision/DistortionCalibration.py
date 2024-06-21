@@ -1,4 +1,4 @@
-__version__ = '4.0'
+__version__ = '5.0'
 
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
@@ -33,7 +33,7 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             label="Undistortion Model",
             description="model used to estimate undistortion.",
             value="3deanamorphic4",
-            values=["3deanamorphic4"],
+            values=["3deanamorphic4", "3declassicld", "3deradial4"],
             exclusive=True,
             uid=[0],
         ),

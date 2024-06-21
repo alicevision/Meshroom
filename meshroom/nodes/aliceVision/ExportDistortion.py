@@ -24,7 +24,7 @@ It also allows to export an undistorted image of the lens grids for validation.
             name="exportNukeNode",
             label="Export Nuke Node",
             description="Export Nuke LensDistortion node as nuke file.\n"
-                        "Only supports 3DEqualizer/3DE4 Anamorphic lens model.",
+                        "Only supports 3DEqualizer lens models.",
             value=True,
             uid=[0],
         ),

@@ -40,8 +40,8 @@ class RippleSubmitter(BaseSubmitter):
         #Map meshroom GPU modes to MPC services
         gpudict = {
             "NONE":"",
-            "NORMAL":",gpu8G",
-            "INTENSIVE":",gpu16G"
+            "NORMAL":",cuda8G",
+            "INTENSIVE":",cuda16G"
         }
 
         #Specify some constraints

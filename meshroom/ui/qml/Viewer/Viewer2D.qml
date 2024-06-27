@@ -224,12 +224,14 @@ FocusScope {
             // Entry point for getting the image file from the gallery
             let vp = getViewpoint(_reconstruction.pickedViewId)
             let path = vp ? vp.childAttribute("path").value : ""
+            _reconstruction.currentViewPath = path
             return Filepath.stringToUrl(path)
         }
 
         if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput && displayedAttr && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
             // Entry point for getting the image file from a sequence defined by an output attribute
             var path = sequence[currentFrame-frameRange.min]
+            _reconstruction.currentViewPath = path
             return Filepath.stringToUrl(path)
         }
 
@@ -238,6 +240,7 @@ FocusScope {
             let vp = getViewpoint(_reconstruction.pickedViewId)
             let path = displayedAttr ? displayedAttr.value : ""
             let resolved = vp ? Filepath.resolve(path, vp) : path
+            _reconstruction.currentViewPath = resolved
             return Filepath.stringToUrl(resolved)
         }
 

@@ -464,6 +464,8 @@ class Reconstruction(UIGraph):
         self._pickedViewId = None
         self._liveSfmManager = LiveSfmManager(self)
 
+        self._currentViewPath = ""
+
         self._workerThreads = ThreadPool(processes=1)
 
         # react to internal graph changes to update those variables
@@ -1216,6 +1218,12 @@ class Reconstruction(UIGraph):
 
         return R, T
 
+    def setCurrentViewPath(self, path):
+        if self._currentViewPath == path:
+            return
+        self._currentViewPath = path
+        self.currentViewPathChanged.emit()
+
     selectedViewIdChanged = Signal()
     selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)
     selectedViewpointChanged = Signal()
@@ -1232,6 +1240,12 @@ class Reconstruction(UIGraph):
     sfmAugmented = Signal(Node, Node)
 
     nbCameras = Property(int, reconstructedCamerasCount, notify=sfmReportChanged)
+
+    # Provides the path of the image that is currently displayed
+    # This is an alternative to "selectedViewpoint.attribute.path.value" for images that are displayed
+    # but not part of the list of viewpoints of a CameraInit node (i.e. "sequence" node outputs)
+    currentViewPathChanged = Signal()
+    currentViewPath = Property(str, lambda self: self._currentViewPath, setCurrentViewPath, notify=currentViewPathChanged)
 
     # Signals to propagate high-level messages
     error = Signal(Message)

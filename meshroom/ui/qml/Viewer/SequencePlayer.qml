@@ -33,7 +33,7 @@ FloatingPane {
 
     Settings {
         id: settings_SequencePlayer
-        property int maxCacheMemory: viewer ? viewer.ramInfo.x/4 : 0
+        property int maxCacheMemory: viewer && viewer.ramInfo != undefined ? viewer.ramInfo.x / 4 : 0
     }
 
     function updateReconstructionView() {
@@ -441,7 +441,11 @@ FloatingPane {
                             Text {
                                 height: sync3DCheckBox.height
                                 verticalAlignment: Text.AlignVCenter
-                                text: "Available Memory: " + viewer.ramInfo.x + " GB"
+                                text: {
+                                    if (viewer && viewer.ramInfo != undefined)
+                                        return "Available Memory: " + viewer.ramInfo.x + " GB"
+                                    return "Unknown Available Memory"
+                                }
                                 color: palette.text
                             }
 
@@ -467,11 +471,17 @@ FloatingPane {
                                 width: parent.width
 
                                 from: 0
-                                to: viewer ? viewer.ramInfo.x : 0
+                                to: viewer && viewer.ramInfo != undefined ? viewer.ramInfo.x : 0
 
                                 value: viewer ? settings_SequencePlayer.maxCacheMemory : 0
 
-                                ToolTip.text: "Max cache memory set: " + settings_SequencePlayer.maxCacheMemory + " GB" + "\n" + "on available memory: "+ viewer.ramInfo.x + " GB"
+                                ToolTip.text: {
+                                    let ramMsg = "Max cache memory set: " + settings_SequencePlayer.maxCacheMemory + " GB"
+                                    if (viewer && viewer.ramInfo != undefined) {
+                                        return  ramMsg + "\n" + "on available memory: " + viewer.ramInfo.x + " GB"
+                                    }
+                                    return ramMsg + ",\n" + "available memory unknown"
+                                }
                                 ToolTip.visible: hovered
                                 ToolTip.delay: 100
                             }
@@ -483,9 +493,14 @@ FloatingPane {
 
                                 from: 0
                                 to: settings_SequencePlayer.maxCacheMemory
-                                value: viewer.ramInfo.y
+                                value: viewer && viewer.ramInfo != undefined ? viewer.ramInfo.y : 0
 
-                                ToolTip.text: "Occupied cache: "+ viewer.ramInfo.y + " GB" + "\n" +"On max cache memory set: " + settings_SequencePlayer.maxCacheMemory + " GB"
+                                ToolTip.text: {
+                                    if (viewer && viewer.ramInfo != undefined) {
+                                        return "Occupied cache: "+ viewer.ramInfo.y + " GB" + "\n" + "On max cache memory set: " + settings_SequencePlayer.maxCacheMemory + " GB"
+                                    }
+                                    return "Unknown occupied cache (max cache memory set: " + settings_SequencePlayer.maxCacheMemory + ")"
+                                }
                                 ToolTip.visible: hovered
                                 ToolTip.delay: 100
                             }

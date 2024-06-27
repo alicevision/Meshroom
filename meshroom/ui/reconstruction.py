@@ -1158,7 +1158,6 @@ class Reconstruction(UIGraph):
             # Reconstruction has ownership of Viewpoint object - destroy it when not needed anymore
             self._selectedViewpoint.deleteLater()
         self._selectedViewpoint = ViewpointWrapper(viewpointAttribute, self) if viewpointAttribute else None
-        self._graph._selectedViewpoint = self._selectedViewpoint.attribute if viewpointAttribute else None
         self.selectedViewpointChanged.emit()
 
     def setPickedViewId(self, viewId):

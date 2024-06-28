@@ -1133,6 +1133,9 @@ class BaseNode(BaseObject):
     def _isCompatibilityNode(self):
         return False
 
+    def _isInputNode(self):
+        return isinstance(self.nodeDesc, desc.InputNode)
+
     @property
     def globalExecMode(self):
         return self._chunks.at(0).execModeName
@@ -1338,6 +1341,7 @@ class BaseNode(BaseObject):
     elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
     recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime, notify=globalStatusChanged)
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)  # need lambda to evaluate the virtual function
+    isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
 
     globalExecModeChanged = Signal()
     globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)

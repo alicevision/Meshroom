@@ -76,6 +76,8 @@ class Attribute(BaseObject):
         self._value = None
         self.initValue()
 
+        self.valueChanged.connect(self.onChanged)
+
     @property
     def node(self):
         return self._node()
@@ -187,6 +189,21 @@ class Attribute(BaseObject):
             return self.getLinkParam().value
         return self._value
 
+    def onChanged(self):
+        """ Called when the attribute value has changed """
+        if self.node.isCompatibilityNode:
+            # We have no access to the node's implementation,
+            # so we cannot call the custom method.
+            return
+        if self.isOutput and not self.node.isInputNode:
+            # Ignore changes on output attributes for non-input nodes
+            # as they are updated during the node's computation.
+            # And we do not want notifications during the graph processing.
+            return
+        # notify the node that the attribute has changed
+        # this will call the node descriptor "onAttrNameChanged" method
+        self.node.onAttributeChanged(self)
+
     def _set_value(self, value, emitSignals=True):
         if self._value == value:
             return
@@ -206,8 +223,6 @@ class Attribute(BaseObject):
         if not emitSignals:
             return
 
-        if not self.node.isCompatibilityNode:
-            self.node.onAttributeChanged(self)
         # Request graph update when input parameter value is set
         # and parent node belongs to a graph
         # Output attributes value are set internally during the update process,

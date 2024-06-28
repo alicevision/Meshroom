@@ -920,12 +920,18 @@ class BaseNode(BaseObject):
         Args:
             attr (Attribute): attribute that has changed
         """
+        # Call the specific function if it exists in the node implementation
         paramName = attr.name[:1].upper() + attr.name[1:]
         methodName = f'on{paramName}Changed'
         if hasattr(self.nodeDesc, methodName):
             m = getattr(self.nodeDesc, methodName)
             if callable(m):
                 m(self)
+
+        # Propage the notification to connected output attributes
+        outEdges = self.graph.outEdges(attr)
+        for edge in outEdges:
+            edge.dst.onChanged()
 
     def onAttributeClicked(self, attr):
         """ When an attribute is clicked, a specific function can be defined in the descriptor and be called.

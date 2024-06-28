@@ -226,8 +226,6 @@ class Graph(BaseObject):
         self._fileDateVersion = 0
         self.header = {}
 
-        self._selectedViewpoint = None
-
     def clear(self):
         self.header.clear()
         self._compatibilityNodes.clear()
@@ -1565,12 +1563,6 @@ class Graph(BaseObject):
         self.updateInternals(force=True)
         self.updateStatusFromCache(force=True)
         self.cacheDirChanged.emit()
-
-    @property
-    def selectedViewpoint(self):
-        """ Return the attribute describing the viewpoint that is
-        currently set as the 'selected viewpoint'. """
-        return self._selectedViewpoint
 
     @property
     def fileDateVersion(self):

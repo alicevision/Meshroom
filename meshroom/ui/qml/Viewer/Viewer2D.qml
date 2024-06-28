@@ -137,8 +137,8 @@ FocusScope {
             if (Math.min(imgContainer.width, imgContainer.image.height) * imgContainer.scale * zoomFactor < 10)
                 return
             var point = mapToItem(imgContainer, wheel.x, wheel.y)
-            imgContainer.x += (1-zoomFactor) * point.x * imgContainer.scale
-            imgContainer.y += (1-zoomFactor) * point.y * imgContainer.scale
+            imgContainer.x += (1 - zoomFactor) * point.x * imgContainer.scale
+            imgContainer.y += (1 - zoomFactor) * point.y * imgContainer.scale
             imgContainer.scale *= zoomFactor
         }
     }
@@ -224,12 +224,15 @@ FocusScope {
             // Entry point for getting the image file from the gallery
             let vp = getViewpoint(_reconstruction.pickedViewId)
             let path = vp ? vp.childAttribute("path").value : ""
+            _reconstruction.currentViewPath = path
             return Filepath.stringToUrl(path)
         }
 
-        if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput && displayedAttr && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
+        if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput && displayedAttr &&
+            (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
             // Entry point for getting the image file from a sequence defined by an output attribute
-            var path = sequence[currentFrame-frameRange.min]
+            var path = sequence[currentFrame - frameRange.min]
+            _reconstruction.currentViewPath = path
             return Filepath.stringToUrl(path)
         }
 
@@ -238,20 +241,22 @@ FocusScope {
             let vp = getViewpoint(_reconstruction.pickedViewId)
             let path = displayedAttr ? displayedAttr.value : ""
             let resolved = vp ? Filepath.resolve(path, vp) : path
+            _reconstruction.currentViewPath = resolved
             return Filepath.stringToUrl(resolved)
         }
 
         return undefined
     }
 
-    function buildOrderedSequence(path_template) {
+    function buildOrderedSequence(pathTemplate) {
         // Resolve the path template on the sequence of viewpoints
         // ordered by path
 
         let objs = []
 
-        if (displayedNode && displayedNode.hasSequenceOutput && displayedAttr && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
-            let sequence = Filepath.resolveSequence(path_template)
+        if (displayedNode && displayedNode.hasSequenceOutput && displayedAttr &&
+            (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
+            let sequence = Filepath.resolveSequence(pathTemplate)
             let ids = sequence[0]
             let resolved = sequence[1]
 
@@ -260,7 +265,7 @@ FocusScope {
                 // concat in one array all sequences in resolved
                 resolved = [].concat.apply([], resolved)
                 frameRange.min = 0
-                frameRange.max = resolved.length-1
+                frameRange.max = resolved.length - 1
                 currentFrame = 0
             }
 
@@ -270,7 +275,7 @@ FocusScope {
                     resolved = resolved[0]
                 ids = ids[0]
                 frameRange.min = ids[0]
-                frameRange.max = ids[ids.length-1]
+                frameRange.max = ids[ids.length - 1]
                 currentFrame = frameRange.min
             }
 
@@ -282,11 +287,11 @@ FocusScope {
             objs.sort((a, b) => { return a.childAttribute("path").value < b.childAttribute("path").value ? -1 : 1; })
             let seq = [];
             for (let i = 0; i < objs.length; i++) {
-                seq.push(Filepath.resolve(path_template, objs[i]))
+                seq.push(Filepath.resolve(pathTemplate, objs[i]))
             }
 
             frameRange.min = 0
-            frameRange.max = seq.length-1
+            frameRange.max = seq.length - 1
             currentFrame = 0
 
             return seq
@@ -322,13 +327,15 @@ FocusScope {
             // store attr name for output attributes that represent images
             for (var i = 0; i < displayedNode.attributes.count; i++) {
                 var attr = displayedNode.attributes.at(i)
-                if (attr.isOutput && (attr.desc.semantic === "image" || attr.desc.semantic === "sequence" || attr.desc.semantic === "imageList") && attr.enabled) {
+                if (attr.isOutput && (attr.desc.semantic === "image" || attr.desc.semantic === "sequence" ||
+                    attr.desc.semantic === "imageList") && attr.enabled) {
                     names.push(attr.name)
                 }
             }
         }
 
-        if (!displayedNode || displayedNode.isComputable) names.push("gallery")
+        if (!displayedNode || displayedNode.isComputable)
+            names.push("gallery")
 
         outputAttribute.names = names
     }
@@ -399,7 +406,8 @@ FocusScope {
                 if (floatImageViewerLoader.item.containsMouse === false) {
                     return null
                 }
-                var pix = floatImageViewerLoader.item.pixelValueAt(Math.floor(floatImageViewerLoader.item.mouseX), Math.floor(floatImageViewerLoader.item.mouseY))
+                var pix = floatImageViewerLoader.item.pixelValueAt(Math.floor(floatImageViewerLoader.item.mouseX),
+                                                                   Math.floor(floatImageViewerLoader.item.mouseY))
                 return pix
             }
         }
@@ -444,7 +452,8 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 ExifOrientedViewer {
                     id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
+                    active: root.aliceVisionPluginAvailable &&
+                            (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
                     orientationTag: imgContainer.orientationTag
@@ -467,7 +476,8 @@ FocusScope {
                          * opened, for example, and the images have a different size), then another auto-fit needs to be
                          * performed */
                         if ((!fittedOnce && imgContainer.image && imgContainer.image.height > 0) ||
-                            (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
+                            (fittedOnce && ((width > 1 && previousWidth != width) ||
+                            (height > 1 && previousHeight != height)))) {
                             fit()
                             fittedOnce = true
                             previousWidth = width
@@ -515,7 +525,8 @@ FocusScope {
                 // qtAliceVision Panorama Viewer
                 Loader {
                     id: panoramaViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.usePanoramaViewer && _reconstruction.activeNodes.get('sfm').node
+                    active: root.aliceVisionPluginAvailable && root.usePanoramaViewer &&
+                            _reconstruction.activeNodes.get('sfm').node
                     visible: (panoramaViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
 
@@ -689,7 +700,7 @@ FocusScope {
 
                         onJsonFolderChanged: {
                             json = null
-                            if(activeNode.attribute("autoDetect").value) {
+                            if (activeNode.attribute("autoDetect").value) {
                                 // auto detection enabled
                                 var jsonPath = activeNode.attribute("output").value + "/detection.json"
                                 Request.get(Filepath.stringToUrl(jsonPath), function(xhr) {
@@ -711,12 +722,12 @@ FocusScope {
                         onNodeCircleRadiusChanged : { updateGizmo() }
 
                         function updateGizmo() {
-                            if(activeNode.attribute("autoDetect").value) {
+                            if (activeNode.attribute("autoDetect").value) {
                                 // update gizmo from auto detection json file
-                                if(json) { 
+                                if (json) {
                                     // json file found
                                     var data = json[currentViewId]
-                                    if(data && data[0]) { 
+                                    if (data && data[0]) {
                                         // current view id found
                                         circleX = data[0].x
                                         circleY= data[0].y
@@ -738,11 +749,13 @@ FocusScope {
                         }
 
                         onMoved: {
-                            _reconstruction.setAttribute(activeNode.attribute("sphereCenter"), JSON.stringify([xoffset, yoffset]))
+                            _reconstruction.setAttribute(activeNode.attribute("sphereCenter"),
+                                                         JSON.stringify([xoffset, yoffset]))
                         }
 
                         onIncrementRadius: {
-                            _reconstruction.setAttribute(activeNode.attribute("sphereRadius"), activeNode.attribute("sphereRadius").value + radiusOffset)
+                            _reconstruction.setAttribute(activeNode.attribute("sphereRadius"),
+                                                         activeNode.attribute("sphereRadius").value + radiusOffset)
                         }
                     }
                 }
@@ -1087,7 +1100,8 @@ FocusScope {
                             left: parent.left
                             margins: 2
                         }
-                        active: root.aliceVisionPluginAvailable && displayFeatures.checked && featuresViewerLoader.status === Loader.Ready
+                        active: root.aliceVisionPluginAvailable && displayFeatures.checked &&
+                                featuresViewerLoader.status === Loader.Ready
 
                         sourceComponent: FeaturesInfoOverlay {
                             pluginStatus: featuresViewerLoader.status

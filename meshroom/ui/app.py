@@ -4,13 +4,14 @@ import re
 import argparse
 
 from PySide2 import QtCore
-from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, Signal, qInstallMessageHandler, QtMsgType, QSettings
+from PySide2.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import nodesDesc
 from meshroom.core.taskManager import TaskManager
+from meshroom.common import Property, Variant, Signal, Slot
 
 from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
@@ -143,9 +144,9 @@ class MeshroomApp(QApplication):
         # instantiate Reconstruction object
         self._undoStack = commands.UndoStack(self)
         self._taskManager = TaskManager(self)
-        r = Reconstruction(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
-        r.setSubmitLabel(args.submitLabel)
-        self.engine.rootContext().setContextProperty("_reconstruction", r)
+        self._activeProject = Reconstruction(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
+        self._activeProject.setSubmitLabel(args.submitLabel)
+        self.engine.rootContext().setContextProperty("_reconstruction", self._activeProject)
 
         # those helpers should be available from QML Utils module as singletons, but:
         #  - qmlRegisterUncreatableType is not yet available in PySide2
@@ -162,7 +163,7 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
 
         # request any potential computation to stop on exit
-        self.aboutToQuit.connect(r.stopChildThreads)
+        self.aboutToQuit.connect(self._activeProject.stopChildThreads)
 
         if args.project and not os.path.isfile(args.project):
             raise RuntimeError(
@@ -171,17 +172,17 @@ class MeshroomApp(QApplication):
 
         if args.project:
             args.project = os.path.abspath(args.project)
-            r.load(args.project)
+            self._activeProject.load(args.project)
             self.addRecentProjectFile(args.project)
         else:
-            r.new()
+            self._activeProject.new()
 
         # import is a python keyword, so we have to access the attribute by a string
         if getattr(args, "import", None):
-            r.importImagesFromFolder(getattr(args, "import"), recursive=False)
+            self._activeProject.importImagesFromFolder(getattr(args, "import"), recursive=False)
 
         if args.importRecursive:
-            r.importImagesFromFolder(args.importRecursive, recursive=True)
+            self._activeProject.importImagesFromFolder(args.importRecursive, recursive=True)
 
         if args.save:
             if os.path.isfile(args.save):
@@ -195,7 +196,7 @@ class MeshroomApp(QApplication):
                         "Meshroom Command Line Error: Cannot save the new Meshroom project file (.mg) as the parent of the folder does not exists.\n"
                         "Invalid value: '{}'".format(args.save))
                 os.mkdir(projectFolder)
-            r.saveAs(args.save)
+            self._activeProject.saveAs(args.save)
             self.addRecentProjectFile(args.save)
 
         self.engine.load(os.path.normpath(url))
@@ -459,7 +460,8 @@ class MeshroomApp(QApplication):
     def _default8bitViewerEnabled(self):
         return bool(os.environ.get("MESHROOM_USE_8BIT_VIEWER", False))
 
-
+    activeProjectChanged = Signal()
+    activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)
     changelogModel = Property("QVariantList", _changelogModel, constant=True)
     licensesModel = Property("QVariantList", _licensesModel, constant=True)
     pipelineTemplateFilesChanged = Signal()

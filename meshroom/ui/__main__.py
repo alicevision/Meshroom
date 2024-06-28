@@ -6,6 +6,8 @@ from meshroom.common import Backend
 meshroom.setupEnvironment(backend=Backend.PYSIDE)
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-from meshroom.ui.app import MeshroomApp
-app = MeshroomApp(sys.argv)
-app.exec_()
+import meshroom.ui
+import meshroom.ui.app
+
+meshroom.ui.uiInstance = meshroom.ui.app.MeshroomApp(sys.argv)
+meshroom.ui.uiInstance.exec_()

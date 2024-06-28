@@ -29,7 +29,7 @@ FloatingPane {
     property bool loading: fetchButton.checked || m.playing
     property alias settings_SequencePlayer: settings_SequencePlayer
     property alias frameId: m.frame
-    property var frameRange: {"min" : 0, "max" : 0}
+    property var frameRange: { "min" : 0, "max" : 0 }
 
     Settings {
         id: settings_SequencePlayer
@@ -39,13 +39,13 @@ FloatingPane {
     function updateReconstructionView() {
         if (isOutputSequence)
             return
-        if (_reconstruction && m.frame >= frameRange.min && m.frame < frameRange.max+1) {
+        if (_reconstruction && m.frame >= frameRange.min && m.frame < frameRange.max + 1) {
             if (!m.playing && !frameSlider.pressed) {
-                _reconstruction.selectedViewId = sortedViewIds[m.frame];
+                _reconstruction.selectedViewId = sortedViewIds[m.frame]
             } else {
-                _reconstruction.pickedViewId = sortedViewIds[m.frame];
+                _reconstruction.pickedViewId = sortedViewIds[m.frame]
                 if (m.sync3DSelected) {
-                    _reconstruction.updateSelectedViewpoint(_reconstruction.pickedViewId);
+                    _reconstruction.updateSelectedViewpoint(_reconstruction.pickedViewId)
                 }
             }
         }
@@ -76,16 +76,16 @@ FloatingPane {
         property real fps: 24
 
         onFrameChanged: {
-            updateReconstructionView();
+            updateReconstructionView()
         }
 
         onPlayingChanged: {
             if (!playing) {
-                updateReconstructionView();
+                updateReconstructionView()
             } else if (playing && (frame + 1 >= frameRange + 1)) {
-                frame = frameRange.min;
+                frame = frameRange.min
             }
-            viewer.playback(playing);
+            viewer.playback(playing)
         }
     }
 
@@ -96,7 +96,7 @@ FloatingPane {
         function onSelectedViewIdChanged() {
             for (let idx = 0; idx < sortedViewIds.length; idx++) {
                 if (_reconstruction.selectedViewId === sortedViewIds[idx] && (m.frame != idx)) {
-                    m.frame = idx;
+                    m.frame = idx
                 }
             }
         }
@@ -115,20 +115,20 @@ FloatingPane {
         onTriggered: {
             if (viewer.imageStatus !== Image.Ready) {
                 // Wait for current image to be displayed before switching to next image
-                return;
+                return
             }
-            let nextIndex = m.frame + 1;
+            let nextIndex = m.frame + 1
             if (nextIndex == frameRange.max + 1) {
                 if (m.repeat) {
-                    m.frame = frameRange.min;
-                    return;
+                    m.frame = frameRange.min
+                    return
                 }
                 else {
-                    m.playing = false;
-                    return;
+                    m.playing = false
+                    return
                 }
             }
-            m.frame = nextIndex;
+            m.frame = nextIndex
         }
     }
     
@@ -168,18 +168,16 @@ FloatingPane {
                 MaterialToolButton {
                     id: previousFrameButton
 
-                    width: 10
-
                     anchors.verticalCenter: mouseAreaFrameLabel.verticalCenter
 
                     opacity: 0
-                    
+                    width: 10
                     text: MaterialIcons.navigate_before
                     ToolTip.text: "Previous Frame"
 
                     onClicked: {
                         if (m.frame > frameRange.min) {
-                            m.frame -= 1;
+                            m.frame -= 1
                         }
                     }
                 }
@@ -188,37 +186,34 @@ FloatingPane {
                     id: frameInput
 
                     anchors.horizontalCenter: mouseAreaFrameLabel.horizontalCenter
+                    Layout.preferredWidth: frameMetrics.width
 
                     color: palette.text
                     horizontalAlignment: Text.AlignHCenter
-
                     text: m.frame
-                    Layout.preferredWidth: frameMetrics.width
 
                     onEditingFinished: {
                         // We first assign the frame to the entered text even if it is an invalid frame number. We do it for extreme cases, for example without doing it, if we are at 0, and put a negative number, m.frame would be still 0 and nothing happens but we will still see the wrong number
-                        m.frame = parseInt(text) 
-                        m.frame = Math.min(frameRange.max, Math.max(frameRange.min, parseInt(text)));
-                        focus = false;
+                        m.frame = parseInt(text)
+                        m.frame = Math.min(frameRange.max, Math.max(frameRange.min, parseInt(text)))
+                        focus = false
                     }
                 }
 
                 MaterialToolButton {
                     id: nextFrameButton
 
-                    width: 10
-
                     anchors.right: mouseAreaFrameLabel.right
                     anchors.verticalCenter: mouseAreaFrameLabel.verticalCenter
 
+                    width: 10
                     opacity: 0
-
                     text: MaterialIcons.navigate_next
                     ToolTip.text: "Next Frame"
 
                     onClicked: {
                         if (m.frame < frameRange.max) {
-                            m.frame += 1;
+                            m.frame += 1
                         }
                     }
                 }
@@ -235,13 +230,13 @@ FloatingPane {
             ToolTip.text: checked ? "Pause Player" : "Play Sequence"
 
             onCheckedChanged: {
-                m.playing = checked;
+                m.playing = checked
             }
 
             Connections {
                 target: m
                 function onPlayingChanged() {
-                    playButton.checked = m.playing;
+                    playButton.checked = m.playing
                 }
             }
         }
@@ -260,12 +255,12 @@ FloatingPane {
             to: frameRange.max
 
             onValueChanged: {
-                m.frame = value;
+                m.frame = value
             }
 
             onPressedChanged: {
                 if (!pressed) {
-                    updateReconstructionView();
+                    updateReconstructionView()
                 }
             }
 
@@ -278,7 +273,7 @@ FloatingPane {
             Connections {
                 target: m
                 function onFrameChanged() {
-                    frameSlider.value = m.frame;
+                    frameSlider.value = m.frame
                 }
             }
 
@@ -294,7 +289,7 @@ FloatingPane {
                     id: cacheView
 
                     model: viewer ? viewer.cachedFrames : []
-                    property real frameLength: sortedViewIds.length > 0 ? frameSlider.width / (frameRange.max-frameRange.min+1) : 0
+                    property real frameLength: sortedViewIds.length > 0 ? frameSlider.width / (frameRange.max - frameRange.min + 1) : 0
 
                     Rectangle {
                         x: modelData.x * cacheView.frameLength
@@ -312,15 +307,14 @@ FloatingPane {
             TextInput {
                 id: fpsTextInput
 
-                color: palette.text
-
                 Layout.preferredWidth: fpsMetrics.width
 
                 text: !focus ? m.fps + " FPS" : m.fps
+                color: palette.text
 
                 onEditingFinished: {
-                    m.fps = parseInt(text);
-                    focus = false;
+                    m.fps = parseInt(text)
+                    focus = false
                 }
             }
         }
@@ -343,7 +337,7 @@ FloatingPane {
             ToolTip.text: "Repeat"
 
             onCheckedChanged: {
-                m.repeat = checked;
+                m.repeat = checked
             }
         }
 
@@ -374,7 +368,6 @@ FloatingPane {
                                 text: "<b>Synchronisation:</b>"
                                 color: palette.text
                             }
-
 
                             CheckBox {
                                 id: syncFeaturePointsCheckBox
@@ -432,8 +425,8 @@ FloatingPane {
                                     text: !focus ? settings_SequencePlayer.maxCacheMemory + " GB" : settings_SequencePlayer.maxCacheMemory
 
                                     onEditingFinished: {
-                                        settings_SequencePlayer.maxCacheMemory = parseInt(text);
-                                        focus = false;
+                                        settings_SequencePlayer.maxCacheMemory = parseInt(text)
+                                        focus = false
                                     }
                                 }
                             }
@@ -452,12 +445,12 @@ FloatingPane {
                             Text {
                                 height: sync3DCheckBox.height
                                 verticalAlignment: Text.AlignVCenter
-                                text:{
+                                text: {
                                     // number of cached frames is the difference between the first and last frame of all intervals in the cache
-                                    let cachedFrames = viewer.cachedFrames;
-                                    let cachedFramesCount = 0;
+                                    let cachedFrames = viewer.cachedFrames
+                                    let cachedFramesCount = 0
                                     for (let i = 0; i < cachedFrames.length; i++) {
-                                        cachedFramesCount += cachedFrames[i].y - cachedFrames[i].x + 1;
+                                        cachedFramesCount += cachedFrames[i].y - cachedFrames[i].x + 1
                                     }
                                     return "Cached Frames: " + (viewer ? cachedFramesCount : "0") + " / " + sortedViewIds.length
                                 }
@@ -532,7 +525,7 @@ FloatingPane {
         shortcut: "Space"
 
         onTriggered: {
-            m.playing = !m.playing;
+            m.playing = !m.playing
         }
     }
 }

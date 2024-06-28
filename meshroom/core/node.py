@@ -928,10 +928,11 @@ class BaseNode(BaseObject):
             if callable(m):
                 m(self)
 
-        # Propage the notification to connected output attributes
-        outEdges = self.graph.outEdges(attr)
-        for edge in outEdges:
-            edge.dst.onChanged()
+        if self.graph:
+            # If we are in a graph, propagate the notification to the connected output attributes
+            outEdges = self.graph.outEdges(attr)
+            for edge in outEdges:
+                edge.dst.onChanged()
 
     def onAttributeClicked(self, attr):
         """ When an attribute is clicked, a specific function can be defined in the descriptor and be called.

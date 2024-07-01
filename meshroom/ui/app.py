@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import argparse
+import json
 
 from PySide2 import QtCore
 from PySide2.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
@@ -96,6 +97,8 @@ class MeshroomApp(QApplication):
 
         args = parser.parse_args(args[1:])
 
+        self._projectOpened = True if getattr(args, "import", None) or args.project or args.importRecursive or args.save or args.pipeline else False
+
         logStringToPython = {
             'fatal': logging.FATAL,
             'error': logging.ERROR,
@@ -181,7 +184,7 @@ class MeshroomApp(QApplication):
             args.project = os.path.abspath(args.project)
             self._activeProject.load(args.project)
             self.addRecentProjectFile(args.project)
-        else:
+        elif getattr(args, "import", None) or args.importRecursive or args.save or args.pipeline:
             self._activeProject.new()
 
         # import is a python keyword, so we have to access the attribute by a string
@@ -235,6 +238,18 @@ class MeshroomApp(QApplication):
             settings.setArrayIndex(i)
             p = settings.value("filepath")
             if p:
+                # get the first image path from the project
+                file = open(p)
+                file = json.load(file)
+                # find the first camerainit node
+                file = file["graph"]
+                thumbnail = ""
+                for node in file:
+                    if file[node]["nodeType"] == "CameraInit":
+                        if len(file[node]["inputs"]["viewpoints"]) > 0:
+                            thumbnail = ThumbnailCache.thumbnailPath(file[node]["inputs"]["viewpoints"][0]["path"])
+                            break
+                p = {"path": p, "thumbnail": thumbnail}
                 projects.append(p)
         settings.endArray()
         return projects
@@ -254,6 +269,7 @@ class MeshroomApp(QApplication):
                 projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
 
         projects = self._recentProjectFiles()
+        projects = [p["path"] for p in projects]
 
         # remove duplicates while preserving order
         from collections import OrderedDict
@@ -471,6 +487,11 @@ class MeshroomApp(QApplication):
 
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)
+
+    # As activeProject is a Reconstruction, we can't use it directly in QML to know if a project is opened or not
+    # So we expose a boolean property to know if a project is opened or not
+    # TODO: find a way to have empty activeProject property
+    projectOpened = Property(bool, lambda self: self._projectOpened, constant=True)
     changelogModel = Property("QVariantList", _changelogModel, constant=True)
     licensesModel = Property("QVariantList", _licensesModel, constant=True)
     pipelineTemplateFilesChanged = Signal()

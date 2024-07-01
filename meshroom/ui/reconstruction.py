@@ -477,6 +477,7 @@ class Reconstruction(UIGraph):
         self._workerThreads.terminate()
         self._workerThreads.join()
 
+    @Slot()
     def clear(self):
         self.clearActiveNodes()
         super(Reconstruction, self).clear()
@@ -879,6 +880,9 @@ class Reconstruction(UIGraph):
         """
         logging.debug("importImagesFromFolder: " + str(path))
         filesByType = multiview.findFilesByTypeInFolder(path, recursive)
+        if not self.cameraInit:
+            # Create a CameraInit node if none exists
+            self.cameraInit = self.addNewNode("CameraInit")
         if filesByType.images:
             self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType.images, self.cameraInit,))
 

@@ -235,6 +235,7 @@ class Graph(BaseObject):
             node.alive = False
         self._importedNodes.clear()
         self._nodes.clear()
+        self._unsetFilepath()
 
     @property
     def fileFeatures(self):

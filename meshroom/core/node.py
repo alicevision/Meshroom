@@ -920,12 +920,19 @@ class BaseNode(BaseObject):
         Args:
             attr (Attribute): attribute that has changed
         """
+        # Call the specific function if it exists in the node implementation
         paramName = attr.name[:1].upper() + attr.name[1:]
         methodName = f'on{paramName}Changed'
         if hasattr(self.nodeDesc, methodName):
             m = getattr(self.nodeDesc, methodName)
             if callable(m):
                 m(self)
+
+        if self.graph:
+            # If we are in a graph, propagate the notification to the connected output attributes
+            outEdges = self.graph.outEdges(attr)
+            for edge in outEdges:
+                edge.dst.onChanged()
 
     def onAttributeClicked(self, attr):
         """ When an attribute is clicked, a specific function can be defined in the descriptor and be called.
@@ -1133,6 +1140,9 @@ class BaseNode(BaseObject):
     def _isCompatibilityNode(self):
         return False
 
+    def _isInputNode(self):
+        return isinstance(self.nodeDesc, desc.InputNode)
+
     @property
     def globalExecMode(self):
         return self._chunks.at(0).execModeName
@@ -1338,6 +1348,7 @@ class BaseNode(BaseObject):
     elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
     recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime, notify=globalStatusChanged)
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)  # need lambda to evaluate the virtual function
+    isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
 
     globalExecModeChanged = Signal()
     globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)

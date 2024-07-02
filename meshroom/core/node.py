@@ -811,6 +811,8 @@ class BaseNode(BaseObject):
         return True
 
     def _isComputed(self):
+        if not self.isComputable:
+            return True
         return self.hasStatus(Status.SUCCESS)
 
     def _isComputable(self):

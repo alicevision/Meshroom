@@ -1088,7 +1088,7 @@ class Graph(BaseObject):
                 nodes.append(vertex)  # We could collect specific chunks
 
         def finishEdge(edge, graph):
-            if edge[0].hasStatus(Status.SUCCESS) or edge[1].hasStatus(Status.SUCCESS):
+            if edge[0].isComputed or edge[1].isComputed:
                 return
             edges.append(edge)
 

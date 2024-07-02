@@ -237,18 +237,21 @@ class MeshroomApp(QApplication):
         for i in range(size):
             settings.setArrayIndex(i)
             p = settings.value("filepath")
+            thumbnail = ""
             if p:
                 # get the first image path from the project
-                file = open(p)
-                file = json.load(file)
-                # find the first camerainit node
-                file = file["graph"]
-                thumbnail = ""
-                for node in file:
-                    if file[node]["nodeType"] == "CameraInit":
-                        if len(file[node]["inputs"]["viewpoints"]) > 0:
-                            thumbnail = ThumbnailCache.thumbnailPath(file[node]["inputs"]["viewpoints"][0]["path"])
-                            break
+                try:
+                    with open(p) as file:
+                        file = json.load(file)
+                        # find the first camerainit node
+                        file = file["graph"]
+                        for node in file:
+                            if file[node]["nodeType"] == "CameraInit":
+                                if len(file[node]["inputs"]["viewpoints"]) > 0:
+                                    thumbnail = ThumbnailCache.createThumbnail(ThumbnailCache, file[node]["inputs"]["viewpoints"][0]["path"], -1, True)
+                                    break
+                except FileNotFoundError:
+                    pass
                 p = {"path": p, "thumbnail": thumbnail}
                 projects.append(p)
         settings.endArray()
@@ -310,6 +313,7 @@ class MeshroomApp(QApplication):
                 projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
 
         projects = self._recentProjectFiles()
+        projects = [p["path"] for p in projects]
 
         # remove duplicates while preserving order
         from collections import OrderedDict

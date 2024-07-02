@@ -1129,6 +1129,8 @@ class Reconstruction(UIGraph):
         if not viewpoint:
             return False
         # fetch up-to-date poseId from sfm result (in case of rigs, poseId might have changed)
+        if not self._views:
+            return False
         view = self._views.get(str(viewpoint.poseId.value), None)  # keys are strings (faster lookup)
         return view.get('poseId', -1) in self._poses if view else False
 

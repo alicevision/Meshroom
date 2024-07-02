@@ -247,7 +247,6 @@ Page {
                             function onClicked() {
                                 // Open pipeline
                                 mainStack.push("Application.qml")
-                                console.log("Open pipeline", modelData["path"])
                                 _reconstruction.new(modelData["path"])
                             }
                         }

@@ -27,9 +27,9 @@ class ScriptEditorManager(QObject):
 
         result = stdout.getvalue().strip()
 
-        # Add the script to the history and move up the index
+        # Add the script to the history and move up the index to the top of history stack
         self._history.append(script)
-        self._index = self._index + 1
+        self._index = len(self._history)
 
         return result
 

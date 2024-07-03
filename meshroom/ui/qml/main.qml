@@ -1088,7 +1088,7 @@ ApplicationWindow {
                 id: graphEditorPanel
                 Layout.fillWidth: true
                 padding: 4
-                tabs: ["Graph Editor", "Task Manager"]
+                tabs: ["Graph Editor", "Task Manager", "Script Editor"]
 
                 headerBar: RowLayout {
                     MaterialToolButton {
@@ -1274,6 +1274,12 @@ ApplicationWindow {
                     anchors.fill: parent
                 }
 
+                ScriptEditor {
+                    id: scriptEditor
+
+                    visible: graphEditorPanel.currentTab === 2
+                    anchors.fill: parent
+                }
             }
 
             NodeEditor {

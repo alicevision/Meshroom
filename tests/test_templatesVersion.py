@@ -15,6 +15,8 @@ def test_templateVersions():
     It fails when an upgrade of a templates is needed. Any template can still be opened even if its
     nodes are not up-to-date, as they will be automatically upgraded.
     """
+    meshroom.core.initNodes()
+    meshroom.core.initPipelines()
 
     assert len(pipelineTemplates) >= 1
 

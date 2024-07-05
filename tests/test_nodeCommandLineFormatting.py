@@ -9,6 +9,8 @@ from meshroom.core.node import Node
 
 
 def test_formatting_listOfFiles():
+    meshroom.core.initNodes()
+
     inputImages = ['/non/existing/fileA', '/non/existing/with space/fileB']
 
     graph = Graph('')
@@ -37,6 +39,8 @@ def test_formatting_listOfFiles():
 
 
 def test_formatting_strings():
+    meshroom.core.initNodes()
+
     graph = Graph('')
     n1 = graph.addNewNode('ImageMatching')
     name = 'weights'
@@ -61,6 +65,8 @@ def test_formatting_strings():
 
 
 def test_formatting_groups():
+    meshroom.core.initNodes()
+
     graph = Graph('')
     n3 = graph.addNewNode('ImageProcessing')
     n3._buildCmdVars()  # prepare vars for command line creation

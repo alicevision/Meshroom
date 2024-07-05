@@ -31,6 +31,8 @@ parser.add_argument('-i', '--iteration', type=int,
 
 args = parser.parse_args()
 
+meshroom.core.initNodes()
+
 graph = meshroom.core.graph.loadGraph(args.graphFile)
 if args.cache:
     graph.cacheDir = args.cache

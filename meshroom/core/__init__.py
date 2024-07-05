@@ -330,30 +330,32 @@ def loadPipelineTemplates(folder):
         if file.endswith(".mg") and file not in pipelineTemplates:
             pipelineTemplates[os.path.splitext(file)[0]] = os.path.join(folder, file)
 
-meshroomFolder = os.path.dirname(os.path.dirname(__file__))
+def initNodes():
+    meshroomFolder = os.path.dirname(os.path.dirname(__file__))
+    additionalNodesPath = os.environ.get("MESHROOM_NODES_PATH", "").split(os.pathsep)
+    # filter empty strings
+    additionalNodesPath = [i for i in additionalNodesPath if i]
+    nodesFolders = [os.path.join(meshroomFolder, 'nodes')] + additionalNodesPath
+    for f in nodesFolders:
+        loadAllNodes(folder=f)
 
-additionalNodesPath = os.environ.get("MESHROOM_NODES_PATH", "").split(os.pathsep)
-# filter empty strings
-additionalNodesPath = [i for i in additionalNodesPath if i]
+def initSubmitters():
+    meshroomFolder = os.path.dirname(os.path.dirname(__file__))
+    subs = loadSubmitters(os.environ.get("MESHROOM_SUBMITTERS_PATH", meshroomFolder), 'submitters')
+    for sub in subs:
+        registerSubmitter(sub())
 
-# Load plugins:
-# - Nodes
-nodesFolders = [os.path.join(meshroomFolder, 'nodes')] + additionalNodesPath
+def initPipelines():
+    meshroomFolder = os.path.dirname(os.path.dirname(__file__))
+    # Load pipeline templates: check in the default folder and any folder the user might have
+    # added to the environment variable
+    additionalPipelinesPath = os.environ.get("MESHROOM_PIPELINE_TEMPLATES_PATH", "").split(os.pathsep)
+    additionalPipelinesPath = [i for i in additionalPipelinesPath if i]
+    pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
+    for f in pipelineTemplatesFolders:
+        loadPipelineTemplates(f)
 
-for f in nodesFolders:
-    loadAllNodes(folder=f)
-
-# - Submitters
-subs = loadSubmitters(os.environ.get("MESHROOM_SUBMITTERS_PATH", meshroomFolder), 'submitters')
-
-for sub in subs:
-    registerSubmitter(sub())
-
-# Load pipeline templates: check in the default folder and any folder the user might have
-# added to the environment variable
-additionalPipelinesPath = os.environ.get("MESHROOM_PIPELINE_TEMPLATES_PATH", "").split(os.pathsep)
-additionalPipelinesPath = [i for i in additionalPipelinesPath if i]
-pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
-
-for f in pipelineTemplatesFolders:
-    loadPipelineTemplates(f)
+def initPlugins():
+    initNodes()
+    initSubmitters()
+    initPipelines()

@@ -9,6 +9,9 @@ from meshroom.core.node import Node
 
 
 def test_multiviewPipeline():
+    meshroom.core.initNodes()
+    meshroom.core.initPipelines()
+
     graph1InputImages = ['/non/existing/fileA']
     graph1 = loadGraph(meshroom.core.pipelineTemplates["photogrammetry"])
     graph1.name = "graph1"

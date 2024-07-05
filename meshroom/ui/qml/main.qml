@@ -216,35 +216,35 @@ ApplicationWindow {
                                  && _reconstruction.graph.filepath :                   // graph is saved on disk
                                  false
 
-        function compute(node, force) {
+        function compute(nodes, force) {
             if (!force && warnIfUnsaved && !_reconstruction.graph.filepath)
             {
-                unsavedComputeDialog.currentNode = node;
+                unsavedComputeDialog.currentNode = nodes[0];
                 unsavedComputeDialog.open();
             }
             else {
                 try {
-                    _reconstruction.execute(node)
+                    _reconstruction.execute(nodes)
                 }
                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
                     if (data.context === "COMPUTATION")
-                        computeSubmitErrorDialog.openError(data.type, data.msg, node)
+                        computeSubmitErrorDialog.openError(data.type, data.msg, nodes)
                 }
             }
         }
 
-        function submit(node) {
+        function submit(nodes) {
             if (!canSubmit) {
                 unsavedSubmitDialog.open()
             } else {
                 try {
-                    _reconstruction.submit(node)
+                    _reconstruction.submit(nodes)
                 }
                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
                     if (data.context === "SUBMITTING")
-                        computeSubmitErrorDialog.openError(data.type, data.msg, node)
+                        computeSubmitErrorDialog.openError(data.type, data.msg, nodes)
                 }
             }
         }
@@ -1245,11 +1245,11 @@ ApplicationWindow {
                     }
                     onComputeRequest: {
                         _reconstruction.forceNodesStatusUpdate();
-                        computeManager.compute(node)
+                        computeManager.compute(nodes)
                     }
                     onSubmitRequest: {
                         _reconstruction.forceNodesStatusUpdate();
-                        computeManager.submit(node)
+                        computeManager.submit(nodes)
                     }
                     onFilesDropped: {
                         var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)

@@ -22,4 +22,7 @@ parser.add_argument("--submitLabel",
 
 args = parser.parse_args()
 
+meshroom.core.initNodes()
+meshroom.core.initSubmitters()
+
 meshroom.core.graph.submit(args.meshroomFile, args.submitter, toNode=args.toNode, submitLabel=args.submitLabel)

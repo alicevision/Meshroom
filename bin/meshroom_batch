@@ -14,6 +14,7 @@ from meshroom import multiview
 from meshroom.core.desc import InitNode
 import logging
 
+meshroom.core.initPlugins()
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry or Panorama HDR pipeline.')
 parser.add_argument('-i', '--input', metavar='NODEINSTANCE:"SFM/FOLDERS/IMAGES;..."', type=str, nargs='*',

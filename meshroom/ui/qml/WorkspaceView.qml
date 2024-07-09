@@ -157,7 +157,7 @@ Item {
                             id: enableSequencePlayerAction
                             text: "Enable Sequence Player"
                             checkable: true
-                            checked: true
+                            checked: MeshroomApp.defaultSequencePlayerEnabled
                         }
                     }
                 }

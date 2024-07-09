@@ -463,6 +463,9 @@ class MeshroomApp(QApplication):
 
     def _default8bitViewerEnabled(self):
         return bool(os.environ.get("MESHROOM_USE_8BIT_VIEWER", False))
+    
+    def _defaultSequencePlayerEnabled(self):
+        return bool(os.environ.get("MESHROOM_USE_SEQUENCE_PLAYER", False))
 
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)
@@ -476,3 +479,4 @@ class MeshroomApp(QApplication):
     recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
     recentImportedImagesFolders = Property("QVariantList", _recentImportedImagesFolders, notify=recentImportedImagesFoldersChanged)
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)
+    defaultSequencePlayerEnabled = Property(bool, _defaultSequencePlayerEnabled, constant=True)

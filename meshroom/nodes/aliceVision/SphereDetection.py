@@ -73,7 +73,7 @@ Spheres can be automatically detected or manually defined in the interface.
             label="Radius",
             description="Sphere radius in pixels.",
             value=500.0,
-            range=(0.0, 1000.0, 0.1),
+            range=(0.0, 10000.0, 0.1),
             enabled=lambda node: not node.autoDetect.value,
             uid=[0],
         ),

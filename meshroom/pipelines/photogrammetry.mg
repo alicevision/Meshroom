@@ -5,7 +5,7 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "CameraInit": "10.0",
+            "CameraInit": "11.0",
             "DepthMap": "5.0",
             "DepthMapFilter": "4.0",
             "FeatureExtraction": "1.3",

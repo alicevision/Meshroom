@@ -508,8 +508,7 @@ FocusScope {
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
                                 'useSequence': Qt.binding(function() { 
-                                    let attr = root.displayedNode ? root.displayedNode.attributes.get(outputAttribute.name) : undefined
-                                    return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput)) && (attr.desc.semantic === "imageList" || attr.desc.semantic === "sequence")) 
+                                    return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence"))))
                                 }),
                                 'fetchingSequence': Qt.binding(function() { return sequencePlayer.loading }),
                                 'memoryLimit': Qt.binding(function() { return sequencePlayer.settings_SequencePlayer.maxCacheMemory }),

@@ -190,6 +190,8 @@ FloatingPane {
 
                     color: palette.text
                     horizontalAlignment: Text.AlignHCenter
+                    selectByMouse: true
+
                     text: m.frame
 
                     onEditingFinished: {
@@ -308,6 +310,7 @@ FloatingPane {
                 id: fpsTextInput
 
                 Layout.preferredWidth: fpsMetrics.width
+                selectByMouse: true
 
                 text: !focus ? m.fps + " FPS" : m.fps
                 color: palette.text
@@ -482,18 +485,15 @@ FloatingPane {
                             ProgressBar {
                                 id: occupiedCacheProgressBar
 
+                                property string occupiedCache: viewer.ramInfo ? Format.GB2SizeStr(viewer.ramInfo.y) : 0
+
                                 width: parent.width
 
                                 from: 0
                                 to: settings_SequencePlayer.maxCacheMemory
                                 value: viewer && viewer.ramInfo != undefined ? viewer.ramInfo.y : 0
 
-                                ToolTip.text: {
-                                    if (viewer && viewer.ramInfo != undefined) {
-                                        return "Occupied cache: "+ viewer.ramInfo.y + " GB" + "\n" + "On max cache memory set: " + settings_SequencePlayer.maxCacheMemory + " GB"
-                                    }
-                                    return "Unknown occupied cache (max cache memory set: " + settings_SequencePlayer.maxCacheMemory + ")"
-                                }
+                                ToolTip.text: "Occupied cache: " + occupiedCache + "\n" + "On max cache memory set: " + settings_SequencePlayer.maxCacheMemory + " GB"
                                 ToolTip.visible: hovered
                                 ToolTip.delay: 100
                             }

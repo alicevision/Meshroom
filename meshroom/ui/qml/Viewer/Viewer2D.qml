@@ -36,6 +36,8 @@ FocusScope {
     property alias currentFrame: sequencePlayer.frameId
     property alias frameRange: sequencePlayer.frameRange
 
+    property alias mouseArea: mouseArea
+
     QtObject {
         id: m
         property variant viewpointMetadata: {
@@ -114,9 +116,11 @@ FocusScope {
 
     // mouse area
     MouseArea {
+        id: mouseArea
         anchors.fill: parent
         property double factor: 1.2
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        hoverEnabled: true
         onPressed: {
             imgContainer.forceActiveFocus()
             if (mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))

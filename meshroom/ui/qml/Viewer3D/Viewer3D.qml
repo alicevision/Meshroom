@@ -28,6 +28,7 @@ FocusScope {
 
     readonly property var viewpoint: _reconstruction ? _reconstruction.selectedViewpoint : null
     readonly property bool doSyncViewpointCamera: Viewer3DSettings.syncViewpointCamera && (viewpoint && viewpoint.isReconstructed)
+    property alias mouseArea: cameraController
 
     // functions
     function resetCameraPosition() {

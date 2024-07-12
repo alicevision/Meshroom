@@ -23,6 +23,7 @@ Item {
     readonly property variant cameraInits: _reconstruction ? _reconstruction.cameraInits : null
     property bool readOnly: false
     property alias panel3dViewer: panel3dViewerLoader.item
+    property alias viewer3DContainer: panel3dViewerContainer
     readonly property Viewer2D viewer2D: viewer2D
     readonly property alias imageGallery: imageGallery
 
@@ -66,12 +67,20 @@ Item {
 
         Controls1.SplitView {
             orientation: Qt.Vertical
-            Layout.fillHeight: true
-            implicitWidth: Math.round(parent.width * 0.2)
+            SplitView.fillHeight: true
+
             Layout.minimumWidth: imageGallery.defaultCellSize
+            implicitWidth: (imageGallery.defaultCellSize + 2) * 2
+            Layout.fillWidth: imageGallery.isFullScreen
+            Layout.maximumWidth: imageGallery.isFullScreen ? parent.width : (imageGallery.defaultCellSize + 2) * 4
+
+            visible: settings_UILayout.showImageGallery || settings_UILayout.showLiveReconstruction
 
             ImageGallery {
                 id: imageGallery
+                property bool isFullScreen: settings_UILayout.showImageGallery && !settings_UILayout.showLiveReconstruction && !settings_UILayout.showImageViewer && !settings_UILayout.showViewer3D && !settings_UILayout.showGraphEditor
+                Layout.fillWidth: isFullScreen
+                anchors.fill: parent
                 Layout.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
@@ -93,8 +102,7 @@ Item {
             LiveSfmView {
                 visible: settings_UILayout.showLiveReconstruction
                 reconstruction: root.reconstruction
-                Layout.fillWidth: true
-                Layout.preferredHeight: childrenRect.height
+                SplitView.preferredHeight: childrenRect.height
             }
         }
 
@@ -103,8 +111,12 @@ Item {
             visible: settings_UILayout.showImageViewer
             implicitWidth: Math.round(parent.width * 0.35)
             Layout.fillHeight: true
-            Layout.fillWidth: true
-            Layout.minimumWidth: 50
+
+            property bool isFullScreen: !settings_UILayout.showImageGallery && !settings_UILayout.showLiveReconstruction && settings_UILayout.showImageViewer && !settings_UILayout.showViewer3D && !settings_UILayout.showGraphEditor
+
+            Layout.fillWidth: isFullScreen
+
+            Layout.minimumWidth: visible ? 50 : 0
             loading: viewer2D.loadingModules.length > 0
             loadingText: loading ? "Loading " + viewer2D.loadingModules : ""
 
@@ -184,12 +196,17 @@ Item {
             }
         }
 
-        Item {
+        Page {
+            id: panel3dViewerContainer
             visible: settings_UILayout.showViewer3D
-            Layout.minimumWidth: 20
-            Layout.minimumHeight: 80
+            Layout.minimumWidth: visible ? 200 : 0
+            Layout.minimumHeight: visible ? 80 : 0
             Layout.fillHeight: true
             implicitWidth: Math.round(parent.width * 0.45)
+
+            property bool isFullScreen: !settings_UILayout.showImageGallery && !settings_UILayout.showLiveReconstruction && !settings_UILayout.showImageViewer && settings_UILayout.showViewer3D && !settings_UILayout.showGraphEditor
+
+            Layout.fillWidth: isFullScreen
 
             Loader {
                 id: panel3dViewerLoader

@@ -97,6 +97,7 @@ ApplicationWindow {
         property alias showGraphEditor: graphEditorVisibilityCB.checked
         property alias showImageViewer: imageViewerVisibilityCB.checked
         property alias showViewer3D: viewer3DVisibilityCB.checked
+        property alias showImageGallery: imageGalleryVisibilityCB.checked
     }
 
     Component.onDestruction: {
@@ -110,6 +111,67 @@ ApplicationWindow {
         sequence: "Ctrl+N"
         context: Qt.ApplicationShortcut
         onActivated: ensureSaved(function() { _reconstruction.new() })
+    }
+
+    // Action to put component with mouse focus in fullscreen
+    Action {
+        id: showFullScreenAction
+
+        property bool isFullScreen: false
+        property Settings settingsBeforeFullScreen: Settings {
+            property bool showLiveReconstruction: false
+            property bool showImageViewer: false
+            property bool showViewer3D: false
+            property bool showGraphEditor: false
+            property bool showImageGallery: false
+        }
+
+        function setSettingsBeforeFullScreen(setting) {
+            settingsBeforeFullScreen.showLiveReconstruction = settings_UILayout.showLiveReconstruction
+            settingsBeforeFullScreen.showImageViewer = settings_UILayout.showImageViewer
+            settingsBeforeFullScreen.showViewer3D = settings_UILayout.showViewer3D
+            settingsBeforeFullScreen.showGraphEditor = settings_UILayout.showGraphEditor
+            settingsBeforeFullScreen.showImageGallery = settings_UILayout.showImageGallery
+
+            // set all to false except the one that triggered the fullscreen
+            for (var name in settings_UILayout) {
+                if (name !== setting && !settings_UILayout[name].readOnly && typeof settings_UILayout[name] === "boolean")
+                    settings_UILayout[name] = false
+            }
+
+            isFullScreen = true
+        }
+
+        function setSettingsAfterFullScreen() {
+            settings_UILayout.showLiveReconstruction = settingsBeforeFullScreen.showLiveReconstruction
+            settings_UILayout.showImageViewer = settingsBeforeFullScreen.showImageViewer
+            settings_UILayout.showViewer3D = settingsBeforeFullScreen.showViewer3D
+            settings_UILayout.showGraphEditor = settingsBeforeFullScreen.showGraphEditor
+            settings_UILayout.showImageGallery = settingsBeforeFullScreen.showImageGallery
+        }
+
+        shortcut: "Shift+F"
+        onTriggered: {
+            if (isFullScreen) {
+                setSettingsAfterFullScreen()
+                if (settings_UILayout.showGraphEditor)
+                    graphEditor.fit()
+
+                isFullScreen = false
+                return
+            } else {
+                if (workspaceView.viewer2D.mouseArea.containsMouse) {
+                    setSettingsBeforeFullScreen("showImageViewer")
+                } else if (workspaceView.imageGallery.mouseArea.containsMouse) {
+                    setSettingsBeforeFullScreen("showImageGallery")
+                } else if (workspaceView.viewer3DContainer.hovered) {
+                    setSettingsBeforeFullScreen("showViewer3D")
+                } else if (graphEditorPanel.hovered) {
+                    setSettingsBeforeFullScreen("showGraphEditor")
+                    graphEditor.fit()
+                }
+            }
+        }
     }
 
     MessageDialog {
@@ -896,6 +958,12 @@ ApplicationWindow {
                 checkable: true
                 checked: true
             }
+            MenuItem {
+                id: imageGalleryVisibilityCB
+                text: "Image Gallery"
+                checkable: true
+                checked: true
+            }
             MenuSeparator {}
             Action {
                 text: "Fullscreen"
@@ -1045,7 +1113,7 @@ ApplicationWindow {
                 id: workspaceView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: graphEditorPanel.parent.isFullScreen ? 50 : 0
                 reconstruction: _reconstruction
                 readOnly: _reconstruction ? _reconstruction.computing : false
 
@@ -1081,14 +1149,21 @@ ApplicationWindow {
         Controls1.SplitView {
             orientation: Qt.Horizontal
             width: parent.width
-            height: Math.round(parent.height * 0.3)
+
+            Layout.minimumHeight: graphEditorPanel.isFullScreen ? _window.height : 50
+            Layout.maximumHeight: graphEditorPanel.isFullScreen ? _window.height : Math.round(_window.height * 0.4)
             visible: settings_UILayout.showGraphEditor
 
             TabPanel {
                 id: graphEditorPanel
                 Layout.fillWidth: true
+
+                property bool isFullScreen: !settings_UILayout.showImageGallery && !settings_UILayout.showLiveReconstruction && !settings_UILayout.showImageViewer && !settings_UILayout.showViewer3D && settings_UILayout.showGraphEditor
+
+                implicitHeight: Math.round(_window.height * 0.3)
                 padding: 4
                 tabs: ["Graph Editor", "Task Manager", "Script Editor"]
+                hoverEnabled: true
 
                 headerBar: RowLayout {
                     MaterialToolButton {
@@ -1261,6 +1336,8 @@ ApplicationWindow {
                             _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
                         }
                     }
+
+                    
                 }
 
                 TaskManager {

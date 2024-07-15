@@ -279,6 +279,8 @@ FocusScope {
                 currentFrame = frameRange.min
             }
 
+            enableSequencePlayerAction.checked = true
+
             return resolved
         } else {
             for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
@@ -347,7 +349,6 @@ FocusScope {
         } else {
             root.source = ""
             root.sequence = getSequence()
-            enableSequencePlayerAction.checked = true
         }
     }
 

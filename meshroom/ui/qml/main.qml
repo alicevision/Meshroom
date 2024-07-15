@@ -132,6 +132,73 @@ ApplicationWindow {
         }
     }
 
+    //File browser for plugin
+    Dialog {
+        id: pluginURLDialog
+        title: "Plugin URL"
+        height: 150
+        width: 300
+        standardButtons: StandardButton.Ok | StandardButton.Cancel
+        //focus: true  
+        Column {
+            anchors.fill: parent
+            Text {
+                text: "Plugin URL"
+                height: 40
+            }
+            TextField {
+                id: urlInput
+                width: parent.width * 0.75
+                focus: true
+            }
+        }
+        onButtonClicked: {
+        if (clickedButton==StandardButton.Ok) {
+            console.log("Accepted " + clickedButton)
+            if (_reconstruction.installPlugin(urlInput.text)) {
+                pluginInstalledDialog.open()
+            } else { 
+                pluginNotInstalledDialog.open()
+            }
+            } 
+        }
+    }
+
+    // dialogs for plugins 
+    MessageDialog {
+        id: pluginInstalledDialog
+        title: "Plugin installed"
+        modal: true
+        canCopy: false
+        Label {
+            text: "Plugin installed, please restart meshroom for the changes to take effect"
+        }
+    }
+
+    MessageDialog {
+        id: pluginNotInstalledDialog
+        title: "Plugin not installed"
+        modal: true
+        canCopy: false
+        Label {
+            text: "Something went wrong, plugin not installed"
+        }
+    }
+
+    // plugin installation from path or url
+    Platform.FolderDialog {
+        id: intallPluginDialog
+        options: Platform.FolderDialog.DontUseNativeDialog
+        title: "Install Plugin"
+        onAccepted: {
+            if (_reconstruction.installPlugin(currentFolder.toString())) {
+                pluginInstalledDialog.open()
+            } else { 
+                pluginNotInstalledDialog.open()
+            }
+        }
+    }
+
     // Check if document has been saved
     function ensureSaved(callback)
     {

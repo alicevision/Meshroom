@@ -68,6 +68,14 @@ You can create custom nodes in python and make them available in Meshroom using 
 In a standard precompiled version of Meshroom, you can also directly add custom nodes in `lib/meshroom/nodes`.
 To be recognized by Meshroom, a custom folder with nodes should be a Python module (an `__init__.py` file is needed).
 
+### Plugins
+
+Meshroom supports installing containerised plugins via Docker (with the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)) or [Anaconda](https://docs.anaconda.com/free/miniconda/index.html).
+
+To do so, make sure docker or anaconda is installed properly and available from the command line.
+Then click on `File > Advanced > Install Plugin From URL` or `File > Advanced > Install Plugin From Local Folder` to begin the installation.
+
+To learn more about using or creating plugins, check the explanations [here](meshroom/plugins/README.md).
 
 ## License
 

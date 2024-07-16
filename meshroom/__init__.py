@@ -34,6 +34,8 @@ if __version_status__ is VersionStatus.develop:
     # Allow override from env variable
     if "REZ_MESHROOM_VERSION" in os.environ:
         __version_label__ += " package=" + os.environ.get("REZ_MESHROOM_VERSION")
+    elif "ION_MESHROOM_VERSION" in os.environ:
+        __version_label__ += " container=" + os.environ.get("ION_MESHROOM_VERSION")
 
 
 # Internal imports after the definition of the version

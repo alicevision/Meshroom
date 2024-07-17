@@ -201,6 +201,9 @@ class TaskManager(BaseObject):
             self.checkDuplicates(nodes, "COMPUTATION")  # name of the context is important for QML
 
             nodes = [node for node in nodes if not self.contains(node)]  # be sure to avoid non-real conflicts
+            nodes = list(set(nodes))
+            nodes = sorted(nodes, key=lambda x: x.depth)
+
             chunksInConflict = self.getAlreadySubmittedChunks(nodes)
 
             if chunksInConflict:

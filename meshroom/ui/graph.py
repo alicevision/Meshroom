@@ -495,9 +495,10 @@ class UIGraph(QObject):
         else:
             self._undoStack.unlock()
 
+    @Slot(QObjectListModel)
     @Slot(Node)
-    def execute(self, node=None):
-        nodes = [node] if node else None
+    def execute(self, nodes=None):
+        nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
         self._taskManager.compute(self._graph, nodes)
         self.updateLockedUndoStack()  # explicitly call the update while it is already computing
 
@@ -532,8 +533,9 @@ class UIGraph(QObject):
                 n.clearSubmittedChunks()
                 self._taskManager.removeNode(n, displayList=True, processList=True)
 
+    @Slot(QObjectListModel)
     @Slot(Node)
-    def submit(self, node=None):
+    def submit(self, nodes=None):
         """ Submit the graph to the default Submitter.
         If a node is specified, submit this node and its uncomputed predecessors.
         Otherwise, submit the whole
@@ -543,8 +545,8 @@ class UIGraph(QObject):
         """
         self.save()  # graph must be saved before being submitted
         self._undoStack.clear()  # the undo stack must be cleared
-        node = [node] if node else None
-        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node, submitLabel=self.submitLabel)
+        nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
+        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), nodes, submitLabel=self.submitLabel)
 
     def updateGraphComputingStatus(self):
         # update graph computing status

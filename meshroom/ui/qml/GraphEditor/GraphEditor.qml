@@ -26,8 +26,8 @@ Item {
     signal workspaceClicked()
 
     signal nodeDoubleClicked(var mouse, var node)
-    signal computeRequest(var node)
-    signal submitRequest(var node)
+    signal computeRequest(var nodes)
+    signal submitRequest(var nodes)
 
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
@@ -448,19 +448,51 @@ Item {
 
                 MenuItem {
                     text: "Compute"
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                    visible: {
+                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
+                            if (!uigraph.selectedNodes.at(i).isComputable)
+                                return false
+                        }
+                        return uigraph.selectedNodes.count > 0
+                    }
                     height: visible ? implicitHeight : 0
-                    enabled: nodeMenu.canComputeNode && (nodeMenu.canSubmitOrCompute%2 == 1) //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
+
+                    enabled: {
+                        var canCompute = false
+                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
+                            if (uigraph.graph.canCompute(uigraph.selectedNodes.at(i)) && uigraph.graph.canSubmitOrCompute(uigraph.selectedNodes.at(i)) % 2 == 1) {
+                                canCompute = true
+                            }
+                        }
+                        return canCompute //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
+                    
+                    }
+
                     onTriggered: {
-                        computeRequest(nodeMenu.currentNode)
+                        computeRequest(uigraph.selectedNodes)
                     }
                 }
                 MenuItem {
                     text: "Submit"
-                    enabled: nodeMenu.canComputeNode && nodeMenu.canSubmitOrCompute > 1
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : uigraph ? uigraph.canSubmit : false
+                    visible: {
+                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
+                            if (!uigraph.selectedNodes.at(i).isComputable)
+                                return false
+                        }
+                        return uigraph.selectedNodes.count > 0 || uigraph.canSubmit
+                    }
                     height: visible ? implicitHeight : 0
-                    onTriggered: submitRequest(nodeMenu.currentNode)
+
+                    enabled: {
+                        var canSubmit = false
+                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
+                            if (uigraph.graph.canCompute(uigraph.selectedNodes.at(i)) && uigraph.graph.canSubmitOrCompute(uigraph.selectedNodes.at(i)) > 1) {
+                                canSubmit = true
+                            }
+                        }
+                        return canSubmit
+                    }
+                    onTriggered: submitRequest(uigraph.selectedNodes)
                 }
                 MenuItem {
                     text: "Stop Computation"

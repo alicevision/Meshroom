@@ -18,7 +18,7 @@
             "FeatureMatching": "2.0",
             "ImageMatching": "2.0",
             "ImageMatchingMultiSfM": "1.0",
-            "ImageSegmentation": "1.2",
+            "ImagePrompt": "0.1",
             "KeyframeSelection": "5.0",
             "MeshDecimate": "1.0",
             "MeshFiltering": "3.0",
@@ -180,7 +180,7 @@
             ],
             "inputs": {
                 "input": "{ApplyCalibration_1.output}",
-                "masksFolder": "{ImageSegmentation_1.output}",
+                "masksFolder": "{ImagePrompt_1.output}",
                 "maskExtension": "exr"
             },
             "internalInputs": {
@@ -293,8 +293,8 @@
                 "color": "#80766f"
             }
         },
-        "ImageSegmentation_1": {
-            "nodeType": "ImageSegmentation",
+        "ImagePrompt_1": {
+            "nodeType": "ImagePrompt",
             "position": [
                 0,
                 200
@@ -319,7 +319,7 @@
                     "{ApplyCalibration_1.output}"
                 ],
                 "maskPaths": [
-                    "{ImageSegmentation_1.output}"
+                    "{ImagePrompt_1.output}"
                 ]
             },
             "internalInputs": {
@@ -381,7 +381,7 @@
             "inputs": {
                 "input": "{SfMTriangulation_1.output}",
                 "masksFolders": [
-                    "{ImageSegmentation_1.output}"
+                    "{ImagePrompt_1.output}"
                 ],
                 "maskExtension": "exr"
             },
@@ -414,7 +414,7 @@
                 "cameras": "{ConvertSfMFormat_1.output}",
                 "model": "{MeshDecimate_1.output}",
                 "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}",
-                "masks": "{ImageSegmentation_1.output}"
+                "masks": "{ImagePrompt_1.output}"
             },
             "internalInputs": {
                 "color": "#4c594c"

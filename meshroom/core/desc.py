@@ -354,12 +354,10 @@ class ChoiceParam(Param):
         self._joinChar = joinChar
         if self._values:
             # Look at the type of the first element of the possible values
-            assert isinstance(self._values, list)
             self._valueType = type(self._values[0])
         elif not exclusive:
             # Possible values may be defined later, so use the value to define the type.
             # if non exclusive, it is a list
-            assert isinstance(self._value, list)
             self._valueType = type(self._value[0])
         else:
             self._valueType = type(self._value)
@@ -380,12 +378,26 @@ class ChoiceParam(Param):
             value = value.split(',')
 
         if not isinstance(value, Iterable):
-            raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{}).'.format(self.name, value, type(value)))
+            raise ValueError('Non exclusive ChoiceParam value should be iterable (param: {}, value: {}, type: {}).'.format(self.name, value, type(value)))
 
         return [self.conformValue(v) for v in value]
 
     def checkValueTypes(self):
-        # nothing to validate
+        # Check that the values have been provided as a list
+        if not isinstance(self._values, list):
+            return self.name
+
+        # If the choices are not exclusive, check that 'value' is a list, and check that it does not contain values that
+        # are not available
+        elif not self.exclusive and (not isinstance(self._value, list) or
+             not all(val in self._values for val in self._value)):
+            return self.name
+
+        # If the choices are exclusive, the value should NOT be a list but it can contain any value that is not in the
+        # list of possible ones
+        elif self.exclusive and isinstance(self._value, list):
+            return self.name
+
         return ""
 
     values = Property(VariantList, lambda self: self._values, constant=True)

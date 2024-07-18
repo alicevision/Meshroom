@@ -714,7 +714,7 @@ FocusScope {
                             json = null
                             if (activeNode.attribute("autoDetect").value) {
                                 // auto detection enabled
-                                var jsonPath = activeNode.attribute("output").value + "/detection.json"
+                                var jsonPath = activeNode.attribute("output").value
                                 Request.get(Filepath.stringToUrl(jsonPath), function(xhr) {
                                     if (xhr.readyState === XMLHttpRequest.DONE) {
                                         try {

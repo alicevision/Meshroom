@@ -55,11 +55,14 @@ if args.node:
             if chunk.status.status in submittedStatuses:
                 print('Warning: Node is already submitted with status "{}". See file: "{}"'.format(chunk.status.status.name, chunk.statusFile))
                 # sys.exit(-1)
+
+    node.preprocess()
     if args.iteration != -1:
         chunk = node.chunks[args.iteration]
         chunk.process(args.forceCompute)
     else:
         node.process(args.forceCompute)
+    node.postprocess()
 else:
     if args.iteration != -1:
         print('Error: "--iteration" only make sense when used with "--node".')

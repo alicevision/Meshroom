@@ -1064,10 +1064,13 @@ class BaseNode(BaseObject):
         # logging.warning(data)
         for output in self.nodeDesc.outputs:
             if output.isDynamicValue:
-                if self.hasAttribute(output.name):
+                if self.hasAttribute(output.name) and output.name in data:
                     self.attribute(output.name).value = data[output.name]
                 else:
-                    logging.warning(f"loadOutputAttr: Missing dynamic output attribute: {self.name}.{output.name}")
+                    if not self.hasAttribute(output.name):
+                        logging.warning(f"loadOutputAttr: Missing dynamic output attribute. Node={self.name}, Attribute={output.name}")
+                    if output.name not in data:
+                        logging.warning(f"loadOutputAttr: Missing dynamic output value in file. Node={self.name}, Attribute={output.name}, File={valuesFile}, Data keys={data.keys()}")
 
     def saveOutputAttr(self):
         """ Save output attributes with dynamic values into a values.json file.

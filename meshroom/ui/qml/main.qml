@@ -219,7 +219,7 @@ ApplicationWindow {
         function compute(nodes, force) {
             if (!force && warnIfUnsaved && !_reconstruction.graph.filepath)
             {
-                unsavedComputeDialog.currentNode = nodes[0];
+                unsavedComputeDialog.selectedNodes = nodes;
                 unsavedComputeDialog.open();
             }
             else {
@@ -323,7 +323,7 @@ ApplicationWindow {
         MessageDialog {
             id: unsavedComputeDialog
 
-            property var currentNode: null
+            property var selectedNodes: null
 
             canCopy: false
             icon.text: MaterialIcons.warning
@@ -349,7 +349,7 @@ ApplicationWindow {
 
             onDiscarded: {
                 close()
-                computeManager.compute(currentNode, true)
+                computeManager.compute(selectedNodes, true)
             }
 
             onAccepted: saveAsAction.trigger()

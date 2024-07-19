@@ -193,6 +193,10 @@ RowLayout {
         Layout.fillWidth: true
 
         sourceComponent: {
+            if (attribute.value === undefined)
+            {
+                return notComputed_component
+            }
             switch (attribute.type) {
                 case "PushButtonParam":
                     return pushButton_component
@@ -217,6 +221,22 @@ RowLayout {
                     return color_component
                 default:
                     return textField_component
+            }
+        }
+
+        Component {
+            id: notComputed_component
+            Label {
+                anchors.fill: parent
+                text: MaterialIcons.do_not_disturb_alt
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                background: Rectangle {
+                    anchors.fill: parent
+                    border.width: 0
+                    radius: 20
+                    color: Qt.darker(palette.window, 1.1)
+                }
             }
         }
 

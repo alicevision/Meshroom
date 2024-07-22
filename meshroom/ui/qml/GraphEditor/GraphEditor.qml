@@ -29,6 +29,8 @@ Item {
     signal computeRequest(var nodes)
     signal submitRequest(var nodes)
 
+    signal dataDeleted()
+
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
     // Files have been dropped
@@ -65,6 +67,13 @@ Item {
             uigraph.appendSelection(node)
             uigraph.selectedNodesChanged()
         }
+    }
+
+    onDataDeleted: {
+        if (computeMenuItem.recompute) {
+            computeRequest(uigraph.selectedNodes)
+            computeMenuItem.recompute = false
+        } 
     }
 
     /// Duplicate a node and optionally all the following ones
@@ -443,11 +452,20 @@ Item {
                 property bool canComputeNode: currentNode != null && uigraph.graph.canCompute(currentNode)
                 //canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
                 property int canSubmitOrCompute: currentNode != null && uigraph.graph.canSubmitOrCompute(currentNode)
+                    property bool isComputed: {
+                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
+                            if (!uigraph.selectedNodes.at(i).isComputed)
+                                return false
+                        }
+                        return uigraph.selectedNodes.count > 0
+                    }
                 width: 220
                 onClosed: currentNode = null
 
                 MenuItem {
-                    text: "Compute"
+                    id: computeMenuItem
+                    property bool recompute: false
+                    text: nodeMenu.isComputed ? "Recompute" : "Compute"
                     visible: {
                         for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
                             if (!uigraph.selectedNodes.at(i).isComputable)
@@ -464,12 +482,17 @@ Item {
                                 canCompute = true
                             }
                         }
-                        return canCompute //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
+                        return canCompute || nodeMenu.isComputed //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
                     
                     }
 
                     onTriggered: {
-                        computeRequest(uigraph.selectedNodes)
+                        if (nodeMenu.isComputed) {
+                            recompute = true
+                            deleteDataMenuItem.showConfirmationDialog(false)
+                        } else {
+                            computeRequest(uigraph.selectedNodes)
+                        }
                     }
                 }
                 MenuItem {
@@ -584,6 +607,7 @@ Item {
                     visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
                 }
                 MenuItem {
+                    id: deleteDataMenuItem
                     text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
                     visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
                     height: visible ? implicitHeight : 0
@@ -645,6 +669,8 @@ Item {
                                     uigraph.clearDataFrom(uigraph.selectedNodes)
                                 else
                                     uigraph.clearData(uigraph.selectedNodes)
+
+                                root.dataDeleted()
                             }
                             onClosed: destroy()
                         }

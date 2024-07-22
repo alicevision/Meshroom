@@ -39,6 +39,13 @@ The detection method also supports nested calibration grids.
             uid=[0],
         ),
         desc.BoolParam(
+            name="ignorePixelAspectRatio",
+            label="Ignore Pixel Aspect Ratio",
+            description="Ignore pixel aspect ratio for detection.",
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name="exportDebugImages",
             label="Export Debug Images",
             description="Export debug images.",

@@ -37,6 +37,20 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             exclusive=True,
             uid=[0],
         ),
+        desc.BoolParam(
+            name="handleSqueeze",
+            label="Handle Squeeze",
+            description="Estimate squeeze.",
+            value=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name="isDesqueezed",
+            label="Is Desqueezed",
+            description="True if the input image is already desqueezed.",
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",

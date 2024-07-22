@@ -294,7 +294,6 @@ FocusScope {
 
             frameRange.min = 0
             frameRange.max = seq.length - 1
-            currentFrame = 0
 
             return seq
         }
@@ -349,6 +348,7 @@ FocusScope {
         } else {
             root.source = ""
             root.sequence = getSequence()
+            currentFrame = frameRange.min
         }
     }
 

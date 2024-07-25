@@ -59,6 +59,7 @@ class RippleSubmitter(BaseSubmitter):
         elif Level.NORMAL in (node.nodeDesc.ram, node.nodeDesc.cpu):
             #if 2 are available, otherwise 1
             maxProcessors = 2
+            requirements = requirements + ",!\"rr*\""
 
         #specify which node to wait before launching the current one
         waitsFor = []

@@ -348,7 +348,8 @@ FocusScope {
         } else {
             root.source = ""
             root.sequence = getSequence()
-            currentFrame = frameRange.min
+            if (currentFrame > frameRange.max)
+                currentFrame = frameRange.min
         }
     }
 

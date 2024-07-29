@@ -627,6 +627,8 @@ class Reconstruction(UIGraph):
             self.setSelectedViewId(self.viewpoints[0].viewId.value)
 
     def setCameraInitNode(self, node):
+        if self._cameraInit == node:
+            return
         self.setCameraInitIndex(self._cameraInits.indexOf(node))
 
     @Slot()
@@ -1020,7 +1022,7 @@ class Reconstruction(UIGraph):
                 if node.nodeType in nodeTypes:
                     self.activeNodes.getr(category).node = node
 
-                    if category == "sfmData":
+                    if category == "sfm":
                         self.setSfm(node)
 
         if node.nodeType == "CameraInit":

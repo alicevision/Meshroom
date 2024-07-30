@@ -1255,7 +1255,9 @@ ApplicationWindow {
                         var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
                         if (filesByType["meshroomScenes"].length == 1) {
                             ensureSaved(function() {
-                                _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
+                                if (_reconstruction.handleFilesUrl(filesByType, null, mousePosition)) {
+                                    MeshroomApp.addRecentProjectFile(filesByType["meshroomScenes"][0])
+                                }
                             })
                         } else {
                             _reconstruction.handleFilesUrl(filesByType, null, mousePosition)

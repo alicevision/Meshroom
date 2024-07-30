@@ -193,8 +193,8 @@ RowLayout {
         Layout.fillWidth: true
 
         sourceComponent: {
-            if (attribute.value === undefined)
-            {
+            // PushButtonParam always has value == undefined, so it needs to be excluded from this check
+            if (attribute.type != "PushButtonParam" && attribute.value === undefined) {
                 return notComputed_component
             }
             switch (attribute.type) {

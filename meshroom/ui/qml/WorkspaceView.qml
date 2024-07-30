@@ -83,7 +83,9 @@ Item {
                 onFilesDropped: {
                     if (drop["meshroomScenes"].length == 1) {
                         ensureSaved(function() {
-                            reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)
+                            if (reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)) {
+                                MeshroomApp.addRecentProjectFile(drop["meshroomScenes"][0])
+                            }
                         })
                     } else {
                         reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)

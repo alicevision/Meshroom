@@ -752,9 +752,9 @@ class Reconstruction(UIGraph):
         """ Get all view Ids involved in the reconstruction. """
         return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints.value]
 
-    @Slot("QVariantMap")
-    @Slot("QVariantMap", Node)
-    @Slot("QVariantMap", Node, "QPoint")
+    @Slot("QVariantMap", result=bool)
+    @Slot("QVariantMap", Node, result=bool)
+    @Slot("QVariantMap", Node, "QPoint", result=bool)
     def handleFilesUrl(self, filesByType, cameraInit=None, position=None):
         """ Handle drop events aiming to add images to the Reconstruction.
         This method allows to reduce process time by doing it on Python side.
@@ -830,7 +830,8 @@ class Reconstruction(UIGraph):
                     )
                 )
             else:
-                self.loadUrl(filesByType["meshroomScenes"][0])
+                return self.loadUrl(filesByType["meshroomScenes"][0])
+
 
 
         if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"] and not filesByType["meshroomScenes"]:
@@ -843,6 +844,10 @@ class Reconstruction(UIGraph):
                         "Unknown file extensions: " + ', '.join(extensions)
                     )
                 )
+        
+        # As the boolean is introduced to check if the project is loaded or not, the return value is added to the function.
+        # The default value is False, which means the project is not loaded.
+        return False
 
     @Slot("QList<QUrl>", result="QVariantMap")
     def getFilesByTypeFromDrop(self, urls):

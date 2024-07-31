@@ -73,6 +73,8 @@ class MessageHandler(object):
 class MeshroomApp(QApplication):
     """ Meshroom UI Application. """
     def __init__(self, args):
+        meshroom.core.initPipelines()
+
         QtArgs = [args[0], '-style', 'fusion'] + args[1:]  # force Fusion style by default
 
         parser = argparse.ArgumentParser(prog=args[0], description='Launch Meshroom UI.', add_help=True)
@@ -124,7 +126,8 @@ class MeshroomApp(QApplication):
         # - clean cache directory and make sure it exists on disk
         ThumbnailCache.initialize()
 
-        meshroom.core.initPlugins()
+        meshroom.core.initNodes()
+        meshroom.core.initSubmitters()
 
         # QML engine setup
         qmlDir = os.path.join(pwd, "qml")

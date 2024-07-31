@@ -74,6 +74,10 @@ Item {
             computeRequest(uigraph.selectedNodes)
             computeMenuItem.recompute = false
         } 
+        else if (submitMenuItem.resubmit) {
+            submitRequest(uigraph.selectedNodes)
+            submitMenuItem.resubmit = false
+        }
     }
 
     /// Duplicate a node and optionally all the following ones
@@ -496,7 +500,9 @@ Item {
                     }
                 }
                 MenuItem {
-                    text: "Submit"
+                    id: submitMenuItem
+                    property bool resubmit: false
+                    text: nodeMenu.isComputed ? "Re-Submit" : "Submit"
                     visible: {
                         for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
                             if (!uigraph.selectedNodes.at(i).isComputable)
@@ -513,9 +519,16 @@ Item {
                                 canSubmit = true
                             }
                         }
-                        return canSubmit
+                        return canSubmit || nodeMenu.isComputed
                     }
-                    onTriggered: submitRequest(uigraph.selectedNodes)
+                    onTriggered: {
+                        if (nodeMenu.isComputed) {
+                            resubmit = true
+                            deleteDataMenuItem.showConfirmationDialog(false)
+                        } else {
+                            submitRequest(uigraph.selectedNodes)
+                        }
+                    }
                 }
                 MenuItem {
                     text: "Stop Computation"

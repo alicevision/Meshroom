@@ -89,7 +89,7 @@ class MeshroomApp(QApplication):
         parser.add_argument('-s', '--save', metavar='PROJECT.mg', type=str, default='',
                             help='Save the created scene.')
         parser.add_argument('-p', '--pipeline', metavar="FILE.mg/" + "/".join(meshroom.core.pipelineTemplates), type=str,
-                            default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
+                            default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", ""),
                             help='Override the default Meshroom pipeline with this external or template graph.')
         parser.add_argument("--submitLabel", metavar='SUBMITLABEL', type=str, help="Label of a node in the submitter", default='[Meshroom] {projectName}')
         parser.add_argument("--verbose", help="Verbosity level", default=os.environ.get('MESHROOM_VERBOSE', 'warning'),

@@ -509,10 +509,8 @@ class Reconstruction(UIGraph):
     @Slot()
     @Slot(str)
     def new(self, pipeline=None):
-        p = pipeline if pipeline != None else self._defaultPipeline
-        if not p:
-            return
         """ Create a new pipeline. """
+        p = pipeline if pipeline != None else self._defaultPipeline
         # Lower the input and the dictionary keys to make sure that all input types can be found:
         # - correct pipeline name but the case does not match (e.g. panoramaHDR instead of panoramaHdr)
         # - lowercase pipeline name given through the "New Pipeline" menu
@@ -537,7 +535,6 @@ class Reconstruction(UIGraph):
                     "Open it with the corresponding version of Meshroom to recover your data."
                 ))
 
-            self.graph.fileDateVersion = os.path.getmtime(filepath)
             return status
         except FileNotFoundError as e:
             self.error.emit(
@@ -769,18 +766,29 @@ class Reconstruction(UIGraph):
         """
         if filesByType["images"]:
             if cameraInit is None:
-                boundingBox = self.layout.boundingBox()
-                if not position:
-                    p = Position(boundingBox[0], boundingBox[1] + boundingBox[3])
-                elif isinstance(position, QPoint):
-                    p = Position(position.x(), position.y())
+                if not self._cameraInits:
+                    if isinstance(position, QPoint):
+                        p = Position(position.x(), position.y())
+                    else:
+                        p = position
+                    cameraInit = self.addNewNode("CameraInit", position=p)
                 else:
-                    p = position
-                cameraInit = self.addNewNode("CameraInit", position=p)
+                    boundingBox = self.layout.boundingBox()
+                    if not position:
+                        p = Position(boundingBox[0], boundingBox[1] + boundingBox[3])
+                    elif isinstance(position, QPoint):
+                        p = Position(position.x(), position.y())
+                    else:
+                        p = position
+                    cameraInit = self.addNewNode("CameraInit", position=p)
             self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType["images"], cameraInit,))
         if filesByType["videos"]:
-            boundingBox = self.layout.boundingBox()
-            keyframeNode = self.addNewNode("KeyframeSelection", position=Position(boundingBox[0], boundingBox[1] + boundingBox[3]))
+            if self.nodes:
+                boundingBox = self.layout.boundingBox()
+                p = Position(boundingBox[0], boundingBox[1] + boundingBox[3])
+            else:
+                p = position
+            keyframeNode = self.addNewNode("KeyframeSelection", position=p)
             keyframeNode.inputPaths.value = filesByType["videos"]
             if len(filesByType["videos"]) == 1:
                 newVideoNodeMessage = "New node '{}' added for the input video.".format(keyframeNode.getLabel())

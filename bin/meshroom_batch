@@ -14,7 +14,7 @@ from meshroom import multiview
 from meshroom.core.desc import InitNode
 import logging
 
-meshroom.core.initPlugins()
+meshroom.core.initPipelines()
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry or Panorama HDR pipeline.')
 parser.add_argument('-i', '--input', metavar='NODEINSTANCE:"SFM/FOLDERS/IMAGES;..."', type=str, nargs='*',
@@ -91,6 +91,8 @@ if args.verbose:
 if not args.input and not args.inputRecursive:
     print('Nothing to compute. You need to set --input or --inputRecursive.')
     sys.exit(1)
+
+meshroom.core.initNodes()
 
 graph = multiview.Graph(name=args.pipeline)
 
@@ -218,6 +220,7 @@ if not args.output:
 toNodes = graph.findNodes(args.toNode) if args.toNode else None
 
 if args.submit:
+    meshroom.core.initSubmitters()
     if not args.save:
         raise ValueError('Need to save the project to file to submit on renderfarm.')
     # submit on renderfarm

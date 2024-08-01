@@ -456,13 +456,13 @@ Item {
                 property bool canComputeNode: currentNode != null && uigraph.graph.canCompute(currentNode)
                 //canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
                 property int canSubmitOrCompute: currentNode != null && uigraph.graph.canSubmitOrCompute(currentNode)
-                    property bool isComputed: {
-                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            if (!uigraph.selectedNodes.at(i).isComputed)
-                                return false
-                        }
-                        return uigraph.selectedNodes.count > 0
+                property bool isComputed: {
+                    for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
+                        if (!uigraph.selectedNodes.at(i).isComputed)
+                            return false
                     }
+                    return uigraph.selectedNodes.count > 0
+                }
                 width: 220
                 onClosed: currentNode = null
 
@@ -673,8 +673,8 @@ Item {
                             modal: false
                             header.visible: false
 
-                            text: "Delete Data of '" + node.label + (deleteFollowing ?  "' and following Nodes?" : "'?")
-                            helperText: "Warning: This operation can not be undone."
+                            text: "Delete Data of '" + node.label + "'" + (uigraph.selectedNodes.count > 1 ? " and other selected Nodes" : "") + (deleteFollowing ?  " and following Nodes?" : "?")
+                            helperText: "Warning: This operation cannot be undone."
                             standardButtons: Dialog.Yes | Dialog.Cancel
 
                             onAccepted: {

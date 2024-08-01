@@ -88,6 +88,14 @@ Page {
             palette.window: Qt.darker(activePalette.window, 1.15)
             Menu {
                 title: "File"
+                Action {
+                    id: newAction
+                    text: "New"
+                    shortcut: "Ctrl+N"
+                    onTriggered: ensureSaved(function() {
+                        _reconstruction.new()
+                    })
+                }
                 Menu {
                     id: newPipelineMenu
                     title: "New Pipeline"

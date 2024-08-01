@@ -96,13 +96,6 @@ ApplicationWindow {
         settings_General.windowHeight = _window.height
     }
 
-    Shortcut {
-        // Ensures the Ctrl+N shortcut is always valid and creates a default pipeline
-        sequence: "Ctrl+N"
-        context: Qt.ApplicationShortcut
-        onActivated: ensureSaved(function() { _reconstruction.new() })
-    }
-
     MessageDialog {
         id: unsavedDialog
 

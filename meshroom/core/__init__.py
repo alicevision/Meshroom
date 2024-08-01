@@ -354,8 +354,3 @@ def initPipelines():
     pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
     for f in pipelineTemplatesFolders:
         loadPipelineTemplates(f)
-
-def initPlugins():
-    initNodes()
-    initSubmitters()
-    initPipelines()

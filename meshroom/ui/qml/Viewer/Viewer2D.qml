@@ -861,7 +861,7 @@ FocusScope {
                                             return "Outdated Loading"
                                         case 3:  // AliceVision.FloatImageViewer.EStatus.MISSING_FILE
                                             return "Missing File"
-                                        case 4:  // AliceVision.FloatImageViewer.EStatus.ERROR
+                                        case 4:  // AliceVision.FloatImageViewer.EStatus.LOADING_ERROR
                                             return "Error"
                                         default:
                                             return ""

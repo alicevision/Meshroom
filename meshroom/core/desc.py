@@ -35,6 +35,8 @@ class Attribute(BaseObject):
         self._isDynamicValue = (self._value is None)
         self._valueType = None
 
+        self._attrType = None
+
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
@@ -57,6 +59,8 @@ class Attribute(BaseObject):
     errorMessage = Property(str, lambda self: self._errorMessage, constant=True)
     visible = Property(bool, lambda self: self._visible, constant=True)
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
+
+    attrType = Property(Variant, lambda self: self._attrType, constant=True)
 
     def validateValue(self, value):
         """ Return validated/conformed 'value'. Need to be implemented in derived classes.
@@ -403,6 +407,7 @@ class ChoiceParam(Param):
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
+
 
 
 class StringParam(Param):

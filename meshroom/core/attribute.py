@@ -25,7 +25,11 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
         root: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
         parent (BaseObject): (optional) the parent BaseObject if any
     """
-    if isinstance(description, desc.GroupAttribute):
+
+    if description.attrType:
+        cls = description.attrType
+
+    elif isinstance(description, desc.GroupAttribute):
         cls = GroupAttribute
     elif isinstance(description, desc.ListAttribute):
         cls = ListAttribute
@@ -35,6 +39,7 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
         cls = PushButtonParam
     else:
         cls = Attribute
+
     attr = cls(node, description, isOutput, root, parent)
     if value is not None:
         attr._set_value(value, emitSignals=False)
@@ -416,7 +421,6 @@ class Attribute(BaseObject):
     def updateInternals(self):
         # Emit if the enable status has changed
         self.setEnabled(self.getEnabled())
-
 
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)

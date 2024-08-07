@@ -16,6 +16,9 @@ on:
       - '**.rst'
       - 'docs/**'
 
+env:
+  CI: True
+
 jobs:
   build:
     runs-on: ubuntu-20.04

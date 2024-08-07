@@ -35,29 +35,6 @@ class Attribute(BaseObject):
         self._isDynamicValue = (self._value is None)
         self._valueType = None
 
-    name = Property(str, lambda self: self._name, constant=True)
-    label = Property(str, lambda self: self._label, constant=True)
-    description = Property(str, lambda self: self._description, constant=True)
-    value = Property(Variant, lambda self: self._value, constant=True)
-    # isExpression:
-    #   The default value of the attribute's descriptor is a static string expression that should be evaluated at runtime.
-    #   This property only makes sense for output attributes.
-    isExpression = Property(bool, lambda self: self._isExpression, constant=True)
-    # isDynamicValue
-    #   The default value of the attribute's descriptor is None, so it's not an input value,
-    #   but an output value that is computed during the Node's process execution.
-    isDynamicValue = Property(bool, lambda self: self._isDynamicValue, constant=True)
-    uid = Property(Variant, lambda self: self._uid, constant=True)
-    group = Property(str, lambda self: self._group, constant=True)
-    advanced = Property(bool, lambda self: self._advanced, constant=True)
-    enabled = Property(Variant, lambda self: self._enabled, constant=True)
-    semantic = Property(str, lambda self: self._semantic, constant=True)
-    uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
-    validValue = Property(Variant, lambda self: self._validValue, constant=True)
-    errorMessage = Property(str, lambda self: self._errorMessage, constant=True)
-    visible = Property(bool, lambda self: self._visible, constant=True)
-    type = Property(str, lambda self: self.__class__.__name__, constant=True)
-
     def getInstanceType(self):
         """ Return the correct Attribute instance corresponding to the description. """
         # Import within the method to prevent cyclic dependencies
@@ -94,6 +71,28 @@ class Attribute(BaseObject):
             return False
         return True
 
+    name = Property(str, lambda self: self._name, constant=True)
+    label = Property(str, lambda self: self._label, constant=True)
+    description = Property(str, lambda self: self._description, constant=True)
+    value = Property(Variant, lambda self: self._value, constant=True)
+    # isExpression:
+    #   The default value of the attribute's descriptor is a static string expression that should be evaluated at runtime.
+    #   This property only makes sense for output attributes.
+    isExpression = Property(bool, lambda self: self._isExpression, constant=True)
+    # isDynamicValue
+    #   The default value of the attribute's descriptor is None, so it's not an input value,
+    #   but an output value that is computed during the Node's process execution.
+    isDynamicValue = Property(bool, lambda self: self._isDynamicValue, constant=True)
+    uid = Property(Variant, lambda self: self._uid, constant=True)
+    group = Property(str, lambda self: self._group, constant=True)
+    advanced = Property(bool, lambda self: self._advanced, constant=True)
+    enabled = Property(Variant, lambda self: self._enabled, constant=True)
+    semantic = Property(str, lambda self: self._semantic, constant=True)
+    uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
+    validValue = Property(Variant, lambda self: self._validValue, constant=True)
+    errorMessage = Property(str, lambda self: self._errorMessage, constant=True)
+    visible = Property(bool, lambda self: self._visible, constant=True)
+    type = Property(str, lambda self: self.__class__.__name__, constant=True)
     # instanceType
     #   Attribute instance corresponding to the description
     instanceType = Property(Variant, lambda self: self.getInstanceType(), constant=True)
@@ -108,10 +107,6 @@ class ListAttribute(Attribute):
         self._elementDesc = elementDesc
         self._joinChar = joinChar
         super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
-
-    elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
-    uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
-    joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -145,6 +140,10 @@ class ListAttribute(Attribute):
             return self._elementDesc.matchDescription(value[0], strict)
         return True
 
+    elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
+    uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
+    joinChar = Property(str, lambda self: self._joinChar, constant=True)
+
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
@@ -156,8 +155,6 @@ class GroupAttribute(Attribute):
         self._joinChar = joinChar
         self._brackets = brackets
         super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
-
-    groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -240,6 +237,7 @@ class GroupAttribute(Attribute):
             allUids.extend(desc.uid)
         return allUids
 
+    groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
     uid = Property(Variant, retrieveChildrenUids, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
     brackets = Property(str, lambda self: self._brackets, constant=True)

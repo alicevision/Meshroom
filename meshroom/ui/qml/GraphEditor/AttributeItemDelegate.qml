@@ -506,7 +506,7 @@ RowLayout {
             Flow {
                 Repeater {
                     id: checkbox_repeater
-                    model: attribute.desc.values
+                    model: attribute.values
                     delegate: CheckBox {
                         enabled: root.editable
                         text: modelData

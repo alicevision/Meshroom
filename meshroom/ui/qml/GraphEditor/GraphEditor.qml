@@ -1019,6 +1019,9 @@ Item {
 
     function boundingBox() {
         var first = nodeRepeater.itemAt(0)
+        if (first === null) {
+            return Qt.rect(0, 0, 0, 0)
+        }
         var bbox = Qt.rect(first.x, first.y, first.x + first.width, first.y + first.height)
         for (var i = 0; i < root.graph.nodes.count; ++i) {
             var item = nodeRepeater.itemAt(i)

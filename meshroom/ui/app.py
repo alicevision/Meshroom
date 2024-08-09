@@ -246,7 +246,7 @@ class MeshroomApp(QApplication):
                         # find the first camerainit node
                         file = file["graph"]
                         for node in file:
-                            if file[node]["nodeType"] == "CameraInit":
+                            if file[node]["nodeType"] == "CameraInit" and file[node]["inputs"].get("viewpoints"):
                                 if len(file[node]["inputs"]["viewpoints"]) > 0:
                                     thumbnail = ThumbnailCache.createThumbnail(ThumbnailCache, file[node]["inputs"]["viewpoints"][0]["path"], -1, True)
                                     break

@@ -301,7 +301,7 @@ Page {
 
                             Image {
                                 visible: modelData["thumbnail"]
-                                source: modelData["thumbnail"]
+                                source: Filepath.stringToUrl(modelData["thumbnail"])
 
                                 fillMode: Image.PreserveAspectCrop
 

@@ -51,7 +51,12 @@ Page {
                     iconSize: 24
                     flat: true
                     leftPadding: 20
-                    rightPadding: leftColumn.width - labelItem.width - iconItem.width - leftPadding
+                    rightPadding: {
+                        var padding = leftColumn.width - labelItem.width - iconItem.width - leftPadding
+                        if (padding > 0 && padding < leftColumn.Layout.maximumWidth)
+                            return padding
+                        return 0
+                    }
 
                     onClicked: Qt.openUrlExternally("https://meshroom-manual.readthedocs.io/en/latest")
                 }
@@ -64,7 +69,12 @@ Page {
                     iconSize: 24
                     flat: true
                     leftPadding: 20
-                    rightPadding: leftColumn.width - labelItem.width - iconItem.width - leftPadding
+                    rightPadding: {
+                        var padding = leftColumn.width - labelItem.width - iconItem.width - leftPadding
+                        if (padding > 0 && padding < leftColumn.Layout.maximumWidth)
+                            return padding
+                        return 0
+                    }
 
                     onClicked: Qt.openUrlExternally("https://github.com/alicevision/Meshroom/blob/develop/CHANGES.md")
                 }
@@ -77,7 +87,12 @@ Page {
                     iconSize: 24
                     flat: true
                     leftPadding: 20
-                    rightPadding: leftColumn.width - labelItem.width - iconItem.width - leftPadding
+                    rightPadding: {
+                        var padding = leftColumn.width - labelItem.width - iconItem.width - leftPadding
+                        if (padding > 0 && padding < leftColumn.Layout.maximumWidth)
+                            return padding
+                        return 0
+                    }
 
                     onClicked: Qt.openUrlExternally("https://alicevision.org/")
                 }
@@ -195,8 +210,12 @@ Page {
                     font.pointSize: 16
                     iconSize: 24
                     flat: true
-
-                    leftPadding: (leftColumn.width - labelItem.width - iconItem.width - 5) / 2
+                    leftPadding: {
+                        var padding = (leftColumn.width - labelItem.width - iconItem.width - 5) / 2
+                        if (padding > 0 && padding < leftColumn.Layout.maximumWidth)
+                            return padding
+                        return 0
+                    }
                     rightPadding: leftPadding
 
                     onClicked: Qt.openUrlExternally("https://alicevision.org/association/#donate")

@@ -58,6 +58,12 @@ class Attribute(BaseObject):
     visible = Property(bool, lambda self: self._visible, constant=True)
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
+    def getInstanceType(self):
+        """ Return the correct Attribute instance corresponding to the description. """
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import Attribute
+        return Attribute
+
     def validateValue(self, value):
         """ Return validated/conformed 'value'. Need to be implemented in derived classes.
 
@@ -88,6 +94,10 @@ class Attribute(BaseObject):
             return False
         return True
 
+    # instanceType
+    #   Attribute instance corresponding to the description
+    instanceType = Property(Variant, lambda self: self.getInstanceType(), constant=True)
+
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
@@ -102,6 +112,11 @@ class ListAttribute(Attribute):
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
+
+    def getInstanceType(self):
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import ListAttribute
+        return ListAttribute
 
     def validateValue(self, value):
         if value is None:
@@ -143,6 +158,11 @@ class GroupAttribute(Attribute):
         super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
+
+    def getInstanceType(self):
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import GroupAttribute
+        return GroupAttribute
 
     def validateValue(self, value):
         if value is None:
@@ -336,10 +356,17 @@ class PushButtonParam(Param):
         super(PushButtonParam, self).__init__(name=name, label=label, description=description, value=None, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
         self._valueType = None
 
+    def getInstanceType(self):
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import PushButtonParam
+        return PushButtonParam
+
     def validateValue(self, value):
         return value
+
     def checkValueTypes(self):
         pass
+
 
 class ChoiceParam(Param):
     """
@@ -361,6 +388,11 @@ class ChoiceParam(Param):
             self._valueType = type(self._value[0])
         else:
             self._valueType = type(self._value)
+
+    def getInstanceType(self):
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import ChoiceParam
+        return ChoiceParam
 
     def conformValue(self, value):
         """ Conform 'value' to the correct type and check for its validity """

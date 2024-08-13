@@ -25,17 +25,7 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
         root: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
         parent (BaseObject): (optional) the parent BaseObject if any
     """
-    if isinstance(description, desc.GroupAttribute):
-        cls = GroupAttribute
-    elif isinstance(description, desc.ListAttribute):
-        cls = ListAttribute
-    elif isinstance(description, desc.ChoiceParam):
-        cls = ChoiceParam
-    elif isinstance(description, desc.PushButtonParam):
-        cls = PushButtonParam
-    else:
-        cls = Attribute
-    attr = cls(node, description, isOutput, root, parent)
+    attr = description.instanceType(node, description, isOutput, root, parent)
     if value is not None:
         attr._set_value(value, emitSignals=False)
     else:

@@ -97,8 +97,6 @@ class MeshroomApp(QApplication):
 
         args = parser.parse_args(args[1:])
 
-        self._projectOpened = True if getattr(args, "import", None) or args.project or args.importRecursive or args.save or args.pipeline else False
-
         logStringToPython = {
             'fatal': logging.FATAL,
             'error': logging.ERROR,
@@ -492,10 +490,6 @@ class MeshroomApp(QApplication):
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)
 
-    # As activeProject is a Reconstruction, we can't use it directly in QML to know if a project is opened or not
-    # So we expose a boolean property to know if a project is opened or not
-    # TODO: find a way to have empty activeProject property
-    projectOpened = Property(bool, lambda self: self._projectOpened, constant=True)
     changelogModel = Property("QVariantList", _changelogModel, constant=True)
     licensesModel = Property("QVariantList", _licensesModel, constant=True)
     pipelineTemplateFilesChanged = Signal()

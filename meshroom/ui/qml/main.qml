@@ -609,7 +609,7 @@ ApplicationWindow {
         anchors.fill: parent
 
         Component.onCompleted: {
-            if (MeshroomApp.projectOpened) {
+            if (_reconstruction.active) {
                 mainStack.push("Application.qml")
             } else {
                 mainStack.push("Homepage.qml")

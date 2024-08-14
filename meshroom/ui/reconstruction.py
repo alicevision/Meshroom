@@ -434,11 +434,11 @@ class Reconstruction(UIGraph):
         "matchProvider": ["FeatureMatching", "StructureFromMotion"]
     }
 
-    def __init__(self, undoStack, taskManager, defaultPipeline='', parent=None):
+    def __init__(self, undoStack, taskManager, defaultPipeline="", parent=None):
         super(Reconstruction, self).__init__(undoStack, taskManager, parent)
 
         # initialize member variables for key steps of the 3D reconstruction pipeline
-
+        self._active = False
         self._activeNodes = meshroom.common.DictModel(keyAttrName="nodeType")
         self.initActiveNodes()
 
@@ -477,10 +477,14 @@ class Reconstruction(UIGraph):
         self._workerThreads.terminate()
         self._workerThreads.join()
 
+    def setActive(self, active):
+        self._active = active
+
     @Slot()
     def clear(self):
         self.clearActiveNodes()
         super(Reconstruction, self).clear()
+        self.setActive(False)
 
     def setDefaultPipeline(self, defaultPipeline):
         self._defaultPipeline = defaultPipeline
@@ -534,7 +538,7 @@ class Reconstruction(UIGraph):
                     "Data might have been lost in the process.",
                     "Open it with the corresponding version of Meshroom to recover your data."
                 ))
-
+            self.setActive(True)
             return status
         except FileNotFoundError as e:
             self.error.emit(
@@ -1272,6 +1276,11 @@ class Reconstruction(UIGraph):
     # but not part of the list of viewpoints of a CameraInit node (i.e. "sequence" node outputs)
     currentViewPathChanged = Signal()
     currentViewPath = Property(str, lambda self: self._currentViewPath, setCurrentViewPath, notify=currentViewPathChanged)
+
+    # Whether the Reconstruction object has been set ("new" has been called) or not ("new" has never
+    # been called or "clear" has been called)
+    activeChanged = Signal()
+    active = Property(bool, lambda self: self._active, setActive, notify=activeChanged)
 
     # Signals to propagate high-level messages
     error = Signal(Message)

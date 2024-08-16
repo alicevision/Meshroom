@@ -1,11 +1,13 @@
 import QtQuick 2.15
 import GraphEditor 1.0
 import QtQuick.Shapes 1.15
+import MaterialIcons 2.2
+import QtQuick.Controls 2.15
 
 /**
     A cubic spline representing an edge, going from point1 to point2, providing mouse interaction.
 */
-Shape {
+Item {
     id: root
 
     property var edge
@@ -15,6 +17,8 @@ Shape {
     property real point2y
     property alias thickness: path.strokeWidth
     property alias color: path.strokeColor
+    property bool isForLoop: false
+    property int iteration: 0
 
     // BUG: edgeArea is destroyed before path, need to test if not null to avoid warnings
     readonly property bool containsMouse: edgeArea && edgeArea.containsMouse
@@ -32,31 +36,71 @@ Shape {
     property real endX: width
     property real endY: height
 
-    // cause rendering artifacts when enabled (and don't support hot reload really well)
-    vendorExtensionsEnabled: false
 
-    ShapePath {
-        id: path
-        startX: root.startX
-        startY: root.startY
-        fillColor: "transparent"
-        strokeColor: "#3E3E3E"
-        strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
-        strokeWidth: 1
-        // final visual width of this path (never below 1)
-        readonly property real visualWidth: Math.max(strokeWidth, 1)
-        dashPattern: [6 / visualWidth, 4 / visualWidth]
-        capStyle: ShapePath.RoundCap
+    Shape {
+        anchors.fill: parent
+        // cause rendering artifacts when enabled (and don't support hot reload really well)
+        vendorExtensionsEnabled: false
+        opacity: 0.7
 
-        PathCubic {
-            id: cubic
-            property real ctrlPtDist: 30
-            x: root.endX
-            y: root.endY
-            relativeControl1X: ctrlPtDist
-            relativeControl1Y: 0
-            control2X: x - ctrlPtDist
-            control2Y: y
+        ShapePath {
+            id: path
+            startX: root.startX
+            startY: root.startY
+            fillColor: "transparent"
+
+            strokeColor: "#3E3E3E"
+            strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
+            strokeWidth: 1
+            // final visual width of this path (never below 1)
+            readonly property real visualWidth: Math.max(strokeWidth, 1)
+            dashPattern: [6 / visualWidth, 4 / visualWidth]
+            capStyle: ShapePath.RoundCap
+
+            PathCubic {
+                id: cubic
+                property real ctrlPtDist: 30
+                x: root.endX
+                y: root.endY
+                relativeControl1X: ctrlPtDist
+                relativeControl1Y: 0
+                control2X: x - ctrlPtDist
+                control2Y: y
+            }
+
+        }
+    }
+    Item {
+        // place the label at the middle of the edge
+        x: (root.startX + root.endX) / 2
+        y: (root.startY + root.endY) / 2
+        visible: root.isForLoop
+        Rectangle {
+            anchors.centerIn: parent
+            property int margin: 1
+            width: childrenRect.width + 2 * margin
+            height: childrenRect.height + 2 * margin
+            radius: width
+            color: path.strokeColor
+            MaterialLabel {
+                id: icon
+                x: parent.margin
+                y: parent.margin
+                text: MaterialIcons.loop
+                color: palette.base
+                font.pointSize: 24
+                
+                ToolTip.text: "This is a for loop"
+            }
+
+            Label {
+                x: icon.width / 2.4
+                y: icon.height / 3
+                font.pixelSize: 10
+                text: root.iteration
+                color: palette.base
+                font.bold: true
+            }
         }
     }
 

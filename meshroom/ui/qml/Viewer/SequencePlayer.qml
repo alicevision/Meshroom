@@ -144,81 +144,14 @@ FloatingPane {
 
         anchors.fill: parent 
 
-        Item {
-            Layout.preferredWidth: previousFrameButton.width + frameMetrics.width + nextFrameButton.width
-            Layout.preferredHeight: frameInput.height
+        IntSelector {
+            id: frameInput
 
-            MouseArea {
-                id: mouseAreaFrameLabel
+            value: m.frame
+            range: frameRange
 
-                anchors.fill: parent
-
-                hoverEnabled: true
-
-                onEntered: {
-                    previousFrameButton.opacity = 1
-                    nextFrameButton.opacity = 1
-                }
-
-                onExited: {
-                    previousFrameButton.opacity = 0
-                    nextFrameButton.opacity = 0
-                } 
-
-                MaterialToolButton {
-                    id: previousFrameButton
-
-                    anchors.verticalCenter: mouseAreaFrameLabel.verticalCenter
-
-                    opacity: 0
-                    width: 10
-                    text: MaterialIcons.navigate_before
-                    ToolTip.text: "Previous Frame"
-
-                    onClicked: {
-                        if (m.frame > frameRange.min) {
-                            m.frame -= 1
-                        }
-                    }
-                }
-
-                TextInput {
-                    id: frameInput
-
-                    anchors.horizontalCenter: mouseAreaFrameLabel.horizontalCenter
-                    Layout.preferredWidth: frameMetrics.width
-
-                    color: palette.text
-                    horizontalAlignment: Text.AlignHCenter
-                    selectByMouse: true
-
-                    text: m.frame
-
-                    onEditingFinished: {
-                        // We first assign the frame to the entered text even if it is an invalid frame number. We do it for extreme cases, for example without doing it, if we are at 0, and put a negative number, m.frame would be still 0 and nothing happens but we will still see the wrong number
-                        m.frame = parseInt(text)
-                        m.frame = Math.min(frameRange.max, Math.max(frameRange.min, parseInt(text)))
-                        focus = false
-                    }
-                }
-
-                MaterialToolButton {
-                    id: nextFrameButton
-
-                    anchors.right: mouseAreaFrameLabel.right
-                    anchors.verticalCenter: mouseAreaFrameLabel.verticalCenter
-
-                    width: 10
-                    opacity: 0
-                    text: MaterialIcons.navigate_next
-                    ToolTip.text: "Next Frame"
-
-                    onClicked: {
-                        if (m.frame < frameRange.max) {
-                            m.frame += 1
-                        }
-                    }
-                }
+            onValueChanged: {
+                m.frame = value
             }
         }
 
@@ -502,13 +435,6 @@ FloatingPane {
                     }
             }
         }
-    }
-
-    TextMetrics {
-        id: frameMetrics
-
-        font: frameInput.font
-        text: "10000"
     }
 
     TextMetrics {

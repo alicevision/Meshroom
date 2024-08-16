@@ -423,8 +423,10 @@ Item {
                                         onPressed: root.pressed(mouse)
                                         onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
 
-                                        Component.onCompleted: attributePinCreated(object, outPin)
+                                        Component.onCompleted: attributePinCreated(attribute, outPin)
+                                        onChildPinCreated: attributePinCreated(childAttribute, outPin)
                                         Component.onDestruction: attributePinDeleted(attribute, outPin)
+                                        onChildPinDeleted: attributePinDeleted(childAttribute, outPin)
                                     }
                                 }
                             }

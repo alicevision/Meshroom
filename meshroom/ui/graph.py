@@ -767,6 +767,11 @@ class UIGraph(QObject):
         """ Expand 'node' by creating all its output nodes. """
         with self.groupedGraphModification("Expand For Loop Node"):
             listAttribute = currentEdge.src.root
+            dst = currentEdge.dst
+
+            # First, replace the edge with the first element of the list
+            currentEdge = self.replaceEdge(currentEdge, listAttribute.at(0), dst)
+
             srcIndex = listAttribute.index(currentEdge.src)
             dst = currentEdge.dst
             for i in range(len(listAttribute)):

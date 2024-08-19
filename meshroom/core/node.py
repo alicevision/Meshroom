@@ -1417,12 +1417,30 @@ class Node(BaseNode):
 
         self.optionalCallOnDescriptor("onNodeCreated")
 
+
     def optionalCallOnDescriptor(self, methodName, *args, **kwargs):
-        """ Call of optional method defined in the descriptor. By now there is the onNodeCreated existing. """
+        """ Call of optional method defined in the descriptor.
+        Available method names are:
+         - onNodeCreated
+        """
         if hasattr(self.nodeDesc, methodName):
             m = getattr(self.nodeDesc, methodName)
             if callable(m):
-                m(self, *args, **kwargs)
+                try:
+                    m(self, *args, **kwargs)
+                except Exception as e:
+                    import traceback
+                    # Format error strings with all the provided arguments
+                    argsStr = ", ".join(str(arg) for arg in args)
+                    kwargsStr = ", ".join(str(key) + "=" + str(value) for key, value in kwargs.items())
+                    finalErrStr = argsStr
+                    if kwargsStr:
+                        if argsStr:
+                            finalErrStr += ", "
+                        finalErrStr += kwargsStr
+
+                    logging.error("Error on call to '{}' (with args: '{}') for node type {}".format(methodName, finalErrStr, self.nodeType))
+                    logging.error(traceback.format_exc())
 
     def setAttributeValues(self, values):
         # initialize attribute values

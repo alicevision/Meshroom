@@ -411,14 +411,16 @@ Item {
                             anchors.top: listAttrMenuText.bottom
                             anchors.horizontalCenter: listAttrColumn.horizontalCenter
                             visible: edgeMenu.currentEdge && edgeMenu.forLoop
-                            value: listAttrColumn.listAttr ? listAttrColumn.listAttr.value.indexOf(edgeMenu.currentEdge.src) : 0
-                            range: { "min": 0, "max": listAttrColumn.listAttr ? listAttrColumn.listAttr.value.count - 1 : 0 }
+
+                            // We add 1 to the index because of human readable index (starting at 1) 
+                            value: listAttrColumn.listAttr ? listAttrColumn.listAttr.value.indexOf(edgeMenu.currentEdge.src) + 1 : 0
+                            range: { "min": 1, "max": listAttrColumn.listAttr ? listAttrColumn.listAttr.value.count : 0 }
 
                             onValueChanged: {
                                 if (listAttrColumn.listAttr === null) {
                                     return
                                 }
-                                const newSrcAttr = listAttrColumn.listAttr.value.at(value)
+                                const newSrcAttr = listAttrColumn.listAttr.value.at(value - 1)
                                 const dst = edgeMenu.currentEdge.dst
 
                                 // if the edge exists do not replace it
@@ -499,6 +501,7 @@ Item {
 
                     edge: object
                     isForLoop: forLoop
+                    loopSize: forLoop ? edge.src.root.value.count : 0
                     iteration: forLoop ? edge.src.root.value.indexOf(edge.src) : 0
                     color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
                     thickness: (forLoop && inFocus) ? 3 : (forLoop || inFocus) ? 2 : 1

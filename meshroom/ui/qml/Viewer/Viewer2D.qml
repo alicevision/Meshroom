@@ -281,6 +281,13 @@ FocusScope {
                     // if there is one or several sequences, take the first one
                     outputFiles = filesSeqs[0]
                     newFrameRange = frameRanges[0]
+
+                    if(frameRange.min != newFrameRange[0] || frameRange.max != newFrameRange[1]) {
+                        frameRange.min = newFrameRange[0]
+                        frameRange.max = newFrameRange[1]
+                        // Change the current frame, only if the frame range is different
+                        currentFrame = frameRange.min
+                    }
                 }
 
 

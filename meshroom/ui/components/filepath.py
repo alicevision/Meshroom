@@ -159,7 +159,15 @@ class FilepathHelper(QObject):
 
         # create the resolved path for each sequence
         if includesSeqMissingFiles:
-            resolved = [[seq.format("%D%h%p%t") % frameNumber for frameNumber in range(seq.start(), seq.end() + 1)] for seq in seqs]
+            resolved = []
+            for seq in seqs:
+                if not seq.frames():
+                    # In case of a single frame, pyseq does not exctract a frameNumber
+                    s = [fileItem.path for fileItem in seq]
+                else:
+                    # Create all frames between start and end, even for missing files
+                    s = [seq.format("%D%h%p%t") % frameNumber for frameNumber in range(seq.start(), seq.end() + 1)]
+                resolved.append(s)
         else:
             resolved = [[fileItem.path for fileItem in seq] for seq in seqs]
         return frameRanges, resolved

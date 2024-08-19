@@ -223,8 +223,7 @@ class MeshroomApp(QApplication):
 
     @Slot()
     def reloadTemplateList(self):
-        for f in meshroom.core.pipelineTemplatesFolders:
-            meshroom.core.loadPipelineTemplates(f)
+        meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
 
     def _recentProjectFiles(self):

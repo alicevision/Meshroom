@@ -18,6 +18,7 @@ Item {
     property alias thickness: path.strokeWidth
     property alias color: path.strokeColor
     property bool isForLoop: false
+    property int loopSize: 0
     property int iteration: 0
 
     // BUG: edgeArea is destroyed before path, need to test if not null to avoid warnings
@@ -82,24 +83,16 @@ Item {
             height: childrenRect.height + 2 * margin
             radius: width
             color: path.strokeColor
-            MaterialLabel {
+            MaterialToolLabel {
                 id: icon
                 x: parent.margin
                 y: parent.margin
-                text: MaterialIcons.loop
+                iconText: MaterialIcons.loop
+                label: (root.iteration + 1) + "/" + root.loopSize
+
                 color: palette.base
-                font.pointSize: 24
                 
                 ToolTip.text: "This is a for loop"
-            }
-
-            Label {
-                x: icon.width / 2.4
-                y: icon.height / 3
-                font.pixelSize: 10
-                text: root.iteration
-                color: palette.base
-                font.bold: true
             }
         }
     }

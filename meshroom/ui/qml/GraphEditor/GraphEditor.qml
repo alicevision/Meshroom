@@ -415,7 +415,7 @@ Item {
 
                     MaterialToolButton {
                         font.pointSize: 13
-                        ToolTip.text: "Remove edge"
+                        ToolTip.text: "Remove Edge"
                         enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
                         text: MaterialIcons.delete_
                         onClicked: {

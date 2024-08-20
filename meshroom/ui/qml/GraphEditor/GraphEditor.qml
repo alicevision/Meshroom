@@ -444,7 +444,10 @@ Item {
                                 ToolTip.text: "Remove edge"
                                 enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
                                 text: MaterialIcons.delete_
-                                onClicked: uigraph.removeEdge(edgeMenu.currentEdge)
+                                onClicked: {
+                                    uigraph.removeEdge(edgeMenu.currentEdge)
+                                    edgeMenu.close()
+                                }
                             }
 
                             MaterialToolButton {
@@ -461,6 +464,7 @@ Item {
                                 onClicked: {
                                     uigraph.expandForLoop(edgeMenu.currentEdge)
                                     canExpand = false
+                                    edgeMenu.close()
                                 }
                             }
 
@@ -476,6 +480,7 @@ Item {
                                 onClicked: {
                                     uigraph.collapseForLoop(edgeMenu.currentEdge)
                                     expandButton.canExpand = true
+                                    edgeMenu.close()
                                 }
                             }
                         }

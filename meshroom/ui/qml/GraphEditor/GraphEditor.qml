@@ -555,7 +555,7 @@ Item {
             Menu {
                 id: nodeMenu
                 property var currentNode: null
-                property bool canComputeNode: currentNode != null && uigraph.graph.canCompute(currentNode)
+                property bool canComputeNode: currentNode != null && uigraph.graph.canComputeTopologically(currentNode)
                 //canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
                 property int canSubmitOrCompute: currentNode != null && uigraph.graph.canSubmitOrCompute(currentNode)
                 property bool isComputed: {
@@ -584,11 +584,15 @@ Item {
                     enabled: {
                         var canCompute = false
                         for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            if (uigraph.graph.canCompute(uigraph.selectedNodes.at(i)) && uigraph.graph.canSubmitOrCompute(uigraph.selectedNodes.at(i)) % 2 == 1) {
-                                canCompute = true
+                            if (uigraph.graph.canComputeTopologically(uigraph.selectedNodes.at(i))) {
+                                if (nodeMenu.isComputed) {
+                                    canCompute = true
+                                } else if (uigraph.graph.canSubmitOrCompute(uigraph.selectedNodes.at(i)) % 2 == 1) {
+                                    canCompute = true
+                                }
                             }
                         }
-                        return canCompute || nodeMenu.isComputed //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
+                        return canCompute //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
                     
                     }
 
@@ -617,11 +621,15 @@ Item {
                     enabled: {
                         var canSubmit = false
                         for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            if (uigraph.graph.canCompute(uigraph.selectedNodes.at(i)) && uigraph.graph.canSubmitOrCompute(uigraph.selectedNodes.at(i)) > 1) {
-                                canSubmit = true
+                            if (uigraph.graph.canComputeTopologically(uigraph.selectedNodes.at(i))) {
+                                if (nodeMenu.isComputed) {
+                                    canSubmit = true
+                                } else if (uigraph.graph.canSubmitOrCompute(uigraph.selectedNodes.at(i)) > 1) {
+                                    canSubmit = true
+                                }
                             }
                         }
-                        return canSubmit || nodeMenu.isComputed
+                        return canSubmit
                     }
                     onTriggered: {
                         if (nodeMenu.isComputed) {

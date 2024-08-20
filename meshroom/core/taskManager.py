@@ -341,12 +341,12 @@ class TaskManager(BaseObject):
             if not node.isComputable:
                 inputNodes.append(node)
             elif context == "COMPUTATION":
-                if graph.canCompute(node) and graph.canSubmitOrCompute(node) % 2 == 1:
+                if graph.canComputeTopologically(node) and graph.canSubmitOrCompute(node) % 2 == 1:
                     ready.append(node)
                 elif node.isComputed:
                     computed.append(node)
             elif context == "SUBMITTING":
-                if graph.canCompute(node) and graph.canSubmitOrCompute(node) > 1:
+                if graph.canComputeTopologically(node) and graph.canSubmitOrCompute(node) > 1:
                     ready.append(node)
                 elif node.isComputed:
                     computed.append(node)

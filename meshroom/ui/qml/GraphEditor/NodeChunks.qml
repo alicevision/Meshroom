@@ -6,6 +6,7 @@ import Utils 1.0
 ListView {
     id: root
     interactive: false
+    property bool highlightChunks: true
 
     SystemPalette { id: activePalette }
 
@@ -27,7 +28,14 @@ ListView {
         height: root.chunkHeight
         width: root.chunkWidth
         property var chunkColor: Colors.getChunkColor(object, { "NONE": root.defaultColor })
-        color: index % 2 == 0 ? chunkColor : Qt.darker(chunkColor, 1.2)
+        color: {
+            if(!highlightChunks || model.count == 1)
+                return chunkColor
+            if(index % 2 == 0)
+                return Qt.lighter(chunkColor, 1.1)
+            else
+                return Qt.darker(chunkColor, 1.1)
+        }
     }
 }
 

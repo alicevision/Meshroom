@@ -1039,6 +1039,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 height: 6
                 model: _reconstruction ? _reconstruction.sortedDFSChunks : null
+                highlightChunks: false
             }
 
             WorkspaceView {

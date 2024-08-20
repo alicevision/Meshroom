@@ -11,11 +11,17 @@ ListView {
 
     property color defaultColor: Qt.darker(activePalette.window, 1.1)
     property real chunkHeight: height
-    property real chunkWidth: model ? width / model.count : 0
+    property bool modelIsBig: (3 * model.count >= width)
+    property real chunkWidth: {
+        if(!model || model.count == 0)
+            return 0
+        return (width / model.count) - spacing
+    }
 
     orientation: ListView.Horizontal
     implicitWidth: 100
-    spacing: 0
+    // If we have enough space, add one pixel margin between chunks
+    spacing: modelIsBig ? 0 : 1
     delegate: Rectangle {
         id: chunkDelegate
         height: root.chunkHeight

@@ -665,7 +665,15 @@ Item {
                 }
                 MenuItem {
                     text: "Cut Node(s)"
-                    enabled: true
+                    enabled: {
+                        var canCut = false
+                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
+                            if (!uigraph.selectedNodes.at(i).isCompatibilityNode) {
+                                canCut = true
+                            }
+                        }
+                        return canCut
+                    }
                     ToolTip.text: "Copy selection to the clipboard and remove it"
                     ToolTip.visible: hovered
                     onTriggered: {
@@ -675,7 +683,15 @@ Item {
                 }
                 MenuItem {
                     text: "Copy Node(s)"
-                    enabled: true
+                    enabled: {
+                        var canCopy = false
+                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
+                            if (!uigraph.selectedNodes.at(i).isCompatibilityNode) {
+                                canCopy = true
+                            }
+                        }
+                        return canCopy
+                    }
                     ToolTip.text: "Copy selection to the clipboard"
                     ToolTip.visible: hovered
                     onTriggered: copyNodes()
@@ -692,7 +708,15 @@ Item {
                 }
                 MenuItem {
                     text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
-                    enabled: true
+                    enabled: {
+                        var canDuplicate = false
+                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
+                            if (!uigraph.selectedNodes.at(i).isCompatibilityNode) {
+                                canDuplicate = true
+                            }
+                        }
+                        return canDuplicate
+                    }
                     onTriggered: duplicateNode(false)
                     MaterialToolButton {
                         id: duplicateFollowingButton

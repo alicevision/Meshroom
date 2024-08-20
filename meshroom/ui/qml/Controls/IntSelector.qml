@@ -7,95 +7,86 @@ import QtQuick.Layouts 1.11
 * IntSelector with arrows and a text input to select a number
 */
 
-Item {
+Row {
     id: root
 
+    property string tooltipText: ""
     property int value: 0
     property var range: { "min" : 0, "max" : 0 }
 
-    Layout.preferredWidth: previousIntButton.width + intMetrics.width + nextIntButton.width
-    Layout.preferredHeight: intInput.height
+    Layout.alignment: Qt.AlignVCenter
 
-    MouseArea {
-        id: mouseAreaIntLabel
+    spacing: 0
+    property bool displayButtons: previousIntButton.hovered || intInputMouseArea.containsMouse || nextIntButton.hovered
+    property real buttonsOpacity: displayButtons ? 1.0 : 0.0
 
-        anchors.fill: parent
+    MaterialToolButton {
+        id: previousIntButton
 
-        hoverEnabled: true
+        opacity: buttonsOpacity
+        width: 10
+        text: MaterialIcons.navigate_before
+        ToolTip.text: "Previous"
 
-        onEntered: {
-            previousIntButton.opacity = 1
-            nextIntButton.opacity = 1
-        }
-
-        onExited: {
-            previousIntButton.opacity = 0
-            nextIntButton.opacity = 0
-        } 
-
-        MaterialToolButton {
-            id: previousIntButton
-
-            anchors.verticalCenter: mouseAreaIntLabel.verticalCenter
-
-            opacity: 0
-            width: 10
-            text: MaterialIcons.navigate_before
-            ToolTip.text: "Previous Integer"
-
-            onClicked: {
-                if (value > range.min) {
-                    value -= 1
-                }
+        onClicked: {
+            if (value > range.min) {
+                value -= 1
             }
-        }
-
-        TextInput {
-            id: intInput
-
-            anchors.horizontalCenter: mouseAreaIntLabel.horizontalCenter
-            anchors.verticalCenter: mouseAreaIntLabel.verticalCenter
-            Layout.preferredWidth: intMetrics.width
-
-            color: palette.text
-            horizontalAlignment: Text.AlignHCenter
-            selectByMouse: true
-
-            text: value
-
-            onEditingFinished: {
-                // We first assign the frame to the entered text even if it is an invalid frame number. We do it for extreme cases, for example without doing it, if we are at 0, and put a negative number, value would be still 0 and nothing happens but we will still see the wrong number
-                value = parseInt(text)
-                value = Math.min(range.max, Math.max(range.min, parseInt(text)))
-                focus = false
-            }
-        }
-
-        MaterialToolButton {
-            id: nextIntButton
-
-            anchors.right: mouseAreaIntLabel.right
-            anchors.verticalCenter: mouseAreaIntLabel.verticalCenter
-
-            width: 10
-            opacity: 0
-            text: MaterialIcons.navigate_next
-            ToolTip.text: "Next Integer"
-
-            onClicked: {
-                if (value < range.max) {
-                    value += 1
-                }
-            }
-        }
-
-        TextMetrics {
-            id: intMetrics
-
-            font: intInput.font
-            text: "10000"
         }
     }
 
+    TextInput {
+        id: intInput
+
+        ToolTip.text: tooltipText
+        ToolTip.visible: tooltipText && intInputMouseArea.containsMouse
+
+        width: intMetrics.width
+        height: previousIntButton.height
+
+        color: palette.text
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        selectByMouse: true
+
+        text: value
+
+        onEditingFinished: {
+            // We first assign the frame to the entered text even if it is an invalid frame number. We do it for extreme cases, for example without doing it, if we are at 0, and put a negative number, value would be still 0 and nothing happens but we will still see the wrong number
+            value = parseInt(text)
+            value = Math.min(range.max, Math.max(range.min, parseInt(text)))
+            focus = false
+        }
+
+        MouseArea {
+            id: intInputMouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            propagateComposedEvents: true
+        }
+    }
+
+    MaterialToolButton {
+        id: nextIntButton
+
+        width: 10
+        opacity: buttonsOpacity
+        text: MaterialIcons.navigate_next
+        ToolTip.text: "Next"
+
+        onClicked: {
+            if (value < range.max) {
+                value += 1
+            }
+        }
+    }
+
+    TextMetrics {
+        id: intMetrics
+
+        font: intInput.font
+        text: "10000"
+    }
 
 }

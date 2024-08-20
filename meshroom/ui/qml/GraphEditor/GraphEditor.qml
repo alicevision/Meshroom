@@ -387,10 +387,8 @@ Item {
                     expandButton.canExpand = uigraph.canExpandForLoop(edgeMenu.currentEdge)
                 }
 
-                contentItem: GridLayout {
-                    layoutDirection: Qt.LeftToRight
-                    columns: 2
-                    columnSpacing: 20
+                contentItem: Row {
+                    spacing: 20
 
                     Column {
                         id: listAttrColumn
@@ -402,13 +400,11 @@ Item {
                             text: "<b>Iteration:</b>"
 
                             color: activePalette.text
-                            bottomPadding: 15
                         }
 
                         IntSelector {
+                            tooltipText: "Iterations"
                             width: listAttrColumn.width
-                            anchors.top: listAttrMenuText.bottom
-                            anchors.horizontalCenter: listAttrColumn.horizontalCenter
                             visible: edgeMenu.currentEdge && edgeMenu.forLoop
 
                             // We add 1 to the index because of human readable index (starting at 1) 
@@ -438,7 +434,7 @@ Item {
                             color: activePalette.text
                         }
 
-                        RowLayout {
+                        Row {
                             MaterialToolButton {
                                 font.pointSize: 13
                                 ToolTip.text: "Remove edge"

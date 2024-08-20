@@ -769,11 +769,9 @@ class UIGraph(QObject):
 
             srcIndex = listAttribute.index(currentEdge.src)
             dst = currentEdge.dst
-            for i in range(len(listAttribute)):
-                if i == srcIndex:
-                    continue
-                self.duplicateNodesFrom(dst.node)
-                newNode = self.graph.nodes.at(-1)
+            for i in range(1, len(listAttribute)):
+                duplicates = self.duplicateNodesFrom(dst.node)
+                newNode = duplicates[0]
                 previousEdge = self.graph.edge(newNode.attribute(dst.name))
                 self.replaceEdge(previousEdge, listAttribute.at(i), previousEdge.dst)
 
@@ -784,7 +782,7 @@ class UIGraph(QObject):
             listAttribute = currentEdge.src.root
             srcIndex = listAttribute.index(currentEdge.src)
             allSrc = [e.src for e in self._graph.edges.values()]
-            for i in range(len(listAttribute)):
+            for i in reversed(range(len(listAttribute))):
                 if i == srcIndex:
                     continue
                 occurence = allSrc.index(listAttribute.at(i)) if listAttribute.at(i) in allSrc else -1

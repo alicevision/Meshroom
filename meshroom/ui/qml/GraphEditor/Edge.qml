@@ -79,8 +79,8 @@ Item {
         Rectangle {
             anchors.centerIn: parent
             property int margin: 2
-            width: childrenRect.width + 2 * margin
-            height: childrenRect.height + 2 * margin
+            width: icon.width + 2 * margin
+            height: icon.height + 2 * margin
             radius: width
             color: path.strokeColor
             MaterialToolLabel {

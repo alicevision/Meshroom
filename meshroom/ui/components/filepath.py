@@ -147,23 +147,27 @@ class FilepathHelper(QObject):
             extension = ".*"
         return [self.basename(f) for f in glob.glob(os.path.join(folderPath, f"*{extension}")) if os.path.isfile(f)]
 
-    @Slot(str, result="QVariantList")
-    def resolveSequence(self, path):
+    @Slot(str, bool, result="QVariantList")
+    def resolveSequence(self, path, includesSeqMissingFiles):
         """
         Get id of each file in the sequence.
         """
         # use of pyseq to get the sequences
-        seq = pyseq.get_sequences(self.asStr(path))
+        seqs = pyseq.get_sequences(self.asStr(path))
 
-        ids = [[s.start(), s.end()] for s in seq]
+        frameRanges = [[seq.start(), seq.end()] for seq in seqs]
 
-        folder = self.dirname(path)
-
-        missingFiles = [s.missing() for s in seq]
-        
-        # create the resolved path for each sequence and if a frame is missing add a empty string
-        resolved = [[os.path.join(folder, s.head() + str(s.format("%p") % frame) + s.tail()) if frame not in missingFiles[seq.index(s)]
-                     else "" for frame in range(ids[seq.index(s)][0], ids[seq.index(s)][1] + 1)] if s.frames()
-                     else os.path.join(folder, s.head())
-                    for s in seq]
-        return ids, resolved
+        # create the resolved path for each sequence
+        if includesSeqMissingFiles:
+            resolved = []
+            for seq in seqs:
+                if not seq.frames():
+                    # In case of a single frame, pyseq does not exctract a frameNumber
+                    s = [fileItem.path for fileItem in seq]
+                else:
+                    # Create all frames between start and end, even for missing files
+                    s = [seq.format("%D%h%p%t") % frameNumber for frameNumber in range(seq.start(), seq.end() + 1)]
+                resolved.append(s)
+        else:
+            resolved = [[fileItem.path for fileItem in seq] for seq in seqs]
+        return frameRanges, resolved

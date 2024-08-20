@@ -251,52 +251,63 @@ FocusScope {
     function buildOrderedSequence(pathTemplate) {
         // Resolve the path template on the sequence of viewpoints
         // ordered by path
+        let outputFiles = []
 
-        let objs = []
-
-        if (displayedNode && displayedNode.hasSequenceOutput && displayedAttr &&
-            (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
-            let sequence = Filepath.resolveSequence(pathTemplate)
-            let ids = sequence[0]
-            let resolved = sequence[1]
+        if (displayedNode && displayedNode.hasSequenceOutput && displayedAttr) {
 
             // reset current frame to 0 if it is imageList but not sequence
             if (displayedAttr.desc.semantic === "imageList") {
+                let includesSeqMissingFiles = false  // list only the existing files
+                let [_, filesSeqs] = Filepath.resolveSequence(pathTemplate, includesSeqMissingFiles)
                 // concat in one array all sequences in resolved
-                resolved = [].concat.apply([], resolved)
-                frameRange.min = 0
-                frameRange.max = resolved.length - 1
-                currentFrame = 0
+                outputFiles = [].concat.apply([], filesSeqs)
+                let newFrameRange = [0, outputFiles.length - 1]
+
+                if(frameRange.min != newFrameRange[0] || frameRange.max != newFrameRange[1]) {
+                    frameRange.min = newFrameRange[0]
+                    frameRange.max = newFrameRange[1]
+                    // Change the current frame, only if the frame range is different
+                    currentFrame = frameRange.min
+                }
+
+                enableSequencePlayerAction.checked = true
             }
 
             if (displayedAttr.desc.semantic === "sequence") {
-                // if there is several sequences, take the first one, else take the only one
-                if (typeof resolved[0] === "object")
-                    resolved = resolved[0]
-                ids = ids[0]
-                frameRange.min = ids[0]
-                frameRange.max = ids[ids.length - 1]
-                currentFrame = frameRange.min
+                let includesSeqMissingFiles = true
+                let [frameRanges, filesSeqs] = Filepath.resolveSequence(pathTemplate, includesSeqMissingFiles)
+                let newFrameRange = [0, 0]
+                if (filesSeqs.length > 0) {
+                    // if there is one or several sequences, take the first one
+                    outputFiles = filesSeqs[0]
+                    newFrameRange = frameRanges[0]
+
+                    if(frameRange.min != newFrameRange[0] || frameRange.max != newFrameRange[1]) {
+                        frameRange.min = newFrameRange[0]
+                        frameRange.max = newFrameRange[1]
+                        // Change the current frame, only if the frame range is different
+                        currentFrame = frameRange.min
+                    }
+                }
+
+
+                enableSequencePlayerAction.checked = true
             }
-
-            enableSequencePlayerAction.checked = true
-
-            return resolved
         } else {
+            let objs = []
             for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
                 objs.push(_reconstruction.viewpoints.at(i))
             }
             objs.sort((a, b) => { return a.childAttribute("path").value < b.childAttribute("path").value ? -1 : 1; })
-            let seq = [];
+            
             for (let i = 0; i < objs.length; i++) {
-                seq.push(Filepath.resolve(pathTemplate, objs[i]))
+                outputFiles.push(Filepath.resolve(pathTemplate, objs[i]))
             }
 
             frameRange.min = 0
-            frameRange.max = seq.length - 1
-
-            return seq
+            frameRange.max = outputFiles.length - 1
         }
+        return outputFiles
     }
 
     function getSequence() {

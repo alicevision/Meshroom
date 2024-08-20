@@ -78,21 +78,20 @@ Item {
         visible: root.isForLoop
         Rectangle {
             anchors.centerIn: parent
-            property int margin: 1
+            property int margin: 2
             width: childrenRect.width + 2 * margin
             height: childrenRect.height + 2 * margin
             radius: width
             color: path.strokeColor
             MaterialToolLabel {
                 id: icon
-                x: parent.margin
-                y: parent.margin
-                iconText: MaterialIcons.loop
-                label: (root.iteration + 1) + "/" + root.loopSize
+                anchors.centerIn: parent
 
-                color: palette.base
-                
-                ToolTip.text: "This is a for loop"
+                iconText: MaterialIcons.loop
+                label: (root.iteration + 1) + "/" + root.loopSize + " "
+
+                color: palette.base                
+                ToolTip.text: "Foreach Loop"
             }
         }
     }

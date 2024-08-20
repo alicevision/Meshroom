@@ -147,6 +147,8 @@ FloatingPane {
         IntSelector {
             id: frameInput
 
+            tooltipText: "Frame"
+
             value: m.frame
             range: frameRange
 

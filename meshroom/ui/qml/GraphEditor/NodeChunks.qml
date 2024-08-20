@@ -20,7 +20,8 @@ ListView {
         id: chunkDelegate
         height: root.chunkHeight
         width: root.chunkWidth
-        color: Colors.getChunkColor(object, { "NONE": root.defaultColor })
+        property var chunkColor: Colors.getChunkColor(object, { "NONE": root.defaultColor })
+        color: index % 2 == 0 ? chunkColor : Qt.darker(chunkColor, 1.2)
     }
 }
 

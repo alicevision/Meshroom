@@ -454,6 +454,7 @@ Item {
                                 property bool canExpand: edgeMenu.currentEdge && edgeMenu.forLoop
 
                                 visible: edgeMenu.currentEdge && edgeMenu.forLoop && canExpand
+                                enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
                                 font.pointSize: 13
                                 ToolTip.text: "Expand"
                                 text: MaterialIcons.open_in_full
@@ -468,6 +469,7 @@ Item {
                                 id: collapseButton
 
                                 visible: edgeMenu.currentEdge && edgeMenu.forLoop && !expandButton.canExpand
+                                enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
                                 font.pointSize: 13
                                 ToolTip.text: "Collapse"
                                 text: MaterialIcons.close_fullscreen

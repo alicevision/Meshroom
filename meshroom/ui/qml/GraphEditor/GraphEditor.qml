@@ -389,97 +389,73 @@ Item {
                 }
 
                 contentItem: Row {
-                    spacing: 20
+                    IntSelector {
+                        tooltipText: "Iterations"
+                        visible: edgeMenu.currentEdge && edgeMenu.forLoop
 
-                    Column {
-                        id: listAttrColumn
-                        visible: edgeMenu.currentEdge && edgeMenu.forLoop && expandButton.canExpand
                         property var listAttr: edgeMenu.currentEdge ? edgeMenu.currentEdge.src.root : null
-                        Layout.alignment: Qt.AlignTop
-                        Text {
-                            id: listAttrMenuText
-                            text: "<b>Iteration:</b>"
 
-                            color: activePalette.text
-                        }
+                        // We add 1 to the index because of human readable index (starting at 1) 
+                        value: listAttr ? listAttr.value.indexOf(edgeMenu.currentEdge.src) + 1 : 0
+                        range: { "min": 1, "max": listAttr ? listAttr.value.count : 0 }
 
-                        IntSelector {
-                            tooltipText: "Iterations"
-                            width: listAttrColumn.width
-                            visible: edgeMenu.currentEdge && edgeMenu.forLoop
-
-                            // We add 1 to the index because of human readable index (starting at 1) 
-                            value: listAttrColumn.listAttr ? listAttrColumn.listAttr.value.indexOf(edgeMenu.currentEdge.src) + 1 : 0
-                            range: { "min": 1, "max": listAttrColumn.listAttr ? listAttrColumn.listAttr.value.count : 0 }
-
-                            onValueChanged: {
-                                if (listAttrColumn.listAttr === null) {
-                                    return
-                                }
-                                const newSrcAttr = listAttrColumn.listAttr.value.at(value - 1)
-                                const dst = edgeMenu.currentEdge.dst
-
-                                // if the edge exists do not replace it
-                                if (newSrcAttr === edgeMenu.currentEdge.src && dst === edgeMenu.currentEdge.dst) {
-                                    return
-                                }
-                                edgeMenu.currentEdge = uigraph.replaceEdge(edgeMenu.currentEdge, newSrcAttr, dst)
+                        onValueChanged: {
+                            if (listAttr === null) {
+                                return
                             }
+                            const newSrcAttr = listAttr.value.at(value - 1)
+                            const dst = edgeMenu.currentEdge.dst
+
+                            // if the edge exists do not replace it
+                            if (newSrcAttr === edgeMenu.currentEdge.src && dst === edgeMenu.currentEdge.dst) {
+                                return
+                            }
+                            edgeMenu.currentEdge = uigraph.replaceEdge(edgeMenu.currentEdge, newSrcAttr, dst)
                         }
                     }
-                    Column {
-                        Layout.alignment: Qt.AlignTop
-                        Text {
-                            text: "<b>Actions:</b>"
 
-                            color: activePalette.text
+                    MaterialToolButton {
+                        font.pointSize: 13
+                        ToolTip.text: "Remove edge"
+                        enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
+                        text: MaterialIcons.delete_
+                        onClicked: {
+                            uigraph.removeEdge(edgeMenu.currentEdge)
+                            edgeMenu.close()
                         }
+                    }
 
-                        Row {
-                            MaterialToolButton {
-                                font.pointSize: 13
-                                ToolTip.text: "Remove edge"
-                                enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
-                                text: MaterialIcons.delete_
-                                onClicked: {
-                                    uigraph.removeEdge(edgeMenu.currentEdge)
-                                    edgeMenu.close()
-                                }
-                            }
+                    MaterialToolButton {
+                        id: expandButton
 
-                            MaterialToolButton {
-                                id: expandButton
+                        property bool canExpand: edgeMenu.currentEdge && edgeMenu.forLoop
 
-                                property bool canExpand: edgeMenu.currentEdge && edgeMenu.forLoop
+                        visible: edgeMenu.currentEdge && edgeMenu.forLoop && canExpand
+                        enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
+                        font.pointSize: 13
+                        ToolTip.text: "Expand"
+                        text: MaterialIcons.open_in_full
 
-                                visible: edgeMenu.currentEdge && edgeMenu.forLoop && canExpand
-                                enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
-                                font.pointSize: 13
-                                ToolTip.text: "Expand"
-                                text: MaterialIcons.open_in_full
+                        onClicked: {
+                            uigraph.expandForLoop(edgeMenu.currentEdge)
+                            canExpand = false
+                            edgeMenu.close()
+                        }
+                    }
 
-                                onClicked: {
-                                    uigraph.expandForLoop(edgeMenu.currentEdge)
-                                    canExpand = false
-                                    edgeMenu.close()
-                                }
-                            }
+                    MaterialToolButton {
+                        id: collapseButton
 
-                            MaterialToolButton {
-                                id: collapseButton
+                        visible: edgeMenu.currentEdge && edgeMenu.forLoop && !expandButton.canExpand
+                        enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
+                        font.pointSize: 13
+                        ToolTip.text: "Collapse"
+                        text: MaterialIcons.close_fullscreen
 
-                                visible: edgeMenu.currentEdge && edgeMenu.forLoop && !expandButton.canExpand
-                                enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
-                                font.pointSize: 13
-                                ToolTip.text: "Collapse"
-                                text: MaterialIcons.close_fullscreen
-
-                                onClicked: {
-                                    uigraph.collapseForLoop(edgeMenu.currentEdge)
-                                    expandButton.canExpand = true
-                                    edgeMenu.close()
-                                }
-                            }
+                        onClicked: {
+                            uigraph.collapseForLoop(edgeMenu.currentEdge)
+                            expandButton.canExpand = true
+                            edgeMenu.close()
                         }
                     }
                 }

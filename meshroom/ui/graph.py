@@ -857,11 +857,14 @@ class UIGraph(QObject):
         """ Reset 'attribute' to its default value """
         # if the attribute is a ListAttribute, remove all edges
         if isinstance(attribute, ListAttribute):
-            for edge in self._graph.edges:
-                # if the edge is connected to one of the ListAttribute's elements, remove it
-                if edge.src in attribute.value:
-                    self.removeEdge(edge)
-        self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
+            with self.groupedGraphModification("Reset List Attribute '{}'".format(attribute.name)):
+                for edge in self._graph.edges:
+                    # if the edge is connected to one of the ListAttribute's elements, remove it
+                    if edge.src in attribute.value:
+                        self.removeEdge(edge)
+                self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
+        else:
+            self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
 
     @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):

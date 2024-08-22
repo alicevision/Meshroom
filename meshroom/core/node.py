@@ -1320,6 +1320,25 @@ class BaseNode(BaseObject):
             if attr.enabled and attr.isOutput and hasSupportedExt:
                 return True
         return False
+    
+    def _countForLoop(self):
+        """
+        Return in how many ForLoop nodes this node is.
+        """
+        count = 0
+        # Access to the input attributes of the node
+        for attr in self._attributes:
+            if attr.isInput and attr.isLink:
+                # Access to the attribute connected to the input attribute
+                srcAttr = attr.getLinkParam()
+                # If the srcAttr is a ListAttribute, it means that the node is in a ForLoop
+                if isinstance(srcAttr.root, ListAttribute) and srcAttr.type == attr.type:
+                    # Access the countForLoop of the node of the ListAttribute
+                    count = srcAttr.root.node.countForLoop + 1
+                    if srcAttr.root.isInput:
+                        count = count - 1 if count > 1 else 1
+        return count
+
 
 
     name = Property(str, getName, constant=True)
@@ -1372,6 +1391,9 @@ class BaseNode(BaseObject):
     hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
+
+    countForLoopChanged = Signal()
+    countForLoop = Property(int, _countForLoop, notify=countForLoopChanged)
 
 class Node(BaseNode):
     """

@@ -276,6 +276,16 @@ Item {
                                 }
                             }
 
+                            // Is in for loop indicator
+                            MaterialLabel {
+                                visible: node.countForLoop > 0
+                                text: MaterialIcons.loop
+                                padding: 2
+                                font.pointSize: 7
+                                palette.text: Colors.sysPalette.text
+                                ToolTip.text: "Is in " + node.countForLoop + " for loop(s)"
+                            }
+
                             // Submitted externally indicator
                             MaterialLabel {
                                 visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.isExternal

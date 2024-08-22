@@ -776,6 +776,7 @@ class UIGraph(QObject):
                 newNode = duplicates[0]
                 previousEdge = self.graph.edge(newNode.attribute(dst.name))
                 self.replaceEdge(previousEdge, listAttribute.at(i), previousEdge.dst)
+                newNode.countForLoopChanged.emit()
 
             # Last, replace the edge with the first element of the list
             return self.replaceEdge(currentEdge, listAttribute.at(0), dst)

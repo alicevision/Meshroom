@@ -257,11 +257,37 @@ Panel {
                 Controls1.SplitView {
                     anchors.fill: parent
 
+                    // The list of iterations
+                    NodeEditorElementsListView {
+                        id: iterationsLV
+                        visible: root.node.countForLoop > 0
+                        elements: {
+                            if (root.node.countForLoop == 0)
+                                return []
+                            var elements = []
+                            for (let i = 0; i < node.attributes.count; ++i) {
+                                if (node.attributes.at(i).isLink) {
+                                    var srcAttr = node.attributes.at(i).linkParam
+                                    for (let j = 0; j < srcAttr.root.value.count; ++j) {
+                                        elements.push(j)
+                                    }
+                                    return elements
+                                }
+                            }
+                        }
+
+                        // TODO to remove when the elements would be correct
+                        currentElement: elements[0]
+                        
+                        isChunk: false
+                        title: "Iterations"
+                    }
+
                     // The list of chunks
-                    ChunksListView {
+                    NodeEditorElementsListView {
                         id: chunksLV
                         visible: (tabBar.currentIndex >= 1 && tabBar.currentIndex <= 3)
-                        chunks: root.node.chunks
+                        elements: root.node.chunks
                     }
 
                     StackLayout {
@@ -295,7 +321,7 @@ Panel {
                                 id: nodeLog
                                 node: root.node
                                 currentChunkIndex: chunksLV.currentIndex
-                                currentChunk: chunksLV.currentChunk
+                                currentChunk: chunksLV.currentElement
                             }
                         }
 
@@ -310,7 +336,7 @@ Panel {
                                 Layout.fillWidth: true
                                 node: root.node
                                 currentChunkIndex: chunksLV.currentIndex
-                                currentChunk: chunksLV.currentChunk
+                                currentChunk: chunksLV.currentElement
                             }
                         }
 
@@ -325,7 +351,7 @@ Panel {
                                 Layout.fillWidth: true
                                 node: root.node
                                 currentChunkIndex: chunksLV.currentIndex
-                                currentChunk: chunksLV.currentChunk
+                                currentChunk: chunksLV.currentElement
                             }
                         }
 

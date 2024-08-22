@@ -377,19 +377,41 @@ Item {
                 }
 
                 // Node Chunks
-               NodeChunks {
-                   visible: node.isComputable
-                   defaultColor: Colors.sysPalette.mid
-                   implicitHeight: 3
-                   width: parent.width
-                   model: node ? node.chunks : undefined
+                Column {
+                    width: parent.width
 
-                   Rectangle {
-                       anchors.fill: parent
-                       color: Colors.sysPalette.mid
-                       z: -1
-                   }
-               }
+                    spacing: 2
+                    Repeater {
+                        // the model is the number of iterations for the for loop
+                        // so if the count is 0 we display only one iteration
+                        // else we display the number of iterations
+                        model: {
+                            if (node.countForLoop === 0)
+                                return 1
+
+                            for (let i = 0; i < node.attributes.count; ++i) {
+                                if (node.attributes.at(i).isLink) {
+                                    var srcAttr = node.attributes.at(i).linkParam
+                                    return srcAttr.root.value.count
+                                }
+                            }
+                        }
+
+                        delegate: NodeChunks {
+                            visible: node.isComputable
+                            defaultColor: Colors.sysPalette.mid
+                            height: 3
+                            width: parent.width
+                            model: node ? node.chunks : undefined
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: Colors.sysPalette.mid
+                                z: -1
+                            }
+                        }
+                    }
+                }
 
                 // Vertical Spacer
                 Item { width: parent.width; height: 2 }

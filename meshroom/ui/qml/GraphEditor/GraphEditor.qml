@@ -224,6 +224,7 @@ Item {
             id: newNodeMenu
             property point spawnPosition
             property variant menuKeys: Object.keys(root.nodeTypesModel).concat(Object.values(MeshroomApp.pipelineTemplateNames))
+            height: searchBar.height + nodeMenuRepeater.height + instantiator.height
 
             function createNode(nodeType) {
                 uigraph.clearNodeSelection() // Ensures that only the created node / imported pipeline will be selected
@@ -268,10 +269,9 @@ Item {
             }
 
             onVisibleChanged: {
+                searchBar.clear()
                 if (visible) {
-                    // when menu is shown,
-                    // clear and give focus to the TextField filter
-                    searchBar.clear()
+                    // when menu is shown, give focus to the TextField filter
                     searchBar.forceActiveFocus()
                 }
             }
@@ -343,7 +343,8 @@ Item {
 
             // Dynamically add the menu categories
             Instantiator {
-                model: !(searchBar.text !== "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
+                id: instantiator
+                model: (searchBar.text === "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
                 onObjectAdded: newNodeMenu.insertMenu(index + 1, object ) // add sub-menu under the search bar
                 onObjectRemoved: newNodeMenu.removeMenu(object)
 

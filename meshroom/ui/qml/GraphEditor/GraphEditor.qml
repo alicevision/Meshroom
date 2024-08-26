@@ -392,6 +392,11 @@ Item {
                         tooltipText: "Iterations"
                         visible: edgeMenu.currentEdge && edgeMenu.forLoop
 
+                        onVisibleChanged: {
+                            if (visible)
+                                value = listAttr.value.indexOf(edgeMenu.currentEdge.src) + 1
+                        }
+
                         property var listAttr: edgeMenu.currentEdge ? edgeMenu.currentEdge.src.root : null
 
                         // We add 1 to the index because of human readable index (starting at 1) 

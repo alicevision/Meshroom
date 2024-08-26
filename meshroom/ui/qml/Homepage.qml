@@ -240,25 +240,21 @@ Page {
                     visible: tabPanel.currentTab === 0
 
                     anchors.fill: parent
+                    anchors.margins: 10
 
                     model: [{ "name": "New Empty Project", "path": null }].concat(MeshroomApp.pipelineTemplateFiles)
 
                     delegate: Button {
                         id: pipelineDelegate
+                        padding: 10
                         width: pipelinesListView.width
-                        height: pipelineContent.implicitHeight
 
-                        Column {
-                            id: pipelineContent
-                            topPadding: 8
-                            bottomPadding: 10
-                            leftPadding: 30
-
-                            Label {
-                                id: pipeline
-                                text: modelData["name"]
-                                font.pointSize: 10
-                            }
+                        contentItem: Label {
+                            id: pipeline
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            text: modelData["name"]
+                            font.pointSize: 10
                         }
 
                         Connections {
@@ -280,6 +276,7 @@ Page {
 
                     cellWidth: 200
                     cellHeight: cellWidth
+                    anchors.margins: 10
 
                     model: MeshroomApp.recentProjectFiles
 
@@ -288,11 +285,11 @@ Page {
 
                         width: gridView.cellWidth
                         height: gridView.cellHeight
+
                         Button {
                             id: projectDelegate
-                            height: gridView.cellHeight * 0.8
-                            width: gridView.cellWidth * 0.8
-                            x: gridView.cellWidth * 0.1
+                            height: gridView.cellHeight * 0.95 - project.height
+                            width: gridView.cellWidth * 0.9
 
                             ToolTip.visible: hovered
                             ToolTip.text: modelData["path"]

@@ -59,7 +59,7 @@ ListView {
     // when clicking on the background
     MouseArea {
         anchors.fill: parent
-        onClicked: root.forceActiveFocus()
+        onClicked: forceActiveFocus()
         z: -1
     }
 }

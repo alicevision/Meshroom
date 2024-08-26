@@ -264,7 +264,7 @@ Item {
                     spacing: 3
 
                     delegate: Label {
-                        width: (ListView.view.width / ListView.view.model.count) - 3
+                        width: ListView.view.model ? (ListView.view.width / ListView.view.model.count) - 3 : 0
                         height: ListView.view.height
                         anchors.verticalCenter: parent.verticalCenter
                         background: Rectangle {

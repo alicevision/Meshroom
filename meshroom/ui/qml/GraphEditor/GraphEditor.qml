@@ -390,10 +390,21 @@ Item {
 
                 contentItem: Row {
                     IntSelector {
+                        id: loopIterationSelector
                         tooltipText: "Iterations"
                         visible: edgeMenu.currentEdge && edgeMenu.forLoop
 
                         property var listAttr: edgeMenu.currentEdge ? edgeMenu.currentEdge.src.root : null
+
+                        Connections {
+                            target: edgeMenu
+                            function onCurrentEdgeChanged() {
+                                if (edgeMenu.currentEdge) {
+                                    loopIterationSelector.listAttr = edgeMenu.currentEdge.src.root
+                                    loopIterationSelector.value = loopIterationSelector.listAttr ? loopIterationSelector.listAttr.value.indexOf(edgeMenu.currentEdge.src) + 1 : 0
+                                }
+                            }
+                        }
 
                         // We add 1 to the index because of human readable index (starting at 1) 
                         value: listAttr ? listAttr.value.indexOf(edgeMenu.currentEdge.src) + 1 : 0
@@ -437,7 +448,7 @@ Item {
                         text: MaterialIcons.open_in_full
 
                         onClicked: {
-                            uigraph.expandForLoop(edgeMenu.currentEdge)
+                            edgeMenu.currentEdge = uigraph.expandForLoop(edgeMenu.currentEdge)
                             canExpand = false
                             edgeMenu.close()
                         }

@@ -18,6 +18,7 @@ ComboBox {
 
     property alias filterText: filterTextArea
     property bool validValue: true
+    property string previousText: ""  // Used to restore displayText if the edition is cancelled
 
     enabled: root.editable
     model: {
@@ -73,6 +74,9 @@ ComboBox {
 
         onAboutToShow: {
             filterTextArea.forceActiveFocus()
+            filterTextArea.editingCancelled = true
+
+            previousText = displayText
 
             var dropDown = true
             var posY = mapToGlobal(popup.x, popup.y).y
@@ -101,6 +105,8 @@ ComboBox {
             anchors.fill: parent
             TextArea {
                 id: filterTextArea
+
+                property bool editingCancelled: false
                 leftPadding: 12
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -114,7 +120,12 @@ ComboBox {
 
                 onEditingFinished: {
                     combo.popup.close()
-                    combo.editingFinished(displayText)
+                    if (editingCancelled) {
+                        displayText = previousText
+                        filterTextArea.clear()
+                    } else {
+                        combo.editingFinished(displayText)
+                    }
                 }
 
                 Keys.onEnterPressed: {
@@ -123,6 +134,7 @@ ComboBox {
                     } else {
                         displayText = currentText
                     }
+                    editingCancelled = false
                     editingFinished()
                 }
 
@@ -132,6 +144,7 @@ ComboBox {
                     } else {
                         displayText = currentText
                     }
+                    editingCancelled = false
                     editingFinished()
                 }
 
@@ -199,5 +212,10 @@ ComboBox {
 
     onCurrentTextChanged: {
         displayText = currentText
+    }
+
+    onActivated: {
+        // This slot is entered when one of the element of the combo is clicked on, causing the popup to close
+        filterTextArea.editingCancelled = false
     }
 }

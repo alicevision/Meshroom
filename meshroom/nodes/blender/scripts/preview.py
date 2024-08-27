@@ -104,6 +104,13 @@ def setupCamera(intrinsic, pose):
     camData.sensor_width = float(intrinsic['sensorWidth'])
     camData.lens = float(intrinsic['focalLength'])
 
+    #shift is normalized with the largest resolution
+    fwidth = float(intrinsic['width'])
+    fheight = float(intrinsic['height'])
+    maxSize = max(fwidth, fheight)
+    camData.shift_x = - float(intrinsic['principalPoint'][0]) / maxSize
+    camData.shift_y = float(intrinsic['principalPoint'][1]) / maxSize
+
     tr = pose['pose']['transform']
     matPose = mathutils.Matrix.Identity(4)
     matPose[0][0] = float(tr['rotation'][0])
@@ -301,6 +308,7 @@ def setupPointCloudShading(obj, color, size):
 
 
 def main():
+    
     argv = sys.argv
 
     if "--" not in argv:

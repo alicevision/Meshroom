@@ -22,7 +22,7 @@ Item {
     property int iteration: 0
 
     // BUG: edgeArea is destroyed before path, need to test if not null to avoid warnings
-    readonly property bool containsMouse: edgeArea && edgeArea.containsMouse
+    readonly property bool containsMouse: (loopArea && loopArea.containsMouse) || (edgeArea && edgeArea.containsMouse)
 
     signal pressed(var event)
     signal released(var event)
@@ -93,7 +93,14 @@ Item {
                 color: palette.base                
                 ToolTip.text: "Foreach Loop"
             }
+            MouseArea {
+                id: loopArea
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: root.pressed(arguments[0])
+            }
         }
+
     }
 
     EdgeMouseArea {

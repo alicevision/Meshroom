@@ -280,11 +280,38 @@ Page {
 
                     model: MeshroomApp.recentProjectFiles
 
+                    // Update grid item when corresponding thumbnail is computed
+                    Connections {
+                        target: ThumbnailCache
+                        function onThumbnailCreated(imgSource, callerID) {
+                            let item = gridView.itemAtIndex(callerID);  // item is an Image
+                            if (item && item.source === imgSource) {
+                                item.updateThumbnail()
+                                return
+                            }
+                            // fallback in case the Image cellID changed
+                            for (let idx = 0; idx < gridView.count; idx++) {
+                                item = gridView.itemAtIndex(idx)
+                                if (item && item.source === imgSource) {
+                                    item.updateThumbnail()
+                                }
+                            }
+                        }
+                    }
+
                     delegate: Column {
                         id: projectContent
 
                         width: gridView.cellWidth
                         height: gridView.cellHeight
+
+                        property var source: modelData["thumbnail"] ? Filepath.stringToUrl(modelData["thumbnail"]) : ""
+
+                        function updateThumbnail() {
+                            thumbnail.source = ThumbnailCache.thumbnail(source, gridView.currentIndex)
+                        }
+
+                        onSourceChanged: updateThumbnail()
 
                         Button {
                             id: projectDelegate
@@ -297,13 +324,21 @@ Page {
                             text: modelData["thumbnail"] ? "" : MaterialIcons.description
 
                             Image {
+                                id: thumbnail
                                 visible: modelData["thumbnail"]
-                                source: Filepath.stringToUrl(modelData["thumbnail"])
+                                cache: false
+                                asynchronous: true
 
                                 fillMode: Image.PreserveAspectCrop
 
                                 width: projectDelegate.width
                                 height: projectDelegate.height
+                            }
+
+                            BusyIndicator {
+                                anchors.centerIn: parent
+                                running: gridView.visible && modelData["thumbnail"] && thumbnail.status != Image.Ready
+                                visible: running
                             }
 
                             Connections {

@@ -246,7 +246,7 @@ class MeshroomApp(QApplication):
                         for node in file:
                             if file[node]["nodeType"] == "CameraInit" and file[node]["inputs"].get("viewpoints"):
                                 if len(file[node]["inputs"]["viewpoints"]) > 0:
-                                    thumbnail = ThumbnailCache.createThumbnail(ThumbnailCache, file[node]["inputs"]["viewpoints"][0]["path"], -1, True)
+                                    thumbnail = file[node]["inputs"]["viewpoints"][0]["path"]
                                     break
                 except FileNotFoundError:
                     pass

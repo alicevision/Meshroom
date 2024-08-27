@@ -247,24 +247,19 @@ class ThumbnailCache(QObject):
 
         return None
 
-    def createThumbnail(self, imgSource, callerID, inHomepage=False):
+    def createThumbnail(self, imgSource, callerID):
         """Load an image, resize it to thumbnail dimensions and save the result in the cache directory.
 
         Args:
             imgSource (QUrl): location of the input image
             callerID (int): identifier for the object that requested the thumbnail
         """
-        if not inHomepage:
-            imgPath = imgSource.toLocalFile()
-            path = ThumbnailCache.thumbnailPath(imgPath)
-        else:
-            imgPath = imgSource
-            path = ThumbnailCache.thumbnailPath(imgPath)
+        imgPath = imgSource.toLocalFile()
+        path = ThumbnailCache.thumbnailPath(imgPath)
 
         # Check if thumbnail already exists (it may have been created by another thread)
         if ThumbnailCache.checkThumbnail(path):
-            if not inHomepage:
-                self.thumbnailCreated.emit(imgSource, callerID)
+            self.thumbnailCreated.emit(imgSource, callerID)
             return path
 
         logging.debug(f'[ThumbnailCache] Creating thumbnail {path} for image {imgPath}')
@@ -292,8 +287,7 @@ class ThumbnailCache(QObject):
             logging.error(f'[ThumbnailCache] Error when writing thumbnail: {writer.errorString()}')
 
         # Notify listeners
-        if not inHomepage:
-            self.thumbnailCreated.emit(imgSource, callerID)
+        self.thumbnailCreated.emit(imgSource, callerID)
         return path
 
     def handleRequestsAsync(self):

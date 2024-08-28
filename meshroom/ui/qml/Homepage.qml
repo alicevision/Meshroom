@@ -356,18 +356,12 @@ Page {
                         }
                         Label {
                             id: project
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.horizontalCenter: projectDelegate.horizontalCenter
                             horizontalAlignment: Text.AlignHCenter
                             width: projectDelegate.width
-                            wrapMode: Text.WrapAnywhere
-                            text: {
-                                if (Filepath.removeExtension(Filepath.basename(modelData["path"])).length > 40) {
-                                    var length = Filepath.basename(modelData["path"]).length
-                                    return Filepath.basename(modelData["path"]).substring(0, 30) + "…" + Filepath.basename(modelData["path"]).substring(length - 10, length)
-                                } else {
-                                    return Filepath.basename(modelData["path"])
-                                }
-                            }
+                            elide: Text.ElideMiddle
+                            text: Filepath.basename(modelData["path"])
+                            maximumLineCount: 1
                             font.pointSize: 10
                         }
                     }

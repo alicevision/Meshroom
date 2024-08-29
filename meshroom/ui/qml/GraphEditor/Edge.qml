@@ -61,6 +61,33 @@ Item {
             PathCubic {
                 id: cubic
                 property real ctrlPtDist: 30
+                x: root.isForLoop ? (root.startX + root.endX) / 2  - loopArea.width / 2 : root.endX
+                y: root.isForLoop ? (root.startY + root.endY) / 2 : root.endY
+                relativeControl1X: ctrlPtDist
+                relativeControl1Y: 0
+                control2X: x - ctrlPtDist
+                control2Y: y
+            }
+
+        }
+
+        ShapePath {
+            id: pathSecondary
+            startX: (root.startX + root.endX) / 2 + loopArea.width / 2
+            startY: (root.startY + root.endY) / 2
+            fillColor: "transparent"
+
+            strokeColor: root.isForLoop ? root.color : "transparent"
+            strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
+            strokeWidth: root.thickness
+            // final visual width of this path (never below 1)
+            readonly property real visualWidth: Math.max(strokeWidth, 1)
+            dashPattern: [6 / visualWidth, 4 / visualWidth]
+            capStyle: ShapePath.RoundCap
+
+            PathCubic {
+                id: cubicSecondary
+                property real ctrlPtDist: 30
                 x: root.endX
                 y: root.endY
                 relativeControl1X: ctrlPtDist
@@ -68,7 +95,6 @@ Item {
                 control2X: x - ctrlPtDist
                 control2Y: y
             }
-
         }
     }
     Item {

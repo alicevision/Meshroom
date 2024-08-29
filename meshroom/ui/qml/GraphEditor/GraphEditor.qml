@@ -487,8 +487,13 @@ Item {
                     loopSize: forLoop ? edge.src.root.value.count : 0
                     iteration: forLoop ? edge.src.root.value.indexOf(edge.src) : 0
                     color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
-                    thickness: (forLoop && inFocus) ? 3 : (forLoop || inFocus) ? 2 : 1
-                    
+                    thickness: {
+                        if (forLoop) {
+                            return (inFocus) ? 4 : 3
+                        }
+                        return (inFocus) ? 2 : 1
+                    }
+
                     point1x: isValidEdge ? src.globalX + src.outputAnchorPos.x : 0
                     point1y: isValidEdge ? src.globalY + src.outputAnchorPos.y : 0
                     point2x: isValidEdge ? dst.globalX + dst.inputAnchorPos.x : 0

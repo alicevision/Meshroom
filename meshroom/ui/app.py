@@ -148,6 +148,11 @@ Additional Resources:
         default='',
         help='Save the created scene to the specified Meshroom project file.'
     )
+    project_group.add_argument(
+        '-1', '--latest',
+        action='store_true',
+        help='Load the most recent scene.'
+    )
 
     # Pipeline Options
     pipeline_group = parser.add_argument_group('Pipeline Options')
@@ -257,6 +262,11 @@ class MeshroomApp(QApplication):
             args.project = os.path.abspath(args.project)
             self._activeProject.load(args.project)
             self.addRecentProjectFile(args.project)
+        elif args.latest:
+            projects = self._recentProjectFiles()
+            if projects:
+                project = os.path.abspath(projects[0]["path"])
+                self._activeProject.load(project)
         elif getattr(args, "import", None) or args.importRecursive or args.save or args.pipeline:
             self._activeProject.new()
 

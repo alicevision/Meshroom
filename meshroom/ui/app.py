@@ -70,6 +70,98 @@ class MessageHandler(object):
                 return
         MessageHandler.logFunctions[messageType](message)
 
+def createMeshroomParser(args):
+
+    # Create the main parser with a description
+    parser = argparse.ArgumentParser(
+        prog=args[0],
+        description='Launch Meshroom UI - The 3D digitization toolbox that connects research, industry and community at large.',
+        add_help=True,
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog='''
+Examples:
+  1. Open an existing project in Meshroom:
+     meshroom myProject.mg
+
+  2. Open a new project in Meshroom with a specific pipeline, import images from a folder and save the project:
+     meshroom -p photogrammetry -i /path/to/images/ --save /path/to/project.mg
+
+Additional Resources:
+  Project Website:     https://alicevision.org
+  Meshroom Manual:     https://meshroom-manual.readthedocs.io
+  Forum:               https://groups.google.com/g/alicevision
+  Tutorials:           https://www.youtube.com/c/AliceVisionOrg
+'''
+    )
+
+    # Positional Arguments
+    parser.add_argument(
+        'project',
+        metavar='PROJECT',
+        type=str,
+        nargs='?',
+        help='Meshroom project file (e.g. myProject.mg) or folder with images to reconstruct.'
+    )
+
+    # General Options
+    general_group = parser.add_argument_group('General Options')
+    general_group.add_argument(
+        '--verbose',
+        help='Set the verbosity level for logging:\n'
+             '  - fatal: Show only critical errors.\n'
+             '  - error: Show errors only.\n'
+             '  - warning: Show warnings and errors.\n'
+             '  - info: Show standard informational messages.\n'
+             '  - debug: Show detailed debug information.\n'
+             '  - trace: Show all messages, including trace-level details.',
+        default=os.environ.get('MESHROOM_VERBOSE', 'warning'),
+        choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+    )
+    general_group.add_argument(
+        '--submitLabel',
+        metavar='SUBMITLABEL',
+        type=str,
+        help='Label of a node in the submitter.',
+        default='[Meshroom] {projectName}'
+    )
+
+    # Project and Input Options
+    project_group = parser.add_argument_group('Project and Input Options')
+    project_group.add_argument(
+        '-i', '--import',
+        metavar='IMAGES/FOLDERS',
+        type=str,
+        nargs='*',
+        help='Import images or a folder with images to process.'
+    )
+    project_group.add_argument(
+        '-I', '--importRecursive',
+        metavar='FOLDERS',
+        type=str,
+        nargs='*',
+        help='Import images to process from specified folder and sub-folders.'
+    )
+    project_group.add_argument(
+        '-s', '--save',
+        metavar='PROJECT.mg',
+        type=str,
+        default='',
+        help='Save the created scene to the specified Meshroom project file.'
+    )
+
+    # Pipeline Options
+    pipeline_group = parser.add_argument_group('Pipeline Options')
+    pipeline_group.add_argument(
+        '-p', '--pipeline',
+        metavar='FILE.mg / PIPELINE',
+        type=str,
+        default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
+        help='Select the default Meshroom pipeline:\n'
+        + '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates]),
+    )
+
+    return parser.parse_args(args[1:])
+
 
 class MeshroomApp(QApplication):
     """ Meshroom UI Application. """
@@ -78,24 +170,7 @@ class MeshroomApp(QApplication):
 
         QtArgs = [args[0], '-style', 'fusion'] + args[1:]  # force Fusion style by default
 
-        parser = argparse.ArgumentParser(prog=args[0], description='Launch Meshroom UI.', add_help=True)
-
-        parser.add_argument('project', metavar='PROJECT', type=str, nargs='?',
-                            help='Meshroom project file (e.g. myProject.mg) or folder with images to reconstruct.')
-        parser.add_argument('-i', '--import', metavar='IMAGES/FOLDERS', type=str, nargs='*',
-                            help='Import images or folder with images to reconstruct.')
-        parser.add_argument('-I', '--importRecursive', metavar='FOLDERS', type=str, nargs='*',
-                            help='Import images to reconstruct from specified folder and sub-folders.')
-        parser.add_argument('-s', '--save', metavar='PROJECT.mg', type=str, default='',
-                            help='Save the created scene.')
-        parser.add_argument('-p', '--pipeline', metavar="FILE.mg/" + "/".join(meshroom.core.pipelineTemplates), type=str,
-                            default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", ""),
-                            help='Override the default Meshroom pipeline with this external or template graph.')
-        parser.add_argument("--submitLabel", metavar='SUBMITLABEL', type=str, help="Label of a node in the submitter", default='[Meshroom] {projectName}')
-        parser.add_argument("--verbose", help="Verbosity level", default=os.environ.get('MESHROOM_VERBOSE', 'warning'),
-                            choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
-
-        args = parser.parse_args(args[1:])
+        args = createMeshroomParser(args)
 
         logStringToPython = {
             'fatal': logging.FATAL,

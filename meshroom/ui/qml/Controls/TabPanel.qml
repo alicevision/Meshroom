@@ -41,7 +41,7 @@ Page {
                         text: modelData
                         y: mainTabBar.padding
                         padding: 4
-                        width: 150
+                        width: text.length * font.pointSize
                         background: Rectangle {
                             color: index === mainTabBar.currentIndex ? root.palette.window : Qt.darker(root.palette.window, 1.30)
                         }

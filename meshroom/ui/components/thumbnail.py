@@ -260,7 +260,7 @@ class ThumbnailCache(QObject):
         # Check if thumbnail already exists (it may have been created by another thread)
         if ThumbnailCache.checkThumbnail(path):
             self.thumbnailCreated.emit(imgSource, callerID)
-            return
+            return path
 
         logging.debug(f'[ThumbnailCache] Creating thumbnail {path} for image {imgPath}')
 
@@ -273,7 +273,7 @@ class ThumbnailCache(QObject):
         img = reader.read()
         if img.isNull():
             logging.error(f'[ThumbnailCache] Error when reading image: {reader.errorString()}')
-            return
+            return ""
 
         # Scale image while preserving aspect ratio
         thumbnail = img.scaled(ThumbnailCache.thumbnailSize,
@@ -288,6 +288,7 @@ class ThumbnailCache(QObject):
 
         # Notify listeners
         self.thumbnailCreated.emit(imgSource, callerID)
+        return path
 
     def handleRequestsAsync(self):
         """Process thumbnail creation requests in LIFO order.

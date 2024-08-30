@@ -15,9 +15,13 @@ ToolButton {
     padding: 0
     ToolTip.visible: ToolTip.text && hovered
     ToolTip.delay: 100
-    width: childrenRect.width
-    height: childrenRect.height
+
+    property alias labelItem: labelItem
+    property alias iconItem: icon
+    property alias rowIconLabel: rowIconLabel
+
     contentItem: RowLayout {
+        id: rowIconLabel
         Layout.margins: 0
         Label {
             id: icon

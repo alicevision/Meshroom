@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import argparse
+import json
 
 from PySide2 import QtCore
 from PySide2.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
@@ -88,7 +89,7 @@ class MeshroomApp(QApplication):
         parser.add_argument('-s', '--save', metavar='PROJECT.mg', type=str, default='',
                             help='Save the created scene.')
         parser.add_argument('-p', '--pipeline', metavar="FILE.mg/" + "/".join(meshroom.core.pipelineTemplates), type=str,
-                            default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
+                            default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", ""),
                             help='Override the default Meshroom pipeline with this external or template graph.')
         parser.add_argument("--submitLabel", metavar='SUBMITLABEL', type=str, help="Label of a node in the submitter", default='[Meshroom] {projectName}')
         parser.add_argument("--verbose", help="Verbosity level", default=os.environ.get('MESHROOM_VERBOSE', 'warning'),
@@ -181,7 +182,7 @@ class MeshroomApp(QApplication):
             args.project = os.path.abspath(args.project)
             self._activeProject.load(args.project)
             self.addRecentProjectFile(args.project)
-        else:
+        elif getattr(args, "import", None) or args.importRecursive or args.save or args.pipeline:
             self._activeProject.new()
 
         # import is a python keyword, so we have to access the attribute by a string
@@ -234,7 +235,22 @@ class MeshroomApp(QApplication):
         for i in range(size):
             settings.setArrayIndex(i)
             p = settings.value("filepath")
+            thumbnail = ""
             if p:
+                # get the first image path from the project
+                try:
+                    with open(p) as file:
+                        file = json.load(file)
+                        # find the first camerainit node
+                        file = file["graph"]
+                        for node in file:
+                            if file[node]["nodeType"] == "CameraInit" and file[node]["inputs"].get("viewpoints"):
+                                if len(file[node]["inputs"]["viewpoints"]) > 0:
+                                    thumbnail = file[node]["inputs"]["viewpoints"][0]["path"]
+                                    break
+                except FileNotFoundError:
+                    pass
+                p = {"path": p, "thumbnail": thumbnail}
                 projects.append(p)
         settings.endArray()
         return projects
@@ -254,6 +270,7 @@ class MeshroomApp(QApplication):
                 projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
 
         projects = self._recentProjectFiles()
+        projects = [p["path"] for p in projects]
 
         # remove duplicates while preserving order
         from collections import OrderedDict
@@ -294,6 +311,7 @@ class MeshroomApp(QApplication):
                 projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
 
         projects = self._recentProjectFiles()
+        projects = [p["path"] for p in projects]
 
         # remove duplicates while preserving order
         from collections import OrderedDict
@@ -471,6 +489,7 @@ class MeshroomApp(QApplication):
 
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)
+
     changelogModel = Property("QVariantList", _changelogModel, constant=True)
     licensesModel = Property("QVariantList", _licensesModel, constant=True)
     pipelineTemplateFilesChanged = Signal()

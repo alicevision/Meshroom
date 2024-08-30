@@ -434,11 +434,11 @@ class Reconstruction(UIGraph):
         "matchProvider": ["FeatureMatching", "StructureFromMotion"]
     }
 
-    def __init__(self, undoStack, taskManager, defaultPipeline='', parent=None):
+    def __init__(self, undoStack, taskManager, defaultPipeline="", parent=None):
         super(Reconstruction, self).__init__(undoStack, taskManager, parent)
 
         # initialize member variables for key steps of the 3D reconstruction pipeline
-
+        self._active = False
         self._activeNodes = meshroom.common.DictModel(keyAttrName="nodeType")
         self.initActiveNodes()
 
@@ -477,9 +477,14 @@ class Reconstruction(UIGraph):
         self._workerThreads.terminate()
         self._workerThreads.join()
 
+    def setActive(self, active):
+        self._active = active
+
+    @Slot()
     def clear(self):
         self.clearActiveNodes()
         super(Reconstruction, self).clear()
+        self.setActive(False)
 
     def setDefaultPipeline(self, defaultPipeline):
         self._defaultPipeline = defaultPipeline
@@ -508,8 +513,8 @@ class Reconstruction(UIGraph):
     @Slot()
     @Slot(str)
     def new(self, pipeline=None):
-        p = pipeline if pipeline != None else self._defaultPipeline
         """ Create a new pipeline. """
+        p = pipeline if pipeline != None else self._defaultPipeline
         # Lower the input and the dictionary keys to make sure that all input types can be found:
         # - correct pipeline name but the case does not match (e.g. panoramaHDR instead of panoramaHdr)
         # - lowercase pipeline name given through the "New Pipeline" menu
@@ -533,8 +538,7 @@ class Reconstruction(UIGraph):
                     "Data might have been lost in the process.",
                     "Open it with the corresponding version of Meshroom to recover your data."
                 ))
-
-            self.graph.fileDateVersion = os.path.getmtime(filepath)
+            self.setActive(True)
             return status
         except FileNotFoundError as e:
             self.error.emit(
@@ -766,18 +770,29 @@ class Reconstruction(UIGraph):
         """
         if filesByType["images"]:
             if cameraInit is None:
-                boundingBox = self.layout.boundingBox()
-                if not position:
-                    p = Position(boundingBox[0], boundingBox[1] + boundingBox[3])
-                elif isinstance(position, QPoint):
-                    p = Position(position.x(), position.y())
+                if not self._cameraInits:
+                    if isinstance(position, QPoint):
+                        p = Position(position.x(), position.y())
+                    else:
+                        p = position
+                    cameraInit = self.addNewNode("CameraInit", position=p)
                 else:
-                    p = position
-                cameraInit = self.addNewNode("CameraInit", position=p)
+                    boundingBox = self.layout.boundingBox()
+                    if not position:
+                        p = Position(boundingBox[0], boundingBox[1] + boundingBox[3])
+                    elif isinstance(position, QPoint):
+                        p = Position(position.x(), position.y())
+                    else:
+                        p = position
+                    cameraInit = self.addNewNode("CameraInit", position=p)
             self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType["images"], cameraInit,))
         if filesByType["videos"]:
-            boundingBox = self.layout.boundingBox()
-            keyframeNode = self.addNewNode("KeyframeSelection", position=Position(boundingBox[0], boundingBox[1] + boundingBox[3]))
+            if self.nodes:
+                boundingBox = self.layout.boundingBox()
+                p = Position(boundingBox[0], boundingBox[1] + boundingBox[3])
+            else:
+                p = position
+            keyframeNode = self.addNewNode("KeyframeSelection", position=p)
             keyframeNode.inputPaths.value = filesByType["videos"]
             if len(filesByType["videos"]) == 1:
                 newVideoNodeMessage = "New node '{}' added for the input video.".format(keyframeNode.getLabel())
@@ -879,6 +894,9 @@ class Reconstruction(UIGraph):
         """
         logging.debug("importImagesFromFolder: " + str(path))
         filesByType = multiview.findFilesByTypeInFolder(path, recursive)
+        if not self.cameraInit:
+            # Create a CameraInit node if none exists
+            self.cameraInit = self.addNewNode("CameraInit")
         if filesByType.images:
             self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType.images, self.cameraInit,))
 
@@ -1125,6 +1143,8 @@ class Reconstruction(UIGraph):
         if not viewpoint:
             return False
         # fetch up-to-date poseId from sfm result (in case of rigs, poseId might have changed)
+        if not self._views:
+            return False
         view = self._views.get(str(viewpoint.poseId.value), None)  # keys are strings (faster lookup)
         return view.get('poseId', -1) in self._poses if view else False
 
@@ -1256,6 +1276,11 @@ class Reconstruction(UIGraph):
     # but not part of the list of viewpoints of a CameraInit node (i.e. "sequence" node outputs)
     currentViewPathChanged = Signal()
     currentViewPath = Property(str, lambda self: self._currentViewPath, setCurrentViewPath, notify=currentViewPathChanged)
+
+    # Whether the Reconstruction object has been set ("new" has been called) or not ("new" has never
+    # been called or "clear" has been called)
+    activeChanged = Signal()
+    active = Property(bool, lambda self: self._active, setActive, notify=activeChanged)
 
     # Signals to propagate high-level messages
     error = Signal(Message)

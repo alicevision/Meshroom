@@ -253,6 +253,8 @@ class GraphLayout(QObject):
             startX (int): start position x coordinate
             startY (int): start position y coordinate
         """
+        if not self.graph.nodes:
+            return
         fromIndex = self.graph.nodes.indexOf(fromNode) if fromNode else 0
         toIndex = self.graph.nodes.indexOf(toNode) if toNode else self.graph.nodes.count - 1
 
@@ -439,9 +441,12 @@ class UIGraph(QObject):
     @Slot(str, result=bool)
     def loadGraph(self, filepath, setupProjectFile=True, publishOutputs=False):
         g = Graph('')
-        status = g.load(filepath, setupProjectFile, importProject=False, publishOutputs=publishOutputs)
-        if not os.path.exists(g.cacheDir):
-            os.mkdir(g.cacheDir)
+        status = True
+        if filepath:
+            status = g.load(filepath, setupProjectFile, importProject=False, publishOutputs=publishOutputs)
+            if not os.path.exists(g.cacheDir):
+                os.mkdir(g.cacheDir)
+            g.fileDateVersion = os.path.getmtime(filepath)
         self.setGraph(g)
         return status
 

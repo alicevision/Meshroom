@@ -14,6 +14,7 @@ import Utils 1.0
  */
 Panel {
     id: root
+    visible: settings_UILayout.showImageGallery
 
     property variant cameraInits
     property variant cameraInit
@@ -32,12 +33,13 @@ Panel {
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
 
+    property alias mouseArea: mouseArea
+
     signal removeImageRequest(var attribute)
     signal allViewpointsCleared()
     signal filesDropped(var drop, var augmentSfm)
 
     title: "Image Gallery"
-    implicitWidth: (root.defaultCellSize + 2) * 2
 
     Connections {
         target: _reconstruction
@@ -530,7 +532,9 @@ Panel {
             }
 
             MouseArea {
+                id: mouseArea
                 anchors.fill: parent
+                hoverEnabled: true
                 onPressed: {
                     if (mouse.button == Qt.LeftButton)
                         grid.forceActiveFocus()

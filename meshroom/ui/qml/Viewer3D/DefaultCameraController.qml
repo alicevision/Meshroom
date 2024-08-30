@@ -22,6 +22,7 @@ Entity {
     property alias rotationSpeed: trackball.rotationSpeed
     property alias windowSize: trackball.windowSize
     property alias trackballSize: trackball.trackballSize
+    property alias mouseHandler: mouseHandler
 
     property bool loseMouseFocus: false // Must be changed by other entities when they want to take mouse focus
 

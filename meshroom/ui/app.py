@@ -87,10 +87,10 @@ Examples:
      meshroom -p photogrammetry -i /path/to/images/ --save /path/to/project.mg
 
 Additional Resources:
-  Project Website:     https://alicevision.org
-  Meshroom Manual:     https://meshroom-manual.readthedocs.io
-  Forum:               https://groups.google.com/g/alicevision
-  Tutorials:           https://www.youtube.com/c/AliceVisionOrg
+  Website:      https://alicevision.org
+  Manual:       https://meshroom-manual.readthedocs.io
+  Forum:        https://groups.google.com/g/alicevision
+  Tutorials:    https://www.youtube.com/c/AliceVisionOrg
 '''
     )
 

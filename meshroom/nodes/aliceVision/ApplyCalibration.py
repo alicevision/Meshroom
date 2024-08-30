@@ -23,7 +23,7 @@ Overwrite intrinsics with a calibrated intrinsic.
         desc.File(
             name="calibration",
             label="Calibration",
-            description="Calibration file (Either SfmData or Lens calibration file).",
+            description="Calibration file (SfmData or Lens calibration file).",
             value="",
             uid=[0],
         ),

@@ -39,6 +39,10 @@ ComboBox {
                     return -1
                 if (!nameA.startsWith(filterText) && nameB.startsWith(filterText))
                     return 1
+                if (nameB > nameA)
+                    return -1
+                if (nameA > nameB)
+                    return 1
                 return 0
             })
         } else {

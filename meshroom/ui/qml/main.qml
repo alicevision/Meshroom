@@ -14,6 +14,8 @@ ApplicationWindow {
     minimumHeight: 500
     visible: true
 
+    property bool isClosing: false
+
     title: {
         var t = (_reconstruction && _reconstruction.graph && _reconstruction.graph.filepath) ? _reconstruction.graph.filepath : "Untitled"
         if (_reconstruction && !_reconstruction.undoStack.clean)
@@ -27,6 +29,7 @@ ApplicationWindow {
         close.accepted = false
         if (!ensureNotComputing())
             return
+        isClosing = true
         ensureSaved(function() { Qt.quit() })
     }
 

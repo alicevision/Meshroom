@@ -23,8 +23,15 @@ Overwrite intrinsics with a calibrated intrinsic.
         desc.File(
             name="calibration",
             label="Calibration",
-            description="Calibration SfMData file.",
+            description="Calibration file (Either SfmData or Lens calibration file).",
             value="",
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name="useJson",
+            label="Use lens calibration file",
+            description="Use Lens calibration file generated using 3Dequalizer.",
+            value=False,
             uid=[0],
         ),
         desc.ChoiceParam(

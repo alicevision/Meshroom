@@ -394,6 +394,8 @@ Item {
                         tooltipText: "Iterations"
                         visible: edgeMenu.currentEdge && edgeMenu.forLoop
 
+                        enabled: expandButton.canExpand
+
                         property var listAttr: edgeMenu.currentEdge ? edgeMenu.currentEdge.src.root : null
 
                         Connections {

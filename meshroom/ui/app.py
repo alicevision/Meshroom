@@ -121,8 +121,8 @@ Additional Resources:
         '--submitLabel',
         metavar='SUBMITLABEL',
         type=str,
-        help='Label of a node in the submitter.',
-        default='[Meshroom] {projectName}'
+        help='Label of a node when submitted on renderfarm.',
+        default=os.environ.get('MESHROOM_SUBMIT_LABEL', '[Meshroom] {projectName}'),
     )
 
     # Project and Input Options

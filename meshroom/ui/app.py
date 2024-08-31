@@ -95,6 +95,7 @@ Additional Resources:
   Manual:       https://meshroom-manual.readthedocs.io
   Forum:        https://groups.google.com/g/alicevision
   Tutorials:    https://www.youtube.com/c/AliceVisionOrg
+  Contribute:   https://github.com/alicevision/Meshroom
 '''
     )
 

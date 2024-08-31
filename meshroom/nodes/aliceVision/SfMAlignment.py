@@ -46,9 +46,10 @@ The alignment can be based on:
                         " - from_cameras_poseid: Align cameras with same pose ID.\n"
                         " - from_cameras_filepath: Align cameras with a filepath matching, using 'fileMatchingPattern'.\n"
                         " - from_cameras_metadata: Align cameras with matching metadata, using 'metadataMatchingList'.\n"
-                        " - from_markers: Align from markers with the same ID.\n",
+                        " - from_markers: Align from markers with the same ID.\n"
+                        " - from_landmarks: Align from matched features.\n",
             value="from_cameras_viewid",
-            values=["from_cameras_viewid", "from_cameras_poseid", "from_cameras_filepath", "from_cameras_metadata", "from_markers"],
+            values=["from_cameras_viewid", "from_cameras_poseid", "from_cameras_filepath", "from_cameras_metadata", "from_markers", 'from_landmarks'],
             exclusive=True,
             uid=[0],
         ),

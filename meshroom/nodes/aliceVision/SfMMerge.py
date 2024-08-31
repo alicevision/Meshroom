@@ -1,7 +1,7 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
-from meshroom.core.utils import VERBOSE_LEVEL
+from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
 import os.path
 
@@ -54,6 +54,39 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             description="Second input SfMData file to merge.",
             value="",
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name="method",
+            label="Merge Method",
+            description="Merge method:\n"
+                        " - simple copy: Straight copy without duplicate management.\n"
+                        " - from_landmarks: Align from matched features, try to fuse.\n",
+            value="simple_copy",
+            values=["simple_copy", 'from_landmarks'],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="matchesFolder",
+                label="Matches Folder",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="matchesFolders",
+            label="Matches Folders",
+            description="Folder(s) in which the computed matches are stored.",
+        ),
+        desc.ChoiceParam(
+            name="describerTypes",
+            label="Describer Types",
+            description="Describer types used to describe an image.",
+            values=DESCRIBER_TYPES,
+            value=["dspsift"],
+            exclusive=False,
+            uid=[0],
+            joinChar=",",
         ),
         desc.ChoiceParam(
             name="verboseLevel",

@@ -155,7 +155,17 @@ Additional Resources:
     project_group.add_argument(
         '-1', '--latest',
         action='store_true',
-        help='Load the most recent scene.'
+        help='Load the most recent scene (-2 and -3 to load the previous ones).'
+    )
+    project_group.add_argument(
+        '-2', '--latest2',
+        action='store_true',
+        help=argparse.SUPPRESS  # This hides the option from the help message
+    )
+    project_group.add_argument(
+        '-3', '--latest3',
+        action='store_true',
+        help=argparse.SUPPRESS  # This hides the option from the help message
     )
 
     # Pipeline Options
@@ -266,11 +276,13 @@ class MeshroomApp(QApplication):
             args.project = os.path.abspath(args.project)
             self._activeProject.load(args.project)
             self.addRecentProjectFile(args.project)
-        elif args.latest:
+        elif args.latest or args.latest2 or args.latest3:
             projects = self._recentProjectFiles()
             if projects:
-                project = os.path.abspath(projects[0]["path"])
+                index = [args.latest, args.latest2, args.latest3].index(True)
+                project = os.path.abspath(projects[index]["path"])
                 self._activeProject.load(project)
+                self.addRecentProjectFile(project)
         elif getattr(args, "import", None) or args.importRecursive or args.save or args.pipeline:
             self._activeProject.new()
 

@@ -45,7 +45,7 @@ parser.add_argument('--cache', metavar='FOLDER', type=str,
                     help='Custom cache folder to write computation results. '
                          'If not set, the default cache folder will be used: ' + meshroom.core.defaultCacheFolder)
 
-parser.add_argument('--save', metavar='FILE', type=str, required=False,
+parser.add_argument('-s', '--save', metavar='FILE', type=str, required=False,
                     help='Save the configured Meshroom graph to a project file. It will setup the cache folder accordingly if not explicitly changed by --cache.')
 
 parser.add_argument('--compute', metavar='<yes/no>', type=lambda x: bool(distutils.util.strtobool(x)), default=True, required=False,

@@ -16,63 +16,119 @@ import logging
 
 meshroom.core.initPipelines()
 
-parser = argparse.ArgumentParser(description='Launch the full photogrammetry or Panorama HDR pipeline.')
-parser.add_argument('-i', '--input', metavar='NODEINSTANCE:"SFM/FOLDERS/IMAGES;..."', type=str, nargs='*',
-                    default=[],
-                    help='Input folder containing images or folders of images or file (.sfm or .json) '
-                         'with images paths and optionally predefined camera intrinsics.')
-parser.add_argument('-I', '--inputRecursive', metavar='NODEINSTANCE:"FOLDERS/IMAGES;..."', type=str, nargs='*',
-                    default=[],
-                    help='Input folders containing all images recursively.')
+parser = argparse.ArgumentParser(
+    prog='meshroom_batch',
+    description='Launch a Meshroom pipeline from command line.',
+    add_help=True,
+    formatter_class=argparse.RawTextHelpFormatter,
+    epilog='''
+Examples:
+  1. Process a pipeline in command line:
+     meshroom_batch -p cameraTracking -i /input/path -o /output/path -s /path/to/store/the/project.mg
 
-parser.add_argument('-p', '--pipeline', metavar='FILE.mg/' + '/'.join(meshroom.core.pipelineTemplates), type=str, default='photogrammetry',
-                    help='Template pipeline among those listed or a Meshroom file containing a custom pipeline to run on input images. '
-                         'Requirements: the graph must contain one CameraInit node, '
-                         'and one Publish node if --output is set.')
+  2. Submit a pipeline on renderfarm:
+     meshroom_batch -p cameraTracking -i /input/path -o /output/path -s /path/to/store/the/project.mg --submit
 
-parser.add_argument('--overrides', metavar='SETTINGS', type=str, default=None,
-                    help='A JSON file containing the graph parameters override.')
+  See "meshroom_compute -h" to compute an existing project from command line.
 
-parser.add_argument('--paramOverrides', metavar='NODETYPE:param=value NODEINSTANCE.param=value', type=str, default=None, nargs='*',
-                    help='Override specific parameters directly from the command line (by node type or by node names).')
+Additional Resources:
+  Website:      https://alicevision.org
+  Manual:       https://meshroom-manual.readthedocs.io
+  Forum:        https://groups.google.com/g/alicevision
+  Tutorials:    https://www.youtube.com/c/AliceVisionOrg
+  Contribute:   https://github.com/alicevision/Meshroom
+''')
 
-parser.add_argument('-o', '--output', metavar='FOLDER', type=str, required=False,
-                    help='Output folder where results should be copied to. '
-                         'If not set, results will have to be retrieved directly from the cache folder.')
 
-parser.add_argument('--cache', metavar='FOLDER', type=str,
-                    default=None,
-                    help='Custom cache folder to write computation results. '
-                         'If not set, the default cache folder will be used: ' + meshroom.core.defaultCacheFolder)
+general_group = parser.add_argument_group('General Options')
+general_group.add_argument(
+    '-i', '--input', metavar='NODEINSTANCE:"SFM/FOLDERS/IMAGES;..."', type=str, nargs='*',
+    default=[],
+    help='Input folder containing images or folders of images or file (.sfm or .json) '
+         'with images paths and optionally predefined camera intrinsics.')
 
-parser.add_argument('-s', '--save', metavar='FILE', type=str, required=False,
-                    help='Save the configured Meshroom graph to a project file. It will setup the cache folder accordingly if not explicitly changed by --cache.')
+general_group.add_argument(
+    '-I', '--inputRecursive', metavar='NODEINSTANCE:"FOLDERS/IMAGES;..."', type=str, nargs='*',
+    default=[],
+    help='Input folders containing all images recursively.')
 
-parser.add_argument('--compute', metavar='<yes/no>', type=lambda x: bool(distutils.util.strtobool(x)), default=True, required=False,
-                    help='You can set it to <no/false/0> to disable the computation.')
+general_group.add_argument(
+    '-p', '--pipeline',
+    metavar='FILE.mg / PIPELINE',
+    type=str,
+    default=os.environ.get('MESHROOM_DEFAULT_PIPELINE', 'photogrammetry'),
+    help='Template pipeline among those listed or a Meshroom file containing a custom pipeline to run on input images:\n'
+    + '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates])
+    + '\nRequirements: the graph must contain one CameraInit node, and one Publish node if --output is set.',
+    )
 
-parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
-                    default=None,
-                    help='Process the node(s) with its dependencies.')
+general_group.add_argument(
+    '-o', '--output', metavar='FOLDER', type=str, required=False,
+    help='Output folder where results should be copied to. '
+         'If not set, results will have to be retrieved directly from the cache folder.')
 
-parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
-                    action='store_true')
-parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
-                    action='store_true')
+general_group.add_argument(
+    '-s', '--save', metavar='FILE', type=str, required=False,
+    help='Save the configured Meshroom graph to a project file. It will setup the cache folder accordingly if not explicitly changed by --cache.')
 
-parser.add_argument('--submit', help='Submit on renderfarm instead of local computation.',
-                    action='store_true')
-parser.add_argument("--submitLabel",
-                    type=str,
-                    default=os.environ.get('MESHROOM_SUBMIT_LABEL', '[Meshroom] {projectName}'),
-                    help="Label of a node when submitted on renderfarm.")
-parser.add_argument('--submitter',
-                    type=str,
-                    default='SimpleFarm',
-                    help='Execute job with a specific submitter.')
+general_group.add_argument(
+    '--submit', help='Submit on renderfarm instead of local computation.',
+    action='store_true')
 
-parser.add_argument('-v', '--verbose', help="Verbosity level", default='',
-                    choices=['', 'fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
+general_group.add_argument(
+    '-v', '--verbose',
+    help='Set the verbosity level for logging:\n'
+         '  - fatal: Show only critical errors.\n'
+         '  - error: Show errors only.\n'
+         '  - warning: Show warnings and errors.\n'
+         '  - info: Show standard informational messages.\n'
+         '  - debug: Show detailed debug information.\n'
+         '  - trace: Show all messages, including trace-level details.',
+    default=os.environ.get('MESHROOM_VERBOSE', 'warning'),
+    choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'])
+
+advanced_group = parser.add_argument_group('Advanced Options')
+advanced_group.add_argument(
+    '--overrides', metavar='SETTINGS', type=str, default=None,
+    help='A JSON file containing the graph parameters override.')
+
+advanced_group.add_argument(
+    '--paramOverrides', metavar='NODETYPE:param=value NODEINSTANCE.param=value', type=str, default=None, nargs='*',
+    help='Override specific parameters directly from the command line (by node type or by node names).')
+
+advanced_group.add_argument(
+    '--cache', metavar='FOLDER', type=str,
+    default=None,
+    help='Custom cache folder to write computation results. '
+         'If not set, the default cache folder will be used: ' + meshroom.core.defaultCacheFolder)
+
+advanced_group.add_argument(
+    '--compute', metavar='<yes/no>', type=lambda x: bool(distutils.util.strtobool(x)), default=True, required=False,
+    help='You can set it to <no/false/0> to disable the computation.')
+
+advanced_group.add_argument(
+    '--toNode', metavar='NODE', type=str, nargs='*',
+    default=None,
+    help='Process the node(s) with its dependencies.')
+
+advanced_group.add_argument(
+    '--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
+    action='store_true')
+advanced_group.add_argument(
+    '--forceCompute', help='Compute in all cases even if already computed.',
+    action='store_true')
+
+advanced_group.add_argument(
+    "--submitLabel",
+    type=str,
+    default=os.environ.get('MESHROOM_SUBMIT_LABEL', '[Meshroom] {projectName}'),
+    help="Label of a node when submitted on renderfarm.")
+
+advanced_group.add_argument(
+    '--submitter',
+    type=str,
+    default='SimpleFarm',
+    help='Execute job with a specific submitter.')
 
 args = parser.parse_args()
 
@@ -85,8 +141,7 @@ logStringToPython = {
     'debug': logging.DEBUG,
     'trace': logging.DEBUG,
 }
-if args.verbose:
-    logging.getLogger().setLevel(logStringToPython[args.verbose])
+logging.getLogger().setLevel(logStringToPython[args.verbose])
 
 if not args.input and not args.inputRecursive:
     print('Nothing to compute. You need to set --input or --inputRecursive.')

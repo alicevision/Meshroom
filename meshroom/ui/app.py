@@ -74,7 +74,7 @@ def createMeshroomParser(args):
 
     # Create the main parser with a description
     parser = argparse.ArgumentParser(
-        prog=args[0],
+        prog='meshroom',
         description='Launch Meshroom UI - The toolbox that connects research, industry and community at large.',
         add_help=True,
         formatter_class=argparse.RawTextHelpFormatter,
@@ -111,7 +111,7 @@ Additional Resources:
     # General Options
     general_group = parser.add_argument_group('General Options')
     general_group.add_argument(
-        '--verbose',
+        '-v', '--verbose',
         help='Set the verbosity level for logging:\n'
              '  - fatal: Show only critical errors.\n'
              '  - error: Show errors only.\n'

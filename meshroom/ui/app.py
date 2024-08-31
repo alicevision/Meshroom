@@ -164,7 +164,7 @@ Additional Resources:
         '-p', '--pipeline',
         metavar='FILE.mg / PIPELINE',
         type=str,
-        default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
+        default=os.environ.get('MESHROOM_DEFAULT_PIPELINE', ''),
         help='Select the default Meshroom pipeline:\n'
         + '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates]),
     )

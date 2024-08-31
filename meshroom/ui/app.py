@@ -75,7 +75,7 @@ def createMeshroomParser(args):
     # Create the main parser with a description
     parser = argparse.ArgumentParser(
         prog=args[0],
-        description='Launch Meshroom UI - The 3D digitization toolbox that connects research, industry and community at large.',
+        description='Launch Meshroom UI - The toolbox that connects research, industry and community at large.',
         add_help=True,
         formatter_class=argparse.RawTextHelpFormatter,
         epilog='''
@@ -84,7 +84,11 @@ Examples:
      meshroom myProject.mg
 
   2. Open a new project in Meshroom with a specific pipeline, import images from a folder and save the project:
-     meshroom -p photogrammetry -i /path/to/images/ --save /path/to/project.mg
+     meshroom -p photogrammetry -i /path/to/images/ --save /path/to/store/the/project.mg
+
+  3. Process a pipeline in command line:
+     meshroom_batch -p cameraTracking -i /input/path -o /output/path -s /path/to/store/the/project.mg
+     See 'meshroom_batch -h' for more details.
 
 Additional Resources:
   Website:      https://alicevision.org
@@ -145,7 +149,7 @@ Additional Resources:
         '-s', '--save',
         metavar='PROJECT.mg',
         type=str,
-        default='',
+        required=False,
         help='Save the created scene to the specified Meshroom project file.'
     )
     project_group.add_argument(

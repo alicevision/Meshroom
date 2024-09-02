@@ -19,7 +19,7 @@ except Exception:
     pass
 
 from meshroom.core.submitter import BaseSubmitter
-from . import desc
+from meshroom.core import desc
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)

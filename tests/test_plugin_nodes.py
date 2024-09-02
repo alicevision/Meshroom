@@ -6,6 +6,7 @@ from meshroom.core.graph import Graph
 logging = logging.getLogger(__name__)
 
 def test_pluginNodes():
+    #Dont run the tests in the CI as we are unable to install plugins beforehand
     if "CI" in os.environ:
         return 
     graph = Graph('')

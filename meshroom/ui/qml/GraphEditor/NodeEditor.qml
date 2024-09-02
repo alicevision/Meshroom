@@ -18,9 +18,12 @@ Panel {
     property bool readOnly: false
     property bool isCompatibilityNode: node && node.compatibilityIssue !== undefined
     property string nodeStartDateTime: ""
+    readonly property bool isPlugin: node ? node.isPlugin : false
+    readonly property bool isNotBuilt: node ? (!node.isBuilt) : false
 
     signal attributeDoubleClicked(var mouse, var attribute)
     signal upgradeRequest()
+    signal doBuild()
 
     title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" + (node.label !== node.defaultLabel ? " (" + node.defaultLabel + ")" : "") : "")
     icon: MaterialLabel { text: MaterialIcons.tune }
@@ -221,6 +224,17 @@ Panel {
                 canUpgrade: root.node.canUpgrade
                 issueDetails: root.node.issueDetails
                 onUpgradeRequest: root.upgradeRequest()
+                sourceComponent: bannerDelegate
+            }
+        }
+
+        Loader {
+            active: root.isPlugin && root.isNotBuilt
+            Layout.fillWidth: true
+            visible: active  // for layout update
+
+            sourceComponent: ToBuildBadge {
+                onDoBuild: root.doBuild()
                 sourceComponent: bannerDelegate
             }
         }

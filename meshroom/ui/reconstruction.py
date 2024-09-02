@@ -586,6 +586,14 @@ class Reconstruction(UIGraph):
         localFile = prepareUrlLocalFile(url)
         return installPlugin(localFile)
 
+    @Slot(str, result=bool)
+    def buildNode(self, nodeName):
+        print("***Building "+nodeName)
+        node = self._graph.node(nodeName)
+        from meshroom.core.plugin import isBuilt, build #lazy import to avoid circular dep
+        if not isBuilt(node.nodeDesc):
+            build(node.nodeDesc)
+
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()

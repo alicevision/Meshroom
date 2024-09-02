@@ -21,7 +21,6 @@ from meshroom.core import desc, stats, hashValue, nodeVersion, Version
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
-
 def getWritingFilepath(filepath):
     return filepath + '.writing.' + str(uuid.uuid4())
 
@@ -406,13 +405,14 @@ class NodeChunk(BaseObject):
 
 	    #if plugin node and if first call call meshroom_compute inside the env on 'host' so that the processchunk 
         # of the node will be ran into the env
-        if hasattr(self.node.nodeDesc, 'envFile') and self._status.status!=Status.FIRST_RUN:
+        if self.node.nodeDesc.isPlugin and self._status.status!=Status.FIRST_RUN:
             try:
-                if not self.node.nodeDesc.isBuild():
+                from meshroom.core.plugin import isBuilt, build, getCommandLine #lazy import to avoid circular dep
+                if not isBuilt(self.node.nodeDesc):
                     self.upgradeStatusTo(Status.BUILD)
-                    self.node.nodeDesc.build()
+                    build(self.node.nodeDesc)
                 self.upgradeStatusTo(Status.FIRST_RUN)
-                command = self.node.nodeDesc.getCommandLine(self)
+                command = getCommandLine(self)
                 #NOTE: docker returns 0 even if mount fail (it fails on the deamon side)
                 logging.info("Running plugin node with "+command)
                 status = os.system(command) 
@@ -482,6 +482,7 @@ class NodeChunk(BaseObject):
     statusNodeName = Property(str, lambda self: self._status.nodeName, constant=True)
 
     elapsedTime = Property(float, lambda self: self._status.elapsedTime, notify=statusChanged)
+    
 
 
 # Simple structure for storing node position
@@ -1416,6 +1417,8 @@ class BaseNode(BaseObject):
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
 
+    isPlugin = Property(bool, lambda self: self.nodeDesc.isPlugin, constant=True)
+    isBuilt  = Property(bool, lambda self: self.nodeDesc.isBuilt,  constant=True)
 
 class Node(BaseNode):
     """

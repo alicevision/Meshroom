@@ -33,6 +33,8 @@ Page {
                 property var ratio: sourceSize.width / sourceSize.height
 
                 Layout.fillWidth: true
+                fillMode: Image.PreserveAspectFit
+                // Enforce aspect ratio of the component, as the fillMode does not do the job
                 Layout.preferredHeight: width / ratio
 
                 source: "../img/meshroom-anim-once.gif"
@@ -41,14 +43,14 @@ Page {
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                property real buttonFontSize: 14
 
                 MaterialToolLabelButton {
                     id: manualButton
                     Layout.topMargin: 20
                     iconText: MaterialIcons.open_in_new
                     label: "Manual"
-                    font.pointSize: 16
-                    iconSize: 24
+                    font.pointSize: parent.buttonFontSize
                     flat: true
                     leftPadding: 20
                     rightPadding: {
@@ -65,8 +67,7 @@ Page {
                     id: releaseNotesButton
                     iconText: MaterialIcons.open_in_new
                     label: "Release Notes"
-                    font.pointSize: 16
-                    iconSize: 24
+                    font.pointSize: parent.buttonFontSize
                     flat: true
                     leftPadding: 20
                     rightPadding: {
@@ -83,8 +84,7 @@ Page {
                     id: websiteButton
                     iconText: MaterialIcons.open_in_new
                     label: "Website"
-                    font.pointSize: 16
-                    iconSize: 24
+                    font.pointSize: parent.buttonFontSize
                     flat: true
                     leftPadding: 20
                     rightPadding: {
@@ -101,10 +101,10 @@ Page {
             ColumnLayout {
                 id: sponsors
                 Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
 
-                Rectangle {
-                    // find better alternative
-                    color: "transparent"
+                Item {
+                    // Empty area that expands
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                 }
@@ -112,18 +112,11 @@ Page {
                 Label {
                     Layout.alignment: Qt.AlignHCenter
                     text: "Sponsors"
-                    font.pointSize: 16
                 }
 
                 Image {
                     Layout.alignment: Qt.AlignHCenter
-                    property var ratio: sourceSize.width / sourceSize.height
-
-                    Layout.preferredWidth: leftColumn.width * 0.6
-                    Layout.preferredHeight: width / ratio
                     source: "../img/technicolor-group_rgb_primary_col-rev.png"
-                    smooth: true
-                    mipmap: true
 
                     MouseArea {
                         anchors.fill: parent
@@ -135,17 +128,13 @@ Page {
                 RowLayout {
                     id: brandsRow
 
+                    Layout.fillWidth: true
                     Layout.leftMargin: leftColumn.width * 0.05
                     Layout.rightMargin: leftColumn.width * 0.05
+                    Layout.alignment: Qt.AlignHCenter
 
                     Image {
-                        property var ratio: sourceSize.width / sourceSize.height
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: width / ratio
                         source: "../img/MPC_TG.png"
-                        smooth: true
-                        mipmap: true
 
                         MouseArea {
                             anchors.fill: parent
@@ -155,13 +144,7 @@ Page {
                     }
 
                     Image {
-                        property var ratio: sourceSize.width / sourceSize.height
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: width / ratio
                         source: "../img/MILL_TG.png"
-                        smooth: true
-                        mipmap: true
 
                         MouseArea {
                             anchors.fill: parent
@@ -171,13 +154,7 @@ Page {
                     }
 
                     Image {
-                        property var ratio: sourceSize.width / sourceSize.height
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: width / ratio
                         source: "../img/MIKROS_TG.png"
-                        smooth: true
-                        mipmap: true
 
                         MouseArea {
                             anchors.fill: parent
@@ -187,13 +164,7 @@ Page {
                     }
 
                     Image {
-                        property var ratio: sourceSize.width / sourceSize.height
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: width / ratio
                         source: "../img/TechnicolorGames_TG.png"
-                        smooth: true
-                        mipmap: true
 
                         MouseArea {
                             anchors.fill: parent
@@ -204,11 +175,10 @@ Page {
                 }
 
                 MaterialToolLabelButton {
-                    Layout.topMargin: 20
+                    Layout.topMargin: 5
+                    Layout.bottomMargin: 10
                     iconText: MaterialIcons.favorite
                     label: "Support AliceVision"
-                    font.pointSize: 16
-                    iconSize: 24
                     flat: true
                     leftPadding: {
                         var padding = (leftColumn.width - labelItem.width - iconItem.width - 5) / 2
@@ -229,8 +199,6 @@ Page {
             TabPanel {
                 id: tabPanel
                 tabs: ["Pipelines", "Recent Projects"]
-
-                font.pointSize: 16
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -254,7 +222,6 @@ Page {
                             horizontalAlignment: Text.AlignLeft
                             verticalAlignment: Text.AlignVCenter
                             text: modelData["name"]
-                            font.pointSize: 10
                         }
 
                         Connections {
@@ -320,6 +287,8 @@ Page {
 
                             ToolTip.visible: hovered
                             ToolTip.text: modelData["path"]
+
+                            font.pointSize: 24
 
                             text: modelData["thumbnail"] ? "" : MaterialIcons.description
 

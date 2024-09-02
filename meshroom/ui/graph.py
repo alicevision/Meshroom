@@ -793,8 +793,8 @@ class UIGraph(QObject):
                 occurence = allSrc.index(listAttribute.at(i)) if listAttribute.at(i) in allSrc else -1
                 if occurence != -1:
                     self.removeNodesFrom(self.graph.edges.at(occurence).dst.node)
-                    # remove the edge from allSrc
-                    allSrc.pop(occurence)
+                    # update the edges from allSrc
+                    allSrc = [e.src for e in self._graph.edges.values()]
 
 
     @Slot(QObject)

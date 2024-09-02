@@ -413,7 +413,7 @@ ApplicationWindow {
 
     Platform.FileDialog {
         id: importImagesDialog
-        options: FileDialog.DontUseNativeDialog
+        options: Platform.FileDialog.DontUseNativeDialog
         title: "Import Images"
         fileMode: Platform.FileDialog.OpenFiles
         nameFilters: []
@@ -426,7 +426,7 @@ ApplicationWindow {
 
     Platform.FileDialog {
         id: importProjectDialog
-        options: FileDialog.DontUseNativeDialog
+        options: Platform.FileDialog.DontUseNativeDialog
         title: "Import Project"
         fileMode: Platform.FileDialog.OpenFile
         nameFilters: ["Meshroom Graphs (*.mg)"]

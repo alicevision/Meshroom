@@ -118,6 +118,27 @@ Intrinsic = [
         value=True,
         uid=[0],
     ),
+    desc.BoolParam(
+        name="scaleLocked",
+        label="Focal length Locked",
+        description="The focal length is locked for estimation.",
+        value=False,
+        uid=[0],
+    ),
+    desc.BoolParam(
+        name="offsetLocked",
+        label="Optical Center Locked",
+        description="The optical center coordinates are locked for estimation.",
+        value=False,
+        uid=[0],
+    ),
+    desc.BoolParam(
+        name="distortionLocked",
+        label="Distortion Locked",
+        description="The distortion parameters are locked for estimation.",
+        value=False,
+        uid=[0],
+    ),
     desc.ChoiceParam(
         name="type",
         label="Camera Type",
@@ -677,7 +698,7 @@ The needed metadata are:
                     view['metadata'] = json.loads(view['metadata'])
 
             sfmData = {
-                "version": [1, 2, 8],
+                "version": [1, 2, 10],
                 "views": views + newViews,
                 "intrinsics": intrinsics,
                 "featureFolder": "",

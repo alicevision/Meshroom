@@ -407,8 +407,8 @@ Item {
 
                                 delegate: Loader {
                                     id: outputLoader
-                                    active: object.isOutput && object.desc.visible
-                                    visible: object.enabled || object.hasOutputConnections
+                                    active: Boolean(object.isOutput && object.desc.visible)
+                                    visible: Boolean(object.enabled || object.hasOutputConnections)
                                     anchors.right: parent.right
                                     width: outputs.width
 
@@ -443,7 +443,7 @@ Item {
                                 delegate: Loader {
                                     id: inputLoader
                                     active: !object.isOutput && isFileAttributeBaseType(object)
-                                    visible: object.enabled
+                                    visible: Boolean(object.enabled)
                                     width: inputs.width
 
                                     sourceComponent: AttributePin {
@@ -503,8 +503,8 @@ Item {
                                     delegate: Loader {
                                         id: paramLoader
                                         active: !object.isOutput && !isFileAttributeBaseType(object)
-                                        visible: object.enabled || object.isLink || object.hasOutputConnections
-                                        property bool isFullyActive: (m.displayParams || object.isLink || object.hasOutputConnections)
+                                        visible: Boolean(object.enabled || object.isLink || object.hasOutputConnections)
+                                        property bool isFullyActive: Boolean(m.displayParams || object.isLink || object.hasOutputConnections)
                                         width: parent.width
 
                                         sourceComponent: AttributePin {
@@ -517,7 +517,7 @@ Item {
                                             Behavior on height { PropertyAnimation {easing.type: Easing.Linear} }
                                             visible: (height == childrenRect.height)
                                             attribute: object
-                                            readOnly: root.readOnly || object.isReadOnly
+                                            readOnly: Boolean(root.readOnly || object.isReadOnly)
                                             Component.onCompleted: attributePinCreated(attribute, inParamsPin)
                                             Component.onDestruction: attributePinDeleted(attribute, inParamsPin)
                                             onPressed: root.pressed(mouse)

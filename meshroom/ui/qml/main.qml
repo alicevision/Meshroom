@@ -8,8 +8,8 @@ import Qt.labs.settings 1.0
 ApplicationWindow {
     id: _window
 
-    width: settings_General.windowWidth
-    height: settings_General.windowHeight
+    width: settingsGeneral.windowWidth
+    height: settingsGeneral.windowHeight
     minimumWidth: 650
     minimumHeight: 500
     visible: true
@@ -62,7 +62,7 @@ ApplicationWindow {
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
     Settings {
-        id: settings_General
+        id: settingsGeneral
         category: 'General'
         property int windowWidth: 1280
         property int windowHeight: 720
@@ -70,8 +70,8 @@ ApplicationWindow {
 
     Component.onDestruction: {
         // Store main window dimensions in persisting Settings
-        settings_General.windowWidth = _window.width
-        settings_General.windowHeight = _window.height
+        settingsGeneral.windowWidth = _window.width
+        settingsGeneral.windowHeight = _window.height
     }
 
     // Check if document has been saved

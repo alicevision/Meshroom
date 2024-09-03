@@ -21,7 +21,7 @@ Page {
     property alias unsavedDialog: unsavedDialog
 
     Settings {
-        id: settings_UILayout
+        id: settingsUILayout
         category: 'UILayout'
         property alias showLiveReconstruction: liveSfMVisibilityCB.checked
         property alias showGraphEditor: graphEditorVisibilityCB.checked
@@ -1054,7 +1054,7 @@ Page {
             orientation: Qt.Horizontal
             width: parent.width
             height: Math.round(parent.height * 0.3)
-            visible: settings_UILayout.showGraphEditor
+            visible: settingsUILayout.showGraphEditor
 
             TabPanel {
                 id: graphEditorPanel

@@ -1,18 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls 1.4 as Controls1 // For SplitView
-import QtQuick.Layouts 1.11
 import QtQuick.Window 2.15
-import QtQml.Models 2.15
-
-import Qt.labs.platform 1.0 as Platform
 import QtQuick.Dialogs 1.3
 
 import Qt.labs.settings 1.0
-import GraphEditor 1.0
-import MaterialIcons 2.2
-import Utils 1.0
-import Controls 1.0
 
 ApplicationWindow {
     id: _window

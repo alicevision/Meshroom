@@ -92,8 +92,8 @@ Page {
         fileMode: Platform.FileDialog.SaveFile
         onAccepted: {
             _reconstruction.saveAs(currentFile)
-            closed(Platform.Dialog.Accepted)
             MeshroomApp.addRecentProjectFile(currentFile.toString())
+            closed(Platform.Dialog.Accepted)
         }
         onRejected: closed(Platform.Dialog.Rejected)
     }
@@ -384,21 +384,20 @@ Page {
 
         onAccepted: {
             // Save current file
-            if (saveAction.enabled)
-            {
+            if (saveAction.enabled && _reconstruction.graph.filepath) {
                 saveAction.trigger()
                 fireCallback()
             }
             // Open "Save As" dialog
-            else
-            {
+            else {
                 saveFileDialog.open()
                 function _callbackWrapper(rc) {
                     if (rc === Platform.Dialog.Accepted)
                         fireCallback()
+
                     saveFileDialog.closed.disconnect(_callbackWrapper)
                 }
-                saveFileDialog.closed.disconnect(_callbackWrapper)
+                saveFileDialog.closed.connect(_callbackWrapper)
             }
         }
 

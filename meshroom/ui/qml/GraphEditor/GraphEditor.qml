@@ -379,13 +379,98 @@ Item {
             width: 1000
             height: 1000
 
-            Menu {
+            Popup {
                 id: edgeMenu
                 property var currentEdge: null
-                MenuItem {
-                    enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
-                    text: "Remove"
-                    onTriggered: uigraph.removeEdge(edgeMenu.currentEdge)
+                property bool forLoop: false
+
+                onOpened: {
+                    expandButton.canExpand = uigraph.canExpandForLoop(edgeMenu.currentEdge)
+                }
+
+                contentItem: Row {
+                    IntSelector {
+                        id: loopIterationSelector
+                        tooltipText: "Iterations"
+                        visible: edgeMenu.currentEdge && edgeMenu.forLoop
+
+                        enabled: expandButton.canExpand
+
+                        property var listAttr: edgeMenu.currentEdge ? edgeMenu.currentEdge.src.root : null
+
+                        Connections {
+                            target: edgeMenu
+                            function onCurrentEdgeChanged() {
+                                if (edgeMenu.currentEdge) {
+                                    loopIterationSelector.listAttr = edgeMenu.currentEdge.src.root
+                                    loopIterationSelector.value = loopIterationSelector.listAttr ? loopIterationSelector.listAttr.value.indexOf(edgeMenu.currentEdge.src) + 1 : 0
+                                }
+                            }
+                        }
+
+                        // We add 1 to the index because of human readable index (starting at 1) 
+                        value: listAttr ? listAttr.value.indexOf(edgeMenu.currentEdge.src) + 1 : 0
+                        range: { "min": 1, "max": listAttr ? listAttr.value.count : 0 }
+
+                        onValueChanged: {
+                            if (listAttr === null) {
+                                return
+                            }
+                            const newSrcAttr = listAttr.value.at(value - 1)
+                            const dst = edgeMenu.currentEdge.dst
+
+                            // if the edge exists do not replace it
+                            if (newSrcAttr === edgeMenu.currentEdge.src && dst === edgeMenu.currentEdge.dst) {
+                                return
+                            }
+                            edgeMenu.currentEdge = uigraph.replaceEdge(edgeMenu.currentEdge, newSrcAttr, dst)
+                        }
+                    }
+
+                    MaterialToolButton {
+                        font.pointSize: 13
+                        ToolTip.text: "Remove Edge"
+                        enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
+                        text: MaterialIcons.delete_
+                        onClicked: {
+                            uigraph.removeEdge(edgeMenu.currentEdge)
+                            edgeMenu.close()
+                        }
+                    }
+
+                    MaterialToolButton {
+                        id: expandButton
+
+                        property bool canExpand: edgeMenu.currentEdge && edgeMenu.forLoop
+
+                        visible: edgeMenu.currentEdge && edgeMenu.forLoop && canExpand
+                        enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
+                        font.pointSize: 13
+                        ToolTip.text: "Expand"
+                        text: MaterialIcons.open_in_full
+
+                        onClicked: {
+                            edgeMenu.currentEdge = uigraph.expandForLoop(edgeMenu.currentEdge)
+                            canExpand = false
+                            edgeMenu.close()
+                        }
+                    }
+
+                    MaterialToolButton {
+                        id: collapseButton
+
+                        visible: edgeMenu.currentEdge && edgeMenu.forLoop && !expandButton.canExpand
+                        enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
+                        font.pointSize: 13
+                        ToolTip.text: "Collapse"
+                        text: MaterialIcons.close_fullscreen
+
+                        onClicked: {
+                            uigraph.collapseForLoop(edgeMenu.currentEdge)
+                            expandButton.canExpand = true
+                            edgeMenu.close()
+                        }
+                    }
                 }
             }
 
@@ -402,12 +487,22 @@ Item {
                     property bool isValidEdge: src !== undefined && dst !== undefined
                     visible: isValidEdge && src.visible && dst.visible
 
+                    property bool forLoop: src.attribute.type === "ListAttribute" && dst.attribute.type != "ListAttribute"
+
                     property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge === edge)
 
                     edge: object
+                    isForLoop: forLoop
+                    loopSize: forLoop ? edge.src.root.value.count : 0
+                    iteration: forLoop ? edge.src.root.value.indexOf(edge.src) : 0
                     color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
-                    thickness: inFocus ? 2 : 1
-                    opacity: 0.7
+                    thickness: {
+                        if (forLoop) {
+                            return (inFocus) ? 4 : 3
+                        }
+                        return (inFocus) ? 2 : 1
+                    }
+
                     point1x: isValidEdge ? src.globalX + src.outputAnchorPos.x : 0
                     point1y: isValidEdge ? src.globalY + src.outputAnchorPos.y : 0
                     point2x: isValidEdge ? dst.globalX + dst.inputAnchorPos.x : 0
@@ -415,12 +510,16 @@ Item {
                     onPressed: {
                         const canEdit = !edge.dst.node.locked
 
-                        if (event.button === Qt.RightButton) {
+                        if (event.button) {
                             if (canEdit && (event.modifiers & Qt.AltModifier)) {
                                 uigraph.removeEdge(edge)
                             } else {
                                 edgeMenu.currentEdge = edge
-                                edgeMenu.popup()
+                                edgeMenu.forLoop = forLoop
+                                var spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
+                                edgeMenu.x = spawnPosition.x
+                                edgeMenu.y = spawnPosition.y
+                                edgeMenu.open()
                             }
                         }
                     }

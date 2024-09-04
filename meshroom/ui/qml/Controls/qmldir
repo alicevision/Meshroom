@@ -12,3 +12,4 @@ TabPanel 1.0 TabPanel.qml
 TextFileViewer 1.0 TextFileViewer.qml
 ExifOrientedViewer 1.0 ExifOrientedViewer.qml
 FilterComboBox 1.0 FilterComboBox.qml
+IntSelector 1.0 IntSelector.qml

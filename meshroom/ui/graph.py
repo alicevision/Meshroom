@@ -687,6 +687,8 @@ class UIGraph(QObject):
         Args:
             startNode (Node): the node to start from.
         """
+        if isinstance(nodes, Node):
+            nodes = [nodes]
         with self.groupedGraphModification("Remove Nodes From Selected Nodes"):
             nodesToRemove, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
             # filter out nodes that will be removed more than once
@@ -706,7 +708,7 @@ class UIGraph(QObject):
             list[Node]: the list of duplicated nodes
         """
         nodes = self.filterNodes(nodes)
-        nPositions = []
+        nPositions = [(n.x, n.y) for n in self._graph.nodes]
         # enable updates between duplication and layout to get correct depths during layout
         with self.groupedGraphModification("Duplicate Selected Nodes", disableUpdates=False):
             # disable graph updates during duplication
@@ -716,9 +718,8 @@ class UIGraph(QObject):
             bbox = self._layout.boundingBox(nodes)
 
             for n in duplicates:
-                idx = duplicates.index(n)
                 yPos = n.y + self.layout.gridSpacing + bbox[3]
-                if idx > 0 and (n.x, yPos) in nPositions:
+                if (n.x, yPos) in nPositions:
                     # make sure the node will not be moved on top of another node
                     while (n.x, yPos) in nPositions:
                         yPos = yPos + self.layout.gridSpacing + self.layout.nodeHeight
@@ -739,12 +740,62 @@ class UIGraph(QObject):
         Returns:
             list[Node]: the list of duplicated nodes
         """
+        if isinstance(nodes, Node):
+            nodes = [nodes]
         with self.groupedGraphModification("Duplicate Nodes From Selected Nodes"):
             nodesToDuplicate, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
             # filter out nodes that will be duplicated more than once
             uniqueNodesToDuplicate = list(dict.fromkeys(nodesToDuplicate))
             duplicates = self.duplicateNodes(uniqueNodesToDuplicate)
         return duplicates
+    
+    @Slot(Edge, result=bool)
+    def canExpandForLoop(self, currentEdge):
+        """ Check if the list attribute can be expanded by looking at all the edges connected to it. """
+        listAttribute = currentEdge.src.root
+        if not listAttribute:
+            return False
+        srcIndex = listAttribute.index(currentEdge.src)
+        allSrc = [e.src for e in self._graph.edges.values()]
+        for i in range(len(listAttribute)):
+            if i == srcIndex:
+                continue
+            if listAttribute.at(i) in allSrc:
+                return False
+        return True
+
+    @Slot(Edge, result=Edge)
+    def expandForLoop(self, currentEdge):
+        """ Expand 'node' by creating all its output nodes. """
+        with self.groupedGraphModification("Expand For Loop Node"):
+            listAttribute = currentEdge.src.root
+            dst = currentEdge.dst
+
+            for i in range(1, len(listAttribute)):
+                duplicates = self.duplicateNodesFrom(dst.node)
+                newNode = duplicates[0]
+                previousEdge = self.graph.edge(newNode.attribute(dst.name))
+                self.replaceEdge(previousEdge, listAttribute.at(i), previousEdge.dst)
+
+            # Last, replace the edge with the first element of the list
+            return self.replaceEdge(currentEdge, listAttribute.at(0), dst)
+
+    @Slot(Edge)
+    def collapseForLoop(self, currentEdge):
+        """ Collapse 'node' by removing all its output nodes. """
+        with self.groupedGraphModification("Collapse For Loop Node"):
+            listAttribute = currentEdge.src.root
+            srcIndex = listAttribute.index(currentEdge.src)
+            allSrc = [e.src for e in self._graph.edges.values()]
+            for i in reversed(range(len(listAttribute))):
+                if i == srcIndex:
+                    continue
+                occurence = allSrc.index(listAttribute.at(i)) if listAttribute.at(i) in allSrc else -1
+                if occurence != -1:
+                    self.removeNodesFrom(self.graph.edges.at(occurence).dst.node)
+                    # update the edges from allSrc
+                    allSrc = [e.src for e in self._graph.edges.values()]
+
 
     @Slot(QObject)
     def clearData(self, nodes):
@@ -765,7 +816,9 @@ class UIGraph(QObject):
 
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
-        if isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
+        if isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
+            self._addEdge(src.at(0), dst)
+        elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
             with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.getFullNameToNode())):
                 self.appendAttribute(dst)
                 self._addEdge(src, dst.at(-1))
@@ -787,6 +840,17 @@ class UIGraph(QObject):
         else:
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
+    @Slot(Edge, Attribute, Attribute, result=Edge)
+    def replaceEdge(self, edge, newSrc, newDst):
+        with self.groupedGraphModification("Replace Edge '{}'->'{}' with '{}'->'{}'".format(edge.src.getFullNameToNode(), edge.dst.getFullNameToNode(), newSrc.getFullNameToNode(), newDst.getFullNameToNode())):
+            self.removeEdge(edge)
+            self.addEdge(newSrc, newDst)
+        return self._graph.edge(newDst)
+    
+    @Slot(Attribute, result=Edge)
+    def getEdge(self, dst):
+        return self._graph.edge(dst)
+
     @Slot(Attribute, "QVariant")
     def setAttribute(self, attribute, value):
         self.push(commands.SetAttributeCommand(self._graph, attribute, value))
@@ -794,7 +858,14 @@ class UIGraph(QObject):
     @Slot(Attribute)
     def resetAttribute(self, attribute):
         """ Reset 'attribute' to its default value """
-        self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
+        with self.groupedGraphModification("Reset Attribute '{}'".format(attribute.name)):
+            # if the attribute is a ListAttribute, remove all edges
+            if isinstance(attribute, ListAttribute):
+                for edge in self._graph.edges:
+                    # if the edge is connected to one of the ListAttribute's elements, remove it
+                    if edge.src in attribute.value:
+                        self.removeEdge(edge)
+            self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
 
     @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):

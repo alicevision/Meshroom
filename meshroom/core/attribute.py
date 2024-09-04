@@ -36,7 +36,7 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
 class Attribute(BaseObject):
     """
     """
-    stringIsLinkRe = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.]*\}$')
+    stringIsLinkRe = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         """
@@ -324,6 +324,9 @@ class Attribute(BaseObject):
         # safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return False
+        # if the attribute is a ListAttribute, we need to check if any of its elements has output connections
+        if isinstance(self, ListAttribute):
+            return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None or any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
     def _applyExpr(self):
@@ -447,6 +450,7 @@ class Attribute(BaseObject):
     uidIgnoreValue = Property(Variant, getUidIgnoreValue, constant=True)
     validValueChanged = Signal()
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
+    root = Property(BaseObject, root.fget, constant=True)
 
 
 def raiseIfLink(func):

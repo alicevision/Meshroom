@@ -100,7 +100,6 @@ RowLayout {
                     || drag.source.objectName != inputDragTarget.objectName // not an edge connector
                     || drag.source.baseType !== inputDragTarget.baseType    // not the same base type
                     || drag.source.nodeItem === inputDragTarget.nodeItem    // connection between attributes of the same node
-                    || (drag.source.isList && !inputDragTarget.isList)      // connection between a list and a simple attribute
                     || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
                     || drag.source.connectorType === "input"                // refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
                    ) {

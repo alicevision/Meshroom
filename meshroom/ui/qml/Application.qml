@@ -40,9 +40,10 @@ Page {
         if (_reconstruction.graph && _reconstruction.graph.filepath) {
             folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
         } else {
-            var projects = MeshroomApp.recentProjectFiles;
-            if (projects.length > 0 && Filepath.exists(projects[0])) {
-                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]))
+            var projects = MeshroomApp.recentProjectFiles
+
+            if (projects.length > 0 && Filepath.exists(projects[0]["path"])) {
+                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]["path"]))
             }
         }
 

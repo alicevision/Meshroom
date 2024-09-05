@@ -315,8 +315,8 @@ class Graph(BaseObject):
                 # If no filepath is being set but the graph is not a template, trigger an updateInternals either way.
                 self.updateInternals()
 
-            # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the nodes'
-            # links have been resolved and their UID computations are all complete.
+            # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the
+            # nodes' links have been resolved and their UID computations are all complete.
             # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
             # that were computed.
             if not isTemplate:  # UIDs are not stored in templates
@@ -342,13 +342,9 @@ class Graph(BaseObject):
         for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
             node = self.node(nodeName)
 
-            savedUid = nodeData.get("uids", {})  # Node's UID from the graph file
-            # JSON enfore keys to be strings, see
-            # https://docs.python.org/3.8/library/json.html#json.dump
-            # We know our keys are integers, so we convert them back to int.
-            savedUid = {int(k): v for k, v in savedUid.items()}
+            savedUid = nodeData.get("uid", None)
+            graphUid = node._uid  # Node's UID from the graph itself
 
-            graphUid = node._uids  # Node's UID from the graph itself
             if savedUid != graphUid and graphUid is not None:
                 # Different UIDs, remove the existing node from the graph and replace it with a CompatibilityNode
                 logging.debug("UID conflict detected for {}".format(nodeName))
@@ -1382,7 +1378,7 @@ class Graph(BaseObject):
                 del graph[nodeName]["internalInputs"]
 
             del graph[nodeName]["outputs"]
-            del graph[nodeName]["uids"]
+            del graph[nodeName]["uid"]
             del graph[nodeName]["internalFolder"]
             del graph[nodeName]["parallelization"]
 
@@ -1431,13 +1427,13 @@ class Graph(BaseObject):
             node.updateStatisticsFromCache()
 
     def updateNodesPerUid(self):
-        """ Update the duplicate nodes (sharing same uid) list of each node. """
-        # First step is to construct a map uid/nodes
+        """ Update the duplicate nodes (sharing same UID) list of each node. """
+        # First step is to construct a map UID/nodes
         nodesPerUid = {}
         for node in self.nodes:
-            uid = node._uids.get(0)
+            uid = node._uid
 
-            # We try to add the node to the list corresponding to this uid
+            # We try to add the node to the list corresponding to this UID
             try:
                 nodesPerUid.get(uid).append(node)
             # If it fails because the uid is not in the map, we add it

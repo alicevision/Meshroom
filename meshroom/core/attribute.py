@@ -272,22 +272,21 @@ class Attribute(BaseObject):
     def isInput(self):
         return not self._isOutput
 
-    def uid(self, uidIndex=-1):
+    def uid(self):
         """
+        Compute the UID for the attribute.
         """
-        # 'uidIndex' should be in 'self.desc.uid' but in the case of linked attribute
-        # it will not be the case (so we cannot have an assert).
         if self.isOutput:
             if self.desc.isDynamicValue:
                 # If the attribute is a dynamic output, the UID is derived from the node UID.
                 # To guarantee that each output attribute receives a unique ID, we add the attribute name to it.
-                return hashValue((self.name, self.node._uids.get(uidIndex)))
+                return hashValue((self.name, self.node._uid))
             else:
                 # only dependent on the hash of its value without the cache folder
                 return hashValue(self._invalidationValue)
         if self.isLink:
             linkParam = self.getLinkParam(recursive=True)
-            return linkParam.uid(uidIndex)
+            return linkParam.uid()
         if isinstance(self._value, (list, tuple, set,)):
             # non-exclusive choice param
             # hash of sorted values hashed
@@ -610,14 +609,14 @@ class ListAttribute(Attribute):
         self.requestGraphUpdate()
         self.valueChanged.emit()
 
-    def uid(self, uidIndex):
+    def uid(self):
         if isinstance(self.value, ListModel):
             uids = []
             for value in self.value:
-                if uidIndex in value.desc.uid:
-                    uids.append(value.uid(uidIndex))
+                if value.desc.invalidate:
+                    uids.append(value.uid())
             return hashValue(uids)
-        return super(ListAttribute, self).uid(uidIndex)
+        return super(ListAttribute, self).uid()
 
     def _applyExpr(self):
         if not self.node.graph:
@@ -747,11 +746,11 @@ class GroupAttribute(Attribute):
         except KeyError:
             return None
 
-    def uid(self, uidIndex):
+    def uid(self):
         uids = []
         for k, v in self._value.items():
-            if v.enabled and uidIndex in v.desc.uid:
-                uids.append(v.uid(uidIndex))
+            if v.enabled and v.desc.invalidate:
+                uids.append(v.uid())
         return hashValue(uids)
 
     def _applyExpr(self):

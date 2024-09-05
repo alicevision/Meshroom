@@ -9,7 +9,7 @@ class Ls(desc.CommandLineNode):
             label='Input',
             description='''''',
             value='',
-            uid=[0],
+            invalidate=True,
         )
     ]
 
@@ -19,6 +19,6 @@ class Ls(desc.CommandLineNode):
             label='Output',
             description='''''',
             value=desc.Node.internalFolder + 'ls.txt',
-            uid=[],
+            invalidate=False,
         )
     ]

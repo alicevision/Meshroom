@@ -15,17 +15,17 @@ from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
 
 
 SampleGroupV1 = [
-    desc.IntParam(name="a", label="a", description="", value=0, uid=[0], range=None),
+    desc.IntParam(name="a", label="a", description="", value=0, invalidate=True, range=None),
     desc.ListAttribute(
         name="b",
-        elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=None),
+        elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, invalidate=True, range=None),
         label="b",
         description="",
     )
 ]
 
 SampleGroupV2 = [
-    desc.IntParam(name="a", label="a", description="", value=0, uid=[0], range=None),
+    desc.IntParam(name="a", label="a", description="", value=0, invalidate=True, range=None),
     desc.ListAttribute(
         name="b",
         elementDesc=desc.GroupAttribute(name="p", label="", description="", groupDesc=SampleGroupV1),
@@ -36,8 +36,8 @@ SampleGroupV2 = [
 
 #SampleGroupV3 is SampleGroupV2 with one more int parameter
 SampleGroupV3 = [
-    desc.IntParam(name="a", label="a", description="", value=0, uid=[0], range=None),
-    desc.IntParam(name="notInSampleGroupV2", label="notInSampleGroupV2", description="", value=0, uid=[0], range=None),
+    desc.IntParam(name="a", label="a", description="", value=0, invalidate=True, range=None),
+    desc.IntParam(name="notInSampleGroupV2", label="notInSampleGroupV2", description="", value=0, invalidate=True, range=None),
     desc.ListAttribute(
         name="b",
         elementDesc=desc.GroupAttribute(name="p", label="", description="", groupDesc=SampleGroupV1),
@@ -50,11 +50,11 @@ SampleGroupV3 = [
 class SampleNodeV1(desc.Node):
     """ Version 1 Sample Node """
     inputs = [
-        desc.File(name='input', label='Input', description='', value='', uid=[0],),
-        desc.StringParam(name='paramA', label='ParamA', description='', value='', uid=[])  # No impact on UID
+        desc.File(name='input', label='Input', description='', value='', invalidate=True,),
+        desc.StringParam(name='paramA', label='ParamA', description='', value='', invalidate=False)  # No impact on UID
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
 
@@ -63,11 +63,11 @@ class SampleNodeV2(desc.Node):
         * 'input' has been renamed to 'in'
     """
     inputs = [
-        desc.File(name='in', label='Input', description='', value='', uid=[0],),
-        desc.StringParam(name='paramA', label='ParamA', description='', value='', uid=[]),  # No impact on UID
+        desc.File(name='in', label='Input', description='', value='', invalidate=True,),
+        desc.StringParam(name='paramA', label='ParamA', description='', value='', invalidate=False),  # No impact on UID
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
 class SampleNodeV3(desc.Node):
@@ -76,10 +76,10 @@ class SampleNodeV3(desc.Node):
         * 'paramA' has been removed'
     """
     inputs = [
-        desc.File(name='in', label='Input', description='', value='', uid=[0], ),
+        desc.File(name='in', label='Input', description='', value='', invalidate=True, ),
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
 class SampleNodeV4(desc.Node):
@@ -88,14 +88,14 @@ class SampleNodeV4(desc.Node):
         * 'paramA' has been added
     """
     inputs = [
-        desc.File(name='in', label='Input', description='', value='', uid=[0], ),
+        desc.File(name='in', label='Input', description='', value='', invalidate=True, ),
         desc.ListAttribute(name='paramA', label='ParamA',
                            elementDesc=desc.GroupAttribute(
                                groupDesc=SampleGroupV1, name='gA', label='gA', description=''),
                            description='')
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
 
@@ -105,14 +105,14 @@ class SampleNodeV5(desc.Node):
         * 'paramA' elementDesc has changed from SampleGroupV1 to SampleGroupV2
     """
     inputs = [
-        desc.File(name='in', label='Input', description='', value='', uid=[0]),
+        desc.File(name='in', label='Input', description='', value='', invalidate=True),
         desc.ListAttribute(name='paramA', label='ParamA',
                            elementDesc=desc.GroupAttribute(
                                groupDesc=SampleGroupV2, name='gA', label='gA', description=''),
                            description='')
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
 class SampleNodeV6(desc.Node):
@@ -121,23 +121,23 @@ class SampleNodeV6(desc.Node):
         * 'paramA' elementDesc has changed from SampleGroupV2 to SampleGroupV3
     """
     inputs = [
-        desc.File(name='in', label='Input', description='', value='', uid=[0]),
+        desc.File(name='in', label='Input', description='', value='', invalidate=True),
         desc.ListAttribute(name='paramA', label='ParamA',
                            elementDesc=desc.GroupAttribute(
                                groupDesc=SampleGroupV3, name='gA', label='gA', description=''),
                            description='')
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
 class SampleInputNodeV1(desc.InputNode):
     """ Version 1 Sample Input Node """
     inputs = [
-        desc.StringParam(name='path', label='path', description='', value='', uid=[])  # No impact on UID
+        desc.StringParam(name='path', label='path', description='', value='', invalidate=False)  # No impact on UID
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
 class SampleInputNodeV2(desc.InputNode):
@@ -145,10 +145,10 @@ class SampleInputNodeV2(desc.InputNode):
         * 'path' has been renamed to 'in'
     """
     inputs = [
-        desc.StringParam(name='in', label='path', description='', value='', uid=[])  # No impact on UID
+        desc.StringParam(name='in', label='path', description='', value='', invalidate=False)  # No impact on UID
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
 def test_unknown_node_type():

@@ -97,8 +97,7 @@ def test_multiviewPipeline():
             if attr.isOutput and attr.enabled:
                 assert attr.uid() == otherAttr.uid()
             else:
-                for uidIndex in attr.desc.uid:
-                    assert attr.uid(uidIndex) == otherAttr.uid(uidIndex)
+                assert attr.uid() == otherAttr.uid()
 
     # graph4 == graph4b
     nodes, edges = graph4.dfsOnFinish()
@@ -109,8 +108,7 @@ def test_multiviewPipeline():
             if attr.isOutput and attr.enabled:
                 assert attr.uid() == otherAttr.uid()
             else:
-                for uidIndex in attr.desc.uid:
-                    assert attr.uid(uidIndex) == otherAttr.uid(uidIndex)
+                assert attr.uid() == otherAttr.uid()
 
     # test serialization/deserialization
     for graph in [graph1, graph2, graph3, graph4]:
@@ -124,4 +122,4 @@ def test_multiviewPipeline():
         #  - no compatibility issues
         assert all(isinstance(n, Node) for n in loadedGraph.nodes)
         #  - same UIDs for every node
-        assert sorted([n._uids.get(0) for n in loadedGraph.nodes]) == sorted([n._uids.get(0) for n in graph.nodes])
+        assert sorted([n._uid for n in loadedGraph.nodes]) == sorted([n._uid for n in graph.nodes])

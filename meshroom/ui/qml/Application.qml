@@ -383,6 +383,10 @@ Page {
             fireCallback()
         }
 
+        onRejected: {
+            _window.isClosing = false
+        }
+
         onAccepted: {
             // Save current file
             if (saveAction.enabled && _reconstruction.graph.filepath) {

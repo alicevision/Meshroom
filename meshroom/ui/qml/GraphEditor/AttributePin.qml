@@ -130,8 +130,8 @@ RowLayout {
             readonly property string connectorType: "input"
             readonly property alias attribute: root.attribute
             readonly property alias nodeItem: root.nodeItem
-            readonly property bool isOutput: attribute.isOutput
-            readonly property string baseType: attribute.baseType
+            readonly property bool isOutput: Boolean(attribute.isOutput)
+            readonly property string baseType: attribute.baseType !== undefined ? attribute.baseType : ""
             readonly property alias isList: root.isList
             property bool dragAccepted: false
             anchors.verticalCenter: parent.verticalCenter
@@ -192,7 +192,7 @@ RowLayout {
 
             enabled: !root.readOnly
             property bool hovered: (inputConnectMA.containsMouse || inputConnectMA.drag.active || inputDropArea.containsDrag || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag)
-            text: attribute ? attribute.label : ""
+            text: (attribute && attribute.label) !== undefined ? attribute.label : ""
             elide: hovered ? Text.ElideNone : Text.ElideMiddle
             width: hovered ? contentWidth : parent.width
             font.pointSize: 7
@@ -279,9 +279,9 @@ RowLayout {
             readonly property string connectorType: "output"
             readonly property alias attribute: root.attribute
             readonly property alias nodeItem: root.nodeItem
-            readonly property bool isOutput: attribute.isOutput
+            readonly property bool isOutput: Boolean(attribute.isOutput)
             readonly property alias isList: root.isList
-            readonly property string baseType: attribute.baseType
+            readonly property string baseType: attribute.baseType !== undefined ? attribute.baseType : ""
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter

@@ -167,7 +167,7 @@ Entity {
 
             // Specific properties to the MESHING node (declared and initialized for every Entity anyway)
             property bool hasBoundingBox: {
-                if (currentNode.hasAttribute("useBoundingBox")) // Can have a BoundingBox
+                if (currentNode && currentNode.hasAttribute("useBoundingBox")) // Can have a BoundingBox
                     return currentNode.attribute("useBoundingBox").value
                 return false
             }

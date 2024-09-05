@@ -21,7 +21,7 @@ Prepare images for Panorama pipeline: ensures that images orientations are coher
             label="Input",
             description="SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -30,7 +30,7 @@ Prepare images for Panorama pipeline: ensures that images orientations are coher
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -40,6 +40,6 @@ Prepare images for Panorama pipeline: ensures that images orientations are coher
             label="SfMData",
             description="Output SfMData file.",
             value=lambda attr: desc.Node.internalFolder + os.path.basename(attr.node.input.value),
-            uid=[],
+            invalidate=False,
         ),
     ]

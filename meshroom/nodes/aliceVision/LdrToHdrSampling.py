@@ -65,7 +65,7 @@ Sample pixels from Low range images for HDR creation.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="userNbBrackets",
@@ -73,7 +73,7 @@ Sample pixels from Low range images for HDR creation.
             description="Number of exposure brackets per HDR image (0 for automatic detection).",
             value=0,
             range=(0, 15, 1),
-            uid=[],
+            invalidate=False,
             group="user",  # not used directly on the command line
             errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
                          "Errors will occur during the computation.",
@@ -86,7 +86,7 @@ Sample pixels from Low range images for HDR creation.
                         "is 0, else it is equal to 'userNbBrackets'.",
             value=0,
             range=(0, 15, 1),
-            uid=[0],
+            invalidate=True,
             group="bracketsParams",
         ),
         desc.BoolParam(
@@ -94,7 +94,7 @@ Sample pixels from Low range images for HDR creation.
             label="Bypass",
             description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.nbBrackets.value != 1,
         ),
         desc.ChoiceParam(
@@ -109,7 +109,7 @@ Sample pixels from Low range images for HDR creation.
             values=["auto", "linear", "debevec", "grossberg", "laguerre"],
             value="auto",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
@@ -118,7 +118,7 @@ Sample pixels from Low range images for HDR creation.
             description="Quantization level like 8 bits or 10 bits.",
             value=10,
             range=(8, 14, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
@@ -130,7 +130,7 @@ Sample pixels from Low range images for HDR creation.
             values=COLORSPACES,
             value="AUTO",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
@@ -139,7 +139,7 @@ Sample pixels from Low range images for HDR creation.
             description="Size of the image tile to extract a sample.",
             value=256,
             range=(8, 1024, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
@@ -149,7 +149,7 @@ Sample pixels from Low range images for HDR creation.
             description="Radius of the patch used to analyze the sample statistics.",
             value=5,
             range=(0, 10, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
@@ -159,7 +159,7 @@ Sample pixels from Low range images for HDR creation.
             description="Maximum number of samples per image group.",
             value=200,
             range=(10, 1000, 10),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
@@ -168,7 +168,7 @@ Sample pixels from Low range images for HDR creation.
             label="Export Debug Files",
             description="Export debug files to analyze the sampling strategy.",
             value=False,
-            uid=[],
+            invalidate=False,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
@@ -178,7 +178,7 @@ Sample pixels from Low range images for HDR creation.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -188,7 +188,7 @@ Sample pixels from Low range images for HDR creation.
             label="Folder",
             description="Output path for the samples.",
             value=desc.Node.internalFolder,
-            uid=[],
+            invalidate=False,
         ),
     ]
 

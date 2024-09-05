@@ -39,7 +39,7 @@ then it checks the number of features that validates this model and iterate thro
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -47,7 +47,7 @@ then it checks the number of features that validates this model and iterate thro
                 label="Features Folder",
                 description="Folder containing some extracted features and descriptors.",
                 value="",
-                uid=[0],
+                invalidate=True,
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -58,7 +58,7 @@ then it checks the number of features that validates this model and iterate thro
             label="Image Pairs",
             description="Path to a file which contains the list of image pairs to match.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="describerTypes",
@@ -67,7 +67,7 @@ then it checks the number of features that validates this model and iterate thro
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            uid=[0],
+            invalidate=True,
             joinChar=",",
         ),
         desc.ChoiceParam(
@@ -83,7 +83,7 @@ then it checks the number of features that validates this model and iterate thro
             value="ANN_L2",
             values=["BRUTE_FORCE_L2", "ANN_L2", "CASCADE_HASHING_L2", "FAST_CASCADE_HASHING_L2", "BRUTE_FORCE_HAMMING"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -95,7 +95,7 @@ then it checks the number of features that validates this model and iterate thro
             value="acransac",
             values=["acransac", "loransac"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -111,7 +111,7 @@ then it checks the number of features that validates this model and iterate thro
             value="fundamental_matrix",
             values=["fundamental_matrix", "fundamental_with_distortion", "essential_matrix", "homography_matrix", "homography_growing", "no_filtering"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -120,7 +120,7 @@ then it checks the number of features that validates this model and iterate thro
             description="Distance ratio to discard non meaningful matches.",
             value=0.8,
             range=(0.0, 1.0, 0.01),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -129,7 +129,7 @@ then it checks the number of features that validates this model and iterate thro
             description="Maximum number of iterations allowed in the Ransac step.",
             value=50000,
             range=(1, 100000, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -140,7 +140,7 @@ then it checks the number of features that validates this model and iterate thro
                         "(if ACRansac, it will analyze the input data to select the optimal value).",
             value=0.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -150,7 +150,7 @@ then it checks the number of features that validates this model and iterate thro
                         "If set to 0 it lets the ACRansac select an optimal value.",
             value=5.0,
             range=(0.0, 100.0, 1.0),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -161,7 +161,7 @@ then it checks the number of features that validates this model and iterate thro
                         "Useful for filtering the background during acquisition with a turntable and a static camera.",
             value=-1.0,
             range=(0.0, 10.0, 1.0),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="maxMatches",
@@ -169,7 +169,7 @@ then it checks the number of features that validates this model and iterate thro
             description="Maximum number of matches to keep.",
             value=0,
             range=(0, 10000, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -177,7 +177,7 @@ then it checks the number of features that validates this model and iterate thro
             label="Save Putative Matches",
             description="Save putative matches.",
             value=False,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -185,14 +185,14 @@ then it checks the number of features that validates this model and iterate thro
             label="Cross Matching",
             description="Ensure that the matching process is symmetric (same matches for I->J than for J->I).",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="guidedMatching",
             label="Guided Matching",
             description="Use the found model to improve the pairwise correspondences.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="matchFromKnownCameraPoses",
@@ -200,14 +200,14 @@ then it checks the number of features that validates this model and iterate thro
             description="Enable the usage of geometric information from known camera poses to guide the feature matching.\n"
                         "If some cameras have unknown poses (so there is no geometric prior), the standard feature matching will be performed.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="exportDebugFiles",
             label="Export Debug Files",
             description="Export debug files (svg, dot).",
             value=False,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -217,7 +217,7 @@ then it checks the number of features that validates this model and iterate thro
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
     outputs = [
@@ -226,6 +226,6 @@ then it checks the number of features that validates this model and iterate thro
             label="Matches Folder",
             description="Path to a folder in which the computed matches are stored.",
             value=desc.Node.internalFolder,
-            uid=[],
+            invalidate=False,
         ),
     ]

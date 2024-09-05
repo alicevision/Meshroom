@@ -18,21 +18,21 @@ Overwrite intrinsics with a calibrated intrinsic.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="calibration",
             label="Calibration",
             description="Calibration file (SfmData or Lens calibration file).",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="useJson",
             label="Use Lens Calibration File",
             description="Calibration is a Lens calibration file generated using 3Dequalizer instead of an sfmData.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -40,8 +40,8 @@ Overwrite intrinsics with a calibrated intrinsic.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
+            invalidate=False,
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -51,6 +51,6 @@ Overwrite intrinsics with a calibrated intrinsic.
             label="SMData",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfmData.sfm",
-            uid=[],
+            invalidate=False,
         ),
     ]

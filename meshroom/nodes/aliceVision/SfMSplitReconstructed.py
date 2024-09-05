@@ -21,7 +21,7 @@ class SfMSplitReconstructed(desc.AVCommandLineNode):
             label="Input SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -30,7 +30,7 @@ class SfMSplitReconstructed(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -40,13 +40,13 @@ class SfMSplitReconstructed(desc.AVCommandLineNode):
             label="Reconstructed SfMData File",
             description="SfMData file containing the reconstructed cameras.",
             value=desc.Node.internalFolder + "sfmReconstructed.abc",
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="notReconstructedOutput",
             label="Not Reconstructed SfMData File",
             description="SfMData file containing the non-reconstructed cameras.",
             value=desc.Node.internalFolder + "sfmNonReconstructed.abc",
-            uid=[],
+            invalidate=False,
         ),
     ]

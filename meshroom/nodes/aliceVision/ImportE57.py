@@ -20,7 +20,7 @@ Import an E57 file and generate an SfMData.
                 label="E57 File",
                 description="Path to an E57 file.",
                 value="",
-                uid=[0],
+                invalidate=True,
             ),
             name="input",
             label="Input Files",
@@ -32,7 +32,7 @@ Import an E57 file and generate an SfMData.
             description="Ensure each point has no neighbour closer than maxDensity meters.",
             value=0.01,
             range=(0.0, 0.2, 0.001),
-            uid=[0],
+            invalidate=True,
         ),
         desc.FloatParam(
             name="minIntensity",
@@ -40,7 +40,7 @@ Import an E57 file and generate an SfMData.
             description="Ensure no point has an intensity lower than this value.",
             value=0.03,
             range=(0.0, 1.0, 0.01),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="maxPointsPerBlock",
@@ -48,7 +48,7 @@ Import an E57 file and generate an SfMData.
             description="Limit the number of points per computation region (For memory usage, 0 means no limit).",
             value=5000000,
             range=(0, 10000000, 100000),
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -57,7 +57,7 @@ Import an E57 file and generate an SfMData.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -67,6 +67,6 @@ Import an E57 file and generate an SfMData.
             label="Output",
             description="Path to the output JSON file.",
             value=desc.Node.internalFolder + "inputset.json",
-            uid=[],
+            invalidate=False,
         ),
     ]

@@ -18,28 +18,28 @@ Can also be used to calibrate a lighting dome (RTI type).
             label="Input SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="inputDetection",
             label="Sphere Detection File",
             description="Input JSON file containing sphere centers and radiuses.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="saveAsModel",
             label="Save As Model",
             description="Check if this calibration file will be used with other datasets.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="ellipticEstimation",
             label="Use elliptic estimation",
             description="Consider the right projection of the sphere. Fit the circle tool on the small axe of the ellipse.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="method",
@@ -50,7 +50,7 @@ Can also be used to calibrate a lighting dome (RTI type).
             values=["brightestPoint", "whiteSphere", "SH"],
             value="brightestPoint",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -59,7 +59,7 @@ Can also be used to calibrate a lighting dome (RTI type).
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -69,7 +69,7 @@ Can also be used to calibrate a lighting dome (RTI type).
             label="Light File",
             description="Light information will be written here.",
             value=desc.Node.internalFolder + "/lights.json",
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="lightingEstimationVisualization",
@@ -77,6 +77,6 @@ Can also be used to calibrate a lighting dome (RTI type).
             description="Estimated Lighting Visualization.",
             semantic="image",
             value=desc.Node.internalFolder + "/<FILESTEM>_{methodValue}.png",
-            uid=[],
+            invalidate=False,
         ),
     ]

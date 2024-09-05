@@ -28,14 +28,14 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             label="SfmData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="depthMapsFolder",
             label="Depth Maps Folder",
             description="Input depth maps folder.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="outputMeshFileType",
@@ -44,7 +44,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             value="obj",
             values=["gltf", "obj", "fbx", "stl"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             group="",
         ),
         desc.BoolParam(
@@ -54,7 +54,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         "If enabled, it takes priority over the 'Estimate Space From SfM' option.\n"
                         "Parameters can be adjusted in advanced settings.",
             value=False,
-            uid=[0],
+            invalidate=True,
             group="",
         ),
         desc.GroupAttribute(
@@ -70,19 +70,19 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         desc.FloatParam(
                             name="x", label="x", description="X offset.",
                             value=0.0,
-                            uid=[0],
+                            invalidate=True,
                             range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Y offset.",
                             value=0.0,
-                            uid=[0],
+                            invalidate=True,
                             range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Z offset.",
                             value=0.0,
-                            uid=[0],
+                            invalidate=True,
                             range=(-20.0, 20.0, 0.01),
                         ),
                     ],
@@ -96,19 +96,19 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         desc.FloatParam(
                             name="x", label="x", description="Euler X rotation.",
                             value=0.0,
-                            uid=[0],
+                            invalidate=True,
                             range=(-90.0, 90.0, 1.0)
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Euler Y rotation.",
                             value=0.0,
-                            uid=[0],
+                            invalidate=True,
                             range=(-180.0, 180.0, 1.0)
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Euler Z rotation.",
                             value=0.0,
-                            uid=[0],
+                            invalidate=True,
                             range=(-180.0, 180.0, 1.0)
                         ),
                     ],
@@ -122,19 +122,19 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         desc.FloatParam(
                             name="x", label="x", description="X scale.",
                             value=1.0,
-                            uid=[0],
+                            invalidate=True,
                             range=(0.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Y scale.",
                             value=1.0,
-                            uid=[0],
+                            invalidate=True,
                             range=(0.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Z scale.",
                             value=1.0,
-                            uid=[0],
+                            invalidate=True,
                             range=(0.0, 20.0, 0.01),
                         ),
                     ],
@@ -149,7 +149,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             label="Estimate Space From SfM",
             description="Estimate the 3D space from the SfM.",
             value=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -158,7 +158,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Minimum number of observations for the space estimation from the SfM.",
             value=3,
             range=(0, 100, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.estimateSpaceFromSfM.value,
         ),
@@ -168,7 +168,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Minimum angle between two observations for the space estimation from the SfM.",
             value=10.0,
             range=(0.0, 120.0, 1.0),
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.estimateSpaceFromSfM.value,
         ),
         desc.IntParam(
@@ -177,7 +177,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Maximum input points loaded from depth map images.",
             value=50000000,
             range=(500000, 500000000, 1000),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="maxPoints",
@@ -185,7 +185,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Maximum points at the end of the depth maps fusion.",
             value=5000000,
             range=(100000, 10000000, 1000),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="maxPointsPerVoxel",
@@ -193,7 +193,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Maximum points per voxel.",
             value=1000000,
             range=(500000, 30000000, 1000),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -204,7 +204,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         "too much time at the beginning loading all the depth values.",
             value=2,
             range=(1, 20, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -214,7 +214,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             value="singleBlock",
             values=["singleBlock", "auto"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -224,7 +224,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             value="multiResolution",
             values=["multiResolution", "regularGrid"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -233,7 +233,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Angle factor.",
             value=15.0,
             range=(0.0, 200.0, 1.0),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -242,7 +242,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Sim factor.",
             value=15.0,
             range=(0.0, 200.0, 1.0),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -251,7 +251,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Filter points based on their number of observations.",
             value=2,
             range=(1, 20, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -260,7 +260,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Size of the margin init coefficient, in pixels.",
             value=2.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -269,7 +269,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Size of the margin final coefficient, in pixels.",
             value=4.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -278,7 +278,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Vote margin factor.",
             value=4.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -287,7 +287,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Contribute margin factor.",
             value=2.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -296,7 +296,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Sim Gaussian size init.",
             value=10.0,
             range=(0.0, 50.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -305,7 +305,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Sim Gaussian size.",
             value=10.0,
             range=(0.0, 50.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -314,7 +314,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Minimum angle threshold.",
             value=1.0,
             range=(0.0, 10.0, 0.01),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -322,7 +322,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             label="Refine Fuse",
             description="Refine depth map fusion with the new pixels size defined by angle and similarity scores.",
             value=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -331,7 +331,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Grid size for the helper points.",
             value=10,
             range=(0, 50, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -339,7 +339,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             label="Densify",
             description="Densify scene with helper points around vertices.",
             value=False,
-            uid=[],
+            invalidate=False,
             advanced=True,
             group="",
         ),
@@ -349,7 +349,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Densify vertices: front.",
             value=1,
             range=(0, 5, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.densify.value,
         ),
@@ -359,7 +359,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Densify vertices: back.",
             value=1,
             range=(0, 5, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.densify.value,
         ),
@@ -369,7 +369,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Scale between points used to densify the scene.",
             value=20.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.densify.value,
         ),
@@ -379,7 +379,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Number of pixel size units to vote behind the vertex as FULL status.",
             value=4.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -388,7 +388,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Weighting for full status.",
             value=1.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -396,14 +396,14 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             label="Weakly Supported Surface Support",
             description="Improve support of weakly supported surfaces with a tetrahedra fullness score filtering.",
             value=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="addLandmarksToTheDensePointCloud",
             label="Add Landmarks To The Dense Point Cloud",
             description="Add SfM landmarks to the dense point cloud.",
             value=False,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -413,7 +413,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         "Set to 0 to disable.",
             value=10,
             range=(0, 30, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -423,7 +423,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         "ratio between full/empty parts. Set to 0 to disable.",
             value=0.2,
             range=(0.0, 0.5, 0.01),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -433,7 +433,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         "between full/empty parts. Set to 0 to disable.",
             value=2,
             range=(0, 30, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -441,14 +441,14 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             label="Colorize Output",
             description="Whether to colorize output dense point cloud and mesh.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="addMaskHelperPoints",
             label="Add Mask Helper Points",
             description="Add Helper points on the outline of the depth maps masks.",
             value=False,
-            uid=[],
+            invalidate=False,
             advanced=True,
             group="",
         ),
@@ -458,7 +458,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Weight value for mask helper points. 0 means no helper point.",
             value=1.0,
             range=(0.0, 20.0, 1.0),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.addMaskHelperPoints.value,
         ),
@@ -468,7 +468,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Number of pixels on mask borders.",
             value=4,
             range=(0, 20, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.addMaskHelperPoints.value,
         ),
@@ -480,7 +480,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         "0 means that all helper points are removed. -1 means that helper points are not filtered at all.",
             value=50,
             range=(-1, 100, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -488,7 +488,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             label="Save Raw Dense Point Cloud",
             description="Save dense point cloud before cut and filtering.",
             value=False,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.BoolParam(
@@ -497,7 +497,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Export debug cells score as tetrahedral mesh.\n"
                         "WARNING: Could create HUGE meshes, only use on very small datasets.",
             value=False,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.IntParam(
@@ -507,7 +507,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         "0 means use of random device instead of a fixed seed.",
             value=0,
             range=(0, 10000, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -517,7 +517,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -527,13 +527,13 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             label="Mesh",
             description="Output mesh.",
             value=desc.Node.internalFolder + "mesh.{outputMeshFileTypeValue}",
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="output",
             label="Dense SfMData",
             description="Output dense point cloud with visibilities (SfMData file format).",
             value=desc.Node.internalFolder + "densePointCloud.abc",
-            uid=[],
+            invalidate=False,
         ),
     ]

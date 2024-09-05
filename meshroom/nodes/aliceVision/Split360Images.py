@@ -33,7 +33,7 @@ class Split360Images(desc.AVCommandLineNode):
             label="Input",
             description="Single image, image folder or SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="splitMode",
@@ -42,7 +42,7 @@ class Split360Images(desc.AVCommandLineNode):
             value="equirectangular",
             values=["equirectangular", "dualfisheye"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.GroupAttribute(
             name="dualFisheyeGroup",
@@ -58,7 +58,7 @@ class Split360Images(desc.AVCommandLineNode):
                     value="center",
                     values=["center", "left", "right"],
                     exclusive=True,
-                    uid=[0],
+                    invalidate=True,
                 ),
                 desc.ChoiceParam(
                     name="dualFisheyeOffsetPresetY",
@@ -67,7 +67,7 @@ class Split360Images(desc.AVCommandLineNode):
                     value="center",
                     values=["center", "top", "bottom"],
                     exclusive=True,
-                    uid=[0],
+                    invalidate=True,
                 ),
                 desc.ChoiceParam(
                     name="dualFisheyeCameraModel",
@@ -76,7 +76,7 @@ class Split360Images(desc.AVCommandLineNode):
                     value="fisheye4",
                     values=["fisheye4", "equidistant_r3"],
                     exclusive=True,
-                    uid=[0],
+                    invalidate=True,
                 ),
             ],
         ),
@@ -93,7 +93,7 @@ class Split360Images(desc.AVCommandLineNode):
                     description="Equirectangular number of splits.",
                     value=2,
                     range=(1, 100, 1),
-                    uid=[0],
+                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="equirectangularSplitResolution",
@@ -101,14 +101,14 @@ class Split360Images(desc.AVCommandLineNode):
                     description="Equirectangular split resolution.",
                     value=1200,
                     range=(100, 10000, 1),
-                    uid=[0],
+                    invalidate=True,
                 ),
                 desc.BoolParam(
                     name="equirectangularPreviewMode",
                     label="Preview Mode",
                     description="Export a SVG file that simulates the split.",
                     value=False,
-                    uid=[0],
+                    invalidate=True,
                 ),
                 desc.FloatParam(
                     name="fov",
@@ -116,7 +116,7 @@ class Split360Images(desc.AVCommandLineNode):
                     description="Field of View to extract (in degrees).",
                     value=110.0,
                     range=(0.0, 180.0, 1.0),
-                    uid=[0],
+                    invalidate=True,
                 ),
             ],
         ),
@@ -127,7 +127,7 @@ class Split360Images(desc.AVCommandLineNode):
             value="",
             values=["", "exr", "jpg", "tiff", "png"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -136,7 +136,7 @@ class Split360Images(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -146,13 +146,13 @@ class Split360Images(desc.AVCommandLineNode):
             label="Folder",
             description="Output folder for extracted frames.",
             value=desc.Node.internalFolder,
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="outSfMData",
             label="SfMData File",
             description="Output SfMData file.",
             value=desc.Node.internalFolder + "rig.sfm",
-            uid=[],
+            invalidate=False,
         ),
     ]

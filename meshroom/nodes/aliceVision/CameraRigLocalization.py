@@ -18,35 +18,35 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             label="SfMData",
             description="The input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="mediapath",
             label="Media Path",
             description="The path to the video file, the folder of the image sequence or a text file (one image path per line) for each camera of the rig (eg. --mediapath /path/to/cam1.mov /path/to/cam2.mov).",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="calibration",
             label="Rig Calibration File",
             description="The file containing the calibration data for the rig (subposes).",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="cameraIntrinsics",
             label="Camera Intrinsics",
             description="The intrinsics calibration file for each camera of the rig (eg. --cameraIntrinsics /path/to/calib1.txt /path/to/calib2.txt).",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="descriptorPath",
             label="Descriptor Path",
             description="Folder containing the .desc.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="matchDescTypes",
@@ -55,7 +55,7 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            uid=[0],
+            invalidate=True,
             joinChar=",",
         ),
         desc.ChoiceParam(
@@ -65,7 +65,7 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             value="normal",
             values=["low", "medium", "normal", "high", "ultra"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="resectionEstimator",
@@ -74,7 +74,7 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             value="acransac",
             values=["acransac", "loransac"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="matchingEstimator",
@@ -83,14 +83,14 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             value="acransac",
             values=["acransac", "loransac"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.StringParam(
             name="refineIntrinsics",
             label="Refine Intrinsics",
             description="Enable/Disable camera intrinsics refinement for each localized image.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.FloatParam(
             name="reprojectionError",
@@ -99,14 +99,14 @@ class CameraRigLocalization(desc.AVCommandLineNode):
                         "If set to 0, it lets the ACRansac select an optimal value.",
             value=4.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="useLocalizeRigNaive",
             label="Use Localize Rig Naive",
             description="Enable/Disable the naive method for rig localization: naive method tries to localize each camera separately.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.FloatParam(
             name="angularThreshold",
@@ -114,21 +114,21 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             description="The maximum angular threshold in degrees between feature bearing vector and 3D point direction. Used only with the opengv method.",
             value=0.1,
             range=(0.0, 10.0, 0.01),
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="voctree",
             label="Voctree",
             description="[voctree] Filename for the vocabulary tree.""",
             value="${ALICEVISION_VOCTREE}",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="voctreeWeights",
             label="Voctree Weights",
             description="[voctree] Filename for the vocabulary tree weights.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="algorithm",
@@ -137,7 +137,7 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             value="AllResults",
             values=["FirstBest", "AllResults"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="nbImageMatch",
@@ -145,7 +145,7 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             description="[voctree] Number of images to retrieve in the database.",
             value=4,
             range=(0, 100, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="maxResults",
@@ -154,7 +154,7 @@ class CameraRigLocalization(desc.AVCommandLineNode):
                         "If set to 0, it is ignored.",
             value=10,
             range=(0, 100, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.FloatParam(
             name="matchingError",
@@ -163,7 +163,7 @@ class CameraRigLocalization(desc.AVCommandLineNode):
                         "If set to 0, it lets the ACRansac select an optimal value.",
             value=4.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="nNearestKeyFrames",
@@ -171,7 +171,7 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             description="[cctag] Number of images to retrieve in database.",
             value=5,
             range=(0, 50, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -180,7 +180,7 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -190,6 +190,6 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             label="Alembic",
             description="Filename for the SfMData export file (where camera poses will be stored).",
             value=desc.Node.internalFolder + "trackedcameras.abc",
-            uid=[],
+            invalidate=False,
         ),
     ]

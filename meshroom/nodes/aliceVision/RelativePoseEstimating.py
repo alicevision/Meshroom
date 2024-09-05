@@ -21,21 +21,21 @@ Estimate relative pose between each pair of views that share tracks.
             label="SfMData",
             description="SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="tracksFilename",
             label="Tracks File",
             description="Tracks file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="enforcePureRotation",
             label="Enforce pure rotation",
             description="Enforce pure rotation as a model",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -44,7 +44,7 @@ Estimate relative pose between each pair of views that share tracks.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -54,6 +54,6 @@ Estimate relative pose between each pair of views that share tracks.
             label="Pairs Info",
             description="Path to the output Pairs info files directory.",
             value=desc.Node.internalFolder,
-            uid=[],
+            invalidate=False,
         ),
     ]

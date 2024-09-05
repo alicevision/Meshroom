@@ -27,7 +27,7 @@ This node allows to setup the Panorama:
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="initializeCameras",
@@ -36,14 +36,14 @@ This node allows to setup the Panorama:
             value="No",
             values=["No", "File", "Horizontal", "Horizontal+Zenith", "Zenith+Horizontal", "Spherical"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="config",
             label="XML Config",
             description="XML data file.",
             value="",
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.initializeCameras.value == "File",
         ),
         desc.BoolParam(
@@ -51,7 +51,7 @@ This node allows to setup the Panorama:
             label="Yaw CW",
             description="If selected, the yaw rotation will be clockwise. Otherwise, it will be counter-clockwise.",
             value=True,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: ("Horizontal" in node.initializeCameras.value) or (node.initializeCameras.value == "Spherical"),
         ),
         desc.BoolParam(
@@ -60,7 +60,7 @@ This node allows to setup the Panorama:
             description="Build the contact sheet for the panorama if an XML data file is provided.\n"
                         "The contact sheet consists in a preview of the panorama using the input images.",
             value=True,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.config.enabled and node.config.value != "",
         ),
         desc.ListAttribute(
@@ -70,7 +70,7 @@ This node allows to setup the Panorama:
                 description="Number of views for a line.",
                 value=-1,
                 range=(-1, 20, 1),
-                uid=[0],
+                invalidate=True,
             ),
             name="nbViewsPerLine",
             label="Spherical: Nb Views Per Line",
@@ -85,14 +85,14 @@ This node allows to setup the Panorama:
             label="Full Fisheye",
             description="Set this option to declare a full fisheye panorama setup.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="estimateFisheyeCircle",
             label="Estimate Fisheye Circle",
             description="Automatically estimate the fisheye circle center and radius instead of using user values.",
             value=True,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.useFisheye.value,
         ),
         desc.GroupAttribute(
@@ -105,7 +105,7 @@ This node allows to setup the Panorama:
                     label="x",
                     description="X offset in pixels.",
                     value=0.0,
-                    uid=[0],
+                    invalidate=True,
                     range=(-1000.0, 10000.0, 1.0),
                 ),
                 desc.FloatParam(
@@ -113,7 +113,7 @@ This node allows to setup the Panorama:
                     label="y",
                     description="Y offset in pixels.",
                     value=0.0,
-                    uid=[0],
+                    invalidate=True,
                     range=(-1000.0, 10000.0, 1.0),
                 ),
             ],
@@ -126,7 +126,7 @@ This node allows to setup the Panorama:
             description="Fisheye visibillity circle radius (in % of image's shortest side).",
             value=96.0,
             range=(0.0, 150.0, 0.01),
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.useFisheye.value and not node.estimateFisheyeCircle.value,
         ),
         desc.ChoiceParam(
@@ -136,14 +136,14 @@ This node allows to setup the Panorama:
             value="None",
             values=["None", "rotate90", "rotate180", "rotate270"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="debugFisheyeCircleEstimation",
             label="Debug Fisheye Circle Detection",
             description="Debug fisheye circle detection.",
             value=False,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.useFisheye.value,
             advanced=True,
         ),
@@ -154,7 +154,7 @@ This node allows to setup the Panorama:
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -164,6 +164,6 @@ This node allows to setup the Panorama:
             label="SfMData File",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfmData.sfm",
-            uid=[],
+            invalidate=False,
         ),
     ]

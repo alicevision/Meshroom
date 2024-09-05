@@ -17,7 +17,7 @@ The lighting conditions are assumed to be known.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="pathToJSONLightFile",
@@ -25,14 +25,14 @@ The lighting conditions are assumed to be known.
             description="Path to a JSON file containing the lighting information.\n"
                         "If empty, .txt files are expected in the image folder.",
             value="defaultJSON.txt",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="maskPath",
             label="Mask Folder Path",
             description="Path to a folder containing masks or to a mask directly.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="SHOrder",
@@ -45,7 +45,7 @@ The lighting conditions are assumed to be known.
             value="0",
             exclusive=True,
             advanced=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="removeAmbient",
@@ -53,7 +53,7 @@ The lighting conditions are assumed to be known.
             description="True if the ambient light is to be removed on the PS images, false otherwise.",
             value=False,
             advanced=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="isRobust",
@@ -61,7 +61,7 @@ The lighting conditions are assumed to be known.
             description="True to use the robust algorithm, false otherwise.",
             value=False,
             advanced=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="downscale",
@@ -70,7 +70,7 @@ The lighting conditions are assumed to be known.
             value=1,
             range=(1, 10, 1),
             advanced=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -79,7 +79,7 @@ The lighting conditions are assumed to be known.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -89,14 +89,14 @@ The lighting conditions are assumed to be known.
             label="Output Folder",
             description="Path to the output folder.",
             value=desc.Node.internalFolder,
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="outputSfmDataAlbedo",
             label="SfMData Albedo",
             description="Output SfMData file containing the albedo information.",
             value=desc.Node.internalFolder + "/albedoMaps.sfm",
-            uid=[],
+            invalidate=False,
             group="",  # remove from command line
         ),
         desc.File(
@@ -104,7 +104,7 @@ The lighting conditions are assumed to be known.
             label="SfMData Normal",
             description="Output SfMData file containing the normal maps information.",
             value=desc.Node.internalFolder + "/normalMaps.sfm",
-            uid=[],
+            invalidate=False,
             group="",  # remove from command line
         ),
         desc.File(
@@ -112,7 +112,7 @@ The lighting conditions are assumed to be known.
             label="SfMData Normal PNG",
             description="Output SfMData file containing the normal maps information.",
             value=desc.Node.internalFolder + "/normalMapsPNG.sfm",
-            uid=[],
+            invalidate=False,
             group="", # remove from command line
         ),
         # these attributes are only here to describe more accurately the output of the node
@@ -124,7 +124,7 @@ The lighting conditions are assumed to be known.
             description="Generated normal maps in the camera coordinate system.",
             semantic="image",
             value=desc.Node.internalFolder + "<POSE_ID>_normals.exr",
-            uid=[],
+            invalidate=False,
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -133,7 +133,7 @@ The lighting conditions are assumed to be known.
             description="Generated normal maps in the camera coordinate system (in false colors).",
             semantic="image",
             value=desc.Node.internalFolder + "<POSE_ID>_normals.png",
-            uid=[],
+            invalidate=False,
             group="", # do not export on the command line
         ),
         desc.File(
@@ -142,7 +142,7 @@ The lighting conditions are assumed to be known.
             description="Generated normal maps in the world coordinate system.",
             semantic="image",
             value=desc.Node.internalFolder + "<POSE_ID>_normals_w.exr",
-            uid=[],
+            invalidate=False,
             group="",  # do not export on the command line
         ),
 
@@ -152,7 +152,7 @@ The lighting conditions are assumed to be known.
             description="Generated albedo maps.",
             semantic="image",
             value=desc.Node.internalFolder + "<POSE_ID>_albedo.png",
-            uid=[],
+            invalidate=False,
             group="",  # do not export on the command line
         ),
     ]

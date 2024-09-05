@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 __version__ = "1.3"
 
 from meshroom.core import desc
@@ -26,7 +24,7 @@ This node allows to copy files into a specific folder.
                 label="Input",
                 description="File or folder to publish.",
                 value="",
-                uid=[0],
+                invalidate=True,
             ),
             name="inputFiles",
             label="Input Files",
@@ -38,7 +36,7 @@ This node allows to copy files into a specific folder.
             label="Output Folder",
             description="Folder to publish to.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -47,7 +45,7 @@ This node allows to copy files into a specific folder.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 

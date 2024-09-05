@@ -20,7 +20,7 @@ Assumes the input SfMData describes a set of cameras capturing a scene at a comm
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -29,7 +29,7 @@ Assumes the input SfMData describes a set of cameras capturing a scene at a comm
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -39,6 +39,6 @@ Assumes the input SfMData describes a set of cameras capturing a scene at a comm
             label="SfMData",
             description="Path to the output SfM file (in SfMData format).",
             value=lambda attr: desc.Node.internalFolder + "sfmData.sfm",
-            uid=[],
+            invalidate=False,
         ),
     ]

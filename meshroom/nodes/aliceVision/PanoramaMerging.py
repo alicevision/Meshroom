@@ -24,14 +24,14 @@ Merge all inputs coming from the PanoramaCompositing node.
             label="Input SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="compositingFolder",
             label="Compositing Folder",
             description="Panorama compositing results.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="outputFileType",
@@ -40,15 +40,15 @@ Merge all inputs coming from the PanoramaCompositing node.
             value="exr",
             values=["jpg", "png", "tif", "exr"],
             exclusive=True,
-            uid=[0],
-            group="", # not part of allParams, as this is not a parameter for the command line
+            invalidate=True,
+            group="",  # not part of allParams, as this is not a parameter for the command line
         ),
         desc.BoolParam(
             name="useTiling",
             label="Use Tiling",
             description="Enable tiling mode for parallelization.",
             value=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="storageDataType",
@@ -61,7 +61,7 @@ Merge all inputs coming from the PanoramaCompositing node.
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -70,7 +70,7 @@ Merge all inputs coming from the PanoramaCompositing node.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -81,6 +81,6 @@ Merge all inputs coming from the PanoramaCompositing node.
             description="Output merged panorama image.",
             semantic="image",
             value=desc.Node.internalFolder + "panorama.{outputFileTypeValue}",
-            uid=[],
+            invalidate=False,
         ),
     ]

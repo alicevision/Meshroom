@@ -31,7 +31,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             label="Dense SfMData",
             description="SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ), 
         desc.File(
             name="imagesFolder",
@@ -39,21 +39,21 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Use images from a specific folder instead of those specified in the SfMData file.\n"
                         "Filename should be the image UID.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="normalsFolder",
             label="Normals Folder",
             description="Use normal maps from a specific folder to texture the mesh.\nFilename should be : uid_normalMap.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="inputMesh",
             label="Mesh",
             description="Optional input mesh to texture. By default, it will texture the result of the reconstruction.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="inputRefMesh",
@@ -61,7 +61,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Optional input mesh to compute height maps and normal maps.\n"
                         "If not provided, no additional map with geometric information will be generated.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="textureSide",
@@ -70,7 +70,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             value=8192,
             values=[1024, 2048, 4096, 8192, 16384],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="downscale",
@@ -79,7 +79,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             value=2,
             values=[1, 2, 4, 8],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="outputMeshFileType",
@@ -88,7 +88,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             value="obj",
             values=["obj", "gltf", "fbx", "stl"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.GroupAttribute(
             name="colorMapping",
@@ -102,7 +102,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     label="Enable",
                     description="Generate textures if set to true.",
                     value=True,
-                    uid=[],
+                    invalidate=False,
                     group=None,
                 ),
                 desc.ChoiceParam(
@@ -112,7 +112,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     value="exr",
                     values=["exr", "png", "tiff", "jpg"],
                     exclusive=True,
-                    uid=[0],
+                    invalidate=True,
                     enabled=lambda node: node.colorMapping.enable.value,
                 ),
             ],
@@ -129,7 +129,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     label="Enable",
                     description="Generate normal / bump maps if set to true.",
                     value=True,
-                    uid=[],
+                    invalidate=False,
                     group=None,
                 ),
                 desc.ChoiceParam(
@@ -139,7 +139,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     value="Normal",
                     values=["Height", "Normal"],
                     exclusive=True,
-                    uid=[0],
+                    invalidate=True,
                     enabled=lambda node: node.bumpMapping.enable.value,
                 ),
                 desc.ChoiceParam(
@@ -149,7 +149,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     value="exr",
                     values=["exr", "png", "tiff", "jpg"],
                     exclusive=True,
-                    uid=[0],
+                    invalidate=True,
                     enabled=lambda node: node.bumpMapping.enable.value and node.bumpMapping.bumpType.value == "Normal",
                 ),
                 desc.ChoiceParam(
@@ -159,7 +159,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     value="exr",
                     values=["exr",],
                     exclusive=True,
-                    uid=[0],
+                    invalidate=True,
                     enabled=lambda node: node.bumpMapping.enable.value and node.bumpMapping.bumpType.value == "Height",
                 ),
             ],
@@ -176,7 +176,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     label="Enable",
                     description="Generate height maps for displacement.",
                     value=True,
-                    uid=[],
+                    invalidate=False,
                     group=None,
                 ),
                 desc.ChoiceParam(
@@ -186,7 +186,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     value="exr",
                     values=["exr"],
                     exclusive=True,
-                    uid=[0],
+                    invalidate=True,
                     enabled=lambda node: node.displacementMapping.enable.value,
                 ),
             ],
@@ -201,21 +201,21 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             value="Basic",
             values=["Basic", "LSCM", "ABF"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="useUDIM",
             label="Use UDIM",
             description="Use UDIM UV mapping.",
             value=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="fillHoles",
             label="Fill Holes",
             description="Fill texture holes with plausible values.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="padding",
@@ -223,7 +223,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Texture edge padding size in pixels.",
             value=5,
             range=(0, 20, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -232,7 +232,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Width of frequency bands for multiband blending.",
             value=4,
             range=(0, 8, 2),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.GroupAttribute(
@@ -244,7 +244,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     label="High Freq",
                     description="High frequency band.",
                     value=1,
-                    uid=[0],
+                    invalidate=True,
                     range=None,
                 ),
                 desc.IntParam(
@@ -252,7 +252,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     label="Mid-High Freq",
                     description="Mid-high frequency band.",
                     value=5,
-                    uid=[0],
+                    invalidate=True,
                     range=None,
                 ),
                 desc.IntParam(
@@ -260,7 +260,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     label="Mid-Low Freq",
                     description="Mid-low frequency band.",
                     value=10,
-                    uid=[0],
+                    invalidate=True,
                     range=None,
                 ),
                 desc.IntParam(
@@ -268,7 +268,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     label="Low Freq",
                     description="Low frequency band",
                     value=0,
-                    uid=[0],
+                    invalidate=True,
                     range=None,
                 ),
             ],
@@ -280,7 +280,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             label="Use Score",
             description="Use triangles scores (ie. reprojection area) for multi-band blending.",
             value=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -289,7 +289,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Setting this parameter to 0.0 disables filtering based on threshold to relative best score.",
             value=0.1,
             range=(0.0, 1.0, 0.01),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -298,7 +298,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Setting this parameter to 0.0 disables angle hard threshold filtering.",
             value=90.0,
             range=(0.0, 180.0, 0.01),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -308,7 +308,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             values=COLORSPACES,
             value="sRGB",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -318,21 +318,21 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             values=COLORSPACES,
             value="AUTO",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="correctEV",
             label="Correct Exposure",
             description="Uniformize images exposure values.",
             value=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="forceVisibleByAllVertices",
             label="Force Visible By All Vertices",
             description="Triangle visibility is based on the union of vertices visibility.",
             value=False,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -341,7 +341,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Option to flip face normals.\n"
                         "It can be needed as it depends on the vertices order in triangles and the convention changes from one software to another.",
             value=False,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -351,7 +351,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             value="PullPush",
             values=["Pull", "Push", "PullPush", "MeshItself"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -363,7 +363,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                         " - 1: full density of the reconstruction).",
             value=0.8,
             range=(0.0, 1.0, 0.001),
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -373,7 +373,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -383,14 +383,14 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             label="Folder",
             description="Folder for output mesh: OBJ, material and texture files.",
             value=desc.Node.internalFolder,
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="outputMesh",
             label="Mesh",
             description="Output mesh file.",
             value=desc.Node.internalFolder + "texturedMesh.{outputMeshFileTypeValue}",
-            uid=[],
+            invalidate=False,
             group="",
             ),
         desc.File(
@@ -399,7 +399,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             label="Material",
             description="Output material file.",
             value=desc.Node.internalFolder + "texturedMesh.mtl",
-            uid=[],
+            invalidate=False,
             group="",
             ),
         desc.File(
@@ -407,7 +407,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             label="Textures",
             description="Output texture files.",
             value=lambda attr: desc.Node.internalFolder + "texture_*." + attr.node.colorMapping.colorMappingFileType.value if attr.node.colorMapping.enable.value else "",
-            uid=[],
+            invalidate=False,
             group="",
         ),
     ]

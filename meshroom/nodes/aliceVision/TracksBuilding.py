@@ -19,7 +19,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -27,7 +27,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
                 label="Features Folder",
                 description="Folder containing some extracted features and descriptors.",
                 value="",
-                uid=[0],
+                invalidate=True,
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -39,7 +39,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
                 label="Matches Folder",
                 description="Folder containing some matches.",
                 value="",
-                uid=[0],
+                invalidate=True,
             ),
             name="matchesFolders",
             label="Matches Folders",
@@ -52,7 +52,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            uid=[0],
+            invalidate=True,
             joinChar=",",
         ),
         desc.IntParam(
@@ -61,7 +61,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             description="Minimum track length.",
             value=2,
             range=(2, 10, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="useOnlyMatchesFromInputFolder",
@@ -69,7 +69,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             description="Use only matches from the input 'matchesFolder' parameter.\n"
                         "Matches folders previously added to the SfMData file will be ignored.",
             value=False,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.BoolParam(
@@ -78,7 +78,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             description="Enable/Disable the track forks removal. A track contains a fork when incoherent matches\n"
                         "lead to multiple features in the same image for a single track.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -87,7 +87,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -97,6 +97,6 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             label="Tracks",
             description="Path to the output tracks file.",
             value=desc.Node.internalFolder + "tracksFile.json",
-            uid=[],
+            invalidate=False,
         ),
     ]

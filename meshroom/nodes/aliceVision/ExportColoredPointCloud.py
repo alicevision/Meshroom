@@ -17,7 +17,7 @@ class ExportColoredPointCloud(desc.AVCommandLineNode):
             label="Input SfMData",
             description="SfMData file containing a complete SfM.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -26,7 +26,7 @@ class ExportColoredPointCloud(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -36,6 +36,6 @@ class ExportColoredPointCloud(desc.AVCommandLineNode):
             label="Point Cloud Filepath",
             description="Output point cloud with visibilities as SfMData file.",
             value=desc.Node.internalFolder + "pointCloud.abc",
-            uid=[],
+            invalidate=False,
         ),
     ]

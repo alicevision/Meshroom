@@ -24,14 +24,14 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             label="Input SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="warpingFolder",
             label="Warping Folder",
             description="Panorama warping results.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="maxWidth",
@@ -39,14 +39,14 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             description="Maximal resolution for the panorama seams estimation.",
             value=5000,
             range=(0, 100000, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="useGraphCut",
             label="Use Smart Seams",
             description="Use a graphcut algorithm to optimize seams for better transitions between images.",
             value=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -55,7 +55,7 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -66,13 +66,13 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             description="",
             semantic="image",
             value=desc.Node.internalFolder + "labels.exr",
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="outputSfm",
             label="Output SfMData File",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "panorama.sfm",
-            uid=[],
+            invalidate=False,
         ),
     ]

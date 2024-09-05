@@ -28,7 +28,7 @@ If multiple color charts are submitted, only the first one will be taken in acco
             label="Color Checker Data",
             description="Position and colorimetric data of the color checker.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="input",
@@ -36,7 +36,7 @@ If multiple color charts are submitted, only the first one will be taken in acco
             description="Input SfMData file, image filenames or regex(es) on the image file path.\n"
                         "Supported regex: '#' matches a single digit, '@' one or more digits, '?' one character and '*' zero or more.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="extension",
@@ -45,7 +45,7 @@ If multiple color charts are submitted, only the first one will be taken in acco
             value="exr",
             values=["exr", ""],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="storageDataType",
@@ -58,7 +58,7 @@ If multiple color charts are submitted, only the first one will be taken in acco
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -67,7 +67,7 @@ If multiple color charts are submitted, only the first one will be taken in acco
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -77,7 +77,7 @@ If multiple color charts are submitted, only the first one will be taken in acco
             label="SfMData",
             description="Output SfMData.",
             value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in [".abc", ".sfm"]) else "",
-            uid=[],
+            invalidate=False,
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -85,6 +85,6 @@ If multiple color charts are submitted, only the first one will be taken in acco
             label="Folder",
             description="Output images folder.",
             value=desc.Node.internalFolder,
-            uid=[],
+            invalidate=False,
         ),
     ]

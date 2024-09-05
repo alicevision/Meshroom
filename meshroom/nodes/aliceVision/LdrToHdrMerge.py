@@ -43,14 +43,14 @@ Merge LDR images into HDR images.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="response",
             label="Response File",
             description="Response file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="userNbBrackets",
@@ -58,7 +58,7 @@ Merge LDR images into HDR images.
             description="Number of exposure brackets per HDR image (0 for automatic detection).",
             value=0,
             range=(0, 15, 1),
-            uid=[],
+            invalidate=False,
             group="user",  # not used directly on the command line
             errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
                          "Errors will occur during the computation.",
@@ -71,7 +71,7 @@ Merge LDR images into HDR images.
                         "is 0, else it is equal to 'userNbBrackets'.",
             value=0,
             range=(0, 15, 1),
-            uid=[0],
+            invalidate=True,
             group="bracketsParams",
         ),
         desc.BoolParam(
@@ -79,7 +79,7 @@ Merge LDR images into HDR images.
             label="Manually Specify Ref Bracket",
             description="Manually specify the reference bracket index to control the exposure of the HDR image.",
             value=False,
-            uid=[0],
+            invalidate=True,
             group="user",  # not used directly on the command line
         ),
         desc.IntParam(
@@ -89,7 +89,7 @@ Merge LDR images into HDR images.
                         "+N to use a more exposed bracket or -N to use a less exposed bracket.",
             value=1,
             range=(-4, 4, 1),
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: (node.nbBrackets.value != 1 and node.offsetRefBracketIndexEnabled.value),
         ),
         desc.FloatParam(
@@ -98,7 +98,7 @@ Merge LDR images into HDR images.
             description="Expected mean luminance of the HDR images used to compute the final panorama.",
             value=0.4,
             range=(0.0, 1.0, 0.01),
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: (node.nbBrackets.value != 1 and not node.offsetRefBracketIndexEnabled.value),
         ),
         desc.FloatParam(
@@ -107,7 +107,7 @@ Merge LDR images into HDR images.
             description="Minimum channel input value to be considered in advanced pixelwise merging.",
             value=0.05,
             range=(0.0, 1.0, 0.001),
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: (node.nbBrackets.value != 1),
         ),
         desc.FloatParam(
@@ -116,7 +116,7 @@ Merge LDR images into HDR images.
             description="Maximum channel input value to be considered in advanced pixelwise merging.",
             value=0.995,
             range=(0.0, 1.0, 0.001),
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: (node.nbBrackets.value != 1),
         ),
         desc.BoolParam(
@@ -124,7 +124,7 @@ Merge LDR images into HDR images.
             label="Compute Light Masks",
             description="Compute masks of low and high lights and missing info.",
             value=False,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.nbBrackets.value != 1,
         ),
         desc.BoolParam(
@@ -132,7 +132,7 @@ Merge LDR images into HDR images.
             label="Bypass",
             description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.nbBrackets.value != 1,
         ),
         desc.BoolParam(
@@ -140,7 +140,7 @@ Merge LDR images into HDR images.
             label="Keep Source Image Name",
             description="Keep the filename of the input image selected as central image for the output image filename.",
             value=False,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="fusionWeight",
@@ -152,7 +152,7 @@ Merge LDR images into HDR images.
             value="gaussian",
             values=["gaussian", "triangle", "plateau"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
@@ -161,7 +161,7 @@ Merge LDR images into HDR images.
             description="Quantization level like 8 bits or 10 bits.",
             value=10,
             range=(8, 14, 1),
-            uid=[0],
+            invalidate=True,
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
@@ -173,7 +173,7 @@ Merge LDR images into HDR images.
             values=COLORSPACES,
             value="AUTO",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.BoolParam(
@@ -181,7 +181,7 @@ Merge LDR images into HDR images.
             label="Enable Highlight",
             description="Enable highlights correction.",
             value=False,
-            uid=[0],
+            invalidate=True,
             group="user",  # not used directly on the command line
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
@@ -195,7 +195,7 @@ Merge LDR images into HDR images.
                         "This parameter is float to enable to weight this correction.",
             value=1.0,
             range=(0.0, 1.0, 0.01),
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.enableHighlight.enabled and node.enableHighlight.value,
         ),
         desc.FloatParam(
@@ -218,7 +218,7 @@ Merge LDR images into HDR images.
                         " - 150 lux: Home\n",
             value=120000.0,
             range=(1000.0, 150000.0, 1.0),
-            uid=[0],
+            invalidate=True,
             enabled=lambda node: node.enableHighlight.enabled and node.enableHighlight.value and node.highlightCorrectionFactor.value != 0,
         ),
         desc.ChoiceParam(
@@ -232,7 +232,7 @@ Merge LDR images into HDR images.
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -241,7 +241,7 @@ Merge LDR images into HDR images.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -251,7 +251,7 @@ Merge LDR images into HDR images.
             label="Folder",
             description="Path to the folder containing the merged HDR images.",
             value=desc.Node.internalFolder,
-            uid=[],
+            invalidate=False,
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -259,7 +259,7 @@ Merge LDR images into HDR images.
             label="SfMData",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfmData.sfm",
-            uid=[],
+            invalidate=False,
         ),
     ]
 

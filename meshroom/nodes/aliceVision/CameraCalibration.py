@@ -20,7 +20,7 @@ class CameraCalibration(desc.AVCommandLineNode):
                         " - image sequence like \"/path/to/seq.@.jpg\".\n"
                         " - video file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="pattern",
@@ -29,7 +29,7 @@ class CameraCalibration(desc.AVCommandLineNode):
             value="CHESSBOARD",
             values=["CHESSBOARD", "CIRCLES", "ASYMMETRIC_CIRCLES", "ASYMMETRIC_CCTAG"],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.GroupAttribute(
             name="size",
@@ -42,7 +42,7 @@ class CameraCalibration(desc.AVCommandLineNode):
                     description="",
                     value=7,
                     range=(0, 10000, 1),
-                    uid=[0],
+                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="height",
@@ -50,7 +50,7 @@ class CameraCalibration(desc.AVCommandLineNode):
                     description="",
                     value=5,
                     range=(0, 10000, 1),
-                    uid=[0],
+                    invalidate=True,
                 ),
             ],
         ),
@@ -60,7 +60,7 @@ class CameraCalibration(desc.AVCommandLineNode):
             description="Size of the grid's square cells (mm).",
             value=1.0,
             range=(0.0, 100.0, 1.0),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="nbDistortionCoef",
@@ -68,7 +68,7 @@ class CameraCalibration(desc.AVCommandLineNode):
             description="Number of distortion coefficients.",
             value=3,
             range=(0, 5, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="maxFrames",
@@ -76,7 +76,7 @@ class CameraCalibration(desc.AVCommandLineNode):
             description="Maximum number of frames to extract from the video file.",
             value=0,
             range=(0, 5, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="maxCalibFrames",
@@ -84,7 +84,7 @@ class CameraCalibration(desc.AVCommandLineNode):
             description="Maximum number of frames to use to calibrate from the selected frames.",
             value=100,
             range=(0, 1000, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="calibGridSize",
@@ -92,7 +92,7 @@ class CameraCalibration(desc.AVCommandLineNode):
             description="Define the number of cells per edge.",
             value=10,
             range=(0, 50, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.IntParam(
             name="minInputFrames",
@@ -100,7 +100,7 @@ class CameraCalibration(desc.AVCommandLineNode):
             description="Minimum number of frames to limit the refinement loop.",
             value=10,
             range=(0, 100, 1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.FloatParam(
             name="maxTotalAvgErr",
@@ -108,21 +108,21 @@ class CameraCalibration(desc.AVCommandLineNode):
             description="Maximum total average error.",
             value=0.10000000000000001,
             range=(0.0, 1.0, 0.01),
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="debugRejectedImgFolder",
             label="Debug Rejected Img Folder",
             description="Folder to export images that were deleted during the refinement loop.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="debugSelectedImgFolder",
             label="Debug Selected Img Folder",
             description="Folder to export debug images.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -131,7 +131,7 @@ class CameraCalibration(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -141,6 +141,6 @@ class CameraCalibration(desc.AVCommandLineNode):
             label="Output",
             description="Output filename for intrinsic [and extrinsic] parameters.",
             value=desc.Node.internalFolder + "/cameraCalibration.cal",
-            uid=[],
+            invalidate=False,
         ),
     ]

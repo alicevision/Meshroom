@@ -19,14 +19,14 @@ Estimate the camera intrinsics and extrinsincs on a set of checkerboard images.
             label="Input SfMData",
             description="SfMData file.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="checkerboards",
             label="Checkerboards Folder",
             description="Folder containing checkerboard JSON files.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.FloatParam(
             name="squareSize",
@@ -34,7 +34,7 @@ Estimate the camera intrinsics and extrinsincs on a set of checkerboard images.
             description="Checkerboard square width in mm",
             value=10.,
             range=(0.1, 100., 0.1),
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -43,7 +43,7 @@ Estimate the camera intrinsics and extrinsincs on a set of checkerboard images.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -53,6 +53,6 @@ Estimate the camera intrinsics and extrinsincs on a set of checkerboard images.
             label="SfMData File",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfmData.sfm",
-            uid=[],
+            invalidate=False,
         )
     ]

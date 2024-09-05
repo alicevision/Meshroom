@@ -17,7 +17,7 @@ Viewpoint = [
         label="ID",
         description="Image UID.",
         value=-1,
-        uid=[0],
+        invalidate=True,
         range=None,
     ),
     desc.IntParam(
@@ -25,7 +25,7 @@ Viewpoint = [
         label="Pose ID",
         description="Pose ID.",
         value=-1,
-        uid=[0],
+        invalidate=True,
         range=None,
     ),
     desc.File(
@@ -33,14 +33,14 @@ Viewpoint = [
         label="Image Path",
         description="Image filepath.",
         value="",
-        uid=[0],
+        invalidate=True,
     ),
     desc.IntParam(
         name="intrinsicId",
         label="Intrinsic",
         description="Internal camera parameters.",
         value=-1,
-        uid=[0],
+        invalidate=True,
         range=None,
     ),
     desc.IntParam(
@@ -48,7 +48,7 @@ Viewpoint = [
         label="Rig",
         description="Rig parameters.",
         value=-1,
-        uid=[0],
+        invalidate=True,
         range=None,
     ),
     desc.IntParam(
@@ -56,7 +56,7 @@ Viewpoint = [
         label="Rig Sub-Pose",
         description="Rig sub-pose parameters.",
         value=-1,
-        uid=[0],
+        invalidate=True,
         range=None,
     ),
     desc.StringParam(
@@ -70,7 +70,7 @@ Viewpoint = [
                     " - Serial Number: allows to uniquely identify a device so multiple devices with the same Make, Model can be "
                     "differentiated and their internal parameters are optimized separately.",
         value="",
-        uid=[],
+        invalidate=False,
         advanced=True,
     ),
 ]
@@ -81,7 +81,7 @@ Intrinsic = [
         label="ID",
         description="Intrinsic UID.",
         value=-1,
-        uid=[0],
+        invalidate=True,
         range=None,
     ),
     desc.FloatParam(
@@ -92,7 +92,7 @@ Intrinsic = [
                     "So this value is used to limit the range of possible values in the optimization.\n"
                     "If this value is set to -1, it will not be used and the focal length will not be bounded.",
         value=-1.0,
-        uid=[0],
+        invalidate=True,
         range=None,
     ),
     desc.FloatParam(
@@ -100,7 +100,7 @@ Intrinsic = [
         label="Focal Length",
         description="Known/calibrated focal length (in mm).",
         value=1000.0,
-        uid=[0],
+        invalidate=True,
         range=(0.0, 10000.0, 1.0),
     ),
     desc.FloatParam(
@@ -108,7 +108,7 @@ Intrinsic = [
         label="Pixel Ratio",
         description="Ratio between the pixel width and the pixel height.",
         value=1.0,
-        uid=[0],
+        invalidate=True,
         range=(0.0, 10.0, 0.1),
     ),
     desc.BoolParam(
@@ -116,28 +116,28 @@ Intrinsic = [
         label="Pixel Ratio Locked",
         description="The pixel ratio value is locked for estimation.",
         value=True,
-        uid=[0],
+        invalidate=True,
     ),
     desc.BoolParam(
         name="scaleLocked",
         label="Focal length Locked",
         description="The focal length is locked for estimation.",
         value=False,
-        uid=[0],
+        invalidate=True,
     ),
     desc.BoolParam(
         name="offsetLocked",
         label="Optical Center Locked",
         description="The optical center coordinates are locked for estimation.",
         value=False,
-        uid=[0],
+        invalidate=True,
     ),
     desc.BoolParam(
         name="distortionLocked",
         label="Distortion Locked",
         description="The distortion parameters are locked for estimation.",
         value=False,
-        uid=[0],
+        invalidate=True,
     ),
     desc.ChoiceParam(
         name="type",
@@ -148,7 +148,7 @@ Intrinsic = [
         value="pinhole",
         values=["pinhole", "equidistant"],
         exclusive=True,
-        uid=[0],
+        invalidate=True,
     ),
     desc.ChoiceParam(
         name="distortionType",
@@ -163,14 +163,14 @@ Intrinsic = [
         value="radialk3",
         values=["none", "radialk1", "radialk3", "radialk3pt", "brown", "fisheye4", "fisheye1"],
         exclusive=True,
-        uid=[0],
+        invalidate=True,
     ),
     desc.IntParam(
         name="width",
         label="Width",
         description="Image width.",
         value=0,
-        uid=[0],
+        invalidate=True,
         range=(0, 10000, 1),
     ),
     desc.IntParam(
@@ -178,7 +178,7 @@ Intrinsic = [
         label="Height",
         description="Image height.",
         value=0,
-        uid=[0],
+        invalidate=True,
         range=(0, 10000, 1),
     ),
     desc.FloatParam(
@@ -186,7 +186,7 @@ Intrinsic = [
         label="Sensor Width",
         description="Sensor width (in mm).",
         value=36.0,
-        uid=[0],
+        invalidate=True,
         range=(0.0, 1000.0, 1.0),
     ),
     desc.FloatParam(
@@ -194,7 +194,7 @@ Intrinsic = [
         label="Sensor Height",
         description="Sensor height (in mm).",
         value=24.0,
-        uid=[0],
+        invalidate=True,
         range=(0.0, 1000.0, 1.0),
     ),
     desc.StringParam(
@@ -202,7 +202,7 @@ Intrinsic = [
         label="Serial Number",
         description="Device serial number (Camera UID and Lens UID combined).",
         value="",
-        uid=[0],
+        invalidate=True,
     ),
     desc.GroupAttribute(
         name="principalPoint",
@@ -214,7 +214,7 @@ Intrinsic = [
                 label="x",
                 description="",
                 value=0.0,
-                uid=[0],
+                invalidate=True,
                 range=(0.0, 10000.0, 1.0),
             ),
             desc.FloatParam(
@@ -222,7 +222,7 @@ Intrinsic = [
                 label="y",
                 description="",
                 value=0.0,
-                uid=[0],
+                invalidate=True,
                 range=(0.0, 10000.0, 1.0),
             ),
         ],
@@ -238,7 +238,7 @@ Intrinsic = [
         values=["calibrated", "estimated", "unknown", "none"],
         value="none",
         exclusive=True,
-        uid=[0],
+        invalidate=True,
     ),
     desc.ChoiceParam(
         name="distortionInitializationMode",
@@ -251,7 +251,7 @@ Intrinsic = [
         values=["calibrated", "estimated", "unknown", "none"],
         value="none",
         exclusive=True,
-        uid=[0],
+        invalidate=True,
     ),
     desc.ListAttribute(
         name="distortionParams",
@@ -260,7 +260,7 @@ Intrinsic = [
             label="",
             description="",
             value=0.0,
-            uid=[0],
+            invalidate=True,
             range=(-0.1, 0.1, 0.01),
         ),
         label="Distortion Params",
@@ -276,7 +276,7 @@ Intrinsic = [
                 label="x",
                 description="",
                 value=0.0,
-                uid=[0],
+                invalidate=True,
                 range=(0.0, 10000.0, 1.0),
             ),
             desc.FloatParam(
@@ -284,7 +284,7 @@ Intrinsic = [
                 label="y",
                 description="",
                 value=0.0,
-                uid=[0],
+                invalidate=True,
                 range=(0.0, 10000.0, 1.0),
             ),
         ],
@@ -296,7 +296,7 @@ Intrinsic = [
             label="",
             description="",
             value=0.0,
-            uid=[0],
+            invalidate=True,
             range=(-0.1, 0.1, 0.01),
         ),
         label="Undistortion Params",
@@ -307,7 +307,7 @@ Intrinsic = [
         label="Locked",
         description="If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speed-up the reconstruction.",
         value=False,
-        uid=[0],
+        invalidate=True,
     ),
 ]
 
@@ -406,21 +406,21 @@ The needed metadata are:
             label="Sensor Database",
             description="Camera sensor with database path.",
             value="${ALICEVISION_SENSOR_DB}",
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="lensCorrectionProfileInfo",
             label="LCP Info",
             description="Lens Correction Profile filepath or database directory.",
             value="${ALICEVISION_LENS_PROFILE_INFO}",
-            uid=[],
+            invalidate=False,
         ),
         desc.BoolParam(
             name="lensCorrectionProfileSearchIgnoreCameraModel",
             label="LCP Generic Search",
             description="The lens name and camera maker are used to match the LCP database, but the camera model is ignored.",
             value=True,
-            uid=[0],
+            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -429,7 +429,7 @@ The needed metadata are:
             description="Default value for the field of view (in degrees) used as an initialization value when there is no focal or field of view in the image metadata.",
             value=45.0,
             range=(0.0, 180.0, 1.0),
-            uid=[],
+            invalidate=False,
         ),
         desc.ChoiceParam(
             name="groupCameraFallback",
@@ -443,7 +443,7 @@ The needed metadata are:
             values=["global", "folder", "image"],
             value="folder",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
         desc.ChoiceParam(
             name="rawColorInterpretation",
@@ -457,7 +457,7 @@ The needed metadata are:
             values=RAW_COLOR_INTERPRETATION,
             value="DCPLinearProcessing" if os.environ.get("ALICEVISION_COLOR_PROFILE_DB", "") else "LibRawWhiteBalancing",
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="colorProfileDatabase",
@@ -465,7 +465,7 @@ The needed metadata are:
             description="Color Profile database directory path.",
             value="${ALICEVISION_COLOR_PROFILE_DB}",
             enabled=lambda node: node.rawColorInterpretation.value.startswith("DCP"),
-            uid=[],
+            invalidate=False,
         ),
         desc.BoolParam(
             name="errorOnMissingColorProfile",
@@ -474,7 +474,7 @@ The needed metadata are:
                         "When disabled, if no color profile is found for some images, it will fallback to libRawWhiteBalancing for those images.",
             value=True,
             enabled=lambda node: node.rawColorInterpretation.value.startswith("DCP"),
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="viewIdMethod",
@@ -485,7 +485,7 @@ The needed metadata are:
             value="metadata",
             values=["metadata", "filename"],
             exclusive=True,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.StringParam(
@@ -499,7 +499,7 @@ The needed metadata are:
                         " - Match the first number found in filename: "
                         r'"(\d+).*"',
             value=r".*?(\d+)",
-            uid=[],
+            invalidate=False,
             advanced=True,
             enabled=lambda node: node.viewIdMethod.value == "filename",
         ),
@@ -510,7 +510,7 @@ The needed metadata are:
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -520,7 +520,7 @@ The needed metadata are:
             label="SfMData",
             description="Output SfMData.",
             value=desc.Node.internalFolder + "cameraInit.sfm",
-            uid=[],
+            invalidate=False,
         ),
     ]
 

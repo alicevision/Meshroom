@@ -29,14 +29,14 @@ The alignment can be based on:
             label="Input",
             description="Input SfMData file .",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.File(
             name="reference",
             label="Reference",
             description="Path to the scene used as the reference coordinate system.",
             value="",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="method",
@@ -51,7 +51,7 @@ The alignment can be based on:
             value="from_cameras_viewid",
             values=["from_cameras_viewid", "from_cameras_poseid", "from_cameras_filepath", "from_cameras_metadata", "from_markers", 'from_landmarks'],
             exclusive=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.StringParam(
             name="fileMatchingPattern",
@@ -66,7 +66,7 @@ The alignment can be based on:
                         " - Match the filename prefix before '_': "
                         r'".*\/(.*?)_.*\.\w{3}"',
             value=r".*\/(.*?)\.\w{3}",
-            uid=[0],
+            invalidate=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -74,7 +74,7 @@ The alignment can be based on:
                 label="Metadata",
                 description="",
                 value="Metadata that should match to create the correspondences.",
-                uid=[0],
+                invalidate=True,
             ),
             name="metadataMatchingList",
             label="Metadata Matching List",
@@ -86,21 +86,21 @@ The alignment can be based on:
             label="Scale",
             description="Apply scale transformation.",
             value=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="applyRotation",
             label="Rotation",
             description="Apply rotation transformation.",
             value=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.BoolParam(
             name="applyTranslation",
             label="Translation",
             description="Apply translation transformation.",
             value=True,
-            uid=[0],
+            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -109,7 +109,7 @@ The alignment can be based on:
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
     ]
 
@@ -119,13 +119,13 @@ The alignment can be based on:
             label="SfMData File",
             description="Output SfMData file.",
             value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or "sfmData") + ".abc",
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="outputViewsAndPoses",
             label="Poses",
             description="Path to the output SfMData file with cameras (views and poses).",
             value=desc.Node.internalFolder + "cameras.sfm",
-            uid=[],
+            invalidate=False,
         ),
     ]

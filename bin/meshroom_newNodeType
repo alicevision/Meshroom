@@ -178,7 +178,7 @@ for cmdLineArg in cmdLineArgs:
     isOutput = 'output' in cmdLineArgLower or 'out' in namesLower
     isInt = is_int(value)
     isFloat = is_float(value)
-    uid = '[]' if isOutput else '[0]'
+    uid = False if isOutput else True
 
     argStr = None
     if isBool:
@@ -188,7 +188,7 @@ for cmdLineArg in cmdLineArgs:
             label='{label}',
             description='''{description}''',
             value={value},
-            uid={uid},
+            invalidate={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
@@ -204,7 +204,7 @@ for cmdLineArg in cmdLineArgs:
             label='{label}',
             description='''{description}''',
             value={value},
-            uid={uid},
+            invalidate={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
@@ -222,7 +222,7 @@ for cmdLineArg in cmdLineArgs:
             value={value},
             values={values},
             exclusive={exclusive},
-            uid={uid},
+            invalidate={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
@@ -240,7 +240,7 @@ for cmdLineArg in cmdLineArgs:
             description='''{description}''',
             value={value},
             range={range},
-            uid={uid},
+            invalidate={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
@@ -257,7 +257,7 @@ for cmdLineArg in cmdLineArgs:
             description='''{description}''',
             value={value},
             range={range},
-            uid={uid},
+            invalidate={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
@@ -273,7 +273,7 @@ for cmdLineArg in cmdLineArgs:
             label='{label}',
             description='''{description}''',
             value={value},
-            uid={uid},
+            invalidate={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),

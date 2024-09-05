@@ -1,6 +1,3 @@
-# Multiview pipeline version
-__version__ = "2.2"
-
 import os
 
 from meshroom.core.graph import Graph, GraphModification

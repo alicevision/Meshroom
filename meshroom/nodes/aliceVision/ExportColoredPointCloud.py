@@ -35,7 +35,7 @@ class ExportColoredPointCloud(desc.AVCommandLineNode):
             name="output",
             label="Point Cloud Filepath",
             description="Output point cloud with visibilities as SfMData file.",
-            value="{cache}/{nodeType}/{uid0}/pointCloud.abc",
+            value=desc.Node.internalFolder + "pointCloud.abc",
             uid=[],
         ),
     ]

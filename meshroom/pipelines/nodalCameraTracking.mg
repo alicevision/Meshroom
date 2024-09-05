@@ -1,8 +1,7 @@
 {
     "header": {
-        "pipelineVersion": "2.2",
         "releaseVersion": "2024.1.0-develop",
-        "fileVersion": "1.1",
+        "fileVersion": "2.0",
         "template": true,
         "nodesVersions": {
             "ApplyCalibration": "1.0",

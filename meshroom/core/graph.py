@@ -166,7 +166,7 @@ class Graph(BaseObject):
 
     class IO(object):
         """ Centralize Graph file keys and IO version. """
-        __version__ = "1.1"
+        __version__ = "2.0"
 
         class Keys(object):
             """ File Keys. """
@@ -204,8 +204,10 @@ class Graph(BaseObject):
                              Graph.IO.Features.NodesVersions,
                              Graph.IO.Features.PrecomputedOutputs,
                              ]
+
             if fileVersion >= Version("1.1"):
                 features += [Graph.IO.Features.NodesPositions]
+
             return tuple(features)
 
     def __init__(self, name, parent=None):
@@ -260,7 +262,27 @@ class Graph(BaseObject):
         with open(filepath) as jsonFile:
             fileData = json.load(jsonFile)
 
-        # older versions of Meshroom files only contained the serialized nodes
+        self.header = fileData.get(Graph.IO.Keys.Header, {})
+
+        fileVersion = self.header.get(Graph.IO.Keys.FileVersion, "0.0")
+        # Retro-compatibility for all project files with the previous UID format
+        if Version(fileVersion) < Version("2.0"):
+            # For internal folders, all "{uid0}" keys should be replaced with "{uid}"
+            updatedFileData = json.dumps(fileData).replace("{uid0}", "{uid}")
+
+            # For fileVersion < 2.0, the nodes' UID is stored as:
+            # "uids": {"0": "hashvalue"}
+            # These should be identified and replaced with:
+            # "uid": "hashvalue"
+            uidPattern = re.compile(r'"uids": \{"0":.*?\}')
+            uidOccurrences = uidPattern.findall(updatedFileData)
+            for occ in uidOccurrences:
+                uid = occ.split("\"")[-2]  # UID is second to last element
+                newUidStr = r'"uid": "{}"'.format(uid)
+                updatedFileData = updatedFileData.replace(occ, newUidStr)
+            fileData = json.loads(updatedFileData)
+
+        # Older versions of Meshroom files only contained the serialized nodes
         graphData = fileData.get(Graph.IO.Keys.Graph, fileData)
 
         if importProject:
@@ -270,12 +292,11 @@ class Graph(BaseObject):
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
 
-        self._fileDateVersion = os.path.getmtime(filepath)
-
-        self.header = fileData.get(Graph.IO.Keys.Header, {})
         nodesVersions = self.header.get(Graph.IO.Keys.NodesVersions, {})
 
-        # check whether the file was saved as a template in minimal mode
+        self._fileDateVersion = os.path.getmtime(filepath)
+
+        # Check whether the file was saved as a template in minimal mode
         isTemplate = self.header.get("template", False)
 
         with GraphModification(self):

@@ -59,6 +59,7 @@ class Attribute(BaseObject):
         self._enabled = True
         self._validValue = True
         self._description = attributeDesc.description
+        self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
         # invalidation value for output attributes
         self._invalidationValue = ""
@@ -448,6 +449,7 @@ class Attribute(BaseObject):
     node = Property(BaseObject, node.fget, constant=True)
     enabledChanged = Signal()
     enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
+    invalidate = Property(bool, lambda self: self._invalidate, constant=True)
     uidIgnoreValue = Property(Variant, getUidIgnoreValue, constant=True)
     validValueChanged = Signal()
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
@@ -619,7 +621,7 @@ class ListAttribute(Attribute):
         if isinstance(self.value, ListModel):
             uids = []
             for value in self.value:
-                if value.desc.invalidate:
+                if value.invalidate:
                     uids.append(value.uid())
             return hashValue(uids)
         return super(ListAttribute, self).uid()
@@ -755,7 +757,7 @@ class GroupAttribute(Attribute):
     def uid(self):
         uids = []
         for k, v in self._value.items():
-            if v.enabled and v.desc.invalidate:
+            if v.enabled and v.invalidate:
                 uids.append(v.uid())
         return hashValue(uids)
 

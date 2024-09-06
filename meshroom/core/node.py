@@ -1423,15 +1423,12 @@ class Node(BaseNode):
 
         # List attributes per UID
         for attr in self._attributes:
-            if attr.isInput and attr.attributeDesc.invalidate:
+            if attr.isInput and attr.invalidate:
                 self.invalidatingAttributes.add(attr)
-            else:
-                if attr.attributeDesc.invalidate:
-                    logging.error(f"Output Attribute should not be invalidating: '{nodeType}.{attr.name}'")
 
         # Add internal attributes with a UID to the list
         for attr in self._internalAttributes:
-            if attr.attributeDesc.invalidate:
+            if attr.invalidate:
                 self.invalidatingAttributes.add(attr)
 
         self.optionalCallOnDescriptor("onNodeCreated")

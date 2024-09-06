@@ -33,7 +33,8 @@ If multiple color charts are submitted, only the first one will be taken in acco
             name="input",
             label="Input",
             description="Input SfMData file, image filenames or regex(es) on the image file path.\n"
-                        "Supported regex: '#' matches a single digit, '@' one or more digits, '?' one character and '*' zero or more.",
+                        "Supported regex: '#' matches a single digit, '@' one or more digits, '?' one character and "
+                        "'*' zero or more.",
             value="",
         ),
         desc.ChoiceParam(

@@ -1,6 +1,5 @@
 __version__ = "1.0"
 
-import os
 from meshroom.core import desc
 from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 

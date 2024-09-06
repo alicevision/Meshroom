@@ -3,8 +3,6 @@ __version__ = "1.0"
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
 
-import os.path
-
 
 class ColorCheckerDetection(desc.AVCommandLineNode):
     commandLine = 'aliceVision_colorCheckerDetection {allParams}'
@@ -18,10 +16,10 @@ Performs Macbeth color checker chart detection.
 
 Outputs:
 - the detected color charts position and colors
-- the associated transform matrix from "theoric" to "measured" 
-assuming that the "theoric" Macbeth chart corners coordinates are: 
+- the associated transform matrix from "theoric" to "measured"
+assuming that the "theoric" Macbeth chart corners coordinates are:
 (0, 0), (1675, 0), (1675, 1125), (0, 1125)
-  
+
 Dev notes:
 - Fisheye/pinhole is not handled
 - ColorCheckerViewer is unstable with multiple color chart within a same image
@@ -32,7 +30,8 @@ Dev notes:
             name="input",
             label="Input",
             description="SfMData file input, image filenames or regex(es) on the image file path.\n"
-                        "Supported regex: '#' matches a single digit, '@' one or more digits, '?' one character and '*' zero or more.",
+                        "Supported regex: '#' matches a single digit, '@' one or more digits, '?' one character "
+                        "and '*' zero or more.",
             value="",
         ),
         desc.IntParam(

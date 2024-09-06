@@ -1,6 +1,5 @@
 __version__ = "2.0"
 
-import os
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
 

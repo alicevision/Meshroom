@@ -31,7 +31,7 @@ MeshroomMaya contains a user interface to browse all cameras.
             exclusive=True,
         ),
     ]
-    
+
     outputs = [
         desc.File(
             name="output",

@@ -43,4 +43,3 @@ class ImportKnownPoses(desc.AVCommandLineNode):
             value=desc.Node.internalFolder + "/sfmData.abc",
         ),
     ]
-

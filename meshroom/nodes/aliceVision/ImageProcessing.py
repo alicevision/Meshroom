@@ -5,11 +5,12 @@ from meshroom.core.utils import COLORSPACES, EXR_STORAGE_DATA_TYPE, RAW_COLOR_IN
 
 import os.path
 
+
 def outputImagesValueFunct(attr):
     basename = os.path.basename(attr.node.input.value)
     fileStem = os.path.splitext(basename)[0]
     inputExt = os.path.splitext(basename)[1]
-    outputExt =  ('.' + attr.node.extension.value) if attr.node.extension.value else None
+    outputExt = ('.' + attr.node.extension.value) if attr.node.extension.value else None
 
     if inputExt in ['.abc', '.sfm']:
         fileStem = '<FILESTEM>' if attr.node.keepImageFilename.value else '<VIEW_ID>'
@@ -17,7 +18,7 @@ def outputImagesValueFunct(attr):
         return desc.Node.internalFolder + fileStem + (outputExt or '.*')
 
     if inputExt:
-        # if we have one or multiple files in input
+        # If we have one or multiple files in input
         return desc.Node.internalFolder + fileStem + (outputExt or inputExt)
 
     if '*' in fileStem:

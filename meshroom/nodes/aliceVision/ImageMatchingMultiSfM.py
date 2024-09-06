@@ -1,6 +1,5 @@
 __version__ = "1.0"
 
-import os
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
 
@@ -47,13 +46,19 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             name="method",
             label="Method",
             description="Method used to select the image pairs to match:\n"
-                        " - VocabularyTree:  It uses image retrieval techniques to find images that share some content without the cost of resolving all \n"
-                        "feature matches in details. Each image is represented in a compact image descriptor which allows to compute the distance between all \n"
-                        "images descriptors very efficiently. If your scene contains less than 'Voc Tree: Minimal Number of Images', all image pairs will be selected.\n"
-                        " - SequentialAndVocabularyTree:  Combines sequential approach with VocTree to enable connections between keyframes at different times.\n"
+                        " - VocabularyTree:  It uses image retrieval techniques to find images that share some content "
+                        "without the cost of resolving all \n"
+                        "feature matches in details. Each image is represented in a compact image descriptor which "
+                        "allows to compute the distance between all \n"
+                        "images descriptors very efficiently. If your scene contains less than 'Voc Tree: Minimal "
+                        "Number of Images', all image pairs will be selected.\n"
+                        " - SequentialAndVocabularyTree:  Combines sequential approach with VocTree to enable "
+                        "connections between keyframes at different times.\n"
                         " - Exhaustive: Export all image pairs.\n"
-                        " - Frustum: If images have known poses, computes the intersection between cameras frustums to create the list of image pairs.\n"
-                        " - FrustumOrVocabularyTree: If images have known poses, use frustum intersection. Otherwise, use VocabularyTree.\n",
+                        " - Frustum: If images have known poses, computes the intersection between cameras frustums "
+                        "to create the list of image pairs.\n"
+                        " - FrustumOrVocabularyTree: If images have known poses, use frustum intersection. Otherwise, "
+                        "use VocabularyTree.\n",
             value="SequentialAndVocabularyTree",
             values=["VocabularyTree", "SequentialAndVocabularyTree", "Exhaustive", "Frustum"],
             exclusive=True,

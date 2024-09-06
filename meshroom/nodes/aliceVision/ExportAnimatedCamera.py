@@ -48,7 +48,7 @@ Based on the input image filenames, it will recognize the input video sequence t
             description="Export undistorted images.",
             value=False,
         ),
-       desc.ChoiceParam(
+        desc.ChoiceParam(
             name="undistortedImageType",
             label="Undistort Image Format",
             description="Image file format to use for undistorted images ('jpg', 'png', 'tif', 'exr (half)').",

@@ -5,22 +5,24 @@ from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class DepthMap(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_depthMapEstimation {allParams}'
+    commandLine = "aliceVision_depthMapEstimation {allParams}"
     gpu = desc.Level.INTENSIVE
-    size = desc.DynamicNodeSize('input')
+    size = desc.DynamicNodeSize("input")
     parallelization = desc.Parallelization(blockSize=12)
-    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
+    commandLineRange = "--rangeStart {rangeStart} --rangeSize {rangeBlockSize}"
 
-    category = 'Dense Reconstruction'
-    documentation = '''
-Estimate a depth map for each calibrated camera using Plane Sweeping, a multi-view stereo algorithm notable for its efficiency on modern graphics hardware (GPU).
+    category = "Dense Reconstruction"
+    documentation = """
+Estimate a depth map for each calibrated camera using Plane Sweeping, a multi-view stereo algorithm notable for its
+efficiency on modern graphics hardware (GPU).
 
 Adjust the downscale factor to compute depth maps at a higher/lower resolution.
-Use a downscale factor of one (full-resolution) only if the quality of the input images is really high (camera on a tripod with high-quality optics).
+Use a downscale factor of one (full-resolution) only if the quality of the input images is really high
+(camera on a tripod with high-quality optics).
 
 ## Online
 [https://alicevision.org/#photogrammetry/depth_maps_estimation](https://alicevision.org/#photogrammetry/depth_maps_estimation)
-'''
+"""
 
     inputs = [
         desc.File(
@@ -42,7 +44,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Downscale the input images to compute the depth map.\n"
                         "Full resolution (downscale = 1) gives the best result,\n"
                         "but using a larger downscale will reduce computation time at the expense of quality.\n"
-                        "If the images are noisy, blurry or if the surfaces are challenging (weakly-textured or with specularities), a larger downscale may improve.",
+                        "If the images are noisy, blurry or if the surfaces are challenging (weakly-textured or with "
+                        "specularities), a larger downscale may improve.",
             value=2,
             values=[1, 2, 4, 8, 16],
             exclusive=True,
@@ -50,7 +53,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
         desc.FloatParam(
             name="minViewAngle",
             label="Min View Angle",
-            description="Minimum angle between two views (select the neighbouring cameras, select depth planes from epipolar segment point).",
+            description="Minimum angle between two views (select the neighbouring cameras, select depth planes from "
+                        "epipolar segment point).",
             value=2.0,
             range=(0.0, 10.0, 0.1),
             advanced=True,
@@ -58,7 +62,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
         desc.FloatParam(
             name="maxViewAngle",
             label="Max View Angle",
-            description="Maximum angle between two views (select the neighbouring cameras, select depth planes from epipolar segment point).",
+            description="Maximum angle between two views (select the neighbouring cameras, select depth planes from "
+                        "epipolar segment point).",
             value=70.0,
             range=(10.0, 120.0, 1.0),
             advanced=True,
@@ -117,28 +122,33 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
         desc.GroupAttribute(
             name="sgm",
             label="SGM",
-            description="The Semi-Global Matching (SGM) step computes a similarity volume and extracts the initial low-resolution depth map.\n"
-                        "This method is highly robust but has limited depth precision (banding artifacts due to a limited list of depth planes).",
+            description="The Semi-Global Matching (SGM) step computes a similarity volume and extracts the initial "
+                        "low-resolution depth map.\n"
+                        "This method is highly robust but has limited depth precision (banding artifacts due to a "
+                        "limited list of depth planes).",
             group=None,
             groupDesc=[
                 desc.IntParam(
                     name="sgmScale",
                     label="Downscale Factor",
-                    description="Downscale factor applied on source images for the SGM step (in addition to the global downscale).",
+                    description="Downscale factor applied on source images for the SGM step (in addition to the global "
+                                "downscale).",
                     value=2,
                     range=(-1, 10, 1),
                 ),
                 desc.IntParam(
                     name="sgmStepXY",
                     label="Step XY",
-                    description="The step is used to compute the similarity volume for one pixel over N (in the XY image plane).",
+                    description="The step is used to compute the similarity volume for one pixel over N "
+                                "(in the XY image plane).",
                     value=2,
                     range=(-1, 10, 1),
                 ),
                 desc.IntParam(
                     name="sgmStepZ",
                     label="Step Z",
-                    description="Initial step used to compute the similarity volume on Z axis (every N pixels on the epilolar line).\n"
+                    description="Initial step used to compute the similarity volume on Z axis (every N pixels on the "
+                                "epilolar line).\n"
                                 "-1 means automatic estimation.\n"
                                 "This value will be adjusted in all case to fit in the max memory (sgmMaxDepths).",
                     value=-1,
@@ -185,7 +195,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 desc.FloatParam(
                     name="sgmMaxSimilarity",
                     label="Max Similarity",
-                    description="Maximum similarity threshold (between 0 and 1) used to filter out poorly supported depth values.",
+                    description="Maximum similarity threshold (between 0 and 1) used to filter out poorly supported "
+                                "depth values.",
                     value=1.0,
                     range=(0.0, 1.0, 0.01),
                     advanced=True,
@@ -255,7 +266,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
         desc.GroupAttribute(
             name="refine",
             label="Refine",
-            description="The refine step computes a similarity volume in higher resolution but with a small depth range around the SGM depth map.\n"
+            description="The refine step computes a similarity volume in higher resolution but with a small depth "
+                        "range around the SGM depth map.\n"
                         "This allows to compute a depth map with sub-pixel accuracy.",
             group=None,
             groupDesc=[
@@ -268,7 +280,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 desc.IntParam(
                     name="refineScale",
                     label="Downscale Factor",
-                    description="Downscale factor applied on source images for the Refine step (in addition to the global downscale).",
+                    description="Downscale factor applied on source images for the Refine step (in addition to the "
+                                "global downscale).",
                     value=1,
                     range=(-1, 10, 1),
                     enabled=lambda node: node.refine.refineEnabled.value,
@@ -292,7 +305,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 desc.IntParam(
                     name="refineSubsampling",
                     label="Number Of Subsamples",
-                    description="The number of subsamples used to extract the best depth from the refine volume (sliding gaussian window precision).",
+                    description="The number of subsamples used to extract the best depth from the refine volume "
+                                "(sliding gaussian window precision).",
                     value=10,
                     range=(1, 30, 1),
                     advanced=True,
@@ -321,7 +335,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 desc.FloatParam(
                     name="refineSigma",
                     label="Sigma",
-                    description="Sigma (2*sigma^2) of the Gaussian filter used to extract the best depth from the refine volume.",
+                    description="Sigma (2*sigma^2) of the Gaussian filter used to extract the best depth from "
+                                "the refine volume.",
                     value=15.0,
                     range=(0.0, 30.0, 0.5),
                     advanced=True,
@@ -410,7 +425,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Subparts",
                     description="User custom patch pattern subparts for similarity volume computation.",
                     advanced=True,
-                    enabled=lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
+                    enabled=lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or
+                                          node.customPatchPattern.refineUseCustomPatchPattern.value),
                     elementDesc=desc.GroupAttribute(
                         name="customPatchPatternSubpart",
                         label="Patch Pattern Subpart",
@@ -463,7 +479,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Group all subparts with the same image level.",
                     value=False,
                     advanced=True,
-                    enabled=lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
+                    enabled=lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or 
+                                          node.customPatchPattern.refineUseCustomPatchPattern.value),
                 ),
             ],
         ),
@@ -520,7 +537,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 desc.BoolParam(
                     name="exportTilePattern",
                     label="Export Tile Pattern",
-                    description="Export the bounding boxes of tiles volumes as meshes. This allows to visualize the depth map search areas.",
+                    description="Export the bounding boxes of tiles volumes as meshes. "
+                                "This allows to visualize the depth map search areas.",
                     value=False,
                     advanced=True,
                 ),
@@ -561,7 +579,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Generated depth maps.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap.exr",
-            group="", # do not export on the command line
+            group="",  # do not export on the command line
         ),
         desc.File(
             name="sim",
@@ -569,14 +587,14 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Generated sim maps.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_simMap.exr",
-            group="", # do not export on the command line
+            group="",  # do not export on the command line
         ),
         desc.File(
             name="tilePattern",
             label="Tile Pattern",
             description="Debug: Tile pattern.",
             value=desc.Node.internalFolder + "<VIEW_ID>_tilePattern.obj",
-            group="", # do not export on the command line
+            group="",  # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportTilePattern.value,
         ),
         desc.File(
@@ -585,7 +603,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Debug: Depth maps SGM",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_sgm.exr",
-            group="", # do not export on the command line
+            group="",  # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
         desc.File(
@@ -594,7 +612,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Debug: Depth maps SGM upscaled.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_sgmUpscaled.exr",
-            group="", # do not export on the command line
+            group="",  # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
         desc.File(
@@ -603,7 +621,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Debug: Depth maps after refinement",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_refinedFused.exr",
-            group="", # do not export on the command line
+            group="",  # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
     ]

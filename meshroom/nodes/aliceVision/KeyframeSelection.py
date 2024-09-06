@@ -1,6 +1,5 @@
 __version__ = "5.0"
 
-import os
 from meshroom.core import desc
 from meshroom.core.utils import EXR_STORAGE_DATA_TYPE, VERBOSE_LEVEL
 

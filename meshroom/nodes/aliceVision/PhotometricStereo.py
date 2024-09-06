@@ -5,7 +5,7 @@ from meshroom.core.utils import VERBOSE_LEVEL
 
 class PhotometricStereo(desc.CommandLineNode):
     commandLine = 'aliceVision_photometricStereo {allParams}'
-    category = 'PhotometricStereo'
+    category = 'Photometric Stereo'
     documentation = '''
 Reconstruction using Photometric Stereo. A normal map is evaluated from several photographs taken from the same point of view, but under different lighting conditions.
 The lighting conditions are assumed to be known.
@@ -145,7 +145,7 @@ The lighting conditions are assumed to be known.
             uid=[],
             group="",  # do not export on the command line
         ),
-        
+
         desc.File(
             name="albedo",
             label="Albedo Maps",

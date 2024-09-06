@@ -10,14 +10,12 @@ class AppendText(desc.CommandLineNode):
             label='Input File',
             description='''''',
             value='',
-            invalidate=True,
         ),
         desc.File(
             name='inputText',
             label='Input Text',
             description='''''',
             value='',
-            invalidate=True,
         )
     ]
 
@@ -27,6 +25,5 @@ class AppendText(desc.CommandLineNode):
             label='Output',
             description='''''',
             value=desc.Node.internalFolder + 'appendText.txt',
-            invalidate=False,
         ),
     ]

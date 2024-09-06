@@ -29,7 +29,7 @@
             ],
             "inputs": {
                 "inputPath": "{SphereDetection_1.input}",
-                "inputJSON": "{SphereDetection_1.output}"
+                "inputDetection": "{SphereDetection_1.output}"
             }
         },
         "PhotometricStereo_1": {
@@ -51,12 +51,15 @@
             ],
             "inputs": {
                 "inputFiles": [
-                    "{PhotometricStereo_1.outputSfmData}",
                     "{PhotometricStereo_1.outputSfmDataNormal}",
                     "{PhotometricStereo_1.normals}",
                     "{PhotometricStereo_1.normalsWorld}",
                     "{PhotometricStereo_1.albedo}",
-                    "{PhotometricStereo_1.outputSfmDataAlbedo}"
+                    "{PhotometricStereo_1.outputSfmDataAlbedo}",
+                    "{PhotometricStereo_1.inputPath}",
+                    "{PhotometricStereo_1.outputSfmDataNormalPNG}",
+                    "{PhotometricStereo_1.normalsPNG}",
+                    "{PhotometricStereo_1.pathToJSONLightFile}"
                 ]
             }
         },

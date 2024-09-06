@@ -6,7 +6,7 @@ from meshroom.core.utils import VERBOSE_LEVEL
 
 class SphereDetection(desc.CommandLineNode):
     commandLine = 'aliceVision_sphereDetection {allParams}'
-    category = 'Photometry'
+    category = 'Photometric Stereo'
     documentation = '''
 Detect spheres in pictures. These spheres will be used for lighting calibration.
 Spheres can be automatically detected or manually defined in the interface.
@@ -91,9 +91,9 @@ Spheres can be automatically detected or manually defined in the interface.
     outputs = [
         desc.File(
             name="output",
-            label="Output Folder",
+            label="Output Path",
             description="Sphere detection information will be written here.",
-            value=desc.Node.internalFolder,
-            uid=[],
-        ),
+            value=desc.Node.internalFolder + "/detection.json",
+            uid=[]
+        )
     ]

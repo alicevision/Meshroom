@@ -59,5 +59,3 @@ def test_inputLinkInvalidation():
     graph.addEdges((n1.input, n2.input))
     assert n1.input.uid() == n2.input.uid()
     assert n1.output.value == n2.output.value
-
-

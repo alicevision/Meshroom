@@ -12,7 +12,7 @@ import shutil
 import time
 import types
 import uuid
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from enum import Enum
 
 import meshroom
@@ -33,7 +33,7 @@ def renameWritingToFinalPath(writingFilepath, filepath):
         for i in range(20):
             try:
                 os.remove(filepath)
-                # if remove is successful, we can stop the iterations
+                # If remove is successful, we can stop the iterations
                 break
             except WindowsError:
                 pass
@@ -50,7 +50,7 @@ class Status(Enum):
     STOPPED = 4
     KILLED = 5
     SUCCESS = 6
-    INPUT = 7 # special status for input nodes
+    INPUT = 7  # Special status for input nodes
 
 
 class ExecMode(Enum):
@@ -252,7 +252,7 @@ class NodeChunk(BaseObject):
         self.statistics = stats.Statistics()
         self.statusFileLastModTime = -1
         self._subprocess = None
-        # notify update in filepaths when node's internal folder changes
+        # Notify update in filepaths when node's internal folder changes
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
 
         self.execModeNameChanged.connect(self.node.globalExecModeChanged)
@@ -296,7 +296,7 @@ class NodeChunk(BaseObject):
                     statusData = json.load(jsonFile)
                 self.status.fromDict(statusData)
                 self.statusFileLastModTime = os.path.getmtime(statusFile)
-            except Exception as e:
+            except Exception:
                 self.statusFileLastModTime = -1
                 self.status.reset()
 
@@ -306,23 +306,23 @@ class NodeChunk(BaseObject):
     @property
     def statusFile(self):
         if self.range.blockSize == 0:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, 'status')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, "status")
         else:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + '.status')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + ".status")
 
     @property
     def statisticsFile(self):
         if self.range.blockSize == 0:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, 'statistics')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, "statistics")
         else:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + '.statistics')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + ".statistics")
 
     @property
     def logFile(self):
         if self.range.blockSize == 0:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, 'log')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, "log")
         else:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + '.log')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + ".log")
 
     def saveStatusFile(self):
         """
@@ -333,7 +333,7 @@ class NodeChunk(BaseObject):
         folder = os.path.dirname(statusFilepath)
         try:
             os.makedirs(folder)
-        except Exception as e:
+        except Exception:
             pass
 
         statusFilepathWriting = getWritingFilepath(statusFilepath)
@@ -343,8 +343,8 @@ class NodeChunk(BaseObject):
 
     def upgradeStatusTo(self, newStatus, execMode=None):
         if newStatus.value <= self._status.status.value:
-            logging.warning('Downgrade status on node "{}" from {} to {}'.format(self.name, self._status.status,
-                                                                                 newStatus))
+            logging.warning("Downgrade status on node '{}' from {} to {}".
+                            format(self.name, self._status.status, newStatus))
 
         if newStatus == Status.SUBMITTED:
             self._status = StatusData(self.node.name, self.node.nodeType, self.node.packageName, self.node.packageVersion)
@@ -411,11 +411,11 @@ class NodeChunk(BaseObject):
         self.statThread.start()
         try:
             self.node.nodeDesc.processChunk(self)
-        except Exception as e:
+        except Exception:
             if self._status.status != Status.STOPPED:
                 exceptionStatus = Status.ERROR
             raise
-        except (KeyboardInterrupt, SystemError, GeneratorExit) as e:
+        except (KeyboardInterrupt, SystemError, GeneratorExit):
             exceptionStatus = Status.STOPPED
             raise
         finally:
@@ -423,8 +423,8 @@ class NodeChunk(BaseObject):
             self._status.elapsedTime = time.time() - startTime
             if exceptionStatus is not None:
                 self.upgradeStatusTo(exceptionStatus)
-            logging.info(' - elapsed time: {}'.format(self._status.elapsedTimeStr))
-            # ask and wait for the stats thread to stop
+            logging.info(" - elapsed time: {}".format(self._status.elapsedTimeStr))
+            # Ask and wait for the stats thread to stop
             self.statThread.stopRequest()
             self.statThread.join()
             self.statistics = stats.Statistics()
@@ -462,9 +462,9 @@ class NodeChunk(BaseObject):
     elapsedTime = Property(float, lambda self: self._status.elapsedTime, notify=statusChanged)
 
 
-# simple structure for storing node position
+# Simple structure for storing node position
 Position = namedtuple("Position", ["x", "y"])
-# initialize default coordinates values to 0
+# Initialize default coordinates values to 0
 Position.__new__.__defaults__ = (0,) * len(Position._fields)
 
 
@@ -729,7 +729,8 @@ class BaseNode(BaseObject):
     def _buildCmdVars(self):
         def _buildAttributeCmdVars(cmdVars, name, attr):
             if attr.enabled:
-                group = attr.attributeDesc.group(attr.node) if isinstance(attr.attributeDesc.group, types.FunctionType) else attr.attributeDesc.group
+                group = attr.attributeDesc.group(attr.node) \
+                        if isinstance(attr.attributeDesc.group, types.FunctionType) else attr.attributeDesc.group
                 if group is not None:
                     # If there is a valid command line "group"
                     v = attr.getValueStr(withQuotes=True)
@@ -776,18 +777,25 @@ class BaseNode(BaseObject):
                 if attr.enabled:
                     try:
                         defaultValue = attr.defaultValue()
-                    except AttributeError as e:
+                    except AttributeError:
                         # If we load an old scene, the lambda associated to the 'value' could try to access other
                         # params that could not exist yet
-                        logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
+                        logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.
+                                        format(nodeName=self.name, attrName=attr.name))
                     if defaultValue is not None:
                         try:
                             attr.value = defaultValue.format(**self._cmdVars)
                             attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
                         except KeyError as e:
-                            logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                            logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with '
+                                            'value "{defaultValue}".\nError: {err}'.
+                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
+                                            err=str(e)))
                         except ValueError as e:
-                            logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                            logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value '
+                                            '"{defaultValue}".\nError: {err}'.
+                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
+                                            err=str(e)))
 
             v = attr.getValueStr(withQuotes=True)
 
@@ -1074,9 +1082,11 @@ class BaseNode(BaseObject):
                     self.attribute(output.name).value = data[output.name]
                 else:
                     if not self.hasAttribute(output.name):
-                        logging.warning(f"loadOutputAttr: Missing dynamic output attribute. Node={self.name}, Attribute={output.name}")
+                        logging.warning(f"loadOutputAttr: Missing dynamic output attribute. Node={self.name}, "
+                                        f"Attribute={output.name}")
                     if output.name not in data:
-                        logging.warning(f"loadOutputAttr: Missing dynamic output value in file. Node={self.name}, Attribute={output.name}, File={valuesFile}, Data keys={data.keys()}")
+                        logging.warning(f"loadOutputAttr: Missing dynamic output value in file. Node={self.name}, "
+                                        f"Attribute={output.name}, File={valuesFile}, Data keys={data.keys()}")
 
     def saveOutputAttr(self):
         """ Save output attributes with dynamic values into a values.json file.
@@ -1272,7 +1282,6 @@ class BaseNode(BaseObject):
             self._hasDuplicates = bool(len(newList))
             self.hasDuplicatesChanged.emit()
 
-
     def statusInThisSession(self):
         if not self._chunks:
             return False
@@ -1297,7 +1306,8 @@ class BaseNode(BaseObject):
 
     def hasImageOutputAttribute(self):
         """
-        Return True if at least one attribute has the 'image' semantic (and can thus be loaded in the 2D Viewer), False otherwise.
+        Return True if at least one attribute has the 'image' semantic (and can thus be loaded in the 2D Viewer),
+        False otherwise.
         """
         for attr in self._attributes:
             if attr.enabled and attr.isOutput and attr.desc.semantic == "image":
@@ -1306,10 +1316,12 @@ class BaseNode(BaseObject):
 
     def hasSequenceOutputAttribute(self):
         """
-        Return True if at least one attribute has the 'sequence' semantic (and can thus be loaded in the 2D Viewer), False otherwise.
+        Return True if at least one attribute has the 'sequence' semantic (and can thus be loaded in the 2D Viewer),
+        False otherwise.
         """
         for attr in self._attributes:
-            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or attr.desc.semantic == "imageList"):
+            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or 
+                                                   attr.desc.semantic == "imageList"):
                 return True
         return False
 
@@ -1325,7 +1337,6 @@ class BaseNode(BaseObject):
             if attr.enabled and attr.isOutput and hasSupportedExt:
                 return True
         return False
-
 
     name = Property(str, getName, constant=True)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
@@ -1356,8 +1367,10 @@ class BaseNode(BaseObject):
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
     fusedStatus = Property(StatusData, getFusedStatus, notify=globalStatusChanged)
     elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
-    recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime, notify=globalStatusChanged)
-    isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)  # need lambda to evaluate the virtual function
+    recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime,
+                                    notify=globalStatusChanged)
+    # isCompatibilityNode: need lambda to evaluate the virtual function
+    isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
 
     globalExecModeChanged = Signal()
@@ -1377,6 +1390,7 @@ class BaseNode(BaseObject):
     hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
+
 
 class Node(BaseNode):
     """
@@ -1399,7 +1413,8 @@ class Node(BaseNode):
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=True, node=self))
 
         for attrDesc in self.nodeDesc.internalInputs:
-            self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))
+            self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False,
+                                                          node=self))
 
         # Declare events for specific output attributes
         for attr in self._attributes:
@@ -1421,7 +1436,6 @@ class Node(BaseNode):
 
         self.optionalCallOnDescriptor("onNodeCreated")
 
-
     def optionalCallOnDescriptor(self, methodName, *args, **kwargs):
         """ Call of optional method defined in the descriptor.
         Available method names are:
@@ -1432,7 +1446,7 @@ class Node(BaseNode):
             if callable(m):
                 try:
                     m(self, *args, **kwargs)
-                except Exception as e:
+                except Exception:
                     import traceback
                     # Format error strings with all the provided arguments
                     argsStr = ", ".join(str(arg) for arg in args)
@@ -1443,7 +1457,8 @@ class Node(BaseNode):
                             finalErrStr += ", "
                         finalErrStr += kwargsStr
 
-                    logging.error("Error on call to '{}' (with args: '{}') for node type {}".format(methodName, finalErrStr, self.nodeType))
+                    logging.error("Error on call to '{}' (with args: '{}') for node type {}".
+                                  format(methodName, finalErrStr, self.nodeType))
                     logging.error(traceback.format_exc())
 
     def setAttributeValues(self, values):
@@ -1491,7 +1506,8 @@ class Node(BaseNode):
     def toDict(self):
         inputs = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
         internalInputs = {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
-        outputs = ({k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isOutput and not v.desc.isDynamicValue})
+        outputs = ({k: v.getExportValue() for k, v in self._attributes.objects.items()
+                    if v.isOutput and not v.desc.isDynamicValue})
 
         return {
             'nodeType': self.nodeType,
@@ -1788,7 +1804,8 @@ class CompatibilityNode(BaseNode):
             upgradedAttrValues = attrValues
 
         if not isinstance(upgradedAttrValues, dict):
-            logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".format(self.name))
+            logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".
+                          format(self.name))
             upgradedAttrValues = attrValues
 
         node.upgradeAttributeValues(upgradedAttrValues)
@@ -1859,8 +1876,10 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
             # do not perform that check for internal attributes because there is no point in
             # raising compatibility issues if their number differs: in that case, it is only useful
             # if some internal attributes do not exist or are invalid
-            if not template and (sorted([attr.name for attr in nodeDesc.inputs if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or \
-                    sorted([attr.name for attr in nodeDesc.outputs if not attr.isDynamicValue]) != sorted(outputs.keys())):
+            if not template and (sorted([attr.name for attr in nodeDesc.inputs 
+                                         if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or
+                                 sorted([attr.name for attr in nodeDesc.outputs if not attr.isDynamicValue]) !=
+                                 sorted(outputs.keys())):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
 
             # Check whether there are any internal attributes that are invalidating in the node description: if there

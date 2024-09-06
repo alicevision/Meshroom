@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding:utf-8
 import tempfile
-
 import os
 
 import copy
@@ -34,7 +33,7 @@ SampleGroupV2 = [
     )
 ]
 
-#SampleGroupV3 is SampleGroupV2 with one more int parameter
+# SampleGroupV3 is SampleGroupV2 with one more int parameter
 SampleGroupV3 = [
     desc.IntParam(name="a", label="a", description="", value=0, invalidate=True, range=None),
     desc.IntParam(name="notInSampleGroupV2", label="notInSampleGroupV2", description="", value=0, invalidate=True, range=None),
@@ -70,6 +69,7 @@ class SampleNodeV2(desc.Node):
         desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
+
 class SampleNodeV3(desc.Node):
     """
     Changes from V3:
@@ -81,6 +81,7 @@ class SampleNodeV3(desc.Node):
     outputs = [
         desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
+
 
 class SampleNodeV4(desc.Node):
     """
@@ -115,6 +116,7 @@ class SampleNodeV5(desc.Node):
         desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
+
 class SampleNodeV6(desc.Node):
     """
     Changes from V5:
@@ -131,6 +133,7 @@ class SampleNodeV6(desc.Node):
         desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
 
+
 class SampleInputNodeV1(desc.InputNode):
     """ Version 1 Sample Input Node """
     inputs = [
@@ -139,6 +142,7 @@ class SampleInputNodeV1(desc.InputNode):
     outputs = [
         desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
+
 
 class SampleInputNodeV2(desc.InputNode):
     """ Changes from V1:
@@ -150,6 +154,7 @@ class SampleInputNodeV2(desc.InputNode):
     outputs = [
         desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, invalidate=False)
     ]
+
 
 def test_unknown_node_type():
     """
@@ -351,6 +356,7 @@ def test_upgradeAllNodes():
     unregisterNodeType(SampleNodeV1)
     unregisterNodeType(SampleInputNodeV1)
 
+
 def test_conformUpgrade():
     registerNodeType(SampleNodeV5)
     registerNodeType(SampleNodeV6)
@@ -389,9 +395,3 @@ def test_conformUpgrade():
 
     unregisterNodeType(SampleNodeV5)
     unregisterNodeType(SampleNodeV6)
-
-
-
-
-
-

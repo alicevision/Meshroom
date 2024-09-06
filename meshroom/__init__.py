@@ -4,9 +4,11 @@ import logging
 import os
 import sys
 
+
 class VersionStatus(Enum):
     release = 1
     develop = 2
+
 
 __version__ = "2024.1.0"
 # Always increase the minor version when switching from release to develop.
@@ -55,6 +57,7 @@ logStringToPython = {
     'trace': logging.DEBUG,
 }
 logging.getLogger().setLevel(logStringToPython[os.environ.get('MESHROOM_VERBOSE', 'warning')])
+
 
 def setupEnvironment(backend=Backend.STANDALONE):
     """

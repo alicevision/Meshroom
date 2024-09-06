@@ -1,4 +1,4 @@
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # ConsoleSetLibPath.py
 #   Initialization script for cx_Freeze which manipulates the path so that the
 # directory in which the executable is found is searched for extensions but
@@ -6,7 +6,7 @@
 # manipulated first, however, to ensure that shared libraries found in the
 # target directory are found. This requires a restart of the executable because
 # the environment variable LD_LIBRARY_PATH is only checked at startup.
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 import os
 import sys
@@ -40,4 +40,3 @@ def run(*args):
         moduleName = args[0]
     code = importer.get_code(moduleName)
     exec(code, m.__dict__)
-

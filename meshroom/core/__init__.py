@@ -1,11 +1,8 @@
-from __future__ import print_function
-
 import hashlib
 from contextlib import contextmanager
 import importlib
 import inspect
 import os
-import re
 import tempfile
 import uuid
 import logging
@@ -18,7 +15,7 @@ try:
     import encodings.ascii
     import encodings.idna
     import encodings.utf_8
-except:
+except Exception:
     pass
 
 from meshroom.core.submitter import BaseSubmitter
@@ -330,6 +327,7 @@ def loadPipelineTemplates(folder):
         if file.endswith(".mg") and file not in pipelineTemplates:
             pipelineTemplates[os.path.splitext(file)[0]] = os.path.join(folder, file)
 
+
 def initNodes():
     meshroomFolder = os.path.dirname(os.path.dirname(__file__))
     additionalNodesPath = os.environ.get("MESHROOM_NODES_PATH", "").split(os.pathsep)
@@ -339,11 +337,13 @@ def initNodes():
     for f in nodesFolders:
         loadAllNodes(folder=f)
 
+
 def initSubmitters():
     meshroomFolder = os.path.dirname(os.path.dirname(__file__))
     subs = loadSubmitters(os.environ.get("MESHROOM_SUBMITTERS_PATH", meshroomFolder), 'submitters')
     for sub in subs:
         registerSubmitter(sub())
+
 
 def initPipelines():
     meshroomFolder = os.path.dirname(os.path.dirname(__file__))

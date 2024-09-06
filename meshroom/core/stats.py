@@ -6,7 +6,6 @@ import time
 import threading
 import platform
 import os
-import sys
 
 import xml.etree.ElementTree as ET
 
@@ -56,7 +55,7 @@ class ComputerStatistics:
             # If the platform is Windows and nvidia-smi
             self.nvidia_smi = spawn.find_executable('nvidia-smi')
             if self.nvidia_smi is None:
-                # could not be found from the environment path,
+                # Could not be found from the environment path,
                 # try to find it from system drive with default installation path
                 default_nvidia_smi = "%s\\Program Files\\NVIDIA Corporation\\NVSMI\\nvidia-smi.exe" % os.environ['systemdrive']
                 if os.path.isfile(default_nvidia_smi):
@@ -77,7 +76,8 @@ class ComputerStatistics:
     def update(self):
         try:
             self.initOnFirstTime()
-            self._addKV('cpuUsage', psutil.cpu_percent(percpu=True)) # interval=None => non-blocking (percentage since last call)
+            # Interval=None => non-blocking (percentage since last call)
+            self._addKV('cpuUsage', psutil.cpu_percent(percpu=True))
             self._addKV('ramUsage', psutil.virtual_memory().percent)
             self._addKV('swapUsage', psutil.swap_memory().percent)
             self._addKV('vramUsage', 0)
@@ -91,7 +91,7 @@ class ComputerStatistics:
             return
         try:
             p = subprocess.Popen([self.nvidia_smi, "-q", "-x"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            xmlGpu, stdError = p.communicate(timeout=10) # 10 seconds
+            xmlGpu, stdError = p.communicate(timeout=10)  # 10 seconds
 
             smiTree = ET.fromstring(xmlGpu)
             gpuTree = smiTree.find('gpu')
@@ -139,6 +139,7 @@ class ComputerStatistics:
     def fromDict(self, d):
         for k, v in d.items():
             setattr(self, k, v)
+
 
 class ProcStatistics:
     staticKeys = [
@@ -201,7 +202,7 @@ class ProcStatistics:
         for k, v in data.items():
             self._addKV(k, v)
 
-        ## Note: Do not collect stats about open files for now,
+        # Note: Do not collect stats about open files for now,
         #        as there is bug in psutil-5.7.2 on Windows which crashes the application.
         #        https://github.com/giampaolo/psutil/issues/1763
         #

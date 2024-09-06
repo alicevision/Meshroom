@@ -22,6 +22,7 @@ from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
 
 DefaultJSONEncoder = json.JSONEncoder  # store the original one
 
+
 class MyJSONEncoder(DefaultJSONEncoder):  # declare a new one with Enum support
     def default(self, obj):
         if isinstance(obj, Enum):
@@ -220,7 +221,8 @@ class Graph(BaseObject):
         self._computationBlocked = {}
         self._canComputeLeaves = True
         self._nodes = DictModel(keyAttrName='name', parent=self)
-        self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
+        # Edges: use dst attribute as unique key since it can only have one input connection
+        self._edges = DictModel(keyAttrName='dst', parent=self)
         self._importedNodes = DictModel(keyAttrName='name', parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
         self.cacheDir = meshroom.core.defaultCacheFolder
@@ -682,9 +684,12 @@ class Graph(BaseObject):
         """
         Remove the node identified by 'nodeName' from the graph.
         Returns:
-            - a dictionary containing the incoming edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
-            - a dictionary containing the outgoing edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
-            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute prior to the removal of all edges:
+            - a dictionary containing the incoming edges removed by this operation:
+                {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the outgoing edges removed by this operation:
+                {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
+                prior to the removal of all edges:
                 {dstAttr.getFullNameToNode(), (dstAttr.root.getFullNameToNode(), dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
@@ -695,14 +700,18 @@ class Graph(BaseObject):
         # Remove all edges arriving to and starting from this node
         with GraphModification(self):
             # Two iterations over the outgoing edges are necessary:
-            # - the first one is used to collect all the information about the edges while they are all there (overall context)
-            # - once we have collected all the information, the edges (and perhaps the entries in ListAttributes) can actually be removed
+            # - the first one is used to collect all the information about the edges while they are all there
+            #   (overall context)
+            # - once we have collected all the information, the edges (and perhaps the entries in ListAttributes) can
+            #   actually be removed
             for edge in self.nodeOutEdges(node):
                 outEdges[edge.dst.getFullNameToNode()] = edge.src.getFullNameToNode()
 
                 if isinstance(edge.dst.root, ListAttribute):
                     index = edge.dst.root.index(edge.dst)
-                    outListAttributes[edge.dst.getFullNameToNode()] = (edge.dst.root.getFullNameToNode(), index, edge.dst.value if edge.dst.value else None)
+                    outListAttributes[edge.dst.getFullNameToNode()] = (edge.dst.root.getFullNameToNode(),
+                                                                       index, edge.dst.value
+                                                                       if edge.dst.value else None)
 
             for edge in self.nodeOutEdges(node):
                 self.removeEdge(edge.dst)
@@ -763,9 +772,12 @@ class Graph(BaseObject):
 
         Returns:
             - the upgraded (newly created) node
-            - a dictionary containing the incoming edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
-            - a dictionary containing the outgoing edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
-            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute prior to the removal of all edges:
+            - a dictionary containing the incoming edges removed by this operation:
+                {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the outgoing edges removed by this operation:
+                {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
+                prior to the removal of all edges:
                 {dstAttr.getFullNameToNode(), (dstAttr.root.getFullNameToNode(), dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
@@ -834,7 +846,7 @@ class Graph(BaseObject):
         """
         try:
             return int(name.split('_')[-1])
-        except:
+        except Exception:
             return -1
 
     @staticmethod
@@ -970,7 +982,8 @@ class Graph(BaseObject):
     def dfs(self, visitor, startNodes=None, longestPathFirst=False):
         # Default direction (visitor.reverse=False): from node to root
         # Reverse direction (visitor.reverse=True): from node to leaves
-        nodeChildren = self._getOutputEdgesPerNode(visitor.dependenciesOnly) if visitor.reverse else self._getInputEdgesPerNode(visitor.dependenciesOnly)
+        nodeChildren = self._getOutputEdgesPerNode(visitor.dependenciesOnly) \
+                       if visitor.reverse else self._getInputEdgesPerNode(visitor.dependenciesOnly)
         # Initialize color map
         colors = {}
         for u in self._nodes:
@@ -979,9 +992,11 @@ class Graph(BaseObject):
         if longestPathFirst and visitor.reverse:
             # Because we have no knowledge of the node's count between a node and its leaves,
             # it is not possible to handle this case at the moment
-            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and visitor.reverse=True are not compatible yet.")
+            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and visitor.reverse=True are not "
+                                      "compatible yet.")
 
-        nodes = startNodes or (self.getRootNodes(visitor.dependenciesOnly) if visitor.reverse else self.getLeafNodes(visitor.dependenciesOnly))
+        nodes = startNodes or (self.getRootNodes(visitor.dependenciesOnly)
+                               if visitor.reverse else self.getLeafNodes(visitor.dependenciesOnly))
 
         if longestPathFirst:
             # Graph topology must be known and node depths up-to-date
@@ -1302,7 +1317,6 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=[startNode])
         return visitor.canCompute + (2 * visitor.canSubmit)
 
-
     def _applyExpr(self):
         with GraphModification(self):
             for node in self._nodes:
@@ -1600,14 +1614,15 @@ class Graph(BaseObject):
                 if node.hasAttribute('verbose'):
                     try:
                         node.verbose.value = v
-                    except:
+                    except Exception:
                         pass
 
     nodes = Property(BaseObject, nodes.fget, constant=True)
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
-    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.Keys.ReleaseVersion, "0.0"), notify=filepathChanged)
+    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.Keys.ReleaseVersion, "0.0"),
+                                  notify=filepathChanged)
     fileDateVersion = Property(float, fileDateVersion.fget, fileDateVersion.fset, notify=filepathChanged)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
@@ -1721,4 +1736,3 @@ def submit(graphFile, submitter, toNode=None, submitLabel="{projectName}"):
     graph = loadGraph(graphFile)
     toNodes = graph.findNodes(toNode) if toNode else None
     submitGraph(graph, submitter, toNodes, submitLabel=submitLabel)
-

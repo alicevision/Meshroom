@@ -1,5 +1,6 @@
 from . import PySignal
 
+
 class CoreDictModel:
 
     def __init__(self, keyAttrName, **kwargs):

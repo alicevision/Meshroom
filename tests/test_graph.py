@@ -142,7 +142,6 @@ def test_transitive_reduction():
         (tC.output, tE.input3),
         (tD.output, tE.input2),
         )
-    edgesScore = graph.dfsMaxEdgeLength()
 
     flowEdges = graph.flowEdges()
     flowEdgesRes = [(tB, tA),
@@ -153,7 +152,7 @@ def test_transitive_reduction():
                     ]
     assert set(flowEdgesRes) == set(flowEdges)
 
-    assert len(graph._nodesMinMaxDepths) ==  len(graph.nodes)
+    assert len(graph._nodesMinMaxDepths) == len(graph.nodes)
     for node, (minDepth, maxDepth) in graph._nodesMinMaxDepths.items():
         assert node.depth == maxDepth
 

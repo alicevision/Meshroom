@@ -138,7 +138,7 @@ class Attribute(BaseObject):
         if isinstance(self.desc.enabled, types.FunctionType):
             try:
                 return self.desc.enabled(self.node)
-            except:
+            except Exception:
                 # Node implementation may fail due to version mismatch
                 return True
         return self.attributeDesc.enabled
@@ -325,7 +325,8 @@ class Attribute(BaseObject):
             return False
         # if the attribute is a ListAttribute, we need to check if any of its elements has output connections
         if isinstance(self, ListAttribute):
-            return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None or any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
+            return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None or \
+                any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
     def _applyExpr(self):
@@ -348,7 +349,8 @@ class Attribute(BaseObject):
             try:
                 g.addEdge(g.node(linkNode).attribute(linkAttr), self)
             except KeyError as err:
-                logging.warning('Connect Attribute from Expression failed.\nExpression: "{exp}"\nError: "{err}".'.format(exp=v, err=err))
+                logging.warning('Connect Attribute from Expression failed.')
+                logging.warning('Expression: "{exp}"\nError: "{err}".'.format(exp=v, err=err))
             self.resetToDefaultValue()
 
     def getExportValue(self):
@@ -376,8 +378,8 @@ class Attribute(BaseObject):
         '''
         # ChoiceParam with multiple values should be combined
         if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
-            # ensure value is a list as expected
-            assert(isinstance(self.value, Sequence) and not isinstance(self.value, str))
+            # Ensure value is a list as expected
+            assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
             v = self.attributeDesc.joinChar.join(self.getEvalValue())
             if withQuotes and v:
                 return '"{}"'.format(v)
@@ -393,8 +395,9 @@ class Attribute(BaseObject):
                 return self.desc.value(self)
             except Exception as e:
                 if not self.node.isCompatibilityNode:
-                    # log message only if we are not in compatibility mode
-                    logging.warning("Failed to evaluate default value (node lambda) for attribute '{}': {}".format(self.name, e))
+                    # Log message only if we are not in compatibility mode
+                    logging.warning("Failed to evaluate default value (node lambda) for attribute '{}': {}".
+                                    format(self.name, e))
                 return None
         # Need to force a copy, for the case where the value is a list (avoid reference to the desc value)
         return copy.copy(self.desc.value)
@@ -409,7 +412,6 @@ class Attribute(BaseObject):
         # Emit if the enable status has changed
         self.setEnabled(self.getEnabled())
 
-
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
     fullNameToNode = Property(str, getFullNameToNode, constant=True)
@@ -423,11 +425,11 @@ class Attribute(BaseObject):
     baseType = Property(str, getType, constant=True)
     isReadOnly = Property(bool, _isReadOnly, constant=True)
 
-    # description of the attribute
+    # Description of the attribute
     descriptionChanged = Signal()
     description = Property(str, _get_description, _set_description, notify=descriptionChanged)
 
-    # definition of the attribute
+    # Definition of the attribute
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
 
     valueChanged = Signal()
@@ -460,6 +462,7 @@ def raiseIfLink(func):
         return func(attr, *args, **kwargs)
     return wrapper
 
+
 class PushButtonParam(Attribute):
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         super(PushButtonParam, self).__init__(node, attributeDesc, isOutput, root, parent)
@@ -467,6 +470,7 @@ class PushButtonParam(Attribute):
     @Slot()
     def clicked(self):
         self.node.onAttributeClicked(self)
+
 
 class ChoiceParam(Attribute):
 
@@ -489,7 +493,8 @@ class ChoiceParam(Attribute):
             value = value.split(',')
 
         if not isinstance(value, Iterable):
-            raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+            raise ValueError("Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})".
+                             format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
     def setValues(self, values):
@@ -523,7 +528,7 @@ class ListAttribute(Attribute):
 
     def at(self, idx):
         """ Returns child attribute at index 'idx' """
-        # implement 'at' rather than '__getitem__'
+        # Implement 'at' rather than '__getitem__'
         # since the later is called spuriously when object is used in QML
         return self._value.at(idx)
 
@@ -560,7 +565,8 @@ class ListAttribute(Attribute):
             if isinstance(exportedValues, ListAttribute) or Attribute.isLinkExpression(exportedValues):
                 self._set_value(exportedValues)
                 return
-            raise RuntimeError("ListAttribute.upgradeValue: the given value is of type " + str(type(exportedValues)) + " but a 'list' is expected.")
+            raise RuntimeError("ListAttribute.upgradeValue: the given value is of type " +
+                               str(type(exportedValues)) + " but a 'list' is expected.")
 
         attrs = []
         for v in exportedValues:
@@ -645,7 +651,7 @@ class ListAttribute(Attribute):
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value if not attr.isDefault]
 
     def getValueStr(self, withQuotes=True):
-        assert(isinstance(self.value, ListModel))
+        assert isinstance(self.value, ListModel)
         if self.attributeDesc.joinChar == ' ':
             return self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=withQuotes) for v in self.value])
         else:
@@ -770,7 +776,8 @@ class GroupAttribute(Attribute):
         if exportDefault:
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()}
         else:
-            return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault}
+            return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()
+                    if not attr.isDefault}
 
     def getValueStr(self, withQuotes=True):
         # add brackets if requested
@@ -787,7 +794,8 @@ class GroupAttribute(Attribute):
         spaceSep = self.attributeDesc.joinChar == ' '
 
         # sort values based on child attributes group description order
-        sortedSubValues = [self._value.get(attr.name).getValueStr(withQuotes=spaceSep) for attr in self.attributeDesc.groupDesc]
+        sortedSubValues = [self._value.get(attr.name).getValueStr(withQuotes=spaceSep)
+                           for attr in self.attributeDesc.groupDesc]
         s = self.attributeDesc.joinChar.join(sortedSubValues)
 
         if withQuotes and not spaceSep:

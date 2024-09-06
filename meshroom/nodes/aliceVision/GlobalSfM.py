@@ -23,7 +23,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -31,7 +30,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
                 label="Features Folder",
                 description="Folder containing some extracted features.",
                 value="",
-                invalidate=True,
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -43,7 +41,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
                 label="Matches Folder",
                 description="Folder containing some computed matches.",
                 value="",
-                invalidate=True,
             ),
             name="matchesFolders",
             label="Matches Folders",
@@ -56,7 +53,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            invalidate=True,
             joinChar=",",
         ),
         desc.ChoiceParam(
@@ -68,7 +64,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             values=["L1_minimization", "L2_minimization"],
             value="L2_minimization",
             exclusive=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="translationAveraging",
@@ -80,7 +75,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             values=["L1_minimization", "L2_minimization", "L1_soft_minimization"],
             value="L1_soft_minimization",
             exclusive=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="lockAllIntrinsics",
@@ -89,7 +83,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
                         "principal point, distortion if any) constant during the reconstruction.\n"
                         "This may be helpful if the input cameras are already fully calibrated.",
             value=False,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -98,7 +91,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -108,20 +100,17 @@ It is known to be faster but less robust to challenging datasets than the Increm
             label="SfMData",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.abc",
-            invalidate=False,
         ),
         desc.File(
             name="outputViewsAndPoses",
             label="Output Poses",
             description="Path to the output SfMData file with cameras (views and poses).",
             value=desc.Node.internalFolder + "cameras.sfm",
-            invalidate=False,
         ),
         desc.File(
             name="extraInfoFolder",
             label="Folder",
             description="Folder for intermediate reconstruction files and additional reconstruction information files.",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
     ]

@@ -20,7 +20,6 @@ This node allows to reduce the density of the Mesh.
             label="Mesh",
             description="Input mesh in the OBJ format.",
             value="",
-            invalidate=True,
         ),
         desc.FloatParam(
             name="simplificationFactor",
@@ -28,7 +27,6 @@ This node allows to reduce the density of the Mesh.
             description="Simplification factor for the decimation.",
             value=0.5,
             range=(0.0, 1.0, 0.01),
-            invalidate=True,
         ),
         desc.IntParam(
             name="nbVertices",
@@ -36,7 +34,6 @@ This node allows to reduce the density of the Mesh.
             description="Fixed number of output vertices.",
             value=0,
             range=(0, 1000000, 1),
-            invalidate=True,
         ),
         desc.IntParam(
             name="minVertices",
@@ -44,7 +41,6 @@ This node allows to reduce the density of the Mesh.
             description="Minimum number of output vertices.",
             value=0,
             range=(0, 1000000, 1),
-            invalidate=True,
         ),
         desc.IntParam(
             name="maxVertices",
@@ -52,7 +48,6 @@ This node allows to reduce the density of the Mesh.
             description="Maximum number of output vertices.",
             value=0,
             range=(0, 1000000, 1),
-            invalidate=True,
         ),
         desc.BoolParam(
             name="flipNormals",
@@ -61,7 +56,6 @@ This node allows to reduce the density of the Mesh.
                         "It can be needed as it depends on the vertices order in triangles\n"
                         "and the convention changes from one software to another.",
             value=False,
-            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -71,7 +65,6 @@ This node allows to reduce the density of the Mesh.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -81,6 +74,5 @@ This node allows to reduce the density of the Mesh.
             label="Mesh",
             description="Output mesh in the OBJ file format.",
             value=desc.Node.internalFolder + "mesh.obj",
-            invalidate=False,
         ),
     ]

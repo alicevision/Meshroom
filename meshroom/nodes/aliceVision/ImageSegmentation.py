@@ -22,14 +22,12 @@ Generate a mask with segmented labels for each pixel.
             label="Input",
             description="SfMData file input.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="modelPath",
             label="Segmentation Model",
             description="Weights file for the internal model.",
             value="${ALICEVISION_SEMANTIC_SEGMENTATION_MODEL}",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="validClasses",
@@ -49,14 +47,12 @@ Generate a mask with segmented labels for each pixel.
                 "train", "tvmonitor"
             ],
             exclusive=False,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="maskInvert",
             label="Invert Masks",
             description="Invert mask values. If selected, the pixels corresponding to the mask will be set to 0 instead of 255.",
             value=False,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="useGpu",
@@ -70,7 +66,6 @@ Generate a mask with segmented labels for each pixel.
             label="Keep Filename",
             description="Keep Input Filename",
             value=False,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -79,7 +74,6 @@ Generate a mask with segmented labels for each pixel.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -89,7 +83,6 @@ Generate a mask with segmented labels for each pixel.
             label="Masks Folder",
             description="Output path for the masks.",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
         desc.File(
             name="masks",
@@ -98,6 +91,5 @@ Generate a mask with segmented labels for each pixel.
             semantic="image",
             value=lambda attr: desc.Node.internalFolder + "<VIEW_ID>.exr" if not attr.node.keepFilename.value else desc.Node.internalFolder + "<FILESTEM>.exr",
             group="",
-            invalidate=False,
         ),
     ]

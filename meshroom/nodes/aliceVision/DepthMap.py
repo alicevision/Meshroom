@@ -28,7 +28,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="imagesFolder",
@@ -36,7 +35,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Use images from a specific folder instead of those specified in the SfMData file.\n"
                         "Filename should be the image UID.",
             value="",
-            invalidate=True,
         ),
        desc.ChoiceParam(
             name="downscale",
@@ -48,7 +46,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=2,
             values=[1, 2, 4, 8, 16],
             exclusive=True,
-            invalidate=True,
         ),
         desc.FloatParam(
             name="minViewAngle",
@@ -56,7 +53,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Minimum angle between two views (select the neighbouring cameras, select depth planes from epipolar segment point).",
             value=2.0,
             range=(0.0, 10.0, 0.1),
-            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -65,7 +61,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Maximum angle between two views (select the neighbouring cameras, select depth planes from epipolar segment point).",
             value=70.0,
             range=(10.0, 120.0, 1.0),
-            invalidate=True,
             advanced=True,
         ),
         desc.GroupAttribute(
@@ -80,7 +75,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Maximum tile buffer width.",
                     value=1024,
                     range=(-1, 2000, 10),
-                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="tileBufferHeight",
@@ -88,7 +82,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Maximum tile buffer height.",
                     value=1024,
                     range=(-1, 2000, 10),
-                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="tilePadding",
@@ -96,7 +89,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Buffer padding for overlapping tiles.",
                     value=64,
                     range=(0, 500, 1),
-                    invalidate=True,
                 ),
                 desc.BoolParam(
                     name="autoAdjustSmallImage",
@@ -104,7 +96,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Automatically adjust depth map parameters if images are smaller than one tile\n"
                                 "(maxTCamsPerTile = maxTCams, adjust step if needed).",
                     value=True,
-                    invalidate=True,
                     advanced=True,
                 ),
             ],
@@ -114,7 +105,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label="Choose Neighbour Cameras Per Tile",
             description="Choose neighbour cameras per tile or globally to the image.",
             value=True,
-            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -123,7 +113,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Maximum number of neighbour cameras per image.",
             value=10,
             range=(1, 20, 1),
-            invalidate=True,
         ),
         desc.GroupAttribute(
             name="sgm",
@@ -138,7 +127,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Downscale factor applied on source images for the SGM step (in addition to the global downscale).",
                     value=2,
                     range=(-1, 10, 1),
-                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="sgmStepXY",
@@ -146,7 +134,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="The step is used to compute the similarity volume for one pixel over N (in the XY image plane).",
                     value=2,
                     range=(-1, 10, 1),
-                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="sgmStepZ",
@@ -156,7 +143,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                                 "This value will be adjusted in all case to fit in the max memory (sgmMaxDepths).",
                     value=-1,
                     range=(-1, 10, 1),
-                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="sgmMaxTCamsPerTile",
@@ -164,7 +150,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Maximum number of neighbour cameras used per tile.",
                     value=4,
                     range=(1, 20, 1),
-                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="sgmWSH",
@@ -172,7 +157,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Half-size of the patch used to compute the similarity. Patch width is wsh*2+1.",
                     value=4,
                     range=(1, 20, 1),
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -180,7 +164,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Use SfM Landmarks",
                     description="Use landmarks from Structure-from-Motion as input seeds to define min/max depth ranges.",
                     value=True,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.FloatParam(
@@ -189,7 +172,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Inflate factor to add margins around SfM seeds.",
                     value=0.2,
                     range=(0.0, 2.0, 0.1),
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.FloatParam(
@@ -198,7 +180,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Inflate factor to add margins to the depth thickness.",
                     value=0.0,
                     range=(0.0, 2.0, 0.1),
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.FloatParam(
@@ -207,7 +188,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Maximum similarity threshold (between 0 and 1) used to filter out poorly supported depth values.",
                     value=1.0,
                     range=(0.0, 1.0, 0.01),
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.FloatParam(
@@ -216,7 +196,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="GammaC threshold used for similarity computation.",
                     value=5.5,
                     range=(0.0, 30.0, 0.5),
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.FloatParam(
@@ -225,7 +204,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="GammaP threshold used for similarity computation.",
                     value=8.0,
                     range=(0.0, 30.0, 0.5),
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.FloatParam(
@@ -234,7 +212,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="P1 parameter for SGM filtering.",
                     value=10.0,
                     range=(0.0, 255.0, 0.5),
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.FloatParam(
@@ -243,7 +220,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="P2 weighting parameter for SGM filtering.",
                     value=100.0,
                     range=(-255.0, 255.0, 0.5),
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.IntParam(
@@ -252,7 +228,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Maximum number of depths in the similarity volume.",
                     value=1500,
                     range=(1, 5000, 1),
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.StringParam(
@@ -260,7 +235,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Filtering Axes",
                     description="Define axes for the filtering of the similarity volume.",
                     value="YX",
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -268,7 +242,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Depth List Per Tile",
                     description="Select the list of depth planes per tile or globally to the image.",
                     value=True,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -276,7 +249,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Consistent Scale",
                     description="Compare patch with consistent scale for similarity volume computation.",
                     value=False,
-                    invalidate=True,
                 ),
             ],
         ),
@@ -292,7 +264,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Enable",
                     description="Enable depth/similarity map refinement process.",
                     value=True,
-                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="refineScale",
@@ -300,7 +271,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Downscale factor applied on source images for the Refine step (in addition to the global downscale).",
                     value=1,
                     range=(-1, 10, 1),
-                    invalidate=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.IntParam(
@@ -309,7 +279,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="The step is used to compute the refine volume for one pixel over N (in the XY image plane).",
                     value=1,
                     range=(-1, 10, 1),
-                    invalidate=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.IntParam(
@@ -318,7 +287,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Maximum number of neighbour cameras used per tile.",
                     value=4,
                     range=(1, 20, 1),
-                    invalidate=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.IntParam(
@@ -327,7 +295,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="The number of subsamples used to extract the best depth from the refine volume (sliding gaussian window precision).",
                     value=10,
                     range=(1, 30, 1),
-                    invalidate=True,
                     advanced=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
@@ -339,7 +306,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                                 "for which we evaluate the similarity with a finer z sampling.",
                     value=15,
                     range=(1, 50, 1),
-                    invalidate=True,
                     advanced=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
@@ -349,7 +315,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Half-size of the patch used to compute the similarity. Patch width is wsh*2+1.",
                     value=3,
                     range=(1, 20, 1),
-                    invalidate=True,
                     advanced=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
@@ -359,7 +324,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Sigma (2*sigma^2) of the Gaussian filter used to extract the best depth from the refine volume.",
                     value=15.0,
                     range=(0.0, 30.0, 0.5),
-                    invalidate=True,
                     advanced=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
@@ -369,7 +333,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="GammaC threshold used for similarity computation.",
                     value=15.5,
                     range=(0.0, 30.0, 0.5),
-                    invalidate=True,
                     advanced=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
@@ -379,7 +342,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="GammaP threshold used for similarity computation.",
                     value=8.0,
                     range=(0.0, 30.0, 0.5),
-                    invalidate=True,
                     advanced=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
@@ -388,7 +350,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Interpolate Middle Depth",
                     description="Enable middle depth bilinear interpolation.",
                     value=False,
-                    invalidate=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.BoolParam(
@@ -396,7 +357,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Consistent Scale",
                     description="Compare patch with consistent scale for similarity volume computation.",
                     value=False,
-                    invalidate=True,
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
             ],
@@ -412,7 +372,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Enable",
                     description="Enable depth/similarity map post-process color optimization.",
                     value=True,
-                    invalidate=True,
                 ),
                 desc.IntParam(
                     name="colorOptimizationNbIterations",
@@ -420,7 +379,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Number of iterations for the optimization.",
                     value=100,
                     range=(1, 500, 10),
-                    invalidate=True,
                     advanced=True,
                     enabled=lambda node: node.colorOptimization.colorOptimizationEnabled.value,
                 ),
@@ -438,7 +396,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Enable For SGM",
                     description="Enable custom patch pattern for similarity volume computation at the SGM step.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -446,7 +403,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Enable For Refine",
                     description="Enable custom patch pattern for similarity volume computation at the Refine step.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.ListAttribute(
@@ -469,7 +425,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                                 value="full",
                                 values=["full", "circle"],
                                 exclusive=True,
-                                invalidate=True,
                             ),
                             desc.FloatParam(
                                 name="customPatchPatternSubpartRadius",
@@ -477,7 +432,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                                 description="Patch pattern subpart half-width or circle radius.",
                                 value=2.5,
                                 range=(0.5, 30.0, 0.1),
-                                invalidate=True,
                             ),
                             desc.IntParam(
                                 name="customPatchPatternSubpartNbCoords",
@@ -485,7 +439,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                                 description="Patch pattern subpart number of coordinates (for circle or ignore).",
                                 value=12,
                                 range=(3, 24, 1),
-                                invalidate=True,
                             ),
                             desc.IntParam(
                                 name="customPatchPatternSubpartLevel",
@@ -493,7 +446,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                                 description="Patch pattern subpart image level.",
                                 value=0,
                                 range=(0, 2, 1),
-                                invalidate=True,
                             ),
                             desc.FloatParam(
                                 name="customPatchPatternSubpartWeight",
@@ -501,7 +453,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                                 description="Patch pattern subpart weight.",
                                 value=1.0,
                                 range=(0.0, 1.0, 0.1),
-                                invalidate=True,
                             ),
                         ],
                     ),
@@ -511,7 +462,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Group Subparts Per Level",
                     description="Group all subparts with the same image level.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                     enabled=lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
                 ),
@@ -530,7 +480,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Export Depth Maps",
                     description="Export intermediate depth/similarity maps from the SGM and Refine steps.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -538,7 +487,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Export Normal Maps",
                     description="Export intermediate normal maps from the SGM and Refine steps.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -546,7 +494,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Export Volumes",
                     description="Export intermediate full similarity volumes from the SGM and Refine steps.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -554,7 +501,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Export Cross Volumes",
                     description="Export intermediate similarity cross volumes from the SGM and Refine steps.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -562,7 +508,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Export Cut Volumes",
                     description="Export intermediate similarity topographic cut volumes from the SGM and Refine steps.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -570,7 +515,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Export 9 Points",
                     description="Export intermediate volumes 9 points from the SGM and Refine steps in CSV files.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                 ),
                 desc.BoolParam(
@@ -578,7 +522,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Export Tile Pattern",
                     description="Export the bounding boxes of tiles volumes as meshes. This allows to visualize the depth map search areas.",
                     value=False,
-                    invalidate=True,
                     advanced=True,
                 ),
             ],
@@ -599,7 +542,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -609,7 +551,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label="Folder",
             description="Output folder for generated depth maps.",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
         # these attributes are only here to describe more accurately the output of the node
         # by specifying that it generates 2 sequences of images
@@ -620,7 +561,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Generated depth maps.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap.exr",
-            invalidate=False,
             group="", # do not export on the command line
         ),
         desc.File(
@@ -629,7 +569,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Generated sim maps.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_simMap.exr",
-            invalidate=False,
             group="", # do not export on the command line
         ),
         desc.File(
@@ -637,7 +576,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label="Tile Pattern",
             description="Debug: Tile pattern.",
             value=desc.Node.internalFolder + "<VIEW_ID>_tilePattern.obj",
-            invalidate=False,
             group="", # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportTilePattern.value,
         ),
@@ -647,7 +585,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Debug: Depth maps SGM",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_sgm.exr",
-            invalidate=False,
             group="", # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
@@ -657,7 +594,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Debug: Depth maps SGM upscaled.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_sgmUpscaled.exr",
-            invalidate=False,
             group="", # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
@@ -667,7 +603,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Debug: Depth maps after refinement",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_refinedFused.exr",
-            invalidate=False,
             group="", # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),

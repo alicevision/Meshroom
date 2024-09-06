@@ -19,14 +19,12 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             label="Input SfMData",
             description="SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="checkerboards",
             label="Checkerboards Folder",
             description="Folder containing checkerboard JSON files.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="undistortionModelName",
@@ -35,21 +33,18 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             value="3deanamorphic4",
             values=["3deanamorphic4", "3declassicld", "3deradial4"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="handleSqueeze",
             label="Handle Squeeze",
             description="Estimate squeeze.",
             value=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="isDesqueezed",
             label="Is Desqueezed",
             description="True if the input image is already desqueezed.",
             value=False,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -58,7 +53,6 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -68,6 +62,5 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             label="SfMData File",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfmData.sfm",
-            invalidate=False,
         ),
     ]

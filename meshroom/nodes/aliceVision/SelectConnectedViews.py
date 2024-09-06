@@ -21,7 +21,6 @@ Select Connected Views based on SfM landmarks.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.IntParam(
             name="maxTCams",
@@ -29,7 +28,6 @@ Select Connected Views based on SfM landmarks.
             description="Maximum number of neighbour cameras per image.",
             value=10,
             range=(1, 20, 1),
-            invalidate=True,
         ),
         desc.FloatParam(
             name="minViewAngle",
@@ -37,7 +35,6 @@ Select Connected Views based on SfM landmarks.
             description="Minimum angle between two views (select the neighbouring cameras, select depth planes from epipolar segment point).",
             value=2.0,
             range=(0.0, 10.0, 0.1),
-            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -46,7 +43,6 @@ Select Connected Views based on SfM landmarks.
             description="Maximum angle between two views (select the neighbouring cameras, select depth planes from epipolar segment point).",
             value=70.0,
             range=(10.0, 120.0, 1.0),
-            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -56,7 +52,6 @@ Select Connected Views based on SfM landmarks.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -66,6 +61,5 @@ Select Connected Views based on SfM landmarks.
             label="Connected Views",
             description="List of connected views in a text file.",
             value=desc.Node.internalFolder + "connectedViews.txt",
-            invalidate=False,
         ),
     ]

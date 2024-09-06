@@ -66,7 +66,6 @@ Upload a textured mesh on Sketchfab.
                 label="Input",
                 description="",
                 value="",
-                invalidate=True,
             ),
             name="inputFiles",
             label="Input Files",
@@ -78,21 +77,18 @@ Upload a textured mesh on Sketchfab.
             label="API Token",
             description="Get your token from https://sketchfab.com/settings/password.",
             value="",
-            invalidate=True,
         ),
         desc.StringParam(
             name="title",
             label="Title",
             description="Title cannot be longer than 48 characters.",
             value="",
-            invalidate=True,
         ),
         desc.StringParam(
             name="description",
             label="Description",
             description="Description cannot be longer than 1024 characters.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="license",
@@ -106,7 +102,6 @@ Upload a textured mesh on Sketchfab.
                     "CC Attribution-NonCommercial-ShareAlike",
                     "CC Attribution-NonCommercial-NoDerivs"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.StringParam(
@@ -114,7 +109,6 @@ Upload a textured mesh on Sketchfab.
                 label="Tag",
                 description="Tag cannot be longer than 48 characters.",
                 value="",
-                invalidate=True,
             ),
             name="tags",
             label="Tags",
@@ -146,35 +140,30 @@ Upload a textured mesh on Sketchfab.
                     "sports-fitness",
                     "weapons-military"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="isPublished",
             label="Publish",
             description="If the model is not published, it will be saved as a draft.",
             value=False,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="isInspectable",
             label="Inspectable",
             description="Allow 2D view in model inspector.",
             value=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="isPrivate",
             label="Private",
             description="Requires a pro account.",
             value=False,
-            invalidate=True,
         ),
         desc.StringParam(
             name="password",
             label="Password",
             description="Requires a pro account.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -183,7 +172,6 @@ Upload a textured mesh on Sketchfab.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
     

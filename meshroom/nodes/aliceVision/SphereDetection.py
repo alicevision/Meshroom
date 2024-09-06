@@ -18,21 +18,18 @@ Spheres can be automatically detected or manually defined in the interface.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="modelPath",
             label="Detection Network",
             description="Deep learning network for automatic calibration sphere detection.",
             value="${ALICEVISION_SPHERE_DETECTION_MODEL}",
-            invalidate=True,
         ),
         desc.BoolParam(
             name="autoDetect",
             label="Automatic Sphere Detection",
             description="Automatic detection of calibration spheres.",
             value=False,
-            invalidate=True,
         ),
         desc.FloatParam(
             name="minScore",
@@ -41,7 +38,6 @@ Spheres can be automatically detected or manually defined in the interface.
             value=0.0,
             range=(0.0, 50.0, 0.01),
             advanced=True,
-            invalidate=True,
         ),
         desc.GroupAttribute(
             name="sphereCenter",
@@ -53,7 +49,6 @@ Spheres can be automatically detected or manually defined in the interface.
                     label="x",
                     description="X offset in pixels.",
                     value=0.0,
-                    invalidate=True,
                     range=(-1000.0, 10000.0, 1.0),
                 ),
                 desc.FloatParam(
@@ -61,7 +56,6 @@ Spheres can be automatically detected or manually defined in the interface.
                     label="y",
                     description="Y offset in pixels.",
                     value=0.0,
-                    invalidate=True,
                     range=(-1000.0, 10000.0, 1.0),
                 ),
             ],
@@ -75,7 +69,6 @@ Spheres can be automatically detected or manually defined in the interface.
             value=500.0,
             range=(0.0, 10000.0, 0.1),
             enabled=lambda node: not node.autoDetect.value,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -84,7 +77,6 @@ Spheres can be automatically detected or manually defined in the interface.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -94,6 +86,5 @@ Spheres can be automatically detected or manually defined in the interface.
             label="Output Path",
             description="Sphere detection information will be written here.",
             value=desc.Node.internalFolder + "/detection.json",
-            invalidate=False,
         )
     ]

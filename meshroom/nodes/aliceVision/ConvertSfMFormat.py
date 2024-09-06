@@ -20,7 +20,6 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             label="Input",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="fileExt",
@@ -29,7 +28,6 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             value="abc",
             values=["abc", "sfm", "json", "ply", "baf"],
             exclusive=True,
-            invalidate=True,
             group="",  # exclude from command line
         ),
         desc.ChoiceParam(
@@ -39,7 +37,6 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            invalidate=True,
             joinChar=",",
         ),
         desc.ListAttribute(
@@ -48,7 +45,6 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
                 label="Image ID",
                 description="UID or path of an image to add to the white list.",
                 value="",
-                invalidate=True,
             ),
             name="imageWhiteList",
             label="Image White List",
@@ -59,35 +55,30 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             label="Views",
             description="Export views.",
             value=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="intrinsics",
             label="Intrinsics",
             description="Export intrinsics.",
             value=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="extrinsics",
             label="Extrinsics",
             description="Export extrinsics.",
             value=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="structure",
             label="Structure",
             description="Export structure.",
             value=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="observations",
             label="Observations",
             description="Export observations.",
             value=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -96,7 +87,6 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -106,6 +96,5 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             label="Output",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.{fileExtValue}",
-            invalidate=False,
         ),
     ]

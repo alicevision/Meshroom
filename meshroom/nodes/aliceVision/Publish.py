@@ -24,7 +24,6 @@ This node allows to copy files into a specific folder.
                 label="Input",
                 description="File or folder to publish.",
                 value="",
-                invalidate=True,
             ),
             name="inputFiles",
             label="Input Files",
@@ -36,7 +35,6 @@ This node allows to copy files into a specific folder.
             label="Output Folder",
             description="Folder to publish to.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -45,7 +43,6 @@ This node allows to copy files into a specific folder.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 

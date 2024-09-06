@@ -18,28 +18,24 @@ Can also be used to calibrate a lighting dome (RTI type).
             label="Input SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="inputDetection",
             label="Sphere Detection File",
             description="Input JSON file containing sphere centers and radiuses.",
             value="",
-            invalidate=True,
         ),
         desc.BoolParam(
             name="saveAsModel",
             label="Save As Model",
             description="Check if this calibration file will be used with other datasets.",
             value=False,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="ellipticEstimation",
             label="Use elliptic estimation",
             description="Consider the right projection of the sphere. Fit the circle tool on the small axe of the ellipse.",
             value=False,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="method",
@@ -50,7 +46,6 @@ Can also be used to calibrate a lighting dome (RTI type).
             values=["brightestPoint", "whiteSphere", "SH"],
             value="brightestPoint",
             exclusive=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -59,7 +54,6 @@ Can also be used to calibrate a lighting dome (RTI type).
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -69,7 +63,6 @@ Can also be used to calibrate a lighting dome (RTI type).
             label="Light File",
             description="Light information will be written here.",
             value=desc.Node.internalFolder + "/lights.json",
-            invalidate=False,
         ),
         desc.File(
             name="lightingEstimationVisualization",
@@ -77,6 +70,5 @@ Can also be used to calibrate a lighting dome (RTI type).
             description="Estimated Lighting Visualization.",
             semantic="image",
             value=desc.Node.internalFolder + "/<FILESTEM>_{methodValue}.png",
-            invalidate=False,
         ),
     ]

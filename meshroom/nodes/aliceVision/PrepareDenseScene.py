@@ -21,7 +21,6 @@ This node export undistorted images so the depth map and texturing can be comput
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -29,7 +28,6 @@ This node export undistorted images so the depth map and texturing can be comput
                 label="Images Folder",
                 description="",
                 value="",
-                invalidate=True,
             ),
             name="imagesFolders",
             label="Images Folders",
@@ -41,7 +39,6 @@ This node export undistorted images so the depth map and texturing can be comput
                 label="Masks Folder",
                 description="",
                 value="",
-                invalidate=True,
             ),
             name="masksFolders",
             label="Masks Folders",
@@ -54,7 +51,6 @@ This node export undistorted images so the depth map and texturing can be comput
             value="png",
             values=["exr", "jpg", "png"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="outputFileType",
@@ -63,7 +59,6 @@ This node export undistorted images so the depth map and texturing can be comput
             value="exr",
             values=["jpg", "png", "tif", "exr"],
             exclusive=True,
-            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -71,7 +66,6 @@ This node export undistorted images so the depth map and texturing can be comput
             label="Save Metadata",
             description="Save projections and intrinsics information in images metadata (only for .exr images).",
             value=True,
-            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -79,7 +73,6 @@ This node export undistorted images so the depth map and texturing can be comput
             label="Save Matrices Text Files",
             description="Save projections and intrinsics information in text files.",
             value=False,
-            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -87,7 +80,6 @@ This node export undistorted images so the depth map and texturing can be comput
             label="Correct Images Exposure",
             description="Apply a correction on images' exposure value.",
             value=False,
-            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -97,7 +89,6 @@ This node export undistorted images so the depth map and texturing can be comput
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -107,7 +98,6 @@ This node export undistorted images so the depth map and texturing can be comput
             label="Images Folder",
             description="Output folder.",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
         desc.File(
             name="undistorted",
@@ -115,7 +105,6 @@ This node export undistorted images so the depth map and texturing can be comput
             description="List of undistorted images.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>.{outputFileTypeValue}",
-            invalidate=False,
             group="",
             advanced=True,
         ),

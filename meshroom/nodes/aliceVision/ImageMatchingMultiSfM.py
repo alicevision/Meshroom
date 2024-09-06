@@ -25,14 +25,12 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             label="Input A",
             description="First input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="inputB",
             label="Input B",
             description="Second input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -40,7 +38,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
                 label="Features Folder",
                 description="Folder containing some extracted features and descriptors.",
                 value="",
-                invalidate=True,
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -60,7 +57,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             value="SequentialAndVocabularyTree",
             values=["VocabularyTree", "SequentialAndVocabularyTree", "Exhaustive", "Frustum"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.File(
             name="tree",
@@ -76,7 +72,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description="Input name for the weight file.\n"
                         "If not provided, the weights will be computed on the database built with the provided set.",
             value="",
-            invalidate=True,
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -90,7 +85,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             value="a/a+a/b",
             values=["a/a+a/b","a/ab", "a/b"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.IntParam(
             name="minNbImages",
@@ -99,7 +93,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
                         "If we have less features than this threshold, we will compute all the matching combinations.",
             value=200,
             range=(0, 500, 1),
-            invalidate=True,
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -109,7 +102,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description="Limit the number of descriptors you load per image. 0 means no limit.",
             value=500,
             range=(0, 100000, 1),
-            invalidate=True,
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -119,7 +111,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description="The number of matches to retrieve for each image. (If 0, it will retrieve all the matches).",
             value=40,
             range=(0, 1000, 1),
-            invalidate=True,
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -129,7 +120,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description="The number of neighbors to retrieve for each image. (If 0, it will retrieve all the neighbors).",
             value=5,
             range=(0, 1000, 1),
-            invalidate=True,
             advanced=True,
             enabled=lambda node: "Sequential" in node.method.value,
         ),
@@ -140,7 +130,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -150,13 +139,11 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             label="List File",
             description="Filepath to the output file with the list of selected image pairs.",
             value=desc.Node.internalFolder + "imageMatches.txt",
-            invalidate=False,
         ),
         desc.File(
             name="outputCombinedSfM",
             label="Combined SfM",
             description="Path for the combined SfMData file.",
             value=desc.Node.internalFolder + "combineSfM.sfm",
-            invalidate=False,
         ),
     ]

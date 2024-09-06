@@ -19,21 +19,18 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="tracksFilename",
             label="Tracks File",
             description="Input tracks file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="pairs",
             label="Pairs File",
             description="Information on pairs.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -42,7 +39,6 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -52,6 +48,5 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             label="SfMData",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.abc",
-            invalidate=False,
         ),
     ]

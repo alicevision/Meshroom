@@ -24,7 +24,6 @@ class LidarMeshing(desc.AVCommandLineNode):
             label="Input JSON",
             description="Input JSON file with description of inputs.",
             value="",
-            invalidate=True,
         ),
         desc.BoolParam(
             name="useBoundingBox",
@@ -33,7 +32,6 @@ class LidarMeshing(desc.AVCommandLineNode):
                         "If enabled, it takes priority over the 'Estimate Space From SfM' option.\n"
                         "Parameters can be adjusted in advanced settings.",
             value=False,
-            invalidate=True,
             group="",
         ),
         desc.GroupAttribute(
@@ -49,19 +47,16 @@ class LidarMeshing(desc.AVCommandLineNode):
                         desc.FloatParam(
                             name="x", label="x", description="X offset.",
                             value=0.0,
-                            invalidate=True,
                             range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Y offset.",
                             value=0.0,
-                            invalidate=True,
                             range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Z offset.",
                             value=0.0,
-                            invalidate=True,
                             range=(-20.0, 20.0, 0.01),
                         ),
                     ],
@@ -75,19 +70,16 @@ class LidarMeshing(desc.AVCommandLineNode):
                         desc.FloatParam(
                             name="x", label="x", description="Euler X rotation.",
                             value=0.0,
-                            invalidate=True,
                             range=(-90.0, 90.0, 1.0),
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Euler Y rotation.",
                             value=0.0,
-                            invalidate=True,
                             range=(-180.0, 180.0, 1.0),
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Euler Z rotation.",
                             value=0.0,
-                            invalidate=True,
                             range=(-180.0, 180.0, 1.0),
                         ),
                     ],
@@ -101,19 +93,16 @@ class LidarMeshing(desc.AVCommandLineNode):
                         desc.FloatParam(
                             name="x", label="x", description="X scale.",
                             value=1.0,
-                            invalidate=True,
                             range=(0.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Y scale.",
                             value=1.0,
-                            invalidate=True,
                             range=(0.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Z scale.",
                             value=1.0,
-                            invalidate=True,
                             range=(0.0, 20.0, 0.01),
                         ),
                     ],
@@ -130,7 +119,6 @@ class LidarMeshing(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -140,13 +128,11 @@ class LidarMeshing(desc.AVCommandLineNode):
             label="Sub-Meshes Directory",
             description="Output directory for sub-meshes",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
         desc.File(
             name="outputJson",
             label="Scene Description",
             description="Output scene description.",
             value=desc.Node.internalFolder + "scene.json",
-            invalidate=False,
         ),
     ]

@@ -44,14 +44,12 @@ Calibrate LDR to HDR response curve from samples.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="samples",
             label="Samples Folder",
             description="Samples folder.",
             value=desc.Node.internalFolder,
-            invalidate=True,
         ),
         desc.IntParam(
             name="userNbBrackets",
@@ -72,7 +70,6 @@ Calibrate LDR to HDR response curve from samples.
                         "else it is equal to 'userNbBrackets'.",
             value=0,
             range=(0, 15, 1),
-            invalidate=True,
             group="bracketsParams",
         ),
         desc.BoolParam(
@@ -80,7 +77,6 @@ Calibrate LDR to HDR response curve from samples.
             label="Bypass",
             description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
-            invalidate=True,
             enabled=lambda node: node.nbBrackets.value != 1,
         ),
         desc.ChoiceParam(
@@ -95,7 +91,6 @@ Calibrate LDR to HDR response curve from samples.
             values=["auto", "linear", "debevec", "grossberg", "laguerre"],
             value="auto",
             exclusive=True,
-            invalidate=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
@@ -109,7 +104,6 @@ Calibrate LDR to HDR response curve from samples.
             value="default",
             values=["default", "gaussian", "triangle", "plateau"],
             exclusive=True,
-            invalidate=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
@@ -118,7 +112,6 @@ Calibrate LDR to HDR response curve from samples.
             description="Quantization level like 8 bits or 10 bits.",
             value=10,
             range=(8, 14, 1),
-            invalidate=True,
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
@@ -142,7 +135,6 @@ Calibrate LDR to HDR response curve from samples.
                         "can be managed by the calibration step (in term of computation time and memory usage).",
             value=1000000,
             range=(8, 10000000, 1000),
-            invalidate=True,
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
@@ -153,7 +145,6 @@ Calibrate LDR to HDR response curve from samples.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -163,7 +154,6 @@ Calibrate LDR to HDR response curve from samples.
             label="Response File",
             description="Path to the output response file.",
             value=desc.Node.internalFolder + "response_<INTRINSIC_ID>.csv",
-            invalidate=False,
         ),
     ]
 

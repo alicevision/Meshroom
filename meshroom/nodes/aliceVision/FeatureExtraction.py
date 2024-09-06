@@ -37,14 +37,12 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="masksFolder",
             label="Masks Folder",
             description="Use masks to filter features. Filename should be the same or the image UID.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="maskExtension",
@@ -53,14 +51,12 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             value="png",
             values=["png", "exr", "jpg"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="maskInvert",
             label="Invert Masks",
             description="Invert mask values.",
             value=False,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="describerTypes",
@@ -69,7 +65,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            invalidate=True,
             joinChar=",",
         ),
         desc.ChoiceParam(
@@ -80,7 +75,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             value="normal",
             values=["low", "medium", "normal", "high", "ultra", "custom"],
             exclusive=True,
-            invalidate=True,
             group=lambda node: 'allParams' if node.describerPreset.value != 'custom' else None,
         ),
         desc.IntParam(
@@ -89,7 +83,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             description="Maximum number of features extracted (0 means default value based on Describer Density).",
             value=0,
             range=(0, 100000, 1000),
-            invalidate=True,
             advanced=True,
             enabled=lambda node: (node.describerPreset.value == "custom"),
         ),
@@ -100,7 +93,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             value="normal",
             values=["low", "medium", "normal", "high", "ultra"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="contrastFiltering",
@@ -117,7 +109,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             values=["Static", "AdaptiveToMedianVariance", "NoFiltering", "GridSortOctaves", "GridSort", "GridSortScaleSteps", "GridSortOctaveSteps", "NonExtremaFiltering"],
             exclusive=True,
             advanced=True,
-            invalidate=True,
         ),
         desc.FloatParam(
             name="relativePeakThreshold",
@@ -126,7 +117,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             value=0.01,
             range=(0.01, 1.0, 0.001),
             advanced=True,
-            invalidate=True,
             enabled=lambda node: (node.contrastFiltering.value == "AdaptiveToMedianVariance"),
         ),
         desc.BoolParam(
@@ -135,7 +125,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             description="Enable grid filtering. Highly recommended to ensure usable number of features.",
             value=True,
             advanced=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="workingColorSpace",
@@ -144,14 +133,12 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             values=COLORSPACES,
             value="sRGB",
             exclusive=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="forceCpuExtraction",
             label="Force CPU Extraction",
             description="Use only CPU feature extraction.",
             value=True,
-            invalidate=False,
             advanced=True,
         ),
         desc.IntParam(
@@ -170,7 +157,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -180,6 +166,5 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             label="Features Folder",
             description="Output path for the features and descriptors files (*.feat, *.desc).",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
     ]

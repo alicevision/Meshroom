@@ -34,7 +34,6 @@ Dev notes:
             description="SfMData file input, image filenames or regex(es) on the image file path.\n"
                         "Supported regex: '#' matches a single digit, '@' one or more digits, '?' one character and '*' zero or more.",
             value="",
-            invalidate=True,
         ),
         desc.IntParam(
             name="maxCount",
@@ -42,7 +41,6 @@ Dev notes:
             description="Maximum color charts count to detect in a single image.",
             value=1,
             range=(1, 3, 1),
-            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -50,7 +48,6 @@ Dev notes:
             label="Debug",
             description="If checked, debug data will be generated.",
             value=False,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -59,7 +56,6 @@ Dev notes:
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -69,6 +65,5 @@ Dev notes:
             label="Color Checker Data",
             description="Output position and colorimetric data extracted from detected color checkers in the images.",
             value=desc.Node.internalFolder + "/ccheckers.json",
-            invalidate=False,
         ),
     ]

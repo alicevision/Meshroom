@@ -17,14 +17,12 @@ Decimate triangles based on image masks.
             label="Dense SfMData",
             description="Dense SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="inputMesh",
             label="Input Mesh",
             description="Input mesh.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="outputMeshFileType",
@@ -33,7 +31,6 @@ Decimate triangles based on image masks.
             value="obj",
             values=["obj", "gltf", "fbx", "stl"],
             exclusive=True,
-            invalidate=True,
             group="",
         ),
         desc.ListAttribute(
@@ -42,7 +39,6 @@ Decimate triangles based on image masks.
                 label="Masks Folder",
                 description="Folder containing some masks.",
                 value="",
-                invalidate=True,
             ),
             name="masksFolders",
             label="Masks Folders",
@@ -55,7 +51,6 @@ Decimate triangles based on image masks.
             value="png",
             values=["exr", "jpg", "png"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.IntParam(
             name="threshold",
@@ -63,14 +58,12 @@ Decimate triangles based on image masks.
             description="The minimum number of visibilities to keep a vertex.",
             value=1,
             range=(1, 100, 1),
-            invalidate=True,
         ),
         desc.BoolParam(
             name="smoothBoundary",
             label="Smooth Boundary",
             description="Modify the triangles at the boundary to fit the masks.",
             value=False,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="invert",
@@ -78,7 +71,6 @@ Decimate triangles based on image masks.
             description="If ticked, the selected area is ignored.\n"
                         "If not, only the selected area is considered.",
             value=False,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="undistortMasks",
@@ -86,7 +78,6 @@ Decimate triangles based on image masks.
             description="Undistort the masks with the same parameters as the matching image.\n"
                         "Select it if the masks are drawn on the original images.",
             value=False,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="usePointsVisibilities",
@@ -94,7 +85,6 @@ Decimate triangles based on image masks.
             description="Use the points visibilities from the meshing to filter triangles.\n"
                         "Example: when they are occluded, back-face, etc.",
             value=False,
-            invalidate=True
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -103,7 +93,6 @@ Decimate triangles based on image masks.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -113,6 +102,5 @@ Decimate triangles based on image masks.
             label="Mesh",
             description="Output mesh file.",
             value=desc.Node.internalFolder + "mesh.{outputMeshFileTypeValue}",
-            invalidate=False,
         ),
     ]

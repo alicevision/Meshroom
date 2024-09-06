@@ -17,7 +17,6 @@ class SfMDistances(desc.AVCommandLineNode):
             label="Input",
             description="SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="objectType",
@@ -26,7 +25,6 @@ class SfMDistances(desc.AVCommandLineNode):
             value="landmarks",
             values=["landmarks", "cameras"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="landmarksDescriberTypes",
@@ -35,7 +33,6 @@ class SfMDistances(desc.AVCommandLineNode):
             values=DESCRIBER_TYPES,
             value=["cctag3"],
             exclusive=False,
-            invalidate=True,
             joinChar=",",
         ),
         desc.StringParam(
@@ -45,7 +42,6 @@ class SfMDistances(desc.AVCommandLineNode):
                         "This value should be an ID or a list of IDs of landmarks IDs or cameras (UID or filename without extension).\n"
                         "It will list all elements if empty.",
             value="",
-            invalidate=True,
         ),
         desc.StringParam(
             name="B",
@@ -54,7 +50,6 @@ class SfMDistances(desc.AVCommandLineNode):
                         "This value should be an ID or a list of IDs of landmarks IDs or cameras (UID or filename without extension).\n"
                         "It will list all elements if empty.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -63,7 +58,6 @@ class SfMDistances(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 

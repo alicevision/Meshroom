@@ -18,14 +18,12 @@ class ImportKnownPoses(desc.AVCommandLineNode):
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="knownPosesData",
             label="Known Poses Data",
             description="Known poses data in the JSON or XMP format.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -34,7 +32,6 @@ class ImportKnownPoses(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -44,7 +41,6 @@ class ImportKnownPoses(desc.AVCommandLineNode):
             label="Output",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "/sfmData.abc",
-            invalidate=False,
         ),
     ]
 

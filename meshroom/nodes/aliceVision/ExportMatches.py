@@ -18,7 +18,6 @@ class ExportMatches(desc.AVCommandLineNode):
             label="Input",
             description="SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="describerTypes",
@@ -27,7 +26,6 @@ class ExportMatches(desc.AVCommandLineNode):
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            invalidate=True,
             joinChar=",",
         ),
         desc.ListAttribute(
@@ -36,7 +34,6 @@ class ExportMatches(desc.AVCommandLineNode):
                 label="Features Folder",
                 description="Folder containing some extracted features and descriptors.",
                 value="",
-                invalidate=True,
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -48,7 +45,6 @@ class ExportMatches(desc.AVCommandLineNode):
                 label="Matches Folder",
                 description="Folder containing some computed matches.",
                 value="",
-                invalidate=True,
             ),
             name="matchesFolders",
             label="Matches Folders",
@@ -61,7 +57,6 @@ class ExportMatches(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -71,6 +66,5 @@ class ExportMatches(desc.AVCommandLineNode):
             label="Folder",
             description="Output path for the features and descriptors files (*.feat, *.desc).",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
     ]

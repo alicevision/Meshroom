@@ -19,7 +19,6 @@ class ConvertDistortion(desc.AVCommandLineNode):
             label="Input",
             description="Input SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="from",
@@ -28,7 +27,6 @@ class ConvertDistortion(desc.AVCommandLineNode):
             value="distortion",
             values=["distortion", "undistortion"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="to",
@@ -37,7 +35,6 @@ class ConvertDistortion(desc.AVCommandLineNode):
             value="undistortion",
             values=["distortion", "undistortion"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -46,7 +43,6 @@ class ConvertDistortion(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -56,6 +52,5 @@ class ConvertDistortion(desc.AVCommandLineNode):
             label="Output",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.abc",
-            invalidate=False,
         ),
     ]

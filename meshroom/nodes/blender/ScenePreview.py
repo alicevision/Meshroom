@@ -42,28 +42,24 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             label="Cameras",
             description="SfMData with the views, poses and intrinsics to use (in JSON format).",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="model",
             label="Model",
             description="Point cloud (.abc) or mesh (.obj) to render.",
             value="",
-            invalidate=True,
         ),
         desc.BoolParam(
             name="useBackground",
             label="Display Background",
             description="Use the undistorted images as background.",
             value=True,
-            invalidate=True,
         ),
         desc.File(
             name="undistortedImages",
             label="Undistorted Images",
             description="Folder containing the undistorted images.",
             value="",
-            invalidate=True,
             enabled=lambda node: node.useBackground.value,
         ),
         desc.BoolParam(
@@ -71,14 +67,12 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             label="Apply Masks",
             description="Apply mask to the rendered geometry.",
             value=True,
-            invalidate=True,
         ),
         desc.File(
             name="masks",
             label="Masks",
             description="Folder containing the masks.",
             value="",
-            invalidate=True,
             enabled=lambda node: node.useMasks.value,
         ),
         desc.GroupAttribute(
@@ -94,7 +88,6 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
                     description="Scale of particles used for the point cloud.",
                     value=0.01,
                     range=(0.01, 1.0, 0.01),
-                    invalidate=True,
                 ),
                 desc.ChoiceParam(
                     name="particleColor",
@@ -103,7 +96,6 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
                     value="Red",
                     values=["Grey", "White", "Red", "Green", "Magenta"],
                     exclusive=True,
-                    invalidate=True,
                 ),
             ],
         ),
@@ -121,7 +113,6 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
                     value="wireframe",
                     values=["wireframe", "line_art"],
                     exclusive=True,
-                    invalidate=True,
                 ),
                 desc.ChoiceParam(
                     name="edgeColor",
@@ -130,7 +121,6 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
                     value="Red",
                     values=["Grey", "White", "Red", "Green", "Magenta"],
                     exclusive=True,
-                    invalidate=True,
                 ),
             ],
         ),
@@ -142,7 +132,6 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             label="Output",
             description="Output folder.",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
         desc.File(
             name="frames",
@@ -150,7 +139,6 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             description="Frames rendered in Blender.",
             semantic="image",
             value=desc.Node.internalFolder + "<FILESTEM>_preview.jpg",
-            invalidate=False,
             group="",
         ),
     ]

@@ -23,14 +23,12 @@ This allows to filter unstable points before starting the fusion of all depth ma
             label="SfMData",
             description="SfMData file.",
             value="",
-            invalidate=True,
         ),
         desc.File(
             name="depthMapsFolder",
             label="Depth Maps Folder",
             description="Input depth maps folder.",
             value="",
-            invalidate=True,
         ),
         desc.FloatParam(
             name="minViewAngle",
@@ -38,7 +36,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Minimum angle between two views.",
             value=2.0,
             range=(0.0, 10.0, 0.1),
-            invalidate=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -47,7 +44,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Maximum angle between two views.",
             value=70.0,
             range=(10.0, 120.0, 1.0),
-            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -56,7 +52,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Number of nearest cameras used for filtering.",
             value=10,
             range=(0, 20, 1),
-            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -65,7 +60,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Minimum number of consistent cameras.",
             value=3,
             range=(0, 10, 1),
-            invalidate=True,
         ),
         desc.IntParam(
             name="minNumOfConsistentCamsWithLowSimilarity",
@@ -73,7 +67,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Minimum number of consistent cameras for pixels with weak similarity value.",
             value=4,
             range=(0, 10, 1),
-            invalidate=True,
         ),
         desc.FloatParam(
             name="pixToleranceFactor",
@@ -81,7 +74,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Filtering tolerance size factor, in pixels.",
             value=2.0,
             range=(0.001, 10.0, 0.1),
-            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -90,7 +82,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Filtering size in pixels.",
             value=0,
             range=(0, 10, 1),
-            invalidate=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -99,7 +90,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Filtering size in pixels for low similarity.",
             value=0,
             range=(0, 10, 1),
-            invalidate=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -107,7 +97,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             label="Compute Normal Maps",
             description="Compute normal maps for each depth map.",
             value=False,
-            invalidate=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -117,7 +106,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -127,7 +115,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             label="Filtered Depth Maps Folder",
             description="Output folder for generated depth maps.",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
         # these attributes are only here to describe more accurately the output of the node
         # by specifying that it generates 2 sequences of images
@@ -138,7 +125,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Filtered depth maps.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap.exr",
-            invalidate=False,
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -147,7 +133,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Filtered sim maps.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_simMap.exr",
-            invalidate=False,
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -156,7 +141,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Normal maps.",
             semantic="image",
             value=desc.Node.internalFolder + "<VIEW_ID>_normalMap.exr",
-            invalidate=False,
             enabled=lambda node: node.computeNormalMaps.value,
             group="",  # do not export on the command line
         ),

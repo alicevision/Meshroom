@@ -21,7 +21,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             label="Input Folder",
             description="Input folder with evaluation datasets.",
             value="",
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="describerTypes",
@@ -30,7 +29,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             values=DESCRIBER_TYPES,
             value=["sift"],
             exclusive=False,
-            invalidate=True,
             joinChar=",",
         ),
         desc.ChoiceParam(
@@ -41,7 +39,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             value="normal",
             values=["low", "medium", "normal", "high", "ultra"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="describerQuality",
@@ -50,7 +47,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             value="normal",
             values=["low", "medium", "normal", "high", "ultra"],
             exclusive=True,
-            invalidate=True,
         ),
         desc.ChoiceParam(
             name="contrastFiltering",
@@ -67,7 +63,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             values=["Static", "AdaptiveToMedianVariance", "NoFiltering", "GridSortOctaves", "GridSort", "GridSortScaleSteps", "GridSortOctaveSteps", "NonExtremaFiltering"],
             exclusive=True,
             advanced=True,
-            invalidate=True,
         ),
         desc.FloatParam(
             name="relativePeakThreshold",
@@ -76,7 +71,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             value=0.01,
             range=(0.01, 1.0, 0.001),
             advanced=True,
-            invalidate=True,
             enabled=lambda node: (node.contrastFiltering.value == "AdaptiveToMedianVariance"),
         ),
         desc.BoolParam(
@@ -85,7 +79,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             description="Enable grid filtering. Highly recommended to ensure a usable number of features.",
             value=True,
             advanced=True,
-            invalidate=True,
         ),
         desc.BoolParam(
             name="forceCpuExtraction",
@@ -102,7 +95,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             value=0,
             range=(0, 10000, 1),
             group="",
-            invalidate=True,
         ),
         desc.StringParam(
             name="comments",
@@ -119,7 +111,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            invalidate=False,
         ),
     ]
 
@@ -129,6 +120,5 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             label="Folder",
             description="Output path for the features and descriptors files (*.feat, *.desc).",
             value=desc.Node.internalFolder,
-            invalidate=False,
         ),
     ]

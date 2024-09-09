@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
 import QtQuick.Dialogs 1.3
 
+import Qt.labs.platform 1.0 as Platform
 import Qt.labs.settings 1.0
 
 ApplicationWindow {
@@ -75,6 +76,49 @@ ApplicationWindow {
         // Store main window dimensions in persisting Settings
         settingsGeneral.windowWidth = _window.width
         settingsGeneral.windowHeight = _window.height
+    }
+
+    function initFileDialogFolder(dialog, importImages = false) {
+        let folder = "";
+
+        if (mainStack.currentItem instanceof Homepage) {
+            folder = Filepath.stringToUrl(Filepath.dirname(MeshroomApp.recentProjectFiles[0]["path"]))
+        } else {
+            if (mainStack.currentItem.imagesFolder.toString() === "" && mainStack.currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {
+                imagesFolder = Filepath.stringToUrl(Filepath.dirname(mainStack.currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source))
+            }
+
+            if (_reconstruction.graph && _reconstruction.graph.filepath) {
+                folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+            } else {
+                var projects = MeshroomApp.recentProjectFiles
+
+                if (projects.length > 0 && Filepath.exists(projects[0]["path"])) {
+                    folder = Filepath.stringToUrl(Filepath.dirname(projects[0]["path"]))
+                }
+            }
+
+            if (importImages && mainStack.currentItem.imagesFolder.toString() !== "" && Filepath.exists(imagesFolder)) {
+                folder = mainStack.currentItem.imagesFolder
+            }
+        }
+
+        dialog.folder = folder
+    }
+
+    Platform.FileDialog {
+        id: openFileDialog
+        options: Platform.FileDialog.DontUseNativeDialog
+        title: "Open File"
+        nameFilters: ["Meshroom Graphs (*.mg)"]
+        onAccepted: {
+            if (_reconstruction.loadUrl(currentFile)) {
+                MeshroomApp.addRecentProjectFile(currentFile.toString())
+            }
+            if (mainStack.currentItem instanceof Homepage) {
+                mainStack.push("Application.qml")
+            }
+        }
     }
 
     // Check if document has been saved

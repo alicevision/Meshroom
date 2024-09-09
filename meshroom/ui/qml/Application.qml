@@ -19,6 +19,7 @@ Page {
 
     property alias computingAtExitDialog: computingAtExitDialog
     property alias unsavedDialog: unsavedDialog
+    property alias workspaceView: workspaceView
 
     Settings {
         id: settingsUILayout
@@ -30,30 +31,6 @@ Page {
     }
 
     // Utility functions for elements in the menubar
-    function initFileDialogFolder(dialog, importImages = false) {
-        let folder = "";
-
-        if (imagesFolder.toString() === "" && workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {
-            imagesFolder = Filepath.stringToUrl(Filepath.dirname(workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source))
-        }
-
-        if (_reconstruction.graph && _reconstruction.graph.filepath) {
-            folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
-        } else {
-            var projects = MeshroomApp.recentProjectFiles
-
-            if (projects.length > 0 && Filepath.exists(projects[0]["path"])) {
-                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]["path"]))
-            }
-        }
-
-        if (importImages && imagesFolder.toString() !== "" && Filepath.exists(imagesFolder)) {
-            folder = imagesFolder
-        }
-
-        dialog.folder = folder
-    }
-
     function getSelectedNodesName() {
         if (!_reconstruction)
             return ""
@@ -115,18 +92,6 @@ Page {
             MeshroomApp.reloadTemplateList()
         }
         onRejected: closed(Platform.Dialog.Rejected)
-    }
-
-    Platform.FileDialog {
-        id: openFileDialog
-        options: Platform.FileDialog.DontUseNativeDialog
-        title: "Open File"
-        nameFilters: ["Meshroom Graphs (*.mg)"]
-        onAccepted: {
-            if (_reconstruction.loadUrl(currentFile)) {
-                MeshroomApp.addRecentProjectFile(currentFile.toString())
-            }
-        }
     }
 
     Platform.FileDialog {
@@ -573,13 +538,17 @@ Page {
                 border.color: Qt.darker(activePalette.window, 1.15)
             }
 
-            onClicked: ensureSaved(function() {
-                _reconstruction.clear()
-                if (mainStack.depth == 1)
-                    mainStack.replace("Homepage.qml")
-                else
-                    mainStack.pop()
-            })
+            onClicked: {
+                if (!ensureNotComputing())
+                    return
+                ensureSaved(function() {
+                    _reconstruction.clear()
+                    if (mainStack.depth == 1)
+                        mainStack.replace("Homepage.qml")
+                    else
+                        mainStack.pop()
+                })
+            }
         }
         MenuBar {
             palette.window: Qt.darker(activePalette.window, 1.15)
@@ -887,7 +856,7 @@ Page {
 
                 text: !(_reconstruction.computingLocally) ? MaterialIcons.send : MaterialIcons.cancel_schedule_send
 
-                ToolTip.text: !(_reconstruction.computingLocally) ? "Start the computation" : "Stop the computation"
+                ToolTip.text: !(_reconstruction.computingLocally) ? "Compute" : "Stop Computing"
                 ToolTip.visible: hovered
 
                 background: Rectangle {
@@ -906,7 +875,7 @@ Page {
                 visible: _reconstruction ? _reconstruction.canSubmit : false
                 text: MaterialIcons.rocket_launch
 
-                ToolTip.text: "Submit"
+                ToolTip.text: "Submit on Render Farm"
                 ToolTip.visible: hovered
 
                 background: Rectangle {

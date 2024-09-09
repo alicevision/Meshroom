@@ -26,7 +26,7 @@ Page {
             height: parent.height
 
             Layout.minimumWidth: 200
-            Layout.maximumWidth: 400
+            Layout.maximumWidth: 300
 
             AnimatedImage {
                 id: logo
@@ -36,6 +36,7 @@ Page {
                 fillMode: Image.PreserveAspectFit
                 // Enforce aspect ratio of the component, as the fillMode does not do the job
                 Layout.preferredHeight: width / ratio
+                smooth: true
 
                 source: "../img/meshroom-anim-once.gif"
             }
@@ -198,7 +199,7 @@ Page {
 
             TabPanel {
                 id: tabPanel
-                tabs: ["Pipelines", "Recent Projects"]
+                tabs: ["Pipelines", "Projects"]
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -241,11 +242,11 @@ Page {
                     anchors.fill: parent
                     anchors.topMargin: cellHeight * 0.1
 
-                    cellWidth: 200
+                    cellWidth: 195
                     cellHeight: cellWidth
                     anchors.margins: 10
 
-                    model: MeshroomApp.recentProjectFiles
+                    model: [{ "path": null, "thumbnail": null}].concat(MeshroomApp.recentProjectFiles)
 
                     // Update grid item when corresponding thumbnail is computed
                     Connections {
@@ -286,11 +287,11 @@ Page {
                             width: gridView.cellWidth * 0.9
 
                             ToolTip.visible: hovered
-                            ToolTip.text: modelData["path"]
+                            ToolTip.text: modelData["path"] ? modelData["path"] : "Open browser to select a project file"
 
                             font.pointSize: 24
 
-                            text: modelData["thumbnail"] ? "" : MaterialIcons.description
+                            text: modelData["path"] ? (modelData["thumbnail"] ? "" : MaterialIcons.description) : MaterialIcons.folder_open
 
                             Image {
                                 id: thumbnail
@@ -313,12 +314,17 @@ Page {
                             Connections {
                                 target: projectDelegate
                                 function onClicked() {
-                                    // Open project
-                                    mainStack.push("Application.qml")
-                                    if (_reconstruction.loadUrl(modelData["path"])) {
-                                        MeshroomApp.addRecentProjectFile(modelData["path"])
-                                    } else {
-                                        MeshroomApp.removeRecentProjectFile(modelData["path"])
+                                    if (!modelData["path"]){
+                                        initFileDialogFolder(openFileDialog)
+                                        openFileDialog.open()
+                                    } else{
+                                        // Open project
+                                        mainStack.push("Application.qml")
+                                        if (_reconstruction.loadUrl(modelData["path"])) {
+                                            MeshroomApp.addRecentProjectFile(modelData["path"])
+                                        } else {
+                                            MeshroomApp.removeRecentProjectFile(modelData["path"])
+                                        }
                                     }
                                 }
                             }
@@ -329,7 +335,7 @@ Page {
                             horizontalAlignment: Text.AlignHCenter
                             width: projectDelegate.width
                             elide: Text.ElideMiddle
-                            text: Filepath.basename(modelData["path"])
+                            text: modelData["path"] ? Filepath.basename(modelData["path"]) : "Open project"
                             maximumLineCount: 1
                             font.pointSize: 10
                         }

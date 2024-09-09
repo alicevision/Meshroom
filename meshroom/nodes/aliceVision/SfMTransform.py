@@ -22,7 +22,7 @@ The transformation can be based on:
  * from_markers: Align specific markers to custom coordinates
  * from_gps: Align with the gps positions from the image metadata
  * align_ground: Detect ground level and align to it
- * from_linup: Align using external lineup file
+ * from_lineup: Align using a camera pose (json line up file), tracks and a mesh
 '''
 
     inputs = [
@@ -56,7 +56,7 @@ The transformation can be based on:
         ),
         desc.File(
             name="lineUp",
-            label="LineUp file",
+            label="Line Up File",
             description="LineUp Json file.",
             value="",
             uid=[0],
@@ -64,7 +64,7 @@ The transformation can be based on:
         ),
         desc.File(
             name="tracksFile",
-            label="tracks file",
+            label="Tracks File",
             description="Tracks file for lineup.",
             value="",
             uid=[0],
@@ -72,7 +72,7 @@ The transformation can be based on:
         ),
         desc.File(
             name="objectFile",
-            label="Mesh file",
+            label="Mesh File",
             description="Mesh file for lineup.",
             value="",
             uid=[0],

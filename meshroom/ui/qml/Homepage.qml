@@ -123,6 +123,10 @@ Page {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: Qt.openUrlExternally("https://www.technicolor.com/")
+
+                        hoverEnabled: true
+                        ToolTip.visible: containsMouse
+                        ToolTip.text: "Technicolor Group"
                     }
                 }
 
@@ -141,6 +145,10 @@ Page {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: Qt.openUrlExternally("https://www.mpcvfx.com/")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "MPC - Moving Picture Company"
                         }
                     }
 
@@ -151,6 +159,10 @@ Page {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: Qt.openUrlExternally("https://www.themill.com/")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "The Mill"
                         }
                     }
 
@@ -161,6 +173,10 @@ Page {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: Qt.openUrlExternally("https://www.mikrosanimation.com/")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "Mikros Animation"
                         }
                     }
 
@@ -171,6 +187,77 @@ Page {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: Qt.openUrlExternally("https://www.technicolorgames.com/")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "Technicolor Games"
+                        }
+                    }
+                }
+
+                RowLayout {
+                    id: academicRow
+
+                    Layout.fillWidth: true
+                    Layout.leftMargin: leftColumn.width * 0.05
+                    Layout.rightMargin: leftColumn.width * 0.05
+                    Layout.alignment: Qt.AlignHCenter
+
+                    spacing: 30
+
+                    Image {
+                        source: "../img/logo_IRIT.png"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Qt.openUrlExternally("https://www.irit.fr/en/departement/dep-hpc-simulation-optimization/reva-team")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "IRIT - Institut de Recherche en Informatique de Toulouse"
+                        }
+                    }
+
+                    Image {
+                        source: "../img/logo_CTU.png"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Qt.openUrlExternally("http://aag.ciirc.cvut.cz")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "CTU - Czech Technical University in Prague"
+                        }
+                    }
+
+                    Image {
+                        source: "../img/logo_uio.png"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Qt.openUrlExternally("https://www.mn.uio.no/ifi/english/about/organisation/dis")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "UiO - University of Oslo"
+                        }
+                    }
+
+                    Image {
+                        source: "../img/logo_enpc.png"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Qt.openUrlExternally("https://imagine-lab.enpc.fr")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "ENPC - Ecole des Ponts ParisTech"
                         }
                     }
                 }

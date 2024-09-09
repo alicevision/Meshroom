@@ -26,7 +26,7 @@ Page {
             height: parent.height
 
             Layout.minimumWidth: 200
-            Layout.maximumWidth: 400
+            Layout.maximumWidth: 300
 
             AnimatedImage {
                 id: logo
@@ -36,6 +36,7 @@ Page {
                 fillMode: Image.PreserveAspectFit
                 // Enforce aspect ratio of the component, as the fillMode does not do the job
                 Layout.preferredHeight: width / ratio
+                smooth: true
 
                 source: "../img/meshroom-anim-once.gif"
             }
@@ -122,6 +123,10 @@ Page {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: Qt.openUrlExternally("https://www.technicolor.com/")
+
+                        hoverEnabled: true
+                        ToolTip.visible: containsMouse
+                        ToolTip.text: "Technicolor Group"
                     }
                 }
 
@@ -140,6 +145,10 @@ Page {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: Qt.openUrlExternally("https://www.mpcvfx.com/")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "MPC - Moving Picture Company"
                         }
                     }
 
@@ -150,6 +159,10 @@ Page {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: Qt.openUrlExternally("https://www.themill.com/")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "The Mill"
                         }
                     }
 
@@ -160,6 +173,10 @@ Page {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: Qt.openUrlExternally("https://www.mikrosanimation.com/")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "Mikros Animation"
                         }
                     }
 
@@ -170,6 +187,77 @@ Page {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: Qt.openUrlExternally("https://www.technicolorgames.com/")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "Technicolor Games"
+                        }
+                    }
+                }
+
+                RowLayout {
+                    id: academicRow
+
+                    Layout.fillWidth: true
+                    Layout.leftMargin: leftColumn.width * 0.05
+                    Layout.rightMargin: leftColumn.width * 0.05
+                    Layout.alignment: Qt.AlignHCenter
+
+                    spacing: 30
+
+                    Image {
+                        source: "../img/logo_IRIT.png"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Qt.openUrlExternally("https://www.irit.fr/en/departement/dep-hpc-simulation-optimization/reva-team")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "IRIT - Institut de Recherche en Informatique de Toulouse"
+                        }
+                    }
+
+                    Image {
+                        source: "../img/logo_CTU.png"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Qt.openUrlExternally("http://aag.ciirc.cvut.cz")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "CTU - Czech Technical University in Prague"
+                        }
+                    }
+
+                    Image {
+                        source: "../img/logo_uio.png"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Qt.openUrlExternally("https://www.mn.uio.no/ifi/english/about/organisation/dis")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "UiO - University of Oslo"
+                        }
+                    }
+
+                    Image {
+                        source: "../img/logo_enpc.png"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Qt.openUrlExternally("https://imagine-lab.enpc.fr")
+
+                            hoverEnabled: true
+                            ToolTip.visible: containsMouse
+                            ToolTip.text: "ENPC - Ecole des Ponts ParisTech"
                         }
                     }
                 }
@@ -198,7 +286,7 @@ Page {
 
             TabPanel {
                 id: tabPanel
-                tabs: ["Pipelines", "Recent Projects"]
+                tabs: ["Pipelines", "Projects"]
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -241,11 +329,11 @@ Page {
                     anchors.fill: parent
                     anchors.topMargin: cellHeight * 0.1
 
-                    cellWidth: 200
+                    cellWidth: 195
                     cellHeight: cellWidth
                     anchors.margins: 10
 
-                    model: MeshroomApp.recentProjectFiles
+                    model: [{ "path": null, "thumbnail": null}].concat(MeshroomApp.recentProjectFiles)
 
                     // Update grid item when corresponding thumbnail is computed
                     Connections {
@@ -286,11 +374,11 @@ Page {
                             width: gridView.cellWidth * 0.9
 
                             ToolTip.visible: hovered
-                            ToolTip.text: modelData["path"]
+                            ToolTip.text: modelData["path"] ? modelData["path"] : "Open browser to select a project file"
 
                             font.pointSize: 24
 
-                            text: modelData["thumbnail"] ? "" : MaterialIcons.description
+                            text: modelData["path"] ? (modelData["thumbnail"] ? "" : MaterialIcons.description) : MaterialIcons.folder_open
 
                             Image {
                                 id: thumbnail
@@ -313,12 +401,17 @@ Page {
                             Connections {
                                 target: projectDelegate
                                 function onClicked() {
-                                    // Open project
-                                    mainStack.push("Application.qml")
-                                    if (_reconstruction.loadUrl(modelData["path"])) {
-                                        MeshroomApp.addRecentProjectFile(modelData["path"])
-                                    } else {
-                                        MeshroomApp.removeRecentProjectFile(modelData["path"])
+                                    if (!modelData["path"]){
+                                        initFileDialogFolder(openFileDialog)
+                                        openFileDialog.open()
+                                    } else{
+                                        // Open project
+                                        mainStack.push("Application.qml")
+                                        if (_reconstruction.loadUrl(modelData["path"])) {
+                                            MeshroomApp.addRecentProjectFile(modelData["path"])
+                                        } else {
+                                            MeshroomApp.removeRecentProjectFile(modelData["path"])
+                                        }
                                     }
                                 }
                             }
@@ -329,7 +422,7 @@ Page {
                             horizontalAlignment: Text.AlignHCenter
                             width: projectDelegate.width
                             elide: Text.ElideMiddle
-                            text: Filepath.basename(modelData["path"])
+                            text: modelData["path"] ? Filepath.basename(modelData["path"]) : "Open project"
                             maximumLineCount: 1
                             font.pointSize: 10
                         }

@@ -22,7 +22,7 @@ The transformation can be based on:
  * from_markers: Align specific markers to custom coordinates
  * from_gps: Align with the gps positions from the image metadata
  * align_ground: Detect ground level and align to it
-
+ * from_linup: Align using external lineup file
 '''
 
     inputs = [
@@ -47,11 +47,36 @@ The transformation can be based on:
                         " - from_center_camera: Defines the coordinate system from the camera closest to the center of the reconstruction.\n"
                         " - from_markers: Defines the coordinate system from markers specified by --markers.\n"
                         " - from_gps: Defines coordinate system from GPS metadata.\n"
+                        " - from_lineup: Defines coordinate system using lineup json file.\n"
                         " - align_ground: Defines ground level from the point cloud density. It assumes that the scene is oriented.",
             value="auto",
-            values=["transformation", "manual", "auto", "auto_from_cameras", "auto_from_cameras_x_axis", "auto_from_landmarks", "from_single_camera", "from_center_camera", "from_markers", "from_gps", "align_ground"],
+            values=["transformation", "manual", "auto", "auto_from_cameras", "auto_from_cameras_x_axis", "auto_from_landmarks", "from_single_camera", "from_center_camera", "from_markers", "from_gps", "from_lineup", "align_ground"],
             exclusive=True,
             uid=[0],
+        ),
+        desc.File(
+            name="lineUp",
+            label="LineUp file",
+            description="LineUp Json file.",
+            value="",
+            uid=[0],
+            enabled=lambda node: node.method.value == "from_lineup"
+        ),
+        desc.File(
+            name="tracksFile",
+            label="tracks file",
+            description="Tracks file for lineup.",
+            value="",
+            uid=[0],
+            enabled=lambda node: node.method.value == "from_lineup"
+        ),
+        desc.File(
+            name="objectFile",
+            label="Mesh file",
+            description="Mesh file for lineup.",
+            value="",
+            uid=[0],
+            enabled=lambda node: node.method.value == "from_lineup"
         ),
         desc.StringParam(
             name="transformation",

@@ -35,6 +35,11 @@ RowLayout {
     layoutDirection: Qt.LeftToRight
     spacing: 3
 
+    ToolTip.text: attribute.name + ": " + attribute.type
+    ToolTip.visible: nameLabel.hovered
+    ToolTip.toolTip.y: nameLabel.y + nameLabel.height
+    ToolTip.toolTip.x: nameLabel.x
+
     function updatePin(isSrc, isVisible)
     {
         if (isSrc) {

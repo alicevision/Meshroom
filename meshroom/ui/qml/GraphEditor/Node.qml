@@ -96,14 +96,6 @@ Item {
         return str
     }
 
-    // Whether an attribute can be displayed as an attribute pin on the node
-    function isFileAttributeBaseType(attribute) {
-        // ATM, only File attributes are meant to be connected
-        // TODO: review this if we want to connect something else
-        return attribute.type === "File"
-               || (attribute.type === "ListAttribute" && attribute.desc.elementDesc.type === "File")
-    }
-
     // Used to generate list of node's label sharing the same uid
     function generateDuplicateList() {
         let str = "<b>Shares internal folder (data) with:</b>"
@@ -442,7 +434,7 @@ Item {
 
                                 delegate: Loader {
                                     id: inputLoader
-                                    active: !object.isOutput && isFileAttributeBaseType(object)
+                                    active: !object.isOutput && object.desc.exposed && object.desc.visible
                                     visible: Boolean(object.enabled)
                                     width: inputs.width
 
@@ -502,7 +494,7 @@ Item {
                                     model: node ? node.attributes : undefined
                                     delegate: Loader {
                                         id: paramLoader
-                                        active: !object.isOutput && !isFileAttributeBaseType(object)
+                                        active: !object.isOutput && !object.desc.exposed && object.desc.visible
                                         visible: Boolean(object.enabled || object.isLink || object.hasOutputConnections)
                                         property bool isFullyActive: Boolean(m.displayParams || object.isLink || object.hasOutputConnections)
                                         width: parent.width

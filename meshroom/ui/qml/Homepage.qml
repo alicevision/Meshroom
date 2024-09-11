@@ -422,7 +422,7 @@ Page {
                             horizontalAlignment: Text.AlignHCenter
                             width: projectDelegate.width
                             elide: Text.ElideMiddle
-                            text: modelData["path"] ? Filepath.basename(modelData["path"]) : "Open project"
+                            text: modelData["path"] ? Filepath.basename(modelData["path"]) : "Open Project"
                             maximumLineCount: 1
                             font.pointSize: 10
                         }

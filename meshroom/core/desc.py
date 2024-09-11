@@ -16,7 +16,7 @@ class Attribute(BaseObject):
     """
 
     def __init__(self, name, label, description, value, advanced, semantic, uid, group, enabled, uidIgnoreValue=None,
-                 validValue=True, errorMessage="", visible=True):
+                 validValue=True, errorMessage="", visible=True, exposed=False):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
@@ -31,6 +31,7 @@ class Attribute(BaseObject):
         self._validValue = validValue
         self._errorMessage = errorMessage
         self._visible = visible
+        self._exposed = exposed
         self._isExpression = (isinstance(self._value, str) and "{" in self._value) or isinstance(self._value, types.FunctionType)
         self._isDynamicValue = (self._value is None)
         self._valueType = None
@@ -91,7 +92,14 @@ class Attribute(BaseObject):
     uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
     validValue = Property(Variant, lambda self: self._validValue, constant=True)
     errorMessage = Property(str, lambda self: self._errorMessage, constant=True)
+    # visible:
+    #   The attribute is not displayed in the Graph Editor if False but still visible in the Node Editor.
+    #   This property is useful to hide some attributes that are not relevant for the user.
     visible = Property(bool, lambda self: self._visible, constant=True)
+    # exposed:
+    #   The attribute is exposed in the upper part of the node in the Graph Editor.
+    #   By default, all file attributes are exposed.
+    exposed = Property(bool, lambda self: self._exposed, constant=True)
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
     # instanceType
     #   Attribute instance corresponding to the description
@@ -100,13 +108,13 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' ', visible=True):
+    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' ', visible=True, exposed=False):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -147,14 +155,14 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' ', brackets=None, visible=True):
+    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' ', brackets=None, visible=True, exposed=False):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
         self._brackets = brackets
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -246,16 +254,16 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group, advanced, semantic, enabled, uidIgnoreValue=None, validValue=True, errorMessage="", visible=True):
+    def __init__(self, name, label, description, value, uid, group, advanced, semantic, enabled, uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
         super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
-            uidIgnoreValue=uidIgnoreValue, validValue=validValue, errorMessage=errorMessage, visible=visible)
+            uidIgnoreValue=uidIgnoreValue, validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
 
 
 class File(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True):
-        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True, exposed=True):
+        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
         self._valueType = str
 
     def validateValue(self, value):
@@ -276,8 +284,8 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True):
-        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True, exposed=False):
+        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
         self._valueType = bool
 
     def validateValue(self, value):
@@ -300,10 +308,10 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', enabled=True, validValue=True, errorMessage="", visible=True):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', enabled=True, validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
         super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
-            validValue=validValue, errorMessage=errorMessage, visible=visible)
+            validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
         self._valueType = int
 
     def validateValue(self, value):
@@ -326,10 +334,10 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', enabled=True, validValue=True, errorMessage="", visible=True):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', enabled=True, validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
-            validValue=validValue, errorMessage=errorMessage, visible=visible)
+            validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
         self._valueType = float
 
     def validateValue(self, value):
@@ -350,8 +358,8 @@ class FloatParam(Param):
 class PushButtonParam(Param):
     """
     """
-    def __init__(self, name, label, description, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True):
-        super(PushButtonParam, self).__init__(name=name, label=label, description=description, value=None, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+    def __init__(self, name, label, description, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True, exposed=False):
+        super(PushButtonParam, self).__init__(name=name, label=label, description=description, value=None, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
         self._valueType = None
 
     def getInstanceType(self):
@@ -370,10 +378,10 @@ class ChoiceParam(Param):
     """
     """
     def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, semantic='',
-                 enabled=True, validValue=True, errorMessage="", visible=True):
+                 enabled=True, validValue=True, errorMessage="", visible=True, exposed=False):
         assert values
         super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced,
-                                          semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage, visible=visible)
+                                          semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
@@ -438,9 +446,9 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, uidIgnoreValue=None, validValue=True, errorMessage="", visible=True):
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
-            uidIgnoreValue=uidIgnoreValue, validValue=validValue, errorMessage=errorMessage, visible=visible)
+            uidIgnoreValue=uidIgnoreValue, validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
         self._valueType = str
 
     def validateValue(self, value):
@@ -459,8 +467,8 @@ class StringParam(Param):
 class ColorParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True):
-        super(ColorParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True, exposed=False):
+        super(ColorParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
         self._valueType = str
 
     def validateValue(self, value):

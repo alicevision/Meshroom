@@ -172,10 +172,8 @@ Panel {
 
             visible: !intrinsicsFilterButton.checked
 
-            ScrollBar.vertical: ScrollBar {
-                minimumSize: 0.05
+            ScrollBar.vertical: MScrollBar {
                 active : !intrinsicsFilterButton.checked
-                visible: !intrinsicsFilterButton.checked
             }
 
             focus: true
@@ -562,8 +560,8 @@ Panel {
                     readOnly: m.currentCameraInit ? m.currentCameraInit.locked : false
                 }
 
-                ScrollBar.horizontal: ScrollBar { id: sb }
-                ScrollBar.vertical : ScrollBar { id: sbv }
+                ScrollBar.horizontal: MScrollBar { id: sb }
+                ScrollBar.vertical : MScrollBar { id: sbv }
             }
 
             TableModel {

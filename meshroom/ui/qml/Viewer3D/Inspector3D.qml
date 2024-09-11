@@ -311,7 +311,7 @@ FloatingPane {
                     clip: true
                     spacing: 4
 
-                    ScrollBar.vertical: ScrollBar { id: scrollBar }
+                    ScrollBar.vertical: MScrollBar { id: scrollBar }
 
                     onCountChanged: {
                         if (mediaListView.count === 0) {

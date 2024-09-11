@@ -357,9 +357,7 @@ RowLayout {
                     contentWidth: width
                     contentHeight: height
 
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AlwaysOn
-                    }
+                    ScrollBar.vertical: MScrollBar {}
 
                     TextArea.flickable: TextArea {
                         wrapMode: Text.WordWrap
@@ -639,7 +637,7 @@ RowLayout {
                     clip: true
                     spacing: 4
 
-                    ScrollBar.vertical: ScrollBar { id: sb }
+                    ScrollBar.vertical: MScrollBar { id: sb }
 
                     delegate: Loader {
                         active: !objectsHideable

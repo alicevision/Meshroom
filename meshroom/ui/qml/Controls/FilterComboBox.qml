@@ -146,10 +146,7 @@ ComboBox {
             implicitHeight: (combo.height * (combo.model.length + 1) > _window.contentItem.height) ? _window.contentItem.height*2/3 : contentHeight
             model: combo.popup.visible ? combo.delegateModel : null
 
-            ScrollBar.vertical: ScrollBar {
-                visible: listView.contentHeight > listView.height
-                policy: ScrollBar.AlwaysOn
-            }
+            ScrollBar.vertical: MScrollBar {}
         }
     }
 

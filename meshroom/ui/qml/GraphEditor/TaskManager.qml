@@ -26,17 +26,6 @@ Item {
         uigraph.selectedNode = node
     }
 
-    ScrollBar {
-            id: hbar
-            hoverEnabled: true
-            active: true
-            orientation: Qt.Horizontal
-            size: root.width / taskList.width
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-        }
-
     TextMetrics {
         id: nbMetrics
         text: root.taskManager ? root.taskManager.nodes.count : "0"
@@ -65,7 +54,7 @@ Item {
     ListView {
         id: taskList
         anchors.fill: parent
-        ScrollBar.vertical: ScrollBar {}
+        ScrollBar.vertical: MScrollBar {}
 
         model: parent.taskManager ? parent.taskManager.nodes : null
         spacing: 3

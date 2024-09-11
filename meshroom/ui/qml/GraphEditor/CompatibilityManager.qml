@@ -65,7 +65,8 @@ MessageDialog {
             implicitHeight: contentHeight
             clip: true
             model: nodesModel
-            ScrollBar.vertical: ScrollBar { id: scrollBar }
+
+            ScrollBar.vertical: MScrollBar { id: scrollbar }
 
             spacing: 4
             headerPositioning: ListView.OverlayHeader

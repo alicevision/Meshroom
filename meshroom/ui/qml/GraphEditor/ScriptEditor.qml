@@ -260,9 +260,7 @@ Item {
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
 
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                    }
+                    ScrollBar.vertical: MScrollBar {}
 
                     TextArea.flickable: TextArea {
                         id: input
@@ -314,9 +312,7 @@ Item {
                     contentWidth: width
                     contentHeight: height
 
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                    }
+                    ScrollBar.vertical: MScrollBar {}
 
                     TextArea.flickable: TextArea {
                         id: output

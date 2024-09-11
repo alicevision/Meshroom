@@ -169,12 +169,9 @@ Item {
                     return indexAt(contentX, contentY + height - 2)
                 }
 
-                ScrollBar.vertical: ScrollBar {
-                    id: vScrollBar
-                    minimumSize: 0.05
-                }
+                ScrollBar.vertical: MScrollBar { id: vScrollBar }
 
-                ScrollBar.horizontal: ScrollBar { minimumSize: 0.1 }
+                ScrollBar.horizontal: MScrollBar {}
 
                 // TextMetrics for line numbers column
                 TextMetrics {

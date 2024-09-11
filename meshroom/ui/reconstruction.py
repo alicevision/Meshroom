@@ -365,8 +365,9 @@ class ViewpointWrapper(QObject):
             sensorWidth = self.solvedIntrinsics["sensorWidth"]
             return 2.0 * math.atan(float(sensorWidth) / (2.0 * float(focalLength))) * 180.0 / math.pi
         else:
+            pixelRatio = float(self.solvedIntrinsics["pixelRatio"])
             sensorHeight = self.solvedIntrinsics["sensorHeight"]
-            return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
+            return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength) * pixelRatio)) * 180.0 / math.pi
 
     @Property(type=QUrl, notify=undistortedImageParamsChanged)
     def undistortedImageSource(self):

@@ -291,8 +291,6 @@ Item {
 
                     // Hide items that does not match the filter text
                     visible: modelData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
-                    // Reset menu currentIndex if highlighted items gets filtered out
-                    onVisibleChanged: if (highlighted) newNodeMenu.currentIndex = 0
                     text: modelData
                     // Forward key events to the search bar to continue typing seamlessly
                     // even if this delegate took the activeFocus due to mouse hovering
@@ -353,7 +351,7 @@ Item {
                     id: newNodeSubMenu
 
                     Instantiator {
-                        model: newNodeMenu.visible && newNodeSubMenu.activeFocus ? newNodeMenu.parseCategories()[modelData] : undefined
+                        model: newNodeMenu.visible ? newNodeMenu.parseCategories()[modelData] : undefined
                         onObjectAdded: newNodeSubMenu.insertItem(index, object)
                         onObjectRemoved: newNodeSubMenu.removeItem(object)
                         delegate: menuItemDelegateComponent

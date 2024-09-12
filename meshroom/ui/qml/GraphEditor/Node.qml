@@ -278,12 +278,12 @@ Item {
 
                             // Is in for loop indicator
                             MaterialLabel {
-                                visible: node.countForLoop > 0
+                                visible: node.forLoopData.countForLoop > 0
                                 text: MaterialIcons.loop
                                 padding: 2
                                 font.pointSize: 7
                                 palette.text: Colors.sysPalette.text
-                                ToolTip.text: "Is in " + node.countForLoop + " for loop(s)"
+                                ToolTip.text: "Is in " + node.forLoopData.countForLoop + " for loop(s)"
                             }
 
                             // Submitted externally indicator
@@ -386,14 +386,15 @@ Item {
                         // so if the count is 0 we display only one iteration
                         // else we display the number of iterations
                         model: {
-                            if (node.countForLoop === 0)
-                                return 1
-
-                            for (let i = 0; i < node.attributes.count; ++i) {
-                                if (node.attributes.at(i).isLink) {
-                                    var srcAttr = node.attributes.at(i).linkParam
-                                    return srcAttr.root.value.count
+                            if (node.forLoopData.countForLoop === 0) {
+                                return node
+                            } else {
+                                // convert the iterations to a list
+                                let list = []
+                                for (let i = 0; i < node.forLoopData.iterations.count; ++i) {
+                                    list.push(node.forLoopData.iterations.at(i))
                                 }
+                                return list
                             }
                         }
 
@@ -402,7 +403,9 @@ Item {
                             defaultColor: Colors.sysPalette.mid
                             height: 3
                             width: parent.width
-                            model: node ? node.chunks : undefined
+                            model: {
+                                return modelData.chunks
+                            }
 
                             Rectangle {
                                 anchors.fill: parent

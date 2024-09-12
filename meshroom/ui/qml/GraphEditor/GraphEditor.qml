@@ -1085,7 +1085,7 @@ Item {
         Repeater {
             id: filteredNodes
             model: SortFilterDelegateModel {
-                model: root.graph ? root.graph.nodes : undefined
+                model: root.uigraph ? root.uigraph.nodes : undefined
                 sortRole: "label"
                 filters: [{role: "label", value: graphSearchBar.text}]
                 delegate: Item {

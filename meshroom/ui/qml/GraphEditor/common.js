@@ -25,3 +25,7 @@ function getChunkColor(chunk, overrides) {
     console.warn("Unknown status : " + chunk.status)
     return "magenta"
 }
+
+function getNodeColor(node) {
+    return statusColors[node.globalStatus] || "magenta"
+}

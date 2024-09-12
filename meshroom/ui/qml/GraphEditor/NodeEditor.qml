@@ -258,29 +258,40 @@ Panel {
                     anchors.fill: parent
 
                     // The list of iterations
-                    NodeEditorElementsListView {
-                        id: iterationsLV
-                        visible: root.node.countForLoop > 0
-                        elements: {
-                            if (root.node.countForLoop == 0)
-                                return []
-                            var elements = []
-                            for (let i = 0; i < node.attributes.count; ++i) {
-                                if (node.attributes.at(i).isLink) {
-                                    var srcAttr = node.attributes.at(i).linkParam
-                                    for (let j = 0; j < srcAttr.root.value.count; ++j) {
-                                        elements.push(j)
-                                    }
-                                    return elements
-                                }
+
+                    Repeater {
+                        id: iterationsRepeater
+                        visible: root.node.forLoopData.countForLoop > 0
+
+                        model: {
+                            let currentNode = root.node
+                            let count = root.node.forLoopData.countForLoop
+                            let list = []
+                            for (let i = 0; i < count; i++) {
+                                let parent = currentNode.forLoopData.parentNode
+                                list.push(currentNode.forLoopData.iterations)
+                                currentNode = parent
                             }
+
+                            // reverse the list
+                            list.reverse()
+                            return list
                         }
 
-                        // TODO to remove when the elements would be correct
-                        currentElement: elements[0]
-                        
-                        isChunk: false
-                        title: "Iterations"
+                        NodeEditorElementsListView {
+                            id: iterationsLV
+                            elements: {
+                                if (root.node.forLoopData.countForLoop == 0)
+                                    return []
+                                return modelData
+                            }
+
+                            // TODO to remove when the elements would be correct
+                            // currentElement: elements[0]
+                            
+                            isChunk: false
+                            title: "Iterations"
+                        }
                     }
 
                     // The list of chunks

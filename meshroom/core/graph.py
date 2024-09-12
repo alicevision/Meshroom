@@ -899,7 +899,6 @@ class Graph(BaseObject):
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
         srcAttr.hasOutputConnectionsChanged.emit()
-        dstAttr.node.countForLoopChanged.emit()
         return edge
 
     def addEdges(self, *edges):
@@ -916,7 +915,6 @@ class Graph(BaseObject):
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
         edge.src.hasOutputConnectionsChanged.emit()
-        dstAttr.node.countForLoopChanged.emit()
 
     def getDepth(self, node, minimal=False):
         """ Return node's depth in this Graph.
@@ -1487,7 +1485,6 @@ class Graph(BaseObject):
         nodes, edges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True)
         for node in nodes:
             node.dirty = True
-            node.countForLoopChanged.emit()
 
     def stopExecution(self):
         """ Request graph execution to be stopped by terminating running chunks"""

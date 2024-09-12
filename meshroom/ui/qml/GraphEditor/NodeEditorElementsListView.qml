@@ -92,7 +92,13 @@ ColumnLayout {
             Rectangle {
                 width: 4
                 height: parent.height
-                color: isChunk ? Common.getChunkColor(parent.element) : palette.mid
+                color: {
+                    if (isChunk) {
+                        return Common.getChunkColor(parent.element)
+                    } else {
+                        return Common.getNodeColor(parent.element)
+                    }
+                }
             }
         }
     }

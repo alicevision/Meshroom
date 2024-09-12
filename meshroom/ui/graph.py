@@ -17,7 +17,7 @@ from meshroom.core.graph import Graph, Edge
 
 from meshroom.core.taskManager import TaskManager
 
-from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position
+from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position, IterationNode
 from meshroom.core import submitters
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
@@ -634,7 +634,10 @@ class UIGraph(QObject):
         """
         if isinstance(position, QPoint):
             position = Position(position.x(), position.y())
-        return self.push(commands.AddNodeCommand(self._graph, nodeType, position=position, **kwargs))
+            
+        node = self.push(commands.AddNodeCommand(self._graph, nodeType, position=position, **kwargs))
+        self.nodesChanged.emit()
+        return node
 
     def filterNodes(self, nodes):
         """Filter out the nodes that do not exist on the graph."""
@@ -776,7 +779,6 @@ class UIGraph(QObject):
                 newNode = duplicates[0]
                 previousEdge = self.graph.edge(newNode.attribute(dst.name))
                 self.replaceEdge(previousEdge, listAttribute.at(i), previousEdge.dst)
-                newNode.countForLoopChanged.emit()
 
             # Last, replace the edge with the first element of the list
             return self.replaceEdge(currentEdge, listAttribute.at(0), dst)
@@ -819,6 +821,7 @@ class UIGraph(QObject):
     def addEdge(self, src, dst):
         if isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
             self._addEdge(src.at(0), dst)
+            self.nodesChanged.emit()
         elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
             with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.getFullNameToNode())):
                 self.appendAttribute(dst)
@@ -1120,12 +1123,27 @@ class UIGraph(QObject):
             positions.append(finalPosition)
 
         return self.push(commands.PasteNodesCommand(self.graph, d, position=positions))
+    
+    def getNodes(self):
+        """
+        Return all the nodes that are not Iteration nodes.
+        """
+        nodes = self._graph.nodes
+        toRemove = []
+        for node in nodes.values():
+            if isinstance(node, IterationNode):
+                toRemove.append(node)
+        for node in toRemove:
+            nodes.pop(node.name)
+        return nodes
+
 
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
     taskManager = Property(TaskManager, lambda self: self._taskManager, constant=True)
-    nodes = Property(QObject, lambda self: self._graph.nodes, notify=graphChanged)
+    nodesChanged = Signal()
+    nodes = Property(QObject, getNodes, notify=nodesChanged)
     layout = Property(GraphLayout, lambda self: self._layout, constant=True)
 
     computeStatusChanged = Signal()

@@ -38,6 +38,7 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             value=["dspsift"],
             exclusive=False,
             joinChar=",",
+            exposed=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(

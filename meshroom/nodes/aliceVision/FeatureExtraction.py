@@ -66,6 +66,7 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             value=["dspsift"],
             exclusive=False,
             joinChar=",",
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="describerPreset",

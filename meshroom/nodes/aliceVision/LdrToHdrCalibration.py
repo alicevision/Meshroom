@@ -61,6 +61,7 @@ Calibrate LDR to HDR response curve from samples.
             group="user",  # not used directly on the command line
             errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
                          "Errors will occur during the computation.",
+            exposed=True,
         ),
         desc.IntParam(
             name="nbBrackets",
@@ -78,6 +79,7 @@ Calibrate LDR to HDR response curve from samples.
             description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
             enabled=lambda node: node.nbBrackets.value != 1,
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="calibrationMethod",
@@ -92,6 +94,7 @@ Calibrate LDR to HDR response curve from samples.
             value="auto",
             exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="calibrationWeight",
@@ -114,6 +117,7 @@ Calibrate LDR to HDR response curve from samples.
             range=(8, 14, 1),
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="workingColorSpace",
@@ -126,6 +130,7 @@ Calibrate LDR to HDR response curve from samples.
             invalidate=False,
             group="user",  # not used directly on the command line
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
+            exposed=True,
         ),
         desc.IntParam(
             name="maxTotalPoints",

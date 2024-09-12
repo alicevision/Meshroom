@@ -33,6 +33,7 @@ Estimate relative camera rotations between input images.
             name="featuresFolders",
             label="Features Folders",
             description="Folder(s) containing the extracted features.",
+            exposed=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -53,6 +54,7 @@ Estimate relative camera rotations between input images.
             value=["sift"],
             exclusive=False,
             joinChar=",",
+            exposed=True,
         ),
         desc.FloatParam(
             name="offsetLongitude",

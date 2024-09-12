@@ -41,6 +41,7 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             name="featuresFolders",
             label="Features Folders",
             description="Folder(s) containing the extracted features and descriptors.",
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="method",

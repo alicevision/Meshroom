@@ -591,9 +591,14 @@ Page {
                                 elide: Text.ElideLeft
                                 elideWidth: newPipelineMenu.maxWidth
                             }
-                            ToolTip.text: modelData["path"]
-                            ToolTip.visible: hovered
-                            ToolTip.delay: 200
+
+                            ToolTip {
+                                id: toolTip
+
+                                delay: 200
+                                text: modelData["path"]
+                                visible: hovered
+                            }
                         }
                     }
                 }

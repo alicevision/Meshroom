@@ -268,6 +268,16 @@ Item {
                                 }
                             }
 
+                            // Is in for loop indicator
+                            MaterialLabel {
+                                visible: node.forLoopData.countForLoop > 0
+                                text: MaterialIcons.loop
+                                padding: 2
+                                font.pointSize: 7
+                                palette.text: Colors.sysPalette.text
+                                ToolTip.text: "Is in " + node.forLoopData.countForLoop + " for loop(s)"
+                            }
+
                             // Submitted externally indicator
                             MaterialLabel {
                                 visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.isExternal
@@ -359,19 +369,44 @@ Item {
                 }
 
                 // Node Chunks
-               NodeChunks {
-                   visible: node.isComputable
-                   defaultColor: Colors.sysPalette.mid
-                   implicitHeight: 3
-                   width: parent.width
-                   model: node ? node.chunks : undefined
+                Column {
+                    width: parent.width
 
-                   Rectangle {
-                       anchors.fill: parent
-                       color: Colors.sysPalette.mid
-                       z: -1
-                   }
-               }
+                    spacing: 2
+                    Repeater {
+                        // the model is the number of iterations for the for loop
+                        // so if the count is 0 we display only one iteration
+                        // else we display the number of iterations
+                        model: {
+                            if (node.forLoopData.countForLoop === 0) {
+                                return node
+                            } else {
+                                // convert the iterations to a list
+                                let list = []
+                                for (let i = 0; i < node.forLoopData.iterations.count; ++i) {
+                                    list.push(node.forLoopData.iterations.at(i))
+                                }
+                                return list
+                            }
+                        }
+
+                        delegate: NodeChunks {
+                            visible: node.isComputable
+                            defaultColor: Colors.sysPalette.mid
+                            height: 3
+                            width: parent.width
+                            model: {
+                                return modelData.chunks
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: Colors.sysPalette.mid
+                                z: -1
+                            }
+                        }
+                    }
+                }
 
                 // Vertical Spacer
                 Item { width: parent.width; height: 2 }

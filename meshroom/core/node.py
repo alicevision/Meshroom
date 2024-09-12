@@ -58,6 +58,65 @@ class ExecMode(Enum):
     LOCAL = 1
     EXTERN = 2
 
+class ForLoopData(BaseObject):
+    """
+    """
+
+    def __init__(self, parentNode=None, connectedAttribute=None, parent=None):
+        super(ForLoopData, self).__init__(parent)
+        self._countForLoop = 0
+        self._iterations = ListModel(parent=self) # list of nodes for each iteration
+        self._parentNode = parentNode  # parent node
+        self.connectedAttribute = connectedAttribute  # attribute connected to the ForLoop node from parent node
+
+    def update(self, currentNode=None):
+        # set the connectedAttribute
+        forLoopAttribute = None
+        if currentNode is not None:
+            for attr in currentNode._attributes:
+                if attr.isInput and attr.isLink:
+                    forLoopAttribute = currentNode._attributes.indexOf(attr)
+                    srcAttr = attr.getLinkParam()
+                    # If the srcAttr is a ListAttribute, it means that the node is in a ForLoop
+                    if isinstance(srcAttr.root, ListAttribute) and srcAttr.type == attr.type:
+                        self.connectedAttribute = srcAttr.root
+                        self._parentNode = srcAttr.root.node
+                        break
+
+        # set the countForLoop
+        if self.connectedAttribute is not None:
+            self._countForLoop = self._parentNode._forLoopData._countForLoop + 1
+            if self.connectedAttribute.isInput:
+                self._countForLoop -= 1 if self._countForLoop > 1 else 1
+
+            # set the iterations by creating iteration nodes for each connected attribute value and will add them to the core graph and not the ui one
+            for i in range(len(self.connectedAttribute.value)):
+                # name of the iteration node
+                name = "{}_{}".format(currentNode.name, i)
+                # check if node already exists
+                if name not in [n.name for n in self._parentNode.graph.nodes]:
+                    iterationNode = IterationNode(currentNode, i, forLoopAttribute)
+                    self._parentNode.graph.addNode(iterationNode, iterationNode.name)
+                else :
+                    # find node by name
+                    iterationNode = self._parentNode.graph.node(name)
+                    iterationNode._updateChunks()
+
+                self._iterations.append(iterationNode)
+            
+            print("parent internal folder: ", currentNode.internalFolder)
+            self.parentNodeChanged.emit()
+            self.iterationsChanged.emit()
+            self.countForLoopChanged.emit()
+    
+    countForLoopChanged = Signal()
+    countForLoop = Property(int, lambda self: self._countForLoop, notify=countForLoopChanged)
+    iterationsChanged = Signal()
+    iterations = Property(Variant, lambda self: self._iterations, notify=iterationsChanged)
+    parentNodeChanged = Signal()
+    parentNode = Property(Variant, lambda self: self._parentNode, notify=parentNodeChanged)
+    
+
 
 class StatusData(BaseObject):
     """
@@ -513,6 +572,7 @@ class BaseNode(BaseObject):
         self._locked = False
         self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
         self._hasDuplicates = False
+        self._forLoopData = ForLoopData()
 
         self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)
 
@@ -979,6 +1039,10 @@ class BaseNode(BaseObject):
         }
         self._computeUids()
         self._buildCmdVars()
+
+        # try to update for loopdata as node is created
+        self._forLoopData.update(self)
+
         if self.nodeDesc:
             self.nodeDesc.postUpdate(self)
         # Notify internal folder change if needed
@@ -1320,6 +1384,13 @@ class BaseNode(BaseObject):
             if attr.enabled and attr.isOutput and hasSupportedExt:
                 return True
         return False
+    
+    def getForLoopData(self):
+        """
+        Return the ForLoopData of the node.
+        """
+        return self._forLoopData
+
 
 
     name = Property(str, getName, constant=True)
@@ -1372,6 +1443,9 @@ class BaseNode(BaseObject):
     hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
+
+    forLoopDataChanged = Signal()
+    forLoopData = Property(Variant, getForLoopData, notify=forLoopDataChanged)
 
 class Node(BaseNode):
     """
@@ -1530,7 +1604,39 @@ class Node(BaseNode):
             else:
                 self._chunks[0].range = desc.Range()
 
+class IterationNode(Node):
+    """
+    A node that is not added to the graph but used to process a specific iteration of a ForLoop node.
+    """
+    def __init__(self, node, iteration, attributeIndex):
+        super(IterationNode, self).__init__(node.nodeType, parent=node.graph)
+        self._name = f"{node.name}_{iteration}"
+        self._originalNode = node
 
+        # By recognizing the connected attribute linked to the ForLoop node, we can set the value of the iteration
+        # attribute to the current iteration value
+        self._attributes.at(attributeIndex).value = node._forLoopData.connectedAttribute.at(iteration).value
+
+        print("Attributes of IterationNode: ", [attr.value for attr in self._attributes.values()])
+
+        # Internal folder should correspond to each possibility of uid
+        # print(self._uids)
+        # self._buildCmdVars()
+        # self._computeUids()
+        # print("after: ", self._uids)
+        print(self.nodeType)
+        print(self._cmdVars)
+        print(self._internalFolder)
+
+    def _updateChunks(self):
+        # find node in graph
+        node = self.graph.node(self._originalNode.name)
+        # Setting chunks to the same chunks as the parent node
+        self._chunks.setObjectList([NodeChunk(self, desc.Range()) for _ in node._chunks])
+        for c in self._chunks:
+            c.statusChanged.connect(self.globalStatusChanged)
+
+        self.chunksChanged.emit()
 class CompatibilityIssue(Enum):
     """
     Enum describing compatibility issues when deserializing a Node.

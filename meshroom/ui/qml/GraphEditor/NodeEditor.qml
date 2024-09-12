@@ -257,11 +257,48 @@ Panel {
                 Controls1.SplitView {
                     anchors.fill: parent
 
+                    // The list of iterations
+
+                    Repeater {
+                        id: iterationsRepeater
+                        visible: root.node.forLoopData.countForLoop > 0
+
+                        model: {
+                            let currentNode = root.node
+                            let count = root.node.forLoopData.countForLoop
+                            let list = []
+                            for (let i = 0; i < count; i++) {
+                                let parent = currentNode.forLoopData.parentNode
+                                list.push(currentNode.forLoopData.iterations)
+                                currentNode = parent
+                            }
+
+                            // reverse the list
+                            list.reverse()
+                            return list
+                        }
+
+                        NodeEditorElementsListView {
+                            id: iterationsLV
+                            elements: {
+                                if (root.node.forLoopData.countForLoop == 0)
+                                    return []
+                                return modelData
+                            }
+
+                            // TODO to remove when the elements would be correct
+                            // currentElement: elements[0]
+                            
+                            isChunk: false
+                            title: "Iterations"
+                        }
+                    }
+
                     // The list of chunks
-                    ChunksListView {
+                    NodeEditorElementsListView {
                         id: chunksLV
                         visible: (tabBar.currentIndex >= 1 && tabBar.currentIndex <= 3)
-                        chunks: root.node.chunks
+                        elements: root.node.chunks
                     }
 
                     StackLayout {
@@ -295,7 +332,7 @@ Panel {
                                 id: nodeLog
                                 node: root.node
                                 currentChunkIndex: chunksLV.currentIndex
-                                currentChunk: chunksLV.currentChunk
+                                currentChunk: chunksLV.currentElement
                             }
                         }
 
@@ -310,7 +347,7 @@ Panel {
                                 Layout.fillWidth: true
                                 node: root.node
                                 currentChunkIndex: chunksLV.currentIndex
-                                currentChunk: chunksLV.currentChunk
+                                currentChunk: chunksLV.currentElement
                             }
                         }
 
@@ -325,7 +362,7 @@ Panel {
                                 Layout.fillWidth: true
                                 node: root.node
                                 currentChunkIndex: chunksLV.currentIndex
-                                currentChunk: chunksLV.currentChunk
+                                currentChunk: chunksLV.currentElement
                             }
                         }
 

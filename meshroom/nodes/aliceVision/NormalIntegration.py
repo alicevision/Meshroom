@@ -16,14 +16,12 @@ Evaluate a depth map from a normals map (currently in development)
             label="Normal Maps Folder",
             description="Path to the folder containing the normal maps and the masks.",
             value="",
-            uid=[0],
          ),
         desc.File(
             name="sfmDataFile",
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.IntParam(
             name="downscale",
@@ -32,7 +30,6 @@ Evaluate a depth map from a normals map (currently in development)
             value=1,
             range=(1, 10, 1),
             advanced=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -41,7 +38,6 @@ Evaluate a depth map from a normals map (currently in development)
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -52,7 +48,6 @@ Evaluate a depth map from a normals map (currently in development)
             description="Generated depth in the camera coordinate system.",
             semantic="image",
             value=desc.Node.internalFolder + "<POSE_ID>_depthMap.exr",
-            uid=[],
             group="", # do not export on the command line
         )
     ]

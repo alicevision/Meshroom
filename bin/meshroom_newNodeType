@@ -178,7 +178,6 @@ for cmdLineArg in cmdLineArgs:
     isOutput = 'output' in cmdLineArgLower or 'out' in namesLower
     isInt = is_int(value)
     isFloat = is_float(value)
-    uid = '[]' if isOutput else '[0]'
 
     argStr = None
     if isBool:
@@ -188,14 +187,12 @@ for cmdLineArg in cmdLineArgs:
             label='{label}',
             description='''{description}''',
             value={value},
-            uid={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=quotesForStrings(value),
                 arg=arg,
-                uid=uid,
                 )
     elif isFile:
         argStr = """
@@ -204,14 +201,12 @@ for cmdLineArg in cmdLineArgs:
             label='{label}',
             description='''{description}''',
             value={value},
-            uid={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=quotesForStrings(value),
                 arg=arg,
-                uid=uid,
                 )
     elif isChoice:
         argStr = """
@@ -222,7 +217,6 @@ for cmdLineArg in cmdLineArgs:
             value={value},
             values={values},
             exclusive={exclusive},
-            uid={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
@@ -230,7 +224,6 @@ for cmdLineArg in cmdLineArgs:
                 value=quotesForStrings(value),
                 values=values,
                 exclusive=True,
-                uid=uid,
                 )
     elif isInt:
         argStr = """
@@ -240,14 +233,12 @@ for cmdLineArg in cmdLineArgs:
             description='''{description}''',
             value={value},
             range={range},
-            uid={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=value,
                 range='(-sys.maxsize, sys.maxsize, 1)',
-                uid=uid,
                 )
     elif isFloat:
         argStr = """
@@ -257,14 +248,12 @@ for cmdLineArg in cmdLineArgs:
             description='''{description}''',
             value={value},
             range={range},
-            uid={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=value,
                 range='''(-float('inf'), float('inf'), 0.01)''',
-                uid=uid,
                 )
     else:
         argStr = """
@@ -273,14 +262,12 @@ for cmdLineArg in cmdLineArgs:
             label='{label}',
             description='''{description}''',
             value={value},
-            uid={uid},
             ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=quotesForStrings(value),
                 range=range,
-                uid=uid,
                 )
     if isOutput:
         outputNodeStr += argStr

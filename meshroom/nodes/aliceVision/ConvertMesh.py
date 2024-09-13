@@ -16,7 +16,6 @@ class ConvertMesh(desc.AVCommandLineNode):
             label="Input Mesh",
             description="Input mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="outputMeshFileType",
@@ -25,7 +24,6 @@ class ConvertMesh(desc.AVCommandLineNode):
             value="obj",
             values=["gltf", "obj", "fbx", "stl"],
             exclusive=True,
-            uid=[0],
             group="",
         ),
         desc.ChoiceParam(
@@ -35,7 +33,6 @@ class ConvertMesh(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -45,6 +42,5 @@ class ConvertMesh(desc.AVCommandLineNode):
             label="Mesh",
             description="Output mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).",
             value=desc.Node.internalFolder + "mesh." + "{outputMeshFileTypeValue}",
-            uid=[],
         ),
     ]

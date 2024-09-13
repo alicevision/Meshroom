@@ -71,7 +71,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -79,7 +78,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                 label="Features Folder",
                 description="",
                 value="",
-                uid=[0],
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -91,7 +89,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                 label="Matches Folder",
                 description="",
                 value="",
-                uid=[0],
             ),
             name="matchesFolders",
             label="Matches Folders",
@@ -104,7 +101,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            uid=[0],
             joinChar=",",
         ),
         desc.ChoiceParam(
@@ -114,7 +110,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             value="acransac",
             values=["acransac", "ransac", "lsmeds", "loransac", "maxconsensus"],
             exclusive=True,
-            uid=[0],
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -126,7 +121,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             value="Scale",
             values=["Basic", "Scale"],
             exclusive=True,
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -135,7 +129,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Maximum number of iterations allowed in the Ransac step.",
             value=50000,
             range=(1, 100000, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -146,7 +139,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "(if ACRansac, it will analyze the input data to select the optimal value).",
             value=0.0,
             range=(0.0, 100.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
        desc.BoolParam(
@@ -155,7 +147,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Lock previously reconstructed poses and intrinsics.\n"
                         "This option is useful for SfM augmentation.",
             value=False,
-            uid=[0],
         ),
         desc.BoolParam(
             name="useLocalBA",
@@ -163,7 +154,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="It reduces the reconstruction time, especially for large datasets (500+ images),\n"
                         "by avoiding computation of the Bundle Adjustment on areas that are not changing.",
             value=True,
-            uid=[0],
         ),
         desc.IntParam(
             name="localBAGraphDistance",
@@ -171,7 +161,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Graph-distance limit to define the active region in the Local Bundle Adjustment strategy.",
             value=1,
             range=(2, 10, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -182,7 +171,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "Past this number, the bundle adjustment will only be performed once for N added cameras.",
             value=30,
             range=(0, 100, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -192,7 +180,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "This prevents adding too much data at once without performing the bundle adjustment.",
             value=30,
             range=(0, 100, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -202,7 +189,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "Using a negative value for this threshold will disable BA iterations.",
             value=50,
             range=(-1, 1000, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -213,7 +199,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "0 means no limit.",
             value=0,
             range=(0, 50000, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="minNumberOfMatches",
@@ -223,7 +208,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "0 means no limit.",
             value=0,
             range=(0, 50000, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="minInputTrackLength",
@@ -231,7 +215,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Minimum track length in input of SfM.",
             value=2,
             range=(2, 10, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="minNumberOfObservationsForTriangulation",
@@ -242,7 +225,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "(from 1.5% to 11% on the tested datasets).",
             value=2,
             range=(2, 10, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -251,7 +233,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Minimum angle for triangulation.",
             value=3.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -260,7 +241,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Minimum angle for landmark.",
             value=2.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -269,7 +249,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Maximum reprojection error.",
             value=4.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -278,7 +257,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Minimum angle for the initial pair.",
             value=5.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -287,7 +265,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Maximum angle for the initial pair.",
             value=40.0,
             range=(0.1, 60.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
@@ -296,7 +273,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Use only matches from the input matchesFolder parameter.\n"
                         "Matches folders previously added to the SfMData file will be ignored.",
             value=False,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.BoolParam(
@@ -304,7 +281,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             label="Use Rig Constraint",
             description="Enable/Disable rig constraint.",
             value=True,
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -313,7 +289,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Minimum number of cameras to start the calibration of the rig.",
             value=20,
             range=(1, 50, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
@@ -323,7 +298,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "principal point, distortion if any) constant during the reconstruction.\n"
                         "This may be helpful if the input cameras are already fully calibrated.",
             value=False,
-            uid=[0],
         ),
         desc.IntParam(
             name="minNbCamerasToRefinePrincipalPoint",
@@ -334,7 +308,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "If minNbCamerasToRefinePrincipalPoint is set to 1, the principal point is always refined.",
             value=3,
             range=(0, 20, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
@@ -343,14 +316,12 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n"
                         "lead to multiple features in the same image for a single track.",
             value=False,
-            uid=[0],
         ),
         desc.BoolParam(
             name="computeStructureColor",
             label="Compute Structure Color",
             description="Enable/Disable color computation of every 3D point.",
             value=True,
-            uid=[0],
         ),
         desc.BoolParam(
             name="useAutoTransform",
@@ -360,21 +331,18 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         "determines north and scale from GPS information if available,\n"
                         "and defines ground level from the point cloud.",
             value=True,
-            uid=[0],
         ),
         desc.File(
             name="initialPairA",
             label="Initial Pair A",
             description="View ID or filename of the first image (either with or without the full path).",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="initialPairB",
             label="Initial Pair B",
             description="View ID or filename of the second image (either with or without the full path).",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="interFileExtension",
@@ -383,7 +351,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             value=".abc",
             values=[".abc", ".ply"],
             exclusive=True,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.BoolParam(
@@ -391,7 +359,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             label="Log Intermediate Steps",
             description="Dump the current state of the scene as an SfMData file every 3 resections.",
             value=False,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -401,7 +369,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -411,20 +378,17 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             label="SfMData",
             description="Path to the output SfM point cloud file (in SfMData format).",
             value=desc.Node.internalFolder + "sfm.abc",
-            uid=[],
         ),
         desc.File(
             name="outputViewsAndPoses",
             label="Views And Poses",
             description="Path to the output SfMData file with cameras (views and poses).",
             value=desc.Node.internalFolder + "cameras.sfm",
-            uid=[],
         ),
         desc.File(
             name="extraInfoFolder",
             label="Folder",
             description="Folder for intermediate reconstruction files and additional reconstruction information files.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
     ]

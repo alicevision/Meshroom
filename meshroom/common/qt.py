@@ -1,6 +1,7 @@
 from PySide2 import QtCore, QtQml
 import shiboken2
 
+
 class QObjectListModel(QtCore.QAbstractListModel):
     """
     QObjectListModel provides a more powerful, but still easy to use, alternative to using

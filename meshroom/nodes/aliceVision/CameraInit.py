@@ -17,7 +17,6 @@ Viewpoint = [
         label="ID",
         description="Image UID.",
         value=-1,
-        uid=[0],
         range=None,
     ),
     desc.IntParam(
@@ -25,7 +24,6 @@ Viewpoint = [
         label="Pose ID",
         description="Pose ID.",
         value=-1,
-        uid=[0],
         range=None,
     ),
     desc.File(
@@ -33,14 +31,12 @@ Viewpoint = [
         label="Image Path",
         description="Image filepath.",
         value="",
-        uid=[0],
     ),
     desc.IntParam(
         name="intrinsicId",
         label="Intrinsic",
         description="Internal camera parameters.",
         value=-1,
-        uid=[0],
         range=None,
     ),
     desc.IntParam(
@@ -48,7 +44,6 @@ Viewpoint = [
         label="Rig",
         description="Rig parameters.",
         value=-1,
-        uid=[0],
         range=None,
     ),
     desc.IntParam(
@@ -56,7 +51,6 @@ Viewpoint = [
         label="Rig Sub-Pose",
         description="Rig sub-pose parameters.",
         value=-1,
-        uid=[0],
         range=None,
     ),
     desc.StringParam(
@@ -65,12 +59,12 @@ Viewpoint = [
         description="The configuration of the Viewpoints is based on the images' metadata.\n"
                     "The important ones are:\n"
                     " - Focal Length: the focal length in mm.\n"
-                    " - Make and Model: this information allows to convert the focal in mm into a focal length in pixels using "
-                    "an embedded sensor database.\n"
-                    " - Serial Number: allows to uniquely identify a device so multiple devices with the same Make, Model can be "
-                    "differentiated and their internal parameters are optimized separately.",
+                    " - Make and Model: this information allows to convert the focal in mm into a focal length in "
+                    "pixels using an embedded sensor database.\n"
+                    " - Serial Number: allows to uniquely identify a device so multiple devices with the same Make, "
+                    "Model can be differentiated and their internal parameters are optimized separately.",
         value="",
-        uid=[],
+        invalidate=False,
         advanced=True,
     ),
 ]
@@ -81,7 +75,6 @@ Intrinsic = [
         label="ID",
         description="Intrinsic UID.",
         value=-1,
-        uid=[0],
         range=None,
     ),
     desc.FloatParam(
@@ -92,7 +85,6 @@ Intrinsic = [
                     "So this value is used to limit the range of possible values in the optimization.\n"
                     "If this value is set to -1, it will not be used and the focal length will not be bounded.",
         value=-1.0,
-        uid=[0],
         range=None,
     ),
     desc.FloatParam(
@@ -100,7 +92,6 @@ Intrinsic = [
         label="Focal Length",
         description="Known/calibrated focal length (in mm).",
         value=1000.0,
-        uid=[0],
         range=(0.0, 10000.0, 1.0),
     ),
     desc.FloatParam(
@@ -108,7 +99,6 @@ Intrinsic = [
         label="Pixel Ratio",
         description="Ratio between the pixel width and the pixel height.",
         value=1.0,
-        uid=[0],
         range=(0.0, 10.0, 0.1),
     ),
     desc.BoolParam(
@@ -116,61 +106,56 @@ Intrinsic = [
         label="Pixel Ratio Locked",
         description="The pixel ratio value is locked for estimation.",
         value=True,
-        uid=[0],
     ),
     desc.BoolParam(
         name="scaleLocked",
         label="Focal length Locked",
         description="The focal length is locked for estimation.",
         value=False,
-        uid=[0],
     ),
     desc.BoolParam(
         name="offsetLocked",
         label="Optical Center Locked",
         description="The optical center coordinates are locked for estimation.",
         value=False,
-        uid=[0],
     ),
     desc.BoolParam(
         name="distortionLocked",
         label="Distortion Locked",
         description="The distortion parameters are locked for estimation.",
         value=False,
-        uid=[0],
     ),
     desc.ChoiceParam(
         name="type",
         label="Camera Type",
         description="Mathematical model used to represent a camera:\n"
-                     " - pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
-                     " - equidistant: Non-projective camera model suited for full-fisheye optics.\n",
+                    " - pinhole: Simplest projective camera model without optical distortion "
+                    "(focal and optical center).\n"
+                    " - equidistant: Non-projective camera model suited for full-fisheye optics.\n",
         value="pinhole",
         values=["pinhole", "equidistant"],
         exclusive=True,
-        uid=[0],
     ),
     desc.ChoiceParam(
         name="distortionType",
         label="Distortion Type",
         description="Mathematical model used to represent the distortion:\n"
-                     " - radialk1: radial distortion with one parameter.\n"
-                     " - radialk3: radial distortion with three parameters (Best for pinhole cameras).\n"
-                     " - radialk3pt: radial distortion with three parameters and normalized with the sum of parameters (Best for equidistant cameras).\n"
-                     " - brown: distortion with 3 radial and 2 tangential parameters.\n"
-                     " - fisheye1: distortion with 1 parameter suited for fisheye optics (like 120deg FoV).\n"
-                     " - fisheye4: distortion with 4 parameters suited for fisheye optics (like 120deg FoV).\n",
+                    " - radialk1: radial distortion with one parameter.\n"
+                    " - radialk3: radial distortion with three parameters (Best for pinhole cameras).\n"
+                    " - radialk3pt: radial distortion with three parameters and normalized with the sum of parameters "
+                    "(Best for equidistant cameras).\n"
+                    " - brown: distortion with 3 radial and 2 tangential parameters.\n"
+                    " - fisheye1: distortion with 1 parameter suited for fisheye optics (like 120deg FoV).\n"
+                    " - fisheye4: distortion with 4 parameters suited for fisheye optics (like 120deg FoV).\n",
         value="radialk3",
         values=["none", "radialk1", "radialk3", "radialk3pt", "brown", "fisheye4", "fisheye1"],
         exclusive=True,
-        uid=[0],
     ),
     desc.IntParam(
         name="width",
         label="Width",
         description="Image width.",
         value=0,
-        uid=[0],
         range=(0, 10000, 1),
     ),
     desc.IntParam(
@@ -178,7 +163,6 @@ Intrinsic = [
         label="Height",
         description="Image height.",
         value=0,
-        uid=[0],
         range=(0, 10000, 1),
     ),
     desc.FloatParam(
@@ -186,7 +170,6 @@ Intrinsic = [
         label="Sensor Width",
         description="Sensor width (in mm).",
         value=36.0,
-        uid=[0],
         range=(0.0, 1000.0, 1.0),
     ),
     desc.FloatParam(
@@ -194,7 +177,6 @@ Intrinsic = [
         label="Sensor Height",
         description="Sensor height (in mm).",
         value=24.0,
-        uid=[0],
         range=(0.0, 1000.0, 1.0),
     ),
     desc.StringParam(
@@ -202,7 +184,6 @@ Intrinsic = [
         label="Serial Number",
         description="Device serial number (Camera UID and Lens UID combined).",
         value="",
-        uid=[0],
     ),
     desc.GroupAttribute(
         name="principalPoint",
@@ -214,7 +195,6 @@ Intrinsic = [
                 label="x",
                 description="",
                 value=0.0,
-                uid=[0],
                 range=(0.0, 10000.0, 1.0),
             ),
             desc.FloatParam(
@@ -222,7 +202,6 @@ Intrinsic = [
                 label="y",
                 description="",
                 value=0.0,
-                uid=[0],
                 range=(0.0, 10000.0, 1.0),
             ),
         ],
@@ -238,7 +217,6 @@ Intrinsic = [
         values=["calibrated", "estimated", "unknown", "none"],
         value="none",
         exclusive=True,
-        uid=[0],
     ),
     desc.ChoiceParam(
         name="distortionInitializationMode",
@@ -251,7 +229,6 @@ Intrinsic = [
         values=["calibrated", "estimated", "unknown", "none"],
         value="none",
         exclusive=True,
-        uid=[0],
     ),
     desc.ListAttribute(
         name="distortionParams",
@@ -260,7 +237,6 @@ Intrinsic = [
             label="",
             description="",
             value=0.0,
-            uid=[0],
             range=(-0.1, 0.1, 0.01),
         ),
         label="Distortion Params",
@@ -276,7 +252,6 @@ Intrinsic = [
                 label="x",
                 description="",
                 value=0.0,
-                uid=[0],
                 range=(0.0, 10000.0, 1.0),
             ),
             desc.FloatParam(
@@ -284,7 +259,6 @@ Intrinsic = [
                 label="y",
                 description="",
                 value=0.0,
-                uid=[0],
                 range=(0.0, 10000.0, 1.0),
             ),
         ],
@@ -296,7 +270,6 @@ Intrinsic = [
             label="",
             description="",
             value=0.0,
-            uid=[0],
             range=(-0.1, 0.1, 0.01),
         ),
         label="Undistortion Params",
@@ -305,11 +278,12 @@ Intrinsic = [
     desc.BoolParam(
         name="locked",
         label="Locked",
-        description="If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speed-up the reconstruction.",
+        description="If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. "
+                    "It should improve robustness and speed-up the reconstruction.",
         value=False,
-        uid=[0],
     ),
 ]
+
 
 def readSfMData(sfmFile):
     """ Read views and intrinsics from a .sfm file
@@ -356,14 +330,14 @@ def readSfMData(sfmFile):
 
 
 class CameraInit(desc.AVCommandLineNode, desc.InitNode):
-    commandLine = 'aliceVision_cameraInit {allParams} --allowSingleView 1' # don't throw an error if there is only one image
+    commandLine = "aliceVision_cameraInit {allParams} --allowSingleView 1"  # don't throw an error if there is only one image
 
-    size = desc.DynamicNodeSize('viewpoints')
+    size = desc.DynamicNodeSize("viewpoints")
 
-    category = 'Sparse Reconstruction'
-    documentation = '''
-This node describes your dataset. It lists the Viewpoints candidates, the guess about the type of optic, the initial focal length
-and which images are sharing the same internal camera parameters, as well as potential camera rigs.
+    category = "Sparse Reconstruction"
+    documentation = """
+This node describes your dataset. It lists the Viewpoints candidates, the guess about the type of optic, the initial
+focal length and which images are sharing the same internal camera parameters, as well as potential camera rigs.
 
 When you import new images into Meshroom, this node is automatically configured from the analysis of the images' metadata.
 The software can support images without any metadata but it is recommended to have them for robustness.
@@ -372,9 +346,11 @@ The software can support images without any metadata but it is recommended to ha
 Metadata allow images to be grouped together and provide an initialization of the focal length (in pixel unit).
 The needed metadata are:
  * **Focal Length**: the focal length in mm.
- * **Make** & **Model**: this information allows to convert the focal in mm into a focal length in pixels using an embedded sensor database.
- * **Serial Number**: allows to uniquely identify a device so multiple devices with the same Make, Model can be differentiated and their internal parameters are optimized separately (in the photogrammetry case).
-'''
+ * **Make** & **Model**: this information allows to convert the focal in mm into a focal length in pixels using an
+ embedded sensor database.
+ * **Serial Number**: allows to uniquely identify a device so multiple devices with the same Make, Model can be
+ differentiated and their internal parameters are optimized separately (in the photogrammetry case).
+"""
 
     inputs = [
         desc.ListAttribute(
@@ -406,30 +382,30 @@ The needed metadata are:
             label="Sensor Database",
             description="Camera sensor with database path.",
             value="${ALICEVISION_SENSOR_DB}",
-            uid=[],
+            invalidate=False,
         ),
         desc.File(
             name="lensCorrectionProfileInfo",
             label="LCP Info",
             description="Lens Correction Profile filepath or database directory.",
             value="${ALICEVISION_LENS_PROFILE_INFO}",
-            uid=[],
+            invalidate=False,
         ),
         desc.BoolParam(
             name="lensCorrectionProfileSearchIgnoreCameraModel",
             label="LCP Generic Search",
             description="The lens name and camera maker are used to match the LCP database, but the camera model is ignored.",
             value=True,
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
             name="defaultFieldOfView",
             label="Default Field Of View",
-            description="Default value for the field of view (in degrees) used as an initialization value when there is no focal or field of view in the image metadata.",
+            description="Default value for the field of view (in degrees) used as an initialization value when there is "
+                        "no focal or field of view in the image metadata.",
             value=45.0,
             range=(0.0, 180.0, 1.0),
-            uid=[],
+            invalidate=False,
         ),
         desc.ChoiceParam(
             name="groupCameraFallback",
@@ -443,7 +419,7 @@ The needed metadata are:
             values=["global", "folder", "image"],
             value="folder",
             exclusive=True,
-            uid=[],
+            invalidate=False,
         ),
         desc.ChoiceParam(
             name="rawColorInterpretation",
@@ -457,7 +433,6 @@ The needed metadata are:
             values=RAW_COLOR_INTERPRETATION,
             value="DCPLinearProcessing" if os.environ.get("ALICEVISION_COLOR_PROFILE_DB", "") else "LibRawWhiteBalancing",
             exclusive=True,
-            uid=[0],
         ),
         desc.File(
             name="colorProfileDatabase",
@@ -465,16 +440,16 @@ The needed metadata are:
             description="Color Profile database directory path.",
             value="${ALICEVISION_COLOR_PROFILE_DB}",
             enabled=lambda node: node.rawColorInterpretation.value.startswith("DCP"),
-            uid=[],
+            invalidate=False,
         ),
         desc.BoolParam(
             name="errorOnMissingColorProfile",
             label="Error On Missing DCP Color Profile",
             description="When enabled, if no color profile is found for at least one image, then an error is thrown.\n"
-                        "When disabled, if no color profile is found for some images, it will fallback to libRawWhiteBalancing for those images.",
+                        "When disabled, if no color profile is found for some images, it will fallback to "
+                        "libRawWhiteBalancing for those images.",
             value=True,
             enabled=lambda node: node.rawColorInterpretation.value.startswith("DCP"),
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="viewIdMethod",
@@ -485,21 +460,22 @@ The needed metadata are:
             value="metadata",
             values=["metadata", "filename"],
             exclusive=True,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.StringParam(
             name="viewIdRegex",
             label="ViewId Regex",
             description="Regex used to catch number used as viewId in filename."
-                        "You should capture specific parts of the filename with parentheses to define matching elements. (only numbers will work)\n"
+                        "You should capture specific parts of the filename with parentheses to define matching elements."
+                        " (only numbers will work)\n"
                         "Some examples of patterns:\n"
                         " - Match the longest number at the end of the filename (default value): "
                         r'".*?(\d+)"' + "\n" +
                         " - Match the first number found in filename: "
                         r'"(\d+).*"',
             value=r".*?(\d+)",
-            uid=[],
+            invalidate=False,
             advanced=True,
             enabled=lambda node: node.viewIdMethod.value == "filename",
         ),
@@ -510,7 +486,6 @@ The needed metadata are:
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -520,7 +495,6 @@ The needed metadata are:
             label="SfMData",
             description="Output SfMData.",
             value=desc.Node.internalFolder + "cameraInit.sfm",
-            uid=[],
         ),
     ]
 
@@ -568,7 +542,7 @@ The needed metadata are:
             intrinsic['type'] = "pinhole"
             intrinsic['distortionType'] = "radialk3"
             intrinsic['undistortionType'] = "none"
-        
+
         elif itype == "brown":
             intrinsic['type'] = "pinhole"
             intrinsic['distortionType'] = "brown"
@@ -583,12 +557,12 @@ The needed metadata are:
             intrinsic['type'] = "pinhole"
             intrinsic['distortionType'] = "fisheye1"
             intrinsic['undistortionType'] = "none"
-        
+
         elif itype == "equidistant":
             intrinsic['type'] = "equidistant"
             intrinsic['distortionType'] = "none"
             intrinsic['undistortionType'] = "none"
-        
+
         elif itype == "equidistant_r3":
             intrinsic['type'] = "equidistant"
             intrinsic['distortionType'] = "radialk3pt"
@@ -624,12 +598,12 @@ The needed metadata are:
                 intrinsic['pixelRatio'] = 1.0
                 intrinsic['pixelRatioLocked'] = False
 
-        #Upgrade types
+        # Upgrade types
         if fromVersion < Version(10, 0):
             for intrinsic in attrValues['intrinsics']:
                 itype = intrinsic['type']
                 self.upgradeTypes(intrinsic, itype)
-              
+
         return attrValues
 
     def readSfMData(self, sfmFile):

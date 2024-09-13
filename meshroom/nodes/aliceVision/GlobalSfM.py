@@ -1,21 +1,19 @@
 __version__ = "1.0"
 
-import json
-import os
 
 from meshroom.core import desc
 from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
 
 class GlobalSfM(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_globalSfM {allParams}'
-    size = desc.DynamicNodeSize('input')
+    commandLine = "aliceVision_globalSfM {allParams}"
+    size = desc.DynamicNodeSize("input")
 
-    category = 'Sparse Reconstruction'
-    documentation = '''
+    category = "Sparse Reconstruction"
+    documentation = """
 Performs the Structure-From-Motion with a global approach.
 It is known to be faster but less robust to challenging datasets than the Incremental approach.
-'''
+"""
 
     inputs = [
         desc.File(
@@ -23,7 +21,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -31,7 +28,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
                 label="Features Folder",
                 description="Folder containing some extracted features.",
                 value="",
-                uid=[0],
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -43,7 +39,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
                 label="Matches Folder",
                 description="Folder containing some computed matches.",
                 value="",
-                uid=[0],
             ),
             name="matchesFolders",
             label="Matches Folders",
@@ -56,7 +51,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            uid=[0],
             joinChar=",",
         ),
         desc.ChoiceParam(
@@ -68,7 +62,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             values=["L1_minimization", "L2_minimization"],
             value="L2_minimization",
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="translationAveraging",
@@ -80,7 +73,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             values=["L1_minimization", "L2_minimization", "L1_soft_minimization"],
             value="L1_soft_minimization",
             exclusive=True,
-            uid=[0],
         ),
         desc.BoolParam(
             name="lockAllIntrinsics",
@@ -89,7 +81,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
                         "principal point, distortion if any) constant during the reconstruction.\n"
                         "This may be helpful if the input cameras are already fully calibrated.",
             value=False,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -98,7 +89,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -108,20 +98,17 @@ It is known to be faster but less robust to challenging datasets than the Increm
             label="SfMData",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.abc",
-            uid=[],
         ),
         desc.File(
             name="outputViewsAndPoses",
             label="Output Poses",
             description="Path to the output SfMData file with cameras (views and poses).",
             value=desc.Node.internalFolder + "cameras.sfm",
-            uid=[],
         ),
         desc.File(
             name="extraInfoFolder",
             label="Folder",
             description="Folder for intermediate reconstruction files and additional reconstruction information files.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
     ]

@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
-import os
-import tempfile
-
 import meshroom.multiview
 from meshroom.core.graph import Graph
-from meshroom.core.node import Node
 
 
 def test_formatting_listOfFiles():
@@ -17,7 +13,8 @@ def test_formatting_listOfFiles():
     n1 = graph.addNewNode('CameraInit')
     n1.viewpoints.extend([{'path': image} for image in inputImages])
     # viewId, poseId, path, intrinsicId, rigId, subPoseId, metadata
-    assert n1.viewpoints.getValueStr() == '-1 -1 "/non/existing/fileA" -1 -1 -1 "" -1 -1 "/non/existing/with space/fileB" -1 -1 -1 ""'
+    assert n1.viewpoints.getValueStr() == \
+        '-1 -1 "/non/existing/fileA" -1 -1 -1 "" -1 -1 "/non/existing/with space/fileB" -1 -1 -1 ""'
 
     graph = Graph('')
     n1 = graph.addNewNode('ImageMatching')
@@ -61,7 +58,8 @@ def test_formatting_strings():
     n2.featuresFolders.extend('')
     n2._buildCmdVars()  # prepare vars for command line creation
     assert n2.featuresFolders.getValueStr() == '"" ""', 'A list with 2 empty strings should generate quotes'
-    assert n2._cmdVars[name + 'Value'] == ' ', 'The Value is always only the value, so 2 empty with the space separator in the middle'
+    assert n2._cmdVars[name + 'Value'] == ' ', \
+        'The Value is always only the value, so 2 empty with the space separator in the middle'
 
 
 def test_formatting_groups():
@@ -78,4 +76,3 @@ def test_formatting_groups():
     name = 'noiseFilter'
     assert n3.noiseFilter.getValueStr() == '"False:uniform:0.0:1.0:True"'
     assert n3._cmdVars[name + 'Value'] == 'False:uniform:0.0:1.0:True'
-

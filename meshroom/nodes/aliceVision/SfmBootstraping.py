@@ -18,21 +18,18 @@ class SfMBootStraping(desc.AVCommandLineNode):
             label="SfMData",
             description="SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="tracksFilename",
             label="Tracks File",
             description="Tracks file.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="pairs",
             label="Pairs File",
             description="Information on pairs.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -41,7 +38,6 @@ class SfMBootStraping(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -51,6 +47,5 @@ class SfMBootStraping(desc.AVCommandLineNode):
             label="SfMData",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.json",
-            uid=[],
         ),
     ]

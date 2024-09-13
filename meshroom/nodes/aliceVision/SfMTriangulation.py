@@ -20,7 +20,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             label="SfMData",
             description="SfMData file. Must contain the camera calibration.",
             value="",
-            uid=[0],
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -28,7 +27,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
                 label="Features Folder",
                 description="Folder containing some extracted features and descriptors.",
                 value="",
-                uid=[0],
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -40,7 +38,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
                 label="Matches Folder",
                 description="Folder in which some computed matches are stored.",
                 value="",
-                uid=[0],
             ),
             name="matchesFolders",
             label="Matches Folders",
@@ -53,7 +50,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            uid=[0],
             joinChar=",",
         ),
         desc.IntParam(
@@ -64,7 +60,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
                         "0 means no limit.",
             value=0,
             range=(0, 50000, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="minNumberOfMatches",
@@ -74,7 +69,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
                         "0 means no limit.",
             value=0,
             range=(0, 50000, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="minNumberOfObservationsForTriangulation",
@@ -85,7 +79,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
                         "(from 1.5% to 11% on the tested datasets).",
             value=2,
             range=(2, 10, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -94,7 +87,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             description="Minimum angle for triangulation.",
             value=3.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -103,7 +95,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             description="Minimum angle for landmark.",
             value=2.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
@@ -111,7 +102,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             label="Use Rig Constraint",
             description="Enable/Disable rig constraint.",
             value=True,
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -120,7 +110,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             description="Minimum number of cameras to start the calibration of the rig.",
             value=20,
             range=(1, 50, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
@@ -128,7 +117,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             label="Compute Structure Color",
             description="Enable/Disable color computation of each 3D point.",
             value=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="interFileExtension",
@@ -137,7 +125,7 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             value=".abc",
             values=[".abc", ".ply"],
             exclusive=True,
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -147,7 +135,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -157,13 +144,11 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             label="SfMData",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.abc",
-            uid=[],
         ),
         desc.File(
             name="extraInfoFolder",
             label="Folder",
             description="Folder for intermediate reconstruction files and additional reconstruction information files.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
     ]

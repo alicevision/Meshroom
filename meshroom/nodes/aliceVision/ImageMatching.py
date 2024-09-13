@@ -1,6 +1,5 @@
 __version__ = "2.0"
 
-import os
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
 
@@ -40,7 +39,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -48,7 +46,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
                 label="Features Folder",
                 description="Folder containing some extracted features and descriptors.",
                 value="",
-                uid=[0],
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -69,14 +66,13 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             value="SequentialAndVocabularyTree",
             values=["VocabularyTree", "Sequential", "SequentialAndVocabularyTree", "Exhaustive", "Frustum", "FrustumOrVocabularyTree"],
             exclusive=True,
-            uid=[0],
         ),
         desc.File(
             name="tree",
             label="Voc Tree: Tree",
             description="Input name for the vocabulary tree file.",
             value="${ALICEVISION_VOCTREE}",
-            uid=[],
+            invalidate=False,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
         desc.File(
@@ -85,7 +81,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             description="Input name for the weight file.\n"
                         "If not provided, the weights will be computed on the database built with the provided set.",
             value="",
-            uid=[0],
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -96,7 +91,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
                         "If we have less features than this threshold, we will compute all matching combinations.",
             value=200,
             range=(0, 500, 1),
-            uid=[0],
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -106,7 +100,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             description="Limit the number of descriptors you load per image. 0 means no limit.",
             value=500,
             range=(0, 100000, 1),
-            uid=[0],
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -116,7 +109,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             description="The number of matches to retrieve for each image. (If 0, it will retrieve all the matches).",
             value=40,
             range=(0, 1000, 1),
-            uid=[0],
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -126,7 +118,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             description="The number of neighbors to retrieve for each image. (If 0, it will retrieve all the neighbors).",
             value=5,
             range=(0, 1000, 1),
-            uid=[0],
             advanced=True,
             enabled=lambda node: "Sequential" in node.method.value,
         ),
@@ -137,7 +128,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -147,6 +137,5 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             label="Image Pairs",
             description="Filepath to the output file with the list of selected image pairs.",
             value=desc.Node.internalFolder + "imageMatches.txt",
-            uid=[],
         ),
     ]

@@ -21,14 +21,12 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             label="Input",
             description="SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="reference",
             label="Reference",
             description="Path to the scene used as the reference to retrieve resolved poses and intrinsics.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="method",
@@ -41,7 +39,6 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             value="from_viewid",
             values=["from_viewid", "from_filepath", "from_metadata", "from_intrinsicid"],
             exclusive=True,
-            uid=[0],
         ),
         desc.StringParam(
             name="fileMatchingPattern",
@@ -56,7 +53,6 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
                         " - Match the filename prefix before \"_\": "
                         r'".*\/(.*?)_.*\.\w{3}"',
             value=r'.*\/(.*?)\.\w{3}',
-            uid=[0],
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -64,7 +60,6 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
                 label="Metadata",
                 description="Metadata that should match to create correspondences.",
                 value="",
-                uid=[0],
             ),
             name="metadataMatchingList",
             label="Metadata Matching List",
@@ -77,21 +72,18 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             label="Poses",
             description="Transfer poses.",
             value=True,
-            uid=[0],
         ),
         desc.BoolParam(
             name="transferIntrinsics",
             label="Intrinsics",
             description="Transfer cameras intrinsics.",
             value=True,
-            uid=[0],
         ),
         desc.BoolParam(
             name="transferLandmarks",
             label="Landmarks",
             description="Transfer landmarks.",
             value=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -100,7 +92,6 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -110,13 +101,11 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             label="SfMData",
             description="Path to the output SfM point cloud file (in SfMData format).",
             value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or "sfmData") + ".abc",
-            uid=[],
         ),
         desc.File(
             name="outputViewsAndPoses",
             label="Poses",
             description="Path to the output SfMData file with cameras (views and poses).",
             value=desc.Node.internalFolder + "cameras.sfm",
-            uid=[],
         ),
     ]

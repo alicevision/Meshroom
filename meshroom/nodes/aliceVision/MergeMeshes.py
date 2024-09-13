@@ -24,14 +24,12 @@ Operation types used to merge two meshes:
             label="First Mesh",
             description="Input first mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="inputSecondMesh",
             label="Second Mesh",
             description="Input second mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="mergeOperation",
@@ -40,21 +38,18 @@ Operation types used to merge two meshes:
             value="boolean_union",
             values=["boolean_union", "boolean_intersection", "boolean_difference"],
             exclusive=True,
-            uid=[0],
         ),
         desc.BoolParam(
             name="preProcess",
             label="Pre-Process",
             description="Pre-process the input meshes in order to avoid geometric errors in the merging process.",
             value=True,
-            uid=[0],
         ),
         desc.BoolParam(
             name="postProcess",
             label="Post-Process",
             description="Post-process the output mesh in order to avoid future geometric errors.",
             value=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -63,7 +58,6 @@ Operation types used to merge two meshes:
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -73,6 +67,5 @@ Operation types used to merge two meshes:
             label="Mesh",
             description="Output mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).",
             value=desc.Node.internalFolder + "mesh.stl",
-            uid=[],
         ),
     ]

@@ -46,14 +46,12 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             label="First SfMData",
             description="First input SfMData file to merge.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="secondinput",
             label="Second SfMData",
             description="Second input SfMData file to merge.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="method",
@@ -64,7 +62,6 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             value="simple_copy",
             values=["simple_copy", 'from_landmarks'],
             exclusive=True,
-            uid=[0],
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -72,7 +69,6 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
                 label="Matches Folder",
                 description="",
                 value="",
-                uid=[0],
             ),
             name="matchesFolders",
             label="Matches Folders",
@@ -85,7 +81,6 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            uid=[0],
             joinChar=",",
         ),
         desc.ChoiceParam(
@@ -95,7 +90,6 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -105,6 +99,5 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             label="SfMData",
             description="Path to the output SfM file (in SfMData format).",
             value=lambda attr: desc.Node.internalFolder + "sfmData.sfm",
-            uid=[],
         ),
     ]

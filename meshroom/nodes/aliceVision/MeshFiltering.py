@@ -18,7 +18,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             label="Mesh",
             description="Input mesh file.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="outputMeshFileType",
@@ -27,7 +26,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             value="obj",
             values=["gltf", "obj", "fbx", "stl"],
             exclusive=True,
-            uid=[0],
             group="",
         ),
         desc.BoolParam(
@@ -35,7 +33,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             label="Keep Only The Largest Mesh",
             description="Keep only the largest connected triangles group.",
             value=False,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="smoothingSubset",
@@ -44,7 +41,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             value="all",
             values=["all", "surface_boundaries", "surface_inner_part"],
             exclusive=True,
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -53,7 +49,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             description="Neighbours of the boundaries to consider.",
             value=0,
             range=(0, 20, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -62,7 +57,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             description="Number of smoothing iterations.",
             value=5,
             range=(0, 50, 1),
-            uid=[0],
         ),
         desc.FloatParam(
             name="smoothingLambda",
@@ -70,7 +64,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             description="Smoothing size.",
             value=1.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -80,7 +73,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             value="all",
             values=["all", "surface_boundaries", "surface_inner_part"],
             exclusive=True,
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -89,7 +81,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             description="Number of filtering iterations.",
             value=1,
             range=(0, 20, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -100,7 +91,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
                         "0 disables the filtering.",
             value=60.0,
             range=(0.0, 100.0, 0.1),
-            uid=[0],
         ),
         desc.FloatParam(
             name="filterTrianglesRatio",
@@ -109,7 +99,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
                         "0 disables the filtering.",
             value=0.0,
             range=(1.0, 50.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -119,7 +108,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -129,6 +117,5 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             label="Mesh",
             description="Output mesh file.",
             value=desc.Node.internalFolder + "mesh.{outputMeshFileTypeValue}",
-            uid=[],
         ),
     ]

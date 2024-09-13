@@ -3,21 +3,22 @@
 
 import os
 
-#Try to retrieve limits of memory for the current process' cgroup
+
+# Try to retrieve limits of memory for the current process' cgroup
 def getCgroupMemorySize():
 
-    #first of all, get pid of process
+    # First of all, get pid of process
     pid = os.getpid()
 
-    #Get cgroup associated with pid
+    # Get cgroup associated with pid
     filename = f"/proc/{pid}/cgroup"
 
     cgroup = None
     try:
-        with open(filename, "r") as f :
+        with open(filename, "r") as f:
 
-            #cgroup file is a ':' separated table
-            #lookup a line where the second field is "memory"
+            # cgroup file is a ':' separated table
+            # lookup a line where the second field is "memory"
             lines = f.readlines()
             for line in lines:
                 tokens = line.rstrip("\r\n").split(":")
@@ -34,7 +35,7 @@ def getCgroupMemorySize():
     size = -1
     filename = f"/sys/fs/cgroup/memory/{cgroup}/memory.limit_in_bytes"
     try:
-        with open(filename, "r") as f :
+        with open(filename, "r") as f:
             value = f.read().rstrip("\r\n")
             if value.isnumeric():
                 size = int(value)
@@ -42,6 +43,7 @@ def getCgroupMemorySize():
         pass
 
     return size
+
 
 def parseNumericList(numericListString):
 
@@ -58,21 +60,22 @@ def parseNumericList(numericListString):
 
     return nList
 
-#Try to retrieve limits of cores for the current process' cgroup
+
+# Try to retrieve limits of cores for the current process' cgroup
 def getCgroupCpuCount():
 
-    #first of all, get pid of process
+    # First of all, get pid of process
     pid = os.getpid()
 
-    #Get cgroup associated with pid
+    # Get cgroup associated with pid
     filename = f"/proc/{pid}/cgroup"
 
     cgroup = None
     try:
-        with open(filename, "r") as f :
+        with open(filename, "r") as f:
 
-            #cgroup file is a ':' separated table
-            #lookup a line where the second field is "memory"
+            # cgroup file is a ':' separated table
+            # lookup a line where the second field is "memory"
             lines = f.readlines()
             for line in lines:
                 tokens = line.rstrip("\r\n").split(":")
@@ -89,7 +92,7 @@ def getCgroupCpuCount():
     size = -1
     filename = f"/sys/fs/cgroup/cpuset/{cgroup}/cpuset.cpus"
     try:
-        with open(filename, "r") as f :
+        with open(filename, "r") as f:
             value = f.read().rstrip("\r\n")
             nlist = parseNumericList(value)
             size = len(nlist)
@@ -98,4 +101,3 @@ def getCgroupCpuCount():
         pass
 
     return size
-

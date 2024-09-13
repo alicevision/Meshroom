@@ -7,11 +7,11 @@ from meshroom.core import desc, registerNodeType
 class SampleNode(desc.Node):
     """ Sample Node for unit testing """
     inputs = [
-        desc.File(name='input', label='Input', description='', value='', uid=[0],),
-        desc.StringParam(name='paramA', label='ParamA', description='', value='', uid=[])  # No impact on UID
+        desc.File(name='input', label='Input', description='', value='',),
+        desc.StringParam(name='paramA', label='ParamA', description='', value='', invalidate=False)  # No impact on UID
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder)
     ]
 
 
@@ -59,5 +59,3 @@ def test_inputLinkInvalidation():
     graph.addEdges((n1.input, n2.input))
     assert n1.input.uid() == n2.input.uid()
     assert n1.output.value == n2.output.value
-
-

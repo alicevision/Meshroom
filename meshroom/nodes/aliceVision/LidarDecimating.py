@@ -24,7 +24,6 @@ class LidarDecimating(desc.AVCommandLineNode):
             label="Input JSON",
             description="Input JSON file with description of inputs.",
             value="",
-            uid=[0],
         ),
         desc.FloatParam(
             name="errorLimit",
@@ -32,7 +31,6 @@ class LidarDecimating(desc.AVCommandLineNode):
             description="Maximal distance (in meters) allowed.",
             value=0.001,
             range=(0.0, 1.0, 0.001),
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -41,7 +39,6 @@ class LidarDecimating(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -51,13 +48,11 @@ class LidarDecimating(desc.AVCommandLineNode):
             label="Sub-Meshes Directory",
             description="Output directory for sub-meshes.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
         desc.File(
             name="outputJson",
             label="Scene Description",
             description="Output scene description.",
             value=desc.Node.internalFolder + "scene.json",
-            uid=[],
         ),
     ]

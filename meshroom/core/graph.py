@@ -22,6 +22,7 @@ from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
 
 DefaultJSONEncoder = json.JSONEncoder  # store the original one
 
+
 class MyJSONEncoder(DefaultJSONEncoder):  # declare a new one with Enum support
     def default(self, obj):
         if isinstance(obj, Enum):
@@ -166,7 +167,7 @@ class Graph(BaseObject):
 
     class IO(object):
         """ Centralize Graph file keys and IO version. """
-        __version__ = "1.1"
+        __version__ = "2.0"
 
         class Keys(object):
             """ File Keys. """
@@ -204,8 +205,10 @@ class Graph(BaseObject):
                              Graph.IO.Features.NodesVersions,
                              Graph.IO.Features.PrecomputedOutputs,
                              ]
+
             if fileVersion >= Version("1.1"):
                 features += [Graph.IO.Features.NodesPositions]
+
             return tuple(features)
 
     def __init__(self, name, parent=None):
@@ -218,7 +221,8 @@ class Graph(BaseObject):
         self._computationBlocked = {}
         self._canComputeLeaves = True
         self._nodes = DictModel(keyAttrName='name', parent=self)
-        self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
+        # Edges: use dst attribute as unique key since it can only have one input connection
+        self._edges = DictModel(keyAttrName='dst', parent=self)
         self._importedNodes = DictModel(keyAttrName='name', parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
         self.cacheDir = meshroom.core.defaultCacheFolder
@@ -260,7 +264,27 @@ class Graph(BaseObject):
         with open(filepath) as jsonFile:
             fileData = json.load(jsonFile)
 
-        # older versions of Meshroom files only contained the serialized nodes
+        self.header = fileData.get(Graph.IO.Keys.Header, {})
+
+        fileVersion = self.header.get(Graph.IO.Keys.FileVersion, "0.0")
+        # Retro-compatibility for all project files with the previous UID format
+        if Version(fileVersion) < Version("2.0"):
+            # For internal folders, all "{uid0}" keys should be replaced with "{uid}"
+            updatedFileData = json.dumps(fileData).replace("{uid0}", "{uid}")
+
+            # For fileVersion < 2.0, the nodes' UID is stored as:
+            # "uids": {"0": "hashvalue"}
+            # These should be identified and replaced with:
+            # "uid": "hashvalue"
+            uidPattern = re.compile(r'"uids": \{"0":.*?\}')
+            uidOccurrences = uidPattern.findall(updatedFileData)
+            for occ in uidOccurrences:
+                uid = occ.split("\"")[-2]  # UID is second to last element
+                newUidStr = r'"uid": "{}"'.format(uid)
+                updatedFileData = updatedFileData.replace(occ, newUidStr)
+            fileData = json.loads(updatedFileData)
+
+        # Older versions of Meshroom files only contained the serialized nodes
         graphData = fileData.get(Graph.IO.Keys.Graph, fileData)
 
         if importProject:
@@ -270,12 +294,11 @@ class Graph(BaseObject):
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
 
-        self._fileDateVersion = os.path.getmtime(filepath)
-
-        self.header = fileData.get(Graph.IO.Keys.Header, {})
         nodesVersions = self.header.get(Graph.IO.Keys.NodesVersions, {})
 
-        # check whether the file was saved as a template in minimal mode
+        self._fileDateVersion = os.path.getmtime(filepath)
+
+        # Check whether the file was saved as a template in minimal mode
         isTemplate = self.header.get("template", False)
 
         with GraphModification(self):
@@ -315,8 +338,8 @@ class Graph(BaseObject):
                 # If no filepath is being set but the graph is not a template, trigger an updateInternals either way.
                 self.updateInternals()
 
-            # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the nodes'
-            # links have been resolved and their UID computations are all complete.
+            # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the
+            # nodes' links have been resolved and their UID computations are all complete.
             # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
             # that were computed.
             if not isTemplate:  # UIDs are not stored in templates
@@ -342,13 +365,9 @@ class Graph(BaseObject):
         for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
             node = self.node(nodeName)
 
-            savedUid = nodeData.get("uids", {})  # Node's UID from the graph file
-            # JSON enfore keys to be strings, see
-            # https://docs.python.org/3.8/library/json.html#json.dump
-            # We know our keys are integers, so we convert them back to int.
-            savedUid = {int(k): v for k, v in savedUid.items()}
+            savedUid = nodeData.get("uid", None)
+            graphUid = node._uid  # Node's UID from the graph itself
 
-            graphUid = node._uids  # Node's UID from the graph itself
             if savedUid != graphUid and graphUid is not None:
                 # Different UIDs, remove the existing node from the graph and replace it with a CompatibilityNode
                 logging.debug("UID conflict detected for {}".format(nodeName))
@@ -665,9 +684,12 @@ class Graph(BaseObject):
         """
         Remove the node identified by 'nodeName' from the graph.
         Returns:
-            - a dictionary containing the incoming edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
-            - a dictionary containing the outgoing edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
-            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute prior to the removal of all edges:
+            - a dictionary containing the incoming edges removed by this operation:
+                {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the outgoing edges removed by this operation:
+                {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
+                prior to the removal of all edges:
                 {dstAttr.getFullNameToNode(), (dstAttr.root.getFullNameToNode(), dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
@@ -678,14 +700,18 @@ class Graph(BaseObject):
         # Remove all edges arriving to and starting from this node
         with GraphModification(self):
             # Two iterations over the outgoing edges are necessary:
-            # - the first one is used to collect all the information about the edges while they are all there (overall context)
-            # - once we have collected all the information, the edges (and perhaps the entries in ListAttributes) can actually be removed
+            # - the first one is used to collect all the information about the edges while they are all there
+            #   (overall context)
+            # - once we have collected all the information, the edges (and perhaps the entries in ListAttributes) can
+            #   actually be removed
             for edge in self.nodeOutEdges(node):
                 outEdges[edge.dst.getFullNameToNode()] = edge.src.getFullNameToNode()
 
                 if isinstance(edge.dst.root, ListAttribute):
                     index = edge.dst.root.index(edge.dst)
-                    outListAttributes[edge.dst.getFullNameToNode()] = (edge.dst.root.getFullNameToNode(), index, edge.dst.value if edge.dst.value else None)
+                    outListAttributes[edge.dst.getFullNameToNode()] = (edge.dst.root.getFullNameToNode(),
+                                                                       index, edge.dst.value
+                                                                       if edge.dst.value else None)
 
             for edge in self.nodeOutEdges(node):
                 self.removeEdge(edge.dst)
@@ -746,9 +772,12 @@ class Graph(BaseObject):
 
         Returns:
             - the upgraded (newly created) node
-            - a dictionary containing the incoming edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
-            - a dictionary containing the outgoing edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
-            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute prior to the removal of all edges:
+            - a dictionary containing the incoming edges removed by this operation:
+                {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the outgoing edges removed by this operation:
+                {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
+                prior to the removal of all edges:
                 {dstAttr.getFullNameToNode(), (dstAttr.root.getFullNameToNode(), dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
@@ -817,7 +846,7 @@ class Graph(BaseObject):
         """
         try:
             return int(name.split('_')[-1])
-        except:
+        except Exception:
             return -1
 
     @staticmethod
@@ -953,7 +982,8 @@ class Graph(BaseObject):
     def dfs(self, visitor, startNodes=None, longestPathFirst=False):
         # Default direction (visitor.reverse=False): from node to root
         # Reverse direction (visitor.reverse=True): from node to leaves
-        nodeChildren = self._getOutputEdgesPerNode(visitor.dependenciesOnly) if visitor.reverse else self._getInputEdgesPerNode(visitor.dependenciesOnly)
+        nodeChildren = self._getOutputEdgesPerNode(visitor.dependenciesOnly) \
+                       if visitor.reverse else self._getInputEdgesPerNode(visitor.dependenciesOnly)
         # Initialize color map
         colors = {}
         for u in self._nodes:
@@ -962,9 +992,11 @@ class Graph(BaseObject):
         if longestPathFirst and visitor.reverse:
             # Because we have no knowledge of the node's count between a node and its leaves,
             # it is not possible to handle this case at the moment
-            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and visitor.reverse=True are not compatible yet.")
+            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and visitor.reverse=True are not "
+                                      "compatible yet.")
 
-        nodes = startNodes or (self.getRootNodes(visitor.dependenciesOnly) if visitor.reverse else self.getLeafNodes(visitor.dependenciesOnly))
+        nodes = startNodes or (self.getRootNodes(visitor.dependenciesOnly)
+                               if visitor.reverse else self.getLeafNodes(visitor.dependenciesOnly))
 
         if longestPathFirst:
             # Graph topology must be known and node depths up-to-date
@@ -1285,7 +1317,6 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=[startNode])
         return visitor.canCompute + (2 * visitor.canSubmit)
 
-
     def _applyExpr(self):
         with GraphModification(self):
             for node in self._nodes:
@@ -1382,7 +1413,7 @@ class Graph(BaseObject):
                 del graph[nodeName]["internalInputs"]
 
             del graph[nodeName]["outputs"]
-            del graph[nodeName]["uids"]
+            del graph[nodeName]["uid"]
             del graph[nodeName]["internalFolder"]
             del graph[nodeName]["parallelization"]
 
@@ -1431,13 +1462,13 @@ class Graph(BaseObject):
             node.updateStatisticsFromCache()
 
     def updateNodesPerUid(self):
-        """ Update the duplicate nodes (sharing same uid) list of each node. """
-        # First step is to construct a map uid/nodes
+        """ Update the duplicate nodes (sharing same UID) list of each node. """
+        # First step is to construct a map UID/nodes
         nodesPerUid = {}
         for node in self.nodes:
-            uid = node._uids.get(0)
+            uid = node._uid
 
-            # We try to add the node to the list corresponding to this uid
+            # We try to add the node to the list corresponding to this UID
             try:
                 nodesPerUid.get(uid).append(node)
             # If it fails because the uid is not in the map, we add it
@@ -1583,14 +1614,15 @@ class Graph(BaseObject):
                 if node.hasAttribute('verbose'):
                     try:
                         node.verbose.value = v
-                    except:
+                    except Exception:
                         pass
 
     nodes = Property(BaseObject, nodes.fget, constant=True)
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
-    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.Keys.ReleaseVersion, "0.0"), notify=filepathChanged)
+    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.Keys.ReleaseVersion, "0.0"),
+                                  notify=filepathChanged)
     fileDateVersion = Property(float, fileDateVersion.fget, fileDateVersion.fset, notify=filepathChanged)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
@@ -1704,4 +1736,3 @@ def submit(graphFile, submitter, toNode=None, submitLabel="{projectName}"):
     graph = loadGraph(graphFile)
     toNodes = graph.findNodes(toNode) if toNode else None
     submitGraph(graph, submitter, toNodes, submitLabel=submitLabel)
-

@@ -29,21 +29,18 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             label="Input SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="warpingFolder",
             label="Warping Folder",
             description="Panorama warping results folder.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="labels",
             label="Labels Images",
             description="Panorama seams results images.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="compositerType",
@@ -55,7 +52,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             value="multiband",
             values=["replace", "alpha", "multiband"],
             exclusive=True,
-            uid=[0],
         ),
         desc.IntParam(
             name="forceMinPyramidLevels",
@@ -63,7 +59,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             description="Force the minimal number of levels in the pyramid for multiband compositer.",
             value=0,
             range=(0, 16, 1),
-            uid=[0],
             enabled=lambda node: node.compositerType.value and node.compositerType.value == "multiband",
         ),
         desc.IntParam(
@@ -72,7 +67,7 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             description="Specifies the maximum number of threads to run simultaneously.",
             value=4,
             range=(0, 48, 1),
-            uid=[],
+            invalidate=False,
             advanced=True,
         ),
         desc.BoolParam(
@@ -80,7 +75,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             label="Use Tiling",
             description="Enable tiling mode for parallelization.",
             value=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="storageDataType",
@@ -93,7 +87,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="overlayType",
@@ -107,7 +100,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             values=["none", "borders", "seams", "all"],
             exclusive=True,
             advanced=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -116,7 +108,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -126,6 +117,5 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             label="Folder",
             description="Output folder containing the composited panorama.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
     ]

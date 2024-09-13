@@ -21,7 +21,6 @@ MeshroomMaya contains a user interface to browse all cameras.
             label="Input SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -30,16 +29,14 @@ MeshroomMaya contains a user interface to browse all cameras.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
-    
+
     outputs = [
         desc.File(
             name="output",
             label="Folder",
             description="Folder for MeshroomMaya outputs: undistorted images and thumbnails.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
     ]

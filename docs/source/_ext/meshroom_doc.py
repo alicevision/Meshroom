@@ -11,7 +11,6 @@
 # Note:
 # for now this tool focuses only on meshroom nodes
 
-from docutils import nodes
 from docutils.parsers.rst import Directive
 from utils import md_to_docutils
 

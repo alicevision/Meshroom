@@ -18,32 +18,19 @@ class SfMExpanding(desc.AVCommandLineNode):
             label="SfMData",
             description="SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="tracksFilename",
             label="Tracks File",
             description="Tracks file.",
             value="",
-            uid=[0],
         ),
-        desc.ChoiceParam(
-            name="verboseLevel",
-            label="Verbose Level",
-            description="Verbosity level (fatal, error, warning, info, debug, trace).",
-            values=VERBOSE_LEVEL,
-            value="info",
-            exclusive=True,
-            uid=[],
-        ),
-
         desc.IntParam(
             name="localizerEstimatorMaxIterations",
             label="Localizer Max Ransac Iterations",
             description="Maximum number of iterations allowed in the Ransac step.",
             value=50000,
             range=(1, 100000, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -54,7 +41,6 @@ class SfMExpanding(desc.AVCommandLineNode):
                         "(if ACRansac, it will analyze the input data to select the optimal value).",
             value=0.0,
             range=(0.0, 100.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
        desc.BoolParam(
@@ -63,7 +49,6 @@ class SfMExpanding(desc.AVCommandLineNode):
             description="Lock previously reconstructed poses and intrinsics.\n"
                         "This option is useful for SfM augmentation.",
             value=False,
-            uid=[0],
         ),
         desc.BoolParam(
             name="useLocalBA",
@@ -71,7 +56,6 @@ class SfMExpanding(desc.AVCommandLineNode):
             description="It reduces the reconstruction time, especially for large datasets (500+ images),\n"
                         "by avoiding computation of the Bundle Adjustment on areas that are not changing.",
             value=True,
-            uid=[0],
         ),
         desc.IntParam(
             name="localBAGraphDistance",
@@ -79,7 +63,6 @@ class SfMExpanding(desc.AVCommandLineNode):
             description="Graph-distance limit to define the active region in the Local Bundle Adjustment strategy.",
             value=1,
             range=(2, 10, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -90,7 +73,6 @@ class SfMExpanding(desc.AVCommandLineNode):
                         "Past this number, the bundle adjustment will only be performed once for N added cameras.",
             value=30,
             range=(0, 100, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -100,7 +82,6 @@ class SfMExpanding(desc.AVCommandLineNode):
                         "This prevents adding too much data at once without performing the bundle adjustment.",
             value=30,
             range=(0, 100, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -110,7 +91,6 @@ class SfMExpanding(desc.AVCommandLineNode):
                         "Using a negative value for this threshold will disable BA iterations.",
             value=50,
             range=(-1, 1000, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -122,7 +102,6 @@ class SfMExpanding(desc.AVCommandLineNode):
                         "(from 1.5% to 11% on the tested datasets).",
             value=2,
             range=(2, 10, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -131,7 +110,6 @@ class SfMExpanding(desc.AVCommandLineNode):
             description="Minimum angle for triangulation.",
             value=3.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -140,7 +118,6 @@ class SfMExpanding(desc.AVCommandLineNode):
             description="Minimum angle for landmark.",
             value=2.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
@@ -149,7 +126,6 @@ class SfMExpanding(desc.AVCommandLineNode):
             description="Maximum reprojection error.",
             value=4.0,
             range=(0.1, 10.0, 0.1),
-            uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
@@ -159,7 +135,6 @@ class SfMExpanding(desc.AVCommandLineNode):
                         "principal point, distortion if any) constant during the reconstruction.\n"
                         "This may be helpful if the input cameras are already fully calibrated.",
             value=False,
-            uid=[0],
         ),
         desc.IntParam(
             name="minNbCamerasToRefinePrincipalPoint",
@@ -170,8 +145,15 @@ class SfMExpanding(desc.AVCommandLineNode):
                         "If minNbCamerasToRefinePrincipalPoint is set to 1, the principal point is always refined.",
             value=3,
             range=(0, 20, 1),
-            uid=[0],
             advanced=True,
+        ),
+        desc.ChoiceParam(
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
+            value="info",
+            exclusive=True,
         ),
     ]
 
@@ -181,6 +163,5 @@ class SfMExpanding(desc.AVCommandLineNode):
             label="SfMData",
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.json",
-            uid=[],
         ),
     ]

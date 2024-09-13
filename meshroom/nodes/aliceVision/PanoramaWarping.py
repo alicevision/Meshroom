@@ -24,14 +24,12 @@ Compute the image warping for each input image in the panorama coordinate system
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.BoolParam(
             name="estimateResolution",
             label="Estimate Resolution",
             description="Estimate output panorama resolution automatically based on the resolution of input images.",
             value=True,
-            uid=[0],
             group=None, # skip group from command line
         ),
         desc.IntParam(
@@ -40,7 +38,6 @@ Compute the image warping for each input image in the panorama coordinate system
             description="Choose the output panorama width (in pixels).",
             value=10000,
             range=(0, 50000, 1000),
-            uid=[0],
             enabled=lambda node: (not node.estimateResolution.value),
         ),
         desc.IntParam(
@@ -55,7 +52,6 @@ Compute the image warping for each input image in the panorama coordinate system
             value=50,
             range=(0, 100, 1),
             enabled=lambda node: (node.estimateResolution.value),
-            uid=[0],
         ),
         desc.IntParam(
             name="maxPanoramaWidth",
@@ -63,7 +59,6 @@ Compute the image warping for each input image in the panorama coordinate system
             description="Choose the maximum width for the output panorama (in pixels). 0 means no limit.",
             value=70000,
             range=(0, 100000, 1000),
-            uid=[0],
             enabled=lambda node: (node.estimateResolution.value),
         ),
         desc.ChoiceParam(
@@ -73,7 +68,6 @@ Compute the image warping for each input image in the panorama coordinate system
             values=COLORSPACES,
             value="Linear",
             exclusive=True,
-            uid=[0],
         ),
        desc.ChoiceParam(
             name="storageDataType",
@@ -86,7 +80,6 @@ Compute the image warping for each input image in the panorama coordinate system
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -95,7 +88,6 @@ Compute the image warping for each input image in the panorama coordinate system
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -105,6 +97,5 @@ Compute the image warping for each input image in the panorama coordinate system
             label="Folder",
             description="Output folder.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
     ]

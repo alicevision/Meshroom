@@ -1,6 +1,5 @@
 __version__ = "1.0"
 
-import os
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
 
@@ -25,14 +24,12 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             label="Input A",
             description="First input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="inputB",
             label="Input B",
             description="Second input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -40,7 +37,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
                 label="Features Folder",
                 description="Folder containing some extracted features and descriptors.",
                 value="",
-                uid=[0],
             ),
             name="featuresFolders",
             label="Features Folders",
@@ -50,24 +46,29 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             name="method",
             label="Method",
             description="Method used to select the image pairs to match:\n"
-                        " - VocabularyTree:  It uses image retrieval techniques to find images that share some content without the cost of resolving all \n"
-                        "feature matches in details. Each image is represented in a compact image descriptor which allows to compute the distance between all \n"
-                        "images descriptors very efficiently. If your scene contains less than 'Voc Tree: Minimal Number of Images', all image pairs will be selected.\n"
-                        " - SequentialAndVocabularyTree:  Combines sequential approach with VocTree to enable connections between keyframes at different times.\n"
+                        " - VocabularyTree:  It uses image retrieval techniques to find images that share some content "
+                        "without the cost of resolving all \n"
+                        "feature matches in details. Each image is represented in a compact image descriptor which "
+                        "allows to compute the distance between all \n"
+                        "images descriptors very efficiently. If your scene contains less than 'Voc Tree: Minimal "
+                        "Number of Images', all image pairs will be selected.\n"
+                        " - SequentialAndVocabularyTree:  Combines sequential approach with VocTree to enable "
+                        "connections between keyframes at different times.\n"
                         " - Exhaustive: Export all image pairs.\n"
-                        " - Frustum: If images have known poses, computes the intersection between cameras frustums to create the list of image pairs.\n"
-                        " - FrustumOrVocabularyTree: If images have known poses, use frustum intersection. Otherwise, use VocabularyTree.\n",
+                        " - Frustum: If images have known poses, computes the intersection between cameras frustums "
+                        "to create the list of image pairs.\n"
+                        " - FrustumOrVocabularyTree: If images have known poses, use frustum intersection. Otherwise, "
+                        "use VocabularyTree.\n",
             value="SequentialAndVocabularyTree",
             values=["VocabularyTree", "SequentialAndVocabularyTree", "Exhaustive", "Frustum"],
             exclusive=True,
-            uid=[0],
         ),
         desc.File(
             name="tree",
             label="Voc Tree: Tree",
             description="Input name for the vocabulary tree file.",
             value="${ALICEVISION_VOCTREE}",
-            uid=[],
+            invalidate=False,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
         desc.File(
@@ -76,7 +77,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description="Input name for the weight file.\n"
                         "If not provided, the weights will be computed on the database built with the provided set.",
             value="",
-            uid=[0],
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -90,7 +90,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             value="a/a+a/b",
             values=["a/a+a/b","a/ab", "a/b"],
             exclusive=True,
-            uid=[0],
         ),
         desc.IntParam(
             name="minNbImages",
@@ -99,7 +98,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
                         "If we have less features than this threshold, we will compute all the matching combinations.",
             value=200,
             range=(0, 500, 1),
-            uid=[0],
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -109,7 +107,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description="Limit the number of descriptors you load per image. 0 means no limit.",
             value=500,
             range=(0, 100000, 1),
-            uid=[0],
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -119,7 +116,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description="The number of matches to retrieve for each image. (If 0, it will retrieve all the matches).",
             value=40,
             range=(0, 1000, 1),
-            uid=[0],
             advanced=True,
             enabled=lambda node: "VocabularyTree" in node.method.value,
         ),
@@ -129,7 +125,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description="The number of neighbors to retrieve for each image. (If 0, it will retrieve all the neighbors).",
             value=5,
             range=(0, 1000, 1),
-            uid=[0],
             advanced=True,
             enabled=lambda node: "Sequential" in node.method.value,
         ),
@@ -140,7 +135,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -150,13 +144,11 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             label="List File",
             description="Filepath to the output file with the list of selected image pairs.",
             value=desc.Node.internalFolder + "imageMatches.txt",
-            uid=[],
         ),
         desc.File(
             name="outputCombinedSfM",
             label="Combined SfM",
             description="Path for the combined SfMData file.",
             value=desc.Node.internalFolder + "combineSfM.sfm",
-            uid=[],
         ),
     ]

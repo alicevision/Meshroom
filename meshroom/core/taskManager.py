@@ -211,11 +211,8 @@ class TaskManager(BaseObject):
                 chunksName = [node.name for node in chunksInConflict]
                 # Warning: Syntax and terms are parsed on QML side to recognize the error
                 # Syntax : [Context] ErrorType: ErrorMessage
-                msg = '[COMPUTATION] Already Submitted:\n' \
-                      'WARNING - Some nodes are already submitted with status: {}\nNodes: {}'.format(
-                      ', '.join(chunksStatus),
-                      ', '.join(chunksName)
-                      )
+                msg = '[COMPUTATION] Already Submitted:\nWARNING - Some nodes are already submitted with status: ' \
+                      '{}\nNodes: {}'.format(', '.join(chunksStatus), ', '.join(chunksName))
 
                 if forceStatus:
                     logging.warning(msg)
@@ -325,8 +322,9 @@ class TaskManager(BaseObject):
                     raise RuntimeError("[{}] Duplicates Issue:\n"
                                        "Cannot compute because there are some duplicate nodes to process:\n\n"
                                        "First match: '{}' and '{}'\n\n"
-                                       "There can be other duplicate nodes in the list. Please, check the graph and try again.".format(
-                                       context, node.nameToLabel(node.name), node.nameToLabel(duplicate.name)))
+                                       "There can be other duplicate nodes in the list. "
+                                       "Please, check the graph and try again.".
+                                       format(context, node.nameToLabel(node.name), node.nameToLabel(duplicate.name)))
 
     def checkNodesDependencies(self, graph, toNodes, context):
         """
@@ -366,7 +364,8 @@ class TaskManager(BaseObject):
         # Warning: Syntax and terms are parsed on QML side to recognize the error
         # Syntax : [Context] ErrorType: ErrorMessage
         raise RuntimeWarning("[{}] Unresolved dependencies:\n"
-                             "Some nodes cannot be computed in LOCAL/submitted in EXTERN because of unresolved dependencies.\n\n"
+                             "Some nodes cannot be computed in LOCAL/submitted in EXTERN because of "
+                             "unresolved dependencies.\n\n"
                              "Nodes which are ready will be processed.".format(context))
 
     def raiseImpossibleProcess(self, context):

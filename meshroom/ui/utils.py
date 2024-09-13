@@ -5,7 +5,7 @@ from PySide2.QtCore import QFileSystemWatcher, QUrl, Slot, QTimer, Property, QOb
 from PySide2.QtQml import QQmlApplicationEngine
 try:
     from PySide2 import shiboken2
-except:
+except Exception:
     import shiboken2
 
 

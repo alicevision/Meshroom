@@ -28,7 +28,7 @@ def test_DictModel_add_remove():
         assert len(m.values()) == 1
         assert m.get("DummyNode_1") == node
 
-        assert m.get("something") == None
+        assert m.get("something") is None
         with pytest.raises(KeyError):
             m.getr("something")
 

@@ -1,6 +1,5 @@
 __version__ = "1.0"
 
-import os
 from meshroom.core import desc
 from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
@@ -18,7 +17,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="mediapath",
@@ -26,28 +24,24 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             description="The path to the video file, the folder of the image sequence or a text file\n"
                         "(one image path per line) for each camera of the rig (eg. --mediapath /path/to/cam1.mov /path/to/cam2.mov).",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="cameraIntrinsics",
             label="Camera Intrinsics",
             description="The intrinsics calibration file for each camera of the rig (eg. --cameraIntrinsics /path/to/calib1.txt /path/to/calib2.txt).",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="export",
             label="Export File",
             description="Filename for the alembic file containing the rig poses with the 3D points. It also saves a file for each camera named 'filename.cam##.abc'.",
             value="trackedcameras.abc",
-            uid=[0],
         ),
         desc.File(
             name="descriptorPath",
             label="Descriptor Path",
             description="Folder containing the .desc.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="matchDescTypes",
@@ -56,7 +50,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             values=DESCRIBER_TYPES,
             value=["dspsift"],
             exclusive=False,
-            uid=[0],
             joinChar=",",
         ),
         desc.ChoiceParam(
@@ -66,7 +59,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             value="normal",
             values=["low", "medium", "normal", "high", "ultra"],
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="resectionEstimator",
@@ -75,7 +67,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             value="acransac",
             values=["acransac", "loransac"],
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="matchingEstimator",
@@ -84,14 +75,12 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             value="acransac",
             values=["acransac", "loransac"],
             exclusive=True,
-            uid=[0],
         ),
         desc.StringParam(
             name="refineIntrinsics",
             label="Refine Intrinsics",
             description="Enable/Disable camera intrinsics refinement for each localized image.",
             value="",
-            uid=[0],
         ),
         desc.FloatParam(
             name="reprojectionError",
@@ -100,7 +89,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
                         "If set to 0, it lets the ACRansac select an optimal value.",
             value=4.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
         ),
         desc.IntParam(
             name="maxInputFrames",
@@ -108,21 +96,18 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             description="Maximum number of frames to read in input. 0 means no limit.",
             value=0,
             range=(0, 1000, 1),
-            uid=[0],
         ),
         desc.File(
             name="voctree",
             label="Voctree",
             description="[voctree] Filename for the vocabulary tree.",
             value="${ALICEVISION_VOCTREE}",
-            uid=[0],
         ),
         desc.File(
             name="voctreeWeights",
             label="Voctree Weights",
             description="[voctree] Filename for the vocabulary tree weights.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="algorithm",
@@ -131,7 +116,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             value="AllResults",
             values=["FirstBest", "AllResults"],
             exclusive=True,
-            uid=[0],
         ),
         desc.IntParam(
             name="nbImageMatch",
@@ -139,7 +123,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             description="[voctree] Number of images to retrieve in the database.",
             value=4,
             range=(0, 50, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="maxResults",
@@ -147,7 +130,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             description="[voctree] For algorithm AllResults, it stops the image matching when this number of matched images is reached. If set to 0, it is ignored.",
             value=10,
             range=(0, 100, 1),
-            uid=[0],
         ),
         desc.FloatParam(
             name="matchingError",
@@ -156,7 +138,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
                         "If set to 0, it lets the ACRansac select an optimal value.",
             value=4.0,
             range=(0.0, 10.0, 0.1),
-            uid=[0],
         ),
         desc.IntParam(
             name="nNearestKeyFrames",
@@ -164,7 +145,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             description="[cctag] Number of images to retrieve in database.",
             value=5,
             range=(0, 50, 1),
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -173,7 +153,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -183,6 +162,5 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             label="Output File",
             description="The name of the file to store the calibration data in.",
             value=desc.Node.internalFolder + "cameraRigCalibration.rigCal",
-            uid=[],
         ),
     ]

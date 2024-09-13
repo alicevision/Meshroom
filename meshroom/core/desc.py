@@ -11,28 +11,30 @@ import ast
 import distutils.util
 import shlex
 
+
 class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, semantic, uid, group, enabled, uidIgnoreValue=None,
-                 validValue=True, errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, advanced, semantic, group, enabled, invalidate=True,
+                 uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
         self._description = description
         self._value = value
-        self._uid = uid
         self._group = group
         self._advanced = advanced
         self._enabled = enabled
+        self._invalidate = invalidate
         self._semantic = semantic
         self._uidIgnoreValue = uidIgnoreValue
         self._validValue = validValue
         self._errorMessage = errorMessage
         self._visible = visible
         self._exposed = exposed
-        self._isExpression = (isinstance(self._value, str) and "{" in self._value) or isinstance(self._value, types.FunctionType)
+        self._isExpression = (isinstance(self._value, str) and "{" in self._value) \
+            or isinstance(self._value, types.FunctionType)
         self._isDynamicValue = (self._value is None)
         self._valueType = None
 
@@ -48,7 +50,8 @@ class Attribute(BaseObject):
         Raises:
             ValueError: if value does not have the proper type
         """
-        raise NotImplementedError("Attribute.validateValue is an abstract function that should be implemented in the derived class.")
+        raise NotImplementedError("Attribute.validateValue is an abstract function that should be "
+                                  "implemented in the derived class.")
 
     def checkValueTypes(self):
         """ Returns the attribute's name if the default value's type is invalid or if the range's type (when available)
@@ -57,7 +60,8 @@ class Attribute(BaseObject):
         Returns:
             string: the attribute's name if the default value's or range's type is invalid, empty string otherwise
         """
-        raise NotImplementedError("Attribute.checkValueTypes is an abstract function that should be implemented in the derived class.")
+        raise NotImplementedError("Attribute.checkValueTypes is an abstract function that should be implemented in the "
+                                  "derived class.")
 
     def matchDescription(self, value, strict=True):
         """ Returns whether the value perfectly match attribute's description.
@@ -84,10 +88,10 @@ class Attribute(BaseObject):
     #   The default value of the attribute's descriptor is None, so it's not an input value,
     #   but an output value that is computed during the Node's process execution.
     isDynamicValue = Property(bool, lambda self: self._isDynamicValue, constant=True)
-    uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
     advanced = Property(bool, lambda self: self._advanced, constant=True)
     enabled = Property(Variant, lambda self: self._enabled, constant=True)
+    invalidate = Property(Variant, lambda self: self._invalidate, constant=True)
     semantic = Property(str, lambda self: self._semantic, constant=True)
     uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
     validValue = Property(Variant, lambda self: self._validValue, constant=True)
@@ -108,13 +112,16 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' ', visible=True, exposed=False):
+    def __init__(self, elementDesc, name, label, description, group="allParams", advanced=False, semantic="",
+                 enabled=True, joinChar=" ", visible=True, exposed=False):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[],
+                                            invalidate=False, group=group, advanced=advanced, semantic=semantic,
+                                            enabled=enabled, visible=visible, exposed=exposed)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -126,14 +133,16 @@ class ListAttribute(Attribute):
             return value
         if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
-            raise ValueError("ListAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
+            raise ValueError("ListAttribute.validateValue: cannot recognize QJSValue. "
+                             "Please, use JSON.stringify(value) in QML.")
         if isinstance(value, str):
             # Alternative solution to set values from QML is to convert values to JSON string
             # In this case, it works with all data types
             value = ast.literal_eval(value)
 
         if not isinstance(value, (list, tuple)):
-            raise ValueError('ListAttribute only supports list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+            raise ValueError("ListAttribute only supports list/tuple input values "
+                             "(param:{}, value:{}, type:{})".format(self.name, value, type(value)))
         return value
 
     def checkValueTypes(self):
@@ -149,20 +158,23 @@ class ListAttribute(Attribute):
         return True
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
-    uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
+    invalidate = Property(Variant, lambda self: self.elementDesc.invalidate, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' ', brackets=None, visible=True, exposed=False):
+    def __init__(self, groupDesc, name, label, description, group="allParams", advanced=False, semantic="",
+                 enabled=True, joinChar=" ", brackets=None, visible=True, exposed=False):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
         self._brackets = brackets
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={},
+                                             group=group, advanced=advanced, invalidate=False, semantic=semantic,
+                                             enabled=enabled, visible=visible, exposed=exposed)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -170,12 +182,13 @@ class GroupAttribute(Attribute):
         return GroupAttribute
 
     def validateValue(self, value):
+        """ Ensure value is compatible with the group description and convert value if needed. """
         if value is None:
             return value
-        """ Ensure value is compatible with the group description and convert value if needed. """
         if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
-            raise ValueError("GroupAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
+            raise ValueError("GroupAttribute.validateValue: cannot recognize QJSValue. "
+                             "Please, use JSON.stringify(value) in QML.")
         if isinstance(value, str):
             # Alternative solution to set values from QML is to convert values to JSON string
             # In this case, it works with all data types
@@ -188,12 +201,16 @@ class GroupAttribute(Attribute):
             if self._groupDesc and value.keys():
                 commonKeys = set(value.keys()).intersection([attr.name for attr in self._groupDesc])
                 if not commonKeys:
-                    raise ValueError(f'Value contains no key that matches with the group description (name={self.name}, values={value.keys()}, desc={[attr.name for attr in self._groupDesc]})')
+                    raise ValueError(f"Value contains no key that matches with the group description "
+                                     f"(name={self.name}, values={value.keys()}, "
+                                     f"desc={[attr.name for attr in self._groupDesc]})")
         elif isinstance(value, (list, tuple, set)):
             if len(value) != len(self._groupDesc):
-                raise ValueError('Value contains incoherent number of values: desc size: {}, value size: {}'.format(len(self._groupDesc), len(value)))
+                raise ValueError("Value contains incoherent number of values: desc size: {}, value size: {}".
+                                 format(len(self._groupDesc), len(value)))
         else:
-            raise ValueError('GroupAttribute only supports dict/list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+            raise ValueError("GroupAttribute only supports dict/list/tuple input values (param:{}, value:{}, type:{})".
+                             format(self.name, value, type(value)))
 
         return value
 
@@ -239,14 +256,14 @@ class GroupAttribute(Attribute):
 
         return matchCount > 0
 
-    def retrieveChildrenUids(self):
-        allUids = []
+    def retrieveChildrenInvalidations(self):
+        allInvalidations = []
         for desc in self._groupDesc:
-            allUids.extend(desc.uid)
-        return allUids
+            allInvalidations.append(desc.invalidate)
+        return allInvalidations
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
-    uid = Property(Variant, retrieveChildrenUids, constant=True)
+    invalidate = Property(Variant, retrieveChildrenInvalidations, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
     brackets = Property(str, lambda self: self._brackets, constant=True)
 
@@ -254,24 +271,31 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group, advanced, semantic, enabled, uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
-        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
-            uidIgnoreValue=uidIgnoreValue, validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
+    def __init__(self, name, label, description, value, group, advanced, semantic, enabled, invalidate=True,
+                 uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value,
+                                    group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
+                                    semantic=semantic, uidIgnoreValue=uidIgnoreValue, validValue=validValue,
+                                    errorMessage=errorMessage, visible=visible, exposed=exposed)
 
 
 class File(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True, exposed=True):
-        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
+    def __init__(self, name, label, description, value, group="allParams", advanced=False, invalidate=True,
+                 semantic="", enabled=True, visible=True, exposed=True):
+        super(File, self).__init__(name=name, label=label, description=description, value=value, group=group,
+                                   advanced=advanced, enabled=enabled, invalidate=invalidate, semantic=semantic,
+                                   visible=visible, exposed=exposed)
         self._valueType = str
 
     def validateValue(self, value):
         if value is None:
             return value
         if not isinstance(value, str):
-            raise ValueError('File only supports string input  (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
-        return os.path.normpath(value).replace('\\', '/') if value else ''
+            raise ValueError("File only supports string input  (param:{}, value:{}, type:{})".
+                             format(self.name, value, type(value)))
+        return os.path.normpath(value).replace("\\", "/") if value else ""
 
     def checkValueTypes(self):
         # Some File values are functions generating a string: check whether the value is a string or if it
@@ -284,8 +308,11 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True, exposed=False):
-        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
+    def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
+                 invalidate=True, semantic="", visible=True, exposed=False):
+        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value,
+                                        group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
+                                        semantic=semantic, visible=visible, exposed=exposed)
         self._valueType = bool
 
     def validateValue(self, value):
@@ -296,8 +323,9 @@ class BoolParam(Param):
                 # use distutils.util.strtobool to handle (1/0, true/false, on/off, y/n)
                 return bool(distutils.util.strtobool(value))
             return bool(value)
-        except:
-            raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        except Exception:
+            raise ValueError("BoolParam only supports bool value (param:{}, value:{}, type:{})".
+                             format(self.name, value, type(value)))
 
     def checkValueTypes(self):
         if not isinstance(self.value, bool):
@@ -308,20 +336,24 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', enabled=True, validValue=True, errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, range, group="allParams", advanced=False, enabled=True,
+                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
-        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
-            validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
+        super(IntParam, self).__init__(name=name, label=label, description=description, value=value,
+                                       group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
+                                       semantic=semantic, validValue=validValue, errorMessage=errorMessage,
+                                       visible=visible, exposed=exposed)
         self._valueType = int
 
     def validateValue(self, value):
         if value is None:
             return value
-        # handle unsigned int values that are translated to int by shiboken and may overflow
+        # Handle unsigned int values that are translated to int by shiboken and may overflow
         try:
             return int(value)
-        except:
-            raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        except Exception:
+            raise ValueError("IntParam only supports int value (param:{}, value:{}, type:{})".
+                             format(self.name, value, type(value)))
 
     def checkValueTypes(self):
         if not isinstance(self.value, int) or (self.range and not all([isinstance(r, int) for r in self.range])):
@@ -334,10 +366,13 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', enabled=True, validValue=True, errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, range, group="allParams", advanced=False, enabled=True,
+                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
-        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
-            validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
+        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value,
+                                         group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
+                                         semantic=semantic, validValue=validValue, errorMessage=errorMessage,
+                                         visible=visible, exposed=exposed)
         self._valueType = float
 
     def validateValue(self, value):
@@ -345,8 +380,9 @@ class FloatParam(Param):
             return value
         try:
             return float(value)
-        except:
-            raise ValueError('FloatParam only supports float value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        except Exception:
+            raise ValueError("FloatParam only supports float value (param:{}, value:{}, type:{})".
+                             format(self.name, value, type(value)))
 
     def checkValueTypes(self):
         if not isinstance(self.value, float) or (self.range and not all([isinstance(r, float) for r in self.range])):
@@ -355,11 +391,15 @@ class FloatParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
+
 class PushButtonParam(Param):
     """
     """
-    def __init__(self, name, label, description, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True, exposed=False):
-        super(PushButtonParam, self).__init__(name=name, label=label, description=description, value=None, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
+    def __init__(self, name, label, description, group="allParams", advanced=False, enabled=True,
+                 invalidate=True, semantic="", visible=True, exposed=False):
+        super(PushButtonParam, self).__init__(name=name, label=label, description=description, value=None,
+                                              group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
+                                              semantic=semantic, visible=visible, exposed=exposed)
         self._valueType = None
 
     def getInstanceType(self):
@@ -377,11 +417,14 @@ class PushButtonParam(Param):
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, semantic='',
-                 enabled=True, validValue=True, errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, values, exclusive, group="allParams", joinChar=" ",
+                 advanced=False, enabled=True, invalidate=True, semantic="", validValue=True, errorMessage="",
+                 visible=True, exposed=False):
         assert values
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced,
-                                          semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value,
+                                          group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
+                                          semantic=semantic, validValue=validValue, errorMessage=errorMessage,
+                                          visible=visible, exposed=exposed)
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
@@ -416,7 +459,8 @@ class ChoiceParam(Param):
             value = value.split(',')
 
         if not isinstance(value, Iterable):
-            raise ValueError('Non exclusive ChoiceParam value should be iterable (param: {}, value: {}, type: {}).'.format(self.name, value, type(value)))
+            raise ValueError("Non-exclusive ChoiceParam value should be iterable (param: {}, value: {}, type: {}).".
+                             format(self.name, value, type(value)))
 
         return [self.conformValue(v) for v in value]
 
@@ -428,7 +472,7 @@ class ChoiceParam(Param):
         # If the choices are not exclusive, check that 'value' is a list, and check that it does not contain values that
         # are not available
         elif not self.exclusive and (not isinstance(self._value, list) or
-             not all(val in self._values for val in self._value)):
+                                     not all(val in self._values for val in self._value)):
             return self.name
 
         # If the choices are exclusive, the value should NOT be a list but it can contain any value that is not in the
@@ -446,16 +490,21 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
-        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
-            uidIgnoreValue=uidIgnoreValue, validValue=validValue, errorMessage=errorMessage, visible=visible, exposed=exposed)
+    def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
+                 invalidate=True, semantic="", uidIgnoreValue=None, validValue=True, errorMessage="", visible=True,
+                 exposed=False):
+        super(StringParam, self).__init__(name=name, label=label, description=description, value=value,
+                                          group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
+                                          semantic=semantic, uidIgnoreValue=uidIgnoreValue, validValue=validValue,
+                                          errorMessage=errorMessage, visible=visible, exposed=exposed)
         self._valueType = str
 
     def validateValue(self, value):
         if value is None:
             return value
         if not isinstance(value, str):
-            raise ValueError('StringParam value should be a string (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+            raise ValueError("StringParam value should be a string (param:{}, value:{}, type:{})".
+                             format(self.name, value, type(value)))
         return value
 
     def checkValueTypes(self):
@@ -467,8 +516,11 @@ class StringParam(Param):
 class ColorParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, visible=True, exposed=False):
-        super(ColorParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
+    def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
+                 invalidate=True, semantic="", visible=True, exposed=False):
+        super(ColorParam, self).__init__(name=name, label=label, description=description, value=value,
+                                         group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
+                                         semantic=semantic, visible=visible, exposed=exposed)
         self._valueType = str
 
     def validateValue(self, value):
@@ -616,7 +668,7 @@ class StaticNodeSize(object):
 class Node(object):
     """
     """
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
+    internalFolder = '{cache}/{nodeType}/{uid}/'
     cpu = Level.NORMAL
     gpu = Level.NONE
     ram = Level.NORMAL
@@ -631,7 +683,6 @@ class Node(object):
                         "It is displayed in bold font in the invalidation/comment messages tooltip.",
             value="",
             semantic="multiline",
-            uid=[0],
             advanced=True,
             uidIgnoreValue="",  # If the invalidation string is empty, it does not participate to the node's UID
         ),
@@ -642,21 +693,21 @@ class Node(object):
                         "It is displayed in regular font in the invalidation/comment messages tooltip.",
             value="",
             semantic="multiline",
-            uid=[],
+            invalidate=False,
         ),
         StringParam(
             name="label",
             label="Node's Label",
             description="Customize the default label (to replace the technical name of the node instance).",
             value="",
-            uid=[],
+            invalidate=False,
         ),
         ColorParam(
             name="color",
             label="Color",
             description="Custom color for the node (SVG name or hexadecimal code).",
             value="",
-            uid=[],
+            invalidate=False,
         )
     ]
     inputs = []
@@ -683,6 +734,7 @@ class Node(object):
             BaseNode.updateInternals
         """
         pass
+
     @classmethod
     def postUpdate(cls, node):
         """ Method call after node's internal update on invalidation.
@@ -699,6 +751,7 @@ class Node(object):
 
     def processChunk(self, chunk):
         raise NotImplementedError('No processChunk implementation on node: "{}"'.format(chunk.node.name))
+
 
 class InputNode(Node):
     """
@@ -724,12 +777,14 @@ class CommandLineNode(Node):
     def buildCommandLine(self, chunk):
 
         cmdPrefix = ''
-        # if rez available in env, we use it
-        if 'REZ_ENV' in os.environ and chunk.node.packageVersion:
-            # if the node package is already in the environment, we don't need a new dedicated rez environment
-            alreadyInEnv = os.environ.get('REZ_{}_VERSION'.format(chunk.node.packageName.upper()), "").startswith(chunk.node.packageVersion)
+        # If rez available in env, we use it
+        if "REZ_ENV" in os.environ and chunk.node.packageVersion:
+            # If the node package is already in the environment, we don't need a new dedicated rez environment
+            alreadyInEnv = os.environ.get("REZ_{}_VERSION".format(chunk.node.packageName.upper()),
+                                          "").startswith(chunk.node.packageVersion)
             if not alreadyInEnv:
-                cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get('REZ_ENV'), packageFullName=chunk.node.packageFullName)
+                cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get("REZ_ENV"),
+                                                                 packageFullName=chunk.node.packageFullName)
 
         cmdSuffix = ''
         if chunk.node.isParallelized and chunk.node.size > 1:
@@ -738,12 +793,12 @@ class CommandLineNode(Node):
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
     def stopProcess(self, chunk):
-        # the same node could exists several times in the graph and
+        # The same node could exists several times in the graph and
         # only one would have the running subprocess; ignore all others
         if not hasattr(chunk, "subprocess"):
             return
         if chunk.subprocess:
-            # kill process tree
+            # Kill process tree
             processes = chunk.subprocess.children(recursive=True) + [chunk.subprocess]
             try:
                 for process in processes:
@@ -761,7 +816,7 @@ class CommandLineNode(Node):
                 print(' - logFile: {}'.format(chunk.logFile))
                 chunk.subprocess = psutil.Popen(shlex.split(cmd), stdout=logF, stderr=logF, cwd=chunk.node.internalFolder)
 
-                # store process static info into the status file
+                # Store process static info into the status file
                 # chunk.status.env = node.proc.environ()
                 # chunk.status.createTime = node.proc.create_time()
 
@@ -775,12 +830,13 @@ class CommandLineNode(Node):
                 with open(chunk.logFile, 'r') as logF:
                     logContent = ''.join(logF.readlines())
                 raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(chunk.name, logContent))
-        except:
+        except Exception:
             raise
         finally:
             chunk.subprocess = None
 
-#specific command line node for alicevision apps
+
+# Specific command line node for AliceVision apps
 class AVCommandLineNode(CommandLineNode):
 
     cgroupParsed = False
@@ -805,12 +861,11 @@ class AVCommandLineNode(CommandLineNode):
             AVCommandLineNode.cgroupParsed = True
 
     def buildCommandLine(self, chunk):
-
         commandLineString = super(AVCommandLineNode, self).buildCommandLine(chunk)
 
         return commandLineString + AVCommandLineNode.cmdMem + AVCommandLineNode.cmdCore
 
-# Test abstract node
+
 class InitNode(object):
     def __init__(self):
         super(InitNode, self).__init__()

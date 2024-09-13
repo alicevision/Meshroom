@@ -8,7 +8,7 @@
             "Publish": "1.3"
         },
         "releaseVersion": "2024.1.0-develop",
-        "fileVersion": "1.1",
+        "fileVersion": "2.0",
         "template": true
     },
     "graph": {

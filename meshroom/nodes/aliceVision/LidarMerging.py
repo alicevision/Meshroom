@@ -20,7 +20,6 @@ class LidarMerging(desc.AVCommandLineNode):
             label="Input JSON",
             description="Input JSON file with description of inputs.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -29,7 +28,6 @@ class LidarMerging(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -39,6 +37,5 @@ class LidarMerging(desc.AVCommandLineNode):
             label="Mesh Path Output",
             description="Output directory for mesh.",
             value=desc.Node.internalFolder + "output.obj",
-            uid=[],
         ),
     ]

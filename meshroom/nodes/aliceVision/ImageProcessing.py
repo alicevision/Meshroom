@@ -5,11 +5,12 @@ from meshroom.core.utils import COLORSPACES, EXR_STORAGE_DATA_TYPE, RAW_COLOR_IN
 
 import os.path
 
+
 def outputImagesValueFunct(attr):
     basename = os.path.basename(attr.node.input.value)
     fileStem = os.path.splitext(basename)[0]
     inputExt = os.path.splitext(basename)[1]
-    outputExt =  ('.' + attr.node.extension.value) if attr.node.extension.value else None
+    outputExt = ('.' + attr.node.extension.value) if attr.node.extension.value else None
 
     if inputExt in ['.abc', '.sfm']:
         fileStem = '<FILESTEM>' if attr.node.keepImageFilename.value else '<VIEW_ID>'
@@ -17,7 +18,7 @@ def outputImagesValueFunct(attr):
         return desc.Node.internalFolder + fileStem + (outputExt or '.*')
 
     if inputExt:
-        # if we have one or multiple files in input
+        # If we have one or multiple files in input
         return desc.Node.internalFolder + fileStem + (outputExt or inputExt)
 
     if '*' in fileStem:
@@ -52,7 +53,6 @@ Convert or apply filtering to the input images.
                         " - '?' matches one character.\n"
                         " - '*' matches zero character or more.",
             value="",
-            uid=[0],
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -60,7 +60,6 @@ Convert or apply filtering to the input images.
                 label="Input Folder",
                 description="Folder containing images.",
                 value="",
-                uid=[0],
             ),
             name="inputFolders",
             label="Input Images Folders",
@@ -72,7 +71,6 @@ Convert or apply filtering to the input images.
                 label="Metadata Folder",
                 description="Specific folder containing images with metadata.",
                 value="",
-                uid=[0],
             ),
             name="metadataFolders",
             label="Input Metadata Folders",
@@ -86,49 +84,42 @@ Convert or apply filtering to the input images.
             value="",
             values=["", "exr", "jpg", "tiff", "png"],
             exclusive=True,
-            uid=[0],
         ),
         desc.BoolParam(
             name="reconstructedViewsOnly",
             label="Only Reconstructed Views",
             description="Only process reconstructed views.",
             value=False,
-            uid=[0],
         ),
         desc.BoolParam(
             name="keepImageFilename",
             label="Keep Image Name",
             description="Keep the original image name instead of the view name.",
             value=False,
-            uid=[0],
         ),
         desc.BoolParam(
             name="reorient",
             label="Automatic Reorientation",
             description="Automatic image reorientation.",
             value=False,
-            uid=[0],
         ),
         desc.BoolParam(
             name="fixNonFinite",
             label="Fix Non-Finite",
             description="Fix non-finite pixels based on neighboring pixels average.",
             value=False,
-            uid=[0],
         ),
         desc.BoolParam(
             name="exposureCompensation",
             label="Exposure Compensation",
             description="Exposure compensation (only valid for SfMData).",
             value=False,
-            uid=[0],
         ),
         desc.BoolParam(
             name="rawAutoBright",
             label="RAW Auto Bright",
             description="Enable automatic exposure adjustment for RAW images.",
             value=False,
-            uid=[0],
         ),
         desc.FloatParam(
             name="rawExposureAdjust",
@@ -136,7 +127,6 @@ Convert or apply filtering to the input images.
             description="Manual exposure adjustment in fstops for RAW images.",
             value=0.0,
             range=(-2.0, 3.0, 0.125),
-            uid=[0],
         ),
         desc.GroupAttribute(
             name="lensCorrection",
@@ -149,14 +139,12 @@ Convert or apply filtering to the input images.
                     label="Enable",
                     description="Enable lens correction.",
                     value=False,
-                    uid=[0],
                 ),
                 desc.BoolParam(
                     name="geometry",
                     label="Geometry",
                     description="Geometry correction if a model is available in the SfMData.",
                     value=False,
-                    uid=[0],
                     enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value,
                 ),
                 desc.BoolParam(
@@ -164,7 +152,6 @@ Convert or apply filtering to the input images.
                     label="Vignetting",
                     description="Vignetting correction if the model parameters are available in the metadata.",
                     value=False,
-                    uid=[0],
                     enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value,
                 ),
                 desc.BoolParam(
@@ -172,7 +159,6 @@ Convert or apply filtering to the input images.
                     label="Chromatic Aberration",
                     description="Chromatic aberration (fringing) correction if the model parameters are available in the metadata.",
                     value=False,
-                    uid=[0],
                     enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value,
                 ),
             ],
@@ -183,7 +169,6 @@ Convert or apply filtering to the input images.
             description="Scale factor.",
             value=1.0,
             range=(0.0, 1.0, 0.01),
-            uid=[0],
         ),
         desc.IntParam(
             name="maxWidth",
@@ -191,7 +176,6 @@ Convert or apply filtering to the input images.
             description="Maximum width of the output images (0: ignored).",
             value=0,
             range=(0, 10000, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="maxHeight",
@@ -199,7 +183,6 @@ Convert or apply filtering to the input images.
             description="Maximum height of the output images (0: ignored).",
             value=0,
             range=(0, 10000, 1),
-            uid=[0],
         ),
         desc.FloatParam(
             name="contrast",
@@ -207,7 +190,6 @@ Convert or apply filtering to the input images.
             description="Contrast.",
             value=1.0,
             range=(0.0, 100.0, 0.1),
-            uid=[0],
         ),
         desc.IntParam(
             name="medianFilter",
@@ -215,7 +197,6 @@ Convert or apply filtering to the input images.
             description="Median filter.",
             value=0,
             range=(0, 10, 1),
-            uid=[0],
         ),
         desc.BoolParam(
             name="fillHoles",
@@ -223,7 +204,6 @@ Convert or apply filtering to the input images.
             description="Fill holes based on the alpha channel.\n"
                         "Note: It will enable 'fixNonFinite', as it is required for the image pyramid construction used to fill holes.",
             value=False,
-            uid=[0],
         ),
         desc.GroupAttribute(
             name="sharpenFilter",
@@ -236,7 +216,6 @@ Convert or apply filtering to the input images.
                     label="Enable",
                     description="Use sharpen filter.",
                     value=False,
-                    uid=[0],
                 ),
                 desc.IntParam(
                     name="width",
@@ -244,7 +223,6 @@ Convert or apply filtering to the input images.
                     description="Sharpening width.",
                     value=3,
                     range=(1, 9, 2),
-                    uid=[0],
                     enabled=lambda node: node.sharpenFilter.sharpenFilterEnabled.value,
                 ),
                 desc.FloatParam(
@@ -253,7 +231,6 @@ Convert or apply filtering to the input images.
                     description="Sharpening contrast.",
                     value=1.0,
                     range=(0.0, 100.0, 0.1),
-                    uid=[0],
                     enabled=lambda node: node.sharpenFilter.sharpenFilterEnabled.value,
                 ),
                 desc.FloatParam(
@@ -262,7 +239,6 @@ Convert or apply filtering to the input images.
                     description="Sharpening threshold.",
                     value=0.0,
                     range=(0.0, 1.0, 0.01),
-                    uid=[0],
                     enabled=lambda node: node.sharpenFilter.sharpenFilterEnabled.value,
                 ),
             ],
@@ -278,7 +254,6 @@ Convert or apply filtering to the input images.
                     label="Enable",
                     description="Use bilateral filter.",
                     value=False,
-                    uid=[0],
                 ),
                 desc.IntParam(
                     name="bilateralFilterDistance",
@@ -287,7 +262,6 @@ Convert or apply filtering to the input images.
                                 "Could be very slow for large filters, so it is recommended to use 5.",
                     value=0,
                     range=(0, 9, 1),
-                    uid=[0],
                     enabled=lambda node: node.bilateralFilter.bilateralFilterEnabled.value,
                 ),
                 desc.FloatParam(
@@ -296,7 +270,6 @@ Convert or apply filtering to the input images.
                     description="Bilateral filter sigma in the coordinate space.",
                     value=0.0,
                     range=(0.0, 150.0, 0.01),
-                    uid=[0],
                     enabled=lambda node: node.bilateralFilter.bilateralFilterEnabled.value,
                 ),
                 desc.FloatParam(
@@ -305,7 +278,6 @@ Convert or apply filtering to the input images.
                     description="Bilateral filter sigma in the color space.",
                     value=0.0,
                     range=(0.0, 150.0, 0.01),
-                    uid=[0],
                     enabled=lambda node: node.bilateralFilter.bilateralFilterEnabled.value,
                 ),
             ],
@@ -321,7 +293,6 @@ Convert or apply filtering to the input images.
                     label="Enable",
                     description="Use Contrast Limited Adaptive Histogram Equalization (CLAHE) filter.",
                     value=False,
-                    uid=[0],
                 ),
                 desc.FloatParam(
                     name="claheClipLimit",
@@ -329,7 +300,6 @@ Convert or apply filtering to the input images.
                     description="Threshold for contrast limiting.",
                     value=4.0,
                     range=(0.0, 8.0, 1.0),
-                    uid=[0],
                     enabled=lambda node: node.claheFilter.claheEnabled.value,
                 ),
                 desc.IntParam(
@@ -339,7 +309,6 @@ Convert or apply filtering to the input images.
                                 "Input image will be divided into equally sized rectangular tiles.",
                     value=8,
                     range=(4, 64, 4),
-                    uid=[0],
                     enabled=lambda node: node.claheFilter.claheEnabled.value,
                 ),
             ],
@@ -355,7 +324,6 @@ Convert or apply filtering to the input images.
                     label="Enable",
                     description="Add noise.",
                     value=False,
-                    uid=[0],
                 ),
                 desc.ChoiceParam(
                     name="noiseMethod",
@@ -367,7 +335,6 @@ Convert or apply filtering to the input images.
                     value="uniform",
                     values=["uniform", "gaussian", "salt"],
                     exclusive=True,
-                    uid=[0],
                     enabled=lambda node: node.noiseFilter.noiseEnabled.value,
                 ),
                 desc.FloatParam(
@@ -379,7 +346,6 @@ Convert or apply filtering to the input images.
                                 " - salt: the value of the specified portion of pixels.",
                     value=0.0,
                     range=(0.0, 1.0, 0.0001),
-                    uid=[0],
                     enabled=lambda node: node.noiseFilter.noiseEnabled.value,
                 ),
                 desc.FloatParam(
@@ -391,7 +357,6 @@ Convert or apply filtering to the input images.
                                 " - salt: the portion of pixels to set to a specified value.",
                     value=1.0,
                     range=(0.0, 1.0, 0.0001),
-                    uid=[0],
                     enabled=lambda node: node.noiseFilter.noiseEnabled.value,
                 ),
                 desc.BoolParam(
@@ -400,7 +365,6 @@ Convert or apply filtering to the input images.
                     description="If selected, a single noise value will be applied to all channels.\n"
                                 "Otherwise, a separate noise value will be computed for each channel.",
                     value=True,
-                    uid=[0],
                     enabled=lambda node: node.noiseFilter.noiseEnabled.value,
                 ),
             ],
@@ -417,7 +381,6 @@ Convert or apply filtering to the input images.
                     label="Enable",
                     description="Use Non-Local Mean Denoising from OpenCV to denoise images.",
                     value=False,
-                    uid=[0],
                 ),
                 desc.FloatParam(
                     name="nlmFilterH",
@@ -427,7 +390,6 @@ Convert or apply filtering to the input images.
                                 "smaller H value preserves details but also preserves some noise.",
                     value=5.0,
                     range=(1.0, 1000.0, 0.01),
-                    uid=[0],
                     enabled=lambda node: node.nlmFilter.nlmFilterEnabled.value,
                 ),
                 desc.FloatParam(
@@ -438,7 +400,6 @@ Convert or apply filtering to the input images.
                                 "smaller HColor value preserves details but also preserves some noise.",
                     value=10.0,
                     range=(0.0, 1000.0, 0.01),
-                    uid=[0],
                     enabled=lambda node: node.nlmFilter.nlmFilterEnabled.value,
                 ),
                 desc.IntParam(
@@ -447,7 +408,6 @@ Convert or apply filtering to the input images.
                     description="Size in pixels of the template patch that is used to compute weights. Should be odd.",
                     value=7,
                     range=(1, 101, 2),
-                    uid=[0],
                     enabled=lambda node: node.nlmFilter.nlmFilterEnabled.value,
                 ),
                 desc.IntParam(
@@ -457,7 +417,6 @@ Convert or apply filtering to the input images.
                                 "Should be odd. Affect performance linearly: greater searchWindowsSize - greater denoising time.",
                     value=21,
                     range=(1, 1001, 2),
-                    uid=[0],
                     enabled=lambda node: node.nlmFilter.nlmFilterEnabled.value,
                 ),
             ],
@@ -473,7 +432,6 @@ Convert or apply filtering to the input images.
                     label="Enable",
                     description="Apply pixel aspect ratio.",
                     value=False,
-                    uid=[0],
                 ),
                 desc.BoolParam(
                     name="parRowDecimation",
@@ -481,7 +439,6 @@ Convert or apply filtering to the input images.
                     description="If selected, reduce image height by decimating the number of rows.\n"
                                 "Otherwise, increase width by upsampling image columns.",
                     value=False,
-                    uid=[0],
                     enabled=lambda node: node.parFilter.parEnabled.value,
                 ),
             ],
@@ -493,7 +450,6 @@ Convert or apply filtering to the input images.
             value="rgba",
             values=["rgba", "rgb", "grayscale"],
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="inputColorSpace",
@@ -502,7 +458,6 @@ Convert or apply filtering to the input images.
             values=COLORSPACES,
             value="AUTO",
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="outputColorSpace",
@@ -511,7 +466,6 @@ Convert or apply filtering to the input images.
             values=COLORSPACES,
             value="AUTO",
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="workingColorSpace",
@@ -520,7 +474,6 @@ Convert or apply filtering to the input images.
             values=COLORSPACES,
             value="Linear",
             exclusive=True,
-            uid=[0],
             enabled=lambda node: not node.applyDcpMetadata.value,
         ),
         desc.ChoiceParam(
@@ -530,21 +483,19 @@ Convert or apply filtering to the input images.
             values=RAW_COLOR_INTERPRETATION,
             value="DCPLinearProcessing" if os.environ.get("ALICEVISION_COLOR_PROFILE_DB", "") else "LibRawWhiteBalancing",
             exclusive=True,
-            uid=[0],
         ),
         desc.BoolParam(
             name="applyDcpMetadata",
             label="Apply DCP Metadata",
             description="If the image contains some DCP metadata, then generate a DCP profile from them and apply it to the image content.",
             value=False,
-            uid=[0],
         ),
         desc.File(
             name="colorProfileDatabase",
             label="Color Profile Database",
             description="Color profile database directory path.",
             value="${ALICEVISION_COLOR_PROFILE_DB}",
-            uid=[],
+            invalidate=False,
             enabled=lambda node: (node.rawColorInterpretation.value == "DCPLinearProcessing") or (node.rawColorInterpretation.value == "DCPMetadata"),
         ),
         desc.BoolParam(
@@ -552,7 +503,6 @@ Convert or apply filtering to the input images.
             label="Error On Missing DCP Color Profile",
             description="If a color profile database is specified but no color profile is found for at least one image, then an error is thrown.",
             value=True,
-            uid=[0],
             enabled=lambda node: (node.rawColorInterpretation.value == "DCPLinearProcessing") or (node.rawColorInterpretation.value == "DCPMetadata"),
         ),
         desc.BoolParam(
@@ -560,7 +510,6 @@ Convert or apply filtering to the input images.
             label="Use DCP Color Matrix Only",
             description="Use only the Color Matrix information from the DCP and ignore the Forward Matrix.",
             value=True,
-            uid=[0],
             enabled=lambda node: (node.rawColorInterpretation.value == "DCPLinearProcessing") or (node.rawColorInterpretation.value == "DCPMetadata"),
         ),
         desc.BoolParam(
@@ -568,7 +517,6 @@ Convert or apply filtering to the input images.
             label="WB After Demosaicing",
             description="Do White Balance after demosaicing, just before DCP profile application.",
             value=False,
-            uid=[0],
             enabled=lambda node: (node.rawColorInterpretation.value == "DCPLinearProcessing") or (node.rawColorInterpretation.value == "DCPMetadata"),
         ),
         desc.ChoiceParam(
@@ -578,7 +526,6 @@ Convert or apply filtering to the input images.
             value="AHD",
             values=["linear", "VNG", "PPG", "AHD", "DCB", "AHD-Mod", "AFD", "VCD", "Mixed", "LMMSE", "AMaZE", "DHT", "AAHD", "none"],
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="highlightMode",
@@ -591,7 +538,6 @@ Convert or apply filtering to the input images.
             value=0,
             values=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
             exclusive=True,
-            uid=[0],
         ),
         desc.FloatParam(
             name="correlatedColorTemperature",
@@ -600,21 +546,19 @@ Convert or apply filtering to the input images.
                         "A negative or null value indicates that the metadata information will be used.",
             value=-1.0,
             range=(-1.0, 10000.0, 1.0),
-            uid=[0],
         ),
         desc.File(
             name="lensCorrectionProfileInfo",
             label="Lens Correction Profile Info",
             description="Lens Correction Profile filepath or database directory.",
             value="${ALICEVISION_LENS_PROFILE_INFO}",
-            uid=[],
+            invalidate=False,
         ),
         desc.BoolParam(
             name="lensCorrectionProfileSearchIgnoreCameraModel",
             label="LCP Generic Search",
             description="The lens name and camera maker are used to match the LCP database, but the camera model is ignored.",
             value=True,
-            uid=[0],
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -628,7 +572,6 @@ Convert or apply filtering to the input images.
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
             exclusive=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="exrCompressionMethod",
@@ -637,7 +580,6 @@ Convert or apply filtering to the input images.
             value="auto",
             values=["none", "auto", "rle", "zip", "zips", "piz", "pxr24", "b44", "b44a", "dwaa", "dwab"],
             exclusive=True,
-            uid=[0],
         ),
         desc.IntParam(
             name="exrCompressionLevel",
@@ -647,7 +589,6 @@ Convert or apply filtering to the input images.
                         "A value of 0 will be ignored, and the default value for the selected method will be used.",
             value=0,
             range=(0, 500, 1),
-            uid=[0],
             enabled=lambda node: node.exrCompressionMethod.value in ["dwaa", "dwab", "zip", "zips"],
         ),
         desc.BoolParam(
@@ -655,7 +596,6 @@ Convert or apply filtering to the input images.
             label="JPEG Compress",
             description="Enable JPEG compression.",
             value=True,
-            uid=[0],
         ),
         desc.IntParam(
             name="jpegQuality",
@@ -663,7 +603,6 @@ Convert or apply filtering to the input images.
             description="JPEG images quality after compression.",
             value=90,
             range=(0, 100, 1),
-            uid=[0],
             enabled=lambda node: node.jpegCompress.value,
         ),
         desc.ChoiceParam(
@@ -673,7 +612,6 @@ Convert or apply filtering to the input images.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -683,7 +621,6 @@ Convert or apply filtering to the input images.
             label="SfMData",
             description="Output SfMData file.",
             value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in [".abc", ".sfm"]) else "",
-            uid=[],
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -691,7 +628,6 @@ Convert or apply filtering to the input images.
             label="Folder",
             description="Output images folder.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
         desc.File(
             name="outputImages",
@@ -700,6 +636,5 @@ Convert or apply filtering to the input images.
             semantic="image",
             value=outputImagesValueFunct,
             group="",  # do not export on the command line
-            uid=[],
         ),
     ]

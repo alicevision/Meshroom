@@ -21,14 +21,12 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="inputMesh",
             label="Mesh",
             description="Input Mesh file.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="outputMeshFileType",
@@ -37,7 +35,6 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             value="obj",
             values=["gltf", "obj", "fbx", "stl"],
             exclusive=True,
-            uid=[0],
             group="",
         ),
         desc.IntParam(
@@ -46,7 +43,6 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             description="Minimal number of observations to keep a vertex.",
             value=1,
             range=(0, 5, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="minVertices",
@@ -54,7 +50,6 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             description="Minimal number of killed vertices in a triangle to remove the triangle.",
             value=3,
             range=(1, 3, 1),
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -63,7 +58,6 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -73,6 +67,5 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             label="Mesh",
             description="Output mesh file.",
             value=desc.Node.internalFolder + "mesh.{outputMeshFileTypeValue}",
-            uid=[],
         ),
     ]

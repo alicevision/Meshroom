@@ -20,7 +20,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             label="Input SfMData",
             description="SfMData file containing a complete SfM.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="sfmDataFilter",
@@ -28,7 +27,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             description="Filter out cameras from the export if they are part of this SfMData.\n"
                         "If empty, export all cameras.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="viewFilter",
@@ -36,7 +34,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             description="Select the cameras to export using an expression based on the image filepath.\n"
                         "If empty, export all cameras.",
             value="",
-            uid=[0],
         ),
         desc.BoolParam(
             name="exportSTMaps",
@@ -44,23 +41,20 @@ Based on the input image filenames, it will recognize the input video sequence t
             description="Export ST maps. Motion (x, y) is encoded in the image channels to correct the lens distortion.\n"
                         "It represents the absolute pixel positions of an image normalized between 0 and 1.",
             value=True,
-            uid=[0],
         ),
         desc.BoolParam(
             name="exportUndistortedImages",
             label="Export Undistorted Images",
             description="Export undistorted images.",
             value=False,
-            uid=[0],
         ),
-       desc.ChoiceParam(
+        desc.ChoiceParam(
             name="undistortedImageType",
             label="Undistort Image Format",
             description="Image file format to use for undistorted images ('jpg', 'png', 'tif', 'exr (half)').",
             value="exr",
             values=["jpg", "png", "tif", "exr"],
             exclusive=True,
-            uid=[0],
             enabled=lambda node: node.exportUndistortedImages.value,
         ),
         desc.BoolParam(
@@ -69,14 +63,12 @@ Based on the input image filenames, it will recognize the input video sequence t
             description="Export full ROD.",
             value=False,
             enabled=lambda node: node.exportUndistortedImages.value and node.undistortedImageType.value == "exr",
-            uid=[0],
         ),
         desc.BoolParam(
             name="correctPrincipalPoint",
             label="Correct Principal Point",
             description="Correct principal point.",
             value=False,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -85,7 +77,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -95,7 +86,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             label="Folder",
             description="Output folder with animated camera and undistorted images.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
         desc.File(
             name="outputCamera",
@@ -103,7 +93,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             description="Output filename for the animated camera in Alembic format.",
             value=desc.Node.internalFolder + "camera.abc",
             group="",  # exclude from command line
-            uid=[],
         ),
         desc.File(
             name="outputUndistorted",
@@ -111,7 +100,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             description="Output undistorted folder.",
             value=desc.Node.internalFolder + "undistort/",
             group="",  # exclude from command line
-            uid=[],
         ),
         desc.File(
             name="outputImages",
@@ -121,6 +109,5 @@ Based on the input image filenames, it will recognize the input video sequence t
             semantic="image",
             group="",  # exclude from command line
             enabled=lambda node: node.exportUndistortedImages.value,
-            uid=[],
         ),
     ]

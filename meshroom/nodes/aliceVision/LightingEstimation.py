@@ -17,14 +17,12 @@ class LightingEstimation(desc.AVCommandLineNode):
             label="Input SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0],
         ), 
         desc.File(
             name="depthMapsFilterFolder",
             label="Filtered Depth Maps Folder",
             description="Input filtered depth maps folder.",
             value="",
-            uid=[0],
         ),
         desc.File(
             name="imagesFolder",
@@ -32,7 +30,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             description="Use images from a specific folder instead of those specify in the SfMData file.\n"
                         "Filename should be the image UID.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="lightingEstimationMode",
@@ -41,7 +38,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             value="global",
             values=["global", "per_image"],
             exclusive=True,
-            uid=[0],
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -51,7 +47,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             value="RGB",
             values=["RGB", "Luminance"],
             exclusive=True,
-            uid=[0],
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -61,7 +56,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             value="constant",
             values=["constant", "picture", "median_filter", "blur_filter"],
             exclusive=True,
-            uid=[0],
             advanced=True,
         ),
         desc.IntParam(
@@ -70,7 +64,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             description="Albedo filter size for estimation method using filter.",
             value=3,
             range=(0, 100, 1),
-            uid=[0],
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -80,7 +73,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
     
@@ -90,6 +82,5 @@ class LightingEstimation(desc.AVCommandLineNode):
             label="Folder",
             description="Folder for output lighting vector files.",
             value=desc.Node.internalFolder,
-            uid=[],
         ),
     ]

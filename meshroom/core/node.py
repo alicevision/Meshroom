@@ -12,7 +12,7 @@ import shutil
 import time
 import types
 import uuid
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from enum import Enum
 
 import meshroom
@@ -33,7 +33,7 @@ def renameWritingToFinalPath(writingFilepath, filepath):
         for i in range(20):
             try:
                 os.remove(filepath)
-                # if remove is successful, we can stop the iterations
+                # If remove is successful, we can stop the iterations
                 break
             except WindowsError:
                 pass
@@ -50,7 +50,7 @@ class Status(Enum):
     STOPPED = 4
     KILLED = 5
     SUCCESS = 6
-    INPUT = 7 # special status for input nodes
+    INPUT = 7  # Special status for input nodes
 
 
 class ExecMode(Enum):
@@ -252,7 +252,7 @@ class NodeChunk(BaseObject):
         self.statistics = stats.Statistics()
         self.statusFileLastModTime = -1
         self._subprocess = None
-        # notify update in filepaths when node's internal folder changes
+        # Notify update in filepaths when node's internal folder changes
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
 
         self.execModeNameChanged.connect(self.node.globalExecModeChanged)
@@ -296,7 +296,7 @@ class NodeChunk(BaseObject):
                     statusData = json.load(jsonFile)
                 self.status.fromDict(statusData)
                 self.statusFileLastModTime = os.path.getmtime(statusFile)
-            except Exception as e:
+            except Exception:
                 self.statusFileLastModTime = -1
                 self.status.reset()
 
@@ -306,23 +306,23 @@ class NodeChunk(BaseObject):
     @property
     def statusFile(self):
         if self.range.blockSize == 0:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, 'status')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, "status")
         else:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + '.status')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + ".status")
 
     @property
     def statisticsFile(self):
         if self.range.blockSize == 0:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, 'statistics')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, "statistics")
         else:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + '.statistics')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + ".statistics")
 
     @property
     def logFile(self):
         if self.range.blockSize == 0:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, 'log')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, "log")
         else:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + '.log')
+            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + ".log")
 
     def saveStatusFile(self):
         """
@@ -333,7 +333,7 @@ class NodeChunk(BaseObject):
         folder = os.path.dirname(statusFilepath)
         try:
             os.makedirs(folder)
-        except Exception as e:
+        except Exception:
             pass
 
         statusFilepathWriting = getWritingFilepath(statusFilepath)
@@ -343,8 +343,8 @@ class NodeChunk(BaseObject):
 
     def upgradeStatusTo(self, newStatus, execMode=None):
         if newStatus.value <= self._status.status.value:
-            logging.warning('Downgrade status on node "{}" from {} to {}'.format(self.name, self._status.status,
-                                                                                 newStatus))
+            logging.warning("Downgrade status on node '{}' from {} to {}".
+                            format(self.name, self._status.status, newStatus))
 
         if newStatus == Status.SUBMITTED:
             self._status = StatusData(self.node.name, self.node.nodeType, self.node.packageName, self.node.packageVersion)
@@ -411,11 +411,11 @@ class NodeChunk(BaseObject):
         self.statThread.start()
         try:
             self.node.nodeDesc.processChunk(self)
-        except Exception as e:
+        except Exception:
             if self._status.status != Status.STOPPED:
                 exceptionStatus = Status.ERROR
             raise
-        except (KeyboardInterrupt, SystemError, GeneratorExit) as e:
+        except (KeyboardInterrupt, SystemError, GeneratorExit):
             exceptionStatus = Status.STOPPED
             raise
         finally:
@@ -423,8 +423,8 @@ class NodeChunk(BaseObject):
             self._status.elapsedTime = time.time() - startTime
             if exceptionStatus is not None:
                 self.upgradeStatusTo(exceptionStatus)
-            logging.info(' - elapsed time: {}'.format(self._status.elapsedTimeStr))
-            # ask and wait for the stats thread to stop
+            logging.info(" - elapsed time: {}".format(self._status.elapsedTimeStr))
+            # Ask and wait for the stats thread to stop
             self.statThread.stopRequest()
             self.statThread.join()
             self.statistics = stats.Statistics()
@@ -462,9 +462,9 @@ class NodeChunk(BaseObject):
     elapsedTime = Property(float, lambda self: self._status.elapsedTime, notify=statusChanged)
 
 
-# simple structure for storing node position
+# Simple structure for storing node position
 Position = namedtuple("Position", ["x", "y"])
-# initialize default coordinates values to 0
+# Initialize default coordinates values to 0
 Position.__new__.__defaults__ = (0,) * len(Position._fields)
 
 
@@ -477,7 +477,7 @@ class BaseNode(BaseObject):
     # i.e: a.b, a[0], a[0].b.c[1]
     attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
 
-    def __init__(self, nodeType, position=None, parent=None, uids=None, **kwargs):
+    def __init__(self, nodeType, position=None, parent=None, uid=None, **kwargs):
         """
         Create a new Node instance based on the given node description.
         Any other keyword argument will be used to initialize this node's attributes.
@@ -502,13 +502,13 @@ class BaseNode(BaseObject):
         self.graph = None
         self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)
-        self._uids = uids if uids else {}
+        self._uid = uid
         self._cmdVars = {}
         self._size = 0
         self._position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self._internalAttributes = DictModel(keyAttrName='name', parent=self)
-        self.attributesPerUid = defaultdict(set)
+        self.invalidatingAttributes = set()
         self._alive = True  # for QML side to know if the node can be used or is going to be deleted
         self._locked = False
         self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
@@ -699,56 +699,60 @@ class BaseNode(BaseObject):
     def toDict(self):
         pass
 
-    def _computeUids(self):
-        """ Compute node UIDs by combining associated attributes' UIDs. """
-        # Get all the attributes associated to a given UID index, specified in node descriptions with "uid=[index]"
-        # For now, the only index that is used is "0", so there will be a single iteration of the loop below
-        for uidIndex, associatedAttributes in self.attributesPerUid.items():
-            # UID is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this UID
-            uidAttributes = []
-            for a in associatedAttributes:
-                if not a.enabled:
-                    continue  # disabled params do not contribute to the uid
-                dynamicOutputAttr = a.isLink and a.getLinkParam(recursive=True).desc.isDynamicValue
-                # For dynamic output attributes, the UID does not depend on the attribute value.
-                # In particular, when loading a project file, the UIDs are updated first,
-                # and the node status and the dynamic output values are not yet loaded,
-                # so we should not read the attribute value.
-                if not dynamicOutputAttr and a.value == a.uidIgnoreValue:
-                    continue  # for non-dynamic attributes, check if the value should be ignored
-                uidAttributes.append((a.getName(), a.uid(uidIndex)))
-            uidAttributes.sort()
-            # Adding the node type prevents ending up with two identical UIDs for different node types that have the exact same list of attributes
-            uidAttributes.append(self.nodeType)
-            self._uids[uidIndex] = hashValue(uidAttributes)
+    def _computeUid(self):
+        """ Compute node UID by combining associated attributes' UIDs. """
+        # If there is no invalidating attribute, then the computation of the UID should not go through as
+        # it will only include the node type
+        if not self.invalidatingAttributes:
+            return
+
+        # UID is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this UID
+        uidAttributes = []
+        for attr in self.invalidatingAttributes:
+            if not attr.enabled:
+                continue  # Disabled params do not contribute to the uid
+            dynamicOutputAttr = attr.isLink and attr.getLinkParam(recursive=True).desc.isDynamicValue
+            # For dynamic output attributes, the UID does not depend on the attribute value.
+            # In particular, when loading a project file, the UIDs are updated first,
+            # and the node status and the dynamic output values are not yet loaded,
+            # so we should not read the attribute value.
+            if not dynamicOutputAttr and attr.value == attr.uidIgnoreValue:
+                continue  # For non-dynamic attributes, check if the value should be ignored
+            uidAttributes.append((attr.getName(), attr.uid()))
+        uidAttributes.sort()
+
+        # Adding the node type prevents ending up with two identical UIDs for different node types
+        # that have the exact same list of attributes
+        uidAttributes.append(self.nodeType)
+        self._uid = hashValue(uidAttributes)
 
     def _buildCmdVars(self):
         def _buildAttributeCmdVars(cmdVars, name, attr):
             if attr.enabled:
-                group = attr.attributeDesc.group(attr.node) if isinstance(attr.attributeDesc.group, types.FunctionType) else attr.attributeDesc.group
+                group = attr.attributeDesc.group(attr.node) \
+                        if isinstance(attr.attributeDesc.group, types.FunctionType) else attr.attributeDesc.group
                 if group is not None:
-                    # if there is a valid command line "group"
+                    # If there is a valid command line "group"
                     v = attr.getValueStr(withQuotes=True)
-                    cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+                    cmdVars[name] = "--{name} {value}".format(name=name, value=v)
                     # xxValue is exposed without quotes to allow to compose expressions
-                    cmdVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
+                    cmdVars[name + "Value"] = attr.getValueStr(withQuotes=False)
 
                     # List elements may give a fully empty string and will not be sent to the command line.
                     # String attributes will return only quotes if it is empty and thus will be send to the command line.
                     # But a List of string containing 1 element,
-                    # and this element is an empty string will also return quotes and will be send to the command line.
+                    # and this element is an empty string will also return quotes and will be sent to the command line.
                     if v:
-                        cmdVars[group] = cmdVars.get(group, '') + ' ' + cmdVars[name]
+                        cmdVars[group] = cmdVars.get(group, "") + " " + cmdVars[name]
                 elif isinstance(attr, GroupAttribute):
                     assert isinstance(attr.value, DictModel)
-                    # if the GroupAttribute is not set in a single command line argument,
+                    # If the GroupAttribute is not set in a single command line argument,
                     # the sub-attributes may need to be exposed individually
                     for v in attr._value:
                         _buildAttributeCmdVars(cmdVars, v.name, v)
 
         """ Generate command variables using input attributes and resolved output attributes names and values. """
-        for uidIndex, value in self._uids.items():
-            self._cmdVars['uid{}'.format(uidIndex)] = value
+        self._cmdVars["uid"] = self._uid
 
         # Evaluate input params
         for name, attr in self._attributes.objects.items():
@@ -768,21 +772,30 @@ class BaseNode(BaseObject):
             # Apply expressions for File attributes
             if attr.attributeDesc.isExpression:
                 defaultValue = ""
-                # Do not evaluate expression for disabled attributes (the expression may refer to other attributes that are not defined)
+                # Do not evaluate expression for disabled attributes
+                # (the expression may refer to other attributes that are not defined)
                 if attr.enabled:
                     try:
                         defaultValue = attr.defaultValue()
-                    except AttributeError as e:
-                        # If we load an old scene, the lambda associated to the 'value' could try to access other params that could not exist yet
-                        logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
+                    except AttributeError:
+                        # If we load an old scene, the lambda associated to the 'value' could try to access other
+                        # params that could not exist yet
+                        logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.
+                                        format(nodeName=self.name, attrName=attr.name))
                     if defaultValue is not None:
                         try:
                             attr.value = defaultValue.format(**self._cmdVars)
                             attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
                         except KeyError as e:
-                            logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                            logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with '
+                                            'value "{defaultValue}".\nError: {err}'.
+                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
+                                            err=str(e)))
                         except ValueError as e:
-                            logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                            logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value '
+                                            '"{defaultValue}".\nError: {err}'.
+                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
+                                            err=str(e)))
 
             v = attr.getValueStr(withQuotes=True)
 
@@ -972,12 +985,13 @@ class BaseNode(BaseObject):
             folder = self.internalFolder
         except KeyError:
             folder = ''
+
         # Update command variables / output attributes
         self._cmdVars = {
             'cache': cacheDir or self.graph.cacheDir,
             'nodeType': self.nodeType,
         }
-        self._computeUids()
+        self._computeUid()
         self._buildCmdVars()
         if self.nodeDesc:
             self.nodeDesc.postUpdate(self)
@@ -1068,9 +1082,11 @@ class BaseNode(BaseObject):
                     self.attribute(output.name).value = data[output.name]
                 else:
                     if not self.hasAttribute(output.name):
-                        logging.warning(f"loadOutputAttr: Missing dynamic output attribute. Node={self.name}, Attribute={output.name}")
+                        logging.warning(f"loadOutputAttr: Missing dynamic output attribute. Node={self.name}, "
+                                        f"Attribute={output.name}")
                     if output.name not in data:
-                        logging.warning(f"loadOutputAttr: Missing dynamic output value in file. Node={self.name}, Attribute={output.name}, File={valuesFile}, Data keys={data.keys()}")
+                        logging.warning(f"loadOutputAttr: Missing dynamic output value in file. Node={self.name}, "
+                                        f"Attribute={output.name}, File={valuesFile}, Data keys={data.keys()}")
 
     def saveOutputAttr(self):
         """ Save output attributes with dynamic values into a values.json file.
@@ -1237,16 +1253,15 @@ class BaseNode(BaseObject):
         self.setLocked(False)
 
     def updateDuplicates(self, nodesPerUid):
-        """ Update the list of duplicate nodes (sharing the same uid). """
-        uid = self._uids.get(0)
-        if not nodesPerUid or not uid:
+        """ Update the list of duplicate nodes (sharing the same UID). """
+        if not nodesPerUid or not self._uid:
             if len(self._duplicates) > 0:
                 self._duplicates.clear()
                 self._hasDuplicates = False
                 self.hasDuplicatesChanged.emit()
             return
 
-        newList = [node for node in nodesPerUid.get(uid) if node != self]
+        newList = [node for node in nodesPerUid.get(self._uid) if node != self]
 
         # If number of elements in both lists are identical,
         # we must check if their content is the same
@@ -1266,7 +1281,6 @@ class BaseNode(BaseObject):
         if bool(len(newList)) != self._hasDuplicates:
             self._hasDuplicates = bool(len(newList))
             self.hasDuplicatesChanged.emit()
-
 
     def statusInThisSession(self):
         if not self._chunks:
@@ -1292,7 +1306,8 @@ class BaseNode(BaseObject):
 
     def hasImageOutputAttribute(self):
         """
-        Return True if at least one attribute has the 'image' semantic (and can thus be loaded in the 2D Viewer), False otherwise.
+        Return True if at least one attribute has the 'image' semantic (and can thus be loaded in the 2D Viewer),
+        False otherwise.
         """
         for attr in self._attributes:
             if attr.enabled and attr.isOutput and attr.desc.semantic == "image":
@@ -1301,10 +1316,12 @@ class BaseNode(BaseObject):
 
     def hasSequenceOutputAttribute(self):
         """
-        Return True if at least one attribute has the 'sequence' semantic (and can thus be loaded in the 2D Viewer), False otherwise.
+        Return True if at least one attribute has the 'sequence' semantic (and can thus be loaded in the 2D Viewer),
+        False otherwise.
         """
         for attr in self._attributes:
-            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or attr.desc.semantic == "imageList"):
+            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or 
+                                                   attr.desc.semantic == "imageList"):
                 return True
         return False
 
@@ -1320,7 +1337,6 @@ class BaseNode(BaseObject):
             if attr.enabled and attr.isOutput and hasSupportedExt:
                 return True
         return False
-
 
     name = Property(str, getName, constant=True)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
@@ -1351,8 +1367,10 @@ class BaseNode(BaseObject):
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
     fusedStatus = Property(StatusData, getFusedStatus, notify=globalStatusChanged)
     elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
-    recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime, notify=globalStatusChanged)
-    isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)  # need lambda to evaluate the virtual function
+    recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime,
+                                    notify=globalStatusChanged)
+    # isCompatibilityNode: need lambda to evaluate the virtual function
+    isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
 
     globalExecModeChanged = Signal()
@@ -1373,12 +1391,13 @@ class BaseNode(BaseObject):
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
 
+
 class Node(BaseNode):
     """
     A standard Graph node based on a node type.
     """
-    def __init__(self, nodeType, position=None, parent=None, uids=None, **kwargs):
-        super(Node, self).__init__(nodeType, position, parent=parent, uids=uids, **kwargs)
+    def __init__(self, nodeType, position=None, parent=None, uid=None, **kwargs):
+        super(Node, self).__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
 
         if not self.nodeDesc:
             raise UnknownNodeTypeError(nodeType)
@@ -1394,29 +1413,25 @@ class Node(BaseNode):
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=True, node=self))
 
         for attrDesc in self.nodeDesc.internalInputs:
-            self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))
+            self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False,
+                                                          node=self))
 
         # Declare events for specific output attributes
         for attr in self._attributes:
             if attr.isOutput and attr.desc.semantic == "image":
                 attr.enabledChanged.connect(self.outputAttrEnabledChanged)
 
-        # List attributes per uid
+        # List attributes per UID
         for attr in self._attributes:
-            if attr.isInput:
-                for uidIndex in attr.attributeDesc.uid:
-                    self.attributesPerUid[uidIndex].add(attr)
-            else:
-                if attr.attributeDesc.uid:
-                    logging.error(f"Output Attribute should not contain a UID: '{nodeType}.{attr.name}'")
+            if attr.isInput and attr.invalidate:
+                self.invalidatingAttributes.add(attr)
 
         # Add internal attributes with a UID to the list
         for attr in self._internalAttributes:
-            for uidIndex in attr.attributeDesc.uid:
-                self.attributesPerUid[uidIndex].add(attr)
+            if attr.invalidate:
+                self.invalidatingAttributes.add(attr)
 
         self.optionalCallOnDescriptor("onNodeCreated")
-
 
     def optionalCallOnDescriptor(self, methodName, *args, **kwargs):
         """ Call of optional method defined in the descriptor.
@@ -1428,7 +1443,7 @@ class Node(BaseNode):
             if callable(m):
                 try:
                     m(self, *args, **kwargs)
-                except Exception as e:
+                except Exception:
                     import traceback
                     # Format error strings with all the provided arguments
                     argsStr = ", ".join(str(arg) for arg in args)
@@ -1439,7 +1454,8 @@ class Node(BaseNode):
                             finalErrStr += ", "
                         finalErrStr += kwargsStr
 
-                    logging.error("Error on call to '{}' (with args: '{}') for node type {}".format(methodName, finalErrStr, self.nodeType))
+                    logging.error("Error on call to '{}' (with args: '{}') for node type {}".
+                                  format(methodName, finalErrStr, self.nodeType))
                     logging.error(traceback.format_exc())
 
     def setAttributeValues(self, values):
@@ -1487,7 +1503,8 @@ class Node(BaseNode):
     def toDict(self):
         inputs = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
         internalInputs = {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
-        outputs = ({k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isOutput and not v.desc.isDynamicValue})
+        outputs = ({k: v.getExportValue() for k, v in self._attributes.objects.items()
+                    if v.isOutput and not v.desc.isDynamicValue})
 
         return {
             'nodeType': self.nodeType,
@@ -1497,7 +1514,7 @@ class Node(BaseNode):
                 'size': self.size,
                 'split': self.nbParallelizationBlocks
             },
-            'uids': self._uids,
+            'uid': self._uid,
             'internalFolder': self._internalFolder,
             'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
@@ -1539,7 +1556,7 @@ class CompatibilityIssue(Enum):
     UnknownNodeType = 1  # the node type has no corresponding description class
     VersionConflict = 2  # mismatch between node's description version and serialized node data
     DescriptionConflict = 3  # mismatch between node's description attributes and serialized node data
-    UidConflict = 4  # mismatch between computed uids and uids stored in serialized node data
+    UidConflict = 4  # mismatch between computed UIDs and UIDs stored in serialized node data
 
 
 class CompatibilityNode(BaseNode):
@@ -1552,7 +1569,7 @@ class CompatibilityNode(BaseNode):
         super(CompatibilityNode, self).__init__(nodeType, position, parent)
 
         self.issue = issue
-        # make a deepcopy of nodeDict to handle CompatibilityNode duplication
+        # Make a deepcopy of nodeDict to handle CompatibilityNode duplication
         # and be able to change modified inputs (see CompatibilityNode.toDict)
         self.nodeDict = copy.deepcopy(nodeDict)
         self.version = Version(self.nodeDict.get("version", None))
@@ -1561,30 +1578,26 @@ class CompatibilityNode(BaseNode):
         self._internalInputs = self.nodeDict.get("internalInputs", {})
         self.outputs = self.nodeDict.get("outputs", {})
         self._internalFolder = self.nodeDict.get("internalFolder", "")
-        self._uids = self.nodeDict.get("uids", {})
-        # JSON enfore keys to be strings, see
-        # https://docs.python.org/3.8/library/json.html#json.dump
-        # We know our keys are integers, so we convert them back to int.
-        self._uids = {int(k): v for k, v in self._uids.items()}
+        self._uid = self.nodeDict.get("uid", None)
 
-        # restore parallelization settings
+        # Restore parallelization settings
         self.parallelization = self.nodeDict.get("parallelization", {})
         self.splitCount = self.parallelization.get("split", 1)
         self.setSize(self.parallelization.get("size", 1))
 
-        # create input attributes
+        # Create input attributes
         for attrName, value in self._inputs.items():
             self._addAttribute(attrName, value, isOutput=False)
 
-        # create outputs attributes
+        # Create outputs attributes
         for attrName, value in self.outputs.items():
             self._addAttribute(attrName, value, isOutput=True)
 
-        # create internal attributes
+        # Create internal attributes
         for attrName, value in self._internalInputs.items():
             self._addAttribute(attrName, value, isOutput=False, internalAttr=True)
 
-        # create NodeChunks matching serialized parallelization settings
+        # Create NodeChunks matching serialized parallelization settings
         self._chunks.setObjectList([
             NodeChunk(self, desc.Range(i, blockSize=self.parallelization.get("blockSize", 0)))
             for i in range(self.splitCount)
@@ -1609,7 +1622,7 @@ class CompatibilityNode(BaseNode):
         params = {
             "name": attrName, "label": attrName,
             "description": "Incompatible parameter",
-            "value": value, "uid": (),
+            "value": value, "invalidate": False,
             "group": "incompatible"
         }
         if isinstance(value, bool):
@@ -1626,10 +1639,10 @@ class CompatibilityNode(BaseNode):
         # List/GroupAttribute: recursively build descriptions
         elif isinstance(value, (list, dict)):
             del params["value"]
-            del params["uid"]
+            del params["invalidate"]
             attrDesc = None
             if isinstance(value, list):
-                elt = value[0] if value else ""  # fallback: empty string value if list is empty
+                elt = value[0] if value else ""  # Fallback: empty string value if list is empty
                 eltDesc = CompatibilityNode.attributeDescFromValue("element", elt, isOutput)
                 attrDesc = desc.ListAttribute(elementDesc=eltDesc, **params)
             elif isinstance(value, dict):
@@ -1638,10 +1651,10 @@ class CompatibilityNode(BaseNode):
                     eltDesc = CompatibilityNode.attributeDescFromValue(key, value, isOutput)
                     groupDesc.append(eltDesc)
                 attrDesc = desc.GroupAttribute(groupDesc=groupDesc, **params)
-            # override empty default value with
+            # Override empty default value with
             attrDesc._value = value
             return attrDesc
-        # handle any other type of parameters as Strings
+        # Handle any other type of parameters as Strings
         return desc.StringParam(**params)
 
     @staticmethod
@@ -1760,7 +1773,7 @@ class CompatibilityNode(BaseNode):
         Return a new Node instance based on original node type with common inputs initialized.
         """
         if not self.canUpgrade:
-            raise NodeUpgradeError(self.name, "no matching node type")
+            raise NodeUpgradeError(self.name, "No matching node type")
 
         # inputs matching current type description
         commonInputs = []
@@ -1788,7 +1801,8 @@ class CompatibilityNode(BaseNode):
             upgradedAttrValues = attrValues
 
         if not isinstance(upgradedAttrValues, dict):
-            logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".format(self.name))
+            logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".
+                          format(self.name))
             upgradedAttrValues = attrValues
 
         node.upgradeAttributeValues(upgradedAttrValues)
@@ -1819,23 +1833,19 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
     """
     nodeType = nodeDict["nodeType"]
 
-    # retro-compatibility: inputs were previously saved as "attributes"
+    # Retro-compatibility: inputs were previously saved as "attributes"
     if "inputs" not in nodeDict and "attributes" in nodeDict:
         nodeDict["inputs"] = nodeDict["attributes"]
         del nodeDict["attributes"]
 
-    # get node inputs/outputs
+    # Get node inputs/outputs
     inputs = nodeDict.get("inputs", {})
     internalInputs = nodeDict.get("internalInputs", {})
     outputs = nodeDict.get("outputs", {})
     version = nodeDict.get("version", None)
     internalFolder = nodeDict.get("internalFolder", None)
     position = Position(*nodeDict.get("position", []))
-    uids = nodeDict.get("uids", {})
-    # JSON enfore keys to be strings, see
-    # https://docs.python.org/3.8/library/json.html#json.dump
-    # We know our keys are integers, so we convert them back to int.
-    uids = {int(k): v for k, v in uids.items()}
+    uid = nodeDict.get("uid", None)
 
     compatibilityIssue = None
 
@@ -1843,70 +1853,73 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
     try:
         nodeDesc = meshroom.core.nodesDesc[nodeType]
     except KeyError:
-        # unknown node type
+        # Unknown node type
         compatibilityIssue = CompatibilityIssue.UnknownNodeType
 
-    if uidConflict:
+    # Unknown node type should take precedence over UID conflict, as it cannot be resolved
+    if uidConflict and nodeDesc:
         compatibilityIssue = CompatibilityIssue.UidConflict
 
     if nodeDesc and not uidConflict:  # if uidConflict, there is no need to look for another compatibility issue
-        # compare serialized node version with current node version
+        # Compare serialized node version with current node version
         currentNodeVersion = meshroom.core.nodeVersion(nodeDesc)
-        # if both versions are available, check for incompatibility in major version
+        # If both versions are available, check for incompatibility in major version
         if version and currentNodeVersion and Version(version).major != Version(currentNodeVersion).major:
             compatibilityIssue = CompatibilityIssue.VersionConflict
-        # in other cases, check attributes compatibility between serialized node and its description
+        # In other cases, check attributes compatibility between serialized node and its description
         else:
-            # check that the node has the exact same set of inputs/outputs as its description, except
+            # Check that the node has the exact same set of inputs/outputs as its description, except
             # if the node is described in a template file, in which only non-default parameters are saved;
             # do not perform that check for internal attributes because there is no point in
             # raising compatibility issues if their number differs: in that case, it is only useful
             # if some internal attributes do not exist or are invalid
-            if not template and (sorted([attr.name for attr in nodeDesc.inputs if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or \
-                    sorted([attr.name for attr in nodeDesc.outputs if not attr.isDynamicValue]) != sorted(outputs.keys())):
+            if not template and (sorted([attr.name for attr in nodeDesc.inputs 
+                                         if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or
+                                 sorted([attr.name for attr in nodeDesc.outputs if not attr.isDynamicValue]) !=
+                                 sorted(outputs.keys())):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
 
-            # check whether there are any internal attributes that are invalidating in the node description: if there
+            # Check whether there are any internal attributes that are invalidating in the node description: if there
             # are, then check that these internal attributes are part of nodeDict; if they are not, a compatibility
             # issue must be raised to warn the user, as this will automatically change the node's UID
             if not template:
                 invalidatingIntInputs = []
                 for attr in nodeDesc.internalInputs:
-                    if attr.uid == [0]:
+                    if attr.invalidate:
                         invalidatingIntInputs.append(attr.name)
                 for attr in invalidatingIntInputs:
                     if attr not in internalInputs.keys():
                         compatibilityIssue = CompatibilityIssue.DescriptionConflict
                         break
 
-            # verify that all inputs match their descriptions
+            # Verify that all inputs match their descriptions
             for attrName, value in inputs.items():
                 if not CompatibilityNode.attributeDescFromName(nodeDesc.inputs, attrName, value):
                     compatibilityIssue = CompatibilityIssue.DescriptionConflict
                     break
-            # verify that all internal inputs match their description
+            # Verify that all internal inputs match their description
             for attrName, value in internalInputs.items():
                 if not CompatibilityNode.attributeDescFromName(nodeDesc.internalInputs, attrName, value):
                     compatibilityIssue = CompatibilityIssue.DescriptionConflict
                     break
-            # verify that all outputs match their descriptions
+            # Verify that all outputs match their descriptions
             for attrName, value in outputs.items():
                 if not CompatibilityNode.attributeDescFromName(nodeDesc.outputs, attrName, value):
                     compatibilityIssue = CompatibilityIssue.DescriptionConflict
                     break
 
     if compatibilityIssue is None:
-        node = Node(nodeType, position, uids=uids, **inputs, **internalInputs, **outputs)
+        node = Node(nodeType, position, uid=uid, **inputs, **internalInputs, **outputs)
     else:
         logging.debug("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
         node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)
-        # retro-compatibility: no internal folder saved
+        # Retro-compatibility: no internal folder saved
         # can't spawn meaningful CompatibilityNode with precomputed outputs
         # => automatically try to perform node upgrade
         if not internalFolder and nodeDesc:
             logging.warning("No serialized output data: performing automatic upgrade on '{}'".format(name))
             node = node.upgrade()
-        elif template:  # if the node comes from a template file and there is a conflict, it should be upgraded anyway
+        elif template:  # If the node comes from a template file and there is a conflict, it should be upgraded anyway
             node = node.upgrade()
 
     return node

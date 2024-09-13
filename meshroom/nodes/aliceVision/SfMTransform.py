@@ -31,7 +31,6 @@ The transformation can be based on:
             label="Input",
             description="SfMData file.",
             value="",
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="method",
@@ -52,14 +51,12 @@ The transformation can be based on:
             value="auto",
             values=["transformation", "manual", "auto", "auto_from_cameras", "auto_from_cameras_x_axis", "auto_from_landmarks", "from_single_camera", "from_center_camera", "from_markers", "from_gps", "from_lineup", "align_ground"],
             exclusive=True,
-            uid=[0],
         ),
         desc.File(
             name="lineUp",
             label="Line Up File",
             description="LineUp Json file.",
             value="",
-            uid=[0],
             enabled=lambda node: node.method.value == "from_lineup"
         ),
         desc.File(
@@ -67,7 +64,6 @@ The transformation can be based on:
             label="Tracks File",
             description="Tracks file for lineup.",
             value="",
-            uid=[0],
             enabled=lambda node: node.method.value == "from_lineup"
         ),
         desc.File(
@@ -75,7 +71,6 @@ The transformation can be based on:
             label="Mesh File",
             description="Mesh file for lineup.",
             value="",
-            uid=[0],
             enabled=lambda node: node.method.value == "from_lineup"
         ),
         desc.StringParam(
@@ -85,7 +80,6 @@ The transformation can be based on:
                         " - transformation: Align [X,Y,Z] to +Y-axis, rotate around Y by R deg, scale by S; syntax: X,Y,Z;R;S\n"
                         " - from_single_camera: Camera UID or simplified regular expression to match image filepath (like '*camera2*.jpg').",
             value="",
-            uid=[0],
             enabled=lambda node: node.method.value == "transformation" or node.method.value == "from_single_camera" or node.method.value == "auto_from_cameras_x_axis",
         ),
         desc.GroupAttribute(
@@ -103,7 +97,6 @@ The transformation can be based on:
                             label="x",
                             description="X offset.",
                             value=0.0,
-                            uid=[0],
                             range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
@@ -111,7 +104,6 @@ The transformation can be based on:
                             label="y",
                             description="Y offset.",
                             value=0.0,
-                            uid=[0],
                             range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
@@ -119,7 +111,6 @@ The transformation can be based on:
                             label="z",
                             description="Z offset.",
                             value=0.0,
-                            uid=[0],
                             range=(-20.0, 20.0, 0.01),
                         ),
                     ],
@@ -135,7 +126,6 @@ The transformation can be based on:
                             label="x",
                             description="Euler X rotation.",
                             value=0.0,
-                            uid=[0],
                             range=(-90.0, 90.0, 1.0),
                         ),
                         desc.FloatParam(
@@ -143,7 +133,6 @@ The transformation can be based on:
                             label="y",
                             description="Euler Y rotation.",
                             value=0.0,
-                            uid=[0],
                             range=(-180.0, 180.0, 1.0),
                         ),
                         desc.FloatParam(
@@ -151,7 +140,6 @@ The transformation can be based on:
                             label="z",
                             description="Euler Z rotation.",
                             value=0.0,
-                            uid=[0],
                             range=(-180.0, 180.0, 1.0),
                         ),
                     ],
@@ -162,7 +150,6 @@ The transformation can be based on:
                     label="Scale",
                     description="Uniform scale.",
                     value=1.0,
-                    uid=[0],
                     range=(0.0, 20.0, 0.01),
                 ),
             ],
@@ -176,7 +163,6 @@ The transformation can be based on:
             values=DESCRIBER_TYPES,
             value=["sift", "dspsift", "akaze"],
             exclusive=False,
-            uid=[0],
             joinChar=",",
         ),
         desc.FloatParam(
@@ -185,7 +171,6 @@ The transformation can be based on:
             description="Additional scale to apply.",
             value=1.0,
             range=(0.0, 100.0, 0.1),
-            uid=[0],
         ),
         desc.ListAttribute(
             name="markers",
@@ -200,7 +185,6 @@ The transformation can be based on:
                         label="Marker",
                         description="Marker ID.",
                         value=0,
-                        uid=[0],
                         range=(0, 32, 1),
                     ),
                     desc.GroupAttribute(
@@ -214,7 +198,6 @@ The transformation can be based on:
                                 label="x",
                                 description="X coordinates for the marker.",
                                 value=0.0,
-                                uid=[0],
                                 range=(-2.0, 2.0, 1.0),
                             ),
                             desc.FloatParam(
@@ -222,7 +205,6 @@ The transformation can be based on:
                                 label="y",
                                 description="Y coordinates for the marker.",
                                 value=0.0,
-                                uid=[0],
                                 range=(-2.0, 2.0, 1.0),
                             ),
                             desc.FloatParam(
@@ -230,7 +212,6 @@ The transformation can be based on:
                                 label="z",
                                 description="Z coordinates for the marker.",
                                 value=0.0,
-                                uid=[0],
                                 range=(-2.0, 2.0, 1.0),
                             ),
                         ],
@@ -245,7 +226,6 @@ The transformation can be based on:
             label="Scale",
             description="Apply scale transformation.",
             value=True,
-            uid=[0],
             enabled=lambda node: node.method.value != "manual",
         ),
         desc.BoolParam(
@@ -253,7 +233,6 @@ The transformation can be based on:
             label="Rotation",
             description="Apply rotation transformation.",
             value=True,
-            uid=[0],
             enabled=lambda node: node.method.value != "manual",
         ),
         desc.BoolParam(
@@ -261,7 +240,6 @@ The transformation can be based on:
             label="Translation",
             description="Apply translation transformation.",
             value=True,
-            uid=[0],
             enabled=lambda node: node.method.value != "manual",
         ),
         desc.ChoiceParam(
@@ -271,7 +249,6 @@ The transformation can be based on:
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -281,13 +258,11 @@ The transformation can be based on:
             label="SfMData File",
             description="Aligned SfMData file.",
             value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or "sfmData") + ".abc",
-            uid=[],
         ),
         desc.File(
             name="outputViewsAndPoses",
             label="Poses",
             description="Path to the output SfMData file with cameras (views and poses).",
             value=desc.Node.internalFolder + "cameras.sfm",
-            uid=[],
         ),
     ]

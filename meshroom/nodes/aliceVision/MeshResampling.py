@@ -20,7 +20,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             label="Input Mesh",
             description="Input mesh in the OBJ file format.",
             value="",
-            uid=[0],
         ),
         desc.FloatParam(
             name="simplificationFactor",
@@ -28,7 +27,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             description="Simplification factor for the resampling.",
             value=0.5,
             range=(0.0, 1.0, 0.01),
-            uid=[0],
         ),
         desc.IntParam(
             name="nbVertices",
@@ -36,7 +34,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             description="Fixed number of output vertices.",
             value=0,
             range=(0, 1000000, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="minVertices",
@@ -44,7 +41,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             description="Minimum number of output vertices.",
             value=0,
             range=(0, 1000000, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="maxVertices",
@@ -52,7 +48,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             description="Maximum number of output vertices.",
             value=0,
             range=(0, 1000000, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name="nbLloydIter",
@@ -60,7 +55,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             description="Number of iterations for Lloyd pre-smoothing.",
             value=40,
             range=(0, 100, 1),
-            uid=[0],
         ),
         desc.BoolParam(
             name="flipNormals",
@@ -68,7 +62,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             description="Option to flip face normals.\n"
                         "It can be needed as it depends on the vertices order in triangles and the convention changes from one software to another.",
             value=False,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -77,7 +70,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             values=VERBOSE_LEVEL,
             value="info",
             exclusive=True,
-            uid=[],
         ),
     ]
 
@@ -87,6 +79,5 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             label="Mesh",
             description="Output mesh in the OBJ file format.",
             value=desc.Node.internalFolder + "mesh.obj",
-            uid=[],
         ),
     ]

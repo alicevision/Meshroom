@@ -7,9 +7,11 @@ Warning: A call to `init(Backend.XXX)` is required to choose the backend before 
 
 from enum import Enum
 
+
 class Backend(Enum):
     STANDALONE = 1
     PYSIDE = 2
+
 
 DictModel = None
 ListModel = None
@@ -21,6 +23,7 @@ Variant = None
 VariantList = None
 JSValue = None
 
+
 def init(backend):
     global DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList, JSValue
     if backend == Backend.PYSIDE:
@@ -30,5 +33,6 @@ def init(backend):
         # Core types
         from .core import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList, JSValue
 
-# default initialization
+
+# Default initialization
 init(Backend.STANDALONE)

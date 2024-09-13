@@ -75,6 +75,7 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             label="Use Tiling",
             description="Enable tiling mode for parallelization.",
             value=True,
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="storageDataType",

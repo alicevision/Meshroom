@@ -60,6 +60,7 @@ Merge LDR images into HDR images.
             group="user",  # not used directly on the command line
             errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
                          "Errors will occur during the computation.",
+            exposed=True,
         ),
         desc.IntParam(
             name="nbBrackets",
@@ -124,6 +125,7 @@ Merge LDR images into HDR images.
             description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
             enabled=lambda node: node.nbBrackets.value != 1,
+            exposed=True,
         ),
         desc.BoolParam(
             name="keepSourceImageName",
@@ -151,6 +153,7 @@ Merge LDR images into HDR images.
             range=(8, 14, 1),
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="workingColorSpace",
@@ -161,6 +164,7 @@ Merge LDR images into HDR images.
             value="AUTO",
             exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
+            exposed=True,
         ),
         desc.BoolParam(
             name="enableHighlight",

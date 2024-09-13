@@ -76,6 +76,7 @@ Sample pixels from Low range images for HDR creation.
             group="user",  # not used directly on the command line
             errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
                          "Errors will occur during the computation.",
+            exposed=True,
         ),
         desc.IntParam(
             name="nbBrackets",
@@ -93,6 +94,7 @@ Sample pixels from Low range images for HDR creation.
             description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
             enabled=lambda node: node.nbBrackets.value != 1,
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="calibrationMethod",
@@ -107,6 +109,7 @@ Sample pixels from Low range images for HDR creation.
             value="auto",
             exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
+            exposed=True,
         ),
         desc.IntParam(
             name="channelQuantizationPower",
@@ -116,6 +119,7 @@ Sample pixels from Low range images for HDR creation.
             range=(8, 14, 1),
             advanced=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="workingColorSpace",
@@ -126,6 +130,7 @@ Sample pixels from Low range images for HDR creation.
             value="AUTO",
             exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
+            exposed=True,
         ),
         desc.IntParam(
             name="blockSize",

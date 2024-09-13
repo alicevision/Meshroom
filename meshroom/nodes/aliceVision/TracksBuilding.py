@@ -30,6 +30,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             name="featuresFolders",
             label="Features Folders",
             description="Folder(s) containing the extracted features and descriptors.",
+            exposed=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(

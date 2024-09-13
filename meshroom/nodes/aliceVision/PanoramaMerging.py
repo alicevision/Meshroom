@@ -45,6 +45,7 @@ Merge all inputs coming from the PanoramaCompositing node.
             label="Use Tiling",
             description="Enable tiling mode for parallelization.",
             value=True,
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="storageDataType",

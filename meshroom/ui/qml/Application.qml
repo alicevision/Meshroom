@@ -591,9 +591,14 @@ Page {
                                 elide: Text.ElideLeft
                                 elideWidth: newPipelineMenu.maxWidth
                             }
-                            ToolTip.text: modelData["path"]
-                            ToolTip.visible: hovered
-                            ToolTip.delay: 200
+
+                            ToolTip {
+                                id: toolTip
+
+                                delay: 200
+                                text: modelData["path"]
+                                visible: hovered
+                            }
                         }
                     }
                 }
@@ -1037,7 +1042,7 @@ Page {
 
                 headerBar: RowLayout {
                     MaterialToolButton {
-                        text: MaterialIcons.refresh
+                        text: MaterialIcons.sync
                         ToolTip.text: "Refresh Nodes Status"
                         ToolTip.visible: hovered
                         font.pointSize: 11
@@ -1049,107 +1054,6 @@ Page {
                         }
                         property bool updatingStatus: false
                         enabled: !updatingStatus
-                    }
-                    MaterialToolButton {
-                        id: filePollerRefreshStatus
-                        text: {
-                            if (_reconstruction.filePollerRefresh === 0)
-                                return MaterialIcons.published_with_changes
-                            else if (_reconstruction.filePollerRefresh === 2)
-                                return MaterialIcons.sync
-                            else
-                                return MaterialIcons.sync_disabled
-                        }
-                        font.pointSize: 11
-                        padding: 2
-                        enabled: true
-                        ToolTip {
-                            id: filePollerTooltip
-                            property string title: "Auto-Refresh Nodes Status For External Changes. "
-                            property string description: "Check if the status of a node is changed by another instance on the same network, " +
-                                                         "such as when computing in render farm."
-                            text: {
-                                var status = ""
-                                if (_reconstruction.filePollerRefresh === 0)
-                                    status = "Enabled"
-                                else if (_reconstruction.filePollerRefresh === 2)
-                                    status = "Minimal"
-                                else
-                                    status = "Disabled"
-                                return title + "(Current: " + status + ")\n\n" + description
-                            }
-                            visible: filePollerRefreshStatus.hovered
-                            contentWidth: 420
-                        }
-                        onClicked: {
-                            refreshFilesMenu.open()
-                        }
-                        Menu {
-                            id: refreshFilesMenu
-                            width: 210
-                            y: parent.height
-                            x: -width + parent.width
-                            MenuItem {
-                                id: enableAutoRefresh
-                                text: "Enable Auto-Refresh"
-                                checkable: true
-                                checked: _reconstruction.filePollerRefresh === 0
-                                ToolTip.text: "Check every file's status periodically"
-                                ToolTip.visible: hovered
-                                ToolTip.delay: 200
-                                onToggled: {
-                                    if (checked) {
-                                        disableAutoRefresh.checked = false
-                                        minimalAutoRefresh.checked = false
-                                        _reconstruction.filePollerRefreshChanged(0)
-                                    }
-                                    // Prevents cases where the user unchecks the currently checked option
-                                    enableAutoRefresh.checked = true
-                                    filePollerRefreshStatus.text = MaterialIcons.published_with_changes
-                                    filePollerTooltip.text = filePollerTooltip.title + "(Current: Enabled)\n\n" + filePollerTooltip.description
-                                }
-                            }
-                            MenuItem {
-                                id: disableAutoRefresh
-                                text: "Disable Auto-Refresh"
-                                checkable: true
-                                checked: _reconstruction.filePollerRefresh === 1
-                                ToolTip.text: "No file status will be checked"
-                                ToolTip.visible: hovered
-                                ToolTip.delay: 200
-                                onToggled: {
-                                    if (checked) {
-                                        enableAutoRefresh.checked = false
-                                        minimalAutoRefresh.checked = false
-                                        _reconstruction.filePollerRefreshChanged(1)
-                                    }
-                                    // Prevents cases where the user unchecks the currently checked option
-                                    disableAutoRefresh.checked = true
-                                    filePollerRefreshStatus.text = MaterialIcons.sync_disabled
-                                    filePollerTooltip.text = filePollerTooltip.title + "(Current: Disabled)\n\n" + filePollerTooltip.description
-                                }
-                            }
-                            MenuItem {
-                                id: minimalAutoRefresh
-                                text: "Enable Minimal Auto-Refresh"
-                                checkable: true
-                                checked: _reconstruction.filePollerRefresh === 2
-                                ToolTip.text: "Check the file status of submitted or running chunks periodically"
-                                ToolTip.visible: hovered
-                                ToolTip.delay: 200
-                                onToggled: {
-                                    if (checked) {
-                                        disableAutoRefresh.checked = false
-                                        enableAutoRefresh.checked = false
-                                        _reconstruction.filePollerRefreshChanged(2)
-                                    }
-                                    // Prevents cases where the user unchecks the currently checked option
-                                    minimalAutoRefresh.checked = true
-                                    filePollerRefreshStatus.text = MaterialIcons.sync
-                                    filePollerTooltip.text = filePollerTooltip.title + "(Current: Minimal)\n\n" + filePollerTooltip.description
-                                }
-                            }
-                        }
                     }
                     MaterialToolButton {
                         text: MaterialIcons.more_vert
@@ -1170,6 +1074,65 @@ Page {
                             MenuItem {
                                 text: "Force Unlock Nodes"
                                 onTriggered: _reconstruction.graph.forceUnlockNodes()
+                            }
+
+                            Menu {
+                                title: "Refresh Nodes Status"
+
+                                MenuItem {
+                                id: enableAutoRefresh
+                                text: "Enable Auto-Refresh"
+                                checkable: true
+                                checked: _reconstruction.filePollerRefresh === 0
+                                ToolTip.text: "Check every file's status periodically"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 200
+                                onToggled: {
+                                    if (checked) {
+                                        disableAutoRefresh.checked = false
+                                        minimalAutoRefresh.checked = false
+                                        _reconstruction.filePollerRefreshChanged(0)
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    enableAutoRefresh.checked = true
+                                }
+                            }
+                            MenuItem {
+                                id: disableAutoRefresh
+                                text: "Disable Auto-Refresh"
+                                checkable: true
+                                checked: _reconstruction.filePollerRefresh === 1
+                                ToolTip.text: "No file status will be checked"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 200
+                                onToggled: {
+                                    if (checked) {
+                                        enableAutoRefresh.checked = false
+                                        minimalAutoRefresh.checked = false
+                                        _reconstruction.filePollerRefreshChanged(1)
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    disableAutoRefresh.checked = true
+                                }
+                            }
+                            MenuItem {
+                                id: minimalAutoRefresh
+                                text: "Enable Minimal Auto-Refresh"
+                                checkable: true
+                                checked: _reconstruction.filePollerRefresh === 2
+                                ToolTip.text: "Check the file status of submitted or running chunks periodically"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 200
+                                onToggled: {
+                                    if (checked) {
+                                        disableAutoRefresh.checked = false
+                                        enableAutoRefresh.checked = false
+                                        _reconstruction.filePollerRefreshChanged(2)
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    minimalAutoRefresh.checked = true
+                                }
+                            }
                             }
                         }
                     }

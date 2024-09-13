@@ -50,6 +50,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             name="featuresFolders",
             label="Features Folders",
             description="Folder(s) containing the extracted features and descriptors.",
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="method",

@@ -82,6 +82,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             name="featuresFolders",
             label="Features Folders",
             description="Folder(s) containing the extracted features and descriptors.",
+            exposed=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -93,6 +94,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             name="matchesFolders",
             label="Matches Folders",
             description="Folder(s) in which the computed matches are stored.",
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="describerTypes",
@@ -102,6 +104,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             value=["dspsift"],
             exclusive=False,
             joinChar=",",
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="localizerEstimator",

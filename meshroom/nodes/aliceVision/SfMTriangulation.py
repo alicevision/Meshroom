@@ -31,6 +31,7 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             name="featuresFolders",
             label="Features Folders",
             description="Folder(s) containing the extracted features and descriptors.",
+            exposed=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -42,6 +43,7 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             name="matchesFolders",
             label="Matches Folders",
             description="Folder(s) in which computed matches are stored.",
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="describerTypes",

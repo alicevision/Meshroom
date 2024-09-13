@@ -1132,9 +1132,10 @@ class Graph(BaseObject):
         return nodes, edges
 
     @Slot(Node, result=bool)
-    def canCompute(self, node):
+    def canComputeTopologically(self, node):
         """
         Return the computability of a node based on itself and its dependency chain.
+        It is a static result as it depends on the graph topology.
         Computation can't happen for:
          - CompatibilityNodes
          - nodes having a non-computed CompatibilityNode in its dependency chain
@@ -1200,7 +1201,7 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=leaves)
 
         # update graph computability status
-        canComputeLeaves = all([self.canCompute(node) for node in leaves])
+        canComputeLeaves = all([self.canComputeTopologically(node) for node in leaves])
         if self._canComputeLeaves != canComputeLeaves:
             self._canComputeLeaves = canComputeLeaves
             self.canComputeLeavesChanged.emit()
@@ -1290,6 +1291,7 @@ class Graph(BaseObject):
     def canSubmitOrCompute(self, startNode):
         """
         Check if a node can be submitted/computed.
+        It does not depend on the topology of the graph and is based on the node status and its dependencies.
 
         Returns:
             int: 0 = cannot be submitted or computed /

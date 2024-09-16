@@ -6,12 +6,11 @@ import distutils.util
 import json
 import re
 
-import meshroom
-meshroom.setupEnvironment()
+from meshroom import setupEnvironment
+
+setupEnvironment()
 
 import meshroom.core.graph
-from meshroom import multiview
-from meshroom.core.desc import InitNode
 import logging
 
 meshroom.core.initPipelines()
@@ -149,9 +148,9 @@ if not args.input and not args.inputRecursive:
 
 meshroom.core.initNodes()
 
-graph = multiview.Graph(name=args.pipeline)
+graph = meshroom.core.graph.Graph(name=args.pipeline)
 
-with multiview.GraphModification(graph):
+with meshroom.core.graph.GraphModification(graph):
     # initialize template pipeline
     loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
     if args.pipeline.lower() in loweredPipelineTemplates:

@@ -79,27 +79,38 @@ ApplicationWindow {
     }
 
     function initFileDialogFolder(dialog, importImages = false) {
-        let folder = "";
+        let folder = ""
+        let projects = MeshroomApp.recentProjectFiles
+        let currentItem = mainStack.currentItem
 
-        if (mainStack.currentItem instanceof Homepage) {
-            folder = Filepath.stringToUrl(Filepath.dirname(MeshroomApp.recentProjectFiles[0]["path"]))
+        if (currentItem instanceof Homepage) {
+            // From the homepage, take the folder from the most recent project (no prior check on its existence)
+            if (projects.length > 0 && Filepath.exists(projects[0]["path"])) {
+                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]["path"]))
+            }
         } else {
-            if (mainStack.currentItem.imagesFolder.toString() === "" && mainStack.currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {
-                imagesFolder = Filepath.stringToUrl(Filepath.dirname(mainStack.currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source))
+
+            if (currentItem.imagesFolder.toString() === "" && currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {
+                // Set the initial folder for the "import images" dialog if it hasn't been set already
+                currentItem.imagesFolder = Filepath.stringToUrl(Filepath.dirname(currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source))
             }
 
             if (_reconstruction.graph && _reconstruction.graph.filepath) {
+                // If the opened project has been saved, the dialog will open in the same folder
                 folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
             } else {
-                var projects = MeshroomApp.recentProjectFiles
-
+                // If the currently opened project has not been saved, the dialog will open in the same
+                // folder as the most recent project if it exists; otherwise, it will not be set
                 if (projects.length > 0 && Filepath.exists(projects[0]["path"])) {
                     folder = Filepath.stringToUrl(Filepath.dirname(projects[0]["path"]))
                 }
             }
 
-            if (importImages && mainStack.currentItem.imagesFolder.toString() !== "" && Filepath.exists(imagesFolder)) {
-                folder = mainStack.currentItem.imagesFolder
+            // If the dialog that's being opened is the "import images" dialog, use the "imagesFolder" property
+            // which contains the last folder used to import images rather than the folder in which
+            // projects have been saved
+            if (importImages && currentItem.imagesFolder.toString() !== "" && Filepath.exists(imagesFolder)) {
+                folder = currentItem.imagesFolder
             }
         }
 

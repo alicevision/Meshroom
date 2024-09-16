@@ -61,7 +61,6 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
                         " - from_landmarks: Align from matched features, try to fuse.\n",
             value="simple_copy",
             values=["simple_copy", 'from_landmarks'],
-            exclusive=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -89,7 +88,6 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

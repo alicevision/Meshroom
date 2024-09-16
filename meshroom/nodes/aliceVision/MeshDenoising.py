@@ -72,7 +72,6 @@ for now, the parameters are difficult to control and vary a lot from one dataset
                         " - POISSON_UPDATE: Poisson-based update from [Wang et al. 2015] 'Rolling guidance normal filter for geometric processing'.",
             value=0,
             values=[0, 1],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -80,7 +79,6 @@ for now, the parameters are difficult to control and vary a lot from one dataset
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

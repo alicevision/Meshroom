@@ -25,7 +25,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             description="File type for the output mesh.",
             value="obj",
             values=["gltf", "obj", "fbx", "stl"],
-            exclusive=True,
             group="",
         ),
         desc.BoolParam(
@@ -40,7 +39,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             description="Subset for smoothing (all, surface_boundaries, surface_inner_part).",
             value="all",
             values=["all", "surface_boundaries", "surface_inner_part"],
-            exclusive=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -72,7 +70,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             description="Subset for filtering (all, surface_boundaries, surface_inner_part).",
             value="all",
             values=["all", "surface_boundaries", "surface_inner_part"],
-            exclusive=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -107,7 +104,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

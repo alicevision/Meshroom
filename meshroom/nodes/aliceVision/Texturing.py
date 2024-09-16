@@ -64,7 +64,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Output texture size.",
             value=8192,
             values=[1024, 2048, 4096, 8192, 16384],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="downscale",
@@ -72,7 +71,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Texture downscale factor.",
             value=2,
             values=[1, 2, 4, 8],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="outputMeshFileType",
@@ -80,7 +78,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="File type for the mesh output.",
             value="obj",
             values=["obj", "gltf", "fbx", "stl"],
-            exclusive=True,
         ),
         desc.GroupAttribute(
             name="colorMapping",
@@ -103,7 +100,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     description="Texture file type.",
                     value="exr",
                     values=["exr", "png", "tiff", "jpg"],
-                    exclusive=True,
                     enabled=lambda node: node.colorMapping.enable.value,
                 ),
             ],
@@ -129,7 +125,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     description="Export normal map or height map.",
                     value="Normal",
                     values=["Height", "Normal"],
-                    exclusive=True,
                     enabled=lambda node: node.bumpMapping.enable.value,
                 ),
                 desc.ChoiceParam(
@@ -138,7 +133,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     description="File type for the normal map texture.",
                     value="exr",
                     values=["exr", "png", "tiff", "jpg"],
-                    exclusive=True,
                     enabled=lambda node: node.bumpMapping.enable.value and node.bumpMapping.bumpType.value == "Normal",
                 ),
                 desc.ChoiceParam(
@@ -147,7 +141,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     description="File type for the height map texture.",
                     value="exr",
                     values=["exr",],
-                    exclusive=True,
                     enabled=lambda node: node.bumpMapping.enable.value and node.bumpMapping.bumpType.value == "Height",
                 ),
             ],
@@ -173,7 +166,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     description="File type for the height map texture.",
                     value="exr",
                     values=["exr"],
-                    exclusive=True,
                     enabled=lambda node: node.displacementMapping.enable.value,
                 ),
             ],
@@ -187,7 +179,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                         " - ABF (<= 300k faces): optimize space and stretch. Generates one atlas.",
             value="Basic",
             values=["Basic", "LSCM", "ABF"],
-            exclusive=True,
         ),
         desc.BoolParam(
             name="useUDIM",
@@ -282,7 +273,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Color space for the texturing internal computation (does not impact the output file color space).",
             values=COLORSPACES,
             value="sRGB",
-            exclusive=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -291,7 +281,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Color space for the output texture files.",
             values=COLORSPACES,
             value="AUTO",
-            exclusive=True,
         ),
         desc.BoolParam(
             name="correctEV",
@@ -320,7 +309,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Method to remap visibilities from the reconstruction to the input mesh (Pull, Push, PullPush, MeshItself).",
             value="PullPush",
             values=["Pull", "Push", "PullPush", "MeshItself"],
-            exclusive=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -340,7 +328,6 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

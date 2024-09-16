@@ -50,7 +50,6 @@ The transformation can be based on:
                         " - align_ground: Defines ground level from the point cloud density. It assumes that the scene is oriented.",
             value="auto",
             values=["transformation", "manual", "auto", "auto_from_cameras", "auto_from_cameras_x_axis", "auto_from_landmarks", "from_single_camera", "from_center_camera", "from_markers", "from_gps", "from_lineup", "align_ground"],
-            exclusive=True,
         ),
         desc.File(
             name="lineUp",
@@ -248,7 +247,6 @@ The transformation can be based on:
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

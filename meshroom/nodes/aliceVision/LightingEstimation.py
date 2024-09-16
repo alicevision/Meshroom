@@ -37,7 +37,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             description="Lighting estimation mode.",
             value="global",
             values=["global", "per_image"],
-            exclusive=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -46,7 +45,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             description="Lighting color mode.",
             value="RGB",
             values=["RGB", "Luminance"],
-            exclusive=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -55,7 +53,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             description="Albedo estimation method used for light estimation.",
             value="constant",
             values=["constant", "picture", "median_filter", "blur_filter"],
-            exclusive=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -72,7 +69,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
     

@@ -50,7 +50,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             description="File extension for masks.",
             value="png",
             values=["png", "exr", "jpg"],
-            exclusive=True,
         ),
         desc.BoolParam(
             name="maskInvert",
@@ -75,7 +74,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
                         "Warning: Use ULTRA only on small datasets.",
             value="normal",
             values=["low", "medium", "normal", "high", "ultra", "custom"],
-            exclusive=True,
             group=lambda node: 'allParams' if node.describerPreset.value != 'custom' else None,
         ),
         desc.IntParam(
@@ -93,7 +91,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             description="Control the ImageDescriber quality (low, medium, normal, high, ultra).",
             value="normal",
             values=["low", "medium", "normal", "high", "ultra"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="contrastFiltering",
@@ -108,7 +105,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
                         " - NonExtremaFiltering: Filter non-extrema peakValues.\n",
             value="GridSort",
             values=["Static", "AdaptiveToMedianVariance", "NoFiltering", "GridSortOctaves", "GridSort", "GridSortScaleSteps", "GridSortOctaveSteps", "NonExtremaFiltering"],
-            exclusive=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -133,7 +129,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             description="Allows you to choose the color space in which the data are processed.",
             values=COLORSPACES,
             value="sRGB",
-            exclusive=True,
         ),
         desc.BoolParam(
             name="forceCpuExtraction",
@@ -157,7 +152,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

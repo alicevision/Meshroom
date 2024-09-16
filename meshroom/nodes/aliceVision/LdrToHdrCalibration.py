@@ -92,7 +92,6 @@ Calibrate LDR to HDR response curve from samples.
                         " - Laguerre: Simple but robust method estimating the minimal number of parameters.",
             values=["auto", "linear", "debevec", "grossberg", "laguerre"],
             value="auto",
-            exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
             exposed=True,
         ),
@@ -106,7 +105,6 @@ Calibrate LDR to HDR response curve from samples.
                         " - plateau",
             value="default",
             values=["default", "gaussian", "triangle", "plateau"],
-            exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
@@ -126,7 +124,6 @@ Calibrate LDR to HDR response curve from samples.
                         "If 'auto' is selected, the working color space will be 'Linear' if RAW images are detected; otherwise, it will be set to 'sRGB'.",
             values=COLORSPACES,
             value="AUTO",
-            exclusive=True,
             invalidate=False,
             group="user",  # not used directly on the command line
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
@@ -149,7 +146,6 @@ Calibrate LDR to HDR response curve from samples.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

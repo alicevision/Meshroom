@@ -45,7 +45,6 @@ Can also be used to calibrate a lighting dome (RTI type).
                         "Spherical Harmonic lighting can be estimated using 'SH' method.",
             values=["brightestPoint", "whiteSphere", "SH"],
             value="brightestPoint",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -53,7 +52,6 @@ Can also be used to calibrate a lighting dome (RTI type).
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

@@ -57,7 +57,6 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             description="Preset for the feature extractor when localizing a new image (low, medium, normal, high, ultra).",
             value="normal",
             values=["low", "medium", "normal", "high", "ultra"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="resectionEstimator",
@@ -65,7 +64,6 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             description="The type of *sac framework to use for resection (acransac, loransac).",
             value="acransac",
             values=["acransac", "loransac"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="matchingEstimator",
@@ -73,7 +71,6 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             description="The type of *sac framework to use for matching (acransac, loransac).",
             value="acransac",
             values=["acransac", "loransac"],
-            exclusive=True,
         ),
         desc.StringParam(
             name="refineIntrinsics",
@@ -120,7 +117,6 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             description="[voctree] Algorithm type: {FirstBest, AllResults}.",
             value="AllResults",
             values=["FirstBest", "AllResults"],
-            exclusive=True,
         ),
         desc.IntParam(
             name="nbImageMatch",
@@ -158,7 +154,6 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

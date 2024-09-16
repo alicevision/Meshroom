@@ -52,7 +52,6 @@ Import an E57 file and generate an SfMData.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

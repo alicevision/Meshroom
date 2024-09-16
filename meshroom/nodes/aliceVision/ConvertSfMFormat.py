@@ -27,7 +27,6 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             description="Output SfM file format.",
             value="abc",
             values=["abc", "sfm", "json", "ply", "baf"],
-            exclusive=True,
             group="",  # exclude from command line
         ),
         desc.ChoiceParam(
@@ -87,7 +86,6 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

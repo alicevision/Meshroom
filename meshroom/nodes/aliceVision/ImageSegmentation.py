@@ -73,7 +73,6 @@ Generate a mask with segmented labels for each pixel.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

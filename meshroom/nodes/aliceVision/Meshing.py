@@ -41,7 +41,6 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="File type for the output mesh.",
             value="obj",
             values=["gltf", "obj", "fbx", "stl"],
-            exclusive=True,
             group="",
         ),
         desc.BoolParam(
@@ -193,7 +192,6 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Single block or auto partitioning.",
             value="singleBlock",
             values=["singleBlock", "auto"],
-            exclusive=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -202,7 +200,6 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Multi-resolution or regular grid-based repartition.",
             value="multiResolution",
             values=["multiResolution", "regularGrid"],
-            exclusive=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -467,7 +464,6 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

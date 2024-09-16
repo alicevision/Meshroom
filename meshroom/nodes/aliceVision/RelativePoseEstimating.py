@@ -40,7 +40,6 @@ Estimate relative pose between each pair of views that share tracks.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

@@ -48,7 +48,6 @@ The alignment can be based on:
                         " - from_landmarks: Align from matched features.\n",
             value="from_cameras_viewid",
             values=["from_cameras_viewid", "from_cameras_poseid", "from_cameras_filepath", "from_cameras_metadata", "from_markers", 'from_landmarks'],
-            exclusive=True,
         ),
         desc.StringParam(
             name="fileMatchingPattern",
@@ -100,7 +99,6 @@ The alignment can be based on:
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

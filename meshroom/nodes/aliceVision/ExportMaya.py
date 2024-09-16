@@ -28,7 +28,6 @@ MeshroomMaya contains a user interface to browse all cameras.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

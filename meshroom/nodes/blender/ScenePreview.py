@@ -95,7 +95,6 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
                     description="Color of particles used for the point cloud.",
                     value="Red",
                     values=["Grey", "White", "Red", "Green", "Magenta"],
-                    exclusive=True,
                 ),
             ],
         ),
@@ -112,7 +111,6 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
                     description="Shading method for visualizing the mesh.",
                     value="wireframe",
                     values=["wireframe", "line_art"],
-                    exclusive=True,
                 ),
                 desc.ChoiceParam(
                     name="edgeColor",
@@ -120,7 +118,6 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
                     description="Color of the mesh edges.",
                     value="Red",
                     values=["Grey", "White", "Red", "Green", "Magenta"],
-                    exclusive=True,
                 ),
             ],
         ),

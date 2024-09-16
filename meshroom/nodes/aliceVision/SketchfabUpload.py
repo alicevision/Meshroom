@@ -101,7 +101,6 @@ Upload a textured mesh on Sketchfab.
                     "CC Attribution-NonCommercial",
                     "CC Attribution-NonCommercial-ShareAlike",
                     "CC Attribution-NonCommercial-NoDerivs"],
-            exclusive=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.StringParam(
@@ -139,7 +138,6 @@ Upload a textured mesh on Sketchfab.
                     "science-technology",
                     "sports-fitness",
                     "weapons-military"],
-            exclusive=True,
         ),
         desc.BoolParam(
             name="isPublished",
@@ -171,7 +169,6 @@ Upload a textured mesh on Sketchfab.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
     

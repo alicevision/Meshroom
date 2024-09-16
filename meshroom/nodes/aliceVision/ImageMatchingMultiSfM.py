@@ -62,7 +62,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
                         "use VocabularyTree.\n",
             value="SequentialAndVocabularyTree",
             values=["VocabularyTree", "SequentialAndVocabularyTree", "Exhaustive", "Frustum"],
-            exclusive=True,
         ),
         desc.File(
             name="tree",
@@ -90,7 +89,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
                         "- 'a/b' for A with B.",
             value="a/a+a/b",
             values=["a/a+a/b","a/ab", "a/b"],
-            exclusive=True,
         ),
         desc.IntParam(
             name="minNbImages",
@@ -135,7 +133,6 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

@@ -66,7 +66,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
                         " - FrustumOrVocabularyTree: If images have known poses, use frustum intersection else use VocabularyTree.\n",
             value="SequentialAndVocabularyTree",
             values=["VocabularyTree", "Sequential", "SequentialAndVocabularyTree", "Exhaustive", "Frustum", "FrustumOrVocabularyTree"],
-            exclusive=True,
         ),
         desc.File(
             name="tree",
@@ -128,7 +127,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

@@ -80,7 +80,6 @@ then it checks the number of features that validates this model and iterate thro
                         " - BRUTE_FORCE_HAMMING: BruteForce Hamming matching",
             value="ANN_L2",
             values=["BRUTE_FORCE_L2", "ANN_L2", "CASCADE_HASHING_L2", "FAST_CASCADE_HASHING_L2", "BRUTE_FORCE_HAMMING"],
-            exclusive=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -91,7 +90,6 @@ then it checks the number of features that validates this model and iterate thro
                         " - loransac: LO-Ransac (only available for 'fundamental_matrix' model).",
             value="acransac",
             values=["acransac", "loransac"],
-            exclusive=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -106,7 +104,6 @@ then it checks the number of features that validates this model and iterate thro
                         " - no_filtering",
             value="fundamental_matrix",
             values=["fundamental_matrix", "fundamental_with_distortion", "essential_matrix", "homography_matrix", "homography_growing", "no_filtering"],
-            exclusive=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -201,7 +198,6 @@ then it checks the number of features that validates this model and iterate thro
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
     outputs = [

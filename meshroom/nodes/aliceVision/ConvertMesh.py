@@ -23,7 +23,6 @@ class ConvertMesh(desc.AVCommandLineNode):
             description="Output mesh format (*.obj, *.gltf, *.fbx, *.stl).",
             value="obj",
             values=["gltf", "obj", "fbx", "stl"],
-            exclusive=True,
             group="",
         ),
         desc.ChoiceParam(
@@ -32,7 +31,6 @@ class ConvertMesh(desc.AVCommandLineNode):
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

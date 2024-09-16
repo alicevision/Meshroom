@@ -37,7 +37,6 @@ Evaluate a depth map from a normals map (currently in development)
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

@@ -45,7 +45,6 @@ It also allows to export an undistorted image of the lens grids for validation.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

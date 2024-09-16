@@ -107,7 +107,6 @@ Sample pixels from Low range images for HDR creation.
                         " - Laguerre: Simple but robust method estimating the minimal number of parameters.",
             values=["auto", "linear", "debevec", "grossberg", "laguerre"],
             value="auto",
-            exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
             exposed=True,
         ),
@@ -128,7 +127,6 @@ Sample pixels from Low range images for HDR creation.
                         "If 'auto' is selected, the working color space will be 'Linear' if RAW images are detected; otherwise, it will be set to 'sRGB'.",
             values=COLORSPACES,
             value="AUTO",
-            exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
             exposed=True,
         ),
@@ -173,7 +171,6 @@ Sample pixels from Low range images for HDR creation.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

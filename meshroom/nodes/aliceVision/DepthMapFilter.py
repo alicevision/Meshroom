@@ -105,7 +105,6 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

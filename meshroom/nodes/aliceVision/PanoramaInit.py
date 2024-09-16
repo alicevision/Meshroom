@@ -34,7 +34,6 @@ This node allows to setup the Panorama:
             description="Initialize cameras.",
             value="No",
             values=["No", "File", "Horizontal", "Horizontal+Zenith", "Zenith+Horizontal", "Spherical"],
-            exclusive=True,
         ),
         desc.File(
             name="config",
@@ -124,7 +123,6 @@ This node allows to setup the Panorama:
             description="Add a rotation to the input XML given poses (CCW).",
             value="None",
             values=["None", "rotate90", "rotate180", "rotate270"],
-            exclusive=True,
         ),
         desc.BoolParam(
             name="debugFisheyeCircleEstimation",
@@ -140,7 +138,6 @@ This node allows to setup the Panorama:
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

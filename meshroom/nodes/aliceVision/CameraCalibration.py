@@ -27,7 +27,6 @@ class CameraCalibration(desc.AVCommandLineNode):
             description="Type of pattern (CHESSBOARD, CIRCLES, ASYMMETRIC_CIRCLES, ASYMMETRIC_CCTAG).",
             value="CHESSBOARD",
             values=["CHESSBOARD", "CIRCLES", "ASYMMETRIC_CIRCLES", "ASYMMETRIC_CCTAG"],
-            exclusive=True,
         ),
         desc.GroupAttribute(
             name="size",
@@ -117,7 +116,6 @@ class CameraCalibration(desc.AVCommandLineNode):
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

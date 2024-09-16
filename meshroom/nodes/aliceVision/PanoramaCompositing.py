@@ -51,7 +51,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
                         " - alpha: debug option with linear transitions.",
             value="multiband",
             values=["replace", "alpha", "multiband"],
-            exclusive=True,
         ),
         desc.IntParam(
             name="forceMinPyramidLevels",
@@ -87,7 +86,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
                         " - auto: Use half float if all values can fit, else use full float.",
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="overlayType",
@@ -99,7 +97,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
                         " - all: display borders and seams.",
             value="none",
             values=["none", "borders", "seams", "all"],
-            exclusive=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -108,7 +105,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

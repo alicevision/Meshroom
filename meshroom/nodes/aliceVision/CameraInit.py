@@ -134,7 +134,6 @@ Intrinsic = [
                     " - equidistant: Non-projective camera model suited for full-fisheye optics.\n",
         value="pinhole",
         values=["pinhole", "equidistant"],
-        exclusive=True,
     ),
     desc.ChoiceParam(
         name="distortionType",
@@ -149,7 +148,6 @@ Intrinsic = [
                     " - fisheye4: distortion with 4 parameters suited for fisheye optics (like 120deg FoV).\n",
         value="radialk3",
         values=["none", "radialk1", "radialk3", "radialk3pt", "brown", "fisheye4", "fisheye1"],
-        exclusive=True,
     ),
     desc.IntParam(
         name="width",
@@ -216,7 +214,6 @@ Intrinsic = [
                     " - none: not set.",
         values=["calibrated", "estimated", "unknown", "none"],
         value="none",
-        exclusive=True,
     ),
     desc.ChoiceParam(
         name="distortionInitializationMode",
@@ -228,7 +225,6 @@ Intrinsic = [
                     " - none: not set.",
         values=["calibrated", "estimated", "unknown", "none"],
         value="none",
-        exclusive=True,
     ),
     desc.ListAttribute(
         name="distortionParams",
@@ -418,7 +414,6 @@ The needed metadata are:
                         " - image: never group images from comparable devices.",
             values=["global", "folder", "image"],
             value="folder",
-            exclusive=True,
             invalidate=False,
         ),
         desc.ChoiceParam(
@@ -432,7 +427,6 @@ The needed metadata are:
                         " - DCPMetadata: Same as None with DCP info added in metadata.",
             values=RAW_COLOR_INTERPRETATION,
             value="DCPLinearProcessing" if os.environ.get("ALICEVISION_COLOR_PROFILE_DB", "") else "LibRawWhiteBalancing",
-            exclusive=True,
         ),
         desc.File(
             name="colorProfileDatabase",
@@ -459,7 +453,6 @@ The needed metadata are:
                         " - filename : Generate viewId from filename using regex.",
             value="metadata",
             values=["metadata", "filename"],
-            exclusive=True,
             invalidate=False,
             advanced=True,
         ),
@@ -485,7 +478,6 @@ The needed metadata are:
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

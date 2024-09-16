@@ -50,7 +50,6 @@ This node export undistorted images so the depth map and texturing can be comput
             description="File extension for the masks to use.",
             value="png",
             values=["exr", "jpg", "png"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="outputFileType",
@@ -58,7 +57,6 @@ This node export undistorted images so the depth map and texturing can be comput
             description="Output file type for the undistorted images.",
             value="exr",
             values=["jpg", "png", "tif", "exr"],
-            exclusive=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -88,7 +86,6 @@ This node export undistorted images so the depth map and texturing can be comput
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

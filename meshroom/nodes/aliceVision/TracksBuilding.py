@@ -81,7 +81,6 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

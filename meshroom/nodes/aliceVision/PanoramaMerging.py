@@ -37,7 +37,6 @@ Merge all inputs coming from the PanoramaCompositing node.
             description="Output file type for the merged panorama.",
             value="exr",
             values=["jpg", "png", "tif", "exr"],
-            exclusive=True,
             group="",  # not part of allParams, as this is not a parameter for the command line
         ),
         desc.BoolParam(
@@ -57,7 +56,6 @@ Merge all inputs coming from the PanoramaCompositing node.
                         " - auto: Use half float if all values can fit, else use full float.\n",
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -65,7 +63,6 @@ Merge all inputs coming from the PanoramaCompositing node.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

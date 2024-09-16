@@ -74,6 +74,9 @@ RowLayout {
                 ToolTip {
                     id: parameterTooltip
 
+                    // Position in y at mouse position
+                    y: parameterMA.mouseY + 10
+
                     text: {
                         var tooltip = ""
                         if (!object.validValue && object.desc.errorMessage !== "")

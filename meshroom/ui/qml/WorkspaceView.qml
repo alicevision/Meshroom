@@ -28,6 +28,7 @@ Item {
 
     implicitWidth: 300
     implicitHeight: 400
+    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D || settingsUILayout.showLiveReconstruction
 
 
     // Load a 3D media file in the 3D viewer
@@ -65,6 +66,7 @@ Item {
         anchors.fill: parent
 
         Controls1.SplitView {
+            visible: settingsUILayout.showImageGallery || settingsUILayout.showLiveReconstruction
             orientation: Qt.Vertical
             Layout.fillHeight: true
             implicitWidth: Math.round(parent.width * 0.2)
@@ -72,6 +74,7 @@ Item {
 
             ImageGallery {
                 id: imageGallery
+                visible: settingsUILayout.showImageGallery
                 Layout.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits

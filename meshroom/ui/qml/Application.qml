@@ -28,6 +28,7 @@ Page {
         property alias showGraphEditor: graphEditorVisibilityCB.checked
         property alias showImageViewer: imageViewerVisibilityCB.checked
         property alias showViewer3D: viewer3DVisibilityCB.checked
+        property alias showImageGallery: imageGalleryVisibilityCB.checked
     }
 
     // Utility functions for elements in the menubar
@@ -802,6 +803,12 @@ Page {
                     checkable: true
                     checked: true
                 }
+                MenuItem {
+                    id: imageGalleryVisibilityCB
+                    text: "Image Gallery"
+                    checkable: true
+                    checked: true
+                }
                 MenuSeparator {}
                 Action {
                     text: "Fullscreen"
@@ -1031,7 +1038,8 @@ Page {
         Controls1.SplitView {
             orientation: Qt.Horizontal
             width: parent.width
-            height: Math.round(parent.height * 0.3)
+            property bool isOnlyGraphEditorVisible: settingsUILayout.showGraphEditor && !settingsUILayout.showImageViewer && !settingsUILayout.showViewer3D && !settingsUILayout.showImageGallery
+            height: isOnlyGraphEditorVisible ? parent.height : Math.round(parent.height * 0.3)
             visible: settingsUILayout.showGraphEditor
 
             TabPanel {

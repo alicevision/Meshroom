@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.11
 import QtQuick.Window 2.15
 import QtQml.Models 2.15
@@ -976,33 +975,32 @@ Page {
         function onError() { createDialog(dialogsFactory.error, arguments[0]) }
     }
 
-    Controls1.SplitView {
+    ColumnLayout {
         anchors.fill: parent
-        orientation: Qt.Vertical
+        spacing: 4
 
-        // Setup global tooltip style
-        ToolTip.toolTip.background: Rectangle { color: activePalette.base; border.color: activePalette.mid }
+        // "ProgressBar" reflecting status of all the chunks in the graph, in their process order
+        NodeChunks {
+            id: chunksListView
+            height: 6
+            width: parent.width
+            model: _reconstruction ? _reconstruction.sortedDFSChunks : null
+            highlightChunks: false
+        }
 
-        ColumnLayout {
-            Layout.fillWidth: true
+        SplitView {
             Layout.fillHeight: true
-            implicitHeight: Math.round(parent.height * 0.7)
-            spacing: 4
+            width: parent.width
 
-            // "ProgressBar" reflecting status of all the chunks in the graph, in their process order
-            NodeChunks {
-                id: chunksListView
-                Layout.fillWidth: true
-                height: 6
-                model: _reconstruction ? _reconstruction.sortedDFSChunks : null
-                highlightChunks: false
-            }
+            orientation: Qt.Vertical
+
+            // Setup global tooltip style
+            ToolTip.toolTip.background: Rectangle { color: activePalette.base; border.color: activePalette.mid }
 
             WorkspaceView {
                 id: workspaceView
-                Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumHeight: 50
+                SplitView.preferredHeight: 0.7 * parent.height
                 reconstruction: _reconstruction
                 readOnly: _reconstruction ? _reconstruction.computing : false
 
@@ -1018,7 +1016,7 @@ Page {
                         if (attr.isOutput && attr.desc.semantic !== "image")
                             if (!alreadyDisplay || attr.desc.semantic == "3D")
                                 if (workspaceView.viewIn3D(attr, mouse))
-                                      alreadyDisplay = true
+                                        alreadyDisplay = true
                         }
                 }
 
@@ -1033,184 +1031,183 @@ Page {
                     return loaded
                 }
             }
-        }
 
-        Controls1.SplitView {
-            orientation: Qt.Horizontal
-            width: parent.width
-            property bool isOnlyGraphEditorVisible: settingsUILayout.showGraphEditor && !settingsUILayout.showImageViewer && !settingsUILayout.showViewer3D && !settingsUILayout.showImageGallery
-            height: isOnlyGraphEditorVisible ? parent.height : Math.round(parent.height * 0.3)
-            visible: settingsUILayout.showGraphEditor
+            SplitView {
+                id: bottomContainer
+                orientation: Qt.Horizontal
+                visible: settingsUILayout.showGraphEditor
+                SplitView.preferredHeight: 0.3 * parent.height
 
-            TabPanel {
-                id: graphEditorPanel
-                Layout.fillWidth: true
-                padding: 4
-                tabs: ["Graph Editor", "Task Manager", "Script Editor"]
+                TabPanel {
+                    id: graphEditorPanel
+                    Layout.fillWidth: true
+                    SplitView.preferredWidth: 0.7 * parent.width
 
-                headerBar: RowLayout {
-                    MaterialToolButton {
-                        text: MaterialIcons.sync
-                        ToolTip.text: "Refresh Nodes Status"
-                        ToolTip.visible: hovered
-                        font.pointSize: 11
-                        padding: 2
-                        onClicked: {
-                            updatingStatus = true
-                            _reconstruction.forceNodesStatusUpdate()
-                            updatingStatus = false
+                    padding: 4
+                    tabs: ["Graph Editor", "Task Manager", "Script Editor"]
+
+                    headerBar: RowLayout {
+                        MaterialToolButton {
+                            text: MaterialIcons.sync
+                            ToolTip.text: "Refresh Nodes Status"
+                            ToolTip.visible: hovered
+                            font.pointSize: 11
+                            padding: 2
+                            onClicked: {
+                                updatingStatus = true
+                                _reconstruction.forceNodesStatusUpdate()
+                                updatingStatus = false
+                            }
+                            property bool updatingStatus: false
+                            enabled: !updatingStatus
                         }
-                        property bool updatingStatus: false
-                        enabled: !updatingStatus
-                    }
-                    MaterialToolButton {
-                        text: MaterialIcons.more_vert
-                        font.pointSize: 11
-                        padding: 2
-                        onClicked: graphEditorMenu.open()
-                        checkable: true
-                        checked: graphEditorMenu.visible
-                        Menu {
-                            id: graphEditorMenu
-                            y: parent.height
-                            x: -width + parent.width
-                            MenuItem {
-                                text: "Clear Pending Status"
-                                enabled: _reconstruction ? !_reconstruction.computingLocally : false
-                                onTriggered: _reconstruction.graph.clearSubmittedNodes()
-                            }
-                            MenuItem {
-                                text: "Force Unlock Nodes"
-                                onTriggered: _reconstruction.graph.forceUnlockNodes()
-                            }
-
+                        MaterialToolButton {
+                            text: MaterialIcons.more_vert
+                            font.pointSize: 11
+                            padding: 2
+                            onClicked: graphEditorMenu.open()
+                            checkable: true
+                            checked: graphEditorMenu.visible
                             Menu {
-                                title: "Refresh Nodes Status"
-
+                                id: graphEditorMenu
+                                y: parent.height
+                                x: -width + parent.width
                                 MenuItem {
-                                id: enableAutoRefresh
-                                text: "Enable Auto-Refresh"
-                                checkable: true
-                                checked: _reconstruction.filePollerRefresh === 0
-                                ToolTip.text: "Check every file's status periodically"
-                                ToolTip.visible: hovered
-                                ToolTip.delay: 200
-                                onToggled: {
-                                    if (checked) {
-                                        disableAutoRefresh.checked = false
-                                        minimalAutoRefresh.checked = false
-                                        _reconstruction.filePollerRefreshChanged(0)
-                                    }
-                                    // Prevents cases where the user unchecks the currently checked option
-                                    enableAutoRefresh.checked = true
+                                    text: "Clear Pending Status"
+                                    enabled: _reconstruction ? !_reconstruction.computingLocally : false
+                                    onTriggered: _reconstruction.graph.clearSubmittedNodes()
                                 }
-                            }
-                            MenuItem {
-                                id: disableAutoRefresh
-                                text: "Disable Auto-Refresh"
-                                checkable: true
-                                checked: _reconstruction.filePollerRefresh === 1
-                                ToolTip.text: "No file status will be checked"
-                                ToolTip.visible: hovered
-                                ToolTip.delay: 200
-                                onToggled: {
-                                    if (checked) {
-                                        enableAutoRefresh.checked = false
-                                        minimalAutoRefresh.checked = false
-                                        _reconstruction.filePollerRefreshChanged(1)
-                                    }
-                                    // Prevents cases where the user unchecks the currently checked option
-                                    disableAutoRefresh.checked = true
+                                MenuItem {
+                                    text: "Force Unlock Nodes"
+                                    onTriggered: _reconstruction.graph.forceUnlockNodes()
                                 }
-                            }
-                            MenuItem {
-                                id: minimalAutoRefresh
-                                text: "Enable Minimal Auto-Refresh"
-                                checkable: true
-                                checked: _reconstruction.filePollerRefresh === 2
-                                ToolTip.text: "Check the file status of submitted or running chunks periodically"
-                                ToolTip.visible: hovered
-                                ToolTip.delay: 200
-                                onToggled: {
-                                    if (checked) {
-                                        disableAutoRefresh.checked = false
-                                        enableAutoRefresh.checked = false
-                                        _reconstruction.filePollerRefreshChanged(2)
+
+                                Menu {
+                                    title: "Refresh Nodes Status"
+
+                                    MenuItem {
+                                    id: enableAutoRefresh
+                                    text: "Enable Auto-Refresh"
+                                    checkable: true
+                                    checked: _reconstruction.filePollerRefresh === 0
+                                    ToolTip.text: "Check every file's status periodically"
+                                    ToolTip.visible: hovered
+                                    ToolTip.delay: 200
+                                    onToggled: {
+                                        if (checked) {
+                                            disableAutoRefresh.checked = false
+                                            minimalAutoRefresh.checked = false
+                                            _reconstruction.filePollerRefreshChanged(0)
+                                        }
+                                        // Prevents cases where the user unchecks the currently checked option
+                                        enableAutoRefresh.checked = true
                                     }
-                                    // Prevents cases where the user unchecks the currently checked option
-                                    minimalAutoRefresh.checked = true
                                 }
-                            }
+                                MenuItem {
+                                    id: disableAutoRefresh
+                                    text: "Disable Auto-Refresh"
+                                    checkable: true
+                                    checked: _reconstruction.filePollerRefresh === 1
+                                    ToolTip.text: "No file status will be checked"
+                                    ToolTip.visible: hovered
+                                    ToolTip.delay: 200
+                                    onToggled: {
+                                        if (checked) {
+                                            enableAutoRefresh.checked = false
+                                            minimalAutoRefresh.checked = false
+                                            _reconstruction.filePollerRefreshChanged(1)
+                                        }
+                                        // Prevents cases where the user unchecks the currently checked option
+                                        disableAutoRefresh.checked = true
+                                    }
+                                }
+                                MenuItem {
+                                    id: minimalAutoRefresh
+                                    text: "Enable Minimal Auto-Refresh"
+                                    checkable: true
+                                    checked: _reconstruction.filePollerRefresh === 2
+                                    ToolTip.text: "Check the file status of submitted or running chunks periodically"
+                                    ToolTip.visible: hovered
+                                    ToolTip.delay: 200
+                                    onToggled: {
+                                        if (checked) {
+                                            disableAutoRefresh.checked = false
+                                            enableAutoRefresh.checked = false
+                                            _reconstruction.filePollerRefreshChanged(2)
+                                        }
+                                        // Prevents cases where the user unchecks the currently checked option
+                                        minimalAutoRefresh.checked = true
+                                    }
+                                }
+                                }
                             }
                         }
                     }
-                }
 
-                GraphEditor {
-                    id: graphEditor
+                    GraphEditor {
+                        id: graphEditor
+                        anchors.fill: parent
 
-                    visible: graphEditorPanel.currentTab === 0
+                        visible: graphEditorPanel.currentTab === 0
 
-                    anchors.fill: parent
-                    uigraph: _reconstruction
-                    nodeTypesModel: _nodeTypes
+                        uigraph: _reconstruction
+                        nodeTypesModel: _nodeTypes
 
-                    onNodeDoubleClicked: {
-                        _reconstruction.setActiveNode(node);
-                        workspaceView.viewNode(node, mouse);
-                    }
-                    onComputeRequest: {
-                        _reconstruction.forceNodesStatusUpdate();
-                        computeManager.compute(nodes)
-                    }
-                    onSubmitRequest: {
-                        _reconstruction.forceNodesStatusUpdate();
-                        computeManager.submit(nodes)
-                    }
-                    onFilesDropped: {
-                        var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
-                        if (filesByType["meshroomScenes"].length == 1) {
-                            ensureSaved(function() {
-                                if (_reconstruction.handleFilesUrl(filesByType, null, mousePosition)) {
-                                    MeshroomApp.addRecentProjectFile(filesByType["meshroomScenes"][0])
-                                }
-                            })
-                        } else {
-                            _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
+                        onNodeDoubleClicked: {
+                            _reconstruction.setActiveNode(node);
+                            workspaceView.viewNode(node, mouse);
+                        }
+                        onComputeRequest: {
+                            _reconstruction.forceNodesStatusUpdate();
+                            computeManager.compute(nodes)
+                        }
+                        onSubmitRequest: {
+                            _reconstruction.forceNodesStatusUpdate();
+                            computeManager.submit(nodes)
+                        }
+                        onFilesDropped: {
+                            var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
+                            if (filesByType["meshroomScenes"].length == 1) {
+                                ensureSaved(function() {
+                                    if (_reconstruction.handleFilesUrl(filesByType, null, mousePosition)) {
+                                        MeshroomApp.addRecentProjectFile(filesByType["meshroomScenes"][0])
+                                    }
+                                })
+                            } else {
+                                _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
+                            }
                         }
                     }
+
+                    TaskManager {
+                        id: taskManager
+                        anchors.fill: parent
+
+                        visible: graphEditorPanel.currentTab === 1
+
+                        uigraph: _reconstruction
+                        taskManager: _reconstruction ? _reconstruction.taskManager : null
+                    }
+
+                    ScriptEditor {
+                        id: scriptEditor
+                        anchors.fill: parent
+
+                        visible: graphEditorPanel.currentTab === 2
+                    }
                 }
 
-                TaskManager {
-                    id: taskManager
+                NodeEditor {
+                    id: nodeEditor
+                    node: _reconstruction ? _reconstruction.selectedNode : null
+                    property bool computing: _reconstruction ? _reconstruction.computing : false
+                    // Make NodeEditor readOnly when computing
+                    readOnly: node ? node.locked : false
 
-                    visible: graphEditorPanel.currentTab === 1
-
-                    uigraph: _reconstruction
-                    taskManager: _reconstruction ? _reconstruction.taskManager : null
-
-                    anchors.fill: parent
-                }
-
-                ScriptEditor {
-                    id: scriptEditor
-
-                    visible: graphEditorPanel.currentTab === 2
-                    anchors.fill: parent
-                }
-            }
-
-            NodeEditor {
-                id: nodeEditor
-                width: Math.round(parent.width * 0.3)
-                node: _reconstruction ? _reconstruction.selectedNode : null
-                property bool computing: _reconstruction ? _reconstruction.computing : false
-                // Make NodeEditor readOnly when computing
-                readOnly: node ? node.locked : false
-
-                onUpgradeRequest: {
-                    var n = _reconstruction.upgradeNode(node)
-                    _reconstruction.selectedNode = n
+                    onUpgradeRequest: {
+                        var n = _reconstruction.upgradeNode(node)
+                        _reconstruction.selectedNode = n
+                    }
                 }
             }
         }

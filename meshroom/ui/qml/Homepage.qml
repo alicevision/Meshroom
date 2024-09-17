@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.11
 import Utils 1.0
 import MaterialIcons 2.2
@@ -16,7 +15,7 @@ Page {
         }
     }
 
-    Controls1.SplitView {
+    SplitView {
         id: splitView
         anchors.fill: parent
 
@@ -25,8 +24,8 @@ Page {
             id: leftColumn
             height: parent.height
 
-            Layout.minimumWidth: 200
-            Layout.maximumWidth: 300
+            SplitView.minimumWidth: 200
+            SplitView.maximumWidth: 300
 
             AnimatedImage {
                 id: logo

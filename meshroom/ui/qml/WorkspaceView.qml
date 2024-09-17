@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.11
 import Qt.labs.platform 1.0 as Platform
 import ImageGallery 1.0
@@ -26,10 +25,8 @@ Item {
     readonly property Viewer2D viewer2D: viewer2D
     readonly property alias imageGallery: imageGallery
 
-    implicitWidth: 300
-    implicitHeight: 400
+    // Use settings instead of visible property as property changes are not propagated
     visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D || settingsUILayout.showLiveReconstruction
-
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
@@ -62,10 +59,12 @@ Item {
 
     SystemPalette { id: activePalette }
 
-    Controls1.SplitView {
+    SplitView {
+        id: mainSplitView
         anchors.fill: parent
 
-        Controls1.SplitView {
+        SplitView {
+            id: leftSplitView
             visible: settingsUILayout.showImageGallery || settingsUILayout.showLiveReconstruction
             orientation: Qt.Vertical
             Layout.fillHeight: true
@@ -96,6 +95,7 @@ Item {
                 }
             }
             LiveSfmView {
+                id: liveSfmView
                 visible: settingsUILayout.showLiveReconstruction
                 reconstruction: root.reconstruction
                 Layout.fillWidth: true
@@ -104,6 +104,7 @@ Item {
         }
 
         Panel {
+            id: imageViewer
             title: "Image Viewer"
             visible: settingsUILayout.showImageViewer
             implicitWidth: Math.round(parent.width * 0.35)
@@ -190,6 +191,7 @@ Item {
         }
 
         Item {
+            id: viewer3DContainer
             visible: settingsUILayout.showViewer3D
             Layout.minimumWidth: 20
             Layout.minimumHeight: 80
@@ -213,15 +215,15 @@ Item {
 
                 property alias viewer3D: c_viewer3D
 
-                Controls1.SplitView {
+                SplitView {
                     id: c_viewer3DSplitView
                     anchors.fill: parent
                     Viewer3D {
                         id: c_viewer3D
 
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumWidth: 20
+                        SplitView.fillWidth: true
+                        SplitView.fillHeight: true
+                        SplitView.minimumWidth: 20
 
                         DropArea {
                             anchors.fill: parent

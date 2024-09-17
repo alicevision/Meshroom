@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls 1.4 as Controls1 // SplitView
 import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
 import Controls 1.0
@@ -254,7 +253,7 @@ Panel {
             Component {
                 id: editor_component
 
-                Controls1.SplitView {
+                SplitView {
                     anchors.fill: parent
 
                     // The list of chunks

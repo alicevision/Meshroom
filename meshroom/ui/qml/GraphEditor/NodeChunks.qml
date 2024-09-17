@@ -20,7 +20,7 @@ ListView {
     }
 
     orientation: ListView.Horizontal
-    implicitWidth: 100
+
     // If we have enough space, add one pixel margin between chunks
     spacing: modelIsBig ? 0 : 1
     delegate: Rectangle {

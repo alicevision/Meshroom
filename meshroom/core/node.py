@@ -1030,13 +1030,16 @@ class BaseNode(BaseObject):
         self._chunks[iteration].process()
 
     def preprocess(self):
-        pass
+        # Invoke the Node Description's pre-process for the Client Node to prep it's processing
+        self.nodeDesc.preprocess(self)
 
     def process(self, forceCompute=False):
         for chunk in self._chunks:
             chunk.process(forceCompute)
 
     def postprocess(self):
+        # Invoke the post process on Client Node to execute after the processing on the node is completed
+        self.nodeDesc.postprocess(self)
         self.saveOutputAttr()
 
     def updateOutputAttr(self):

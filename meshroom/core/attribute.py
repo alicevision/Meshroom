@@ -77,6 +77,13 @@ class Attribute(BaseObject):
         self._description: str = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
+        self._depth = 0
+        if root is not None:
+            current = self
+            while current.root is not None:
+                self._depth += 1
+                current = current.root
+
         # invalidation value for output attributes
         self._invalidationValue = ""
 
@@ -91,6 +98,9 @@ class Attribute(BaseObject):
     @property
     def root(self):
         return self._root() if self._root else None
+
+    def getDepth(self):
+        return self._depth
 
     def getName(self) -> str:
         """ Attribute name """
@@ -531,6 +541,7 @@ class Attribute(BaseObject):
     validValueChanged = Signal()
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
     root = Property(BaseObject, root.fget, constant=True)
+    depth = Property(int, getDepth, constant=True)
 
 
 def raiseIfLink(func):

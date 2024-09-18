@@ -1030,7 +1030,7 @@ class BaseNode(BaseObject):
         self._chunks[iteration].process()
 
     def preprocess(self):
-        # Invoke the Node Description's pre-process for the Client Node to prep it's processing
+        # Invoke the Node Description's pre-process for the Client Node to prepare its processing
         self.nodeDesc.preprocess(self)
 
     def process(self, forceCompute=False):

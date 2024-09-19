@@ -15,7 +15,7 @@ Page {
         }
     }
 
-    SplitView {
+    MSplitView {
         id: splitView
         anchors.fill: parent
 

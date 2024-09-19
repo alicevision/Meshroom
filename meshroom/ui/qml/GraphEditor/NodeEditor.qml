@@ -253,7 +253,7 @@ Panel {
             Component {
                 id: editor_component
 
-                SplitView {
+                MSplitView {
                     anchors.fill: parent
 
                     // The list of chunks

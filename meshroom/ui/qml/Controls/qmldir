@@ -14,3 +14,4 @@ ExifOrientedViewer 1.0 ExifOrientedViewer.qml
 FilterComboBox 1.0 FilterComboBox.qml
 IntSelector 1.0 IntSelector.qml
 MScrollBar 1.0 MScrollBar.qml
+MSplitView 1.0 MSplitView.qml

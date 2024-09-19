@@ -988,7 +988,8 @@ Page {
             highlightChunks: false
         }
 
-        SplitView {
+        MSplitView {
+            id: topBottomSplit
             Layout.fillHeight: true
             width: parent.width
 
@@ -1032,7 +1033,7 @@ Page {
                 }
             }
 
-            SplitView {
+            MSplitView {
                 id: bottomContainer
                 orientation: Qt.Horizontal
                 visible: settingsUILayout.showGraphEditor

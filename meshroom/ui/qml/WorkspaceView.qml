@@ -59,11 +59,11 @@ Item {
 
     SystemPalette { id: activePalette }
 
-    SplitView {
+    MSplitView {
         id: mainSplitView
         anchors.fill: parent
 
-        SplitView {
+        MSplitView {
             id: leftSplitView
             visible: settingsUILayout.showImageGallery || settingsUILayout.showLiveReconstruction
             orientation: Qt.Vertical
@@ -215,7 +215,7 @@ Item {
 
                 property alias viewer3D: c_viewer3D
 
-                SplitView {
+                MSplitView {
                     id: c_viewer3DSplitView
                     anchors.fill: parent
                     Viewer3D {

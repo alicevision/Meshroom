@@ -470,6 +470,33 @@ class Attribute(BaseObject):
         # Emit if the enable status has changed
         self.setEnabled(self.getEnabled())
 
+    def getFlattenedChildren(self):
+        """ Return a list of all the attributes that refer to this instance as their parent through
+        the 'root' property. If no such attribute exist, return an empty list. The depth difference is not
+        taken into account in the list, which is thus always flat. """
+        attributes = ListModel(parent=self)
+        if isinstance(self._value, str):
+            # String/File attributes are iterable but cannot have children: immediately rule that case out
+            return attributes
+
+        try:
+            # If self._value is not iterable, then it is not an attribute that can have children
+            iter(self._value)
+        except TypeError:
+            return attributes
+
+        for attribute in self._value:
+            if not isinstance(attribute, Attribute):
+                # Handle ChoiceParam values, which contained in a list hence iterable, but are string
+                continue
+            attributes.add(attribute)
+            if isinstance(attribute, ListAttribute) or isinstance(attribute, GroupAttribute):
+                # Handle nested ListAttributes and GroupAttributes
+                flattened = attribute.getFlattenedChildren()
+                for i in flattened:
+                    attributes.add(i)
+        return attributes
+
     def _is3D(self) -> bool:
         """ Return True if the current attribute is considered as a 3d file """
 
@@ -542,6 +569,7 @@ class Attribute(BaseObject):
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
     root = Property(BaseObject, root.fget, constant=True)
     depth = Property(int, getDepth, constant=True)
+    flattenedChildren = Property(BaseObject, getFlattenedChildren, constant=True)
 
 
 def raiseIfLink(func):

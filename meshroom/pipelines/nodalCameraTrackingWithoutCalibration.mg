@@ -7,6 +7,7 @@
             "CameraInit": "11.0",
             "ConvertSfMFormat": "2.0",
             "ExportAnimatedCamera": "2.0",
+            "ExportDistortion": "1.0",
             "FeatureExtraction": "1.3",
             "FeatureMatching": "2.0",
             "ImageMatching": "2.0",
@@ -55,6 +56,19 @@
             "inputs": {
                 "input": "{NodalSfM_1.output}",
                 "exportUndistortedImages": true
+            },
+            "internalInputs": {
+                "color": "#80766f"
+            }
+        },
+        "ExportDistortion_1": {
+            "nodeType": "ExportDistortion",
+            "position": [
+                1600,
+                0
+            ],
+            "inputs": {
+                "input": "{ExportAnimatedCamera_1.input}"
             },
             "internalInputs": {
                 "color": "#80766f"
@@ -145,7 +159,8 @@
             "inputs": {
                 "inputFiles": [
                     "{ExportAnimatedCamera_1.output}",
-                    "{ScenePreview_1.output}"
+                    "{ScenePreview_1.output}",
+                    "{ExportDistortion_1.output}"
                 ]
             }
         },

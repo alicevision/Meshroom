@@ -17,271 +17,243 @@ Page {
 
     MSplitView {
         id: splitView
+        orientation: Qt.Horizontal
         anchors.fill: parent
 
-
-        ColumnLayout {
-            id: leftColumn
-            height: parent.height
-
-            SplitView.minimumWidth: 200
-            SplitView.maximumWidth: 300
-
-            AnimatedImage {
-                id: logo
-                property var ratio: sourceSize.width / sourceSize.height
-
-                Layout.fillWidth: true
-                fillMode: Image.PreserveAspectFit
-                // Enforce aspect ratio of the component, as the fillMode does not do the job
-                Layout.preferredHeight: width / ratio
-                smooth: true
-
-                source: "../img/meshroom-anim-once.gif"
-            }
+        Item {
+            
+            SplitView.minimumWidth: 100
+            SplitView.preferredWidth: 330
+            SplitView.maximumWidth: 500
 
             ColumnLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                property real buttonFontSize: 14
+                id: leftColumn
+                anchors.fill: parent
+                spacing: 20
 
-                MaterialToolLabelButton {
-                    id: manualButton
-                    Layout.topMargin: 20
-                    iconText: MaterialIcons.open_in_new
-                    label: "Manual"
-                    font.pointSize: parent.buttonFontSize
-                    flat: true
-                    leftPadding: 20
-                    rightPadding: {
-                        var padding = leftColumn.width - labelItem.width - iconItem.width - leftPadding
-                        if (padding > 0 && padding < leftColumn.Layout.maximumWidth)
-                            return padding
-                        return 0
-                    }
-
-                    onClicked: Qt.openUrlExternally("https://meshroom-manual.readthedocs.io/en/latest")
+                AnimatedImage {
+                    id: logo
+                    property var ratio: sourceSize.width / sourceSize.height
+                    Layout.fillWidth: true
+                    fillMode: Image.PreserveAspectFit
+                    // Enforce aspect ratio of the component, as the fillMode does not do the job
+                    Layout.preferredHeight: width / ratio
+                    smooth: true
+                    source: "../img/meshroom-anim-once.gif"
                 }
 
-                MaterialToolLabelButton {
-                    id: releaseNotesButton
-                    iconText: MaterialIcons.open_in_new
-                    label: "Release Notes"
-                    font.pointSize: parent.buttonFontSize
-                    flat: true
-                    leftPadding: 20
-                    rightPadding: {
-                        var padding = leftColumn.width - labelItem.width - iconItem.width - leftPadding
-                        if (padding > 0 && padding < leftColumn.Layout.maximumWidth)
-                            return padding
-                        return 0
-                    }
-
-                    onClicked: Qt.openUrlExternally("https://github.com/alicevision/Meshroom/blob/develop/CHANGES.md")
-                }
-
-                MaterialToolLabelButton {
-                    id: websiteButton
-                    iconText: MaterialIcons.open_in_new
-                    label: "Website"
-                    font.pointSize: parent.buttonFontSize
-                    flat: true
-                    leftPadding: 20
-                    rightPadding: {
-                        var padding = leftColumn.width - labelItem.width - iconItem.width - leftPadding
-                        if (padding > 0 && padding < leftColumn.Layout.maximumWidth)
-                            return padding
-                        return 0
-                    }
-
-                    onClicked: Qt.openUrlExternally("https://alicevision.org/")
-                }
-            }
-
-            ColumnLayout {
-                id: sponsors
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignHCenter
-
-                Item {
-                    // Empty area that expands
+                ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                }
+                    Layout.margins: 5
+                    Layout.leftMargin: 20
 
-                Label {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: "Sponsors"
-                }
+                    property real buttonFontSize: 14
 
-                Image {
-                    Layout.alignment: Qt.AlignHCenter
-                    source: "../img/technicolor-group_rgb_primary_col-rev.png"
+                    MaterialToolLabelButton {
+                        id: manualButton
+                        iconText: MaterialIcons.open_in_new
+                        label: "Manual"
+                        font.pointSize: parent.buttonFontSize
+                        Layout.fillWidth: true
+                        onClicked: Qt.openUrlExternally("https://meshroom-manual.readthedocs.io")
+                    }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Qt.openUrlExternally("https://www.technicolor.com/")
+                    MaterialToolLabelButton {
+                        id: releaseNotesButton
+                        iconText: MaterialIcons.open_in_new
+                        label: "Release Notes"
+                        font.pointSize: parent.buttonFontSize
+                        Layout.fillWidth: true
+                        onClicked: Qt.openUrlExternally("https://github.com/alicevision/Meshroom/blob/develop/CHANGES.md")
+                    }
 
-                        hoverEnabled: true
-                        ToolTip.visible: containsMouse
-                        ToolTip.text: "Technicolor Group"
+                    MaterialToolLabelButton {
+                        id: websiteButton
+                        iconText: MaterialIcons.open_in_new
+                        label: "Website"
+                        font.pointSize: parent.buttonFontSize
+                        Layout.fillWidth: true
+                        onClicked: Qt.openUrlExternally("https://alicevision.org")
                     }
                 }
 
-                RowLayout {
-                    id: brandsRow
-
+                ColumnLayout {
+                    id: sponsors
                     Layout.fillWidth: true
-                    Layout.leftMargin: leftColumn.width * 0.05
-                    Layout.rightMargin: leftColumn.width * 0.05
                     Layout.alignment: Qt.AlignHCenter
+                    spacing: 5
+
+                    Item {
+                        // Empty area that expands
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
+
+                    Label {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "Sponsors"
+                    }
 
                     Image {
-                        source: "../img/MPC_TG.png"
+                        Layout.alignment: Qt.AlignHCenter
+                        source: "../img/technicolor-group_rgb_primary_col-rev.png"
 
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: Qt.openUrlExternally("https://www.mpcvfx.com/")
+                            onClicked: Qt.openUrlExternally("https://www.technicolor.com/")
 
                             hoverEnabled: true
                             ToolTip.visible: containsMouse
-                            ToolTip.text: "MPC - Moving Picture Company"
+                            ToolTip.text: "Technicolor"
                         }
                     }
 
-                    Image {
-                        source: "../img/MILL_TG.png"
+                    RowLayout {
+                        id: brandsRow
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Qt.openUrlExternally("https://www.themill.com/")
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
+                        // spacing: 30
 
-                            hoverEnabled: true
-                            ToolTip.visible: containsMouse
-                            ToolTip.text: "The Mill"
+                        Image {
+                            source: "../img/MPC_TG.png"
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Qt.openUrlExternally("https://www.mpcvfx.com/")
+
+                                hoverEnabled: true
+                                ToolTip.visible: containsMouse
+                                ToolTip.text: "MPC - Moving Picture Company"
+                            }
+                        }
+
+                        Image {
+                            source: "../img/MILL_TG.png"
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Qt.openUrlExternally("https://www.themill.com/")
+
+                                hoverEnabled: true
+                                ToolTip.visible: containsMouse
+                                ToolTip.text: "The Mill"
+                            }
+                        }
+
+                        Image {
+                            source: "../img/MIKROS_TG.png"
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Qt.openUrlExternally("https://www.mikrosanimation.com/")
+
+                                hoverEnabled: true
+                                ToolTip.visible: containsMouse
+                                ToolTip.text: "Mikros Animation"
+                            }
+                        }
+
+                        Image {
+                            source: "../img/TechnicolorGames_TG.png"
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Qt.openUrlExternally("https://www.technicolorgames.com/")
+
+                                hoverEnabled: true
+                                ToolTip.visible: containsMouse
+                                ToolTip.text: "Technicolor Games"
+                            }
                         }
                     }
 
-                    Image {
-                        source: "../img/MIKROS_TG.png"
+                    RowLayout {
+                        id: academicRow
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Qt.openUrlExternally("https://www.mikrosanimation.com/")
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 30
 
-                            hoverEnabled: true
-                            ToolTip.visible: containsMouse
-                            ToolTip.text: "Mikros Animation"
+                        Image {
+                            source: "../img/logo_IRIT.png"
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Qt.openUrlExternally("https://www.irit.fr/en/departement/dep-hpc-simulation-optimization/reva-team")
+
+                                hoverEnabled: true
+                                ToolTip.visible: containsMouse
+                                ToolTip.text: "IRIT - Institut de Recherche en Informatique de Toulouse"
+                            }
+                        }
+
+                        Image {
+                            source: "../img/logo_CTU.png"
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Qt.openUrlExternally("http://aag.ciirc.cvut.cz")
+
+                                hoverEnabled: true
+                                ToolTip.visible: containsMouse
+                                ToolTip.text: "CTU - Czech Technical University in Prague"
+                            }
+                        }
+
+                        Image {
+                            source: "../img/logo_uio.png"
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Qt.openUrlExternally("https://www.mn.uio.no/ifi/english/about/organisation/dis")
+
+                                hoverEnabled: true
+                                ToolTip.visible: containsMouse
+                                ToolTip.text: "UiO - University of Oslo"
+                            }
+                        }
+
+                        Image {
+                            source: "../img/logo_enpc.png"
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Qt.openUrlExternally("https://imagine-lab.enpc.fr")
+
+                                hoverEnabled: true
+                                ToolTip.visible: containsMouse
+                                ToolTip.text: "ENPC - Ecole des Ponts ParisTech"
+                            }
                         }
                     }
 
-                    Image {
-                        source: "../img/TechnicolorGames_TG.png"
+                    MaterialToolLabelButton {
+                        Layout.bottomMargin: 10
+                        Layout.fillWidth: true
+                        labelItem.horizontalAlignment: Text.AlignHCenter
+                        label: MaterialIcons.favorite + " Support AliceVision"
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Qt.openUrlExternally("https://www.technicolorgames.com/")
-
-                            hoverEnabled: true
-                            ToolTip.visible: containsMouse
-                            ToolTip.text: "Technicolor Games"
-                        }
+                        onClicked: Qt.openUrlExternally("https://alicevision.org/association/#donate")
                     }
-                }
-
-                RowLayout {
-                    id: academicRow
-
-                    Layout.fillWidth: true
-                    Layout.leftMargin: leftColumn.width * 0.05
-                    Layout.rightMargin: leftColumn.width * 0.05
-                    Layout.alignment: Qt.AlignHCenter
-
-                    spacing: 30
-
-                    Image {
-                        source: "../img/logo_IRIT.png"
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Qt.openUrlExternally("https://www.irit.fr/en/departement/dep-hpc-simulation-optimization/reva-team")
-
-                            hoverEnabled: true
-                            ToolTip.visible: containsMouse
-                            ToolTip.text: "IRIT - Institut de Recherche en Informatique de Toulouse"
-                        }
-                    }
-
-                    Image {
-                        source: "../img/logo_CTU.png"
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Qt.openUrlExternally("http://aag.ciirc.cvut.cz")
-
-                            hoverEnabled: true
-                            ToolTip.visible: containsMouse
-                            ToolTip.text: "CTU - Czech Technical University in Prague"
-                        }
-                    }
-
-                    Image {
-                        source: "../img/logo_uio.png"
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Qt.openUrlExternally("https://www.mn.uio.no/ifi/english/about/organisation/dis")
-
-                            hoverEnabled: true
-                            ToolTip.visible: containsMouse
-                            ToolTip.text: "UiO - University of Oslo"
-                        }
-                    }
-
-                    Image {
-                        source: "../img/logo_enpc.png"
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Qt.openUrlExternally("https://imagine-lab.enpc.fr")
-
-                            hoverEnabled: true
-                            ToolTip.visible: containsMouse
-                            ToolTip.text: "ENPC - Ecole des Ponts ParisTech"
-                        }
-                    }
-                }
-
-                MaterialToolLabelButton {
-                    Layout.topMargin: 5
-                    Layout.bottomMargin: 10
-                    iconText: MaterialIcons.favorite
-                    label: "Support AliceVision"
-                    flat: true
-                    leftPadding: {
-                        var padding = (leftColumn.width - labelItem.width - iconItem.width - 5) / 2
-                        if (padding > 0 && padding < leftColumn.Layout.maximumWidth)
-                            return padding
-                        return 0
-                    }
-                    rightPadding: leftPadding
-
-                    onClicked: Qt.openUrlExternally("https://alicevision.org/association/#donate")
                 }
             }
         }
         
         ColumnLayout {
             id: rightColumn
+            SplitView.minimumWidth: 300
+            SplitView.fillWidth: true
 
             TabPanel {
                 id: tabPanel

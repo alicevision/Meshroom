@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.11
 import Qt.labs.platform 1.0 as Platform
 import ImageGallery 1.0
@@ -26,9 +25,8 @@ Item {
     readonly property Viewer2D viewer2D: viewer2D
     readonly property alias imageGallery: imageGallery
 
-    implicitWidth: 300
-    implicitHeight: 400
-
+    // Use settings instead of visible property as property changes are not propagated
+    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D || settingsUILayout.showLiveReconstruction
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
@@ -61,18 +59,22 @@ Item {
 
     SystemPalette { id: activePalette }
 
-    Controls1.SplitView {
+    MSplitView {
+        id: mainSplitView
         anchors.fill: parent
+        orientation: Qt.Horizontal
 
-        Controls1.SplitView {
+        MSplitView {
+            id: leftSplitView
+            visible: settingsUILayout.showImageGallery || settingsUILayout.showLiveReconstruction
             orientation: Qt.Vertical
-            Layout.fillHeight: true
-            implicitWidth: Math.round(parent.width * 0.2)
-            Layout.minimumWidth: imageGallery.defaultCellSize
+            SplitView.preferredWidth: imageGallery.defaultCellSize * 2 + 20
+            SplitView.minimumWidth: imageGallery.defaultCellSize
 
             ImageGallery {
                 id: imageGallery
-                Layout.fillHeight: true
+                visible: settingsUILayout.showImageGallery
+                SplitView.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
                 cameraInit: reconstruction ? reconstruction.cameraInit : null
@@ -93,20 +95,20 @@ Item {
                 }
             }
             LiveSfmView {
+                id: liveSfmView
                 visible: settingsUILayout.showLiveReconstruction
                 reconstruction: root.reconstruction
-                Layout.fillWidth: true
-                Layout.preferredHeight: childrenRect.height
+                SplitView.preferredHeight: childrenRect.height
             }
         }
 
         Panel {
+            id: imageViewer
             title: "Image Viewer"
             visible: settingsUILayout.showImageViewer
             implicitWidth: Math.round(parent.width * 0.35)
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-            Layout.minimumWidth: 50
+            SplitView.fillWidth: true
+            SplitView.minimumWidth: 50
             loading: viewer2D.loadingModules.length > 0
             loadingText: loading ? "Loading " + viewer2D.loadingModules : ""
 
@@ -187,6 +189,7 @@ Item {
         }
 
         Item {
+            id: viewer3DContainer
             visible: settingsUILayout.showViewer3D
             Layout.minimumWidth: 20
             Layout.minimumHeight: 80
@@ -210,15 +213,15 @@ Item {
 
                 property alias viewer3D: c_viewer3D
 
-                Controls1.SplitView {
+                MSplitView {
                     id: c_viewer3DSplitView
                     anchors.fill: parent
+                    orientation: Qt.Horizontal
                     Viewer3D {
                         id: c_viewer3D
 
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumWidth: 20
+                        SplitView.fillWidth: true
+                        SplitView.minimumWidth: 50
 
                         DropArea {
                             anchors.fill: parent
@@ -253,8 +256,8 @@ Item {
                     // Inspector Panel
                     Inspector3D {
                         id: inspector3d
-                        width: 200
-                        Layout.minimumWidth: 5
+                        SplitView.preferredWidth: 220
+                        SplitView.minimumWidth: 10
 
                         mediaLibrary: c_viewer3D.library
                         camera: c_viewer3D.mainCamera

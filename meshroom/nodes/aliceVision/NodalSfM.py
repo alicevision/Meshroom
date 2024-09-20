@@ -38,7 +38,6 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

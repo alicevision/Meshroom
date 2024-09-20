@@ -283,7 +283,6 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                         "For input videos, 'none' should not be used since the written keyframes are used to generate the output SfMData file.",
             value="none",
             values=["none", "exr", "jpg", "png"],
-            exclusive=True,
             validValue=lambda node: not (any(ext in input.value.lower() for ext in videoExts for input in node.inputPaths.value) and node.outputExtension.value == "none"),
             errorMessage="A video input has been provided. The output extension should be different from 'none'.",
         ),
@@ -297,7 +296,6 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                         " - auto: Use half float if all values can fit, else use full float.",
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            exclusive=True,
             enabled=lambda node: node.outputExtension.value == "exr",
             advanced=True,
         ),
@@ -384,7 +382,6 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

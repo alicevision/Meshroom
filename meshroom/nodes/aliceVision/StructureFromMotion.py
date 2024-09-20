@@ -112,7 +112,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Estimator type used to localize cameras (acransac, ransac, lsmeds, loransac, maxconsensus).",
             value="acransac",
             values=["acransac", "ransac", "lsmeds", "loransac", "maxconsensus"],
-            exclusive=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -123,7 +122,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         " - Scale: Use reprojection error in pixel coordinates but relative to the feature scale.",
             value="Scale",
             values=["Basic", "Scale"],
-            exclusive=True,
             advanced=True,
         ),
         desc.IntParam(
@@ -353,7 +351,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Extension of the intermediate file export.",
             value=".abc",
             values=[".abc", ".ply"],
-            exclusive=True,
             invalidate=False,
             advanced=True,
         ),
@@ -371,7 +368,6 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

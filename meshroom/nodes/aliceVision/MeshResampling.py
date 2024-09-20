@@ -69,7 +69,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

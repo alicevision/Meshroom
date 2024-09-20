@@ -27,7 +27,6 @@ Assumes the input SfMData describes a set of cameras capturing a scene at a comm
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

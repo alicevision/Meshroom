@@ -38,7 +38,6 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
                 " - from_intrinsicid: Copy intrinsics parameters.\n",
             value="from_viewid",
             values=["from_viewid", "from_filepath", "from_metadata", "from_intrinsicid"],
-            exclusive=True,
         ),
         desc.StringParam(
             name="fileMatchingPattern",
@@ -91,7 +90,6 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

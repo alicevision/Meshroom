@@ -26,7 +26,6 @@ class ImageMasking(desc.AVCommandLineNode):
             description="",
             value="HSV",
             values=["HSV", "AutoGrayscaleThreshold"],
-            exclusive=True,
         ),
         desc.GroupAttribute(
             name="hsv",
@@ -124,7 +123,6 @@ class ImageMasking(desc.AVCommandLineNode):
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

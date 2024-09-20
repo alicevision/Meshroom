@@ -53,7 +53,6 @@ The detection method also supports nested calibration grids.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

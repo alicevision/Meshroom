@@ -30,7 +30,6 @@ Decimate triangles based on image masks.
             description="File type of the output mesh.",
             value="obj",
             values=["obj", "gltf", "fbx", "stl"],
-            exclusive=True,
             group="",
         ),
         desc.ListAttribute(
@@ -50,7 +49,6 @@ Decimate triangles based on image masks.
             description="File extension for the masks to use.",
             value="png",
             values=["exr", "jpg", "png"],
-            exclusive=True,
         ),
         desc.IntParam(
             name="threshold",
@@ -92,7 +90,6 @@ Decimate triangles based on image masks.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

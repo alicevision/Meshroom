@@ -43,7 +43,6 @@ If multiple color charts are submitted, only the first one will be taken in acco
             description="Output image file extension.",
             value="exr",
             values=["exr", ""],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="storageDataType",
@@ -55,7 +54,6 @@ If multiple color charts are submitted, only the first one will be taken in acco
                         " - auto: Use half float if all values can fit, else use full float.",
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -63,7 +61,6 @@ If multiple color charts are submitted, only the first one will be taken in acco
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

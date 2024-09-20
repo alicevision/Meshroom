@@ -37,7 +37,6 @@ Operation types used to merge two meshes:
             description="Operation types used to merge two meshes.",
             value="boolean_union",
             values=["boolean_union", "boolean_intersection", "boolean_difference"],
-            exclusive=True,
         ),
         desc.BoolParam(
             name="preProcess",
@@ -57,7 +56,6 @@ Operation types used to merge two meshes:
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

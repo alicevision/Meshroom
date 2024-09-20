@@ -83,7 +83,6 @@ Convert or apply filtering to the input images.
                         "If unset, the output file extension will match the input's if possible.",
             value="",
             values=["", "exr", "jpg", "tiff", "png"],
-            exclusive=True,
         ),
         desc.BoolParam(
             name="reconstructedViewsOnly",
@@ -334,7 +333,6 @@ Convert or apply filtering to the input images.
                                 " - salt: changes to value A a portion of pixels given by B.\n",
                     value="uniform",
                     values=["uniform", "gaussian", "salt"],
-                    exclusive=True,
                     enabled=lambda node: node.noiseFilter.noiseEnabled.value,
                 ),
                 desc.FloatParam(
@@ -449,7 +447,6 @@ Convert or apply filtering to the input images.
             description="Allows you to choose the format of the output image.",
             value="rgba",
             values=["rgba", "rgb", "grayscale"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="inputColorSpace",
@@ -457,7 +454,6 @@ Convert or apply filtering to the input images.
             description="Allows you to force the color space of the input image.",
             values=COLORSPACES,
             value="AUTO",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="outputColorSpace",
@@ -465,7 +461,6 @@ Convert or apply filtering to the input images.
             description="Allows you to choose the color space of the output image.",
             values=COLORSPACES,
             value="AUTO",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="workingColorSpace",
@@ -473,7 +468,6 @@ Convert or apply filtering to the input images.
             description="Allows you to choose the color space in which the data are processed.",
             values=COLORSPACES,
             value="Linear",
-            exclusive=True,
             enabled=lambda node: not node.applyDcpMetadata.value,
         ),
         desc.ChoiceParam(
@@ -482,7 +476,6 @@ Convert or apply filtering to the input images.
             description="Allows you to choose how RAW data are color processed.",
             values=RAW_COLOR_INTERPRETATION,
             value="DCPLinearProcessing" if os.environ.get("ALICEVISION_COLOR_PROFILE_DB", "") else "LibRawWhiteBalancing",
-            exclusive=True,
         ),
         desc.BoolParam(
             name="applyDcpMetadata",
@@ -525,7 +518,6 @@ Convert or apply filtering to the input images.
             description="LibRaw demosaicing algorithm to use.",
             value="AHD",
             values=["linear", "VNG", "PPG", "AHD", "DCB", "AHD-Mod", "AFD", "VCD", "Mixed", "LMMSE", "AMaZE", "DHT", "AAHD", "none"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="highlightMode",
@@ -537,7 +529,6 @@ Convert or apply filtering to the input images.
                         " - 3-9: Rebuild",
             value=0,
             values=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            exclusive=True,
         ),
         desc.FloatParam(
             name="correlatedColorTemperature",
@@ -571,7 +562,6 @@ Convert or apply filtering to the input images.
                         " - auto: Use half float if all values can fit, else use full float.",
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="exrCompressionMethod",
@@ -579,7 +569,6 @@ Convert or apply filtering to the input images.
             description="Compression method for EXR output images.",
             value="auto",
             values=["none", "auto", "rle", "zip", "zips", "piz", "pxr24", "b44", "b44a", "dwaa", "dwab"],
-            exclusive=True,
         ),
         desc.IntParam(
             name="exrCompressionLevel",
@@ -611,7 +600,6 @@ Convert or apply filtering to the input images.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

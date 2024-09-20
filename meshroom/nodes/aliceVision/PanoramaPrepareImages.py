@@ -28,7 +28,6 @@ Prepare images for Panorama pipeline: ensures that images orientations are coher
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

@@ -40,7 +40,6 @@ class Split360Images(desc.AVCommandLineNode):
             description="Split mode (equirectangular, dualfisheye).",
             value="equirectangular",
             values=["equirectangular", "dualfisheye"],
-            exclusive=True,
         ),
         desc.GroupAttribute(
             name="dualFisheyeGroup",
@@ -55,7 +54,6 @@ class Split360Images(desc.AVCommandLineNode):
                     description="Dual-Fisheye X offset preset.",
                     value="center",
                     values=["center", "left", "right"],
-                    exclusive=True,
                 ),
                 desc.ChoiceParam(
                     name="dualFisheyeOffsetPresetY",
@@ -63,7 +61,6 @@ class Split360Images(desc.AVCommandLineNode):
                     description="Dual-Fisheye Y offset preset.",
                     value="center",
                     values=["center", "top", "bottom"],
-                    exclusive=True,
                 ),
                 desc.ChoiceParam(
                     name="dualFisheyeCameraModel",
@@ -71,7 +68,6 @@ class Split360Images(desc.AVCommandLineNode):
                     description="Dual-Fisheye camera model.",
                     value="fisheye4",
                     values=["fisheye4", "equidistant_r3"],
-                    exclusive=True,
                 ),
             ],
         ),
@@ -117,7 +113,6 @@ class Split360Images(desc.AVCommandLineNode):
             description="Output image file extension.",
             value="",
             values=["", "exr", "jpg", "tiff", "png"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -125,7 +120,6 @@ class Split360Images(desc.AVCommandLineNode):
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

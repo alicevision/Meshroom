@@ -40,7 +40,6 @@ The lighting conditions are assumed to be known.
                         " - 2: second order spherical harmonics.",
             values=["0", "1", "2"],
             value="0",
-            exclusive=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -71,7 +70,6 @@ The lighting conditions are assumed to be known.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

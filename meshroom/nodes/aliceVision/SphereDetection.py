@@ -76,7 +76,6 @@ Spheres can be automatically detected or manually defined in the interface.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

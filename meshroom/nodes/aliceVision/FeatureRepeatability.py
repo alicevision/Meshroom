@@ -38,7 +38,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
                         "Warning: Use ULTRA only on small datasets.",
             value="normal",
             values=["low", "medium", "normal", "high", "ultra"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="describerQuality",
@@ -46,7 +45,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             description="Control the ImageDescriber quality (low, medium, normal, high, ultra).",
             value="normal",
             values=["low", "medium", "normal", "high", "ultra"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="contrastFiltering",
@@ -61,7 +59,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
                         " - NonExtremaFiltering: Filter non-extrema peakValues.",
             value="Static",
             values=["Static", "AdaptiveToMedianVariance", "NoFiltering", "GridSortOctaves", "GridSort", "GridSortScaleSteps", "GridSortOctaveSteps", "NonExtremaFiltering"],
-            exclusive=True,
             advanced=True,
         ),
         desc.FloatParam(
@@ -110,7 +107,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

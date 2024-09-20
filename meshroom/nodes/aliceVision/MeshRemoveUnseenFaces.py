@@ -34,7 +34,6 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             description="File type for the output mesh.",
             value="obj",
             values=["gltf", "obj", "fbx", "stl"],
-            exclusive=True,
             group="",
         ),
         desc.IntParam(
@@ -57,7 +56,6 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

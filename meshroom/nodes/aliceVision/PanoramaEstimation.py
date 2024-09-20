@@ -78,7 +78,6 @@ Estimate relative camera rotations between input images.
                         " - L2 minimization",
             values=["L1_minimization", "L2_minimization"],
             value="L2_minimization",
-            exclusive=True,
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -90,7 +89,6 @@ Estimate relative camera rotations between input images.
                         " - from rotation matrix",
             values=["essential_matrix", "homography_matrix", "rotation_matrix"],
             value="rotation_matrix",
-            exclusive=True,
             advanced=True,
         ),
         desc.BoolParam(
@@ -164,7 +162,6 @@ Estimate relative camera rotations between input images.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

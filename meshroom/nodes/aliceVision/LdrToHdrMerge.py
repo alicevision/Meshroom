@@ -142,7 +142,6 @@ Merge LDR images into HDR images.
                         " - plateau",
             value="gaussian",
             values=["gaussian", "triangle", "plateau"],
-            exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
@@ -162,7 +161,6 @@ Merge LDR images into HDR images.
                         "If 'auto' is selected, the working color space will be 'Linear' if RAW images are detected; otherwise, it will be set to 'sRGB'.",
             values=COLORSPACES,
             value="AUTO",
-            exclusive=True,
             enabled=lambda node: node.byPass.enabled and not node.byPass.value,
             exposed=True,
         ),
@@ -218,7 +216,6 @@ Merge LDR images into HDR images.
                         " - auto: Use half float if all values can fit, else use full float.",
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -226,7 +223,6 @@ Merge LDR images into HDR images.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

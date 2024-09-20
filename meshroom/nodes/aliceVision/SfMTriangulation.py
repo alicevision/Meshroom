@@ -126,7 +126,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             description="Extension of the intermediate file export.",
             value=".abc",
             values=[".abc", ".ply"],
-            exclusive=True,
             invalidate=False,
             advanced=True,
         ),
@@ -136,7 +135,6 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

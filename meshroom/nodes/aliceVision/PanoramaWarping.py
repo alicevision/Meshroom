@@ -67,7 +67,6 @@ Compute the image warping for each input image in the panorama coordinate system
             description="Colorspace in which the panorama warping will be performed.",
             values=COLORSPACES,
             value="Linear",
-            exclusive=True,
         ),
        desc.ChoiceParam(
             name="storageDataType",
@@ -79,7 +78,6 @@ Compute the image warping for each input image in the panorama coordinate system
                         " - auto: Use half float if all values can fit, else use full float.",
             values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -87,7 +85,6 @@ Compute the image warping for each input image in the panorama coordinate system
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

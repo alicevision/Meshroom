@@ -54,7 +54,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             description="Image file format to use for undistorted images ('jpg', 'png', 'tif', 'exr (half)').",
             value="exr",
             values=["jpg", "png", "tif", "exr"],
-            exclusive=True,
             enabled=lambda node: node.exportUndistortedImages.value,
         ),
         desc.BoolParam(
@@ -76,7 +75,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

@@ -32,7 +32,6 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             description="model used to estimate undistortion.",
             value="3deanamorphic4",
             values=["3deanamorphic4", "3declassicld", "3deradial4"],
-            exclusive=True,
         ),
         desc.BoolParam(
             name="handleSqueeze",
@@ -52,7 +51,6 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

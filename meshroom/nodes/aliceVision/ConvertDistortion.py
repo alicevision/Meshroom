@@ -26,7 +26,6 @@ class ConvertDistortion(desc.AVCommandLineNode):
             description="Distortion model to convert from.",
             value="distortion",
             values=["distortion", "undistortion"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="to",
@@ -34,7 +33,6 @@ class ConvertDistortion(desc.AVCommandLineNode):
             description="Distortion model to convert to.",
             value="undistortion",
             values=["distortion", "undistortion"],
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -42,7 +40,6 @@ class ConvertDistortion(desc.AVCommandLineNode):
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

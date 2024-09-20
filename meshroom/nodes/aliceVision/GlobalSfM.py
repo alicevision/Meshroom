@@ -61,7 +61,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
                         " - L2 minimization",
             values=["L1_minimization", "L2_minimization"],
             value="L2_minimization",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="translationAveraging",
@@ -72,7 +71,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
                         " - L1 soft minimization",
             values=["L1_minimization", "L2_minimization", "L1_soft_minimization"],
             value="L1_soft_minimization",
-            exclusive=True,
         ),
         desc.BoolParam(
             name="lockAllIntrinsics",
@@ -88,7 +86,6 @@ It is known to be faster but less robust to challenging datasets than the Increm
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

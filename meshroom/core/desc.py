@@ -336,7 +336,7 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, group="allParams", advanced=False, enabled=True,
+    def __init__(self, name, label, description, value, range=None, group="allParams", advanced=False, enabled=True,
                  invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
         super(IntParam, self).__init__(name=name, label=label, description=description, value=value,
@@ -366,7 +366,7 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, group="allParams", advanced=False, enabled=True,
+    def __init__(self, name, label, description, value, range=None, group="allParams", advanced=False, enabled=True,
                  invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value,
@@ -417,7 +417,7 @@ class PushButtonParam(Param):
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, values, exclusive, group="allParams", joinChar=" ",
+    def __init__(self, name, label, description, value, values, exclusive=True, group="allParams", joinChar=" ",
                  advanced=False, enabled=True, invalidate=True, semantic="", validValue=True, errorMessage="",
                  visible=True, exposed=False):
         assert values

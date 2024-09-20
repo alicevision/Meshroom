@@ -39,7 +39,6 @@ Estimate the camera intrinsics and extrinsincs on a set of checkerboard images.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

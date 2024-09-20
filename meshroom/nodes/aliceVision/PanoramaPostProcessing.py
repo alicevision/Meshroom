@@ -56,7 +56,6 @@ Post process the panorama.
             description="The color space of the output image.",
             values=COLORSPACES,
             value="Linear",
-            exclusive=True,
         ),
         desc.ChoiceParam(
             name="compressionMethod",
@@ -64,7 +63,6 @@ Post process the panorama.
             description="Compression method for output EXR image.",
             value="auto",
             values=["none", "auto", "rle", "zip", "zips", "piz", "pxr24", "b44", "b44a", "dwaa", "dwab"],
-            exclusive=True,
         ),
         desc.IntParam(
             name="compressionLevel",
@@ -100,7 +98,6 @@ Post process the panorama.
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

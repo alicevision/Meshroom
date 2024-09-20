@@ -48,7 +48,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                         "specularities), a larger downscale may improve.",
             value=2,
             values=[1, 2, 4, 8, 16],
-            exclusive=True,
         ),
         desc.FloatParam(
             name="minViewAngle",
@@ -440,7 +439,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                                 description="Patch pattern subpart type.",
                                 value="full",
                                 values=["full", "circle"],
-                                exclusive=True,
                             ),
                             desc.FloatParam(
                                 name="customPatchPatternSubpartRadius",
@@ -559,7 +557,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-            exclusive=True,
         ),
     ]
 

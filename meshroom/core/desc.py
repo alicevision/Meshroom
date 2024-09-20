@@ -746,6 +746,22 @@ class Node(object):
         """
         pass
 
+    def preprocess(self, node):
+        """ Gets invoked just before the processChunk method for the node.
+
+        Args:
+            node: The BaseNode instance about to be processed.
+        """
+        pass
+
+    def postprocess(self, node):
+        """ Gets invoked after the processChunk method for the node.
+
+        Args:
+            node: The BaseNode instance which is processed.
+        """
+        pass
+
     def stopProcess(self, chunk):
         raise NotImplementedError('No stopProcess implementation on node: {}'.format(chunk.node.name))
 

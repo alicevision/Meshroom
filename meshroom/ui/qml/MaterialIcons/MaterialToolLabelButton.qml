@@ -36,6 +36,7 @@ ToolButton {
             text: ""
             padding: 0
             color: (checked ? palette.highlight : palette.text)
+            Layout.fillWidth: true
         }
     }
     background: Rectangle {

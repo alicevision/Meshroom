@@ -4,10 +4,11 @@ import QtQuick.Controls 2.15
 SplitView {
     id: splitView
 
-    handle: Item {
+    handle: Rectangle {
         id: handleDelegate
         implicitWidth: 5
         implicitHeight: 5
+        color: palette.window
         property bool hovered: SplitHandle.hovered
         property bool pressed: SplitHandle.pressed
         Rectangle {

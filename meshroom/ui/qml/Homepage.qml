@@ -115,7 +115,7 @@ Page {
 
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignHCenter
-                        // spacing: 30
+                        spacing: 20
 
                         Image {
                             source: "../img/MPC_TG.png"
@@ -179,7 +179,7 @@ Page {
 
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignHCenter
-                        spacing: 30
+                        spacing: 28
 
                         Image {
                             source: "../img/logo_IRIT.png"

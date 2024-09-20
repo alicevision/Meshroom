@@ -62,19 +62,19 @@ Item {
     MSplitView {
         id: mainSplitView
         anchors.fill: parent
+        orientation: Qt.Horizontal
 
         MSplitView {
             id: leftSplitView
             visible: settingsUILayout.showImageGallery || settingsUILayout.showLiveReconstruction
             orientation: Qt.Vertical
-            Layout.fillHeight: true
-            implicitWidth: Math.round(parent.width * 0.2)
-            Layout.minimumWidth: imageGallery.defaultCellSize
+            SplitView.preferredWidth: imageGallery.defaultCellSize * 2 + 20
+            SplitView.minimumWidth: imageGallery.defaultCellSize
 
             ImageGallery {
                 id: imageGallery
                 visible: settingsUILayout.showImageGallery
-                Layout.fillHeight: true
+                SplitView.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
                 cameraInit: reconstruction ? reconstruction.cameraInit : null
@@ -98,8 +98,7 @@ Item {
                 id: liveSfmView
                 visible: settingsUILayout.showLiveReconstruction
                 reconstruction: root.reconstruction
-                Layout.fillWidth: true
-                Layout.preferredHeight: childrenRect.height
+                SplitView.preferredHeight: childrenRect.height
             }
         }
 
@@ -108,9 +107,8 @@ Item {
             title: "Image Viewer"
             visible: settingsUILayout.showImageViewer
             implicitWidth: Math.round(parent.width * 0.35)
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-            Layout.minimumWidth: 50
+            SplitView.fillWidth: true
+            SplitView.minimumWidth: 50
             loading: viewer2D.loadingModules.length > 0
             loadingText: loading ? "Loading " + viewer2D.loadingModules : ""
 
@@ -218,12 +216,12 @@ Item {
                 MSplitView {
                     id: c_viewer3DSplitView
                     anchors.fill: parent
+                    orientation: Qt.Horizontal
                     Viewer3D {
                         id: c_viewer3D
 
                         SplitView.fillWidth: true
-                        SplitView.fillHeight: true
-                        SplitView.minimumWidth: 20
+                        SplitView.minimumWidth: 50
 
                         DropArea {
                             anchors.fill: parent
@@ -258,8 +256,8 @@ Item {
                     // Inspector Panel
                     Inspector3D {
                         id: inspector3d
-                        width: 200
-                        Layout.minimumWidth: 5
+                        SplitView.preferredWidth: 220
+                        SplitView.minimumWidth: 10
 
                         mediaLibrary: c_viewer3D.library
                         camera: c_viewer3D.mainCamera

@@ -1000,8 +1000,9 @@ Page {
 
             WorkspaceView {
                 id: workspaceView
-                Layout.fillHeight: true
-                SplitView.preferredHeight: 0.7 * parent.height
+                SplitView.fillHeight: true
+                SplitView.preferredHeight: 300
+                SplitView.minimumHeight: 80
                 reconstruction: _reconstruction
                 readOnly: _reconstruction ? _reconstruction.computing : false
 
@@ -1037,12 +1038,13 @@ Page {
                 id: bottomContainer
                 orientation: Qt.Horizontal
                 visible: settingsUILayout.showGraphEditor
-                SplitView.preferredHeight: 0.3 * parent.height
+                SplitView.preferredHeight: 300
+                SplitView.minimumHeight: 80
 
                 TabPanel {
                     id: graphEditorPanel
-                    Layout.fillWidth: true
-                    SplitView.preferredWidth: 0.7 * parent.width
+                    SplitView.fillWidth: true
+                    SplitView.minimumWidth: 80
 
                     padding: 4
                     tabs: ["Graph Editor", "Task Manager", "Script Editor"]
@@ -1200,6 +1202,9 @@ Page {
 
                 NodeEditor {
                     id: nodeEditor
+                    SplitView.preferredWidth: 500
+                    SplitView.minimumWidth: 80
+
                     node: _reconstruction ? _reconstruction.selectedNode : null
                     property bool computing: _reconstruction ? _reconstruction.computing : false
                     // Make NodeEditor readOnly when computing

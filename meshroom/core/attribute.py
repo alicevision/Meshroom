@@ -61,11 +61,14 @@ class Attribute(BaseObject):
         self._description = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
+        self._exposed = attributeDesc.exposed
         self._depth = 0
         if root is not None:
             current = self
             while current.root is not None:
                 self._depth += 1
+                if current.root.exposed != self._exposed:
+                    self._exposed = current.root.exposed
                 current = current.root
 
         # invalidation value for output attributes
@@ -86,6 +89,9 @@ class Attribute(BaseObject):
 
     def getDepth(self):
         return self._depth
+
+    def getExposed(self):
+        return self._exposed
 
     def getName(self):
         """ Attribute name """
@@ -462,6 +468,7 @@ class Attribute(BaseObject):
     type = Property(str, getType, constant=True)
     baseType = Property(str, getType, constant=True)
     isReadOnly = Property(bool, _isReadOnly, constant=True)
+    exposed = Property(bool, getExposed, constant=True)
 
     # Description of the attribute
     descriptionChanged = Signal()

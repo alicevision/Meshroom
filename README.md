@@ -32,23 +32,27 @@ https://meshroom-manual.readthedocs.io
 
 * [Meshroom: Open Source 3D Reconstruction Software](https://www.youtube.com/watch?v=v_O6tYKQEBA) by [Mikros Image](http://www.mikrosimage.com)
 
-Overall presentation of the Meshroom software.
+  Overall presentation of the Meshroom software.
+
+* [Meshroom: Initial Pipeline, CCTags, using a Turntable and Known Camera Positions](https://www.youtube.com/watch?v=XUKu1apUuVE) by [mpr-projects](https://github.com/mpr-projects)
+
+  Overview of the default Meshroom 2023.3 pipeline, including masking, cctags and known camera positions.
 
 * [Meshroom Tutorial on Sketchfab](https://sketchfab.com/blogs/community/tutorial-meshroom-for-beginners) by [Mikros Image](http://www.mikrosimage.com)
 
-Detailed tutorial with a focus on the features of the 2019.1 release.
+  Detailed tutorial with a focus on the features of the 2019.1 release.
 
 * [Photogrammetry 2 – 3D scanning with just PHONE/CAMERA simpler, better than ever!](https://www.youtube.com/watch?v=1D0EhSi-vvc) by [Prusa 3D Printer](https://blog.prusaprinters.org)
 
-Overall presentation of the photogrammetry practice with Meshroom.
+  Overall presentation of the photogrammetry practice with Meshroom.
 
 * [How to 3D Photoscan Easy and Free! by ](https://www.youtube.com/watch?v=k4NTf0hMjtY) by [CG Geek](https://www.youtube.com/channel/UCG8AxMVa6eutIGxrdnDxWpQ)
 
-Overall presentation of the protogrammetry practice with Meshroom and detailed presentation how to do the retolopogy in Blender.
+  Overall presentation of the protogrammetry practice with Meshroom and detailed presentation how to do the retolopogy in Blender.
 
 * [Meshroom Survival Guide](https://www.youtube.com/watch?v=eiEaHLNJJ94) by [Moviola](https://moviola.com)
 
-Presentation of the Meshroom software with a focus on using it for Match Moving.
+  Presentation of the Meshroom software with a focus on using it for Match Moving.
 
 
 ## Customization

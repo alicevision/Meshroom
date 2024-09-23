@@ -12,6 +12,7 @@ RowLayout {
 
     property var nodeItem
     property var attribute
+    property bool expanded: false
     property bool readOnly: false
     /// Whether to display an output pin for input attribute
     property bool displayOutputPinForInput: true
@@ -24,12 +25,16 @@ RowLayout {
                                                       outputAnchor.y + outputAnchor.height / 2)
 
     readonly property bool isList: attribute && attribute.type === "ListAttribute"
+    readonly property bool isGroup: attribute && attribute.type === "GroupAttribute"
+    readonly property bool isChild: attribute && attribute.root
 
     signal childPinCreated(var childAttribute, var pin)
     signal childPinDeleted(var childAttribute, var pin)
 
     signal pressed(var mouse)
     signal edgeAboutToBeRemoved(var input)
+
+    signal clicked()
 
     objectName: attribute ? attribute.name + "." : ""
     layoutDirection: Qt.LeftToRight
@@ -43,14 +48,30 @@ RowLayout {
         x: nameLabel.x
     }
 
-    function updatePin(isSrc, isVisible)
-    {
+    function updatePin(isSrc, isVisible) {
         if (isSrc) {
             innerOutputAnchor.linkEnabled = isVisible
         } else {
             innerInputAnchor.linkEnabled = isVisible
         }
+    }
 
+    function updateLabel() {
+        var label = ""
+        var expandedGroup = expanded ? "-" : "+"
+        if (attribute && attribute.label !== undefined) {
+            label = attribute.label
+            if (isGroup && attribute.isOutput) {
+                label = label + " " + expandedGroup
+            } else if (isGroup && !attribute.isOutput) {
+                label = expandedGroup + " " + label
+            }
+        }
+        return label
+    }
+
+    onExpandedChanged: {
+        nameLabel.text = updateLabel()
     }
 
     // Instantiate empty Items for each child attribute
@@ -160,17 +181,16 @@ RowLayout {
             drag.smoothed: false
             enabled: !root.readOnly
             anchors.fill: parent
-            // use the same negative margins as DropArea to ease pin selection
+            // Use the same negative margins as DropArea to ease pin selection
             anchors.margins: inputDropArea.anchors.margins
             anchors.leftMargin: inputDropArea.anchors.leftMargin
             anchors.rightMargin: inputDropArea.anchors.rightMargin
-            onPressed: {
-                root.pressed(mouse)
-            }
-            onReleased: {
-                inputDragTarget.Drag.drop()
-            }
-            hoverEnabled: true
+
+            onPressed: root.pressed(mouse)
+            onReleased: inputDragTarget.Drag.drop()
+            onClicked: root.clicked()
+
+            hoverEnabled: root.visible
         }
 
         Edge {
@@ -186,7 +206,6 @@ RowLayout {
     }
 
 
-
     // Attribute name
     Item {
         id: nameContainer
@@ -199,17 +218,22 @@ RowLayout {
             id: nameLabel
 
             enabled: !root.readOnly
+            visible: true
             property bool hovered: (inputConnectMA.containsMouse || inputConnectMA.drag.active || inputDropArea.containsDrag || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag)
-            text: (attribute && attribute.label) !== undefined ? attribute.label : ""
+            text: root.updateLabel()
             elide: hovered ? Text.ElideNone : Text.ElideMiddle
             width: hovered ? contentWidth : parent.width
             font.pointSize: 7
+            font.italic: isChild ? true : false
             horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
             anchors.right: attribute && attribute.isOutput ? parent.right : undefined
             rightPadding: 0
             color: {
-                if ((object.hasOutputConnections || object.isLink) && !object.enabled) return Colors.lightgrey
-                return hovered ? palette.highlight : palette.text
+                if ((object.hasOutputConnections || object.isLink) && !object.enabled)
+                    return Colors.lightgrey
+                else if (hovered)
+                    return palette.highlight
+                return palette.text
             }
         }
     }
@@ -236,8 +260,8 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: 2
             color: {
-                if (object.enabled && (outputConnectMA.containsMouse || outputConnectMA.drag.active ||
-                                       (outputDropArea.containsDrag && outputDropArea.acceptableDrop)))
+                if (modelData.enabled && (outputConnectMA.containsMouse || outputConnectMA.drag.active ||
+                                          (outputDropArea.containsDrag && outputDropArea.acceptableDrop)))
                     return Colors.sysPalette.highlight
                 return Colors.sysPalette.text
             }
@@ -309,15 +333,16 @@ RowLayout {
             // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
             drag.smoothed: false
             anchors.fill: parent
-            // use the same negative margins as DropArea to ease pin selection
+            // Use the same negative margins as DropArea to ease pin selection
             anchors.margins: outputDropArea.anchors.margins
             anchors.leftMargin: outputDropArea.anchors.leftMargin
             anchors.rightMargin: outputDropArea.anchors.rightMargin
 
             onPressed: root.pressed(mouse)
             onReleased: outputDragTarget.Drag.drop()
+            onClicked: root.clicked()
 
-            hoverEnabled: true
+            hoverEnabled: root.visible
         }
 
         Edge {

@@ -42,7 +42,7 @@ RowLayout {
     spacing: 3
 
     ToolTip {
-        text: attribute.name + ": " + attribute.type
+        text: attribute.fullName + ": " + attribute.type
         visible: nameLabel.hovered
 
         y: nameLabel.y + nameLabel.height

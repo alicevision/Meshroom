@@ -780,7 +780,8 @@ class UIGraph(QObject):
     def canExpandForLoop(self, currentEdge):
         """ Check if the list attribute can be expanded by looking at all the edges connected to it. """
         listAttribute = currentEdge.src.root
-        if not listAttribute:
+        # Check that the parent is indeed a ListAttribute (it could be a GroupAttribute, for instance)
+        if not listAttribute or not isinstance(listAttribute, ListAttribute):
             return False
         srcIndex = listAttribute.index(currentEdge.src)
         allSrc = [e.src for e in self._graph.edges.values()]

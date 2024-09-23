@@ -356,7 +356,7 @@ class Attribute(BaseObject):
         elif self.isInput and Attribute.isLinkExpression(v):
             # value is a link to another attribute
             link = v[1:-1]
-            linkNode, linkAttr = link.split('.')
+            linkNode, linkAttr = link.split('.', 1)
             try:
                 g.addEdge(g.node(linkNode).attribute(linkAttr), self)
             except KeyError as err:

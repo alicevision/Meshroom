@@ -233,6 +233,54 @@ Item {
         return str
     }
 
+    function updateChildPin(attribute, parentPins, pin) {
+        /*
+         * Update the pin of a child attribute: if the attribute is enabled and its parent is a GroupAttribute,
+         * the visibility is determined based on the parent pin's "expanded" state, using the "parentPins" map to
+         * access the status.
+         * If the current pin is also a GroupAttribute and is expanded while its newly "visible" state is false,
+         * it is reset.
+         */
+        if (Boolean(attribute.enabled)) {
+            // If the parent's a GroupAttribute, use status of the parent's pin to determine visibility
+            if (attribute.root && attribute.root.type === "GroupAttribute") {
+                var visible = Boolean(parentPins.get(attribute.root.name))
+                if (!visible && parentPins.has(attribute.name) && parentPins.get(attribute.name) === true) {
+                    parentPins.set(attribute.name, false)
+                    pin.expanded = false
+                }
+                return visible
+            }
+            return true
+        }
+        return false
+    }
+
+    function generateAttributesModel(isOutput, parentPins) {
+        if (!node)
+            return undefined
+
+        const attributes = []
+        for (let i = 0; i < node.attributes.count; ++i) {
+            let attr = node.attributes.at(i)
+            if (attr.isOutput == isOutput) {
+                attributes.push(attr)
+                if (attr.type === "GroupAttribute") {
+                    parentPins.set(attr.name, false)
+                }
+
+                for (let j = 0; j < attr.flattenedChildren.count; ++j) {
+                    attributes.push(attr.flattenedChildren.at(j))
+                    if (attr.flattenedChildren.at(j).type === "GroupAttribute") {
+                        parentPins.set(attr.flattenedChildren.at(j).name, false)
+                    }
+                }
+            }
+        }
+
+        return attributes
+    }
+
     // Main Layout
     MouseArea {
         id: mouseArea
@@ -524,26 +572,53 @@ Item {
                             width: parent.width
                             spacing: 3
 
+                            property var parentPins: new Map()
+                            signal parentPinsUpdated()
+
                             Repeater {
-                                model: node ? node.attributes : undefined
+                                model: generateAttributesModel(true, outputs.parentPins)  // isOutput = true
 
                                 delegate: Loader {
                                     id: outputLoader
-                                    active: Boolean(object.isOutput && object.desc.visible)
-                                    visible: Boolean(object.enabled || object.hasOutputConnections)
+                                    active: Boolean(modelData.isOutput && modelData.desc.visible)
+
+                                    visible: {
+                                        if (Boolean(modelData.enabled || modelData.hasOutputConnections)) {
+                                            if (modelData.root && modelData.root.type === "GroupAttribute") {
+                                                return Boolean(outputs.parentPins.get(modelData.root.name))
+                                            }
+                                            return true
+                                        }
+                                        return false
+                                    }
                                     anchors.right: parent.right
                                     width: outputs.width
+
+                                    Connections {
+                                        target: outputs
+
+                                        function onParentPinsUpdated() {
+                                            visible = updateChildPin(modelData, outputs.parentPins, outputLoader.item)
+                                        }
+                                    }
 
                                     sourceComponent: AttributePin {
                                         id: outPin
                                         nodeItem: root
-                                        attribute: object
+                                        attribute: modelData
 
                                         property real globalX: root.x + nodeAttributes.x + outputs.x + outputLoader.x + outPin.x
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
 
                                         onPressed: function(mouse) { root.pressed(mouse) }
                                         onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
+                                        onClicked: {
+                                            expanded = !expanded
+                                            if (outputs.parentPins.has(modelData.name)) {
+                                                outputs.parentPins.set(modelData.name, expanded)
+                                                outputs.parentPinsUpdated()
+                                            }
+                                        }
 
                                         Component.onCompleted: attributePinCreated(attribute, outPin)
                                         onChildPinCreated: attributePinCreated(childAttribute, outPin)
@@ -559,19 +634,38 @@ Item {
                             width: parent.width
                             spacing: 3
 
+                            property var parentPins: new Map()
+                            signal parentPinsUpdated()
+
                             Repeater {
-                                model: node ? node.attributes : undefined
+                                model: generateAttributesModel(false, inputs.parentPins)  // isOutput = false
 
                                 delegate: Loader {
                                     id: inputLoader
-                                    active: !object.isOutput && object.exposed && object.desc.visible
-                                    visible: Boolean(object.enabled)
+                                    active: !modelData.isOutput && modelData.exposed && modelData.desc.visible
+                                    visible: {
+                                        if (Boolean(modelData.enabled)) {
+                                            if (modelData.root && modelData.root.type === "GroupAttribute") {
+                                                return Boolean(inputs.parentPins.get(modelData.root.name))
+                                            }
+                                            return true
+                                        }
+                                        return false
+                                    }
                                     width: inputs.width
+
+                                    Connections {
+                                        target: inputs
+
+                                        function onParentPinsUpdated() {
+                                            visible = updateChildPin(modelData, inputs.parentPins, inputLoader.item)
+                                        }
+                                    }
 
                                     sourceComponent: AttributePin {
                                         id: inPin
                                         nodeItem: root
-                                        attribute: object
+                                        attribute: modelData
 
                                         property real globalX: root.x + nodeAttributes.x + inputs.x + inputLoader.x + inPin.x
                                         property real globalY: root.y + nodeAttributes.y + inputs.y + inputLoader.y + inPin.y
@@ -580,6 +674,13 @@ Item {
                                         Component.onCompleted: attributePinCreated(attribute, inPin)
                                         Component.onDestruction: attributePinDeleted(attribute, inPin)
                                         onPressed: function(mouse) { root.pressed(mouse) }
+                                        onClicked: {
+                                            expanded = !expanded
+                                            if (inputs.parentPins.has(modelData.name)) {
+                                                inputs.parentPins.set(modelData.name, expanded)
+                                                inputs.parentPinsUpdated()
+                                            }
+                                        }
                                         onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
                                         onChildPinCreated: function(childAttribute, inPin) { attributePinCreated(childAttribute, inPin) }
                                         onChildPinDeleted: function(childAttribute, inPin) { attributePinDeleted(childAttribute, inPin) }
@@ -619,30 +720,59 @@ Item {
                                 id: inputParams
                                 width: parent.width
                                 spacing: 3
+
+                                property var parentPins: new Map()
+                                signal parentPinsUpdated()
+
                                 Repeater {
-                                    id: inputParamsRepeater
-                                    model: node ? node.attributes : undefined
+                                    model: generateAttributesModel(false, inputParams.parentPins)  // isOutput = false
+
                                     delegate: Loader {
                                         id: paramLoader
-                                        active: !object.isOutput && !object.exposed && object.desc.visible
-                                        visible: Boolean(object.enabled || object.isLinkNested || object.hasOutputConnections)
-                                        property bool isFullyActive: Boolean(m.displayParams || object.isLinkNested || object.hasOutputConnections)
+                                        active: !modelData.isOutput && !modelData.exposed && modelData.desc.visible
+                                        visible: {
+                                            if (Boolean(modelData.enabled || modelData.isLinkNested || modelData.hasOutputConnections)) {
+                                                if (modelData.root && modelData.root.type === "GroupAttribute") {
+                                                    return Boolean(inputParams.parentPins.get(modelData.root.name))
+                                                }
+                                                return true
+                                            }
+                                            return false
+                                        }
+                                        property bool isFullyActive: Boolean(m.displayParams || modelData.isLinkNested || modelData.hasOutputConnections)
                                         width: parent.width
+
+                                        Connections {
+                                            target: inputParams
+
+                                            function onParentPinsUpdated() {
+                                                visible = updateChildPin(modelData, inputParams.parentPins, paramLoader.item)
+                                            }
+                                        }
 
                                         sourceComponent: AttributePin {
                                             id: inParamsPin
                                             nodeItem: root
+                                            attribute: modelData
+
                                             property real globalX: root.x + nodeAttributes.x + inputParamsRect.x + paramLoader.x + inParamsPin.x
                                             property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inParamsPin.y
 
                                             height: isFullyActive ? childrenRect.height : 0
                                             Behavior on height { PropertyAnimation {easing.type: Easing.Linear} }
                                             visible: (height == childrenRect.height)
-                                            attribute: object
-                                            readOnly: Boolean(root.readOnly || object.isReadOnly)
+
+                                            readOnly: Boolean(root.readOnly || modelData.isReadOnly)
                                             Component.onCompleted: attributePinCreated(attribute, inParamsPin)
                                             Component.onDestruction: attributePinDeleted(attribute, inParamsPin)
                                             onPressed: function(mouse) { root.pressed(mouse) }
+                                            onClicked: {
+                                                expanded = !expanded
+                                                if (inputParams.parentPins.has(modelData.name)) {
+                                                    inputParams.parentPins.set(modelData.name, expanded)
+                                                    inputParams.parentPinsUpdated()
+                                                }
+                                            }
                                             onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
                                             onChildPinCreated: function(childAttribute, inParamsPin) { attributePinCreated(childAttribute, inParamsPin) }
                                             onChildPinDeleted: function(childAttribute, inParamsPin) { attributePinDeleted(childAttribute, inParamsPin) }

@@ -29,12 +29,14 @@ RowLayout {
     function updateAttributeLabel() {
         background.color = attribute.validValue ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
 
+        console.warn("about to enter if")
         if (attribute.desc) {
             var tooltip = ""
             if (!attribute.validValue && attribute.desc.errorMessage !== "")
                 tooltip += "<i><b>Error: </b>" + Format.plainToHtml(attribute.desc.errorMessage) + "</i><br><br>"
-            tooltip += "<b> " + attribute.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(attribute.desc.description)
+            tooltip += "<b> " + attribute.fullName + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(attribute.desc.description)
 
+            console.warn(attribute.fullName)
             parameterTooltip.text = tooltip
         }
     }
@@ -81,7 +83,7 @@ RowLayout {
                         var tooltip = ""
                         if (!object.validValue && object.desc.errorMessage !== "")
                             tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
-                        tooltip += "<b>" + object.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.description)
+                        tooltip += "<b>" + object.fullName + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.description)
                         return tooltip
                     }
                     visible: parameterMA.containsMouse

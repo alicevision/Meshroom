@@ -389,7 +389,7 @@ class Attribute(BaseObject):
         elif self.isInput and Attribute.isLinkExpression(v):
             # value is a link to another attribute
             link = v[1:-1]
-            linkNodeName, linkAttrName = link.split('.')
+            linkNodeName, linkAttrName = link.split('.', 1)
             try:
                 node = g.node(linkNodeName)
                 if not node:

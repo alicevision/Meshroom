@@ -825,6 +825,18 @@ Page {
                         ToolTip.visible: hovered
                         ToolTip.text: removeImagesFromAllGroupsAction.tooltip
                     }
+
+                    MenuItem {
+                        action: installPluginFromFolderAction
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Install plugin from a folder"
+                    }
+
+                    MenuItem {
+                        action: installPluginFromURLAction
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Install plugin from a local or online url"
+                    }
                 }
                 MenuSeparator { }
                 Action {
@@ -1298,18 +1310,17 @@ Page {
                         var n = _reconstruction.upgradeNode(node)
                         _reconstruction.selectedNode = n
                     }
-                }
 
-                onDoBuild: {
-                    try {
-                        _reconstruction.buildNode(node.name)
-                        node.isNotBuilt=false
-                    } catch (error) {
-                        //NOTE: could do an error popup
-                        console.log("Build error:")
-                        console.log(error)
+                    onDoBuild: {
+                        try {
+                            _reconstruction.buildNode(node.name)
+                            node.isNotBuilt=false
+                        } catch (error) {
+                            //NOTE: could do an error popup
+                            console.log("Build error:")
+                            console.log(error)
+                        }
                     }
-   
                 }
             }
         }

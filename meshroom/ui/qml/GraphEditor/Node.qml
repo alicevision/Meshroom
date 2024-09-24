@@ -31,7 +31,6 @@ Item {
     property point position: Qt.point(x, y)
     /// Styling
     property color shadowColor: "#cc000000"
-    //readonly property color defaultColor: isCompatibilityNode ? "#444" : ((isPlugin && isNotBuilt) ?  "#444": (!node.isComputable ? "#BA3D69" : activePalette.base))
     readonly property color defaultColor: isCompatibilityNode ? "#444" : (!node.isComputable ? "#BA3D69" : activePalette.base)
     property color baseColor: defaultColor
 

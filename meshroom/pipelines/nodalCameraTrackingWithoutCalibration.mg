@@ -5,13 +5,14 @@
         "template": true,
         "nodesVersions": {
             "CameraInit": "11.0",
+            "ConvertDistortion": "1.0",
             "ConvertSfMFormat": "2.0",
             "ExportAnimatedCamera": "2.0",
             "ExportDistortion": "1.0",
             "FeatureExtraction": "1.3",
             "FeatureMatching": "2.0",
             "ImageMatching": "2.0",
-            "ImageSegmentation": "1.2",
+            "ImageSegmentationPrompt": "0.1",
             "NodalSfM": "2.0",
             "Publish": "1.3",
             "RelativePoseEstimating": "2.0",
@@ -27,6 +28,19 @@
                 0
             ],
             "inputs": {},
+            "internalInputs": {
+                "color": "#80766f"
+            }
+        },
+        "ConvertDistortion_1": {
+            "nodeType": "ConvertDistortion",
+            "position": [
+                1600,
+                0
+            ],
+            "inputs": {
+                "input": "{ExportAnimatedCamera_1.input}"
+            },
             "internalInputs": {
                 "color": "#80766f"
             }
@@ -64,11 +78,11 @@
         "ExportDistortion_1": {
             "nodeType": "ExportDistortion",
             "position": [
-                1600,
+                1800,
                 0
             ],
             "inputs": {
-                "input": "{ExportAnimatedCamera_1.input}"
+                "input": "{ConvertDistortion_1.output}"
             },
             "internalInputs": {
                 "color": "#80766f"
@@ -81,8 +95,8 @@
                 0
             ],
             "inputs": {
-                "input": "{ImageSegmentation_1.input}",
-                "masksFolder": "{ImageSegmentation_1.output}"
+                "input": "{ImageSegmentationPrompt_1.input}",
+                "masksFolder": "{ImageSegmentationPrompt_1.output}"
             },
             "internalInputs": {
                 "color": "#80766f"
@@ -120,8 +134,8 @@
                 "color": "#80766f"
             }
         },
-        "ImageSegmentation_1": {
-            "nodeType": "ImageSegmentation",
+        "ImageSegmentationPrompt_1": {
+            "nodeType": "ImageSegmentationPrompt",
             "position": [
                 0,
                 0
@@ -153,7 +167,7 @@
         "Publish_1": {
             "nodeType": "Publish",
             "position": [
-                1800,
+                2000,
                 0
             ],
             "inputs": {
@@ -189,7 +203,7 @@
                 "cameras": "{ConvertSfMFormat_1.output}",
                 "model": "{NodalSfM_1.output}",
                 "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}",
-                "masks": "{ImageSegmentation_1.output}",
+                "masks": "{ImageSegmentationPrompt_1.output}",
                 "pointCloudParams": {
                     "particleSize": 0.001,
                     "particleColor": "Red"

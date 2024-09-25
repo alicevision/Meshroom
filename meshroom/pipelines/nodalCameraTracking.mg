@@ -14,7 +14,7 @@
             "FeatureExtraction": "1.3",
             "FeatureMatching": "2.0",
             "ImageMatching": "2.0",
-            "ImageSegmentation": "1.2",
+            "ImageSegmentationPrompt": "0.1",
             "NodalSfM": "2.0",
             "Publish": "1.3",
             "RelativePoseEstimating": "2.0",
@@ -140,7 +140,7 @@
             ],
             "inputs": {
                 "input": "{ApplyCalibration_1.output}",
-                "masksFolder": "{ImageSegmentation_1.output}"
+                "masksFolder": "{ImageSegmentationPrompt_1.output}"
             },
             "internalInputs": {
                 "color": "#80766f"
@@ -178,8 +178,8 @@
                 "color": "#80766f"
             }
         },
-        "ImageSegmentation_1": {
-            "nodeType": "ImageSegmentation",
+        "ImageSegmentationPrompt_1": {
+            "nodeType": "ImageSegmentationPrompt",
             "position": [
                 0,
                 200
@@ -247,7 +247,7 @@
                 "cameras": "{ConvertSfMFormat_1.output}",
                 "model": "{NodalSfM_1.output}",
                 "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}",
-                "masks": "{ImageSegmentation_1.output}",
+                "masks": "{ImageSegmentationPrompt_1.output}",
                 "pointCloudParams": {
                     "particleSize": 0.001,
                     "particleColor": "Red"

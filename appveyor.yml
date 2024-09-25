@@ -5,6 +5,8 @@ environment:
 install:
   - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "pip install -r requirements.txt -r dev_requirements.txt --timeout 45"
+  - "cd .. && git clone https://github.com/alicevision/meshroomNodes && cd Meshroom"
+  - "set MESHROOM_NODES_PATH=%MESHROOM_NODES_PATH%;%cd%/../meshroomNodes/meshroom/nodes"
 
 build: off
 

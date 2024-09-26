@@ -135,7 +135,8 @@
                 360
             ],
             "inputs": {
-                "input": "{ConvertDistortion_1.output}"
+                "input": "{ConvertDistortion_1.output}",
+                "exportLensGridsUndistorted": false
             },
             "internalInputs": {
                 "color": "#80766f"

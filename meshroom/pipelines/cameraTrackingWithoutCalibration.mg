@@ -6,6 +6,7 @@
         "nodesVersions": {
             "ApplyCalibration": "1.0",
             "CameraInit": "11.0",
+            "ConvertDistortion": "1.0",
             "ConvertSfMFormat": "2.0",
             "DepthMap": "5.0",
             "DepthMapFilter": "4.0",
@@ -15,7 +16,7 @@
             "FeatureMatching": "2.0",
             "ImageMatching": "2.0",
             "ImageMatchingMultiSfM": "1.0",
-            "ImageSegmentation": "1.2",
+            "ImageSegmentationPrompt": "0.1",
             "KeyframeSelection": "5.0",
             "MeshDecimate": "1.0",
             "MeshFiltering": "3.0",
@@ -52,6 +53,19 @@
             "inputs": {},
             "internalInputs": {
                 "color": "#575963"
+            }
+        },
+        "ConvertDistortion_1": {
+            "nodeType": "ConvertDistortion",
+            "position": [
+                1600,
+                360
+            ],
+            "inputs": {
+                "input": "{StructureFromMotion_1.output}"
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "ConvertSfMFormat_1": {
@@ -118,10 +132,11 @@
             "nodeType": "ExportDistortion",
             "position": [
                 1800,
-                200
+                360
             ],
             "inputs": {
-                "input": "{ExportAnimatedCamera_1.input}"
+                "input": "{ConvertDistortion_1.output}",
+                "exportLensGridsUndistorted": false
             },
             "internalInputs": {
                 "color": "#80766f"
@@ -135,7 +150,7 @@
             ],
             "inputs": {
                 "input": "{ApplyCalibration_1.output}",
-                "masksFolder": "{ImageSegmentation_1.output}",
+                "masksFolder": "{ImageSegmentationPrompt_1.output}",
                 "maskExtension": "exr"
             },
             "internalInputs": {
@@ -248,8 +263,8 @@
                 "color": "#80766f"
             }
         },
-        "ImageSegmentation_1": {
-            "nodeType": "ImageSegmentation",
+        "ImageSegmentationPrompt_1": {
+            "nodeType": "ImageSegmentationPrompt",
             "position": [
                 0,
                 200
@@ -274,7 +289,7 @@
                     "{ApplyCalibration_1.output}"
                 ],
                 "maskPaths": [
-                    "{ImageSegmentation_1.output}"
+                    "{ImageSegmentationPrompt_1.output}"
                 ]
             },
             "internalInputs": {
@@ -336,7 +351,7 @@
             "inputs": {
                 "input": "{SfMTriangulation_1.output}",
                 "masksFolders": [
-                    "{ImageSegmentation_1.output}"
+                    "{ImageSegmentationPrompt_1.output}"
                 ],
                 "maskExtension": "exr"
             },
@@ -369,7 +384,7 @@
                 "cameras": "{ConvertSfMFormat_1.output}",
                 "model": "{MeshDecimate_1.output}",
                 "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}",
-                "masks": "{ImageSegmentation_1.output}"
+                "masks": "{ImageSegmentationPrompt_1.output}"
             },
             "internalInputs": {
                 "color": "#4c594c"

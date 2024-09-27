@@ -353,4 +353,7 @@ def initPipelines():
     additionalPipelinesPath = [i for i in additionalPipelinesPath if i]
     pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
     for f in pipelineTemplatesFolders:
-        loadPipelineTemplates(f)
+        if os.path.isdir(f):
+            loadPipelineTemplates(f)
+        else:
+            logging.error("Pipeline templates folder '{}' does not exist.".format(f))

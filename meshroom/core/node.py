@@ -410,6 +410,8 @@ class NodeChunk(BaseObject):
         self.statThread = stats.StatisticsThread(self)
         self.statThread.start()
         try:
+            if self.node.nodeDesc is None:
+                raise RuntimeError("Node description empty. This could be coming from a wrong MESHROOM_NODES_PATH environment variable.")
             self.node.nodeDesc.processChunk(self)
         except Exception:
             if self._status.status != Status.STOPPED:

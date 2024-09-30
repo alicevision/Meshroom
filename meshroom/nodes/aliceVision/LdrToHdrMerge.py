@@ -5,6 +5,9 @@ import os
 import math
 from collections import Counter
 
+from pyalicevision import sfmData as avsfmdata
+from pyalicevision import hdr as avhdr
+
 from meshroom.core import desc
 from meshroom.core.utils import COLORSPACES, EXR_STORAGE_DATA_TYPE, VERBOSE_LEVEL
 
@@ -278,7 +281,7 @@ Merge LDR images into HDR images.
             node.nbBrackets.value = 0
             return
 
-        inputs = []
+        inputs = avhdr.vectorli()
         for viewpoint in viewpoints:
             jsonMetadata = viewpoint.metadata.value
             if not jsonMetadata:
@@ -305,100 +308,25 @@ Merge LDR images into HDR images.
                 # We assume that there is no multi-bracketing, so nothing to do.
                 node.nbBrackets.value = 1
                 return
-            inputs.append((viewpoint.path.value, (float(fnumber), float(shutterSpeed), float(iso))))
-        inputs.sort()
 
-        exposureGroups = []
-        exposures = []
-        prevFnumber = 0.0
-        prevShutterSpeed = 0.0
-        prevIso = 0.0
-        prevPath = None  # Stores the dirname of the previous parsed image
-        prevExposure = None
-        newGroup = False  # True if a new exposure group needs to be created (useful when there are several datasets)
-        for path, exp in inputs:
-            # If the dirname of the previous image and the dirname of the current image do not match, this means that the
-            # dataset that is being parsed has changed. A new group needs to be created but will fail to be detected in the
-            # next "if" statement if the new dataset's exposure levels are different. Setting "newGroup" to True prevents this
-            # from happening.
-            if prevPath is not None and prevPath != os.path.dirname(path):
-                newGroup = True
+            exposure = LdrToHdrMerge.getExposure((float(fnumber), float(shutterSpeed), float(iso)))
 
-            currentExposure = LdrToHdrMerge.getExposure(exp)
+            obj = avhdr.LuminanceInfo(viewpoint.viewId.value,viewpoint.path.value, exposure)
+            inputs.append(obj)
 
-            # Create a new group if the current image's exposure level is smaller than the previous image's, or
-            # if a new dataset has been detected (with a change in the path of the images).
-            if prevExposure and currentExposure < prevExposure or newGroup:
-                exposureGroups.append(exposures)
-                exposures = [exp]
-            else:
-                exposures.append(exp)
+        obj = avhdr.estimateGroups(inputs)
 
-            prevPath = os.path.dirname(path)
-            prevExposure = currentExposure
-            newGroup = False
+        if len(obj) == 0:
+            node.nbBrackets.value = 0
+            return
 
-        exposureGroups.append(exposures)
-
-        exposures = None
-        bracketSizes = Counter()
-        if len(exposureGroups) == 1:
-            if len(set(exposureGroups[0])) == 1:
-                # Single exposure and multiple views
-                node.nbBrackets.value = 1
-            else:
-                # Single view and multiple exposures
-                node.nbBrackets.value = len(exposureGroups[0])
-        else:
-            for expGroup in exposureGroups:
-                bracketSizes[len(expGroup)] += 1
-
-            if len(bracketSizes) == 0:
-                node.nbBrackets.value = 0
-            else:
-                bestTuple = None
-                for tuple in bracketSizes.most_common():
-                    if bestTuple is None or tuple[1] > bestTuple[1]:
-                        bestTuple = tuple
-                    elif tuple[1] == bestTuple[1]:
-                        bestTuple = tuple if tuple[0] > bestTuple[0] else bestTuple
-
-                bestBracketSize = bestTuple[0]
-                node.nbBrackets.value = bestBracketSize
+        node.nbBrackets.value = len(obj[0])
 
     @staticmethod
     def getExposure(exp, refIso = 100.0, refFnumber = 1.0):
         fnumber, shutterSpeed, iso = exp
-
-        validShutterSpeed = shutterSpeed > 0.0 and math.isfinite(shutterSpeed)
-        validFnumber = fnumber > 0.0 and math.isfinite(fnumber)
-
-        if not validShutterSpeed and not validFnumber:
-            return -1.0
-
-        validRefFnumber = refFnumber > 0.0 and math.isfinite(refFnumber)
-
-        if not validShutterSpeed:
-            shutterSpeed = 1.0 / 200.0
-
-        if not validFnumber:
-            if validRefFnumber:
-                fnumber = refFnumber
-            else:
-                fnumber = 2.0
-
-        lRefFnumber = refFnumber
-        if not validRefFnumber:
-            lRefFnumber = fnumber
-
-        isoToAperture = 1.0
-        if iso > 1e-6 and refIso > 1e-6:
-            isoToAperture = math.sqrt(iso / refIso)
-
-        newFnumber = fnumber * isoToAperture
-        expIncrease = (lRefFnumber / newFnumber) * (lRefFnumber / newFnumber)
-
-        return shutterSpeed * expIncrease
+        obj = avsfmdata.ExposureSetting(shutterSpeed, fnumber, iso)
+        return obj.getExposure()
 
     def processChunk(self, chunk):
         # Trick to avoid sending --nbBrackets to the command line when the bracket detection is automatic.

@@ -13,10 +13,10 @@ Effect {
     techniques: [
         Technique {
             graphicsApiFilter {
-                api: GraphicsApiFilter.OpenGL
+                api: GraphicsApiFilter.RHI
                 profile: GraphicsApiFilter.CoreProfile
-                majorVersion: 3
-                minorVersion: 1
+                majorVersion: 1
+                minorVersion: 0
             }
 
 

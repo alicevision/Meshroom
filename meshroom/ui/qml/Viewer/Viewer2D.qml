@@ -53,7 +53,7 @@ FocusScope {
         property variant imgMetadata: {
             // Metadata from FloatImage viewer
             // Directly read from the image file on disk
-            if (floatImageViewerLoader.active) {
+            if (floatImageViewerLoader.active && floatImageViewerLoader.item) {
                 return floatImageViewerLoader.item.metadata
             }
             // Use viewpoint metadata for the special case of the 8-bit viewer
@@ -150,27 +150,30 @@ FocusScope {
         }
     }
 
-    // functions
+    // Functions
     function fit() {
-        // make sure the image is ready for use
-        if (!imgContainer.image)
-            return
+        // Make sure the image is ready for use
+        if (!imgContainer.image || imgContainer.orientationTag == undefined) {
+            return false
+        }
 
-        // for Exif orientation tags 5 to 8, a 90 degrees rotation is applied
+        // For Exif orientation tags 5 to 8, a 90 degrees rotation is applied
         // therefore image dimensions must be inverted
         let dimensionsInverted = ["5", "6", "7", "8"].includes(imgContainer.orientationTag)
         let orientedWidth = dimensionsInverted ? imgContainer.image.height : imgContainer.image.width
         let orientedHeight = dimensionsInverted ? imgContainer.image.width : imgContainer.image.height
 
-        // fit oriented image
+        // Fit oriented image
         imgContainer.scale = Math.min(imgLayout.width / orientedWidth, root.height / orientedHeight)
         imgContainer.x = Math.max((imgLayout.width - orientedWidth * imgContainer.scale) * 0.5, 0)
         imgContainer.y = Math.max((imgLayout.height - orientedHeight * imgContainer.scale) * 0.5, 0)
 
-        // correct position when image dimensions are inverted
+        // Correct position when image dimensions are inverted
         // so that container center corresponds to image center
         imgContainer.x += (orientedWidth - imgContainer.image.width) * 0.5 * imgContainer.scale
         imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale
+
+        return true
     }
 
     function tryLoadNode(node) {
@@ -476,27 +479,42 @@ FocusScope {
                     property bool fittedOnce: false
                     property int previousWidth: 0
                     property int previousHeight: 0
+                    property int previousOrientationTag: 1
                     property real targetSize: Math.max(width, height) * imgContainer.scale
-                    onHeightChanged: {
-                        /* Image size is not updated through a single signal with the floatImage viewer, unlike
-                         * the simple QML image viewer: instead of updating straight away the width and height to x and
-                         * y, the emitted signals look like:
-                         * - width = -1, height = -1
-                         * - width = x, height = -1
-                         * - width = x, height = y
-                         * We want to do the auto-fit on the first display of an image from the group, and then keep its
+                    onWidthChanged: {
+                        /* We want to do the auto-fit on the first display of an image from the group, and then keep its
                          * scale when displaying another image from the group, so we need to know if an image in the
                          * group has already been auto-fitted. If we change the group of images (when another project is
                          * opened, for example, and the images have a different size), then another auto-fit needs to be
                          * performed */
-                        if ((!fittedOnce && imgContainer.image && imgContainer.image.height > 0) ||
+                        if ((!fittedOnce && imgContainer.image && imgContainer.image.width > 0) ||
                             (fittedOnce && ((width > 1 && previousWidth != width) ||
                             (height > 1 && previousHeight != height)))) {
-                            fit()
+                            var ret = fit()
+                            if (!ret)
+                                return
                             fittedOnce = true
                             previousWidth = width
                             previousHeight = height
+
+                            if (orientationTag != undefined)
+                                previousOrientationTag = orientationTag
                         }
+                    }
+
+                    onOrientationTagChanged: {
+                        /* For images of the same width and height but with different orientations, the auto-fit
+                         * will not be triggered by the "widthChanged()" signal, so it needs to be triggered upon
+                         * either a change in the image's size or in its orientation. */
+                         if (orientationTag != undefined && previousOrientationTag != orientationTag) {
+                            var ret = fit()
+                            if (!ret)
+                                return
+                            fittedOnce = true
+                            previousWidth = width
+                            previousHeight = height
+                            previousOrientationTag = orientationTag
+                         }
                     }
 
                     onActiveChanged: {

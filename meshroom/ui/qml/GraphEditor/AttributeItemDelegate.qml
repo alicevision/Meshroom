@@ -444,7 +444,7 @@ RowLayout {
                 ColorDialog {
                     id: colorDialog
                     title: "Please choose a color"
-                    color: attribute.value
+                    selectedColor: attribute.value
                     onAccepted: {
                         colorText.text = color
                         // Artificially trigger change of attribute value

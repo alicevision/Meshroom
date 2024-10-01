@@ -27,7 +27,7 @@ FocusScope {
         clip: true
         anchors.fill: parent
         property string currentFile: currentChunk ? currentChunk["statisticsFile"] : ""
-        property url source: Filepath.stringToUrl(currentFile)
+        property url sourceFile: Filepath.stringToUrl(currentFile)
 
         sourceComponent: chunksLV.chunksSummary ? statViewerComponent : chunkStatViewerComponent
     }
@@ -37,7 +37,7 @@ FocusScope {
         StatViewer {
             id: statViewer
             anchors.fill: parent
-            source: componentLoader.source
+            source: componentLoader.sourceFile
         }
     }
 

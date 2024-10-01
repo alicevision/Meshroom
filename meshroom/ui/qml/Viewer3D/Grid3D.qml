@@ -18,7 +18,6 @@ Entity {
                     count: 0
                     name: defaultPositionAttributeName
                     buffer: Buffer {
-                        type: Buffer.VertexBuffer
                         data: {
                             function buildGrid(first, last, offset, attribute) {
                                 var vertexCount = (((last-first)/offset)+1)*4;

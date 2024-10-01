@@ -197,10 +197,6 @@ FocusScope {
                                         buffers : ClearBuffers.ColorDepthBuffer
                                         RenderStateSet {
                                             renderStates: [
-                                                PointSize {
-                                                    sizeMode: Viewer3DSettings.fixedPointSize ? PointSize.Fixed : PointSize.Programmable
-                                                    value: Viewer3DSettings.pointSize
-                                                },
                                                 DepthTest { depthFunction: DepthTest.Less }
                                             ]
                                         }

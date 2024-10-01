@@ -115,8 +115,11 @@ class StatusData(BaseObject):
 
     def toDict(self):
         d = self.__dict__.copy()
-        d.pop('destroyed', None)  # skip non data attributes from BaseObject
         d["elapsedTimeStr"] = self.elapsedTimeStr
+
+        # Skip non data attributes from BaseObject
+        d.pop("destroyed", None)
+        d.pop("objectNameChanged", None)
         return d
 
     def fromDict(self, d):

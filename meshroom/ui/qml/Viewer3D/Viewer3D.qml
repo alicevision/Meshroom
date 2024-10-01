@@ -1,16 +1,15 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import QtQml.Models 2.15
-import QtQuick.Scene3D 2.15
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQml.Models
+import QtQuick.Scene3D 2.6
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
 import Qt3D.Extras 2.15
-import Qt3D.Input 2.15 as Qt3DInput // to avoid clash with Controls2 Action
-
-import MaterialIcons 2.2
+import Qt3D.Input 2.6 as Qt3DInput // to avoid clash with Controls2 Action
 
 import Controls 1.0
+import MaterialIcons 2.2
 import Utils 1.0
 
 

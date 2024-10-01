@@ -1,4 +1,5 @@
-import QtQuick 2.11
+import QtQuick
+
 import Utils 1.0
 
 /**

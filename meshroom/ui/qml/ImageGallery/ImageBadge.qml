@@ -1,4 +1,5 @@
-import QtQuick 2.15
+import QtQuick
+
 import MaterialIcons 2.2
 import Utils 1.0
 

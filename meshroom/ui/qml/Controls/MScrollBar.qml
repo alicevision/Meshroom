@@ -1,5 +1,6 @@
-import QtQuick 2.0
-import QtQuick.Controls 2.0
+import QtQuick
+import QtQuick.Controls
+
 /**
  * MScrollBar is a custom scrollbar implementation.
  * It is a vertical scrollbar that can be used to scroll a ListView.

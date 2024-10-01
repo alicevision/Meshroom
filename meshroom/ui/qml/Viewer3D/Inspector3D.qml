@@ -238,7 +238,8 @@ FloatingPane {
                             label: {
                                 var id = undefined
                                 // Ensure there are entries in resectionGroups and a valid resectionId before accessing anything
-                                if (Viewer3DSettings.resectionId !== undefined && Viewer3DSettings.resectionGroups.length > 0)
+                                if (Viewer3DSettings.resectionId !== undefined && Viewer3DSettings.resectionGroups &&
+                                    Viewer3DSettings.resectionGroups.length > 0)
                                     id = Math.min(Viewer3DSettings.resectionId, Viewer3DSettings.resectionIdCount)
                                 if (id !== undefined && Viewer3DSettings.resectionGroups[id] !== undefined)
                                     return Viewer3DSettings.resectionGroups[id]
@@ -253,9 +254,11 @@ FloatingPane {
                             iconText: MaterialIcons.auto_awesome_motion
                             label: {
                                 let currentCameras = 0
-                                for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
-                                    if (i <= Viewer3DSettings.resectionId)
-                                        currentCameras += Viewer3DSettings.resectionGroups[i]
+                                if (Viewer3DSettings.resectionGroups) {
+                                    for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
+                                        if (i <= Viewer3DSettings.resectionId)
+                                            currentCameras += Viewer3DSettings.resectionGroups[i]
+                                    }
                                 }
 
                                 return currentCameras
@@ -268,8 +271,10 @@ FloatingPane {
                             iconText: MaterialIcons.videocam
                             label: {
                                 let totalCameras = 0
-                                for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
-                                    totalCameras += Viewer3DSettings.resectionGroups[i]
+                                if (Viewer3DSettings.resectionGroups) {
+                                    for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
+                                        totalCameras += Viewer3DSettings.resectionGroups[i]
+                                    }
                                 }
 
                                 return totalCameras
@@ -523,6 +528,7 @@ FloatingPane {
                                             topPadding: 3
                                             bottomPadding: topPadding
                                             text: model.label
+                                            color: palette.text
                                             opacity: model.valid ? 1.0 : 0.6
                                             elide: Text.ElideMiddle
                                             font.weight: mediaListView.currentIndex === index ? Font.DemiBold : Font.Normal
@@ -554,25 +560,37 @@ FloatingPane {
                                                     spacing: 1
                                                     visible: model.vertexCount
                                                     MaterialLabel { text: MaterialIcons.grain }
-                                                    Label { text: Format.intToString(model.vertexCount) }
+                                                    Label {
+                                                        text: Format.intToString(model.vertexCount)
+                                                        color: palette.text
+                                                    }
                                                 }
                                                 RowLayout {
                                                     spacing: 1
                                                     visible: model.faceCount
                                                     MaterialLabel { text: MaterialIcons.details; rotation: -180 }
-                                                    Label { text: Format.intToString(model.faceCount) }
+                                                    Label {
+                                                        text: Format.intToString(model.faceCount)
+                                                        color: palette.text
+                                                    }
                                                 }
                                                 RowLayout {
                                                     spacing: 1
                                                     visible: model.cameraCount
                                                     MaterialLabel { text: MaterialIcons.videocam }
-                                                    Label { text: model.cameraCount }
+                                                    Label {
+                                                        text: model.cameraCount
+                                                        color: palette.text
+                                                    }
                                                 }
                                                 RowLayout {
                                                     spacing: 1
                                                     visible: model.textureCount
                                                     MaterialLabel { text: MaterialIcons.texture }
-                                                    Label { text: model.textureCount }
+                                                    Label {
+                                                        text: model.textureCount
+                                                        color: palette.text
+                                                    }
                                                 }
                                             }
                                         }

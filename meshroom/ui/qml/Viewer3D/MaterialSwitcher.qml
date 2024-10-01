@@ -93,7 +93,7 @@ Entity {
         objectName: "VertexColorMaterial"
     }
 
-    DiffuseSpecularMaterial {
+    DiffuseMapMaterial {
         id: textured
         objectName: "TexturedMaterial"
         ambient: root.ambient

@@ -80,8 +80,8 @@ Item {
                 cameraInit: reconstruction ? reconstruction.cameraInit : null
                 tempCameraInit: reconstruction ? reconstruction.tempCameraInit : null
                 cameraInitIndex: reconstruction ? reconstruction.cameraInitIndex : -1
-                onRemoveImageRequest: reconstruction.removeImage(attribute)
-                onAllViewpointsCleared: { reconstruction.selectedViewId = "-1" }
+                onRemoveImageRequest: function(attribute) { reconstruction.removeImage(attribute) }
+                onAllViewpointsCleared: reconstruction.selectedViewId = "-1"
                 onFilesDropped: {
                     if (drop["meshroomScenes"].length == 1) {
                         ensureSaved(function() {
@@ -226,8 +226,10 @@ Item {
                         DropArea {
                             anchors.fill: parent
                             keys: ["text/uri-list"]
-                            onDropped: {
-                                drop.urls.forEach(function(url){ load3DMedia(url); });
+                            onDropped: function(drop) {
+                                drop.urls.forEach(function(url) {
+                                    load3DMedia(url)
+                                })
                             }
                         }
 

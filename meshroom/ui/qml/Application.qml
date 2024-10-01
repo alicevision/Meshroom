@@ -520,8 +520,8 @@ Page {
         text: "Load Template"
         onTriggered: {
             ensureSaved(function() {
-                initFileDialogFolder(loadTemplateDialog);
-                loadTemplateDialog.open();
+                initFileDialogFolder(loadTemplateDialog)
+                loadTemplateDialog.open()
             })
         }
     }
@@ -1157,15 +1157,15 @@ Page {
                         uigraph: _reconstruction
                         nodeTypesModel: _nodeTypes
 
-                        onNodeDoubleClicked: {
+                        onNodeDoubleClicked: function(mouse, node) {
                             _reconstruction.setActiveNode(node);
                             workspaceView.viewNode(node, mouse);
                         }
-                        onComputeRequest: {
+                        onComputeRequest: function(nodes) {
                             _reconstruction.forceNodesStatusUpdate();
                             computeManager.compute(nodes)
                         }
-                        onSubmitRequest: {
+                        onSubmitRequest: function(nodes) {
                             _reconstruction.forceNodesStatusUpdate();
                             computeManager.submit(nodes)
                         }

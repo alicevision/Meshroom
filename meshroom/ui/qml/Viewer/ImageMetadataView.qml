@@ -32,11 +32,11 @@ FloatingPane {
         var values = value.split(",")
         var result = 0
         for (var i = 0; i < values.length; ++i) {
-            // divide each component by the corresponding power of 60
+            // Divide each component by the corresponding power of 60
             // 1 for degree, 60 for minutes, 3600 for seconds
             result += Number(values[i]) / Math.pow(60, i)
         }
-        // handle opposite reference: South (latitude) or West (longitude)
+        // Handle opposite reference: South (latitude) or West (longitude)
         return (ref === "S" || ref === "W") ? -result : result
     }
 
@@ -63,14 +63,14 @@ FloatingPane {
         id: metadataModel
         property var metadata: ({})
 
-        // reset model when metadata changes
+        // Reset model when metadata changes
         onMetadataChanged: {
             metadataModel.clear()
             var entries = []
-            // prepare data to populate the model from the input metadata object
+            // Prepare data to populate the model from the input metadata object
             for (var key in metadata) {
                 var entry = {}
-                // split on ":" to get group and key
+                // Split on ":" to get group and key
                 var i = key.lastIndexOf(":")
                 if (i === -1) {
                     i = key.lastIndexOf("/")
@@ -80,7 +80,7 @@ FloatingPane {
                     entry["group"] = key.substr(0, i)
                     entry["key"] = key.substr(i+1)
                 } else {
-                    // set default group to something convenient for sorting
+                    // Set default group to something convenient for sorting
                     entry["group"] = "-"
                     entry["key"] = key
                 }
@@ -104,7 +104,7 @@ FloatingPane {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.MiddleButton
-        onWheel: wheel.accepted = true
+        onWheel: function(wheel) { wheel.accepted = true }
     }
 
     // Main Layout
@@ -175,7 +175,7 @@ FloatingPane {
                 sortRole: "raw"
                 filters: [{role: "raw", value: searchBar.text}]
                 delegate: RowLayout {
-                    width: parent ? parent.width : 0
+                    width: ListView.view.width
                     Label {
                         text: key
                         leftPadding: 6

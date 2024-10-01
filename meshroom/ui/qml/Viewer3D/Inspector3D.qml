@@ -26,7 +26,12 @@ FloatingPane {
 
     padding: 0
 
-    MouseArea { anchors.fill: parent; onWheel: wheel.accepted = true }
+    MouseArea {
+        anchors.fill: parent
+        onWheel: function(wheel) {
+            wheel.accepted = true
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -382,7 +387,7 @@ FloatingPane {
                                 if (model.attribute)
                                     uigraph.hoveredNode = null
                             }
-                            onClicked: {
+                            onClicked: function(mouse) {
                                 if (model.attribute)
                                     uigraph.selectedNode = model.attribute.node
                                 else
@@ -457,9 +462,11 @@ FloatingPane {
                                         property int modifiers
                                         anchors.fill: parent
                                         hoverEnabled: true
-                                        onPositionChanged: modifiers = mouse.modifiers
+                                        onPositionChanged: function(mouse) {
+                                            modifiers = mouse.modifiers
+                                        }
                                         onExited: modifiers = Qt.NoModifier
-                                        onPressed: {
+                                        onPressed: function(mouse) {
                                             modifiers = mouse.modifiers;
                                             mouse.accepted = false;
                                         }

@@ -84,7 +84,7 @@ FocusScope {
             }
         ]
 
-        Keys.onPressed: {
+        Keys.onPressed: function(event) {
             if (event.key === Qt.Key_F) {
                 resetCameraPosition();
             } else if (Qt.Key_1 <= event.key && event.key < Qt.Key_1 + Viewer3DSettings.renderModes.length) {

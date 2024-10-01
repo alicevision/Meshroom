@@ -692,7 +692,7 @@ FocusScope {
                         circleRadius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
 
                         circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))
-                        onMoved: {
+                        onMoved: function(xoffset, yoffset) {
                             if (!useAuto) {
                                 _reconstruction.setAttribute(
                                     activeNode.attribute("fisheyeCenterOffset"),
@@ -700,7 +700,7 @@ FocusScope {
                                 )
                             }
                         }
-                        onIncrementRadius: {
+                        onIncrementRadius: function(radiusOffset) {
                             if (!useAuto) {
                                 _reconstruction.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
                             }

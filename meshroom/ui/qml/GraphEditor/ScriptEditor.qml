@@ -6,7 +6,7 @@ import Utils 1.0
 import MaterialIcons 2.2
 
 import Qt.labs.platform 1.0 as Platform
-import QtQuick.Dialogs 1.3
+import QtQuick.Dialogs
 
 Item {
     id: root

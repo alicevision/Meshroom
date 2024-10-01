@@ -1,7 +1,7 @@
 from meshroom.common import Signal
 
-from PySide2.QtCore import QObject, Slot, QSize, QUrl, Qt, QStandardPaths
-from PySide2.QtGui import QImageReader, QImageWriter
+from PySide6.QtCore import QObject, Slot, QSize, QUrl, Qt, QStandardPaths
+from PySide6.QtGui import QImageReader, QImageWriter
 
 import os
 from pathlib import Path

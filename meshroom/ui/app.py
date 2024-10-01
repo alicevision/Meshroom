@@ -4,10 +4,10 @@ import re
 import argparse
 import json
 
-from PySide2 import QtCore
-from PySide2.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
-from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import QApplication
+from PySide6 import QtCore
+from PySide6.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import nodesDesc
@@ -188,7 +188,7 @@ class MeshroomApp(QApplication):
     def __init__(self, args):
         meshroom.core.initPipelines()
 
-        QtArgs = [args[0], '-style', 'fusion'] + args[1:]  # force Fusion style by default
+        QtArgs = [args[0], '-style', 'Fusion'] + args[1:]  # force Fusion style by default
 
         args = createMeshroomParser(args)
 

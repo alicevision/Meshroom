@@ -50,11 +50,11 @@ RowLayout {
                     if (!attribute)
                         return undefined
                     switch (attribute.type) {
-                       case "ChoiceParam": return choice_component
-                       case "IntParam": return int_component
-                       case "FloatParam": return float_component
-                       case "BoolParam": return bool_component
-                       case "StringParam": return textField_component
+                       case "ChoiceParam": return choiceComponent
+                       case "IntParam": return intComponent
+                       case "FloatParam": return floatComponent
+                       case "BoolParam": return boolComponent
+                       case "StringParam": return textFieldComponent
                        default: return undefined
                     }
                 }
@@ -63,7 +63,7 @@ RowLayout {
     }
 
     Component {
-        id: textField_component
+        id: textFieldComponent
         TextInput {
             text: attribute.value
             width: intrinsicModel.columnWidths[columnIndex]
@@ -82,14 +82,14 @@ RowLayout {
                 _reconstruction.setAttribute(attribute, text)
             }
             Component.onDestruction: {
-                if(activeFocus)
+                if (activeFocus)
                     _reconstruction.setAttribute(attribute, text)
             }
         }
     }
 
     Component {
-        id: int_component
+        id: intComponent
 
         TextInput {
             text: model.display.value
@@ -122,7 +122,7 @@ RowLayout {
     }
 
     Component {
-        id: choice_component
+        id: choiceComponent
         ComboBox {
             id: combo
             model: attribute.desc !== undefined ? attribute.desc.values : undefined
@@ -147,7 +147,7 @@ RowLayout {
     }
 
     Component {
-        id: bool_component
+        id: boolComponent
         CheckBox {
             checked: attribute ? attribute.value : false
             padding: 12
@@ -157,7 +157,7 @@ RowLayout {
     }
 
     Component {
-        id: float_component
+        id: floatComponent
         TextInput {
             readonly property real formattedValue: attribute.value.toFixed(2)
             property string displayValue: String(formattedValue)
@@ -180,9 +180,9 @@ RowLayout {
 
             autoScroll: activeFocus
 
-            //Use this function to ensure the left part is visible
-            //while keeping the trick for formatting the text
-            //Timing issues otherwise
+            // Use this function to ensure the left part is visible
+            // while keeping the trick for formatting the text
+            // Timing issues otherwise
             onActiveFocusChanged: {
                 if (activeFocus)
                     text = String(attribute.value)

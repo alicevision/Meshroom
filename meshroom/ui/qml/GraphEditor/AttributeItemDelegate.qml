@@ -43,7 +43,7 @@ RowLayout {
     Pane {
         background: Rectangle {
             id: background
-            color: object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
+            color: object != undefined && object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
         }
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
@@ -67,8 +67,10 @@ RowLayout {
                 text: object.label
 
                 color: {
-                    if ((object.hasOutputConnections || object.isLink) && !object.enabled) return Colors.lightgrey
-                    else return palette.text
+                    if (object != undefined && (object.hasOutputConnections || object.isLink) && !object.enabled)
+                        return Colors.lightgrey
+                    else
+                        return palette.text
                 }
 
                 // Tooltip hint with attribute's description

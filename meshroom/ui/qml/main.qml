@@ -2,7 +2,6 @@ import QtCore
 
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Window
 import QtQuick.Dialogs
 
 import Qt.labs.platform 1.0 as Platform

@@ -3,7 +3,6 @@ import QtCore
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Window
 import QtQml.Models
 
 import Qt.labs.platform 1.0 as Platform

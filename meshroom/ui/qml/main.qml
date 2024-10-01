@@ -1,10 +1,11 @@
+import QtCore
+
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
 import QtQuick.Dialogs
 
 import Qt.labs.platform 1.0 as Platform
-import Qt.labs.settings 1.0
 
 ApplicationWindow {
     id: _window
@@ -65,7 +66,7 @@ ApplicationWindow {
 
     Settings {
         id: settingsGeneral
-        category: 'General'
+        category: "General"
         property int windowWidth: 1280
         property int windowHeight: 720
     }

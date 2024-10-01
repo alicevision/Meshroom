@@ -1,3 +1,5 @@
+import QtCore
+
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.11
@@ -7,7 +9,6 @@ import QtQml.Models 2.15
 import Qt.labs.platform 1.0 as Platform
 import QtQuick.Dialogs
 
-import Qt.labs.settings 1.0
 import GraphEditor 1.0
 import MaterialIcons 2.2
 import Utils 1.0
@@ -22,7 +23,7 @@ Page {
 
     Settings {
         id: settingsUILayout
-        category: 'UILayout'
+        category: "UILayout"
         property alias showLiveReconstruction: liveSfMVisibilityCB.checked
         property alias showGraphEditor: graphEditorVisibilityCB.checked
         property alias showImageViewer: imageViewerVisibilityCB.checked

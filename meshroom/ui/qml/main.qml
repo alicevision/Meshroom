@@ -35,8 +35,6 @@ ApplicationWindow {
         ensureSaved(function() { Qt.quit() })
     }
 
-    palette: _PaletteManager.palette
-
     // QPalette is not convertible to QML palette (anymore)
     Component.onCompleted: {
         palette.alternateBase = _PaletteManager.alternateBase

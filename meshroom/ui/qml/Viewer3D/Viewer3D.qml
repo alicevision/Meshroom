@@ -16,7 +16,7 @@ import Utils 1.0
 FocusScope {
     id: root
 
-    property int renderMode: 2
+    property int renderMode: 1
     readonly property alias library: mediaLibrary
     readonly property alias mainCamera: mainCamera
 
@@ -284,13 +284,17 @@ FocusScope {
     }
 
     FloatingPane {
-        visible: Viewer3DSettings.renderMode == 3
+        visible: Viewer3DSettings.renderMode == 2
         anchors.bottom: renderModesPanel.top
         GridLayout {
             columns: 2
             rowSpacing: 0
 
-            RadioButton { text: "SHL File"; autoExclusive: true; checked: true }
+            RadioButton {
+                text: "SHL File"
+                autoExclusive: true
+                checked: true
+            }
             TextField {
                 text: Viewer3DSettings.shlFile
                 selectByMouse: true

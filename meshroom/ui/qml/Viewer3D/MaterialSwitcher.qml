@@ -56,10 +56,10 @@ Entity {
                 name: "Solid"
                 PropertyChanges { target: m; material: solid }
             },
-            State {
+            /* State {
                 name: "Wireframe"
                 PropertyChanges { target: m; material: wireframe }
-            },
+            }, */
             State {
                 name: "Textured"
                 PropertyChanges {
@@ -106,7 +106,7 @@ Entity {
         }
     }
 
-    WireframeMaterial {
+    /* WireframeMaterial {
         id: wireframe
         objectName: "WireframeMaterial"
         effect: WireframeEffect {}
@@ -114,7 +114,7 @@ Entity {
         diffuse: root.diffuseColor
         shininess: 0
         specular: root.specular
-    }
+    } */
 
     SphericalHarmonicsMaterial {
         id: shMaterial

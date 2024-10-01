@@ -41,7 +41,7 @@ ToolButton {
     }
     background: Rectangle {
         color: {
-            if (pressed || checked || hovered) {
+            if (enabled && (pressed || checked || hovered)) {
                 if (pressed || checked)
                     return Qt.darker(parent.palette.base, 1.3)
                 if (hovered)

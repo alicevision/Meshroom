@@ -10,4 +10,4 @@ import meshroom.ui
 import meshroom.ui.app
 
 meshroom.ui.uiInstance = meshroom.ui.app.MeshroomApp(sys.argv)
-meshroom.ui.uiInstance.exec_()
+meshroom.ui.uiInstance.exec()

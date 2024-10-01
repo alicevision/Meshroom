@@ -1,7 +1,7 @@
-import QtQuick 2.15
-import Utils 1.0
+import QtQuick
 
 import AliceVision 1.0 as AliceVision
+import Utils 1.0
 
 /**
  * PanoramaViwer displays a list of Float Images

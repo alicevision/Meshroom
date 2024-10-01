@@ -1,7 +1,8 @@
-import QtQuick 2.15
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
+import QtQuick
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
 import Qt3D.Extras 2.15
+
 import Utils 1.0
 
 // Locator

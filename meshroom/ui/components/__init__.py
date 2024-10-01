@@ -1,6 +1,6 @@
 
 def registerTypes():
-    from PySide2.QtQml import qmlRegisterType
+    from PySide6.QtQml import qmlRegisterType
     from meshroom.ui.components.clipboard import ClipboardHelper
     from meshroom.ui.components.edge import EdgeMouseArea
     from meshroom.ui.components.filepath import FilepathHelper

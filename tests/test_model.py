@@ -1,6 +1,6 @@
 import pytest
 
-from PySide2.QtCore import QObject, Property
+from PySide6.QtCore import QObject, Property
 
 from meshroom.common.core import CoreDictModel
 from meshroom.common.qt import QObjectListModel, QTypedObjectListModel

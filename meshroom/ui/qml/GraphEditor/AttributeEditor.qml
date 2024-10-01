@@ -43,7 +43,9 @@ ListView {
             filterText: root.filterText
             objectsHideable: root.objectsHideable
             attribute: object
-            onDoubleClicked: root.attributeDoubleClicked(mouse, attr)
+            onDoubleClicked: function(mouse, attr) {
+                root.attributeDoubleClicked(mouse, attr)
+            }
         }
 
         onActiveChanged: height = active ? item.implicitHeight : -spacing

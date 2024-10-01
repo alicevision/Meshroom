@@ -968,12 +968,12 @@ Item {
                 })
             }
 
-            onDropped: {
+            onDropped: function(drop) {
                 if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
-                    // retrieve mouse position and convert coordinate system
+                    // Retrieve mouse position and convert coordinate system
                     // from pixel values to graph reference system
                     var mousePosition = mapToItem(draggable, drag.x, drag.y)
-                    // send the list of files,
+                    // Send the list of files,
                     // to create the corresponding nodes or open another scene
                     filesDropped(drop, mousePosition)
                 } else {

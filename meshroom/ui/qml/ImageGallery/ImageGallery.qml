@@ -442,12 +442,12 @@ Panel {
                 anchors.fill: parent
                 enabled: !m.readOnly && !intrinsicsFilterButton.checked
                 keys: ["text/uri-list"]
-                onEntered: {
+                onEntered: function(drag) {
                     nbDraggedFiles = drag.urls.length
                     filesByType = _reconstruction.getFilesByTypeFromDrop(drag.urls)
                     nbMeshroomScenes = filesByType["meshroomScenes"].length
                 }
-                onDropped: {
+                onDropped: function(drop) {
                     var augmentSfm = augmentArea.hovered
                     if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
                         root.filesDropped(filesByType, augmentSfm)

@@ -154,7 +154,7 @@ FocusScope {
 
                 camera: mainCamera
                 focus: scene3D.activeFocus
-                onMousePressed: {
+                onMousePressed: function(mouse) {
                     scene3D.forceActiveFocus()
                     if (mouse.button === Qt.LeftButton) {
                         if (!doubleClickTimer.running)
@@ -162,7 +162,7 @@ FocusScope {
                     } else
                         doubleClickTimer.stop()
                 }
-                onMouseReleased: {
+                onMouseReleased: function(mouse, moved) {
                     if (moving)
                         return
                     if (!moved && mouse.button === Qt.RightButton) {

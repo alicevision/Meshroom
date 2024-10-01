@@ -101,29 +101,29 @@ FocusScope {
     }
 
     function clear() {
-        source = ''
+        source = ""
     }
 
-    // slots
-    Keys.onPressed: {
+    // Slots
+    Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             root.fit()
             event.accepted = true
         }
     }
 
-    // mouse area
+    // Mouse area
     MouseArea {
         anchors.fill: parent
         property double factor: 1.2
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-        onPressed: {
+        onPressed: function(mouse) {
             imgContainer.forceActiveFocus()
             if (mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
-                drag.target = imgContainer // start drag
+                drag.target = imgContainer  // Start drag
         }
-        onReleased: {
-            drag.target = undefined // stop drag
+        onReleased: function(mouse) {
+            drag.target = undefined  // Stop drag
             if (mouse.button & Qt.RightButton) {
                 var menu = contextMenu.createObject(root)
                 menu.x = mouse.x
@@ -131,7 +131,7 @@ FocusScope {
                 menu.open()
             }
         }
-        onWheel: {
+        onWheel: function(wheel) {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1 / factor
 
             if (Math.min(imgContainer.width, imgContainer.image.height) * imgContainer.scale * zoomFactor < 10)
@@ -1155,7 +1155,7 @@ FocusScope {
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onClicked: {
+                                onClicked: function(mouse) {
                                     if (mouse.button & Qt.LeftButton) {
                                         fit()
                                     } else if (mouse.button & Qt.RightButton) {

@@ -26,7 +26,7 @@ ApplicationWindow {
         return t
     }
 
-    onClosing: {
+    onClosing: function(close) {
         // Make sure document is saved before exiting application
         close.accepted = false
         if (!ensureNotComputing())

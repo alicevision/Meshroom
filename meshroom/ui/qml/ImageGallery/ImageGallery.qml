@@ -305,7 +305,7 @@ Panel {
                     }
 
                     onRemoveRequest: sendRemoveRequest()
-                    Keys.onPressed: (event) => {
+                    Keys.onPressed: function(event) {
                         if (event.key === Qt.Key_Delete && event.modifiers === Qt.ShiftModifier) {
                             removeAllImages()
                         } else if (event.key === Qt.Key_Delete) {
@@ -375,7 +375,7 @@ Panel {
 
             // Keyboard shortcut to change current image group
             Keys.priority: Keys.BeforeItem
-            Keys.onPressed: {
+            Keys.onPressed: function(event) {
                 if (event.modifiers & Qt.AltModifier) {
                     if (event.key === Qt.Key_Right) {
                         _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
@@ -529,7 +529,7 @@ Panel {
 
             MouseArea {
                 anchors.fill: parent
-                onPressed: {
+                onPressed: function(mouse) {
                     if (mouse.button == Qt.LeftButton)
                         grid.forceActiveFocus()
                     mouse.accepted = false

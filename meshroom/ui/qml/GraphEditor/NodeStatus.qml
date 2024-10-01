@@ -26,7 +26,7 @@ FocusScope {
         anchors.fill: parent
 
         property string currentFile: (root.currentChunkIndex >= 0) ? root.currentChunk["statusFile"] : ""
-        property url source: Filepath.stringToUrl(currentFile)
+        property url sourceFile: Filepath.stringToUrl(currentFile)
 
         sourceComponent: statViewerComponent
     }
@@ -35,7 +35,7 @@ FocusScope {
         id: statViewerComponent
         Item {
             id: statusViewer
-            property url source: componentLoader.source
+            property url source: componentLoader.sourceFile
             property var lastModified: undefined
 
             onSourceChanged: {

@@ -29,7 +29,7 @@ FocusScope {
         anchors.fill: parent
 
         property string currentFile: (root.currentChunkIndex >= 0 && root.currentChunk) ? root.currentChunk["logFile"] : ""
-        property url source: Filepath.stringToUrl(currentFile)
+        property url sourceFile: Filepath.stringToUrl(currentFile)
 
         sourceComponent: textFileViewerComponent
     }
@@ -40,7 +40,7 @@ FocusScope {
         TextFileViewer {
             id: textFileViewer
             anchors.fill: parent
-            source: componentLoader.source
+            source: componentLoader.sourceFile
             autoReload: root.currentChunk !== undefined && root.currentChunk.statusName === "RUNNING"
             // source is set in fileSelector
         }

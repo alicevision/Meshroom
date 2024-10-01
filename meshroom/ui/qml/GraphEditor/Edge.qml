@@ -133,10 +133,14 @@ Item {
     EdgeMouseArea {
         id: edgeArea
         anchors.fill: parent
-        curveScale: cubic.ctrlPtDist / root.width  // normalize by width
+        curveScale: cubic.ctrlPtDist / root.width  // Normalize by width
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         thickness: root.thickness + 4
-        onPressed: root.pressed(arguments[0])   // can't get named args, use arguments array
-        onReleased: root.released(arguments[0])
+        onPressed: function(event) {
+            root.pressed(event)
+        }
+        onReleased: function(event) {
+            root.released(event)
+        }
     }
 }

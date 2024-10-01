@@ -79,7 +79,7 @@ ColumnLayout {
             id: chunkDelegate
             property var chunk: object
             text: index
-            width: parent ? parent.width : 0
+            width: ListView.view.width
             leftPadding: 8
             onClicked: {
                 chunksLV.forceActiveFocus()

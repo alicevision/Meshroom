@@ -406,7 +406,10 @@ RowLayout {
                     text: "Custom Color"
                     onClicked: {
                         if (checked) {
-                            _reconstruction.setAttribute(attribute, "#0000FF")
+                            if (colorText.text == "")
+                                _reconstruction.setAttribute(attribute, "#0000FF")
+                            else
+                                _reconstruction.setAttribute(attribute, colorText.text)
                         } else {
                             _reconstruction.setAttribute(attribute, "")
                         }
@@ -433,7 +436,7 @@ RowLayout {
                     width: colorText.width / 2
                     Layout.alignment: Qt.AlignLeft
                     visible: colorCheckbox.checked
-                    color: colorCheckbox.checked ? attribute.value : ""
+                    color: colorCheckbox.checked ? colorDialog.selectedColor : ""
 
                     MouseArea {
                         enabled: root.editable
@@ -445,9 +448,9 @@ RowLayout {
                 ColorDialog {
                     id: colorDialog
                     title: "Please choose a color"
-                    selectedColor: attribute.value
+                    selectedColor: colorText.text
                     onAccepted: {
-                        colorText.text = color
+                        colorText.text = colorDialog.selectedColor
                         // Artificially trigger change of attribute value
                         colorText.editingFinished()
                         close()

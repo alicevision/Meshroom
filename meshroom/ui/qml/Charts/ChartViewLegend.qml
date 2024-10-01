@@ -84,7 +84,7 @@ Flow {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
+                onClicked: function(mouse) {
                     if (mouse.modifiers & Qt.ControlModifier)
                         root.soloSeries(index)
                     else

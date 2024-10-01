@@ -63,7 +63,7 @@ FloatingPane {
             padding : 10
             colors: root.colors
             currentIndex: root.colorIndex
-            onColorPicked: root.colorOffset = colorIndex
+            onColorPicked: function(colorIndex) { root.colorOffset = colorIndex }
         }
 
         // Grid opacity slider

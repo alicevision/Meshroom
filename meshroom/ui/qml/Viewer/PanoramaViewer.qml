@@ -121,7 +121,7 @@ AliceVision.PanoramaViewer {
                     if (isEditable)
                         isRotating ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 }
-                onPositionChanged: {
+                onPositionChanged: function(mouse) {
                     // Send Mouse Coordinates to Float Images Viewers
                     idSelected = -1
                     for (var i = 0; i < repeater.model && isHighlightable; ++i) {
@@ -171,7 +171,7 @@ AliceVision.PanoramaViewer {
                     }
                 }
 
-                onPressed:{
+                onPressed: function(mouse) {
                     _reconstruction.beginModification("Panorama Manual Rotation")
                     isRotating = true
                     lastX = mouse.x
@@ -185,7 +185,7 @@ AliceVision.PanoramaViewer {
                     previous_roll = roll
                 }
 
-                onReleased: {
+                onReleased: function(mouse) {
                     _reconstruction.endModification()
                     isRotating = false
                     lastX = 0

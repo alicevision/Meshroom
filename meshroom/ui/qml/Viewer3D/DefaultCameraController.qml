@@ -58,7 +58,9 @@ Entity {
             _pressed = false
             mouseReleased(mouse, hasMoved)
         }
-        onClicked: function(mouse) { mouseClicked(mouse) }
+        onClicked: function(mouse) {
+            mouseClicked(mouse)
+        }
         onPositionChanged: function(mouse) {
             currentPosition.x = mouse.x
             currentPosition.y = mouse.y

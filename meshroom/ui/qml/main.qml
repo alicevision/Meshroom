@@ -1,8 +1,8 @@
 import QtCore
 
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Window 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Window
 import QtQuick.Dialogs
 
 import Qt.labs.platform 1.0 as Platform

@@ -1,11 +1,12 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
+import QtQuick
+import QtQuick.Controls
 import QtQuick.Controls.Material 2.12
+import QtQuick.Layouts
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
+
 import Controls 1.0
+import MaterialIcons 2.2
 import Utils 1.0
 
 FloatingPane {

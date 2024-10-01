@@ -121,12 +121,12 @@ Item {
         width: parent.width
         height: body.height
         drag.target: root
-        // small drag threshold to avoid moving the node by mistake
+        // Small drag threshold to avoid moving the node by mistake
         drag.threshold: 2
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onPressed: root.pressed(mouse)
-        onDoubleClicked: root.doubleClicked(mouse)
+        onPressed: function(mouse) { root.pressed(mouse) }
+        onDoubleClicked: function(mouse) { root.doubleClicked(mouse) }
         onEntered: root.entered()
         onExited: root.exited()
         drag.onActiveChanged: {
@@ -412,8 +412,8 @@ Item {
                                         property real globalX: root.x + nodeAttributes.x + outputs.x + outputLoader.x + outPin.x
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
 
-                                        onPressed: root.pressed(mouse)
-                                        onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
+                                        onPressed: function(mouse) { root.pressed(mouse) }
+                                        onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
 
                                         Component.onCompleted: attributePinCreated(attribute, outPin)
                                         onChildPinCreated: attributePinCreated(childAttribute, outPin)
@@ -449,10 +449,10 @@ Item {
                                         readOnly: root.readOnly || object.isReadOnly
                                         Component.onCompleted: attributePinCreated(attribute, inPin)
                                         Component.onDestruction: attributePinDeleted(attribute, inPin)
-                                        onPressed: root.pressed(mouse)
-                                        onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
-                                        onChildPinCreated: attributePinCreated(childAttribute, inPin)
-                                        onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
+                                        onPressed: function(mouse) { root.pressed(mouse) }
+                                        onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
+                                        onChildPinCreated: function(childAttribute, inPin) { attributePinCreated(childAttribute, inPin) }
+                                        onChildPinDeleted: function(childAttribute, inPin) { attributePinDeleted(childAttribute, inPin) }
                                     }
                                 }
                             }
@@ -512,10 +512,10 @@ Item {
                                             readOnly: Boolean(root.readOnly || object.isReadOnly)
                                             Component.onCompleted: attributePinCreated(attribute, inParamsPin)
                                             Component.onDestruction: attributePinDeleted(attribute, inParamsPin)
-                                            onPressed: root.pressed(mouse)
-                                            onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
-                                            onChildPinCreated: attributePinCreated(childAttribute, inParamsPin)
-                                            onChildPinDeleted: attributePinDeleted(childAttribute, inParamsPin)
+                                            onPressed: function(mouse) { root.pressed(mouse) }
+                                            onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
+                                            onChildPinCreated: function(childAttribute, inParamsPin) { attributePinCreated(childAttribute, inParamsPin) }
+                                            onChildPinDeleted: function(childAttribute, inParamsPin) { attributePinDeleted(childAttribute, inParamsPin) }
                                         }
                                     }
                                 }

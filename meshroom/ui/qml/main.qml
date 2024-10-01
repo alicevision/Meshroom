@@ -36,8 +36,6 @@ ApplicationWindow {
 
     palette: _PaletteManager.palette
 
-    // TODO: uncomment for Qt6, which correctly supports palette for disabled elements AND an alternate base
-    /*
     // QPalette is not convertible to QML palette (anymore)
     Component.onCompleted: {
         palette.alternateBase = _PaletteManager.alternateBase
@@ -60,7 +58,7 @@ ApplicationWindow {
         palette.disabled.highlightedText = _PaletteManager.disabledHighlightedText
         palette.disabled.text = _PaletteManager.disabledText
         palette.disabled.windowText = _PaletteManager.disabledWindowText
-    } */
+    }
 
     SystemPalette { id: activePalette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
@@ -157,12 +155,11 @@ ApplicationWindow {
     }
 
 
-    // TODO: uncomment for Qt6 to re-enable the alternative palette (the alternative palette and the disabled items currently cannot both be supported)
-    /* Action {
+    Action {
 
         shortcut: "Ctrl+Shift+P"
         onTriggered: _PaletteManager.togglePalette()
-    } */
+    }
 
     StackView {
         id: mainStack

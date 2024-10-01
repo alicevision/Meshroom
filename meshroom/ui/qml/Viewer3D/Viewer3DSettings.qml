@@ -29,12 +29,12 @@ Item {
     // Available render modes
     readonly property var renderModes: [ // Can't use ListModel because of MaterialIcons expressions
                          {"name": "Solid", "icon": MaterialIcons.crop_din },
-                         {"name": "Wireframe", "icon": MaterialIcons.details },
+                         /* {"name": "Wireframe", "icon": MaterialIcons.details }, */
                          {"name": "Textured", "icon": MaterialIcons.texture },
                          {"name": "Spherical Harmonics", "icon": MaterialIcons.brightness_7}
                      ]
     // Current render mode
-    property int renderMode: 2
+    property int renderMode: 1
 
     // Spherical Harmonics file
     property string shlFile: ""

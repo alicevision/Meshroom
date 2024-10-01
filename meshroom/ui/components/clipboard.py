@@ -1,5 +1,5 @@
-from PySide2.QtCore import Slot, QObject
-from PySide2.QtGui import QClipboard
+from PySide6.QtCore import Slot, QObject
+from PySide6.QtGui import QClipboard
 
 
 class ClipboardHelper(QObject):

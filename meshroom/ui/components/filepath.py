@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
-from PySide2.QtCore import QUrl, QFileInfo
-from PySide2.QtCore import QObject, Slot
+from PySide6.QtCore import QUrl, QFileInfo
+from PySide6.QtCore import QObject, Slot
 
 import os
 import glob

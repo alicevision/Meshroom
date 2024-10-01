@@ -6,8 +6,8 @@ from collections.abc import Iterable
 from multiprocessing.pool import ThreadPool
 from threading import Thread
 
-from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint
-from PySide2.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
+from PySide6.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint
+from PySide6.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
 
 import meshroom.core
 import meshroom.common

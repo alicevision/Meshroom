@@ -40,6 +40,7 @@ FocusScope {
     property bool fittedOnce: false
     property int previousWidth: -1
     property int previousHeight: -1
+    property int previousOrientationTag: 1
 
     QtObject {
         id: m
@@ -57,7 +58,7 @@ FocusScope {
         property variant imgMetadata: {
             // Metadata from FloatImage viewer
             // Directly read from the image file on disk
-            if (floatImageViewerLoader.active) {
+            if (floatImageViewerLoader.active && floatImageViewerLoader.item) {
                 return floatImageViewerLoader.item.metadata
             }
             // Use viewpoint metadata for the special case of the 8-bit viewer
@@ -154,27 +155,30 @@ FocusScope {
         }
     }
 
-    // functions
+    // Functions
     function fit() {
-        // make sure the image is ready for use
-        if (!imgContainer.image)
-            return
+        // Make sure the image is ready for use
+        if (!imgContainer.image || imgContainer.orientationTag == undefined) {
+            return false
+        }
 
-        // for Exif orientation tags 5 to 8, a 90 degrees rotation is applied
+        // For Exif orientation tags 5 to 8, a 90 degrees rotation is applied
         // therefore image dimensions must be inverted
         let dimensionsInverted = ["5", "6", "7", "8"].includes(imgContainer.orientationTag)
         let orientedWidth = dimensionsInverted ? imgContainer.image.height : imgContainer.image.width
         let orientedHeight = dimensionsInverted ? imgContainer.image.width : imgContainer.image.height
 
-        // fit oriented image
+        // Fit oriented image
         imgContainer.scale = Math.min(imgLayout.width / orientedWidth, root.height / orientedHeight)
         imgContainer.x = Math.max((imgLayout.width - orientedWidth * imgContainer.scale) * 0.5, 0)
         imgContainer.y = Math.max((imgLayout.height - orientedHeight * imgContainer.scale) * 0.5, 0)
 
-        // correct position when image dimensions are inverted
+        // Correct position when image dimensions are inverted
         // so that container center corresponds to image center
         imgContainer.x += (orientedWidth - imgContainer.image.width) * 0.5 * imgContainer.scale
         imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale
+
+        return true
     }
 
     function tryLoadNode(node) {
@@ -477,11 +481,9 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    
+
                     property real targetSize: Math.max(width, height) * imgContainer.scale
                     property real resizeRatio: imgContainer.scale
-
-                    
 
                     function sizeChanged() {
                         /* Image size is not updated through a single signal with the floatImage viewer, unlike
@@ -499,14 +501,17 @@ FocusScope {
                         var sizeValid = (width > 0) && (height > 0)
                         var layoutValid = (root.width > 50) && (root.height > 50)
                         var sizeChanged = (root.previousWidth != width) || (root.previousHeight != height)
-                        var sizeChanged = (root.previousWidth != width) || (root.previousHeight != height)
                         
                         if ((!root.fittedOnce && imgContainer.image && sizeValid && layoutValid) ||
                             (root.fittedOnce && sizeChanged && sizeValid && layoutValid)) {                            
-                            fit()
+                            var ret = fit()
+                            if (!ret)
+                                return
                             root.fittedOnce = true
                             root.previousWidth = width
                             root.previousHeight = height
+                            if (orientationTag != undefined)
+                                root.previousOrientationTag = orientationTag
                         }
                     }
 
@@ -519,6 +524,21 @@ FocusScope {
                         function onHeightChanged() {
                             floatImageViewerLoader.sizeChanged()
                         }
+                    }
+
+                    onOrientationTagChanged: {
+                        /* For images of the same width and height but with different orientations, the auto-fit
+                         * will not be triggered by the "widthChanged()" signal, so it needs to be triggered upon
+                         * either a change in the image's size or in its orientation. */
+                         if (orientationTag != undefined && root.previousOrientationTag != orientationTag) {
+                            var ret = fit()
+                            if (!ret)
+                                return
+                            root.fittedOnce = true
+                            root.previousWidth = width
+                            root.previousHeight = height
+                            root.previousOrientationTag = orientationTag
+                         }
                     }
 
                     onActiveChanged: {

@@ -134,7 +134,7 @@ Item {
         }
 
         delegate: RowLayout {
-            width: parent != null ? parent.width : undefined
+            width: ListView.view.width
             height: 18
             spacing: 3
 

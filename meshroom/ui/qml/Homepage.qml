@@ -22,7 +22,6 @@ Page {
         anchors.fill: parent
 
         Item {
-            
             SplitView.minimumWidth: 250
             SplitView.preferredWidth: 330
             SplitView.maximumWidth: 500

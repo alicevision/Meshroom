@@ -56,7 +56,8 @@ Dialog {
                 selectByMouse: true
                 text: "Version " + Qt.application.version + "\n"
                       + MeshroomApp.systemInfo["platform"] + " \n"
-                      + MeshroomApp.systemInfo["python"]
+                      + MeshroomApp.systemInfo["python"] + "\n"
+                      + MeshroomApp.systemInfo["pyside"]
             }
         }
 

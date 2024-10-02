@@ -4,6 +4,7 @@ import re
 import argparse
 import json
 
+from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
 from PySide6.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
 from PySide6.QtGui import QIcon
@@ -537,7 +538,8 @@ class MeshroomApp(QApplication):
         import sys
         return {
             'platform': '{} {}'.format(platform.system(), platform.release()),
-            'python': 'Python {}'.format(sys.version.split(" ")[0])
+            'python': 'Python {}'.format(sys.version.split(" ")[0]),
+            'pyside': 'PySide6 {}'.format(PySideVersion)
         }
 
     systemInfo = Property(QJsonValue, _systemInfo, constant=True)

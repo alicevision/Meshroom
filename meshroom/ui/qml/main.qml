@@ -119,11 +119,11 @@ ApplicationWindow {
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
-            if (_reconstruction.loadUrl(currentFile)) {
-                MeshroomApp.addRecentProjectFile(currentFile.toString())
-            }
             if (mainStack.currentItem instanceof Homepage) {
                 mainStack.push("Application.qml")
+            }
+            if (_reconstruction.loadUrl(currentFile)) {
+                MeshroomApp.addRecentProjectFile(currentFile.toString())
             }
         }
     }

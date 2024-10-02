@@ -373,10 +373,10 @@ Page {
                             Connections {
                                 target: projectDelegate
                                 function onClicked() {
-                                    if (!modelData["path"]){
+                                    if (!modelData["path"]) {
                                         initFileDialogFolder(openFileDialog)
                                         openFileDialog.open()
-                                    } else{
+                                    } else {
                                         // Open project
                                         mainStack.push("Application.qml")
                                         if (_reconstruction.loadUrl(modelData["path"])) {

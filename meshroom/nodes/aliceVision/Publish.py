@@ -28,6 +28,7 @@ This node allows to copy files into a specific folder.
             name="inputFiles",
             label="Input Files",
             description="Input files or folders' content to publish.",
+            exposed=True,
             group="",
         ),
         desc.File(

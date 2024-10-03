@@ -23,8 +23,10 @@ from meshroom.core import meshroomFolder
 from meshroom.core.graph import loadGraph
 from meshroom.core import hashValue
 
-#where the executables are (eg meshroom compute)
+#executables def
 meshroomBinDir = os.path.abspath(os.path.join(meshroomFolder, "..", "bin"))
+condaBin = "conda"
+dockerBin = "docker"
 
 class EnvType(Enum):
     """
@@ -32,6 +34,7 @@ class EnvType(Enum):
     """
     NONE = 0
     PIP = 1
+    REZ = 2
     VENV = 10
     CONDA = 20
     DOCKER = 30
@@ -63,7 +66,7 @@ def _dockerImageExists(image_name, tag='latest'):
     Check if the desired image:tag exists 
     """
     try: 
-        result = subprocess.run( ['docker', 'images', image_name, '--format', '{{.Repository}}:{{.Tag}}'], 
+        result = subprocess.run( [dockerBin, 'images', image_name, '--format', '{{.Repository}}:{{.Tag}}'], 
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True )
         if result.returncode != 0: 
             return False 
@@ -84,8 +87,8 @@ def _condaEnvExist(envName):
     """
     Checks if a specified env exists
     """
-    cmd = "conda list --name "+envName
-    return os.system(cmd) == 0     
+    cmd = condaBin+" list --name "+envName
+    return os.system(cmd) == 0    
 
 def _formatPluginName(pluginName):
     """
@@ -115,6 +118,23 @@ def _venvExists(envName):
     Check if the following virtual env exists
     """
     return os.path.isdir(getVenvPath(envName))
+
+def getActiveRezPackages():
+    """
+    Returns a list containing the active explicit packages
+    """
+    packages = []
+    if 'REZ_REQUEST' in os.environ:
+        nondefpackages = [n.split("-")[0] for n in os.environ.get('REZ_REQUEST', '').split()]
+        resolvedPackages = os.environ.get('REZ_RESOLVE', '').split()
+        resolvedVersions = {}
+        for r in resolvedPackages:
+            if r.startswith('~'):
+                continue
+            v = r.split('-')
+            resolvedVersions[v[0]] = v[1]
+        packages = [p+"-"+resolvedVersions[p] for p in resolvedVersions.keys() if p in nondefpackages]
+    return packages
 
 def installPlugin(pluginUrl):
     """
@@ -219,7 +239,7 @@ def isBuilt(nodeDesc):
     """
     Check if the env needs to be build for a specific nodesc.
     """
-    if nodeDesc.envType == EnvType.NONE:
+    if nodeDesc.envType in [EnvType.NONE, EnvType.REZ]:
         return True
     elif nodeDesc.envType == EnvType.PIP:
         #NOTE: could find way to check for installed packages instead of rebuilding all the time
@@ -238,7 +258,7 @@ def build(nodeDesc):
     if not hasattr(nodeDesc, 'envFile'):
         raise RuntimeError("The nodedesc has no env file")
     returnValue = 0
-    if nodeDesc.envType == EnvType.NONE:
+    if nodeDesc.envType in [EnvType.NONE, EnvType.REZ]:
         pass
     elif nodeDesc.envType == EnvType.PIP:
         #install packages in the same python as meshroom
@@ -263,14 +283,14 @@ def build(nodeDesc):
     elif nodeDesc.envType == EnvType.CONDA:
         #build a conda env from a yaml file
         logging.info("Creating conda env "+nodeDesc._envName+" from "+nodeDesc.envFile)
-        makeEnvCommand = (  _cleanEnvVarsRez()+" conda config --set channel_priority strict ; "
-                            +" conda env create -v -v  --name "+nodeDesc._envName
+        makeEnvCommand = (  _cleanEnvVarsRez()+condaBin+" config --set channel_priority strict ; "
+                            +condaBin+"  env create -v -v  --name "+nodeDesc._envName
                             +" --file "+nodeDesc.envFile+" ")
         logging.info("Making conda env")
         logging.info(makeEnvCommand)
         returnValue = os.system(makeEnvCommand)
         #find path to env's folder and add symlink to meshroom
-        condaPythonExecudable=subprocess.check_output(_cleanEnvVarsRez()+"conda run -n "+nodeDesc._envName
+        condaPythonExecudable=subprocess.check_output(_cleanEnvVarsRez()+condaBin+" run -n "+nodeDesc._envName
                                                         +" python -c \"import sys; print(sys.executable)\"",   
                                                         shell=True).strip().decode('UTF-8')
         condaPythonLibFolder=os.path.join(os.path.dirname(condaPythonExecudable), '..', 'lib')
@@ -281,7 +301,7 @@ def build(nodeDesc):
     elif nodeDesc.envType == EnvType.DOCKER:
         #build docker image 
         logging.info("Creating image "+nodeDesc._envName+" from "+ nodeDesc.envFile)
-        buildCommand = "docker build -f "+nodeDesc.envFile+" -t "+nodeDesc._envName+" "+os.path.dirname(nodeDesc.envFile)
+        buildCommand = dockerBin+" build -f "+nodeDesc.envFile+" -t "+nodeDesc._envName+" "+os.path.dirname(nodeDesc.envFile)
         logging.info("Building with "+buildCommand+" ...")
         returnValue = os.system(buildCommand)
         logging.info("Done")
@@ -316,9 +336,11 @@ def getCommandLine(chunk):
         envExe = getVenvExe(envPath)
         #make sure meshroom in in pythonpath and that we call the right python 
         cmdPrefix = _cleanEnvVarsRez()+pythonsetMeshroomPath+" "+envExe + " "+ meshroomCompute +" " 
+    elif nodeDesc.envType == EnvType.REZ:
+        cmdPrefix = "rez env "+" ".join(getActiveRezPackages())+" "+nodeDesc._envName+" -- "+ meshroomCompute +" " 
     elif nodeDesc.envType == EnvType.CONDA:
         #NOTE: system env vars are not passed to conda run, we installed it 'manually' before
-        cmdPrefix = _cleanEnvVarsRez()+" conda run --cwd "+os.path.join(meshroomFolder, "..")\
+        cmdPrefix = _cleanEnvVarsRez()+condaBin+"  run --cwd "+os.path.join(meshroomFolder, "..")\
                     +" --no-capture-output -n "+nodeDesc._envName+" "+" python "+meshroomCompute
     elif nodeDesc.envType == EnvType.DOCKER:
         #path to the selected plugin
@@ -337,7 +359,7 @@ def getCommandLine(chunk):
         if chunk.node.nodeDesc.gpu != desc.Level.NONE:
             runtimeArg="--runtime=nvidia --gpus all"
         #compose cl 
-        cmdPrefix = "docker run -it --rm "+runtimeArg+" "+mountCommand+" "+envCommand+" "+nodeDesc._envName +" \"python /meshroomBinDir/meshroom_compute "
+        cmdPrefix = dockerBin+" run -it --rm "+runtimeArg+" "+mountCommand+" "+envCommand+" "+nodeDesc._envName +" \"python /meshroomBinDir/meshroom_compute "
         meshroomComputeArgs="--node "+chunk.node.name+" "+chunk.node.graph.filepath+"\""
     else:
         raise RuntimeError("NodeType not recognised")

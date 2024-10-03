@@ -556,7 +556,6 @@ FocusScope {
                                 'surface.gridColor': Qt.binding(function() { return lensDistortionImageToolbar.color }),
                                 'surface.subdivisions': Qt.binding(function() { return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue }),
                                 'viewerTypeString': Qt.binding(function() { return displayLensDistortionViewer.checked ? "distortion" : "hdr" }),
-                                'sfmRequired': Qt.binding(function() { return displayLensDistortionViewer.checked ? true : false }),
                                 'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
                                 'canBeHovered': false,
                                 'idView': Qt.binding(function() { return ((root.displayedNode && !root.displayedNode.hasSequenceOutput && _reconstruction) ? _reconstruction.selectedViewId : -1) }),

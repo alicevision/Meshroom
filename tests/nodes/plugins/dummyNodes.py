@@ -86,6 +86,22 @@ class DummyNone(PluginNode):
         chunk.logManager.start("info")
         chunk.logger.info(np.abs(-1))
 
+class DummyRez(PluginNode):
+
+    category = 'Dummy'
+    documentation = ''' '''
+
+    envType = EnvType.REZ
+    envFile = "numpy"
+
+    inputs = []
+    outputs = []
+
+    def processChunk(self, chunk):
+        import numpy as np
+        chunk.logManager.start("info")
+        chunk.logger.info(np.abs(-1))
+
 #Command line node
         
 class DummyCondaCL(PluginCommandLineNode):

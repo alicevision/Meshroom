@@ -236,7 +236,8 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: 2
             color: {
-                if ((!object.hasOutputConnections && object.enabled) && outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
+                if (object.enabled && (outputConnectMA.containsMouse || outputConnectMA.drag.active ||
+                                       (outputDropArea.containsDrag && outputDropArea.acceptableDrop)))
                     return Colors.sysPalette.highlight
                 return Colors.sysPalette.text
             }

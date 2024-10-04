@@ -12,6 +12,8 @@ Dialog {
     property alias icon: iconLabel
     property alias canCopy: copyButton.visible
     property alias preset: presets.state
+    property alias content: contentComponent.sourceComponent
+    property alias textMetrics: textMetrics
 
     default property alias children: layout.children
 
@@ -47,7 +49,6 @@ Dialog {
         }
 
         RowLayout {
-            width: parent.width
             // Icon
             Label {
                 id: iconLabel
@@ -58,7 +59,6 @@ Dialog {
 
             Label {
                 id: titleLabel
-                Layout.fillWidth: true
                 text: title + " - " + Qt.application.name + " " + Qt.application.version
                 font.bold: true
             }
@@ -75,7 +75,7 @@ Dialog {
         }
     }
 
-    ColumnLayout {
+    contentItem: ColumnLayout {
         id: layout
         // Text
         spacing: 12
@@ -84,6 +84,9 @@ Dialog {
             font.bold: true
             visible: text != ""
             onLinkActivated: function(link) { Qt.openUrlExternally(link) }
+
+            Layout.preferredWidth: titleLabel.width
+            wrapMode: Text.WordWrap
         }
         // Detailed text
         Label {
@@ -91,13 +94,31 @@ Dialog {
             text: text
             visible: text != ""
             onLinkActivated: function(link) { Qt.openUrlExternally(link) }
+
+            Layout.preferredWidth: titleLabel.width
+            wrapMode: Text.WordWrap
         }
         // Additional helper text
         Label {
             id: helperLabel
             visible: text != ""
             onLinkActivated: function(link) { Qt.openUrlExternally(link) }
+
+            Layout.preferredWidth: titleLabel.width
+            wrapMode: Text.WordWrap
         }
+
+        Loader {
+            id: contentComponent
+
+            Layout.fillWidth: true
+        }
+    }
+
+    TextMetrics {
+        id: textMetrics
+
+        text: "A"
     }
 
     StateGroup {

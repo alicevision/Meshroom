@@ -64,10 +64,7 @@ class Attribute(BaseObject):
         # invalidation value for output attributes
         self._invalidationValue = ""
 
-        self._value = None
         self.initValue()
-
-        self.valueChanged.connect(self.onChanged)
 
     @property
     def node(self):
@@ -250,6 +247,7 @@ class Attribute(BaseObject):
     def initValue(self):
         if self.desc._valueType is not None:
             self._value = self.desc._valueType()
+        self.valueChanged.connect(self.onChanged)
 
     def resetToDefaultValue(self, emitSignals=True):
         self._set_value(copy.copy(self.defaultValue()), emitSignals=emitSignals)

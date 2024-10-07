@@ -19,7 +19,7 @@ Panel {
     property bool isCompatibilityNode: node && node.compatibilityIssue !== undefined
     property string nodeStartDateTime: ""
     readonly property bool isPlugin: node ? node.isPlugin : false
-    readonly property bool isNotBuilt: node ? (!node.isBuilt) : false
+    property bool isNotBuilt: node ? (!node.isBuiltStatus) : false
 
     signal attributeDoubleClicked(var mouse, var attribute)
     signal upgradeRequest()

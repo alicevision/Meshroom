@@ -1418,7 +1418,11 @@ class BaseNode(BaseObject):
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
 
     isPlugin = Property(bool, lambda self: self.nodeDesc.isPlugin, constant=True)
-    isBuilt  = Property(bool, lambda self: self.nodeDesc.isBuilt,  constant=True)
+    
+    isEnvBuild = (not isPlugin) #init build status false its not a plugin  
+    buildStatusChanged = Signal() #event to notify change in status
+    isBuiltStatus  = Property(bool, lambda self: self.isEnvBuild,  notify = buildStatusChanged)
+    # isBuiltStatus  = Property(bool, lambda self: self.nodeDesc.isBuilt,  constant=True)
 
 class Node(BaseNode):
     """

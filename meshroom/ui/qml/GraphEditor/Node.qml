@@ -21,7 +21,7 @@ Item {
     readonly property bool isCompatibilityNode: node ? node.hasOwnProperty("compatibilityIssue") : false
     /// Whether the node is a plugin that needs to be build
     readonly property bool isPlugin: node ? node.isPlugin : false
-    property bool isNotBuilt: node ? (!node.isBuilt) : false
+    property bool isNotBuilt: node ? (!node.isBuiltStatus) : false
     /// Mouse related states
     property bool mainSelected: false
     property bool selected: false

@@ -44,6 +44,7 @@ class FilesModTimePollerThread(QObject):
         self._stopFlag = Event()
         self._refreshInterval = 5  # refresh interval in seconds
         self._files = []
+        self._nodes = []
         if submitters:
             self._filePollerRefresh = PollerRefreshStatus.MINIMAL_ENABLED
         else:
@@ -53,7 +54,7 @@ class FilesModTimePollerThread(QObject):
         self._threadPool.terminate()
         self._threadPool.join()
 
-    def start(self, files=None):
+    def start(self, files=None, nodes=None):
         """ Start polling thread.
 
         Args:
@@ -66,6 +67,7 @@ class FilesModTimePollerThread(QObject):
             return
         self._stopFlag.clear()
         self._files = files or []
+        self._nodes = nodes or []
         self._thread = Thread(target=self.run)
         self._thread.start()
 
@@ -77,6 +79,15 @@ class FilesModTimePollerThread(QObject):
         """
         with self._mutex:
             self._files = files
+
+    def setNodes(self, nodes):
+        """ Set the list of nodes to monitor
+
+        Args:
+            nodes: the list of nodes to monitor
+        """
+        with self._mutex:
+            self._nodes = nodes
 
     def stop(self):
         """ Request polling thread to stop. """
@@ -94,6 +105,13 @@ class FilesModTimePollerThread(QObject):
         except OSError:
             return -1
 
+    @staticmethod
+    def updatePluginEnvStatus(n):
+        """ Will update the status of the plugin env """
+        print("Refreshing "+str(n))
+        n.isEnvBuild=n.nodeDesc.isBuilt
+        n.buildStatusChanged.emit()
+
     def run(self):
         """ Poll watched files for last modification time. """
         while not self._stopFlag.wait(self._refreshInterval):
@@ -103,6 +121,8 @@ class FilesModTimePollerThread(QObject):
             with self._mutex:
                 if files == self._files:
                     self.timesAvailable.emit(times)
+            #update plugin nodes
+            _ = self._threadPool.map(self.updatePluginEnvStatus, self._nodes)
 
     def onFilePollerRefreshChanged(self, value):
         """ Stop or start the file poller depending on the new refresh status. """
@@ -115,7 +135,6 @@ class FilesModTimePollerThread(QObject):
 
     filePollerRefresh = Property(int, lambda self: self._filePollerRefresh.value, constant=True)
     filePollerRefreshReady = Signal()  # The refresh status has been updated and is ready to be used
-
 
 class ChunksMonitor(QObject):
     """
@@ -147,6 +166,8 @@ class ChunksMonitor(QObject):
         self.monitorableChunks = chunks
         files, monitoredChunks = self.watchedStatusFiles
         self._filesTimePoller.setFiles(files)
+        pluginNodes = [c.node for c in chunks if c.node.isPlugin]
+        self._filesTimePoller.setNodes(pluginNodes)
         self.monitoredChunks = monitoredChunks
 
     def stop(self):
@@ -172,7 +193,8 @@ class ChunksMonitor(QObject):
         elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
             for c in self.monitorableChunks:
                 # When a chunk's status is ERROR, it may be externally re-submitted and it should thus still be monitored
-                if c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING or c._status.status is Status.ERROR:
+                #Plugin nodes are always moniotored 
+                if c.node.isPlugin or c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING or c._status.status is Status.ERROR:
                     files.append(c.statusFile)
                     chunks.append(c)
         return files, chunks

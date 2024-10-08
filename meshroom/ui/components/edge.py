@@ -9,8 +9,8 @@ class MouseEvent(QObject):
     """
     def __init__(self, evt):
         super(MouseEvent, self).__init__()
-        self._x = evt.x()
-        self._y = evt.y()
+        self._x = evt.position().x()
+        self._y = evt.position().y()
         self._button = evt.button()
         self._modifiers = evt.modifiers()
 

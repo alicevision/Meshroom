@@ -41,7 +41,7 @@ Item {
 
     Shape {
         anchors.fill: parent
-        // cause rendering artifacts when enabled (and don't support hot reload really well)
+        // Cause rendering artifacts when enabled (and don't support hot reload really well)
         vendorExtensionsEnabled: false
         opacity: 0.7
 
@@ -54,7 +54,7 @@ Item {
             strokeColor: "#3E3E3E"
             strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
             strokeWidth: 1
-            // final visual width of this path (never below 1)
+            // Final visual width of this path (never below 1)
             readonly property real visualWidth: Math.max(strokeWidth, 1)
             dashPattern: [6 / visualWidth, 4 / visualWidth]
             capStyle: ShapePath.RoundCap
@@ -81,7 +81,7 @@ Item {
             strokeColor: root.isForLoop ? root.color : "transparent"
             strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
             strokeWidth: root.thickness
-            // final visual width of this path (never below 1)
+            // Final visual width of this path (never below 1)
             readonly property real visualWidth: Math.max(strokeWidth, 1)
             dashPattern: [6 / visualWidth, 4 / visualWidth]
             capStyle: ShapePath.RoundCap
@@ -99,7 +99,7 @@ Item {
         }
     }
     Item {
-        // place the label at the middle of the edge
+        // Place the label at the middle of the edge
         x: (root.startX + root.endX) / 2
         y: (root.startY + root.endY) / 2
         visible: root.isForLoop
@@ -127,13 +127,11 @@ Item {
                 onClicked: root.pressed(arguments[0])
             }
         }
-
     }
 
     EdgeMouseArea {
         id: edgeArea
         anchors.fill: parent
-        curveScale: cubic.ctrlPtDist / root.width  // Normalize by width
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         thickness: root.thickness + 4
         onPressed: function(event) {
@@ -141,6 +139,13 @@ Item {
         }
         onReleased: function(event) {
             root.released(event)
+        }
+
+        Component.onCompleted: {
+            /* The curve scale must be set only once the component has been fully created, so
+             * that all the events following the update of the curve scale can be taken into
+             * account */
+            curveScale = cubic.ctrlPtDist / root.width  // Normalize by width
         }
     }
 }

@@ -14,9 +14,6 @@ Entity {
     property real translateSpeed: 75.0
     property real tiltSpeed: 500.0
     property real panSpeed: 500.0
-    readonly property bool moving: actionLMB.active
-    readonly property bool panning: (keyboardHandler._pressed && actionLMB.active && actionShift.active) || actionMMB.active
-    readonly property bool zooming: keyboardHandler._pressed && actionRMB.active && actionAlt.active
     property alias focus: keyboardHandler.focus
     readonly property bool pickingActive: actionControl.active && keyboardHandler._pressed
     property alias rotationSpeed: trackball.rotationSpeed
@@ -24,6 +21,10 @@ Entity {
     property alias trackballSize: trackball.trackballSize
 
     property bool loseMouseFocus: false  // Must be changed by other entities when they want to take mouse focus
+
+    property bool moving: false
+    property bool panning: false
+    property bool zooming: false
 
     readonly property alias pressed: mouseHandler._pressed
     signal mousePressed(var mouse)
@@ -68,7 +69,12 @@ Entity {
             const dt = 0.02
             var d
 
-            if (panning) {  // Translate
+            root.moving = mouse.buttons & Qt.LeftButton
+            root.panning = (mouse.buttons & Qt.MiddleButton)
+            var panningAlt = actionShift.active && (mouse.buttons & Qt.LeftButton)
+            root.zooming = actionAlt.active && (mouse.buttons & Qt.RightButton)
+
+            if (panning || panningAlt) {  // Translate
                 d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03
                 var tx = axisMX.value * root.translateSpeed * d
                 var ty = axisMY.value * root.translateSpeed * d
@@ -76,7 +82,7 @@ Entity {
                 root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt))
                 return
             }
-            if (moving){  // Trackball rotation
+            if (moving) {  // Trackball rotation
                 trackball.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition, dt)
                 mouseHandler.lastPosition = mouseHandler.currentPosition
                 mouseHandler.hasMoved = true

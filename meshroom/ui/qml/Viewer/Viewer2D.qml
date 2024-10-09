@@ -624,9 +624,12 @@ FocusScope {
                         source: getImageFile()
                         onStatusChanged: {
                             // Update cache source when image is loaded
+                            imageStatus = status
                             if (status === Image.Ready)
                                 qtImageViewerCache.source = source
                         }
+
+                        property var imageStatus: Image.Ready
 
                         // Image cache of the last loaded image
                         // Only visible when the main one is loading, to maintain a displayed image for smoother transitions

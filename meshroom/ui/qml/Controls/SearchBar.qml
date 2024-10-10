@@ -4,10 +4,10 @@ import QtQuick.Layouts
 
 import MaterialIcons 2.2
 
-
 /**
  * Basic SearchBar component with an appropriate icon and a TextField.
  */
+
 FocusScope {
     property alias textField: field
     property alias text: field.text
@@ -36,7 +36,7 @@ FocusScope {
             Layout.fillWidth: true
             selectByMouse: true
 
-            // ensure the field has focus when the text is modified
+            // Ensure the field has focus when the text is modified
             onTextChanged: {
                 forceActiveFocus()
             }

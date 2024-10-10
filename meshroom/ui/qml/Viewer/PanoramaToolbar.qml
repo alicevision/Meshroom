@@ -32,7 +32,7 @@ FloatingPane {
 
     DoubleValidator {
         id: doubleValidator
-        locale: 'C' // use '.' decimal separator disregarding of the system locale
+        locale: 'C'  // Use '.' decimal separator disregarding of the system locale
     }
 
     RowLayout {
@@ -132,7 +132,6 @@ FloatingPane {
                 Layout.fillWidth: false
                 Layout.maximumWidth: 50
 
-
                 validator: DoubleValidator {
                     bottom: Math.min(speedSpinBox.from, speedSpinBox.to)
                     top: Math.max(speedSpinBox.from, speedSpinBox.to)
@@ -165,7 +164,6 @@ FloatingPane {
                 Layout.fillWidth: false
                 Layout.maximumWidth: 50
 
-
                 validator: DoubleValidator {
                     bottom: Math.min(downscaleSpinBox.from, downscaleSpinBox.to)
                     top: Math.max(downscaleSpinBox.from, downscaleSpinBox.to)
@@ -180,8 +178,8 @@ FloatingPane {
                 }
             }
         }
-
     }
+
     TextMetrics {
         id: textMetrics_subdivisionsValue
         font: subdivisionsLabel.font

@@ -10,6 +10,7 @@ import Utils 1.0
  * FeaturesInfoOverlay is an overlay that displays info and
  * provides controls over a FeaturesViewer component.
  */
+
 FloatingPane {
     id: root
 
@@ -65,7 +66,10 @@ FloatingPane {
                             ComboBox {
                                 id: featureDisplayModeCB
                                 flat: true
-                                ToolTip.text: "Feature Display Mode:\n* Points: Simple points.\n* Square: Scaled filled squares.\n* Oriented Square: Scaled and oriented squares."
+                                ToolTip.text: "Feature Display Mode:\n" +
+                                              "* Points: Simple points.\n" +
+                                              "* Square: Scaled filled squares.\n" +
+                                              "* Oriented Square: Scaled and oriented squares."
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
@@ -81,7 +85,10 @@ FloatingPane {
                             ComboBox {
                                 id: trackDisplayModeCB
                                 flat: true
-                                ToolTip.text: "Track Display Mode:\n* Lines Only: Only track lines.\n* Current Matches: Track lines with current matches / landmarks.\n* All Matches: Track lines with all matches / landmarks."
+                                ToolTip.text: "Track Display Mode:\n" +
+                                              "* Lines Only: Only track lines.\n" +
+                                              "* Current Matches: Track lines with current matches/landmarks.\n" +
+                                              "* All Matches: Track lines with all matches / landmarks."
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
@@ -152,7 +159,8 @@ FloatingPane {
                             }
                             SpinBox {
                                 id: timeWindowSB
-                                ToolTip.text: "Time Window: The number of frames to consider for tracks display.\ne.g. With time window set at x, tracks will start at current frame - x and they will end at  current frame + x."
+                                ToolTip.text: "Time Window: The number of frames to consider for tracks display.\n" +
+                                              "e.g. With time window set at x, tracks will start at current frame - x and they will end at  current frame + x."
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight

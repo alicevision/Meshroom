@@ -8,17 +8,18 @@ import Utils 1.0
 
 /**
  * CompatibilityManager summarizes and allows to resolve compatibility issues.
-*/
+ */
+
 MessageDialog {
     id: root
 
-    // the UIGraph instance
+    // The UIGraph instance
     property var uigraph
-    // alias to underlying compatibilityNodes model
+    // Alias to underlying compatibilityNodes model
     readonly property var nodesModel: uigraph ? uigraph.graph.compatibilityNodes : undefined
-    // the total number of compatibility issues
+    // The total number of compatibility issues
     readonly property int issueCount: (nodesModel !== undefined && nodesModel !== null) ? nodesModel.count : 0
-    // the number of CompatibilityNodes that can be upgraded
+    // The number of CompatibilityNodes that can be upgraded
     readonly property int upgradableCount: {
         var count = 0
         for (var i = 0; i < issueCount; ++i) {
@@ -28,7 +29,7 @@ MessageDialog {
         return count
     }
 
-    // override MessageDialog.getAsString to add compatibility report
+    // Override MessageDialog.getAsString to add compatibility report
     function getAsString() {
         var t = asString + "\n"
         t += '-------------------------\n'

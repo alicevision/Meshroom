@@ -143,8 +143,7 @@ ApplicationWindow {
     // Check and return whether no local computation is in progress
     function ensureNotComputing()
     {
-        if (_reconstruction.computingLocally)
-        {
+        if (_reconstruction.computingLocally) {
             // Open a warning dialog to ask for computation to be stopped
             mainStack.currentItem.computingAtExitDialog.open()
             return false

@@ -1,8 +1,7 @@
 .pragma library
 
-
 function intToString(v) {
-    // use EN locale to get comma separated thousands
+    // Use EN locale to get comma separated thousands
     // + remove automatically added trailing decimals
     // (this 'toLocaleString' does not take any option)
     return v.toLocaleString(Qt.locale('en-US')).split('.')[0]
@@ -10,8 +9,8 @@ function intToString(v) {
 
 // Convert a plain text to an html escaped string.
 function plainToHtml(t) {
-    var escaped = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')  // escape text
-    return escaped.replace(/\n/g, '<br>')  // replace line breaks
+    var escaped = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')  // Escape text
+    return escaped.replace(/\n/g, '<br>')  // Replace line breaks
 }
 
 function divmod(x, y) {
@@ -41,8 +40,7 @@ function sec2timecode(timeSeconds) {
 }
 
 function sec2timeStr(timeSeconds) {
-    // Need to decide the rounding precision first
-    // to propagate the right values
+    // Need to decide the rounding precision first to propagate the right values
     if (timeSeconds >= 60.0) {
         timeSeconds = Math.round(timeSeconds)
     } else {
@@ -57,7 +55,7 @@ function sec2timeStr(timeSeconds) {
         timeStr += timeObj.minutes + "m"
     }
     if (timeObj.hours === 0) {
-        // seconds only matter if the elapsed time is less than 1 hour
+        // Seconds only matter if the elapsed time is less than 1 hour
         if (timeObj.minutes === 0) {
             // If less than a minute, keep millisecond precision
             timeStr += timeObj.seconds.toFixed(2) + "s"

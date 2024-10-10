@@ -8,18 +8,19 @@ import Utils 1.0
 import Controls 1.0
 
 /**
-  Instantiate a control to visualize and edit an Attribute based on its type.
-*/
+ * Instantiate a control to visualize and edit an Attribute based on its type.
+ */
+
 RowLayout {
     id: root
 
     property variant attribute: null
-    property bool readOnly: false // whether the attribute's value can be modified
+    property bool readOnly: false  // Whether the attribute's value can be modified
     property bool objectsHideable: true
     property string filterText: ""
 
-    property alias label: parameterLabel  // accessor to the internal Label (attribute's name)
-    property int labelWidth               // shortcut to set the fixed size of the Label
+    property alias label: parameterLabel  // Accessor to the internal Label (attribute's name)
+    property int labelWidth               // Shortcut to set the fixed size of the Label
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
@@ -91,10 +92,10 @@ RowLayout {
                     delay: 800
                 }
 
-                // make label bold if attribute's value is not the default one
+                // Make label bold if attribute's value is not the default one
                 font.bold: !object.isOutput && !object.isDefault
 
-                // make label italic if attribute is a link
+                // Make label italic if attribute is a link
                 font.italic: object.isLink
 
                 MouseArea {
@@ -295,7 +296,7 @@ RowLayout {
                     anchors.fill: parent
                     acceptedButtons: Qt.RightButton
                     onClicked: function(mouse) {
-                        // Do not loose the selection during the right click
+                        // Do not lose the selection during the right click
                         textField.persistentSelection = true
                         // We store the status of the activeFocus before opening the popup
                         textField.memoryActiveFocus = textField.activeFocus
@@ -321,7 +322,7 @@ RowLayout {
                                     Clipboard.clear()
                                     Clipboard.setText(attribute.value)
                                 } else {
-                                    // copy selection only
+                                    // Copy selection only
                                     textField.copy()
                                 }
                             }
@@ -331,12 +332,12 @@ RowLayout {
                             enabled: Clipboard.getText() != "" && !readOnly
                             onTriggered: {
                                 if (textField.memoryActiveFocus) {
-                                    // replace the selected text with the clipboard
+                                    // Replace the selected text with the clipboard
                                     // or if there is no selection insert at the cursor position
                                     var before = textField.text.substr(0, textField.selectionStart)
                                     var after = textField.text.substr(textField.selectionEnd, textField.text.length)
                                     setTextFieldAttribute(before + Clipboard.getText() + after)
-                                    // set the cursor at the end of the added text
+                                    // Set the cursor at the end of the added text
                                     textField.cursorPosition = before.length + Clipboard.getText().length
                                 } else {
                                     setTextFieldAttribute(Clipboard.getText())
@@ -473,7 +474,7 @@ RowLayout {
                 inputModel: attribute.values
 
                 Component.onCompleted: {
-                    // if value not in list, override the text and precise it is not valid
+                    // If value not in list, override the text and precise it is not valid
                     var idx = find(attribute.value)
                     if (idx === -1) {
                         displayText = attribute.value
@@ -490,10 +491,10 @@ RowLayout {
                 Connections {
                     target: attribute
                     function onValueChanged() {
-                        // when reset, clear and find the current index
+                        // When reset, clear and find the current index
                         // but if only reopen the combo box, keep the current value
                         
-                        //convert all values of desc values as string
+                        // Convert all values of desc values as string
                         var valuesAsString = attribute.values.map(function(value) {
                             return value.toString()
                         })
@@ -521,9 +522,9 @@ RowLayout {
                         onToggled: {
                             var t = attribute.value
                             if (!checked) {
-                                t.splice(t.indexOf(modelData), 1) // remove element
+                                t.splice(t.indexOf(modelData), 1)  // Remove element
                             } else {
-                                t.push(modelData) // add element
+                                t.push(modelData)  // Add element
                             }
                             _reconstruction.setAttribute(attribute, t)
                         }
@@ -541,12 +542,12 @@ RowLayout {
                     }
                     DoubleValidator {
                         id: doubleValidator
-                        locale: 'C'  // use '.' decimal separator disregarding the system locale
+                        locale: 'C'  // Use '.' decimal separator disregarding the system locale
                     }
                     implicitWidth: 100
                     Layout.fillWidth: !slider.active
                     enabled: root.editable
-                    // cast value to string to avoid intrusive scientific notations on numbers
+                    // Cast value to string to avoid intrusive scientific notations on numbers
                     property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : attribute.value)
                     text: displayValue
                     selectByMouse: true
@@ -698,7 +699,7 @@ RowLayout {
                                                {
                                                    'model': Qt.binding(function() { return attribute.value }),
                                                    'readOnly': Qt.binding(function() { return root.readOnly }),
-                                                   'labelWidth': 100, // reduce label width for children (space gain)
+                                                   'labelWidth': 100,  // Reduce label width for children (space gain)
                                                    'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
                                                    'filterText': Qt.binding(function() { return root.filterText }),
                                                })
@@ -714,12 +715,12 @@ RowLayout {
                 TextField {
                     implicitWidth: 100
                     enabled: root.editable
-                    // cast value to string to avoid intrusive scientific notations on numbers
+                    // Cast value to string to avoid intrusive scientific notations on numbers
                     property string displayValue: String(slider.pressed ? slider.formattedValue : attribute.value)
                     text: displayValue
                     selectByMouse: true
                     validator: DoubleValidator {
-                        locale: 'C'  // use '.' decimal separator disregarding the system locale
+                        locale: 'C'  // Use '.' decimal separator disregarding the system locale
                     }
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: setTextFieldAttribute(text)

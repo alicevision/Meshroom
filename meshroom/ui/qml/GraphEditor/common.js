@@ -1,4 +1,3 @@
-
 var statusColors = {
     "NONE": "transparent",
     "SUBMITTED": "#009688",

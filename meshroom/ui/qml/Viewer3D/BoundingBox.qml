@@ -15,7 +15,7 @@ Entity {
 
         CuboidMesh {
             id: cube
-            property real edge : 1.995 // Almost 2: important to have all the cube's vertices with a unit of 1
+            property real edge : 1.995  // Almost 2: important to have all the cube's vertices with a unit of 1
             xExtent: edge
             yExtent: edge
             zExtent: edge

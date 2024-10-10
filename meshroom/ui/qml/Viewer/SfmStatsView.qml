@@ -145,7 +145,6 @@ FloatingPane {
         anchors.leftMargin: observationsLengthsChart.width * 0.25
 
         RowLayout {
-
             ChartViewCheckBox {
                 id: allObservations
                 text: "ALL"
@@ -213,7 +212,6 @@ FloatingPane {
         anchors.leftMargin: observationsScaleChart.width * 0.15
 
         RowLayout {
-
             ChartViewCheckBox {
                 id: allObservationsScales
                 text: "ALL"

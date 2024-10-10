@@ -2,8 +2,6 @@ import QtQuick
 
 import Utils 1.0
 
-//import "common.js" as Common
-
 ListView {
     id: root
     interactive: false
@@ -15,7 +13,7 @@ ListView {
     property real chunkHeight: height
     property bool modelIsBig: (3 * model.count >= width)
     property real chunkWidth: {
-        if(!model || model.count == 0)
+        if (!model || model.count == 0)
             return 0
         return (width / model.count) - spacing
     }
@@ -30,13 +28,12 @@ ListView {
         width: root.chunkWidth
         property var chunkColor: Colors.getChunkColor(object, { "NONE": root.defaultColor })
         color: {
-            if(!highlightChunks || model.count == 1)
+            if (!highlightChunks || model.count == 1)
                 return chunkColor
-            if(index % 2 == 0)
+            if (index % 2 == 0)
                 return Qt.lighter(chunkColor, 1.1)
             else
                 return Qt.darker(chunkColor, 1.1)
         }
     }
 }
-

@@ -5,6 +5,7 @@ import QtQuick.Layouts
 /**
  * A custom GroupBox with predefined header.
  */
+
 GroupBox {
     id: root
 
@@ -20,13 +21,14 @@ GroupBox {
     background: Item {}
 
     label: Pane {
+        padding: 2
+        width: root.width
         background: Rectangle {
             id: labelBg
             color: palette.base
             opacity: 0.8
         }
-        padding: 2
-        width: root.width
+
         RowLayout {
             width: parent.width
             Label {

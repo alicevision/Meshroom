@@ -9,13 +9,14 @@ import Utils 1.0
  * MediaLibrary is an Entity that loads and manages a list of 3D media.
  * It also uses an internal cache to instantly reload media.
  */
+
 Entity {
     id: root
 
     readonly property alias model: m.mediaModel
     property int renderMode
     property bool pickingEnabled: false
-    readonly property alias count: instantiator.count // number of instantiated media delegates
+    readonly property alias count: instantiator.count  // Number of instantiated media delegates
 
     // For TransformGizmo in BoundingBox
     property DefaultCameraController sceneCameraController
@@ -47,10 +48,10 @@ Entity {
             "valid": true,
             "label": "",
             "visible": true,
-            "hasBoundingBox": false, // for Meshing node only
-            "displayBoundingBox": true, // for Meshing node only
-            "hasTransform": false, // for SfMTransform node only
-            "displayTransform": true, // for SfMTransform node only
+            "hasBoundingBox": false,  // For Meshing node only
+            "displayBoundingBox": true,  // For Meshing node only
+            "hasTransform": false,  // For SfMTransform node only
+            "displayTransform": true,  // For SfMTransform node only
             "section": "",
             "attribute": null,
             "entity": null,
@@ -71,7 +72,7 @@ Entity {
     }
 
     function ensureVisible(source) {
-        var idx = find(source);
+        var idx = find(source)
         if (idx === -1)
             return
         m.mediaModel.get(idx).visible = true
@@ -194,7 +195,7 @@ Entity {
                 // Whether MediaLoader has been fully instantiated by the NodeInstantiator
                 property bool fullyInstantiated: false
 
-                // explicitly store some attached model properties for outside use and ease binding
+                // Explicitly store some attached model properties for outside use and ease binding
                 readonly property var attribute: model.attribute
                 readonly property int idx: index
                 readonly property var modelSource: attribute || model.source
@@ -340,7 +341,7 @@ Entity {
             }
 
             // Transform: display a TransformGizmo for SfMTransform node only
-            // note: use a NodeInstantiator to evaluate if the current node is a SfMTransform node and if the transform mode is set to Manual
+            // Note: use a NodeInstantiator to evaluate if the current node is a SfMTransform node and if the transform mode is set to Manual
             NodeInstantiator {
                 id: sfmTransformGizmoInstantiator
                 active: instantiatedEntity.hasTransform
@@ -355,14 +356,14 @@ Entity {
                     enabled: mediaLoader.visible && instantiatedEntity.displayTransform
 
                     Component.onCompleted: {
-                        mediaLoader.drawInputSource() // Because we are sure we want to show the input in MANUAL mode only
-                        Scene3DHelper.addComponent(mediaLoader, sfmTransformGizmoEntity.objectTransform) // Add the transform to the media to see real-time transformations
+                        mediaLoader.drawInputSource()  // Because we are sure we want to show the input in MANUAL mode only
+                        Scene3DHelper.addComponent(mediaLoader, sfmTransformGizmoEntity.objectTransform)  // Add the transform to the media to see real-time transformations
                     }
                 }
             }
 
             // BoundingBox: display bounding box for MESHING computation
-            // note: use a NodeInstantiator to evaluate if the current node is a MESHING node and if the checkbox is active
+            // Note: use a NodeInstantiator to evaluate if the current node is a MESHING node and if the checkbox is active
             NodeInstantiator {
                 id: boundingBoxInstantiator
                 active: instantiatedEntity.hasBoundingBox

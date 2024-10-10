@@ -5,6 +5,7 @@ import QtQuick.Controls
 /**
  * Singleton that gathers useful colors, shades and system palettes.
  */
+
 QtObject {
     property SystemPalette sysPalette: SystemPalette {}
     property SystemPalette disabledSysPalette: SystemPalette { colorGroup: SystemPalette.Disabled }

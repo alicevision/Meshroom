@@ -2,11 +2,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-
 /**
  * MaterialToolButton is a standard ToolButton using MaterialIcons font.
  * It also shows up its tooltip when hovered.
  */
+
 ToolButton {
     id: control
     font.family: MaterialIcons.fontFamily

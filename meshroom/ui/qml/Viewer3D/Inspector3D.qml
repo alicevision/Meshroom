@@ -352,7 +352,7 @@ FloatingPane {
                         filters: [{role: "label", value: searchBar.text}]
                         delegate: MouseArea {
                             id: mediaDelegate
-                            // add mediaLibrary.count in the binding to ensure 'entity'
+                            // Add mediaLibrary.count in the binding to ensure 'entity'
                             // is re-evaluated when mediaLibrary delegates are modified
                             property bool loading: model.status === SceneLoader.Loading
                             property bool hovered: model.attribute ? (uigraph ? uigraph.hoveredNode === model.attribute.node : false) : containsMouse

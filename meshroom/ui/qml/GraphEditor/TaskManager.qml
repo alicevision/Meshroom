@@ -261,7 +261,6 @@ Item {
                             radius: 3
                             border.width: 2
                             border.color: chunkList.node === uigraph.selectedNode ? Colors.sysPalette.text : Colors.getChunkColor(object, {"NONE": bgColor})
-
                         }
 
                         MouseArea {

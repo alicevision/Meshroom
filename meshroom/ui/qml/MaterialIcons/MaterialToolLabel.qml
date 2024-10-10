@@ -2,11 +2,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-
 /**
  * MaterialToolLabel is a Label with an icon (using MaterialIcons).
  * It shows up its tooltip when hovered.
  */
+
 Item {
     id: control
     property alias iconText: iconItem.text

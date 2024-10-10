@@ -6,8 +6,9 @@ import GraphEditor 1.0
 import MaterialIcons 2.2
 
 /**
-    A cubic spline representing an edge, going from point1 to point2, providing mouse interaction.
-*/
+ * A cubic spline representing an edge, going from point1 to point2, providing mouse interaction.
+ */
+
 Item {
     id: root
 
@@ -69,7 +70,6 @@ Item {
                 control2X: x - ctrlPtDist
                 control2Y: y
             }
-
         }
 
         ShapePath {
@@ -98,11 +98,13 @@ Item {
             }
         }
     }
+
     Item {
         // Place the label at the middle of the edge
         x: (root.startX + root.endX) / 2
         y: (root.startY + root.endY) / 2
         visible: root.isForLoop
+
         Rectangle {
             anchors.centerIn: parent
             property int margin: 2
@@ -110,6 +112,7 @@ Item {
             height: icon.height + 2 * margin
             radius: width
             color: path.strokeColor
+
             MaterialToolLabel {
                 id: icon
                 anchors.centerIn: parent
@@ -120,6 +123,7 @@ Item {
                 color: palette.base                
                 ToolTip.text: "Foreach Loop"
             }
+
             MouseArea {
                 id: loopArea
                 anchors.fill: parent

@@ -26,7 +26,7 @@ FocusScope {
     readonly property var viewpoint: _reconstruction ? _reconstruction.selectedViewpoint : null
     readonly property bool doSyncViewpointCamera: Viewer3DSettings.syncViewpointCamera && (viewpoint && viewpoint.isReconstructed)
 
-    // functions
+    // Functions
     function resetCameraPosition() {
         mainCamera.position = defaultCamPosition
         mainCamera.upVector = defaultCamUpVector
@@ -62,8 +62,8 @@ FocusScope {
     Scene3D {
         id: scene3D
         anchors.fill: parent
-        cameraAspectRatioMode: Scene3D.AutomaticAspectRatio // vs. UserAspectRatio
-        hoverEnabled: true // if true, will trigger positionChanged events in attached MouseHandler
+        cameraAspectRatioMode: Scene3D.AutomaticAspectRatio  // vs. UserAspectRatio
+        hoverEnabled: true  // If true, will trigger positionChanged events in attached MouseHandler
         aspects: ["logic", "input"]
         focus: true
 
@@ -85,9 +85,9 @@ FocusScope {
 
         Keys.onPressed: function(event) {
             if (event.key === Qt.Key_F) {
-                resetCameraPosition();
+                resetCameraPosition()
             } else if (Qt.Key_1 <= event.key && event.key < Qt.Key_1 + Viewer3DSettings.renderModes.length) {
-                Viewer3DSettings.renderMode = event.key - Qt.Key_1;
+                Viewer3DSettings.renderMode = event.key - Qt.Key_1
             } else {
                 event.accepted = false
             }
@@ -179,7 +179,7 @@ FocusScope {
 
             components: [
                 RenderSettings {
-                    pickingSettings.pickMethod: PickingSettings.PrimitivePicking  // enables point/edge/triangle picking
+                    pickingSettings.pickMethod: PickingSettings.PrimitivePicking  // Enables point/edge/triangle picking
                     pickingSettings.pickResultMode: PickingSettings.NearestPick
                     renderPolicy: RenderSettings.Always
 
@@ -326,7 +326,7 @@ FocusScope {
                     font.pointSize: 11
                     onClicked: Viewer3DSettings.renderMode = index
                     checked: Viewer3DSettings.renderMode === index
-                    checkable: !checked // hack to disabled check on toggle
+                    checkable: !checked  // Hack to disabled check on toggle
                 }
             }
         }

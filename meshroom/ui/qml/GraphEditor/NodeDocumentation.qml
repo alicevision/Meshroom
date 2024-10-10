@@ -9,6 +9,7 @@ import "common.js" as Common
 /**
  * Displays Node documentation
  */
+
 FocusScope {
     id: root
 

@@ -7,6 +7,7 @@ import Utils 1.0
  * FeaturesViewer displays the extracted feature points of a View.
  * Requires QtAliceVision plugin.
  */
+
 Repeater {
     id: root
 
@@ -60,7 +61,7 @@ Repeater {
 
     model: root.describerTypes
 
-    // instantiate one FeaturesViewer by describer type
+    // Instantiate one FeaturesViewer by describer type
     delegate: AliceVision.FeaturesViewer {
         readonly property int colorIndex: (index + colorOffset) % root.colors.length
         property int colorOffset: 0

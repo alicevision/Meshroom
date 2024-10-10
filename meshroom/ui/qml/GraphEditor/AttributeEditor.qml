@@ -56,12 +56,10 @@ ListView {
         }
     }
 
-    // Helper MouseArea to lose edit/activeFocus
-    // when clicking on the background
+    // Helper MouseArea to lose edit/activeFocus when clicking on the background
     MouseArea {
         anchors.fill: parent
         onClicked: forceActiveFocus()
         z: -1
     }
 }
-

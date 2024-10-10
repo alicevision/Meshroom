@@ -31,7 +31,7 @@ FloatingPane {
         onWheel: {}
     }
 
-    // note: We need to use csvData.getNbColumns() slot instead of the csvData.nbColumns property to avoid a crash on linux.
+    // Note: We need to use csvData.getNbColumns() slot instead of the csvData.nbColumns property to avoid a crash on linux.
     property bool crfReady: csvData && csvData.ready && (csvData.getNbColumns() >= 4)
     onCrfReadyChanged: {
         if (crfReady) {
@@ -77,24 +77,24 @@ FloatingPane {
             }
 
             // We cannot use a Repeater with these Components so we need to instantiate them one by one
-            // Red curve
             LineSeries {
+                // Red curve
                 id: redCurve
                 axisX: valueAxisX
                 axisY: valueAxisY
                 name: crfReady ? csvData.getColumn(1).title : ""
                 color: name.toLowerCase()
             }
-            // Green curve
             LineSeries {
+                // Green curve
                 id: greenCurve
                 axisX: valueAxisX
                 axisY: valueAxisY
                 name: crfReady ? csvData.getColumn(2).title : ""
                 color: name.toLowerCase()
             }
-            // Blue curve
             LineSeries {
+                // Blue curve
                 id: blueCurve
                 axisX: valueAxisX
                 axisY: valueAxisY

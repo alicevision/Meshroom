@@ -11,6 +11,7 @@ import "Materials"
  * MaterialSwitcher is an Entity that can change its parent's material
  * by setting the 'mode' property.
  */
+
 Entity {
     id: root
     objectName: "MaterialSwitcher"
@@ -28,7 +29,7 @@ Entity {
         id: m
         property Material material
         onMaterialChanged: {
-            // remove previous material(s)
+            // Remove previous material(s)
             removeComponentsByType(parent, "Material")
             Scene3DHelper.addComponent(root.parent, material)
         }
@@ -38,10 +39,8 @@ Entity {
     {
         if (!entity)
             return
-        for (var i = 0; i < entity.components.length; ++i)
-        {
+        for (var i = 0; i < entity.components.length; ++i) {
             if (entity.components[i].toString().indexOf(type) !== -1) {
-                //entity.components[i].enabled = false;
                 Scene3DHelper.removeComponent(entity, entity.components[i])
             }
         }

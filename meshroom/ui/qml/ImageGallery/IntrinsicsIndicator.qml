@@ -4,11 +4,11 @@ import QtQuick.Controls
 import MaterialIcons 2.2
 import Utils 1.0
 
-
 /**
  * Display camera initialization status and the value of metadata
  * that take part in this process.
  */
+
 ImageBadge {
     id: root
 
@@ -28,7 +28,8 @@ ImageBadge {
         }
         return ""
     }
-    // access useful metadata
+
+    // Access useful metadata
     readonly property var make: findMetadata("Make")
     readonly property var model: findMetadata("Model")
     readonly property var focalLength: findMetadata("FocalLength")
@@ -104,13 +105,12 @@ ImageBadge {
             }
         },
         State {
-            // fallback status when initialization mode is unset
+            // Fallback status when initialization mode is unset
             name: "none"
             PropertyChanges {
                 target: root
                 visible: false
             }
         }
-
     ]
 }

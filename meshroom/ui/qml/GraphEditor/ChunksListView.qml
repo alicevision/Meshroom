@@ -7,6 +7,7 @@ import "common.js" as Common
 /**
  * ChunkListView
  */
+
 ColumnLayout {
     id: root
     property variant chunks

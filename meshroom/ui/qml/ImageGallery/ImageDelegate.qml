@@ -4,10 +4,10 @@ import QtQuick.Layouts
 
 import Utils 1.0
 
-
 /**
  * ImageDelegate for a Viewpoint object.
  */
+
 Item {
     id: root
 
@@ -25,7 +25,7 @@ Item {
 
     default property alias children: imageMA.children
 
-    // retrieve viewpoints inner data
+    // Retrieve viewpoints inner data
     QtObject {
         id: _viewpoint
         property url source: viewpoint ? Filepath.stringToUrl(viewpoint.get("path").value) : ''
@@ -34,8 +34,8 @@ Item {
         property var metadata: metadataStr ? JSON.parse(viewpoint.get("metadata").value) : {}
     }
 
-    // update thumbnail location
-    // can be called from the GridView when a new thumbnail has been written on disk
+    // Update thumbnail location
+    // Can be called from the GridView when a new thumbnail has been written on disk
     function updateThumbnail() {
         thumbnail.source = ThumbnailCache.thumbnail(root.source, root.cellID)
     }
@@ -136,6 +136,7 @@ Item {
                     running: thumbnail.status != Image.Ready
                 }
             }
+
             // Image basename
             Label {
                 id: imageLabel

@@ -6,10 +6,10 @@ import Qt5Compat.GraphicalEffects
 import MaterialIcons 2.2
 import Utils 1.0
 
-
 /**
  * Visual representation of a Graph Node.
  */
+
 Item {
     id: root
 

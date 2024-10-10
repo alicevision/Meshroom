@@ -96,7 +96,6 @@ AliceVision.FloatImageViewer {
         if (!isHighlightable) root.surface.mouseOver = false
     }
 
-
     /*
     * Principal Point
     */

@@ -5,11 +5,12 @@ import QtQuick.Layouts
 import Controls 1.0
 
 /**
- * NodeLog displays log and statistics data of Node's chunks (NodeChunks)
+ * NodeStatistics displays statistics data of Node's chunks (NodeChunks).
  *
  * To ease monitoring, it provides periodic auto-reload of the opened file
  * if the related NodeChunk is being computed.
  */
+
 FocusScope {
     id: root
 

@@ -1,10 +1,10 @@
 pragma Singleton
 import QtCore
 
-
 /**
  * Persistent Settings related to the GraphEditor module.
  */
+
 Settings {
     category: 'GraphEditor'
     property bool showAdvancedAttributes: false

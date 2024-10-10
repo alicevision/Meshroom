@@ -6,10 +6,11 @@ import QtQuick.Layouts
  * It takes the principal point correction into account and handle image ratio to
  * correctly fit or crop according to original image ratio and parent Item ratio.
  */
+
 Item {
     id: root
 
-    /// The url of the image to display
+    /// The URL of the image to display
     property alias source: image.source
     /// Source image ratio
     property real imageRatio: 1.0
@@ -53,14 +54,13 @@ Item {
         smooth: false
         anchors.fill: parent
         visible: false
-        // Preserver aspect fit while display ratio is aligned with image ratio, crop otherwise
-        fillMode: width/height >= imageRatio ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+        // Preserve aspect fit while display ratio is aligned with image ratio, crop otherwise
+        fillMode: width / height >= imageRatio ? Image.PreserveAspectFit : Image.PreserveAspectCrop
         autoTransform: true
     }
 
 
-    // Custom shader for displaying undistorted images
-    // with principal point correction
+    // Custom shader for displaying undistorted images with principal point correction
     ShaderEffect {
         id: shader
         anchors.centerIn: parent

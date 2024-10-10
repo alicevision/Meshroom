@@ -9,6 +9,7 @@ import Utils 1.0
  * Text file viewer with auto-reload feature.
  * Uses a ListView with one delegate by line instead of a TextArea for performance reasons.
  */
+
 Item {
     id: root
 
@@ -115,7 +116,7 @@ Item {
                 clip: true
                 focus: true
 
-                // custom key navigation handling
+                // Custom key navigation handling
                 keyNavigationEnabled: false
                 highlightFollowsCurrentItem: true
                 highlightMoveDuration: 0
@@ -145,14 +146,14 @@ Item {
                 }
 
                 function setText(value) {
-                    // store current first index
+                    // Store current first index
                     var topIndex = firstVisibleIndex()
-                    // store whether autoscroll to bottom is active
+                    // Store whether autoscroll to bottom is active
                     var scrollToBottom = atYEnd && autoscroll.checked
-                    // replace text
+                    // Replace text
                     text = value
 
-                    // restore content position by either:
+                    // Restore content position by either:
                     //  - autoscrolling to bottom
                     if (scrollToBottom)
                         positionViewAtEnd()
@@ -183,7 +184,7 @@ Item {
                 // TextMetrics for textual progress bar
                 TextMetrics {
                     id: progressMetrics
-                    // total number of character in textual progress bar
+                    // Total number of character in textual progress bar
                     property int count: 51
                     property string character: '*'
                     text: character.repeat(count)
@@ -230,15 +231,15 @@ Item {
                     Loader {
                         id: delegateLoader
                         Layout.fillWidth: true
-                        // default line delegate
+                        // Default line delegate
                         sourceComponent: line_component
 
-                        // line delegate selector based on content
+                        // Line delegate selector based on content
                         StateGroup {
                             states: [
                                 State {
                                     name: "progressBar"
-                                    // detect textual progressbar (non empty line with only progressbar character)
+                                    // Detect textual progressbar (non-empty line with only progressbar character)
                                     when: logLine.line.trim().length
                                           && logLine.line.split(progressMetrics.character).length - 1 === logLine.line.trim().length
                                     PropertyChanges {
@@ -281,7 +282,7 @@ Item {
                                 Keys.forwardTo: [textView]
 
                                 color: {
-                                    // color line according to log level
+                                    // Color line according to log level
                                     if (text.indexOf("[warning]") >= 0)
                                         return Colors.orange
                                     else if(text.indexOf("[error]") >= 0)
@@ -350,7 +351,7 @@ Item {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 textView.setText(xhr.status === 200 ? xhr.responseText : "")
                 loading = false
-                // re-trigger reload source file
+                // Re-trigger reload source file
                 if (autoReload)
                     reloadTimer.restart()
             }

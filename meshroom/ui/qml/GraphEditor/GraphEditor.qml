@@ -7,14 +7,15 @@ import MaterialIcons 2.2
 import Utils 1.0
 
 /**
-  A component displaying a Graph (nodes, attributes and edges).
-*/
+ * A component displaying a Graph (nodes, attributes and edges).
+ */
+
 Item {
     id: root
 
-    property variant uigraph: null  /// Meshroom ui graph (UIGraph)
-    readonly property variant graph: uigraph ? uigraph.graph : null  /// core graph contained in ui graph
-    property variant nodeTypesModel: null  /// the list of node types that can be instantiated
+    property variant uigraph: null  /// Meshroom UI graph (UIGraph)
+    readonly property variant graph: uigraph ? uigraph.graph : null  /// Core graph contained in the UI graph
+    property variant nodeTypesModel: null  /// The list of node types that can be instantiated
     property real maxZoom: 2.0
     property real minZoom: 0.1
 
@@ -22,7 +23,7 @@ Item {
 
     property var _attributeToDelegate: ({})
 
-    // signals
+    // Signals
     signal workspaceMoved()
     signal workspaceClicked()
 
@@ -34,10 +35,9 @@ Item {
 
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
-    // Files have been dropped
-    signal filesDropped(var drop, var mousePosition)
+    signal filesDropped(var drop, var mousePosition)  // Files have been dropped
 
-    // trigger initial fit() after initialization
+    // Trigger initial fit() after initialization
     // (ensure GraphEditor has its final size)
     Component.onCompleted: firstFitTimer.start()
 
@@ -215,7 +215,7 @@ Item {
 
         onClicked: function(mouse) {
             if (mouse.button == Qt.RightButton) {
-                // store mouse click position in 'draggable' coordinates as new node spawn position
+                // Store mouse click position in 'draggable' coordinates as new node spawn position
                 newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
                 newNodeMenu.popup()
             }
@@ -274,7 +274,7 @@ Item {
             onVisibleChanged: {
                 searchBar.clear()
                 if (visible) {
-                    // when menu is shown, give focus to the TextField filter
+                    // When menu is shown, give focus to the TextField filter
                     searchBar.forceActiveFocus()
                 }
             }
@@ -298,12 +298,12 @@ Item {
                     // Forward key events to the search bar to continue typing seamlessly
                     // even if this delegate took the activeFocus due to mouse hovering
                     Keys.forwardTo: [searchBar.textField]
-                    Keys.onPressed: {
+                    Keys.onPressed: function(event) {
                         event.accepted = false;
                         switch (event.key) {
                             case Qt.Key_Return:
                             case Qt.Key_Enter:
-                                // create node on validation (Enter/Return keys)
+                                // Create node on validation (Enter/Return keys)
                                 newNodeMenu.createNode(modelData)
                                 event.accepted = true
                                 break
@@ -311,7 +311,7 @@ Item {
                             case Qt.Key_Down:
                             case Qt.Key_Left:
                             case Qt.Key_Right:
-                                break  // ignore if arrow key was pressed to let the menu be controlled
+                                break  // Ignore if arrow key was pressed to let the menu be controlled
                             default:
                                 searchBar.forceActiveFocus()
                         }
@@ -326,8 +326,8 @@ Item {
                             name: "invisible"
                             PropertyChanges {
                                 target: menuItemDelegate
-                                height: 0 // make sure the item is no visible by setting height to 0
-                                focusPolicy: Qt.NoFocus // don't grab focus when not visible
+                                height: 0  // Make sure the item is no visible by setting height to 0
+                                focusPolicy: Qt.NoFocus  // Don't grab focus when not visible
                             }
                         }
                     ]
@@ -429,7 +429,7 @@ Item {
                             const newSrcAttr = listAttr.value.at(value - 1)
                             const dst = edgeMenu.currentEdge.dst
 
-                            // if the edge exists do not replace it
+                            // If the edge exists, do not replace it
                             if (newSrcAttr === edgeMenu.currentEdge.src && dst === edgeMenu.currentEdge.dst) {
                                 return
                             }
@@ -488,7 +488,7 @@ Item {
             Repeater {
                 id: edgesRepeater
 
-                // delay edges loading after nodes (edges needs attribute pins to be created)
+                // Delay edges loading after nodes (edges needs attribute pins to be created)
                 model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
 
                 delegate: Edge {
@@ -512,7 +512,6 @@ Item {
                         }
                         return (inFocus) ? 2 : 1
                     }
-
                     point1x: isValidEdge ? src.globalX + src.outputAnchorPos.x : 0
                     point1y: isValidEdge ? src.globalY + src.outputAnchorPos.y : 0
                     point2x: isValidEdge ? dst.globalX + dst.inputAnchorPos.x : 0
@@ -552,7 +551,7 @@ Item {
                 id: nodeMenu
                 property var currentNode: null
                 property bool canComputeNode: currentNode != null && uigraph.graph.canComputeTopologically(currentNode)
-                //canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
+                // canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
                 property int canSubmitOrCompute: currentNode != null && uigraph.graph.canSubmitOrCompute(currentNode)
                 property bool isComputed: {
                     var count = 0
@@ -601,7 +600,7 @@ Item {
                                 }
                             }
                         }
-                        return canCompute //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
+                        return canCompute  // canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
                     }
 
                     onTriggered: {
@@ -875,12 +874,10 @@ Item {
 
                     onEdgeAboutToBeRemoved: function(input) {
                         /*
-                        Sometimes the signals are not in the right order
-                        because of weird Qt/QML update order (next DropArea
-                        entered signal before previous DropArea exited signal)
-                        so edgeAboutToBeRemoved must be set to undefined before
-                        it can be set to another attribute object.
-                        */
+                         * Sometimes the signals are not in the right order because of weird Qt/QML update order
+                         * (next DropArea entered signal before previous DropArea exited signal) so edgeAboutToBeRemoved
+                         * must be set to undefined before it can be set to another attribute object.
+                         */
                         if (input === undefined) {
                             if (nodeRepeater.temporaryEdgeAboutToBeRemoved === undefined) {
                                 root.edgeAboutToBeRemoved = input
@@ -899,7 +896,7 @@ Item {
 
                     onPositionChanged: {
                         if (dragging && uigraph.selectedNodes.contains(node)) {
-                            // update all selected nodes positions with this node that is being dragged
+                            // Update all selected nodes positions with this node that is being dragged
                             for (var i = 0; i < nodeRepeater.count; i++) {
                                 var otherNode = nodeRepeater.itemAt(i)
                                 if (uigraph.selectedNodes.contains(otherNode.node) && otherNode.node !== node) {
@@ -910,10 +907,10 @@ Item {
                         }
                     }
 
-                    // allow all nodes to know if they are being dragged
+                    // Allow all nodes to know if they are being dragged
                     onDraggingChanged: nodeRepeater.dragging = dragging
 
-                    // must not be enabled during drag because the other nodes will be slow to match the movement of the node being dragged
+                    // Must not be enabled during drag because the other nodes will be slow to match the movement of the node being dragged
                     Behavior on x {
                         enabled: !nodeRepeater.dragging
                         NumberAnimation { duration: 100 }
@@ -1122,12 +1119,12 @@ Item {
         }
 
         function nextItem() {
-            // compute bounding box
+            // Compute bounding box
             var node = nodeRepeater.itemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
             var bbox = Qt.rect(node.x, node.y, node.width, node.height)
-            // rescale to fit the bounding box in the view, zoom is limited to prevent huge text
+            // Rescale to fit the bounding box in the view, zoom is limited to prevent huge text
             draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height),maxZoom)
-            // recenter
+            // Recenter
             draggable.x = bbox.x*draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
             draggable.y = bbox.y*draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
         }
@@ -1136,6 +1133,7 @@ Item {
     function registerAttributePin(attribute, pin) {
         root._attributeToDelegate[attribute] = pin
     }
+
     function unregisterAttributePin(attribute, pin) {
         delete root._attributeToDelegate[attribute]
     }
@@ -1160,11 +1158,11 @@ Item {
 
     // Fit graph to fill root
     function fit() {
-        // compute bounding box
+        // Compute bounding box
         var bbox = boundingBox()
-        // rescale to fit the bounding box in the view, zoom is limited to prevent huge text
+        // Rescale to fit the bounding box in the view, zoom is limited to prevent huge text
         draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height), maxZoom)
-        // recenter
+        // Recenter
         draggable.x = bbox.x * draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
         draggable.y = bbox.y * draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
     }

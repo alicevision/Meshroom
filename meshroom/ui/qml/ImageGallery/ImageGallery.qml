@@ -12,6 +12,7 @@ import Utils 1.0
  * ImageGallery displays as a grid of Images a model containing Viewpoints objects.
  * It manages a model of multiple CameraInit nodes as individual groups.
  */
+
 Panel {
     id: root
 
@@ -28,7 +29,7 @@ Panel {
     property int defaultCellSize: 160
     property bool readOnly: false
 
-    property var filesByType: {}
+    property var filesByType: ({})
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
 
@@ -98,7 +99,7 @@ Panel {
                         intrinsic[currentAttribute.name + "." + currentAttribute.value.at(k).name] = currentAttribute.value.at(k)
                     }
                 } else if (currentAttribute.type === "ListAttribute") {
-                    // not needed for now
+                    // Not needed for now
                 } else {
                     intrinsic[currentAttribute.name] = currentAttribute
                 }
@@ -217,12 +218,12 @@ Panel {
             Connections {
                 target: ThumbnailCache
                 function onThumbnailCreated(imgSource, callerID) {
-                    let item = grid.itemAtIndex(callerID);  // item is an ImageDelegate
+                    let item = grid.itemAtIndex(callerID);  // "item" is an ImageDelegate
                     if (item && item.source === imgSource) {
                         item.updateThumbnail()
                         return
                     }
-                    // fallback in case the ImageDelegate cellID changed
+                    // Fallback in case the ImageDelegate cellID changed
                     for (let idx = 0; idx < grid.count; idx++) {
                         item = grid.itemAtIndex(idx)
                         if (item && item.source === imgSource) {
@@ -250,7 +251,7 @@ Panel {
                 ]
                 property var reconstructionFilter: undefined
 
-                // override modelData to return basename of viewpoint's path for sorting
+                // Override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName_) {
                     var roleNameAndCmd = roleName_.split(".")
                     var roleName = roleName_
@@ -831,8 +832,7 @@ Panel {
                 }
             }
             onEnabledChanged: {
-                // Reset the toggle to avoid getting stuck
-                // with the HDR node checked but disabled.
+                // Reset the toggle to avoid getting stuck with the HDR node checked but disabled
                 if (checked) {
                     checked = false
                     close()
@@ -875,8 +875,7 @@ Panel {
                 }
             }
             onEnabledChanged: {
-                // Reset the toggle to avoid getting stuck
-                // with the HDR node checked but disabled.
+                // Reset the toggle to avoid getting stuck with the HDR node checked but disabled
                 if (checked) {
                     checked = false
                     close()

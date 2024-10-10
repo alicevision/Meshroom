@@ -12,6 +12,7 @@ import Utils 1.0
 /**
  * ImageMetadataView displays a JSON model representing an image's metadata as a ListView.
  */
+
 FloatingPane {
     id: root
 
@@ -94,7 +95,7 @@ FloatingPane {
                 entry["raw"] = entry["group"] + ":" + entry["key"] + "=" + entry["value"]
                 entries.push(entry)
             }
-            // reset the model with prepared data (limit to one update event)
+            // Reset the model with prepared data (limit to one update event)
             metadataModel.append(entries)
             coordinates = getGPSCoordinates(metadata)
         }

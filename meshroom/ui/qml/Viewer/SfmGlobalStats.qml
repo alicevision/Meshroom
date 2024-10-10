@@ -100,7 +100,6 @@ FloatingPane {
         anchors.leftMargin: residualsPerViewChart.width * 0.25
 
         RowLayout {
-
             ChartViewCheckBox {
                 id: allObservations
                 text: "ALL"
@@ -198,7 +197,6 @@ FloatingPane {
         anchors.leftMargin: observationsLengthsPerViewChart.width * 0.25
 
         RowLayout {
-
             ChartViewCheckBox {
                 id: allModes
                 text: "ALL"

@@ -31,7 +31,7 @@ FloatingPane {
 
     DoubleValidator {
         id: doubleValidator
-        locale: 'C' // use '.' decimal separator disregarding of the system locale
+        locale: 'C'  // Use '.' decimal separator disregarding of the system locale
     }
 
     RowLayout {
@@ -148,12 +148,11 @@ FloatingPane {
             }
         }
 
-        //Fill rectangle to have a better UI
+        // Fill rectangle to have a better UI
         Rectangle {
             color: root.palette.window
             Layout.fillWidth: true
         }
-
     }
 
     TextMetrics {

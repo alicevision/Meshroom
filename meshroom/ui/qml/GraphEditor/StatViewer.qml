@@ -37,8 +37,7 @@ Item {
 
     property color textColor: Colors.sysPalette.text
 
-
-    readonly property  var colors: [
+    readonly property var colors: [
         "#f44336",
         "#e91e63",
         "#9c27b0",
@@ -94,7 +93,7 @@ Item {
     }
 
     function readSourceFile() {
-        // make sure we are trying to load a statistics file
+        // Make sure we are trying to load a statistics file
         if (!Filepath.urlToString(source).endsWith("statistics"))
             return
 
@@ -103,7 +102,7 @@ Item {
 
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {
-                if (sourceModified === undefined || sourceModified < xhr.getResponseHeader('Last-Modified')) {
+                if (sourceModified === undefined || sourceModified < xhr.getResponseHeader("Last-Modified")) {
                     try {
                         root.jsonObject = JSON.parse(xhr.responseText)
                     } catch(exc) {
@@ -112,7 +111,7 @@ Item {
                         return
                     }
                     resetCharts()
-                    sourceModified = xhr.getResponseHeader('Last-Modified')
+                    sourceModified = xhr.getResponseHeader("Last-Modified")
                     root.createCharts()
                     reloadTimer.restart()
                 }
@@ -130,8 +129,8 @@ Item {
     }
 
     function createCharts() {
-        root.deltaTime = getPropertyWithDefault(jsonObject, 'interval', 30) / 60.0;
-        root.fileVersion = getPropertyWithDefault(jsonObject, 'fileVersion', 0.0)
+        root.deltaTime = getPropertyWithDefault(jsonObject, "interval", 30) / 60.0;
+        root.fileVersion = getPropertyWithDefault(jsonObject, "fileVersion", 0.0)
         initCpuChart()
         initRamChart()
         initGpuChart()
@@ -158,7 +157,7 @@ Item {
         var nbCores = categories.length
         root.nbCores = nbCores
 
-        root.cpuFrequency = getPropertyWithDefault(jsonObject.computer, 'cpuFreq', -1)
+        root.cpuFrequency = getPropertyWithDefault(jsonObject.computer, "cpuFreq", -1)
 
         root.nbReads = categories[0].length-1
 
@@ -219,9 +218,9 @@ Item {
 
     function initRamChart() {
 
-        var ram = getPropertyWithDefault(jsonObject.computer.curves, 'ramUsage', -1)
+        var ram = getPropertyWithDefault(jsonObject.computer.curves, "ramUsage", -1)
 
-        root.ramTotal = getPropertyWithDefault(jsonObject.computer, 'ramTotal', -1)
+        root.ramTotal = getPropertyWithDefault(jsonObject.computer, "ramTotal", -1)
         root.ramLabel = "RAM: "
         if (root.ramTotal <= 0) {
             var maxRamPeak = 0
@@ -249,17 +248,18 @@ Item {
         ramSerie.color = colors[10]
     }
 
+
 /**************************
 ***         GPU         ***
 **************************/
 
     function initGpuChart() {
-        root.gpuTotalMemory = getPropertyWithDefault(jsonObject.computer, 'gpuMemoryTotal', 0)
-        root.gpuName = getPropertyWithDefault(jsonObject.computer, 'gpuName', '')
+        root.gpuTotalMemory = getPropertyWithDefault(jsonObject.computer, "gpuMemoryTotal", 0)
+        root.gpuName = getPropertyWithDefault(jsonObject.computer, "gpuName", "")
 
-        var gpuUsedMemory = getPropertyWithDefault(jsonObject.computer.curves, 'gpuMemoryUsed', 0)
-        var gpuUsed = getPropertyWithDefault(jsonObject.computer.curves, 'gpuUsed', 0)
-        var gpuTemperature = getPropertyWithDefault(jsonObject.computer.curves, 'gpuTemperature', 0)
+        var gpuUsedMemory = getPropertyWithDefault(jsonObject.computer.curves, "gpuMemoryUsed", 0)
+        var gpuUsed = getPropertyWithDefault(jsonObject.computer.curves, "gpuUsed", 0)
+        var gpuTemperature = getPropertyWithDefault(jsonObject.computer.curves, "gpuTemperature", 0)
 
         var gpuUsedSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "GPU", valueGpuX, valueGpuY)
         var gpuUsedMemorySerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Memory", valueGpuX, valueGpuY)
@@ -390,7 +390,7 @@ Item {
                     plotAreaColor: "transparent"
                     titleColor: textColor
 
-                    visible: (root.fileVersion > 0.0)  // only visible if we have valid information
+                    visible: (root.fileVersion > 0.0)  // Only visible if we have valid information
                     title: "CPU: " + root.nbCores + " cores, " + root.cpuFrequency + "MHz"
 
                     ValueAxis {
@@ -422,7 +422,6 @@ Item {
             }
 
 
-
 /**************************
 ***       RAM UI        ***
 **************************/
@@ -444,7 +443,7 @@ Item {
                     plotAreaColor: "transparent"
                     titleColor: textColor
 
-                    visible: (root.fileVersion > 0.0)  // only visible if we have valid information
+                    visible: (root.fileVersion > 0.0)  // Only visible if we have valid information
                     title: root.ramLabel + root.ramTotal + "GB"
 
                     ValueAxis {
@@ -474,7 +473,6 @@ Item {
                     }
                 }
             }
-
 
 
 /**************************

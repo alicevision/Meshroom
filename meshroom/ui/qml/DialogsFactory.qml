@@ -4,6 +4,7 @@ import Controls 1.0
 /**
  * DialogsFactory is utility object to instantiate generic purpose Dialogs.
  */
+
 QtObject {
 
     readonly property string defaultErrorText: "An unexpected error has occurred"

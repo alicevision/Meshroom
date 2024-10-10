@@ -12,7 +12,6 @@ FloatingPane {
     padding: 4
     anchors.rightMargin: 0
 
-
     ColumnLayout {
         anchors.fill: parent
 
@@ -34,9 +33,7 @@ FloatingPane {
                     height: root.height / grid.rows - grid.spacing * (grid.rows + 1) / grid.rows
                     color: Qt.rgba(modelData.r, modelData.g, modelData.b, 1.0)
                 }
-
             }
         }
     }
-
 }

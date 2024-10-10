@@ -4,12 +4,13 @@ import QtQuick.Layouts
 
 import MaterialIcons 2.2
 
-
-/** Node Badge to inform about compatibility issues
+/**
+ * Node Badge to inform about compatibility issues
  * Provides 2 delegates (can be set using sourceComponent property):
  *     - iconDelegate (default): icon + tooltip with information about the issue
  *     - bannerDelegate: banner with issue info + upgrade request button
-*/
+ */
+
 Loader {
     id: root
 

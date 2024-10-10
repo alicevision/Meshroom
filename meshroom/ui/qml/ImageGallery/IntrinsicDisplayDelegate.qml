@@ -190,7 +190,7 @@ RowLayout {
 
             DoubleValidator {
                 id: doubleValidator
-                locale: 'C'  // use '.' decimal separator disregarding the system locale
+                locale: 'C'  // Use '.' decimal separator disregarding the system locale
             }
 
             validator: doubleValidator

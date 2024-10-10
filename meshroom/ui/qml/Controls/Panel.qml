@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-
 /**
  * Panel is a container control with preconfigured header/footer.
  *
@@ -12,6 +11,7 @@ import QtQuick.Layouts
  *
  * The footer is empty (and not visible) by default. It does not provided any layout.
  */
+
 Page {
     id: root
 

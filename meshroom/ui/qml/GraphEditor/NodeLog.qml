@@ -5,11 +5,12 @@ import QtQuick.Layouts
 import Controls 1.0
 
 /**
- * NodeLog displays log and statistics data of Node's chunks (NodeChunks)
+ * NodeLog displays the log file of Node's chunks (NodeChunks).
  *
  * To ease monitoring, it provides periodic auto-reload of the opened file
  * if the related NodeChunk is being computed.
  */
+
 FocusScope {
     id: root
     property variant node
@@ -40,7 +41,6 @@ FocusScope {
             anchors.fill: parent
             source: componentLoader.sourceFile
             autoReload: root.currentChunk !== undefined && root.currentChunk.statusName === "RUNNING"
-            // source is set in fileSelector
         }
     }
 }

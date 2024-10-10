@@ -16,7 +16,7 @@ Dialog {
 
     default property alias children: layout.children
 
-    // the content of this MessageDialog as a string
+    // The content of this MessageDialog as a string
     readonly property string asString: titleLabel.text + "\n\n" + text + "\n" + detailedText + "\n" + helperText + "\n"
 
     /// Return the text content of this dialog as a simple string.
@@ -40,7 +40,7 @@ Dialog {
         rightPadding: leftPadding
 
         background: Item {
-            // hidden text edit to perform copy in clipboard
+            // Hidden text edit to perform copy in clipboard
             TextEdit {
                 id: textContent
                 visible: false

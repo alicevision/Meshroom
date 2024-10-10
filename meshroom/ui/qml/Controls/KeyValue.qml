@@ -5,6 +5,7 @@ import QtQuick.Layouts
 /**
  * KeyValue allows to create a list of key/value, like a table.
  */
+
 Rectangle {
     property alias key: keyLabel.text
     property alias value: valueText.text
@@ -19,7 +20,6 @@ Rectangle {
         Rectangle {
             anchors.margins: 2
             color: Qt.darker(activePalette.window, 1.1)
-            // Layout.preferredWidth: sizeHandle.x
             Layout.minimumWidth: 10.0 * Qt.application.font.pixelSize
             Layout.maximumWidth: 15.0 * Qt.application.font.pixelSize
             Layout.fillWidth: false
@@ -45,7 +45,10 @@ Rectangle {
 
             readOnly: true
             selectByMouse: true
-            background: Rectangle { anchors.fill: parent; color: Qt.darker(activePalette.window, 1.05) }
+            background: Rectangle {
+                anchors.fill: parent
+                color: Qt.darker(activePalette.window, 1.05)
+            }
         }
     }
 }

@@ -2,10 +2,10 @@ import QtQuick
 import Qt3D.Core 2.6
 import Qt3D.Render 2.6
 
-
 /**
  * ViewpointCamera sets up a Camera to match a Viewpoint's internal parameters.
  */
+
 Entity {
     id: root
 
@@ -51,5 +51,4 @@ Entity {
             }
         ]
     }
-
 }

@@ -39,7 +39,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
                 # logging.info('REZ: {}'.format(str(r)))
                 v = r.split('-')
                 # logging.info('    v: {}'.format(str(v)))
-                if len(v) == 2:
+                if len(v) >= 2:
                     resolvedVersions[v[0]] = v[1]
             for p in packages:
                 if p.startswith('~'):

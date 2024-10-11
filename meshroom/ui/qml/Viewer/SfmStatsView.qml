@@ -2,14 +2,9 @@ import QtCharts
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtPositioning 6.6
-import QtLocation 6.6
 
 import AliceVision 1.0 as AliceVision
 import Charts 1.0
-import Controls 1.0
-import MaterialIcons 2.2
-import Utils 1.0
 
 
 FloatingPane {

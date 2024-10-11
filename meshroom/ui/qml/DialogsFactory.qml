@@ -1,5 +1,4 @@
 import QtQuick
-import MaterialIcons 2.2
 import Controls 1.0
 
 /**

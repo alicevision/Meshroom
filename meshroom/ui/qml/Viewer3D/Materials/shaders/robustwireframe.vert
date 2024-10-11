@@ -1,21 +1,39 @@
-#version 330 core
+#version 450 core
 
-in vec3 vertexPosition;
-in vec3 vertexNormal;
+layout(location = 0) in vec3 vertexPosition;
 
-out EyeSpaceVertex {
-    vec3 position;
-    vec3 normal;
-} vs_out;
+layout(std140, binding = 0) uniform qt3d_render_view_uniforms {
+  mat4 viewMatrix;
+  mat4 projectionMatrix;
+  mat4 uncorrectedProjectionMatrix;
+  mat4 clipCorrectionMatrix;
+  mat4 viewProjectionMatrix;
+  mat4 inverseViewMatrix;
+  mat4 inverseProjectionMatrix;
+  mat4 inverseViewProjectionMatrix;
+  mat4 viewportMatrix;
+  mat4 inverseViewportMatrix;
+  vec4 textureTransformMatrix;
+  vec3 eyePosition;
+  float aspectRatio;
+  float gamma;
+  float exposure;
+  float time;
+  float yUpInNDC;
+  float yUpInFBO;
+};
 
-uniform mat4 modelView;
-uniform mat3 modelViewNormal;
-uniform mat4 mvp;
+layout(std140, binding = 1) uniform qt3d_command_uniforms {
+  mat4 modelMatrix;
+  mat4 inverseModelMatrix;
+  mat4 modelViewMatrix;
+  mat3 modelNormalMatrix;
+  mat4 inverseModelViewMatrix;
+  mat4 modelViewProjection;
+  mat4 inverseModelViewProjectionMatrix;
+};
 
 void main()
 {
-    vs_out.normal = normalize( modelViewNormal * vertexNormal );
-    vs_out.position = vec3( modelView * vec4( vertexPosition, 1.0 ) );
-
-    gl_Position = mvp * vec4( vertexPosition, 1.0 );
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( vertexPosition, 1.0 );
 }

@@ -30,7 +30,7 @@ Item {
     // Available render modes
     readonly property var renderModes: [  // Can't use ListModel because of MaterialIcons expressions
                          {"name": "Solid", "icon": MaterialIcons.crop_din },
-                         /* {"name": "Wireframe", "icon": MaterialIcons.details }, */
+                         {"name": "Wireframe", "icon": MaterialIcons.details },
                          {"name": "Textured", "icon": MaterialIcons.texture },
                          {"name": "Spherical Harmonics", "icon": MaterialIcons.brightness_7}
                      ]

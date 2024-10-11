@@ -15,7 +15,7 @@ import Utils 1.0
 FocusScope {
     id: root
 
-    property int renderMode: 1
+    property int renderMode: 2
     readonly property alias library: mediaLibrary
     readonly property alias mainCamera: mainCamera
 
@@ -283,7 +283,7 @@ FocusScope {
     }
 
     FloatingPane {
-        visible: Viewer3DSettings.renderMode == 2
+        visible: Viewer3DSettings.renderMode == 3
         anchors.bottom: renderModesPanel.top
         GridLayout {
             columns: 2

@@ -10,6 +10,6 @@ DepthMapEntity {
 
     pointSize: Viewer3DSettings.pointSize * (Viewer3DSettings.fixedPointSize ? 1.0 : 0.001)
     // Map render modes to custom visualization modes
-    displayMode: Viewer3DSettings.renderMode == 0 ? DepthMapEntity.Points : DepthMapEntity.Triangles
-    displayColor: Viewer3DSettings.renderMode == 1
+    displayMode: Viewer3DSettings.renderMode == 1 ? DepthMapEntity.Points : DepthMapEntity.Triangles
+    displayColor: Viewer3DSettings.renderMode == 2
 }

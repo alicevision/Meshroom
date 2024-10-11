@@ -35,7 +35,7 @@ Item {
                          {"name": "Spherical Harmonics", "icon": MaterialIcons.brightness_7}
                      ]
     // Current render mode
-    property int renderMode: 1
+    property int renderMode: 2
 
     // Spherical Harmonics file
     property string shlFile: ""

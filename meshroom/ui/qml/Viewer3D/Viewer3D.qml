@@ -154,11 +154,6 @@ FocusScope {
                 focus: scene3D.activeFocus
                 onMousePressed: function(mouse) {
                     scene3D.forceActiveFocus()
-                    if (mouse.button === Qt.LeftButton) {
-                        if (!doubleClickTimer.running)
-                            doubleClickTimer.restart()
-                    } else
-                        doubleClickTimer.stop()
                 }
                 onMouseReleased: function(mouse, moved) {
                     if (moving)
@@ -166,14 +161,6 @@ FocusScope {
                     if (!moved && mouse.button === Qt.RightButton) {
                         contextMenu.popup()
                     }
-                }
-
-                // Manually handle double click to activate object picking
-                // for camera re-centering only during a short amount of time
-                Timer {
-                    id: doubleClickTimer
-                    running: false
-                    interval: 300
                 }
             }
 
@@ -223,8 +210,8 @@ FocusScope {
                 id: mediaLibrary
                 renderMode: Viewer3DSettings.renderMode
                 // Picking to set focus point (camera view center)
-                // Only activate it when a double click may happen or when the 'Control' key is pressed
-                pickingEnabled: cameraController.pickingActive || doubleClickTimer.running
+                // Only activate it when the 'Control' key is pressed
+                pickingEnabled: cameraController.pickingActive
                 camera: cameraSelector.camera
 
                 // Used for TransformGizmo in BoundingBox
@@ -238,11 +225,10 @@ FocusScope {
                     }
                 ]
 
-                onPressed: function(pick) {
+                onClicked: function(pick) {
                     if (pick.button === Qt.LeftButton) {
                         mainCamera.viewCenter = pick.worldIntersection
                     }
-                    doubleClickTimer.stop()
                 }
 
             }

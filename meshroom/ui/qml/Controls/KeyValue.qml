@@ -2,8 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import MaterialIcons 2.2
-
 /**
  * KeyValue allows to create a list of key/value, like a table.
  */

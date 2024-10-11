@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import Controls 1.0
-import MaterialIcons 2.2
 
 FloatingPane {
     id: root

@@ -25,6 +25,7 @@ import Utils 1.0
     property Camera camera: null
 
     property bool cached: false
+    property bool cameraPickingEnabled: false
 
     onSourceChanged: {
         if (cached) {
@@ -109,7 +110,7 @@ import Utils 1.0
                                                "source": source,
                                                "pointSize": Qt.binding(function() { return 0.01 * Viewer3DSettings.pointSize }),
                                                "locatorScale": Qt.binding(function() { return Viewer3DSettings.cameraScale }),
-                                               "cameraPickingEnabled": Qt.binding(function() { return root.enabled }),
+                                               "cameraPickingEnabled": Qt.binding(function() { return root.enabled && root.cameraPickingEnabled }),
                                                "resectionId": Qt.binding(function() { return Viewer3DSettings.resectionId }),
                                                "displayResections": Qt.binding(function() { return Viewer3DSettings.displayResectionIds }),
                                                "syncPickedViewId": Qt.binding(function() { return Viewer3DSettings.syncWithPickedViewId })

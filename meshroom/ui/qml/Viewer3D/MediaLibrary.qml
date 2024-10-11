@@ -35,7 +35,7 @@ Entity {
         return false
     }
 
-    signal pressed(var pick)
+    signal clicked(var pick)
     signal loadRequest(var idx)
 
     QtObject {
@@ -192,6 +192,8 @@ Entity {
             MediaLoader {
                 id: mediaLoader
 
+                cameraPickingEnabled: !sceneCameraController.pickingActive
+
                 // Whether MediaLoader has been fully instantiated by the NodeInstantiator
                 property bool fullyInstantiated: false
 
@@ -335,7 +337,7 @@ Entity {
                     ObjectPicker {
                         enabled: mediaLoader.enabled && pickingEnabled
                         hoverEnabled: false
-                        onPressed: function(pick) { root.pressed(pick) }
+                        onClicked: function(pick) { root.clicked(pick) }
                     }
                 ]
             }

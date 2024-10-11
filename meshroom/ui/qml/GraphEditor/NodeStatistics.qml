@@ -3,10 +3,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import Controls 1.0
-import MaterialIcons 2.2
-import Utils 1.0
-
-import "common.js" as Common
 
 /**
  * NodeLog displays log and statistics data of Node's chunks (NodeChunks)

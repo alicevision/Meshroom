@@ -2,21 +2,18 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Qt.labs.platform 1.0 as Platform
-
+import Controls 1.0
+import MaterialIcons 2.2
 import ImageGallery 1.0
 import Viewer 1.0
 import Viewer3D 1.0
-import MaterialIcons 2.2
-import Controls 1.0
-import Utils 1.0
-
 
 /**
  * WorkspaceView is an aggregation of Meshroom's main modules.
  *
  * It contains an ImageGallery, a 2D and a 3D viewer to manipulate and visualize reconstruction data.
  */
+
 Item {
     id: root
 

@@ -2,9 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 
-import MaterialIcons 2.2
-import Utils 1.0
-
 RowLayout {
     id: root
 

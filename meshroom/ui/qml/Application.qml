@@ -985,7 +985,7 @@ Page {
         NodeChunks {
             id: chunksListView
             height: 6
-            width: parent.width
+            Layout.fillWidth: true
             model: _reconstruction ? _reconstruction.sortedDFSChunks : null
             highlightChunks: false
         }
@@ -993,7 +993,7 @@ Page {
         MSplitView {
             id: topBottomSplit
             Layout.fillHeight: true
-            width: parent.width
+            Layout.fillWidth: true
 
             orientation: Qt.Vertical
 

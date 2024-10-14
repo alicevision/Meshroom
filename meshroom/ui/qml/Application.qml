@@ -39,7 +39,9 @@ Page {
             if (nodesName !== "")
                 nodesName += ", "
             var node = _reconstruction.selectedNodes.at(i)
-            nodesName += node.name
+            if(node) {
+                nodesName += node.name
+            }
         }
         return nodesName
     }

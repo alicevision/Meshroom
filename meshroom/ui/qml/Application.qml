@@ -1086,7 +1086,7 @@ Page {
                                 }
 
                                 Menu {
-                                    title: "Refresh Nodes Status"
+                                    title: "Refresh Nodes Method"
 
                                     MenuItem {
                                     id: enableAutoRefresh

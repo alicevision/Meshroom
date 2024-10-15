@@ -1,9 +1,6 @@
 __version__ = "4.1"
 
 import json
-import os
-import math
-from collections import Counter
 
 from meshroom.core import desc
 from meshroom.core.utils import COLORSPACES, EXR_STORAGE_DATA_TYPE, VERBOSE_LEVEL

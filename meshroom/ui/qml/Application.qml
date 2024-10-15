@@ -39,7 +39,9 @@ Page {
             if (nodesName !== "")
                 nodesName += ", "
             var node = _reconstruction.selectedNodes.at(i)
-            nodesName += node.name
+            if(node) {
+                nodesName += node.name
+            }
         }
         return nodesName
     }
@@ -983,7 +985,7 @@ Page {
         NodeChunks {
             id: chunksListView
             height: 6
-            width: parent.width
+            Layout.fillWidth: true
             model: _reconstruction ? _reconstruction.sortedDFSChunks : null
             highlightChunks: false
         }
@@ -991,7 +993,7 @@ Page {
         MSplitView {
             id: topBottomSplit
             Layout.fillHeight: true
-            width: parent.width
+            Layout.fillWidth: true
 
             orientation: Qt.Vertical
 
@@ -1086,7 +1088,7 @@ Page {
                                 }
 
                                 Menu {
-                                    title: "Refresh Nodes Status"
+                                    title: "Refresh Nodes Method"
 
                                     MenuItem {
                                     id: enableAutoRefresh

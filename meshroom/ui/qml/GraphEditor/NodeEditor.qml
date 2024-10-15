@@ -261,11 +261,12 @@ Panel {
                         id: chunksLV
                         visible: (tabBar.currentIndex >= 1 && tabBar.currentIndex <= 3)
                         chunks: root.node.chunks
+                        SplitView.preferredWidth: 55
+                        SplitView.minimumWidth: 20
                     }
 
                     StackLayout {
-                        Layout.fillHeight: true
-                        Layout.fillWidth: true
+                        SplitView.fillWidth: true
 
                         currentIndex: tabBar.currentIndex
 

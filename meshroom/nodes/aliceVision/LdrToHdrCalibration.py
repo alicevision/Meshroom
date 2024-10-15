@@ -5,9 +5,6 @@ import math
 import os
 from collections import Counter
 
-from pyalicevision import sfmData as avsfmdata
-from pyalicevision import hdr as avhdr
-
 from meshroom.core import desc
 from meshroom.core.utils import COLORSPACES, VERBOSE_LEVEL
 
@@ -174,6 +171,8 @@ Calibrate LDR to HDR response curve from samples.
 
     @classmethod
     def update(cls, node):
+        from pyalicevision import hdr as avhdr
+
         if not isinstance(node.nodeDesc, cls):
             raise ValueError("Node {} is not an instance of type {}".format(node, cls))
         # TODO: use Node version for this test
@@ -251,6 +250,8 @@ Calibrate LDR to HDR response curve from samples.
 
     @staticmethod
     def getExposure(exp, refIso = 100.0, refFnumber = 1.0):
+        from pyalicevision import sfmData as avsfmdata
+
         fnumber, shutterSpeed, iso = exp
         obj = avsfmdata.ExposureSetting(shutterSpeed, fnumber, iso)
         return obj.getExposure()

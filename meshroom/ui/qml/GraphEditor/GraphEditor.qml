@@ -521,22 +521,6 @@ Item {
                             }
                         }
                     }
-                    onVisibleChanged: {
-                        if (visible) {
-                            // Enable the pins on both sides
-                            src.updatePin(true, true)  // isSrc = true, isVisible = true
-                            dst.updatePin(false, true)  // isSrc = false, isVisible = true
-                        } else {
-                            // One of the attributes is visible, we do not need to handle the case where both attributes are hidden
-                            if (isValidEdge && (src.visible || dst.visible)) {
-                                if (src.visible) {
-                                    src.updatePin(true, false)  // isSrc = true, isVisible = false
-                                } else {
-                                    dst.updatePin(false, false)  // isSrc = false, isVisible = false
-                                }
-                            }
-                        }
-                    }
 
                     Component.onDestruction: {
                         // Handles the case where the edge is destroyed while hidden because it is replaced: the pins should be re-enabled

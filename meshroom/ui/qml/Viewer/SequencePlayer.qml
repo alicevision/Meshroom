@@ -385,7 +385,7 @@ FloatingPane {
                                 verticalAlignment: Text.AlignVCenter
                                 text: {
                                     // number of cached frames is the difference between the first and last frame of all intervals in the cache
-                                    let cachedFrames = viewer.cachedFrames
+                                    let cachedFrames = viewer ? viewer.cachedFrames : []
                                     let cachedFramesCount = 0
                                     for (let i = 0; i < cachedFrames.length; i++) {
                                         cachedFramesCount += cachedFrames[i].y - cachedFrames[i].x + 1
@@ -420,7 +420,7 @@ FloatingPane {
                             ProgressBar {
                                 id: occupiedCacheProgressBar
 
-                                property string occupiedCache: viewer.ramInfo ? Format.GB2SizeStr(viewer.ramInfo.y) : 0
+                                property string occupiedCache: viewer && viewer.ramInfo ? Format.GB2SizeStr(viewer.ramInfo.y) : 0
 
                                 width: parent.width
 

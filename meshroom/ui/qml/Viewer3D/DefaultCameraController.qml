@@ -14,9 +14,6 @@ Entity {
     property real translateSpeed: 75.0
     property real tiltSpeed: 500.0
     property real panSpeed: 500.0
-    readonly property bool moving: actionLMB.active
-    readonly property bool panning: (keyboardHandler._pressed && actionLMB.active && actionShift.active) || actionMMB.active
-    readonly property bool zooming: keyboardHandler._pressed && actionRMB.active && actionAlt.active
     property alias focus: keyboardHandler.focus
     readonly property bool pickingActive: actionControl.active && keyboardHandler._pressed
     property alias rotationSpeed: trackball.rotationSpeed
@@ -68,7 +65,12 @@ Entity {
             const dt = 0.02
             var d
 
-            if (panning) {  // Translate
+            var moving = mouse.buttons & Qt.LeftButton
+            var panning = (mouse.buttons & Qt.MiddleButton)
+            var panningAlt = actionShift.active && (mouse.buttons & Qt.LeftButton)
+            var zooming = actionAlt.active && (mouse.buttons & Qt.RightButton)
+
+            if (panning || panningAlt) {  // Translate
                 d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03
                 var tx = axisMX.value * root.translateSpeed * d
                 var ty = axisMY.value * root.translateSpeed * d

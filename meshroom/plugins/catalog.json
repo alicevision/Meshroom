@@ -1,0 +1,9 @@
+[
+    {
+    "pluginName":"Meshroom Research",
+    "pluginUrl":"https://github.com/alicevision/MeshroomResearch/",
+    "description":"Meshroom-Research comprises a collection of experimental plugins for Meshroom",
+    "isCollection":true,
+    "nodeTypes":["Python", "Docker", "Conda"]
+    }
+]

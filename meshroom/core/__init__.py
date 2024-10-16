@@ -19,7 +19,7 @@ except Exception:
     pass
 
 from meshroom.core.submitter import BaseSubmitter
-from . import desc
+from meshroom.core import desc
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
@@ -27,12 +27,19 @@ logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=log
 # make a UUID based on the host ID and current time
 sessionUid = str(uuid.uuid1())
 
-cacheFolderName = 'MeshroomCache'
-defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))
 nodesDesc = {}
 submitters = {}
 pipelineTemplates = {}
 
+#meshroom paths
+meshroomFolder = os.path.dirname(os.path.dirname(__file__))
+cacheFolderName = 'MeshroomCache'
+defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))
+
+#plugin paths
+pluginsNodesFolder = os.path.join(meshroomFolder, "plugins")
+pluginsPipelinesFolder = os.path.join(meshroomFolder, "pipelines")
+pluginCatalogFile = os.path.join(meshroomFolder, "plugins", "catalog.json")
 
 def hashValue(value):
     """ Hash 'value' using sha1. """
@@ -329,29 +336,26 @@ def loadPipelineTemplates(folder):
 
 
 def initNodes():
-    meshroomFolder = os.path.dirname(os.path.dirname(__file__))
     additionalNodesPath = os.environ.get("MESHROOM_NODES_PATH", "").split(os.pathsep)
     # filter empty strings
     additionalNodesPath = [i for i in additionalNodesPath if i]
-    nodesFolders = [os.path.join(meshroomFolder, 'nodes')] + additionalNodesPath
+    nodesFolders = [os.path.join(meshroomFolder, 'nodes')] + additionalNodesPath + [pluginsNodesFolder]
     for f in nodesFolders:
         loadAllNodes(folder=f)
 
 
 def initSubmitters():
-    meshroomFolder = os.path.dirname(os.path.dirname(__file__))
     subs = loadSubmitters(os.environ.get("MESHROOM_SUBMITTERS_PATH", meshroomFolder), 'submitters')
     for sub in subs:
         registerSubmitter(sub())
 
 
 def initPipelines():
-    meshroomFolder = os.path.dirname(os.path.dirname(__file__))
     # Load pipeline templates: check in the default folder and any folder the user might have
     # added to the environment variable
     additionalPipelinesPath = os.environ.get("MESHROOM_PIPELINE_TEMPLATES_PATH", "").split(os.pathsep)
     additionalPipelinesPath = [i for i in additionalPipelinesPath if i]
-    pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
+    pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath + [pluginsPipelinesFolder]
     for f in pipelineTemplatesFolders:
         if os.path.isdir(f):
             loadPipelineTemplates(f)

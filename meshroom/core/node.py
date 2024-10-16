@@ -1922,7 +1922,9 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
         if not internalFolder and nodeDesc:
             logging.warning("No serialized output data: performing automatic upgrade on '{}'".format(name))
             node = node.upgrade()
-        elif template:  # If the node comes from a template file and there is a conflict, it should be upgraded anyway
+        # If the node comes from a template file and there is a conflict, it should be upgraded anyway unless it is
+        # an "unknown node type" conflict (in which case the upgrade would fail)
+        elif template and compatibilityIssue is not CompatibilityIssue.UnknownNodeType:
             node = node.upgrade()
 
     return node

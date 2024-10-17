@@ -102,7 +102,7 @@ def setupCamera(intrinsic, pose):
     bpy.context.scene.render.pixel_aspect_x = float(intrinsic['pixelRatio'])
 
     camData.sensor_width = float(intrinsic['sensorWidth'])
-    camData.lens = float(intrinsic['focalLength'])
+    camData.lens = float(intrinsic['focalLength']) / float(intrinsic['pixelRatio'])
 
     #shift is normalized with the largest resolution
     fwidth = float(intrinsic['width'])

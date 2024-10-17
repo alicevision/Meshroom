@@ -446,7 +446,7 @@ Item {
                                         property real globalX: root.x + nodeAttributes.x + inputs.x + inputLoader.x + inPin.x
                                         property real globalY: root.y + nodeAttributes.y + inputs.y + inputLoader.y + inPin.y
 
-                                        readOnly: root.readOnly || object.isReadOnly
+                                        readOnly: Boolean(root.readOnly || object.isReadOnly)
                                         Component.onCompleted: attributePinCreated(attribute, inPin)
                                         Component.onDestruction: attributePinDeleted(attribute, inPin)
                                         onPressed: function(mouse) { root.pressed(mouse) }

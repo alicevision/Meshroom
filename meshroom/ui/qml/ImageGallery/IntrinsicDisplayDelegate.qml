@@ -52,6 +52,7 @@ RowLayout {
                        case "FloatParam": return floatComponent
                        case "BoolParam": return boolComponent
                        case "StringParam": return textFieldComponent
+                       case "File": return textFieldComponent
                        default: return undefined
                     }
                 }

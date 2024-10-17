@@ -156,7 +156,7 @@ FocusScope {
     // Functions
     function fit() {
         // Make sure the image is ready for use
-        if (!imgContainer.image || imgContainer.orientationTag == undefined) {
+        if (!imgContainer.image) {
             return false
         }
 
@@ -480,7 +480,7 @@ FocusScope {
                     property bool fittedOnce: false
                     property int previousWidth: 0
                     property int previousHeight: 0
-                    property int previousOrientationTag: 1
+                    property int previousOrientationTag: -1
                     property real targetSize: Math.max(width, height) * imgContainer.scale
                     onWidthChanged: {
                         /* We want to do the auto-fit on the first display of an image from the group, and then keep its
@@ -498,8 +498,9 @@ FocusScope {
                             previousWidth = width
                             previousHeight = height
 
-                            if (orientationTag != undefined)
+                            if (orientationTag != undefined) {
                                 previousOrientationTag = orientationTag
+                            }
                         }
                     }
 

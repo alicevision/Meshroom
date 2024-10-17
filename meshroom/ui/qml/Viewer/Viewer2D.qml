@@ -476,6 +476,7 @@ FocusScope {
                     property int previousWidth: 0
                     property int previousHeight: 0
                     property real targetSize: Math.max(width, height) * imgContainer.scale
+                    property real resizeRatio: imgContainer.scale
                     onHeightChanged: {
                         /* Image size is not updated through a single signal with the floatImage viewer, unlike
                          * the simple QML image viewer: instead of updating straight away the width and height to x and
@@ -519,6 +520,7 @@ FocusScope {
                                 'idView': Qt.binding(function() { return ((root.displayedNode && !root.displayedNode.hasSequenceOutput && _reconstruction) ? _reconstruction.selectedViewId : -1) }),
                                 'cropFisheye': false,
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
+                                'resizeRatio': Qt.binding(function() { return floatImageViewerLoader.resizeRatio }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
                                 'useSequence': Qt.binding(function() { 
                                     return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence"))))

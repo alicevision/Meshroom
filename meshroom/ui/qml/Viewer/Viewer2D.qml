@@ -161,7 +161,7 @@ FocusScope {
     // Functions
     function fit() {
         // Make sure the image is ready for use
-        if (!imgContainer.image || imgContainer.orientationTag == undefined) {
+        if (!imgContainer.image) {
             return false
         }
 
@@ -482,7 +482,6 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-
                     property real targetSize: Math.max(width, height) * imgContainer.scale
                     property real resizeRatio: imgContainer.scale
 

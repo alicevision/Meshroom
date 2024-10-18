@@ -1419,6 +1419,12 @@ class Node(BaseNode):
             self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False,
                                                           node=self))
 
+        for attr in self._attributes:
+            attr.valueChanged.connect(attr.onChanged)
+    
+        for attr in self._internalAttributes:
+            attr.valueChanged.connect(attr.onChanged)
+
         # Declare events for specific output attributes
         for attr in self._attributes:
             if attr.isOutput and attr.desc.semantic == "image":
@@ -1714,7 +1720,10 @@ class CompatibilityNode(BaseNode):
         matchDesc = attrDesc is not None
         if attrDesc is None:
             attrDesc = CompatibilityNode.attributeDescFromValue(name, val, isOutput)
+            
         attribute = attributeFactory(attrDesc, val, isOutput, self)
+        attribute.valueChanged.connect(attribute.onChanged)
+
         if internalAttr:
             self._internalAttributes.add(attribute)
         else:

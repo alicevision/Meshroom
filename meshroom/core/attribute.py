@@ -67,8 +67,6 @@ class Attribute(BaseObject):
         self._value = None
         self.initValue()
 
-        self.valueChanged.connect(self.onChanged)
-
     @property
     def node(self):
         return self._node()
@@ -573,6 +571,7 @@ class ListAttribute(Attribute):
         attrs = []
         for v in exportedValues:
             a = attributeFactory(self.attributeDesc.elementDesc, None, self.isOutput, self.node, self)
+            a.valueChanged.connect(a.onChanged)
             a.upgradeValue(v)
             attrs.append(a)
         index = len(self._value)
@@ -591,6 +590,10 @@ class ListAttribute(Attribute):
             self._value = ListModel(parent=self)
         values = value if isinstance(value, list) else [value]
         attrs = [attributeFactory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
+
+        for attr in attrs:
+            attr.valueChanged.connect(attr.onChanged)
+
         self._value.insert(index, attrs)
         self.valueChanged.emit()
         self._applyExpr()

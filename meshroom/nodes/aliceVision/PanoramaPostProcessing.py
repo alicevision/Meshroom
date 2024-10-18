@@ -103,18 +103,18 @@ Post process the panorama.
 
     outputs = [
         desc.File(
-            name="outputPanorama",
-            label="Output Panorama",
-            description="Generated panorama in EXR format.",
-            semantic="image",
-            value=lambda attr: desc.Node.internalFolder + attr.node.panoramaName.value,
-        ),
-        desc.File(
             name="outputPanoramaPreview",
             label="Output Panorama Preview",
             description="Preview of the generated panorama in JPG format.",
             semantic="image",
             value=lambda attr: desc.Node.internalFolder + attr.node.previewName.value,
+        ),
+        desc.File(
+            name="outputPanorama",
+            label="Output Panorama",
+            description="Generated panorama in EXR format.",
+            semantic="image",
+            value=lambda attr: desc.Node.internalFolder + attr.node.panoramaName.value,
         ),
         desc.File(
             name="downscaledPanoramaLevels",

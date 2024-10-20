@@ -5,7 +5,9 @@ var statusColors = {
     "RUNNING": "#FF9800",
     "ERROR": "#F44336",
     "SUCCESS": "#4CAF50",
-    "STOPPED": "#E91E63"
+    "STOPPED": "#E91E63",
+    "BUILD": "#66207f",
+    "FIRST_RUN": "#A52A2A"
 }
 
 var statusColorsExternOverrides = {

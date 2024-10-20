@@ -19,6 +19,8 @@ QtObject {
     readonly property color lime: "#CDDC39"
     readonly property color grey: "#555555"
     readonly property color lightgrey: "#999999"
+    readonly property color deeppurple: "#66207F"
+    readonly property color brown: "#A52A2A"
 
     readonly property var statusColors: {
         "NONE": "transparent",
@@ -26,7 +28,9 @@ QtObject {
         "RUNNING": orange,
         "ERROR": red,
         "SUCCESS": green,
-        "STOPPED": pink
+        "STOPPED": pink,
+        "BUILD": deeppurple,
+        "FIRST_RUN": brown
     }
 
     readonly property var ghostColors: {

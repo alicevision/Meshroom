@@ -21,7 +21,6 @@ from meshroom.core import desc, stats, hashValue, nodeVersion, Version
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
-
 def getWritingFilepath(filepath):
     return filepath + '.writing.' + str(uuid.uuid4())
 
@@ -51,6 +50,8 @@ class Status(Enum):
     KILLED = 5
     SUCCESS = 6
     INPUT = 7  # Special status for input nodes
+    BUILD = 8
+    FIRST_RUN = 9
 
 
 class ExecMode(Enum):
@@ -380,16 +381,16 @@ class NodeChunk(BaseObject):
         renameWritingToFinalPath(statisticsFilepathWriting, statisticsFilepath)
 
     def isAlreadySubmitted(self):
-        return self._status.status in (Status.SUBMITTED, Status.RUNNING)
+        return self._status.status in (Status.SUBMITTED, Status.RUNNING, Status.BUILD, Status.FIRST_RUN)
 
     def isAlreadySubmittedOrFinished(self):
-        return self._status.status in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS)
+        return self._status.status in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS, Status.BUILD, Status.FIRST_RUN)
 
     def isFinishedOrRunning(self):
-        return self._status.status in (Status.SUCCESS, Status.RUNNING)
+        return self._status.status in (Status.SUCCESS, Status.RUNNING, Status.BUILD, Status.FIRST_RUN)
 
     def isRunning(self):
-        return self._status.status == Status.RUNNING
+        return self._status.status in (Status.RUNNING, Status.BUILD, Status.FIRST_RUN)
 
     def isStopped(self):
         return self._status.status == Status.STOPPED
@@ -401,36 +402,57 @@ class NodeChunk(BaseObject):
         if not forceCompute and self._status.status == Status.SUCCESS:
             logging.info("Node chunk already computed: {}".format(self.name))
             return
-        global runningProcesses
-        runningProcesses[self.name] = self
-        self._status.initStartCompute()
-        exceptionStatus = None
-        startTime = time.time()
-        self.upgradeStatusTo(Status.RUNNING)
-        self.statThread = stats.StatisticsThread(self)
-        self.statThread.start()
-        try:
-            self.node.nodeDesc.processChunk(self)
-        except Exception:
-            if self._status.status != Status.STOPPED:
-                exceptionStatus = Status.ERROR
-            raise
-        except (KeyboardInterrupt, SystemError, GeneratorExit):
-            exceptionStatus = Status.STOPPED
-            raise
-        finally:
-            self._status.initEndCompute()
-            self._status.elapsedTime = time.time() - startTime
-            if exceptionStatus is not None:
-                self.upgradeStatusTo(exceptionStatus)
-            logging.info(" - elapsed time: {}".format(self._status.elapsedTimeStr))
-            # Ask and wait for the stats thread to stop
-            self.statThread.stopRequest()
-            self.statThread.join()
-            self.statistics = stats.Statistics()
-            del runningProcesses[self.name]
 
-        self.upgradeStatusTo(Status.SUCCESS)
+	    #if plugin node and if first call call meshroom_compute inside the env on 'host' so that the processchunk 
+        # of the node will be ran into the env
+        if self.node.nodeDesc.isPlugin and self._status.status!=Status.FIRST_RUN:
+            try:
+                from meshroom.core.plugin import isBuilt, build, getCommandLine #lazy import to avoid circular dep
+                if not isBuilt(self.node.nodeDesc):
+                    self.upgradeStatusTo(Status.BUILD)
+                    build(self.node.nodeDesc)
+                self.upgradeStatusTo(Status.FIRST_RUN)
+                command = getCommandLine(self)
+                #NOTE: docker returns 0 even if mount fail (it fails on the deamon side)
+                logging.info("Running plugin node with "+command)
+                status = os.system(command) 
+                if status != 0:
+                    raise RuntimeError("Error in node execution")
+                self.updateStatusFromCache()
+            except Exception as ex:
+                self.logger.exception(ex)
+                self.upgradeStatusTo(Status.ERROR)
+        else:
+            global runningProcesses
+            runningProcesses[self.name] = self
+            self._status.initStartCompute()
+            exceptionStatus = None
+            startTime = time.time()
+            self.upgradeStatusTo(Status.RUNNING)
+            self.statThread = stats.StatisticsThread(self)
+            self.statThread.start()
+            try:
+                self.node.nodeDesc.processChunk(self)
+            except Exception:
+                if self._status.status != Status.STOPPED:
+                    exceptionStatus = Status.ERROR
+                raise
+            except (KeyboardInterrupt, SystemError, GeneratorExit):
+                exceptionStatus = Status.STOPPED
+                raise
+            finally:
+                self._status.initEndCompute()
+                self._status.elapsedTime = time.time() - startTime
+                if exceptionStatus is not None:
+                    self.upgradeStatusTo(exceptionStatus)
+                logging.info(" - elapsed time: {}".format(self._status.elapsedTimeStr))
+                # Ask and wait for the stats thread to stop
+                self.statThread.stopRequest()
+                self.statThread.join()
+                self.statistics = stats.Statistics()
+                del runningProcesses[self.name]
+
+            self.upgradeStatusTo(Status.SUCCESS)
 
     def stopProcess(self):
         if not self.isExtern():
@@ -460,6 +482,7 @@ class NodeChunk(BaseObject):
     statusNodeName = Property(str, lambda self: self._status.nodeName, constant=True)
 
     elapsedTime = Property(float, lambda self: self._status.elapsedTime, notify=statusChanged)
+    
 
 
 # Simple structure for storing node position
@@ -1130,8 +1153,8 @@ class BaseNode(BaseObject):
             return Status.INPUT
         chunksStatus = [chunk.status.status for chunk in self._chunks]
 
-        anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
-                 Status.RUNNING, Status.SUBMITTED)
+        anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED, Status.RUNNING, Status.BUILD, Status.FIRST_RUN, 
+                 Status.SUBMITTED,)
         allOf = (Status.SUCCESS,)
 
         for status in anyOf:
@@ -1394,6 +1417,12 @@ class BaseNode(BaseObject):
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
 
+    isPlugin = Property(bool, lambda self: self.nodeDesc.isPlugin, constant=True)
+    
+    isEnvBuild = (not isPlugin) #init build status false its not a plugin  
+    buildStatusChanged = Signal() #event to notify change in status
+    isBuiltStatus  = Property(bool, lambda self: self.isEnvBuild,  notify = buildStatusChanged)
+    # isBuiltStatus  = Property(bool, lambda self: self.nodeDesc.isBuilt,  constant=True)
 
 class Node(BaseNode):
     """

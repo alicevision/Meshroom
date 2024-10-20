@@ -717,9 +717,57 @@ class Node(object):
     documentation = ''
     category = 'Other'
 
+    _isPlugin = True
+
     def __init__(self):
         super(Node, self).__init__()
         self.hasDynamicOutputAttribute = any(output.isDynamicValue for output in self.outputs)
+        try:
+            self.envFile 
+            self.envType
+        except:
+            self._isPlugin=False
+
+    @property
+    def envType(cls):
+        from core.plugin import EnvType #lazy import for plugin to avoid circular dependency
+        return EnvType.NONE
+
+    @property
+    def envFile(cls):
+        """
+        Env file used to build the environement, you may overwrite this to custom the behaviour
+        """
+        raise NotImplementedError("You must specify an env file")
+
+    @property
+    def _envName(cls):
+        """
+        Get the env name by hashing the env files, overwrite this to use a custom pre-build env 
+        """
+        from core.plugin import EnvType
+        from meshroom.core.plugin import getEnvName  #lazy import as to avoid circular dep
+        if cls.envType.value == EnvType.REZ.value:
+            return cls.envFile
+        with open(cls.envFile, 'r') as file:
+            envContent = file.read()
+        
+        return getEnvName(envContent)
+
+    @property
+    def isPlugin(self):
+        """
+        Tests if the node is a valid plugin node
+        """
+        return self._isPlugin
+
+    @property
+    def isBuilt(self):
+        """
+        Tests if the environnement is built
+        """
+        from meshroom.core.plugin import isBuilt
+        return self._isPlugin and isBuilt(self)
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
         return attrValues
@@ -806,7 +854,17 @@ class CommandLineNode(Node):
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
 
-        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
+        cmd=cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
+
+        #the process in Popen does not seem to use the right python, even if meshroom_compute is called within the env
+        #so in the case of command line using python, we have to make sure it is using the correct python
+        from meshroom.core.plugin import EnvType, getVenvPath, getVenvExe  #lazy import to prevent circular dep
+        if self.isPlugin and self.envType == EnvType.VENV:
+            envPath = getVenvPath(self._envName)
+            envExe = getVenvExe(envPath)
+            cmd=cmd.replace("python", envExe)
+
+        return cmd
 
     def stopProcess(self, chunk):
         # The same node could exists several times in the graph and

@@ -19,6 +19,9 @@ Item {
     property bool readOnly: node.locked
     /// Whether the node is in compatibility mode
     readonly property bool isCompatibilityNode: node ? node.hasOwnProperty("compatibilityIssue") : false
+    /// Whether the node is a plugin that needs to be build
+    readonly property bool isPlugin: node ? node.isPlugin : false
+    property bool isNotBuilt: node ? (!node.isBuiltStatus) : false
     /// Mouse related states
     property bool mainSelected: false
     property bool selected: false
@@ -28,7 +31,7 @@ Item {
     property point position: Qt.point(x, y)
     /// Styling
     property color shadowColor: "#cc000000"
-    readonly property color defaultColor: isCompatibilityNode ? "#444" : !node.isComputable ? "#BA3D69" : activePalette.base
+    readonly property color defaultColor: isCompatibilityNode ? "#444" : (!node.isComputable ? "#BA3D69" : activePalette.base)
     property color baseColor: defaultColor
 
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
@@ -232,6 +235,15 @@ Item {
                                     issueDetails: root.node.issueDetails
                                 }
                             }
+                            
+                            // ToBuild icon for PluginNodes
+                            Loader {
+                                active: root.isPlugin && root.isNotBuilt
+                                sourceComponent: ToBuildBadge {
+                                    sourceComponent: iconDelegate
+                                }
+                            }
+
 
                             // Data sharing indicator
                             // Note: for an unknown reason, there are some performance issues with the UI refresh.

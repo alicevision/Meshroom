@@ -587,7 +587,7 @@ class MeshroomApp(QApplication):
         return bool(os.environ.get("MESHROOM_USE_8BIT_VIEWER", False))
     
     def _defaultSequencePlayerEnabled(self):
-        return bool(os.environ.get("MESHROOM_USE_SEQUENCE_PLAYER", False))
+        return bool(os.environ.get("MESHROOM_USE_SEQUENCE_PLAYER", True))
 
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)

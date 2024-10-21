@@ -61,6 +61,16 @@ class Attribute(BaseObject):
         self._description = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
+        self._exposed = attributeDesc.exposed
+        self._depth = 0
+        if root is not None:
+            current = self
+            while current.root is not None:
+                self._depth += 1
+                if current.root.exposed != self._exposed:
+                    self._exposed = current.root.exposed
+                current = current.root
+
         # invalidation value for output attributes
         self._invalidationValue = ""
 
@@ -76,6 +86,12 @@ class Attribute(BaseObject):
     @property
     def root(self):
         return self._root() if self._root else None
+
+    def getDepth(self):
+        return self._depth
+
+    def getExposed(self):
+        return self._exposed
 
     def getName(self):
         """ Attribute name """
@@ -346,7 +362,7 @@ class Attribute(BaseObject):
         elif self.isInput and Attribute.isLinkExpression(v):
             # value is a link to another attribute
             link = v[1:-1]
-            linkNode, linkAttr = link.split('.')
+            linkNode, linkAttr = link.split('.', 1)
             try:
                 g.addEdge(g.node(linkNode).attribute(linkAttr), self)
             except KeyError as err:
@@ -413,6 +429,33 @@ class Attribute(BaseObject):
         # Emit if the enable status has changed
         self.setEnabled(self.getEnabled())
 
+    def getFlattenedChildren(self):
+        """ Return a list of all the attributes that refer to this instance as their parent through
+        the 'root' property. If no such attribute exist, return an empty list. The depth difference is not
+        taken into account in the list, which is thus always flat. """
+        attributes = ListModel(parent=self)
+        if isinstance(self._value, str):
+            # String/File attributes are iterable but cannot have children: immediately rule that case out
+            return attributes
+
+        try:
+            # If self._value is not iterable, then it is not an attribute that can have children
+            iter(self._value)
+        except TypeError:
+            return attributes
+
+        for attribute in self._value:
+            if not isinstance(attribute, Attribute):
+                # Handle ChoiceParam values, which contained in a list hence iterable, but are string
+                continue
+            attributes.add(attribute)
+            if isinstance(attribute, ListAttribute) or isinstance(attribute, GroupAttribute):
+                # Handle nested ListAttributes and GroupAttributes
+                flattened = attribute.getFlattenedChildren()
+                for i in flattened:
+                    attributes.add(i)
+        return attributes
+
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
     fullNameToNode = Property(str, getFullNameToNode, constant=True)
@@ -425,6 +468,7 @@ class Attribute(BaseObject):
     type = Property(str, getType, constant=True)
     baseType = Property(str, getType, constant=True)
     isReadOnly = Property(bool, _isReadOnly, constant=True)
+    exposed = Property(bool, getExposed, constant=True)
 
     # Description of the attribute
     descriptionChanged = Signal()
@@ -454,6 +498,8 @@ class Attribute(BaseObject):
     validValueChanged = Signal()
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
     root = Property(BaseObject, root.fget, constant=True)
+    depth = Property(int, getDepth, constant=True)
+    flattenedChildren = Property(BaseObject, getFlattenedChildren, constant=True)
 
 
 def raiseIfLink(func):

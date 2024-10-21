@@ -36,6 +36,10 @@ FocusScope {
     property alias currentFrame: sequencePlayer.frameId
     property alias frameRange: sequencePlayer.frameRange
 
+    property bool fittedOnce: false
+    property int previousWidth: -1
+    property int previousHeight: -1
+
     QtObject {
         id: m
         property variant viewpointMetadata: {
@@ -472,11 +476,13 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    property bool fittedOnce: false
-                    property int previousWidth: 0
-                    property int previousHeight: 0
+                    
                     property real targetSize: Math.max(width, height) * imgContainer.scale
-                    onHeightChanged: {
+                    property real resizeRatio: imgContainer.scale
+
+                    
+
+                    function sizeChanged() {
                         /* Image size is not updated through a single signal with the floatImage viewer, unlike
                          * the simple QML image viewer: instead of updating straight away the width and height to x and
                          * y, the emitted signals look like:
@@ -488,13 +494,29 @@ FocusScope {
                          * group has already been auto-fitted. If we change the group of images (when another project is
                          * opened, for example, and the images have a different size), then another auto-fit needs to be
                          * performed */
-                        if ((!fittedOnce && imgContainer.image && imgContainer.image.height > 0) ||
-                            (fittedOnce && ((width > 1 && previousWidth != width) ||
-                            (height > 1 && previousHeight != height)))) {
+
+                        var sizeValid = (width > 0) && (height > 0)
+                        var layoutValid = (root.width > 50) && (root.height > 50)
+                        var sizeChanged = (root.previousWidth != width) || (root.previousHeight != height)
+                        var sizeChanged = (root.previousWidth != width) || (root.previousHeight != height)
+                        
+                        if ((!root.fittedOnce && imgContainer.image && sizeValid && layoutValid) ||
+                            (root.fittedOnce && sizeChanged && sizeValid && layoutValid)) {                            
                             fit()
-                            fittedOnce = true
-                            previousWidth = width
-                            previousHeight = height
+                            root.fittedOnce = true
+                            root.previousWidth = width
+                            root.previousHeight = height
+                        }
+                    }
+
+                    onHeightChanged : {
+                        floatImageViewerLoader.sizeChanged();
+                    }
+
+                    Connections {
+                        target: root
+                        function onHeightChanged() {
+                            floatImageViewerLoader.sizeChanged()
                         }
                     }
 
@@ -519,6 +541,7 @@ FocusScope {
                                 'idView': Qt.binding(function() { return ((root.displayedNode && !root.displayedNode.hasSequenceOutput && _reconstruction) ? _reconstruction.selectedViewId : -1) }),
                                 'cropFisheye': false,
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
+                                'resizeRatio': Qt.binding(function() { return floatImageViewerLoader.resizeRatio }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
                                 'useSequence': Qt.binding(function() { 
                                     return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence"))))

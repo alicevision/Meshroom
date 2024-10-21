@@ -312,6 +312,15 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             advanced=True,
         ),
         desc.BoolParam(
+            name="mergeTracks",
+            label="Merge Tracks",
+            description="Enable/Disable the track merging. The merging between two tracks is made when they have duplicate features \n"
+                        "coming from the same original feature (same describer type, same 2D position in the same view, same scale, \n"
+                        "but different rotations and different feature id).\n",
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name="filterTrackForks",
             label="Filter Track Forks",
             description="Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n"

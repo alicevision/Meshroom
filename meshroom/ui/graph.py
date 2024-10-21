@@ -642,6 +642,20 @@ class UIGraph(QObject):
             nodes = [nodes]
         return [ n for n in nodes if n in self._graph.nodes.values() ]
 
+    @Slot(Node, float, float)
+    def resizeNode(self, node, width, height):
+        """ Resizes the Node.
+
+        Args:
+            node (Node): the node to move
+            width (float): Node width.
+            height (float): Node height.
+        """
+        # Update the node size
+        with self.groupedGraphModification("Resize Node Dimensions"):
+            node.setNodeWidth(width)
+            node.setNodeHeight(height)
+
     @Slot(Node, QPoint, QObject)
     def moveNode(self, node, position, nodes=None):
         """
@@ -748,7 +762,7 @@ class UIGraph(QObject):
             uniqueNodesToDuplicate = list(dict.fromkeys(nodesToDuplicate))
             duplicates = self.duplicateNodes(uniqueNodesToDuplicate)
         return duplicates
-    
+
     @Slot(Edge, result=bool)
     def canExpandForLoop(self, currentEdge):
         """ Check if the list attribute can be expanded by looking at all the edges connected to it. """
@@ -846,7 +860,7 @@ class UIGraph(QObject):
             self.removeEdge(edge)
             self.addEdge(newSrc, newDst)
         return self._graph.edge(newDst)
-    
+
     @Slot(Attribute, result=Edge)
     def getEdge(self, dst):
         return self._graph.edge(dst)
@@ -940,12 +954,40 @@ class UIGraph(QObject):
         if not self._selectedNodes.contains(node):
             self._selectedNodes.append(node)
 
+    @Slot(Node)
+    def appendBackdropSelection(self, node):
+        """ Appends 'children' of the provided backdrop node if they're not already part of the selection.
+
+        Args:
+            node (Node): Backdrop Node instance.
+        """
+        # Only applicable for backdrop nodes
+        if not node.isBackdrop:
+            return
+
+        # Iterate and select the individual nodes which belong to the backdrop as per the graph
+        for child in self.getBackdropNodes(node):
+            self.appendSelection(child)
+
     @Slot("QVariantList")
     def selectNodes(self, nodes):
         """ Append 'nodes' to the selection. """
         for node in nodes:
             self.appendSelection(node)
         self.selectedNodesChanged.emit()
+
+    @Slot(Node, result="QVariantList")
+    def getBackdropNodes(self, node):
+        """ Returns the Nodes from the graph which are present in a region.
+        """
+        # A region of intereset for the Backdrop
+        region = self._graph.ROI(node.x, node.y, node.x + node.nodeWidth, node.y + node.nodeHeight)
+
+        # Fetch the nodes from the graph which belong to the region of the Backdrop
+        nodes = self._graph.nodesInRegion(region)
+
+        # Ignore the current node from the region nodes
+        return [n for n in nodes if n != node]
 
     @Slot(Node)
     def selectFollowing(self, node):

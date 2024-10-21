@@ -52,6 +52,8 @@ class Status(Enum):
     SUCCESS = 6
     INPUT = 7  # Special status for input nodes
 
+    BACKDROP = 8    # Backdrops are just well.. backdrops
+
 
 class ExecMode(Enum):
     NONE = 0
@@ -570,6 +572,60 @@ class BaseNode(BaseObject):
             return self.internalAttribute("comment").value
         return ""
 
+    def getFontSize(self):
+        """ Gets the Font Size of the node comment.
+
+        Returns:
+            int: The font size from the node if it exists, else 12 as default.
+        """
+        if self.hasInternalAttribute("fontSize"):
+            return self.internalAttribute("fontSize").value
+
+        # Default to 12
+        return 12
+
+    def getNodeWidth(self):
+        """ Gets the Width of the node from the internal attribute.
+
+        Returns:
+            int: The Width from the node if the attribute exists, else 160 as default.
+        """
+        if self.hasInternalAttribute("nodeWidth"):
+            return self.internalAttribute("nodeWidth").value
+
+        # Default to 160
+        return 160
+
+    def getNodeHeight(self):
+        """ Gets the Height of the node from the internal attribute.
+
+        Returns:
+            int: The Height from the node if the attribute exists, else 120 as default.
+        """
+        if self.hasInternalAttribute("nodeHeight"):
+            return self.internalAttribute("nodeHeight").value
+
+        # Default to 120
+        return 120
+
+    def setNodeWidth(self, width):
+        """ Gets the Width of the node from the internal attribute.
+
+        Returns:
+            int: The Width from the node if the attribute exists, else 160 as default.
+        """
+        if self.hasInternalAttribute("nodeWidth"):
+            self.internalAttribute("nodeWidth").value = width
+
+    def setNodeHeight(self, height):
+        """ Gets the Height of the node from the internal attribute.
+
+        Returns:
+            int: The Height from the node if the attribute exists, else 120 as default.
+        """
+        if self.hasInternalAttribute("nodeHeight"):
+            self.internalAttribute("nodeHeight").value = height
+
     @Slot(str, result=str)
     def nameToLabel(self, name):
         """
@@ -817,7 +873,7 @@ class BaseNode(BaseObject):
 
     def hasStatus(self, status):
         if not self._chunks:
-            return (status == Status.INPUT)
+            return (status in (Status.BACKDROP, Status.INPUT))
         for chunk in self._chunks:
             if chunk.status.status != status:
                 return False
@@ -829,7 +885,13 @@ class BaseNode(BaseObject):
         return self.hasStatus(Status.SUCCESS)
 
     def _isComputable(self):
-        return self.getGlobalStatus() != Status.INPUT
+        # A node is not considered computable if it is a Backdrop or an inputNode
+        return self.getGlobalStatus() not in (Status.BACKDROP, Status.INPUT)
+
+    def _isBackdrop(self):
+        """ If this is a backdrop node?
+        """
+        return self.getGlobalStatus() == Status.BACKDROP
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -1126,8 +1188,13 @@ class BaseNode(BaseObject):
         Returns:
             Status: the node global status
         """
+        # A Backdrop Node instance
+        if isinstance(self.nodeDesc, desc.Backdrop):
+            return Status.BACKDROP
+
         if isinstance(self.nodeDesc, desc.InputNode):
             return Status.INPUT
+
         chunksStatus = [chunk.status.status for chunk in self._chunks]
 
         anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
@@ -1323,7 +1390,7 @@ class BaseNode(BaseObject):
         False otherwise.
         """
         for attr in self._attributes:
-            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or 
+            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or
                                                    attr.desc.semantic == "imageList"):
                 return True
         return False
@@ -1356,6 +1423,12 @@ class BaseNode(BaseObject):
     color = Property(str, getColor, notify=internalAttributesChanged)
     invalidation = Property(str, getInvalidationMessage, notify=internalAttributesChanged)
     comment = Property(str, getComment, notify=internalAttributesChanged)
+    fontSize = Property(int, getFontSize, notify=internalAttributesChanged)
+
+    # Node Dimensions
+    nodeWidth = Property(float, getNodeWidth, notify=internalAttributesChanged)
+    nodeHeight = Property(float, getNodeHeight, notify=internalAttributesChanged)
+
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     valuesFile = Property(str, valuesFile.fget, notify=internalFolderChanged)
@@ -1381,6 +1454,7 @@ class BaseNode(BaseObject):
     isExternal = Property(bool, isExtern, notify=globalExecModeChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
     isComputable = Property(bool, _isComputable, notify=globalStatusChanged)
+    isBackdrop = Property(bool, _isBackdrop, notify=globalStatusChanged)
     aliveChanged = Signal()
     alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)
     lockedChanged = Signal()
@@ -1526,8 +1600,10 @@ class Node(BaseNode):
 
     def _updateChunks(self):
         """ Update Node's computation task splitting into NodeChunks based on its description """
-        if isinstance(self.nodeDesc, desc.InputNode):
+        # No chunks for Input and Backdrop nodes as they don't need any processing
+        if isinstance(self.nodeDesc, (desc.InputNode, desc.Backdrop)):
             return
+
         self.setSize(self.nodeDesc.size.computeSize(self))
         if self.isParallelized:
             try:
@@ -1876,7 +1952,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
             # do not perform that check for internal attributes because there is no point in
             # raising compatibility issues if their number differs: in that case, it is only useful
             # if some internal attributes do not exist or are invalid
-            if not template and (sorted([attr.name for attr in nodeDesc.inputs 
+            if not template and (sorted([attr.name for attr in nodeDesc.inputs
                                          if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or
                                  sorted([attr.name for attr in nodeDesc.outputs if not attr.isDynamicValue]) !=
                                  sorted(outputs.keys())):

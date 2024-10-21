@@ -82,7 +82,7 @@ FloatingPane {
         onPlayingChanged: {
             if (!playing) {
                 updateReconstructionView()
-            } else if (playing && (frame + 1 >= frameRange + 1)) {
+            } else if (playing && (frame + 1 >= frameRange.max + 1)) {
                 frame = frameRange.min
             }
             viewer.playback(playing)

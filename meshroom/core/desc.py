@@ -702,6 +702,22 @@ class Node(object):
             value="",
             invalidate=False,
         ),
+        FloatParam(
+            name="nodeWidth",
+            label="Node Width",
+            description="The Node's Width.",
+            value=160,
+            range=None,
+            enabled=False # Hidden always
+        ),
+        FloatParam(
+            name="nodeHeight",
+            label="Node Height",
+            description="The Node's Height.",
+            value=120,
+            range=None,
+            enabled=False # Hidden always
+        ),
         ColorParam(
             name="color",
             label="Color",
@@ -778,6 +794,68 @@ class InputNode(Node):
 
     def processChunk(self, chunk):
         pass
+
+    def stopProcess(self, chunk):
+        pass
+
+
+class Backdrop(InputNode):
+    """ A Backdrop for other nodes.
+    """
+
+    # The internal inputs' of Backdrop Node needs a Integer Field to determine the font size for the comment
+    internalInputs = [
+        StringParam(
+            name="invalidation",
+            label="Invalidation Message",
+            description="A message that will invalidate the node's output folder.\n"
+                        "This is useful for development, we can invalidate the output of the node when we modify the code.\n"
+                        "It is displayed in bold font in the invalidation/comment messages tooltip.",
+            value="",
+            semantic="multiline",
+            advanced=True,
+            uidIgnoreValue="",  # If the invalidation string is empty, it does not participate to the node's UID
+        ),
+        StringParam(
+            name="comment",
+            label="Comments",
+            description="User comments describing this specific node instance.\n"
+                        "It is displayed in regular font in the invalidation/comment messages tooltip.",
+            value="",
+            semantic="multiline",
+            invalidate=False,
+        ),
+        IntParam(
+            name="fontSize",
+            label="Font Size",
+            description="The Font size for the User Comment on the Backdrop.",
+            value=12,
+            range=(6, 100, 1),
+        ),
+        FloatParam(
+            name="nodeWidth",
+            label="Node Width",
+            description="The Backdrop Node's Width.",
+            value=600,
+            range=None,
+            enabled=False # Hidden always
+        ),
+        FloatParam(
+            name="nodeHeight",
+            label="Node Height",
+            description="The Backdrop Node's Height.",
+            value=400,
+            range=None,
+            enabled=False # Hidden always
+        ),
+        ColorParam(
+            name="color",
+            label="Color",
+            description="Custom color for the node (SVG name or hexadecimal code).",
+            value="",
+            invalidate=False,
+        )
+    ]
 
 
 class CommandLineNode(Node):

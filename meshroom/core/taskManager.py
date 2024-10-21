@@ -336,10 +336,14 @@ class TaskManager(BaseObject):
         """
         ready = []
         computed = []
-        inputNodes = []
+
+        # The Node which does not have processing functionality
+        incomputable = []
+
         for node in toNodes:
+            # Input or Backdrop nodes
             if not node.isComputable:
-                inputNodes.append(node)
+                incomputable.append(node)
             elif context == "COMPUTATION":
                 if graph.canComputeTopologically(node) and graph.canSubmitOrCompute(node) % 2 == 1:
                     ready.append(node)
@@ -353,7 +357,7 @@ class TaskManager(BaseObject):
             else:
                 raise ValueError("Argument 'context' must be: 'COMPUTATION' or 'SUBMITTING'")
 
-        if len(ready) + len(computed) + len(inputNodes) != len(toNodes):
+        if len(ready) + len(computed) + len(incomputable) != len(toNodes):
             toNodes.clear()
             toNodes.extend(ready)
             return False

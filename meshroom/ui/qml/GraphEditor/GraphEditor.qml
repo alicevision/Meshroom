@@ -65,6 +65,10 @@ Item {
         uigraph.selectedNode = node
         if (node !== null) {
             uigraph.appendSelection(node)
+
+            // If the node is a backdrop -> Select it's children
+            if (node.isBackdrop) uigraph.appendBackdropSelection(node)
+
             uigraph.selectedNodesChanged()
         }
     }
@@ -857,6 +861,9 @@ Item {
                     onDoubleClicked: root.nodeDoubleClicked(mouse, node)
 
                     onMoved: uigraph.moveNode(node, position, uigraph.selectedNodes)
+
+                    // Update the Node size
+                    onResized: uigraph.resizeNode(node, width, height)
 
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null

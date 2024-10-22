@@ -139,7 +139,7 @@ Item {
     Keys.onPressed: {
         if (event.key === Qt.Key_F) {
             fit()
-        } else if (event.key === Qt.Key_Delete) {
+        } else if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) { // Backspace supports both Windows and MacOS Keyboards
             if (event.modifiers === Qt.AltModifier) {
                 uigraph.removeNodesFrom(uigraph.selectedNodes)
             } else {

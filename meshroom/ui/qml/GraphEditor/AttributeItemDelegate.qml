@@ -405,7 +405,7 @@ RowLayout {
                     text: "Custom Color"
                     onClicked: {
                         if (checked) {
-                            _reconstruction.setAttribute(attribute, "#0000FF")
+                            _reconstruction.setAttribute(attribute, node.isBackdrop ? "#fffb85" : "#0000FF")
                         } else {
                             _reconstruction.setAttribute(attribute, "")
                         }

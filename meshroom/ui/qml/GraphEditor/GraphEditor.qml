@@ -65,6 +65,10 @@ Item {
         uigraph.selectedNode = node
         if (node !== null) {
             uigraph.appendSelection(node)
+
+            // If the node is a backdrop -> Select it's children
+            if (node.isBackdrop) uigraph.appendBackdropSelection(node)
+
             uigraph.selectedNodesChanged()
         }
     }
@@ -135,7 +139,7 @@ Item {
     Keys.onPressed: {
         if (event.key === Qt.Key_F) {
             fit()
-        } else if (event.key === Qt.Key_Delete) {
+        } else if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) { // Backspace supports both Windows and MacOS Keyboards
             if (event.modifiers === Qt.AltModifier) {
                 uigraph.removeNodesFrom(uigraph.selectedNodes)
             } else {
@@ -857,6 +861,9 @@ Item {
                     onDoubleClicked: root.nodeDoubleClicked(mouse, node)
 
                     onMoved: uigraph.moveNode(node, position, uigraph.selectedNodes)
+
+                    // Update the Node size
+                    onResized: uigraph.resizeNode(node, width, height)
 
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null

@@ -19,23 +19,25 @@ Item {
     property bool readOnly: node.locked
     /// Whether the node is in compatibility mode
     readonly property bool isCompatibilityNode: node ? node.hasOwnProperty("compatibilityIssue") : false
+    /// Whether the node is a backdrop node
+    readonly property bool isBackdrop: node ? node.isBackdrop : false
     /// Mouse related states
     property bool mainSelected: false
     property bool selected: false
     property bool hovered: false
-    property bool dragging: mouseArea.drag.active
+    property bool dragging: mouseArea.drag.active || leftDragger.drag.active
     /// Combined x and y
     property point position: Qt.point(x, y)
     /// Styling
     property color shadowColor: "#cc000000"
-    readonly property color defaultColor: isCompatibilityNode ? "#444" : !node.isComputable ? "#BA3D69" : activePalette.base
+    readonly property color defaultColor: _defaultColor()
     property color baseColor: defaultColor
 
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
 
     Item {
         id: m
-        property bool displayParams: false
+        property bool displayParams: isBackdrop ? true : false
     }
 
     // Mouse interaction related signals
@@ -44,6 +46,9 @@ Item {
     signal moved(var position)
     signal entered()
     signal exited()
+
+    // Size signal
+    signal resized(var width, var height)
 
     // Already connected attribute with another edge in DropArea
     signal edgeAboutToBeRemoved(var input)
@@ -60,6 +65,9 @@ Item {
     x: root.node ? root.node.x : undefined
     y: root.node ? root.node.y : undefined
 
+    // The backdrop node always needs to be at the back
+    z: isBackdrop ? -1 : 1
+
     implicitHeight: childrenRect.height
 
     SystemPalette { id: activePalette }
@@ -71,6 +79,21 @@ Item {
             root.x = root.node.x
             root.y = root.node.y
         }
+    }
+
+    function _defaultColor() {
+        /*
+         * Returns the default color for the Node.
+         * If the node is in Compatibility Mode - Grey
+         * If the node is an InputNode - Pinkish
+         * If the node is a Backdrop - Yellow or the Node Color
+         */
+        if (isCompatibilityNode) return "#444"
+        else if (isBackdrop) return node.color === "" ? "#fffb85" : node.color
+        else if (!node.isComputable) return "#BA3D69"
+
+        // The default color for the node
+        return activePalette.base
     }
 
     function formatInternalAttributesTooltip(invalidation, comment) {
@@ -118,7 +141,7 @@ Item {
     // Main Layout
     MouseArea {
         id: mouseArea
-        width: parent.width
+        width: isBackdrop ? node.nodeWidth : parent.width
         height: body.height
         drag.target: root
         // small drag threshold to avoid moving the node by mistake
@@ -136,6 +159,138 @@ Item {
         }
 
         cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
+
+        /// Backdrop Resize Controls ???
+        ///
+        /// Resize Right Side
+        ///
+        Rectangle {
+            width: 4
+            height: nodeContent.height
+
+            color: baseColor
+            opacity: 0
+
+            // Only Visible for a backdrop node
+            visible: isBackdrop
+
+            anchors.horizontalCenter: parent.right
+
+            // This mouse area serves as the dragging rectangle    
+            MouseArea {
+                id: rightDragger
+
+                cursorShape: Qt.SizeHorCursor
+                anchors.fill: parent
+
+                drag{ target: parent; axis: Drag.XAxis }
+
+                onMouseXChanged: {
+                    if (drag.active) {
+                        // Width of the Area
+                        let w = 0
+
+                        // Update the area width
+                        w = mouseArea.width + mouseX
+
+                        // Ensure we have a minimum width always
+                        if (w < 300) {
+                            w = 300
+                        }
+
+                        // emit the width and height
+                        root.resized(w, nodeContent.height)
+                    }
+                }
+            }
+        }
+
+        ///
+        /// Resize Left Side
+        ///
+        Rectangle {
+            width: 4
+            height: nodeContent.height
+
+            color: baseColor
+            opacity: 0
+
+            // Only Visible for a backdrop node
+            visible: isBackdrop
+
+            anchors.horizontalCenter: parent.left
+
+            // This mouse area serves as the dragging rectangle
+            MouseArea {
+                id: leftDragger
+
+                cursorShape: Qt.SizeHorCursor
+                anchors.fill: parent
+
+                drag{ target: parent; axis: Drag.XAxis }
+
+                onMouseXChanged: {
+                    if (drag.active) {
+                        // Width of the Area
+                        let w = 0
+
+                        // Update the area width
+                        w = mouseArea.width - mouseX
+
+                        // Ensure we have a minimum width always
+                        if (w > 300) {
+                            // Update the node's x position
+                            root.x = root.x + mouseX
+                            // Emit the updated width and height
+                            root.resized(w, nodeContent.height)
+                        }
+                    }
+                }
+            }
+        }
+
+        ///
+        /// Resize Bottom
+        ///
+        Rectangle {
+            width: mouseArea.width
+            height: 4
+
+            color: baseColor
+            opacity: 0
+
+            // Only Visible for a backdrop node
+            visible: isBackdrop
+
+            anchors.verticalCenter: nodeContent.bottom
+
+            MouseArea {
+                id: bottomDragger
+
+                cursorShape: Qt.SizeVerCursor
+                anchors.fill: parent
+
+                drag{ target: parent; axis: Drag.YAxis }
+
+                onMouseYChanged: {
+                    if (drag.active) {
+                        // Height of the node
+                        let h = 0
+
+                        // Update the height
+                        h = nodeContent.height + mouseY
+
+                        // Ensure a minimum height
+                        if (h < 300) {
+                            h = 300
+                        }
+
+                        // emit the width and height for it to be updated
+                        root.resized(mouseArea.width, h)
+                    }
+                }
+            }
+        }
 
         // Selection border
         Rectangle {
@@ -164,7 +319,7 @@ Item {
         Rectangle {
             id: background
             anchors.fill: nodeContent
-            color: node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color
+            color: isBackdrop ? baseColor : node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color
             layer.enabled: true
             layer.effect: DropShadow { radius: 3; color: shadowColor }
             radius: 3
@@ -174,7 +329,7 @@ Item {
         Rectangle {
             id: nodeContent
             width: parent.width
-            height: childrenRect.height
+            height: isBackdrop ? node.nodeHeight : childrenRect.height
             color: "transparent"
 
             // Data Layout
@@ -211,7 +366,7 @@ Item {
                             Layout.fillWidth: true
                             text: node ? node.label : ""
                             padding: 4
-                            color: root.mainSelected ? "white" : activePalette.text
+                            color: isBackdrop ? "#2b2b2b" : root.mainSelected ? "white" : activePalette.text
                             elide: Text.ElideMiddle
                             font.pointSize: 8
                         }
@@ -240,7 +395,7 @@ Item {
                             MaterialToolButton {
                                 property string baseText: "<b>Shares internal folder (data) with other node(s). Hold click for details.</b>"
                                 property string toolTipText: visible ? baseText : ""
-                                visible: node.hasDuplicates
+                                visible: !isBackdrop && node.hasDuplicates
                                 text: MaterialIcons.layers
                                 font.pointSize: 7
                                 padding: 2
@@ -290,7 +445,7 @@ Item {
 
                             MaterialLabel {
                                 id: nodeComment
-                                visible: node.comment !== "" || node.invalidation !== ""
+                                visible: !isBackdrop && (node.comment !== "" || node.invalidation !== "")
                                 text: MaterialIcons.comment
                                 padding: 2
                                 font.pointSize: 7
@@ -375,6 +530,20 @@ Item {
 
                 // Vertical Spacer
                 Item { width: parent.width; height: 2 }
+
+                // Node Text
+                Rectangle {
+                    y: header.height
+
+                    // Show only when the node is backdrop node and if we have a comment
+                    visible: isBackdrop && node.comment
+
+                    Text {
+                        text: node.comment
+                        padding: 4
+                        font.pointSize: node.fontSize
+                    }
+                }
 
                 // Input/Output Attributes
                 Item {
@@ -531,6 +700,7 @@ Item {
                             spacing: 0
                             anchors.margins: 0
                             font.pointSize: 10
+                            visible: !isBackdrop
                             onClicked: {
                                 m.displayParams = ! m.displayParams
                             }

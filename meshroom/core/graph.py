@@ -16,7 +16,7 @@ from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import StopGraphVisit, StopBranchVisit
-from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
+from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode, Position
 
 # Replace default encoder to support Enums
 
@@ -54,6 +54,130 @@ def GraphModification(graph):
     finally:
         # Restore update policy
         graph.updateEnabled = enabled
+
+
+class Region:
+    """ Defines the boundaries for a Region on the 2d Plane (Graph in our Context).
+    """
+
+    class Range:
+        """ Defines a Range between two points in the Graph or 2d Plane, inclusive of the 2nd Point.
+        """
+
+        def __init__(self, x, y):
+            """ Constructor.
+
+            Args:
+                x (int | float): An integer or float start.
+                y (int | float): An integer or float end.
+            """
+            # Internal Coords
+            self._x = x
+            self._y = y
+
+        def __repr__(self):
+            """ Represents the instance.
+            """
+            return f"Range::{self._x}, {self._y}"
+
+        def __contains__(self, _i):
+            """ Returns True if the provided integer or float falls between the start and the end point of the range.
+            """
+            return self._x < _i <= self._y
+
+
+    def __init__(self, x=0, y=0, right=0, bottom=0):
+        """ Constructor.
+
+        Args:
+            x (int | float): The x coordinate of the top-left point on the Region.
+            y (int | float): The y coordinate of the top-left point on the Region.
+            right (int | float): The x coordinate of the bottom-right point on the Region.
+            bottom (int | float): The y coordinate of the bottom-right point on the Region.
+        """
+        # The coords of the Region can be represented as
+        #   (x, y)
+        #    .------------------------.
+        #    |                        |
+        #    |                        |
+        #    |                        |
+        #    |                        |
+        #    '------------------------'
+        #                            (right, bottom)
+        self._x = x
+        self._y = y
+        self._right = right
+        self._bottom = bottom
+
+    # Properties
+    x = property(lambda self: self._x)
+    y = property(lambda self: self._y)
+    right = property(lambda self: self._right)
+    bottom = property(lambda self: self._bottom)
+
+    def __contains__(self, point):
+        """ Returns True if the provided Point is present in the Region.
+        """
+        return self.contains(point)
+
+    def __repr__(self):
+        """ Represents the instance.
+        """
+        return f"Region::{self.points()}"
+
+    # Public
+    def xrange(self):
+        """ Defines the Range between the left most and right most x-coordinate.
+
+        Returns:
+            Region.Range. Range of the left most and right most x-coordinate.
+        """
+        return Region.Range(self._x, self._right)
+
+    def yrange(self):
+        """ Defines the Range between the top most and bottom most y-coordinate.
+
+        Returns:
+            Region.Range. Range of the top most and bottom most y-coordinate.
+        """
+        return Region.Range(self._y, self._bottom)
+
+    def contains(self, point):
+        """ Returns True if the provided point is present inside the Region.
+
+        Args:
+            point (Position) A 2d Point position.
+
+        Returns:
+            bool. True if the point is in the Region else False.
+        """
+        return point.x in self.xrange() and point.y in self.yrange()
+
+    def points(self):
+        """ A Region can be represented by basic 2 points defining its top-left and bottom right position.
+
+        Returns:
+            list<Position>. Array of Positions for the Region.
+        """
+        return [Position(self._x, self._y), Position(self._right, self._bottom)]
+
+    def containsRegion(self, region):
+        """ Returns True if the provided region belongs to the current Region.
+
+        Args:
+            region (Region): The region to check for.
+
+        Returns:
+            bool. True if the provided region belongs to the current Region.
+        """
+        # Check if both top-left and bottom-right points of the region fall in the current region
+        for point in region.points():
+            # If any of the point is outside of the -> The region can be safely marked as not in current region
+            if point not in self:
+                return False
+
+        # Else it belongs
+        return True
 
 
 class Edge(BaseObject):
@@ -164,6 +288,9 @@ class Graph(BaseObject):
 
     """
     _cacheDir = ""
+
+    # Graph's Region Of Interest
+    ROI = Region
 
     class IO(object):
         """ Centralize Graph file keys and IO version. """
@@ -678,6 +805,26 @@ class Graph(BaseObject):
         # type: (Node) -> [Edge]
         """ Return the list of edges starting from this node """
         return [edge for edge in self.edges if edge.src.node == node]
+
+    def nodesInRegion(self, region):
+        """ Returns the Nodes present in this region.
+
+        Args:
+            region (Graph.ROI): Region to look for nodes.
+
+        Returns:
+            list<Node>. Array of Nodes present in the Region.
+        """
+        # A node with 40 pixels inside the backdrop in terms of height could be considered a candidate ?
+        nodes = []
+        for node in self._nodes.values():
+            # Node's Region
+            noder = Graph.ROI(node.x, node.y, node.x + node.nodeWidth, node.y + 40)
+            # If the provided region contains the node region -> add the node to the array of nodes
+            if region.containsRegion(noder):
+                nodes.append(node)
+
+        return nodes
 
     @changeTopology
     def removeNode(self, nodeName):

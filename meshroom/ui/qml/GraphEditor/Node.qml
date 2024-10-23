@@ -495,8 +495,8 @@ Item {
                                     delegate: Loader {
                                         id: paramLoader
                                         active: !object.isOutput && !object.desc.exposed && object.desc.visible
-                                        visible: Boolean(object.enabled || object.isLink || object.hasOutputConnections)
-                                        property bool isFullyActive: Boolean(m.displayParams || object.isLink || object.hasOutputConnections)
+                                        visible: Boolean(object.enabled || object.isLinkNested || object.hasOutputConnections)
+                                        property bool isFullyActive: Boolean(m.displayParams || object.isLinkNested || object.hasOutputConnections)
                                         width: parent.width
 
                                         sourceComponent: AttributePin {

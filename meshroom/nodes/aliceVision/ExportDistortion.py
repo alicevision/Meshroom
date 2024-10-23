@@ -28,6 +28,12 @@ It also allows to export an undistorted image of the lens grids for validation.
             value=True,
         ),
         desc.BoolParam(
+            name="exportAnimatedNukeNode",
+            label="Export Animated Nuke Node",
+            description="Export animated distortion for this sequence as nuke file.",
+            value=False,
+        ),
+        desc.BoolParam(
             name="exportLensGridsUndistorted",
             label="Export Lens Grids Undistorted",
             description="Export the lens grids undistorted for validation.",

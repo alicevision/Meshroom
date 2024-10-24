@@ -120,7 +120,9 @@ Panel {
     headerBar: RowLayout {
         SearchBar {
             id: searchBar
-            width: 150
+            toggle: true // enable toggling the actual text field by the search button
+            Layout.minimumWidth: searchBar.width
+            maxWidth: 150
         }
 
         MaterialToolButton {

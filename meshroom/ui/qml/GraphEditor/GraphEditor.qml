@@ -991,7 +991,11 @@ Item {
         padding: 2
         anchors.bottom: parent.bottom
         RowLayout {
+            id: navigation
             spacing: 4
+
+            // Default index for search
+            property int currentIndex: -1
             // Fit
             MaterialToolButton {
                 text: MaterialIcons.fullscreen
@@ -1030,7 +1034,7 @@ Item {
                         ComboBox {
                             flat: true
                             model: ['Minimum', 'Maximum']
-                            implicitWidth: 80
+                            implicitWidth: 85
                             currentIndex: uigraph ? uigraph.layout.depthMode : -1
                             onActivated: {
                                 uigraph.layout.depthMode = currentIndex
@@ -1039,32 +1043,27 @@ Item {
                     }
                 }
             }
-        }
-    }
 
-    // Graph Nodes Search
-    FloatingPane {
-        id: navigation
-        padding: 2
-        anchors.top: parent.top
-
-        property int currentIndex: -1
-
-        RowLayout {
-            spacing: 0
-
+            // Search nodes in the graph
             SearchBar {
                 id: graphSearchBar
-                Layout.minimumWidth: 150
-                width: 150
+  
+                toggle: true // enable toggling the actual text field by the search button
+                Layout.minimumWidth: graphSearchBar.width
+                maxWidth: 150
+
                 textField.background.opacity: 0.5
                 textField.onTextChanged: navigation.currentIndex = -1
+
+                onReturnPressed: {
+                    nextArrow.clicked()
+                }
             }
 
             MaterialToolButton {
                 text: MaterialIcons.arrow_left
                 padding: 0
-                enabled: graphSearchBar.text !== ""
+                visible: graphSearchBar.text !== ""
                 onClicked: {
                     navigation.currentIndex--
                     if (navigation.currentIndex === -1)
@@ -1074,9 +1073,10 @@ Item {
             }
 
             MaterialToolButton {
+                id: nextArrow
                 text: MaterialIcons.arrow_right
                 padding: 0
-                enabled: graphSearchBar.text !== ""
+                visible: graphSearchBar.text !== ""
                 onClicked: {
                     navigation.currentIndex++
                     if (navigation.currentIndex === filteredNodes.count)
@@ -1092,32 +1092,31 @@ Item {
                 visible: graphSearchBar.text !== ""
             }
 
-        }
-
-        Repeater {
-            id: filteredNodes
-            model: SortFilterDelegateModel {
-                model: root.graph ? root.graph.nodes : undefined
-                sortRole: "label"
-                filters: [{role: "label", value: graphSearchBar.text}]
-                delegate: Item {
-                    property var index_: index
-                }
-                function modelData(item, roleName_) {
-                    return item.model.object[roleName_]
+            Repeater {
+                id: filteredNodes
+                model: SortFilterDelegateModel {
+                    model: root.graph ? root.graph.nodes : undefined
+                    sortRole: "label"
+                    filters: [{role: "label", value: graphSearchBar.text}]
+                    delegate: Item {
+                        property var index_: index
+                    }
+                    function modelData(item, roleName_) {
+                        return item.model.object[roleName_]
+                    }
                 }
             }
-        }
 
-        function nextItem() {
-            // compute bounding box
-            var node = nodeRepeater.itemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
-            var bbox = Qt.rect(node.x, node.y, node.width, node.height)
-            // rescale to fit the bounding box in the view, zoom is limited to prevent huge text
-            draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height),maxZoom)
-            // recenter
-            draggable.x = bbox.x*draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
-            draggable.y = bbox.y*draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
+            function nextItem() {
+                // compute bounding box
+                var node = nodeRepeater.itemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
+                var bbox = Qt.rect(node.x, node.y, node.width, node.height)
+                // rescale to fit the bounding box in the view, zoom is limited to prevent huge text
+                draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height),maxZoom)
+                // recenter
+                draggable.x = bbox.x*draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
+                draggable.y = bbox.y*draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
+            }
         }
     }
 

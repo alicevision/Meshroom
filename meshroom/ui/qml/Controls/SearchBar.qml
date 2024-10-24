@@ -9,8 +9,23 @@ import MaterialIcons 2.2
  */
 
 FocusScope {
+    id: root
     property alias textField: field
     property alias text: field.text
+
+    // Enables hiding and showing of the text field on Search button click
+    property bool toggle: false
+    property bool isVisible: false
+
+    // Size properties
+    property int maxWidth: 150
+    property int minWidth: 30
+
+    // The default width is computed based on whether toggling is enabled and if the visibility is true
+    width: toggle && isVisible ? maxWidth : minWidth
+
+    // Keyboard interaction related signals
+    signal returnPressed()
 
     implicitHeight: childrenRect.height
     Keys.forwardTo: [field]
@@ -24,10 +39,18 @@ FocusScope {
     }
 
     RowLayout {
+        spacing: 0
         width: parent.width
 
-        MaterialLabel {
+        MaterialToolButton {
             text: MaterialIcons.search
+            enabled: root.toggle
+
+            onClicked: {
+                isVisible = !root.isVisible
+                // Set Focus on the Text Field
+                field.focus = true
+            }
         }
 
         TextField {
@@ -36,9 +59,44 @@ FocusScope {
             Layout.fillWidth: true
             selectByMouse: true
 
+            rightPadding: clear.width
+
+            // The text field is visible either when toggle is not activated or the visible property is set
+            visible: root.toggle ? root.isVisible : true
+
             // Ensure the field has focus when the text is modified
             onTextChanged: {
                 forceActiveFocus()
+            }
+
+            // Handle enter Key press and forward it to the parent
+            Keys.onPressed: (event)=> {
+                if ((event.key == Qt.Key_Return)) {
+                    event.accepted = true
+                    root.returnPressed()
+                }
+            }
+
+            MaterialToolButton {
+                id: clear
+
+                // Anchors
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+
+                // Style
+                font.pointSize: 8
+                text: MaterialIcons.close
+                ToolTip.text: "Clears text."
+
+                // States
+                visible: field.text
+
+                // Signals -> Slots
+                onClicked: {
+                    field.text = ""
+                    parent.focus = true
+                }
             }
         }
     }

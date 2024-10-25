@@ -32,12 +32,13 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             name="method",
             label="Matching Method",
             description="Matching Method:\n"
-                " - from_viewid: Align cameras with same view ID.\n"
-                " - from_filepath: Align cameras with a filepath matching, using 'fileMatchingPattern'.\n"
-                " - from_metadata: Align cameras with matching metadata, using 'metadataMatchingList'.\n"
-                " - from_intrinsicid: Copy intrinsics parameters.\n",
+                " - from_viewid: Match cameras based on viewId.\n"
+                " - from_filepath: Match cameras with a filepath matching, using 'fileMatchingPattern'.\n"
+                " - from_metadata: Match cameras with matching metadata, using 'metadataMatchingList'.\n"
+                " - from_poseid: Match cameras based on poseId.\n"
+                " - from_intrinsicid: Match cameras based on intrinsicId.\n",
             value="from_viewid",
-            values=["from_viewid", "from_filepath", "from_metadata", "from_intrinsicid"],
+            values=["from_viewid", "from_filepath", "from_metadata", "from_poseid", "from_intrinsicid"],
         ),
         desc.StringParam(
             name="fileMatchingPattern",

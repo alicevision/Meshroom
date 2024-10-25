@@ -14,6 +14,7 @@ import types
 import uuid
 from collections import namedtuple
 from enum import Enum
+from typing import Callable, Optional
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
@@ -929,25 +930,42 @@ class BaseNode(BaseObject):
     def _updateChunks(self):
         pass
 
-    def onAttributeChanged(self, attr):
-        """ When an attribute changed, a specific function can be defined in the descriptor and be called.
+    def _getAttributeChangedCallback(self, attr: Attribute) -> Optional[Callable]:
+        """Get the node descriptor-defined value changed callback associated to `attr` if any."""
+
+        attrCapitalizedName = attr.name[:1].upper() + attr.name[1:]
+        callbackName = f"on{attrCapitalizedName}Changed"
+
+        callback = getattr(self.nodeDesc, callbackName, None)
+        return callback if callback and callable(callback) else None
+
+    def _onAttributeChanged(self, attr: Attribute):
+        """
+        When an attribute value has changed, a specific function can be defined in the descriptor and be called.
 
         Args:
-            attr (Attribute): attribute that has changed
+            attr: The Attribute that has changed.
         """
-        # Call the specific function if it exists in the node implementation
-        paramName = attr.name[:1].upper() + attr.name[1:]
-        methodName = f'on{paramName}Changed'
-        if hasattr(self.nodeDesc, methodName):
-            m = getattr(self.nodeDesc, methodName)
-            if callable(m):
-                m(self)
+
+        if self.isCompatibilityNode:
+            # Compatibility nodes are not meant to be updated.
+            return
+
+        if attr.isOutput and not self.isInputNode:
+            # Ignore changes on output attributes for non-input nodes
+            # as they are updated during the node's computation.
+            # And we do not want notifications during the graph processing.
+            return
+
+        callback = self._getAttributeChangedCallback(attr)
+
+        if callback:
+            callback(self)
 
         if self.graph:
             # If we are in a graph, propagate the notification to the connected output attributes
-            outEdges = self.graph.outEdges(attr)
-            for edge in outEdges:
-                edge.dst.onChanged()
+            for edge in self.graph.outEdges(attr):
+                edge.dst.node._onAttributeChanged(edge.dst)
 
     def onAttributeClicked(self, attr):
         """ When an attribute is clicked, a specific function can be defined in the descriptor and be called.

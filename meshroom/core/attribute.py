@@ -25,11 +25,14 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
         root: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
         parent (BaseObject): (optional) the parent BaseObject if any
     """
-    attr = description.instanceType(node, description, isOutput, root, parent)
+    attr: Attribute = description.instanceType(node, description, isOutput, root, parent)
     if value is not None:
         attr._set_value(value, emitSignals=False)
     else:
         attr.resetToDefaultValue(emitSignals=False)
+
+    attr.valueChanged.connect(lambda attr=attr: node._onAttributeChanged(attr))
+
     return attr
 
 
@@ -67,7 +70,6 @@ class Attribute(BaseObject):
         self._value = None
         self.initValue()
 
-        self.valueChanged.connect(self.onChanged)
 
     @property
     def node(self):

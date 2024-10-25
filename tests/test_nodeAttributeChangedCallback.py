@@ -160,3 +160,22 @@ class TestAttributeCallbackTriggerInGraph:
         loadedNode = loadedGraph.node(node.name)
         assert loadedNode
         assert loadedNode.affectedInput.value == 2
+
+    def test_loadingGraphDoesNotTriggerCallbackForConnectedAttributes(
+        self, graphSavedOnDisk
+    ):
+        graph: Graph = graphSavedOnDisk
+        nodeA = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+        nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+
+        graph.addEdge(nodeA.input, nodeB.input)
+        nodeA.input.value = 5
+        nodeB.affectedInput.value = 2
+
+        graph.save()
+
+        loadedGraph = loadGraph(graph.filepath)
+        loadedNodeB = loadedGraph.node(nodeB.name)
+        assert loadedNodeB
+        assert loadedNodeB.affectedInput.value == 2
+

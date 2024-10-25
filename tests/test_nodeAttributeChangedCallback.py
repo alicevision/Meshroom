@@ -179,3 +179,133 @@ class TestAttributeCallbackTriggerInGraph:
         assert loadedNodeB
         assert loadedNodeB.affectedInput.value == 2
 
+
+class NodeWithCompoundAttributes(desc.Node):
+    """
+    A Node containing a variation of compound attributes (List/Groups),
+    called whenever the value of this attribute is changed explicitly.
+    """
+
+    inputs = [
+        desc.ListAttribute(
+            name="listInput",
+            label="List Input",
+            description="ListAttribute of IntParams.",
+            elementDesc=desc.IntParam(
+                name="int", label="Int", description="", value=0, range=None
+            ),
+        ),
+        desc.GroupAttribute(
+            name="groupInput",
+            label="Group Input",
+            description="GroupAttribute with a single 'IntParam' element.",
+            groupDesc=[
+                desc.IntParam(
+                    name="int", label="Int", description="", value=0, range=None
+                )
+            ],
+        ),
+        desc.ListAttribute(
+            name="listOfGroupsInput",
+            label="List of Groups input",
+            description="ListAttribute of GroupAttribute with a single 'IntParam' element.",
+            elementDesc=desc.GroupAttribute(
+                name="subGroup",
+                label="SubGroup",
+                description="",
+                groupDesc=[
+                    desc.IntParam(
+                        name="int", label="Int", description="", value=0, range=None
+                    )
+                ],  
+            )
+        ),
+        desc.GroupAttribute(
+            name="groupWithListInput",
+            label="Group with List",
+            description="GroupAttribute with a single 'ListAttribute of IntParam' element.",
+            groupDesc=[
+                desc.ListAttribute(
+                    name="subList",
+                    label="SubList",
+                    description="",
+                    elementDesc=desc.IntParam(
+                        name="int", label="Int", description="", value=0, range=None
+                    )
+                )
+            ]
+        )
+    ]
+
+
+class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
+    @classmethod
+    def setup_class(cls):
+        registerNodeType(NodeWithAttributeChangedCallback)
+        registerNodeType(NodeWithCompoundAttributes)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeType(NodeWithAttributeChangedCallback)
+        unregisterNodeType(NodeWithCompoundAttributes)
+
+    def test_connectionToListElement(self):
+        graph = Graph("")
+        nodeA = graph.addNewNode(NodeWithCompoundAttributes.__name__)
+        nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+
+        nodeA.listInput.append(0)
+        attr = nodeA.listInput.at(0)
+
+        graph.addEdge(attr, nodeB.input)
+
+        attr.value = 10
+
+        assert nodeB.input.value == 10
+        assert nodeB.affectedInput.value == 20
+
+    def test_connectionToGroupElement(self):
+        graph = Graph("")
+        nodeA = graph.addNewNode(NodeWithCompoundAttributes.__name__)
+        nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+
+        graph.addEdge(nodeA.groupInput.int, nodeB.input)
+
+        nodeA.groupInput.int.value = 10
+
+        assert nodeB.input.value == 10
+        assert nodeB.affectedInput.value == 20
+
+    def test_connectionToGroupElementInList(self):
+        graph = Graph("")
+        nodeA = graph.addNewNode(NodeWithCompoundAttributes.__name__)
+        nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+
+        nodeA.listOfGroupsInput.append({})
+
+        attr = nodeA.listOfGroupsInput.at(0)
+
+        graph.addEdge(attr.int, nodeB.input)
+
+        attr.int.value = 10
+
+        assert nodeB.input.value == 10
+        assert nodeB.affectedInput.value == 20
+
+    def test_connectionToListElementInGroup(self):
+        graph = Graph("")
+        nodeA = graph.addNewNode(NodeWithCompoundAttributes.__name__)
+        nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+
+        nodeA.groupWithListInput.subList.append(0)
+
+        attr = nodeA.groupWithListInput.subList.at(0)
+
+        graph.addEdge(attr, nodeB.input)
+
+        attr.value = 10
+
+        assert nodeB.input.value == 10
+        assert nodeB.affectedInput.value == 20
+
+

@@ -961,6 +961,10 @@ class BaseNode(BaseObject):
             # And we do not want notifications during the graph processing.
             return
 
+        if attr.value is None:
+            # Discard dynamic values depending on the graph processing.
+            return
+
         callback = self._getAttributeChangedCallback(attr)
 
         if callback:

@@ -1,9 +1,15 @@
-from PySide6.QtCore import QObject, Slot
+from PySide6.QtCore import QObject, Slot, QSettings
 
 from io import StringIO
 from contextlib import redirect_stdout
+import traceback
 
 class ScriptEditorManager(QObject):
+    """ Manages the script editor history and logs.
+    """
+
+    _GROUP = "ScriptEditor"
+    _KEY = "script"
 
     def __init__(self, parent=None):
         super(ScriptEditorManager, self).__init__(parent=parent)
@@ -13,19 +19,51 @@ class ScriptEditorManager(QObject):
         self._globals = {}
         self._locals = {}
 
+    # Protected
+    def _defaultScript(self):
+        """ Returns the default script for the script editor.
+        """
+        lines = (
+            "from meshroom.ui import uiInstance\n",
+            "graph = uiInstance.activeProject.graph",
+            "for node in graph.nodes:",
+            "    print(node.name)"
+        )
 
+        return "\n".join(lines)
+
+    def _lastScript(self):
+        """ Returns the last script from the user settings.
+        """
+        settings = QSettings()
+        settings.beginGroup(self._GROUP)
+        return settings.value(self._KEY)
+
+    # Public
     @Slot(str, result=str)
     def process(self, script):
         """ Execute the provided input script, capture the output from the standard output, and return it. """
+        # Saves the state if an exception has occured
+        exception = False
+
         stdout = StringIO()
         with redirect_stdout(stdout):
             try:
                 exec(script, self._globals, self._locals)
-            except Exception as exception:
-                # Format and print the exception to stdout, which will be captured
-                print("{}: {}".format(type(exception).__name__, exception))
+            except Exception:
+                # Update that we have an exception that is thrown
+                exception = True
+                # Print the backtrace
+                traceback.print_exc(file=stdout)
 
         result = stdout.getvalue().strip()
+
+        # Strip out additional part
+        if exception:
+            # We know that we're executing the above statement and that caused the exception
+            # What we want to show to the user is just the part that happened while executing the script
+            # So just split with the last part and show it to the user
+            result = result.split("self._locals)", 1)[-1]
 
         # Add the script to the history and move up the index to the top of history stack
         self._history.append(script)
@@ -58,3 +96,21 @@ class ScriptEditorManager(QObject):
         elif self._index == 0 and len(self._history):
             return self._history[self._index]
         return ""
+
+    @Slot(result=str)
+    def loadLastScript(self):
+        """ Returns the last executed script from the prefs.
+        """
+        return self._lastScript() or self._defaultScript()
+
+    @Slot(str)
+    def saveScript(self, script):
+        """ Returns the last executed script from the prefs.
+
+        Args:
+            script (str): The script to save.
+        """
+        settings = QSettings()
+        settings.beginGroup(self._GROUP)
+        settings.setValue(self._KEY, script)
+        settings.sync()

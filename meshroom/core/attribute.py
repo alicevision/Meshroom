@@ -27,9 +27,9 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
     """
     attr: Attribute = description.instanceType(node, description, isOutput, root, parent)
     if value is not None:
-        attr._set_value(value, emitSignals=False)
+        attr._set_value(value)
     else:
-        attr.resetToDefaultValue(emitSignals=False)
+        attr.resetToDefaultValue()
 
     attr.valueChanged.connect(lambda attr=attr: node._onAttributeChanged(attr))
 
@@ -182,7 +182,7 @@ class Attribute(BaseObject):
             return self.getLinkParam().value
         return self._value
 
-    def _set_value(self, value, emitSignals=True):
+    def _set_value(self, value):
         if self._value == value:
             return
 
@@ -197,9 +197,6 @@ class Attribute(BaseObject):
             # and apply some conversion if needed
             convertedValue = self.validateValue(value)
             self._value = convertedValue
-
-        if not emitSignals:
-            return
 
         # Request graph update when input parameter value is set
         # and parent node belongs to a graph
@@ -238,8 +235,8 @@ class Attribute(BaseObject):
         if self.desc._valueType is not None:
             self._value = self.desc._valueType()
 
-    def resetToDefaultValue(self, emitSignals=True):
-        self._set_value(copy.copy(self.defaultValue()), emitSignals=emitSignals)
+    def resetToDefaultValue(self):
+        self._set_value(copy.copy(self.defaultValue()))
 
     def requestGraphUpdate(self):
         if self.node.graph:
@@ -525,14 +522,13 @@ class ListAttribute(Attribute):
         return self._value.indexOf(item)
 
     def initValue(self):
-        self.resetToDefaultValue(emitSignals=False)
+        self.resetToDefaultValue()
 
-    def resetToDefaultValue(self, emitSignals=True):
+    def resetToDefaultValue(self):
         self._value = ListModel(parent=self)
-        if emitSignals:
-            self.valueChanged.emit()
+        self.valueChanged.emit()
 
-    def _set_value(self, value, emitSignals=True):
+    def _set_value(self, value):
         if self.node.graph:
             self.remove(0, len(self))
         # Link to another attribute
@@ -545,8 +541,6 @@ class ListAttribute(Attribute):
                 self._value = ListModel(parent=self)
             newValue = self.desc.validateValue(value)
             self.extend(newValue)
-        if not emitSignals:
-            return
         self.requestGraphUpdate()
 
     def upgradeValue(self, exportedValues):
@@ -683,7 +677,7 @@ class GroupAttribute(Attribute):
             except KeyError:
                 raise AttributeError(key)
 
-    def _set_value(self, exportedValue, emitSignals=True):
+    def _set_value(self, exportedValue):
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
@@ -721,7 +715,7 @@ class GroupAttribute(Attribute):
             childAttr.valueChanged.connect(self.valueChanged)
         self._value.reset(subAttributes)
 
-    def resetToDefaultValue(self, emitSignals=True):
+    def resetToDefaultValue(self):
         for attrDesc in self.desc._groupDesc:
             self._value.get(attrDesc.name).resetToDefaultValue()
 

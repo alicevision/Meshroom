@@ -387,3 +387,23 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
 
         assert nodeB.input.value == 20
         assert nodeB.affectedInput.value == 0
+
+        
+    def test_clearingDynamicOutputValueDoesNotTriggerDownstreamAttributeChangedCallback(
+        self, graphWithIsolatedCache
+    ):
+        graph: Graph = graphWithIsolatedCache
+        nodeA = graph.addNewNode(NodeWithDynamicOutputValue.__name__)
+        nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+
+        nodeA.input.value = 10
+        executeGraph(graph)
+
+        graph.addEdge(nodeA.output, nodeB.input)
+
+        expectedPreClearValue = nodeA.input.value * 2 * 2
+        assert nodeB.affectedInput.value == expectedPreClearValue
+
+        nodeA.clearData()
+        assert nodeA.output.value == nodeB.input.value is None
+        assert nodeB.affectedInput.value == expectedPreClearValue

@@ -17,7 +17,6 @@ This node allows select views from sfmData file using a regular expresion.
             label="inputFile",
             description="SfMData file.",
             value="",
-            uid=[],
         ),
         desc.StringParam(
             name="fileMatchingPattern",
@@ -32,7 +31,6 @@ This node allows select views from sfmData file using a regular expresion.
                         " - Match the filename prefix before \"_\": "
                         r'".*\/(.*?)_.*\.\w{3}"',
             value=r'.*\/(.*?)\.\w{3}',
-            uid=[],
         ),
     ]
 
@@ -42,13 +40,11 @@ This node allows select views from sfmData file using a regular expresion.
             label="SfMData_selected",
             description="Output SfMData file containing selected views.",
             value=desc.Node.internalFolder + "/selectedSfmData.sfm",
-            uid=[],
         ),
         desc.File(
             name="outputSfMData_unselected",
             label="SfMData_unselected",
             description="Output SfMData file containing remaining views.",
             value=desc.Node.internalFolder + "/unselectedSfmData.sfm",
-            uid=[],
         ),
     ]

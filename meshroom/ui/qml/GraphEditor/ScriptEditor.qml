@@ -9,6 +9,8 @@ import Utils 1.0
 
 import Qt.labs.platform 1.0 as Platform
 
+import ScriptEditor 1.0
+
 Item {
     id: root
 
@@ -338,6 +340,13 @@ Item {
                         lineNumbers.contentY = contentY
                     }
                 }
+            }
+
+            // Syntax Highlights for the Input Area for Python Based Syntax
+            PySyntaxHighlighter {
+                id: syntaxHighlighter
+                // The document to highlight
+                textDocument: input.textDocument
             }
         }
     }

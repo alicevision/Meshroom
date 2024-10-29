@@ -32,6 +32,13 @@ This node allows select views from sfmData file using a regular expresion.
                         r'".*\/(.*?)_.*\.\w{3}"',
             value=r'.*\/(.*?)\.\w{3}',
         ),
+        desc.ChoiceParam(
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
+            value="info",
+        ),
     ]
 
     outputs = [

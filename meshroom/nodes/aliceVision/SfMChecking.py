@@ -2,17 +2,15 @@ __version__ = "1.0"
 
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
-import os.path
 
 
+class SfMChecking(desc.Node):
 
-class SfmChecking(desc.Node):
-    
-    category = 'Utils'
-    documentation = '''
-    Check an input Sfm for validity.
-    Throw an error if the sfm does not satisfy constraints
-    '''
+    category = "Utils"
+    documentation = """
+    Check an input SfM for validity.
+    Throw an error if the SfM does not satisfy constraints.
+    """
 
     inputs = [
         desc.File(
@@ -22,8 +20,8 @@ class SfmChecking(desc.Node):
             value="",
         ),
         desc.FloatParam(
-            name="posecompletion",
-            label="Completion percentage",
+            name="poseCompletion",
+            label="Completion Percentage",
             description="Minimal percent of the views reconstructed.",
             value=80.0,
             range=(0.0, 100.0, 1.0),
@@ -50,10 +48,9 @@ class SfmChecking(desc.Node):
         from pyalicevision import sfmData as avsfmdata
         from pyalicevision import sfmDataIO as avsfmdataio
 
-        error = False
-
         chunk.logManager.start(chunk.node.verboseLevel.value)
-        chunk.logger.error("open input")
+        chunk.logger.info("Open input file")
+
         data = avsfmdata.SfMData()
         ret = avsfmdataio.load(data, chunk.node.input.value, avsfmdataio.ALL)
         if not ret:
@@ -63,20 +60,18 @@ class SfmChecking(desc.Node):
 
         total = len(data.getViews())
         valid = len(data.getValidViews())
-        ratio = (100.0 * float(valid))/float(total)
+        ratio = (100.0 * float(valid)) / float(total)
 
-        chunk.logger.info(f"Total views : {total}")
-        chunk.logger.info(f"Reconstructed views : {valid}")
-        chunk.logger.info(f"Percentage : {ratio}")
+        chunk.logger.info(f"Total views: {total}")
+        chunk.logger.info(f"Reconstructed views: {valid}")
+        chunk.logger.info(f"Percentage of reconstructed views: {ratio}")
 
-        if ratio < chunk.node.posecompletion.value:
-            chunk.logger.error("Percentage of reconstructed views is insufficient")
-            error = True
-
-        avsfmdataio.save(data, chunk.node.output.value, avsfmdataio.ALL)
-        
-        chunk.logManager.end()
-
-        if error:
+        if ratio < chunk.node.poseCompletion.value:
+            chunk.logger.error("Percentage of reconstructed views is insufficient.")
+            chunk.logger.error(f"Expected {chunk.node.poseCompletion.value}, got {ratio}.")
+            chunk.logManager.end()
             raise RuntimeError()
 
+        avsfmdataio.save(data, chunk.node.output.value, avsfmdataio.ALL)
+
+        chunk.logManager.end()

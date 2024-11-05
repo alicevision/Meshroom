@@ -13,8 +13,9 @@
             "ExportDistortion": "1.0",
             "FeatureExtraction": "1.3",
             "FeatureMatching": "2.0",
+            "ImageDetectionPrompt": "0.1",
             "ImageMatching": "2.0",
-            "ImageSegmentationPrompt": "0.1",
+            "ImageSegmentationBox": "0.1",
             "NodalSfM": "2.0",
             "Publish": "1.3",
             "RelativePoseEstimating": "2.0",
@@ -78,7 +79,7 @@
         "ConvertSfMFormat_1": {
             "nodeType": "ConvertSfMFormat",
             "position": [
-                1400,
+                1600,
                 200
             ],
             "inputs": {
@@ -108,7 +109,7 @@
         "ExportAnimatedCamera_1": {
             "nodeType": "ExportAnimatedCamera",
             "position": [
-                1400,
+                1600,
                 0
             ],
             "inputs": {
@@ -135,12 +136,12 @@
         "FeatureExtraction_1": {
             "nodeType": "FeatureExtraction",
             "position": [
-                200,
+                400,
                 0
             ],
             "inputs": {
                 "input": "{ApplyCalibration_1.output}",
-                "masksFolder": "{ImageSegmentationPrompt_1.output}"
+                "masksFolder": "{ImageSegmentationBox_1.output}"
             },
             "internalInputs": {
                 "color": "#80766f"
@@ -149,7 +150,7 @@
         "FeatureMatching_1": {
             "nodeType": "FeatureMatching",
             "position": [
-                600,
+                800,
                 0
             ],
             "inputs": {
@@ -162,10 +163,23 @@
                 "color": "#80766f"
             }
         },
+        "ImageDetectionPrompt_1": {
+            "nodeType": "ImageDetectionPrompt",
+            "position": [
+                0,
+                200
+            ],
+            "inputs": {
+                "input": "{CameraInit_1.output}"
+            },
+            "internalInputs": {
+                "color": "#80766f"
+            }
+        },
         "ImageMatching_1": {
             "nodeType": "ImageMatching",
             "position": [
-                400,
+                600,
                 0
             ],
             "inputs": {
@@ -178,14 +192,15 @@
                 "color": "#80766f"
             }
         },
-        "ImageSegmentationPrompt_1": {
-            "nodeType": "ImageSegmentationPrompt",
+        "ImageSegmentationBox_1": {
+            "nodeType": "ImageSegmentationBox",
             "position": [
-                0,
+                200,
                 200
             ],
             "inputs": {
-                "input": "{CameraInit_1.output}",
+                "input": "{ImageDetectionPrompt_1.input}",
+                "bboxFolder": "{ImageDetectionPrompt_1.output}",
                 "maskInvert": true,
                 "keepFilename": true
             },
@@ -196,7 +211,7 @@
         "NodalSfM_1": {
             "nodeType": "NodalSfM",
             "position": [
-                1200,
+                1400,
                 0
             ],
             "inputs": {
@@ -211,7 +226,7 @@
         "Publish_1": {
             "nodeType": "Publish",
             "position": [
-                1800,
+                2000,
                 0
             ],
             "inputs": {
@@ -225,7 +240,7 @@
         "RelativePoseEstimating_1": {
             "nodeType": "RelativePoseEstimating",
             "position": [
-                1000,
+                1200,
                 0
             ],
             "inputs": {
@@ -240,14 +255,14 @@
         "ScenePreview_1": {
             "nodeType": "ScenePreview",
             "position": [
-                1600,
+                1800,
                 200
             ],
             "inputs": {
                 "cameras": "{ConvertSfMFormat_1.output}",
                 "model": "{NodalSfM_1.output}",
                 "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}",
-                "masks": "{ImageSegmentationPrompt_1.output}",
+                "masks": "{ImageSegmentationBox_1.output}",
                 "pointCloudParams": {
                     "particleSize": 0.001,
                     "particleColor": "Red"
@@ -260,7 +275,7 @@
         "TracksBuilding_1": {
             "nodeType": "TracksBuilding",
             "position": [
-                800,
+                1000,
                 0
             ],
             "inputs": {

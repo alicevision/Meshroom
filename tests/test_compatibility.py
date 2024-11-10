@@ -197,7 +197,7 @@ def test_description_conflict():
     Test compatibility behavior for conflicting node descriptions.
     """
     # copy registered node types to be able to restore them
-    originalNodeTypes = copy.copy(meshroom.core.nodesDesc)
+    originalNodeTypes = copy.copy(meshroom.core.pluginManager.descriptors)
 
     nodeTypes = [SampleNodeV1, SampleNodeV2, SampleNodeV3, SampleNodeV4, SampleNodeV5]
     nodes = []
@@ -224,7 +224,7 @@ def test_description_conflict():
     # offset node types register to create description conflicts
     # each node type name now reference the next one's implementation
     for i, nt in enumerate(nodeTypes[:-1]):
-        meshroom.core.nodesDesc[nt.__name__] = nodeTypes[i+1]
+        meshroom.core.pluginManager.register(nt.__name__, nodeTypes[i+1])
 
     # reload file
     g = loadGraph(graphFile)
@@ -306,7 +306,7 @@ def test_description_conflict():
             raise ValueError("Unexpected node type: " + srcNode.nodeType)
 
     # restore original node types
-    meshroom.core.nodesDesc = originalNodeTypes
+    meshroom.core.pluginManager._descriptors = originalNodeTypes        # pylint: disable=protected-access
 
 
 def test_upgradeAllNodes():
@@ -331,8 +331,8 @@ def test_upgradeAllNodes():
     unregisterNodeType(SampleNodeV2)
     unregisterNodeType(SampleInputNodeV2)
     # replace SampleNodeV1 by SampleNodeV2 and SampleInputNodeV1 by SampleInputNodeV2
-    meshroom.core.nodesDesc[SampleNodeV1.__name__] = SampleNodeV2
-    meshroom.core.nodesDesc[SampleInputNodeV1.__name__] = SampleInputNodeV2
+    meshroom.core.pluginManager.register(SampleNodeV1.__name__, SampleNodeV2)
+    meshroom.core.pluginManager.register(SampleInputNodeV1.__name__, SampleInputNodeV2)
 
     # reload file
     g = loadGraph(graphFile)
@@ -369,7 +369,7 @@ def test_conformUpgrade():
     g.save(graphFile)
 
     # replace SampleNodeV5 by SampleNodeV6
-    meshroom.core.nodesDesc[SampleNodeV5.__name__] = SampleNodeV6
+    meshroom.core.pluginManager.register(SampleNodeV5.__name__, SampleNodeV6)
 
     # reload file
     g = loadGraph(graphFile)

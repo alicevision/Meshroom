@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # coding:utf-8
+# Types
+from typing import List
+
 import atexit
 import copy
 import datetime
@@ -495,9 +498,9 @@ class BaseNode(BaseObject):
         self._nodeType = nodeType
         self.nodeDesc = None
 
-        # instantiate node description if nodeType is valid
-        if nodeType in meshroom.core.nodesDesc:
-            self.nodeDesc = meshroom.core.nodesDesc[nodeType]()
+        # instantiate node description if nodeType has been registered
+        if meshroom.core.pluginManager.registered(nodeType):
+            self.nodeDesc = meshroom.core.pluginManager.descriptor(nodeType)()
 
         self.packageName = self.packageVersion = ""
         self._internalFolder = ""
@@ -1356,7 +1359,7 @@ class BaseNode(BaseObject):
         False otherwise.
         """
         for attr in self._attributes:
-            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or 
+            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or
                                                    attr.desc.semantic == "imageList"):
                 return True
         return False
@@ -1593,6 +1596,7 @@ class CompatibilityIssue(Enum):
     VersionConflict = 2  # mismatch between node's description version and serialized node data
     DescriptionConflict = 3  # mismatch between node's description attributes and serialized node data
     UidConflict = 4  # mismatch between computed UIDs and UIDs stored in serialized node data
+    PluginIssue = 5 # Issue with interpreting the plugin due to any issues with interpreting the plugin
 
 
 class CompatibilityNode(BaseNode):
@@ -1754,8 +1758,9 @@ class CompatibilityNode(BaseNode):
             self._attributes.add(attribute)
         return matchDesc
 
-    @property
-    def issueDetails(self):
+    def _issueDetails(self) -> str:
+        """ Returns Issue Details.
+        """
         if self.issue == CompatibilityIssue.UnknownNodeType:
             return "Unknown node type: '{}'.".format(self.nodeType)
         elif self.issue == CompatibilityIssue.VersionConflict:
@@ -1766,8 +1771,14 @@ class CompatibilityNode(BaseNode):
             return "Node attributes do not match node description."
         elif self.issue == CompatibilityIssue.UidConflict:
             return "Node UID differs from the expected one."
-        else:
-            return "Unknown error."
+        elif self.issue == CompatibilityIssue.PluginIssue:
+            return "Error interpreting the Node Plugin."
+
+        return "Unknown error."
+
+    @property
+    def issueDetails(self) -> str:
+        return self._issueDetails()
 
     @property
     def inputs(self):
@@ -1852,6 +1863,74 @@ class CompatibilityNode(BaseNode):
     issueDetails = Property(str, issueDetails.fget, constant=True)
 
 
+class IncompatiblePluginNode(CompatibilityNode):
+    """ Fallback BaseNode subclass to instantiate Nodes having compatibility issues with current type description.
+    CompatibilityNode creates an 'empty-shell' exposing the deserialized node as-is,
+    with all its inputs and precomputed outputs.
+    """
+
+    def __init__(self, nodeType, position=None, issue=CompatibilityIssue.PluginIssue, parent=None, **kwargs):
+        super(IncompatiblePluginNode, self).__init__(nodeType, {}, position=position, issue=issue, parent=parent)
+
+        self.packageName = self.nodeDesc.packageName
+        self.packageVersion = self.nodeDesc.packageVersion
+        self._internalFolder = self.nodeDesc.internalFolder
+
+        # Fetch the errors for the plugin
+        self._nodeErrors = self.nodeDesc.plugin.errors
+
+        # Add the Attributes
+        for attrDesc in self.nodeDesc.inputs:
+            # Don't add any invalid attributes
+            if attrDesc.invalid:
+                continue
+
+            self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))
+
+        for attrDesc in self.nodeDesc.outputs:
+            # Don't add any invalid attributes
+            if attrDesc.invalid:
+                continue
+
+            self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=True, node=self))
+
+        for attrDesc in self.nodeDesc.internalInputs:
+            # Don't add any invalid attributes
+            if attrDesc.invalid:
+                continue
+
+            self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False,
+                                                          node=self))
+
+    @property
+    def issueDetails(self) -> str:
+        """ Returns any issue details for the Node.
+        """
+        # The basic issue detail
+        details = [self._issueDetails()]
+
+        # Add the Node Parametric error details
+        details.extend(self._errorDetails())
+
+        return "\n".join(details)
+
+    # Protected
+    def _errorDetails(self) -> List[str]:
+        """ Returns the details of the Parametric errors on the Node.
+        """
+        errors = ["Following parameters have invalid default values/ranges:"]
+
+        # Add the parameters from the node Errors
+        errors.extend([f"* Param {param}" for param in self._nodeErrors])
+
+        return errors
+
+    # Properties
+    # An Incompatible Plguin Node should not be upgraded but only reloaded
+    canUpgrade = Property(bool, lambda _: False, constant=True)
+    issueDetails = Property(str, issueDetails.fget, constant=True)
+
+
 def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
     """
     Create a node instance by deserializing the given node data.
@@ -1885,11 +1964,11 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
 
     compatibilityIssue = None
 
-    nodeDesc = None
-    try:
-        nodeDesc = meshroom.core.nodesDesc[nodeType]
-    except KeyError:
-        # Unknown node type
+    # Returns the desc.Node inherited class or None if the plugin was not registered
+    nodeDesc = meshroom.core.pluginManager.descriptor(nodeType)
+
+    # Node plugin was not registered
+    if not nodeDesc:
         compatibilityIssue = CompatibilityIssue.UnknownNodeType
 
     # Unknown node type should take precedence over UID conflict, as it cannot be resolved
@@ -1909,7 +1988,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
             # do not perform that check for internal attributes because there is no point in
             # raising compatibility issues if their number differs: in that case, it is only useful
             # if some internal attributes do not exist or are invalid
-            if not template and (sorted([attr.name for attr in nodeDesc.inputs 
+            if not template and (sorted([attr.name for attr in nodeDesc.inputs
                                          if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or
                                  sorted([attr.name for attr in nodeDesc.outputs if not attr.isDynamicValue]) !=
                                  sorted(outputs.keys())):

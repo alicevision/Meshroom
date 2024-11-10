@@ -34,9 +34,10 @@ def test_templateVersions():
 
         for _, nodeData in graphData.items():
             nodeType = nodeData["nodeType"]
-            assert nodeType in meshroom.core.nodesDesc
+            # Assert that the plugin (nodeType) is indeed registered to be used
+            assert meshroom.core.pluginManager.registered(nodeType)
 
-            nodeDesc = meshroom.core.nodesDesc[nodeType]
+            nodeDesc = meshroom.core.pluginManager.descriptor(nodeType)
             currentNodeVersion = meshroom.core.nodeVersion(nodeDesc)
 
             inputs = nodeData.get("inputs", {})

@@ -16,7 +16,7 @@ from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
-from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
+from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode, IncompatiblePluginNode
 
 # Replace default encoder to support Enums
 
@@ -444,7 +444,7 @@ class Graph(BaseObject):
         # Second pass to update all the links in the input/output attributes for every node with the new names
         for nodeName, nodeData in updatedData.items():
             nodeType = nodeData.get("nodeType", None)
-            nodeDesc = meshroom.core.nodesDesc[nodeType]
+            nodeDesc = meshroom.core.pluginManager.descriptor(nodeType)
 
             inputs = nodeData.get("inputs", {})
             outputs = nodeData.get("outputs", {})
@@ -762,7 +762,14 @@ class Graph(BaseObject):
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 
-        n = self.addNode(Node(nodeType, position=position, **kwargs), uniqueName=name)
+        # The Node Type to Construcct
+        Type = Node
+
+        if meshroom.core.pluginManager.status(nodeType) == meshroom.core.PluginStatus.ERRORED:
+            Type = IncompatiblePluginNode
+
+        # Construct the Node
+        n = self.addNode(Type(nodeType, position=position, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 

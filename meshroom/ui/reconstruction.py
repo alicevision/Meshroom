@@ -496,7 +496,8 @@ class Reconstruction(UIGraph):
         # Create all possible entries
         for category, _ in self.activeNodeCategories.items():
             self._activeNodes.add(ActiveNode(category, parent=self))
-        for nodeType, _ in meshroom.core.nodesDesc.items():
+
+        for nodeType in meshroom.core.pluginManager.descriptors:
             self._activeNodes.add(ActiveNode(nodeType, parent=self))
 
     def clearActiveNodes(self):
@@ -648,7 +649,9 @@ class Reconstruction(UIGraph):
         if not sfmFile or not os.path.isfile(sfmFile):
             self.tempCameraInit = None
             return
-        nodeDesc = meshroom.core.nodesDesc["CameraInit"]()
+
+        # The camera init node should always exist
+        nodeDesc = meshroom.core.pluginManager.descriptor("CameraInit")()
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
         tmpCameraInit.locked = True

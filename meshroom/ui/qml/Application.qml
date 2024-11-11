@@ -433,6 +433,17 @@ Page {
         uigraph: _reconstruction
     }
 
+    PluginManager {
+        id: pluginManager
+        manager: _pluginator
+
+        // When a plugin package has been browsed
+        onBrowsed: {
+            // Load Plugins
+            _pluginator.load(directory)
+        }
+    }
+
 
     // Actions
     Action {
@@ -923,6 +934,25 @@ Page {
                 border.color: Qt.darker(activePalette.window, 1.15)
             }
         }
+
+        // Button to Launch Plugin Manager
+        ToolButton {
+            id: pluginManagerButton
+            visible: true
+            text: MaterialIcons.build
+            font.family: MaterialIcons.fontFamily
+            font.pointSize: 12
+            onClicked: {
+                pluginManager.open()
+            }
+            ToolTip.text: "Plugin Manager"
+            ToolTip.visible: hovered
+
+            background: Rectangle {
+                color: pluginManagerButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.15)
+                border.color: Qt.darker(activePalette.window, 1.15)
+            }
+        }
     }
 
     footer: ToolBar {
@@ -1156,7 +1186,7 @@ Page {
                         visible: graphEditorPanel.currentTab === 0
 
                         uigraph: _reconstruction
-                        nodeTypesModel: _nodeTypes
+                        nodeTypesModel: _pluginator.plugins
 
                         onNodeDoubleClicked: function(mouse, node) {
                             _reconstruction.setActiveNode(node);

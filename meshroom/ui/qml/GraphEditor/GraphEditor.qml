@@ -13,9 +13,43 @@ import Utils 1.0
 Item {
     id: root
 
-    property variant uigraph: null  /// Meshroom UI graph (UIGraph)
-    readonly property variant graph: uigraph ? uigraph.graph : null  /// Core graph contained in the UI graph
-    property variant nodeTypesModel: null  /// The list of node types that can be instantiated
+    property variant uigraph: null  /// Meshroom ui graph (UIGraph)
+    readonly property variant graph: uigraph ? uigraph.graph : null  /// core graph contained in ui graph
+    property variant nodeTypesModel: null  /// the list of node types that can be instantiated
+
+    readonly property var nodeCategories: {
+        // Map to hold the node category: node type
+        let categories = {}
+
+        for (var i = 0; i < nodeTypesModel.count; i++) {
+            // The node at the index
+            let node = nodeTypesModel.at(i)
+
+            // Node Category
+            let category = node.category;
+
+            // Setup an array to allow node type(s) to be added to the category
+            if (categories[category] === undefined) {
+                categories[category] = []
+            }
+            // Add the nodeType to the category which will show up in the Menu
+            categories[category].push(node.name)
+        }
+
+        return categories
+    }
+
+    readonly property var nodeTypes: {
+        // An array to hold the node Types
+        let types = []
+
+        for (var i = 0; i < nodeTypesModel.count; i++) {
+            types.push(nodeTypesModel.at(i).name)
+        }
+
+        return types
+    }
+
     property real maxZoom: 2.0
     property real minZoom: 0.1
 
@@ -226,7 +260,7 @@ Item {
         Menu {
             id: newNodeMenu
             property point spawnPosition
-            property variant menuKeys: Object.keys(root.nodeTypesModel).concat(Object.values(MeshroomApp.pipelineTemplateNames))
+            property variant menuKeys: nodeTypes.concat(Object.values(MeshroomApp.pipelineTemplateNames))
             height: searchBar.height + nodeMenuRepeater.height + instantiator.height
 
             function createNode(nodeType) {
@@ -254,21 +288,10 @@ Item {
             }
 
             function parseCategories() {
-                // Organize nodes based on their category
-                // {"category1": ["node1", "node2"], "category2": ["node3", "node4"]}
-                let categories = {};
-                for (const [name, data] of Object.entries(root.nodeTypesModel)) {
-                    let category = data["category"];
-                    if (categories[category] === undefined) {
-                        categories[category] = []
-                    }
-                    categories[category].push(name)
-                }
-
                 // Add a "Pipelines" category, filled with the list of templates to create pipelines from the menu
-                categories["Pipelines"] = MeshroomApp.pipelineTemplateNames
+                nodeCategories["Pipelines"] = MeshroomApp.pipelineTemplateNames
 
-                return categories
+                return nodeCategories
             }
 
             onVisibleChanged: {

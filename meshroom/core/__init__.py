@@ -188,13 +188,13 @@ def nodeVersion(nodeDesc, default=None):
     return moduleVersion(nodeDesc.__module__, default)
 
 
-def registerNodeType(nodeType, module=None):
+def registerNodeType(nodeType):
     """ Register a Node Type based on a Node Description class.
 
     After registration, nodes of this type can be instantiated in a Graph.
     """
     # Register the node in plugin manager
-    registered = pluginManager.registerNode(nodeType, module=module)
+    registered = pluginManager.registerNode(nodeType)
 
     # The plugin was already registered
     if not registered:

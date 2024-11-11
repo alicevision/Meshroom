@@ -10,6 +10,7 @@ AttributeEditor 1.0 AttributeEditor.qml
 AttributeItemDelegate 1.0 AttributeItemDelegate.qml
 CompatibilityBadge 1.0 CompatibilityBadge.qml
 CompatibilityManager 1.0 CompatibilityManager.qml
+PluginManager 1.0 PluginManager.qml
 singleton GraphEditorSettings 1.0 GraphEditorSettings.qml
 TaskManager 1.0 TaskManager.qml
 ScriptEditor 1.0 ScriptEditor.qml

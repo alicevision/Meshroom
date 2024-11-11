@@ -11,11 +11,11 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 import meshroom
-from meshroom.core import pluginManager
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
 
 from meshroom.ui import components
+from meshroom.ui.plugins import NodesPluginManager
 from meshroom.ui.components.clipboard import ClipboardHelper
 from meshroom.ui.components.filepath import FilepathHelper
 from meshroom.ui.components.scene3D import Scene3DHelper, Transformations3DHelper
@@ -239,16 +239,16 @@ class MeshroomApp(QApplication):
         self.engine.addImportPath(qmlDir)
         components.registerTypes()
 
-        # expose available node types that can be instantiated
-        nodesDesc = pluginManager.descriptors
-        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": nodesDesc[n].category} for n in sorted(nodesDesc.keys())})
-
         # instantiate Reconstruction object
         self._undoStack = commands.UndoStack(self)
         self._taskManager = TaskManager(self)
         self._activeProject = Reconstruction(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
         self._activeProject.setSubmitLabel(args.submitLabel)
+
+        # The Plugin manager for UI to communicate with
+        self._pluginManager = NodesPluginManager(parent=self)
         self.engine.rootContext().setContextProperty("_reconstruction", self._activeProject)
+        self.engine.rootContext().setContextProperty("_pluginator", self._pluginManager)
 
         # those helpers should be available from QML Utils module as singletons, but:
         #  - qmlRegisterUncreatableType is not yet available in PySide2

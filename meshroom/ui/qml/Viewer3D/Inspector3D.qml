@@ -318,11 +318,10 @@ FloatingPane {
 
                 SearchBar {
                     id: searchBar
-
-                    toggle: true // enable toggling the actual text field by the search button
-                    Layout.minimumWidth: searchBar.width
-                    maxWidth: parent.width
-
+                    Layout.minimumWidth: 150
+                    Layout.fillWidth: true
+                    Layout.rightMargin: 10
+                    Layout.leftMargin: 10
                 }
 
                 ListView {

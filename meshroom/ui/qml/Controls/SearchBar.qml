@@ -44,7 +44,6 @@ FocusScope {
 
         MaterialToolButton {
             text: MaterialIcons.search
-            enabled: root.toggle
 
             onClicked: {
                 isVisible = !root.isVisible
@@ -82,6 +81,7 @@ FocusScope {
 
                 // Anchors
                 anchors.right: parent.right
+                anchors.rightMargin: 2  // Leave a tiny bit of space so that its highlight does not overlap with the boundary of the parent
                 anchors.verticalCenter: parent.verticalCenter
 
                 // Style

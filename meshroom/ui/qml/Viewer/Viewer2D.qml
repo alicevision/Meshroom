@@ -501,9 +501,9 @@ FocusScope {
                         var sizeValid = (width > 0) && (height > 0)
                         var layoutValid = (root.width > 50) && (root.height > 50)
                         var sizeChanged = (root.previousWidth != width) || (root.previousHeight != height)
-                        
+
                         if ((!root.fittedOnce && imgContainer.image && sizeValid && layoutValid) ||
-                            (root.fittedOnce && sizeChanged && sizeValid && layoutValid)) {                            
+                            (root.fittedOnce && sizeChanged && sizeValid && layoutValid)) {
                             var ret = fit()
                             if (!ret)
                                 return
@@ -515,12 +515,16 @@ FocusScope {
                         }
                     }
 
-                    onHeightChanged : {
+                    onWidthChanged : {
                         floatImageViewerLoader.sizeChanged();
                     }
 
                     Connections {
                         target: root
+                        function onWidthChanged() {
+                            floatImageViewerLoader.sizeChanged()
+                        }
+
                         function onHeightChanged() {
                             floatImageViewerLoader.sizeChanged()
                         }
@@ -534,7 +538,6 @@ FocusScope {
                             var ret = fit()
                             if (!ret)
                                 return
-                            root.fittedOnce = true
                             root.previousWidth = width
                             root.previousHeight = height
                             root.previousOrientationTag = orientationTag

@@ -12,6 +12,21 @@ class GraphException(MeshroomException):
     pass
 
 
+class GraphCompatibilityError(GraphException):
+    """
+    Raised when node compatibility issues occur when loading a graph.
+    
+    Args:
+        filepath: The path to the file that caused the error.
+        issues: A dictionnary of node names and their respective compatibility issues.
+    """
+    def __init__(self, filepath, issues: dict[str, str]) -> None:
+        self.filepath = filepath
+        self.issues = issues
+        msg = f"Compatibility issues found when loading {self.filepath}: {self.issues}"
+        super().__init__(msg)
+
+
 class UnknownNodeTypeError(GraphException):
     """
     Raised when asked to create a unknown node type.

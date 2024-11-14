@@ -15,7 +15,7 @@ import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
-from meshroom.core.exception import StopGraphVisit, StopBranchVisit
+from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
 from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
 
 # Replace default encoder to support Enums
@@ -1633,11 +1633,27 @@ class Graph(BaseObject):
     canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
 
 
-def loadGraph(filepath):
+def loadGraph(filepath, strictCompatibility: bool = False) -> Graph:
     """
+    Load a Graph from a Meshroom Graph (.mg) file.
+
+    Args:
+        filepath: The path to the Meshroom Graph file.
+        strictCompatibility: If True, raise a GraphCompatibilityError if the loaded Graph has node compatibility issues.
+
+    Returns:
+        Graph: The loaded Graph instance.
+
+    Raises:
+        GraphCompatibilityError: If the Graph has node compatibility issues and `strictCompatibility` is False.
     """
     graph = Graph("")
     graph.load(filepath)
+
+    compatibilityIssues = len(graph.compatibilityNodes) > 0
+    if compatibilityIssues and strictCompatibility:
+        raise GraphCompatibilityError(filepath, {n.name: str(n.issue) for n in graph.compatibilityNodes})
+
     graph.update()
     return graph
 

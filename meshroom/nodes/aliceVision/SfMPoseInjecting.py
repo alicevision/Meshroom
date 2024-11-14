@@ -7,13 +7,13 @@ import json
 
 class SfMPoseInjecting(desc.AVCommandLineNode):
 
-    commandLine = 'aliceVision_sfmPoseInjecting {allParams}'
-    size = desc.DynamicNodeSize('input')
+    commandLine = "aliceVision_sfmPoseInjecting {allParams}"
+    size = desc.DynamicNodeSize("input")
     
     category = "Utils"
     documentation = """
-    Use a json file to inject poses inside sfmData
-    """
+Use a JSON file to inject poses inside the SfMData.
+"""
 
     inputs = [
         desc.File(
@@ -24,15 +24,15 @@ class SfMPoseInjecting(desc.AVCommandLineNode):
         ),
         desc.File(
             name="posesFilename",
-            label="Json file",
-            description="Input poses file.",
+            label="Poses",
+            description="Input JSON file containing the poses.",
             value="",
         ),
         desc.ChoiceParam(
             name="rotationFormat",
-            label="Rotation format",
-            description="Defines the rotation format for the input poses"
-                        " - EulerZXY : Euler rotation in degrees (Y*X*Z)",
+            label="Rotation Format",
+            description="Defines the rotation format for the input poses:\n"
+                        " - EulerZXY: Euler rotation in degrees (Y*X*Z)",
             values=["EulerZXY"],
             value="EulerZXY",
         ),
@@ -42,14 +42,14 @@ class SfMPoseInjecting(desc.AVCommandLineNode):
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-        )
+        ),
     ]
 
     outputs = [
         desc.File(
             name="output",
-            label="SfM File",
+            label="SfMData",
             description="Path to the output SfM file.",
             value=desc.Node.internalFolder + "sfmData.sfm",
-        )
+        ),
     ]

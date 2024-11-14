@@ -214,6 +214,7 @@ class Graph(BaseObject):
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
         self.name = name
+        self._loading = False
         self._updateEnabled = True
         self._updateRequested = False
         self.dirtyTopology = False
@@ -246,6 +247,11 @@ class Graph(BaseObject):
         """ Get loaded file supported features based on its version. """
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
+    @property
+    def isLoading(self):
+        """ Return True if the graph is currently being loaded. """
+        return self._loading
+
     @Slot(str)
     def load(self, filepath, setupProjectFile=True, importProject=False, publishOutputs=False):
         """
@@ -259,6 +265,13 @@ class Graph(BaseObject):
                            of opened.
             publishOutputs: True if "Publish" nodes from templates should not be ignored.
         """
+        self._loading = True
+        try:
+            self._load(filepath, setupProjectFile, importProject, publishOutputs)
+        finally:
+            self._loading = False
+
+    def _load(self, filepath, setupProjectFile, importProject, publishOutputs):
         if not importProject:
             self.clear()
         with open(filepath) as jsonFile:

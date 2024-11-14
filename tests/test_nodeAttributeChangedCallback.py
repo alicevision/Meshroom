@@ -156,7 +156,7 @@ class TestAttributeCallbackTriggerInGraph:
         node.affectedInput.value = 2
         graph.save()
 
-        loadedGraph = loadGraph(graph.filepath)
+        loadedGraph = loadGraph(graph.filepath, strictCompatibility=True)
         loadedNode = loadedGraph.node(node.name)
         assert loadedNode
         assert loadedNode.affectedInput.value == 2
@@ -170,11 +170,13 @@ class TestAttributeCallbackTriggerInGraph:
 
         graph.addEdge(nodeA.input, nodeB.input)
         nodeA.input.value = 5
+        assert nodeB.affectedInput.value == nodeB.input.value * 2
+
         nodeB.affectedInput.value = 2
 
         graph.save()
 
-        loadedGraph = loadGraph(graph.filepath)
+        loadedGraph = loadGraph(graph.filepath, strictCompatibility=True)
         loadedNodeB = loadedGraph.node(nodeB.name)
         assert loadedNodeB
         assert loadedNodeB.affectedInput.value == 2
@@ -407,3 +409,25 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         nodeA.clearData()
         assert nodeA.output.value == nodeB.input.value is None
         assert nodeB.affectedInput.value == expectedPreClearValue
+
+    def test_loadingGraphWithComputedDynamicOutputValueDoesNotTriggerDownstreamAttributeChangedCallback(
+        self, graphSavedOnDisk
+    ):
+        graph: Graph = graphSavedOnDisk
+        nodeA = graph.addNewNode(NodeWithDynamicOutputValue.__name__)
+        nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+
+        nodeA.input.value = 10
+        graph.addEdge(nodeA.output, nodeB.input)
+        executeGraph(graph)
+
+        assert nodeA.output.value == nodeB.input.value == 20
+        assert nodeB.affectedInput.value == 0
+
+        graph.save()
+
+        loadGraph(graph.filepath, strictCompatibility=True)
+
+        assert nodeB.affectedInput.value == 0
+
+

@@ -1658,7 +1658,7 @@ def loadGraph(filepath, strictCompatibility: bool = False) -> Graph:
         Graph: The loaded Graph instance.
 
     Raises:
-        GraphCompatibilityError: If the Graph has node compatibility issues and `strictCompatibility` is False.
+        GraphCompatibilityError: If the Graph has node compatibility issues and `strictCompatibility` is True.
     """
     graph = Graph("")
     graph.load(filepath)

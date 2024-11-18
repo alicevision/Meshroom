@@ -15,7 +15,7 @@ import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
-from meshroom.core.exception import StopGraphVisit, StopBranchVisit
+from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
 from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
 
 # Replace default encoder to support Enums
@@ -214,6 +214,7 @@ class Graph(BaseObject):
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
         self.name = name
+        self._loading = False
         self._updateEnabled = True
         self._updateRequested = False
         self.dirtyTopology = False
@@ -246,6 +247,11 @@ class Graph(BaseObject):
         """ Get loaded file supported features based on its version. """
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
+    @property
+    def isLoading(self):
+        """ Return True if the graph is currently being loaded. """
+        return self._loading
+
     @Slot(str)
     def load(self, filepath, setupProjectFile=True, importProject=False, publishOutputs=False):
         """
@@ -259,6 +265,13 @@ class Graph(BaseObject):
                            of opened.
             publishOutputs: True if "Publish" nodes from templates should not be ignored.
         """
+        self._loading = True
+        try:
+            self._load(filepath, setupProjectFile, importProject, publishOutputs)
+        finally:
+            self._loading = False
+
+    def _load(self, filepath, setupProjectFile, importProject, publishOutputs):
         if not importProject:
             self.clear()
         with open(filepath) as jsonFile:
@@ -1633,11 +1646,27 @@ class Graph(BaseObject):
     canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
 
 
-def loadGraph(filepath):
+def loadGraph(filepath, strictCompatibility: bool = False) -> Graph:
     """
+    Load a Graph from a Meshroom Graph (.mg) file.
+
+    Args:
+        filepath: The path to the Meshroom Graph file.
+        strictCompatibility: If True, raise a GraphCompatibilityError if the loaded Graph has node compatibility issues.
+
+    Returns:
+        Graph: The loaded Graph instance.
+
+    Raises:
+        GraphCompatibilityError: If the Graph has node compatibility issues and `strictCompatibility` is True.
     """
     graph = Graph("")
     graph.load(filepath)
+
+    compatibilityIssues = len(graph.compatibilityNodes) > 0
+    if compatibilityIssues and strictCompatibility:
+        raise GraphCompatibilityError(filepath, {n.name: str(n.issue) for n in graph.compatibilityNodes})
+
     graph.update()
     return graph
 

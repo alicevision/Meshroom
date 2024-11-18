@@ -8,7 +8,7 @@ import pytest
 
 import meshroom.core
 from meshroom.core import desc, registerNodeType, unregisterNodeType
-from meshroom.core.exception import NodeUpgradeError
+from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
 
@@ -395,3 +395,24 @@ def test_conformUpgrade():
 
     unregisterNodeType(SampleNodeV5)
     unregisterNodeType(SampleNodeV6)
+
+
+class TestGraphLoadingWithStrictCompatibility:
+
+    def test_failsOnNodeDescriptionCompatibilityIssue(self, graphSavedOnDisk):
+        registerNodeType(SampleNodeV1)
+        registerNodeType(SampleNodeV2)
+
+        graph: Graph = graphSavedOnDisk
+        graph.addNewNode(SampleNodeV1.__name__)
+        graph.save()
+
+        # Replace saved node description by V2
+        meshroom.core.nodesDesc[SampleNodeV1.__name__] = SampleNodeV2
+
+        with pytest.raises(GraphCompatibilityError):
+            loadGraph(graph.filepath, strictCompatibility=True)
+
+        unregisterNodeType(SampleNodeV1)
+        unregisterNodeType(SampleNodeV2)
+

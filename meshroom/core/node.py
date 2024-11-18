@@ -964,6 +964,10 @@ class BaseNode(BaseObject):
         if attr.value is None:
             # Discard dynamic values depending on the graph processing.
             return
+        
+        if self.graph and self.graph.isLoading:
+            # Do not trigger attribute callbacks during the graph loading.
+            return
 
         callback = self._getAttributeChangedCallback(attr)
 

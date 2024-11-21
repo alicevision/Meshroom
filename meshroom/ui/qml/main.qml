@@ -76,13 +76,19 @@ ApplicationWindow {
 
     function initFileDialogFolder(dialog, importImages = false) {
         let folder = ""
-        let projects = MeshroomApp.recentProjectFiles
+        let project = ""
+        try {
+            // The list of recent projects might be empty, hence the try/catch
+            project = MeshroomApp.recentProjectFiles[0]["path"]
+        } catch (error) {
+            console.info("The list of recent projects is currently empty.")
+        }
         let currentItem = mainStack.currentItem
 
         if (currentItem instanceof Homepage) {
             // From the homepage, take the folder from the most recent project (no prior check on its existence)
-            if (projects.length > 0 && Filepath.exists(projects[0]["path"])) {
-                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]["path"]))
+            if (project != "" && Filepath.exists(project)) {
+                folder = Filepath.stringToUrl(Filepath.dirname(project))
             }
         } else {
 
@@ -97,8 +103,8 @@ ApplicationWindow {
             } else {
                 // If the currently opened project has not been saved, the dialog will open in the same
                 // folder as the most recent project if it exists; otherwise, it will not be set
-                if (projects.length > 0 && Filepath.exists(projects[0]["path"])) {
-                    folder = Filepath.stringToUrl(Filepath.dirname(projects[0]["path"]))
+                if (project != "" && Filepath.exists(project)) {
+                    folder = Filepath.stringToUrl(Filepath.dirname(project))
                 }
             }
 

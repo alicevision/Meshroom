@@ -354,6 +354,7 @@ class MeshroomApp(QApplication):
                 p = {"path": p, "thumbnail": thumbnail}
                 projects.append(p)
         settings.endArray()
+        settings.endGroup()
         return projects
 
     @Slot(str)
@@ -393,6 +394,7 @@ class MeshroomApp(QApplication):
             settings.setArrayIndex(i)
             settings.setValue("filepath", p)
         settings.endArray()
+        settings.endGroup()
         settings.sync()
 
         self.recentProjectFilesChanged.emit()

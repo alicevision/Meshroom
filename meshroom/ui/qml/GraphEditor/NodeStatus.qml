@@ -1,17 +1,14 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
-import Controls 1.0
-
-import "common.js" as Common
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 /**
- * NodeLog displays log and statistics data of Node's chunks (NodeChunks)
+ * NodeStatus displays the status-related information of Node's chunks (NodeChunks)
  *
  * To ease monitoring, it provides periodic auto-reload of the opened file
  * if the related NodeChunk is being computed.
  */
+
 FocusScope {
     id: root
     property variant node
@@ -26,7 +23,7 @@ FocusScope {
         anchors.fill: parent
 
         property string currentFile: (root.currentChunkIndex >= 0) ? root.currentChunk["statusFile"] : ""
-        property url source: Filepath.stringToUrl(currentFile)
+        property url sourceFile: Filepath.stringToUrl(currentFile)
 
         sourceComponent: statViewerComponent
     }
@@ -35,7 +32,7 @@ FocusScope {
         id: statViewerComponent
         Item {
             id: statusViewer
-            property url source: componentLoader.source
+            property url source: componentLoader.sourceFile
             property var lastModified: undefined
 
             onSourceChanged: {
@@ -46,7 +43,7 @@ FocusScope {
                 id: statusListModel
 
                 function readSourceFile() {
-                    // make sure we are trying to load a statistics file
+                    // Make sure we are trying to load a statistics file
                     if (!Filepath.urlToString(source).endsWith("status"))
                         return
 
@@ -55,31 +52,28 @@ FocusScope {
 
                     xhr.onreadystatechange = function() {
                         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                            // console.warn("StatusListModel: read valid file")
                             if (lastModified === undefined || lastModified !== xhr.getResponseHeader('Last-Modified')) {
                                 lastModified = xhr.getResponseHeader('Last-Modified')
                                 try {
                                     var jsonObject = JSON.parse(xhr.responseText)
 
                                     var entries = []
-                                    // prepare data to populate the ListModel from the input json object
+                                    // Prepare data to populate the ListModel from the input json object
                                     for (var key in jsonObject) {
                                         var entry = {}
                                         entry["key"] = key
                                         entry["value"] = String(jsonObject[key])
                                         entries.push(entry)
                                     }
-                                    // reset the model with prepared data (limit to one update event)
+                                    // Reset the model with prepared data (limit to one update event)
                                     statusListModel.clear()
                                     statusListModel.append(entries)
                                 } catch(exc) {
-                                    // console.warn("StatusListModel: failed to read file")
                                     lastModified = undefined
                                     statusListModel.clear()
                                 }
                             }
                         } else {
-                            // console.warn("StatusListModel: invalid file")
                             lastModified = undefined
                             statusListModel.clear()
                         }
@@ -103,7 +97,6 @@ FocusScope {
                         Rectangle {
                             id: statusKey
                             anchors.margins: 2
-                            // height: statusValue.height
                             color: Qt.darker(activePalette.window, 1.1)
                             Layout.preferredWidth: sizeHandle.x
                             Layout.minimumWidth: 10.0 * Qt.application.font.pixelSize

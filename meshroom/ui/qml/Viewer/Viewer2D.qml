@@ -1,8 +1,9 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+
 import Controls 1.0
+import MaterialIcons 2.2
 import Utils 1.0
 
 FocusScope {
@@ -39,6 +40,7 @@ FocusScope {
     property bool fittedOnce: false
     property int previousWidth: -1
     property int previousHeight: -1
+    property int previousOrientationTag: 1
 
     QtObject {
         id: m
@@ -56,8 +58,13 @@ FocusScope {
         property variant imgMetadata: {
             // Metadata from FloatImage viewer
             // Directly read from the image file on disk
-            if (floatImageViewerLoader.active) {
+            if (floatImageViewerLoader.active && floatImageViewerLoader.item) {
                 return floatImageViewerLoader.item.metadata
+            }
+            // Metadata from PhongImageViewer
+            // Directly read from the image file on disk
+            if (phongImageViewerLoader.active) {
+                return phongImageViewerLoader.item.metadata
             }
             // Use viewpoint metadata for the special case of the 8-bit viewer
             if (qtImageViewerLoader.active) {
@@ -105,29 +112,31 @@ FocusScope {
     }
 
     function clear() {
-        source = ''
+        source = ""
     }
 
-    // slots
-    Keys.onPressed: {
+    // Slots
+    Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             root.fit()
             event.accepted = true
         }
     }
 
-    // mouse area
+    // Mouse area
     MouseArea {
         anchors.fill: parent
         property double factor: 1.2
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-        onPressed: {
+
+        onPressed: function(mouse) {
             imgContainer.forceActiveFocus()
             if (mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
-                drag.target = imgContainer // start drag
+                drag.target = imgContainer  // Start drag
         }
-        onReleased: {
-            drag.target = undefined // stop drag
+
+        onReleased: function(mouse) {
+            drag.target = undefined  // Stop drag
             if (mouse.button & Qt.RightButton) {
                 var menu = contextMenu.createObject(root)
                 menu.x = mouse.x
@@ -135,7 +144,8 @@ FocusScope {
                 menu.open()
             }
         }
-        onWheel: {
+
+        onWheel: function(wheel) {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1 / factor
 
             if (Math.min(imgContainer.width, imgContainer.image.height) * imgContainer.scale * zoomFactor < 10)
@@ -153,43 +163,46 @@ FocusScope {
         }
     }
 
-    // functions
+    // Functions
     function fit() {
-        // make sure the image is ready for use
-        if (!imgContainer.image)
-            return
+        // Make sure the image is ready for use
+        if (!imgContainer.image) {
+            return false
+        }
 
-        // for Exif orientation tags 5 to 8, a 90 degrees rotation is applied
+        // For Exif orientation tags 5 to 8, a 90 degrees rotation is applied
         // therefore image dimensions must be inverted
         let dimensionsInverted = ["5", "6", "7", "8"].includes(imgContainer.orientationTag)
         let orientedWidth = dimensionsInverted ? imgContainer.image.height : imgContainer.image.width
         let orientedHeight = dimensionsInverted ? imgContainer.image.width : imgContainer.image.height
 
-        // fit oriented image
+        // Fit oriented image
         imgContainer.scale = Math.min(imgLayout.width / orientedWidth, root.height / orientedHeight)
         imgContainer.x = Math.max((imgLayout.width - orientedWidth * imgContainer.scale) * 0.5, 0)
         imgContainer.y = Math.max((imgLayout.height - orientedHeight * imgContainer.scale) * 0.5, 0)
 
-        // correct position when image dimensions are inverted
+        // Correct position when image dimensions are inverted
         // so that container center corresponds to image center
         imgContainer.x += (orientedWidth - imgContainer.image.width) * 0.5 * imgContainer.scale
         imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale
+
+        return true
     }
 
     function tryLoadNode(node) {
         useExternal = false
 
-        // safety check
+        // Safety check
         if (!node) {
             return false
         }
 
-        // node must be computed or at least running
+        // Node must be computed or at least running
         if (node.isComputable && !node.isPartiallyFinished()) {
             return false
         }
 
-        // node must have at least one output attribute with the image semantic
+        // Node must have at least one output attribute with the image semantic
         if (!node.hasImageOutput && !node.hasSequenceOutput) {
             return false
         }
@@ -207,7 +220,6 @@ FocusScope {
     function getViewpoint(viewId) {
         // Get viewpoint from cameraInit with matching id
         // This requires to loop over all viewpoints
-
         for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
             var vp = _reconstruction.viewpoints.at(i)
             if (vp.childAttribute("viewId").value == viewId) {
@@ -259,11 +271,11 @@ FocusScope {
 
         if (displayedNode && displayedNode.hasSequenceOutput && displayedAttr) {
 
-            // reset current frame to 0 if it is imageList but not sequence
+            // Reset current frame to 0 if it is imageList but not sequence
             if (displayedAttr.desc.semantic === "imageList") {
                 let includesSeqMissingFiles = false  // list only the existing files
                 let [_, filesSeqs] = Filepath.resolveSequence(pathTemplate, includesSeqMissingFiles)
-                // concat in one array all sequences in resolved
+                // Concat in one array all sequences in resolved
                 outputFiles = [].concat.apply([], filesSeqs)
                 let newFrameRange = [0, outputFiles.length - 1]
 
@@ -282,7 +294,7 @@ FocusScope {
                 let [frameRanges, filesSeqs] = Filepath.resolveSequence(pathTemplate, includesSeqMissingFiles)
                 let newFrameRange = [0, 0]
                 if (filesSeqs.length > 0) {
-                    // if there is one or several sequences, take the first one
+                    // If there is one or several sequences, take the first one
                     outputFiles = filesSeqs[0]
                     newFrameRange = frameRanges[0]
 
@@ -316,7 +328,6 @@ FocusScope {
 
     function getSequence() {
         // Entry point for getting the current image sequence
-
         if (useExternal) {
             return []
         }
@@ -337,10 +348,10 @@ FocusScope {
             root.source = ""
         }
 
-        // update output attribute names
+        // Update output attribute names
         var names = []
         if (displayedNode) {
-            // store attr name for output attributes that represent images
+            // Store attr name for output attributes that represent images
             for (var i = 0; i < displayedNode.attributes.count; i++) {
                 var attr = displayedNode.attributes.at(i)
                 if (attr.isOutput && (attr.desc.semantic === "image" || attr.desc.semantic === "sequence" ||
@@ -412,7 +423,7 @@ FocusScope {
                 resetDefaultValues()
             }
             colorPickerVisible: {
-                return !displayPanoramaViewer.checked
+                return !displayPanoramaViewer.checked && !displayPhongLighting.checked
             }
 
             colorRGBA: {
@@ -469,18 +480,14 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 ExifOrientedViewer {
                     id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable &&
-                            (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
+                    active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active && !phongImageViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    
                     property real targetSize: Math.max(width, height) * imgContainer.scale
                     property real resizeRatio: imgContainer.scale
-
-                    
 
                     function sizeChanged() {
                         /* Image size is not updated through a single signal with the floatImage viewer, unlike
@@ -498,26 +505,47 @@ FocusScope {
                         var sizeValid = (width > 0) && (height > 0)
                         var layoutValid = (root.width > 50) && (root.height > 50)
                         var sizeChanged = (root.previousWidth != width) || (root.previousHeight != height)
-                        var sizeChanged = (root.previousWidth != width) || (root.previousHeight != height)
-                        
+
                         if ((!root.fittedOnce && imgContainer.image && sizeValid && layoutValid) ||
-                            (root.fittedOnce && sizeChanged && sizeValid && layoutValid)) {                            
-                            fit()
+                            (root.fittedOnce && sizeChanged && sizeValid && layoutValid)) {
+                            var ret = fit()
+                            if (!ret)
+                                return
                             root.fittedOnce = true
                             root.previousWidth = width
                             root.previousHeight = height
+                            if (orientationTag != undefined)
+                                root.previousOrientationTag = orientationTag
                         }
                     }
 
-                    onHeightChanged : {
+                    onWidthChanged : {
                         floatImageViewerLoader.sizeChanged();
                     }
 
                     Connections {
                         target: root
+                        function onWidthChanged() {
+                            floatImageViewerLoader.sizeChanged()
+                        }
+
                         function onHeightChanged() {
                             floatImageViewerLoader.sizeChanged()
                         }
+                    }
+
+                    onOrientationTagChanged: {
+                        /* For images of the same width and height but with different orientations, the auto-fit
+                         * will not be triggered by the "widthChanged()" signal, so it needs to be triggered upon
+                         * either a change in the image's size or in its orientation. */
+                         if (orientationTag != undefined && root.previousOrientationTag != orientationTag) {
+                            var ret = fit()
+                            if (!ret)
+                                return
+                            root.previousWidth = width
+                            root.previousHeight = height
+                            root.previousOrientationTag = orientationTag
+                         }
                     }
 
                     onActiveChanged: {
@@ -525,29 +553,28 @@ FocusScope {
                             // Instantiate and initialize a FloatImage component dynamically using Loader.setSource
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
                             floatImageViewerLoader.setSource("FloatImage.qml", {
-                                'source':  Qt.binding(function() { return getImageFile() }),
-                                'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
-                                'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
-                                'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
-                                'isPrincipalPointsDisplayed': Qt.binding(function() { return lensDistortionImageToolbar.displayPrincipalPoint }),
-                                'surface.displayGrid':  Qt.binding(function() { return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid }),
-                                'surface.gridOpacity': Qt.binding(function() { return lensDistortionImageToolbar.opacityValue }),
-                                'surface.gridColor': Qt.binding(function() { return lensDistortionImageToolbar.color }),
-                                'surface.subdivisions': Qt.binding(function() { return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue }),
-                                'viewerTypeString': Qt.binding(function() { return displayLensDistortionViewer.checked ? "distortion" : "hdr" }),
-                                'sfmRequired': Qt.binding(function() { return displayLensDistortionViewer.checked ? true : false }),
-                                'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
-                                'canBeHovered': false,
-                                'idView': Qt.binding(function() { return ((root.displayedNode && !root.displayedNode.hasSequenceOutput && _reconstruction) ? _reconstruction.selectedViewId : -1) }),
-                                'cropFisheye': false,
-                                'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
-                                'resizeRatio': Qt.binding(function() { return floatImageViewerLoader.resizeRatio }),
-                                'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
-                                'useSequence': Qt.binding(function() { 
+                                "source":  Qt.binding(function() { return getImageFile() }),
+                                "gamma": Qt.binding(function() { return hdrImageToolbar.gammaValue }),
+                                "gain": Qt.binding(function() { return hdrImageToolbar.gainValue }),
+                                "channelModeString": Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
+                                "isPrincipalPointsDisplayed": Qt.binding(function() { return lensDistortionImageToolbar.displayPrincipalPoint }),
+                                "surface.displayGrid":  Qt.binding(function() { return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid }),
+                                "surface.gridOpacity": Qt.binding(function() { return lensDistortionImageToolbar.opacityValue }),
+                                "surface.gridColor": Qt.binding(function() { return lensDistortionImageToolbar.color }),
+                                "surface.subdivisions": Qt.binding(function() { return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue }),
+                                "viewerTypeString": Qt.binding(function() { return displayLensDistortionViewer.checked ? "distortion" : "hdr" }),
+                                "surface.msfmData": Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
+                                "canBeHovered": false,
+                                "idView": Qt.binding(function() { return ((root.displayedNode && !root.displayedNode.hasSequenceOutput && _reconstruction) ? _reconstruction.selectedViewId : -1) }),
+                                "cropFisheye": false,
+                                "sequence": Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
+                                "resizeRatio": Qt.binding(function() { return floatImageViewerLoader.resizeRatio }),
+                                "targetSize": Qt.binding(function() { return floatImageViewerLoader.targetSize }),
+                                "useSequence": Qt.binding(function() { 
                                     return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence"))))
                                 }),
-                                'fetchingSequence': Qt.binding(function() { return sequencePlayer.loading }),
-                                'memoryLimit': Qt.binding(function() { return sequencePlayer.settings_SequencePlayer.maxCacheMemory }),
+                                "fetchingSequence": Qt.binding(function() { return sequencePlayer.loading }),
+                                "memoryLimit": Qt.binding(function() { return sequencePlayer.settings_SequencePlayer.maxCacheMemory }),
                                 })
                           } else {
                                 // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -568,14 +595,14 @@ FocusScope {
                     onActiveChanged: {
                         if (active) {
                             setSource("PanoramaViewer.qml", {
-                                'subdivisionsPano': Qt.binding(function() { return panoramaViewerToolbar.subdivisionsValue }),
-                                'cropFisheyePano': Qt.binding(function() { return root.cropFisheye }),
-                                'downscale': Qt.binding(function() { return panoramaViewerToolbar.downscaleValue }),
-                                'isEditable': Qt.binding(function() { return panoramaViewerToolbar.enableEdit }),
-                                'isHighlightable': Qt.binding(function() { return panoramaViewerToolbar.enableHover }),
-                                'displayGridPano': Qt.binding(function() { return panoramaViewerToolbar.displayGrid }),
-                                'mouseMultiplier': Qt.binding(function() { return panoramaViewerToolbar.mouseSpeed }),
-                                'msfmData': Qt.binding(function() { return (msfmDataLoader && msfmDataLoader.item && msfmDataLoader.status === Loader.Ready
+                                "subdivisionsPano": Qt.binding(function() { return panoramaViewerToolbar.subdivisionsValue }),
+                                "cropFisheyePano": Qt.binding(function() { return root.cropFisheye }),
+                                "downscale": Qt.binding(function() { return panoramaViewerToolbar.downscaleValue }),
+                                "isEditable": Qt.binding(function() { return panoramaViewerToolbar.enableEdit }),
+                                "isHighlightable": Qt.binding(function() { return panoramaViewerToolbar.enableHover }),
+                                "displayGridPano": Qt.binding(function() { return panoramaViewerToolbar.displayGrid }),
+                                "mouseMultiplier": Qt.binding(function() { return panoramaViewerToolbar.mouseSpeed }),
+                                "msfmData": Qt.binding(function() { return (msfmDataLoader && msfmDataLoader.item && msfmDataLoader.status === Loader.Ready
                                                                            && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
                             })
                         } else {
@@ -586,10 +613,108 @@ FocusScope {
                     }
                 }
 
+                // qtAliceVision Phong Image Viewer
+                ExifOrientedViewer {
+                    id: phongImageViewerLoader
+                    active: root.aliceVisionPluginAvailable && displayPhongLighting.enabled && displayPhongLighting.checked
+                    visible: (phongImageViewerLoader.status === Loader.Ready) && active
+                    anchors.centerIn: parent
+                    orientationTag: imgContainer.orientationTag
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
+
+                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('PhotometricStereo').node : null
+                    property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
+                    property url sourcePath: getAlbedoFile()
+                    property url normalPath: getNormalFile()
+                    property bool fittedOnce: false
+                    property int previousWidth: 0
+                    property int previousHeight: 0
+                    property int previousOrientationTag: 1
+
+                    function getAlbedoFile() {
+
+                        if(vp && activeNode && activeNode.hasAttribute("albedo")) {
+                            return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("albedo").value, vp))
+                        }
+
+                        return getImageFile()
+                    }
+
+                    function getNormalFile() {
+
+                        if(vp && activeNode && activeNode.hasAttribute("normals")) {
+                            return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("normals").value, vp))
+                        }
+
+                        return getImageFile()
+                    }
+
+                    onWidthChanged: {
+                        /* We want to do the auto-fit on the first display of an image from the group, and then keep its
+                         * scale when displaying another image from the group, so we need to know if an image in the
+                         * group has already been auto-fitted. If we change the group of images (when another project is
+                         * opened, for example, and the images have a different size), then another auto-fit needs to be
+                         * performed */
+                        if ((!fittedOnce && imgContainer.image && imgContainer.image.width > 0) ||
+                            (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
+                            var ret = fit()
+                            if (!ret)
+                                return
+                            fittedOnce = true
+                            previousWidth = width
+                            previousHeight = height
+                            if (orientationTag != undefined)
+                                previousOrientationTag = orientationTag
+                        }
+                    }
+
+                    onOrientationTagChanged: {
+                        /* For images of the same width and height but with different orientations, the auto-fit
+                         * will not be triggered by the "widthChanged()" signal, so it needs to be triggered upon
+                         * either a change in the image's size or in its orientation. */
+                        if (orientationTag != undefined && previousOrientationTag != orientationTag) {
+                            var ret = fit()
+                            if (!ret)
+                                return
+                            fittedOnce = true
+                            previousWidth = width
+                            previousHeight = height
+                            previousOrientationTag = orientationTag
+                        }
+                    }
+
+                    onActiveChanged: {
+                        if (active) {
+                            /* Instantiate and initialize a PhongImageViewer component dynamically using Loader.setSource
+                             * Note: It does not work to use previously created component, so we re-create it with setSource. */
+                            setSource("PhongImageViewer.qml", {
+                                'sourcePath':  Qt.binding(function() { return sourcePath }),
+                                'normalPath':  Qt.binding(function() { return normalPath }),
+                                'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
+                                'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
+                                'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
+                                'baseColor': Qt.binding(function() { return phongImageViewerToolbar.baseColorValue }),
+                                'textureOpacity': Qt.binding(function() { return phongImageViewerToolbar.textureOpacityValue }),
+                                'ka': Qt.binding(function() { return phongImageViewerToolbar.kaValue }),
+                                'kd': Qt.binding(function() { return phongImageViewerToolbar.kdValue }),
+                                'ks': Qt.binding(function() { return phongImageViewerToolbar.ksValue }),
+                                'shininess': Qt.binding(function() { return phongImageViewerToolbar.shininessValue }),
+                                'lightYaw': Qt.binding(function() { return -directionalLightPane.lightYawValue }), // left handed coordinate system
+                                'lightPitch': Qt.binding(function() { return directionalLightPane.lightPitchValue }),
+                            })
+                        } else {
+                            // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                            setSource("", {})
+                            fittedOnce = false
+                        }
+                    }
+                }
+
                 // Simple QML Image Viewer (using Qt or qtAliceVisionImageIO to load images)
                 ExifOrientedViewer {
                     id: qtImageViewerLoader
-                    active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
+                    active: !floatImageViewerLoader.active && !panoramaViewerLoader.active && !phongImageViewerLoader.active
                     anchors.centerIn: parent
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
@@ -602,10 +727,13 @@ FocusScope {
                         onWidthChanged: if (status==Image.Ready) fit()
                         source: getImageFile()
                         onStatusChanged: {
-                            // update cache source when image is loaded
+                            // Update cache source when image is loaded
+                            imageStatus = status
                             if (status === Image.Ready)
                                 qtImageViewerCache.source = source
                         }
+
+                        property var imageStatus: Image.Ready
 
                         // Image cache of the last loaded image
                         // Only visible when the main one is loading, to maintain a displayed image for smoother transitions
@@ -627,6 +755,8 @@ FocusScope {
                         floatImageViewerLoader.item
                     else if (panoramaViewerLoader.active)
                         panoramaViewerLoader.item
+                    else if (phongImageViewerLoader.active)
+                        phongImageViewerLoader.item
                     else
                         qtImageViewerLoader.item
                 }
@@ -635,7 +765,7 @@ FocusScope {
                 scale: 1.0
 
                 // FeatureViewer: display view extracted feature points
-                // note: requires QtAliceVision plugin - use a Loader to evaluate plugin availability at runtime
+                // Note: requires QtAliceVision plugin - use a Loader to evaluate plugin availability at runtime
                 ExifOrientedViewer {
                     id: featuresViewerLoader
                     active: displayFeatures.checked && !useExternal
@@ -651,12 +781,12 @@ FocusScope {
                         if (active) {
                             // Instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             setSource("FeaturesViewer.qml", {
-                                'model': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : "" }),
-                                'currentViewId': Qt.binding(function() { return _reconstruction.selectedViewId }),
-                                'features': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null }),
-                                'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null }),
-                                'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null }),
-                                'syncFeaturesSelected': Qt.binding(function() { return sequencePlayer.syncFeaturesSelected }),
+                                "model": Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : "" }),
+                                "currentViewId": Qt.binding(function() { return _reconstruction.selectedViewId }),
+                                "features": Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null }),
+                                "tracks": Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null }),
+                                "sfmData": Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null }),
+                                "syncFeaturesSelected": Qt.binding(function() { return sequencePlayer.syncFeaturesSelected }),
                             })
                         } else {
                             // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -691,7 +821,7 @@ FocusScope {
                         circleRadius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
 
                         circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))
-                        onMoved: {
+                        onMoved: function(xoffset, yoffset) {
                             if (!useAuto) {
                                 _reconstruction.setAttribute(
                                     activeNode.attribute("fisheyeCenterOffset"),
@@ -699,7 +829,7 @@ FocusScope {
                                 )
                             }
                         }
-                        onIncrementRadius: {
+                        onIncrementRadius: function(radiusOffset) {
                             if (!useAuto) {
                                 _reconstruction.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
                             }
@@ -736,7 +866,7 @@ FocusScope {
                         onJsonFolderChanged: {
                             json = null
                             if (activeNode.attribute("autoDetect").value) {
-                                // auto detection enabled
+                                // Auto detection enabled
                                 var jsonPath = activeNode.attribute("output").value
                                 Request.get(Filepath.stringToUrl(jsonPath), function(xhr) {
                                     if (xhr.readyState === XMLHttpRequest.DONE) {
@@ -758,25 +888,25 @@ FocusScope {
 
                         function updateGizmo() {
                             if (activeNode.attribute("autoDetect").value) {
-                                // update gizmo from auto detection json file
+                                // Update gizmo from auto detection JSON file
                                 if (json) {
-                                    // json file found
+                                    // JSON file found
                                     var data = json[currentViewId]
                                     if (data && data[0]) {
-                                        // current view id found
+                                        // Current view id found
                                         circleX = data[0].x
                                         circleY= data[0].y
                                         circleRadius = data[0].r
                                         return
                                     }
                                 }
-                                // no auto detection data
+                                // No auto detection data
                                 circleX = -1
                                 circleY= -1
                                 circleRadius = 0
                             }
                             else {
-                                // update gizmo from node manual parameters
+                                // Update gizmo from node manual parameters
                                 circleX = nodeCircleX
                                 circleY = nodeCircleY
                                 circleRadius = nodeCircleRadius
@@ -796,7 +926,7 @@ FocusScope {
                 }
 
                 // ColorCheckerViewer: display color checker detection results
-                // note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
+                // Note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
                 ExifOrientedViewer {
                     id: colorCheckerViewerLoader
                     anchors.centerIn: parent
@@ -825,6 +955,7 @@ FocusScope {
             ColumnLayout {
                 anchors.fill: parent
                 spacing: 0
+
                 FloatingPane {
                     id: imagePathToolbar
                     Layout.fillWidth: true
@@ -836,7 +967,7 @@ FocusScope {
                         width: parent.width
                         height: childrenRect.height
 
-                        // selectable filepath to source image
+                        // Selectable filepath to source image
                         TextField {
                             padding: 0
                             background: Item {}
@@ -846,10 +977,10 @@ FocusScope {
                             font.pointSize: 8
                             readOnly: true
                             selectByMouse: true
-                            text: Filepath.urlToString(getImageFile())
+                            text: (phongImageViewerLoader.active) ? Filepath.urlToString(phongImageViewerLoader.sourcePath) : Filepath.urlToString(getImageFile())
                         }
 
-                        // write which node is being displayed
+                        // Write which node is being displayed
                         Label {
                             id: displayedNodeName
                             text: root.displayedNode ? root.displayedNode.label : ""
@@ -861,7 +992,7 @@ FocusScope {
                             height: contentHeight
                         }
 
-                        // button to clear currently displayed file
+                        // Button to clear currently displayed file
                         MaterialToolButton {
                             id: clearViewerButton
                             text: MaterialIcons.close
@@ -869,8 +1000,10 @@ FocusScope {
                             enabled: root.displayedNode || root.useExternal
                             visible: root.displayedNode || root.useExternal
                             onClicked: {
-                                if (root.displayedNode) root.displayedNode = null
-                                if (root.useExternal) root.useExternal = false
+                                if (root.displayedNode)
+                                    root.displayedNode = null
+                                if (root.useExternal)
+                                    root.useExternal = false
                             }
                         }
                     }
@@ -926,7 +1059,7 @@ FocusScope {
                         }
 
                         visible: metadataCB.checked
-                        // only load metadata model if visible
+                        // Only load metadata model if visible
                         metadata: {
                             if (visible) {
                                 if (root.useExternal || outputAttribute.name != "gallery") {
@@ -965,13 +1098,13 @@ FocusScope {
 
                         onActiveChanged: {
                             if (active) {
-                                // instantiate and initialize a MFeatures component dynamically using Loader.setSource
-                                // so it can fail safely if the c++ plugin is not available
+                                // Instantiate and initialize a MFeatures component dynamically using Loader.setSource
+                                // so it can fail safely if the C++ plugin is not available
                                 setSource("MFeatures.qml", {
-                                    'describerTypes': Qt.binding(function() {
+                                    "describerTypes": Qt.binding(function() {
                                         return activeNode ? activeNode.attribute("describerTypes").value : {}
                                     }),
-                                    'featureFolders': Qt.binding(function() {
+                                    "featureFolders": Qt.binding(function() {
                                         let result = []
                                         if (activeNode) {
                                             if (activeNode.nodeType == "FeatureExtraction" && isComputed) {
@@ -985,7 +1118,7 @@ FocusScope {
                                         }
                                         return result
                                     }),
-                                    'viewIds': Qt.binding(function() {
+                                    "viewIds": Qt.binding(function() {
                                         if (_reconstruction) {
                                             let result = [];
                                             for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
@@ -1003,6 +1136,7 @@ FocusScope {
                             }
                         }
                     }
+
                     Loader {
                         id: msfmDataLoader
 
@@ -1040,10 +1174,10 @@ FocusScope {
 
                         onActiveChanged: {
                             if (active) {
-                                // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                                // Instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
                                 // so it can fail safely if the c++ plugin is not available
                                 setSource("MSfMData.qml", {
-                                    'sfmDataPath': Qt.binding(function() { return filepath }),
+                                    "sfmDataPath": Qt.binding(function() { return filepath }),
                                 })
                             } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -1051,6 +1185,7 @@ FocusScope {
                             }
                         }
                     }
+
                     Loader {
                         id: mtracksLoader
 
@@ -1070,7 +1205,7 @@ FocusScope {
                                 // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
                                 // so it can fail safely if the c++ plugin is not available
                                 setSource("MTracks.qml", {
-                                    'matchingFolders': Qt.binding(function() {
+                                    "matchingFolders": Qt.binding(function() {
                                         let result = []
                                         if (activeNode) {
                                             if (activeNode.nodeType == "FeatureMatching" && isComputed) {
@@ -1091,6 +1226,7 @@ FocusScope {
                             }
                         }
                     }
+
                     Loader {
                         id: sfmStatsView
                         anchors.fill: parent
@@ -1109,6 +1245,7 @@ FocusScope {
                             }
                         }
                     }
+
                     Loader {
                         id: sfmGlobalStats
                         anchors.fill: parent
@@ -1119,8 +1256,8 @@ FocusScope {
                             // (necessary since Qt 5.14, Component.onCompleted cannot be used anymore to load the data once and for all)
                             if (active) {
                                 setSource("SfmGlobalStats.qml", {
-                                    'msfmData': Qt.binding(function() { return msfmDataLoader.item }),
-                                    'mTracks': Qt.binding(function() { return mtracksLoader.item }),
+                                    "msfmData": Qt.binding(function() { return msfmDataLoader.item }),
+                                    "mTracks": Qt.binding(function() { return mtracksLoader.item }),
 
                                 })
                             } else {
@@ -1128,6 +1265,7 @@ FocusScope {
                             }
                         }
                     }
+
                     Loader {
                         id: featuresOverlay
                         anchors {
@@ -1151,7 +1289,7 @@ FocusScope {
                         id: ldrHdrCalibrationGraph
                         anchors.fill: parent
 
-                        property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('LdrToHdrCalibration').node : null
+                        property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("LdrToHdrCalibration").node : null
                         property var isEnabled: displayLdrHdrCalibrationGraph.checked && activeNode && activeNode.isComputed
                         active: isEnabled
 
@@ -1162,7 +1300,29 @@ FocusScope {
                             responsePath: Filepath.resolve(path, vp)
                         }
                     }
+
+                    PhongImageViewerToolbar {
+                        id: phongImageViewerToolbar
+
+                        anchors {
+                            bottom: parent.bottom
+                            left: parent.left
+                            margins: 2
+                        }
+                        visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active
+                    }
+
+                    DirectionalLightPane {
+                        id: directionalLightPane
+                        anchors {
+                            bottom: parent.bottom
+                            right: parent.right
+                            margins: 2
+                        }
+                        visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active && phongImageViewerToolbar.displayLightController
+                    }
                 }
+
                 FloatingPane {
                     id: bottomToolbar
                     padding: 4
@@ -1172,13 +1332,15 @@ FocusScope {
                     RowLayout {
                         anchors.fill: parent
 
-                        // zoom label
+                        // Zoom label
                         MLabel {
                             text: ((imgContainer.image && (imgContainer.image.imageStatus === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
+                            ToolTip.text: "Zoom"
+
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onClicked: {
+                                onClicked: function(mouse) {
                                     if (mouse.button & Qt.LeftButton) {
                                         fit()
                                     } else if (mouse.button & Qt.RightButton) {
@@ -1190,8 +1352,8 @@ FocusScope {
                                     }
                                 }
                             }
-                            ToolTip.text: "Zoom"
                         }
+
                         MaterialToolButton {
                             id: displayAlphaBackground
                             ToolTip.text: "Alpha Background"
@@ -1200,13 +1362,12 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                         }
-                        MaterialToolButton
-                        {
+
+                        MaterialToolButton {
                             id: displayHDR
                             ToolTip.text: "High-Dynamic-Range Image Viewer"
                             text: MaterialIcons.hdr_on
-                            // larger font but smaller padding,
-                            // so it is visually similar.
+                            // Larger font but smaller padding, so it is visually similar
                             font.pointSize: 20
                             padding: 0
                             Layout.minimumWidth: 0
@@ -1221,12 +1382,12 @@ FocusScope {
                                 root.useFloatImageViewer = !root.useFloatImageViewer
                             }
                         }
+
                         MaterialToolButton {
                             id: displayLensDistortionViewer
-
                             property int numberChanges: 0
                             property bool previousChecked: false
-                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('sfmData').node : null
+                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get("sfmData").node : null
                             property bool isComputed: {
                                 if (!activeNode)
                                     return false
@@ -1274,9 +1435,10 @@ FocusScope {
                                 }
                             }
                         }
+
                         MaterialToolButton {
                             id: displayPanoramaViewer
-                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('SfMTransform').node : null
+                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get("SfMTransform").node : null
                             property bool isComputed: {
                                 if (!activeNode)
                                     return false
@@ -1313,6 +1475,7 @@ FocusScope {
                                 }
                             }
                         }
+
                         MaterialToolButton {
                             id: displayFeatures
                             ToolTip.text: "Display Features"
@@ -1323,16 +1486,18 @@ FocusScope {
                             checked: false
                             enabled: root.aliceVisionPluginAvailable && !displayPanoramaViewer.checked && !useExternal
                             onEnabledChanged : {
-                                if (useExternal) return
-                                if (enabled == false) checked = false
+                                if (useExternal)
+                                    return
+                                if (enabled == false)
+                                    checked = false
                             }
                         }
+
                         MaterialToolButton {
                             id: displayFisheyeCircleLoader
-                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('PanoramaInit').node : null
+                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
                             ToolTip.text: "Display Fisheye Circle: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.vignette
-                            // text: MaterialIcons.panorama_fish_eye
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true
@@ -1340,9 +1505,10 @@ FocusScope {
                             enabled: activeNode && activeNode.attribute("useFisheye").value && !displayPanoramaViewer.checked
                             visible: activeNode
                         }
+
                         MaterialToolButton {
                             id: displayLightingCircleLoader
-                            property var activeNode: _reconstruction.activeNodes.get('SphereDetection').node
+                            property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node
                             ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.location_searching
                             font.pointSize: 11
@@ -1352,11 +1518,24 @@ FocusScope {
                             enabled: activeNode
                             visible: activeNode
                         }
+
+                        MaterialToolButton {
+                            id: displayPhongLighting
+                            property var activeNode: _reconstruction.activeNodes.get('PhotometricStereo').node
+                            ToolTip.text: "Display Phong Lighting: " + (activeNode ? activeNode.label : "No Node")
+                            text: MaterialIcons.light_mode
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
+                            enabled: activeNode
+                            visible: activeNode
+                        }
                         MaterialToolButton {
                             id: displayColorCheckerViewerLoader
-                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('ColorCheckerDetection').node : null
+                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ColorCheckerDetection").node : null
                             ToolTip.text: "Display Color Checker: " + (activeNode ? activeNode.label : "No Node")
-                            text: MaterialIcons.view_comfy //view_module grid_on gradient view_comfy border_all
+                            text: MaterialIcons.view_comfy
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true
@@ -1445,7 +1624,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displaySfmStatsView
-                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('sfm').node : null
+                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get("sfm").node : null
                             property bool isComputed: activeNode && activeNode.isComputed
 
                             font.family: MaterialIcons.fontFamily
@@ -1471,7 +1650,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displaySfmDataGlobalStats
-                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('sfm').node : null
+                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get("sfm").node : null
                             property bool isComputed: activeNode && activeNode.isComputed
 
                             font.family: MaterialIcons.fontFamily
@@ -1494,6 +1673,7 @@ FocusScope {
                                 }
                             }
                         }
+
                         MaterialToolButton {
                             id: metadataCB
 
@@ -1523,7 +1703,11 @@ FocusScope {
                     id: sequencePlayer
                     anchors.margins: 0
                     Layout.fillWidth: true
-                    sortedViewIds: { return (root.enableSequencePlayer && (root.displayedNode && root.displayedNode.hasSequenceOutput)) ? root.sequence : (_reconstruction && _reconstruction.viewpoints.count > 0) ? buildOrderedSequence("<VIEW_ID>") : [] }
+                    sortedViewIds: {
+                        return (root.enableSequencePlayer && (root.displayedNode && root.displayedNode.hasSequenceOutput)) ?
+                                    root.sequence :
+                                    (_reconstruction && _reconstruction.viewpoints.count > 0) ? buildOrderedSequence("<VIEW_ID>") : []
+                    }
                     viewer: floatImageViewerLoader.status === Loader.Ready ? floatImageViewerLoader.item : null
                     visible: root.enableSequencePlayer
                     enabled: root.enableSequencePlayer
@@ -1536,14 +1720,14 @@ FocusScope {
     // Busy indicator
     BusyIndicator {
         anchors.centerIn: parent
-        // running property binding seems broken, only dynamic binding assignment works
+        // Running property binding seems broken, only dynamic binding assignment works
         Component.onCompleted: {
             running = Qt.binding(function() {
                 return (root.usePanoramaViewer === true && imgContainer.image && imgContainer.image.allImagesLoaded === false)
                        || (imgContainer.image && imgContainer.image.imageStatus === Image.Loading)
             })
         }
-        // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker
+        // Disable the visibility when unused to avoid stealing the mouseEvent to the image color picker
         visible: running
 
         onVisibleChanged: {
@@ -1558,10 +1742,10 @@ FocusScope {
 
         shortcut: "R"
         onTriggered: {
-            if (hdrImageToolbar.channelModeValue !== 'r') {
-                hdrImageToolbar.channelModeValue = 'r'
+            if (hdrImageToolbar.channelModeValue !== "r") {
+                hdrImageToolbar.channelModeValue = "r"
             } else {
-                hdrImageToolbar.channelModeValue = 'rgba'
+                hdrImageToolbar.channelModeValue = "rgba"
             }
         }
     }
@@ -1571,10 +1755,10 @@ FocusScope {
 
         shortcut: "G"
         onTriggered: {
-            if (hdrImageToolbar.channelModeValue !== 'g') {
-                hdrImageToolbar.channelModeValue = 'g'
+            if (hdrImageToolbar.channelModeValue !== "g") {
+                hdrImageToolbar.channelModeValue = "g"
             } else {
-                hdrImageToolbar.channelModeValue = 'rgba'
+                hdrImageToolbar.channelModeValue = "rgba"
             }
         }
     }
@@ -1584,10 +1768,10 @@ FocusScope {
 
         shortcut: "B"
         onTriggered: {
-            if (hdrImageToolbar.channelModeValue !== 'b') {
-                hdrImageToolbar.channelModeValue = 'b'
+            if (hdrImageToolbar.channelModeValue !== "b") {
+                hdrImageToolbar.channelModeValue = "b"
             } else {
-                hdrImageToolbar.channelModeValue = 'rgba'
+                hdrImageToolbar.channelModeValue = "rgba"
             }
         }
     }
@@ -1597,10 +1781,10 @@ FocusScope {
 
         shortcut: "A"
         onTriggered: {
-            if (hdrImageToolbar.channelModeValue !== 'a') {
-                hdrImageToolbar.channelModeValue = 'a'
+            if (hdrImageToolbar.channelModeValue !== "a") {
+                hdrImageToolbar.channelModeValue = "a"
             } else {
-                hdrImageToolbar.channelModeValue = 'rgba'
+                hdrImageToolbar.channelModeValue = "rgba"
             }
         }
     }

@@ -1,7 +1,7 @@
-import QtQuick 2.15
-import Utils 1.0
+import QtQuick
 
 import AliceVision 1.0 as AliceVision
+import Utils 1.0
 
 /**
  * FloatImage displays an Image with gamma / offset / channel controls
@@ -95,7 +95,6 @@ AliceVision.FloatImageViewer {
     function onChangedHighlightState(isHighlightable) {
         if (!isHighlightable) root.surface.mouseOver = false
     }
-
 
     /*
     * Principal Point

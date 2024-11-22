@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
+import QtQuick
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
 
 import Utils 1.0
 
@@ -10,7 +10,7 @@ Entity {
     /// Enable debug mode (show cache entity with a scale applied)
     property bool debug: false
 
-    enabled: false // disabled entity
+    enabled: false  // Disabled entity
 
     components: [
         Transform {
@@ -58,7 +58,7 @@ Entity {
         if (debug) { console.log("[cache] add: " + source) }
         mediaCache[source] = object
         object.parent = root
-        // remove oldest entry in cache
+        // Remove oldest entry in cache
         if (currentSize() > cacheSize)
             shrink()
         return true
@@ -72,7 +72,7 @@ Entity {
         var obj = mediaCache[source]
         delete mediaCache[source]
         if (debug) { console.log("[cache] pop: " + source) }
-        // delete cached obj if file does not exist on disk anymore
+        // Delete cached obj if file does not exist on disk anymore
         if (!Filepath.exists(source)) {
             if (debug) { console.log("[cache] destroy: " + source) }
             obj.destroy()

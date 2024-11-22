@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 
 Item {
     id: root
@@ -8,9 +8,9 @@ Item {
     property var viewpoint: null
     property real zoom: 1.0
 
-    // required for perspective transform
+    // Required for perspective transform
     // Match theoretical values in AliceVision
-    // see https://github.com/alicevision/AliceVision/blob/68ab70bcbc3eb01b73dc8dea78c78d8b4778461c/src/software/utils/main_colorCheckerDetection.cpp#L47
+    // See https://github.com/alicevision/AliceVision/blob/68ab70bcbc3eb01b73dc8dea78c78d8b4778461c/src/software/utils/main_colorCheckerDetection.cpp#L47
     readonly property real ccheckerSizeX: 1675.0
     readonly property real ccheckerSizeY: 1125.0
 
@@ -34,16 +34,13 @@ Item {
 
     function readSourceFile() {
         var xhr = new XMLHttpRequest
-        // console.warn("readSourceFile: " + root.source)
         xhr.open("GET", root.source)
 
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {
                 try {
                     root.json = null
-                    // console.warn("readSourceFile: update json from " + root.source)
                     root.json = JSON.parse(xhr.responseText)
-                    // console.warn("readSourceFile: root.json.checkers.length=" + root.json.checkers.length)
                 } catch(exc) {
                     console.warn("Failed to parse ColorCheckerDetection JSON file: " + source)
                     return

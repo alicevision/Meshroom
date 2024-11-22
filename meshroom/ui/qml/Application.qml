@@ -1,13 +1,13 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import QtQuick.Window 2.15
-import QtQml.Models 2.15
+import QtCore
+
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQml.Models
 
 import Qt.labs.platform 1.0 as Platform
-import QtQuick.Dialogs 1.3
+import QtQuick.Dialogs
 
-import Qt.labs.settings 1.0
 import GraphEditor 1.0
 import MaterialIcons 2.2
 import Utils 1.0
@@ -22,7 +22,7 @@ Page {
 
     Settings {
         id: settingsUILayout
-        category: 'UILayout'
+        category: "UILayout"
         property alias showLiveReconstruction: liveSfMVisibilityCB.checked
         property alias showGraphEditor: graphEditorVisibilityCB.checked
         property alias showImageViewer: imageViewerVisibilityCB.checked
@@ -521,8 +521,8 @@ Page {
         text: "Load Template"
         onTriggered: {
             ensureSaved(function() {
-                initFileDialogFolder(loadTemplateDialog);
-                loadTemplateDialog.open();
+                initFileDialogFolder(loadTemplateDialog)
+                loadTemplateDialog.open()
             })
         }
     }
@@ -1158,15 +1158,15 @@ Page {
                         uigraph: _reconstruction
                         nodeTypesModel: _nodeTypes
 
-                        onNodeDoubleClicked: {
+                        onNodeDoubleClicked: function(mouse, node) {
                             _reconstruction.setActiveNode(node);
                             workspaceView.viewNode(node, mouse);
                         }
-                        onComputeRequest: {
+                        onComputeRequest: function(nodes) {
                             _reconstruction.forceNodesStatusUpdate();
                             computeManager.compute(nodes)
                         }
-                        onSubmitRequest: {
+                        onSubmitRequest: function(nodes) {
                             _reconstruction.forceNodesStatusUpdate();
                             computeManager.submit(nodes)
                         }

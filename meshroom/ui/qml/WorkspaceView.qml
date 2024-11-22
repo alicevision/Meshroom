@@ -1,20 +1,19 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import Qt.labs.platform 1.0 as Platform
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+
+import Controls 1.0
+import MaterialIcons 2.2
 import ImageGallery 1.0
 import Viewer 1.0
 import Viewer3D 1.0
-import MaterialIcons 2.2
-import Controls 1.0
-import Utils 1.0
-
 
 /**
  * WorkspaceView is an aggregation of Meshroom's main modules.
  *
  * It contains an ImageGallery, a 2D and a 3D viewer to manipulate and visualize reconstruction data.
  */
+
 Item {
     id: root
 
@@ -80,9 +79,9 @@ Item {
                 cameraInit: reconstruction ? reconstruction.cameraInit : null
                 tempCameraInit: reconstruction ? reconstruction.tempCameraInit : null
                 cameraInitIndex: reconstruction ? reconstruction.cameraInitIndex : -1
-                onRemoveImageRequest: reconstruction.removeImage(attribute)
-                onAllViewpointsCleared: { reconstruction.selectedViewId = "-1" }
-                onFilesDropped: {
+                onRemoveImageRequest: function(attribute) { reconstruction.removeImage(attribute) }
+                onAllViewpointsCleared: reconstruction.selectedViewId = "-1"
+                onFilesDropped: function(drop, augmentSfm) {
                     if (drop["meshroomScenes"].length == 1) {
                         ensureSaved(function() {
                             if (reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)) {
@@ -176,7 +175,7 @@ Item {
                 DropArea {
                     anchors.fill: parent
                     keys: ["text/uri-list"]
-                    onDropped: {
+                    onDropped: function(drop) {
                         viewer2D.loadExternal(drop.urls[0]);
                     }
                 }
@@ -226,8 +225,10 @@ Item {
                         DropArea {
                             anchors.fill: parent
                             keys: ["text/uri-list"]
-                            onDropped: {
-                                drop.urls.forEach(function(url){ load3DMedia(url); });
+                            onDropped: function(drop) {
+                                drop.urls.forEach(function(url) {
+                                    load3DMedia(url)
+                                })
                             }
                         }
 

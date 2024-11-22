@@ -1,7 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 /**
  * Panel is a container control with preconfigured header/footer.
@@ -12,6 +11,7 @@ import QtQuick.Layouts 1.11
  *
  * The footer is empty (and not visible) by default. It does not provided any layout.
  */
+
 Page {
     id: root
 

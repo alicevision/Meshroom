@@ -1,6 +1,7 @@
-import QtQuick 2.15
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
+import QtQuick
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
+
 import Utils 1.0
 
 
@@ -8,13 +9,14 @@ import Utils 1.0
  * MediaLibrary is an Entity that loads and manages a list of 3D media.
  * It also uses an internal cache to instantly reload media.
  */
+
 Entity {
     id: root
 
     readonly property alias model: m.mediaModel
     property int renderMode
     property bool pickingEnabled: false
-    readonly property alias count: instantiator.count // number of instantiated media delegates
+    readonly property alias count: instantiator.count  // Number of instantiated media delegates
 
     // For TransformGizmo in BoundingBox
     property DefaultCameraController sceneCameraController
@@ -33,7 +35,7 @@ Entity {
         return false
     }
 
-    signal pressed(var pick)
+    signal clicked(var pick)
     signal loadRequest(var idx)
 
     QtObject {
@@ -46,10 +48,10 @@ Entity {
             "valid": true,
             "label": "",
             "visible": true,
-            "hasBoundingBox": false, // for Meshing node only
-            "displayBoundingBox": true, // for Meshing node only
-            "hasTransform": false, // for SfMTransform node only
-            "displayTransform": true, // for SfMTransform node only
+            "hasBoundingBox": false,  // For Meshing node only
+            "displayBoundingBox": true,  // For Meshing node only
+            "hasTransform": false,  // For SfMTransform node only
+            "displayTransform": true,  // For SfMTransform node only
             "section": "",
             "attribute": null,
             "entity": null,
@@ -70,7 +72,7 @@ Entity {
     }
 
     function ensureVisible(source) {
-        var idx = find(source);
+        var idx = find(source)
         if (idx === -1)
             return
         m.mediaModel.get(idx).visible = true
@@ -92,17 +94,18 @@ Entity {
             console.warn("Media Error: File " + pathStr + " does not exist.")
             return
         }
-        // file already loaded, return
+        // File already loaded, return
         if (m.sourceToEntity[pathStr]) {
             ensureVisible(pathStr)
             return
         }
 
-        // add file to the internal ListModel
-        m.mediaModel.append(makeElement({
-                    "source": pathStr,
-                    "label": label ? label : Filepath.basename(pathStr),
-                    "section": "External"
+        // Add file to the internal ListModel
+        m.mediaModel.append(
+            makeElement({
+                "source": pathStr,
+                "label": label ? label : Filepath.basename(pathStr),
+                "section": "External"
         }))
     }
 
@@ -114,16 +117,17 @@ Entity {
 
         var attrLabel = attribute.isOutput ? "" : attribute.fullName.replace(attribute.node.name, "")
         var section = attribute.node.label
-        // add file to the internal ListModel
-        m.mediaModel.append(makeElement({
+        // Add file to the internal ListModel
+        m.mediaModel.append(
+            makeElement({
                 "label": section + attrLabel,
                 "section": section,
-                "attribute": attribute,
+                "attribute": attribute
         }))
     }
 
     function remove(index) {
-        // remove corresponding entry from model
+        // Remove corresponding entry from model
         m.mediaModel.remove(index)
     }
 
@@ -188,32 +192,34 @@ Entity {
             MediaLoader {
                 id: mediaLoader
 
-                // whether MediaLoader has been fully instantiated by the NodeInstantiator
+                cameraPickingEnabled: !sceneCameraController.pickingActive
+
+                // Whether MediaLoader has been fully instantiated by the NodeInstantiator
                 property bool fullyInstantiated: false
 
-                // explicitly store some attached model properties for outside use and ease binding
+                // Explicitly store some attached model properties for outside use and ease binding
                 readonly property var attribute: model.attribute
                 readonly property int idx: index
                 readonly property var modelSource: attribute || model.source
                 readonly property bool visible: model.visible
 
-                // multi-step binding to ensure MediaLoader source is properly
+                // Multi-step binding to ensure MediaLoader source is properly
                 // updated when needed, whether raw source is valid or not
 
-                // raw source path
+                // Raw source path
                 property string rawSource: attribute ? attribute.value : model.source
-                // whether dependencies are statified (applies for output/connected input attributes only)
+                // Whether dependencies are statified (applies for output/connected input attributes only)
                 readonly property bool dependencyReady: {
                     if (attribute) {
                         const rootAttribute = attribute.isLink ? attribute.rootLinkParam : attribute
                         if (rootAttribute.isOutput)
                             return rootAttribute.node.globalStatus === "SUCCESS"
                     }
-                    return true // is an input param without link (so no dependency) or an external file
+                    return true  // Is an input param without link (so no dependency) or an external file
                 }
-                // source based on raw source + dependency status
+                // Source based on raw source + dependency status
                 property string currentSource: dependencyReady ? rawSource : ""
-                // source based on currentSource + "requested" property
+                // Source based on currentSource + "requested" property
                 property string finalSource: model.requested ? currentSource : ""
 
                 // To use only if we want to draw the input source and not the current node output (Warning: to use with caution)
@@ -228,14 +234,6 @@ Entity {
                 renderMode: root.renderMode
                 enabled: visible
 
-                // QObject.destroyed signal is not accessible
-                // Use the object as NodeInstantiator model to be notified of its deletion
-                NodeInstantiator {
-                    model: attribute
-                    delegate: Entity { objectName: "DestructionWatcher [" + model.toString() + "]" }
-                    onObjectRemoved: remove(index)
-                }
-
                 property bool alive: attribute ? attribute.node.alive : false
                 onAliveChanged: {
                     if (!alive && index >= 0)
@@ -244,19 +242,19 @@ Entity {
 
                 // 'visible' property drives media loading request
                 onVisibleChanged: {
-                    // always request media loading if visible
+                    // Always request media loading if visible
                     if (model.visible)
                         model.requested = true
-                    // only cancel loading request if media is not valid
+                    // Only cancel loading request if media is not valid
                     // (a media won't be unloaded if already loaded, only hidden)
                     else if (!model.valid)
                         model.requested = false
                 }
 
                 function updateCacheAndModel(forceRequest) {
-                    // don't cache explicitly unloaded media
+                    // Don't cache explicitly unloaded media
                     if (model.requested && object && dependencyReady) {
-                        // cache current object
+                        // Cache current object
                         if (cache.add(Filepath.urlToString(mediaLoader.source), object))
                             object = null
                     }
@@ -264,21 +262,21 @@ Entity {
                 }
 
                 function updateModel(forceRequest) {
-                    // update model's source path if input is an attribute
+                    // Update model's source path if input is an attribute
                     if (attribute) {
                         model.source = rawSource
                     }
-                    // auto-restore entity if raw source is in cache
+                    // Auto-restore entity if raw source is in cache
                     model.requested = forceRequest || (!model.valid && model.requested) || cache.contains(rawSource)
                     model.valid = Filepath.exists(rawSource) && dependencyReady
                 }
 
                 Component.onCompleted: {
-                    // keep 'source' -> 'entity' reference
+                    // Keep 'source' -> 'entity' reference
                     m.sourceToEntity[modelSource] = instantiatedEntity
-                    // always request media loading when delegate has been created
+                    // Always request media loading when delegate has been created
                     updateModel(true)
-                    // if external media failed to open, remove element from model
+                    // If external media failed to open, remove element from model
                     if (!attribute && !object)
                         remove(index)
                 }
@@ -292,7 +290,7 @@ Entity {
                 }
 
                 onFinalSourceChanged: {
-                    // update media visibility
+                    // Update media visibility
                     // (useful if media was explicitly unloaded or hidden but loaded back from cache)
                     model.visible = model.requested
 
@@ -300,7 +298,7 @@ Entity {
                     cached = cachedObject !== undefined
                     if (cached) {
                         object = cachedObject
-                        // only change cached object parent if mediaLoader has been fully instantiated
+                        // Only change cached object parent if mediaLoader has been fully instantiated
                         // by the NodeInstantiator; otherwise re-parenting will fail silently and the object will disappear...
                         // see "onFullyInstantiatedChanged" and parent NodeInstantiator's "onObjectAdded"
                         if (fullyInstantiated) {
@@ -309,28 +307,28 @@ Entity {
                     }
                     mediaLoader.source = Filepath.stringToUrl(finalSource)
                     if (object) {
-                        // bind media info to corresponding model roles
+                        // Bind media info to corresponding model roles
                         // (test for object validity to avoid error messages right after object has been deleted)
                         var boundProperties = ["vertexCount", "faceCount", "cameraCount", "textureCount", "resectionIdCount", "resectionId", "resectionGroups"]
                         boundProperties.forEach(function(prop) {
                             model[prop] = Qt.binding(function() { return object ? object[prop] : 0 })
                         })
                     } else if (finalSource && status === Component.Ready) {
-                        // source was valid but no loader was created, remove element
-                        // check if component is ready to avoid removing element from the model before adding instance to the node
+                        // Source was valid but no loader was created, remove element
+                        // Check if component is ready to avoid removing element from the model before adding instance to the node
                         remove(index)
                     }
                 }
 
                 onFullyInstantiatedChanged: {
-                    // delayed reparenting of object coming from the cache
+                    // Delayed reparenting of object coming from the cache
                     if (object)
                         object.parent = mediaLoader
                 }
 
                 onStatusChanged: {
                     model.status = status
-                    // remove model entry for external media that failed to load
+                    // Remove model entry for external media that failed to load
                     if (status === SceneLoader.Error && !model.attribute)
                         remove(index)
                 }
@@ -339,13 +337,13 @@ Entity {
                     ObjectPicker {
                         enabled: mediaLoader.enabled && pickingEnabled
                         hoverEnabled: false
-                        onPressed: root.pressed(pick)
+                        onClicked: function(pick) { root.clicked(pick) }
                     }
                 ]
             }
 
             // Transform: display a TransformGizmo for SfMTransform node only
-            // note: use a NodeInstantiator to evaluate if the current node is a SfMTransform node and if the transform mode is set to Manual
+            // Note: use a NodeInstantiator to evaluate if the current node is a SfMTransform node and if the transform mode is set to Manual
             NodeInstantiator {
                 id: sfmTransformGizmoInstantiator
                 active: instantiatedEntity.hasTransform
@@ -360,14 +358,14 @@ Entity {
                     enabled: mediaLoader.visible && instantiatedEntity.displayTransform
 
                     Component.onCompleted: {
-                        mediaLoader.drawInputSource() // Because we are sure we want to show the input in MANUAL mode only
-                        Scene3DHelper.addComponent(mediaLoader, sfmTransformGizmoEntity.objectTransform) // Add the transform to the media to see real-time transformations
+                        mediaLoader.drawInputSource()  // Because we are sure we want to show the input in MANUAL mode only
+                        Scene3DHelper.addComponent(mediaLoader, sfmTransformGizmoEntity.objectTransform)  // Add the transform to the media to see real-time transformations
                     }
                 }
             }
 
             // BoundingBox: display bounding box for MESHING computation
-            // note: use a NodeInstantiator to evaluate if the current node is a MESHING node and if the checkbox is active
+            // Note: use a NodeInstantiator to evaluate if the current node is a MESHING node and if the checkbox is active
             NodeInstantiator {
                 id: boundingBoxInstantiator
                 active: instantiatedEntity.hasBoundingBox
@@ -383,12 +381,12 @@ Entity {
             }
         }
 
-        onObjectAdded: {
-            // notify object that it is now fully instantiated
+        onObjectAdded: function(index, object) {
+            // Notify object that it is now fully instantiated
             object.fullyInstantiated = true
         }
 
-        onObjectRemoved: {
+        onObjectRemoved: function(index, object) {
             if (m.sourceToEntity[object.modelSource])
                 delete m.sourceToEntity[object.modelSource]
         }

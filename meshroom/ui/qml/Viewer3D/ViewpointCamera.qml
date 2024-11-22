@@ -1,11 +1,11 @@
-import QtQuick 2.15
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
-
+import QtQuick
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
 
 /**
  * ViewpointCamera sets up a Camera to match a Viewpoint's internal parameters.
  */
+
 Entity {
     id: root
 
@@ -16,15 +16,6 @@ Entity {
         nearPlane : 0.1
         farPlane : 10000.0
         viewCenter: Qt.vector3d(0.0, 0.0, -1.0)
-
-        // Scene light, attached to the camera
-        Entity {
-            components: [
-                PointLight {
-                    color: "white"
-                }
-            ]
-        }
     }
 
     components: [
@@ -51,5 +42,4 @@ Entity {
             }
         ]
     }
-
 }

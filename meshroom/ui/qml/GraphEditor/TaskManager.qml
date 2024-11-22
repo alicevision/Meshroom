@@ -1,9 +1,9 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+
 import Controls 1.0
 import Utils 1.0
-import MaterialIcons 2.2
 
 Item {
     id: root
@@ -133,7 +133,7 @@ Item {
         }
 
         delegate: RowLayout {
-            width: parent != null ? parent.width : undefined
+            width: ListView.view.width
             height: 18
             spacing: 3
 
@@ -261,7 +261,6 @@ Item {
                             radius: 3
                             border.width: 2
                             border.color: chunkList.node === uigraph.selectedNode ? Colors.sysPalette.text : Colors.getChunkColor(object, {"NONE": bgColor})
-
                         }
 
                         MouseArea {

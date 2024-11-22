@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 
 Item {
     id: root
@@ -49,7 +49,7 @@ Item {
                 propagateComposedEvents: true
 
                 property bool controlModifierEnabled: false
-                onPositionChanged: {
+                onPositionChanged: function(mouse) {
                     mArea.controlModifierEnabled = (mouse.modifiers & Qt.ControlModifier)
                     mouse.accepted = false
                 }
@@ -65,7 +65,7 @@ Item {
                 onPressed: {
                     forceActiveFocus()
                 }
-                onWheel: {
+                onWheel: function(wheel) {
                     mArea.controlModifierEnabled = (wheel.modifiers & Qt.ControlModifier)
                     if (wheel.modifiers & Qt.ControlModifier) {
                         root.incrementRadius(wheel.angleDelta.y / 120.0)

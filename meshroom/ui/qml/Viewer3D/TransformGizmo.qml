@@ -1,12 +1,12 @@
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
-import Qt3D.Input 2.15
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
+import Qt3D.Input 2.6
 import Qt3D.Extras 2.15
-import QtQuick 2.15
-import Qt3D.Logic 2.15
-import QtQuick.Controls 2.15
-import Utils 1.0
+import Qt3D.Logic 2.6
+import QtQuick
+import QtQuick.Controls
 
+import Utils 1.0
 
 /**
  * Simple transformation gizmo entirely made with Qt3D entities.
@@ -14,18 +14,19 @@ import Utils 1.0
  * This TransformGizmo entity should only be instantiated in EntityWithGizmo entity which is its wrapper.
  * It means, to use it for a specified application, make sure to instantiate EntityWithGizmo.
  */
+
 Entity {
     id: root
     property Camera camera
     property var windowSize
-    property Layer frontLayerComponent // Used to draw gizmo on top of everything
+    property Layer frontLayerComponent  // Used to draw gizmo on top of everything
     property var window
     readonly property alias gizmoScale: gizmoScaleLookSlider.value
-    property bool uniformScale: false // By default, the scale is not uniform
-    property bool focusGizmoPriority: false // If true, it is used to give the priority to the current transformation (and not to a upper-level binding)
+    property bool uniformScale: false  // By default, the scale is not uniform
+    property bool focusGizmoPriority: false  // If true, it is used to give the priority to the current transformation (and not to a upper-level binding)
     property Transform gizmoDisplayTransform: Transform {
         id: gizmoDisplayTransform
-        scale: root.gizmoScale * (camera.position.minus(gizmoDisplayTransform.translation)).length() // The gizmo needs a constant apparent size
+        scale: root.gizmoScale * (camera.position.minus(gizmoDisplayTransform.translation)).length()  // The gizmo needs a constant apparent size
     }
     // Component the object controlled by the gizmo must use
     property Transform objectTransform : Transform {
@@ -38,7 +39,7 @@ Entity {
     signal gizmoChanged(var translation, var rotation, var scale, int type)
 
     function emitGizmoChanged(type) {
-        const translation = gizmoDisplayTransform.translation // Position in space
+        const translation = gizmoDisplayTransform.translation  // Position in space
         const rotation = Qt.vector3d(gizmoDisplayTransform.rotationX, gizmoDisplayTransform.rotationY, gizmoDisplayTransform.rotationZ) // Euler angles
         const scale = objectTransform.scale3D // Scale of the object
 
@@ -248,12 +249,12 @@ Entity {
 
                     // Do the transformation
                     if (objectPicker.gizmoType === TransformGizmo.Type.TRANSLATION && offset !== 0) {
-                        doRelativeTranslation(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a translation from the initial Object Model Matrix when we picked the gizmo
+                        doRelativeTranslation(objectPicker.modelMatrix, pickedAxis.times(offset))  // Do a translation from the initial Object Model Matrix when we picked the gizmo
                     } else if (objectPicker.gizmoType === TransformGizmo.Type.SCALE && offset !== 0) {
                         if (root.uniformScale)
-                            doRelativeScale(objectPicker.modelMatrix, Qt.vector3d(1, 1, 1).times(offset)) // Do a uniform scale from the initial Object Model Matrix when we picked the gizmo
+                            doRelativeScale(objectPicker.modelMatrix, Qt.vector3d(1, 1, 1).times(offset))  // Do a uniform scale from the initial Object Model Matrix when we picked the gizmo
                         else
-                            doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a scale on one axis from the initial Object Model Matrix when we picked the gizmo
+                            doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset))  // Do a scale on one axis from the initial Object Model Matrix when we picked the gizmo
                     }
 
                     else if (objectPicker.gizmoType === TransformGizmo.Type.ALL && offset !== 0) {
@@ -283,7 +284,8 @@ Entity {
                     const gizmoToCameraVector = camera.position.toVector4d().minus(gizmoCenterPoint)
                     const orientation = gizmoLocalAxisVector.dotProduct(gizmoToCameraVector) > 0 ? 1 : -1
 
-                    if (angle !== 0) doRelativeRotation(objectPicker.modelMatrix, pickedAxis, angle * orientation) // Do a rotation from the initial Object Model Matrix when we picked the gizmo
+                    if (angle !== 0)
+                        doRelativeRotation(objectPicker.modelMatrix, pickedAxis, angle * orientation)  // Do a rotation from the initial Object Model Matrix when we picked the gizmo
 
                     return
                 }
@@ -296,7 +298,7 @@ Entity {
         onReleased: {
             if (objectPicker && mouse.button === Qt.LeftButton) {
                 const type = objectPicker.gizmoType
-                objectPicker = null // To prevent going again in the onPositionChanged
+                objectPicker = null  // To prevent going again in the onPositionChanged
                 emitGizmoChanged(type)
             }
         }
@@ -387,9 +389,9 @@ Entity {
             }
             property color baseColor: {
                 switch (axis) {
-                    case TransformGizmo.Axis.X: return "#e63b55" // Red
-                    case TransformGizmo.Axis.Y: return "#83c414" // Green
-                    case TransformGizmo.Axis.Z: return "#3387e2" // Blue
+                    case TransformGizmo.Axis.X: return "#e63b55"  // Red
+                    case TransformGizmo.Axis.Y: return "#83c414"  // Green
+                    case TransformGizmo.Axis.Z: return "#3387e2"  // Blue
                 }
             }
             property real lineRadius: 0.011
@@ -563,7 +565,7 @@ Entity {
             // These three surfaces have "forward direction". The three othersurfaces have "backward direction".
             NodeInstantiator {
                 model: 2
-                active: !root.uniformScale // shouldn't be active for SfmTransform Gizmo node for example
+                active: !root.uniformScale  // Shouldn't be active for SfmTransform Gizmo node for example
                 
                 Entity {
 
@@ -653,7 +655,7 @@ Entity {
                 Transform {
                     id: torusTransform
                     matrix: {
-                        const scaleDiff = 2 * torusMesh.minorRadius + 0.01 // Just to make sure there is no face overlapping
+                        const scaleDiff = 2 * torusMesh.minorRadius + 0.01  // Just to make sure there is no face overlapping
                         const m = Qt.matrix4x4()
                         switch (axis) {
                             case TransformGizmo.Axis.X: m.rotate(90, Qt.vector3d(0, 1, 0)); break

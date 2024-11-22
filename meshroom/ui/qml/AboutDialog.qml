@@ -1,11 +1,14 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 import Utils 1.0
 import MaterialIcons 2.2
 
 
-/// Meshroom "About" window
+/**
+ * Meshroom "About" window
+ */
+
 Dialog {
     id: root
 
@@ -24,7 +27,7 @@ Dialog {
     modal: true
     closePolicy: Dialog.CloseOnEscape | Dialog.CloseOnPressOutside
     padding: 30
-    topPadding: 0  // header provides top padding
+    topPadding: 0  // Header provides top padding
 
     header: Pane {
         background: Item {}
@@ -56,7 +59,8 @@ Dialog {
                 selectByMouse: true
                 text: "Version " + Qt.application.version + "\n"
                       + MeshroomApp.systemInfo["platform"] + " \n"
-                      + MeshroomApp.systemInfo["python"]
+                      + MeshroomApp.systemInfo["python"] + "\n"
+                      + MeshroomApp.systemInfo["pyside"]
             }
         }
 
@@ -174,16 +178,16 @@ Dialog {
                     sourceComponent: ScrollView {
 
                         Component.onCompleted: {
-                            // try to load the local file
+                            // Try to load the local file
                             var url = Filepath.stringToUrl(modelData.localUrl)
-                            // fallback to the online url if file is not found
+                            // Fallback to the online url if file is not found
                             if (!Filepath.exists(url))
                                 url = modelData.onlineUrl
                             Request.get(url,
                                         function(xhr) {
                                             if (xhr.readyState === XMLHttpRequest.DONE)
                                             {
-                                                // status is OK
+                                                // Status is OK
                                                 if (xhr.status === 200)
                                                     textArea.text = MeshroomApp.markdownToHtml(xhr.responseText)
                                                 else

@@ -1,17 +1,18 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
-import QtQml.Models 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQml.Models
 import Qt.labs.qmlmodels 1.0
 
 import Controls 1.0
+import MaterialIcons 2.2
 import Utils 1.0
 
 /**
  * ImageGallery displays as a grid of Images a model containing Viewpoints objects.
  * It manages a model of multiple CameraInit nodes as individual groups.
  */
+
 Panel {
     id: root
 
@@ -28,7 +29,7 @@ Panel {
     property int defaultCellSize: 160
     property bool readOnly: false
 
-    property var filesByType: {}
+    property var filesByType: ({})
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
 
@@ -98,7 +99,7 @@ Panel {
                         intrinsic[currentAttribute.name + "." + currentAttribute.value.at(k).name] = currentAttribute.value.at(k)
                     }
                 } else if (currentAttribute.type === "ListAttribute") {
-                    // not needed for now
+                    // Not needed for now
                 } else {
                     intrinsic[currentAttribute.name] = currentAttribute
                 }
@@ -217,12 +218,12 @@ Panel {
             Connections {
                 target: ThumbnailCache
                 function onThumbnailCreated(imgSource, callerID) {
-                    let item = grid.itemAtIndex(callerID);  // item is an ImageDelegate
+                    let item = grid.itemAtIndex(callerID);  // "item" is an ImageDelegate
                     if (item && item.source === imgSource) {
                         item.updateThumbnail()
                         return
                     }
-                    // fallback in case the ImageDelegate cellID changed
+                    // Fallback in case the ImageDelegate cellID changed
                     for (let idx = 0; idx < grid.count; idx++) {
                         item = grid.itemAtIndex(idx)
                         if (item && item.source === imgSource) {
@@ -250,7 +251,7 @@ Panel {
                 ]
                 property var reconstructionFilter: undefined
 
-                // override modelData to return basename of viewpoint's path for sorting
+                // Override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName_) {
                     var roleNameAndCmd = roleName_.split(".")
                     var roleName = roleName_
@@ -305,7 +306,7 @@ Panel {
                     }
 
                     onRemoveRequest: sendRemoveRequest()
-                    Keys.onPressed: (event) => {
+                    Keys.onPressed: function(event) {
                         if (event.key === Qt.Key_Delete && event.modifiers === Qt.ShiftModifier) {
                             removeAllImages()
                         } else if (event.key === Qt.Key_Delete) {
@@ -375,7 +376,7 @@ Panel {
 
             // Keyboard shortcut to change current image group
             Keys.priority: Keys.BeforeItem
-            Keys.onPressed: {
+            Keys.onPressed: function(event) {
                 if (event.modifiers & Qt.AltModifier) {
                     if (event.key === Qt.Key_Right) {
                         _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
@@ -442,12 +443,12 @@ Panel {
                 anchors.fill: parent
                 enabled: !m.readOnly && !intrinsicsFilterButton.checked
                 keys: ["text/uri-list"]
-                onEntered: {
+                onEntered: function(drag) {
                     nbDraggedFiles = drag.urls.length
                     filesByType = _reconstruction.getFilesByTypeFromDrop(drag.urls)
                     nbMeshroomScenes = filesByType["meshroomScenes"].length
                 }
-                onDropped: {
+                onDropped: function(drop) {
                     var augmentSfm = augmentArea.hovered
                     if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
                         root.filesDropped(filesByType, augmentSfm)
@@ -529,7 +530,7 @@ Panel {
 
             MouseArea {
                 anchors.fill: parent
-                onPressed: {
+                onPressed: function(mouse) {
                     if (mouse.button == Qt.LeftButton)
                         grid.forceActiveFocus()
                     mouse.accepted = false
@@ -831,8 +832,7 @@ Panel {
                 }
             }
             onEnabledChanged: {
-                // Reset the toggle to avoid getting stuck
-                // with the HDR node checked but disabled.
+                // Reset the toggle to avoid getting stuck with the HDR node checked but disabled
                 if (checked) {
                     checked = false
                     close()
@@ -875,8 +875,7 @@ Panel {
                 }
             }
             onEnabledChanged: {
-                // Reset the toggle to avoid getting stuck
-                // with the HDR node checked but disabled.
+                // Reset the toggle to avoid getting stuck with the HDR node checked but disabled
                 if (checked) {
                     checked = false
                     close()

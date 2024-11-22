@@ -1,17 +1,10 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
-import QtPositioning 5.15
-import QtLocation 5.15
-import QtCharts 2.15
-import Charts 1.0
-
-import Controls 1.0
-import Utils 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 import AliceVision 1.0 as AliceVision
-
+import Charts 1.0
 
 
 FloatingPane {
@@ -152,7 +145,6 @@ FloatingPane {
         anchors.leftMargin: observationsLengthsChart.width * 0.25
 
         RowLayout {
-
             ChartViewCheckBox {
                 id: allObservations
                 text: "ALL"
@@ -220,7 +212,6 @@ FloatingPane {
         anchors.leftMargin: observationsScaleChart.width * 0.15
 
         RowLayout {
-
             ChartViewCheckBox {
                 id: allObservationsScales
                 text: "ALL"

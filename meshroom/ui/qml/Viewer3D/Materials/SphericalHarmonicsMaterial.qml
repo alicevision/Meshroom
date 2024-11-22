@@ -1,5 +1,6 @@
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
+
 import Utils 1.0
 
 Material {
@@ -12,7 +13,7 @@ Material {
     /// Whether to display normals instead of SH
     property bool displayNormals: false
 
-    // default coefficients (uniform magenta)
+    // Default coefficients (uniform magenta)
     readonly property var noCoeffs: [
         Qt.vector3d(0.0, 0.0, 0.0),
         Qt.vector3d(0.0, 0.0, 0.0),
@@ -28,10 +29,11 @@ Material {
     effect: SphericalHarmonicsEffect {}
 
     onShlSourceChanged: {
-        if(!shlSource) {
-            coefficients = noCoeffs;
-            return;
+        if (!shlSource) {
+            coefficients = noCoeffs
+            return
         }
+
         Request.get(Filepath.urlToString(shlSource), function(xhr) {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 var coeffs = []
@@ -39,7 +41,8 @@ Material {
                 lines.forEach(function(l) {
                     var lineCoeffs = []
                     l.split(" ").forEach(function(v) {
-                        if (v) { lineCoeffs.push(v) }
+                        if (v)
+                            lineCoeffs.push(v)
                     })
                     if (lineCoeffs.length == 3)
                         coeffs.push(Qt.vector3d(lineCoeffs[0], lineCoeffs[1], lineCoeffs[2]))

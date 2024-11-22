@@ -1,11 +1,11 @@
-import QtQuick 2.15
-import Qt3D.Core 2.15
-
+import QtQuick
+import Qt3D.Core 2.6
 
 /**
  * MediaLoaderEntity provides a unified interface for accessing statistics
  * of a 3D media independently from the way it was loaded.
  */
+
 Entity {
     property url source
 

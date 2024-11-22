@@ -1,4 +1,4 @@
-from PySide2.QtCore import QObject, Slot
+from PySide6.QtCore import QObject, Slot
 
 from io import StringIO
 from contextlib import redirect_stdout

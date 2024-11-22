@@ -1,18 +1,16 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
-import Controls 1.0
-import Utils 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import "common.js" as Common
+import Controls 1.0
 
 /**
- * NodeLog displays log and statistics data of Node's chunks (NodeChunks)
+ * NodeStatistics displays statistics data of Node's chunks (NodeChunks).
  *
  * To ease monitoring, it provides periodic auto-reload of the opened file
  * if the related NodeChunk is being computed.
  */
+
 FocusScope {
     id: root
 
@@ -27,7 +25,7 @@ FocusScope {
         clip: true
         anchors.fill: parent
         property string currentFile: currentChunk ? currentChunk["statisticsFile"] : ""
-        property url source: Filepath.stringToUrl(currentFile)
+        property url sourceFile: Filepath.stringToUrl(currentFile)
 
         sourceComponent: chunksLV.chunksSummary ? statViewerComponent : chunkStatViewerComponent
     }
@@ -37,7 +35,7 @@ FocusScope {
         StatViewer {
             id: statViewer
             anchors.fill: parent
-            source: componentLoader.source
+            source: componentLoader.sourceFile
         }
     }
 

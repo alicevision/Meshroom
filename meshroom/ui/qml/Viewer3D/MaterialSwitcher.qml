@@ -1,8 +1,9 @@
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
-import Qt3D.Input 2.15
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
+import Qt3D.Input 2.6
 import Qt3D.Extras 2.15
-import QtQuick 2.15
+import QtQuick
+
 import Utils 1.0
 import "Materials"
 
@@ -10,6 +11,7 @@ import "Materials"
  * MaterialSwitcher is an Entity that can change its parent's material
  * by setting the 'mode' property.
  */
+
 Entity {
     id: root
     objectName: "MaterialSwitcher"
@@ -27,7 +29,7 @@ Entity {
         id: m
         property Material material
         onMaterialChanged: {
-            // remove previous material(s)
+            // Remove previous material(s)
             removeComponentsByType(parent, "Material")
             Scene3DHelper.addComponent(root.parent, material)
         }
@@ -37,10 +39,8 @@ Entity {
     {
         if (!entity)
             return
-        for (var i = 0; i < entity.components.length; ++i)
-        {
+        for (var i = 0; i < entity.components.length; ++i) {
             if (entity.components[i].toString().indexOf(type) !== -1) {
-                //entity.components[i].enabled = false;
                 Scene3DHelper.removeComponent(entity, entity.components[i])
             }
         }
@@ -92,7 +92,7 @@ Entity {
         objectName: "VertexColorMaterial"
     }
 
-    DiffuseSpecularMaterial {
+    DiffuseMapMaterial {
         id: textured
         objectName: "TexturedMaterial"
         ambient: root.ambient
@@ -109,10 +109,6 @@ Entity {
         id: wireframe
         objectName: "WireframeMaterial"
         effect: WireframeEffect {}
-        ambient: root.ambient
-        diffuse: root.diffuseColor
-        shininess: 0
-        specular: root.specular
     }
 
     SphericalHarmonicsMaterial {

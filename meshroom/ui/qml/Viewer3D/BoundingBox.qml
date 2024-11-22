@@ -1,8 +1,8 @@
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
-import Qt3D.Input 2.15
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
+import Qt3D.Input 2.6
 import Qt3D.Extras 2.15
-import QtQuick 2.15
+import QtQuick
 
 Entity {
     id: root
@@ -15,7 +15,7 @@ Entity {
 
         CuboidMesh {
             id: cube
-            property real edge : 1.995 // Almost 2: important to have all the cube's vertices with a unit of 1
+            property real edge : 1.995  // Almost 2: important to have all the cube's vertices with a unit of 1
             xExtent: edge
             yExtent: edge
             zExtent: edge
@@ -56,7 +56,6 @@ Entity {
                     count: 24
                     name: defaultPositionAttributeName
                     buffer: Buffer {
-                        type: Buffer.VertexBuffer
                         data: new Float32Array([
                             1.0, 1.0, 1.0,
                             1.0, -1.0, 1.0,

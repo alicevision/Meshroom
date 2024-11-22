@@ -1,5 +1,5 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 
 import Utils 1.0
 
@@ -7,6 +7,7 @@ import Utils 1.0
  * ColorChart is a color picker based on a set of predefined colors.
  * It takes the form of a ToolButton that pops-up its palette when pressed.
  */
+
 ToolButton {
     id: root
 
@@ -28,10 +29,10 @@ ToolButton {
         id: palettePopup
 
         padding: 4
-        // content width is missing side padding (hence the + padding*2)
+        // Content width is missing side padding (hence the + padding*2)
         implicitWidth: colorChart.contentItem.width + padding * 2
 
-        // center the current color
+        // Center the current color
         y: -(root.height - padding) / 2
         x: -colorChart.currentItem.x - padding
 
@@ -44,14 +45,14 @@ ToolButton {
             spacing: 2
             currentIndex: root.currentIndex
             model: root.colors
-            // display each color as a ToolButton with a custom background
+            // Display each color as a ToolButton with a custom background
             delegate: ToolButton {
                 padding: 0
                 width: root.width
                 height: root.height
                 background: Rectangle {
                     color: modelData
-                    // display border of current/selected item
+                    // Display border of current/selected item
                     border.width: hovered || index === colorChart.currentIndex ? 1 : 0
                     border.color: Colors.sysPalette.midlight
                 }

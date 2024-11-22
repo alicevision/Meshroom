@@ -1,6 +1,6 @@
-from PySide2.QtCore import Signal, Property, QPointF, Qt, QObject
-from PySide2.QtGui import QPainterPath, QVector2D
-from PySide2.QtQuick import QQuickItem
+from PySide6.QtCore import Signal, Property, QPointF, Qt, QObject
+from PySide6.QtGui import QPainterPath, QVector2D
+from PySide6.QtQuick import QQuickItem
 
 
 class MouseEvent(QObject):
@@ -9,8 +9,8 @@ class MouseEvent(QObject):
     """
     def __init__(self, evt):
         super(MouseEvent, self).__init__()
-        self._x = evt.x()
-        self._y = evt.y()
+        self._x = evt.position().x()
+        self._y = evt.position().y()
         self._button = evt.button()
         self._modifiers = evt.modifiers()
 

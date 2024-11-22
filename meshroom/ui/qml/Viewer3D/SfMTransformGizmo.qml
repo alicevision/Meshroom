@@ -1,13 +1,15 @@
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
-import Qt3D.Input 2.15
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
+import Qt3D.Input 2.6
 import Qt3D.Extras 2.15
-import QtQuick 2.15
+
+import QtQuick
 
 /**
  * Gizmo for SfMTransform node.
  * Uses EntityWithGizmo wrapper because we should not instantiate TransformGizmo alone.
  */
+
 Entity {
     id: root
     property DefaultCameraController sceneCameraController
@@ -23,7 +25,7 @@ Entity {
         sceneCameraController: root.sceneCameraController
         frontLayerComponent: root.frontLayerComponent
         window: root.window
-        uniformScale: true // We want to make uniform scale transformations
+        uniformScale: true  // We want to make uniform scale transformations
 
         // Update node SfMTransform slider values when the gizmo has changed: translation, rotation, scale, type
         transformGizmo.onGizmoChanged: {

@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 Page {
     id: root
@@ -47,16 +47,16 @@ Page {
                         }
 
                         Rectangle {
-                            property bool commonBorder : false
+                            property bool commonBorder: false
 
-                            property int lBorderwidth : index === mainTabBar.currentIndex ? 2 : 1
-                            property int rBorderwidth : index === mainTabBar.currentIndex ? 2 : 1
-                            property int tBorderwidth : index === mainTabBar.currentIndex ? 2 : 1
-                            property int bBorderwidth : 0
+                            property int lBorderwidth: index === mainTabBar.currentIndex ? 2 : 1
+                            property int rBorderwidth: index === mainTabBar.currentIndex ? 2 : 1
+                            property int tBorderwidth: index === mainTabBar.currentIndex ? 2 : 1
+                            property int bBorderwidth: 0
 
-                            property int commonBorderWidth : 1
+                            property int commonBorderWidth: 1
 
-                            z : -1
+                            z: -1
 
                             color: Qt.darker(root.palette.window, 1.50)
 
@@ -66,10 +66,10 @@ Page {
                                 top: parent.top
                                 bottom: parent.bottom
 
-                                topMargin    : commonBorder ? -commonBorderWidth : -tBorderwidth
-                                bottomMargin : commonBorder ? -commonBorderWidth : -bBorderwidth
-                                leftMargin   : commonBorder ? -commonBorderWidth : -lBorderwidth
-                                rightMargin  : commonBorder ? -commonBorderWidth : -rBorderwidth
+                                topMargin: commonBorder ? -commonBorderWidth : -tBorderwidth
+                                bottomMargin: commonBorder ? -commonBorderWidth : -bBorderwidth
+                                leftMargin: commonBorder ? -commonBorderWidth : -lBorderwidth
+                                rightMargin: commonBorder ? -commonBorderWidth : -rBorderwidth
                             }
                         }
                     }

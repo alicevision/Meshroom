@@ -1,11 +1,11 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 /**
  * A custom GroupBox with predefined header.
  */
+
 GroupBox {
     id: root
 
@@ -21,13 +21,14 @@ GroupBox {
     background: Item {}
 
     label: Pane {
+        padding: 2
+        width: root.width
         background: Rectangle {
             id: labelBg
             color: palette.base
             opacity: 0.8
         }
-        padding: 2
-        width: root.width
+
         RowLayout {
             width: parent.width
             Label {

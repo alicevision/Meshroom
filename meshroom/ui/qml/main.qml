@@ -1,10 +1,10 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Window 2.15
-import QtQuick.Dialogs 1.3
+import QtCore
+
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
 
 import Qt.labs.platform 1.0 as Platform
-import Qt.labs.settings 1.0
 
 ApplicationWindow {
     id: _window
@@ -25,7 +25,7 @@ ApplicationWindow {
         return t
     }
 
-    onClosing: {
+    onClosing: function(close) {
         // Make sure document is saved before exiting application
         close.accepted = false
         if (!ensureNotComputing())
@@ -34,10 +34,6 @@ ApplicationWindow {
         ensureSaved(function() { Qt.quit() })
     }
 
-    palette: _PaletteManager.palette
-
-    // TODO: uncomment for Qt6, which correctly supports palette for disabled elements AND an alternate base
-    /*
     // QPalette is not convertible to QML palette (anymore)
     Component.onCompleted: {
         palette.alternateBase = _PaletteManager.alternateBase
@@ -60,14 +56,14 @@ ApplicationWindow {
         palette.disabled.highlightedText = _PaletteManager.disabledHighlightedText
         palette.disabled.text = _PaletteManager.disabledText
         palette.disabled.windowText = _PaletteManager.disabledWindowText
-    } */
+    }
 
     SystemPalette { id: activePalette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
     Settings {
         id: settingsGeneral
-        category: 'General'
+        category: "General"
         property int windowWidth: 1280
         property int windowHeight: 720
     }
@@ -80,13 +76,19 @@ ApplicationWindow {
 
     function initFileDialogFolder(dialog, importImages = false) {
         let folder = ""
-        let projects = MeshroomApp.recentProjectFiles
+        let project = ""
+        try {
+            // The list of recent projects might be empty, hence the try/catch
+            project = MeshroomApp.recentProjectFiles[0]["path"]
+        } catch (error) {
+            console.info("The list of recent projects is currently empty.")
+        }
         let currentItem = mainStack.currentItem
 
         if (currentItem instanceof Homepage) {
             // From the homepage, take the folder from the most recent project (no prior check on its existence)
-            if (projects.length > 0 && Filepath.exists(projects[0]["path"])) {
-                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]["path"]))
+            if (project != "" && Filepath.exists(project)) {
+                folder = Filepath.stringToUrl(Filepath.dirname(project))
             }
         } else {
 
@@ -101,8 +103,8 @@ ApplicationWindow {
             } else {
                 // If the currently opened project has not been saved, the dialog will open in the same
                 // folder as the most recent project if it exists; otherwise, it will not be set
-                if (projects.length > 0 && Filepath.exists(projects[0]["path"])) {
-                    folder = Filepath.stringToUrl(Filepath.dirname(projects[0]["path"]))
+                if (project != "" && Filepath.exists(project)) {
+                    folder = Filepath.stringToUrl(Filepath.dirname(project))
                 }
             }
 
@@ -123,11 +125,11 @@ ApplicationWindow {
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
-            if (_reconstruction.loadUrl(currentFile)) {
-                MeshroomApp.addRecentProjectFile(currentFile.toString())
-            }
             if (mainStack.currentItem instanceof Homepage) {
                 mainStack.push("Application.qml")
+            }
+            if (_reconstruction.loadUrl(currentFile)) {
+                MeshroomApp.addRecentProjectFile(currentFile.toString())
             }
         }
     }
@@ -147,8 +149,7 @@ ApplicationWindow {
     // Check and return whether no local computation is in progress
     function ensureNotComputing()
     {
-        if (_reconstruction.computingLocally)
-        {
+        if (_reconstruction.computingLocally) {
             // Open a warning dialog to ask for computation to be stopped
             mainStack.currentItem.computingAtExitDialog.open()
             return false
@@ -157,12 +158,11 @@ ApplicationWindow {
     }
 
 
-    // TODO: uncomment for Qt6 to re-enable the alternative palette (the alternative palette and the disabled items currently cannot both be supported)
-    /* Action {
+    Action {
 
         shortcut: "Ctrl+Shift+P"
         onTriggered: _PaletteManager.togglePalette()
-    } */
+    }
 
     StackView {
         id: mainStack

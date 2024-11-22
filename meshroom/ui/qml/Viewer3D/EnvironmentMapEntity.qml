@@ -1,14 +1,14 @@
-import QtQuick 2.15
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
+import QtQuick
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
 import Qt3D.Extras 2.15
-
 
 /**
  * EnvironmentMap maps an equirectangular image on a Sphere.
  * The 'position' property can be used to virually attach it to a camera
  * and get the impression of an environment at an infinite distance.
  */
+
 Entity {
     id: root
 

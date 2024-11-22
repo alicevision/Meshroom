@@ -1,8 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Layouts 1.11
-import QtQuick.Controls 2.15
-import MaterialIcons 2.2
-import Utils 1.0
+import QtQuick
+import QtQuick.Controls
+
 import Controls 1.0
 
 /**
@@ -42,7 +40,9 @@ ListView {
             filterText: root.filterText
             objectsHideable: root.objectsHideable
             attribute: object
-            onDoubleClicked: root.attributeDoubleClicked(mouse, attr)
+            onDoubleClicked: function(mouse, attr) {
+                root.attributeDoubleClicked(mouse, attr)
+            }
         }
 
         onActiveChanged: height = active ? item.implicitHeight : -spacing
@@ -56,12 +56,10 @@ ListView {
         }
     }
 
-    // Helper MouseArea to lose edit/activeFocus
-    // when clicking on the background
+    // Helper MouseArea to lose edit/activeFocus when clicking on the background
     MouseArea {
         anchors.fill: parent
         onClicked: forceActiveFocus()
         z: -1
     }
 }
-

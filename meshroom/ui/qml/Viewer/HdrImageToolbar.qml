@@ -1,7 +1,7 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+
 import Controls 1.0
 
 FloatingPane {
@@ -30,19 +30,18 @@ FloatingPane {
 
     DoubleValidator {
         id: doubleValidator
-        locale: 'C' // use '.' decimal separator disregarding of the system locale
+        locale: 'C'  // Use '.' decimal separator disregarding of the system locale
     }
 
     RowLayout {
         id: toolLayout
-        // anchors.verticalCenter: parent
         anchors.fill: parent
 
-        // channel mode
+        // Channel mode
         ComboBox {
             id: channelsCtrl
 
-            // set min size to 4 characters + one margin for the combobox
+            // Set min size to 4 characters + one margin for the combobox
             Layout.minimumWidth: 5.0 * Qt.application.font.pixelSize
             Layout.preferredWidth: Layout.minimumWidth
             flat: true
@@ -57,7 +56,7 @@ FloatingPane {
             model: channels
         }
 
-        // gain slider
+        // Gain slider
         RowLayout {
             spacing: 5
 
@@ -97,7 +96,7 @@ FloatingPane {
             }
         }
 
-        // gamma slider
+        // Gamma slider
         RowLayout {
             spacing: 5
 
@@ -242,7 +241,7 @@ FloatingPane {
     TextMetrics {
         id: textMetrics_colorValue
         font: red.font
-        text: "1.2345" // use one more than expected to get the correct value (probably needed due to TextField margin)
+        text: "1.2345"  // Use one more than expected to get the correct value (probably needed due to TextField margin)
     }
     TextMetrics {
         id: textMetrics_gainValue

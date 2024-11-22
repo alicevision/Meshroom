@@ -1,10 +1,11 @@
 pragma Singleton
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 
 /**
  * Singleton that gathers useful colors, shades and system palettes.
  */
+
 QtObject {
     property SystemPalette sysPalette: SystemPalette {}
     property SystemPalette disabledSysPalette: SystemPalette { colorGroup: SystemPalette.Disabled }

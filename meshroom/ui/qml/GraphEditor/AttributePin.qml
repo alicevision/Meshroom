@@ -1,12 +1,13 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+
 import Utils 1.0
 
 /**
-  The representation of an Attribute on a Node.
-*/
+ * The representation of an Attribute on a Node.
+ */
+
 RowLayout {
     id: root
 
@@ -43,24 +44,23 @@ RowLayout {
         x: nameLabel.x
     }
 
-    function updatePin(isSrc, isVisible)
-    {
+    function updatePin(isSrc, isVisible) {
         if (isSrc) {
             innerOutputAnchor.linkEnabled = isVisible
         } else {
             innerInputAnchor.linkEnabled = isVisible
         }
-
     }
 
     // Instantiate empty Items for each child attribute
     Repeater {
         id: childrenRepeater
         model: isList && !attribute.isLink ? attribute.value : 0
-        onItemAdded: childPinCreated(item.childAttribute, item)
-        onItemRemoved: childPinDeleted(item.childAttribute, item)
+        onItemAdded: function(index, item) { childPinCreated(item.childAttribute, root) }
+        onItemRemoved: function(index, item) { childPinDeleted(item.childAttribute, root) }
         delegate: Item {
             property var childAttribute: object
+            visible: false
         }
     }
 
@@ -95,38 +95,39 @@ RowLayout {
 
             property bool acceptableDrop: false
 
-            // add negative margins for DropArea to make the connection zone easier to reach
+            // Add negative margins for DropArea to make the connection zone easier to reach
             anchors.fill: parent
             anchors.margins: -2
-            // add horizontal negative margins according to the current layout
+            // Add horizontal negative margins according to the current layout
             anchors.rightMargin: -root.width * 0.3
 
             keys: [inputDragTarget.objectName]
-            onEntered: {
+            onEntered: function(drag) {
                 // Check if attributes are compatible to create a valid connection
-                if (root.readOnly                                           // cannot connect on a read-only attribute
-                    || drag.source.objectName != inputDragTarget.objectName // not an edge connector
-                    || drag.source.baseType !== inputDragTarget.baseType    // not the same base type
-                    || drag.source.nodeItem === inputDragTarget.nodeItem    // connection between attributes of the same node
-                    || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
-                    || drag.source.connectorType === "input"                // refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
+                if (root.readOnly                                            // Cannot connect on a read-only attribute
+                    || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
+                    || drag.source.baseType !== inputDragTarget.baseType     // Not the same base type
+                    || drag.source.nodeItem === inputDragTarget.nodeItem     // Connection between attributes of the same node
+                    || (drag.source.isList && childrenRepeater.count)        // Source/target are lists but target already has children
+                    || drag.source.connectorType === "input"                 // Refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
                    ) {
                     // Refuse attributes connection
                     drag.accepted = false
-                } else if (inputDragTarget.attribute.isLink) { // already connected attribute
+                } else if (inputDragTarget.attribute.isLink) {  // Already connected attribute
                     root.edgeAboutToBeRemoved(inputDragTarget.attribute)
                 }
                 inputDropArea.acceptableDrop = drag.accepted
             }
+
             onExited: {
-                if (inputDragTarget.attribute.isLink) { // already connected attribute
+                if (inputDragTarget.attribute.isLink) {  // Already connected attribute
                     root.edgeAboutToBeRemoved(undefined)
                 }
                 acceptableDrop = false
                 drag.source.dropAccepted = false
             }
 
-            onDropped: {
+            onDropped: function(drop) {
                 root.edgeAboutToBeRemoved(undefined)
                 _reconstruction.addEdge(drag.source.attribute, inputDragTarget.attribute)
             }
@@ -160,11 +161,11 @@ RowLayout {
             drag.smoothed: false
             enabled: !root.readOnly
             anchors.fill: parent
-            // use the same negative margins as DropArea to ease pin selection
+            // Use the same negative margins as DropArea to ease pin selection
             anchors.margins: inputDropArea.anchors.margins
             anchors.leftMargin: inputDropArea.anchors.leftMargin
             anchors.rightMargin: inputDropArea.anchors.rightMargin
-            onPressed: {
+            onPressed: function(mouse) {
                 root.pressed(mouse)
             }
             onReleased: {
@@ -185,14 +186,11 @@ RowLayout {
         }
     }
 
-
-
     // Attribute name
     Item {
         id: nameContainer
-        Layout.fillWidth: true
         implicitHeight: childrenRect.height
-
+        Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
 
         Label {
@@ -208,12 +206,12 @@ RowLayout {
             anchors.right: attribute && attribute.isOutput ? parent.right : undefined
             rightPadding: 0
             color: {
-                if ((object.hasOutputConnections || object.isLink) && !object.enabled) return Colors.lightgrey
+                if ((object.hasOutputConnections || object.isLink) && !object.enabled)
+                    return Colors.lightgrey
                 return hovered ? palette.highlight : palette.text
             }
         }
     }
-
 
     Rectangle {
         id: outputAnchor
@@ -248,25 +246,25 @@ RowLayout {
 
             property bool acceptableDrop: false
 
-            // add negative margins for DropArea to make the connection zone easier to reach
+            // Add negative margins for DropArea to make the connection zone easier to reach
             anchors.fill: parent
             anchors.margins: -2
-            // add horizontal negative margins according to the current layout
+            // Add horizontal negative margins according to the current layout
             anchors.leftMargin: -root.width * 0.2
 
             keys: [outputDragTarget.objectName]
-            onEntered: {
+            onEntered: function(drag) {
                 // Check if attributes are compatible to create a valid connection
-                if (drag.source.objectName != outputDragTarget.objectName   // not an edge connector
-                    || drag.source.baseType !== outputDragTarget.baseType   // not the same base type
-                    || drag.source.nodeItem === outputDragTarget.nodeItem   // connection between attributes of the same node
-                    || (!drag.source.isList && outputDragTarget.isList)     // connection between a list and a simple attribute
-                    || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
-                    || drag.source.connectorType === "output"               // refuse to connect an output pin on another one
+                if (drag.source.objectName != outputDragTarget.objectName   // Not an edge connector
+                    || drag.source.baseType !== outputDragTarget.baseType   // Not the same base type
+                    || drag.source.nodeItem === outputDragTarget.nodeItem   // Connection between attributes of the same node
+                    || (!drag.source.isList && outputDragTarget.isList)     // Connection between a list and a simple attribute
+                    || (drag.source.isList && childrenRepeater.count)       // Source/target are lists but target already has children
+                    || drag.source.connectorType === "output"               // Refuse to connect an output pin on another one
                    ) {
                     // Refuse attributes connection
                     drag.accepted = false
-                } else if (drag.source.attribute.isLink) { // already connected attribute
+                } else if (drag.source.attribute.isLink) {  // Already connected attribute
                     root.edgeAboutToBeRemoved(drag.source.attribute)
                 }
                 outputDropArea.acceptableDrop = drag.accepted
@@ -276,7 +274,7 @@ RowLayout {
                 acceptableDrop = false
             }
 
-            onDropped: {
+            onDropped: function(drop) {
                 root.edgeAboutToBeRemoved(undefined)
                 _reconstruction.addEdge(outputDragTarget.attribute, drag.source.attribute)
             }
@@ -309,12 +307,12 @@ RowLayout {
             // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
             drag.smoothed: false
             anchors.fill: parent
-            // use the same negative margins as DropArea to ease pin selection
+            // Use the same negative margins as DropArea to ease pin selection
             anchors.margins: outputDropArea.anchors.margins
             anchors.leftMargin: outputDropArea.anchors.leftMargin
             anchors.rightMargin: outputDropArea.anchors.rightMargin
 
-            onPressed: root.pressed(mouse)
+            onPressed: function(mouse) { root.pressed(mouse) }
             onReleased: outputDragTarget.Drag.drop()
 
             hoverEnabled: true

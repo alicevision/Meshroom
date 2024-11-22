@@ -1,24 +1,26 @@
-import QtQuick 2.9
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.2
-import QtQuick.Dialogs 1.3
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQuick.Dialogs
+
 import MaterialIcons 2.2
 import Utils 1.0
 import Controls 1.0
 
 /**
-  Instantiate a control to visualize and edit an Attribute based on its type.
-*/
+ * Instantiate a control to visualize and edit an Attribute based on its type.
+ */
+
 RowLayout {
     id: root
 
     property variant attribute: null
-    property bool readOnly: false // whether the attribute's value can be modified
+    property bool readOnly: false  // Whether the attribute's value can be modified
     property bool objectsHideable: true
     property string filterText: ""
 
-    property alias label: parameterLabel  // accessor to the internal Label (attribute's name)
-    property int labelWidth               // shortcut to set the fixed size of the Label
+    property alias label: parameterLabel  // Accessor to the internal Label (attribute's name)
+    property int labelWidth               // Shortcut to set the fixed size of the Label
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
@@ -42,7 +44,7 @@ RowLayout {
     Pane {
         background: Rectangle {
             id: background
-            color: object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
+            color: object != undefined && object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
         }
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
@@ -66,8 +68,10 @@ RowLayout {
                 text: object.label
 
                 color: {
-                    if ((object.hasOutputConnections || object.isLink) && !object.enabled) return Colors.lightgrey
-                    else return palette.text
+                    if (object != undefined && (object.hasOutputConnections || object.isLink) && !object.enabled)
+                        return Colors.lightgrey
+                    else
+                        return palette.text
                 }
 
                 // Tooltip hint with attribute's description
@@ -88,10 +92,10 @@ RowLayout {
                     delay: 800
                 }
 
-                // make label bold if attribute's value is not the default one
+                // Make label bold if attribute's value is not the default one
                 font.bold: !object.isOutput && !object.isDefault
 
-                // make label italic if attribute is a link
+                // Make label italic if attribute is a link
                 font.italic: object.isLink
 
                 MouseArea {
@@ -152,7 +156,7 @@ RowLayout {
                         }
                     }
 
-                    onClicked: {
+                    onClicked: function(mouse) {
                         forceActiveFocus()
                         if (mouse.button == Qt.RightButton) {
                             var menu = menuComp.createObject(parameterLabel)
@@ -198,37 +202,37 @@ RowLayout {
         sourceComponent: {
             // PushButtonParam always has value == undefined, so it needs to be excluded from this check
             if (attribute.type != "PushButtonParam" && attribute.value === undefined) {
-                return notComputed_component
+                return notComputedComponent
             }
             switch (attribute.type) {
                 case "PushButtonParam":
-                    return pushButton_component
+                    return pushButtonComponent
                 case "ChoiceParam":
-                    return attribute.desc.exclusive ? comboBox_component : multiChoice_component
-                case "IntParam": return slider_component
+                    return attribute.desc.exclusive ? comboBoxComponent : multiChoiceComponent
+                case "IntParam": return sliderComponent
                 case "FloatParam":
                     if (attribute.desc.semantic === 'color/hue')
-                        return color_hue_component
-                    return slider_component
+                        return colorHueComponent
+                    return sliderComponent
                 case "BoolParam":
-                    return checkbox_component
+                    return checkboxComponent
                 case "ListAttribute":
-                    return listAttribute_component
+                    return listAttributeComponent
                 case "GroupAttribute":
-                    return groupAttribute_component
+                    return groupAttributeComponent
                 case "StringParam":
                     if (attribute.desc.semantic.includes('multiline'))
-                        return textArea_component
-                    return textField_component
+                        return textAreaComponent
+                    return textFieldComponent
                 case "ColorParam":
-                    return color_component
+                    return colorComponent
                 default:
-                    return textField_component
+                    return textFieldComponent
             }
         }
 
         Component {
-            id: notComputed_component
+            id: notComputedComponent
             Label {
                 anchors.fill: parent
                 text: MaterialIcons.do_not_disturb_alt
@@ -244,7 +248,7 @@ RowLayout {
         }
 
         Component {
-            id: pushButton_component
+            id: pushButtonComponent
             Button {
                 text: attribute.label
                 enabled: root.editable
@@ -255,7 +259,7 @@ RowLayout {
         }
 
         Component {
-            id: textField_component
+            id: textFieldComponent
             TextField {
                 id: textField
                 readOnly: !root.editable
@@ -268,7 +272,7 @@ RowLayout {
                     setTextFieldAttribute(text)
                     parameterLabel.forceActiveFocus()
                 }
-                Keys.onPressed: (event)=> {
+                Keys.onPressed: function(event) {
                     if ((event.key == Qt.Key_Escape)) {
                         event.accepted = true
                         parameterLabel.forceActiveFocus()
@@ -281,7 +285,7 @@ RowLayout {
                 DropArea {
                     enabled: root.editable
                     anchors.fill: parent
-                    onDropped: {
+                    onDropped: function(drop) {
                         if (drop.hasUrls)
                             setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
                         else if (drop.hasText && drop.text != '')
@@ -291,8 +295,8 @@ RowLayout {
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.RightButton
-                    onClicked: (mouse)=> {
-                        // Do not loose the selection during the right click
+                    onClicked: function(mouse) {
+                        // Do not lose the selection during the right click
                         textField.persistentSelection = true
                         // We store the status of the activeFocus before opening the popup
                         textField.memoryActiveFocus = textField.activeFocus
@@ -318,7 +322,7 @@ RowLayout {
                                     Clipboard.clear()
                                     Clipboard.setText(attribute.value)
                                 } else {
-                                    // copy selection only
+                                    // Copy selection only
                                     textField.copy()
                                 }
                             }
@@ -328,12 +332,12 @@ RowLayout {
                             enabled: Clipboard.getText() != "" && !readOnly
                             onTriggered: {
                                 if (textField.memoryActiveFocus) {
-                                    // replace the selected text with the clipboard
+                                    // Replace the selected text with the clipboard
                                     // or if there is no selection insert at the cursor position
                                     var before = textField.text.substr(0, textField.selectionStart)
                                     var after = textField.text.substr(textField.selectionEnd, textField.text.length)
                                     setTextFieldAttribute(before + Clipboard.getText() + after)
-                                    // set the cursor at the end of the added text
+                                    // Set the cursor at the end of the added text
                                     textField.cursorPosition = before.length + Clipboard.getText().length
                                 } else {
                                     setTextFieldAttribute(Clipboard.getText())
@@ -346,7 +350,7 @@ RowLayout {
         }
 
         Component {
-            id: textArea_component
+            id: textAreaComponent
 
             Rectangle {
                 // Fixed background for the flickable object
@@ -395,17 +399,20 @@ RowLayout {
         }
 
         Component {
-            id: color_component
+            id: colorComponent
             RowLayout {
                 CheckBox {
-                    id: color_checkbox
+                    id: colorCheckbox
                     Layout.alignment: Qt.AlignLeft
                     checked: node && node.color === "" ? false : true
                     checkable: root.editable
                     text: "Custom Color"
                     onClicked: {
                         if (checked) {
-                            _reconstruction.setAttribute(attribute, "#0000FF")
+                            if (colorText.text == "")
+                                _reconstruction.setAttribute(attribute, "#0000FF")
+                            else
+                                _reconstruction.setAttribute(attribute, colorText.text)
                         } else {
                             _reconstruction.setAttribute(attribute, "")
                         }
@@ -415,9 +422,9 @@ RowLayout {
                     id: colorText
                     Layout.alignment: Qt.AlignLeft
                     implicitWidth: 100
-                    enabled: color_checkbox.checked && root.editable
-                    visible: color_checkbox.checked
-                    text: color_checkbox.checked ? attribute.value : ""
+                    enabled: colorCheckbox.checked && root.editable
+                    visible: colorCheckbox.checked
+                    text: colorCheckbox.checked ? attribute.value : ""
                     selectByMouse: true
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: setTextFieldAttribute(text)
@@ -431,8 +438,8 @@ RowLayout {
                     height: colorText.height
                     width: colorText.width / 2
                     Layout.alignment: Qt.AlignLeft
-                    visible: color_checkbox.checked
-                    color: color_checkbox.checked ? attribute.value : ""
+                    visible: colorCheckbox.checked
+                    color: colorCheckbox.checked ? colorDialog.selectedColor : ""
 
                     MouseArea {
                         enabled: root.editable
@@ -444,9 +451,9 @@ RowLayout {
                 ColorDialog {
                     id: colorDialog
                     title: "Please choose a color"
-                    color: attribute.value
+                    selectedColor: colorText.text
                     onAccepted: {
-                        colorText.text = color
+                        colorText.text = colorDialog.selectedColor
                         // Artificially trigger change of attribute value
                         colorText.editingFinished()
                         close()
@@ -461,13 +468,13 @@ RowLayout {
         }
 
         Component {
-            id: comboBox_component
+            id: comboBoxComponent
 
             FilterComboBox {
                 inputModel: attribute.values
 
                 Component.onCompleted: {
-                    // if value not in list, override the text and precise it is not valid
+                    // If value not in list, override the text and precise it is not valid
                     var idx = find(attribute.value)
                     if (idx === -1) {
                         displayText = attribute.value
@@ -484,10 +491,10 @@ RowLayout {
                 Connections {
                     target: attribute
                     function onValueChanged() {
-                        // when reset, clear and find the current index
+                        // When reset, clear and find the current index
                         // but if only reopen the combo box, keep the current value
                         
-                        //convert all values of desc values as string
+                        // Convert all values of desc values as string
                         var valuesAsString = attribute.values.map(function(value) {
                             return value.toString()
                         })
@@ -503,10 +510,10 @@ RowLayout {
         }
 
         Component {
-            id: multiChoice_component
+            id: multiChoiceComponent
             Flow {
                 Repeater {
-                    id: checkbox_repeater
+                    id: checkboxRepeater
                     model: attribute.values
                     delegate: CheckBox {
                         enabled: root.editable
@@ -515,9 +522,9 @@ RowLayout {
                         onToggled: {
                             var t = attribute.value
                             if (!checked) {
-                                t.splice(t.indexOf(modelData), 1) // remove element
+                                t.splice(t.indexOf(modelData), 1)  // Remove element
                             } else {
-                                t.push(modelData) // add element
+                                t.push(modelData)  // Add element
                             }
                             _reconstruction.setAttribute(attribute, t)
                         }
@@ -527,7 +534,7 @@ RowLayout {
         }
 
         Component {
-            id: slider_component
+            id: sliderComponent
             RowLayout {
                 TextField {
                     IntValidator {
@@ -535,12 +542,12 @@ RowLayout {
                     }
                     DoubleValidator {
                         id: doubleValidator
-                        locale: 'C'  // use '.' decimal separator disregarding the system locale
+                        locale: 'C'  // Use '.' decimal separator disregarding the system locale
                     }
                     implicitWidth: 100
                     Layout.fillWidth: !slider.active
                     enabled: root.editable
-                    // cast value to string to avoid intrusive scientific notations on numbers
+                    // Cast value to string to avoid intrusive scientific notations on numbers
                     property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : attribute.value)
                     text: displayValue
                     selectByMouse: true
@@ -594,7 +601,7 @@ RowLayout {
         }
 
         Component {
-            id: checkbox_component
+            id: checkboxComponent
             Row {
                 CheckBox {
                     enabled: root.editable
@@ -605,17 +612,17 @@ RowLayout {
         }
 
         Component {
-            id: listAttribute_component
+            id: listAttributeComponent
             ColumnLayout {
-                id: listAttribute_layout
+                id: listAttributeLayout
                 width: parent.width
                 property bool expanded: false
                 RowLayout {
                     spacing: 4
                     ToolButton {
-                        text: listAttribute_layout.expanded  ? MaterialIcons.keyboard_arrow_down : MaterialIcons.keyboard_arrow_right
+                        text: listAttributeLayout.expanded  ? MaterialIcons.keyboard_arrow_down : MaterialIcons.keyboard_arrow_right
                         font.family: MaterialIcons.fontFamily
-                        onClicked: listAttribute_layout.expanded = !listAttribute_layout.expanded
+                        onClicked: listAttributeLayout.expanded = !listAttributeLayout.expanded
                     }
                     Label {
                         Layout.alignment: Qt.AlignVCenter
@@ -632,7 +639,7 @@ RowLayout {
                 }
                 ListView {
                     id: lv
-                    model: listAttribute_layout.expanded ? attribute.value : undefined
+                    model: listAttributeLayout.expanded ? attribute.value : undefined
                     visible: model !== undefined && count > 0
                     implicitHeight: Math.min(contentHeight, 300)
                     Layout.fillWidth: true
@@ -683,7 +690,7 @@ RowLayout {
         }
 
         Component {
-            id: groupAttribute_component
+            id: groupAttributeComponent
             ColumnLayout {
                 id: groupItem
                 Component.onCompleted:  {
@@ -692,7 +699,7 @@ RowLayout {
                                                {
                                                    'model': Qt.binding(function() { return attribute.value }),
                                                    'readOnly': Qt.binding(function() { return root.readOnly }),
-                                                   'labelWidth': 100, // reduce label width for children (space gain)
+                                                   'labelWidth': 100,  // Reduce label width for children (space gain)
                                                    'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
                                                    'filterText': Qt.binding(function() { return root.filterText }),
                                                })
@@ -703,17 +710,17 @@ RowLayout {
         }
 
         Component {
-            id: color_hue_component
+            id: colorHueComponent
             RowLayout {
                 TextField {
                     implicitWidth: 100
                     enabled: root.editable
-                    // cast value to string to avoid intrusive scientific notations on numbers
+                    // Cast value to string to avoid intrusive scientific notations on numbers
                     property string displayValue: String(slider.pressed ? slider.formattedValue : attribute.value)
                     text: displayValue
                     selectByMouse: true
                     validator: DoubleValidator {
-                        locale: 'C'  // use '.' decimal separator disregarding the system locale
+                        locale: 'C'  // Use '.' decimal separator disregarding the system locale
                     }
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: setTextFieldAttribute(text)
@@ -748,16 +755,7 @@ RowLayout {
                         width: control.availableWidth
                         height: control.availableHeight
                         blending: false
-                        fragmentShader: "
-                            varying mediump vec2 qt_TexCoord0;
-                            vec3 hsv2rgb(vec3 c) {
-                                vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-                                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-                                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-                            }
-                            void main() {
-                                gl_FragColor = vec4(hsv2rgb(vec3(qt_TexCoord0.x, 1.0, 1.0)), 1.0);
-                            }"
+                        fragmentShader: "qrc:/shaders/AttributeItemDelegate.frag.qsb"
                     }
                 }
             }

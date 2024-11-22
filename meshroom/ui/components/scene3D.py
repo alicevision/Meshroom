@@ -1,9 +1,9 @@
 from math import acos, pi, sqrt, atan2, cos, sin, asin
 
-from PySide2.QtCore import QObject, Slot, QSize, Signal, QPointF
-from PySide2.Qt3DCore import Qt3DCore
-from PySide2.Qt3DRender import Qt3DRender
-from PySide2.QtGui import QVector3D, QQuaternion, QVector2D, QVector4D, QMatrix4x4
+from PySide6.QtCore import QObject, Slot, QSize, Signal, QPointF
+from PySide6.Qt3DCore import Qt3DCore
+from PySide6.Qt3DRender import Qt3DRender
+from PySide6.QtGui import QVector3D, QQuaternion, QVector2D, QVector4D, QMatrix4x4
 
 from meshroom.ui.utils import makeProperty
 
@@ -41,14 +41,14 @@ class Scene3DHelper(QObject):
     def faceCount(self, entity):
         """ Returns face count based on children QGeometry buffers size."""
         count = 0
-        for geo in entity.findChildren(Qt3DRender.QGeometry):
+        for geo in entity.findChildren(Qt3DCore.QGeometry):
             count += sum([attr.count() for attr in geo.attributes() if attr.name() == "vertexPosition"])
         return count / 3
 
     @Slot(Qt3DCore.QEntity, result=int)
     def vertexColorCount(self, entity):
         count = 0
-        for geo in entity.findChildren(Qt3DRender.QGeometry):
+        for geo in entity.findChildren(Qt3DCore.QGeometry):
             count += sum([attr.count() for attr in geo.attributes() if attr.name() == "vertexColor"])
         return count
 
@@ -59,10 +59,12 @@ class TrackballController(QObject):
     Based on the C++ version from https://github.com/cjmdaixi/Qt3DTrackball
     """
 
-    _windowSize = QSize()
-    _camera = None
-    _trackballSize = 1.0
-    _rotationSpeed = 5.0
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._windowSize = QSize()
+        self._camera = None
+        self._trackballSize = 1.0
+        self._rotationSpeed = 5.0
 
     def projectToTrackball(self, screenCoords):
         sx = screenCoords.x()
@@ -98,7 +100,7 @@ class TrackballController(QObject):
     windowSizeChanged = Signal()
     windowSize = makeProperty(QSize, '_windowSize', windowSizeChanged)
     cameraChanged = Signal()
-    camera = makeProperty(Qt3DRender.QCamera, '_camera', cameraChanged)
+    camera = makeProperty(QObject, '_camera', cameraChanged)
     trackballSizeChanged = Signal()
     trackballSize = makeProperty(float, '_trackballSize', trackballSizeChanged)
     rotationSpeedChanged = Signal()
@@ -352,7 +354,23 @@ class Transformations3DHelper(QObject):
         U = M * quaternion * M
 
         return U.toEulerAngles()
-
+    
+    @Slot(QVector3D, QVector3D, float, float, result=QVector3D)
+    def getRotatedCameraViewVector(self, camereViewVector, cameraUpVector, pitch, yaw):
+        """ Compute the rotated camera view vector with given pitch and yaw (in degrees).
+            Args:
+                camereViewVector (QVector3D): Camera view vector, the displacement from the camera position to its target
+                cameraUpVector (QVector3D): Camera up vector, the direction the top of the camera is facing
+                pitch (float): Rotation pitch (in degrees)
+                yaw (float): Rotation yaw (in degrees)
+            Returns:
+                QVector3D: rotated camera view vector
+        """
+        cameraSideVector = QVector3D.crossProduct(camereViewVector, cameraUpVector)
+        yawRot = QQuaternion.fromAxisAndAngle(cameraUpVector, yaw)
+        pitchRot = QQuaternion.fromAxisAndAngle(cameraSideVector, pitch)
+        return (yawRot * pitchRot).rotatedVector(camereViewVector)
+    
     @Slot(QVector3D, QMatrix4x4, Qt3DRender.QCamera, QSize, result=float)
     def computeScaleUnitFromModelMatrix(self, axis, modelMat, camera, windowSize):
         """ Compute the length of the screen projected vector axis unit transformed by the model matrix.

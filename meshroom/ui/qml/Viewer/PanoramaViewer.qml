@@ -1,7 +1,7 @@
-import QtQuick 2.15
-import Utils 1.0
+import QtQuick
 
 import AliceVision 1.0 as AliceVision
+import Utils 1.0
 
 /**
  * PanoramaViwer displays a list of Float Images
@@ -73,7 +73,7 @@ AliceVision.PanoramaViewer {
     property double pitchNode: activeNode ? activeNode.attribute("manualTransform.manualRotation.x").value : 0
     property double rollNode: activeNode ? activeNode.attribute("manualTransform.manualRotation.z").value : 0
 
-    //Convert angle functions
+    // Convert angle functions
     function toDegrees(radians) {
         return radians * (180 / Math.PI)
     }
@@ -82,12 +82,16 @@ AliceVision.PanoramaViewer {
         return degrees * (Math.PI / 180)
     }
 
-    function fmod(a,b) { return Number((a - (Math.floor(a / b) * b)).toPrecision(8)) }
+    function fmod(a,b) {
+        return Number((a - (Math.floor(a / b) * b)).toPrecision(8))
+    }
 
     // Limit angle between -180 and 180
     function limitAngle(angle) {
-        if (angle > 180) angle = -180.0 + (angle - 180.0)
-        if (angle < -180) angle = 180.0 - (Math.abs(angle) - 180)
+        if (angle > 180)
+            angle = -180.0 + (angle - 180.0)
+        if (angle < -180)
+            angle = 180.0 - (Math.abs(angle) - 180)
         return angle
     }
 
@@ -121,7 +125,7 @@ AliceVision.PanoramaViewer {
                     if (isEditable)
                         isRotating ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 }
-                onPositionChanged: {
+                onPositionChanged: function(mouse) {
                     // Send Mouse Coordinates to Float Images Viewers
                     idSelected = -1
                     for (var i = 0; i < repeater.model && isHighlightable; ++i) {
@@ -171,7 +175,7 @@ AliceVision.PanoramaViewer {
                     }
                 }
 
-                onPressed:{
+                onPressed: function(mouse) {
                     _reconstruction.beginModification("Panorama Manual Rotation")
                     isRotating = true
                     lastX = mouse.x
@@ -185,7 +189,7 @@ AliceVision.PanoramaViewer {
                     previous_roll = roll
                 }
 
-                onReleased: {
+                onReleased: function(mouse) {
                     _reconstruction.endModification()
                     isRotating = false
                     lastX = 0
@@ -273,33 +277,31 @@ AliceVision.PanoramaViewer {
                     var sourceItem = Filepath.stringToUrl(msfmData.getUrlFromViewId(idViewItem))
 
                     setSource("FloatImage.qml", {
-                        'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,
-                        'viewerTypeString': 'panorama',
-                        'surface.subdivisions': Qt.binding(function() { return subdivisionsPano }),
-                        'cropFisheye' : Qt.binding(function(){ return cropFisheyePano }),
-                        'surface.pitch': Qt.binding(function() { return root.pitch }),
-                        'surface.yaw': Qt.binding(function() { return root.yaw }),
-                        'surface.roll': Qt.binding(function() { return root.roll }),
-                        'idView': Qt.binding(function() { return idViewItem }),
-                        'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
-                        'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
-                        'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
-                        'downscaleLevel' : Qt.binding(function() { return downscale }),
-                        'source':  Qt.binding(function() { return sourceItem }),
-                        'surface.msfmData': Qt.binding(function() { return root.msfmData }),
-                        'canBeHovered': true,
-                        'useSequence': false
+                        "surface.viewerType": AliceVision.Surface.EViewerType.PANORAMA,
+                        "viewerTypeString": "panorama",
+                        "surface.subdivisions": Qt.binding(function() { return subdivisionsPano }),
+                        "cropFisheye" : Qt.binding(function(){ return cropFisheyePano }),
+                        "surface.pitch": Qt.binding(function() { return root.pitch }),
+                        "surface.yaw": Qt.binding(function() { return root.yaw }),
+                        "surface.roll": Qt.binding(function() { return root.roll }),
+                        "idView": Qt.binding(function() { return idViewItem }),
+                        "gamma": Qt.binding(function() { return hdrImageToolbar.gammaValue }),
+                        "gain": Qt.binding(function() { return hdrImageToolbar.gainValue }),
+                        "channelModeString": Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
+                        "downscaleLevel": Qt.binding(function() { return downscale }),
+                        "source":  Qt.binding(function() { return sourceItem }),
+                        "surface.msfmData": Qt.binding(function() { return root.msfmData }),
+                        "canBeHovered": true,
+                        "useSequence": false
                     })
                     imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.imageStatus === Image.Ready ? true : false })
                 }
-
             }
         }
         Repeater {
             id: repeater
             model: 0
             delegate: imgPano
-
         }
         Connections {
             target: root
@@ -309,7 +311,7 @@ AliceVision.PanoramaViewer {
                 // Retrieve downscale value from C++
                 panoramaViewerToolbar.updateDownscaleValue(root.downscale)
 
-                //Changing the repeater model (number of elements)
+                // Changing the repeater model (number of elements)
                 panoImages.updateRepeater()
 
                 root.readyToLoad = Image.Ready

@@ -1,32 +1,34 @@
 pragma Singleton
-import QtQuick 2.15
+import QtQuick
+
 import MaterialIcons 2.2
 
 /**
  * Viewer3DSettings singleton gathers properties related to the 3D Viewer capabilities, state and display options.
  */
+
 Item {
     readonly property Component sfmDataLoaderComp: Qt.createComponent("SfmDataLoader.qml")
     readonly property bool supportSfmData: sfmDataLoaderComp.status == Component.Ready
     readonly property Component depthMapLoaderComp: Qt.createComponent("DepthMapLoader.qml")
     readonly property bool supportDepthMap: depthMapLoaderComp.status == Component.Ready
 
-    // supported 3D files extensions
+    // Supported 3D files extensions
     readonly property var supportedExtensions: {
-        var exts = ['.obj', '.stl', '.fbx', '.gltf', '.ply'];
+        var exts = [".obj", ".stl", ".fbx", ".gltf", ".ply"];
         if (supportSfmData) {
-            exts.push('.abc')
-            exts.push('.json')
-            exts.push('.sfm')
+            exts.push(".abc")
+            exts.push(".json")
+            exts.push(".sfm")
         }
         if (supportDepthMap)
-            exts.push('.exr')
+            exts.push(".exr")
 
         return exts;
     }
 
     // Available render modes
-    readonly property var renderModes: [ // Can't use ListModel because of MaterialIcons expressions
+    readonly property var renderModes: [  // Can't use ListModel because of MaterialIcons expressions
                          {"name": "Solid", "icon": MaterialIcons.crop_din },
                          {"name": "Wireframe", "icon": MaterialIcons.details },
                          {"name": "Textured", "icon": MaterialIcons.texture },
@@ -49,6 +51,7 @@ Item {
     property bool displayGrid: true
     property bool displayGizmo: true
     property bool displayOrigin: false
+    property bool displayLightController: false
     // Camera
     property bool syncViewpointCamera: false
     property bool syncWithPickedViewId: false  // Sync active camera with picked view ID from sequence player if the setting is enabled

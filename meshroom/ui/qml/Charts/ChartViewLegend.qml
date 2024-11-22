@@ -1,13 +1,13 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtCharts 2.15
-
+import QtQuick
+import QtQuick.Controls
+import QtCharts
 
 /**
  * ChartViewLegend is an interactive legend component for ChartViews.
  * It provides a CheckBox for each series that can control its visibility,
  * and highlight on hovering.
  */
+
 Flow {
     id: root
 
@@ -49,7 +49,6 @@ Flow {
     }
 
     Repeater {
-
         // ChartView series can't be accessed directly as a model.
         // Use an intermediate ListModel populated with those series.
         model: ListModel {
@@ -70,7 +69,7 @@ Flow {
                     root.hoveredSeries = null
             }
 
-            // hovered serie properties override
+            // Hovered serie properties override
             states: [
                 State {
                     when: series && root.hoveredSeries === series
@@ -84,7 +83,7 @@ Flow {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
+                onClicked: function(mouse) {
                     if (mouse.modifiers & Qt.ControlModifier)
                         root.soloSeries(index)
                     else

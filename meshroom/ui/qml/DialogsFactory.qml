@@ -1,10 +1,10 @@
-import QtQuick 2.15
-import MaterialIcons 2.2
+import QtQuick
 import Controls 1.0
 
 /**
  * DialogsFactory is utility object to instantiate generic purpose Dialogs.
  */
+
 QtObject {
 
     readonly property string defaultErrorText: "An unexpected error has occurred"

@@ -1,12 +1,13 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
+
 import Controls 1.0
-import Utils 1.0
 import MaterialIcons 2.2
+import Utils 1.0
 
 import Qt.labs.platform 1.0 as Platform
-import QtQuick.Dialogs 1.3
 
 Item {
     id: root

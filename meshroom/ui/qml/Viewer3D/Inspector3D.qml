@@ -1,11 +1,12 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
+import QtQuick
+import QtQuick.Controls
 import QtQuick.Controls.Material 2.12
+import QtQuick.Layouts
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
+
 import Controls 1.0
+import MaterialIcons 2.2
 import Utils 1.0
 
 FloatingPane {
@@ -25,7 +26,12 @@ FloatingPane {
 
     padding: 0
 
-    MouseArea { anchors.fill: parent; onWheel: wheel.accepted = true }
+    MouseArea {
+        anchors.fill: parent
+        onWheel: function(wheel) {
+            wheel.accepted = true
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -63,6 +69,12 @@ FloatingPane {
                         ToolTip.text: "Display Origin"
                         checked: Viewer3DSettings.displayOrigin
                         onClicked: Viewer3DSettings.displayOrigin = !Viewer3DSettings.displayOrigin
+                    }
+                    MaterialToolButton {
+                        text: MaterialIcons.light_mode
+                        ToolTip.text: "Display Light Controller"
+                        checked: Viewer3DSettings.displayLightController
+                        onClicked: Viewer3DSettings.displayLightController = !Viewer3DSettings.displayLightController
                     }
                 }
                 MaterialLabel {
@@ -232,7 +244,8 @@ FloatingPane {
                             label: {
                                 var id = undefined
                                 // Ensure there are entries in resectionGroups and a valid resectionId before accessing anything
-                                if (Viewer3DSettings.resectionId !== undefined && Viewer3DSettings.resectionGroups.length > 0)
+                                if (Viewer3DSettings.resectionId !== undefined && Viewer3DSettings.resectionGroups &&
+                                    Viewer3DSettings.resectionGroups.length > 0)
                                     id = Math.min(Viewer3DSettings.resectionId, Viewer3DSettings.resectionIdCount)
                                 if (id !== undefined && Viewer3DSettings.resectionGroups[id] !== undefined)
                                     return Viewer3DSettings.resectionGroups[id]
@@ -247,9 +260,11 @@ FloatingPane {
                             iconText: MaterialIcons.auto_awesome_motion
                             label: {
                                 let currentCameras = 0
-                                for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
-                                    if (i <= Viewer3DSettings.resectionId)
-                                        currentCameras += Viewer3DSettings.resectionGroups[i]
+                                if (Viewer3DSettings.resectionGroups) {
+                                    for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
+                                        if (i <= Viewer3DSettings.resectionId)
+                                            currentCameras += Viewer3DSettings.resectionGroups[i]
+                                    }
                                 }
 
                                 return currentCameras
@@ -262,8 +277,10 @@ FloatingPane {
                             iconText: MaterialIcons.videocam
                             label: {
                                 let totalCameras = 0
-                                for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
-                                    totalCameras += Viewer3DSettings.resectionGroups[i]
+                                if (Viewer3DSettings.resectionGroups) {
+                                    for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
+                                        totalCameras += Viewer3DSettings.resectionGroups[i]
+                                    }
                                 }
 
                                 return totalCameras
@@ -341,7 +358,7 @@ FloatingPane {
                         filters: [{role: "label", value: searchBar.text}]
                         delegate: MouseArea {
                             id: mediaDelegate
-                            // add mediaLibrary.count in the binding to ensure 'entity'
+                            // Add mediaLibrary.count in the binding to ensure 'entity'
                             // is re-evaluated when mediaLibrary delegates are modified
                             property bool loading: model.status === SceneLoader.Loading
                             property bool hovered: model.attribute ? (uigraph ? uigraph.hoveredNode === model.attribute.node : false) : containsMouse
@@ -381,7 +398,7 @@ FloatingPane {
                                 if (model.attribute)
                                     uigraph.hoveredNode = null
                             }
-                            onClicked: {
+                            onClicked: function(mouse) {
                                 if (model.attribute)
                                     uigraph.selectedNode = model.attribute.node
                                 else
@@ -456,9 +473,11 @@ FloatingPane {
                                         property int modifiers
                                         anchors.fill: parent
                                         hoverEnabled: true
-                                        onPositionChanged: modifiers = mouse.modifiers
+                                        onPositionChanged: function(mouse) {
+                                            modifiers = mouse.modifiers
+                                        }
                                         onExited: modifiers = Qt.NoModifier
-                                        onPressed: {
+                                        onPressed: function(mouse) {
                                             modifiers = mouse.modifiers;
                                             mouse.accepted = false;
                                         }
@@ -515,6 +534,7 @@ FloatingPane {
                                             topPadding: 3
                                             bottomPadding: topPadding
                                             text: model.label
+                                            color: palette.text
                                             opacity: model.valid ? 1.0 : 0.6
                                             elide: Text.ElideMiddle
                                             font.weight: mediaListView.currentIndex === index ? Font.DemiBold : Font.Normal
@@ -546,25 +566,37 @@ FloatingPane {
                                                     spacing: 1
                                                     visible: model.vertexCount
                                                     MaterialLabel { text: MaterialIcons.grain }
-                                                    Label { text: Format.intToString(model.vertexCount) }
+                                                    Label {
+                                                        text: Format.intToString(model.vertexCount)
+                                                        color: palette.text
+                                                    }
                                                 }
                                                 RowLayout {
                                                     spacing: 1
                                                     visible: model.faceCount
                                                     MaterialLabel { text: MaterialIcons.details; rotation: -180 }
-                                                    Label { text: Format.intToString(model.faceCount) }
+                                                    Label {
+                                                        text: Format.intToString(model.faceCount)
+                                                        color: palette.text
+                                                    }
                                                 }
                                                 RowLayout {
                                                     spacing: 1
                                                     visible: model.cameraCount
                                                     MaterialLabel { text: MaterialIcons.videocam }
-                                                    Label { text: model.cameraCount }
+                                                    Label {
+                                                        text: model.cameraCount
+                                                        color: palette.text
+                                                    }
                                                 }
                                                 RowLayout {
                                                     spacing: 1
                                                     visible: model.textureCount
                                                     MaterialLabel { text: MaterialIcons.texture }
-                                                    Label { text: model.textureCount }
+                                                    Label {
+                                                        text: model.textureCount
+                                                        color: palette.text
+                                                    }
                                                 }
                                             }
                                         }

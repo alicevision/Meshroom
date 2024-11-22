@@ -1,11 +1,12 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 /**
  * FloatingPane provides a Pane with a slightly transparent default background
  * using palette.base as color. Useful to create floating toolbar/overlays.
  */
+
 Pane {
     id: root
 
@@ -14,5 +15,9 @@ Pane {
 
     padding: 6
     anchors.margins: 2
-    background: Rectangle { color: root.palette.base; opacity: opaque ? 1.0 : 0.7; radius: root.radius }
+    background: Rectangle {
+        color: root.palette.base
+        opacity: opaque ? 1.0 : 0.7
+        radius: root.radius
+    }
 }

@@ -1,12 +1,14 @@
-import QtQuick 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Shapes 1.6
+
 import GraphEditor 1.0
-import QtQuick.Shapes 1.15
 import MaterialIcons 2.2
-import QtQuick.Controls 2.15
 
 /**
-    A cubic spline representing an edge, going from point1 to point2, providing mouse interaction.
-*/
+ * A cubic spline representing an edge, going from point1 to point2, providing mouse interaction.
+ */
+
 Item {
     id: root
 
@@ -40,7 +42,7 @@ Item {
 
     Shape {
         anchors.fill: parent
-        // cause rendering artifacts when enabled (and don't support hot reload really well)
+        // Cause rendering artifacts when enabled (and don't support hot reload really well)
         vendorExtensionsEnabled: false
         opacity: 0.7
 
@@ -53,7 +55,7 @@ Item {
             strokeColor: "#3E3E3E"
             strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
             strokeWidth: 1
-            // final visual width of this path (never below 1)
+            // Final visual width of this path (never below 1)
             readonly property real visualWidth: Math.max(strokeWidth, 1)
             dashPattern: [6 / visualWidth, 4 / visualWidth]
             capStyle: ShapePath.RoundCap
@@ -68,7 +70,6 @@ Item {
                 control2X: x - ctrlPtDist
                 control2Y: y
             }
-
         }
 
         ShapePath {
@@ -80,7 +81,7 @@ Item {
             strokeColor: root.isForLoop ? root.color : "transparent"
             strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
             strokeWidth: root.thickness
-            // final visual width of this path (never below 1)
+            // Final visual width of this path (never below 1)
             readonly property real visualWidth: Math.max(strokeWidth, 1)
             dashPattern: [6 / visualWidth, 4 / visualWidth]
             capStyle: ShapePath.RoundCap
@@ -97,11 +98,13 @@ Item {
             }
         }
     }
+
     Item {
-        // place the label at the middle of the edge
+        // Place the label at the middle of the edge
         x: (root.startX + root.endX) / 2
         y: (root.startY + root.endY) / 2
         visible: root.isForLoop
+
         Rectangle {
             anchors.centerIn: parent
             property int margin: 2
@@ -109,6 +112,7 @@ Item {
             height: icon.height + 2 * margin
             radius: width
             color: path.strokeColor
+
             MaterialToolLabel {
                 id: icon
                 anchors.centerIn: parent
@@ -119,6 +123,7 @@ Item {
                 color: palette.base                
                 ToolTip.text: "Foreach Loop"
             }
+
             MouseArea {
                 id: loopArea
                 anchors.fill: parent
@@ -126,16 +131,25 @@ Item {
                 onClicked: root.pressed(arguments[0])
             }
         }
-
     }
 
     EdgeMouseArea {
         id: edgeArea
         anchors.fill: parent
-        curveScale: cubic.ctrlPtDist / root.width  // normalize by width
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         thickness: root.thickness + 4
-        onPressed: root.pressed(arguments[0])   // can't get named args, use arguments array
-        onReleased: root.released(arguments[0])
+        onPressed: function(event) {
+            root.pressed(event)
+        }
+        onReleased: function(event) {
+            root.released(event)
+        }
+
+        Component.onCompleted: {
+            /* The curve scale must be set only once the component has been fully created, so
+             * that all the events following the update of the curve scale can be taken into
+             * account */
+            curveScale = cubic.ctrlPtDist / root.width  // Normalize by width
+        }
     }
 }

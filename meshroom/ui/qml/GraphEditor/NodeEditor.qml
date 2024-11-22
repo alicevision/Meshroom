@@ -1,15 +1,16 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
-import Controls 1.0
-import Utils 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
+import Controls 1.0
+import MaterialIcons 2.2
+import Utils 1.0
 
 /**
  * NodeEditor allows to visualize and edit the parameters of a Node.
  * It mainly provides an attribute editor and a log inspector.
  */
+
 Panel {
     id: root
 
@@ -35,7 +36,7 @@ Panel {
             if (node !== null && (node.isFinishedOrRunning() || globalStatus == "ERROR")) {
                 computationInfo.text = Format.sec2timeStr(node.elapsedTime)
             }
-            else{
+            else {
                 computationInfo.text =  ""
             }
         }
@@ -117,6 +118,7 @@ Panel {
             Menu {
                 id: settingsMenu
                 y: parent.height
+
                 Menu {
                     id: filterAttributesMenu
                     title: "Filter Attributes"
@@ -138,7 +140,9 @@ Panel {
                             enabled: tabBar.currentIndex === 0
                         }
                     }
+
                     MenuSeparator {}
+
                     RowLayout {
                         CheckBox {
                             id: defaultToggle
@@ -157,7 +161,9 @@ Panel {
                             enabled: tabBar.currentIndex === 0
                         }
                     }
+
                     MenuSeparator {}
+
                     RowLayout {
                         CheckBox {
                             id: linkToggle
@@ -176,7 +182,9 @@ Panel {
                             enabled: tabBar.currentIndex === 0
                         }
                     }
+
                     MenuSeparator {}
+
                     CheckBox {
                         id: advancedToggle
                         text: "Advanced"
@@ -196,7 +204,9 @@ Panel {
                     enabled: root.node !== null
                     onClicked: Qt.openUrlExternally(Filepath.stringToUrl(root.node.internalFolder))
                 }
+
                 MenuSeparator {}
+
                 MenuItem {
                     enabled: root.node !== null
                     text: "Clear Pending Status"
@@ -208,6 +218,7 @@ Panel {
             }
         }
     }
+
     ColumnLayout {
         anchors.fill: parent
 
@@ -215,7 +226,7 @@ Panel {
         Loader {
             active: root.isCompatibilityNode
             Layout.fillWidth: true
-            visible: active  // for layout update
+            visible: active  // For layout update
 
             sourceComponent: CompatibilityBadge {
                 canUpgrade: root.node.canUpgrade

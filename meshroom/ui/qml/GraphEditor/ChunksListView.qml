@@ -1,14 +1,13 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.11
-import MaterialIcons 2.2
-import Controls 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 import "common.js" as Common
 
 /**
  * ChunkListView
  */
+
 ColumnLayout {
     id: root
     property variant chunks
@@ -78,7 +77,7 @@ ColumnLayout {
             id: chunkDelegate
             property var chunk: object
             text: index
-            width: parent ? parent.width : 0
+            width: ListView.view.width
             leftPadding: 8
             onClicked: {
                 chunksLV.forceActiveFocus()

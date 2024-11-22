@@ -252,6 +252,7 @@ FloatingPane {
                                 return 0
 
                             }
+                            labelIconColor: palette.text
                             ToolTip.text: "Number Of Cameras In Current Resection Group"
                             visible: Viewer3DSettings.displayResectionIds
                         }
@@ -269,6 +270,7 @@ FloatingPane {
 
                                 return currentCameras
                             }
+                            labelIconColor: palette.text
                             ToolTip.text: "Number Of Cumulated Cameras"
                             visible: Viewer3DSettings.displayResectionIds
                         }
@@ -285,6 +287,7 @@ FloatingPane {
 
                                 return totalCameras
                             }
+                            labelIconColor: palette.text
                             ToolTip.text: "Total Number Of Cameras"
                             visible: Viewer3DSettings.displayResectionIds
                         }

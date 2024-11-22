@@ -120,7 +120,7 @@ Item {
                 iconText: MaterialIcons.loop
                 label: (root.iteration + 1) + "/" + root.loopSize + " "
 
-                color: palette.base                
+                labelIconColor: palette.base
                 ToolTip.text: "Foreach Loop"
             }
 

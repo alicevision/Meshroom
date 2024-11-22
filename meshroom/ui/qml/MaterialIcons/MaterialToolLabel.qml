@@ -12,7 +12,7 @@ Item {
     property alias iconText: iconItem.text
     property alias iconSize: iconItem.font.pointSize
     property alias label: labelItem.text
-    property var color: palette.text
+    property var labelIconColor: palette.text
     implicitWidth: childrenRect.width
     implicitHeight: childrenRect.height
     anchors.rightMargin: 5
@@ -24,12 +24,12 @@ Item {
             font.pointSize: 13
             padding: 0
             text: ""
-            color: color
+            color: labelIconColor
         }
         Label {
             id: labelItem
             text: ""
-            color: color
+            color: labelIconColor
         }
     }
 

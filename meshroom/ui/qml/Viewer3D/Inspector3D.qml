@@ -229,6 +229,7 @@ FloatingPane {
 
                         Label {
                             text: resectionIdSlider.value + "/" + Viewer3DSettings.resectionIdCount
+                            color: palette.text
                             visible: Viewer3DSettings.displayResectionIds
                         }
                     }

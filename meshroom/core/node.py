@@ -556,6 +556,15 @@ class BaseNode(BaseObject):
             return self.internalAttribute("color").value.strip()
         return ""
 
+    def setColor(self, color: str):
+        """ Sets the color of the Node.
+
+        Args:
+            color (str): The hex of the color to set on the node.
+        """
+        if self.hasInternalAttribute("color"):
+            self.internalAttribute("color").value = color
+
     def getInvalidationMessage(self):
         """
         Returns:
@@ -967,7 +976,7 @@ class BaseNode(BaseObject):
         if attr.value is None:
             # Discard dynamic values depending on the graph processing.
             return
-        
+
         if self.graph and self.graph.isLoading:
             # Do not trigger attribute callbacks during the graph loading.
             return
@@ -1356,7 +1365,7 @@ class BaseNode(BaseObject):
         False otherwise.
         """
         for attr in self._attributes:
-            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or 
+            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or
                                                    attr.desc.semantic == "imageList"):
                 return True
         return False
@@ -1386,7 +1395,7 @@ class BaseNode(BaseObject):
     internalAttributes = Property(BaseObject, getInternalAttributes, constant=True)
     internalAttributesChanged = Signal()
     label = Property(str, getLabel, notify=internalAttributesChanged)
-    color = Property(str, getColor, notify=internalAttributesChanged)
+    color = Property(str, getColor, setColor, notify=internalAttributesChanged)
     invalidation = Property(str, getInvalidationMessage, notify=internalAttributesChanged)
     comment = Property(str, getComment, notify=internalAttributesChanged)
     internalFolderChanged = Signal()
@@ -1909,7 +1918,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
             # do not perform that check for internal attributes because there is no point in
             # raising compatibility issues if their number differs: in that case, it is only useful
             # if some internal attributes do not exist or are invalid
-            if not template and (sorted([attr.name for attr in nodeDesc.inputs 
+            if not template and (sorted([attr.name for attr in nodeDesc.inputs
                                          if not isinstance(attr, desc.PushButtonParam)]) != sorted(inputs.keys()) or
                                  sorted([attr.name for attr in nodeDesc.outputs if not attr.isDynamicValue]) !=
                                  sorted(outputs.keys())):

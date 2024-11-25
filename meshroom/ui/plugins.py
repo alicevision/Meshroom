@@ -1,8 +1,5 @@
 """ UI Component for the Plugin System.
 """
-# STD
-import urllib.parse as _parser
-
 # Qt
 from PySide2.QtCore import Slot, QObject, Property, Signal
 
@@ -29,7 +26,7 @@ class Plugin(BaseObject):
         self._nodeErrors = self._errors()
 
     def _errors(self) -> str:
-        """
+        """ Returns the Error Description for the Node Plugin if there are any.
         """
         if not self._descriptor.errors:
             return ""
@@ -41,14 +38,22 @@ class Plugin(BaseObject):
 
         return "\n".join(errors)
 
-    @Slot()
-    def reload(self):
+    @Slot(result=bool)
+    def reload(self) -> bool:
         """ Reloads the plugin descriptor.
+
+        Returns:
+            bool. The reload status.
         """
-        self._descriptor.reload()
+        # The plugin descriptor reloads only if the file was modified after it was last loaded
+        if not self._descriptor.reload():
+            return False
 
         # Update the Node errors
         self._nodeErrors = self._errors()
+
+        # Plugin was modified
+        return True
 
     name = Property(str, lambda self: self._descriptor.name, constant=True)
     documentation = Property(str, lambda self: self._descriptor.documentation, constant=True)
@@ -57,7 +62,6 @@ class Plugin(BaseObject):
     path = Property(str, lambda self: self._descriptor.path, constant=True)
     errors = Property(str, lambda self: self._nodeErrors, constant=True)
     category = Property(str, lambda self: self._descriptor.category, constant=True)
-
 
 
 class NodesPluginManager(QObject):
@@ -105,13 +109,8 @@ class NodesPluginManager(QObject):
         Args:
             directory (str): Path to the plugin package to import.
         """
-        # The incoming directory to this method from the QML FolderDialog component is of the format
-        # file:///path/to/a/python/package
-        # Cleanup the provided directory url and convert to a usable Posix path
-        uri = _parser.urlparse(directory)
-
         # Load the plugin(s) from the provided directory package
-        self._manager.load(_parser.unquote(uri.path))
+        self._manager.load(directory)
 
         # Reset the plugins model
         self._reset()

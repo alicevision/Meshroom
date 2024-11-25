@@ -436,11 +436,12 @@ Page {
     PluginManager {
         id: pluginManager
         manager: _pluginator
+        uigraph: _reconstruction
 
         // When a plugin package has been browsed
         onBrowsed: {
             // Load Plugins
-            _pluginator.load(directory)
+            _pluginator.load(Filepath.urlToString(directory))
         }
     }
 

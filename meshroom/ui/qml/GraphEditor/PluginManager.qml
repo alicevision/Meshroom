@@ -12,6 +12,8 @@ import Utils 1.0
 Dialog {
     id: root
 
+    // the UIGraph instance
+    property var uigraph
     // the Plugin Manager instance
     property var manager
     // alias to underlying plugin model
@@ -43,7 +45,7 @@ Dialog {
             Layout.preferredWidth: 600
             Layout.fillHeight: true
             implicitHeight: contentHeight
-            
+
             clip: true
             model: pluginsModel
 
@@ -59,7 +61,7 @@ Dialog {
                 RowLayout {
                     id: headerLabel
                     width: parent.width
-                    Label { text: "Plugin"; Layout.preferredWidth: 170; font.bold: true }
+                    Label { text: "Plugin"; Layout.preferredWidth: 160; font.bold: true }
                     Label { text: "Status"; Layout.preferredWidth: 70; font.bold: true }
                     Label { text: "Version"; Layout.preferredWidth: 70; font.bold: true }
                 }
@@ -74,7 +76,7 @@ Dialog {
                 anchors.horizontalCenter: parent != null ? parent.horizontalCenter : undefined
 
                 Label {
-                    Layout.preferredWidth: 180
+                    Layout.preferredWidth: 200
                     text: pluginDelegate.plugin ? pluginDelegate.plugin.name : ""
 
                     // Mouse Area to allow clicking on the label
@@ -83,14 +85,13 @@ Dialog {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             metadataPane.plugin = pluginDelegate.plugin
-                            metadataPane.visible = true    
+                            metadataPane.visible = true
                         }
                     }
-
                 }
                 Label {
                     id: status
-                    Layout.preferredWidth: 70
+                    Layout.preferredWidth: 90
                     text: pluginDelegate.plugin && pluginDelegate.plugin.loaded ? MaterialIcons.check : MaterialIcons.clear
                     color: pluginDelegate.plugin && pluginDelegate.plugin.loaded ? "#4CAF50" : "#F44336"
                     font.family: MaterialIcons.fontFamily
@@ -99,8 +100,30 @@ Dialog {
                 }
                 Label {
                     id: version
-                    Layout.preferredWidth: 70
+                    Layout.preferredWidth: 50
                     text: pluginDelegate.plugin ? pluginDelegate.plugin.version : ""
+                }
+
+                // Reload the Plugin
+                MaterialToolButton {
+                    id: reloader
+
+                    text: MaterialIcons.refresh
+                    ToolTip.text: "Reload Plugin"
+
+                    onClicked: {
+                        if (pluginDelegate.plugin) {
+                            // Dialog items for updates
+                            confirmationDialog.statusItem = status
+                            confirmationDialog.versionItem = version
+
+                            // Plugin for 
+                            confirmationDialog.plugin = pluginDelegate.plugin
+
+                            // Show the confirmation dialog to the user
+                            confirmationDialog.open()
+                        }
+                    }
                 }
             }
         }
@@ -124,7 +147,7 @@ Dialog {
             clip: true
 
             background: Rectangle { color: Qt.darker(parent.palette.window, 1.15) }
-            
+
             // Header
             Label { id: infoLabel; text: ( metadataPane.plugin ? metadataPane.plugin.name : "Plugin" ) + " Info"; font.bold: true; }
 
@@ -151,7 +174,7 @@ Dialog {
                 background: Rectangle { color: Qt.darker(parent.palette.window, 1.65) }
 
                 Column {
-                    width: parent.width   
+                    width: parent.width
 
                     RowLayout {
                         Label { text: "Name:"; Layout.preferredWidth: 100; font.bold: true }
@@ -166,7 +189,7 @@ Dialog {
                             Layout.preferredWidth: 450
                             wrapMode: Text.WordWrap
                             readOnly: true
-                            selectByMouse: true 
+                            selectByMouse: true
                         }
                     }
 
@@ -246,6 +269,46 @@ Dialog {
         onAccepted: {
             // Emit that a directory has been browsed -> for the loading to occur
             root.browsed(loadDialog.folder)
+        }
+    }
+
+    // A Confirmation Dialog to prompt user of the awareness of the reload process
+    MessageDialog  {
+        id: confirmationDialog
+
+        focus: true
+        modal: true
+        header.visible: false
+
+        text: "Reloading a Plugin will affect all the Node instances of the plugin in the graph.\nDo you want to proceed with reloading?"
+        helperText: "Warning: This operation cannot be undone."
+        standardButtons: Dialog.Yes | Dialog.Cancel
+
+        property var plugin: null   // plugin to reload
+        property var statusItem: null   // status item to update the text for once the plugin has been reloaded
+        property var versionItem: null  // version item to update the text for once the plugin has been reloaded
+
+        onAccepted: {
+            // All of the items required before calling for a reload
+            if (!plugin || !statusItem || !versionItem) return
+
+            // Reload
+            let ret = plugin.reload()
+
+            // Return if the plugin was not reloaded
+            if (!ret) return
+
+            // Reload the Node instances in the graph
+            root.uigraph.reloadNodes(plugin.name)
+
+            // Update the status and version, in case they have changed
+            statusItem.text = plugin.loaded ? MaterialIcons.check : MaterialIcons.clear
+            statusItem.color = plugin.loaded ? "#4CAF50" : "#F44336"
+
+            versionItem.text = plugin.version
+
+            // Update the plugin details view
+            metadataPane.plugin = plugin
         }
     }
 }

@@ -748,7 +748,7 @@ class UIGraph(QObject):
             uniqueNodesToDuplicate = list(dict.fromkeys(nodesToDuplicate))
             duplicates = self.duplicateNodes(uniqueNodesToDuplicate)
         return duplicates
-    
+
     @Slot(Edge, result=bool)
     def canExpandForLoop(self, currentEdge):
         """ Check if the list attribute can be expanded by looking at all the edges connected to it. """
@@ -846,7 +846,7 @@ class UIGraph(QObject):
             self.removeEdge(edge)
             self.addEdge(newSrc, newDst)
         return self._graph.edge(newDst)
-    
+
     @Slot(Attribute, result=Edge)
     def getEdge(self, dst):
         return self._graph.edge(dst)
@@ -880,6 +880,12 @@ class UIGraph(QObject):
             sortedNodes = sorted(nodes, key=lambda x: x.name)
             for node in sortedNodes:
                 self.upgradeNode(node)
+
+    @Slot(str)
+    def reloadNodes(self, nodeType):
+        """ Reload all the Nodes belonging to the Node Type.
+        """
+        self._graph.reloadNodes(nodeType)
 
     @Slot()
     def forceNodesStatusUpdate(self):

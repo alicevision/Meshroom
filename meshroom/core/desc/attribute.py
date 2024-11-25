@@ -33,6 +33,9 @@ class Attribute(BaseObject):
         self._isDynamicValue = (self._value is None)
         self._valueType = None
 
+        # Holds the state if the attribute description is invalid due to any of it's params
+        self._invalid = False
+
     def getInstanceType(self):
         """ Return the correct Attribute instance corresponding to the description. """
         # Import within the method to prevent cyclic dependencies
@@ -103,6 +106,9 @@ class Attribute(BaseObject):
     # instanceType
     #   Attribute instance corresponding to the description
     instanceType = Property(Variant, lambda self: self.getInstanceType(), constant=True)
+    # invalid:
+    #   This property is used to identify whether this parameter has all the correct values or is invalid
+    invalid = Property(bool, lambda self: self._invalid, constant=True)
 
 
 class ListAttribute(Attribute):
@@ -222,6 +228,8 @@ class GroupAttribute(Attribute):
             if name:
                 invalidParams.append(name)
         if invalidParams:
+            # The parameter is no longer valid
+            self._invalid = True
             # In group "group", if parameters "x" and "y" (with "y" in nested group "subgroup") are invalid, the
             # returned string will be: "group:x, group:subgroup:y"
             return self.name + ":" + str(", " + self.name + ":").join(invalidParams)
@@ -296,6 +304,8 @@ class File(Attribute):
         # Some File values are functions generating a string: check whether the value is a string or if it
         # is a function (but there is no way to check that the function's output is indeed a string)
         if not isinstance(self.value, str) and not callable(self.value):
+            # The parameter is no longer valid
+            self._invalid = True
             return self.name
         return ""
 
@@ -324,6 +334,9 @@ class BoolParam(Param):
 
     def checkValueTypes(self):
         if not isinstance(self.value, bool):
+            # The parameter is no longer valid
+            self._invalid = True
+
             return self.name
         return ""
 
@@ -352,6 +365,9 @@ class IntParam(Param):
 
     def checkValueTypes(self):
         if not isinstance(self.value, int) or (self.range and not all([isinstance(r, int) for r in self.range])):
+            # The parameter is no longer valid
+            self._invalid = True
+
             return self.name
         return ""
 
@@ -381,6 +397,9 @@ class FloatParam(Param):
 
     def checkValueTypes(self):
         if not isinstance(self.value, float) or (self.range and not all([isinstance(r, float) for r in self.range])):
+            # The parameter is no longer valid
+            self._invalid = True
+
             return self.name
         return ""
 
@@ -462,17 +481,26 @@ class ChoiceParam(Param):
     def checkValueTypes(self):
         # Check that the values have been provided as a list
         if not isinstance(self._values, list):
+            # The parameter is no longer valid
+            self._invalid = True
+
             return self.name
 
         # If the choices are not exclusive, check that 'value' is a list, and check that it does not contain values that
         # are not available
         elif not self.exclusive and (not isinstance(self._value, list) or
                                      not all(val in self._values for val in self._value)):
+            # The parameter is no longer valid
+            self._invalid = True
+
             return self.name
 
         # If the choices are exclusive, the value should NOT be a list but it can contain any value that is not in the
         # list of possible ones
         elif self.exclusive and isinstance(self._value, list):
+            # The parameter is no longer valid
+            self._invalid = True
+
             return self.name
 
         return ""
@@ -504,6 +532,9 @@ class StringParam(Param):
 
     def checkValueTypes(self):
         if not isinstance(self.value, str):
+            # The parameter is no longer valid
+            self._invalid = True
+
             return self.name
         return ""
 

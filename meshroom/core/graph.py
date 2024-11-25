@@ -824,6 +824,61 @@ class Graph(BaseObject):
 
         return upgradedNode, inEdges, outEdges, outListAttributes
 
+    def reloadNode(self, node):
+        """ Reloads the provided Node instance in the Graph. This could be triggered after the Node Plugin has
+        received an update.
+
+        Args:
+            node (Node): Node Instance.
+
+        Returns:
+            Node. The reloaded (newly created) node.
+        """
+        nodeName = node.getName()
+        upgradedNode = node.reload()
+
+        with GraphModification(self):
+            inEdges, outEdges, outListAttributes = self.removeNode(nodeName)
+            self.addNode(upgradedNode, nodeName)
+            for dst, src in outEdges.items():
+                # Re-create the entries in ListAttributes that were completely removed during the call to "removeNode"
+                # If they are not re-created first, adding their edges will lead to errors
+                # 0 = attribute name, 1 = attribute index, 2 = attribute value
+                if dst in outListAttributes.keys():
+                    listAttr = self.attribute(outListAttributes[dst][0])
+                    if isinstance(outListAttributes[dst][2], list):
+                        listAttr[outListAttributes[dst][1]:outListAttributes[dst][1]] = outListAttributes[dst][2]
+                    else:
+                        listAttr.insert(outListAttributes[dst][1], outListAttributes[dst][2])
+                
+                # Fetch the source and destination attributes for the nodes
+                # There is a high chance that one of these might not exist (possibly the source)
+                # as a node's source could could have removed or made invalid ?
+                source = self.attribute(src)
+                destination = self.attribute(dst)
+
+                # Both the Source and Destination Attribute instances should exist in the graph for being connected
+                # with an Edge, if not -> Move to the next attribute connection
+                if not (source and destination):
+                    continue
+
+                try:
+                    self.addEdge(source, destination)
+                except (KeyError, ValueError) as e:
+                    logging.warning("Failed to restore edge {} -> {}: {}".format(src, dst, str(e)))
+
+        return upgradedNode
+
+    def reloadNodes(self, nodeType):
+        """ Reloads all the Nodes which are of the provide NodeType from the graph.
+
+        Args:
+            nodeType (str): The Node Type.
+        """
+        for node in list(self._nodes.values())[:]:
+            if node.nodeType == nodeType:
+                self.reloadNode(node)
+
     def upgradeAllNodes(self):
         """ Upgrade all upgradable CompatibilityNode instances in the graph. """
         nodeNames = [name for name, n in self._compatibilityNodes.items() if n.canUpgrade]

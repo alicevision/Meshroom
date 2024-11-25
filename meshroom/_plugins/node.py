@@ -7,6 +7,7 @@ from types import ModuleType
 # STD
 import importlib
 import logging
+import os
 import pkgutil
 import sys
 
@@ -37,12 +38,15 @@ class NodeDescriptor(object):
         self._descriptor: desc.Node = descriptor
 
         # Update the Node Descriptor's plugin
-        self._descriptor.plugin = self
+        self._descriptor.plugin: NodeDescriptor = self
 
         # Module descriptions
         self._module: ModuleType = sys.modules.get(self._descriptor.__module__)
-        self._version = getattr(self._module, "__version__", self._DEFAULT_VERSION)
-        self._path = self._module.__file__
+        self._version: str = getattr(self._module, "__version__", self._DEFAULT_VERSION)
+        self._path: str = self._module.__file__
+
+        # When the plugin was last modified ?
+        self._mtime: float = os.path.getmtime(self._path)
 
         self._errors: List[str] = self._validate()
 
@@ -101,9 +105,29 @@ class NodeDescriptor(object):
         return errors
 
     # Public
-    def reload(self) -> None:
-        """ Reloads the Node.
+    def modified(self) -> bool:
+        """ Returns True if the plugin module has been modified after it was loaded.
         """
+        # A Module is modified if the modification time of the file is greater than the modification time
+        # of the file when it was last loaded in the Descriptor
+        return os.path.getmtime(self._path) > self._mtime
+
+    def reload(self, force: bool=False) -> bool:
+        """ Reloads the Node. Defaults to only loading the plugin if it has been modified.
+        Use force=True to load the plugin what so ever.
+
+        Args:
+            force (bool): Set to True to force load the Node Plugin.
+
+        Returns:
+            bool. True when the plugin was reloaded successfully, else False.
+        """
+        # If the plugin's source is not modified and there is no force operation to reload
+        # ignore reloading the plugin, as it could end up changing the graph topology if the plugin
+        # has been instanced in the graph
+        if not force and not self.modified():
+            return False
+
         # Reload the Module
         updated = importlib.reload(self._module)
 
@@ -122,6 +146,14 @@ class NodeDescriptor(object):
 
         # Update the errors if any that may have been introduced
         self._errors = self._validate()
+
+        # Update the version as it may have updated with the update
+        self._version = getattr(self._module, "__version__", self._DEFAULT_VERSION)
+
+        # Update the Modifcation time of the descriptor
+        self._mtime = os.path.getmtime(self._path)
+
+        return True
 
 
 class NodePluginManager(object):

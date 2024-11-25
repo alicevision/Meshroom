@@ -239,10 +239,15 @@ Page {
                     }
 
                     MaterialToolLabelButton {
+                        Layout.topMargin: 10
                         Layout.bottomMargin: 10
-                        Layout.fillWidth: true
-                        labelItem.horizontalAlignment: Text.AlignHCenter
-                        label: MaterialIcons.favorite + " Support AliceVision"
+                        Layout.alignment: Qt.AlignHCenter
+                        label: "Support AliceVision"
+                        iconText: MaterialIcons.favorite
+
+                        // Slightly "extend" the clickable area for the button while preserving the centered layout
+                        iconItem.leftPadding: 15
+                        labelItem.rightPadding: 15
 
                         onClicked: Qt.openUrlExternally("https://alicevision.org/association/#donate")
                     }

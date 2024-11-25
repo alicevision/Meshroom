@@ -258,7 +258,7 @@ Item {
                     Inspector3D {
                         id: inspector3d
                         SplitView.preferredWidth: 220
-                        SplitView.minimumWidth: 10
+                        SplitView.minimumWidth: 100
 
                         mediaLibrary: c_viewer3D.library
                         camera: c_viewer3D.mainCamera

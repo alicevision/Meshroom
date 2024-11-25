@@ -22,21 +22,24 @@ GroupBox {
     topPadding: label.height + padding
     background: Item {}
 
+    MouseArea {
+        parent: paneLabel
+        anchors.fill: parent
+        onClicked: function(mouse) {
+            expandButton.checked = !expandButton.checked
+        }
+    }
+
     label: Pane {
+        id: paneLabel
+        padding: 2
+        width: root.width
+
         background: Rectangle {
             id: labelBg
             color: palette.base
             opacity: 0.8
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    expandButton.checked = !expandButton.checked
-                }
-            }
         }
-        padding: 2
-        width: root.width
 
         RowLayout {
             width: parent.width

@@ -352,6 +352,7 @@ Page {
                             ToolTip.visible: hovered
                             ToolTip.text: modelData["path"] ? modelData["path"] : "Open browser to select a project file"
 
+                            font.family: MaterialIcons.fontFamily
                             font.pointSize: 24
 
                             text: modelData["path"] ? (modelData["thumbnail"] ? "" : MaterialIcons.description) : MaterialIcons.folder_open

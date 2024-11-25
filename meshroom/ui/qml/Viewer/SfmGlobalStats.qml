@@ -5,6 +5,8 @@ import QtQuick.Layouts
 
 import AliceVision 1.0 as AliceVision
 import Charts 1.0
+import Controls 1.0
+import Utils 1.0
 
 FloatingPane {
     id: root

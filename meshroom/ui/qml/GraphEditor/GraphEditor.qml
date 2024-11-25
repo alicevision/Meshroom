@@ -136,6 +136,8 @@ Item {
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             fit()
+        } else if (event.key === Qt.Key_C) {
+            colorSelector.toggle()
         } else if (event.key === Qt.Key_Delete) {
             if (event.modifiers === Qt.AltModifier) {
                 uigraph.removeNodesFrom(uigraph.selectedNodes)
@@ -1050,6 +1052,24 @@ Item {
                             }
                         }
                     }
+                }
+            }
+
+            // Separator
+            Rectangle {
+                Layout.fillHeight: true
+                Layout.margins: 2
+                implicitWidth: 1
+                color: activePalette.window
+            }
+
+            ColorSelector {
+                id: colorSelector
+                Layout.minimumWidth: colorSelector.width
+
+                // When a Color is selected
+                onColorSelected: (color)=> {
+                    uigraph.updateNodeColor(color)
                 }
             }
 

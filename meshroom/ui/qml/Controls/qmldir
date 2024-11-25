@@ -1,6 +1,7 @@
 module Controls
 
 ColorChart 1.0 ColorChart.qml
+ColorSelector 1.0 ColorSelector.qml
 ExpandableGroup 1.0 ExpandableGroup.qml
 FloatingPane 1.0 FloatingPane.qml
 Group 1.0 Group.qml

@@ -1101,17 +1101,20 @@ Item {
                 visible: graphSearchBar.text !== ""
             }
 
-            Repeater {
-                id: filteredNodes
-                model: SortFilterDelegateModel {
-                    model: root.graph ? root.graph.nodes : undefined
-                    sortRole: "label"
-                    filters: [{role: "label", value: graphSearchBar.text}]
-                    delegate: Item {
-                        property var index_: index
-                    }
-                    function modelData(item, roleName_) {
-                        return item.model.object[roleName_]
+            Item {
+                visible: false
+                Repeater {
+                    id: filteredNodes
+                    model: SortFilterDelegateModel {
+                        model: root.graph ? root.graph.nodes : undefined
+                        sortRole: "label"
+                        filters: [{role: "label", value: graphSearchBar.text}]
+                        delegate: Item {
+                            property var index_: index
+                        }
+                        function modelData(item, roleName_) {
+                            return item.model.object[roleName_]
+                        }
                     }
                 }
             }

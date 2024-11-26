@@ -211,50 +211,16 @@ Item {
             }
         }
 
-        MSplitView {
-            id: topBottomSplit
+        RowLayout {
             Layout.fillHeight: true
             Layout.fillWidth: true
-
-            orientation: Qt.Vertical
-        
-            // Output Text Area -- Shows the output for the executed script(s)
-            Rectangle {
-                id: outputArea
-
-                // Has a minimum height
-                SplitView.minimumHeight: 80
-
-                color: palette.base
-
-                Flickable {
-                    width: parent.width
-                    height: parent.height
-                    contentWidth: width
-                    contentHeight: ( output.lineCount + 5 ) * output.font.pixelSize // + 5 lines for buffer to be scrolled and visibility
-
-                    ScrollBar.vertical: MScrollBar {}
-
-                    TextArea.flickable: TextArea {
-                        id: output
-
-                        readOnly: true
-                        selectByMouse: true
-                        padding: 0
-                        Layout.fillHeight: true
-                        Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
-
-                        textFormat: Text.RichText
-                    }
-                }
-            }
+            width: root.width
 
             // Input Text Area -- Holds the input scripts to be executed
             Rectangle {
                 id: inputArea
-
-                SplitView.fillHeight: true
+                Layout.fillHeight: true
+                Layout.fillWidth: true
 
                 color: palette.base
 
@@ -338,6 +304,37 @@ Item {
                         if (lineNumbers.moving)
                             return
                         lineNumbers.contentY = contentY
+                    }
+                }
+            }
+
+            // Output Text Area -- Shows the output for the executed script(s)
+            Rectangle {
+                id: outputArea
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+
+                color: palette.base
+
+                Flickable {
+                    width: parent.width
+                    height: parent.height
+                    contentWidth: width
+                    contentHeight: ( output.lineCount + 5 ) * output.font.pixelSize // + 5 lines for buffer to be scrolled and visibility
+
+                    ScrollBar.vertical: MScrollBar {}
+
+                    TextArea.flickable: TextArea {
+                        id: output
+
+                        readOnly: true
+                        selectByMouse: true
+                        padding: 0
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+
+                        textFormat: Text.RichText
                     }
                 }
             }

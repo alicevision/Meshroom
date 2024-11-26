@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 import traceback
 
 # Qt
-from PySide6 import QtCore, QtGui, QtQuick
+from PySide6 import QtCore, QtGui
 from PySide6.QtCore import Property, QObject, Slot, Signal, QSettings
 
 
@@ -198,7 +198,7 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
         # The Document to highlight
         self._document = None
 
-        # Build a QRegExp for each of the pattern
+        # Build a QRegularExpression for each of the pattern
         self._rules = self.__rules()
 
     # Private
@@ -209,34 +209,34 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
         rules = []
 
         # Keyword rules
-        rules += [(QtCore.QRegExp(r"\b" + w + r"\s"), 0, PySyntaxHighlighter.STYLES["keyword"]) for w in PySyntaxHighlighter.keywords]
+        rules += [(QtCore.QRegularExpression(r"\b" + w + r"\s"), 0, PySyntaxHighlighter.STYLES["keyword"]) for w in PySyntaxHighlighter.keywords]
         # Operator rules
-        rules += [(QtCore.QRegExp(o), 0, PySyntaxHighlighter.STYLES["operator"]) for o in PySyntaxHighlighter.operators]
+        rules += [(QtCore.QRegularExpression(o), 0, PySyntaxHighlighter.STYLES["operator"]) for o in PySyntaxHighlighter.operators]
         # Braces
-        rules += [(QtCore.QRegExp(b), 0, PySyntaxHighlighter.STYLES["brace"]) for b in PySyntaxHighlighter.braces]
+        rules += [(QtCore.QRegularExpression(b), 0, PySyntaxHighlighter.STYLES["brace"]) for b in PySyntaxHighlighter.braces]
 
         # All other rules
         rules += [
             # self
-            (QtCore.QRegExp(r'\bself\b'), 0, PySyntaxHighlighter.STYLES["self"]),
+            (QtCore.QRegularExpression(r'\bself\b'), 0, PySyntaxHighlighter.STYLES["self"]),
 
             # 'def' followed by an identifier
-            (QtCore.QRegExp(r'\bdef\b\s*(\w+)'), 1, PySyntaxHighlighter.STYLES["deffunc"]),
+            (QtCore.QRegularExpression(r'\bdef\b\s*(\w+)'), 1, PySyntaxHighlighter.STYLES["deffunc"]),
             # 'class' followed by an identifier
-            (QtCore.QRegExp(r'\bclass\b\s*(\w+)'), 1, PySyntaxHighlighter.STYLES["defclass"]),
+            (QtCore.QRegularExpression(r'\bclass\b\s*(\w+)'), 1, PySyntaxHighlighter.STYLES["defclass"]),
 
             # Numeric literals
-            (QtCore.QRegExp(r'\b[+-]?[0-9]+[lL]?\b'), 0, PySyntaxHighlighter.STYLES["numbers"]),
-            (QtCore.QRegExp(r'\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b'), 0, PySyntaxHighlighter.STYLES["numbers"]),
-            (QtCore.QRegExp(r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b'), 0, PySyntaxHighlighter.STYLES["numbers"]),
+            (QtCore.QRegularExpression(r'\b[+-]?[0-9]+[lL]?\b'), 0, PySyntaxHighlighter.STYLES["numbers"]),
+            (QtCore.QRegularExpression(r'\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b'), 0, PySyntaxHighlighter.STYLES["numbers"]),
+            (QtCore.QRegularExpression(r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b'), 0, PySyntaxHighlighter.STYLES["numbers"]),
 
             # Double-quoted string, possibly containing escape sequences
-            (QtCore.QRegExp(r'"[^"\\]*(\\.[^"\\]*)*"'), 0, PySyntaxHighlighter.STYLES["string"]),
+            (QtCore.QRegularExpression(r'"[^"\\]*(\\.[^"\\]*)*"'), 0, PySyntaxHighlighter.STYLES["string"]),
             # Single-quoted string, possibly containing escape sequences
-            (QtCore.QRegExp(r"'[^'\\]*(\\.[^'\\]*)*'"), 0, PySyntaxHighlighter.STYLES["string"]),
+            (QtCore.QRegularExpression(r"'[^'\\]*(\\.[^'\\]*)*'"), 0, PySyntaxHighlighter.STYLES["string"]),
 
             # From '#' until a newline
-            (QtCore.QRegExp(r'#[^\n]*'), 0, PySyntaxHighlighter.STYLES['comment']),
+            (QtCore.QRegularExpression(r'#[^\n]*'), 0, PySyntaxHighlighter.STYLES['comment']),
         ]
 
         return rules
@@ -250,14 +250,17 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
         # Do other syntax formatting
         for expression, nth, _format in self._rules:
             # fetch the index of the expression in text
-            index = expression.indexIn(text, 0)
+            match = expression.match(text, 0)
+            index = match.capturedStart()
 
             while index >= 0:
                 # We actually want the index of the nth match
-                index = expression.pos(nth)
-                length = len(expression.cap(nth))
+                index = match.capturedStart(nth)
+                length = len(match.captured(nth))
                 self.setFormat(index, length, _format)
-                index = expression.indexIn(text, index + length)
+                # index = expression.indexIn(text, index + length)
+                match = expression.match(text, index + length)
+                index = match.capturedStart()
 
     def textDoc(self):
         """ Returns the document being highlighted.
@@ -287,4 +290,4 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
     textDocumentChanged = Signal()
 
     # Property
-    textDocument = Property(QtQuick.QQuickTextDocument, textDoc, setTextDocument, notify=textDocumentChanged)
+    textDocument = Property(QObject, textDoc, setTextDocument, notify=textDocumentChanged)

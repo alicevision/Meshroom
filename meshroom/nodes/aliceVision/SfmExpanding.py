@@ -8,6 +8,9 @@ class SfMExpanding(desc.AVCommandLineNode):
     commandLine = 'aliceVision_sfmExpanding {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    cpu = desc.Level.INTENSIVE
+    ram = desc.Level.INTENSIVE
+
     category = 'Sparse Reconstruction'
     documentation = '''
 '''

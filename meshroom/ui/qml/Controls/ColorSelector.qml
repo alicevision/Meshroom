@@ -17,20 +17,20 @@ MaterialToolButton {
     property var isVisible: false
 
     property var colors: [
-                            "#FF6600",
+                            "#E35C03",
                             "#FFAD7D",
-                            "#FFF82F",
-                            "#FFFB8B",
-                            "#BDFF07",
-                            "#E8FF97",
-                            "#0BFFCA",
-                            "#8EFFF7",
-                            "#1158FF",
-                            "#77A7FF",
-                            "#9318FF",
-                            "#EAACFF",
+                            "#D0AE22",
+                            "#C9C770",
+                            "#3D6953",
+                            "#79C62F",
+                            "#02627E",
+                            "#2CB9CC",
+                            "#1453E6",
+                            "#507DD0",
+                            "#4D3E5C",
+                            "#A252BD",
                             "#B61518",
-                            "#FF989A",
+                            "#C16162",
                         ]
 
     // When a color gets selected/choosen

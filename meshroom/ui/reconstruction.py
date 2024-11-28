@@ -374,6 +374,14 @@ class ViewpointWrapper(QObject):
             return 2.0 * math.atan(float(sensorWidth) / (2.0 * float(focalLength))) * 180.0 / math.pi
         else:
             return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
+        
+    @Property(type=float, notify=sfmParamsChanged)
+    def pixelAspectRatio(self):
+        """ Get camera pixel aspect ratio. """
+        if not self.solvedIntrinsics:
+            return 1.0
+        
+        return float(self.solvedIntrinsics["pixelRatio"])
 
     @Property(type=QUrl, notify=undistortedImageParamsChanged)
     def undistortedImageSource(self):

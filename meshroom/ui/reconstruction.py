@@ -361,11 +361,18 @@ class ViewpointWrapper(QObject):
         if not self.solvedIntrinsics:
             return None
         focalLength = self.solvedIntrinsics["focalLength"]
+        
+        #We assume that if the width is less than the weight
+        #It's because the image has been rotated and not
+        #because the sensor has some unusual shape
+        sensorWidth = self.solvedIntrinsics["sensorWidth"]
+        sensorHeight = self.solvedIntrinsics["sensorHeight"]
+        if self.imageSize.height() > self.imageSize.width():
+            sensorWidth, sensorHeight = sensorHeight, sensorWidth
+
         if self.orientation in (5, 6, 7, 8):
-            sensorWidth = self.solvedIntrinsics["sensorWidth"]
             return 2.0 * math.atan(float(sensorWidth) / (2.0 * float(focalLength))) * 180.0 / math.pi
         else:
-            sensorHeight = self.solvedIntrinsics["sensorHeight"]
             return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
 
     @Property(type=QUrl, notify=undistortedImageParamsChanged)

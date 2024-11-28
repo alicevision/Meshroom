@@ -1065,7 +1065,7 @@ Item {
 
                 // When a Color is selected
                 onColorSelected: (color)=> {
-                    uigraph.updateNodeColor(color)
+                    uigraph.setSelectedNodesColor(color)
                 }
             }
         }

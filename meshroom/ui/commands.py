@@ -205,54 +205,6 @@ class DuplicateNodesCommand(GraphCommand):
             self.graph.removeNode(duplicate)
 
 
-class UpdateNodeColorCommand(GraphCommand):
-    """ Command representing the work for Coloring nodes in the Graph.
-    """
-
-    def __init__(self, graph, nodes, color, parent=None):
-        """ Command Constructor.
-
-        Args:
-            graph (meshroom.core.Graph): Current Graph instance.
-            nodes (list<Node>): Array of nodes.
-            color (str): Hex code for the color.
-
-        Keyword Args:
-            parent (QObject): Parent QObject instance.
-        """
-        super(UpdateNodeColorCommand, self).__init__(graph, parent)
-        self._nodes = nodes
-        self._color = color
-
-        # Existing colors
-        # Map <Node: str>
-        # Holds the existing color of the node which can be applied on the node back in case of an undo
-        self._colorMap = {}
-
-        self.setText("Update Selected Node Color")
-
-    def redoImpl(self) -> bool:
-        """ Redo implementation.
-        """
-        for node in self._nodes:
-            # Update the existing color for the node in the map
-            self._colorMap[node] = node.color
-
-            # Now update the color of the node with the provided one
-            node.color = self._color
-
-        return True
-
-    def undoImpl(self):
-        """ Undo Implementation.
-        """
-        with GraphModification(self.graph):
-            # Revert the color for the nodes
-            for node in self._nodes:
-                # Get the color which was saved for the node
-                node.color = self._colorMap.get(node)
-
-
 class PasteNodesCommand(GraphCommand):
     """
     Handle node pasting in a Graph.

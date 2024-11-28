@@ -1,7 +1,7 @@
 """ UI Component for the Plugin System.
 """
 # Qt
-from PySide2.QtCore import Slot, QObject, Property, Signal
+from PySide6.QtCore import Slot, QObject, Property, Signal
 
 # Internal
 from meshroom.core import pluginManager

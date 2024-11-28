@@ -2,7 +2,7 @@
 # coding:utf-8
 # Types
 from __future__ import annotations
-from typing import List
+from typing import Callable, List, Optional
 
 import atexit
 import copy

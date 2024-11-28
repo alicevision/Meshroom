@@ -408,7 +408,7 @@ class TestGraphLoadingWithStrictCompatibility:
         graph.save()
 
         # Replace saved node description by V2
-        meshroom.core.nodesDesc[SampleNodeV1.__name__] = SampleNodeV2
+        meshroom.core.pluginManager.register(SampleNodeV1.__name__, SampleNodeV2)
 
         with pytest.raises(GraphCompatibilityError):
             loadGraph(graph.filepath, strictCompatibility=True)

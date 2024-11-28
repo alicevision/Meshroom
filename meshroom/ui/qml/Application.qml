@@ -439,7 +439,7 @@ Page {
         uigraph: _reconstruction
 
         // When a plugin package has been browsed
-        onBrowsed: {
+        onBrowsed: (directory) => {
             // Load Plugins
             _pluginator.load(Filepath.urlToString(directory))
         }

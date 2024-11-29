@@ -136,8 +136,6 @@ Item {
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             fit()
-        } else if (event.key === Qt.Key_C) {
-            colorSelector.toggle()
         } else if (event.key === Qt.Key_Delete) {
             if (event.modifiers === Qt.AltModifier) {
                 uigraph.removeNodesFrom(uigraph.selectedNodes)
@@ -149,8 +147,13 @@ Item {
         } else if (event.key === Qt.Key_X && event.modifiers === Qt.ControlModifier) {
             copyNodes()
             uigraph.removeNodes(uigraph.selectedNodes)
-        } else if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
-            copyNodes()
+        } else if (event.key === Qt.Key_C) {
+            if (event.modifiers === Qt.ControlModifier) {
+                copyNodes()
+            }
+            else {
+                colorSelector.toggle()
+            }
         } else if (event.key === Qt.Key_V && event.modifiers === Qt.ControlModifier) {
             pasteNodes()
         } else if (event.key === Qt.Key_Tab) {

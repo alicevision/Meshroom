@@ -87,7 +87,7 @@ def _condaEnvExist(envName):
     """
     Checks if a specified env exists
     """
-    cmd = condaBin+" list --name "+envName
+    cmd = condaBin+" list --name "+envName+" > /dev/null"
     return os.system(cmd) == 0    
 
 def _formatPluginName(pluginName):

@@ -1417,7 +1417,7 @@ class BaseNode(BaseObject):
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
 
-    isPlugin = Property(bool, lambda self: self.nodeDesc.isPlugin, constant=True)
+    isPlugin = Property(bool, lambda self: self.nodeDesc.isPlugin if self.nodeDesc is not None else False, constant=True)
     
     isEnvBuild = (not isPlugin) #init build status false its not a plugin  
     buildStatusChanged = Signal() #event to notify change in status

@@ -108,9 +108,9 @@ class FilesModTimePollerThread(QObject):
     @staticmethod
     def updatePluginEnvStatus(n):
         """ Will update the status of the plugin env """
-        print("Refreshing "+str(n))
-        n.isEnvBuild=n.nodeDesc.isBuilt
-        n.buildStatusChanged.emit()
+        if n.nodeDesc is not None:
+            n.isEnvBuild=n.nodeDesc.isBuilt
+            n.buildStatusChanged.emit()
 
     def run(self):
         """ Poll watched files for last modification time. """

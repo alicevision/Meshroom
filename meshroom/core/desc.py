@@ -745,8 +745,7 @@ class Node(object):
         """
         Get the env name by hashing the env files, overwrite this to use a custom pre-build env 
         """
-        from core.plugin import EnvType
-        from meshroom.core.plugin import getEnvName  #lazy import as to avoid circular dep
+        from meshroom.core.plugin import getEnvName, EnvType  #lazy import as to avoid circular dep
         if cls.envType.value == EnvType.REZ.value:
             return cls.envFile
         with open(cls.envFile, 'r') as file:

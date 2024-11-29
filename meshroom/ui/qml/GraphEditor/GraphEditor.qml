@@ -147,8 +147,13 @@ Item {
         } else if (event.key === Qt.Key_X && event.modifiers === Qt.ControlModifier) {
             copyNodes()
             uigraph.removeNodes(uigraph.selectedNodes)
-        } else if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
-            copyNodes()
+        } else if (event.key === Qt.Key_C) {
+            if (event.modifiers === Qt.ControlModifier) {
+                copyNodes()
+            }
+            else {
+                colorSelector.toggle()
+            }
         } else if (event.key === Qt.Key_V && event.modifiers === Qt.ControlModifier) {
             pasteNodes()
         } else if (event.key === Qt.Key_Tab) {
@@ -1046,6 +1051,24 @@ Item {
                             }
                         }
                     }
+                }
+            }
+
+            // Separator
+            Rectangle {
+                Layout.fillHeight: true
+                Layout.margins: 2
+                implicitWidth: 1
+                color: activePalette.window
+            }
+
+            ColorSelector {
+                id: colorSelector
+                Layout.minimumWidth: colorSelector.width
+
+                // When a Color is selected
+                onColorSelected: (color)=> {
+                    uigraph.setSelectedNodesColor(color)
                 }
             }
         }

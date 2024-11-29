@@ -952,6 +952,20 @@ class UIGraph(QObject):
         """ Select all the nodes the depend on 'node'. """
         self.selectNodes(self._graph.dfsOnDiscover(startNodes=[node], reverse=True, dependenciesOnly=True)[0])
 
+    @Slot(str)
+    def setSelectedNodesColor(self, color: str):
+        """ Sets the Provided color on the selected Nodes.
+
+        Args:
+            color (str): Hex code of the color to be set on the nodes.
+        """
+        # Update the color attribute of the nodes which are currently selected
+        with self.groupedGraphModification("Set Nodes Color"):
+            # For each of the selected nodes -> Check if the node has a color -> Apply the color if it has
+            for node in self._selectedNodes:
+                if node.hasInternalAttribute("color"):
+                    self.setAttribute(node.internalAttribute("color"), color)
+
     @Slot(QObject, QObject)
     def boxSelect(self, selection, draggable):
         """

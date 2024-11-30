@@ -1076,6 +1076,14 @@ Item {
                 }
             }
 
+            // Separator
+            Rectangle {
+                Layout.fillHeight: true
+                Layout.margins: 2
+                implicitWidth: 1
+                color: activePalette.window
+            }
+
             // Search nodes in the graph
             SearchBar {
                 id: graphSearchBar
@@ -1096,12 +1104,7 @@ Item {
                 text: MaterialIcons.arrow_left
                 padding: 0
                 visible: graphSearchBar.text !== ""
-                onClicked: {
-                    navigation.currentIndex--
-                    if (navigation.currentIndex === -1)
-                        navigation.currentIndex = filteredNodes.count - 1
-                    navigation.nextItem()
-                }
+                onClicked: navigation.navigateBackward()
             }
 
             MaterialToolButton {
@@ -1109,12 +1112,7 @@ Item {
                 text: MaterialIcons.arrow_right
                 padding: 0
                 visible: graphSearchBar.text !== ""
-                onClicked: {
-                    navigation.currentIndex++
-                    if (navigation.currentIndex === filteredNodes.count)
-                        navigation.currentIndex = 0
-                    navigation.nextItem()
-                }
+                onClicked: navigation.navigateForward()
             }
 
             Label {
@@ -1124,22 +1122,40 @@ Item {
                 visible: graphSearchBar.text !== ""
             }
 
-            Item {
-                visible: false
-                Repeater {
-                    id: filteredNodes
-                    model: SortFilterDelegateModel {
-                        model: root.graph ? root.graph.nodes : undefined
-                        sortRole: "label"
-                        filters: [{role: "label", value: graphSearchBar.text}]
-                        delegate: Item {
-                            property var index_: index
-                        }
-                        function modelData(item, roleName_) {
-                            return item.model.object[roleName_]
-                        }
+            Repeater {
+                id: filteredNodes
+                model: SortFilterDelegateModel {
+                    model: root.graph ? root.graph.nodes : undefined
+                    sortRole: "label"
+                    filters: [{role: "label", value: graphSearchBar.text}]
+                    delegate: Item {
+                        visible: false  // Hide the items to not affect the layout as the nodes model gets changes
+                        property var index_: index
+                    }
+                    function modelData(item, roleName_) {
+                        return item.model.object[roleName_]
                     }
                 }
+            }
+
+            function navigateForward() {
+                /**
+                 * Moves the navigation index forwards and focuses on the next node as per index.
+                 */
+                navigation.currentIndex++
+                if (navigation.currentIndex === filteredNodes.count)
+                    navigation.currentIndex = 0
+                navigation.nextItem()
+            }
+
+            function navigateBackward() {
+                /**
+                 * Moves the navigation index backwards and focuses on the previous node as per index.
+                 */
+                navigation.currentIndex--
+                if (navigation.currentIndex === -1)
+                    navigation.currentIndex = filteredNodes.count - 1
+                navigation.nextItem()
             }
 
             function nextItem() {

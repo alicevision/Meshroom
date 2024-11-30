@@ -1142,6 +1142,9 @@ Item {
                 /**
                  * Moves the navigation index forwards and focuses on the next node as per index.
                  */
+                if (!filteredNodes.count)
+                    return
+
                 navigation.currentIndex++
                 if (navigation.currentIndex === filteredNodes.count)
                     navigation.currentIndex = 0
@@ -1152,6 +1155,9 @@ Item {
                 /**
                  * Moves the navigation index backwards and focuses on the previous node as per index.
                  */
+                if (!filteredNodes.count)
+                    return
+
                 navigation.currentIndex--
                 if (navigation.currentIndex === -1)
                     navigation.currentIndex = filteredNodes.count - 1

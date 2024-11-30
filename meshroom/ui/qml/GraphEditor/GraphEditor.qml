@@ -1096,32 +1096,23 @@ Item {
                 textField.onTextChanged: navigation.currentIndex = -1
 
                 onAccepted: {
-                    nextArrow.clicked()
+                    navigation.navigateForward()
                 }
             }
 
             MaterialToolButton {
                 text: MaterialIcons.arrow_left
                 padding: 0
-                enabled: graphSearchBar.text !== ""
-                onClicked: {
-                    navigation.currentIndex--
-                    if (navigation.currentIndex === -1)
-                        navigation.currentIndex = filteredNodes.count - 1
-                    navigation.nextItem()
-                }
+                visible: graphSearchBar.text !== ""
+                onClicked: navigation.navigateBackward()
             }
 
             MaterialToolButton {
+                id: nextArrow
                 text: MaterialIcons.arrow_right
                 padding: 0
-                enabled: graphSearchBar.text !== ""
-                onClicked: {
-                    navigation.currentIndex++
-                    if (navigation.currentIndex === filteredNodes.count)
-                        navigation.currentIndex = 0
-                    navigation.nextItem()
-                }
+                visible: graphSearchBar.text !== ""
+                onClicked: navigation.navigateForward()
             }
 
             Label {
@@ -1145,6 +1136,32 @@ Item {
                         return item.model.object[roleName_]
                     }
                 }
+            }
+
+            function navigateForward() {
+                /**
+                 * Moves the navigation index forwards and focuses on the next node as per index.
+                 */
+                if (!filteredNodes.count)
+                    return
+
+                navigation.currentIndex++
+                if (navigation.currentIndex === filteredNodes.count)
+                    navigation.currentIndex = 0
+                navigation.nextItem()
+            }
+
+            function navigateBackward() {
+                /**
+                 * Moves the navigation index backwards and focuses on the previous node as per index.
+                 */
+                if (!filteredNodes.count)
+                    return
+
+                navigation.currentIndex--
+                if (navigation.currentIndex === -1)
+                    navigation.currentIndex = filteredNodes.count - 1
+                navigation.nextItem()
             }
 
             function nextItem() {

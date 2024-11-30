@@ -25,7 +25,7 @@ FocusScope {
     width: toggle && isVisible ? maxWidth : minWidth
 
     // Keyboard interaction related signals
-    signal returnPressed()
+    signal accepted()
 
     implicitHeight: childrenRect.height
     Keys.forwardTo: [field]
@@ -48,7 +48,7 @@ FocusScope {
             onClicked: {
                 isVisible = !root.isVisible
                 // Set Focus on the Text Field
-                field.focus = true
+                field.focus = field.visible
             }
         }
 
@@ -70,9 +70,9 @@ FocusScope {
 
             // Handle enter Key press and forward it to the parent
             Keys.onPressed: (event)=> {
-                if ((event.key == Qt.Key_Return)) {
+                if ((event.key == Qt.Key_Return || event.key == Qt.Key_Enter)) {
                     event.accepted = true
-                    root.returnPressed()
+                    root.accepted()
                 }
             }
 

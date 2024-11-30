@@ -1095,7 +1095,7 @@ Item {
                 textField.background.opacity: 0.5
                 textField.onTextChanged: navigation.currentIndex = -1
 
-                onReturnPressed: {
+                onAccepted: {
                     nextArrow.clicked()
                 }
             }

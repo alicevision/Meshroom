@@ -59,6 +59,47 @@ Page {
         return ""
     }
 
+    Component {
+        id: invalidFilepathDialog
+
+        MessageDialog {
+            title: "Invalid Filepath"
+
+            required property string filepath
+
+            preset: "Warning"
+            text: "The provided filepath is not valid."
+            detailedText: "Filepath: " + filepath
+            helperText: "Please provide a valid filepath to save the file."
+
+            standardButtons: Dialog.Ok
+            onClosed: destroy()
+        }
+    }
+
+    function validateFilepathForSave(filepath: string, sourceSaveDialog: Dialog): bool {
+        /**
+         * Return true if `filepath` is valid for saving a file to disk.
+         * Otherwise, show a warning dialog and returns false.
+         * Closing the warning dialog reopens the specified `sourceSaveDialog`, to allow the user to try again.
+         */
+        const emptyFilename = Filepath.basename(filepath).trim() === ".mg";
+
+        // Provided filename is valid
+        if (!emptyFilename) {
+            return true
+        }
+
+        // Instantiate the Warning Dialog with the provided filepath
+        const warningDialog = invalidFilepathDialog.createObject(root, {"filepath": Filepath.urlToString(filepath)});
+
+        // And open the dialog
+        warningDialog.closed.connect(sourceSaveDialog.open);
+        warningDialog.open();
+
+        return false
+    }
+
     // File dialogs
     Platform.FileDialog {
         id: saveFileDialog
@@ -71,6 +112,12 @@ Page {
         defaultSuffix: ".mg"
         fileMode: Platform.FileDialog.SaveFile
         onAccepted: {
+            if (!validateFilepathForSave(currentFile, saveFileDialog))
+            {
+                return;
+            }
+
+            // Only save a valid file
             _reconstruction.saveAs(currentFile)
             MeshroomApp.addRecentProjectFile(currentFile.toString())
             closed(Platform.Dialog.Accepted)
@@ -89,6 +136,12 @@ Page {
         defaultSuffix: ".mg"
         fileMode: Platform.FileDialog.SaveFile
         onAccepted: {
+            if (!validateFilepathForSave(currentFile, saveTemplateDialog))
+            {
+                return;
+            }
+
+            // Only save a valid template
             _reconstruction.saveAsTemplate(currentFile)
             closed(Platform.Dialog.Accepted)
             MeshroomApp.reloadTemplateList()

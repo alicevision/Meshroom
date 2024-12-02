@@ -104,7 +104,9 @@ Panel {
 
         SearchBar {
             id: searchBar
-            width: 150
+            toggle: true  // Enable toggling the actual text field by the search button
+            Layout.minimumWidth: searchBar.width
+            maxWidth: 150
             enabled: tabBar.currentIndex === 0 || tabBar.currentIndex === 5
         }
 

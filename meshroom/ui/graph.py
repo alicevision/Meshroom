@@ -7,7 +7,7 @@ import json
 from enum import Enum
 from threading import Thread, Event, Lock
 from multiprocessing.pool import ThreadPool
-from typing import Iterator
+from typing import Iterator, Optional, Union
 
 from PySide6.QtCore import (
     Slot,
@@ -369,9 +369,7 @@ class UIGraph(QObject):
         self._sortedDFSChunks = QObjectListModel(parent=self)
         self._layout = GraphLayout(self)
         self._selectedNode = None
-        self._selectedNodes = QObjectListModel(parent=self)
         self._nodeSelection = QItemSelectionModel(self._graph.nodes, parent=self)
-        self._nodeSelection.selectionChanged.connect(self.onNodeSelectionChanged)
         self._hoveredNode = None
 
         self.submitLabel = "{projectName}"
@@ -516,9 +514,10 @@ class UIGraph(QObject):
         else:
             self._undoStack.unlock()
 
-    @Slot(QObjectListModel)
+    @Slot()
     @Slot(Node)
-    def execute(self, nodes=None):
+    @Slot(list)
+    def execute(self, nodes: Optional[Union[list[Node], Node]] = None):
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
         self._taskManager.compute(self._graph, nodes)
         self.updateLockedUndoStack()  # explicitly call the update while it is already computing
@@ -554,9 +553,10 @@ class UIGraph(QObject):
                 n.clearSubmittedChunks()
                 self._taskManager.removeNode(n, displayList=True, processList=True)
 
-    @Slot(QObjectListModel)
+    @Slot()
     @Slot(Node)
-    def submit(self, nodes=None):
+    @Slot(list)
+    def submit(self, nodes: Optional[Union[list[Node], Node]] = None):
         """ Submit the graph to the default Submitter.
         If a node is specified, submit this node and its uncomputed predecessors.
         Otherwise, submit the whole
@@ -696,16 +696,14 @@ class UIGraph(QObject):
             for node in nodes:
                 self.push(commands.RemoveNodeCommand(self._graph, node))
 
-    @Slot(QObject)
-    def removeNodesFrom(self, nodes):
+    @Slot(list)
+    def removeNodesFrom(self, nodes: list[Node]):
         """
-        Remove all nodes starting from 'startNode' to graph leaves.
+        Remove all nodes starting from 'nodes' to graph leaves.
 
         Args:
-            startNode (Node): the node to start from.
+            nodes: the nodes to start from.
         """
-        if isinstance(nodes, Node):
-            nodes = [nodes]
         with self.groupedGraphModification("Remove Nodes From Selected Nodes"):
             nodesToRemove, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
             # filter out nodes that will be removed more than once
@@ -714,17 +712,17 @@ class UIGraph(QObject):
             # can be re-created in correct order on redo.
             self.removeNodes(list(reversed(uniqueNodesToRemove)))
 
-    @Slot(QObject, result="QVariantList")
-    def duplicateNodes(self, nodes):
+    @Slot(list, result=list)
+    def duplicateNodes(self, nodes: list[Node]) -> list[Node]:
         """
         Duplicate 'nodes'.
 
         Args:
-            nodes (list[Node]): the nodes to duplicate
+            nodes: the nodes to duplicate.
+
         Returns:
-            list[Node]: the list of duplicated nodes
+            The list of duplicated nodes.
         """
-        nodes = self.filterNodes(nodes)
         nPositions = [(n.x, n.y) for n in self._graph.nodes]
         # enable updates between duplication and layout to get correct depths during layout
         with self.groupedGraphModification("Duplicate Selected Nodes", disableUpdates=False):
@@ -747,18 +745,16 @@ class UIGraph(QObject):
 
         return duplicates
 
-    @Slot(QObject, result="QVariantList")
-    def duplicateNodesFrom(self, nodes):
+    @Slot(list, result=list)
+    def duplicateNodesFrom(self, nodes: list[Node]) -> list[Node]:
         """
         Duplicate all nodes starting from 'nodes' to graph leaves.
 
         Args:
-            nodes (list[Node]): the nodes to start from.
+            node: The nodes to start from.
         Returns:
-            list[Node]: the list of duplicated nodes
+            The list of duplicated nodes.
         """
-        if isinstance(nodes, Node):
-            nodes = [nodes]
         with self.groupedGraphModification("Duplicate Nodes From Selected Nodes"):
             nodesToDuplicate, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
             # filter out nodes that will be duplicated more than once
@@ -789,7 +785,7 @@ class UIGraph(QObject):
             dst = currentEdge.dst
 
             for i in range(1, len(listAttribute)):
-                duplicates = self.duplicateNodesFrom(dst.node)
+                duplicates = self.duplicateNodesFrom([dst.node])
                 newNode = duplicates[0]
                 previousEdge = self.graph.edge(newNode.attribute(dst.name))
                 self.replaceEdge(previousEdge, listAttribute.at(i), previousEdge.dst)
@@ -809,7 +805,7 @@ class UIGraph(QObject):
                     continue
                 occurence = allSrc.index(listAttribute.at(i)) if listAttribute.at(i) in allSrc else -1
                 if occurence != -1:
-                    self.removeNodesFrom(self.graph.edges.at(occurence).dst.node)
+                    self.removeNodesFrom([self.graph.edges.at(occurence).dst.node])
                     # update the edges from allSrc
                     allSrc = [e.src for e in self._graph.edges.values()]
 
@@ -954,11 +950,6 @@ class UIGraph(QObject):
         with self.groupedGraphModification("Remove Images From All CameraInit Nodes"):
             self.push(commands.RemoveImagesCommand(self._graph, list(self.cameraInits)))
 
-    def onNodeSelectionChanged(self, selected, deselected):
-        # Update internal cache of selected Node instances.
-        self._selectedNodes.setObjectList(list(self.iterSelectedNodes()))
-        self.selectedNodesChanged.emit()
-
     @Slot(list)
     @Slot(list, int)
     def selectNodes(self, nodes, command=QItemSelectionModel.SelectionFlag.ClearAndSelect):
@@ -1014,6 +1005,11 @@ class UIGraph(QObject):
         for idx in self._nodeSelection.selectedRows():
             yield self._graph.nodes.at(idx.row())
 
+    @Slot(result=list)
+    def getSelectedNodes(self) -> list[Node]:
+        """Return the list of selected Node instances."""
+        return list(self.iterSelectedNodes())
+
     @Slot(Node, result=bool)
     def isSelected(self, node: Node) -> bool:
         """Whether `node` is part of the current selection."""
@@ -1046,19 +1042,17 @@ class UIGraph(QObject):
     @Slot(result=str)
     def getSelectedNodesContent(self) -> str:
         """
-        Return the content of the currently selected nodes in a string, formatted to JSON.
-        If no node is currently selected, an empty string is returned.
-        """
-        if self._selectedNodes:
-            d = self._graph.toDict()
-            selection = {}
-            for node in self._selectedNodes:
-                selection[node.name] = d[node.name]
-            return json.dumps(selection, indent=4)
-        return ''
+        Serialize the current node selection and return it as JSON formatted string.
 
-    @Slot(str, QPoint, bool, result="QVariantList")
-    def pasteNodes(self, clipboardContent, position=None, centerPosition=False):
+        Returns an empty string if the selection is empty.
+        """
+        if not self._nodeSelection.hasSelection():
+            return ""
+        serializedSelection = {node.name: node.toDict() for node in self.iterSelectedNodes()}
+        return json.dumps(serializedSelection, indent=4)
+
+    @Slot(str, QPoint, bool, result=list)
+    def pasteNodes(self, clipboardContent, position=None, centerPosition=False) -> list[Node]:
         """
         Parse the content of the clipboard to see whether it contains
         valid node descriptions. If that is the case, the nodes described
@@ -1194,10 +1188,6 @@ class UIGraph(QObject):
     selectedNodeChanged = Signal()
     # Current main selected node
     selectedNode = makeProperty(QObject, "_selectedNode", selectedNodeChanged, resetOnDestroy=True)
-
-    selectedNodesChanged = Signal()
-    # Currently selected nodes
-    selectedNodes = makeProperty(QObject, "_selectedNodes", selectedNodesChanged, resetOnDestroy=True)
 
     nodeSelection = makeProperty(QObject, "_nodeSelection")
 

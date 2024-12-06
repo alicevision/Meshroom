@@ -63,11 +63,10 @@ Item {
     function duplicateNode(duplicateFollowingNodes) {
         var nodes
         if (duplicateFollowingNodes) {
-            nodes = uigraph.duplicateNodesFrom(uigraph.selectedNodes)
+            nodes = uigraph.duplicateNodesFrom(uigraph.getSelectedNodes())
         } else {
-            nodes = uigraph.duplicateNodes(uigraph.selectedNodes)
+            nodes = uigraph.duplicateNodes(uigraph.getSelectedNodes())
         }
-        uigraph.clearNodeSelection()
         uigraph.selectedNode = nodes[0]
         uigraph.selectNodes(nodes)
     }
@@ -100,7 +99,6 @@ Item {
         var copiedContent = Clipboard.getText()
         var nodes = uigraph.pasteNodes(copiedContent, finalPosition, centerPosition)
         if (nodes.length > 0) {
-            uigraph.clearNodeSelection()
             uigraph.selectedNode = nodes[0]
             uigraph.selectNodes(nodes)
         }
@@ -116,7 +114,7 @@ Item {
             fit()
         } else if (event.key === Qt.Key_Delete) {
             if (event.modifiers === Qt.AltModifier) {
-                uigraph.removeNodesFrom(uigraph.selectedNodes)
+                uigraph.removeNodesFrom(uigraph.getSelectedNodes())
             } else {
                 uigraph.removeSelectedNodes()
             }
@@ -637,11 +635,11 @@ Item {
                             nodeMenuLoader.showDataDeletionDialog(
                                 false, 
                                 function(request, uigraph) {
-                                    request(uigraph.selectedNodes);
+                                    request(uigraph.getSelectedNodes());
                                 }.bind(null, computeRequest, uigraph)
                             );
                         } else {
-                            computeRequest(uigraph.selectedNodes);
+                            computeRequest(uigraph.getSelectedNodes());
                         }
                     }
                 }
@@ -658,11 +656,11 @@ Item {
                             nodeMenuLoader.showDataDeletionDialog(
                                 false, 
                                 function(request, uigraph) {
-                                    request(uigraph.selectedNodes);
+                                    request(uigraph.getSelectedNodes());
                                 }.bind(null, submitRequest, uigraph)
                             );
                         } else {
-                            submitRequest(uigraph.selectedNodes);
+                            submitRequest(uigraph.getSelectedNodes());
                         }
                     }
                 }
@@ -747,7 +745,7 @@ Item {
                         }
                         text: MaterialIcons.fast_forward
                         onClicked: {
-                            uigraph.removeNodesFrom(uigraph.selectedNodes)
+                            uigraph.removeNodesFrom(uigraph.getSelectedNodes())
                             nodeMenu.close()
                         }
                     }
@@ -807,13 +805,13 @@ Item {
                     modal: false
                     header.visible: false
 
-                    text: "Delete Data of '" + node.label + "'" + (uigraph.selectedNodes.count > 1 ? " and other selected Nodes" : "") + (deleteFollowing ?  " and following Nodes?" : "?")
+                    text: "Delete Data of '" + node.label + "'" + (uigraph.nodeSelection.selectedIndexes.length > 1 ? " and other selected Nodes" : "") + (deleteFollowing ?  " and following Nodes?" : "?")
                     helperText: "Warning: This operation cannot be undone."
                     standardButtons: Dialog.Yes | Dialog.Cancel
 
                     onAccepted: {
                         if (deleteFollowing)
-                            uigraph.clearDataFrom(uigraph.selectedNodes);
+                            uigraph.clearDataFrom(uigraph.getSelectedNodes());
                         else
                             uigraph.clearSelectedNodesData();
                         dataDeleted();

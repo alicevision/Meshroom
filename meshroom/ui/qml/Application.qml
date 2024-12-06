@@ -541,7 +541,7 @@ Page {
         enabled: _reconstruction ? _reconstruction.selectedNodes.count > 0 : false
         onTriggered: {
             graphEditor.copyNodes()
-            graphEditor.uigraph.removeNodes(graphEditor.uigraph.selectedNodes)
+            graphEditor.uigraph.removeSelectedNodes()
         }
     }
 

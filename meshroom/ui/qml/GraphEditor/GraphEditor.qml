@@ -140,13 +140,13 @@ Item {
             if (event.modifiers === Qt.AltModifier) {
                 uigraph.removeNodesFrom(uigraph.selectedNodes)
             } else {
-                uigraph.removeNodes(uigraph.selectedNodes)
+                uigraph.removeSelectedNodes()
             }
         } else if (event.key === Qt.Key_D) {
             duplicateNode(event.modifiers === Qt.AltModifier)
         } else if (event.key === Qt.Key_X && event.modifiers === Qt.ControlModifier) {
             copyNodes()
-            uigraph.removeNodes(uigraph.selectedNodes)
+            uigraph.removeSelectedNodes()
         } else if (event.key === Qt.Key_C) {
             if (event.modifiers === Qt.ControlModifier) {
                 copyNodes()
@@ -685,7 +685,7 @@ Item {
                     ToolTip.visible: hovered
                     onTriggered: {
                         copyNodes()
-                        uigraph.removeNodes(uigraph.selectedNodes)
+                        uigraph.removeSelectedNodes()
                     }
                 }
                 MenuItem {
@@ -726,7 +726,7 @@ Item {
                 MenuItem {
                     text: "Remove Node(s)" + (removeFollowingButton.hovered ? " From Here" : "")
                     enabled: nodeMenu.currentNode ? !nodeMenu.currentNode.locked : false
-                    onTriggered: uigraph.removeNodes(uigraph.selectedNodes)
+                    onTriggered: uigraph.removeSelectedNodes()
                     MaterialToolButton {
                         id: removeFollowingButton
                         height: parent.height

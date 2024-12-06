@@ -676,18 +676,23 @@ class UIGraph(QObject):
                 position = Position(node.x + offset.x(), node.y + offset.y())
                 self.moveNode(node, position)
 
-    @Slot(QObject)
-    def removeNodes(self, nodes):
+    @Slot()
+    def removeSelectedNodes(self):
+        """Remove selected nodes from the graph."""
+        self.removeNodes(list(self.iterSelectedNodes()))
+
+    @Slot(list)
+    def removeNodes(self, nodes: list[Node]):
         """
         Remove 'nodes' from the graph.
 
         Args:
-            nodes (list[Node]): the nodes to remove
+            nodes: The nodes to remove.
         """
-        nodes = self.filterNodes(nodes)
-        if any([ n.locked for n in nodes ]):
+        if any(n.locked for n in nodes):
             return
-        with self.groupedGraphModification("Remove Selected Nodes"):
+
+        with self.groupedGraphModification("Remove Nodes"):
             for node in nodes:
                 self.push(commands.RemoveNodeCommand(self._graph, node))
 

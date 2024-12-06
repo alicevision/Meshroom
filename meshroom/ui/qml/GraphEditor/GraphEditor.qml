@@ -59,15 +59,6 @@ Item {
         return undefined
     }
 
-    /// Select node delegate
-    function selectNode(node) {
-        uigraph.selectedNode = node
-        if (node !== null) {
-            uigraph.appendSelection(node)
-            uigraph.selectedNodesChanged()
-        }
-    }
-
     /// Duplicate a node and optionally all the following ones
     function duplicateNode(duplicateFollowingNodes) {
         var nodes
@@ -219,14 +210,13 @@ Item {
             height: searchBar.height + nodeMenuRepeater.height + instantiator.height
 
             function createNode(nodeType) {
-                uigraph.clearNodeSelection() // Ensures that only the created node / imported pipeline will be selected
-
                 // "nodeType" might be a pipeline (artificially added in the "Pipelines" category) instead of a node
                 // If it is not a pipeline to import, then it must be a node
                 if (!importPipeline(nodeType)) {
                     // Add node via the proper command in uigraph
-                    var node = uigraph.addNewNode(nodeType, spawnPosition)
-                    selectNode(node)
+                    var node = uigraph.addNewNode(nodeType, spawnPosition);
+                    uigraph.selectedNode = node;
+                    uigraph.selectNodes([node])
                 }
                 close()
             }

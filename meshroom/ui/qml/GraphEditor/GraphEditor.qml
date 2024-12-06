@@ -571,20 +571,50 @@ Item {
                 id: nodeMenu
                 
                 property var currentNode: nodeMenuLoader.currentNode
-                property bool canComputeNode: uigraph.graph.canComputeTopologically(currentNode)
-                // canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
-                property int canSubmitOrCompute: uigraph.graph.canSubmitOrCompute(currentNode)
-                property bool isComputed: {
-                    var count = 0
-                    for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                        var node = uigraph.selectedNodes.at(i)
-                        if (!node)
-                            continue
-                        if (!node.isComputed)
-                            return false
-                        count += 1
-                    }
-                    return count > 0
+
+                readonly property bool isSelectionFullyComputed: {
+                    return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                        return uigraph.graph.nodes.at(idx.row).isComputed;
+                    });
+                }
+                readonly property bool isSelectionOnlyComputableNodes: {
+                    return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                        const node = uigraph.graph.nodes.at(idx.row);
+                        return (
+                            node.isComputable
+                            && uigraph.graph.canComputeTopologically(node)
+                        );
+                    });
+                }
+                readonly property bool canSelectionBeComputed: {
+                    if(!isSelectionOnlyComputableNodes)
+                        return false;
+                    if(isSelectionFullyComputed)
+                        return true;
+                    return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                        const node = uigraph.graph.nodes.at(idx.row);
+                        return (
+                            node.isComputed
+                            // canCompute if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
+                            || uigraph.graph.canSubmitOrCompute(node) % 2 == 1
+                        );
+                    });
+                }
+                readonly property bool isSelectionSubmittable: uigraph.canSubmit && isSelectionOnlyComputableNodes
+
+                readonly property bool canSelectionBeSubmitted: {
+                    if(!isSelectionOnlyComputableNodes)
+                        return false;
+                    if(isSelectionFullyComputed)
+                        return true;
+                    return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                        const node = uigraph.graph.nodes.at(idx.row);
+                        return (
+                            node.isComputed
+                            // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
+                            || uigraph.graph.canSubmitOrCompute(node) > 1
+                        )
+                    });
                 }
 
                 width: 220
@@ -594,40 +624,13 @@ Item {
 
                 MenuItem {
                     id: computeMenuItem
-                    text: nodeMenu.isComputed ? "Recompute" : "Compute"
-                    visible: {
-                        var count = 0
-                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            var node = uigraph.selectedNodes.at(i)
-                            if (!node)
-                                continue
-                            if (!node.isComputable)
-                                return false
-                            count += 1
-                        }
-                        return count > 0
-                    }
+                    text: nodeMenu.isSelectionFullyComputed ? "Recompute" : "Compute"
+                    visible: nodeMenu.isSelectionOnlyComputableNodes
                     height: visible ? implicitHeight : 0
-
-                    enabled: {
-                        var canCompute = false
-                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            var node = uigraph.selectedNodes.at(i)
-                            if (!node)
-                                continue
-                            if (uigraph.graph.canComputeTopologically(node)) {
-                                if (nodeMenu.isComputed) {
-                                    canCompute = true
-                                } else if (uigraph.graph.canSubmitOrCompute(node) % 2 == 1) {
-                                    canCompute = true
-                                }
-                            }
-                        }
-                        return canCompute  // canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
-                    }
+                    enabled: nodeMenu.canSelectionBeComputed
 
                     onTriggered: {
-                        if (nodeMenu.isComputed) {
+                        if (nodeMenu.isSelectionFullyComputed) {
                             nodeMenuLoader.showDataDeletionDialog(
                                 false, 
                                 function(request, uigraph) {
@@ -641,38 +644,14 @@ Item {
                 }
                 MenuItem {
                     id: submitMenuItem
-                    property bool resubmit: false
-                    text: nodeMenu.isComputed ? "Re-Submit" : "Submit"
-                    visible: {
-                        var count = 0
-                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            var node = uigraph.selectedNodes.at(i)
-                            if (node && !node.isComputable)
-                                return false
-                            count += 1
-                        }
-                        return count > 0 || uigraph.canSubmit
-                    }
-                    height: visible ? implicitHeight : 0
 
-                    enabled: {
-                        var canSubmit = false
-                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            var node = uigraph.selectedNodes.at(i)
-                            if (!node)
-                                continue
-                            if (uigraph.graph.canComputeTopologically(node)) {
-                                if (nodeMenu.isComputed) {
-                                    canSubmit = true
-                                } else if (uigraph.graph.canSubmitOrCompute(node) > 1) {
-                                    canSubmit = true
-                                }
-                            }
-                        }
-                        return canSubmit
-                    }
+                    text: nodeMenu.isSelectionFullyComputed ? "Re-Submit" : "Submit"
+                    visible: nodeMenu.isSelectionSubmittable
+                    height: visible ? implicitHeight : 0
+                    enabled: nodeMenu.canSelectionBeSubmitted
+
                     onTriggered: {
-                        if (nodeMenu.isComputed) {
+                        if (nodeMenu.isSelectionFullyComputed) {
                             nodeMenuLoader.showDataDeletionDialog(
                                 false, 
                                 function(request, uigraph) {

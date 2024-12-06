@@ -283,6 +283,15 @@ class QObjectListModel(QtCore.QAbstractListModel):
 
         self._objectByKey[key] = item
 
+    @QtCore.Slot(int, result=QtCore.QModelIndex)
+    def index(self, row: int, column: int = 0, parent=QtCore.QModelIndex()):
+        """ Returns the model index for the given row, column and parent index. """
+        if parent.isValid() or column != 0:
+            return QtCore.QModelIndex()
+        if row < 0 or row >= self.size():
+            return QtCore.QModelIndex()
+        return self.createIndex(row, column, self._objects[row])
+
     def _dereferenceItem(self, item):
         # Ask for object deletion if parented to the model
         if shiboken6.isValid(item) and item.parent() == self:

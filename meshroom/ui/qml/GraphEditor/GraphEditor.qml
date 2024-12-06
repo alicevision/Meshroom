@@ -195,24 +195,21 @@ Item {
             if (mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier) {
                 uigraph.clearNodeSelection()
             }
-            if (mouse.button == Qt.LeftButton && (mouse.modifiers == Qt.NoModifier || mouse.modifiers == Qt.ControlModifier)) {
-                boxSelect.startX = mouseX
-                boxSelect.startY = mouseY
-                boxSelectDraggable.x = mouseX
-                boxSelectDraggable.y = mouseY
-                drag.target = boxSelectDraggable
+            if (mouse.button == Qt.LeftButton && (mouse.modifiers == Qt.NoModifier || mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))) {
+                nodeSelectionBox.startSelection(mouse);
             }
-            if (mouse.button == Qt.MiddleButton || (mouse.button == Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier)) {
+            if (mouse.button == Qt.MiddleButton || (mouse.button == Qt.LeftButton && mouse.modifiers & Qt.AltModifier)) {
                 drag.target = draggable // start drag
             }
         }
 
         onReleased: {
-            drag.target = undefined // stop drag
+            nodeSelectionBox.endSelection();
+            drag.target = null;
             root.forceActiveFocus()
             workspaceClicked()
         }
-
+        
         onPositionChanged: {
             if (drag.active)
                 workspaceMoved()
@@ -820,14 +817,19 @@ Item {
             }
 
             // Nodes
-            Repeater {
+             Repeater {
                 id: nodeRepeater
 
                 model: root.graph ? root.graph.nodes : undefined
 
                 property bool loaded: model ? count === model.count : false
-                property bool dragging: false
+                property bool ongoingDrag: false
+                property bool updateSelectionOnClick: false
                 property var temporaryEdgeAboutToBeRemoved: undefined
+
+                function isNodeSelected(index: int) {
+                    return uigraph.nodeSelection.isRowSelected(index);
+                }
 
                 delegate: Node {
                     id: nodeDelegate
@@ -836,43 +838,76 @@ Item {
                     width: uigraph.layout.nodeWidth
 
                     mainSelected: uigraph.selectedNode === node
-                    selected: uigraph.selectedNodes.contains(node)
                     hovered: uigraph.hoveredNode === node
+
+                    selected: nodeRepeater.isNodeSelected(index);
 
                     onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
                     onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
 
+                    Connections {
+                        target: uigraph.nodeSelection
+
+                        function onSelectionChanged() {
+                            selected = nodeRepeater.isNodeSelected(index);
+                        }
+                    }
+
                     onPressed: function(mouse) {
+                        nodeRepeater.updateSelectionOnClick = true;
+                        nodeRepeater.ongoingDrag = true;
+
+                        let selectionMode = ItemSelectionModel.NoUpdate;
+
+                        if(!selected) {
+                            selectionMode = ItemSelectionModel.ClearAndSelect;
+                        }
+
                         if (mouse.button === Qt.LeftButton) {
-                            if (mouse.modifiers & Qt.ControlModifier && !(mouse.modifiers & Qt.AltModifier)) {
-                                if (mainSelected && selected) {
-                                    // Left clicking a selected node twice with control will deselect it
-                                    uigraph.selectedNodes.remove(node)
-                                    uigraph.selectedNodesChanged()
-                                    selectNode(null)
-                                    return
-                                }
-                            } else if (mouse.modifiers & Qt.AltModifier) {
-                                if (!(mouse.modifiers & Qt.ControlModifier)) {
-                                    uigraph.clearNodeSelection()
-                                }
-                                uigraph.selectFollowing(node)
-                            } else if (!mainSelected && !selected) {
-                                uigraph.clearNodeSelection()
+                            if(mouse.modifiers & Qt.ShiftModifier) {
+                                selectionMode = ItemSelectionModel.Select;
                             }
-                        } else if (mouse.button === Qt.RightButton) {
-                            if (!mainSelected && !selected) {
-                                uigraph.clearNodeSelection()
+                            if(mouse.modifiers & Qt.ControlModifier) {
+                                selectionMode = ItemSelectionModel.Deselect;
+                            }
+                            if(mouse.modifiers & Qt.AltModifier) {
+                                uigraph.selectFollowing(node);
+                                selectionMode = ItemSelectionModel.Select;
+                            }
+                        }
+                        else if (mouse.button === Qt.RightButton) {
+                            if(selected) {
+                                // Keep the full selection when right-clicking on a node.
+                                nodeRepeater.updateSelectionOnClick = false;
                             }
                             nodeMenu.currentNode = node
                             nodeMenu.popup()
                         }
-                        selectNode(node)
+
+                        if(selectionMode != ItemSelectionModel.NoUpdate) {
+                            nodeRepeater.updateSelectionOnClick = false;
+                            uigraph.selectNodeByIndex(index, selectionMode);
+                        }
+
+                        // If the node is selected after this, make it the active selected node.
+                        if(selected) {
+                            uigraph.selectedNode = node;
+                        }
+                    }
+
+                    onReleased: function(mouse, wasDragged) {
+                        nodeRepeater.ongoingDrag = false;
+                    }
+
+                    // Only called when the node has not been dragged.
+                    onClicked: function(mouse) {
+                        if(!nodeRepeater.updateSelectionOnClick) {
+                            return;
+                        }
+                        uigraph.selectNodeByIndex(index);
                     }
 
                     onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }
-
-                    onMoved: function(position) { uigraph.moveNode(node, position, uigraph.selectedNodes) }
 
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null
@@ -899,60 +934,55 @@ Item {
                         }
                     }
 
+                    // Interactive dragging: move the visual delegates
                     onPositionChanged: {
-                        if (dragging && uigraph.selectedNodes.contains(node)) {
-                            // Update all selected nodes positions with this node that is being dragged
-                            for (var i = 0; i < nodeRepeater.count; i++) {
-                                var otherNode = nodeRepeater.itemAt(i)
-                                if (uigraph.selectedNodes.contains(otherNode.node) && otherNode.node !== node) {
-                                    otherNode.x = otherNode.node.x + (x - node.x)
-                                    otherNode.y = otherNode.node.y + (y - node.y)
-                                }
-                            }
+                        if(!selected || !dragging) {
+                            return;
                         }
+                        // Compute offset between the delegate and the stored node position.
+                        const offset = Qt.point(x - node.x, y - node.y);
+
+                        uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+                            if(idx != index) {
+                                const delegate = nodeRepeater.itemAt(idx.row);
+                                delegate.x = delegate.node.x + offset.x;
+                                delegate.y = delegate.node.y + offset.y;
+                            }
+                        });
                     }
 
-                    // Allow all nodes to know if they are being dragged
-                    onDraggingChanged: nodeRepeater.dragging = dragging
+                    // After drag: apply the final offset to all selected nodes
+                    onMoved: function(position) {
+                        const offset = Qt.point(position.x - node.x, position.y - node.y);
+                        uigraph.moveSelectedNodesBy(offset);
+                    }
 
-                    // Must not be enabled during drag because the other nodes will be slow to match the movement of the node being dragged
                     Behavior on x {
-                        enabled: !nodeRepeater.dragging
+                        enabled: !nodeRepeater.ongoingDrag
                         NumberAnimation { duration: 100 }
                     }
                     Behavior on y {
-                        enabled: !nodeRepeater.dragging
+                        enabled: !nodeRepeater.ongoingDrag
                         NumberAnimation { duration: 100 }
                     }
                 }
             }
         }
 
-        Rectangle {
-            id: boxSelect
-            property int startX: 0
-            property int startY: 0
-            property int toX: boxSelectDraggable.x - startX
-            property int toY: boxSelectDraggable.y - startY
-
-            x: toX < 0 ? startX + toX : startX
-            y: toY < 0 ? startY + toY : startY
-            width: Math.abs(toX)
-            height: Math.abs(toY)
-
-            color: "transparent"
-            border.color: activePalette.text
-            visible: mouseArea.drag.target == boxSelectDraggable
-
-            onVisibleChanged: {
-                if (!visible) {
-                    uigraph.boxSelect(boxSelect, draggable)
+        DelegateSelectionBox {
+            id: nodeSelectionBox
+            mouseArea: mouseArea
+            modelInstantiator: nodeRepeater
+            container: draggable
+            onDelegateSelectionEnded: function(selectedIndices, modifiers) {
+                let selectionMode = ItemSelectionModel.ClearAndSelect;
+                if(modifiers & Qt.ShiftModifier) {
+                    selectionMode = ItemSelectionModel.Select;
+                } else if(modifiers & Qt.ControlModifier) {
+                    selectionMode = ItemSelectionModel.Deselect;
                 }
+                uigraph.selectNodesByIndices(selectedIndices, selectionMode);
             }
-        }
-
-        Item {
-            id: boxSelectDraggable
         }
 
         DropArea {

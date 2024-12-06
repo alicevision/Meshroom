@@ -555,241 +555,241 @@ Item {
 
             Component {
                 id: nodeMenuComponent
-            Menu {
-                id: nodeMenu
-                
-                property var currentNode: nodeMenuLoader.currentNode
+                Menu {
+                    id: nodeMenu
+                    
+                    property var currentNode: nodeMenuLoader.currentNode
 
-                // Cache computatibility/submitability status of each selected node.
-                readonly property var nodeSubmitOrComputeStatus: {
-                    var collectedStatus = ({});
-                    uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
-                        const node = uigraph.graph.nodes.at(idx.row);
-                        collectedStatus[node] = uigraph.graph.canSubmitOrCompute(node);
-                    });
-                    return collectedStatus;
-                }
+                    // Cache computatibility/submitability status of each selected node.
+                    readonly property var nodeSubmitOrComputeStatus: {
+                        var collectedStatus = ({});
+                        uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            collectedStatus[node] = uigraph.graph.canSubmitOrCompute(node);
+                        });
+                        return collectedStatus;
+                    }
 
-                readonly property bool isSelectionFullyComputed: {
-                    return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                        return uigraph.graph.nodes.at(idx.row).isComputed;
-                    });
-                }
+                    readonly property bool isSelectionFullyComputed: {
+                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                            return uigraph.graph.nodes.at(idx.row).isComputed;
+                        });
+                    }
 
-                readonly property bool isSelectionOnlyComputableNodes: {
-                    return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                        const node = uigraph.graph.nodes.at(idx.row);
-                        return (
-                            node.isComputable
-                            && uigraph.graph.canComputeTopologically(node)
-                        );
-                    });
-                }
-
-                readonly property bool canSelectionBeComputed: {
-                    if(!isSelectionOnlyComputableNodes)
-                        return false;
-                    if(isSelectionFullyComputed)
-                        return true;
-                    return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                        const node = uigraph.graph.nodes.at(idx.row);
-                        return (
-                            node.isComputed
-                            // canCompute if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
-                            || nodeSubmitOrComputeStatus[node] % 2 == 1
-                        );
-                    });
-                }
-
-                readonly property bool isSelectionSubmittable: uigraph.canSubmit && isSelectionOnlyComputableNodes
-
-                readonly property bool canSelectionBeSubmitted: {
-                    if(!isSelectionOnlyComputableNodes)
-                        return false;
-                    if(isSelectionFullyComputed)
-                        return true;
-                    return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                        const node = uigraph.graph.nodes.at(idx.row);
-                        return (
-                            node.isComputed
-                            // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
-                            || nodeSubmitOrComputeStatus[node] > 1
-                        )
-                    });
-                }
-
-                width: 220
-
-                Component.onCompleted: popup()
-                onClosed: nodeMenuLoader.unload()
-
-                MenuItem {
-                    id: computeMenuItem
-                    text: nodeMenu.isSelectionFullyComputed ? "Recompute" : "Compute"
-                    visible: nodeMenu.isSelectionOnlyComputableNodes
-                    height: visible ? implicitHeight : 0
-                    enabled: nodeMenu.canSelectionBeComputed
-
-                    onTriggered: {
-                        if (nodeMenu.isSelectionFullyComputed) {
-                            nodeMenuLoader.showDataDeletionDialog(
-                                false, 
-                                function(request, uigraph) {
-                                    request(uigraph.getSelectedNodes());
-                                }.bind(null, computeRequest, uigraph)
+                    readonly property bool isSelectionOnlyComputableNodes: {
+                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return (
+                                node.isComputable
+                                && uigraph.graph.canComputeTopologically(node)
                             );
-                        } else {
-                            computeRequest(uigraph.getSelectedNodes());
-                        }
+                        });
                     }
-                }
-                MenuItem {
-                    id: submitMenuItem
 
-                    text: nodeMenu.isSelectionFullyComputed ? "Re-Submit" : "Submit"
-                    visible: nodeMenu.isSelectionSubmittable
-                    height: visible ? implicitHeight : 0
-                    enabled: nodeMenu.canSelectionBeSubmitted
-
-                    onTriggered: {
-                        if (nodeMenu.isSelectionFullyComputed) {
-                            nodeMenuLoader.showDataDeletionDialog(
-                                false, 
-                                function(request, uigraph) {
-                                    request(uigraph.getSelectedNodes());
-                                }.bind(null, submitRequest, uigraph)
+                    readonly property bool canSelectionBeComputed: {
+                        if(!isSelectionOnlyComputableNodes)
+                            return false;
+                        if(isSelectionFullyComputed)
+                            return true;
+                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return (
+                                node.isComputed
+                                // canCompute if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
+                                || nodeSubmitOrComputeStatus[node] % 2 == 1
                             );
-                        } else {
-                            submitRequest(uigraph.getSelectedNodes());
+                        });
+                    }
+
+                    readonly property bool isSelectionSubmittable: uigraph.canSubmit && isSelectionOnlyComputableNodes
+
+                    readonly property bool canSelectionBeSubmitted: {
+                        if(!isSelectionOnlyComputableNodes)
+                            return false;
+                        if(isSelectionFullyComputed)
+                            return true;
+                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return (
+                                node.isComputed
+                                // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
+                                || nodeSubmitOrComputeStatus[node] > 1
+                            )
+                        });
+                    }
+
+                    width: 220
+
+                    Component.onCompleted: popup()
+                    onClosed: nodeMenuLoader.unload()
+
+                    MenuItem {
+                        id: computeMenuItem
+                        text: nodeMenu.isSelectionFullyComputed ? "Recompute" : "Compute"
+                        visible: nodeMenu.isSelectionOnlyComputableNodes
+                        height: visible ? implicitHeight : 0
+                        enabled: nodeMenu.canSelectionBeComputed
+
+                        onTriggered: {
+                            if (nodeMenu.isSelectionFullyComputed) {
+                                nodeMenuLoader.showDataDeletionDialog(
+                                    false, 
+                                    function(request, uigraph) {
+                                        request(uigraph.getSelectedNodes());
+                                    }.bind(null, computeRequest, uigraph)
+                                );
+                            } else {
+                                computeRequest(uigraph.getSelectedNodes());
+                            }
                         }
                     }
-                }
-                MenuItem {
-                    text: "Stop Computation"
-                    enabled: nodeMenu.currentNode.canBeStopped()
-                    visible: enabled
-                    height: visible ? implicitHeight : 0
-                    onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
-                }
-                MenuItem {
-                    text: "Cancel Computation"
-                    enabled: nodeMenu.currentNode.canBeCanceled()
-                    visible: enabled
-                    height: visible ? implicitHeight : 0
-                    onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)
-                }
-                MenuItem {
-                    text: "Open Folder"
-                    visible: nodeMenu.currentNode.isComputable 
-                    height: visible ? implicitHeight : 0
-                    onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
-                }
-                MenuSeparator {
-                    visible: nodeMenu.currentNode.isComputable
-                }
-                MenuItem {
-                    text: "Cut Node(s)"
-                    enabled: true
-                    ToolTip.text: "Copy selection to the clipboard and remove it"
-                    ToolTip.visible: hovered
-                    onTriggered: {
-                        copyNodes()
-                        uigraph.removeSelectedNodes()
-                    }
-                }
-                MenuItem {
-                    text: "Copy Node(s)"
-                    enabled: true
-                    ToolTip.text: "Copy selection to the clipboard"
-                    ToolTip.visible: hovered
-                    onTriggered: copyNodes()
-                }
-                MenuItem {
-                    text: "Paste Node(s)"
-                    enabled: true
-                    ToolTip.text: "Copy selection to the clipboard and immediately paste it"
-                    ToolTip.visible: hovered
-                    onTriggered: {
-                        copyNodes()
-                        pasteNodes()
-                    }
-                }
-                MenuItem {
-                    text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
-                    enabled: true
-                    onTriggered: duplicateNode(false)
-                    MaterialToolButton {
-                        id: duplicateFollowingButton
-                        height: parent.height
-                        anchors {
-                            right: parent.right
-                            rightMargin: parent.padding
-                        }
-                        text: MaterialIcons.fast_forward
-                        onClicked: {
-                            duplicateNode(true)
-                            nodeMenu.close()
+                    MenuItem {
+                        id: submitMenuItem
+
+                        text: nodeMenu.isSelectionFullyComputed ? "Re-Submit" : "Submit"
+                        visible: nodeMenu.isSelectionSubmittable
+                        height: visible ? implicitHeight : 0
+                        enabled: nodeMenu.canSelectionBeSubmitted
+
+                        onTriggered: {
+                            if (nodeMenu.isSelectionFullyComputed) {
+                                nodeMenuLoader.showDataDeletionDialog(
+                                    false, 
+                                    function(request, uigraph) {
+                                        request(uigraph.getSelectedNodes());
+                                    }.bind(null, submitRequest, uigraph)
+                                );
+                            } else {
+                                submitRequest(uigraph.getSelectedNodes());
+                            }
                         }
                     }
-                }
-                MenuItem {
-                    text: "Remove Node(s)" + (removeFollowingButton.hovered ? " From Here" : "")
-                    enabled: !nodeMenu.currentNode.locked
-                    onTriggered: uigraph.removeSelectedNodes()
-                    MaterialToolButton {
-                        id: removeFollowingButton
-                        height: parent.height
-                        anchors {
-                            right: parent.right
-                            rightMargin: parent.padding
-                        }
-                        text: MaterialIcons.fast_forward
-                        onClicked: {
-                            uigraph.removeNodesFrom(uigraph.getSelectedNodes())
-                            nodeMenu.close()
+                    MenuItem {
+                        text: "Stop Computation"
+                        enabled: nodeMenu.currentNode.canBeStopped()
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
+                    }
+                    MenuItem {
+                        text: "Cancel Computation"
+                        enabled: nodeMenu.currentNode.canBeCanceled()
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)
+                    }
+                    MenuItem {
+                        text: "Open Folder"
+                        visible: nodeMenu.currentNode.isComputable 
+                        height: visible ? implicitHeight : 0
+                        onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
+                    }
+                    MenuSeparator {
+                        visible: nodeMenu.currentNode.isComputable
+                    }
+                    MenuItem {
+                        text: "Cut Node(s)"
+                        enabled: true
+                        ToolTip.text: "Copy selection to the clipboard and remove it"
+                        ToolTip.visible: hovered
+                        onTriggered: {
+                            copyNodes()
+                            uigraph.removeSelectedNodes()
                         }
                     }
-                }
-                MenuSeparator {
-                    visible: nodeMenu.currentNode.isComputable
-                }
-                MenuItem {
-                    id: deleteDataMenuItem
-                    text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
-                    visible: nodeMenu.currentNode.isComputable
-                    height: visible ? implicitHeight : 0
-                    enabled: {
-                        if (!nodeMenu.currentNode)
-                            return false
-                        // Check if the current node is locked (needed because it does not belong to its own duplicates list)
-                        if (nodeMenu.currentNode.locked)
-                            return false
-                        // Check if at least one of the duplicate nodes is locked
-                        for (let i = 0; i < nodeMenu.currentNode.duplicates.count; ++i) {
-                            if (nodeMenu.currentNode.duplicates.at(i).locked)
+                    MenuItem {
+                        text: "Copy Node(s)"
+                        enabled: true
+                        ToolTip.text: "Copy selection to the clipboard"
+                        ToolTip.visible: hovered
+                        onTriggered: copyNodes()
+                    }
+                    MenuItem {
+                        text: "Paste Node(s)"
+                        enabled: true
+                        ToolTip.text: "Copy selection to the clipboard and immediately paste it"
+                        ToolTip.visible: hovered
+                        onTriggered: {
+                            copyNodes()
+                            pasteNodes()
+                        }
+                    }
+                    MenuItem {
+                        text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
+                        enabled: true
+                        onTriggered: duplicateNode(false)
+                        MaterialToolButton {
+                            id: duplicateFollowingButton
+                            height: parent.height
+                            anchors {
+                                right: parent.right
+                                rightMargin: parent.padding
+                            }
+                            text: MaterialIcons.fast_forward
+                            onClicked: {
+                                duplicateNode(true)
+                                nodeMenu.close()
+                            }
+                        }
+                    }
+                    MenuItem {
+                        text: "Remove Node(s)" + (removeFollowingButton.hovered ? " From Here" : "")
+                        enabled: !nodeMenu.currentNode.locked
+                        onTriggered: uigraph.removeSelectedNodes()
+                        MaterialToolButton {
+                            id: removeFollowingButton
+                            height: parent.height
+                            anchors {
+                                right: parent.right
+                                rightMargin: parent.padding
+                            }
+                            text: MaterialIcons.fast_forward
+                            onClicked: {
+                                uigraph.removeNodesFrom(uigraph.getSelectedNodes())
+                                nodeMenu.close()
+                            }
+                        }
+                    }
+                    MenuSeparator {
+                        visible: nodeMenu.currentNode.isComputable
+                    }
+                    MenuItem {
+                        id: deleteDataMenuItem
+                        text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
+                        visible: nodeMenu.currentNode.isComputable
+                        height: visible ? implicitHeight : 0
+                        enabled: {
+                            if (!nodeMenu.currentNode)
                                 return false
+                            // Check if the current node is locked (needed because it does not belong to its own duplicates list)
+                            if (nodeMenu.currentNode.locked)
+                                return false
+                            // Check if at least one of the duplicate nodes is locked
+                            for (let i = 0; i < nodeMenu.currentNode.duplicates.count; ++i) {
+                                if (nodeMenu.currentNode.duplicates.at(i).locked)
+                                    return false
+                            }
+                            return true
                         }
-                        return true
+
+                        onTriggered: nodeMenuLoader.showDataDeletionDialog(false)
+
+                        MaterialToolButton {
+                            id: deleteFollowingButton
+                            anchors {
+                                right: parent.right
+                                rightMargin: parent.padding
+                            }
+                            height: parent.height
+                            text: MaterialIcons.fast_forward
+                            onClicked: {
+                                nodeMenuLoader.showDataDeletionDialog(true);
+                                nodeMenu.close();
+                            }
+                        }
+
                     }
-
-                    onTriggered: nodeMenuLoader.showDataDeletionDialog(false)
-
-                    MaterialToolButton {
-                        id: deleteFollowingButton
-                        anchors {
-                            right: parent.right
-                            rightMargin: parent.padding
-                        }
-                        height: parent.height
-                        text: MaterialIcons.fast_forward
-                        onClicked: {
-                            nodeMenuLoader.showDataDeletionDialog(true);
-                            nodeMenu.close();
-                        }
-                    }
-
                 }
-            }
             }
 
             // Confirmation dialog for node cache deletion
@@ -821,7 +821,7 @@ Item {
             }
 
             // Nodes
-             Repeater {
+            Repeater {
                 id: nodeRepeater
 
                 model: root.graph ? root.graph.nodes : undefined

@@ -901,10 +901,9 @@ Item {
                         }
                         else if (mouse.button === Qt.RightButton) {
                             if(selected) {
-                                // Keep the full selection when right-clicking on a node.
+                                // Keep the full selection when right-clicking on an already selected node.
                                 nodeRepeater.updateSelectionOnClick = false;
                             }
-                            nodeMenuLoader.load(node)
                         }
 
                         if(selectionMode != ItemSelectionModel.NoUpdate) {
@@ -916,6 +915,12 @@ Item {
                         if(selected) {
                             uigraph.selectedNode = node;
                         }
+
+                        // Open the node context menu once selection has been updated.
+                        if(mouse.button == Qt.RightButton) {
+                            nodeMenuLoader.load(node)
+                        }
+
                     }
 
                     onReleased: function(mouse, wasDragged) {

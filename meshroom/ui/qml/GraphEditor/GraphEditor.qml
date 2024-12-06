@@ -31,8 +31,6 @@ Item {
     signal computeRequest(var nodes)
     signal submitRequest(var nodes)
 
-    signal dataDeleted()
-
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
     signal filesDropped(var drop, var mousePosition)  // Files have been dropped
@@ -67,17 +65,6 @@ Item {
         if (node !== null) {
             uigraph.appendSelection(node)
             uigraph.selectedNodesChanged()
-        }
-    }
-
-    onDataDeleted: {
-        if (computeMenuItem.recompute) {
-            computeRequest(uigraph.selectedNodes)
-            computeMenuItem.recompute = false
-        } 
-        else if (submitMenuItem.resubmit) {
-            submitRequest(uigraph.selectedNodes)
-            submitMenuItem.resubmit = false
         }
     }
 
@@ -549,12 +536,44 @@ Item {
                 }
             }
 
+            Loader {
+                id: nodeMenuLoader
+                property var currentNode: null
+                active: currentNode != null
+                sourceComponent: nodeMenuComponent
+
+                function load(node) {
+                    currentNode = node;
+                }
+
+                function unload() {
+                    currentNode = null;
+                }
+
+                function showDataDeletionDialog(deleteFollowing: bool, callback) {
+                    uigraph.forceNodesStatusUpdate();
+                    const dialog = deleteDataDialog.createObject(
+                        root,
+                        {
+                            "node": currentNode,
+                            "deleteFollowing": deleteFollowing
+                        }
+                    );
+                    dialog.open();
+                    if(callback)
+                        dialog.dataDeleted.connect(callback);
+                }
+            }
+
+            Component {
+                id: nodeMenuComponent
             Menu {
                 id: nodeMenu
-                property var currentNode: null
-                property bool canComputeNode: currentNode != null && uigraph.graph.canComputeTopologically(currentNode)
+                
+                property var currentNode: nodeMenuLoader.currentNode
+                property bool canComputeNode: uigraph.graph.canComputeTopologically(currentNode)
                 // canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
-                property int canSubmitOrCompute: currentNode != null && uigraph.graph.canSubmitOrCompute(currentNode)
+                property int canSubmitOrCompute: uigraph.graph.canSubmitOrCompute(currentNode)
                 property bool isComputed: {
                     var count = 0
                     for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
@@ -567,12 +586,14 @@ Item {
                     }
                     return count > 0
                 }
+
                 width: 220
-                onClosed: currentNode = null
+
+                Component.onCompleted: popup()
+                onClosed: nodeMenuLoader.unload()
 
                 MenuItem {
                     id: computeMenuItem
-                    property bool recompute: false
                     text: nodeMenu.isComputed ? "Recompute" : "Compute"
                     visible: {
                         var count = 0
@@ -607,10 +628,14 @@ Item {
 
                     onTriggered: {
                         if (nodeMenu.isComputed) {
-                            recompute = true
-                            deleteDataMenuItem.showConfirmationDialog(false)
+                            nodeMenuLoader.showDataDeletionDialog(
+                                false, 
+                                function(request, uigraph) {
+                                    request(uigraph.selectedNodes);
+                                }.bind(null, computeRequest, uigraph)
+                            );
                         } else {
-                            computeRequest(uigraph.selectedNodes)
+                            computeRequest(uigraph.selectedNodes);
                         }
                     }
                 }
@@ -648,35 +673,39 @@ Item {
                     }
                     onTriggered: {
                         if (nodeMenu.isComputed) {
-                            resubmit = true
-                            deleteDataMenuItem.showConfirmationDialog(false)
+                            nodeMenuLoader.showDataDeletionDialog(
+                                false, 
+                                function(request, uigraph) {
+                                    request(uigraph.selectedNodes);
+                                }.bind(null, submitRequest, uigraph)
+                            );
                         } else {
-                            submitRequest(uigraph.selectedNodes)
+                            submitRequest(uigraph.selectedNodes);
                         }
                     }
                 }
                 MenuItem {
                     text: "Stop Computation"
-                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.canBeStopped() : false
+                    enabled: nodeMenu.currentNode.canBeStopped()
                     visible: enabled
                     height: visible ? implicitHeight : 0
                     onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Cancel Computation"
-                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.canBeCanceled() : false
+                    enabled: nodeMenu.currentNode.canBeCanceled()
                     visible: enabled
                     height: visible ? implicitHeight : 0
                     onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Open Folder"
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                    visible: nodeMenu.currentNode.isComputable 
                     height: visible ? implicitHeight : 0
                     onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
                 }
                 MenuSeparator {
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                    visible: nodeMenu.currentNode.isComputable
                 }
                 MenuItem {
                     text: "Cut Node(s)"
@@ -725,7 +754,7 @@ Item {
                 }
                 MenuItem {
                     text: "Remove Node(s)" + (removeFollowingButton.hovered ? " From Here" : "")
-                    enabled: nodeMenu.currentNode ? !nodeMenu.currentNode.locked : false
+                    enabled: !nodeMenu.currentNode.locked
                     onTriggered: uigraph.removeSelectedNodes()
                     MaterialToolButton {
                         id: removeFollowingButton
@@ -742,12 +771,12 @@ Item {
                     }
                 }
                 MenuSeparator {
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                    visible: nodeMenu.currentNode.isComputable
                 }
                 MenuItem {
                     id: deleteDataMenuItem
                     text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
+                    visible: nodeMenu.currentNode.isComputable
                     height: visible ? implicitHeight : 0
                     enabled: {
                         if (!nodeMenu.currentNode)
@@ -763,18 +792,7 @@ Item {
                         return true
                     }
 
-                    function showConfirmationDialog(deleteFollowing) {
-                        uigraph.forceNodesStatusUpdate()
-                        var obj = deleteDataDialog.createObject(root,
-                                           {
-                                               "node": nodeMenu.currentNode,
-                                               "deleteFollowing": deleteFollowing
-                                           })
-                        obj.open()
-                        nodeMenu.close()
-                    }
-
-                    onTriggered: showConfirmationDialog(false)
+                    onTriggered: nodeMenuLoader.showDataDeletionDialog(false)
 
                     MaterialToolButton {
                         id: deleteFollowingButton
@@ -784,35 +802,41 @@ Item {
                         }
                         height: parent.height
                         text: MaterialIcons.fast_forward
-                        onClicked: parent.showConfirmationDialog(true)
-                    }
-
-                    // Confirmation dialog for node cache deletion
-                    Component {
-                        id: deleteDataDialog
-                        MessageDialog  {
-                            property var node
-                            property bool deleteFollowing: false
-
-                            focus: true
-                            modal: false
-                            header.visible: false
-
-                            text: "Delete Data of '" + node.label + "'" + (uigraph.selectedNodes.count > 1 ? " and other selected Nodes" : "") + (deleteFollowing ?  " and following Nodes?" : "?")
-                            helperText: "Warning: This operation cannot be undone."
-                            standardButtons: Dialog.Yes | Dialog.Cancel
-
-                            onAccepted: {
-                                if (deleteFollowing)
-                                    uigraph.clearDataFrom(uigraph.selectedNodes)
-                                else
-                                    uigraph.clearData(uigraph.selectedNodes)
-
-                                root.dataDeleted()
-                            }
-                            onClosed: destroy()
+                        onClicked: {
+                            nodeMenuLoader.showDataDeletionDialog(true);
+                            nodeMenu.close();
                         }
                     }
+
+                }
+            }
+            }
+
+            // Confirmation dialog for node cache deletion
+            Component {
+                id: deleteDataDialog
+                MessageDialog  {
+                    property var node
+                    property bool deleteFollowing: false
+
+                    signal dataDeleted()
+
+                    focus: true
+                    modal: false
+                    header.visible: false
+
+                    text: "Delete Data of '" + node.label + "'" + (uigraph.selectedNodes.count > 1 ? " and other selected Nodes" : "") + (deleteFollowing ?  " and following Nodes?" : "?")
+                    helperText: "Warning: This operation cannot be undone."
+                    standardButtons: Dialog.Yes | Dialog.Cancel
+
+                    onAccepted: {
+                        if (deleteFollowing)
+                            uigraph.clearDataFrom(uigraph.selectedNodes);
+                        else
+                            uigraph.clearData(uigraph.selectedNodes);
+                        dataDeleted();
+                    }
+                    onClosed: destroy()
                 }
             }
 
@@ -880,8 +904,7 @@ Item {
                                 // Keep the full selection when right-clicking on a node.
                                 nodeRepeater.updateSelectionOnClick = false;
                             }
-                            nodeMenu.currentNode = node
-                            nodeMenu.popup()
+                            nodeMenuLoader.load(node)
                         }
 
                         if(selectionMode != ItemSelectionModel.NoUpdate) {

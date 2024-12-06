@@ -572,11 +572,22 @@ Item {
                 
                 property var currentNode: nodeMenuLoader.currentNode
 
+                // Cache computatibility/submitability status of each selected node.
+                readonly property var nodeSubmitOrComputeStatus: {
+                    var collectedStatus = ({});
+                    uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+                        const node = uigraph.graph.nodes.at(idx.row);
+                        collectedStatus[node] = uigraph.graph.canSubmitOrCompute(node);
+                    });
+                    return collectedStatus;
+                }
+
                 readonly property bool isSelectionFullyComputed: {
                     return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
                         return uigraph.graph.nodes.at(idx.row).isComputed;
                     });
                 }
+
                 readonly property bool isSelectionOnlyComputableNodes: {
                     return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
                         const node = uigraph.graph.nodes.at(idx.row);
@@ -586,6 +597,7 @@ Item {
                         );
                     });
                 }
+
                 readonly property bool canSelectionBeComputed: {
                     if(!isSelectionOnlyComputableNodes)
                         return false;
@@ -596,10 +608,11 @@ Item {
                         return (
                             node.isComputed
                             // canCompute if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
-                            || uigraph.graph.canSubmitOrCompute(node) % 2 == 1
+                            || nodeSubmitOrComputeStatus[node] % 2 == 1
                         );
                     });
                 }
+
                 readonly property bool isSelectionSubmittable: uigraph.canSubmit && isSelectionOnlyComputableNodes
 
                 readonly property bool canSelectionBeSubmitted: {
@@ -612,7 +625,7 @@ Item {
                         return (
                             node.isComputed
                             // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
-                            || uigraph.graph.canSubmitOrCompute(node) > 1
+                            || nodeSubmitOrComputeStatus[node] > 1
                         )
                     });
                 }

@@ -831,10 +831,6 @@ Item {
                 property bool updateSelectionOnClick: false
                 property var temporaryEdgeAboutToBeRemoved: undefined
 
-                function isNodeSelected(index: int) {
-                    return uigraph.nodeSelection.isRowSelected(index);
-                }
-
                 delegate: Node {
                     id: nodeDelegate
 
@@ -844,18 +840,11 @@ Item {
                     mainSelected: uigraph.selectedNode === node
                     hovered: uigraph.hoveredNode === node
 
-                    selected: nodeRepeater.isNodeSelected(index);
+                    // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
+                    selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
 
                     onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
                     onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
-
-                    Connections {
-                        target: uigraph.nodeSelection
-
-                        function onSelectionChanged() {
-                            selected = nodeRepeater.isNodeSelected(index);
-                        }
-                    }
 
                     onPressed: function(mouse) {
                         nodeRepeater.updateSelectionOnClick = true;

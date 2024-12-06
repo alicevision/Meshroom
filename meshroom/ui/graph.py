@@ -813,21 +813,24 @@ class UIGraph(QObject):
                     # update the edges from allSrc
                     allSrc = [e.src for e in self._graph.edges.values()]
 
+    @Slot()
+    def clearSelectedNodesData(self):
+        """Clear data from all selected nodes."""
+        self.clearData(self.iterSelectedNodes())
 
-    @Slot(QObject)
-    def clearData(self, nodes):
+    @Slot(list)
+    def clearData(self, nodes: list[Node]):
         """ Clear data from 'nodes'. """
-        nodes = self.filterNodes(nodes)
         for n in nodes:
             n.clearData()
 
-    @Slot(QObject)
-    def clearDataFrom(self, nodes):
+    @Slot(list)
+    def clearDataFrom(self, nodes: list[Node]):
         """
         Clear data from all nodes starting from 'nodes' to graph leaves.
 
         Args:
-            nodes (list[Node]): the nodes to start from.
+            nodes: The nodes to start from.
         """
         self.clearData(self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)[0])
 

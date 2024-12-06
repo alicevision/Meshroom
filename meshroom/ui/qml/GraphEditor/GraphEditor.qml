@@ -815,7 +815,7 @@ Item {
                         if (deleteFollowing)
                             uigraph.clearDataFrom(uigraph.selectedNodes);
                         else
-                            uigraph.clearData(uigraph.selectedNodes);
+                            uigraph.clearSelectedNodesData();
                         dataDeleted();
                     }
                     onClosed: destroy()

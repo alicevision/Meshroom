@@ -651,12 +651,6 @@ class UIGraph(QObject):
             position = Position(position.x(), position.y())
         return self.push(commands.AddNodeCommand(self._graph, nodeType, position=position, **kwargs))
 
-    def filterNodes(self, nodes):
-        """Filter out the nodes that do not exist on the graph."""
-        if not isinstance(nodes, Iterable):
-            nodes = [nodes]
-        return [ n for n in nodes if n in self._graph.nodes.values() ]
-
     def moveNode(self, node: Node, position: Position):
         """
         Move `node` to the given `position`.

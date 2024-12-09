@@ -952,9 +952,12 @@ class UIGraph(QObject):
         self.selectNodesByIndices(indices, command)
 
     @Slot(Node)
-    def selectFollowing(self, node: Node):
+    @Slot(Node, int)
+    def selectFollowing(self, node: Node, command=QItemSelectionModel.SelectionFlag.ClearAndSelect):
         """Select all the nodes that depend on `node`."""
-        self.selectNodes(self._graph.dfsOnDiscover(startNodes=[node], reverse=True, dependenciesOnly=True)[0])
+        self.selectNodes(
+            self._graph.dfsOnDiscover(startNodes=[node], reverse=True, dependenciesOnly=True)[0], command
+        )
         self.selectedNode = node
 
     @Slot(int)

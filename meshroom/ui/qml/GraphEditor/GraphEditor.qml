@@ -864,7 +864,12 @@ Item {
                                 selectionMode = ItemSelectionModel.Toggle;
                             }
                             if(mouse.modifiers & Qt.AltModifier) {
-                                uigraph.selectFollowing(node);
+                                let selectFollowingMode = ItemSelectionModel.ClearAndSelect;
+                                if(mouse.modifiers & Qt.ShiftModifier) {
+                                    selectFollowingMode = ItemSelectionModel.Select;
+                                }
+                                uigraph.selectFollowing(node, selectFollowingMode);
+                                // Indicate selection has been dealt with by setting conservative Select mode.
                                 selectionMode = ItemSelectionModel.Select;
                             }
                         }

@@ -17,3 +17,5 @@ IntSelector 1.0 IntSelector.qml
 MScrollBar 1.0 MScrollBar.qml
 MSplitView 1.0 MSplitView.qml
 DirectionalLightPane 1.0 DirectionalLightPane.qml
+SelectionBox 1.0 SelectionBox.qml
+DelegateSelectionBox 1.0 DelegateSelectionBox.qml

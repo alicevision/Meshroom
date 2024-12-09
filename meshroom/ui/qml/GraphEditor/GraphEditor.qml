@@ -31,8 +31,6 @@ Item {
     signal computeRequest(var nodes)
     signal submitRequest(var nodes)
 
-    signal dataDeleted()
-
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
     signal filesDropped(var drop, var mousePosition)  // Files have been dropped
@@ -61,35 +59,14 @@ Item {
         return undefined
     }
 
-    /// Select node delegate
-    function selectNode(node) {
-        uigraph.selectedNode = node
-        if (node !== null) {
-            uigraph.appendSelection(node)
-            uigraph.selectedNodesChanged()
-        }
-    }
-
-    onDataDeleted: {
-        if (computeMenuItem.recompute) {
-            computeRequest(uigraph.selectedNodes)
-            computeMenuItem.recompute = false
-        } 
-        else if (submitMenuItem.resubmit) {
-            submitRequest(uigraph.selectedNodes)
-            submitMenuItem.resubmit = false
-        }
-    }
-
     /// Duplicate a node and optionally all the following ones
     function duplicateNode(duplicateFollowingNodes) {
         var nodes
         if (duplicateFollowingNodes) {
-            nodes = uigraph.duplicateNodesFrom(uigraph.selectedNodes)
+            nodes = uigraph.duplicateNodesFrom(uigraph.getSelectedNodes())
         } else {
-            nodes = uigraph.duplicateNodes(uigraph.selectedNodes)
+            nodes = uigraph.duplicateNodes(uigraph.getSelectedNodes())
         }
-        uigraph.clearNodeSelection()
         uigraph.selectedNode = nodes[0]
         uigraph.selectNodes(nodes)
     }
@@ -122,7 +99,6 @@ Item {
         var copiedContent = Clipboard.getText()
         var nodes = uigraph.pasteNodes(copiedContent, finalPosition, centerPosition)
         if (nodes.length > 0) {
-            uigraph.clearNodeSelection()
             uigraph.selectedNode = nodes[0]
             uigraph.selectNodes(nodes)
         }
@@ -138,15 +114,15 @@ Item {
             fit()
         } else if (event.key === Qt.Key_Delete) {
             if (event.modifiers === Qt.AltModifier) {
-                uigraph.removeNodesFrom(uigraph.selectedNodes)
+                uigraph.removeNodesFrom(uigraph.getSelectedNodes())
             } else {
-                uigraph.removeNodes(uigraph.selectedNodes)
+                uigraph.removeSelectedNodes()
             }
         } else if (event.key === Qt.Key_D) {
             duplicateNode(event.modifiers === Qt.AltModifier)
         } else if (event.key === Qt.Key_X && event.modifiers === Qt.ControlModifier) {
             copyNodes()
-            uigraph.removeNodes(uigraph.selectedNodes)
+            uigraph.removeSelectedNodes()
         } else if (event.key === Qt.Key_C) {
             if (event.modifiers === Qt.ControlModifier) {
                 copyNodes()
@@ -195,24 +171,21 @@ Item {
             if (mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier) {
                 uigraph.clearNodeSelection()
             }
-            if (mouse.button == Qt.LeftButton && (mouse.modifiers == Qt.NoModifier || mouse.modifiers == Qt.ControlModifier)) {
-                boxSelect.startX = mouseX
-                boxSelect.startY = mouseY
-                boxSelectDraggable.x = mouseX
-                boxSelectDraggable.y = mouseY
-                drag.target = boxSelectDraggable
+            if (mouse.button == Qt.LeftButton && (mouse.modifiers == Qt.NoModifier || mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))) {
+                nodeSelectionBox.startSelection(mouse);
             }
-            if (mouse.button == Qt.MiddleButton || (mouse.button == Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier)) {
+            if (mouse.button == Qt.MiddleButton || (mouse.button == Qt.LeftButton && mouse.modifiers & Qt.AltModifier)) {
                 drag.target = draggable // start drag
             }
         }
 
         onReleased: {
-            drag.target = undefined // stop drag
+            nodeSelectionBox.endSelection();
+            drag.target = null;
             root.forceActiveFocus()
             workspaceClicked()
         }
-
+        
         onPositionChanged: {
             if (drag.active)
                 workspaceMoved()
@@ -235,14 +208,13 @@ Item {
             height: searchBar.height + nodeMenuRepeater.height + instantiator.height
 
             function createNode(nodeType) {
-                uigraph.clearNodeSelection() // Ensures that only the created node / imported pipeline will be selected
-
                 // "nodeType" might be a pipeline (artificially added in the "Pipelines" category) instead of a node
                 // If it is not a pipeline to import, then it must be a node
                 if (!importPipeline(nodeType)) {
                     // Add node via the proper command in uigraph
-                    var node = uigraph.addNewNode(nodeType, spawnPosition)
-                    selectNode(node)
+                    var node = uigraph.addNewNode(nodeType, spawnPosition);
+                    uigraph.selectedNode = node;
+                    uigraph.selectNodes([node])
                 }
                 close()
             }
@@ -552,270 +524,299 @@ Item {
                 }
             }
 
-            Menu {
-                id: nodeMenu
+            Loader {
+                id: nodeMenuLoader
                 property var currentNode: null
-                property bool canComputeNode: currentNode != null && uigraph.graph.canComputeTopologically(currentNode)
-                // canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
-                property int canSubmitOrCompute: currentNode != null && uigraph.graph.canSubmitOrCompute(currentNode)
-                property bool isComputed: {
-                    var count = 0
-                    for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                        var node = uigraph.selectedNodes.at(i)
-                        if (!node)
-                            continue
-                        if (!node.isComputed)
-                            return false
-                        count += 1
-                    }
-                    return count > 0
+                active: currentNode != null
+                sourceComponent: nodeMenuComponent
+
+                function load(node) {
+                    currentNode = node;
                 }
-                width: 220
-                onClosed: currentNode = null
 
-                MenuItem {
-                    id: computeMenuItem
-                    property bool recompute: false
-                    text: nodeMenu.isComputed ? "Recompute" : "Compute"
-                    visible: {
-                        var count = 0
-                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            var node = uigraph.selectedNodes.at(i)
-                            if (!node)
-                                continue
-                            if (!node.isComputable)
-                                return false
-                            count += 1
+                function unload() {
+                    currentNode = null;
+                }
+
+                function showDataDeletionDialog(deleteFollowing: bool, callback) {
+                    uigraph.forceNodesStatusUpdate();
+                    const dialog = deleteDataDialog.createObject(
+                        root,
+                        {
+                            "node": currentNode,
+                            "deleteFollowing": deleteFollowing
                         }
-                        return count > 0
-                    }
-                    height: visible ? implicitHeight : 0
+                    );
+                    dialog.open();
+                    if(callback)
+                        dialog.dataDeleted.connect(callback);
+                }
+            }
 
-                    enabled: {
-                        var canCompute = false
-                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            var node = uigraph.selectedNodes.at(i)
-                            if (!node)
-                                continue
-                            if (uigraph.graph.canComputeTopologically(node)) {
-                                if (nodeMenu.isComputed) {
-                                    canCompute = true
-                                } else if (uigraph.graph.canSubmitOrCompute(node) % 2 == 1) {
-                                    canCompute = true
-                                }
+            Component {
+                id: nodeMenuComponent
+                Menu {
+                    id: nodeMenu
+                    
+                    property var currentNode: nodeMenuLoader.currentNode
+
+                    // Cache computatibility/submitability status of each selected node.
+                    readonly property var nodeSubmitOrComputeStatus: {
+                        var collectedStatus = ({});
+                        uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            collectedStatus[node] = uigraph.graph.canSubmitOrCompute(node);
+                        });
+                        return collectedStatus;
+                    }
+
+                    readonly property bool isSelectionFullyComputed: {
+                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                            return uigraph.graph.nodes.at(idx.row).isComputed;
+                        });
+                    }
+
+                    readonly property bool isSelectionOnlyComputableNodes: {
+                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return (
+                                node.isComputable
+                                && uigraph.graph.canComputeTopologically(node)
+                            );
+                        });
+                    }
+
+                    readonly property bool canSelectionBeComputed: {
+                        if(!isSelectionOnlyComputableNodes)
+                            return false;
+                        if(isSelectionFullyComputed)
+                            return true;
+                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return (
+                                node.isComputed
+                                // canCompute if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
+                                || nodeSubmitOrComputeStatus[node] % 2 == 1
+                            );
+                        });
+                    }
+
+                    readonly property bool isSelectionSubmittable: uigraph.canSubmit && isSelectionOnlyComputableNodes
+
+                    readonly property bool canSelectionBeSubmitted: {
+                        if(!isSelectionOnlyComputableNodes)
+                            return false;
+                        if(isSelectionFullyComputed)
+                            return true;
+                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return (
+                                node.isComputed
+                                // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
+                                || nodeSubmitOrComputeStatus[node] > 1
+                            )
+                        });
+                    }
+
+                    width: 220
+
+                    Component.onCompleted: popup()
+                    onClosed: nodeMenuLoader.unload()
+
+                    MenuItem {
+                        id: computeMenuItem
+                        text: nodeMenu.isSelectionFullyComputed ? "Recompute" : "Compute"
+                        visible: nodeMenu.isSelectionOnlyComputableNodes
+                        height: visible ? implicitHeight : 0
+                        enabled: nodeMenu.canSelectionBeComputed
+
+                        onTriggered: {
+                            if (nodeMenu.isSelectionFullyComputed) {
+                                nodeMenuLoader.showDataDeletionDialog(
+                                    false, 
+                                    function(request, uigraph) {
+                                        request(uigraph.getSelectedNodes());
+                                    }.bind(null, computeRequest, uigraph)
+                                );
+                            } else {
+                                computeRequest(uigraph.getSelectedNodes());
                             }
                         }
-                        return canCompute  // canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
                     }
+                    MenuItem {
+                        id: submitMenuItem
 
-                    onTriggered: {
-                        if (nodeMenu.isComputed) {
-                            recompute = true
-                            deleteDataMenuItem.showConfirmationDialog(false)
-                        } else {
-                            computeRequest(uigraph.selectedNodes)
-                        }
-                    }
-                }
-                MenuItem {
-                    id: submitMenuItem
-                    property bool resubmit: false
-                    text: nodeMenu.isComputed ? "Re-Submit" : "Submit"
-                    visible: {
-                        var count = 0
-                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            var node = uigraph.selectedNodes.at(i)
-                            if (node && !node.isComputable)
-                                return false
-                            count += 1
-                        }
-                        return count > 0 || uigraph.canSubmit
-                    }
-                    height: visible ? implicitHeight : 0
+                        text: nodeMenu.isSelectionFullyComputed ? "Re-Submit" : "Submit"
+                        visible: nodeMenu.isSelectionSubmittable
+                        height: visible ? implicitHeight : 0
+                        enabled: nodeMenu.canSelectionBeSubmitted
 
-                    enabled: {
-                        var canSubmit = false
-                        for (var i = 0; i < uigraph.selectedNodes.count; ++i) {
-                            var node = uigraph.selectedNodes.at(i)
-                            if (!node)
-                                continue
-                            if (uigraph.graph.canComputeTopologically(node)) {
-                                if (nodeMenu.isComputed) {
-                                    canSubmit = true
-                                } else if (uigraph.graph.canSubmitOrCompute(node) > 1) {
-                                    canSubmit = true
-                                }
+                        onTriggered: {
+                            if (nodeMenu.isSelectionFullyComputed) {
+                                nodeMenuLoader.showDataDeletionDialog(
+                                    false, 
+                                    function(request, uigraph) {
+                                        request(uigraph.getSelectedNodes());
+                                    }.bind(null, submitRequest, uigraph)
+                                );
+                            } else {
+                                submitRequest(uigraph.getSelectedNodes());
                             }
                         }
-                        return canSubmit
                     }
-                    onTriggered: {
-                        if (nodeMenu.isComputed) {
-                            resubmit = true
-                            deleteDataMenuItem.showConfirmationDialog(false)
-                        } else {
-                            submitRequest(uigraph.selectedNodes)
+                    MenuItem {
+                        text: "Stop Computation"
+                        enabled: nodeMenu.currentNode.canBeStopped()
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
+                    }
+                    MenuItem {
+                        text: "Cancel Computation"
+                        enabled: nodeMenu.currentNode.canBeCanceled()
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)
+                    }
+                    MenuItem {
+                        text: "Open Folder"
+                        visible: nodeMenu.currentNode.isComputable 
+                        height: visible ? implicitHeight : 0
+                        onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
+                    }
+                    MenuSeparator {
+                        visible: nodeMenu.currentNode.isComputable
+                    }
+                    MenuItem {
+                        text: "Cut Node(s)"
+                        enabled: true
+                        ToolTip.text: "Copy selection to the clipboard and remove it"
+                        ToolTip.visible: hovered
+                        onTriggered: {
+                            copyNodes()
+                            uigraph.removeSelectedNodes()
                         }
                     }
-                }
-                MenuItem {
-                    text: "Stop Computation"
-                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.canBeStopped() : false
-                    visible: enabled
-                    height: visible ? implicitHeight : 0
-                    onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
-                }
-                MenuItem {
-                    text: "Cancel Computation"
-                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.canBeCanceled() : false
-                    visible: enabled
-                    height: visible ? implicitHeight : 0
-                    onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)
-                }
-                MenuItem {
-                    text: "Open Folder"
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
-                    height: visible ? implicitHeight : 0
-                    onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
-                }
-                MenuSeparator {
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
-                }
-                MenuItem {
-                    text: "Cut Node(s)"
-                    enabled: true
-                    ToolTip.text: "Copy selection to the clipboard and remove it"
-                    ToolTip.visible: hovered
-                    onTriggered: {
-                        copyNodes()
-                        uigraph.removeNodes(uigraph.selectedNodes)
+                    MenuItem {
+                        text: "Copy Node(s)"
+                        enabled: true
+                        ToolTip.text: "Copy selection to the clipboard"
+                        ToolTip.visible: hovered
+                        onTriggered: copyNodes()
                     }
-                }
-                MenuItem {
-                    text: "Copy Node(s)"
-                    enabled: true
-                    ToolTip.text: "Copy selection to the clipboard"
-                    ToolTip.visible: hovered
-                    onTriggered: copyNodes()
-                }
-                MenuItem {
-                    text: "Paste Node(s)"
-                    enabled: true
-                    ToolTip.text: "Copy selection to the clipboard and immediately paste it"
-                    ToolTip.visible: hovered
-                    onTriggered: {
-                        copyNodes()
-                        pasteNodes()
-                    }
-                }
-                MenuItem {
-                    text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
-                    enabled: true
-                    onTriggered: duplicateNode(false)
-                    MaterialToolButton {
-                        id: duplicateFollowingButton
-                        height: parent.height
-                        anchors {
-                            right: parent.right
-                            rightMargin: parent.padding
-                        }
-                        text: MaterialIcons.fast_forward
-                        onClicked: {
-                            duplicateNode(true)
-                            nodeMenu.close()
+                    MenuItem {
+                        text: "Paste Node(s)"
+                        enabled: true
+                        ToolTip.text: "Copy selection to the clipboard and immediately paste it"
+                        ToolTip.visible: hovered
+                        onTriggered: {
+                            copyNodes()
+                            pasteNodes()
                         }
                     }
-                }
-                MenuItem {
-                    text: "Remove Node(s)" + (removeFollowingButton.hovered ? " From Here" : "")
-                    enabled: nodeMenu.currentNode ? !nodeMenu.currentNode.locked : false
-                    onTriggered: uigraph.removeNodes(uigraph.selectedNodes)
-                    MaterialToolButton {
-                        id: removeFollowingButton
-                        height: parent.height
-                        anchors {
-                            right: parent.right
-                            rightMargin: parent.padding
-                        }
-                        text: MaterialIcons.fast_forward
-                        onClicked: {
-                            uigraph.removeNodesFrom(uigraph.selectedNodes)
-                            nodeMenu.close()
-                        }
-                    }
-                }
-                MenuSeparator {
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
-                }
-                MenuItem {
-                    id: deleteDataMenuItem
-                    text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
-                    visible: nodeMenu.currentNode ? nodeMenu.currentNode.isComputable : false
-                    height: visible ? implicitHeight : 0
-                    enabled: {
-                        if (!nodeMenu.currentNode)
-                            return false
-                        // Check if the current node is locked (needed because it does not belong to its own duplicates list)
-                        if (nodeMenu.currentNode.locked)
-                            return false
-                        // Check if at least one of the duplicate nodes is locked
-                        for (let i = 0; i < nodeMenu.currentNode.duplicates.count; ++i) {
-                            if (nodeMenu.currentNode.duplicates.at(i).locked)
-                                return false
-                        }
-                        return true
-                    }
-
-                    function showConfirmationDialog(deleteFollowing) {
-                        uigraph.forceNodesStatusUpdate()
-                        var obj = deleteDataDialog.createObject(root,
-                                           {
-                                               "node": nodeMenu.currentNode,
-                                               "deleteFollowing": deleteFollowing
-                                           })
-                        obj.open()
-                        nodeMenu.close()
-                    }
-
-                    onTriggered: showConfirmationDialog(false)
-
-                    MaterialToolButton {
-                        id: deleteFollowingButton
-                        anchors {
-                            right: parent.right
-                            rightMargin: parent.padding
-                        }
-                        height: parent.height
-                        text: MaterialIcons.fast_forward
-                        onClicked: parent.showConfirmationDialog(true)
-                    }
-
-                    // Confirmation dialog for node cache deletion
-                    Component {
-                        id: deleteDataDialog
-                        MessageDialog  {
-                            property var node
-                            property bool deleteFollowing: false
-
-                            focus: true
-                            modal: false
-                            header.visible: false
-
-                            text: "Delete Data of '" + node.label + "'" + (uigraph.selectedNodes.count > 1 ? " and other selected Nodes" : "") + (deleteFollowing ?  " and following Nodes?" : "?")
-                            helperText: "Warning: This operation cannot be undone."
-                            standardButtons: Dialog.Yes | Dialog.Cancel
-
-                            onAccepted: {
-                                if (deleteFollowing)
-                                    uigraph.clearDataFrom(uigraph.selectedNodes)
-                                else
-                                    uigraph.clearData(uigraph.selectedNodes)
-
-                                root.dataDeleted()
+                    MenuItem {
+                        text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
+                        enabled: true
+                        onTriggered: duplicateNode(false)
+                        MaterialToolButton {
+                            id: duplicateFollowingButton
+                            height: parent.height
+                            anchors {
+                                right: parent.right
+                                rightMargin: parent.padding
                             }
-                            onClosed: destroy()
+                            text: MaterialIcons.fast_forward
+                            onClicked: {
+                                duplicateNode(true)
+                                nodeMenu.close()
+                            }
                         }
                     }
+                    MenuItem {
+                        text: "Remove Node(s)" + (removeFollowingButton.hovered ? " From Here" : "")
+                        enabled: !nodeMenu.currentNode.locked
+                        onTriggered: uigraph.removeSelectedNodes()
+                        MaterialToolButton {
+                            id: removeFollowingButton
+                            height: parent.height
+                            anchors {
+                                right: parent.right
+                                rightMargin: parent.padding
+                            }
+                            text: MaterialIcons.fast_forward
+                            onClicked: {
+                                uigraph.removeNodesFrom(uigraph.getSelectedNodes())
+                                nodeMenu.close()
+                            }
+                        }
+                    }
+                    MenuSeparator {
+                        visible: nodeMenu.currentNode.isComputable
+                    }
+                    MenuItem {
+                        id: deleteDataMenuItem
+                        text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
+                        visible: nodeMenu.currentNode.isComputable
+                        height: visible ? implicitHeight : 0
+                        enabled: {
+                            if (!nodeMenu.currentNode)
+                                return false
+                            // Check if the current node is locked (needed because it does not belong to its own duplicates list)
+                            if (nodeMenu.currentNode.locked)
+                                return false
+                            // Check if at least one of the duplicate nodes is locked
+                            for (let i = 0; i < nodeMenu.currentNode.duplicates.count; ++i) {
+                                if (nodeMenu.currentNode.duplicates.at(i).locked)
+                                    return false
+                            }
+                            return true
+                        }
+
+                        onTriggered: nodeMenuLoader.showDataDeletionDialog(false)
+
+                        MaterialToolButton {
+                            id: deleteFollowingButton
+                            anchors {
+                                right: parent.right
+                                rightMargin: parent.padding
+                            }
+                            height: parent.height
+                            text: MaterialIcons.fast_forward
+                            onClicked: {
+                                nodeMenuLoader.showDataDeletionDialog(true);
+                                nodeMenu.close();
+                            }
+                        }
+
+                    }
+                }
+            }
+
+            // Confirmation dialog for node cache deletion
+            Component {
+                id: deleteDataDialog
+                MessageDialog  {
+                    property var node
+                    property bool deleteFollowing: false
+
+                    signal dataDeleted()
+
+                    focus: true
+                    modal: false
+                    header.visible: false
+
+                    text: "Delete Data of '" + node.label + "'" + (uigraph.nodeSelection.selectedIndexes.length > 1 ? " and other selected Nodes" : "") + (deleteFollowing ?  " and following Nodes?" : "?")
+                    helperText: "Warning: This operation cannot be undone."
+                    standardButtons: Dialog.Yes | Dialog.Cancel
+
+                    onAccepted: {
+                        if (deleteFollowing)
+                            uigraph.clearDataFrom(uigraph.getSelectedNodes());
+                        else
+                            uigraph.clearSelectedNodesData();
+                        dataDeleted();
+                    }
+                    onClosed: destroy()
                 }
             }
 
@@ -826,7 +827,8 @@ Item {
                 model: root.graph ? root.graph.nodes : undefined
 
                 property bool loaded: model ? count === model.count : false
-                property bool dragging: false
+                property bool ongoingDrag: false
+                property bool updateSelectionOnClick: false
                 property var temporaryEdgeAboutToBeRemoved: undefined
 
                 delegate: Node {
@@ -836,43 +838,78 @@ Item {
                     width: uigraph.layout.nodeWidth
 
                     mainSelected: uigraph.selectedNode === node
-                    selected: uigraph.selectedNodes.contains(node)
                     hovered: uigraph.hoveredNode === node
+
+                    // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
+                    selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
 
                     onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
                     onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
 
                     onPressed: function(mouse) {
-                        if (mouse.button === Qt.LeftButton) {
-                            if (mouse.modifiers & Qt.ControlModifier && !(mouse.modifiers & Qt.AltModifier)) {
-                                if (mainSelected && selected) {
-                                    // Left clicking a selected node twice with control will deselect it
-                                    uigraph.selectedNodes.remove(node)
-                                    uigraph.selectedNodesChanged()
-                                    selectNode(null)
-                                    return
-                                }
-                            } else if (mouse.modifiers & Qt.AltModifier) {
-                                if (!(mouse.modifiers & Qt.ControlModifier)) {
-                                    uigraph.clearNodeSelection()
-                                }
-                                uigraph.selectFollowing(node)
-                            } else if (!mainSelected && !selected) {
-                                uigraph.clearNodeSelection()
-                            }
-                        } else if (mouse.button === Qt.RightButton) {
-                            if (!mainSelected && !selected) {
-                                uigraph.clearNodeSelection()
-                            }
-                            nodeMenu.currentNode = node
-                            nodeMenu.popup()
+                        nodeRepeater.updateSelectionOnClick = true;
+                        nodeRepeater.ongoingDrag = true;
+
+                        let selectionMode = ItemSelectionModel.NoUpdate;
+
+                        if(!selected) {
+                            selectionMode = ItemSelectionModel.ClearAndSelect;
                         }
-                        selectNode(node)
+
+                        if (mouse.button === Qt.LeftButton) {
+                            if(mouse.modifiers & Qt.ShiftModifier) {
+                                selectionMode = ItemSelectionModel.Select;
+                            }
+                            if(mouse.modifiers & Qt.ControlModifier) {
+                                selectionMode = ItemSelectionModel.Toggle;
+                            }
+                            if(mouse.modifiers & Qt.AltModifier) {
+                                let selectFollowingMode = ItemSelectionModel.ClearAndSelect;
+                                if(mouse.modifiers & Qt.ShiftModifier) {
+                                    selectFollowingMode = ItemSelectionModel.Select;
+                                }
+                                uigraph.selectFollowing(node, selectFollowingMode);
+                                // Indicate selection has been dealt with by setting conservative Select mode.
+                                selectionMode = ItemSelectionModel.Select;
+                            }
+                        }
+                        else if (mouse.button === Qt.RightButton) {
+                            if(selected) {
+                                // Keep the full selection when right-clicking on an already selected node.
+                                nodeRepeater.updateSelectionOnClick = false;
+                            }
+                        }
+
+                        if(selectionMode != ItemSelectionModel.NoUpdate) {
+                            nodeRepeater.updateSelectionOnClick = false;
+                            uigraph.selectNodeByIndex(index, selectionMode);
+                        }
+
+                        // If the node is selected after this, make it the active selected node.
+                        if(selected) {
+                            uigraph.selectedNode = node;
+                        }
+
+                        // Open the node context menu once selection has been updated.
+                        if(mouse.button == Qt.RightButton) {
+                            nodeMenuLoader.load(node)
+                        }
+
+                    }
+
+                    onReleased: function(mouse, wasDragged) {
+                        nodeRepeater.ongoingDrag = false;
+                    }
+
+                    // Only called when the node has not been dragged.
+                    onClicked: function(mouse) {
+                        if(!nodeRepeater.updateSelectionOnClick) {
+                            return;
+                        }
+                        uigraph.selectNodeByIndex(index);
                     }
 
                     onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }
-
-                    onMoved: function(position) { uigraph.moveNode(node, position, uigraph.selectedNodes) }
 
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null
@@ -899,60 +936,55 @@ Item {
                         }
                     }
 
+                    // Interactive dragging: move the visual delegates
                     onPositionChanged: {
-                        if (dragging && uigraph.selectedNodes.contains(node)) {
-                            // Update all selected nodes positions with this node that is being dragged
-                            for (var i = 0; i < nodeRepeater.count; i++) {
-                                var otherNode = nodeRepeater.itemAt(i)
-                                if (uigraph.selectedNodes.contains(otherNode.node) && otherNode.node !== node) {
-                                    otherNode.x = otherNode.node.x + (x - node.x)
-                                    otherNode.y = otherNode.node.y + (y - node.y)
-                                }
-                            }
+                        if(!selected || !dragging) {
+                            return;
                         }
+                        // Compute offset between the delegate and the stored node position.
+                        const offset = Qt.point(x - node.x, y - node.y);
+
+                        uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+                            if(idx != index) {
+                                const delegate = nodeRepeater.itemAt(idx.row);
+                                delegate.x = delegate.node.x + offset.x;
+                                delegate.y = delegate.node.y + offset.y;
+                            }
+                        });
                     }
 
-                    // Allow all nodes to know if they are being dragged
-                    onDraggingChanged: nodeRepeater.dragging = dragging
+                    // After drag: apply the final offset to all selected nodes
+                    onMoved: function(position) {
+                        const offset = Qt.point(position.x - node.x, position.y - node.y);
+                        uigraph.moveSelectedNodesBy(offset);
+                    }
 
-                    // Must not be enabled during drag because the other nodes will be slow to match the movement of the node being dragged
                     Behavior on x {
-                        enabled: !nodeRepeater.dragging
+                        enabled: !nodeRepeater.ongoingDrag
                         NumberAnimation { duration: 100 }
                     }
                     Behavior on y {
-                        enabled: !nodeRepeater.dragging
+                        enabled: !nodeRepeater.ongoingDrag
                         NumberAnimation { duration: 100 }
                     }
                 }
             }
         }
 
-        Rectangle {
-            id: boxSelect
-            property int startX: 0
-            property int startY: 0
-            property int toX: boxSelectDraggable.x - startX
-            property int toY: boxSelectDraggable.y - startY
-
-            x: toX < 0 ? startX + toX : startX
-            y: toY < 0 ? startY + toY : startY
-            width: Math.abs(toX)
-            height: Math.abs(toY)
-
-            color: "transparent"
-            border.color: activePalette.text
-            visible: mouseArea.drag.target == boxSelectDraggable
-
-            onVisibleChanged: {
-                if (!visible) {
-                    uigraph.boxSelect(boxSelect, draggable)
+        DelegateSelectionBox {
+            id: nodeSelectionBox
+            mouseArea: mouseArea
+            modelInstantiator: nodeRepeater
+            container: draggable
+            onDelegateSelectionEnded: function(selectedIndices, modifiers) {
+                let selectionMode = ItemSelectionModel.ClearAndSelect;
+                if(modifiers & Qt.ShiftModifier) {
+                    selectionMode = ItemSelectionModel.Select;
+                } else if(modifiers & Qt.ControlModifier) {
+                    selectionMode = ItemSelectionModel.Deselect;
                 }
+                uigraph.selectNodesByIndices(selectedIndices, selectionMode);
             }
-        }
-
-        Item {
-            id: boxSelectDraggable
         }
 
         DropArea {

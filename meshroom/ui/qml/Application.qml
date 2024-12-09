@@ -30,21 +30,6 @@ Page {
         property alias showImageGallery: imageGalleryVisibilityCB.checked
     }
 
-    // Utility functions for elements in the menubar
-    function getSelectedNodesName() {
-        if (!_reconstruction)
-            return ""
-        var nodesName = ""
-        for (var i = 0; i < _reconstruction.selectedNodes.count; i++) {
-            if (nodesName !== "")
-                nodesName += ", "
-            var node = _reconstruction.selectedNodes.at(i)
-            if(node) {
-                nodesName += node.name
-            }
-        }
-        return nodesName
-    }
 
     property url imagesFolder: {
         var recentImportedImagesFolders = MeshroomApp.recentImportedImagesFolders
@@ -531,31 +516,21 @@ Page {
     Action {
         id: cutAction
 
-        property string tooltip: {
-            var s = "Copy selected node"
-            s += (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s (" : " (") + getSelectedNodesName()
-            s += ") to the clipboard and remove them from the graph"
-            return s
-        }
-        text: "Cut Node" + (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s " : " ")
-        enabled: _reconstruction ? _reconstruction.selectedNodes.count > 0 : false
+        property string tooltip: "Cut Selected Node(s)"
+        text: "Cut Node(s)"
+        enabled: _reconstruction ? _reconstruction.nodeSelection.hasSelection : false
         onTriggered: {
             graphEditor.copyNodes()
-            graphEditor.uigraph.removeNodes(graphEditor.uigraph.selectedNodes)
+            graphEditor.uigraph.removeSelectedNodes()
         }
     }
 
     Action {
         id: copyAction
 
-        property string tooltip: {
-            var s = "Copy selected node"
-            s += (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s (" : " (") + getSelectedNodesName()
-            s += ") to the clipboard"
-            return s
-        }
-        text: "Copy Node" + (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s " : " ")
-        enabled: _reconstruction ? _reconstruction.selectedNodes.count > 0 : false
+        property string tooltip: "Copy Selected Node(s)" 
+        text: "Copy Node(s)"
+        enabled: _reconstruction ? _reconstruction.nodeSelection.hasSelection : false
         onTriggered: graphEditor.copyNodes()
     }
 

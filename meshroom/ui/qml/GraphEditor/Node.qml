@@ -40,6 +40,8 @@ Item {
 
     // Mouse interaction related signals
     signal pressed(var mouse)
+    signal released(var mouse)
+    signal clicked(var mouse)
     signal doubleClicked(var mouse)
     signal moved(var position)
     signal entered()
@@ -125,8 +127,10 @@ Item {
         drag.threshold: 2
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onPressed: function(mouse) { root.pressed(mouse) }
-        onDoubleClicked: function(mouse) { root.doubleClicked(mouse) }
+        onPressed: (mouse) => root.pressed(mouse)
+        onReleased: (mouse) => root.released(mouse)
+        onClicked: (mouse) => root.clicked(mouse)
+        onDoubleClicked: (mouse) => root.doubleClicked(mouse)
         onEntered: root.entered()
         onExited: root.exited()
         drag.onActiveChanged: {

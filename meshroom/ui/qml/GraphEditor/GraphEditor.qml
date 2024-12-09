@@ -861,7 +861,7 @@ Item {
                                 selectionMode = ItemSelectionModel.Select;
                             }
                             if(mouse.modifiers & Qt.ControlModifier) {
-                                selectionMode = ItemSelectionModel.Deselect;
+                                selectionMode = ItemSelectionModel.Toggle;
                             }
                             if(mouse.modifiers & Qt.AltModifier) {
                                 uigraph.selectFollowing(node);

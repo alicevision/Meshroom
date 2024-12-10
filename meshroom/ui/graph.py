@@ -109,8 +109,11 @@ class FilesModTimePollerThread(QObject):
     def updatePluginEnvStatus(n):
         """ Will update the status of the plugin env """
         if n.nodeDesc is not None:
-            n.isEnvBuild=n.nodeDesc.isBuilt
-            n.buildStatusChanged.emit()
+            try:
+                n.isEnvBuild=n.nodeDesc.isBuilt
+                n.buildStatusChanged.emit()
+            except Exception as E:
+                logging.warn("Plugin status update failed, node may be already deleted")
 
     def run(self):
         """ Poll watched files for last modification time. """

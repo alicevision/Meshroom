@@ -267,7 +267,7 @@ class Graph(BaseObject):
         """
         self._loading = True
         try:
-            self._load(filepath, setupProjectFile, importProject, publishOutputs)
+            return self._load(filepath, setupProjectFile, importProject, publishOutputs)
         finally:
             self._loading = False
 

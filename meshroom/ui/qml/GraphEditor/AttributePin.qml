@@ -29,13 +29,13 @@ RowLayout {
     readonly property bool isList: attribute && attribute.type === "ListAttribute"
     readonly property bool isGroup: attribute && attribute.type === "GroupAttribute"
     readonly property bool isChild: attribute && attribute.root
+    readonly property bool isConnected: attribute.isLinkNested || attribute.hasOutputConnections
 
     signal childPinCreated(var childAttribute, var pin)
     signal childPinDeleted(var childAttribute, var pin)
 
     signal pressed(var mouse)
     signal edgeAboutToBeRemoved(var input)
-
     signal clicked()
 
     objectName: attribute ? attribute.name + "." : ""

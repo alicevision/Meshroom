@@ -242,9 +242,10 @@ Item {
          * it is reset.
          */
         if (Boolean(attribute.enabled)) {
-            // If the parent's a GroupAttribute, use status of the parent's pin to determine visibility
+            // If the parent's a GroupAttribute, use status of the parent's pin to determine visibility UNLESS the
+            // child attribute is already connected
             if (attribute.root && attribute.root.type === "GroupAttribute") {
-                var visible = Boolean(parentPins.get(attribute.root.name))
+                var visible = Boolean(parentPins.get(attribute.root.name) || attribute.hasOutputConnections || attribute.isLinkNested)
                 if (!visible && parentPins.has(attribute.name) && parentPins.get(attribute.name) === true) {
                     parentPins.set(attribute.name, false)
                     pin.expanded = false
@@ -264,8 +265,10 @@ Item {
         for (let i = 0; i < node.attributes.count; ++i) {
             let attr = node.attributes.at(i)
             if (attr.isOutput == isOutput) {
+                // Add the attribute to the model
                 attributes.push(attr)
                 if (attr.type === "GroupAttribute") {
+                    // If it is a GroupAttribute, initialize its pin status
                     parentPins.set(attr.name, false)
                 }
 
@@ -577,16 +580,17 @@ Item {
                             signal parentPinsUpdated()
 
                             Repeater {
-                                model: generateAttributesModel(true, outputs.parentPins)  // isOutput = true
+                                model: root.generateAttributesModel(true, outputs.parentPins)  // isOutput = true
 
                                 delegate: Loader {
                                     id: outputLoader
                                     active: Boolean(modelData.isOutput && modelData.desc.visible)
 
                                     visible: {
-                                        if (Boolean(modelData.enabled || modelData.hasOutputConnections)) {
+                                        if (Boolean(modelData.enabled || modelData.hasOutputConnections || modelData.isLinkNested)) {
                                             if (modelData.root && modelData.root.type === "GroupAttribute") {
-                                                return Boolean(outputs.parentPins.get(modelData.root.name))
+                                                return Boolean(outputs.parentPins.get(modelData.root.name) ||
+                                                               modelData.hasOutputConnections || modelData.isLinkNested)
                                             }
                                             return true
                                         }
@@ -611,14 +615,20 @@ Item {
                                         property real globalX: root.x + nodeAttributes.x + outputs.x + outputLoader.x + outPin.x
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
 
+                                        onIsConnectedChanged: function() {
+                                            outputs.parentPinsUpdated()
+                                        }
+
                                         onPressed: function(mouse) { root.pressed(mouse) }
-                                        onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
                                         onClicked: {
                                             expanded = !expanded
                                             if (outputs.parentPins.has(modelData.name)) {
                                                 outputs.parentPins.set(modelData.name, expanded)
                                                 outputs.parentPinsUpdated()
                                             }
+                                        }
+                                        onEdgeAboutToBeRemoved: function(input) {
+                                            root.edgeAboutToBeRemoved(input)
                                         }
 
                                         Component.onCompleted: attributePinCreated(attribute, outPin)
@@ -639,7 +649,7 @@ Item {
                             signal parentPinsUpdated()
 
                             Repeater {
-                                model: generateAttributesModel(false, inputs.parentPins)  // isOutput = false
+                                model: root.generateAttributesModel(false, inputs.parentPins)  // isOutput = false
 
                                 delegate: Loader {
                                     id: inputLoader
@@ -647,7 +657,8 @@ Item {
                                     visible: {
                                         if (Boolean(modelData.enabled)) {
                                             if (modelData.root && modelData.root.type === "GroupAttribute") {
-                                                return Boolean(inputs.parentPins.get(modelData.root.name))
+                                                return Boolean(inputs.parentPins.get(modelData.root.name) ||
+                                                               modelData.hasOutputConnections || modelData.isLinkNested)
                                             }
                                             return true
                                         }
@@ -671,6 +682,10 @@ Item {
                                         property real globalX: root.x + nodeAttributes.x + inputs.x + inputLoader.x + inPin.x
                                         property real globalY: root.y + nodeAttributes.y + inputs.y + inputLoader.y + inPin.y
 
+                                        onIsConnectedChanged: function() {
+                                            inputs.parentPinsUpdated()
+                                        }
+
                                         readOnly: Boolean(root.readOnly || object.isReadOnly)
                                         Component.onCompleted: attributePinCreated(attribute, inPin)
                                         Component.onDestruction: attributePinDeleted(attribute, inPin)
@@ -682,7 +697,10 @@ Item {
                                                 inputs.parentPinsUpdated()
                                             }
                                         }
-                                        onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
+                                        onEdgeAboutToBeRemoved: function(input) {
+                                            root.edgeAboutToBeRemoved(input)
+                                        }
+
                                         onChildPinCreated: function(childAttribute, inPin) { attributePinCreated(childAttribute, inPin) }
                                         onChildPinDeleted: function(childAttribute, inPin) { attributePinDeleted(childAttribute, inPin) }
                                     }
@@ -726,7 +744,7 @@ Item {
                                 signal parentPinsUpdated()
 
                                 Repeater {
-                                    model: generateAttributesModel(false, inputParams.parentPins)  // isOutput = false
+                                    model: root.generateAttributesModel(false, inputParams.parentPins)  // isOutput = false
 
                                     delegate: Loader {
                                         id: paramLoader
@@ -734,7 +752,8 @@ Item {
                                         visible: {
                                             if (Boolean(modelData.enabled || modelData.isLinkNested || modelData.hasOutputConnections)) {
                                                 if (modelData.root && modelData.root.type === "GroupAttribute") {
-                                                    return Boolean(inputParams.parentPins.get(modelData.root.name))
+                                                    return Boolean(inputParams.parentPins.get(modelData.root.name) ||
+                                                                   modelData.hasOutputConnections || modelData.isLinkNested)
                                                 }
                                                 return true
                                             }
@@ -759,6 +778,10 @@ Item {
                                             property real globalX: root.x + nodeAttributes.x + inputParamsRect.x + paramLoader.x + inParamsPin.x
                                             property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inParamsPin.y
 
+                                            onIsConnectedChanged: function() {
+                                                inputParams.parentPinsUpdated()
+                                            }
+
                                             height: isFullyActive ? childrenRect.height : 0
                                             Behavior on height { PropertyAnimation {easing.type: Easing.Linear} }
                                             visible: (height == childrenRect.height)
@@ -774,7 +797,10 @@ Item {
                                                     inputParams.parentPinsUpdated()
                                                 }
                                             }
-                                            onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
+                                            onEdgeAboutToBeRemoved: function(input) {
+                                                root.edgeAboutToBeRemoved(input)
+                                            }
+
                                             onChildPinCreated: function(childAttribute, inParamsPin) { attributePinCreated(childAttribute, inParamsPin) }
                                             onChildPinDeleted: function(childAttribute, inParamsPin) { attributePinDeleted(childAttribute, inParamsPin) }
                                         }

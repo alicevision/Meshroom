@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import Utils 1.0
+import MaterialIcons 2.2
 
 /**
  * The representation of an Attribute on a Node.
@@ -69,10 +70,6 @@ RowLayout {
             }
         }
         return label
-    }
-
-    onExpandedChanged: {
-        nameLabel.text = updateLabel()
     }
 
     // Instantiate empty Items for each child attribute
@@ -215,28 +212,65 @@ RowLayout {
         id: nameContainer
         implicitHeight: childrenRect.height
         Layout.fillWidth: true
-        Layout.alignment: Qt.AlignVCenter
+        Layout.alignment: {
+            if (attribute.isOutput) {
+                return Qt.AlignRight | Qt.AlignVCenter
+            }
+            return Qt.AlignLeft | Qt.AlignVCenter
+        }
 
-        Label {
+        MaterialToolLabel {
             id: nameLabel
+
+            anchors.rightMargin: 0
+            anchors.right: attribute && attribute.isOutput ? parent.right : undefined
+            labelIconRow.layoutDirection: attribute.isOutput ? Qt.RightToLeft : Qt.LeftToRight
+            labelIconRow.spacing: 0
 
             enabled: !root.readOnly
             visible: true
-            property bool hovered: (inputConnectMA.containsMouse || inputConnectMA.drag.active || inputDropArea.containsDrag || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag)
-            text: root.updateLabel()
-            elide: hovered ? Text.ElideNone : Text.ElideMiddle
-            width: hovered ? contentWidth : parent.width
-            font.pointSize: 7
-            font.italic: isChild ? true : false
-            horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
-            anchors.right: attribute && attribute.isOutput ? parent.right : undefined
-            rightPadding: 0
-            color: {
-                if ((object.hasOutputConnections || object.isLink) && !object.enabled)
+            property bool hovered: (inputConnectMA.containsMouse || inputConnectMA.drag.active ||
+                                    inputDropArea.containsDrag || outputConnectMA.containsMouse ||
+                                    outputConnectMA.drag.active || outputDropArea.containsDrag)
+
+            labelIconColor: {
+                if ((object.hasOutputConnections || object.isLink) && !object.enabled) {
                     return Colors.lightgrey
-                else if (hovered)
+                } else if (hovered) {
                     return palette.highlight
+                }
                 return palette.text
+            }
+            labelIconMouseArea.enabled: false  // Prevent mixing mouse interactions between the label and the pin context
+
+            // Text
+            label.text: attribute.label
+            label.font.pointSize: 7
+            label.elide: hovered ? Text.ElideNone : Text.ElideMiddle
+            label.horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+
+            // Icon
+            iconText: {
+                if (isGroup) {
+                    return expanded ? MaterialIcons.expand_more : MaterialIcons.chevron_right
+                }
+                return ""
+            }
+            iconSize: 7
+            icon.horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+
+            // Handle tree view for nested attributes
+            icon.leftPadding: {
+                if (attribute.depth != 0 && !attribute.isOutput) {
+                    return attribute.depth * 10
+                }
+                return 0
+            }
+            icon.rightPadding: {
+                if (attribute.depth != 0 && attribute.isOutput) {
+                    return attribute.depth * 10
+                }
+                return 0
             }
         }
     }

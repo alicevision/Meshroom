@@ -476,32 +476,12 @@ class Attribute(BaseObject):
         # Emit if the enable status has changed
         self.setEnabled(self.getEnabled())
 
-    def getFlattenedChildren(self):
+    def getFlatStaticChildren(self):
         """ Return a list of all the attributes that refer to this instance as their parent through
         the 'root' property. If no such attribute exist, return an empty list. The depth difference is not
         taken into account in the list, which is thus always flat. """
-        attributes = ListModel(parent=self)
-        if isinstance(self._value, str):
-            # String/File attributes are iterable but cannot have children: immediately rule that case out
-            return attributes
-
-        try:
-            # If self._value is not iterable, then it is not an attribute that can have children
-            iter(self._value)
-        except TypeError:
-            return attributes
-
-        for attribute in self._value:
-            if not isinstance(attribute, Attribute):
-                # Handle ChoiceParam values, which contained in a list hence iterable, but are string
-                continue
-            attributes.add(attribute)
-            if isinstance(attribute, ListAttribute) or isinstance(attribute, GroupAttribute):
-                # Handle nested ListAttributes and GroupAttributes
-                flattened = attribute.getFlattenedChildren()
-                for i in flattened:
-                    attributes.add(i)
-        return attributes
+        # For all attributes but GroupAttributes, there cannot be any child
+        return []
 
     def _is3D(self) -> bool:
         """ Return True if the current attribute is considered as a 3d file """
@@ -576,7 +556,7 @@ class Attribute(BaseObject):
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
     root = Property(BaseObject, root.fget, constant=True)
     depth = Property(int, getDepth, constant=True)
-    flattenedChildren = Property(BaseObject, getFlattenedChildren, constant=True)
+    flatStaticChildren = Property(Variant, getFlatStaticChildren, constant=True)
 
 
 def raiseIfLink(func):
@@ -991,6 +971,20 @@ class GroupAttribute(Attribute):
         for attr in self._value:
             attr.updateInternals()
 
+    def getFlatStaticChildren(self):
+        """ Return a list of all the attributes that refer to this instance of GroupAttribute as their parent
+        through the 'root' property. In the case of GroupAttributes, any attribute within said group will be
+        a child. The depth difference is not taken into account when generating the list, which is thus always
+        flat. """
+        attributes = []
+
+        # Iterate over the values and add the flat children of every child (if they exist)
+        for attribute in self._value:
+            attributes.append(attribute)
+            attributes = attributes + attribute.getFlatStaticChildren()
+
+        return attributes
+
     @Slot(str, result=bool)
     def matchText(self, text: str) -> bool:
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
@@ -998,3 +992,4 @@ class GroupAttribute(Attribute):
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+    flatStaticChildren = Property(Variant, getFlatStaticChildren, constant=True)

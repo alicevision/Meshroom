@@ -269,12 +269,13 @@ Item {
                     parentPins.set(attr.name, false)
                 }
 
-                for (let j = 0; j < attr.flattenedChildren.count; ++j) {
-                    attributes.push(attr.flattenedChildren.at(j))
-                    if (attr.flattenedChildren.at(j).type === "GroupAttribute") {
-                        parentPins.set(attr.flattenedChildren.at(j).name, false)
+                // Check and add any child this attribute might have
+                attr.flatStaticChildren.forEach((child) => {
+                    attributes.push(child)
+                    if (child.type === "GroupAttribute") {
+                        parentPins.set(child.name, false)
                     }
-                }
+                })
             }
         }
 

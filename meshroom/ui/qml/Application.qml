@@ -1269,6 +1269,7 @@ Page {
                     ScriptEditor {
                         id: scriptEditor
                         anchors.fill: parent
+                        rootApplication: root
 
                         visible: graphEditorPanel.currentTab === 2
                     }

@@ -14,8 +14,26 @@ import ScriptEditor 1.0
 Item {
     id: root
 
+    // Defines the parent or the root Application of which this script editor is a part of
+    property var rootApplication: undefined;
+
+    Component {
+        id: clearConfirmationDialog
+
+        MessageDialog {
+            title: "Clear history"
+
+            preset: "Warning"
+            text: "This will clear all history of executed scripts."
+            helperText: "Are you sure you would like to continue?."
+
+            standardButtons: Dialog.Ok | Dialog.Cancel
+            onClosed: destroy()
+        }
+    }
+
     function replace(text, string, replacement) {
-        /*
+        /**
          * Replaces all occurences of the string in the text
          * @param text - overall text
          * @param string - the string to be replaced in the text
@@ -28,7 +46,7 @@ Item {
     }
 
     function formatInput(text) {
-        /*
+        /**
          * Formats the text to be displayed as the input script executed
          */
 
@@ -37,12 +55,21 @@ Item {
     }
 
     function formatOutput(text) {
-        /*
+        /**
          * Formats the text to be displayed as the result of the script executed
          */
 
         // Replace the text to be RichText Supportive
         return "<font color=#49a1f3>" + "Result: " + replace(text, "\n", "<br>") + "</font><br><br>"
+    }
+
+    function clearHistory() {
+        /**
+         * Clears all of the executed history from the script editor
+         */
+        ScriptEditorManager.clearHistory()
+        input.clear()
+        output.clear()
     }
 
     function processScript(text = "") {
@@ -117,7 +144,7 @@ Item {
 
             MaterialToolButton {
                 font.pointSize: 18
-                text: MaterialIcons.download
+                text: MaterialIcons.file_open
                 ToolTip.text: "Load Script"
 
                 onClicked: {
@@ -127,7 +154,7 @@ Item {
 
             MaterialToolButton {
                 font.pointSize: 18
-                text: MaterialIcons.upload
+                text: MaterialIcons.save
                 ToolTip.text: "Save Script"
 
                 onClicked: {
@@ -142,7 +169,7 @@ Item {
             MaterialToolButton {
                 id: executeButton
                 font.pointSize: 18
-                text: MaterialIcons.slideshow
+                text: MaterialIcons.play_arrow
                 ToolTip.text: "Execute Script"
 
                 onClicked: {
@@ -152,7 +179,7 @@ Item {
 
             MaterialToolButton {
                 font.pointSize: 18
-                text: MaterialIcons.cancel_presentation
+                text: MaterialIcons.backspace
                 ToolTip.text: "Clear Output Window"
 
                 onClicked: {
@@ -196,13 +223,14 @@ Item {
 
             MaterialToolButton {
                 font.pointSize: 18
-                text: MaterialIcons.backspace
+                text: MaterialIcons.delete_sweep
                 ToolTip.text: "Clear History"
 
                 onClicked: {
-                    ScriptEditorManager.clearHistory()
-                    input.clear()
-                    output.clear()
+                    // Confirm from the user before clearing out any history
+                    const confirmationDialog = clearConfirmationDialog.createObject(rootApplication ? rootApplication : root);
+                    confirmationDialog.accepted.connect(clearHistory);
+                    confirmationDialog.open();
                 }
             }
 

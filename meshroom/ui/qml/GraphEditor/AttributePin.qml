@@ -50,14 +50,6 @@ RowLayout {
         x: nameLabel.x
     }
 
-    function updatePin(isSrc, isVisible) {
-        if (isSrc) {
-            innerOutputAnchor.linkEnabled = isVisible
-        } else {
-            innerInputAnchor.linkEnabled = isVisible
-        }
-    }
-
     function updateLabel() {
         var label = ""
         var expandedGroup = expanded ? "-" : "+"

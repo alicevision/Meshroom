@@ -519,18 +519,6 @@ Item {
                             }
                         }
                     }
-
-                    Component.onDestruction: {
-                        // Handles the case where the edge is destroyed while hidden because it is replaced: the pins should be re-enabled
-                        if (!_window.isClosing) {
-                            // When the window is closing, the QML context becomes invalid, which causes function calls to result in errors
-                            if (src && src !== undefined)
-                                src.updatePin(true, true)  // isSrc = true, isVisible = true
-                            if (dst && dst !== undefined)
-                                dst.updatePin(false, true)  // isSrc = false, isVisible = true
-                        }
-                    }
-
                 }
             }
 

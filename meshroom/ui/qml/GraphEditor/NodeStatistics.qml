@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import Controls 1.0
+import Utils 1.0
 
 /**
  * NodeStatistics displays statistics data of Node's chunks (NodeChunks).

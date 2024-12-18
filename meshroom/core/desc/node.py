@@ -5,7 +5,7 @@ import shlex
 from typing import List, Union
 
 from .computation import Level, StaticNodeSize
-from .attribute import StringParam, ColorParam
+from .attribute import StringParam, ColorParam, IntParam, FloatParam
 
 from meshroom.core import cgroup
 
@@ -19,6 +19,9 @@ class Traits(enum.IntEnum):
 
     # Incomputable: Characterisics that does not need processing
     INCOMPUTABLE = 2
+
+    # Resizable: Characterisics that allows node's dimensions to be adjusted 
+    RESIZABLE = 3
 
 
 class AttributeFactory:
@@ -64,13 +67,40 @@ class AttributeFactory:
         )
     ]
 
+    RESIZABLE = [
+        IntParam(
+            name="fontSize",
+            label="Font Size",
+            description="The Font size for the User Comment.",
+            value=12,
+            range=(6, 100, 1),
+        ),
+        FloatParam(
+            name="nodeWidth",
+            label="Node Width",
+            description="The Node's Width.",
+            value=600,
+            range=None,
+            enabled=False # Hidden always
+        ),
+        FloatParam(
+            name="nodeHeight",
+            label="Node Height",
+            description="The Node's Height.",
+            value=400,
+            range=None,
+            enabled=False # Hidden always
+        ),
+    ]
+
     @classmethod
-    def getInternalParameters(cls, traits: Traits) -> List[Union[StringParam, ColorParam]]:
+    def getInternalParameters(cls, traits: Traits) -> List[Union[StringParam, ColorParam, IntParam, FloatParam]]:
         """ Returns an array of Attributes characterized by a given trait.
         """
         paramMap = {
             Traits.COMPUTABLE: cls.INVALIDATION + cls.BASIC,
             Traits.INCOMPUTABLE: cls.BASIC,
+            Traits.RESIZABLE: cls.BASIC + cls.RESIZABLE
         }
 
         return paramMap.get(traits)

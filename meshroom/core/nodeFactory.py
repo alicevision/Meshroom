@@ -3,7 +3,7 @@ from typing import Any, Iterable, Optional, Union
 
 import meshroom.core
 from meshroom.core import Version, desc
-from meshroom.core.node import CompatibilityIssue, CompatibilityNode, Node, Position
+from meshroom.core.node import Backdrop, BaseNode, CompatibilityIssue, CompatibilityNode, Node, Position
 
 
 def nodeFactory(
@@ -27,6 +27,28 @@ def nodeFactory(
         The created Node instance.
     """
     return _NodeCreator(nodeData, name, inTemplate, expectedUid).create()
+
+
+def createNode(nodeType: str, position: Optional[Position]=None, **kwargs) -> BaseNode:
+    """ Create a new Node instance based on given node description.
+        Any other keyword argument will be used to initialize the node's attributes.
+
+    Args:
+        nodeType: Node Plugin/Descriptor name.
+        position: Node Position.
+        parent (BaseObject): this Node's parent.
+        **kwargs: attributes values.
+
+    Returns:
+        The created Node.
+    """
+    constructors = {
+        "Backdrop": Backdrop,
+    }
+    # Node constructor based on NodeType
+    constructor = constructors.get(nodeType, Node)
+
+    return constructor(nodeType, position=position, **kwargs)
 
 
 class _NodeCreator:
@@ -168,7 +190,7 @@ class _NodeCreator:
 
     def _createNode(self) -> Node:
         logging.info(f"Creating node '{self.name}'")
-        return Node(
+        return createNode(
             self.nodeType,
             position=self.position,
             uid=self.uid,

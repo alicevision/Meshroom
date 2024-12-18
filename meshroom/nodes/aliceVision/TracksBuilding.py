@@ -19,6 +19,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             label="SfMData",
             description="Input SfMData file.",
             value="",
+            exposed=True,
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -42,6 +43,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             name="matchesFolders",
             label="Matches Folders",
             description="Folder(s) in which computed matches are stored.",
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="describerTypes",
@@ -51,6 +53,7 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             value=["dspsift"],
             exclusive=False,
             joinChar=",",
+            exposed=True,
         ),
         desc.IntParam(
             name="minInputTrackLength",

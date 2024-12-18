@@ -20,6 +20,7 @@ except Exception:
 
 from meshroom.core.submitter import BaseSubmitter
 from . import desc
+from .desc import builtins
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
@@ -337,6 +338,9 @@ def initNodes():
     for f in nodesFolders:
         loadAllNodes(folder=f)
 
+    # Load all of the builtin Node Plugins
+    initBuiltinNodePlugins()
+
 
 def initSubmitters():
     meshroomFolder = os.path.dirname(os.path.dirname(__file__))
@@ -357,3 +361,8 @@ def initPipelines():
             loadPipelineTemplates(f)
         else:
             logging.error("Pipeline templates folder '{}' does not exist.".format(f))
+
+def initBuiltinNodePlugins():
+    """ Registers the Builtin plugins for Meshroom.
+    """
+    registerNodeType(builtins.Backdrop)

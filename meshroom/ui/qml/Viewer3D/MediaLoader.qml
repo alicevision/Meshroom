@@ -108,7 +108,8 @@ import Utils 1.0
             Component.onCompleted: {
                 var obj = Viewer3DSettings.sfmDataLoaderComp.createObject(sfmDataLoaderEntity, {
                                                "source": source,
-                                               "pointSize": Qt.binding(function() { return 0.01 * Viewer3DSettings.pointSize }),
+                                               "fixedPointSize": Qt.binding(function() { return Viewer3DSettings.fixedPointSize }),
+                                               "pointSize": Qt.binding(function() { return Viewer3DSettings.pointSize }),
                                                "locatorScale": Qt.binding(function() { return Viewer3DSettings.cameraScale }),
                                                "cameraPickingEnabled": Qt.binding(function() { return root.enabled && root.cameraPickingEnabled }),
                                                "resectionId": Qt.binding(function() { return Viewer3DSettings.resectionId }),

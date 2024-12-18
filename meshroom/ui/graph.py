@@ -666,12 +666,37 @@ class UIGraph(QObject):
         """
         self.push(commands.MoveNodeCommand(self._graph, node, position))
 
+    @Slot(Node, float, float)
+    def resizeNode(self, node, width, height):
+        """ Resizes the Node.
+
+        Args:
+            node (Node): the node to move
+            width (float): Node width.
+            height (float): Node height.
+        """
+        # Update the node size
+        with self.groupedGraphModification("Resize Node"):
+            if node.hasInternalAttribute("nodeWidth"):
+                self.setAttribute(node.internalAttribute("nodeWidth"), width)
+            if node.hasInternalAttribute("nodeHeight"):
+                self.setAttribute(node.internalAttribute("nodeHeight"), height)
+
     @Slot(QPoint)
     def moveSelectedNodesBy(self, offset: QPoint):
         """Move all the selected nodes by the given `offset`."""
 
         with self.groupedGraphModification("Move Selected Nodes"):
             for node in self.iterSelectedNodes():
+                position = Position(node.x + offset.x(), node.y + offset.y())
+                self.moveNode(node, position)
+
+    @Slot(list, QPoint)
+    def moveNodesBy(self, nodes, offset: QPoint):
+        """Move all the selected nodes by the given `offset`."""
+
+        with self.groupedGraphModification("Move Nodes"):
+            for node in nodes:
                 position = Position(node.x + offset.x(), node.y + offset.y())
                 self.moveNode(node, position)
 

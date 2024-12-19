@@ -293,6 +293,8 @@ Item {
                                 searchBar.forceActiveFocus()
                         }
                     }
+                    // Set the priority ordering of the keys to be Item's own Key Handling > ForwardTo
+                    Keys.priority: Keys.AfterItem;
                     // Create node on mouse click
                     onClicked: newNodeMenu.createNode(modelData)
 

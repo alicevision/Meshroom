@@ -77,15 +77,8 @@ class Attribute(BaseObject):
         self._description: str = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
-        self._exposed = attributeDesc.exposed
-        self._depth = 0
-        if root is not None:
-            current = self
-            while current.root is not None:
-                self._depth += 1
-                if current.root.exposed != self._exposed:
-                    self._exposed = current.root.exposed
-                current = current.root
+        self._exposed = root.exposed if root is not None else attributeDesc.exposed
+        self._depth = root.depth + 1 if root is not None else 0
 
         # invalidation value for output attributes
         self._invalidationValue = ""

@@ -8,6 +8,7 @@ from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
 from PySide6.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
 from PySide6.QtGui import QIcon
+from PySide6.QtQml import QQmlDebuggingEnabler
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtWidgets import QApplication
 
@@ -15,6 +16,8 @@ import meshroom
 from meshroom.core import nodesDesc
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
+
+from meshroom.env import EnvVar
 
 from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
@@ -192,6 +195,11 @@ class MeshroomApp(QApplication):
 
         args = createMeshroomParser(inputArgs)
         qtArgs = []
+    
+        if EnvVar.get(EnvVar.MESHROOM_QML_DEBUG):
+            debuggerParams = EnvVar.get(EnvVar.MESHROOM_QML_DEBUG_PARAMS)
+            self.debugger = QQmlDebuggingEnabler(printWarning=True)
+            qtArgs = [f"-qmljsdebugger={debuggerParams}"]
 
         logStringToPython = {
             'fatal': logging.FATAL,

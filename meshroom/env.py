@@ -4,8 +4,10 @@ Meshroom environment variable management.
 
 __all__ = [
     "EnvVar",
+    "EnvVarHelpAction",
 ]
 
+import argparse
 import os
 from dataclasses import dataclass
 from enum import Enum
@@ -51,3 +53,18 @@ class EnvVar(Enum):
             return value.lower() in {"true", "1", "on"}
         return valueType(value)
 
+    @classmethod
+    def help(cls) -> str:
+        """Return a formatted string with the details of each environment variables."""
+        return "\n".join([f"{var.name}: {var.value}" for var in cls])
+
+
+class EnvVarHelpAction(argparse.Action):
+    """Argparse action for printing Meshroom environment variables help and exit."""
+
+    DEFAULT_HELP = "Print Meshroom environment variables help and exit."
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        print("Meshroom environment variables:")
+        print(EnvVar.help())
+        sys.exit(0)

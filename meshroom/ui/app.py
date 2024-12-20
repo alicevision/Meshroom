@@ -17,7 +17,7 @@ from meshroom.core import nodesDesc
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
 
-from meshroom.env import EnvVar
+from meshroom.env import EnvVar, EnvVarHelpAction
 
 from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
@@ -183,6 +183,14 @@ Additional Resources:
         default=os.environ.get('MESHROOM_DEFAULT_PIPELINE', ''),
         help='Select the default Meshroom pipeline:\n'
         + '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates]),
+    )
+
+    advanced_group = parser.add_argument_group("Advanced Options")
+    advanced_group.add_argument(
+        "--env-help",
+        action=EnvVarHelpAction,
+        nargs=0,
+        help=EnvVarHelpAction.DEFAULT_HELP,
     )
 
     return parser.parse_args(args[1:])

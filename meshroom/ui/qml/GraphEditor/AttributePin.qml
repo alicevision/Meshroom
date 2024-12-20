@@ -45,6 +45,7 @@ RowLayout {
     ToolTip {
         text: attribute.fullName + ": " + attribute.type
         visible: nameLabel.hovered
+        delay: 500
 
         y: nameLabel.y + nameLabel.height
         x: nameLabel.x

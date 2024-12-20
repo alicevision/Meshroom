@@ -8,6 +8,7 @@ from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
 from PySide6.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
 from PySide6.QtGui import QIcon
+from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtWidgets import QApplication
 
 import meshroom
@@ -186,12 +187,11 @@ Additional Resources:
 
 class MeshroomApp(QApplication):
     """ Meshroom UI Application. """
-    def __init__(self, args):
+    def __init__(self, inputArgs):
         meshroom.core.initPipelines()
 
-        QtArgs = [args[0], '-style', 'Fusion'] + args[1:]  # force Fusion style by default
-
-        args = createMeshroomParser(args)
+        args = createMeshroomParser(inputArgs)
+        qtArgs = []
 
         logStringToPython = {
             'fatal': logging.FATAL,
@@ -203,7 +203,7 @@ class MeshroomApp(QApplication):
         }
         logging.getLogger().setLevel(logStringToPython[args.verbose])
 
-        super(MeshroomApp, self).__init__(QtArgs)
+        super(MeshroomApp, self).__init__(inputArgs[:1] + qtArgs)
 
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
@@ -212,6 +212,9 @@ class MeshroomApp(QApplication):
         font = self.font()
         font.setPointSize(9)
         self.setFont(font)
+
+        # Use Fusion style by default.
+        QQuickStyle.setStyle("Fusion")
 
         pwd = os.path.dirname(__file__)
         self.setWindowIcon(QIcon(os.path.join(pwd, "img/meshroom.svg")))

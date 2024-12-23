@@ -62,6 +62,24 @@ Page {
         }
     }
 
+    Component {
+        id: permissionsDialog
+
+        MessageDialog {
+            title: "Permission Denied"
+
+            required property string filepath
+
+            preset: "Warning"
+            text: "The location does not exist or you do not have necessary permissions to save to the provided filepath."
+            detailedText: "Filepath: " + filepath
+            helperText: "Please check the location or permissions and try again or choose a different location."
+
+            standardButtons: Dialog.Ok
+            onClosed: destroy()
+        }
+    }
+
     function validateFilepathForSave(filepath: string, sourceSaveDialog: Dialog): bool {
         /**
          * Return true if `filepath` is valid for saving a file to disk.
@@ -70,19 +88,35 @@ Page {
          */
         const emptyFilename = Filepath.basename(filepath).trim() === ".mg";
 
-        // Provided filename is valid
-        if (!emptyFilename) {
-            return true
+        // Provided filename is not valid
+        if (emptyFilename) {
+            // Instantiate the Warning Dialog with the provided filepath
+            const warningDialog = invalidFilepathDialog.createObject(root, {"filepath": Filepath.urlToString(filepath)});
+
+            // And open the dialog
+            warningDialog.closed.connect(sourceSaveDialog.open);
+            warningDialog.open();
+
+            return false;
         }
 
-        // Instantiate the Warning Dialog with the provided filepath
-        const warningDialog = invalidFilepathDialog.createObject(root, {"filepath": Filepath.urlToString(filepath)});
+        // Check if the user has access to the directory where the file is to be saved
+        const hasPermission = Filepath.accessible(Filepath.dirname(filepath));
 
-        // And open the dialog
-        warningDialog.closed.connect(sourceSaveDialog.open);
-        warningDialog.open();
+        // Either the directory does not exist or is inaccessible for the user
+        if (!hasPermission) {
+            // Intantiate the permissions dialog with the provided filepath
+            const warningDialog = permissionsDialog.createObject(root, {"filepath": Filepath.urlToString(filepath)});
 
-        return false
+            // Connect and show the dialog
+            warningDialog.closed.connect(sourceSaveDialog.open);
+            warningDialog.open();
+
+            return false;
+        }
+
+        // Everything is valid
+        return true;
     }
 
     // File dialogs

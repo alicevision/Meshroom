@@ -372,6 +372,9 @@ Panel {
 
             property bool isComputable: root.node !== null && root.node.isComputable
 
+            // The indices of the tab bar which can be shown for incomputable nodes
+            readonly property var nonComputableTabIndices: [0, 4, 5];
+
             Layout.fillWidth: true
             width: childrenRect.width
             position: TabBar.Footer
@@ -415,9 +418,11 @@ Panel {
                 rightPadding: leftPadding
             }
 
-            onIsComputableChanged: {
-                if (!isComputable) {
-                    tabBar.currentIndex = 0
+            onVisibleChanged: {
+                // If we have a node selected and the node is not Computable
+                // Reset the currentIndex to 0, if the current index is not allowed for an incomputable node
+                if ((root.node && !root.node.isComputable) && (nonComputableTabIndices.indexOf(tabBar.currentIndex) === -1)) {
+                    tabBar.currentIndex = 0;
                 }
             }
         }

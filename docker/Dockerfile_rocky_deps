@@ -1,0 +1,46 @@
+ARG AV_VERSION
+ARG CUDA_VERSION
+ARG ROCKY_VERSION
+FROM alicevision/alicevision:${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}
+LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
+
+# Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
+# docker run -it --runtime=nvidia meshroom
+
+ENV MESHROOM_DEV=/opt/Meshroom \
+    MESHROOM_BUILD=/tmp/Meshroom_build \
+    QT_DIR=/opt/Qt/6.6.3/gcc_64 \
+    QT_CI_LOGIN=alicevisionjunk@gmail.com \
+    QT_CI_P=azerty1.
+
+# Install libs needed by Qt
+RUN dnf update -y
+RUN dnf install -y flex fontconfig freetype
+RUN dnf install -y glib2-devel libICE
+RUN dnf install -y libX11 libXext libXi libXrender libSM
+RUN dnf install -y libXt-devel mesa-libGLU-devel mesa-libOSMesa-devel mesa-libGL-devel mesa-libEGL-devel
+RUN dnf install -y zlib-devel systemd openssh-server
+RUN dnf install -y libxcb-devel \
+                   libxkbcommon-devel \
+                   libxkbcommon-x11-devel \
+                   xcb-util-wm xcb-util-image \
+                   xcb-util-keysyms \
+                   xcb-util-renderutil
+
+# Install Qt (to build plugins)
+WORKDIR /tmp/qt
+COPY dl/qt.run /tmp/qt
+RUN chmod +x qt.run
+RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses \
+    --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore --no-force-installations --no-default-installations --confirm-command \
+    install qt.qt6.663.gcc_64 qt.qt6.663.addons.qtcharts qt.qt6.663.addons.qt3d
+RUN rm qt.run
+
+# Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023
+RUN find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
+
+COPY ./*requirements.txt ./setup.py ${MESHROOM_DEV}/
+
+# Install Meshroom requirements and freeze bundle
+WORKDIR "${MESHROOM_DEV}"
+RUN python3 -m pip install -r dev_requirements.txt -r requirements.txt

@@ -9,12 +9,9 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
-    QT_DIR=/opt/Qt/5.15.2/gcc_64 \
+    QT_DIR=/opt/Qt/6.6.3/gcc_64 \
     QT_CI_LOGIN=alicevisionjunk@gmail.com \
     QT_CI_P=azerty1.
-
-# Workaround for QtAliceVision builds: fuse lib/lib64 folders
-#RUN ln -s ${AV_INSTALL}/lib ${AV_INSTALL}/lib64
 
 # Install libs needed by Qt
 RUN apt-get update && \
@@ -29,19 +26,29 @@ RUN apt-get update && \
         libxext6 \
         libxi6 \
         libxrender1 \
-        libsm6 \
+        libsm6
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         libxt-dev \
-        libglu-dev \
         libosmesa-dev \
         libgl-dev \
+        libegl-dev \
         libglu-dev \
-	libqt5charts5-dev \
+        libxkbcommon-x11-0 \
+        libz-dev \
+        systemd \
+        ssh
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
+        libxcb1-dev \
+        libxcb-icccm4 \
+        libxcb-render-util0 \
+        libxcb-shape0 \
         libxcb-keysyms1 \
         libxcb-image0 \
-        libxkbcommon-x11-0 \
-	libz-dev \
-	systemd \
-	ssh
+        libxkbcommon-dev
 
 RUN apt-get install -y --no-install-recommends \
 	software-properties-common
@@ -54,13 +61,15 @@ WORKDIR /tmp/qt
 COPY dl/qt.run /tmp/qt
 RUN chmod +x qt.run
 RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses \
-    --default-answer --platform minimal --no-force-installations --no-default-installations --confirm-command \
-    install qt.qt5.5152.gcc_64 qt.qt5.5152.qtcharts qt.qt5.5152.qtcharts.gcc_64
+    --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore --no-force-installations --no-default-installations --confirm-command \
+    install qt.qt6.663.gcc_64 qt.qt6.663.addons.qtcharts qt.qt6.663.addons.qt3d
 RUN rm qt.run
+
+# Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023
+RUN find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
 
 COPY ./*requirements.txt ./setup.py ${MESHROOM_DEV}/
 
 # Install Meshroom requirements and freeze bundle
 WORKDIR "${MESHROOM_DEV}"
 RUN pip install -r dev_requirements.txt -r requirements.txt
-

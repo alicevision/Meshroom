@@ -13,7 +13,7 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
     AV_INSTALL=/opt/AliceVision_install \
-    QT_DIR=/opt/Qt/5.15.2/gcc_64 \
+    QT_DIR=/opt/Qt/6.6.3/gcc_64 \
     PATH="${PATH}:${MESHROOM_BUNDLE}" \
     OPENIMAGEIO_LIBRARY=/opt/AliceVision_install/lib
 
@@ -26,17 +26,16 @@ COPY ./bin ${MESHROOM_DEV}/bin
 WORKDIR ${MESHROOM_DEV}
 
 RUN python3 setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
-        find ${MESHROOM_BUNDLE} -name "*Qt5Web*" -delete && \
-        find ${MESHROOM_BUNDLE} -name "*Qt5Designer*" -delete && \
-        rm -rf ${MESHROOM_BUNDLE}/lib/PySide2/typesystems/ \
-                ${MESHROOM_BUNDLE}/lib/PySide2/examples/ \
-                ${MESHROOM_BUNDLE}/lib/PySide2/include/ \
-                ${MESHROOM_BUNDLE}/lib/PySide2/Qt/translations/ \
-                ${MESHROOM_BUNDLE}/lib/PySide2/Qt/resources/ \
-                ${MESHROOM_BUNDLE}/lib/PySide2/QtWeb* \
-                ${MESHROOM_BUNDLE}/lib/PySide2/pyside2-lupdate \
-                ${MESHROOM_BUNDLE}/lib/PySide2/rcc \
-                ${MESHROOM_BUNDLE}/lib/PySide2/designer
+        find ${MESHROOM_BUNDLE} -name "*Qt6Web*" -delete && \
+        find ${MESHROOM_BUNDLE} -name "*Qt6Designer*" -delete && \
+        rm -rf ${MESHROOM_BUNDLE}/lib/PySide6/typesystems/ \
+                ${MESHROOM_BUNDLE}/lib/PySide6/examples/ \
+                ${MESHROOM_BUNDLE}/lib/PySide6/include/ \
+                ${MESHROOM_BUNDLE}/lib/PySide6/Qt/translations/ \
+                ${MESHROOM_BUNDLE}/lib/PySide6/Qt/resources/ \
+                ${MESHROOM_BUNDLE}/lib/PySide6/QtWeb* \
+                ${MESHROOM_BUNDLE}/lib/PySide6/rcc \
+                ${MESHROOM_BUNDLE}/lib/PySide6/designer
 
 WORKDIR ${MESHROOM_BUILD}
 
@@ -52,9 +51,6 @@ RUN make "-j$(nproc)" && \
 		${MESHROOM_BUNDLE}/aliceVision/share/libraw \
 		${MESHROOM_BUNDLE}/aliceVision/share/man/ \
 		aliceVision/share/pkgconfig
-
-# Copy missing libassimpsceneimport.so
-COPY dl/libassimpsceneimport.so ${MESHROOM_BUNDLE}/lib/PySide2/Qt/plugins/sceneparsers
 
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine

@@ -59,6 +59,13 @@ class FilepathHelper(QObject):
 
     @Slot(str, result=bool)
     @Slot(QUrl, result=bool)
+    def accessible(self, path):
+        """ Returns whether a path is accessible for the user """
+        path = self.asStr(path)
+        return os.path.isdir(self.asStr(path)) and os.access(path, os.R_OK) and os.access(path, os.W_OK)
+
+    @Slot(str, result=bool)
+    @Slot(QUrl, result=bool)
     def isFile(self, path):
         """ Test whether a path is a regular file """
         return os.path.isfile(self.asStr(path))

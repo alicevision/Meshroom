@@ -11,7 +11,7 @@
             "DepthMap": "5.0",
             "DepthMapFilter": "4.0",
             "ExportAnimatedCamera": "2.0",
-            "ExportDistortion": "1.0",
+            "ExportDistortion": "2.0",
             "FeatureExtraction": "1.3",
             "FeatureMatching": "2.0",
             "ImageDetectionPrompt": "0.1",

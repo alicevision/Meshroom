@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
@@ -26,6 +26,12 @@ It also allows to export an undistorted image of the lens grids for validation.
             description="Export Nuke LensDistortion node as nuke file.\n"
                         "Only supports 3DEqualizer lens models.",
             value=True,
+        ),
+        desc.BoolParam(
+            name="exportAnimatedNukeNode",
+            label="Export Animated Nuke Node",
+            description="Export animated distortion for this sequence as nuke file.",
+            value=False,
         ),
         desc.BoolParam(
             name="exportLensGridsUndistorted",

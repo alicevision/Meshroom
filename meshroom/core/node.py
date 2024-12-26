@@ -501,6 +501,7 @@ class BaseNode(BaseObject):
 
         self.packageName = self.packageVersion = ""
         self._internalFolder = ""
+        self._sourceCodeFolder = ""
 
         self._name = None
         self.graph = None
@@ -1039,6 +1040,10 @@ class BaseNode(BaseObject):
     def internalFolder(self):
         return self._internalFolder.format(**self._cmdVars)
 
+    @property
+    def sourceCodeFolder(self):
+        return self._sourceCodeFolder
+
     def updateStatusFromCache(self):
         """
         Update node status based on status file content/existence.
@@ -1441,6 +1446,7 @@ class Node(BaseNode):
         self.packageName = self.nodeDesc.packageName
         self.packageVersion = self.nodeDesc.packageVersion
         self._internalFolder = self.nodeDesc.internalFolder
+        self._sourceCodeFolder = self.nodeDesc.sourceCodeFolder
 
         for attrDesc in self.nodeDesc.inputs:
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))

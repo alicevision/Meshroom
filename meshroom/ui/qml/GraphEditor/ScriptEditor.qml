@@ -118,7 +118,7 @@ Item {
                 ToolTip.text: "Execute Script"
 
                 onClicked: {
-                    processScript()
+                    root.processScript()
                 }
             }
 
@@ -285,9 +285,9 @@ Item {
                             root.forceActiveFocus()
                         }
 
-                        Keys.onPressed: {
+                        Keys.onPressed: function(event) {
                             if ((event.key === Qt.Key_Enter || event.key === Qt.Key_Return) && event.modifiers === Qt.ControlModifier) {
-                                processScript()
+                                root.processScript()
                             }
                         }
                     }

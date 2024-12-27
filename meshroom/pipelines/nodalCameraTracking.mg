@@ -5,7 +5,7 @@
         "template": true,
         "nodesVersions": {
             "ApplyCalibration": "1.0",
-            "CameraInit": "11.0",
+            "CameraInit": "12.0",
             "CheckerboardDetection": "1.0",
             "ConvertSfMFormat": "2.0",
             "DistortionCalibration": "5.0",

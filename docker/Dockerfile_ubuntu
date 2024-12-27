@@ -14,8 +14,7 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
     AV_INSTALL=/opt/AliceVision_install \
     QT_DIR=/opt/Qt/6.6.3/gcc_64 \
-    PATH="${PATH}:${MESHROOM_BUNDLE}" \
-    OPENIMAGEIO_LIBRARY=/opt/AliceVision_install/lib
+    PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 COPY *.txt *.md *.py ${MESHROOM_DEV}/
 COPY ./docs ${MESHROOM_DEV}/docs
@@ -52,6 +51,24 @@ RUN make "-j$(nproc)" && \
 		${MESHROOM_BUNDLE}/aliceVision/share/man/ \
 		aliceVision/share/pkgconfig
 
+# Download meshroomNodes and the models, install the requirements and set all the variables
+WORKDIR ${MESHROOM_BUNDLE}
+RUN git clone https://github.com/alicevision/meshroomNodes.git meshroomNodes
+RUN pip install --upgrade setuptools
+RUN pip install -r meshroomNodes/requirements.txt
+RUN rm meshroomNodes/requirements.txt meshroomNodes/setup.py
+ENV MESHROOM_NODES_PATH="${MESHROOM_BUNDLE}/meshroomNodes/meshroom/nodes"
+ENV PYTHONPATH="${PYTHONPATH}:${MESHROOM_BUNDLE}/meshroomNodes"
+
+RUN git clone https://gitlab.com/alicevision/imagepromptnnmodels.git imagePromptNNModels
+RUN rm imagePromptNNModels/.gitattributes
+ENV RDS_RECOGNITION_MODEL_PATH="${MESHROOM_BUNDLE}/imagePromptNNModels/models/ram_plus_swin_large_14m.pth"
+ENV RDS_DETECTION_CONFIG_PATH="${MESHROOM_BUNDLE}/imagePromptNNModels/models/models/GroundingDINO_SwinT_OGC.py"
+ENV RDS_DETECTION_MODEL_PATH="${MESHROOM_BUNDLE}/imagePromptNNModels/models/groundingdino_swint_ogc.pth"
+ENV RDS_SEGMENTATION_MODEL_PATH="${MESHROOM_BUNDLE}/imagePromptNNModels/models/sam_vit_h_4b8939.pth"
+ENV RDS_TOKENIZER_PATH="${MESHROOM_BUNDLE}/imagePromptNNModels/models/tokenizer"
+ENV TRANSFORMERS_OFFLINE="TRUE"
+
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine
 RUN apt install ssh xauth && \
@@ -65,4 +82,3 @@ WORKDIR /root
 
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
-

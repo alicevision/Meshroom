@@ -7,14 +7,14 @@ test -z "$CUDA_VERSION" && CUDA_VERSION=12.1.0
 test -z "$UBUNTU_VERSION" && UBUNTU_VERSION=22.04
 
 test -d docker || (
-        echo This script must be run from the top level Meshroom directory
+    echo This script must be run from the top level Meshroom directory
 	exit 1
 )
 
 test -d dl || \
 	mkdir dl
 test -f dl/qt.run || \
-        wget --no-check-certificate "https://download.qt.io/official_releases/online_installers/qt-unified-linux-x64-online.run" -O "dl/qt.run"
+    wget --no-check-certificate "https://download.qt.io/official_releases/online_installers/qt-unified-linux-x64-online.run" -O "dl/qt.run"
 
 # DEPENDENCIES
 docker build \

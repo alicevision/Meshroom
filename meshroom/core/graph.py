@@ -215,6 +215,7 @@ class Graph(BaseObject):
         super(Graph, self).__init__(parent)
         self.name = name
         self._loading = False
+        self._saving = False
         self._updateEnabled = True
         self._updateRequested = False
         self.dirtyTopology = False
@@ -251,6 +252,11 @@ class Graph(BaseObject):
     def isLoading(self):
         """ Return True if the graph is currently being loaded. """
         return self._loading
+    
+    @property
+    def isSaving(self):
+        """ Return True if the graph is currently being loaded. """
+        return self._saving
 
     @Slot(str)
     def load(self, filepath, setupProjectFile=True, importProject=False, publishOutputs=False):
@@ -1347,6 +1353,23 @@ class Graph(BaseObject):
         return str(self.toDict())
 
     def save(self, filepath=None, setupProjectFile=True, template=False):
+        """
+        Save the current Meshroom graph as a serialized ".mg" file.
+
+        Args:
+            filepath: project filepath to save as.
+            setupProjectFile: Store the reference to the project file and setup the cache directory.
+                              If false, it only saves the graph of the project file as a template.
+            template: If true, saves the current graph as a template.
+        """
+        # Update the saving flag indicating that the current graph is being saved
+        self._saving = True
+        try:
+            self._save(filepath=filepath, setupProjectFile=setupProjectFile, template=template)
+        finally:
+            self._saving = False
+
+    def _save(self, filepath=None, setupProjectFile=True, template=False):
         path = filepath or self._filepath
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
@@ -1636,6 +1659,7 @@ class Graph(BaseObject):
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
+    isSaving = Property(bool, isSaving.fget, constant=True)
     fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.Keys.ReleaseVersion, "0.0"),
                                   notify=filepathChanged)
     fileDateVersion = Property(float, fileDateVersion.fget, fileDateVersion.fset, notify=filepathChanged)

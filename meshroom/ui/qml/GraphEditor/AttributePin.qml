@@ -68,7 +68,7 @@ RowLayout {
     // Instantiate empty Items for each child attribute
     Repeater {
         id: childrenRepeater
-        model: isList && !attribute.isLink ? attribute.value : 0
+        model: root.isList && !root.attribute.isLink ? root.attribute.value : 0
         onItemAdded: function(index, item) { childPinCreated(item.childAttribute, root) }
         onItemRemoved: function(index, item) { childPinDeleted(item.childAttribute, root) }
         delegate: Item {
@@ -78,12 +78,12 @@ RowLayout {
     }
 
     Rectangle {
-        visible: !attribute.isOutput
+        visible: !root.attribute.isOutput
         id: inputAnchor
 
         width: 8
         height: width
-        radius: isList ? 0 : width / 2
+        radius: root.isList ? 0 : width / 2
         Layout.alignment: Qt.AlignVCenter
 
         border.color: Colors.sysPalette.mid
@@ -92,8 +92,8 @@ RowLayout {
         Rectangle {
             id: innerInputAnchor
             property bool linkEnabled: true
-            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (attribute && attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
-            radius: isList ? 0 : 2
+            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
+            radius: root.isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
             color: {
@@ -168,7 +168,7 @@ RowLayout {
 
         MouseArea {
             id: inputConnectMA
-            drag.target: attribute.isReadOnly ? undefined : inputDragTarget
+            drag.target: root.attribute.isReadOnly ? undefined : inputDragTarget
             drag.threshold: 0
             // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
             drag.smoothed: false
@@ -206,7 +206,7 @@ RowLayout {
         implicitHeight: childrenRect.height
         Layout.fillWidth: true
         Layout.alignment: {
-            if (attribute.isOutput) {
+            if (root.attribute.isOutput) {
                 return Qt.AlignRight | Qt.AlignVCenter
             }
             return Qt.AlignLeft | Qt.AlignVCenter
@@ -216,8 +216,8 @@ RowLayout {
             id: nameLabel
 
             anchors.rightMargin: 0
-            anchors.right: attribute && attribute.isOutput ? parent.right : undefined
-            labelIconRow.layoutDirection: attribute.isOutput ? Qt.RightToLeft : Qt.LeftToRight
+            anchors.right: root.attribute && root.attribute.isOutput ? parent.right : undefined
+            labelIconRow.layoutDirection: root.attribute.isOutput ? Qt.RightToLeft : Qt.LeftToRight
             labelIconRow.spacing: 0
 
             enabled: !root.readOnly
@@ -227,7 +227,7 @@ RowLayout {
                                     outputConnectMA.drag.active || outputDropArea.containsDrag)
 
             labelIconColor: {
-                if ((object.hasOutputConnections || object.isLink) && !object.enabled) {
+                if ((root.attribute.hasOutputConnections || root.attribute.isLink) && !root.attribute.enabled) {
                     return Colors.lightgrey
                 } else if (hovered) {
                     return palette.highlight
@@ -237,31 +237,31 @@ RowLayout {
             labelIconMouseArea.enabled: false  // Prevent mixing mouse interactions between the label and the pin context
 
             // Text
-            label.text: attribute.label
+            label.text: root.attribute.label
             label.font.pointSize: 7
             label.elide: hovered ? Text.ElideNone : Text.ElideMiddle
-            label.horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+            label.horizontalAlignment: root.attribute && root.attribute.isOutput ? Text.AlignRight : Text.AlignLeft
 
             // Icon
             iconText: {
-                if (isGroup) {
-                    return expanded ? MaterialIcons.expand_more : MaterialIcons.chevron_right
+                if (root.isGroup) {
+                    return root.expanded ? MaterialIcons.expand_more : MaterialIcons.chevron_right
                 }
                 return ""
             }
             iconSize: 7
-            icon.horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+            icon.horizontalAlignment: root.attribute && root.attribute.isOutput ? Text.AlignRight : Text.AlignLeft
 
             // Handle tree view for nested attributes
             icon.leftPadding: {
-                if (attribute.depth != 0 && !attribute.isOutput) {
-                    return attribute.depth * 10
+                if (root.attribute.depth != 0 && !root.attribute.isOutput) {
+                    return root.attribute.depth * 10
                 }
                 return 0
             }
             icon.rightPadding: {
-                if (attribute.depth != 0 && attribute.isOutput) {
-                    return attribute.depth * 10
+                if (root.attribute.depth != 0 && root.attribute.isOutput) {
+                    return root.attribute.depth * 10
                 }
                 return 0
             }
@@ -271,10 +271,10 @@ RowLayout {
     Rectangle {
         id: outputAnchor
 
-        visible: displayOutputPinForInput || attribute.isOutput
+        visible: root.displayOutputPinForInput || root.attribute.isOutput
         width: 8
         height: width
-        radius: isList ? 0 : width / 2
+        radius: root.isList ? 0 : width / 2
 
         Layout.alignment: Qt.AlignVCenter
 
@@ -284,8 +284,8 @@ RowLayout {
         Rectangle {
             id: innerOutputAnchor
             property bool linkEnabled: true
-            visible: (attribute.hasOutputConnections && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
-            radius: isList ? 0 : 2
+            visible: (root.attribute.hasOutputConnections && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
+            radius: root.isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
             color: {
@@ -343,7 +343,7 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: Boolean(attribute.isOutput)
             readonly property alias isList: root.isList
-            readonly property string baseType: attribute.baseType !== undefined ? attribute.baseType : ""
+            readonly property string baseType: root.attribute.baseType !== undefined ? attribute.baseType : ""
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter

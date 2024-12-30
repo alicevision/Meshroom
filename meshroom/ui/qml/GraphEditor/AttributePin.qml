@@ -180,13 +180,31 @@ RowLayout {
             anchors.margins: inputDropArea.anchors.margins
             anchors.leftMargin: inputDropArea.anchors.leftMargin
             anchors.rightMargin: inputDropArea.anchors.rightMargin
+
+            property bool dragTriggered: false  // An edge is being dragged from the output connector
+            property bool isPressed: false  // The mouse has been pressed but not yet released
+            property double initialX: 0.0
+            property double initialY: 0.0
+
             onPressed: function(mouse) {
                 root.pressed(mouse)
+                isPressed = true
+                initialX = mouse.x
+                initialY = mouse.y
             }
-            onReleased: {
+            onReleased: function(mouse) {
                 inputDragTarget.Drag.drop()
+                isPressed = false
+                dragTriggered = false
             }
             onClicked: root.clicked()
+            onPositionChanged: function(mouse) {
+                // If there's been a significant (10px along the X- or Y- axis) while the mouse is being pressed,
+                // then we can consider being in the dragging state
+                if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
+                    dragTriggered = true
+                }
+            }
             hoverEnabled: root.visible
         }
 
@@ -371,9 +389,30 @@ RowLayout {
             anchors.leftMargin: outputDropArea.anchors.leftMargin
             anchors.rightMargin: outputDropArea.anchors.rightMargin
 
-            onPressed: function(mouse) { root.pressed(mouse) }
-            onReleased: outputDragTarget.Drag.drop()
+            property bool dragTriggered: false  // An edge is being dragged from the output connector
+            property bool isPressed: false  // The mouse has been pressed but not yet released
+            property double initialX: 0.0
+            property double initialY: 0.0
+
+            onPressed: function(mouse) {
+                root.pressed(mouse)
+                isPressed = true
+                initialX = mouse.x
+                initialY = mouse.y
+            }
+            onReleased: function(mouse) {
+                outputDragTarget.Drag.drop()
+                isPressed = false
+                dragTriggered = false
+            }
             onClicked: root.clicked()
+            onPositionChanged: function(mouse) {
+                // If there's been a significant (10px along the X- or Y- axis) while the mouse is being pressed,
+                // then we can consider being in the dragging state
+                if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
+                    dragTriggered = true
+                }
+            }
 
             hoverEnabled: root.visible
         }
@@ -390,7 +429,7 @@ RowLayout {
         }
     }
 
-    state: (inputConnectMA.pressed) ? "DraggingInput" : outputConnectMA.pressed ? "DraggingOutput" : ""
+    state: inputConnectMA.dragTriggered ? "DraggingInput" : outputConnectMA.dragTriggered ? "DraggingOutput" : ""
 
     states: [
         State {

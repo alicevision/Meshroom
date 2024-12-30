@@ -123,6 +123,7 @@ RowLayout {
                     || drag.source.nodeItem === inputDragTarget.nodeItem     // Connection between attributes of the same node
                     || (drag.source.isList && childrenRepeater.count)        // Source/target are lists but target already has children
                     || drag.source.connectorType === "input"                 // Refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
+                    || (drag.source.isGroup || inputDragTarget.isGroup)      // Refuse connection between Groups, which is unsupported
                    ) {
                     // Refuse attributes connection
                     drag.accepted = false
@@ -155,6 +156,7 @@ RowLayout {
             readonly property bool isOutput: Boolean(attribute.isOutput)
             readonly property string baseType: attribute.baseType !== undefined ? attribute.baseType : ""
             readonly property alias isList: root.isList
+            readonly property alias isGroup: root.isGroup
             property bool dragAccepted: false
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
@@ -316,6 +318,7 @@ RowLayout {
                     || (!drag.source.isList && outputDragTarget.isList)     // Connection between a list and a simple attribute
                     || (drag.source.isList && childrenRepeater.count)       // Source/target are lists but target already has children
                     || drag.source.connectorType === "output"               // Refuse to connect an output pin on another one
+                    || (drag.source.isGroup || outputDragTarget.isGroup)    // Refuse connection between Groups, which is unsupported
                    ) {
                     // Refuse attributes connection
                     drag.accepted = false
@@ -343,6 +346,7 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: Boolean(attribute.isOutput)
             readonly property alias isList: root.isList
+            readonly property alias isGroup: root.isGroup
             readonly property string baseType: root.attribute.baseType !== undefined ? attribute.baseType : ""
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter

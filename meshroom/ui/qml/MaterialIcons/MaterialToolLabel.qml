@@ -28,12 +28,12 @@ Item {
             font.pointSize: 13
             padding: 0
             text: ""
-            color: labelIconColor
+            color: control.labelIconColor
         }
         Label {
             id: labelItem
             text: ""
-            color: labelIconColor
+            color: control.labelIconColor
         }
     }
 

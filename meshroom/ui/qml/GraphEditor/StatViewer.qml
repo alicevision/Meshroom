@@ -310,220 +310,208 @@ Item {
 ***       CPU UI        ***
 **************************/
 
-            ColumnLayout {
+            Button {
+                id: toggleCpuBtn
                 Layout.fillWidth: true
+                text: "Toggle CPU's"
+                state: "closed"
 
-                Button {
-                    id: toggleCpuBtn
-                    Layout.fillWidth: true
-                    text: "Toggle CPU's"
-                    state: "closed"
+                onClicked: state === "opened" ? state = "closed" : state = "opened"
 
-                    onClicked: state === "opened" ? state = "closed" : state = "opened"
-
-                    MaterialLabel {
-                        text: MaterialIcons.arrow_drop_down
-                        font.pointSize: 14
-                        anchors.right: parent.right
-                    }
-
-                    states: [
-                        State {
-                            name: "opened"
-                            PropertyChanges { target: cpuBtnContainer; visible: true }
-                            PropertyChanges { target: toggleCpuBtn; down: true }
-                        },
-                        State {
-                            name: "closed"
-                            PropertyChanges { target: cpuBtnContainer; visible: false }
-                            PropertyChanges { target: toggleCpuBtn; down: false }
-                        }
-                    ]
+                MaterialLabel {
+                    text: MaterialIcons.arrow_drop_down
+                    font.pointSize: 14
+                    anchors.right: parent.right
                 }
 
-                Item {
-                    id: cpuBtnContainer
+                states: [
+                    State {
+                        name: "opened"
+                        PropertyChanges { target: cpuBtnContainer; visible: true }
+                        PropertyChanges { target: toggleCpuBtn; down: true }
+                    },
+                    State {
+                        name: "closed"
+                        PropertyChanges { target: cpuBtnContainer; visible: false }
+                        PropertyChanges { target: toggleCpuBtn; down: false }
+                    }
+                ]
+            }
 
-                    Layout.fillWidth: true
-                    implicitHeight: childrenRect.height
-                    Layout.leftMargin: 25
+            Item {
+                id: cpuBtnContainer
 
-                    RowLayout {
-                        width: parent.width
-                        anchors.horizontalCenter: parent.horizontalCenter
+                Layout.fillWidth: true
+                implicitHeight: childrenRect.height
+                Layout.leftMargin: 25
 
-                        ChartViewCheckBox {
-                            id: allCPU
-                            text: "ALL"
-                            color: textColor
-                            checkState: cpuLegend.buttonGroup.checkState
-                            leftPadding: 0
-                            onClicked: {
-                                var _checked = checked;
-                                for (var i = 0; i < cpuChart.count; ++i) {
-                                    cpuChart.series(i).visible = _checked
-                                }
+                RowLayout {
+                    width: parent.width
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    ChartViewCheckBox {
+                        id: allCPU
+                        text: "ALL"
+                        color: textColor
+                        checkState: cpuLegend.buttonGroup.checkState
+                        leftPadding: 0
+                        onClicked: {
+                            var _checked = checked;
+                            for (var i = 0; i < cpuChart.count; ++i) {
+                                cpuChart.series(i).visible = _checked
                             }
                         }
-
-                        ChartViewLegend {
-                            id: cpuLegend
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            chartView: cpuChart
-                        }
-                    }
-                }
-
-                InteractiveChartView {
-                    id: cpuChart
-
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: width / 2
-                    margins.top: 0
-                    margins.bottom: 0
-                    antialiasing: true
-
-                    legend.visible: false
-                    theme: ChartView.ChartThemeLight
-                    backgroundColor: "transparent"
-                    plotAreaColor: "transparent"
-                    titleColor: textColor
-
-                    visible: (root.fileVersion > 0.0)  // Only visible if we have valid information
-                    title: "CPU: " + root.nbCores + " cores, " + root.cpuFrequency + "MHz"
-
-                    ValueAxis {
-                        id: valueCpuY
-                        min: 0
-                        max: 100
-                        titleText: "<span style='color: " + textColor + "'>%</span>"
-                        color: textColor
-                        gridLineColor: textColor
-                        minorGridLineColor: textColor
-                        shadesColor: textColor
-                        shadesBorderColor: textColor
-                        labelsColor: textColor
                     }
 
-                    ValueAxis {
-                        id: valueCpuX
-                        min: 0
-                        max: root.deltaTime * Math.max(1, root.nbReads)
-                        titleText: "<span style='color: " + textColor + "'>Minutes</span>"
-                        color: textColor
-                        gridLineColor: textColor
-                        minorGridLineColor: textColor
-                        shadesColor: textColor
-                        shadesBorderColor: textColor
-                        labelsColor: textColor
+                    ChartViewLegend {
+                        id: cpuLegend
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        chartView: cpuChart
                     }
                 }
             }
 
+            InteractiveChartView {
+                id: cpuChart
+
+                Layout.fillWidth: true
+                Layout.preferredHeight: width / 2
+                margins.top: 0
+                margins.bottom: 0
+                antialiasing: true
+
+                legend.visible: false
+                theme: ChartView.ChartThemeLight
+                backgroundColor: "transparent"
+                plotAreaColor: "transparent"
+                titleColor: textColor
+
+                visible: (root.fileVersion > 0.0)  // Only visible if we have valid information
+                title: "CPU: " + root.nbCores + " cores, " + root.cpuFrequency + "MHz"
+
+                ValueAxis {
+                    id: valueCpuY
+                    min: 0
+                    max: 100
+                    titleText: "<span style='color: " + textColor + "'>%</span>"
+                    color: textColor
+                    gridLineColor: textColor
+                    minorGridLineColor: textColor
+                    shadesColor: textColor
+                    shadesBorderColor: textColor
+                    labelsColor: textColor
+                }
+
+                ValueAxis {
+                    id: valueCpuX
+                    min: 0
+                    max: root.deltaTime * Math.max(1, root.nbReads)
+                    titleText: "<span style='color: " + textColor + "'>Minutes</span>"
+                    color: textColor
+                    gridLineColor: textColor
+                    minorGridLineColor: textColor
+                    shadesColor: textColor
+                    shadesBorderColor: textColor
+                    labelsColor: textColor
+                }
+            }
 
 /**************************
 ***       RAM UI        ***
 **************************/
 
-            ColumnLayout {
+            InteractiveChartView {
+                id: ramChart
+                margins.top: 0
+                margins.bottom: 0
+                Layout.fillWidth: true
+                Layout.preferredHeight: width / 2
+                antialiasing: true
+                legend.color: textColor
+                legend.labelColor: textColor
+                legend.visible: false
+                theme: ChartView.ChartThemeLight
+                backgroundColor: "transparent"
+                plotAreaColor: "transparent"
+                titleColor: textColor
 
-                InteractiveChartView {
-                    id: ramChart
-                    margins.top: 0
-                    margins.bottom: 0
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: width / 2
-                    antialiasing: true
-                    legend.color: textColor
-                    legend.labelColor: textColor
-                    legend.visible: false
-                    theme: ChartView.ChartThemeLight
-                    backgroundColor: "transparent"
-                    plotAreaColor: "transparent"
-                    titleColor: textColor
+                visible: (root.fileVersion > 0.0)  // Only visible if we have valid information
+                title: root.ramLabel + root.ramTotal + "GB"
 
-                    visible: (root.fileVersion > 0.0)  // Only visible if we have valid information
-                    title: root.ramLabel + root.ramTotal + "GB"
+                ValueAxis {
+                    id: valueRamY
+                    min: 0
+                    max: 100
+                    titleText: "<span style='color: " + textColor + "'>%</span>"
+                    color: textColor
+                    gridLineColor: textColor
+                    minorGridLineColor: textColor
+                    shadesColor: textColor
+                    shadesBorderColor: textColor
+                    labelsColor: textColor
+                }
 
-                    ValueAxis {
-                        id: valueRamY
-                        min: 0
-                        max: 100
-                        titleText: "<span style='color: " + textColor + "'>%</span>"
-                        color: textColor
-                        gridLineColor: textColor
-                        minorGridLineColor: textColor
-                        shadesColor: textColor
-                        shadesBorderColor: textColor
-                        labelsColor: textColor
-                    }
-
-                    ValueAxis {
-                        id: valueRamX
-                        min: 0
-                        max: root.deltaTime * Math.max(1, root.nbReads)
-                        titleText: "<span style='color: " + textColor + "'>Minutes</span>"
-                        color: textColor
-                        gridLineColor: textColor
-                        minorGridLineColor: textColor
-                        shadesColor: textColor
-                        shadesBorderColor: textColor
-                        labelsColor: textColor
-                    }
+                ValueAxis {
+                    id: valueRamX
+                    min: 0
+                    max: root.deltaTime * Math.max(1, root.nbReads)
+                    titleText: "<span style='color: " + textColor + "'>Minutes</span>"
+                    color: textColor
+                    gridLineColor: textColor
+                    minorGridLineColor: textColor
+                    shadesColor: textColor
+                    shadesBorderColor: textColor
+                    labelsColor: textColor
                 }
             }
-
 
 /**************************
 ***       GPU UI        ***
 **************************/
 
-            ColumnLayout {
+            InteractiveChartView {
+                id: gpuChart
 
-                InteractiveChartView {
-                    id: gpuChart
+                Layout.fillWidth: true
+                Layout.preferredHeight: width/2
+                margins.top: 0
+                margins.bottom: 0
+                antialiasing: true
+                legend.color: textColor
+                legend.labelColor: textColor
+                theme: ChartView.ChartThemeLight
+                backgroundColor: "transparent"
+                plotAreaColor: "transparent"
+                titleColor: textColor
 
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: width/2
-                    margins.top: 0
-                    margins.bottom: 0
-                    antialiasing: true
-                    legend.color: textColor
-                    legend.labelColor: textColor
-                    theme: ChartView.ChartThemeLight
-                    backgroundColor: "transparent"
-                    plotAreaColor: "transparent"
-                    titleColor: textColor
+                visible: (root.fileVersion >= 2.0)  // No GPU information was collected before stats 2.0 fileVersion
+                title: (root.gpuName || root.gpuTotalMemory) ? ("GPU: " + root.gpuName + ", " + root.gpuTotalMemory + "MB") : "No GPU"
 
-                    visible: (root.fileVersion >= 2.0)  // No GPU information was collected before stats 2.0 fileVersion
-                    title: (root.gpuName || root.gpuTotalMemory) ? ("GPU: " + root.gpuName + ", " + root.gpuTotalMemory + "MB") : "No GPU"
+                ValueAxis {
+                    id: valueGpuY
+                    min: 0
+                    max: root.gpuMaxAxis
+                    titleText: "<span style='color: " + textColor + "'>%, °C</span>"
+                    color: textColor
+                    gridLineColor: textColor
+                    minorGridLineColor: textColor
+                    shadesColor: textColor
+                    shadesBorderColor: textColor
+                    labelsColor: textColor
+                }
 
-                    ValueAxis {
-                        id: valueGpuY
-                        min: 0
-                        max: root.gpuMaxAxis
-                        titleText: "<span style='color: " + textColor + "'>%, °C</span>"
-                        color: textColor
-                        gridLineColor: textColor
-                        minorGridLineColor: textColor
-                        shadesColor: textColor
-                        shadesBorderColor: textColor
-                        labelsColor: textColor
-                    }
-
-                    ValueAxis {
-                        id: valueGpuX
-                        min: 0
-                        max: root.deltaTime * Math.max(1, root.nbReads)
-                        titleText: "<span style='color: " + textColor + "'>Minutes</span>"
-                        color: textColor
-                        gridLineColor: textColor
-                        minorGridLineColor: textColor
-                        shadesColor: textColor
-                        shadesBorderColor: textColor
-                        labelsColor: textColor
-                    }
+                ValueAxis {
+                    id: valueGpuX
+                    min: 0
+                    max: root.deltaTime * Math.max(1, root.nbReads)
+                    titleText: "<span style='color: " + textColor + "'>Minutes</span>"
+                    color: textColor
+                    gridLineColor: textColor
+                    minorGridLineColor: textColor
+                    shadesColor: textColor
+                    shadesBorderColor: textColor
+                    labelsColor: textColor
                 }
             }
         }

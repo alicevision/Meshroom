@@ -42,6 +42,14 @@ Panel {
         }
     }
 
+    function refresh() {
+        /**
+         * Refresh properties of the Node Editor.
+         */
+        // Reset tab bar's current index
+        tabBar.currentIndex = 0;
+    }
+
     headerBar: RowLayout {
         Label {
             id: computationInfo

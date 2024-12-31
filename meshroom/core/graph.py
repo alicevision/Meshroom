@@ -255,7 +255,7 @@ class Graph(BaseObject):
     
     @property
     def isSaving(self):
-        """ Return True if the graph is currently being loaded. """
+        """ Return True if the graph is currently being saved. """
         return self._saving
 
     @Slot(str)

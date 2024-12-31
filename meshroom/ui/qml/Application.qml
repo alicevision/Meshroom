@@ -20,6 +20,16 @@ Page {
     property alias unsavedDialog: unsavedDialog
     property alias workspaceView: workspaceView
 
+    readonly property var scenefile: _reconstruction ? _reconstruction.graph.filepath : "";
+
+    onScenefileChanged: {
+        // Check if we're not currently saving and emit the currentProjectChanged signal
+        if (! _reconstruction.graph.isSaving) {
+            // Refresh the NodeEditor
+            nodeEditor.refresh();
+        }
+    }
+
     Settings {
         id: settingsUILayout
         category: "UILayout"

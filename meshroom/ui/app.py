@@ -243,6 +243,9 @@ class MeshroomApp(QApplication):
         meshroom.core.initNodes()
         meshroom.core.initSubmitters()
 
+        # Initialize the list of recent project files
+        self._recentProjectFiles = self._getRecentProjectFiles()
+
         # QML engine setup
         qmlDir = os.path.join(pwd, "qml")
         url = os.path.join(qmlDir, "main.qml")
@@ -347,7 +350,16 @@ class MeshroomApp(QApplication):
         meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
 
-    def _recentProjectFiles(self):
+    def _getRecentProjectFiles(self) -> list[dict[str, str]]:
+        """
+        Read the list of recent project files from the QSettings, retrieve their filepath, and if it exists, their
+        thumbnail.
+
+        Returns:
+            list[dict[str, str]]: The list containing dictionaries of the form {"path": "/path/to/project/file",
+                                                                                "thumbnail": "/path/to/thumbnail"}
+                                  based on the recent projects stored in the QSettings.
+        """
         projects = []
         settings = QSettings()
         settings.beginGroup("RecentFiles")
@@ -378,7 +390,18 @@ class MeshroomApp(QApplication):
 
     @Slot(str)
     @Slot(QUrl)
-    def addRecentProjectFile(self, projectFile):
+    def addRecentProjectFile(self, projectFile) -> None:
+        """
+        Add a project file to the list of recent project files.
+        The function ensures that the file is not present more than once in the list and trims it so it
+        never exceeds a set number of projects.
+        QSettings are updated accordingly.
+        The update of the list of recent projects files is minimal: the filepath is added, but there is no
+        attempt to retrieve its corresponding thumbnail.
+
+        Args:
+            projectFile (str or QUrl): path to the project file to add to the list
+        """
         if not isinstance(projectFile, (QUrl, str)):
             raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
         if isinstance(projectFile, QUrl):
@@ -390,37 +413,46 @@ class MeshroomApp(QApplication):
             if not projectFileNorm:
                 projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
 
-        projects = self._recentProjectFiles()
-        projects = [p["path"] for p in projects]
+        # Get the list of recent projects without re-reading the QSettings
+        projects = self._recentProjectFiles
 
-        # remove duplicates while preserving order
-        from collections import OrderedDict
-        uniqueProjects = OrderedDict.fromkeys(projects)
-        projects = list(uniqueProjects)
-        # remove previous usage of the value
-        if projectFileNorm in uniqueProjects:
-            projects.remove(projectFileNorm)
-        # add the new value in the first place
-        projects.insert(0, projectFileNorm)
+        # Checks whether the path is already in the list of recent projects
+        filepaths = [p["path"] for p in projects]
+        if projectFileNorm in filepaths:
+            idx = filepaths.index(projectFileNorm)
+            del projects[idx]  # If so, delete its entry
 
-        # keep only the 40 first elements
-        projects = projects[0:40]
+        # Insert the newest entry at the top of the list
+        projects.insert(0, {"path": projectFileNorm, "thumbnail": ""})
 
+        # Only keep the first 40 projects
+        maxNbProjects = 40
+        if len(projects) > maxNbProjects:
+            projects = projects[0:maxNbProjects]
+
+        # Update the general settings
         settings = QSettings()
         settings.beginGroup("RecentFiles")
         settings.beginWriteArray("Projects")
         for i, p in enumerate(projects):
             settings.setArrayIndex(i)
-            settings.setValue("filepath", p)
+            settings.setValue("filepath", p["path"])
         settings.endArray()
         settings.endGroup()
         settings.sync()
 
+        # Update the final list of recent projects
+        self._recentProjectFiles = projects
         self.recentProjectFilesChanged.emit()
 
     @Slot(str)
     @Slot(QUrl)
-    def removeRecentProjectFile(self, projectFile):
+    def removeRecentProjectFile(self, projectFile) -> None:
+        """
+        Remove a given project file from the list of recent project files.
+        If the provided filepath is not already present in the list of recent project files, nothing is done.
+        Otherwise, it is effectively removed and the QSettings are updated accordingly.
+        """
         if not isinstance(projectFile, (QUrl, str)):
             raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
         if isinstance(projectFile, QUrl):
@@ -432,28 +464,30 @@ class MeshroomApp(QApplication):
             if not projectFileNorm:
                 projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
 
-        projects = self._recentProjectFiles()
-        projects = [p["path"] for p in projects]
+        # Get the list of recent projects without re-reading the QSettings
+        projects = self._recentProjectFiles
 
-        # remove duplicates while preserving order
-        from collections import OrderedDict
-        uniqueProjects = OrderedDict.fromkeys(projects)
-        projects = list(uniqueProjects)
-        # remove previous usage of the value
-        if projectFileNorm not in uniqueProjects:
+        # Ensure the filepath is in the list of recent projects
+        filepaths = [p["path"] for p in projects]
+        if projectFileNorm not in filepaths:
             return
 
-        projects.remove(projectFileNorm)
+        # Delete it from the list
+        idx = filepaths.index(projectFileNorm)
+        del projects[idx]
 
+        # Update the general settings
         settings = QSettings()
         settings.beginGroup("RecentFiles")
         settings.beginWriteArray("Projects")
         for i, p in enumerate(projects):
             settings.setArrayIndex(i)
-            settings.setValue("filepath", p)
+            settings.setValue("filepath", p["path"])
         settings.endArray()
         settings.sync()
 
+        # Update the final list of recent projects
+        self._recentProjectFiles = projects
         self.recentProjectFilesChanged.emit()
 
     def _recentImportedImagesFolders(self):
@@ -620,7 +654,7 @@ class MeshroomApp(QApplication):
     recentImportedImagesFoldersChanged = Signal()
     pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames, notify=pipelineTemplateFilesChanged)
-    recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
+    recentProjectFiles = Property("QVariantList", lambda self: self._recentProjectFiles, notify=recentProjectFilesChanged)
     recentImportedImagesFolders = Property("QVariantList", _recentImportedImagesFolders, notify=recentImportedImagesFoldersChanged)
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)
     defaultSequencePlayerEnabled = Property(bool, _defaultSequencePlayerEnabled, constant=True)

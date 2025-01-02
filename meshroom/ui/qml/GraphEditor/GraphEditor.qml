@@ -827,6 +827,19 @@ Item {
                 property bool updateSelectionOnClick: false
                 property var temporaryEdgeAboutToBeRemoved: undefined
 
+                function getItemAt(index) {
+                    /**
+                     * Helper function to get actual item from the repeater at a given index.
+                     */
+                    const loader = itemAt(index);
+
+                    if (loader && loader.item) {
+                        return loader.item;
+                    }
+
+                    return null;
+                }
+
                 delegate: Loader {
                     id: nodeLoader
                     Component {

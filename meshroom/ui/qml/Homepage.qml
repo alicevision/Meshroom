@@ -309,7 +309,11 @@ Page {
                     cellHeight: cellWidth
                     anchors.margins: 10
 
-                    model: [{ "path": null, "thumbnail": null}].concat(MeshroomApp.recentProjectFiles)
+                    model: {
+                        // Request latest thumbnail paths
+                        MeshroomApp.updateRecentProjectFilesThumbnails()
+                        return [{"path": null, "thumbnail": null}].concat(MeshroomApp.recentProjectFiles)
+                    }
 
                     // Update grid item when corresponding thumbnail is computed
                     Connections {

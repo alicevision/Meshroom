@@ -245,6 +245,10 @@ class MeshroomApp(QApplication):
 
         # Initialize the list of recent project files
         self._recentProjectFiles = self._getRecentProjectFiles()
+        # Flag set to True if, for all the project files in the list, thumbnails have been retrieved when they
+        # are available. If set to False, then all the paths in the list are accurate, but some thumbnails might
+        # be retrievable
+        self._updatedRecentProjectFilesThumbnails = True
 
         # QML engine setup
         qmlDir = os.path.join(pwd, "qml")
@@ -388,6 +392,17 @@ class MeshroomApp(QApplication):
         settings.endGroup()
         return projects
 
+    @Slot()
+    def updateRecentProjectFilesThumbnails(self) -> None:
+        """
+        If there are thumbnails that may be retrievable (meaning the list of projects has been updated minimally),
+        update the list of recent project files by reading the QSettings and retrieving the thumbnails if they are
+        available.
+        """
+        if not self._updatedRecentProjectFilesThumbnails:
+            self._recentProjectFiles = self._getRecentProjectFiles()
+            self._updatedRecentProjectFilesThumbnails = True
+
     @Slot(str)
     @Slot(QUrl)
     def addRecentProjectFile(self, projectFile) -> None:
@@ -443,6 +458,7 @@ class MeshroomApp(QApplication):
 
         # Update the final list of recent projects
         self._recentProjectFiles = projects
+        self._updatedRecentProjectFilesThumbnails = False  # Thumbnails may not be up-to-date
         self.recentProjectFilesChanged.emit()
 
     @Slot(str)

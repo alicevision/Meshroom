@@ -53,8 +53,8 @@ Item {
     /// Get node delegate for the given node object
     function nodeDelegate(node) {
         for(var i = 0; i < nodeRepeater.count; ++i) {
-            if (nodeRepeater.itemAt(i).node === node)
-                return nodeRepeater.itemAt(i)
+            if (nodeRepeater.getItemAt(i).node === node)
+                return nodeRepeater.getItemAt(i)
         }
         return undefined
     }
@@ -1334,7 +1334,7 @@ Item {
 
             function nextItem() {
                 // Compute bounding box
-                var node = nodeRepeater.itemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
+                var node = nodeRepeater.getItemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
                 var bbox = Qt.rect(node.x, node.y, node.width, node.height)
                 // Rescale to fit the bounding box in the view, zoom is limited to prevent huge text
                 draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height),maxZoom)
@@ -1354,13 +1354,13 @@ Item {
     }
 
     function boundingBox() {
-        var first = nodeRepeater.itemAt(0)
+        var first = nodeRepeater.getItemAt(0)
         if (first === null) {
             return Qt.rect(0, 0, 0, 0)
         }
         var bbox = Qt.rect(first.x, first.y, first.x + first.width, first.y + first.height)
         for (var i = 0; i < root.graph.nodes.count; ++i) {
-            var item = nodeRepeater.itemAt(i)
+            var item = nodeRepeater.getItemAt(i)
             bbox.x = Math.min(bbox.x, item.x)
             bbox.y = Math.min(bbox.y, item.y)
             bbox.width = Math.max(bbox.width, item.x + item.width)

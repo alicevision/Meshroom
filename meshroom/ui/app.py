@@ -8,12 +8,16 @@ from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
 from PySide6.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
 from PySide6.QtGui import QIcon
+from PySide6.QtQml import QQmlDebuggingEnabler
+from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import nodesDesc
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
+
+from meshroom.env import EnvVar, EnvVarHelpAction
 
 from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
@@ -181,17 +185,29 @@ Additional Resources:
         + '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates]),
     )
 
+    advanced_group = parser.add_argument_group("Advanced Options")
+    advanced_group.add_argument(
+        "--env-help",
+        action=EnvVarHelpAction,
+        nargs=0,
+        help=EnvVarHelpAction.DEFAULT_HELP,
+    )
+
     return parser.parse_args(args[1:])
 
 
 class MeshroomApp(QApplication):
     """ Meshroom UI Application. """
-    def __init__(self, args):
+    def __init__(self, inputArgs):
         meshroom.core.initPipelines()
 
-        QtArgs = [args[0], '-style', 'Fusion'] + args[1:]  # force Fusion style by default
-
-        args = createMeshroomParser(args)
+        args = createMeshroomParser(inputArgs)
+        qtArgs = []
+    
+        if EnvVar.get(EnvVar.MESHROOM_QML_DEBUG):
+            debuggerParams = EnvVar.get(EnvVar.MESHROOM_QML_DEBUG_PARAMS)
+            self.debugger = QQmlDebuggingEnabler(printWarning=True)
+            qtArgs = [f"-qmljsdebugger={debuggerParams}"]
 
         logStringToPython = {
             'fatal': logging.FATAL,
@@ -203,7 +219,7 @@ class MeshroomApp(QApplication):
         }
         logging.getLogger().setLevel(logStringToPython[args.verbose])
 
-        super(MeshroomApp, self).__init__(QtArgs)
+        super(MeshroomApp, self).__init__(inputArgs[:1] + qtArgs)
 
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
@@ -212,6 +228,9 @@ class MeshroomApp(QApplication):
         font = self.font()
         font.setPointSize(9)
         self.setFont(font)
+
+        # Use Fusion style by default.
+        QQuickStyle.setStyle("Fusion")
 
         pwd = os.path.dirname(__file__)
         self.setWindowIcon(QIcon(os.path.join(pwd, "img/meshroom.svg")))

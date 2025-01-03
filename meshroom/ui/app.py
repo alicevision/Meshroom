@@ -354,6 +354,33 @@ class MeshroomApp(QApplication):
         meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
 
+    def _retrieveThumbnailPath(self, filepath: str) -> str:
+        """
+        Given the path of a project file, load this file and try to retrieve the path to its thumbnail, i.e. its
+        first viewpoint image.
+
+        Args:
+            filepath: the path of the project file to retrieve the thumbnail from
+
+        Returns:
+            The path to the thumbnail if it could be found, an empty string otherwise
+        """
+        thumbnail = ""
+        try:
+            with open(filepath) as file:
+                fileData = json.load(file)
+            # Find the first CameraInit node
+            fileData = fileData["graph"]
+            for node in fileData:
+                if fileData[node]["nodeType"] == "CameraInit" and fileData[node]["inputs"].get("viewpoints"):
+                    if len(fileData[node]["inputs"]["viewpoints"]) > 0:
+                        thumbnail = fileData[node]["inputs"]["viewpoints"][0]["path"]
+                        break
+        except FileNotFoundError:
+            pass
+
+        return thumbnail
+
     def _getRecentProjectFiles(self) -> list[dict[str, str]]:
         """
         Read the list of recent project files from the QSettings, retrieve their filepath, and if it exists, their
@@ -370,23 +397,9 @@ class MeshroomApp(QApplication):
         size = settings.beginReadArray("Projects")
         for i in range(size):
             settings.setArrayIndex(i)
-            p = settings.value("filepath")
-            thumbnail = ""
-            if p:
-                # get the first image path from the project
-                try:
-                    with open(p) as file:
-                        file = json.load(file)
-                        # find the first camerainit node
-                        file = file["graph"]
-                        for node in file:
-                            if file[node]["nodeType"] == "CameraInit" and file[node]["inputs"].get("viewpoints"):
-                                if len(file[node]["inputs"]["viewpoints"]) > 0:
-                                    thumbnail = file[node]["inputs"]["viewpoints"][0]["path"]
-                                    break
-                except FileNotFoundError:
-                    pass
-                p = {"path": p, "thumbnail": thumbnail}
+            path = settings.value("filepath")
+            if path:
+                p = {"path": path, "thumbnail": self._retrieveThumbnailPath(path)}
                 projects.append(p)
         settings.endArray()
         settings.endGroup()

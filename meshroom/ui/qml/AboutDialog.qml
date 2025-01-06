@@ -85,7 +85,7 @@ Dialog {
                 onClicked: Qt.openUrlExternally("https://alicevision.org/association/#donate")
             }
             ToolButton {
-                icon.source: "../img/GitHub-Mark-Light-32px.png"
+                icon.source: "../img/github-mark-white.svg"
                 icon.width: 24
                 icon.height: 24
                 ToolTip.text: "Meshroom on Github"

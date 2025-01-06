@@ -12,7 +12,7 @@
             "StructureFromMotion": "3.3",
             "Texturing": "6.0"
         },
-        "releaseVersion": "2024.1.0-develop",
+        "releaseVersion": "2025.1.0-develop",
         "fileVersion": "2.0",
         "template": true
     },

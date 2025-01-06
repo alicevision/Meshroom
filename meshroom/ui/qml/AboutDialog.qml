@@ -89,14 +89,14 @@ Dialog {
                 icon.color: palette.text
                 ToolTip.text: "Meshroom on Github"
                 ToolTip.visible: hovered
-                onClicked: Qt.openUrlExternally("https://github.com/alicevision/meshroom")
+                onClicked: Qt.openUrlExternally("https://github.com/alicevision/Meshroom")
             }
             MaterialToolButton {
                 text: MaterialIcons.bug_report
                 font.pointSize: 21
                 ToolTip.text: "Report a Bug (GitHub account required)"
-                property string body: "**Configuration**\n" + config.text
-                onClicked: Qt.openUrlExternally("https://github.com/alicevision/meshroom/issues/new?body="+body)
+                property string body: "**Configuration**\n\n" + config.text
+                onClicked: Qt.openUrlExternally("https://github.com/alicevision/Meshroom/issues/new?body="+body)
             }
             MaterialToolButton {
                 text: MaterialIcons.forum

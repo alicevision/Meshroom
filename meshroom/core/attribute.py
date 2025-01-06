@@ -350,7 +350,7 @@ class Attribute(BaseObject):
         Return the value. If it is a string, expressions will be evaluated.
         '''
         if isinstance(self.value, str):
-            return Template(self.value).safe_substitute(os.environ)
+            return Template(self.value).safe_substitute(dict(os.environ, **self.node.dynamicEnvVars))
         return self.value
 
     def getValueStr(self, withQuotes=True):

@@ -288,7 +288,7 @@ class File(Attribute):
         if value is None:
             return value
         if not isinstance(value, str):
-            raise ValueError("File only supports string input  (param:{}, value:{}, type:{})".
+            raise ValueError("File only supports string input (param:{}, value:{}, type:{})".
                              format(self.name, value, type(value)))
         return os.path.normpath(value).replace("\\", "/") if value else ""
 

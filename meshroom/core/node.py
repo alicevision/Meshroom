@@ -14,6 +14,7 @@ import types
 import uuid
 from collections import namedtuple
 from enum import Enum
+from string import Template
 from typing import Callable, Optional
 
 import meshroom
@@ -784,6 +785,8 @@ class BaseNode(BaseObject):
                 # (the expression may refer to other attributes that are not defined)
                 if attr.enabled:
                     try:
+                        # The non-default value may be outdated as it may not be aware of other relevant changes:
+                        # the evaluation # needs to be performed from the default value
                         defaultValue = attr.defaultValue()
                     except AttributeError:
                         # If we load an old scene, the lambda associated to the 'value' could try to access other
@@ -792,6 +795,10 @@ class BaseNode(BaseObject):
                                         format(nodeName=self.name, attrName=attr.name))
                     if defaultValue is not None:
                         try:
+                            # If there is a dynamicEnvVars variable, substitute it before resolving the value;
+                            # global environment variables are not substituted here as we do not support them
+                            # as values in output attributes
+                            defaultValue = Template(defaultValue).safe_substitute(self.dynamicEnvVars)
                             attr.value = defaultValue.format(**self._cmdVars)
                             attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
                         except KeyError as e:

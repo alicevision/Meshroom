@@ -71,7 +71,7 @@ Dialog {
             spacing: 4
             Layout.alignment: Qt.AlignHCenter
             MaterialToolButton {
-                text: MaterialIcons._public
+                text: MaterialIcons.public_
                 font.pointSize: 21
                 palette.buttonText: root.palette.link
                 ToolTip.text: "AliceVision Website"

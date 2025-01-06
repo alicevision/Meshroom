@@ -126,7 +126,7 @@ Dialog {
                 font.pointSize: 10
             }
             Label {
-                text: "2010-2023 AliceVision contributors"
+                text: "2010-2025 AliceVision contributors"
             }
         }
 

@@ -103,7 +103,7 @@ RowLayout {
                     anchors.fill: parent
                     hoverEnabled: true
                     acceptedButtons: Qt.AllButtons
-                    onDoubleClicked: root.doubleClicked(mouse, root.attribute)
+                    onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
 
                     property Component menuComp: Menu {
                         id: paramMenu

@@ -503,6 +503,9 @@ class BaseNode(BaseObject):
         self._internalFolder = ""
         self._sourceCodeFolder = ""
 
+        # Dynamic environment variables: defines variables that will be replaced with set values when used in attributes
+        self.dynamicEnvVars = dict()
+
         self._name = None
         self.graph = None
         self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
@@ -1448,6 +1451,11 @@ class Node(BaseNode):
         self._internalFolder = self.nodeDesc.internalFolder
         self._sourceCodeFolder = self.nodeDesc.sourceCodeFolder
 
+        self.dynamicEnvVars = {
+            "NODE_CACHE_FOLDER": self._internalFolder,
+            "NODE_SOURCECODE_FOLDER": self._sourceCodeFolder,
+        }
+
         for attrDesc in self.nodeDesc.inputs:
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))
 
@@ -1626,6 +1634,13 @@ class CompatibilityNode(BaseNode):
         self.parallelization = self.nodeDict.get("parallelization", {})
         self.splitCount = self.parallelization.get("split", 1)
         self.setSize(self.parallelization.get("size", 1))
+
+        # NODE_SOURCECODE_FOLDER cannot be set if the node's a CompatibilityNode, so explicitly set an error value
+        # rather than letting the resolution fail
+        self.dynamicEnvVars = {
+            "NODE_CACHE_FOLDER": self._internalFolder,
+            "NODE_SOURCECODE_FOLDER": "UndefinedPath",
+        }
 
         # Create input attributes
         for attrName, value in self._inputs.items():

@@ -135,6 +135,6 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             name="output",
             label="Image Pairs",
             description="Filepath to the output file with the list of selected image pairs.",
-            value=desc.Node.internalFolder + "imageMatches.txt",
+            value="${NODE_CACHE_FOLDER}/imageMatches.txt",
         ),
     ]

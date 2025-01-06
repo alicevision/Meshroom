@@ -87,6 +87,6 @@ for now, the parameters are difficult to control and vary a lot from one dataset
             name="output",
             label="Output",
             description="Output mesh in the OBJ file format.",
-            value=desc.Node.internalFolder + "mesh.obj",
+            value="${NODE_CACHE_FOLDER}/mesh.obj",
         ),
     ]

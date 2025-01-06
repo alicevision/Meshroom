@@ -131,6 +131,6 @@ class ImageMasking(desc.AVCommandLineNode):
             name="output",
             label="Output",
             description="Output folder.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
     ]

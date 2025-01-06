@@ -46,6 +46,6 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             name="output",
             label="SfMData",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfm.abc",
+            value="${NODE_CACHE_FOLDER}/sfm.abc",
         ),
     ]

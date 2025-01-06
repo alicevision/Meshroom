@@ -156,6 +156,6 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             name="outfile",
             label="Output File",
             description="The name of the file to store the calibration data in.",
-            value=desc.Node.internalFolder + "cameraRigCalibration.rigCal",
+            value="${NODE_CACHE_FOLDER}/cameraRigCalibration.rigCal",
         ),
     ]

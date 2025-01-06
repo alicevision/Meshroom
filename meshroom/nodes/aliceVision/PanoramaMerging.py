@@ -72,6 +72,6 @@ Merge all inputs coming from the PanoramaCompositing node.
             label="Panorama",
             description="Output merged panorama image.",
             semantic="image",
-            value=desc.Node.internalFolder + "panorama.{outputFileTypeValue}",
+            value="${NODE_CACHE_FOLDER}/panorama.{outputFileTypeValue}",
         ),
     ]

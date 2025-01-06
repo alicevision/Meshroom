@@ -486,7 +486,7 @@ The needed metadata are:
             name="output",
             label="SfMData",
             description="Output SfMData.",
-            value=desc.Node.internalFolder + "cameraInit.sfm",
+            value="${NODE_CACHE_FOLDER}/cameraInit.sfm",
         ),
     ]
 

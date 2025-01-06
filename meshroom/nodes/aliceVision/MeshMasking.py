@@ -98,6 +98,6 @@ Decimate triangles based on image masks.
             name="outputMesh",
             label="Mesh",
             description="Output mesh file.",
-            value=desc.Node.internalFolder + "mesh.{outputMeshFileTypeValue}",
+            value="${NODE_CACHE_FOLDER}/mesh.{outputMeshFileTypeValue}",
         ),
     ]

@@ -48,6 +48,6 @@ Estimate relative pose between each pair of views that share tracks.
             name="output",
             label="Pairs Info",
             description="Path to the output Pairs info files directory.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
     ]

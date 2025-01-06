@@ -50,6 +50,6 @@ Use a JSON file to inject poses inside the SfMData.
             name="output",
             label="SfMData",
             description="Path to the output SfM file.",
-            value=desc.Node.internalFolder + "sfmData.sfm",
+            value="${NODE_CACHE_FOLDER}/sfmData.sfm",
         ),
     ]

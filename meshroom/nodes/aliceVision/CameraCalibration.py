@@ -124,6 +124,6 @@ class CameraCalibration(desc.AVCommandLineNode):
             name="output",
             label="Output",
             description="Output filename for intrinsic [and extrinsic] parameters.",
-            value=desc.Node.internalFolder + "/cameraCalibration.cal",
+            value="${NODE_CACHE_FOLDER}/cameraCalibration.cal",
         ),
     ]

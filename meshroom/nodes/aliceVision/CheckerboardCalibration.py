@@ -47,6 +47,6 @@ Estimate the camera intrinsics and extrinsincs on a set of checkerboard images.
             name="output",
             label="SfMData File",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfmData.sfm",
+            value="${NODE_CACHE_FOLDER}/sfmData.sfm",
         )
     ]

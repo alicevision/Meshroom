@@ -92,6 +92,6 @@ It fuses all feature matches between image pairs into tracks. Each track represe
             name="output",
             label="Tracks",
             description="Path to the output tracks file.",
-            value=desc.Node.internalFolder + "tracksFile.json",
+            value="${NODE_CACHE_FOLDER}/tracksFile.json",
         ),
     ]

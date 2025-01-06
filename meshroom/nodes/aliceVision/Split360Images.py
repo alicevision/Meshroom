@@ -128,12 +128,12 @@ class Split360Images(desc.AVCommandLineNode):
             name="output",
             label="Folder",
             description="Output folder for extracted frames.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
         desc.File(
             name="outSfMData",
             label="SfMData File",
             description="Output SfMData file.",
-            value=desc.Node.internalFolder + "rig.sfm",
+            value="${NODE_CACHE_FOLDER}/rig.sfm",
         ),
     ]

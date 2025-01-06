@@ -228,14 +228,14 @@ Merge LDR images into HDR images.
             name="outputFolder",
             label="Folder",
             description="Path to the folder containing the merged HDR images.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
             group="",  # do not export on the command line
         ),
         desc.File(
             name="outSfMData",
             label="SfMData",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfmData.sfm",
+            value="${NODE_CACHE_FOLDER}/sfmData.sfm",
         ),
     ]
 

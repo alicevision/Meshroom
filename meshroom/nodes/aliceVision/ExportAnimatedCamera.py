@@ -83,27 +83,27 @@ Based on the input image filenames, it will recognize the input video sequence t
             name="output",
             label="Folder",
             description="Output folder with animated camera and undistorted images.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
         desc.File(
             name="outputCamera",
             label="Camera",
             description="Output filename for the animated camera in Alembic format.",
-            value=desc.Node.internalFolder + "camera.abc",
+            value="${NODE_CACHE_FOLDER}/camera.abc",
             group="",  # exclude from command line
         ),
         desc.File(
             name="outputUndistorted",
             label="Undistorted Folder",
             description="Output undistorted folder.",
-            value=desc.Node.internalFolder + "undistort/",
+            value="${NODE_CACHE_FOLDER}/undistort/",
             group="",  # exclude from command line
         ),
         desc.File(
             name="outputImages",
             label="Undistorted Images",
             description="Output undistorted images.",
-            value=desc.Node.internalFolder + "undistort/" + "<INTRINSIC_ID>_<FILESTEM>.{undistortedImageTypeValue}",
+            value="${NODE_CACHE_FOLDER}/undistort/<INTRINSIC_ID>_<FILESTEM>.{undistortedImageTypeValue}",
             semantic="image",
             group="",  # exclude from command line
             enabled=lambda node: node.exportUndistortedImages.value,

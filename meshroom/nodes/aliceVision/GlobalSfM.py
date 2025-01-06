@@ -94,18 +94,18 @@ It is known to be faster but less robust to challenging datasets than the Increm
             name="output",
             label="SfMData",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfm.abc",
+            value="${NODE_CACHE_FOLDER}/sfm.abc",
         ),
         desc.File(
             name="outputViewsAndPoses",
             label="Output Poses",
             description="Path to the output SfMData file with cameras (views and poses).",
-            value=desc.Node.internalFolder + "cameras.sfm",
+            value="${NODE_CACHE_FOLDER}/cameras.sfm",
         ),
         desc.File(
             name="extraInfoFolder",
             label="Folder",
             description="Folder for intermediate reconstruction files and additional reconstruction information files.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
     ]

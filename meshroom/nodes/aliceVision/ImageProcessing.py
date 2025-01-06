@@ -15,20 +15,20 @@ def outputImagesValueFunct(attr):
     if inputExt in ['.abc', '.sfm']:
         fileStem = '<FILESTEM>' if attr.node.keepImageFilename.value else '<VIEW_ID>'
         # If we have an SfM in input
-        return desc.Node.internalFolder + fileStem + (outputExt or '.*')
+        return "${NODE_CACHE_FOLDER}" + fileStem + (outputExt or '.*')
 
     if inputExt:
         # If we have one or multiple files in input
-        return desc.Node.internalFolder + fileStem + (outputExt or inputExt)
+        return "${NODE_CACHE_FOLDER}" + fileStem + (outputExt or inputExt)
 
     if '*' in fileStem:
         # The fileStem of the input param is a regular expression,
         # so even if there is no file extension,
         # we consider that the expression represents files.
-        return desc.Node.internalFolder + fileStem + (outputExt or '.*')
+        return "${NODE_CACHE_FOLDER}" + fileStem + (outputExt or '.*')
 
     # No extension and no expression means that the input param is a folder path
-    return desc.Node.internalFolder + '*' + (outputExt or '.*')
+    return "${NODE_CACHE_FOLDER}" + '*' + (outputExt or '.*')
 
 
 class ImageProcessing(desc.AVCommandLineNode):
@@ -608,14 +608,14 @@ Convert or apply filtering to the input images.
             name="outSfMData",
             label="SfMData",
             description="Output SfMData file.",
-            value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in [".abc", ".sfm"]) else "",
+            value=lambda attr: ("${NODE_CACHE_FOLDER}" + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in [".abc", ".sfm"]) else "",
             group="",  # do not export on the command line
         ),
         desc.File(
             name="output",
             label="Folder",
             description="Output images folder.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
         desc.File(
             name="outputImages",

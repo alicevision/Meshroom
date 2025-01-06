@@ -59,13 +59,13 @@ It also allows to export an undistorted image of the lens grids for validation.
             name="output",
             label="Folder",
             description="Output folder.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
         desc.File(
             name="distortionNukeNode",
             label="Distortion Nuke Node",
             description="Calibrated distortion ST map.",
-            value=desc.Node.internalFolder + "nukeLensDistortion_<INTRINSIC_ID>.nk",
+            value="${NODE_CACHE_FOLDER}/nukeLensDistortion_<INTRINSIC_ID>.nk",
             group="",  # do not export on the command line
             enabled=lambda node: node.exportNukeNode.value,
         ),
@@ -74,7 +74,7 @@ It also allows to export an undistorted image of the lens grids for validation.
             label="Undistorted Lens Grids",
             description="Undistorted lens grids for validation",
             semantic="image",
-            value=desc.Node.internalFolder + "lensgrid_<VIEW_ID>_undistort.exr",
+            value="${NODE_CACHE_FOLDER}/lensgrid_<VIEW_ID>_undistort.exr",
             group="",  # do not export on the command line
             enabled=lambda node: node.exportLensGridsUndistorted.value,
         ),
@@ -83,7 +83,7 @@ It also allows to export an undistorted image of the lens grids for validation.
             label="Distortion ST Map",
             description="Calibrated distortion ST map.",
             semantic="image",
-            value=desc.Node.internalFolder + "stmap_<INTRINSIC_ID>_distort.exr",
+            value="${NODE_CACHE_FOLDER}/stmap_<INTRINSIC_ID>_distort.exr",
             group="",  # do not export on the command line
             enabled=lambda node: node.exportSTMaps.value,
         ),
@@ -92,7 +92,7 @@ It also allows to export an undistorted image of the lens grids for validation.
             label="Undistortion ST Map",
             description="Calibrated undistortion ST map.",
             semantic="image",
-            value=desc.Node.internalFolder + "stmap_<INTRINSIC_ID>_undistort.exr",
+            value="${NODE_CACHE_FOLDER}/stmap_<INTRINSIC_ID>_undistort.exr",
             group="",  # do not export on the command line
             enabled=lambda node: node.exportSTMaps.value,
         ),

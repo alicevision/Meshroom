@@ -64,6 +64,6 @@ Operation types used to merge two meshes:
             name="output",
             label="Mesh",
             description="Output mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).",
-            value=desc.Node.internalFolder + "mesh.stl",
+            value="${NODE_CACHE_FOLDER}/mesh.stl",
         ),
     ]

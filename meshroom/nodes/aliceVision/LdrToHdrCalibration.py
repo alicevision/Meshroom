@@ -46,7 +46,7 @@ Calibrate LDR to HDR response curve from samples.
             name="samples",
             label="Samples Folder",
             description="Samples folder.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
         desc.IntParam(
             name="userNbBrackets",
@@ -151,7 +151,7 @@ Calibrate LDR to HDR response curve from samples.
             name="response",
             label="Response File",
             description="Path to the output response file.",
-            value=desc.Node.internalFolder + "response_<INTRINSIC_ID>.csv",
+            value="${NODE_CACHE_FOLDER}/response_<INTRINSIC_ID>.csv",
         ),
     ]
 

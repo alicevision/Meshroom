@@ -84,6 +84,6 @@ Spheres can be automatically detected or manually defined in the interface.
             name="output",
             label="Output Path",
             description="Sphere detection information will be written here.",
-            value=desc.Node.internalFolder + "/detection.json",
+            value="${NODE_CACHE_FOLDER}/detection.json",
         )
     ]

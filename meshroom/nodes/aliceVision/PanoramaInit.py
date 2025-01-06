@@ -147,7 +147,7 @@ This node allows to setup the Panorama:
             label="Contact sheet",
             semantic="image",
             description="Contact sheet path.",
-            value=desc.Node.internalFolder + "contactSheetImage.jpg",
+            value="${NODE_CACHE_FOLDER}/contactSheetImage.jpg",
             group="",  # do not export on the command line
             enabled=lambda node: node.buildContactSheet.enabled
         ),
@@ -155,6 +155,6 @@ This node allows to setup the Panorama:
             name="outSfMData",
             label="SfMData File",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfmData.sfm",
+            value="${NODE_CACHE_FOLDER}/sfmData.sfm",
         ),
     ]

@@ -36,6 +36,6 @@ class SfMColorizing(desc.AVCommandLineNode):
             name="output",
             label="SfMData",
             description="Path to the output SfM file.",
-            value=desc.Node.internalFolder + "sfmData.abc",
+            value="${NODE_CACHE_FOLDER}/sfmData.abc",
         ),
     ]

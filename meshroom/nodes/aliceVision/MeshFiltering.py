@@ -112,6 +112,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             name="outputMesh",
             label="Mesh",
             description="Output mesh file.",
-            value=desc.Node.internalFolder + "mesh.{outputMeshFileTypeValue}",
+            value="${NODE_CACHE_FOLDER}/mesh.{outputMeshFileTypeValue}",
         ),
     ]

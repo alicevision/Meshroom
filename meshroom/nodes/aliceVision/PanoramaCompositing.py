@@ -113,6 +113,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             name="output",
             label="Folder",
             description="Output folder containing the composited panorama.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
     ]

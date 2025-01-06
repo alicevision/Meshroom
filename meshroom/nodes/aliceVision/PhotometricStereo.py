@@ -78,27 +78,27 @@ The lighting conditions are assumed to be known.
             name="outputPath",
             label="Output Folder",
             description="Path to the output folder.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
         desc.File(
             name="outputSfmDataAlbedo",
             label="SfMData Albedo",
             description="Output SfMData file containing the albedo information.",
-            value=desc.Node.internalFolder + "/albedoMaps.sfm",
+            value="${NODE_CACHE_FOLDER}/albedoMaps.sfm",
             group="",  # remove from command line
         ),
         desc.File(
             name="outputSfmDataNormal",
             label="SfMData Normal",
             description="Output SfMData file containing the normal maps information.",
-            value=desc.Node.internalFolder + "/normalMaps.sfm",
+            value="${NODE_CACHE_FOLDER}/normalMaps.sfm",
             group="",  # remove from command line
         ),
         desc.File(
             name="outputSfmDataNormalPNG",
             label="SfMData Normal PNG",
             description="Output SfMData file containing the normal maps information.",
-            value=desc.Node.internalFolder + "/normalMapsPNG.sfm",
+            value="${NODE_CACHE_FOLDER}/normalMapsPNG.sfm",
             group="", # remove from command line
         ),
         # these attributes are only here to describe more accurately the output of the node
@@ -109,7 +109,7 @@ The lighting conditions are assumed to be known.
             label="Normal Maps Camera",
             description="Generated normal maps in the camera coordinate system.",
             semantic="image",
-            value=desc.Node.internalFolder + "<POSE_ID>_normals.exr",
+            value="${NODE_CACHE_FOLDER}/<POSE_ID>_normals.exr",
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -117,7 +117,7 @@ The lighting conditions are assumed to be known.
             label="Normal Maps Camera (in false colors)",
             description="Generated normal maps in the camera coordinate system (in false colors).",
             semantic="image",
-            value=desc.Node.internalFolder + "<POSE_ID>_normals.png",
+            value="${NODE_CACHE_FOLDER}/<POSE_ID>_normals.png",
             group="", # do not export on the command line
         ),
         desc.File(
@@ -125,7 +125,7 @@ The lighting conditions are assumed to be known.
             label="Normal Maps World",
             description="Generated normal maps in the world coordinate system.",
             semantic="image",
-            value=desc.Node.internalFolder + "<POSE_ID>_normals_w.exr",
+            value="${NODE_CACHE_FOLDER}/<POSE_ID>_normals_w.exr",
             group="",  # do not export on the command line
         ),
 
@@ -134,7 +134,7 @@ The lighting conditions are assumed to be known.
             label="Albedo Maps",
             description="Generated albedo maps.",
             semantic="image",
-            value=desc.Node.internalFolder + "<POSE_ID>_albedo.png",
+            value="${NODE_CACHE_FOLDER}/<POSE_ID>_albedo.png",
             group="",  # do not export on the command line
         ),
     ]

@@ -39,14 +39,14 @@ class NormalMapRendering(desc.AVCommandLineNode):
             name="output",
             label="Folder",
             description="Output folder.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
         desc.File(
             name="normal",
             label="Normal Maps",
             description="Rendered normal maps.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_normalMap.exr",
+            value="${NODE_CACHE_FOLDER}/<VIEW_ID>_normalMap.exr",
             group="",  # do not export on the command line
         ),
     ]

@@ -60,6 +60,6 @@ Import an E57 file and generate an SfMData.
             name="output",
             label="Output",
             description="Path to the output JSON file.",
-            value=desc.Node.internalFolder + "inputset.json",
+            value="${NODE_CACHE_FOLDER}/inputset.json",
         ),
     ]

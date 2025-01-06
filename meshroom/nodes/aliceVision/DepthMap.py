@@ -565,7 +565,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             name="output",
             label="Folder",
             description="Output folder for generated depth maps.",
-            value=desc.Node.internalFolder,
+            value="${NODE_CACHE_FOLDER}",
         ),
         # these attributes are only here to describe more accurately the output of the node
         # by specifying that it generates 2 sequences of images
@@ -575,7 +575,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label="Depth Maps",
             description="Generated depth maps.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_depthMap.exr",
+            value="${NODE_CACHE_FOLDER}/<VIEW_ID>_depthMap.exr",
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -583,14 +583,14 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label="Sim Maps",
             description="Generated sim maps.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_simMap.exr",
+            value="${NODE_CACHE_FOLDER}/<VIEW_ID>_simMap.exr",
             group="",  # do not export on the command line
         ),
         desc.File(
             name="tilePattern",
             label="Tile Pattern",
             description="Debug: Tile pattern.",
-            value=desc.Node.internalFolder + "<VIEW_ID>_tilePattern.obj",
+            value="${NODE_CACHE_FOLDER}/<VIEW_ID>_tilePattern.obj",
             group="",  # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportTilePattern.value,
         ),
@@ -599,7 +599,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label="Depth Maps SGM",
             description="Debug: Depth maps SGM",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_sgm.exr",
+            value="${NODE_CACHE_FOLDER}/<VIEW_ID>_depthMap_sgm.exr",
             group="",  # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
@@ -608,7 +608,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label="Depth Maps SGM Upscaled",
             description="Debug: Depth maps SGM upscaled.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_sgmUpscaled.exr",
+            value="${NODE_CACHE_FOLDER}/<VIEW_ID>_depthMap_sgmUpscaled.exr",
             group="",  # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
@@ -617,7 +617,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label="Depth Maps Refined",
             description="Debug: Depth maps after refinement",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_refinedFused.exr",
+            value="${NODE_CACHE_FOLDER}/<VIEW_ID>_depthMap_refinedFused.exr",
             group="",  # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),

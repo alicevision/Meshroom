@@ -35,6 +35,6 @@ Assumes the input SfMData describes a set of cameras capturing a scene at a comm
             name="output",
             label="SfMData",
             description="Path to the output SfM file (in SfMData format).",
-            value=lambda attr: desc.Node.internalFolder + "sfmData.sfm",
+            value=lambda attr: "${NODE_CACHE_FOLDER}" + "sfmData.sfm",
         ),
     ]

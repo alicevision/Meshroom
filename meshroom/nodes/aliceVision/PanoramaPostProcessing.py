@@ -107,20 +107,20 @@ Post process the panorama.
             label="Output Panorama Preview",
             description="Preview of the generated panorama in JPG format.",
             semantic="image",
-            value=lambda attr: desc.Node.internalFolder + attr.node.previewName.value,
+            value=lambda attr: "${NODE_CACHE_FOLDER}" + attr.node.previewName.value,
         ),
         desc.File(
             name="outputPanorama",
             label="Output Panorama",
             description="Generated panorama in EXR format.",
             semantic="image",
-            value=lambda attr: desc.Node.internalFolder + attr.node.panoramaName.value,
+            value=lambda attr: "${NODE_CACHE_FOLDER}" + attr.node.panoramaName.value,
         ),
         desc.File(
             name="downscaledPanoramaLevels",
             label="Downscaled Panorama Levels",
             description="Downscaled versions of the generated panorama.",
-            value=lambda attr: desc.Node.internalFolder + os.path.splitext(attr.node.panoramaName.value)[0] + "_level_*.exr",
+            value=lambda attr: "${NODE_CACHE_FOLDER}" + os.path.splitext(attr.node.panoramaName.value)[0] + "_level_*.exr",
             group="",
         ),
     ]

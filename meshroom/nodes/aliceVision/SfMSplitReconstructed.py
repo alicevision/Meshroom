@@ -36,12 +36,12 @@ class SfMSplitReconstructed(desc.AVCommandLineNode):
             name="reconstructedOutput",
             label="Reconstructed SfMData File",
             description="SfMData file containing the reconstructed cameras.",
-            value=desc.Node.internalFolder + "sfmReconstructed.abc",
+            value="${NODE_CACHE_FOLDER}/sfmReconstructed.abc",
         ),
         desc.File(
             name="notReconstructedOutput",
             label="Not Reconstructed SfMData File",
             description="SfMData file containing the non-reconstructed cameras.",
-            value=desc.Node.internalFolder + "sfmNonReconstructed.abc",
+            value="${NODE_CACHE_FOLDER}/sfmNonReconstructed.abc",
         ),
     ]

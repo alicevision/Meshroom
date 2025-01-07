@@ -71,46 +71,42 @@ Dialog {
             spacing: 4
             Layout.alignment: Qt.AlignHCenter
             MaterialToolButton {
-                text: MaterialIcons._public
+                text: MaterialIcons.public_
                 font.pointSize: 21
-                palette.buttonText: root.palette.link
                 ToolTip.text: "AliceVision Website"
                 onClicked: Qt.openUrlExternally("https://alicevision.org")
             }
             MaterialToolButton {
                 text: MaterialIcons.favorite
                 font.pointSize: 21
-                palette.buttonText: root.palette.link
                 ToolTip.text: "Donate to get a better software"
                 onClicked: Qt.openUrlExternally("https://alicevision.org/association/#donate")
             }
             ToolButton {
-                icon.source: "../img/GitHub-Mark-Light-32px.png"
+                icon.source: "../img/github-mark-white.svg"
                 icon.width: 24
                 icon.height: 24
+                icon.color: palette.text
                 ToolTip.text: "Meshroom on Github"
                 ToolTip.visible: hovered
-                onClicked: Qt.openUrlExternally("https://github.com/alicevision/meshroom")
+                onClicked: Qt.openUrlExternally("https://github.com/alicevision/Meshroom")
             }
             MaterialToolButton {
                 text: MaterialIcons.bug_report
                 font.pointSize: 21
                 ToolTip.text: "Report a Bug (GitHub account required)"
-                palette.buttonText: "#F44336"
-                property string body: "**Configuration**\n" + config.text
-                onClicked: Qt.openUrlExternally("https://github.com/alicevision/meshroom/issues/new?body="+body)
+                property string body: "**Configuration**\n\n" + config.text
+                onClicked: Qt.openUrlExternally("https://github.com/alicevision/Meshroom/issues/new?body="+body)
             }
             MaterialToolButton {
                 text: MaterialIcons.forum
                 font.pointSize: 21
-                palette.buttonText: Qt.lighter(systemPalette.buttonText, 1.3)
                 ToolTip.text: "Public Mailing-List (open discussions, use-cases, problems, best practices...)"
                 onClicked: Qt.openUrlExternally("https://groups.google.com/forum/#!forum/alicevision")
             }
             MaterialToolButton {
                 text: MaterialIcons.mail
                 font.pointSize: 21
-                palette.buttonText: Qt.lighter(systemPalette.buttonText, 1.3)
                 ToolTip.text: "Private Contact (alicevision-team@googlegroups.com)"
                 onClicked: Qt.openUrlExternally("mailto:alicevision-team@googlegroups.com")
             }

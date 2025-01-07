@@ -674,6 +674,19 @@ class UIGraph(QObject):
             node (Node): the node to move
             width (float): Node width.
             height (float): Node height.
+            position (QPoint): Node's position.
+        """
+        self.resizeAndMoveNode(node, width, height)
+
+    @Slot(Node, float, float, QPoint)
+    def resizeAndMoveNode(self, node, width, height, position=None):
+        """ Resizes the Node as well moves it in a single update.
+
+        Args:
+            node (Node): the node to move
+            width (float): Node width.
+            height (float): Node height.
+            position (QPoint): Node's position.
         """
         # Update the node size
         with self.groupedGraphModification("Resize Node"):
@@ -681,6 +694,11 @@ class UIGraph(QObject):
                 self.setAttribute(node.internalAttribute("nodeWidth"), width)
             if node.hasInternalAttribute("nodeHeight"):
                 self.setAttribute(node.internalAttribute("nodeHeight"), height)
+            
+            # If we have an offset, it means that the node was resized from the left side
+            # Update the node's actual position
+            if position:
+                self.moveNode(node, Position(position.x(), position.y()))
 
     @Slot(QPoint)
     def moveSelectedNodesBy(self, offset: QPoint):

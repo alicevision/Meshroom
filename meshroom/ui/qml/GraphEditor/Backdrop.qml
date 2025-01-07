@@ -50,6 +50,7 @@ Item {
 
     // Size signal
     signal resized(var width, var height)
+    signal resizedAndMoved(var width, var height, var position)
 
     // Already connected attribute with another edge in DropArea
     signal edgeAboutToBeRemoved(var input)
@@ -69,6 +70,9 @@ Item {
     // The backdrop node always needs to be at the back
     z: -1
 
+    width: root.node ? root.node.nodeWidth : 300;
+    height: root.node ? root.node.nodeHeight : 200;
+
     implicitHeight: childrenRect.height
 
     SystemPalette { id: activePalette }
@@ -79,6 +83,11 @@ Item {
         function onPositionChanged() {
             root.x = root.node.x
             root.y = root.node.y
+        }
+
+        function onInternalAttributesChanged() {
+            root.width = root.node.nodeWidth;
+            root.height = root.node.nodeHeight;
         }
     }
 
@@ -117,8 +126,8 @@ Item {
     // Main Layout
     MouseArea {
         id: mouseArea
-        width: node.nodeWidth
-        height: node.nodeHeight
+        width: root.width;
+        height: root.height;
         drag.target: root
         // Small drag threshold to avoid moving the node by mistake
         drag.threshold: 2
@@ -158,24 +167,23 @@ Item {
                 cursorShape: Qt.SizeHorCursor
                 anchors.fill: parent
 
-                drag{ target: parent; axis: Drag.XAxis }
+                drag { target: parent; axis: Drag.XAxis }
 
                 onMouseXChanged: {
                     if (drag.active) {
-                        // Width of the Area
-                        let w = 0
-
                         // Update the area width
-                        w = mouseArea.width + mouseX
+                        root.width = root.width + mouseX;
 
                         // Ensure we have a minimum width always
-                        if (w < 300) {
-                            w = 300
+                        if (root.width < 300) {
+                            root.width = 300;
                         }
-
-                        // emit the width and height
-                        root.resized(w, nodeContent.height)
                     }
+                }
+
+                onReleased: {
+                    // emit the width and height
+                    root.resized(root.width, nodeContent.height);
                 }
             }
         }
@@ -207,16 +215,21 @@ Item {
                         let w = 0
 
                         // Update the area width
-                        w = mouseArea.width - mouseX
+                        w = root.width - mouseX
 
                         // Ensure we have a minimum width always
                         if (w > 300) {
-                            // Update the node's x position
+                            // Update the node's x position and the width
                             root.x = root.x + mouseX
-                            // Emit the updated width and height
-                            root.resized(w, nodeContent.height)
+                            root.width = w;
                         }
                     }
+                }
+
+                onReleased: {
+                    // emit the node width and height along with the root position
+                    // Dragging from the left moves the node as well
+                    root.resizedAndMoved(root.width, root.height, Qt.point(root.x, root.y));
                 }
             }
         }
@@ -243,20 +256,19 @@ Item {
 
                 onMouseYChanged: {
                     if (drag.active) {
-                        // Height of the node
-                        let h = 0
-
                         // Update the height
-                        h = nodeContent.height + mouseY
+                        root.height = root.height + mouseY;
 
                         // Ensure a minimum height
-                        if (h < 300) {
-                            h = 300
+                        if (root.height < 300) {
+                            root.height = 300;
                         }
-
-                        // emit the width and height for it to be updated
-                        root.resized(mouseArea.width, h)
                     }
+                }
+
+                onReleased: {
+                    // emit the width and height for it to be updated
+                    root.resized(mouseArea.width, root.height);
                 }
             }
         }
@@ -298,7 +310,7 @@ Item {
         Rectangle {
             id: nodeContent
             width: parent.width
-            height: node.nodeHeight
+            height: parent.height
             color: "transparent"
 
             // Data Layout

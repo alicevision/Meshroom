@@ -476,6 +476,25 @@ class EnableGraphUpdateCommand(GraphCommand):
         self.graph.updateEnabled = self.previousState
 
 
+class EnableUIGraphAnimationsCommand(EnableGraphUpdateCommand):
+    """ Command to enable/disable UI graph update.
+    Should not be used directly, use GroupedUIGraphModification context manager instead.
+    """
+    def __init__(self, uigraph, enabled, disableAnimations, parent=None):
+        super(EnableUIGraphAnimationsCommand, self).__init__(uigraph.graph, enabled, parent)
+        self.uigraph = uigraph
+        self.disableAnimations = disableAnimations
+        self.previousAnimationState = self.uigraph.disableAnimations
+
+    def redoImpl(self):
+        self.uigraph.disableAnimations = self.disableAnimations
+        return super().redoImpl()
+
+    def undoImpl(self):
+        self.uigraph.disableAnimations = self.previousAnimationState
+        super().undoImpl()
+
+
 @contextmanager
 def GroupedGraphModification(graph, undoStack, title, disableUpdates=True):
     """ A context manager that creates a macro command disabling (if not already) graph update by default
@@ -501,4 +520,34 @@ def GroupedGraphModification(graph, undoStack, title, disableUpdates=True):
         if disableUpdates:
             # Push a command restoring graph update state and end command macro
             undoStack.tryAndPush(EnableGraphUpdateCommand(graph, state))
+        undoStack.endMacro()
+
+
+@contextmanager
+def GroupedUIGraphModification(uigraph, undoStack, title, disableUpdates=True):
+    """ A context manager that creates a macro command disabling (if not already) graph update by default
+    and resetting its status after nested block execution.
+
+    Args:
+        uigraph (Graph): the UI Graph that will be modified
+        undoStack (UndoStack): the UndoStack to work with
+        title (str): the title of the macro command
+        disableUpdates (bool): whether to disable graph updates
+    """
+    # Store graph update state
+    state = uigraph.graph.updateEnabled
+    animationState = uigraph.disableAnimations
+
+    # Create a new command macro and push a command that disable graph updates
+    undoStack.beginMacro(title)
+    if disableUpdates:
+        undoStack.tryAndPush(EnableUIGraphAnimationsCommand(uigraph, False, True))
+    try:
+        yield  # Execute nested block
+    except Exception:
+        raise
+    finally:
+        if disableUpdates:
+            # Push a command restoring graph update and animation states and end command macro
+            undoStack.tryAndPush(EnableUIGraphAnimationsCommand(uigraph, state, animationState))
         undoStack.endMacro()

@@ -51,7 +51,7 @@ Item {
          */
 
         // Replace the text to be RichText Supportive
-        return "<font color=#868686>" + replace(text, "\n", "<br>") + "</font><br><br>"
+        return "<font color=#868686>> Input:<br>" + replace(text, "\n", "<br>") + "</font><br>"
     }
 
     function formatOutput(text) {
@@ -60,7 +60,7 @@ Item {
          */
 
         // Replace the text to be RichText Supportive
-        return "<font color=#49a1f3>" + "Result: " + replace(text, "\n", "<br>") + "</font><br><br>"
+        return "<font color=#49a1f3>> Result:<br>" + replace(text, "\n", "<br>") + "</font><br>"
     }
 
     function clearHistory() {
@@ -295,7 +295,7 @@ Item {
                     width: parent.width
                     height: parent.height
                     contentWidth: width
-                    contentHeight: ( input.lineCount + 5 ) * input.font.pixelSize // + 5 lines for buffer to be scrolled and visibility
+                    contentHeight: input.contentHeight;
 
                     anchors.left: lineNumbers.right
                     anchors.top: parent.top
@@ -348,7 +348,7 @@ Item {
                     width: parent.width
                     height: parent.height
                     contentWidth: width
-                    contentHeight: ( output.lineCount + 5 ) * output.font.pixelSize // + 5 lines for buffer to be scrolled and visibility
+                    contentHeight: output.contentHeight;
 
                     ScrollBar.vertical: MScrollBar {}
 

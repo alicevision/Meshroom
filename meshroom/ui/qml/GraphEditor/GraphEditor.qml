@@ -1123,7 +1123,7 @@ Item {
                             }
 
                             Behavior on x {
-                                enabled: !nodeRepeater.ongoingDrag && !resizing
+                                enabled:  !nodeRepeater.ongoingDrag && !resizing && !uigraph.animationsDisabled;
                                 NumberAnimation { duration: 100 }
                             }
                             Behavior on y {

@@ -639,6 +639,18 @@ class UIGraph(QObject):
         """
         return commands.GroupedGraphModification(self._graph, self._undoStack, title, disableUpdates)
 
+    def groupedUIGraphModification(self, title, disableUpdates=True):
+        """ Get a GroupedUIGraphModification for this Graph.
+
+        Args:
+            title (str): the title of the macro command
+            disableUpdates (bool): whether to disable graph and ui updates
+
+        Returns:
+            GroupedGraphModification: the instantiated context manager
+        """
+        return commands.GroupedUIGraphModification(self, self._undoStack, title, disableUpdates)
+
     @Slot(str)
     def beginModification(self, name):
         """ Begin a Graph modification. Calls to beginModification and endModification may be nested, but
@@ -703,7 +715,7 @@ class UIGraph(QObject):
             position (QPoint): Node's position.
         """
         # Update the node size
-        with self.groupedGraphModification("Resize Node"):
+        with self.groupedUIGraphModification("Resize Node"):
             if node.hasInternalAttribute("nodeWidth"):
                 self.setAttribute(node.internalAttribute("nodeWidth"), width)
             if node.hasInternalAttribute("nodeHeight"):

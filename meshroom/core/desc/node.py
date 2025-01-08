@@ -13,7 +13,6 @@ from meshroom.core import cgroup
 class Node(object):
     """
     """
-    internalFolder = '{cache}/{nodeType}/{uid}/'
     cpu = Level.NORMAL
     gpu = Level.NONE
     ram = Level.NORMAL

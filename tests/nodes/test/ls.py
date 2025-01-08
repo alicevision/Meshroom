@@ -17,6 +17,6 @@ class Ls(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''''',
-            value=desc.Node.internalFolder + 'ls.txt',
+            value='{nodeCacheFolder}/ls.txt',
         )
     ]

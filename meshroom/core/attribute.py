@@ -362,7 +362,14 @@ class Attribute(BaseObject):
         Return the value. If it is a string, expressions will be evaluated.
         '''
         if isinstance(self.value, str):
-            return Template(self.value).safe_substitute(os.environ)
+            substituted = Template(self.value).safe_substitute(os.environ)
+            try:
+                varResolved = substituted.format(**self.node._cmdVars)
+                return varResolved
+            except (KeyError, IndexError):
+                # Catch KeyErrors and IndexErros to be able to open files created prior to the support of
+                # relative variables (when self.node._cmdVars was not used to evaluate expressions in the attribute)
+                return substituted
         return self.value
 
     def getValueStr(self, withQuotes=True):

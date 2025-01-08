@@ -373,9 +373,23 @@ class UIGraph(QObject):
         self._nodeSelection = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
 
+        # UI based animations can be controlled by this flag
+        self._disableAnimations = False
+
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
         self.filePollerRefreshChanged.connect(self._chunksMonitor.filePollerRefreshChanged)
+
+    @property
+    def disableAnimations(self) -> bool:
+        """ Returns whether the animations are currently disabled. """
+        return self._disableAnimations
+
+    @disableAnimations.setter
+    def disableAnimations(self, disable: bool):
+        """ Updates the Animation state for the UI graph. """
+        self._disableAnimations = disable
+        self.attributeChanged.emit()
 
     def setGraph(self, g):
         """ Set the internal graph. """
@@ -1156,6 +1170,10 @@ class UIGraph(QObject):
     hoveredNodeChanged = Signal()
     # Currently hovered node
     hoveredNode = makeProperty(QObject, "_hoveredNode", hoveredNodeChanged, resetOnDestroy=True)
+
+    # Currently resizing a node
+    attributeChanged = Signal()
+    animationsDisabled = Property(bool, disableAnimations.fget, notify=attributeChanged)
 
     filePollerRefreshChanged = Signal(int)
     filePollerRefresh = Property(int, lambda self: self._chunksMonitor.filePollerRefresh, notify=filePollerRefreshChanged)

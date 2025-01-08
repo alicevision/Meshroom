@@ -99,12 +99,12 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             name="output",
             label="SfMData",
             description="Path to the output SfM point cloud file (in SfMData format).",
-            value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or "sfmData") + ".abc",
+            value=lambda attr: "{nodeCacheFolder}/" + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or "sfmData") + ".abc",
         ),
         desc.File(
             name="outputViewsAndPoses",
             label="Poses",
             description="Path to the output SfMData file with cameras (views and poses).",
-            value=desc.Node.internalFolder + "cameras.sfm",
+            value="{nodeCacheFolder}/cameras.sfm",
         ),
     ]

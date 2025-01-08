@@ -472,12 +472,12 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             name="outputMesh",
             label="Mesh",
             description="Output mesh.",
-            value=desc.Node.internalFolder + "mesh.{outputMeshFileTypeValue}",
+            value="{nodeCacheFolder}/mesh.{outputMeshFileTypeValue}",
         ),
         desc.File(
             name="output",
             label="Dense SfMData",
             description="Output dense point cloud with visibilities (SfMData file format).",
-            value=desc.Node.internalFolder + "densePointCloud.abc",
+            value="{nodeCacheFolder}/densePointCloud.abc",
         ),
     ]

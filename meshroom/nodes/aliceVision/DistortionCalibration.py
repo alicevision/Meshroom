@@ -59,6 +59,6 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             name="output",
             label="SfMData File",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfmData.sfm",
+            value="{nodeCacheFolder}/sfmData.sfm",
         ),
     ]

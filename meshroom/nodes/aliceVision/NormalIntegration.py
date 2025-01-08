@@ -46,7 +46,7 @@ Evaluate a depth map from a normals map (currently in development)
             label="Depth Map Camera",
             description="Generated depth in the camera coordinate system.",
             semantic="image",
-            value=desc.Node.internalFolder + "<POSE_ID>_depthMap.exr",
+            value="{nodeCacheFolder}/<POSE_ID>_depthMap.exr",
             group="", # do not export on the command line
         )
     ]

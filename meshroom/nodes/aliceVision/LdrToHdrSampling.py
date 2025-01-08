@@ -176,7 +176,7 @@ Sample pixels from Low range images for HDR creation.
             name="output",
             label="Folder",
             description="Output path for the samples.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
     ]
 

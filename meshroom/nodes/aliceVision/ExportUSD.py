@@ -41,6 +41,6 @@ class ExportUSD(desc.AVCommandLineNode):
             name="output",
             label="Output",
             description="Path to the output file.",
-            value=desc.Node.internalFolder + "output.{fileTypeValue}",
+            value="{nodeCacheFolder}/output.{fileTypeValue}",
         ),
     ]

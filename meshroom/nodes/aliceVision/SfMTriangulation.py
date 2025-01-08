@@ -143,12 +143,12 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
             name="output",
             label="SfMData",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfm.abc",
+            value="{nodeCacheFolder}/sfm.abc",
         ),
         desc.File(
             name="extraInfoFolder",
             label="Folder",
             description="Folder for intermediate reconstruction files and additional reconstruction information files.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
     ]

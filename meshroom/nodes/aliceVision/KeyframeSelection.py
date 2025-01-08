@@ -390,20 +390,20 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             name="outputFolder",
             label="Folder",
             description="Output keyframes folder for extracted frames.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
         desc.File(
             name="outputSfMDataKeyframes",
             label="Keyframes SfMData",
             description="Output SfMData file containing all the selected keyframes.",
-            value=desc.Node.internalFolder + "keyframes.sfm",
+            value="{nodeCacheFolder}/keyframes.sfm",
         ),
         desc.File(
             name="outputSfMDataFrames",
             label="Frames SfMData",
             description="Output SfMData file containing all the frames that were not selected as keyframes.\n"
                         "If the input contains videos, this file will not be written since all the frames that were not selected do not actually exist on disk.",
-            value=desc.Node.internalFolder + "frames.sfm",
+            value="{nodeCacheFolder}/frames.sfm",
         ),
     ]
 

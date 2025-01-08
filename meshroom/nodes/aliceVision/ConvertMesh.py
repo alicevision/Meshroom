@@ -39,6 +39,6 @@ class ConvertMesh(desc.AVCommandLineNode):
             name="output",
             label="Mesh",
             description="Output mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).",
-            value=desc.Node.internalFolder + "mesh." + "{outputMeshFileTypeValue}",
+            value="{nodeCacheFolder}/mesh.{outputMeshFileTypeValue}",
         ),
     ]

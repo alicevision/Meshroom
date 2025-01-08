@@ -77,6 +77,6 @@ class LightingEstimation(desc.AVCommandLineNode):
             name="output",
             label="Folder",
             description="Folder for output lighting vector files.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
     ]

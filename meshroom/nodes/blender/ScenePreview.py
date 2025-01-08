@@ -128,14 +128,14 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             name="output",
             label="Output",
             description="Output folder.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
         desc.File(
             name="frames",
             label="Frames",
             description="Frames rendered in Blender.",
             semantic="image",
-            value=desc.Node.internalFolder + "<FILESTEM>_preview.jpg",
+            value="{nodeCacheFolder}/<FILESTEM>_preview.jpg",
             group="",
         ),
     ]

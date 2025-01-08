@@ -44,6 +44,6 @@ class ApplyCalibration(desc.AVCommandLineNode):
             name="output",
             label="SMData",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfmData.sfm",
+            value="{nodeCacheFolder}/sfmData.sfm",
         ),
     ]

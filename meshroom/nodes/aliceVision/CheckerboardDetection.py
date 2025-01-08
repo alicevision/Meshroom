@@ -61,7 +61,7 @@ The detection method also supports nested calibration grids.
             name="output",
             label="Folder",
             description="Output folder.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
         desc.File(
             name="checkerLines",
@@ -69,7 +69,7 @@ The detection method also supports nested calibration grids.
             label="Checker Lines",
             description="Debug images.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>.png",
+            value="{nodeCacheFolder}/<VIEW_ID>.png",
             group="",  # do not export on the command line
         ),
     ]

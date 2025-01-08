@@ -56,13 +56,13 @@ class ExportMaya(desc.Node):
             name="meloutput",
             label="Mel Script",
             description="Generated mel script.",
-            value=desc.Node.internalFolder + "import.mel",
+            value="{nodeCacheFolder}/import.mel",
         ),
         desc.File(
             name="mayaoutput",
             label="Maya Scene",
             description="Generated Maya scene.",
-            value=desc.Node.internalFolder + "scene.mb",
+            value="{nodeCacheFolder}/scene.mb",
             enabled=lambda node: node.generateMaya.value,
         ),
     ]

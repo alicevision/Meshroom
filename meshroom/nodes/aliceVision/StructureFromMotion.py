@@ -376,18 +376,18 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             name="output",
             label="SfMData",
             description="Path to the output SfM point cloud file (in SfMData format).",
-            value=desc.Node.internalFolder + "sfm.abc",
+            value="{nodeCacheFolder}/sfm.abc",
         ),
         desc.File(
             name="outputViewsAndPoses",
             label="Views And Poses",
             description="Path to the output SfMData file with cameras (views and poses).",
-            value=desc.Node.internalFolder + "cameras.sfm",
+            value="{nodeCacheFolder}/cameras.sfm",
         ),
         desc.File(
             name="extraInfoFolder",
             label="Folder",
             description="Folder for intermediate reconstruction files and additional reconstruction information files.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
     ]

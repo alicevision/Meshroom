@@ -46,12 +46,12 @@ class LidarDecimating(desc.AVCommandLineNode):
             name="output",
             label="Sub-Meshes Directory",
             description="Output directory for sub-meshes.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
         desc.File(
             name="outputJson",
             label="Scene Description",
             description="Output scene description.",
-            value=desc.Node.internalFolder + "scene.json",
+            value="{nodeCacheFolder}/scene.json",
         ),
     ]

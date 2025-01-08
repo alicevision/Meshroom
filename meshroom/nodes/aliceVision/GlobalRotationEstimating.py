@@ -61,6 +61,6 @@ Estimate the global rotation given tracks.
             name="output",
             label="SfMData",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfm.abc",
+            value="{nodeCacheFolder}/sfm.abc",
         ),
     ]

@@ -72,6 +72,6 @@ This node allows to reduce the density of the Mesh.
             name="output",
             label="Mesh",
             description="Output mesh in the OBJ file format.",
-            value=desc.Node.internalFolder + "mesh.obj",
+            value="{nodeCacheFolder}/mesh.obj",
         ),
     ]

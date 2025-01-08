@@ -72,14 +72,14 @@ class MaskProcessing(desc.AVCommandLineNode):
             name="output",
             label="Output",
             description="Path to the output directory.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
         desc.File(
             name="masks",
             label="Masks",
             description="Processed segmentation masks.",
             semantic="imageList",
-            value= desc.Node.internalFolder + "*.exr",
+            value= "{nodeCacheFolder}/*.exr",
             group="",
         ),
     ]

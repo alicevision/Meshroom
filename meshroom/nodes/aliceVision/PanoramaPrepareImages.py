@@ -36,6 +36,6 @@ Prepare images for Panorama pipeline: ensures that images orientations are coher
             name="output",
             label="SfMData",
             description="Output SfMData file.",
-            value=lambda attr: desc.Node.internalFolder + os.path.basename(attr.node.input.value),
+            value=lambda attr: "{nodeCacheFolder}/" + os.path.basename(attr.node.input.value),
         ),
     ]

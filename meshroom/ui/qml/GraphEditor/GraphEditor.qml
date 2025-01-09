@@ -992,7 +992,7 @@ Item {
                 nbDraggedFiles = drag.urls.length
 
                 drag.urls.forEach(function(file) {
-                    if (file.endsWith(".mg")) {
+                    if (String(file).endsWith(".mg")) {
                         nbMeshroomScenes++
                     }
                 })

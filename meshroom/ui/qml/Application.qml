@@ -1281,7 +1281,7 @@ Page {
                             _reconstruction.forceNodesStatusUpdate();
                             computeManager.submit(nodes)
                         }
-                        onFilesDropped: {
+                        onFilesDropped: function(drop, mousePosition) {
                             var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
                             if (filesByType["meshroomScenes"].length == 1) {
                                 ensureSaved(function() {

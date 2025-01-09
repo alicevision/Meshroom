@@ -987,7 +987,7 @@ Item {
             id: dropArea
             anchors.fill: parent
             keys: ["text/uri-list"]
-            onEntered: {
+            onEntered: function(drag) {
                 nbMeshroomScenes = 0
                 nbDraggedFiles = drag.urls.length
 

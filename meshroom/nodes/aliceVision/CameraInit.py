@@ -1,4 +1,4 @@
-__version__ = "11.0"
+__version__ = "12.0"
 
 import os
 import json
@@ -131,9 +131,10 @@ Intrinsic = [
         description="Mathematical model used to represent a camera:\n"
                     " - pinhole: Simplest projective camera model without optical distortion "
                     "(focal and optical center).\n"
-                    " - equidistant: Non-projective camera model suited for full-fisheye optics.\n",
+                    " - equidistant: Non-projective camera model suited for full-fisheye optics.\n"
+                    " - equirectangular: Projection model used in panoramas.\n",
         value="pinhole",
-        values=["pinhole", "equidistant"],
+        values=["pinhole", "equidistant", "equirectangular"],
     ),
     desc.ChoiceParam(
         name="distortionType",

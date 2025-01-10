@@ -239,16 +239,16 @@ Item {
             }
         }
 
-        RowLayout {
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-            width: root.width
+        MSplitView {
+            id: scriptSplitView;
+            Layout.fillHeight: true;
+            Layout.fillWidth: true;
+            orientation: Qt.Horizontal;
 
             // Input Text Area -- Holds the input scripts to be executed
             Rectangle {
                 id: inputArea
-                Layout.fillHeight: true
-                Layout.fillWidth: true
+                SplitView.preferredWidth: root.width / 2;
 
                 color: palette.base
 

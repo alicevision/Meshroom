@@ -18,7 +18,7 @@
             "ImageSegmentationBox": "0.1",
             "NodalSfM": "2.0",
             "Publish": "1.3",
-            "RelativePoseEstimating": "2.0",
+            "RelativePoseEstimating": "3.0",
             "ScenePreview": "2.0",
             "TracksBuilding": "1.0"
         }

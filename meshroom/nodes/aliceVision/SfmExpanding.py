@@ -28,6 +28,12 @@ class SfMExpanding(desc.AVCommandLineNode):
             description="Tracks file.",
             value="",
         ),
+        desc.File(
+            name="meshFilename",
+            label="Mesh File",
+            description="Mesh file (*.obj).",
+            value="",
+        ),
         desc.IntParam(
             name="localizerEstimatorMaxIterations",
             label="Localizer Max Ransac Iterations",

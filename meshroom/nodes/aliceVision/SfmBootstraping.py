@@ -26,6 +26,12 @@ class SfMBootStraping(desc.AVCommandLineNode):
             value="",
         ),
         desc.File(
+            name="meshFilename",
+            label="Mesh File",
+            description="Mesh file (*.obj).",
+            value="",
+        ),
+        desc.File(
             name="pairs",
             label="Pairs File",
             description="Information on pairs.",

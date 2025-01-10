@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 from meshroom.core import desc
 from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
@@ -33,6 +33,14 @@ Estimate relative pose between each pair of views that share tracks.
             label="Enforce pure rotation",
             description="Enforce pure rotation as a model",
             value=False,
+        ),
+        desc.IntParam(
+            name="countIterations",
+            label="Ransac max iterations",
+            description="Maximal number of iterations.",
+            value=1024,
+            range=(1024, 500000, 1),
+            advanced=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",

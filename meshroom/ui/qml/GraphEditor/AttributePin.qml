@@ -236,13 +236,26 @@ RowLayout {
             id: nameLabel
 
             anchors.rightMargin: 0
-            anchors.right: root.attribute && root.attribute.isOutput ? parent.right : undefined
             labelIconRow.layoutDirection: root.attribute.isOutput ? Qt.RightToLeft : Qt.LeftToRight
+            anchors.right: root.attribute && root.attribute.isOutput ? parent.right : undefined
             labelIconRow.spacing: 0
+            width: {
+                if (hovered) {
+                    return icon.width + label.contentWidth
+                } else {
+                    if (nameContainer.width > 0 && icon.width + label.contentWidth < nameContainer.width)
+                        return icon.width + label.contentWidth
+                    return nameContainer.width
+                }
+            }
 
             enabled: !root.readOnly
             visible: true
-            property bool hovered: (inputConnectMA.containsMouse || inputConnectMA.drag.active ||
+            property bool parentNotReady: nameContainer.width == 0  // Allows to trigger a change of state once the parent is ready,
+                                                                    // ensuring the correct width of the elements upon their first
+                                                                    // display without waiting for a mouse interaction
+            property bool hovered: parentNotReady ||
+                                   (inputConnectMA.containsMouse || inputConnectMA.drag.active ||
                                     inputDropArea.containsDrag || outputConnectMA.containsMouse ||
                                     outputConnectMA.drag.active || outputDropArea.containsDrag)
 
@@ -259,6 +272,7 @@ RowLayout {
             // Text
             label.text: root.attribute.label
             label.font.pointSize: 7
+            labelWidth: hovered ? label.contentWidth : nameLabel.width - icon.width
             label.elide: hovered ? Text.ElideNone : Text.ElideMiddle
             label.horizontalAlignment: root.attribute && root.attribute.isOutput ? Text.AlignRight : Text.AlignLeft
 

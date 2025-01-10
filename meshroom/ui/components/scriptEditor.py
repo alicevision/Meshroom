@@ -44,6 +44,18 @@ class ScriptEditorManager(QObject):
         settings = QSettings()
         settings.beginGroup(self._GROUP)
         return settings.value(self._KEY)
+    
+    def _hasPreviousScript(self):
+        """ Returns whether there is a previous script available.
+        """
+        # If the current index is greater than the first
+        return self._index > 0
+    
+    def _hasNextScript(self):
+        """ Returns whethere there is a new script available to load.
+        """
+        # If the current index is lower than the available indexes
+        return self._index < (len(self._history) - 1)
 
     # Public
     @Slot(str, result=str)
@@ -74,6 +86,7 @@ class ScriptEditorManager(QObject):
         # Add the script to the history and move up the index to the top of history stack
         self._history.append(script)
         self._index = len(self._history)
+        self.scriptIndexChanged.emit()
 
         return result
 
@@ -89,6 +102,7 @@ class ScriptEditorManager(QObject):
             If there is no next entry, return an empty string. """
         if self._index + 1 < len(self._history) and len(self._history) > 0:
             self._index = self._index + 1
+            self.scriptIndexChanged.emit()
             return self._history[self._index]
         return ""
 
@@ -98,6 +112,7 @@ class ScriptEditorManager(QObject):
             If there is no previous entry, return an empty string. """
         if self._index - 1 >= 0 and self._index - 1 < len(self._history):
             self._index = self._index - 1
+            self.scriptIndexChanged.emit()
             return self._history[self._index]
         elif self._index == 0 and len(self._history):
             return self._history[self._index]
@@ -120,6 +135,11 @@ class ScriptEditorManager(QObject):
         settings.beginGroup(self._GROUP)
         settings.setValue(self._KEY, script)
         settings.sync()
+    
+    scriptIndexChanged = Signal()
+
+    hasPreviousScript = Property(bool, _hasPreviousScript, notify=scriptIndexChanged)
+    hasNextScript = Property(bool, _hasNextScript, notify=scriptIndexChanged)
 
 
 class CharFormat(QtGui.QTextCharFormat):

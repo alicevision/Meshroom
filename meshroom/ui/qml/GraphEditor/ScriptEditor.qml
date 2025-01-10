@@ -9,22 +9,81 @@ import Utils 1.0
 
 import Qt.labs.platform 1.0 as Platform
 
+import ScriptEditor 1.0
+
 Item {
     id: root
 
-    function formatInput(text) {
-        var lines = text.split("\n")
-        for (let i = 0; i < lines.length; ++i) {
-            lines[i] = ">>> " + lines[i]
+    // Defines the parent or the root Application of which this script editor is a part of
+    property var rootApplication: undefined;
+
+    Component {
+        id: clearConfirmationDialog
+
+        MessageDialog {
+            title: "Clear history"
+
+            preset: "Warning"
+            text: "This will clear all history of executed scripts."
+            helperText: "Are you sure you would like to continue?."
+
+            standardButtons: Dialog.Ok | Dialog.Cancel
+            onClosed: destroy()
         }
-        return lines.join("\n")
     }
 
-    function processScript() {
-        output.clear()
-        var ret = ScriptEditorManager.process(input.text)
-        output.text = formatInput(input.text) + "\n\n" + ret
+    function replace(text, string, replacement) {
+        /**
+         * Replaces all occurences of the string in the text
+         * @param text - overall text
+         * @param string - the string to be replaced in the text
+         * @param replacement - the replacement of the string
+         */
+        // Split with the string
+        let lines = text.split(string)
+        // Return the overall text joined with the replacement
+        return lines.join(replacement)
+    }
+
+    function formatInput(text) {
+        /**
+         * Formats the text to be displayed as the input script executed
+         */
+
+        // Replace the text to be RichText Supportive
+        return "<font color=#868686>> Input:<br>" + replace(text, "\n", "<br>") + "</font><br>"
+    }
+
+    function formatOutput(text) {
+        /**
+         * Formats the text to be displayed as the result of the script executed
+         */
+
+        // Replace the text to be RichText Supportive
+        return "<font color=#49a1f3>> Result:<br>" + replace(text, "\n", "<br>") + "</font><br>"
+    }
+
+    function clearHistory() {
+        /**
+         * Clears all of the executed history from the script editor
+         */
+        ScriptEditorManager.clearHistory()
         input.clear()
+        output.clear()
+    }
+
+    function processScript(text = "") {
+        // Use either the provided/selected or the entire script
+        text = text || input.text
+
+        // Execute the process and fetch back the return for it
+        var ret = ScriptEditorManager.process(text)
+
+        // Append the input script and the output result to the output console
+        output.append(formatInput(text) + formatOutput(ret))
+
+        // Save the entire script after executing the commands
+        ScriptEditorManager.saveScript(input.text)
     }
 
     function loadScript(fileUrl) {
@@ -83,13 +142,9 @@ Item {
         RowLayout {
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
 
-            Item {
-                Layout.fillWidth: true
-            }
-
             MaterialToolButton {
                 font.pointSize: 13
-                text: MaterialIcons.download
+                text: MaterialIcons.file_open
                 ToolTip.text: "Load Script"
 
                 onClicked: {
@@ -99,7 +154,7 @@ Item {
 
             MaterialToolButton {
                 font.pointSize: 13
-                text: MaterialIcons.upload
+                text: MaterialIcons.save
                 ToolTip.text: "Save Script"
 
                 onClicked: {
@@ -107,39 +162,12 @@ Item {
                 }
             }
 
-            Item {
-                width: executeButton.width
-            }
-
-            MaterialToolButton {
-                id: executeButton
-                font.pointSize: 13
-                text: MaterialIcons.slideshow
-                ToolTip.text: "Execute Script"
-
-                onClicked: {
-                    root.processScript()
-                }
-            }
-
-            MaterialToolButton {
-                font.pointSize: 13
-                text: MaterialIcons.cancel_presentation
-                ToolTip.text: "Clear Output Window"
-
-                onClicked: {
-                    output.clear()
-                }
-            }
-
-            Item {
-                width: executeButton.width
-            }
-
             MaterialToolButton {
                 font.pointSize: 13
                 text: MaterialIcons.history
                 ToolTip.text: "Get Previous Script"
+
+                enabled: ScriptEditorManager.hasPreviousScript;
 
                 onClicked: {
                     var ret = ScriptEditorManager.getPreviousScript()
@@ -156,6 +184,8 @@ Item {
                 text: MaterialIcons.update
                 ToolTip.text: "Get Next Script"
 
+                enabled: ScriptEditorManager.hasNextScript;
+
                 onClicked: {
                     var ret = ScriptEditorManager.getNextScript()
 
@@ -168,46 +198,57 @@ Item {
 
             MaterialToolButton {
                 font.pointSize: 13
-                text: MaterialIcons.backspace
+                text: MaterialIcons.delete_sweep
                 ToolTip.text: "Clear History"
 
                 onClicked: {
-                    ScriptEditorManager.clearHistory()
-                    input.clear()
-                    output.clear()
+                    // Confirm from the user before clearing out any history
+                    const confirmationDialog = clearConfirmationDialog.createObject(rootApplication ? rootApplication : root);
+                    confirmationDialog.accepted.connect(clearHistory);
+                    confirmationDialog.open();
+                }
+            }
+
+            Item {
+                width: executeButton.width;
+            }
+            
+            MaterialToolButton {
+                id: executeButton
+                font.pointSize: 13
+                text: MaterialIcons.play_arrow
+                ToolTip.text: "Execute Script"
+
+                onClicked: {
+                    root.processScript()
                 }
             }
 
             Item {
                 Layout.fillWidth: true
             }
-        }
 
-        RowLayout {
-            Label {
-                text: "Input"
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-                Layout.fillWidth: true
-            }
+            MaterialToolButton {
+                font.pointSize: 13
+                text: MaterialIcons.backspace
+                ToolTip.text: "Clear Output Window"
 
-            Label {
-                text: "Output"
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-                Layout.fillWidth: true
+                onClicked: {
+                    output.clear()
+                }
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            width: root.width
+        MSplitView {
+            id: scriptSplitView;
+            Layout.fillHeight: true;
+            Layout.fillWidth: true;
+            orientation: Qt.Horizontal;
 
+            // Input Text Area -- Holds the input scripts to be executed
             Rectangle {
                 id: inputArea
-                Layout.fillHeight: true
-                Layout.fillWidth: true
+                SplitView.preferredWidth: root.width / 2;
 
                 color: palette.base
 
@@ -254,7 +295,7 @@ Item {
                     width: parent.width
                     height: parent.height
                     contentWidth: width
-                    contentHeight: height
+                    contentHeight: input.contentHeight;
 
                     anchors.left: lineNumbers.right
                     anchors.top: parent.top
@@ -266,13 +307,8 @@ Item {
                     TextArea.flickable: TextArea {
                         id: input
 
-                        text: {
-                            var str = "from meshroom.ui import uiInstance\n\n"
-                            str += "graph = uiInstance.activeProject.graph\n"
-                            str += "for node in graph.nodes:\n"
-                            str += "    print(node.name)"
-                            return str
-                        }
+                        text: ScriptEditorManager.loadLastScript()
+
                         font: lineNumbers.textMetrics.font
                         Layout.fillHeight: true
                         Layout.fillWidth: true
@@ -287,7 +323,7 @@ Item {
 
                         Keys.onPressed: function(event) {
                             if ((event.key === Qt.Key_Enter || event.key === Qt.Key_Return) && event.modifiers === Qt.ControlModifier) {
-                                root.processScript()
+                                root.processScript(input.selectedText)
                             }
                         }
                     }
@@ -299,7 +335,8 @@ Item {
                     }
                 }
             }
-            
+
+            // Output Text Area -- Shows the output for the executed script(s)
             Rectangle {
                 id: outputArea
                 Layout.fillHeight: true
@@ -311,7 +348,7 @@ Item {
                     width: parent.width
                     height: parent.height
                     contentWidth: width
-                    contentHeight: height
+                    contentHeight: output.contentHeight;
 
                     ScrollBar.vertical: MScrollBar {}
 
@@ -323,8 +360,18 @@ Item {
                         padding: 0
                         Layout.fillHeight: true
                         Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+
+                        textFormat: Text.RichText
                     }
                 }
+            }
+
+            // Syntax Highlights for the Input Area for Python Based Syntax
+            PySyntaxHighlighter {
+                id: syntaxHighlighter
+                // The document to highlight
+                textDocument: input.textDocument
             }
         }
     }

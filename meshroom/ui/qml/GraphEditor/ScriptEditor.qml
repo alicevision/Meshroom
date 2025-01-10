@@ -143,7 +143,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
 
             MaterialToolButton {
-                font.pointSize: 18
+                font.pointSize: 13
                 text: MaterialIcons.file_open
                 ToolTip.text: "Load Script"
 
@@ -153,7 +153,7 @@ Item {
             }
 
             MaterialToolButton {
-                font.pointSize: 18
+                font.pointSize: 13
                 text: MaterialIcons.save
                 ToolTip.text: "Save Script"
 
@@ -162,39 +162,12 @@ Item {
                 }
             }
 
-            Item {
-                width: executeButton.width
-            }
-
             MaterialToolButton {
-                id: executeButton
-                font.pointSize: 18
-                text: MaterialIcons.play_arrow
-                ToolTip.text: "Execute Script"
-
-                onClicked: {
-                    root.processScript()
-                }
-            }
-
-            MaterialToolButton {
-                font.pointSize: 18
-                text: MaterialIcons.backspace
-                ToolTip.text: "Clear Output Window"
-
-                onClicked: {
-                    output.clear()
-                }
-            }
-
-            Item {
-                width: executeButton.width
-            }
-
-            MaterialToolButton {
-                font.pointSize: 18
+                font.pointSize: 13
                 text: MaterialIcons.history
                 ToolTip.text: "Get Previous Script"
+
+                enabled: ScriptEditorManager.hasPreviousScript;
 
                 onClicked: {
                     var ret = ScriptEditorManager.getPreviousScript()
@@ -207,9 +180,11 @@ Item {
             }
 
             MaterialToolButton {
-                font.pointSize: 18
+                font.pointSize: 13
                 text: MaterialIcons.update
                 ToolTip.text: "Get Next Script"
+
+                enabled: ScriptEditorManager.hasNextScript;
 
                 onClicked: {
                     var ret = ScriptEditorManager.getNextScript()
@@ -222,7 +197,7 @@ Item {
             }
 
             MaterialToolButton {
-                font.pointSize: 18
+                font.pointSize: 13
                 text: MaterialIcons.delete_sweep
                 ToolTip.text: "Clear History"
 
@@ -235,7 +210,32 @@ Item {
             }
 
             Item {
+                width: executeButton.width;
+            }
+            
+            MaterialToolButton {
+                id: executeButton
+                font.pointSize: 13
+                text: MaterialIcons.play_arrow
+                ToolTip.text: "Execute Script"
+
+                onClicked: {
+                    root.processScript()
+                }
+            }
+
+            Item {
                 Layout.fillWidth: true
+            }
+
+            MaterialToolButton {
+                font.pointSize: 13
+                text: MaterialIcons.backspace
+                ToolTip.text: "Clear Output Window"
+
+                onClicked: {
+                    output.clear()
+                }
             }
         }
 

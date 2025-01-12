@@ -1,4 +1,4 @@
-from PySide6.QtCore import Signal, Property, QPointF, Qt, QObject
+from PySide6.QtCore import Signal, Property, QPointF, Qt, QObject, Slot, QRectF
 from PySide6.QtGui import QPainterPath, QVector2D
 from PySide6.QtQuick import QQuickItem
 

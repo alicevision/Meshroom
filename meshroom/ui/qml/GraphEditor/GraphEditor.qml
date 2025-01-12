@@ -870,6 +870,10 @@ Item {
                     onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
                     onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
 
+                    onShaked: {
+                        uigraph.disconnectSelectedNodes();
+                    }
+
                     onPressed: function(mouse) {
                         nodeRepeater.updateSelectionOnClick = true;
                         nodeRepeater.ongoingDrag = true;
@@ -965,6 +969,9 @@ Item {
                         if(!selected || !dragging) {
                             return;
                         }
+
+                        // Check for shake on the node
+                        checkForShake();
                         // Compute offset between the delegate and the stored node position.
                         const offset = Qt.point(x - node.x, y - node.y);
 

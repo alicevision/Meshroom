@@ -502,7 +502,7 @@ Item {
                         if (event.button) {
                             if (canEdit && (event.modifiers & Qt.AltModifier)) {
                                 uigraph.removeEdge(edge)
-                            } else {
+                            } else if (event.button == Qt.RightButton) {
                                 edgeMenu.currentEdge = edge
                                 edgeMenu.forLoop = forLoop
                                 var spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
@@ -972,6 +972,7 @@ Item {
 
                         // Check for shake on the node
                         checkForShake();
+
                         // Compute offset between the delegate and the stored node position.
                         const offset = Qt.point(x - node.x, y - node.y);
 

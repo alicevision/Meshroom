@@ -732,6 +732,13 @@ Item {
                         }
                     }
                     MenuItem {
+                        text: "Disconnect Node(s)";
+                        enabled: true;
+                        ToolTip.text: "Disconnect all edges from the selected Node(s)";
+                        ToolTip.visible: hovered;
+                        onTriggered: uigraph.disconnectSelectedNodes();
+                    }
+                    MenuItem {
                         text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
                         enabled: true
                         onTriggered: duplicateNode(false)

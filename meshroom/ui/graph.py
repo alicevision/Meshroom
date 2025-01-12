@@ -870,6 +870,13 @@ class UIGraph(QObject):
         else:
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
+    @Slot(list)
+    def deleteEdgesByIndices(self, indices):
+        with self.groupedGraphModification("Remove Edges"):
+            copied = list(self._graph.edges)
+            for index in indices:
+                self.removeEdge(copied[index])
+
     @Slot()
     def disconnectSelectedNodes(self):
         with self.groupedGraphModification("Disconnect Nodes"):

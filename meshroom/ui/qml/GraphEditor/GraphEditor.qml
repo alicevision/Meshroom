@@ -113,9 +113,14 @@ Item {
             }
         } else if (event.key === Qt.Key_D) {
             duplicateNode(event.modifiers === Qt.AltModifier)
-        } else if (event.key === Qt.Key_X && event.modifiers === Qt.ControlModifier) {
-            copyNodes()
-            uigraph.removeSelectedNodes()
+        } else if (event.key === Qt.Key_X) {
+            if (event.modifiers === Qt.ControlModifier) {
+                copyNodes()
+                uigraph.removeSelectedNodes()
+            }
+            else {
+                uigraph.disconnectSelectedNodes()
+            }
         } else if (event.key === Qt.Key_C) {
             if (event.modifiers === Qt.ControlModifier) {
                 copyNodes()

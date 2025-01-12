@@ -870,6 +870,18 @@ class UIGraph(QObject):
         else:
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
+    @Slot()
+    def disconnectSelectedNodes(self):
+        with self.groupedGraphModification("Disconnect Nodes"):
+            selectedNodes = self.getSelectedNodes()
+            for edge in self._graph.edges[:]:
+                # Remove only the edges which are coming or going out of the current selection
+                if edge.src.node in selectedNodes and edge.dst.node in selectedNodes:
+                    continue
+
+                if edge.dst.node in selectedNodes or edge.src.node in selectedNodes:
+                    self.removeEdge(edge)
+
     @Slot(Edge, Attribute, Attribute, result=Edge)
     def replaceEdge(self, edge, newSrc, newDst):
         with self.groupedGraphModification(f"Replace Edge '{edge.src.getFullNameToNode()}'->'{edge.dst.getFullNameToNode()}' with '{newSrc.getFullNameToNode()}'->'{newDst.getFullNameToNode()}'"):

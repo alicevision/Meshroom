@@ -143,6 +143,7 @@ Item {
         id: mouseArea
         anchors.fill: parent
         property double factor: 1.15
+        property bool removingEdges: false;
         // Activate multisampling for edges antialiasing
         layer.enabled: true
         layer.samples: 8
@@ -151,7 +152,7 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         drag.threshold: 0
         drag.smoothed: false
-        cursorShape: drag.target == draggable ? Qt.ClosedHandCursor : Qt.ArrowCursor
+        cursorShape: drag.target == draggable ? Qt.ClosedHandCursor : removingEdges ? Qt.CrossCursor : Qt.ArrowCursor
 
         onWheel: function(wheel) {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1 / factor
@@ -176,9 +177,15 @@ Item {
             if (mouse.button == Qt.MiddleButton || (mouse.button == Qt.LeftButton && mouse.modifiers & Qt.AltModifier)) {
                 drag.target = draggable // start drag
             }
+            if (mouse.button == Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier) && (mouse.modifiers & Qt.AltModifier)) {
+                edgeSelectionLine.startSelection(mouse);
+                removingEdges = true;
+            }
         }
 
         onReleased: {
+            removingEdges = false;
+            edgeSelectionLine.endSelection()
             nodeSelectionBox.endSelection();
             drag.target = null;
             root.forceActiveFocus()
@@ -1016,6 +1023,16 @@ Item {
                     selectionMode = ItemSelectionModel.Deselect;
                 }
                 uigraph.selectNodesByIndices(selectedIndices, selectionMode);
+            }
+        }
+
+        DelegateSelectionLine {
+            id: edgeSelectionLine
+            mouseArea: mouseArea
+            modelInstantiator: edgesRepeater
+            container: draggable
+            onDelegateSelectionEnded: function(selectedIndices, modifiers) {
+                uigraph.deleteEdgesByIndices(selectedIndices);
             }
         }
 

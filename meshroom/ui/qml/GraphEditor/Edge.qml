@@ -40,6 +40,17 @@ Item {
     property real endY: height
 
 
+    function intersects(rect) {
+        /**
+         * Detects whether a line along the given rects diagonal intersects with the edge mouse area.
+         */
+        // The edgeArea is within the parent Item and its bounds and position are relative to its parent
+        // Map the original rect to the coordinates of the edgeArea by subtracting the parent's coordinates from the rect
+        // This mapped rect would ensure that the rect coordinates map to 0 of the edge area
+        const mappedRect = Qt.rect(rect.x - x, rect.y - y, rect.width, rect.height);
+        return edgeArea.intersects(mappedRect);
+    }
+
     Shape {
         anchors.fill: parent
         // Cause rendering artifacts when enabled (and don't support hot reload really well)

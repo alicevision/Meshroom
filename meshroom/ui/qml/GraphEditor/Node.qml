@@ -31,6 +31,20 @@ Item {
     readonly property color defaultColor: isCompatibilityNode ? "#444" : !node.isComputableType ? "#BA3D69" : activePalette.base
     property color baseColor: defaultColor
 
+    /// Shake Relevance
+    readonly property double maxAmplitude: 300.0;
+    readonly property int shakeThreshold: 5;
+    
+    property int shakeCounter: 0;
+    property bool shaking: false;
+    property int shakeDetectionInterval: 1000;  // 1 Second to complete the shake else the counter is reset
+
+    property double originalRootX: 0.0;
+    property double originalRootY: 0.0;
+
+    property int directionX: 0;
+    property int directionY: 0;
+
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
 
     Item {
@@ -44,6 +58,7 @@ Item {
     signal clicked(var mouse)
     signal doubleClicked(var mouse)
     signal moved(var position)
+    signal shaked()
     signal entered()
     signal exited()
 
@@ -72,6 +87,107 @@ Item {
         function onPositionChanged() {
             root.x = root.node.x
             root.y = root.node.y
+        }
+    }
+
+    Timer {
+        id: shakeDetectionTimer;
+        interval: root.shakeDetectionInterval;
+        onTriggered: {
+            if (root.shaking) {
+                root.resetShaking();
+            }
+        }
+    }
+
+    function beginShaking() {
+        /**
+         * Sets up the shake related values.
+         * Enables Shake detection.
+         */
+        root.shaking = true;
+
+        // Capture the current Root's X and Y to use in detecting the movement of the node around these points
+        root.originalRootX = root.x;
+        root.originalRootY = root.y;
+    }
+
+    function resetShaking() {
+        /**
+         * Resets the shaking and the variables tracking a shake.
+         */
+        // Reset the shake counter when shaking has ended
+        root.shakeCounter = 0;
+
+        // Reset the direction detection
+        root.directionX = 0;
+        root.directionY = 0;
+    }
+
+    function endShaking() {
+        /**
+         * Resets all values related to shaking.
+         * Ends the shake detection.
+         */
+        root.shaking = false;
+
+        root.resetShaking();
+    }
+
+    function checkForShake() {
+        /**
+         * Detects a shake if a the node has been moved across the originally captured x and y positions
+         * back and forth a given number of times specified by the amplitude.
+         */
+        
+        if (!root.shaking) {
+            return;
+        }
+
+        // This indicates that the shake was either reset or we're starting from scratch
+        if (root.shakeCounter === 0 && !shakeDetectionTimer.running) {
+            shakeDetectionTimer.start();
+        }
+
+        const deltaX = root.x - root.originalRootX;
+        const deltaY = root.y - root.originalRootY;
+
+        // Check if the node has not travelled too much from the original position
+        // If so, stop detecting a shake as that might not be needed
+        if (Math.abs(deltaX) > root.maxAmplitude || Math.abs(deltaY) > root.maxAmplitude) {
+            root.endShaking();
+        }
+
+        // This checks the current direction in which the node is travelling
+        // if the node has moved on the left side of the original position -1
+        // if the node has moved on the right side of the original position +1
+
+        //        <--   Origin
+        //       [Node]   |
+        //                |   [Node]
+        //                |     -->
+        // If the motion continues to be like this 'threshold' number of times
+        // This will be considered as a shake effect
+
+        const currentDirectionX = deltaX > 0 ? 1 : -1;
+        const currentDirectionY = deltaY > 0 ? 1 : -1;
+
+        // Check if we're in the opposite direction of what was the previous direction of the Node
+        // If yes then we're propagating as a shake effect
+        if (currentDirectionX != root.directionX || currentDirectionY != root.directionY) {
+            // One shake cycle is complete, increment the counter
+            root.shakeCounter++;
+
+            // Update the original direction to be the current one
+            root.directionX = currentDirectionX;
+            root.directionY = currentDirectionY;
+        }
+
+        // The node has moved in a shake effect to match the threshold and this is causing it to be detected as a shake
+        if (root.shakeCounter > root.shakeThreshold) {
+            root.shaked();
+            // Reset the counter to detect another shake effect
+            root.resetShaking();
         }
     }
 
@@ -127,8 +243,6 @@ Item {
         drag.threshold: 2
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onPressed: (mouse) => root.pressed(mouse)
-        onReleased: (mouse) => root.released(mouse)
         onClicked: (mouse) => root.clicked(mouse)
         onDoubleClicked: (mouse) => root.doubleClicked(mouse)
         onEntered: root.entered()
@@ -140,6 +254,18 @@ Item {
         }
 
         cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
+
+        onPressed: function(mouse) {
+            root.pressed(mouse);
+            // Begin shake detection
+            root.beginShaking();
+        }
+
+        onReleased: function(mouse) {
+            root.released(mouse);
+            // End shake detection
+            root.endShaking();
+        }
 
         // Selection border
         Rectangle {

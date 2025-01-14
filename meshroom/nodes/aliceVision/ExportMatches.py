@@ -50,6 +50,18 @@ class ExportMatches(desc.AVCommandLineNode):
             label="Matches Folders",
             description="Folder(s) in which computed matches are stored.",
         ),
+        desc.File(
+            name="filterA",
+            label="filter A",
+            description="One item of the pair must match this.",
+            value="",
+        ),
+        desc.File(
+            name="filterB",
+            label="filter B",
+            description="One item of the pair must match this.",
+            value="",
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",

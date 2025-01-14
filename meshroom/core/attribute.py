@@ -276,8 +276,11 @@ class Attribute(BaseObject):
                 # To guarantee that each output attribute receives a unique ID, we add the attribute name to it.
                 return hashValue((self.name, self.node._uid))
             else:
-                # only dependent on the hash of its value without the cache folder
-                return hashValue(self._invalidationValue)
+                # Only dependent on the hash of its value without the cache folder.
+                # "/" at the end of the link is stripped to prevent having different UIDs depending on
+                # whether the invalidation value finishes with it or not
+                strippedInvalidationValue = self._invalidationValue.rstrip("/")
+                return hashValue(strippedInvalidationValue)
         if self.isLink:
             linkParam = self.getLinkParam(recursive=True)
             return linkParam.uid()

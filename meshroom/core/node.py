@@ -769,7 +769,11 @@ class BaseNode(BaseObject):
 
         # For updating output attributes invalidation values
         cmdVarsNoCache = self._cmdVars.copy()
-        cmdVarsNoCache['cache'] = ''
+        cmdVarsNoCache["cache"] = ""
+
+        # Use "self._internalFolder" instead of "self.internalFolder" because we do not want it to be
+        # resolved with the {cache} information ("self.internalFolder" resolves "self._internalFolder")
+        cmdVarsNoCache["nodeCacheFolder"] = self._internalFolder.format(**cmdVarsNoCache)
 
         # Evaluate output params
         for name, attr in self._attributes.objects.items():

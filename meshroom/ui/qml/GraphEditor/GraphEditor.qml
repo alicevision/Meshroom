@@ -152,6 +152,7 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         drag.threshold: 0
+        drag.smoothed: false
         cursorShape: drag.target == draggable ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
         onWheel: function(wheel) {

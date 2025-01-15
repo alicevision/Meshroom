@@ -1064,41 +1064,6 @@ Item {
                 implicitWidth: 1
                 color: activePalette.window
             }
-            // Settings
-            MaterialToolButton {
-                text: MaterialIcons.settings
-                font.pointSize: 11
-                onClicked: menu.open()
-                Menu {
-                    id: menu
-                    y: -height
-                    padding: 4
-                    RowLayout {
-                        spacing: 2
-                        Label {
-                            padding: 2
-                            text: "Auto-Layout Depth:"
-                        }
-                        ComboBox {
-                            flat: true
-                            model: ['Minimum', 'Maximum']
-                            implicitWidth: 85
-                            currentIndex: uigraph ? uigraph.layout.depthMode : -1
-                            onActivated: {
-                                uigraph.layout.depthMode = currentIndex
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Separator
-            Rectangle {
-                Layout.fillHeight: true
-                Layout.margins: 2
-                implicitWidth: 1
-                color: activePalette.window
-            }
 
             ColorSelector {
                 id: colorSelector

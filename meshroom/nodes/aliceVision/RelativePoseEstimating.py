@@ -36,7 +36,7 @@ Estimate relative pose between each pair of views that share tracks.
         ),
         desc.IntParam(
             name="countIterations",
-            label="Ransac max iterations",
+            label="Ransac Max Iterations",
             description="Maximal number of iterations.",
             value=1024,
             range=(1024, 500000, 1),
@@ -44,7 +44,7 @@ Estimate relative pose between each pair of views that share tracks.
         ),
         desc.IntParam(
             name="minInliers",
-            label="Ransac min inliers",
+            label="Ransac Min Inliers",
             description="Minimal allowed inliers in two view relationship.",
             value=35,
             range=(1, 1000, 1),

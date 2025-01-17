@@ -1,4 +1,4 @@
-__version__ = "1.1"
+__version__ = "2.0"
 
 from meshroom.core import desc
 from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
@@ -52,13 +52,13 @@ class ExportMatches(desc.AVCommandLineNode):
         ),
         desc.File(
             name="filterA",
-            label="filter A",
+            label="Filter A",
             description="One item of the pair must match this.",
             value="",
         ),
         desc.File(
             name="filterB",
-            label="filter B",
+            label="Filter B",
             description="One item of the pair must match this.",
             value="",
         ),

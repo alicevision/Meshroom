@@ -1160,6 +1160,45 @@ Page {
                                 }
 
                                 Menu {
+                                    title: "Auto Layout Depth"
+
+                                    MenuItem {
+                                        id: autoLayoutMinimum
+                                        text: "Minimum"
+                                        checkable: true
+                                        checked: _reconstruction.layout.depthMode === 0
+                                        ToolTip.text: "Sets the Auto Layout Depth Mode to use Node's Minimum depth"
+                                        ToolTip.visible: hovered
+                                        ToolTip.delay: 200
+                                        onToggled: {
+                                            if (checked) {
+                                                _reconstruction.layout.depthMode = 0;
+                                                autoLayoutMaximum.checked = false;
+                                            }
+                                            // Prevents cases where the user unchecks the currently checked option
+                                            autoLayoutMinimum.checked = true;
+                                        }
+                                    }
+                                    MenuItem {
+                                        id: autoLayoutMaximum
+                                        text: "Maximum"
+                                        checkable: true
+                                        checked: _reconstruction.layout.depthMode === 1
+                                        ToolTip.text: "Sets the Auto Layout Depth Mode to use Node's Maximum depth"
+                                        ToolTip.visible: hovered
+                                        ToolTip.delay: 200
+                                        onToggled: {
+                                            if (checked) {
+                                                _reconstruction.layout.depthMode = 1;
+                                                autoLayoutMinimum.checked = false;
+                                            }
+                                            // Prevents cases where the user unchecks the currently checked option
+                                            autoLayoutMaximum.checked = true;
+                                        }
+                                    }
+                                }
+
+                                Menu {
                                     title: "Refresh Nodes Method"
 
                                     MenuItem {

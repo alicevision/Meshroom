@@ -1,7 +1,7 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
-from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class SfMExpanding(desc.AVCommandLineNode):
@@ -26,6 +26,12 @@ class SfMExpanding(desc.AVCommandLineNode):
             name="tracksFilename",
             label="Tracks File",
             description="Tracks file.",
+            value="",
+        ),
+        desc.File(
+            name="meshFilename",
+            label="Mesh File",
+            description="Mesh file (*.obj).",
             value="",
         ),
         desc.IntParam(

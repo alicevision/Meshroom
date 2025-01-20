@@ -1,4 +1,4 @@
-__version__ = "1.1"
+__version__ = "2.0"
 
 from meshroom.core import desc
 from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
@@ -49,6 +49,18 @@ class ExportMatches(desc.AVCommandLineNode):
             name="matchesFolders",
             label="Matches Folders",
             description="Folder(s) in which computed matches are stored.",
+        ),
+        desc.File(
+            name="filterA",
+            label="Filter A",
+            description="One item of the pair must match this.",
+            value="",
+        ),
+        desc.File(
+            name="filterB",
+            label="Filter B",
+            description="One item of the pair must match this.",
+            value="",
         ),
         desc.ChoiceParam(
             name="verboseLevel",

@@ -244,7 +244,7 @@ class MeshroomApp(QApplication):
         meshroom.core.initSubmitters()
 
         # Initialize the list of recent project files
-        self._recentProjectFiles = self._getRecentProjectFiles()
+        self._recentProjectFiles = self._getRecentProjectFilesFromSettings()
         # Flag set to True if, for all the project files in the list, thumbnails have been retrieved when they
         # are available. If set to False, then all the paths in the list are accurate, but some thumbnails might
         # be retrievable
@@ -381,15 +381,14 @@ class MeshroomApp(QApplication):
 
         return thumbnail
 
-    def _getRecentProjectFiles(self) -> list[dict[str, str]]:
+    def _getRecentProjectFilesFromSettings(self) -> list[dict[str, str]]:
         """
         Read the list of recent project files from the QSettings, retrieve their filepath, and if it exists, their
         thumbnail.
 
         Returns:
-            list[dict[str, str]]: The list containing dictionaries of the form {"path": "/path/to/project/file",
-                                                                                "thumbnail": "/path/to/thumbnail"}
-                                  based on the recent projects stored in the QSettings.
+            The list containing dictionaries of the form {"path": "/path/to/project/file", "thumbnail":
+            "/path/to/thumbnail"} based on the recent projects stored in the QSettings.
         """
         projects = []
         settings = QSettings()

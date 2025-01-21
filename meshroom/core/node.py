@@ -980,7 +980,7 @@ class BaseNode(BaseObject):
         if self.graph:
             # If we are in a graph, propagate the notification to the connected output attributes
             for edge in self.graph.outEdges(attr):
-                edge.dst.node._onAttributeChanged(edge.dst)
+                edge.dst.valueChanged.emit()
 
     def onAttributeClicked(self, attr):
         """ When an attribute is clicked, a specific function can be defined in the descriptor and be called.

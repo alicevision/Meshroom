@@ -557,8 +557,10 @@ Panel {
                 anchors.fill: parent
                 boundsMovement : Flickable.StopAtBounds
 
-                //Provide width for column
-                //Note no size provided for the last column (bool comp) so it uses its automated size
+                palette: root.palette
+
+                // Provide width for column
+                // Note no size provided for the last column (bool comp) so it uses its automated size
                 columnWidthProvider: function (column) { return intrinsicModel.columnWidths[column] }
 
                 model: intrinsicModel

@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
-import Qt.labs.qmlmodels 1.0
+import Qt.labs.qmlmodels
 
 import Controls 1.0
 import MaterialIcons 2.2

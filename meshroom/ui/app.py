@@ -365,21 +365,27 @@ class MeshroomApp(QApplication):
         Returns:
             The path to the thumbnail if it could be found, an empty string otherwise
         """
-        thumbnail = ""
         try:
             with open(filepath) as file:
                 fileData = json.load(file)
-            # Find the first CameraInit node
-            fileData = fileData["graph"]
-            for node in fileData:
-                if fileData[node]["nodeType"] == "CameraInit" and fileData[node]["inputs"].get("viewpoints"):
-                    if len(fileData[node]["inputs"]["viewpoints"]) > 0:
-                        thumbnail = fileData[node]["inputs"]["viewpoints"][0]["path"]
-                        break
-        except FileNotFoundError:
-            pass
 
-        return thumbnail
+            graphData = fileData.get("graph", {})
+            for node in graphData.values():
+                if node.get("nodeType") != "CameraInit":
+                    continue
+                if viewpoints := node.get("inputs", {}).get("viewpoints"):
+                    return viewpoints[0].get("path", "")
+
+        except FileNotFoundError:
+            logging.info("File {} not found on disk.".format(filepath))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            logging.info("Error while loading file {}.".format(filepath))
+        except KeyError as err:
+            logging.info("The following key does not exist: {}".format(str(err)))
+        except Exception as err:
+            logging.info("Exception: {}".format(str(err)))
+
+        return ""
 
     def _getRecentProjectFilesFromSettings(self) -> list[dict[str, str]]:
         """

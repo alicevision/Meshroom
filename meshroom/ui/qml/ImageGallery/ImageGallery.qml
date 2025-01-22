@@ -75,6 +75,11 @@ Panel {
     }
 
     function populate_model() {
+        if (!intrinsicModel.ready) {
+            // If the TableModel is not done being instantiated, do nothing
+            return
+        }
+
         intrinsicModel.clear()
         for (var intr in parsedIntrinsic) {
             intrinsicModel.appendRow(parsedIntrinsic[intr])
@@ -569,6 +574,8 @@ Panel {
 
             TableModel {
                 id : intrinsicModel
+                property bool ready: false
+
                 // Hardcoded default width per column
                 property var columnWidths: [105, 75, 75, 75, 60, 60, 60, 60, 200, 60, 60, 60]
                 property var columnNames: [
@@ -599,6 +606,13 @@ Panel {
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[10]]} }
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[11]]} }
                 //https://doc.qt.io/qt-5/qml-qt-labs-qmlmodels-tablemodel.html#appendRow-method
+
+                Component.onCompleted: {
+                    ready = true
+                    // Triggers "populate_model" in case the intrinsics have been filled while the model was
+                    // being instantiated
+                    root.populate_model()
+                }
             }
 
             //CODE FOR HEADERS

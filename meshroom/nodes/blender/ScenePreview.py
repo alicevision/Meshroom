@@ -32,7 +32,7 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             name="script",
             label="Script",
             description="Path to the internal script for rendering in Blender.",
-            value=os.path.join(currentDir, "scripts", "preview.py"),
+            value=os.path.join("{nodeSourceCodeFolder}", "scripts", "preview.py"),
             invalidate=False,
             group="",
             advanced=True,

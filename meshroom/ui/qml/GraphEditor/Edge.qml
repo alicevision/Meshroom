@@ -149,7 +149,7 @@ Item {
             /* The curve scale must be set only once the component has been fully created, so
              * that all the events following the update of the curve scale can be taken into
              * account. */
-            curveScale = Qt.binding(() => cubic.ctrlPtDist / root.width)  // Normalize by width
+            curveScale = cubic.ctrlPtDist / root.width  // Normalize by width
         }
     }
 }

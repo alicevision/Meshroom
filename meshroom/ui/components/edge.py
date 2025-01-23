@@ -17,7 +17,7 @@ class MouseEvent(QObject):
     x = Property(float, lambda self: self._x, constant=True)
     y = Property(float, lambda self: self._y, constant=True)
     button = Property(Qt.MouseButton, lambda self: self._button, constant=True)
-    modifiers = Property(int, lambda self: self._modifiers, constant=True)
+    modifiers = Property(Qt.KeyboardModifier, lambda self: self._modifiers, constant=True)
 
 
 class EdgeMouseArea(QQuickItem):
@@ -47,8 +47,8 @@ class EdgeMouseArea(QQuickItem):
         self.setContainsMouse(False)
         super(EdgeMouseArea, self).hoverLeaveEvent(evt)
 
-    def geometryChanged(self, newGeometry, oldGeometry):
-        super(EdgeMouseArea, self).geometryChanged(newGeometry, oldGeometry)
+    def geometryChange(self, newGeometry, oldGeometry):
+        super(EdgeMouseArea, self).geometryChange(newGeometry, oldGeometry)
         self.updateShape()
 
     def mousePressEvent(self, evt):

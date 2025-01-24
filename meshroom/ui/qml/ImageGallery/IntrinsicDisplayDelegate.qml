@@ -67,12 +67,12 @@ RowLayout {
             width: intrinsicModel.columnWidths[columnIndex]
             horizontalAlignment: TextInput.AlignRight
             readOnly: root.readOnly
-            color: 'white'
+            color: palette.text
 
             padding: 12
 
             selectByMouse: true
-            selectionColor: 'white'
+            selectionColor: palette.text
             selectedTextColor: Qt.darker(palette.window, 1.1)
 
             onEditingFinished: _reconstruction.setAttribute(attribute, text)
@@ -93,13 +93,13 @@ RowLayout {
             text: model.display.value
             width: intrinsicModel.columnWidths[columnIndex]
             horizontalAlignment: TextInput.AlignRight
-            color: 'white'
+            color: palette.text
             readOnly: root.readOnly
 
             padding: 12
 
             selectByMouse: true
-            selectionColor: 'white'
+            selectionColor: palette.text
             selectedTextColor: Qt.darker(palette.window, 1.1)
 
             IntValidator {
@@ -164,11 +164,11 @@ RowLayout {
             width: intrinsicModel.columnWidths[columnIndex]
             horizontalAlignment: TextInput.AlignRight
 
-            color: 'white'
+            color: palette.text
             padding: 12
 
             selectByMouse: true
-            selectionColor: 'white'
+            selectionColor: palette.text
             selectedTextColor: Qt.darker(palette.window, 1.1)
 
             readOnly: root.readOnly

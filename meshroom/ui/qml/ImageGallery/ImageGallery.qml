@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
-import Qt.labs.qmlmodels 1.0
+import Qt.labs.qmlmodels
 
 import Controls 1.0
 import MaterialIcons 2.2
@@ -75,6 +75,11 @@ Panel {
     }
 
     function populate_model() {
+        if (!intrinsicModel.ready) {
+            // If the TableModel is not done being instantiated, do nothing
+            return
+        }
+
         intrinsicModel.clear()
         for (var intr in parsedIntrinsic) {
             intrinsicModel.appendRow(parsedIntrinsic[intr])
@@ -552,8 +557,10 @@ Panel {
                 anchors.fill: parent
                 boundsMovement : Flickable.StopAtBounds
 
-                //Provide width for column
-                //Note no size provided for the last column (bool comp) so it uses its automated size
+                palette: root.palette
+
+                // Provide width for column
+                // Note no size provided for the last column (bool comp) so it uses its automated size
                 columnWidthProvider: function (column) { return intrinsicModel.columnWidths[column] }
 
                 model: intrinsicModel
@@ -569,6 +576,8 @@ Panel {
 
             TableModel {
                 id : intrinsicModel
+                property bool ready: false
+
                 // Hardcoded default width per column
                 property var columnWidths: [105, 75, 75, 75, 60, 60, 60, 60, 200, 60, 60, 60]
                 property var columnNames: [
@@ -599,6 +608,13 @@ Panel {
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[10]]} }
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[11]]} }
                 //https://doc.qt.io/qt-5/qml-qt-labs-qmlmodels-tablemodel.html#appendRow-method
+
+                Component.onCompleted: {
+                    ready = true
+                    // Triggers "populate_model" in case the intrinsics have been filled while the model was
+                    // being instantiated
+                    root.populate_model()
+                }
             }
 
             //CODE FOR HEADERS

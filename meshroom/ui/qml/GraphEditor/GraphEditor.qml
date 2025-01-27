@@ -1203,10 +1203,42 @@ Item {
         return bbox;
     }
 
+    function selectionBoundingBox() {
+        /**
+         * Returns the bounding box considering the nodes which are selected.
+         * The returned bounding box starts from the Minumum x,y position to the 
+         * Maximum x,y postion of the selected nodes.
+         */
+        var firstIdx = uigraph.nodeSelection.selectedIndexes[0];
+        const first = nodeRepeater.itemAt(firstIdx.row);
+        // Bounding box of the first selected item
+        var bbox = Qt.rect(first.x, first.y, first.x + first.width, first.y + first.height);
+        // Iterate over the remaining items in the selection
+        uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+            if(idx != firstIdx) {
+                const item = nodeRepeater.itemAt(idx.row);
+                bbox.x = Math.min(bbox.x, item.x);
+                bbox.y = Math.min(bbox.y, item.y);
+                bbox.width = Math.max(bbox.width, item.x + item.width);
+                bbox.height = Math.max(bbox.height, item.y + item.height);
+            }
+        });
+
+        bbox.width -= bbox.x;
+        bbox.height -= bbox.y;
+        return bbox;
+    }
+
     // Fit graph to fill root
     function fit() {
+        var bbox;
         // Compute bounding box
-        var bbox = boundingBox()
+        if (uigraph.nodeSelection.hasSelection) {
+            bbox = selectionBoundingBox();
+        }
+        else {
+            bbox = boundingBox();
+        }
         // Rescale to fit the bounding box in the view, zoom is limited to prevent huge text
         draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height), maxZoom)
         // Recenter

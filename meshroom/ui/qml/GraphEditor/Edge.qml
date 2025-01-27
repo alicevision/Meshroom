@@ -138,6 +138,7 @@ Item {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         thickness: root.thickness + 4
+        curveScale: cubic.ctrlPtDist / root.width  // Normalize by width
         onPressed: function(event) {
             root.pressed(event)
         }
@@ -145,11 +146,5 @@ Item {
             root.released(event)
         }
 
-        Component.onCompleted: {
-            /* The curve scale must be set only once the component has been fully created, so
-             * that all the events following the update of the curve scale can be taken into
-             * account. */
-            curveScale = cubic.ctrlPtDist / root.width  // Normalize by width
-        }
     }
 }

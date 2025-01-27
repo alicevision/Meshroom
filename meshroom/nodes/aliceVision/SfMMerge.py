@@ -1,39 +1,33 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 from meshroom.core import desc
 from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
 import os.path
 
-
-class MergeNodeSize(object):
+class MergeNodeSize(desc.DynamicNodeSize):
     """
-    MergeNodeSize expresses a dependency to two input attributess to define
+    MergeNodeSize expresses a dependency to multiple input attributess to define
     the size of a Node in terms of individual tasks for parallelization.
     """
-    def __init__(self, param1, param2):
-        self._param1 = param1
-        self._param2 = param2
+    def __init__(self, param):
+        self._params = param
 
     def computeSize(self, node):
         
-        size1 = 0
-        size2 = 0
+        size = 0
 
-        param1 = node.attribute(self._param1)
-        if param1.isLink:
-            size1 = param1.getLinkParam().node.size
-
-        param2 = node.attribute(self._param2)
-        if param2.isLink:
-            size2 = param2.getLinkParam().node.size
+        for input in node.attribute(self._params).value:
+            paramName = input.getFullName()
+            param = node.attribute(paramName)
+            size = size + param.getLinkParam().node.size
         
-        return size1 + size2
+        return size
 
 
 class SfMMerge(desc.AVCommandLineNode):
     commandLine = 'aliceVision_sfmMerge {allParams}'
-    size = MergeNodeSize('firstinput', 'secondinput')
+    size = MergeNodeSize("inputs")
 
     category = 'Utils'
     documentation = '''
@@ -41,17 +35,17 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
 '''
 
     inputs = [
-        desc.File(
-            name="firstinput",
-            label="First SfMData",
-            description="First input SfMData file to merge.",
-            value="",
-        ),
-        desc.File(
-            name="secondinput",
-            label="Second SfMData",
-            description="Second input SfMData file to merge.",
-            value="",
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="input",
+                label="Input SfmData",
+                description="A SfmData file.",
+                value="",
+            ),
+            name="inputs",
+            label="Inputs",
+            description="Set of SfmData (at least 1 is required).",
+            exposed=True,
         ),
         desc.ChoiceParam(
             name="method",
@@ -83,12 +77,20 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             joinChar=",",
         ),
         desc.ChoiceParam(
+            name="fileExt",
+            label="SfM File Format",
+            description="Output SfM file format.",
+            value="abc",
+            values=["abc", "sfm", "json"],
+            group="",  # exclude from command line
+        ),
+        desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
             values=VERBOSE_LEVEL,
             value="info",
-        ),
+        )
     ]
 
     outputs = [
@@ -96,6 +98,6 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             name="output",
             label="SfMData",
             description="Path to the output SfM file (in SfMData format).",
-            value=lambda attr: desc.Node.internalFolder + "sfmData.sfm",
-        ),
+            value=lambda attr: desc.Node.internalFolder + "sfmData.{fileExtValue}",
+        )
     ]

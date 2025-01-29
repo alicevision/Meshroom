@@ -599,13 +599,19 @@ class Graph(BaseObject):
                         # edges are declared in input with an expression linking
                         # to another param (which could be an output)
                         continue
+                    value = attr.value
+                    if isinstance(attr, GroupAttribute):
+                        # GroupAttribute subclasses can override their `value` property to return the value
+                        # of a child attribute. Here, we need to evaluate the group's value, hence
+                        # the use of GroupAttribute's `value` getter.
+                        value = GroupAttribute.value.fget(attr)
                     # find top-level links
-                    if Attribute.isLinkExpression(attr.value):
-                        skippedEdges[attr] = attr.value
+                    if Attribute.isLinkExpression(value):
+                        skippedEdges[attr] = value
                         attr.resetToDefaultValue()
                     # find links in ListAttribute children
                     elif isinstance(attr, (ListAttribute, GroupAttribute)):
-                        for child in attr.value:
+                        for child in value:
                             if Attribute.isLinkExpression(child.value):
                                 skippedEdges[child] = child.value
                                 child.resetToDefaultValue()

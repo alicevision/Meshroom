@@ -208,6 +208,7 @@ RowLayout {
                 case "PushButtonParam":
                     return pushButtonComponent
                 case "ChoiceParam":
+                case "DynamicChoiceParam":
                     return attribute.desc.exclusive ? comboBoxComponent : multiChoiceComponent
                 case "IntParam": return sliderComponent
                 case "FloatParam":

@@ -535,6 +535,8 @@ class ListAttribute(Attribute):
         self.valueChanged.emit()
 
     def _set_value(self, value):
+        if isinstance(value, list) and value == self.getExportValue():
+            return
         if self.node.graph:
             self.remove(0, len(self))
         # Link to another attribute

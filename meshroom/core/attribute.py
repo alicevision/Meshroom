@@ -362,7 +362,10 @@ class Attribute(BaseObject):
         If it is a list with one empty string element, it will returns 2 quotes.
         '''
         # ChoiceParam with multiple values should be combined
-        if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
+        if (
+            isinstance(self.attributeDesc, (desc.ChoiceParam, desc.DynamicChoiceParam))
+            and not self.attributeDesc.exclusive
+        ):
             # Ensure value is a list as expected
             assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
             v = self.attributeDesc.joinChar.join(self.getEvalValue())
@@ -370,7 +373,10 @@ class Attribute(BaseObject):
                 return '"{}"'.format(v)
             return v
         # String, File, single value Choice are based on strings and should includes quotes to deal with spaces
-        if withQuotes and isinstance(self.attributeDesc, (desc.StringParam, desc.File, desc.ChoiceParam)):
+        if withQuotes and isinstance(
+            self.attributeDesc,
+            (desc.StringParam, desc.File, desc.ChoiceParam, desc.DynamicChoiceParam),
+        ):
             return '"{}"'.format(self.getEvalValue())
         return str(self.getEvalValue())
 
@@ -797,3 +803,42 @@ class GroupAttribute(Attribute):
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+
+
+class DynamicChoiceParam(GroupAttribute):
+    def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+        # Granularity (and performance) could be improved by using the 'valueChanged' signals of sub-attributes.
+        # But as there are situations where:
+        #  * the whole GroupAttribute is 'changed' (eg: connection/disconnection)
+        #  * the sub-attributes are re-created (eg: resetToDefaultValue)
+        # it is simpler to use the GroupAttribute's 'valueChanged' signal as the main trigger for updates.
+        self.valueChanged.connect(self.choiceValueChanged)
+        self.valueChanged.connect(self.choiceValuesChanged)
+
+    def _get_value(self):
+        if self.isLink:
+            return super()._get_value()
+        return self.choiceValue.value
+
+    def _set_value(self, value):
+        if isinstance(value, dict) or Attribute.isLinkExpression(value):
+            super()._set_value(value)
+        else:
+            self.choiceValue.value = value
+
+    def getValues(self):
+        if self.isLink:
+            return self.linkParam.getValues()
+        return self.choiceValues.getExportValue() or self.desc.values
+
+    def setValues(self, values):
+        self.choiceValues.value = values
+
+    def getValueStr(self, withQuotes=True):
+        return Attribute.getValueStr(self, withQuotes)
+
+    choiceValueChanged = Signal()
+    value = Property(Variant, _get_value, _set_value, notify=choiceValueChanged)
+    choiceValuesChanged = Signal()
+    values = Property(Variant, getValues, setValues, notify=choiceValuesChanged)

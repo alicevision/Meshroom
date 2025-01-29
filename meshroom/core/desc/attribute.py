@@ -2,7 +2,8 @@ import ast
 import distutils.util
 import os
 import types
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
+from typing import Union
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList
 
@@ -526,3 +527,100 @@ class ColorParam(Param):
                              'color code (param: {}, value: {}, type: {})'.format(self.name, value, type(value)))
         return value
 
+
+class DynamicChoiceParam(GroupAttribute):
+    """
+    Attribute supporting a single or multiple values, providing a list of predefined options that can be
+    modified at runtime and serialized.
+    """
+
+    _PYTHON_BUILTIN_TO_PARAM_TYPE = {
+        str: StringParam,
+        int: IntParam,
+    }
+
+    def __init__(
+        self,
+        name: str,
+        label: str,
+        description: str,
+        value: Union[str, int, Sequence[Union[str, int]]],
+        values: Union[Sequence[str], Sequence[int]],
+        exclusive: bool=True,
+        group: str="allParams",
+        joinChar: str=" ",
+        advanced: bool=False,
+        enabled: bool=True,
+        invalidate: bool=True,
+        semantic: str="",
+        validValue: bool=True,
+        errorMessage: str="",
+        visible: bool=True,
+        exposed: bool=False,
+    ):
+        # DynamicChoiceParam is a composed of:
+        #  - a child ChoiceParam to hold the attribute value and as a backend to expose a ChoiceParam-compliant API
+        #  - a child ListAttribute to hold the list of possible values
+
+        self._valueParam = ChoiceParam(
+            name="choiceValue",
+            label="Value",
+            description="",
+            value=value,
+            # Initialize the list of possible values to pass description validation.
+            values=values,
+            exclusive=exclusive,
+            group="",
+            joinChar=joinChar,
+            advanced=advanced,
+            enabled=enabled,
+            invalidate=invalidate,
+            semantic=semantic,
+            validValue=validValue,
+            errorMessage=errorMessage,
+            visible=visible,
+            exposed=exposed,
+        )
+
+        valueType: type = self._valueParam._valueType
+        paramType = DynamicChoiceParam._PYTHON_BUILTIN_TO_PARAM_TYPE[valueType]
+
+        self._valuesParam = ListAttribute(
+            name="choiceValues",
+            label="Values",
+            elementDesc=paramType(
+                name="choiceEntry",
+                label="Choice entry",
+                description="A possible choice value",
+                invalidate=False,
+                value=valueType(),
+            ),
+            description="List of possible choice values",
+            group="",
+            advanced=True,
+            visible=False,
+            exposed=False,
+        )
+        self._valuesParam._value = values
+
+        super().__init__(
+            name=name,
+            label=label,
+            description=description,
+            group=group,
+            groupDesc=[self._valueParam, self._valuesParam],
+            advanced=advanced,
+            semantic=semantic,
+            enabled=enabled,
+            visible=visible,
+            exposed=exposed,
+        )
+
+    def getInstanceType(self):
+        from meshroom.core.attribute import DynamicChoiceParam
+
+        return DynamicChoiceParam
+
+    values = Property(VariantList, lambda self: self._valuesParam._value, constant=True)
+    exclusive = Property(bool, lambda self: self._valueParam.exclusive, constant=True)
+    joinChar = Property(str, lambda self: self._valueParam.joinChar, constant=True)

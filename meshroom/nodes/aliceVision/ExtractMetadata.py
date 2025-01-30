@@ -91,9 +91,8 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
             outFiles = self.resolvedPaths(chunk.node.input.value, chunk.node.output.value, chunk.node.keepFilename.value, chunk.node.extension.value)
 
             if not outFiles:
-                error = 'ExtractMetadata: input files listed, but no metadata to extract'
+                error = 'ExtractMetadata: No input files! Check that a sfmData is connected as input.'
                 chunk.logger.error(error)
-                chunk.logger.info('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
                 raise RuntimeError(error)
 
             if not os.path.exists(chunk.node.output.value):
@@ -107,17 +106,14 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
                 else: #xmp
                     cmd = 'exiftool -tagsfromfile ' + iFile + ' ' + chunk.node.arguments.value.strip() + ' ' + oFile
                 chunk.logger.debug(cmd)
-                os.system(cmd)
+                try:
+                    os.system(cmd)
+                except:
+                    chunk.logger.error("exifTool command failed ! Check that exifTool can be accessed on your system.")
+                    raise RuntimeError(error)
                 if not os.path.exists(oFile):
                     info = 'No metadata extracted for file ' + iFile
                     chunk.logger.info(info)
-                else:
-                    f = open(oFile)
-                    if f.readline().find('command not found') != -1:
-                        error = 'Metadata cannot be extracted, exiftool command not found'
-                        chunk.logger.error(error)
-                        raise RuntimeError(error)
-                    f.close()
             chunk.logger.info('Metadata extraction end')
             
         finally:

@@ -6,7 +6,7 @@ import json
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
-from PySide6.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlDebuggingEnabler
 from PySide6.QtQuickControls2 import QQuickStyle
@@ -243,6 +243,13 @@ class MeshroomApp(QApplication):
         meshroom.core.initNodes()
         meshroom.core.initSubmitters()
 
+        # Initialize the list of recent project files
+        self._recentProjectFiles = self._getRecentProjectFilesFromSettings()
+        # Flag set to True if, for all the project files in the list, thumbnails have been retrieved when they
+        # are available. If set to False, then all the paths in the list are accurate, but some thumbnails might
+        # be retrievable
+        self._updatedRecentProjectFilesThumbnails = True
+
         # QML engine setup
         qmlDir = os.path.join(pwd, "qml")
         url = os.path.join(qmlDir, "main.qml")
@@ -347,38 +354,92 @@ class MeshroomApp(QApplication):
         meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
 
-    def _recentProjectFiles(self):
+    def _retrieveThumbnailPath(self, filepath: str) -> str:
+        """
+        Given the path of a project file, load this file and try to retrieve the path to its thumbnail, i.e. its
+        first viewpoint image.
+
+        Args:
+            filepath: the path of the project file to retrieve the thumbnail from
+
+        Returns:
+            The path to the thumbnail if it could be found, an empty string otherwise
+        """
+        try:
+            with open(filepath) as file:
+                fileData = json.load(file)
+
+            graphData = fileData.get("graph", {})
+            for node in graphData.values():
+                if node.get("nodeType") != "CameraInit":
+                    continue
+                if viewpoints := node.get("inputs", {}).get("viewpoints"):
+                    return viewpoints[0].get("path", "")
+
+        except FileNotFoundError:
+            logging.info("File {} not found on disk.".format(filepath))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            logging.info("Error while loading file {}.".format(filepath))
+        except KeyError as err:
+            logging.info("The following key does not exist: {}".format(str(err)))
+        except Exception as err:
+            logging.info("Exception: {}".format(str(err)))
+
+        return ""
+
+    def _getRecentProjectFilesFromSettings(self) -> list[dict[str, str]]:
+        """
+        Read the list of recent project files from the QSettings, retrieve their filepath, and if it exists, their
+        thumbnail.
+
+        Returns:
+            The list containing dictionaries of the form {"path": "/path/to/project/file", "thumbnail":
+            "/path/to/thumbnail"} based on the recent projects stored in the QSettings.
+        """
         projects = []
         settings = QSettings()
         settings.beginGroup("RecentFiles")
         size = settings.beginReadArray("Projects")
         for i in range(size):
             settings.setArrayIndex(i)
-            p = settings.value("filepath")
-            thumbnail = ""
-            if p:
-                # get the first image path from the project
-                try:
-                    with open(p) as file:
-                        file = json.load(file)
-                        # find the first camerainit node
-                        file = file["graph"]
-                        for node in file:
-                            if file[node]["nodeType"] == "CameraInit" and file[node]["inputs"].get("viewpoints"):
-                                if len(file[node]["inputs"]["viewpoints"]) > 0:
-                                    thumbnail = file[node]["inputs"]["viewpoints"][0]["path"]
-                                    break
-                except FileNotFoundError:
-                    pass
-                p = {"path": p, "thumbnail": thumbnail}
+            path = settings.value("filepath")
+            if path:
+                p = {"path": path, "thumbnail": self._retrieveThumbnailPath(path)}
                 projects.append(p)
         settings.endArray()
         settings.endGroup()
         return projects
 
+    @Slot()
+    def updateRecentProjectFilesThumbnails(self) -> None:
+        """
+        If there are thumbnails that may be retrievable (meaning the list of projects has been updated minimally),
+        update the list of recent project files by reading the QSettings and retrieving the thumbnails if they are
+        available.
+        """
+        if not self._updatedRecentProjectFilesThumbnails:
+            self._updateRecentProjectFilesThumbnails()
+            self._updatedRecentProjectFilesThumbnails = True
+
+    def _updateRecentProjectFilesThumbnails(self) -> None:
+        for project in self._recentProjectFiles:
+            path = project["path"]
+            project["thumbnail"] = self._retrieveThumbnailPath(path)
+
     @Slot(str)
     @Slot(QUrl)
-    def addRecentProjectFile(self, projectFile):
+    def addRecentProjectFile(self, projectFile) -> None:
+        """
+        Add a project file to the list of recent project files.
+        The function ensures that the file is not present more than once in the list and trims it so it
+        never exceeds a set number of projects.
+        QSettings are updated accordingly.
+        The update of the list of recent projects files is minimal: the filepath is added, but there is no
+        attempt to retrieve its corresponding thumbnail.
+
+        Args:
+            projectFile (str or QUrl): path to the project file to add to the list
+        """
         if not isinstance(projectFile, (QUrl, str)):
             raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
         if isinstance(projectFile, QUrl):
@@ -390,37 +451,47 @@ class MeshroomApp(QApplication):
             if not projectFileNorm:
                 projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
 
-        projects = self._recentProjectFiles()
-        projects = [p["path"] for p in projects]
+        # Get the list of recent projects without re-reading the QSettings
+        projects = self._recentProjectFiles
 
-        # remove duplicates while preserving order
-        from collections import OrderedDict
-        uniqueProjects = OrderedDict.fromkeys(projects)
-        projects = list(uniqueProjects)
-        # remove previous usage of the value
-        if projectFileNorm in uniqueProjects:
-            projects.remove(projectFileNorm)
-        # add the new value in the first place
-        projects.insert(0, projectFileNorm)
+        # Checks whether the path is already in the list of recent projects
+        filepaths = [p["path"] for p in projects]
+        if projectFileNorm in filepaths:
+            idx = filepaths.index(projectFileNorm)
+            del projects[idx]  # If so, delete its entry
 
-        # keep only the 40 first elements
-        projects = projects[0:40]
+        # Insert the newest entry at the top of the list
+        projects.insert(0, {"path": projectFileNorm, "thumbnail": ""})
 
+        # Only keep the first 40 projects
+        maxNbProjects = 40
+        if len(projects) > maxNbProjects:
+            projects = projects[0:maxNbProjects]
+
+        # Update the general settings
         settings = QSettings()
         settings.beginGroup("RecentFiles")
         settings.beginWriteArray("Projects")
         for i, p in enumerate(projects):
             settings.setArrayIndex(i)
-            settings.setValue("filepath", p)
+            settings.setValue("filepath", p["path"])
         settings.endArray()
         settings.endGroup()
         settings.sync()
 
+        # Update the final list of recent projects
+        self._recentProjectFiles = projects
+        self._updatedRecentProjectFilesThumbnails = False  # Thumbnails may not be up-to-date
         self.recentProjectFilesChanged.emit()
 
     @Slot(str)
     @Slot(QUrl)
-    def removeRecentProjectFile(self, projectFile):
+    def removeRecentProjectFile(self, projectFile) -> None:
+        """
+        Remove a given project file from the list of recent project files.
+        If the provided filepath is not already present in the list of recent project files, nothing is done.
+        Otherwise, it is effectively removed and the QSettings are updated accordingly.
+        """
         if not isinstance(projectFile, (QUrl, str)):
             raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
         if isinstance(projectFile, QUrl):
@@ -432,28 +503,30 @@ class MeshroomApp(QApplication):
             if not projectFileNorm:
                 projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
 
-        projects = self._recentProjectFiles()
-        projects = [p["path"] for p in projects]
+        # Get the list of recent projects without re-reading the QSettings
+        projects = self._recentProjectFiles
 
-        # remove duplicates while preserving order
-        from collections import OrderedDict
-        uniqueProjects = OrderedDict.fromkeys(projects)
-        projects = list(uniqueProjects)
-        # remove previous usage of the value
-        if projectFileNorm not in uniqueProjects:
+        # Ensure the filepath is in the list of recent projects
+        filepaths = [p["path"] for p in projects]
+        if projectFileNorm not in filepaths:
             return
 
-        projects.remove(projectFileNorm)
+        # Delete it from the list
+        idx = filepaths.index(projectFileNorm)
+        del projects[idx]
 
+        # Update the general settings
         settings = QSettings()
         settings.beginGroup("RecentFiles")
         settings.beginWriteArray("Projects")
         for i, p in enumerate(projects):
             settings.setArrayIndex(i)
-            settings.setValue("filepath", p)
+            settings.setValue("filepath", p["path"])
         settings.endArray()
         settings.sync()
 
+        # Update the final list of recent projects
+        self._recentProjectFiles = projects
         self.recentProjectFilesChanged.emit()
 
     def _recentImportedImagesFolders(self):
@@ -620,7 +693,7 @@ class MeshroomApp(QApplication):
     recentImportedImagesFoldersChanged = Signal()
     pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames, notify=pipelineTemplateFilesChanged)
-    recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
+    recentProjectFiles = Property("QVariantList", lambda self: self._recentProjectFiles, notify=recentProjectFilesChanged)
     recentImportedImagesFolders = Property("QVariantList", _recentImportedImagesFolders, notify=recentImportedImagesFoldersChanged)
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)
     defaultSequencePlayerEnabled = Property(bool, _defaultSequencePlayerEnabled, constant=True)

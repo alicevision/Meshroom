@@ -2,6 +2,9 @@ __version__ = "0.1"
 
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
+from pathlib import Path
+
+import pyalicevision as av
 
 import distutils.dir_util as du
 import shutil
@@ -45,6 +48,12 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
             description="ExifTool command arguments",
             value="",
         ),
+        desc.BoolParam(
+            name="insertInSfm",
+            label="Update sfmData",
+            description="Insert the extracted metadata in the sfmData file.",
+            value=False,
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
@@ -58,64 +67,62 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
         desc.File(
             name="output",
             label="Result Folder",
-            description="Output path for the resulting images.",
+            description="Output path for the resulting metadata files.",
             value=desc.Node.internalFolder,
         ),
     ]
-
-    def resolvedPaths(self, inputSfm, outDir, keepFilename, extension):
-        import pyalicevision as av
-        from pathlib import Path
-
-        paths = {}
-        dataAV = av.sfmData.SfMData()
-        if av.sfmDataIO.load(dataAV, inputSfm, av.sfmDataIO.ALL) and os.path.isdir(outDir):
-            views = dataAV.getViews()
-            for id, v in views.items():
-                inputFile = v.getImage().getImagePath()
-                if keepFilename:
-                    outputMetadata = os.path.join(outDir, Path(inputFile).stem + "." + extension)
-                else:
-                    outputMetadata = os.path.join(outDir, str(id) + "." + extension)
-                paths[inputFile] = outputMetadata
-
-        return paths
 
     def processChunk(self, chunk):
         try:
             chunk.logManager.start(chunk.node.verboseLevel.value)
             
-            if not chunk.node.input:
-                chunk.logger.warning('No image file to process')
-                return
-
-            outFiles = self.resolvedPaths(chunk.node.input.value, chunk.node.output.value, chunk.node.keepFilename.value, chunk.node.extension.value)
-
-            if not outFiles:
-                error = 'ExtractMetadata: No input files! Check that a sfmData is connected as input.'
+            if chunk.node.input.value == "" or chunk.node.input.value[-4:].lower() != '.sfm':
+                error = 'This node need to have a sfmData connected as input.'
                 chunk.logger.error(error)
                 raise RuntimeError(error)
 
             if not os.path.exists(chunk.node.output.value):
                 os.mkdir(chunk.node.output.value)
 
-            for iFile, oFile in outFiles.items():
-                if chunk.node.extension.value == 'txt':
-                    cmd = 'exiftool ' + chunk.node.arguments.value.strip() + ' ' + iFile + ' > ' + oFile
-                elif chunk.node.extension.value == 'xml':
-                    cmd = 'exiftool -X ' + chunk.node.arguments.value.strip() + ' ' + iFile + ' > ' + oFile
-                else: #xmp
-                    cmd = 'exiftool -tagsfromfile ' + iFile + ' ' + chunk.node.arguments.value.strip() + ' ' + oFile
-                chunk.logger.debug(cmd)
-                error = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read().decode()
-                chunk.logger.debug(error)
-                if error != "":
-                    chunk.logger.error(error)
-                    raise RuntimeError(error)
-                if not os.path.exists(oFile):
-                    info = 'No metadata extracted for file ' + iFile
-                    chunk.logger.info(info)
-            chunk.logger.info('Metadata extraction end')
+            dataAV = av.sfmData.SfMData()
+            if av.sfmDataIO.load(dataAV, chunk.node.input.value, av.sfmDataIO.ALL):
+                views = dataAV.getViews()
+                for id, v in views.items():
+                    inputFile = v.getImage().getImagePath()
+                    if chunk.node.keepFilename.value:
+                        outputMetadataFilename = os.path.join(chunk.node.output.value, Path(inputFile).stem + "." + chunk.node.extension.value)
+                    else:
+                        outputMetadataFilename = os.path.join(chunk.node.output.value, str(id) + "." + chunk.node.extension.value)
+
+                    if chunk.node.extension.value == 'txt':
+                        cmd = 'exiftool ' + chunk.node.arguments.value.strip() + ' ' + inputFile + ' > ' + outputMetadataFilename
+                    elif chunk.node.extension.value == 'xml':
+                        cmd = 'exiftool -X ' + chunk.node.arguments.value.strip() + ' ' + inputFile + ' > ' + outputMetadataFilename
+                    else: #xmp
+                        cmd = 'exiftool -tagsfromfile ' + inputFile + ' ' + chunk.node.arguments.value.strip() + ' ' + outputMetadataFilename
+                    chunk.logger.debug(cmd)
+                    error = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read().decode()
+                    chunk.logger.debug(error)
+                    if error != "":
+                        chunk.logger.error(error)
+                        raise RuntimeError(error)
+                    if not os.path.exists(outputMetadataFilename):
+                        info = 'No metadata extracted for file ' + inputFile
+                        chunk.logger.info(info)
+                    elif chunk.node.insertInSfm.value:
+                        cmd = 'exiftool ' + chunk.node.arguments.value.strip() + ' ' + inputFile
+                        metadata = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.read().decode()
+                        chunk.logger.debug(metadata)
+                        lmeta = metadata.split('\n')
+                        for i in range(1, len(lmeta)-1):
+                            l = lmeta[i].split(':', 1)
+                            v.getImageInfo().addMetadata('ExifTool:'+l[0].strip(), l[1].strip())
+
+                if chunk.node.insertInSfm.value:
+                    outputSfm = os.path.join(chunk.node.output.value, Path(chunk.node.input.value).stem + ".sfm")
+                    av.sfmDataIO.save(dataAV, outputSfm, av.sfmDataIO.ALL)
+
+                chunk.logger.info('Metadata extraction end')
             
         finally:
             chunk.logManager.end()

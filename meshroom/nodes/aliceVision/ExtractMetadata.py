@@ -7,6 +7,7 @@ import distutils.dir_util as du
 import shutil
 import glob
 import os
+import subprocess
 
 
 class ExtractMetadata(desc.Node):
@@ -106,10 +107,10 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
                 else: #xmp
                     cmd = 'exiftool -tagsfromfile ' + iFile + ' ' + chunk.node.arguments.value.strip() + ' ' + oFile
                 chunk.logger.debug(cmd)
-                try:
-                    os.system(cmd)
-                except:
-                    chunk.logger.error("exifTool command failed ! Check that exifTool can be accessed on your system.")
+                error = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read().decode()
+                chunk.logger.debug(error)
+                if error != "":
+                    chunk.logger.error(error)
                     raise RuntimeError(error)
                 if not os.path.exists(oFile):
                     info = 'No metadata extracted for file ' + iFile

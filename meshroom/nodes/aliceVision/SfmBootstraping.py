@@ -79,6 +79,6 @@ class SfMBootStraping(desc.AVCommandLineNode):
             name="output",
             label="SfMData",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfm.json",
+            value=desc.Node.internalFolder + "bootstrap.abc",
         ),
     ]

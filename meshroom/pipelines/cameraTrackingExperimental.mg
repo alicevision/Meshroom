@@ -465,8 +465,14 @@
             "inputs": {
                 "input": "{SfMBootStraping_1.output}",
                 "tracksFilename": "{SfMBootStraping_1.tracksFilename}",
+                "meshFilename": "{SfMBootStraping_1.meshFilename}",
                 "minAngleForTriangulation": 1.0,
                 "minAngleForLandmark": 0.5
+            },
+            "internalInputs": {
+                "comment": "Estimate cameras parameters for the keyframes.",
+                "label": "SfMExpandingKeys",
+                "color": "#80766f"
             }
         },
         "SfMExpanding_2": {
@@ -478,12 +484,18 @@
             "inputs": {
                 "input": "{TracksBuilding_2.input}",
                 "tracksFilename": "{TracksBuilding_2.output}",
+                "meshFilename": "{SfMExpanding_1.meshFilename}",
                 "nbFirstUnstableCameras": 0,
                 "maxImagesPerGroup": 0,
                 "bundleAdjustmentMaxOutliers": 5000000,
                 "minNumberOfObservationsForTriangulation": 3,
                 "minAngleForTriangulation": 1.0,
                 "minAngleForLandmark": 0.5
+            },
+            "internalInputs": {
+                "comment": "Estimate cameras parameters for the complete camera tracking sequence.",
+                "label": "SfMExpandingAll",
+                "color": "#80766f"
             }
         },
         "SfMTransfer_1": {

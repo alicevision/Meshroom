@@ -1,4 +1,4 @@
-from PySide6.QtCore import Signal, Property, QPointF, Qt, QObject
+from PySide6.QtCore import Signal, Slot, Property, QPointF, Qt, QObject
 from PySide6.QtGui import QPainterPath, QVector2D
 from PySide6.QtQuick import QQuickItem
 
@@ -51,19 +51,6 @@ class EdgeMouseArea(QQuickItem):
         super(EdgeMouseArea, self).geometryChange(newGeometry, oldGeometry)
         self.updateShape()
 
-    def mousePressEvent(self, evt):
-        if not self.acceptedMouseButtons() & evt.button():
-            evt.setAccepted(False)
-            return
-        e = MouseEvent(evt)
-        self.pressed.emit(e)
-        e.deleteLater()
-
-    def mouseReleaseEvent(self, evt):
-        e = MouseEvent(evt)
-        self.released.emit(e)
-        e.deleteLater()
-
     def updateShape(self):
         p1 = QPointF(0, 0)
         p2 = QPointF(self.width(), self.height())
@@ -109,6 +96,10 @@ class EdgeMouseArea(QQuickItem):
             return
         self._containsMouse = value
         self.containsMouseChanged.emit()
+
+    @Slot(QPointF, result=bool)
+    def containsPoint(self, point):
+        return self.contains(point)
 
     thicknessChanged = Signal()
     thickness = Property(float, getThickness, setThickness, notify=thicknessChanged)

@@ -139,12 +139,35 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         thickness: root.thickness + 4
         curveScale: cubic.ctrlPtDist / root.width  // Normalize by width
+    }
+
+    MouseArea {
+        x: Math.min(0, root.width)
+        y: Math.min(0, root.height)
+        height: Math.abs(root.height)
+        width: Math.abs(root.width)
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+
         onPressed: function(event) {
-            root.pressed(event)
-        }
-        onReleased: function(event) {
-            root.released(event)
+            let xpos = root.width < 0 ? root.height + event.x : event.x;
+            let ypos = root.height < 0 ? root.height + event.y: event.y;
+            if (edgeArea.containsPoint(Qt.point(xpos, ypos))) {
+                root.pressed(event);
+            }
+            else {
+                event.accepted = false;
+            }
         }
 
+        onReleased: function(event) {
+            let xpos = root.width < 0 ? root.height + event.x : event.x;
+            let ypos = root.height < 0 ? root.height + event.y: event.y;
+            if (edgeArea.containsPoint(Qt.point(xpos, ypos))) {
+                root.released(event);
+            }
+            else {
+                event.accepted = false;
+            }
+        }
     }
 }

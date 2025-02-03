@@ -5,6 +5,8 @@ import QtQuick.Shapes 1.6
 import GraphEditor 1.0
 import MaterialIcons 2.2
 
+import AliceVision 1.0 as AliceVision
+
 /**
  * A cubic spline representing an edge, going from point1 to point2, providing mouse interaction.
  */
@@ -133,7 +135,7 @@ Item {
         }
     }
 
-    EdgeMouseArea {
+    AliceVision.EdgeMouse {
         id: edgeArea
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton

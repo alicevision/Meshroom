@@ -89,6 +89,8 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
                 views = dataAV.getViews()
                 for id, v in views.items():
                     inputFile = v.getImage().getImagePath()
+                    chunk.logger.info(f"Processing {inputFile}")
+
                     if chunk.node.keepFilename.value:
                         outputMetadataFilename = os.path.join(chunk.node.output.value, Path(inputFile).stem + "." + chunk.node.extension.value)
                     else:
@@ -100,9 +102,12 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
                         cmd = 'exiftool -X ' + chunk.node.arguments.value.strip() + ' ' + inputFile + ' > ' + outputMetadataFilename
                     else: #xmp
                         cmd = 'exiftool -tagsfromfile ' + inputFile + ' ' + chunk.node.arguments.value.strip() + ' ' + outputMetadataFilename
+
                     chunk.logger.debug(cmd)
                     error = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.read().decode()
+
                     chunk.logger.debug(error)
+                    
                     if error != "":
                         chunk.logger.error(error)
                         raise RuntimeError(error)

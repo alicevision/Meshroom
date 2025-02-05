@@ -31,7 +31,12 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
     else:
         attr.resetToDefaultValue()
 
-    attr.valueChanged.connect(lambda attr=attr: node._onAttributeChanged(attr))
+    # Only connect slot that reacts to value change once initial value has been set.
+    # NOTE: This should be handled by the Node class, but we're currently limited by our core
+    #       signal implementation that does not support emitting parameters.
+    #       And using a lambda here to send the attribute as a parameter causes
+    #       performance issues when using the pyside backend.
+    attr.valueChanged.connect(attr._onValueChanged)
 
     return attr
 
@@ -212,6 +217,10 @@ class Attribute(BaseObject):
 
         self.valueChanged.emit()
         self.validValueChanged.emit()
+
+    @Slot()
+    def _onValueChanged(self):
+        self.node._onAttributeChanged(self)
 
     def _set_label(self, label):
         if self._label == label:

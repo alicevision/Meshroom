@@ -214,3 +214,30 @@ class TestGraphPartialSerialization:
             assert len(otherGraph.compatibilityNodes) == 0
             assert len(otherGraph.nodes) == 1
             assert len(otherGraph.edges) == 0
+
+
+class TestGraphCopy:
+    def test_graphCopyIsIdenticalToOriginalGraph(self):
+        graph = Graph("")
+
+        with registeredNodeTypes([SimpleNode]):
+            nodeA = graph.addNewNode(SimpleNode.__name__)
+            nodeB = graph.addNewNode(SimpleNode.__name__)
+
+            graph.addEdge(nodeA.output, nodeB.input)
+
+            graphCopy = graph.copy()
+            assert compareGraphsContent(graph, graphCopy)
+
+    def test_graphCopyWithUnknownNodeTypesDiffersFromOriginalGraph(self):
+        graph = Graph("")
+
+        with registeredNodeTypes([SimpleNode]):
+            nodeA = graph.addNewNode(SimpleNode.__name__)
+            nodeB = graph.addNewNode(SimpleNode.__name__)
+
+            graph.addEdge(nodeA.output, nodeB.input)
+
+        graphCopy = graph.copy()
+        assert not compareGraphsContent(graph, graphCopy)
+

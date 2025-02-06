@@ -1351,6 +1351,12 @@ class Graph(BaseObject):
     def asString(self):
         return str(self.toDict())
 
+    def copy(self) -> "Graph":
+        """Create a copy of this Graph instance."""
+        graph = Graph("")
+        graph._deserialize(self.serialize())
+        return graph
+
     def serialize(self, asTemplate: bool = False) -> dict:
         """Serialize this Graph instance.
         

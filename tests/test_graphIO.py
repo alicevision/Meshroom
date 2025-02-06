@@ -1,7 +1,11 @@
+import json
+from textwrap import dedent
+
 from meshroom.core import desc
 from meshroom.core.graph import Graph
+from meshroom.core.node import CompatibilityIssue
 
-from .utils import registeredNodeTypes
+from .utils import registeredNodeTypes, overrideNodeTypeVersion
 
 
 class SimpleNode(desc.Node):
@@ -193,6 +197,21 @@ class TestImportGraphContent:
         assert len(otherGraph.compatibilityNodes) == 2
         assert not compareGraphsContent(graph, otherGraph)
 
+    def test_importingDifferentNodeVersionCreatesCompatibilityNodes(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+
+        with registeredNodeTypes([SimpleNode]):
+            with overrideNodeTypeVersion(SimpleNode, "1.0"):
+                node = graph.addNewNode(SimpleNode.__name__)
+                graph.save()
+
+            with overrideNodeTypeVersion(SimpleNode, "2.0"):
+                otherGraph = Graph("")
+                nodes = otherGraph.importGraphContentFromFile(graph.filepath)
+
+        assert len(nodes) == 1
+        assert len(otherGraph.compatibilityNodes) == 1
+        assert otherGraph.node(node.name).issue is CompatibilityIssue.VersionConflict
 
 class TestGraphPartialSerialization:
     def test_emptyGraph(self):
@@ -297,3 +316,23 @@ class TestGraphCopy:
 
         graphCopy = graph.copy()
         assert not compareGraphsContent(graph, graphCopy)
+
+
+class TestImportGraphContentFromMinimalGraphData:
+    def test_nodeWithoutVersionInfoIsUpgraded(self):
+        graph = Graph("")
+
+        with (
+            registeredNodeTypes([SimpleNode]),
+            overrideNodeTypeVersion(SimpleNode, "2.0"),
+        ):
+            sampleGraphContent = dedent("""
+            {
+                "SimpleNode_1": { "nodeType": "SimpleNode" }
+            }
+            """)
+            graph._deserialize(json.loads(sampleGraphContent))
+
+            assert len(graph.nodes) == 1
+            assert len(graph.compatibilityNodes) == 0
+

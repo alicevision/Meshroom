@@ -100,7 +100,9 @@ class GraphSerializer:
         """Get registered versions of each node types in `nodes`, excluding CompatibilityNode instances."""
         nodeTypes = set([node.nodeDesc.__class__ for node in self.nodes if isinstance(node, Node)])
         nodeTypesVersions = {
-            nodeType.__name__: meshroom.core.nodeVersion(nodeType, "0.0") for nodeType in nodeTypes
+            nodeType.__name__: version
+            for nodeType in nodeTypes
+            if (version := meshroom.core.nodeVersion(nodeType)) is not None
         }
         # Sort them by name (to avoid random order changing from one save to another).
         return dict(sorted(nodeTypesVersions.items()))

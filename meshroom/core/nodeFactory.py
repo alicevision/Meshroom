@@ -95,7 +95,10 @@ class _NodeCreator:
         nodeCreatedFromCurrentVersion = self.version is None
         if nodeCreatedFromCurrentVersion:
             return True
-        nodeTypeCurrentVersion = meshroom.core.nodeVersion(self.nodeDesc, "0.0")
+        nodeTypeCurrentVersion = meshroom.core.nodeVersion(self.nodeDesc)
+        # If the node type has not current version information, assume compatibility.
+        if nodeTypeCurrentVersion is None:
+            return True
         return Version(self.version).major == Version(nodeTypeCurrentVersion).major
 
     def _checkDescriptionCompatibility(self) -> bool:

@@ -1608,7 +1608,8 @@ class CompatibilityNode(BaseNode):
         # Make a deepcopy of nodeDict to handle CompatibilityNode duplication
         # and be able to change modified inputs (see CompatibilityNode.toDict)
         self.nodeDict = copy.deepcopy(nodeDict)
-        self.version = Version(self.nodeDict.get("version", None))
+        version = self.nodeDict.get("version")
+        self.version = Version(version) if version else None
 
         self._inputs = self.nodeDict.get("inputs", {})
         self._internalInputs = self.nodeDict.get("internalInputs", {})

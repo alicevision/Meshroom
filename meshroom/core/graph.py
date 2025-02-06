@@ -326,12 +326,13 @@ class Graph(BaseObject):
         return graphContent
 
     def _deserializeNode(self, nodeData: dict, nodeName: str, fromGraph: "Graph"):
-        # Retrieve version from
+        # Retrieve version info from:
         #   1. nodeData: node saved from a CompatibilityNode
         #   2. nodesVersion in file header: node saved from a Node
-        #   3. fallback behavior: default to "0.0"
+        # If unvailable, the "version" field will not be set in `nodeData`.
         if "version" not in nodeData:
-            nodeData["version"] = fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"], "0.0")
+            if version := fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"]):
+                nodeData["version"] = version
         inTemplate = fromGraph.header.get(GraphIO.Keys.Template, False)
         node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate)
         self._addNode(node, nodeName)

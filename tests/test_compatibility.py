@@ -13,7 +13,7 @@ from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
 
-from .utils import registeredNodeTypes
+from .utils import registeredNodeTypes, overrideNodeTypeVersion
 
 
 SampleGroupV1 = [
@@ -472,6 +472,36 @@ class TestGraphTemplateLoading:
             replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
 
             loadGraph(graph.filepath, strictCompatibility=True)
+
+class TestVersionConflict:
+
+    def test_loadingConflictingNodeVersionCreatesCompatibilityNodes(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+
+        with registeredNodeTypes([SampleNodeV1]):
+            with overrideNodeTypeVersion(SampleNodeV1, "1.0"):
+                node = graph.addNewNode(SampleNodeV1.__name__)
+                graph.save()
+            
+            with overrideNodeTypeVersion(SampleNodeV1, "2.0"):
+                otherGraph = Graph("")
+                otherGraph.load(graph.filepath)
+
+        assert len(otherGraph.compatibilityNodes) == 1
+        assert otherGraph.node(node.name).issue is CompatibilityIssue.VersionConflict
+
+    def test_loadingUnspecifiedNodeVersionAssumesCurrentVersion(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+
+        with registeredNodeTypes([SampleNodeV1]):
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save()
+            
+            with overrideNodeTypeVersion(SampleNodeV1, "2.0"):
+                otherGraph = Graph("")
+                otherGraph.load(graph.filepath)
+
+        assert len(otherGraph.compatibilityNodes) == 0
 
 
 class UidTestingNodeV1(desc.Node):

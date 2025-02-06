@@ -13,6 +13,32 @@ class SimpleNode(desc.Node):
     ]
 
 
+class NodeWithListAttributes(desc.Node):
+    inputs = [
+        desc.ListAttribute(
+            name="listInput",
+            label="List Input",
+            description="",
+            elementDesc=desc.File(name="file", label="File", description="", value=""),
+            exposed=True,
+        ),
+        desc.GroupAttribute(
+            name="group",
+            label="Group",
+            description="",
+            groupDesc=[
+                desc.ListAttribute(
+                    name="listInput",
+                    label="List Input",
+                    description="",
+                    elementDesc=desc.File(name="file", label="File", description="", value=""),
+                    exposed=True,
+                ),
+            ],
+        ),
+    ]
+
+
 def compareGraphsContent(graphA: Graph, graphB: Graph) -> bool:
     """Returns whether the content (node and deges) of two graphs are considered identical.
 
@@ -26,9 +52,10 @@ def compareGraphsContent(graphA: Graph, graphB: Graph) -> bool:
     def _buildEdgesSet(graph: Graph):
         return set([(edge.src.fullName, edge.dst.fullName) for edge in graph.edges])
 
-    return _buildNodesSet(graphA) == _buildNodesSet(graphB) and _buildEdgesSet(graphA) == _buildEdgesSet(
-        graphB
-    )
+    nodesSetA, edgesSetA = _buildNodesSet(graphA), _buildEdgesSet(graphA)
+    nodesSetB, edgesSetB = _buildNodesSet(graphB), _buildEdgesSet(graphB)
+
+    return nodesSetA == nodesSetB and edgesSetA == edgesSetB
 
 
 class TestImportGraphContent:
@@ -197,7 +224,7 @@ class TestGraphPartialSerialization:
             assert compareGraphsContent(graph, graphA)
             assert compareGraphsContent(graphA, graphB)
 
-    def test_serializeSingleNodeWithInputConnection(self):
+    def test_singleNodeWithInputConnectionFromNonSerializedNodeRemovesEdge(self):
         graph = Graph("")
 
         with registeredNodeTypes([SimpleNode]):
@@ -214,6 +241,36 @@ class TestGraphPartialSerialization:
             assert len(otherGraph.compatibilityNodes) == 0
             assert len(otherGraph.nodes) == 1
             assert len(otherGraph.edges) == 0
+
+    def test_serializeSingleNodeWithInputConnectionToListAttributeRemovesListEntry(self):
+        graph = Graph("")
+
+        with registeredNodeTypes([SimpleNode, NodeWithListAttributes]):
+            nodeA = graph.addNewNode(SimpleNode.__name__)
+            nodeB = graph.addNewNode(NodeWithListAttributes.__name__)
+
+            nodeB.listInput.append("")
+            graph.addEdge(nodeA.output, nodeB.listInput.at(0))
+
+            otherGraph = Graph("")
+            otherGraph._deserialize(graph.serializePartial([nodeB]))
+
+            assert len(otherGraph.node(nodeB.name).listInput) == 0
+
+    def test_serializeSingleNodeWithInputConnectionToNestedListAttributeRemovesListEntry(self):
+        graph = Graph("")
+
+        with registeredNodeTypes([SimpleNode, NodeWithListAttributes]):
+            nodeA = graph.addNewNode(SimpleNode.__name__)
+            nodeB = graph.addNewNode(NodeWithListAttributes.__name__)
+
+            nodeB.group.listInput.append("")
+            graph.addEdge(nodeA.output, nodeB.group.listInput.at(0))
+
+            otherGraph = Graph("")
+            otherGraph._deserialize(graph.serializePartial([nodeB]))
+
+            assert len(otherGraph.node(nodeB.name).group.listInput) == 0
 
 
 class TestGraphCopy:
@@ -240,4 +297,3 @@ class TestGraphCopy:
 
         graphCopy = graph.copy()
         assert not compareGraphsContent(graph, graphCopy)
-

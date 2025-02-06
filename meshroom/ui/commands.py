@@ -432,11 +432,12 @@ class UpgradeNodeCommand(GraphCommand):
 
     def undoImpl(self):
         # delete upgraded node
+        expectedUid = self.graph.node(self.nodeName)._uid
         self.graph.removeNode(self.nodeName)
         # recreate compatibility node
         with GraphModification(self.graph):
             # We come back from an upgrade, so we enforce uidConflict=True as there was a uid conflict before
-            node = nodeFactory(self.nodeDict, name=self.nodeName, uidConflict=True)
+            node = nodeFactory(self.nodeDict, name=self.nodeName, expectedUid=expectedUid)
             self.graph.addNode(node, self.nodeName)
             # recreate out edges
             for dstAttr, srcAttr in self.outEdges.items():

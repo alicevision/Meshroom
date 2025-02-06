@@ -339,7 +339,7 @@ class Graph(BaseObject):
                 if isTemplate and not publishOutputs and nodeData["nodeType"] == "Publish":
                     continue
 
-                n = nodeFactory(nodeData, nodeName, template=isTemplate)
+                n = nodeFactory(nodeData, nodeName, inTemplate=isTemplate)
 
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
@@ -392,14 +392,14 @@ class Graph(BaseObject):
                 # Different UIDs, remove the existing node from the graph and replace it with a CompatibilityNode
                 logging.debug("UID conflict detected for {}".format(nodeName))
                 self.removeNode(nodeName)
-                n = nodeFactory(nodeData, nodeName, template=False, uidConflict=True)
+                n = nodeFactory(nodeData, nodeName, expectedUid=graphUid)
                 self._addNode(n, nodeName)
             else:
                 # f connecting nodes have UID conflicts and are removed/re-added to the graph, some edges may be lost:
                 # the links will be erroneously updated, and any further resolution will fail.
                 # Recreating the entire graph as it was ensures that all edges will be correctly preserved.
                 self.removeNode(nodeName)
-                n = nodeFactory(nodeData, nodeName, template=False, uidConflict=False)
+                n = nodeFactory(nodeData, nodeName)
                 self._addNode(n, nodeName)
 
     def updateImportedProject(self, data):

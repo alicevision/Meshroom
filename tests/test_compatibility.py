@@ -4,6 +4,7 @@ import tempfile
 import os
 
 import copy
+from typing import Type
 import pytest
 
 import meshroom.core
@@ -11,6 +12,8 @@ from meshroom.core import desc, registerNodeType, unregisterNodeType
 from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
+
+from .utils import registeredNodeTypes
 
 
 SampleGroupV1 = [
@@ -156,6 +159,12 @@ class SampleInputNodeV2(desc.InputNode):
     ]
 
 
+
+def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
+    """Change the `nodeDesc` associated to `nodeType`."""
+    meshroom.core.nodesDesc[nodeType] = nodeDesc
+
+
 def test_unknown_node_type():
     """
     Test compatibility behavior for unknown node type.
@@ -218,8 +227,7 @@ def test_description_conflict():
     g.save(graphFile)
 
     # reload file as-is, ensure no compatibility issue is detected (no CompatibilityNode instances)
-    g = loadGraph(graphFile)
-    assert all(isinstance(n, Node) for n in g.nodes)
+    loadGraph(graphFile, strictCompatibility=True)
 
     # offset node types register to create description conflicts
     # each node type name now reference the next one's implementation
@@ -399,20 +407,68 @@ def test_conformUpgrade():
 
 class TestGraphLoadingWithStrictCompatibility:
 
-    def test_failsOnNodeDescriptionCompatibilityIssue(self, graphSavedOnDisk):
-        registerNodeType(SampleNodeV1)
-        registerNodeType(SampleNodeV2)
-
-        graph: Graph = graphSavedOnDisk
-        graph.addNewNode(SampleNodeV1.__name__)
-        graph.save()
-
-        # Replace saved node description by V2
-        meshroom.core.nodesDesc[SampleNodeV1.__name__] = SampleNodeV2
+    def test_failsOnUnknownNodeType(self, graphSavedOnDisk):
+        with registeredNodeTypes([SampleNodeV1]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save()
 
         with pytest.raises(GraphCompatibilityError):
             loadGraph(graph.filepath, strictCompatibility=True)
 
-        unregisterNodeType(SampleNodeV1)
-        unregisterNodeType(SampleNodeV2)
 
+    def test_failsOnNodeDescriptionCompatibilityIssue(self, graphSavedOnDisk):
+
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save()
+
+            replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
+
+            with pytest.raises(GraphCompatibilityError):
+                loadGraph(graph.filepath, strictCompatibility=True)
+
+
+class TestGraphTemplateLoading:
+
+    def test_failsOnUnknownNodeTypeError(self, graphSavedOnDisk):
+
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save(template=True)
+
+        with pytest.raises(GraphCompatibilityError):
+            loadGraph(graph.filepath, strictCompatibility=True)
+
+    def test_loadsIfIncompatibleNodeHasDefaultAttributeValues(self, graphSavedOnDisk):
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save(template=True)
+
+            replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
+
+            loadGraph(graph.filepath, strictCompatibility=True)
+
+    def test_loadsIfValueSetOnCompatibleAttribute(self, graphSavedOnDisk):
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            node = graph.addNewNode(SampleNodeV1.__name__, paramA="foo")
+            graph.save(template=True)
+
+            replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
+
+            loadedGraph = loadGraph(graph.filepath, strictCompatibility=True)
+            assert loadedGraph.nodes.get(node.name).paramA.value == "foo"
+
+    def test_loadsIfValueSetOnIncompatibleAttribute(self, graphSavedOnDisk):
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__, input="foo")
+            graph.save(template=True)
+
+            replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
+
+            loadGraph(graph.filepath, strictCompatibility=True)

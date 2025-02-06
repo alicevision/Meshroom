@@ -89,10 +89,6 @@ class GraphSerializer:
             - version of the file format.
             - version of the nodes types used in the graph.
             - template flag.
-
-        Args:
-            nodes: (optional) The list of nodes to consider for node types versions - use all nodes if not specified.
-            template: Whether the graph is going to be serialized as a template.
         """
         header: dict[str, Any] = {}
         header[GraphIO.Keys.ReleaseVersion] = meshroom.__version__

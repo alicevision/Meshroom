@@ -18,10 +18,10 @@ def nodeFactory(
     If any compatibility issue occurs, a NodeCompatibility instance is created instead.
 
     Args:
-        nodeDict: The serialized Node data.
-        name: (optional) The node's name.
-        inTemplate: (optional) True if the node is created as part of a graph template.
-        expectedUid: (optional) The expected UID of the node within the context of a Graph.
+        nodeData: The serialized Node data.
+        name: The node's name.
+        inTemplate: True if the node is created as part of a graph template.
+        expectedUid: The expected UID of the node within the context of a Graph.
 
     Returns:
         The created Node instance.

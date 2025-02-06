@@ -258,8 +258,9 @@ class Graph(BaseObject):
         self._deserialize(Graph._loadGraphData(filepath))
 
         if not publishOutputs:
-            for node in [node for node in self.nodes if node.nodeType == "Publish"]:
-                self.removeNode(node.name)
+            with GraphModification(self):
+                for node in [node for node in self.nodes if node.nodeType == "Publish"]:
+                    self.removeNode(node.name)
 
     @staticmethod
     def _loadGraphData(filepath: PathLike) -> dict:

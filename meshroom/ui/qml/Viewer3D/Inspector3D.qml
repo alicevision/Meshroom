@@ -355,6 +355,14 @@ FloatingPane {
                         }
                     }
 
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            /// Steal focus from anything that may have
+                            mediaListView.forceActiveFocus();
+                        }
+                    }
+
                     model: SortFilterDelegateModel {
                         model: mediaLibrary.model
                         sortRole: ""

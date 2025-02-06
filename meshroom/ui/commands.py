@@ -170,19 +170,7 @@ class RemoveNodeCommand(GraphCommand):
             node = nodeFactory(self.nodeDict, self.nodeName)
             self.graph.addNode(node, self.nodeName)
             assert (node.getName() == self.nodeName)
-            # recreate out edges deleted on node removal
-            for dstAttr, srcAttr in self.outEdges.items():
-                # if edges were connected to ListAttributes, recreate their corresponding entry in said ListAttribute
-                # 0 = attribute name, 1 = attribute index, 2 = attribute value
-                if dstAttr in self.outListAttributes.keys():
-                    listAttr = self.graph.attribute(self.outListAttributes[dstAttr][0])
-                    if isinstance(self.outListAttributes[dstAttr][2], list):
-                        listAttr[self.outListAttributes[dstAttr][1]:self.outListAttributes[dstAttr][1]] = self.outListAttributes[dstAttr][2]
-                    else:
-                        listAttr.insert(self.outListAttributes[dstAttr][1], self.outListAttributes[dstAttr][2])
-
-                self.graph.addEdge(self.graph.attribute(srcAttr),
-                                   self.graph.attribute(dstAttr))
+            self.graph._restoreOutEdges(self.outEdges, self.outListAttributes)
 
 
 class DuplicateNodesCommand(GraphCommand):
@@ -451,38 +439,19 @@ class UpgradeNodeCommand(GraphCommand):
         super(UpgradeNodeCommand, self).__init__(graph, parent)
         self.nodeDict = node.toDict()
         self.nodeName = node.getName()
-        self.outEdges = {}
-        self.outListAttributes = {}
         self.setText("Upgrade Node {}".format(self.nodeName))
 
     def redoImpl(self):
         if not self.graph.node(self.nodeName).canUpgrade:
             return False
-        upgradedNode, _, self.outEdges, self.outListAttributes = self.graph.upgradeNode(self.nodeName)
-        return upgradedNode
+        return self.graph.upgradeNode(self.nodeName)
 
     def undoImpl(self):
-        # delete upgraded node
         expectedUid = self.graph.node(self.nodeName)._uid
-        self.graph.removeNode(self.nodeName)
         # recreate compatibility node
         with GraphModification(self.graph):
-            # We come back from an upgrade, so we enforce uidConflict=True as there was a uid conflict before
             node = nodeFactory(self.nodeDict, name=self.nodeName, expectedUid=expectedUid)
-            self.graph.addNode(node, self.nodeName)
-            # recreate out edges
-            for dstAttr, srcAttr in self.outEdges.items():
-                # if edges were connected to ListAttributes, recreate their corresponding entry in said ListAttribute
-                # 0 = attribute name, 1 = attribute index, 2 = attribute value
-                if dstAttr in self.outListAttributes.keys():
-                    listAttr = self.graph.attribute(self.outListAttributes[dstAttr][0])
-                    if isinstance(self.outListAttributes[dstAttr][2], list):
-                        listAttr[self.outListAttributes[dstAttr][1]:self.outListAttributes[dstAttr][1]] = self.outListAttributes[dstAttr][2]
-                    else:
-                        listAttr.insert(self.outListAttributes[dstAttr][1], self.outListAttributes[dstAttr][2])
-
-                self.graph.addEdge(self.graph.attribute(srcAttr),
-                                   self.graph.attribute(dstAttr))
+            self.graph.replaceNode(self.nodeName, node)
 
 
 class EnableGraphUpdateCommand(GraphCommand):

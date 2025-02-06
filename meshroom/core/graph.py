@@ -649,7 +649,7 @@ class Graph(BaseObject):
     def node(self, nodeName):
         return self._nodes.get(nodeName)
 
-    def upgradeNode(self, nodeName):
+    def upgradeNode(self, nodeName) -> Node:
         """
         Upgrade the CompatibilityNode identified as 'nodeName'
         Args:
@@ -669,25 +669,49 @@ class Graph(BaseObject):
         if not isinstance(node, CompatibilityNode):
             raise ValueError("Upgrade is only available on CompatibilityNode instances.")
         upgradedNode = node.upgrade()
-        with GraphModification(self):
-            inEdges, outEdges, outListAttributes = self.removeNode(nodeName)
-            self.addNode(upgradedNode, nodeName)
-            for dst, src in outEdges.items():
-                # Re-create the entries in ListAttributes that were completely removed during the call to "removeNode"
-                # If they are not re-created first, adding their edges will lead to errors
-                # 0 = attribute name, 1 = attribute index, 2 = attribute value
-                if dst in outListAttributes.keys():
-                    listAttr = self.attribute(outListAttributes[dst][0])
-                    if isinstance(outListAttributes[dst][2], list):
-                        listAttr[outListAttributes[dst][1]:outListAttributes[dst][1]] = outListAttributes[dst][2]
-                    else:
-                        listAttr.insert(outListAttributes[dst][1], outListAttributes[dst][2])
-                try:
-                    self.addEdge(self.attribute(src), self.attribute(dst))
-                except (KeyError, ValueError) as e:
-                    logging.warning("Failed to restore edge {} -> {}: {}".format(src, dst, str(e)))
+        self.replaceNode(nodeName, upgradedNode)
+        return upgradedNode
 
-        return upgradedNode, inEdges, outEdges, outListAttributes
+    @changeTopology
+    def replaceNode(self, nodeName: str, newNode: BaseNode):
+        """Replace the node idenfitied by `nodeName` with `newNode`, while restoring compatible edges.
+
+        Args:
+            nodeName: The name of the Node to replace.
+            newNode: The Node instance to replace it with.
+        """
+        with GraphModification(self):
+            _, outEdges, outListAttributes = self.removeNode(nodeName)
+            self.addNode(newNode, nodeName)
+            self._restoreOutEdges(outEdges, outListAttributes)
+    
+    def _restoreOutEdges(self, outEdges: dict[str, str], outListAttributes):
+        """Restore output edges that were removed during a call to "removeNode".
+        
+        Args:
+            outEdges: a dictionary containing the outgoing edges removed by a call to "removeNode".
+                {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            outListAttributes: a dictionary containing the values, indices and keys of attributes that were connected
+                to a ListAttribute prior to the removal of all edges.
+                {dstAttr.getFullNameToNode(), (dstAttr.root.getFullNameToNode(), dstAttr.index, dstAttr.value)}
+        """
+        def _recreateTargetListAttributeChildren(listAttrName: str, index: int, value: Any):
+            listAttr = self.attribute(listAttrName)
+            if not isinstance(listAttr, ListAttribute):
+                return
+            if isinstance(value, list):
+                listAttr[index:index] = value
+            else:
+                listAttr.insert(index, value)
+
+        for dstName, srcName in outEdges.items():
+            # Re-create the entries in ListAttributes that were completely removed during the call to "removeNode"
+            if dstName in outListAttributes:
+                _recreateTargetListAttributeChildren(*outListAttributes[dstName])
+            try:
+                self.addEdge(self.attribute(srcName), self.attribute(dstName))
+            except (KeyError, ValueError) as e:
+                logging.warning(f"Failed to restore edge {srcName} -> {dstName}: {str(e)}")
 
     def upgradeAllNodes(self):
         """ Upgrade all upgradable CompatibilityNode instances in the graph. """

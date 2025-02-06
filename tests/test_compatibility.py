@@ -255,7 +255,7 @@ def test_description_conflict():
             assert not hasattr(compatNode, "in")
 
             # perform upgrade
-            upgradedNode = g.upgradeNode(nodeName)[0]
+            upgradedNode = g.upgradeNode(nodeName)
             assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV2)
 
             assert list(upgradedNode.attributes.keys()) == ["in", "paramA", "output"]
@@ -270,7 +270,7 @@ def test_description_conflict():
             assert hasattr(compatNode, "paramA")
 
             # perform upgrade
-            upgradedNode = g.upgradeNode(nodeName)[0]
+            upgradedNode = g.upgradeNode(nodeName)
             assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV3)
 
             assert not hasattr(upgradedNode, "paramA")
@@ -283,7 +283,7 @@ def test_description_conflict():
             assert not hasattr(compatNode, "paramA")
 
             # perform upgrade
-            upgradedNode = g.upgradeNode(nodeName)[0]
+            upgradedNode = g.upgradeNode(nodeName)
             assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV4)
 
             assert hasattr(upgradedNode, "paramA")
@@ -303,7 +303,7 @@ def test_description_conflict():
                 assert isinstance(elt, next(a for a in SampleGroupV1 if a.name == elt.name).__class__)
 
             # perform upgrade
-            upgradedNode = g.upgradeNode(nodeName)[0]
+            upgradedNode = g.upgradeNode(nodeName)
             assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV5)
 
             assert hasattr(upgradedNode, "paramA")

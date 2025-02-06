@@ -211,15 +211,27 @@ class PasteNodesCommand(GraphCommand):
     """
     Handle node pasting in a Graph.
     """
-    def __init__(self, graph, data, position=None, parent=None):
+    def __init__(self, graph: "Graph", data: dict, position: Position, parent=None):
         super(PasteNodesCommand, self).__init__(graph, parent)
         self.data = data
         self.position = position
-        self.nodeNames = []
+        self.nodeNames: list[str] = []
 
     def redoImpl(self):
-        data = self.graph.updateImportedProject(self.data)
-        nodes = self.graph.pasteNodes(data, self.position)
+        graph = Graph("")
+        try:
+            graph._deserialize(self.data)
+        except:
+            return False
+
+        boundingBoxCenter = self._boundingBoxCenter(graph.nodes)
+        offset = Position(self.position.x - boundingBoxCenter.x, self.position.y - boundingBoxCenter.y)
+
+        for node in graph.nodes:
+            node.position = Position(node.position.x + offset.x, node.position.y + offset.y)
+
+        nodes = self.graph.importGraphContent(graph)
+
         self.nodeNames = [node.name for node in nodes]
         self.setText("Paste Node{} ({})".format("s" if len(self.nodeNames) > 1 else "", ", ".join(self.nodeNames)))
         return nodes
@@ -228,6 +240,24 @@ class PasteNodesCommand(GraphCommand):
         for name in self.nodeNames:
             self.graph.removeNode(name)
 
+    def _boundingBox(self, nodes) -> tuple[int, int, int, int]:
+        if not nodes:
+            return (0, 0, 0 , 0)
+
+        minX = maxX = nodes[0].x
+        minY = maxY = nodes[0].y
+
+        for node in nodes[1:]:
+            minX = min(minX, node.x)
+            minY = min(minY, node.y)
+            maxX = max(maxX, node.x)
+            maxY = max(maxY, node.y)
+
+        return (minX, minY, maxX, maxY)
+
+    def _boundingBoxCenter(self, nodes):
+        minX, minY, maxX, maxY = self._boundingBox(nodes)
+        return Position((minX + maxX) / 2, (minY + maxY) / 2)
 
 class ImportProjectCommand(GraphCommand):
     """

@@ -676,41 +676,6 @@ class Graph(BaseObject):
 
         return duplicates
 
-    def pasteNodes(self, data, position):
-        """
-        Paste node(s) in the graph with their connections. The connections can only be between
-        the pasted nodes and not with the rest of the graph.
-
-        Args:
-            data (dict): the dictionary containing the information about the nodes to paste, with their names and
-                         links already updated to be added to the graph
-            position (list): the list of positions for each node to paste
-
-        Returns:
-            list: the list of Node objects that were pasted and added to the graph
-        """
-        nodes = []
-        with GraphModification(self):
-            positionCnt = 0  # always valid because we know the data is sorted the same way as the position list
-            for key in sorted(data):
-                nodeType = data[key].get("nodeType", None)
-                if not nodeType:  # this case should never occur, as the data should have been prefiltered first
-                    pass
-
-                attributes = {}
-                attributes.update(data[key].get("inputs", {}))
-                attributes.update(data[key].get("outputs", {}))
-                attributes.update(data[key].get("internalInputs", {}))
-
-                node = Node(nodeType, position=position[positionCnt], **attributes)
-                self._addNode(node, key)
-
-                nodes.append(node)
-                positionCnt += 1
-
-            self._applyExpr()
-        return nodes
-
     def outEdges(self, attribute):
         """ Return the list of edges starting from the given attribute """
         # type: (Attribute,) -> [Edge]

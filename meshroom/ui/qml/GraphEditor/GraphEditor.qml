@@ -82,25 +82,18 @@ Item {
 
     /// Paste content of clipboard to graph editor and create new node if valid
     function pasteNodes() {
-        var finalPosition = undefined
-        var centerPosition = false
+        let finalPosition = undefined;
         if (mouseArea.containsMouse) {
-            if (uigraph.hoveredNode !== null) {
-                var node = nodeDelegate(uigraph.hoveredNode)
-                finalPosition = Qt.point(node.mousePosition.x + node.x, node.mousePosition.y + node.y)
-            } else {
-                finalPosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
-            }
+            finalPosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY);
         } else {
-            finalPosition = getCenterPosition()
-            centerPosition = true
+            finalPosition = getCenterPosition();
         }
 
-        var copiedContent = Clipboard.getText()
-        var nodes = uigraph.pasteNodes(copiedContent, finalPosition, centerPosition)
+        const copiedContent = Clipboard.getText();
+        const nodes = uigraph.pasteNodes(copiedContent, finalPosition);
         if (nodes.length > 0) {
-            uigraph.selectedNode = nodes[0]
-            uigraph.selectNodes(nodes)
+            uigraph.selectedNode = nodes[0];
+            uigraph.selectNodes(nodes);
         }
     }
 

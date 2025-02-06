@@ -1668,7 +1668,17 @@ class CompatibilityNode(BaseNode):
         elif isinstance(value, float):
             return desc.FloatParam(range=None, **params)
         elif isinstance(value, str):
-            if isOutput or os.path.isabs(value) or Attribute.isLinkExpression(value):
+            if isOutput or os.path.isabs(value):
+                return desc.File(**params)
+            elif Attribute.isLinkExpression(value):
+                # Do not consider link expression as a valid default desc value.
+                # When the link expression is applied and transformed to an actual link,
+                # the systems resets the value using `Attribute.resetToDefaultValue` to indicate
+                # that this link expression has been handled.
+                # If the link expression is stored as the default value, it will never be cleared,
+                # leading to unexpected behavior where the link expression on a CompatibilityNode
+                # could be evaluated several times and/or incorrectly.
+                params["value"] = ""
                 return desc.File(**params)
             else:
                 return desc.StringParam(**params)

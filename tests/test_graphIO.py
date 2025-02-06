@@ -90,6 +90,23 @@ class TestImportGraphContent:
             otherGraph.importGraphContent(graph)
             otherGraph.importGraphContent(graph)
 
+    def test_edgeRemappingOnImportingGraphWithUnkownNodeTypesSeveralTimes(self):
+        graph = Graph("")
+
+        with registeredNodeTypes([SimpleNode]):
+            nodeA_1 = graph.addNewNode(SimpleNode.__name__)
+            nodeA_2 = graph.addNewNode(SimpleNode.__name__)
+
+            graph.addEdge(nodeA_1.output, nodeA_2.input)
+
+        otherGraph = Graph("")
+        otherGraph.importGraphContent(graph)
+        otherGraph.importGraphContent(graph)
+
+        assert len(otherGraph.nodes) == 4
+        assert len(otherGraph.compatibilityNodes) == 4
+        assert len(otherGraph.edges) == 2
+
     def test_importGraphWithUnknownNodeTypesCreatesCompatibilityNodes(self):
         graph = Graph("")
 

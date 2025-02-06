@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import re
-from typing import Optional
+from typing import Any, Optional
 import weakref
 from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
@@ -18,7 +18,7 @@ from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
-from meshroom.core.node import Status, Node, CompatibilityNode
+from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
 from meshroom.core.typing import PathLike
 
@@ -291,23 +291,18 @@ class Graph(BaseObject):
             # Create graph edges by resolving attributes expressions
             self._applyExpr()
             
-            # Templates are specific: they contain only the minimal amount of 
-            # serialized data to describe the graph structure.
-            # They are not meant to be computed: therefore, we can early return here,
-            # as uid conflict evaluation is only meaningful for nodes with computed data.
-            if isTemplate:
-                return
+        # Templates are specific: they contain only the minimal amount of 
+        # serialized data to describe the graph structure.
+        # They are not meant to be computed: therefore, we can early return here,
+        # as uid conflict evaluation is only meaningful for nodes with computed data.
+        if isTemplate:
+            return
 
-            # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the
-            # nodes' links have been resolved and their UID computations are all complete.
-            # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
-            # that were computed.
-            self.updateInternals()
-            self._evaluateUidConflicts(graphContent)
-            try:
-                self._applyExpr()
-            except Exception as e:
-                logging.warning(e)
+        # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the
+        # nodes' links have been resolved and their UID computations are all complete.
+        # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
+        # that were computed.
+        self._evaluateUidConflicts(graphContent)
 
     def _normalizeGraphContent(self, graphData: dict, fileVersion: Version) -> dict:
         graphContent = graphData.get(GraphIO.Keys.Graph, graphData)
@@ -348,34 +343,48 @@ class Graph(BaseObject):
 
     def _evaluateUidConflicts(self, graphContent: dict):
         """
-        Compare the UIDs of all the nodes in the graph with the UID that is expected in the graph file. If there
+        Compare the computed UIDs of all the nodes in the graph with the UIDs serialized in `graphContent`. If there
         are mismatches, the nodes with the unexpected UID are replaced with "UidConflict" compatibility nodes.
-        Already existing nodes are removed and re-added to the graph identically to preserve all the edges,
-        which may otherwise be invalidated when a node with output edges but a UID conflict is re-generated as a
-        compatibility node.
-
+  
         Args:
-            data (dict): the dictionary containing all the nodes to import and their data
+            graphContent: The serialized Graph content.
         """
-        for nodeName, nodeData in sorted(graphContent.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
-            node = self.node(nodeName)
 
+        def _serializedNodeUidMatchesComputedUid(nodeData: dict, node: BaseNode) -> bool:
+            """Returns whether the serialized UID matches the one computed in the `node` instance."""
+            if isinstance(node, CompatibilityNode):
+                return True
             serializedUid = nodeData.get("uid", None)
-            computedUid = node._uid  # Node's UID from the graph itself
+            computedUid = node._uid
+            return serializedUid is None or computedUid is None or serializedUid == computedUid
 
-            if serializedUid and computedUid and serializedUid != computedUid:
-                # Different UIDs, remove the existing node from the graph and replace it with a CompatibilityNode
-                logging.debug("UID conflict detected for {}".format(nodeName))
-                self.removeNode(nodeName)
-                n = nodeFactory(nodeData, nodeName, expectedUid=computedUid)
-                self._addNode(n, nodeName)
-            else:
-                # f connecting nodes have UID conflicts and are removed/re-added to the graph, some edges may be lost:
-                # the links will be erroneously updated, and any further resolution will fail.
-                # Recreating the entire graph as it was ensures that all edges will be correctly preserved.
-                self.removeNode(nodeName)
-                n = nodeFactory(nodeData, nodeName)
-                self._addNode(n, nodeName)
+        uidConflictingNodes = [
+            node
+            for node in self.nodes
+            if not _serializedNodeUidMatchesComputedUid(graphContent[node.name], node)
+        ]
+
+        if not uidConflictingNodes:
+            return
+
+        logging.warning("UID Compatibility issues found: recreating conflicting nodes as CompatibilityNodes.")
+
+        # A uid conflict is contagious: if a node has a uid conflict, all of its downstream nodes may be 
+        # impacted as well, as the uid flows through connections.
+        # Therefore, we deal with conflicting uid nodes by depth: replacing a node with a CompatibilityNode restores
+        # the serialized uid, which might solve "false-positives" downstream conflicts as well.
+        nodesSortedByDepth = sorted(uidConflictingNodes, key=lambda node: node.minDepth)
+        for node in nodesSortedByDepth:
+            nodeData = graphContent[node.name]
+            # Evaluate if the node uid is still conflicting at this point, or if it has been resolved by an
+            # upstream node replacement.
+            if _serializedNodeUidMatchesComputedUid(nodeData, node):
+                continue
+            expectedUid = node._uid
+            compatibilityNode = nodeFactory(graphContent[node.name], node.name, expectedUid=expectedUid)
+            # This operation will trigger a graph update that will recompute the uids of all nodes,
+            # allowing the iterative resolution of uid conflicts.
+            self.replaceNode(node.name, compatibilityNode)
 
 
     def importGraphContentFromFile(self, filepath: PathLike) -> list[Node]:

@@ -927,6 +927,13 @@ Page {
         }
 
         Rectangle {
+            id: menuSpacer
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    menuSpacer.forceActiveFocus();
+                }
+            }
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: Qt.darker(activePalette.window, 1.15)
@@ -973,6 +980,12 @@ Page {
         }
 
         Rectangle {
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    menuSpacer.forceActiveFocus();
+                }
+            }
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: Qt.darker(activePalette.window, 1.15)
@@ -1007,6 +1020,7 @@ Page {
         // Cache Folder
         RowLayout {
             spacing: 0
+            width: parent.width
             MaterialToolButton {
                 font.pointSize: 8
                 text: MaterialIcons.folder_open
@@ -1020,6 +1034,17 @@ Page {
                 text: _reconstruction ? _reconstruction.graph.cacheDir : "Unknown"
                 color: Qt.darker(palette.text, 1.2)
                 background: Item {}
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        footer.forceActiveFocus();
+                    }
+                }
             }
         }
     }

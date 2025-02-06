@@ -17,7 +17,7 @@ from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
-from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer
+from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
 from meshroom.core.typing import PathLike
@@ -1397,6 +1397,17 @@ class Graph(BaseObject):
         """
         SerializerClass = TemplateGraphSerializer if asTemplate else GraphSerializer
         return SerializerClass(self).serialize()
+
+    def serializePartial(self, nodes: list[Node]) -> dict:
+        """Partially serialize this graph considering only the given list of `nodes`.
+
+        Args:
+            nodes: The list of nodes to serialize.
+
+        Returns:
+            The serialized graph data.
+        """
+        return PartialGraphSerializer(self, nodes=nodes).serialize()
 
     def save(self, filepath=None, setupProjectFile=True, template=False):
         """

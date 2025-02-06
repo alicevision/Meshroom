@@ -3,6 +3,7 @@ from typing import Any, TYPE_CHECKING, Union
 
 import meshroom
 from meshroom.core import Version
+from meshroom.core.attribute import Attribute, GroupAttribute, ListAttribute
 from meshroom.core.node import Node
 
 if TYPE_CHECKING:
@@ -164,5 +165,64 @@ class TemplateGraphSerializer(GraphSerializer):
         del nodeData["parallelization"]
 
         return nodeData
+
+
+class PartialGraphSerializer(GraphSerializer):
+    """Serializer to serialize a partial graph (a subset of nodes)."""
+
+    def __init__(self, graph: "Graph", nodes: list[Node]):
+        super().__init__(graph)
+        self._nodes = nodes
+
+    @property
+    def nodes(self) -> list[Node]:
+        """Override to consider only the subset of nodes."""
+        return self._nodes
+
+    def serializeNode(self, node: Node) -> dict:
+        """Adapt node serialization to partial graph serialization."""
+        # NOTE: For now, implemented as a post-process to the default serialization.
+        nodeData = super().serializeNode(node)
+
+        # Override input attributes with custom serialization logic, to handle attributes
+        # connected to nodes that are not in the list of nodes to serialize.
+        for attributeName in nodeData["inputs"]:
+            nodeData["inputs"][attributeName] = self._serializeAttribute(node.attribute(attributeName))
+
+        # Clear UID for non-compatibility nodes, as the custom attribute serialization
+        # can be impacting the UID by removing connections to missing nodes.
+        if not node.isCompatibilityNode:
+            del nodeData["uid"]
+
+        return nodeData
+
+    def _serializeAttribute(self, attribute: Attribute) -> Any:
+        """
+        Serialize `attribute` (recursively for list/groups) and deal with attributes being connected
+        to nodes that are not part of the partial list of nodes to serialize.
+        """
+        # If the attribute is connected to a node that is not in the list of nodes to serialize,
+        # the link expression should not be serialized.
+        if attribute.isLink and attribute.getLinkParam().node not in self.nodes:
+            # If part of a list, this entry can be discarded.
+            if isinstance(attribute.root, ListAttribute):
+                return None
+            # Otherwise, return the default value for this attribute.
+            return attribute.defaultValue()
+
+        if isinstance(attribute, ListAttribute):
+            # Recusively serialize each child of the ListAttribute, skipping those for which the attribute
+            # serialization logic above returns None.
+            return [
+                exportValue
+                for child in attribute
+                if (exportValue := self._serializeAttribute(child)) is not None
+            ]
+
+        if isinstance(attribute, GroupAttribute):
+            # Recursively serialize each child of the group attribute.
+            return {name: self._serializeAttribute(child) for name, child in attribute.value.items()}
+
+        return attribute.getExportValue()
 
 

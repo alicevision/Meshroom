@@ -167,3 +167,50 @@ class TestImportGraphContent:
         assert not compareGraphsContent(graph, otherGraph)
 
 
+class TestGraphPartialSerialization:
+    def test_emptyGraph(self):
+        graph = Graph("")
+        serializedGraph = graph.serializePartial([])
+
+        otherGraph = Graph("")
+        otherGraph._deserialize(serializedGraph)
+        assert compareGraphsContent(graph, otherGraph)
+
+    def test_serializeAllNodesIsSimilarToStandardSerialization(self):
+        graph = Graph("")
+
+        with registeredNodeTypes([SimpleNode]):
+            nodeA = graph.addNewNode(SimpleNode.__name__)
+            nodeB = graph.addNewNode(SimpleNode.__name__)
+
+            graph.addEdge(nodeA.output, nodeB.input)
+
+            partialSerializedGraph = graph.serializePartial([nodeA, nodeB])
+            standardSerializedGraph = graph.serialize()
+
+            graphA = Graph("")
+            graphA._deserialize(partialSerializedGraph)
+
+            graphB = Graph("")
+            graphB._deserialize(standardSerializedGraph)
+
+            assert compareGraphsContent(graph, graphA)
+            assert compareGraphsContent(graphA, graphB)
+
+    def test_serializeSingleNodeWithInputConnection(self):
+        graph = Graph("")
+
+        with registeredNodeTypes([SimpleNode]):
+            nodeA = graph.addNewNode(SimpleNode.__name__)
+            nodeB = graph.addNewNode(SimpleNode.__name__)
+
+            graph.addEdge(nodeA.output, nodeB.input)
+
+            serializedGraph = graph.serializePartial([nodeB])
+
+            otherGraph = Graph("")
+            otherGraph._deserialize(serializedGraph)
+
+            assert len(otherGraph.compatibilityNodes) == 0
+            assert len(otherGraph.nodes) == 1
+            assert len(otherGraph.edges) == 0

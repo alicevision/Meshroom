@@ -279,7 +279,7 @@ class Graph(BaseObject):
         self.header = graphData.get(GraphIO.Keys.Header, {})
         fileVersion = Version(self.header.get(GraphIO.Keys.FileVersion, "0.0"))
         graphContent = self._normalizeGraphContent(graphData, fileVersion)
-        isTemplate = self.header.get("template", False)
+        isTemplate = self.header.get(GraphIO.Keys.Template, False)
 
         with GraphModification(self):
             # iterate over nodes sorted by suffix index in their names
@@ -337,7 +337,7 @@ class Graph(BaseObject):
         #   3. fallback behavior: default to "0.0"
         if "version" not in nodeData:
             nodeData["version"] = fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"], "0.0")
-        inTemplate = fromGraph.header.get("template", False)
+        inTemplate = fromGraph.header.get(GraphIO.Keys.Template, False)
         node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate)
         self._addNode(node, nodeName)
         return node

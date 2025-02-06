@@ -24,6 +24,7 @@ class GraphIO:
         ReleaseVersion = "releaseVersion"
         FileVersion = "fileVersion"
         Graph = "graph"
+        Template = "template"
 
     class Features(Enum):
         """File Features."""
@@ -122,7 +123,7 @@ class TemplateGraphSerializer(GraphSerializer):
 
     def serializeHeader(self) -> dict:
         header = super().serializeHeader()
-        header["template"] = True
+        header[GraphIO.Keys.Template] = True
         return header
 
     def serializeNode(self, node: Node) -> dict:

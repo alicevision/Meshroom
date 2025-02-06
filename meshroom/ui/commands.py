@@ -6,9 +6,10 @@ from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
-from meshroom.core.graph import GraphModification
+from meshroom.core.graph import Graph, GraphModification
 from meshroom.core.node import Position
 from meshroom.core.nodeFactory import nodeFactory
+from meshroom.core.typing import PathLike
 
 
 class UndoCommand(QUndoCommand):
@@ -232,7 +233,8 @@ class ImportProjectCommand(GraphCommand):
     """
     Handle the import of a project into a Graph.
     """
-    def __init__(self, graph, filepath=None, position=None, yOffset=0, parent=None):
+
+    def __init__(self, graph: Graph, filepath: PathLike, position=None, yOffset=0, parent=None):
         super(ImportProjectCommand, self).__init__(graph, parent)
         self.filepath = filepath
         self.importedNames = []
@@ -240,9 +242,8 @@ class ImportProjectCommand(GraphCommand):
         self.yOffset = yOffset
 
     def redoImpl(self):
-        status = self.graph.load(self.filepath, setupProjectFile=False, importProject=True)
-        importedNodes = self.graph.importedNodes
-        self.setText("Import Project ({} nodes)".format(importedNodes.count))
+        importedNodes = self.graph.importGraphContentFromFile(self.filepath)
+        self.setText(f"Import Project ({len(importedNodes)} nodes)")
 
         lowestY = 0
         for node in self.graph.nodes:

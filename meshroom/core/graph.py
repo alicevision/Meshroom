@@ -243,7 +243,6 @@ class Graph(BaseObject):
         self._nodes = DictModel(keyAttrName='name', parent=self)
         # Edges: use dst attribute as unique key since it can only have one input connection
         self._edges = DictModel(keyAttrName='dst', parent=self)
-        self._importedNodes = DictModel(keyAttrName='name', parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
         self.cacheDir = meshroom.core.defaultCacheFolder
         self._filepath = ''
@@ -251,15 +250,17 @@ class Graph(BaseObject):
         self.header = {}
 
     def clear(self):
+        self._clearGraphContent()
         self.header.clear()
-        self._compatibilityNodes.clear()
+        self._unsetFilepath()
+
+    def _clearGraphContent(self):
         self._edges.clear()
         # Tell QML nodes are going to be deleted
         for node in self._nodes:
             node.alive = False
-        self._importedNodes.clear()
         self._nodes.clear()
-        self._unsetFilepath()
+        self._compatibilityNodes.clear()
 
     @property
     def fileFeatures(self):
@@ -330,7 +331,7 @@ class Graph(BaseObject):
             for nodeName, nodeData in sorted(
                 graphContent.items(), key=lambda x: self.getNodeIndexFromName(x[0])
             ):
-                self._deserializeNode(nodeData, nodeName)
+                self._deserializeNode(nodeData, nodeName, self)
 
             # Create graph edges by resolving attributes expressions
             self._applyExpr()
@@ -374,14 +375,14 @@ class Graph(BaseObject):
 
         return graphContent
 
-    def _deserializeNode(self, nodeData: dict, nodeName: str):
+    def _deserializeNode(self, nodeData: dict, nodeName: str, fromGraph: "Graph"):
         # Retrieve version from
         #   1. nodeData: node saved from a CompatibilityNode
         #   2. nodesVersion in file header: node saved from a Node
         #   3. fallback behavior: default to "0.0"
         if "version" not in nodeData:
-            nodeData["version"] = self._getNodeTypeVersionFromHeader(nodeData["nodeType"], "0.0")
-        inTemplate = self.header.get("template", False)
+            nodeData["version"] = fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"], "0.0")
+        inTemplate = fromGraph.header.get("template", False)
         node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate)
         self._addNode(node, nodeName)
         return node
@@ -554,6 +555,58 @@ class Graph(BaseObject):
                     attributes[key] = defaultValue
 
         return attributes
+
+    def importGraphContentFromFile(self, filepath: PathLike) -> list[Node]:
+        """Import the content (nodes and edges) of another Graph file into this Graph instance.
+
+        Args:
+            filepath: The path to the Graph file to import.
+
+        Returns:
+            The list of newly created Nodes.
+        """
+        graph = loadGraph(filepath)
+        return self.importGraphContent(graph)
+
+    @blockNodeCallbacks
+    def importGraphContent(self, graph: "Graph") -> list[Node]:
+        """
+        Import the content (node and edges) of another `graph` into this Graph instance.
+
+        Nodes are imported with their original names if possible, otherwise a new unique name is generated
+        from their node type.
+
+        Args:
+            graph: The graph to import.
+
+        Returns:
+            The list of newly created Nodes.
+        """
+
+        def _renameClashingNodes():
+            if not self.nodes:
+                return
+            unavailableNames = set(self.nodes.keys())
+            for node in graph.nodes:
+                if node._name in unavailableNames:
+                    node._name = self._createUniqueNodeName(node.nodeType, unavailableNames)
+                unavailableNames.add(node._name)
+
+        def _importNodeAndEdges() -> list[Node]:
+            importedNodes = []
+            # If we import the content of the graph within itself,
+            # iterate over a copy of the nodes as the graph is modified during the iteration.
+            nodes = graph.nodes if graph is not self else list(graph.nodes)
+            with GraphModification(self):
+                for srcNode in nodes:
+                    node = self._deserializeNode(srcNode.toDict(), srcNode.name, graph)
+                    importedNodes.append(node)
+                self._applyExpr()
+            return importedNodes
+
+        _renameClashingNodes()
+        importedNodes = _importNodeAndEdges()
+        return importedNodes
 
     @property
     def updateEnabled(self):
@@ -766,8 +819,6 @@ class Graph(BaseObject):
 
             node.alive = False
             self._nodes.remove(node)
-            if node in self._importedNodes:
-                self._importedNodes.remove(node)
             self.update()
 
         return inEdges, outEdges, outListAttributes
@@ -792,13 +843,21 @@ class Graph(BaseObject):
         n.updateInternals()
         return n
 
-    def _createUniqueNodeName(self, inputName):
-        i = 1
-        while i:
-            newName = "{name}_{index}".format(name=inputName, index=i)
-            if newName not in self._nodes.objects:
+    def _createUniqueNodeName(self, inputName: str, existingNames: Optional[set[str]] = None):
+        """Create a unique node name based on the input name.
+
+        Args:
+            inputName: The desired node name.
+            existingNames: (optional) If specified, consider this set for uniqueness check, instead of the list of nodes.
+        """
+        existingNodeNames = existingNames or set(self._nodes.objects.keys())
+
+        idx = 1
+        while idx:
+            newName = f"{inputName}_{idx}"
+            if newName not in existingNodeNames:
                 return newName
-            i += 1
+            idx += 1
 
     def node(self, nodeName):
         return self._nodes.get(nodeName)
@@ -1634,11 +1693,6 @@ class Graph(BaseObject):
     @property
     def edges(self):
         return self._edges
-
-    @property
-    def importedNodes(self):
-        """" Return the list of nodes that were added to the graph with the latest 'Import Project' action. """
-        return self._importedNodes
 
     @property
     def cacheDir(self):

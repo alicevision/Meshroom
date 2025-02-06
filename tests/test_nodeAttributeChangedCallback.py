@@ -431,3 +431,28 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         assert nodeB.affectedInput.value == 0
 
 
+class TestAttributeCallbackBehaviorOnGraphImport:
+    @classmethod
+    def setup_class(cls):
+        registerNodeType(NodeWithAttributeChangedCallback)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeType(NodeWithAttributeChangedCallback)
+
+    def test_importingGraphDoesNotTriggerAttributeChangedCallbacks(self):
+        graph = Graph("")
+
+        nodeA = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+        nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
+
+        graph.addEdge(nodeA.affectedInput, nodeB.input)
+
+        nodeA.input.value = 5
+        nodeB.affectedInput.value = 2
+        
+        otherGraph = Graph("")
+        otherGraph.importGraphContent(graph)
+
+        assert otherGraph.node(nodeB.name).affectedInput.value == 2
+

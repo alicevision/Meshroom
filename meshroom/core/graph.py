@@ -423,7 +423,7 @@ class Graph(BaseObject):
                     node._name = self._createUniqueNodeName(node.nodeType, unavailableNames)
                 unavailableNames.add(node._name)
 
-        def _importNodeAndEdges() -> list[Node]:
+        def _importNodesAndEdges() -> list[Node]:
             importedNodes = []
             # If we import the content of the graph within itself,
             # iterate over a copy of the nodes as the graph is modified during the iteration.
@@ -436,7 +436,7 @@ class Graph(BaseObject):
             return importedNodes
 
         _renameClashingNodes()
-        importedNodes = _importNodeAndEdges()
+        importedNodes = _importNodesAndEdges()
         return importedNodes
 
     @property

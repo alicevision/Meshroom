@@ -255,6 +255,13 @@ Panel {
                 id: placeholder_component
 
                 Item {
+                    id: panel
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            panel.forceActiveFocus();
+                        }
+                    }
                     Column {
                         anchors.centerIn: parent
                         MaterialLabel {

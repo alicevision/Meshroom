@@ -17,7 +17,7 @@ from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
-from meshroom.core.graphIO import GraphIO
+from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer
 from meshroom.core.node import Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
 from meshroom.core.typing import PathLike
@@ -1386,6 +1386,18 @@ class Graph(BaseObject):
     def asString(self):
         return str(self.toDict())
 
+    def serialize(self, asTemplate: bool = False) -> dict:
+        """Serialize this Graph instance.
+        
+        Args:
+            asTemplate: Whether to use the template serialization.
+
+        Returns:
+            The serialized graph data.
+        """
+        SerializerClass = TemplateGraphSerializer if asTemplate else GraphSerializer
+        return SerializerClass(self).serialize()
+
     def save(self, filepath=None, setupProjectFile=True, template=False):
         """
         Save the current Meshroom graph as a serialized ".mg" file.
@@ -1408,34 +1420,7 @@ class Graph(BaseObject):
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
 
-        self.header[GraphIO.Keys.ReleaseVersion] = meshroom.__version__
-        self.header[GraphIO.Keys.FileVersion] = GraphIO.__version__
-
-        # Store versions of node types present in the graph (excluding CompatibilityNode instances)
-        # and remove duplicates
-        usedNodeTypes = set([n.nodeDesc.__class__ for n in self._nodes if isinstance(n, Node)])
-        # Convert to node types to "name: version"
-        nodesVersions = {
-            "{}".format(p.__name__): meshroom.core.nodeVersion(p, "0.0")
-            for p in usedNodeTypes
-        }
-        # Sort them by name (to avoid random order changing from one save to another)
-        nodesVersions = dict(sorted(nodesVersions.items()))
-        # Add it the header
-        self.header[GraphIO.Keys.NodesVersions] = nodesVersions
-        self.header["template"] = template
-
-        data = {}
-        if template:
-            data = {
-                GraphIO.Keys.Header: self.header,
-                GraphIO.Keys.Graph: self.getNonDefaultInputAttributes()
-            }
-        else:
-            data = {
-                GraphIO.Keys.Header: self.header,
-                GraphIO.Keys.Graph: self.toDict()
-            }
+        data = self.serialize(template)
 
         with open(path, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
@@ -1445,51 +1430,6 @@ class Graph(BaseObject):
 
         # update the file date version
         self._fileDateVersion = os.path.getmtime(path)
-
-    def getNonDefaultInputAttributes(self):
-        """
-        Instead of getting all the inputs and internal attribute keys, only get the keys of
-        the attributes whose value is not the default one.
-        The output attributes, UIDs, parallelization parameters and internal folder are
-        not relevant for templates, so they are explicitly removed from the returned dictionary.
-
-        Returns:
-            dict: self.toDict() with the output attributes, UIDs, parallelization parameters, internal folder
-            and input/internal attributes with default values removed
-        """
-        graph = self.toDict()
-        for nodeName in graph.keys():
-            node = self.node(nodeName)
-
-            inputKeys = list(graph[nodeName]["inputs"].keys())
-
-            internalInputKeys = []
-            internalInputs = graph[nodeName].get("internalInputs", None)
-            if internalInputs:
-                internalInputKeys = list(internalInputs.keys())
-
-            for attrName in inputKeys:
-                attribute = node.attribute(attrName)
-                # check that attribute is not a link for choice attributes
-                if attribute.isDefault and not attribute.isLink:
-                    del graph[nodeName]["inputs"][attrName]
-
-            for attrName in internalInputKeys:
-                attribute = node.internalAttribute(attrName)
-                # check that internal attribute is not a link for choice attributes
-                if attribute.isDefault and not attribute.isLink:
-                    del graph[nodeName]["internalInputs"][attrName]
-
-            # If all the internal attributes are set to their default values, remove the entry
-            if len(graph[nodeName]["internalInputs"]) == 0:
-                del graph[nodeName]["internalInputs"]
-
-            del graph[nodeName]["outputs"]
-            del graph[nodeName]["uid"]
-            del graph[nodeName]["internalFolder"]
-            del graph[nodeName]["parallelization"]
-
-        return graph
 
     def _setFilepath(self, filepath):
         """

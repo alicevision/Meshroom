@@ -830,8 +830,15 @@ Panel {
         }
 
         Item {
+            id: spacer
             Layout.fillHeight: true
             Layout.fillWidth: true
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    spacer.forceActiveFocus();
+                }
+            }
         }
 
         MaterialToolLabelButton {

@@ -5,6 +5,7 @@ import os
 from collections.abc import Iterable
 from multiprocessing.pool import ThreadPool
 from threading import Thread
+from typing import Callable
 
 from PySide6.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint
 from PySide6.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
@@ -534,17 +535,24 @@ class Reconstruction(UIGraph):
         # - correct pipeline name but the case does not match (e.g. panoramaHDR instead of panoramaHdr)
         # - lowercase pipeline name given through the "New Pipeline" menu
         loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
-        if p.lower() in loweredPipelineTemplates:
-            self.load(loweredPipelineTemplates[p.lower()], setupProjectFile=False)
-        else:
-            # use the user-provided default project file
-            self.load(p, setupProjectFile=False)
+        filepath = loweredPipelineTemplates.get(p.lower(), p)
+        return self._loadWithErrorReport(self.initFromTemplate, filepath)
 
     @Slot(str, result=bool)
-    def load(self, filepath, setupProjectFile=True, publishOutputs=False):
+    @Slot(QUrl, result=bool)
+    def load(self, url):
+        if isinstance(url, QUrl):
+            # depending how the QUrl has been initialized,
+            # toLocalFile() may return the local path or an empty string
+            localFile = url.toLocalFile() or url.toString()
+        else:
+            localFile = url
+        return self._loadWithErrorReport(self.loadGraph, localFile)
+
+    def _loadWithErrorReport(self, loadFunction: Callable[[str], None], filepath: str):
         logging.info(f"Load project file: '{filepath}'")
         try:
-            status = super(Reconstruction, self).loadGraph(filepath, setupProjectFile, publishOutputs)
+            loadFunction(filepath)
             # warn about pre-release projects being automatically upgraded
             if Version(self._graph.fileReleaseVersion).major == "0":
                 self.warning.emit(Message(
@@ -554,8 +562,8 @@ class Reconstruction(UIGraph):
                     "Open it with the corresponding version of Meshroom to recover your data."
                 ))
             self.setActive(True)
-            return status
-        except FileNotFoundError as e:
+            return True
+        except FileNotFoundError:
             self.error.emit(
                 Message(
                     "No Such File",
@@ -564,8 +572,7 @@ class Reconstruction(UIGraph):
                 )
             )
             logging.error("Error while loading '{}': No Such File.".format(filepath))
-            return False
-        except Exception as e:
+        except Exception:
             import traceback
             trace = traceback.format_exc()
             self.error.emit(
@@ -577,20 +584,8 @@ class Reconstruction(UIGraph):
             )
             logging.error("Error while loading '{}'.".format(filepath))
             logging.error(trace)
-            return False
 
-    @Slot(QUrl, result=bool)
-    @Slot(QUrl, bool, bool, result=bool)
-    def loadUrl(self, url, setupProjectFile=True, publishOutputs=False):
-        if isinstance(url, (QUrl)):
-            # depending how the QUrl has been initialized,
-            # toLocalFile() may return the local path or an empty string
-            localFile = url.toLocalFile()
-            if not localFile:
-                localFile = url.toString()
-        else:
-            localFile = url
-        return self.load(localFile, setupProjectFile, publishOutputs)
+        return False
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
@@ -860,7 +855,7 @@ class Reconstruction(UIGraph):
                     )
                 )
             else:
-                return self.loadUrl(filesByType["meshroomScenes"][0])
+                return self.load(filesByType["meshroomScenes"][0])
 
 
 

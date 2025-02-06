@@ -451,17 +451,21 @@ class UIGraph(QObject):
         self.stopExecution()
         self._chunksMonitor.stop()
 
-    @Slot(str, result=bool)
-    def loadGraph(self, filepath, setupProjectFile=True, publishOutputs=False):
-        g = Graph('')
-        status = True
+    @Slot(str)
+    def loadGraph(self, filepath):
+        g = Graph("")
         if filepath:
-            status = g.load(filepath, setupProjectFile, importProject=False, publishOutputs=publishOutputs)
+            g.load(filepath)
             if not os.path.exists(g.cacheDir):
                 os.mkdir(g.cacheDir)
-            g.fileDateVersion = os.path.getmtime(filepath)
         self.setGraph(g)
-        return status
+
+    @Slot(str, bool, result=bool)
+    def initFromTemplate(self, filepath, publishOutputs=False):
+        graph = Graph("")
+        if filepath:
+            graph.initFromTemplate(filepath, publishOutputs=publishOutputs)
+        self.setGraph(graph)
 
     @Slot(QUrl, result="QVariantList")
     @Slot(QUrl, QPoint, result="QVariantList")

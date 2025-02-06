@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+from typing import Optional
 import weakref
 from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
@@ -18,6 +19,7 @@ from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
 from meshroom.core.node import Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
+from meshroom.core.typing import PathLike
 
 # Replace default encoder to support Enums
 
@@ -149,6 +151,21 @@ def changeTopology(func):
     return decorator
 
 
+def blockNodeCallbacks(func):
+    """
+    Graph methods loading serialized graph content must be decorated with 'blockNodeCallbacks',
+    to avoid attribute changed callbacks defined on node descriptions to be triggered during
+    this process.
+    """
+    def inner(self, *args, **kwargs):
+        self._loading = True
+        try:
+            return func(self, *args, **kwargs)
+        finally:
+            self._loading = False
+    return inner
+
+
 class Graph(BaseObject):
     """
     _________________      _________________      _________________
@@ -260,37 +277,88 @@ class Graph(BaseObject):
         return self._saving
 
     @Slot(str)
-    def load(self, filepath, setupProjectFile=True, importProject=False, publishOutputs=False):
+    def load(self, filepath: PathLike):
         """
-        Load a Meshroom graph ".mg" file.
+        Load a Meshroom Graph ".mg" file in place.
 
         Args:
-            filepath: project filepath to load
-            setupProjectFile: Store the reference to the project file and setup the cache directory.
-                              If false, it only loads the graph of the project file as a template.
-            importProject: True if the project that is loaded will be imported in the current graph, instead
-                           of opened.
-            publishOutputs: True if "Publish" nodes from templates should not be ignored.
+            filepath: The path to the Meshroom Graph file to load.
         """
-        self._loading = True
-        try:
-            return self._load(filepath, setupProjectFile, importProject, publishOutputs)
-        finally:
-            self._loading = False
+        self._deserialize(Graph._loadGraphData(filepath))
+        self._setFilepath(filepath)
+        self._fileDateVersion = os.path.getmtime(filepath)
 
-    def _load(self, filepath, setupProjectFile, importProject, publishOutputs):
-        if not importProject:
-            self.clear()
-        with open(filepath) as jsonFile:
-            fileData = json.load(jsonFile)
+    def initFromTemplate(self, filepath: PathLike, publishOutputs: bool = False):
+        """
+        Deserialize a template Meshroom Graph ".mg" file in place.
 
-        self.header = fileData.get(Graph.IO.Keys.Header, {})
+        When initializing from a template, the internal filepath of the graph instance is not set.
+        Saving the file on disk will require to specify a filepath.
 
-        fileVersion = self.header.get(Graph.IO.Keys.FileVersion, "0.0")
-        # Retro-compatibility for all project files with the previous UID format
-        if Version(fileVersion) < Version("2.0"):
+        Args:
+            filepath: The path to the Meshroom Graph file to load.
+            publishOutputs: (optional) Whether to keep 'Publish' nodes.
+        """
+        self._deserialize(Graph._loadGraphData(filepath))
+
+        if not publishOutputs:
+            for node in [node for node in self.nodes if node.nodeType == "Publish"]:
+                self.removeNode(node.name)
+
+    @staticmethod
+    def _loadGraphData(filepath: PathLike) -> dict:
+        """Deserialize the content of the Meshroom Graph file at `filepath` to a dictionnary."""
+        with open(filepath) as file:
+            graphData = json.load(file)
+        return graphData
+
+    @blockNodeCallbacks
+    def _deserialize(self, graphData: dict):
+        """Deserialize `graphData` in the current Graph instance.
+
+        Args:
+            graphData: The serialized Graph.
+        """
+        self.clear()
+        self.header = graphData.get(Graph.IO.Keys.Header, {})
+        fileVersion = Version(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
+        graphContent = self._normalizeGraphContent(graphData, fileVersion)
+        isTemplate = self.header.get("template", False)
+
+        with GraphModification(self):
+            # iterate over nodes sorted by suffix index in their names
+            for nodeName, nodeData in sorted(
+                graphContent.items(), key=lambda x: self.getNodeIndexFromName(x[0])
+            ):
+                self._deserializeNode(nodeData, nodeName)
+
+            # Create graph edges by resolving attributes expressions
+            self._applyExpr()
+            
+            # Templates are specific: they contain only the minimal amount of 
+            # serialized data to describe the graph structure.
+            # They are not meant to be computed: therefore, we can early return here,
+            # as uid conflict evaluation is only meaningful for nodes with computed data.
+            if isTemplate:
+                return
+
+            # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the
+            # nodes' links have been resolved and their UID computations are all complete.
+            # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
+            # that were computed.
+            self.updateInternals()
+            self._evaluateUidConflicts(graphContent)
+            try:
+                self._applyExpr()
+            except Exception as e:
+                logging.warning(e)
+
+    def _normalizeGraphContent(self, graphData: dict, fileVersion: Version) -> dict:
+        graphContent = graphData.get(Graph.IO.Keys.Graph, graphData)
+
+        if fileVersion < Version("2.0"):
             # For internal folders, all "{uid0}" keys should be replaced with "{uid}"
-            updatedFileData = json.dumps(fileData).replace("{uid0}", "{uid}")
+            updatedFileData = json.dumps(graphContent).replace("{uid0}", "{uid}")
 
             # For fileVersion < 2.0, the nodes' UID is stored as:
             # "uids": {"0": "hashvalue"}
@@ -302,74 +370,25 @@ class Graph(BaseObject):
                 uid = occ.split("\"")[-2]  # UID is second to last element
                 newUidStr = r'"uid": "{}"'.format(uid)
                 updatedFileData = updatedFileData.replace(occ, newUidStr)
-            fileData = json.loads(updatedFileData)
+            graphContent = json.loads(updatedFileData)
 
-        # Older versions of Meshroom files only contained the serialized nodes
-        graphData = fileData.get(Graph.IO.Keys.Graph, fileData)
+        return graphContent
 
-        if importProject:
-            self._importedNodes.clear()
-            graphData = self.updateImportedProject(graphData)
+    def _deserializeNode(self, nodeData: dict, nodeName: str):
+        # Retrieve version from
+        #   1. nodeData: node saved from a CompatibilityNode
+        #   2. nodesVersion in file header: node saved from a Node
+        #   3. fallback behavior: default to "0.0"
+        if "version" not in nodeData:
+            nodeData["version"] = self._getNodeTypeVersionFromHeader(nodeData["nodeType"], "0.0")
+        inTemplate = self.header.get("template", False)
+        node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate)
+        self._addNode(node, nodeName)
+        return node
 
-        if not isinstance(graphData, dict):
-            raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
-
-        nodesVersions = self.header.get(Graph.IO.Keys.NodesVersions, {})
-
-        self._fileDateVersion = os.path.getmtime(filepath)
-
-        # Check whether the file was saved as a template in minimal mode
-        isTemplate = self.header.get("template", False)
-
-        with GraphModification(self):
-            # iterate over nodes sorted by suffix index in their names
-            for nodeName, nodeData in sorted(graphData.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
-                if not isinstance(nodeData, dict):
-                    raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
-
-                # retrieve version from
-                #   1. nodeData: node saved from a CompatibilityNode
-                #   2. nodesVersion in file header: node saved from a Node
-                #   3. fallback to no version "0.0": retro-compatibility
-                if "version" not in nodeData:
-                    nodeData["version"] = nodesVersions.get(nodeData["nodeType"], "0.0")
-
-                # if the node is a "Publish" node and comes from a template file, it should be ignored
-                # unless publishOutputs is True
-                if isTemplate and not publishOutputs and nodeData["nodeType"] == "Publish":
-                    continue
-
-                n = nodeFactory(nodeData, nodeName, inTemplate=isTemplate)
-
-                # Add node to the graph with raw attributes values
-                self._addNode(n, nodeName)
-
-                if importProject:
-                    self._importedNodes.add(n)
-
-            # Create graph edges by resolving attributes expressions
-            self._applyExpr()
-
-            if setupProjectFile:
-                # Update filepath related members
-                # Note: needs to be done at the end as it will trigger an updateInternals.
-                self._setFilepath(filepath)
-            elif not isTemplate:
-                # If no filepath is being set but the graph is not a template, trigger an updateInternals either way.
-                self.updateInternals()
-
-            # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the
-            # nodes' links have been resolved and their UID computations are all complete.
-            # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
-            # that were computed.
-            if not isTemplate:  # UIDs are not stored in templates
-                self._evaluateUidConflicts(graphData)
-                try:
-                    self._applyExpr()
-                except Exception as e:
-                    logging.warning(e)
-
-        return True
+    def _getNodeTypeVersionFromHeader(self, nodeType: str, default: Optional[str] = None) -> Optional[str]:
+        nodeVersions = self.header.get(Graph.IO.Keys.NodesVersions, {})
+        return nodeVersions.get(nodeType, default)
 
     def _evaluateUidConflicts(self, data):
         """

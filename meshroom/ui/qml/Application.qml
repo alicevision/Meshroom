@@ -185,7 +185,7 @@ Page {
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
             // Open the template as a regular file
-            if (_reconstruction.loadUrl(currentFile, true, true)) {
+            if (_reconstruction.load(currentFile)) {
                 MeshroomApp.addRecentProjectFile(currentFile.toString())
             }
         }
@@ -400,7 +400,7 @@ Page {
                     text: "Reload File"
 
                     onClicked: {
-                        _reconstruction.loadUrl(_reconstruction.graph.filepath)
+                        _reconstruction.load(_reconstruction.graph.filepath)
                         fileModifiedDialog.close()
                     }
                 }
@@ -705,7 +705,7 @@ Page {
                         MenuItem {
                             onTriggered: ensureSaved(function() {
                                 openRecentMenu.dismiss()
-                                if (_reconstruction.loadUrl(modelData["path"])) {
+                                if (_reconstruction.load(modelData["path"])) {
                                     MeshroomApp.addRecentProjectFile(modelData["path"])
                                 } else {
                                     MeshroomApp.removeRecentProjectFile(modelData["path"])

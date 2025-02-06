@@ -7,7 +7,8 @@ from PySide6.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
 from meshroom.core.graph import GraphModification
-from meshroom.core.node import nodeFactory, Position
+from meshroom.core.node import Position
+from meshroom.core.nodeFactory import nodeFactory
 
 
 class UndoCommand(QUndoCommand):

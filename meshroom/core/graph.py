@@ -16,7 +16,8 @@ from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
-from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
+from meshroom.core.node import Status, Node, CompatibilityNode
+from meshroom.core.nodeFactory import nodeFactory
 
 # Replace default encoder to support Enums
 

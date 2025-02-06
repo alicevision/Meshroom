@@ -193,5 +193,6 @@ class _NodeCreator:
         # Backward compatibility: "internalFolder" was not serialized.
         if not self.internalFolder:
             logging.warning(f"No serialized output data: performing automatic upgrade on '{self.name}'")
+            return node.upgrade()
 
         return node

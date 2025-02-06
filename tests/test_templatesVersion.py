@@ -4,6 +4,7 @@
 from meshroom.core.graph import Graph
 from meshroom.core import pipelineTemplates, Version
 from meshroom.core.node import CompatibilityIssue, CompatibilityNode
+from meshroom.core.graphIO import GraphIO
 
 import json
 import meshroom
@@ -24,13 +25,13 @@ def test_templateVersions():
         with open(path) as jsonFile:
             fileData = json.load(jsonFile)
 
-        graphData = fileData.get(Graph.IO.Keys.Graph, fileData)
+        graphData = fileData.get(GraphIO.Keys.Graph, fileData)
 
         assert isinstance(graphData, dict)
 
-        header = fileData.get(Graph.IO.Keys.Header, {})
+        header = fileData.get(GraphIO.Keys.Header, {})
         assert header.get("template", False)
-        nodesVersions = header.get(Graph.IO.Keys.NodesVersions, {})
+        nodesVersions = header.get(GraphIO.Keys.NodesVersions, {})
 
         for _, nodeData in graphData.items():
             nodeType = nodeData["nodeType"]

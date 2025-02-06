@@ -25,6 +25,7 @@ from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge
+from meshroom.core.graphIO import GraphIO
 
 from meshroom.core.taskManager import TaskManager
 
@@ -396,7 +397,7 @@ class UIGraph(QObject):
         self.updateChunks()
 
         # perform auto-layout if graph does not provide nodes positions
-        if Graph.IO.Features.NodesPositions not in self._graph.fileFeatures:
+        if GraphIO.Features.NodesPositions not in self._graph.fileFeatures:
             self._layout.reset()
             # clear undo-stack after layout
             self._undoStack.clear()

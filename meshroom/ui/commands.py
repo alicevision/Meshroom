@@ -7,7 +7,7 @@ from PySide6.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
 from meshroom.core.graph import Graph, GraphModification
-from meshroom.core.node import Position
+from meshroom.core.node import Position, CompatibilityIssue
 from meshroom.core.nodeFactory import nodeFactory
 from meshroom.core.typing import PathLike
 
@@ -439,15 +439,20 @@ class UpgradeNodeCommand(GraphCommand):
         super(UpgradeNodeCommand, self).__init__(graph, parent)
         self.nodeDict = node.toDict()
         self.nodeName = node.getName()
+        self.compatibilityIssue = None
         self.setText("Upgrade Node {}".format(self.nodeName))
 
     def redoImpl(self):
-        if not self.graph.node(self.nodeName).canUpgrade:
+        if not (node := self.graph.node(self.nodeName)).canUpgrade:
             return False
+        self.compatibilityIssue = node.issue
         return self.graph.upgradeNode(self.nodeName)
 
     def undoImpl(self):
-        expectedUid = self.graph.node(self.nodeName)._uid
+        expectedUid = None
+        if self.compatibilityIssue == CompatibilityIssue.UidConflict:
+            expectedUid = self.graph.node(self.nodeName)._uid
+
         # recreate compatibility node
         with GraphModification(self.graph):
             node = nodeFactory(self.nodeDict, name=self.nodeName, expectedUid=expectedUid)

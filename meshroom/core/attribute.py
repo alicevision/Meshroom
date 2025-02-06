@@ -339,9 +339,12 @@ class Attribute(BaseObject):
         elif self.isInput and Attribute.isLinkExpression(v):
             # value is a link to another attribute
             link = v[1:-1]
-            linkNode, linkAttr = link.split('.')
+            linkNodeName, linkAttrName = link.split('.')
             try:
-                g.addEdge(g.node(linkNode).attribute(linkAttr), self)
+                node = g.node(linkNodeName)
+                if not node:
+                    raise KeyError(f"Node '{linkNodeName}' not found")
+                g.addEdge(node.attribute(linkAttrName), self)
             except KeyError as err:
                 logging.warning('Connect Attribute from Expression failed.')
                 logging.warning('Expression: "{exp}"\nError: "{err}".'.format(exp=v, err=err))

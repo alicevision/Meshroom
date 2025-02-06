@@ -336,3 +336,15 @@ class TestImportGraphContentFromMinimalGraphData:
             assert len(graph.nodes) == 1
             assert len(graph.compatibilityNodes) == 0
 
+    def test_connectionsToMissingNodesAreDiscarded(self):
+        graph = Graph("")
+
+        with registeredNodeTypes([SimpleNode]):
+            sampleGraphContent = dedent("""
+            {
+                "SimpleNode_1": { 
+                    "nodeType": "SimpleNode", "inputs": { "input": "{NotSerializedNode.output}" } 
+                }
+            }
+            """)
+            graph._deserialize(json.loads(sampleGraphContent))

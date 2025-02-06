@@ -346,7 +346,7 @@ class Graph(BaseObject):
         nodeVersions = self.header.get(GraphIO.Keys.NodesVersions, {})
         return nodeVersions.get(nodeType, default)
 
-    def _evaluateUidConflicts(self, data):
+    def _evaluateUidConflicts(self, graphContent: dict):
         """
         Compare the UIDs of all the nodes in the graph with the UID that is expected in the graph file. If there
         are mismatches, the nodes with the unexpected UID are replaced with "UidConflict" compatibility nodes.
@@ -357,17 +357,17 @@ class Graph(BaseObject):
         Args:
             data (dict): the dictionary containing all the nodes to import and their data
         """
-        for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
+        for nodeName, nodeData in sorted(graphContent.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
             node = self.node(nodeName)
 
-            savedUid = nodeData.get("uid", None)
-            graphUid = node._uid  # Node's UID from the graph itself
+            serializedUid = nodeData.get("uid", None)
+            computedUid = node._uid  # Node's UID from the graph itself
 
-            if savedUid != graphUid and graphUid is not None:
+            if serializedUid and computedUid and serializedUid != computedUid:
                 # Different UIDs, remove the existing node from the graph and replace it with a CompatibilityNode
                 logging.debug("UID conflict detected for {}".format(nodeName))
                 self.removeNode(nodeName)
-                n = nodeFactory(nodeData, nodeName, expectedUid=graphUid)
+                n = nodeFactory(nodeData, nodeName, expectedUid=computedUid)
                 self._addNode(n, nodeName)
             else:
                 # f connecting nodes have UID conflicts and are removed/re-added to the graph, some edges may be lost:

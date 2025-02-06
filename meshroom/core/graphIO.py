@@ -200,9 +200,13 @@ class PartialGraphSerializer(GraphSerializer):
         Serialize `attribute` (recursively for list/groups) and deal with attributes being connected
         to nodes that are not part of the partial list of nodes to serialize.
         """
-        # If the attribute is connected to a node that is not in the list of nodes to serialize,
-        # the link expression should not be serialized.
-        if attribute.isLink and attribute.getLinkParam().node not in self.nodes:
+        linkParam = attribute.getLinkParam()
+
+        if linkParam is not None:
+            # Use standard link serialization if upstream node is part of the serialization.
+            if linkParam.node in self.nodes:
+                return attribute.getExportValue()
+            # Skip link serialization otherwise.
             # If part of a list, this entry can be discarded.
             if isinstance(attribute.root, ListAttribute):
                 return None

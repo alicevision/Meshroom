@@ -243,6 +243,20 @@ class TestGraphPartialSerialization:
             assert compareGraphsContent(graph, graphA)
             assert compareGraphsContent(graphA, graphB)
 
+    def test_listAttributeToListAttributeConnectionIsSerialized(self):
+        graph = Graph("")
+
+        with registeredNodeTypes([NodeWithListAttributes]):
+            nodeA = graph.addNewNode(NodeWithListAttributes.__name__)
+            nodeB = graph.addNewNode(NodeWithListAttributes.__name__)
+
+            graph.addEdge(nodeA.listInput, nodeB.listInput)
+
+            otherGraph = Graph("")
+            otherGraph._deserialize(graph.serializePartial([nodeA, nodeB]))
+
+            assert otherGraph.node(nodeB.name).listInput.linkParam == otherGraph.node(nodeA.name).listInput
+
     def test_singleNodeWithInputConnectionFromNonSerializedNodeRemovesEdge(self):
         graph = Graph("")
 

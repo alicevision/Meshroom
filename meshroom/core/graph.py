@@ -637,11 +637,7 @@ class Graph(BaseObject):
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 
-        # Get the Node Constructor which should be initialized for the given node type
-        # Node or Backdrop...
-        NodeType = getPreferredNodeConstructor(nodeType)
-
-        n = self.addNode(NodeType(nodeType, position=position, **kwargs), uniqueName=name)
+        n = self.addNode(createNode(nodeType, position=position, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 

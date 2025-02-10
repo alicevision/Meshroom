@@ -1089,18 +1089,18 @@ Item {
                                 let children = getChildrenNodes();
 
                                 for (var i = 0; i < children.length; i++) {
-                                    const delegate = children[i];
+                                const delegate = children[i];
 
-                                    // Ignore the selected delegates as they will be iterated upon separately
-                                    if (delegate.selected)
-                                        continue;
+                                // Ignore the selected delegates as they will be iterated upon separately
+                                if (delegate.selected)
+                                continue;
 
-                                    delegate.x = delegate.node.x + offset.x;
-                                    delegate.y = delegate.node.y + offset.y;
+                                delegate.x = delegate.node.x + offset.x;
+                                delegate.y = delegate.node.y + offset.y;
 
-                                    // If the delegate is not the current Node
-                                    if (delegate !== node)
-                                        nodes.push(delegate.node);
+                                // If the delegate is not the current Node
+                                if (delegate !== node)
+                                nodes.push(delegate.node);
                                 }
 
                                 uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
@@ -1123,11 +1123,11 @@ Item {
                             }
 
                             Behavior on x {
-                                enabled:  !nodeRepeater.ongoingDrag && !resizing && !uigraph.animationsDisabled;
+                                enabled: !nodeRepeater.ongoingDrag && !resizing && !uigraph.animationsDisabled;
                                 NumberAnimation { duration: 100 }
                             }
                             Behavior on y {
-                                enabled: !nodeRepeater.ongoingDrag
+                                enabled: !nodeRepeater.ongoingDrag && !resizing && !uigraph.animationsDisabled;
                                 NumberAnimation { duration: 100 }
                             }
                         }

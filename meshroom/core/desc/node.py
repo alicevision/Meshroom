@@ -2,10 +2,10 @@ import enum
 import os
 import psutil
 import shlex
-from typing import List, Union
+from typing import List
 
 from .computation import Level, StaticNodeSize
-from .attribute import StringParam, ColorParam, IntParam, FloatParam
+from .attribute import Attribute, StringParam, ColorParam, IntParam, FloatParam
 
 from meshroom.core import cgroup
 
@@ -94,7 +94,7 @@ class AttributeFactory:
     ]
 
     @classmethod
-    def getInternalParameters(cls, traits: Traits) -> List[Union[StringParam, ColorParam, IntParam, FloatParam]]:
+    def getInternalParameters(cls, traits: Traits) -> List[Attribute]:
         """ Returns an array of Attributes characterized by a given trait.
         """
         paramMap = {

@@ -25,17 +25,20 @@ Item {
     // The Item instantiating the delegates.
     property Item modelInstantiator: undefined
 
-    // Node Children for the Backdrop
+        // Node Children for the Backdrop
     property var children: []
-
+    
     property bool dragging: mouseArea.drag.active
-    property bool resizing: leftDragger.drag.active
+    property bool resizing: leftDragger.drag.active || topDragger.drag.active
     /// Combined x and y
     property point position: Qt.point(x, y)
     /// Styling
     property color shadowColor: "#cc000000"
     readonly property color defaultColor: node.color === "" ? "#fffb85" : node.color
     property color baseColor: defaultColor
+
+    readonly property int minimumWidth: 200
+    readonly property int minumumHeight: 200
 
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
 
@@ -47,7 +50,7 @@ Item {
     signal moved(var position)
     signal entered()
     signal exited()
-
+    
     // Size signal
     signal resized(var width, var height)
     signal resizedAndMoved(var width, var height, var position)
@@ -110,7 +113,7 @@ Item {
 
             const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height);
             if (Geom2D.rectRectFullIntersect(backdropRect, delegateRect)) {
-                nodes.push(delegate);
+                                nodes.push(delegate);
             }
         }
         children = nodes
@@ -175,8 +178,8 @@ Item {
                         root.width = root.width + mouseX;
 
                         // Ensure we have a minimum width always
-                        if (root.width < 300) {
-                            root.width = 300;
+                        if (root.width < root.minimumWidth) {
+                            root.width = root.minimumWidth;
                         }
                     }
                 }
@@ -218,7 +221,7 @@ Item {
                         w = root.width - mouseX
 
                         // Ensure we have a minimum width always
-                        if (w > 300) {
+                        if (w > root.minimumWidth) {
                             // Update the node's x position and the width
                             root.x = root.x + mouseX
                             root.width = w;
@@ -260,8 +263,8 @@ Item {
                         root.height = root.height + mouseY;
 
                         // Ensure a minimum height
-                        if (root.height < 300) {
-                            root.height = 300;
+                        if (root.height < root.minumumHeight) {
+                            root.height = root.minumumHeight;
                         }
                     }
                 }
@@ -269,6 +272,47 @@ Item {
                 onReleased: {
                     // emit the width and height for it to be updated
                     root.resized(mouseArea.width, root.height);
+                }
+            }
+        }
+
+        ///
+        /// Resize Top
+        ///
+        Rectangle {
+            width: mouseArea.width
+            height: 4
+            
+            color: baseColor
+            opacity: 0
+
+            anchors.verticalCenter: parent.top
+
+            MouseArea {
+                id: topDragger
+
+                cursorShape: Qt.SizeVerCursor
+                anchors.fill: parent
+
+                drag{ target: parent; axis: Drag.YAxis }
+
+                onMouseYChanged: {
+                    if (drag.active) {
+                        let h = root.height - mouseY;
+
+                        // Ensure a minimum height
+                        if (h > root.minumumHeight) {
+                            // Update the node's y position and the height
+                            root.y = root.y + mouseY;
+                            root.height = h;
+                        }
+                    }
+                }
+
+                onReleased: {
+                    // emit the node width and height along with the root position
+                    // Dragging from the top moves the node as well
+                    root.resizedAndMoved(root.width, root.height, Qt.point(root.x, root.y));
                 }
             }
         }
@@ -300,7 +344,7 @@ Item {
         Rectangle {
             id: background
             anchors.fill: nodeContent
-            color: baseColor
+            color: Qt.darker(baseColor, 1.2)
             layer.enabled: true
             layer.effect: DropShadow { radius: 3; color: shadowColor }
             radius: 3

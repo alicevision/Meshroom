@@ -25,9 +25,11 @@ Item {
     // The Item instantiating the delegates.
     property Item modelInstantiator: undefined
 
-        // Node Children for the Backdrop
+    readonly property bool isBackdrop: true
+    // Node Children for the Backdrop
     property var children: []
-    
+    property var childrenIndices: []
+
     property bool dragging: mouseArea.drag.active
     property bool resizing: leftDragger.drag.active || topDragger.drag.active
     /// Combined x and y
@@ -50,7 +52,7 @@ Item {
     signal moved(var position)
     signal entered()
     signal exited()
-    
+
     // Size signal
     signal resized(var width, var height)
     signal resizedAndMoved(var width, var height, var position)
@@ -102,7 +104,12 @@ Item {
         }
     }
 
+    onPressed: {
+        updateChildren();
+    }
+
     function updateChildren() {
+        let indices = [];
         let nodes = [];
         const backdropRect = Qt.rect(root.node.x, root.node.y, root.node.nodeWidth, root.node.nodeHeight);
 
@@ -113,17 +120,34 @@ Item {
 
             const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height);
             if (Geom2D.rectRectFullIntersect(backdropRect, delegateRect)) {
-                                nodes.push(delegate);
+                indices.push(i);
+                nodes.push(delegate);
             }
         }
-        children = nodes
+        childrenIndices = indices;
+        children = nodes;
     }
 
-    function getChildrenNodes() {
+    function getChildrenNodes(refresh = false) {
         /**
          * Returns the current nodes which are a part of the Backdrop.
          */
-        return children
+        // Update the children if required
+        if (refresh) {
+            updateChildren();
+        }
+        return children;
+    }
+
+    function getChildrenIndices(refresh = false) {
+        /**
+         * Returns the current nodes' indices which are a part of the Backdrop.
+         */
+        // Update the children if required
+        if (refresh) {
+            updateChildren();
+        }
+        return childrenIndices;
     }
 
     // Main Layout

@@ -992,8 +992,6 @@ Item {
                             // The Item instantiating the delegates.
                             modelInstantiator: nodeRepeater
 
-                            property var nodes: []
-
                             mainSelected: uigraph.selectedNode === node
                             hovered: uigraph.hoveredNode === node
 
@@ -1044,6 +1042,10 @@ Item {
                                     uigraph.selectedNode = node;
                                 }
 
+                                if (!(mouse.modifiers & Qt.AltModifier)) {
+                                    uigraph.selectNodesByIndices(childrenIndices, ItemSelectionModel.Select);
+                                }
+
                                 // Open the node context menu once selection has been updated.
                                 if(mouse.button == Qt.RightButton) {
                                     nodeMenuLoader.load(node)
@@ -1060,6 +1062,10 @@ Item {
                                     return;
                                 }
                                 uigraph.selectNodeByIndex(index);
+
+                                if (!(mouse.modifiers & Qt.AltModifier)) {
+                                    uigraph.selectNodesByIndices(childrenIndices, ItemSelectionModel.Select);
+                                }
                             }
 
                             onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }
@@ -1084,34 +1090,11 @@ Item {
                                 // Compute offset between the delegate and the stored node position.
                                 const offset = Qt.point(x - node.x, y - node.y);
 
-                                nodes = []
-                                // Get all of the current children for the backdrop
-                                let children = getChildrenNodes();
-
-                                for (var i = 0; i < children.length; i++) {
-                                const delegate = children[i];
-
-                                // Ignore the selected delegates as they will be iterated upon separately
-                                if (delegate.selected)
-                                continue;
-
-                                delegate.x = delegate.node.x + offset.x;
-                                delegate.y = delegate.node.y + offset.y;
-
-                                // If the delegate is not the current Node
-                                if (delegate !== node)
-                                nodes.push(delegate.node);
-                                }
-
                                 uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
                                     if(idx != index) {
                                         const delegate = nodeRepeater.itemAt(idx.row).item;
                                         delegate.x = delegate.node.x + offset.x;
                                         delegate.y = delegate.node.y + offset.y;
-
-                                        // If the delegate is not the current Node
-                                        if (delegate !== node)
-                                            nodes.push(delegate.node);
                                     }
                                 });
                             }
@@ -1119,7 +1102,7 @@ Item {
                             // After drag: apply the final offset to all selected nodes
                             onMoved: function(position) {
                                 const offset = Qt.point(position.x - node.x, position.y - node.y);
-                                uigraph.moveNodesBy(nodes, offset);
+                                uigraph.moveSelectedNodesBy(offset);
                             }
 
                             Behavior on x {

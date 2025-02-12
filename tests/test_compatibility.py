@@ -4,6 +4,7 @@ import tempfile
 import os
 
 import copy
+from typing import Type
 import pytest
 
 import meshroom.core
@@ -11,6 +12,8 @@ from meshroom.core import desc, registerNodeType, unregisterNodeType
 from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
+
+from .utils import registeredNodeTypes, overrideNodeTypeVersion
 
 
 SampleGroupV1 = [
@@ -156,6 +159,12 @@ class SampleInputNodeV2(desc.InputNode):
     ]
 
 
+
+def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
+    """Change the `nodeDesc` associated to `nodeType`."""
+    meshroom.core.nodesDesc[nodeType] = nodeDesc
+
+
 def test_unknown_node_type():
     """
     Test compatibility behavior for unknown node type.
@@ -218,8 +227,7 @@ def test_description_conflict():
     g.save(graphFile)
 
     # reload file as-is, ensure no compatibility issue is detected (no CompatibilityNode instances)
-    g = loadGraph(graphFile)
-    assert all(isinstance(n, Node) for n in g.nodes)
+    loadGraph(graphFile, strictCompatibility=True)
 
     # offset node types register to create description conflicts
     # each node type name now reference the next one's implementation
@@ -247,7 +255,7 @@ def test_description_conflict():
             assert not hasattr(compatNode, "in")
 
             # perform upgrade
-            upgradedNode = g.upgradeNode(nodeName)[0]
+            upgradedNode = g.upgradeNode(nodeName)
             assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV2)
 
             assert list(upgradedNode.attributes.keys()) == ["in", "paramA", "output"]
@@ -262,7 +270,7 @@ def test_description_conflict():
             assert hasattr(compatNode, "paramA")
 
             # perform upgrade
-            upgradedNode = g.upgradeNode(nodeName)[0]
+            upgradedNode = g.upgradeNode(nodeName)
             assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV3)
 
             assert not hasattr(upgradedNode, "paramA")
@@ -275,7 +283,7 @@ def test_description_conflict():
             assert not hasattr(compatNode, "paramA")
 
             # perform upgrade
-            upgradedNode = g.upgradeNode(nodeName)[0]
+            upgradedNode = g.upgradeNode(nodeName)
             assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV4)
 
             assert hasattr(upgradedNode, "paramA")
@@ -295,7 +303,7 @@ def test_description_conflict():
                 assert isinstance(elt, next(a for a in SampleGroupV1 if a.name == elt.name).__class__)
 
             # perform upgrade
-            upgradedNode = g.upgradeNode(nodeName)[0]
+            upgradedNode = g.upgradeNode(nodeName)
             assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV5)
 
             assert hasattr(upgradedNode, "paramA")
@@ -399,20 +407,250 @@ def test_conformUpgrade():
 
 class TestGraphLoadingWithStrictCompatibility:
 
-    def test_failsOnNodeDescriptionCompatibilityIssue(self, graphSavedOnDisk):
-        registerNodeType(SampleNodeV1)
-        registerNodeType(SampleNodeV2)
-
-        graph: Graph = graphSavedOnDisk
-        graph.addNewNode(SampleNodeV1.__name__)
-        graph.save()
-
-        # Replace saved node description by V2
-        meshroom.core.nodesDesc[SampleNodeV1.__name__] = SampleNodeV2
+    def test_failsOnUnknownNodeType(self, graphSavedOnDisk):
+        with registeredNodeTypes([SampleNodeV1]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save()
 
         with pytest.raises(GraphCompatibilityError):
             loadGraph(graph.filepath, strictCompatibility=True)
 
-        unregisterNodeType(SampleNodeV1)
-        unregisterNodeType(SampleNodeV2)
 
+    def test_failsOnNodeDescriptionCompatibilityIssue(self, graphSavedOnDisk):
+
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save()
+
+            replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
+
+            with pytest.raises(GraphCompatibilityError):
+                loadGraph(graph.filepath, strictCompatibility=True)
+
+
+class TestGraphTemplateLoading:
+
+    def test_failsOnUnknownNodeTypeError(self, graphSavedOnDisk):
+
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save(template=True)
+
+        with pytest.raises(GraphCompatibilityError):
+            loadGraph(graph.filepath, strictCompatibility=True)
+
+    def test_loadsIfIncompatibleNodeHasDefaultAttributeValues(self, graphSavedOnDisk):
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save(template=True)
+
+            replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
+
+            loadGraph(graph.filepath, strictCompatibility=True)
+
+    def test_loadsIfValueSetOnCompatibleAttribute(self, graphSavedOnDisk):
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            node = graph.addNewNode(SampleNodeV1.__name__, paramA="foo")
+            graph.save(template=True)
+
+            replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
+
+            loadedGraph = loadGraph(graph.filepath, strictCompatibility=True)
+            assert loadedGraph.nodes.get(node.name).paramA.value == "foo"
+
+    def test_loadsIfValueSetOnIncompatibleAttribute(self, graphSavedOnDisk):
+        with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            graph.addNewNode(SampleNodeV1.__name__, input="foo")
+            graph.save(template=True)
+
+            replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
+
+            loadGraph(graph.filepath, strictCompatibility=True)
+
+class TestVersionConflict:
+
+    def test_loadingConflictingNodeVersionCreatesCompatibilityNodes(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+
+        with registeredNodeTypes([SampleNodeV1]):
+            with overrideNodeTypeVersion(SampleNodeV1, "1.0"):
+                node = graph.addNewNode(SampleNodeV1.__name__)
+                graph.save()
+            
+            with overrideNodeTypeVersion(SampleNodeV1, "2.0"):
+                otherGraph = Graph("")
+                otherGraph.load(graph.filepath)
+
+        assert len(otherGraph.compatibilityNodes) == 1
+        assert otherGraph.node(node.name).issue is CompatibilityIssue.VersionConflict
+
+    def test_loadingUnspecifiedNodeVersionAssumesCurrentVersion(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+
+        with registeredNodeTypes([SampleNodeV1]):
+            graph.addNewNode(SampleNodeV1.__name__)
+            graph.save()
+            
+            with overrideNodeTypeVersion(SampleNodeV1, "2.0"):
+                otherGraph = Graph("")
+                otherGraph.load(graph.filepath)
+
+        assert len(otherGraph.compatibilityNodes) == 0
+
+
+class UidTestingNodeV1(desc.Node):
+    inputs = [
+        desc.File(name="input", label="Input", description="", value="", invalidate=True),
+    ]
+    outputs = [desc.File(name="output", label="Output", description="", value=desc.Node.internalFolder)]
+
+
+class UidTestingNodeV2(desc.Node):
+    """ 
+    Changes from SampleNodeBV1:
+        * 'param' has been added
+    """
+
+    inputs = [
+        desc.File(name="input", label="Input", description="", value="", invalidate=True),
+        desc.ListAttribute(
+            name="param",
+            label="Param",
+            elementDesc=desc.File(
+                name="file",
+                label="File",
+                description="",
+                value="",
+            ),
+            description="",
+        ),
+    ]
+    outputs = [desc.File(name="output", label="Output", description="", value=desc.Node.internalFolder)]
+
+
+class UidTestingNodeV3(desc.Node):
+    """
+    Changes from SampleNodeBV2:
+        * 'input' is not invalidating the UID.
+    """
+
+    inputs = [
+        desc.File(name="input", label="Input", description="", value="", invalidate=False),
+        desc.ListAttribute(
+            name="param",
+            label="Param",
+            elementDesc=desc.File(
+                name="file",
+                label="File",
+                description="",
+                value="",
+            ),
+            description="",
+        ),
+    ]
+    outputs = [desc.File(name="output", label="Output", description="", value=desc.Node.internalFolder)]
+
+
+class TestUidConflict:
+    def test_changingInvalidateOnAttributeDescCreatesUidConflict(self, graphSavedOnDisk):
+        with registeredNodeTypes([UidTestingNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            node = graph.addNewNode(UidTestingNodeV2.__name__)
+
+            graph.save()
+            replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
+
+            with pytest.raises(GraphCompatibilityError):
+                loadGraph(graph.filepath, strictCompatibility=True)
+
+            loadedGraph = loadGraph(graph.filepath)
+            loadedNode = loadedGraph.node(node.name)
+            assert isinstance(loadedNode, CompatibilityNode)
+            assert loadedNode.issue == CompatibilityIssue.UidConflict
+
+    def test_uidConflictingNodesPreserveConnectionsOnGraphLoad(self, graphSavedOnDisk):
+        with registeredNodeTypes([UidTestingNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            nodeA = graph.addNewNode(UidTestingNodeV2.__name__)
+            nodeB = graph.addNewNode(UidTestingNodeV2.__name__)
+
+            nodeB.param.append("")
+            graph.addEdge(nodeA.output, nodeB.param.at(0))
+
+            graph.save()
+            replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
+
+            loadedGraph = loadGraph(graph.filepath)
+            assert len(loadedGraph.compatibilityNodes) == 2
+
+            loadedNodeA = loadedGraph.node(nodeA.name)
+            loadedNodeB = loadedGraph.node(nodeB.name)
+
+            assert loadedNodeB.param.at(0).linkParam == loadedNodeA.output
+
+    def test_upgradingConflictingNodesPreserveConnections(self, graphSavedOnDisk):
+        with registeredNodeTypes([UidTestingNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            nodeA = graph.addNewNode(UidTestingNodeV2.__name__)
+            nodeB = graph.addNewNode(UidTestingNodeV2.__name__)
+
+            # Double-connect nodeA.output to nodeB, on both a single attribute and a list attribute
+            nodeB.param.append("")
+            graph.addEdge(nodeA.output, nodeB.param.at(0))
+            graph.addEdge(nodeA.output, nodeB.input)
+
+            graph.save()
+            replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
+
+            def checkNodeAConnectionsToNodeB():
+                loadedNodeA = loadedGraph.node(nodeA.name)
+                loadedNodeB = loadedGraph.node(nodeB.name)
+                return (
+                    loadedNodeB.param.at(0).linkParam == loadedNodeA.output
+                    and loadedNodeB.input.linkParam == loadedNodeA.output
+                )
+
+            loadedGraph = loadGraph(graph.filepath)
+            loadedGraph.upgradeNode(nodeA.name)
+
+            assert checkNodeAConnectionsToNodeB()
+            loadedGraph.upgradeNode(nodeB.name)
+
+            assert checkNodeAConnectionsToNodeB()
+            assert len(loadedGraph.compatibilityNodes) == 0
+
+
+    def test_uidConflictDoesNotPropagateToValidDownstreamNodeThroughConnection(self, graphSavedOnDisk):
+        with registeredNodeTypes([UidTestingNodeV1, UidTestingNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            nodeA = graph.addNewNode(UidTestingNodeV2.__name__)
+            nodeB = graph.addNewNode(UidTestingNodeV1.__name__)
+
+            graph.addEdge(nodeA.output, nodeB.input)
+
+            graph.save()
+            replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
+
+            loadedGraph = loadGraph(graph.filepath)
+            assert len(loadedGraph.compatibilityNodes) == 1
+
+    def test_uidConflictDoesNotPropagateToValidDownstreamNodeThroughListConnection(self, graphSavedOnDisk):
+        with registeredNodeTypes([UidTestingNodeV2, UidTestingNodeV3]):
+            graph: Graph = graphSavedOnDisk
+            nodeA = graph.addNewNode(UidTestingNodeV2.__name__)
+            nodeB = graph.addNewNode(UidTestingNodeV3.__name__)
+
+            nodeB.param.append("")
+            graph.addEdge(nodeA.output, nodeB.param.at(0))
+
+            graph.save()
+            replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
+
+            loadedGraph = loadGraph(graph.filepath)
+            assert len(loadedGraph.compatibilityNodes) == 1

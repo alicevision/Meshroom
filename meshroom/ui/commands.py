@@ -6,8 +6,10 @@ from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
-from meshroom.core.graph import GraphModification
-from meshroom.core.node import nodeFactory, Position
+from meshroom.core.graph import Graph, GraphModification
+from meshroom.core.node import Position, CompatibilityIssue
+from meshroom.core.nodeFactory import nodeFactory
+from meshroom.core.typing import PathLike
 
 
 class UndoCommand(QUndoCommand):
@@ -168,19 +170,7 @@ class RemoveNodeCommand(GraphCommand):
             node = nodeFactory(self.nodeDict, self.nodeName)
             self.graph.addNode(node, self.nodeName)
             assert (node.getName() == self.nodeName)
-            # recreate out edges deleted on node removal
-            for dstAttr, srcAttr in self.outEdges.items():
-                # if edges were connected to ListAttributes, recreate their corresponding entry in said ListAttribute
-                # 0 = attribute name, 1 = attribute index, 2 = attribute value
-                if dstAttr in self.outListAttributes.keys():
-                    listAttr = self.graph.attribute(self.outListAttributes[dstAttr][0])
-                    if isinstance(self.outListAttributes[dstAttr][2], list):
-                        listAttr[self.outListAttributes[dstAttr][1]:self.outListAttributes[dstAttr][1]] = self.outListAttributes[dstAttr][2]
-                    else:
-                        listAttr.insert(self.outListAttributes[dstAttr][1], self.outListAttributes[dstAttr][2])
-
-                self.graph.addEdge(self.graph.attribute(srcAttr),
-                                   self.graph.attribute(dstAttr))
+            self.graph._restoreOutEdges(self.outEdges, self.outListAttributes)
 
 
 class DuplicateNodesCommand(GraphCommand):
@@ -209,15 +199,27 @@ class PasteNodesCommand(GraphCommand):
     """
     Handle node pasting in a Graph.
     """
-    def __init__(self, graph, data, position=None, parent=None):
+    def __init__(self, graph: "Graph", data: dict, position: Position, parent=None):
         super(PasteNodesCommand, self).__init__(graph, parent)
         self.data = data
         self.position = position
-        self.nodeNames = []
+        self.nodeNames: list[str] = []
 
     def redoImpl(self):
-        data = self.graph.updateImportedProject(self.data)
-        nodes = self.graph.pasteNodes(data, self.position)
+        graph = Graph("")
+        try:
+            graph._deserialize(self.data)
+        except:
+            return False
+
+        boundingBoxCenter = self._boundingBoxCenter(graph.nodes)
+        offset = Position(self.position.x - boundingBoxCenter.x, self.position.y - boundingBoxCenter.y)
+
+        for node in graph.nodes:
+            node.position = Position(node.position.x + offset.x, node.position.y + offset.y)
+
+        nodes = self.graph.importGraphContent(graph)
+
         self.nodeNames = [node.name for node in nodes]
         self.setText("Paste Node{} ({})".format("s" if len(self.nodeNames) > 1 else "", ", ".join(self.nodeNames)))
         return nodes
@@ -226,12 +228,31 @@ class PasteNodesCommand(GraphCommand):
         for name in self.nodeNames:
             self.graph.removeNode(name)
 
+    def _boundingBox(self, nodes) -> tuple[int, int, int, int]:
+        if not nodes:
+            return (0, 0, 0 , 0)
+
+        minX = maxX = nodes[0].x
+        minY = maxY = nodes[0].y
+
+        for node in nodes[1:]:
+            minX = min(minX, node.x)
+            minY = min(minY, node.y)
+            maxX = max(maxX, node.x)
+            maxY = max(maxY, node.y)
+
+        return (minX, minY, maxX, maxY)
+
+    def _boundingBoxCenter(self, nodes):
+        minX, minY, maxX, maxY = self._boundingBox(nodes)
+        return Position((minX + maxX) / 2, (minY + maxY) / 2)
 
 class ImportProjectCommand(GraphCommand):
     """
     Handle the import of a project into a Graph.
     """
-    def __init__(self, graph, filepath=None, position=None, yOffset=0, parent=None):
+
+    def __init__(self, graph: Graph, filepath: PathLike, position=None, yOffset=0, parent=None):
         super(ImportProjectCommand, self).__init__(graph, parent)
         self.filepath = filepath
         self.importedNames = []
@@ -239,9 +260,8 @@ class ImportProjectCommand(GraphCommand):
         self.yOffset = yOffset
 
     def redoImpl(self):
-        status = self.graph.load(self.filepath, setupProjectFile=False, importProject=True)
-        importedNodes = self.graph.importedNodes
-        self.setText("Import Project ({} nodes)".format(importedNodes.count))
+        importedNodes = self.graph.importGraphContentFromFile(self.filepath)
+        self.setText(f"Import Project ({len(importedNodes)} nodes)")
 
         lowestY = 0
         for node in self.graph.nodes:
@@ -419,37 +439,24 @@ class UpgradeNodeCommand(GraphCommand):
         super(UpgradeNodeCommand, self).__init__(graph, parent)
         self.nodeDict = node.toDict()
         self.nodeName = node.getName()
-        self.outEdges = {}
-        self.outListAttributes = {}
+        self.compatibilityIssue = None
         self.setText("Upgrade Node {}".format(self.nodeName))
 
     def redoImpl(self):
-        if not self.graph.node(self.nodeName).canUpgrade:
+        if not (node := self.graph.node(self.nodeName)).canUpgrade:
             return False
-        upgradedNode, _, self.outEdges, self.outListAttributes = self.graph.upgradeNode(self.nodeName)
-        return upgradedNode
+        self.compatibilityIssue = node.issue
+        return self.graph.upgradeNode(self.nodeName)
 
     def undoImpl(self):
-        # delete upgraded node
-        self.graph.removeNode(self.nodeName)
+        expectedUid = None
+        if self.compatibilityIssue == CompatibilityIssue.UidConflict:
+            expectedUid = self.graph.node(self.nodeName)._uid
+
         # recreate compatibility node
         with GraphModification(self.graph):
-            # We come back from an upgrade, so we enforce uidConflict=True as there was a uid conflict before
-            node = nodeFactory(self.nodeDict, name=self.nodeName, uidConflict=True)
-            self.graph.addNode(node, self.nodeName)
-            # recreate out edges
-            for dstAttr, srcAttr in self.outEdges.items():
-                # if edges were connected to ListAttributes, recreate their corresponding entry in said ListAttribute
-                # 0 = attribute name, 1 = attribute index, 2 = attribute value
-                if dstAttr in self.outListAttributes.keys():
-                    listAttr = self.graph.attribute(self.outListAttributes[dstAttr][0])
-                    if isinstance(self.outListAttributes[dstAttr][2], list):
-                        listAttr[self.outListAttributes[dstAttr][1]:self.outListAttributes[dstAttr][1]] = self.outListAttributes[dstAttr][2]
-                    else:
-                        listAttr.insert(self.outListAttributes[dstAttr][1], self.outListAttributes[dstAttr][2])
-
-                self.graph.addEdge(self.graph.attribute(srcAttr),
-                                   self.graph.attribute(dstAttr))
+            node = nodeFactory(self.nodeDict, name=self.nodeName, expectedUid=expectedUid)
+            self.graph.replaceNode(self.nodeName, node)
 
 
 class EnableGraphUpdateCommand(GraphCommand):

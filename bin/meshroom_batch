@@ -154,10 +154,10 @@ with meshroom.core.graph.GraphModification(graph):
     # initialize template pipeline
     loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
     if args.pipeline.lower() in loweredPipelineTemplates:
-        graph.load(loweredPipelineTemplates[args.pipeline.lower()], setupProjectFile=False, publishOutputs=True if args.output else False)
+        graph.initFromTemplate(loweredPipelineTemplates[args.pipeline.lower()], publishOutputs=True if args.output else False)
     else:
         # custom pipeline
-        graph.load(args.pipeline, setupProjectFile=False, publishOutputs=True if args.output else False)
+        graph.initFromTemplate(args.pipeline, publishOutputs=True if args.output else False)
     
     def parseInputs(inputs, uniqueInitNode):
         """Utility method for parsing the input and inputRecursive arguments."""

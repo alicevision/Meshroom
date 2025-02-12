@@ -128,7 +128,7 @@ ApplicationWindow {
             if (mainStack.currentItem instanceof Homepage) {
                 mainStack.push("Application.qml")
             }
-            if (_reconstruction.loadUrl(currentFile)) {
+            if (_reconstruction.load(currentFile)) {
                 MeshroomApp.addRecentProjectFile(currentFile.toString())
             }
         }

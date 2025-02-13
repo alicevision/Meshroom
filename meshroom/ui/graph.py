@@ -735,15 +735,6 @@ class UIGraph(QObject):
                 position = Position(node.x + offset.x(), node.y + offset.y())
                 self.moveNode(node, position)
 
-    @Slot(list, QPoint)
-    def moveNodesBy(self, nodes, offset: QPoint):
-        """Move all the selected nodes by the given `offset`."""
-
-        with self.groupedGraphModification("Move Nodes"):
-            for node in nodes:
-                position = Position(node.x + offset.x(), node.y + offset.y())
-                self.moveNode(node, position)
-
     @Slot()
     def removeSelectedNodes(self):
         """Remove selected nodes from the graph."""

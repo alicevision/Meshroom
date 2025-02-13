@@ -6,6 +6,7 @@ import QtQuick.Dialogs
 import MaterialIcons 2.2
 import Utils 1.0
 import Controls 1.0
+import "AttributeControls" as AttributeControls
 
 /**
  * Instantiate a control to visualize and edit an Attribute based on its type.
@@ -208,7 +209,7 @@ RowLayout {
                 case "PushButtonParam":
                     return pushButtonComponent
                 case "ChoiceParam":
-                    return attribute.desc.exclusive ? comboBoxComponent : multiChoiceComponent
+                    return attribute.desc.exclusive ? choiceComponent : multiChoiceComponent
                 case "IntParam": return sliderComponent
                 case "FloatParam":
                     if (attribute.desc.semantic === 'color/hue')
@@ -469,26 +470,15 @@ RowLayout {
         }
 
         Component {
-            id: comboBoxComponent
+            id: choiceComponent
 
-            RowLayout {
-                FilterComboBox {
-                    id: comboBox
+            AttributeControls.Choice {
+                value: root.attribute.value
+                values: root.attribute.values
+                enabled: root.editable
 
-                    Layout.fillWidth: true
-
-                    enabled: root.editable
-                    sourceModel: attribute.values
-                    inputValue: attribute.value
-
-                    onEditingFinished: (value) => {
-                        _reconstruction.setAttribute(attribute, value)
-                    }
-                }
-                MaterialLabel {
-                    visible: !comboBox.validValue
-                    text: MaterialIcons.warning
-                    ToolTip.text: "Custom value detected"
+                onEditingFinished: (value) => {
+                    _reconstruction.setAttribute(root.attribute, value)
                 }
             }
         }

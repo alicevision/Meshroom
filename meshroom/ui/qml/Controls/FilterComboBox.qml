@@ -21,6 +21,23 @@ ComboBox {
     // Whether the current input value is within the source model.
     readonly property bool validValue: sourceModel.includes(inputValue)
 
+
+    QtObject {
+        id: m
+        readonly property int delegateModelCount: root.delegateModel.count
+
+        // Ensure the highlighted index is always within the range of delegates whenever the
+        // combobox model changes, for combobox validation to always considers a valid item.
+        onDelegateModelCountChanged: {
+            if(delegateModelCount > 0 && root.highlightedIndex >= delegateModelCount) {
+                while(root.highlightedIndex > 0 && root.highlightedIndex >= delegateModelCount) {
+                    // highlightIndex is read-only, this method has to be used to change it programmatically.
+                    root.decrementCurrentIndex();
+                }
+            }
+        }
+    }
+
     signal editingFinished(var value)
 
     function clearFilter() {
@@ -42,14 +59,15 @@ ComboBox {
         return sourceModel.filter(item => {
             return item.toString().toLowerCase().includes(filterText.toLowerCase());
         });
+    } 
+
+    popup.onOpened: {
+        filterTextArea.forceActiveFocus();
     }
 
     popup.onClosed: clearFilter()
 
-    // Allows typing into the filter text area while the combobox has focus.
-    Keys.forwardTo: [filterTextArea]
-
-    onActivated: index => {
+    onActivated: (index) => {
         const isValidEntry = model.length > 0;
         if (!isValidEntry) {
             return;
@@ -63,10 +81,12 @@ ComboBox {
         states: [
             State {
                 name: "Invalid"
-                when: root.delegateModel.count === 0
+                when: m.delegateModelCount === 0
                 PropertyChanges {
                     target: filterTextArea
                     color: Colors.orange
+                    // Prevent ComboBox validation when there are no entries in the model.
+                    Keys.forwardTo: []
                 }
             }
         ]
@@ -85,10 +105,8 @@ ComboBox {
                 placeholderText: "Type to filter..."
                 Layout.fillWidth: true
                 leftPadding: 18
-                MouseArea {
-                    // Prevent textfield from stealing combobox's active focus, without disabling it.
-                    anchors.fill: parent
-                }
+                Keys.forwardTo: [root]
+
                 background: Item {
                     MaterialLabel {
                         anchors.verticalCenter: parent.verticalCenter

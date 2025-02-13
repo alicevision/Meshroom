@@ -471,41 +471,24 @@ RowLayout {
         Component {
             id: comboBoxComponent
 
-            FilterComboBox {
-                inputModel: attribute.values
+            RowLayout {
+                FilterComboBox {
+                    id: comboBox
 
-                Component.onCompleted: {
-                    // If value not in list, override the text and precise it is not valid
-                    var idx = find(attribute.value)
-                    if (idx === -1) {
-                        displayText = attribute.value
-                        validValue = false
-                    } else {
-                        currentIndex = idx
+                    Layout.fillWidth: true
+
+                    enabled: root.editable
+                    sourceModel: attribute.values
+                    inputValue: attribute.value
+
+                    onEditingFinished: (value) => {
+                        _reconstruction.setAttribute(attribute, value)
                     }
                 }
-
-                onEditingFinished: function(value) {
-                    _reconstruction.setAttribute(attribute, value)
-                }
-
-                Connections {
-                    target: attribute
-                    function onValueChanged() {
-                        // When reset, clear and find the current index
-                        // but if only reopen the combo box, keep the current value
-                        
-                        // Convert all values of desc values as string
-                        var valuesAsString = attribute.values.map(function(value) {
-                            return value.toString()
-                        })
-                        if (valuesAsString.includes(attribute.value) || attribute.value === attribute.desc.value) {
-                            filterText.clear()
-                            validValue = true
-                            displayText = currentText
-                            currentIndex = find(attribute.value) 
-                        }
-                    }
+                MaterialLabel {
+                    visible: !comboBox.validValue
+                    text: MaterialIcons.warning
+                    ToolTip.text: "Custom value detected"
                 }
             }
         }

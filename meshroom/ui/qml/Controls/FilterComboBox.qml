@@ -74,7 +74,6 @@ ComboBox {
 
     popup.contentItem: ColumnLayout {
         width: parent.width
-        Layout.maximumHeight: root.Window.height
         spacing: 0
 
         RowLayout {
@@ -120,6 +119,8 @@ ComboBox {
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
             ListView {
                 implicitHeight: contentHeight
                 clip: true

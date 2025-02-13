@@ -209,7 +209,7 @@ RowLayout {
                 case "PushButtonParam":
                     return pushButtonComponent
                 case "ChoiceParam":
-                    return attribute.desc.exclusive ? choiceComponent : multiChoiceComponent
+                    return attribute.desc.exclusive ? choiceComponent : choiceMultiComponent
                 case "IntParam": return sliderComponent
                 case "FloatParam":
                     if (attribute.desc.semantic === 'color/hue')
@@ -484,25 +484,21 @@ RowLayout {
         }
 
         Component {
-            id: multiChoiceComponent
-            Flow {
-                Repeater {
-                    id: checkboxRepeater
-                    model: attribute.values
-                    delegate: CheckBox {
-                        enabled: root.editable
-                        text: modelData
-                        checked: attribute.value.indexOf(modelData) >= 0
-                        onToggled: {
-                            var t = attribute.value
-                            if (!checked) {
-                                t.splice(t.indexOf(modelData), 1)  // Remove element
-                            } else {
-                                t.push(modelData)  // Add element
-                            }
-                            _reconstruction.setAttribute(attribute, t)
-                        }
+            id: choiceMultiComponent
+
+            AttributeControls.ChoiceMulti {
+                value: root.attribute.value
+                values: root.attribute.values
+                enabled: root.editable
+                customValueColor: Colors.orange
+                onToggled: (value, checked) => {
+                    var currentValue = root.attribute.value;
+                    if (!checked) {
+                        currentValue.splice(currentValue.indexOf(value), 1);
+                    } else {
+                        currentValue.push(value);
                     }
+                    _reconstruction.setAttribute(attribute, currentValue);
                 }
             }
         }

@@ -6,6 +6,7 @@ import QtQuick.Dialogs
 import MaterialIcons 2.2
 import Utils 1.0
 import Controls 1.0
+import "AttributeControls" as AttributeControls
 
 /**
  * Instantiate a control to visualize and edit an Attribute based on its type.
@@ -208,7 +209,7 @@ RowLayout {
                 case "PushButtonParam":
                     return pushButtonComponent
                 case "ChoiceParam":
-                    return attribute.desc.exclusive ? comboBoxComponent : multiChoiceComponent
+                    return attribute.desc.exclusive ? choiceComponent : choiceMultiComponent
                 case "IntParam": return sliderComponent
                 case "FloatParam":
                     if (attribute.desc.semantic === 'color/hue')
@@ -469,67 +470,35 @@ RowLayout {
         }
 
         Component {
-            id: comboBoxComponent
+            id: choiceComponent
 
-            FilterComboBox {
-                inputModel: attribute.values
+            AttributeControls.Choice {
+                value: root.attribute.value
+                values: root.attribute.values
+                enabled: root.editable
 
-                Component.onCompleted: {
-                    // If value not in list, override the text and precise it is not valid
-                    var idx = find(attribute.value)
-                    if (idx === -1) {
-                        displayText = attribute.value
-                        validValue = false
-                    } else {
-                        currentIndex = idx
-                    }
-                }
-
-                onEditingFinished: function(value) {
-                    _reconstruction.setAttribute(attribute, value)
-                }
-
-                Connections {
-                    target: attribute
-                    function onValueChanged() {
-                        // When reset, clear and find the current index
-                        // but if only reopen the combo box, keep the current value
-                        
-                        // Convert all values of desc values as string
-                        var valuesAsString = attribute.values.map(function(value) {
-                            return value.toString()
-                        })
-                        if (valuesAsString.includes(attribute.value) || attribute.value === attribute.desc.value) {
-                            filterText.clear()
-                            validValue = true
-                            displayText = currentText
-                            currentIndex = find(attribute.value) 
-                        }
-                    }
+                onEditingFinished: (value) => {
+                    _reconstruction.setAttribute(root.attribute, value)
                 }
             }
         }
 
         Component {
-            id: multiChoiceComponent
-            Flow {
-                Repeater {
-                    id: checkboxRepeater
-                    model: attribute.values
-                    delegate: CheckBox {
-                        enabled: root.editable
-                        text: modelData
-                        checked: attribute.value.indexOf(modelData) >= 0
-                        onToggled: {
-                            var t = attribute.value
-                            if (!checked) {
-                                t.splice(t.indexOf(modelData), 1)  // Remove element
-                            } else {
-                                t.push(modelData)  // Add element
-                            }
-                            _reconstruction.setAttribute(attribute, t)
-                        }
+            id: choiceMultiComponent
+
+            AttributeControls.ChoiceMulti {
+                value: root.attribute.value
+                values: root.attribute.values
+                enabled: root.editable
+                customValueColor: Colors.orange
+                onToggled: (value, checked) => {
+                    var currentValue = root.attribute.value;
+                    if (!checked) {
+                        currentValue.splice(currentValue.indexOf(value), 1);
+                    } else {
+                        currentValue.push(value);
                     }
+                    _reconstruction.setAttribute(attribute, currentValue);
                 }
             }
         }

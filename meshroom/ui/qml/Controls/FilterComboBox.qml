@@ -1,177 +1,153 @@
 import QtQuick
 import QtQuick.Controls
-
+import QtQuick.Layouts
 import Utils 1.0
 
+import MaterialIcons
+
 /**
-* ComboBox with filter text area
-*
-* @param inputModel - model to filter
-* @param editingFinished - signal emitted when editing is finished
-* @alias filterText - text to filter the model
+* ComboBox with filtering capabilities and support for custom values (i.e: outside the source model).
 */
 
 ComboBox {
-    id: combo
+    id: root
 
-    property var inputModel
+    // Model to populate the combobox.
+    required property var sourceModel
+    // Input value to use as the current combobox value.
+    property var inputValue
+    // The text to filter the combobox model when the choices are displayed.
+    property alias filterText: filterTextArea.text
+    // Whether the current input value is within the source model.
+    readonly property bool validValue: sourceModel.includes(inputValue)
+
+
+    QtObject {
+        id: m
+        readonly property int delegateModelCount: root.delegateModel.count
+
+        // Ensure the highlighted index is always within the range of delegates whenever the
+        // combobox model changes, for combobox validation to always considers a valid item.
+        onDelegateModelCountChanged: {
+            if(delegateModelCount > 0 && root.highlightedIndex >= delegateModelCount) {
+                while(root.highlightedIndex > 0 && root.highlightedIndex >= delegateModelCount) {
+                    // highlightIndex is read-only, this method has to be used to change it programmatically.
+                    root.decrementCurrentIndex();
+                }
+            }
+        }
+    }
+
     signal editingFinished(var value)
 
-    property alias filterText: filterTextArea
-    property bool validValue: true
+    function clearFilter() {
+        filterText = "";
+    }
 
-    enabled: root.editable
+    // Re-computing current index when source values are set.
+    Component.onCompleted: _updateCurrentIndex()
+    onInputValueChanged: _updateCurrentIndex()
+    onModelChanged: _updateCurrentIndex()
+
+    function _updateCurrentIndex() {
+        currentIndex = find(inputValue);
+    }
+
+    displayText: inputValue
+
     model: {
-        var filteredData = inputModel.filter(condition => {
-                                            if (filterTextArea.text.length > 0) return condition.toString().toLowerCase().includes(filterTextArea.text.toLowerCase())
-                                            return true
-                                        })
-        if (filteredData.length > 0) {
-            filterTextArea.background.color = Qt.lighter(palette.base, 2)
-            validValue = true
+        return sourceModel.filter(item => {
+            return item.toString().toLowerCase().includes(filterText.toLowerCase());
+        });
+    } 
 
-            // order filtered data by relevance (results that start with the filter text come first)
-            filteredData.sort((a, b) => {
-                const nameA = a.toString().toLowerCase();
-                const nameB = b.toString().toLowerCase();
-                const filterText = filterTextArea.text.toLowerCase()
-                if (nameA.startsWith(filterText) && !nameB.startsWith(filterText))
-                    return -1
-                if (!nameA.startsWith(filterText) && nameB.startsWith(filterText))
-                    return 1
-                return 0
-            })
-        } else {
-            filterTextArea.background.color = Colors.red
-            validValue = false
-        }
-
-        if (filteredData.length == 0 || filterTextArea.length == 0) {
-            filteredData = inputModel
-        } 
-
-        return filteredData
+    popup.onOpened: {
+        filterTextArea.forceActiveFocus();
     }
 
-    background: Rectangle {
-        implicitHeight: root.implicitHeight
-        color: {
-            if (validValue) {
-                return palette.mid
-            } else {
-                return Colors.red
-            }
+    popup.onClosed: clearFilter()
+
+    onActivated: (index) => {
+        const isValidEntry = model.length > 0;
+        if (!isValidEntry) {
+            return;
         }
-        border.color: palette.base
+        editingFinished(model[index]);
     }
 
-    popup: Popup {
-        width: combo.width
-        implicitHeight: contentItem.implicitHeight 
-
-        onAboutToShow: {
-            filterTextArea.forceActiveFocus()
-
-            if (mapToGlobal(popup.x, popup.y).y + root.implicitHeight * (model.length + 1) > _window.contentItem.height) {
-                y = -((combo.height * (combo.model.length + 1) > _window.contentItem.height) ? _window.contentItem.height*2/3 : combo.height * (combo.model.length + 1))
-            } else {
-                y = 0
+    StateGroup {
+        id: filterState
+        // Override properties depending on filter text status.
+        states: [
+            State {
+                name: "Invalid"
+                when: m.delegateModelCount === 0
+                PropertyChanges {
+                    target: filterTextArea
+                    color: Colors.orange
+                    // Prevent ComboBox validation when there are no entries in the model.
+                    Keys.forwardTo: []
+                }
             }
-        }
+        ]
+    }
 
-        contentItem: Item {
-            anchors.fill: parent
-            TextArea {
+    popup.contentItem: ColumnLayout {
+        width: parent.width
+        spacing: 0
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 2
+
+            TextField {
                 id: filterTextArea
-                leftPadding: 12
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
+                placeholderText: "Type to filter..."
+                Layout.fillWidth: true
+                leftPadding: 18
+                Keys.forwardTo: [root]
 
-                selectByMouse: true
-                hoverEnabled: true
-                wrapMode: TextEdit.WrapAnywhere
-                placeholderText: "Filter"
-                background: Rectangle {}
-
-                onEditingFinished: {
-                    combo.popup.close()
-                    combo.editingFinished(displayText)
-                }
-
-                Keys.onEnterPressed: {
-                    if (!validValue) {
-                        displayText = filterTextArea.text
-                    } else {
-                        displayText = currentText
-                    }
-                    editingFinished()
-                }
-
-                Keys.onReturnPressed: {
-                    if (!validValue) {
-                        displayText = filterTextArea.text
-                    } else {
-                        displayText = currentText
-                    }
-                    editingFinished()
-                }
-
-                Keys.onUpPressed: {
-                    // if the current index is 0, the user wants to go to the last item
-                    if (combo.currentIndex == 0) {
-                        combo.currentIndex = combo.model.length - 1
-                    } else {
-                        combo.currentIndex--
+                background: Item {
+                    MaterialLabel {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        anchors.leftMargin: 2
+                        text: MaterialIcons.search
                     }
                 }
+            }
 
-                Keys.onDownPressed: {
-                    // if the current index is the last one, the user wants to go to the first item
-                    if (combo.currentIndex == combo.model.length - 1) {
-                        combo.currentIndex = 0
-                    } else {
-                        combo.currentIndex++
-                    }
+            MaterialToolButton {
+                enabled: root.filterText !== ""
+                text: MaterialIcons.add_task
+                ToolTip.text: "Force custom value"
+                onClicked: {
+                    editingFinished(root.filterText);
+                    root.popup.close();
                 }
             }
         }
 
-        ListView {
-            id: listView
-            clip: true
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: filterTextArea.bottom
-
-            implicitHeight: (combo.height * (combo.model.length + 1) > _window.contentItem.height) ? _window.contentItem.height*2/3 : contentHeight
-            model: combo.popup.visible ? combo.delegateModel : null
-
-            ScrollBar.vertical: MScrollBar {}
-        }
-    }
-
-    delegate: ItemDelegate {
-        width: combo.width
-        height: combo.height
-
-        contentItem: Text {
-            text: modelData
-            color: palette.text
+        Rectangle {
+            height: 1
+            Layout.fillWidth: true
+            color: Colors.sysPalette.mid
         }
 
-        highlighted: validValue ? combo.currentIndex === index : false
+        ScrollView {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-        hoverEnabled: true
-    }
+            ListView {
+                implicitHeight: contentHeight
+                clip: true
 
-    onHighlightedIndexChanged: {
-        if (highlightedIndex >= 0) {
-            combo.currentIndex = highlightedIndex
+                model: root.delegateModel
+                highlightRangeMode: ListView.ApplyRange
+                currentIndex: root.highlightedIndex
+                ScrollBar.vertical: ScrollBar {}
+            }
         }
-    }
-
-    onCurrentTextChanged: {
-        displayText = currentText
     }
 }

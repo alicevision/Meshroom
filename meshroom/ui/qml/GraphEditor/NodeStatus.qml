@@ -22,7 +22,7 @@ FocusScope {
         clip: true
         anchors.fill: parent
 
-        property string currentFile: (root.currentChunkIndex >= 0) ? root.currentChunk["statusFile"] : ""
+        property string currentFile: (root.currentChunkIndex >= 0 && root.currentChunk !== undefined) ? root.currentChunk["statusFile"] : ""
         property url sourceFile: Filepath.stringToUrl(currentFile)
 
         sourceComponent: statViewerComponent
@@ -90,7 +90,7 @@ FocusScope {
 
                 delegate: Rectangle {
                     color: activePalette.window
-                    width: parent.width
+                    width: statusListView.width
                     height: childrenRect.height
                     RowLayout {
                         width: parent.width

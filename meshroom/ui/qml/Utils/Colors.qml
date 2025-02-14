@@ -48,6 +48,8 @@ QtObject {
     ]
 
     function getChunkColor(chunk, overrides) {
+        if (chunk === undefined)
+            return "transparent"
         if (overrides && chunk.statusName in overrides) {
             return overrides[chunk.statusName]
         } else if (chunk.execModeName === "EXTERN" && chunk.statusName in statusColorsExternOverrides) {

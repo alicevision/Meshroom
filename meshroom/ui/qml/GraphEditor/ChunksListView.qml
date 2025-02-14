@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import "common.js" as Common
+import Utils 1.0
 
 /**
  * ChunkListView
@@ -86,7 +86,7 @@ ColumnLayout {
             Rectangle {
                 width: 4
                 height: parent.height
-                color: Common.getChunkColor(parent.chunk)
+                color: Colors.getChunkColor(parent.chunk)
             }
         }
     }

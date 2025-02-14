@@ -4,8 +4,6 @@ import QtQuick.Layouts
 
 import Controls 1.0
 
-import "common.js" as Common
-
 /**
  * Displays Node documentation
  */

@@ -303,7 +303,7 @@ class MeshroomApp(QApplication):
             self._activeProject.load(args.project)
             self.addRecentProjectFile(args.project)
         elif args.latest or args.latest2 or args.latest3:
-            projects = self._recentProjectFiles()
+            projects = self._recentProjectFiles
             if projects:
                 index = [args.latest, args.latest2, args.latest3].index(True)
                 project = os.path.abspath(projects[index]["path"])

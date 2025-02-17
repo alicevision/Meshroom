@@ -36,6 +36,12 @@ class ExportMaya(desc.Node):
             description="Undistorted images template.",
             value="",
         ),
+        desc.BoolParam(
+            name="generateMaya",
+            label="generate Maya scene",
+            description="Do we generate the scene or only export a mel script.",
+            value=True,
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
@@ -47,10 +53,17 @@ class ExportMaya(desc.Node):
 
     outputs = [
         desc.File(
-            name="output",
+            name="meloutput",
             label="Mel script",
             description="Generated mel script",
             value=desc.Node.internalFolder + "import.mel",
+        ),
+        desc.File(
+            name="mayaoutput",
+            label="Maya scene",
+            description="Generated Maya scene",
+            value=desc.Node.internalFolder + "scene.mb",
+            enabled=lambda node: node.generateMaya.value,
         ),
     ]
 
@@ -58,6 +71,8 @@ class ExportMaya(desc.Node):
         
         import pyalicevision
         import pathlib
+        import inspect
+        import subprocess
 
         chunk.logManager.start(chunk.node.verboseLevel.value)
         
@@ -120,6 +135,16 @@ class ExportMaya(desc.Node):
         
 
         #Generate the script itself
+        mayaFileName = chunk.node.mayaoutput.value
+        header = f'''
+        file -f -new;
+        '''
+
+        footer = f'''
+        file -rename "{mayaFileName}";
+        file -type "mayaBinary";
+        file -save;
+        '''
         
         alembic = chunk.node.alembic.value
         abcString = f'AbcImport -mode open -fitTimeRange "{alembic}";'
@@ -160,10 +185,39 @@ class ExportMaya(desc.Node):
             setAttr "imagePlaneShape1.sizeY" $scaledvaperture;
             '''
 
-        with open(chunk.node.output.value, "w") as f:
-            f.write(abcString + '\n')
-            f.write(objString + '\n')
-            f.write(camString + '\n')
-            f.write(advCamString + '\n')
+        with open(chunk.node.meloutput.value, "w") as f:
+            if chunk.node.generateMaya.value:
+                f.write(inspect.cleandoc(header) + '\n')
+            f.write(inspect.cleandoc(abcString) + '\n')
+            f.write(inspect.cleandoc(objString) + '\n')
+            f.write(inspect.cleandoc(camString) + '\n')
+            f.write(inspect.cleandoc(advCamString) + '\n')
+            if chunk.node.generateMaya.value:
+                f.write(inspect.cleandoc(footer) + '\n')
+
+        chunk.logger.info("Mel Script generated")
+        
+        #Export to maya
+        if chunk.node.generateMaya.value:
+            try:
+                melPath = chunk.node.meloutput.value
+                cmd = f'maya_batch -batch -script "{melPath}"'
+                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout, stderr = p.communicate()
+
+                if len(stdout) > 0:
+                    chunk.logger.info(stdout.decode())
+
+                rc = p.returncode
+                if rc != 0:
+                    chunk.logger.error(stderr.decode())
+                    raise Exception(rc)
+
+            except Exception as e:
+                chunk.logger.error('Failed to run maya batch : "{}".'.format(str(e)))
+                raise RuntimeError()
+            
+            chunk.logger.info("Maya Scene generated")
+
 
         chunk.logManager.end()

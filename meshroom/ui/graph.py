@@ -38,7 +38,7 @@ from meshroom.ui.utils import makeProperty
 class PollerRefreshStatus(Enum):
     AUTO_ENABLED = 0  # The file watcher polls every single status file periodically
     DISABLED = 1  # The file watcher is disabled and never polls any file
-    MINIMAL_ENABLED = 2  # The file watcher only polls status files for chunks that are either submitted or running
+    MINIMAL_ENABLED = 2  # The file watcher only polls status files for chunks that are either submitted or running externally
 
 
 class FilesModTimePollerThread(QObject):
@@ -183,10 +183,12 @@ class ChunksMonitor(QObject):
             return self.statusFiles, self.monitorableChunks
         elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
             for c in self.monitorableChunks:
-                # When a chunk's status is ERROR, it may be externally re-submitted and it should thus still be monitored
-                if c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING or c._status.status is Status.ERROR:
-                    files.append(c.statusFile)
-                    chunks.append(c)
+                # Only chunks that are run externally should be monitored; when run locally, status changes are already notified
+                if c.isExtern():
+                    # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
+                    if c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING or c._status.status is Status.ERROR:
+                        files.append(c.statusFile)
+                        chunks.append(c)
         return files, chunks
 
     def compareFilesTimes(self, times):

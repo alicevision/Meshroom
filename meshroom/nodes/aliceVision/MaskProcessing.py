@@ -44,7 +44,7 @@ class MaskProcessing(desc.AVCommandLineNode):
                 value="",
             ),
             name="inputs",
-            label="Input directories",
+            label="Input Directories",
             description="A set of directories containing masks with the same names.",
             exposed=True,
         ),
@@ -52,9 +52,9 @@ class MaskProcessing(desc.AVCommandLineNode):
             name="operator",
             label="Operator",
             description="Operator: Binary operator\n"
-                        "OR : applies binary OR between all the masks\n"
-                        "AND : applies binary AND between all the masks\n"
-                        "NOT : applies binary NOT to the first mask in the list\n",
+                        "OR: applies binary OR between all the masks\n"
+                        "AND: applies binary AND between all the masks\n"
+                        "NOT: applies binary NOT to the first mask in the list\n",
             value="and",
             values=["or", "and", "not"],
         ),

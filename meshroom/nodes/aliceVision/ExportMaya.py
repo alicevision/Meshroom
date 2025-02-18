@@ -20,14 +20,14 @@ class ExportMaya(desc.Node):
         ),
         desc.File(
             name="alembic",
-            label="Alembic file",
+            label="Alembic File",
             description="Input alembic file.",
             value="",
         ),
         desc.File(
             name="mesh",
             label="Input Mesh",
-            description="Input Mesh file.",
+            description="Input mesh file.",
             value="",
         ),
         desc.File(
@@ -38,8 +38,8 @@ class ExportMaya(desc.Node):
         ),
         desc.BoolParam(
             name="generateMaya",
-            label="generate Maya scene",
-            description="Do we generate the scene or only export a mel script.",
+            label="Generate Maya Scene",
+            description="Select to generate the Maya scene in addition to the export of the mel script.",
             value=True,
         ),
         desc.ChoiceParam(
@@ -54,14 +54,14 @@ class ExportMaya(desc.Node):
     outputs = [
         desc.File(
             name="meloutput",
-            label="Mel script",
-            description="Generated mel script",
+            label="Mel Script",
+            description="Generated mel script.",
             value=desc.Node.internalFolder + "import.mel",
         ),
         desc.File(
             name="mayaoutput",
-            label="Maya scene",
-            description="Generated Maya scene",
+            label="Maya Scene",
+            description="Generated Maya scene.",
             value=desc.Node.internalFolder + "scene.mb",
             enabled=lambda node: node.generateMaya.value,
         ),
@@ -218,6 +218,5 @@ class ExportMaya(desc.Node):
                 raise RuntimeError()
             
             chunk.logger.info("Maya Scene generated")
-
 
         chunk.logManager.end()

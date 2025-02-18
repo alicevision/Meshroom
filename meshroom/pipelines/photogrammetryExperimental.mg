@@ -33,7 +33,7 @@
         "DepthMapFilter_1": {
             "nodeType": "DepthMapFilter",
             "position": [
-                1969,
+                2000,
                 0
             ],
             "inputs": {
@@ -44,7 +44,7 @@
         "DepthMap_1": {
             "nodeType": "DepthMap",
             "position": [
-                1769,
+                1800,
                 0
             ],
             "inputs": {
@@ -91,7 +91,7 @@
         "MeshFiltering_1": {
             "nodeType": "MeshFiltering",
             "position": [
-                2369,
+                2400,
                 0
             ],
             "inputs": {
@@ -101,7 +101,7 @@
         "Meshing_1": {
             "nodeType": "Meshing",
             "position": [
-                2169,
+                2200,
                 0
             ],
             "inputs": {
@@ -112,7 +112,7 @@
         "PrepareDenseScene_1": {
             "nodeType": "PrepareDenseScene",
             "position": [
-                1569,
+                1600,
                 0
             ],
             "inputs": {
@@ -122,7 +122,7 @@
         "Publish_1": {
             "nodeType": "Publish",
             "position": [
-                2769,
+                2800,
                 0
             ],
             "inputs": {
@@ -136,8 +136,8 @@
         "RelativePoseEstimating_1": {
             "nodeType": "RelativePoseEstimating",
             "position": [
-                990,
-                -1
+                1000,
+                0
             ],
             "inputs": {
                 "input": "{TracksBuilding_1.input}",
@@ -148,8 +148,8 @@
         "SfMBootStraping_1": {
             "nodeType": "SfMBootStraping",
             "position": [
-                1187,
-                -8
+                1200,
+                0
             ],
             "inputs": {
                 "input": "{RelativePoseEstimating_1.input}",
@@ -160,8 +160,8 @@
         "SfMExpanding_1": {
             "nodeType": "SfMExpanding",
             "position": [
-                1377,
-                -8
+                1400,
+                0
             ],
             "inputs": {
                 "input": "{SfMBootStraping_1.output}",
@@ -172,7 +172,7 @@
         "Texturing_1": {
             "nodeType": "Texturing",
             "position": [
-                2569,
+                2600,
                 0
             ],
             "inputs": {
@@ -184,8 +184,8 @@
         "TracksBuilding_1": {
             "nodeType": "TracksBuilding",
             "position": [
-                794,
-                -1
+                800,
+                0
             ],
             "inputs": {
                 "input": "{FeatureMatching_1.input}",

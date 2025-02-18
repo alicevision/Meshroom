@@ -25,7 +25,7 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
         desc.File(
             name="input",
             label="Input",
-            description="SfMData file input.",
+            description="SfMData input file.",
             value="",
         ),
         desc.BoolParam(
@@ -45,7 +45,7 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
         desc.StringParam(
             name="arguments",
             label="Arguments",
-            description="ExifTool command arguments",
+            description="ExifTool command arguments.",
             value="",
         ),
         desc.BoolParam(

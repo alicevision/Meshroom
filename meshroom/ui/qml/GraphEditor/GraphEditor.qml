@@ -53,8 +53,8 @@ Item {
     /// Get node delegate for the given node object
     function nodeDelegate(node) {
         for(var i = 0; i < nodeRepeater.count; ++i) {
-            if (nodeRepeater.itemAt(i).node === node)
-                return nodeRepeater.itemAt(i)
+            if (nodeRepeater.getItemAt(i).node === node)
+                return nodeRepeater.getItemAt(i)
         }
         return undefined
     }
@@ -827,141 +827,301 @@ Item {
                 property bool updateSelectionOnClick: false
                 property var temporaryEdgeAboutToBeRemoved: undefined
 
-                delegate: Node {
-                    id: nodeDelegate
+                function getItemAt(index) {
+                    /**
+                     * Helper function to get actual item from the repeater at a given index.
+                     */
+                    const loader = itemAt(index);
 
-                    node: object
-                    width: uigraph.layout.nodeWidth
+                    if (loader && loader.item) {
+                        return loader.item;
+                    }
 
-                    mainSelected: uigraph.selectedNode === node
-                    hovered: uigraph.hoveredNode === node
+                    return null;
+                }
 
-                    // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
-                    selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
+                delegate: Loader {
+                    id: nodeLoader
+                    Component {
+                        id: nodeComponent
+                        Node {
+                            id: nodeDelegate
 
-                    onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
-                    onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
+                            node: object
+                            width: uigraph.layout.nodeWidth
 
-                    onPressed: function(mouse) {
-                        nodeRepeater.updateSelectionOnClick = true;
-                        nodeRepeater.ongoingDrag = true;
+                            mainSelected: uigraph.selectedNode === node
+                            hovered: uigraph.hoveredNode === node
 
-                        let selectionMode = ItemSelectionModel.NoUpdate;
+                            // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
+                            selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
 
-                        if(!selected) {
-                            selectionMode = ItemSelectionModel.ClearAndSelect;
-                        }
+                            onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
+                            onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
 
-                        if (mouse.button === Qt.LeftButton) {
-                            if(mouse.modifiers & Qt.ShiftModifier) {
-                                selectionMode = ItemSelectionModel.Select;
-                            }
-                            if(mouse.modifiers & Qt.ControlModifier) {
-                                selectionMode = ItemSelectionModel.Toggle;
-                            }
-                            if(mouse.modifiers & Qt.AltModifier) {
-                                let selectFollowingMode = ItemSelectionModel.ClearAndSelect;
-                                if(mouse.modifiers & Qt.ShiftModifier) {
-                                    selectFollowingMode = ItemSelectionModel.Select;
+                            onPressed: function(mouse) {
+                                nodeRepeater.updateSelectionOnClick = true;
+                                nodeRepeater.ongoingDrag = true;
+
+                                let selectionMode = ItemSelectionModel.NoUpdate;
+
+                                if(!selected) {
+                                    selectionMode = ItemSelectionModel.ClearAndSelect;
                                 }
-                                uigraph.selectFollowing(node, selectFollowingMode);
-                                // Indicate selection has been dealt with by setting conservative Select mode.
-                                selectionMode = ItemSelectionModel.Select;
+
+                                if (mouse.button === Qt.LeftButton) {
+                                    if(mouse.modifiers & Qt.ShiftModifier) {
+                                        selectionMode = ItemSelectionModel.Select;
+                                    }
+                                    if(mouse.modifiers & Qt.ControlModifier) {
+                                        selectionMode = ItemSelectionModel.Toggle;
+                                    }
+                                    if(mouse.modifiers & Qt.AltModifier) {
+                                        let selectFollowingMode = ItemSelectionModel.ClearAndSelect;
+                                        if(mouse.modifiers & Qt.ShiftModifier) {
+                                            selectFollowingMode = ItemSelectionModel.Select;
+                                        }
+                                        uigraph.selectFollowing(node, selectFollowingMode);
+                                        // Indicate selection has been dealt with by setting conservative Select mode.
+                                        selectionMode = ItemSelectionModel.Select;
+                                    }
+                                }
+                                else if (mouse.button === Qt.RightButton) {
+                                    if(selected) {
+                                        // Keep the full selection when right-clicking on an already selected node.
+                                        nodeRepeater.updateSelectionOnClick = false;
+                                    }
+                                }
+
+                                if(selectionMode != ItemSelectionModel.NoUpdate) {
+                                    nodeRepeater.updateSelectionOnClick = false;
+                                    uigraph.selectNodeByIndex(index, selectionMode);
+                                }
+
+                                // If the node is selected after this, make it the active selected node.
+                                if(selected) {
+                                    uigraph.selectedNode = node;
+                                }
+
+                                // Open the node context menu once selection has been updated.
+                                if(mouse.button == Qt.RightButton) {
+                                    nodeMenuLoader.load(node)
+                                }
+
+                            }
+
+                            onReleased: function(mouse, wasDragged) {
+                                nodeRepeater.ongoingDrag = false;
+                            }
+
+                            // Only called when the node has not been dragged.
+                            onClicked: function(mouse) {
+                                if(!nodeRepeater.updateSelectionOnClick) {
+                                    return;
+                                }
+                                uigraph.selectNodeByIndex(index);
+                            }
+
+                            onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }
+
+                            onEntered: uigraph.hoveredNode = node
+                            onExited: uigraph.hoveredNode = null
+
+                            onEdgeAboutToBeRemoved: function(input) {
+                                /*
+                                * Sometimes the signals are not in the right order because of weird Qt/QML update order
+                                * (next DropArea entered signal before previous DropArea exited signal) so edgeAboutToBeRemoved
+                                * must be set to undefined before it can be set to another attribute object.
+                                */
+                                if (input === undefined) {
+                                    if (nodeRepeater.temporaryEdgeAboutToBeRemoved === undefined) {
+                                        root.edgeAboutToBeRemoved = input
+                                    } else {
+                                        root.edgeAboutToBeRemoved = nodeRepeater.temporaryEdgeAboutToBeRemoved
+                                        nodeRepeater.temporaryEdgeAboutToBeRemoved = undefined
+                                    }
+                                } else {
+                                    if (root.edgeAboutToBeRemoved === undefined) {
+                                        root.edgeAboutToBeRemoved = input
+                                    } else {
+                                        nodeRepeater.temporaryEdgeAboutToBeRemoved = input
+                                    }
+                                }
+                            }
+
+                            // Interactive dragging: move the visual delegates
+                            onPositionChanged: {
+                                if(!selected || !dragging) {
+                                    return;
+                                }
+                                // Compute offset between the delegate and the stored node position.
+                                const offset = Qt.point(x - node.x, y - node.y);
+
+                                uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+                                    if(idx != index) {
+                                        const delegate = nodeRepeater.itemAt(idx.row).item;
+                                        delegate.x = delegate.node.x + offset.x;
+                                        delegate.y = delegate.node.y + offset.y;
+                                    }
+                                });
+                            }
+
+                            // After drag: apply the final offset to all selected nodes
+                            onMoved: function(position) {
+                                const offset = Qt.point(position.x - node.x, position.y - node.y);
+                                uigraph.moveSelectedNodesBy(offset);
+                            }
+
+                            Behavior on x {
+                                enabled: !nodeRepeater.ongoingDrag
+                                NumberAnimation { duration: 100 }
+                            }
+                            Behavior on y {
+                                enabled: !nodeRepeater.ongoingDrag
+                                NumberAnimation { duration: 100 }
                             }
                         }
-                        else if (mouse.button === Qt.RightButton) {
-                            if(selected) {
-                                // Keep the full selection when right-clicking on an already selected node.
-                                nodeRepeater.updateSelectionOnClick = false;
+                    }
+
+                    Component {
+                        id: backdropComponent
+                        Backdrop {
+                            id: backdropDelegate
+
+                            node: object
+                            // The Item instantiating the delegates.
+                            modelInstantiator: nodeRepeater
+
+                            mainSelected: uigraph.selectedNode === node
+                            hovered: uigraph.hoveredNode === node
+
+                            // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
+                            selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
+
+                            onPressed: function(mouse) {
+                                nodeRepeater.updateSelectionOnClick = true;
+                                nodeRepeater.ongoingDrag = true;
+
+                                let selectionMode = ItemSelectionModel.NoUpdate;
+
+                                if(!selected) {
+                                    selectionMode = ItemSelectionModel.ClearAndSelect;
+                                }
+
+                                if (mouse.button === Qt.LeftButton) {
+                                    if(mouse.modifiers & Qt.ShiftModifier) {
+                                        selectionMode = ItemSelectionModel.Select;
+                                    }
+                                    if(mouse.modifiers & Qt.ControlModifier) {
+                                        selectionMode = ItemSelectionModel.Toggle;
+                                    }
+                                    if(mouse.modifiers & Qt.AltModifier) {
+                                        let selectFollowingMode = ItemSelectionModel.ClearAndSelect;
+                                        if(mouse.modifiers & Qt.ShiftModifier) {
+                                            selectFollowingMode = ItemSelectionModel.Select;
+                                        }
+                                        uigraph.selectFollowing(node, selectFollowingMode);
+                                        // Indicate selection has been dealt with by setting conservative Select mode.
+                                        selectionMode = ItemSelectionModel.Select;
+                                    }
+                                }
+                                else if (mouse.button === Qt.RightButton) {
+                                    if(selected) {
+                                        // Keep the full selection when right-clicking on an already selected node.
+                                        nodeRepeater.updateSelectionOnClick = false;
+                                    }
+                                }
+
+                                if(selectionMode != ItemSelectionModel.NoUpdate) {
+                                    nodeRepeater.updateSelectionOnClick = false;
+                                    uigraph.selectNodeByIndex(index, selectionMode);
+                                }
+
+                                // If the node is selected after this, make it the active selected node.
+                                if(selected) {
+                                    uigraph.selectedNode = node;
+                                }
+
+                                if (!(mouse.modifiers & Qt.AltModifier)) {
+                                    uigraph.selectNodesByIndices(childrenIndices, ItemSelectionModel.Select);
+                                }
+
+                                // Open the node context menu once selection has been updated.
+                                if(mouse.button == Qt.RightButton) {
+                                    nodeMenuLoader.load(node)
+                                }
+                            }
+
+                            onReleased: function(mouse, wasDragged) {
+                                nodeRepeater.ongoingDrag = false;
+                            }
+
+                            // Only called when the node has not been dragged.
+                            onClicked: function(mouse) {
+                                if(!nodeRepeater.updateSelectionOnClick) {
+                                    return;
+                                }
+                                uigraph.selectNodeByIndex(index);
+
+                                if (!(mouse.modifiers & Qt.AltModifier)) {
+                                    uigraph.selectNodesByIndices(childrenIndices, ItemSelectionModel.Select);
+                                }
+                            }
+
+                            onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }
+
+                            onResized: function(width, height) {
+                                uigraph.resizeNode(node, width, height);
+                            }
+
+                            onResizedAndMoved: function(width, height, position) {
+                                uigraph.resizeAndMoveNode(node, width, height, position);
+                            }
+
+                            onEntered: uigraph.hoveredNode = node
+                            onExited: uigraph.hoveredNode = null
+
+                            // Interactive dragging: move the visual delegates
+                            onPositionChanged: {
+                                if(!selected || !dragging) {
+                                    return;
+                                }
+
+                                // Compute offset between the delegate and the stored node position.
+                                const offset = Qt.point(x - node.x, y - node.y);
+
+                                uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+                                    if(idx != index) {
+                                        const delegate = nodeRepeater.itemAt(idx.row).item;
+                                        delegate.x = delegate.node.x + offset.x;
+                                        delegate.y = delegate.node.y + offset.y;
+                                    }
+                                });
+                            }
+
+                            // After drag: apply the final offset to all selected nodes
+                            onMoved: function(position) {
+                                const offset = Qt.point(position.x - node.x, position.y - node.y);
+                                uigraph.moveSelectedNodesBy(offset);
+                            }
+
+                            Behavior on x {
+                                enabled: !nodeRepeater.ongoingDrag && !resizing && !uigraph.animationsDisabled;
+                                NumberAnimation { duration: 100 }
+                            }
+                            Behavior on y {
+                                enabled: !nodeRepeater.ongoingDrag && !resizing && !uigraph.animationsDisabled;
+                                NumberAnimation { duration: 100 }
                             }
                         }
-
-                        if(selectionMode != ItemSelectionModel.NoUpdate) {
-                            nodeRepeater.updateSelectionOnClick = false;
-                            uigraph.selectNodeByIndex(index, selectionMode);
-                        }
-
-                        // If the node is selected after this, make it the active selected node.
-                        if(selected) {
-                            uigraph.selectedNode = node;
-                        }
-
-                        // Open the node context menu once selection has been updated.
-                        if(mouse.button == Qt.RightButton) {
-                            nodeMenuLoader.load(node)
-                        }
-
                     }
 
-                    onReleased: function(mouse, wasDragged) {
-                        nodeRepeater.ongoingDrag = false;
-                    }
+                    // Source Component for the delegate
+                    sourceComponent: object.isBackdrop ? backdropComponent : nodeComponent;
 
-                    // Only called when the node has not been dragged.
-                    onClicked: function(mouse) {
-                        if(!nodeRepeater.updateSelectionOnClick) {
-                            return;
-                        }
-                        uigraph.selectNodeByIndex(index);
-                    }
-
-                    onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }
-
-                    onEntered: uigraph.hoveredNode = node
-                    onExited: uigraph.hoveredNode = null
-
-                    onEdgeAboutToBeRemoved: function(input) {
-                        /*
-                         * Sometimes the signals are not in the right order because of weird Qt/QML update order
-                         * (next DropArea entered signal before previous DropArea exited signal) so edgeAboutToBeRemoved
-                         * must be set to undefined before it can be set to another attribute object.
-                         */
-                        if (input === undefined) {
-                            if (nodeRepeater.temporaryEdgeAboutToBeRemoved === undefined) {
-                                root.edgeAboutToBeRemoved = input
-                            } else {
-                                root.edgeAboutToBeRemoved = nodeRepeater.temporaryEdgeAboutToBeRemoved
-                                nodeRepeater.temporaryEdgeAboutToBeRemoved = undefined
-                            }
-                        } else {
-                            if (root.edgeAboutToBeRemoved === undefined) {
-                                root.edgeAboutToBeRemoved = input
-                            } else {
-                                nodeRepeater.temporaryEdgeAboutToBeRemoved = input
-                            }
-                        }
-                    }
-
-                    // Interactive dragging: move the visual delegates
-                    onPositionChanged: {
-                        if(!selected || !dragging) {
-                            return;
-                        }
-                        // Compute offset between the delegate and the stored node position.
-                        const offset = Qt.point(x - node.x, y - node.y);
-
-                        uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
-                            if(idx != index) {
-                                const delegate = nodeRepeater.itemAt(idx.row);
-                                delegate.x = delegate.node.x + offset.x;
-                                delegate.y = delegate.node.y + offset.y;
-                            }
-                        });
-                    }
-
-                    // After drag: apply the final offset to all selected nodes
-                    onMoved: function(position) {
-                        const offset = Qt.point(position.x - node.x, position.y - node.y);
-                        uigraph.moveSelectedNodesBy(offset);
-                    }
-
-                    Behavior on x {
-                        enabled: !nodeRepeater.ongoingDrag
-                        NumberAnimation { duration: 100 }
-                    }
-                    Behavior on y {
-                        enabled: !nodeRepeater.ongoingDrag
-                        NumberAnimation { duration: 100 }
+                    onLoaded: {
+                        // Node's Z-Ordering
+                        nodeLoader.z = nodeLoader.item.z;
                     }
                 }
             }
@@ -1159,7 +1319,7 @@ Item {
 
             function nextItem() {
                 // Compute bounding box
-                var node = nodeRepeater.itemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
+                var node = nodeRepeater.getItemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
                 var bbox = Qt.rect(node.x, node.y, node.width, node.height)
                 // Rescale to fit the bounding box in the view, zoom is limited to prevent huge text
                 draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height),maxZoom)
@@ -1179,13 +1339,13 @@ Item {
     }
 
     function boundingBox() {
-        var first = nodeRepeater.itemAt(0)
+        var first = nodeRepeater.getItemAt(0)
         if (first === null) {
             return Qt.rect(0, 0, 0, 0)
         }
         var bbox = Qt.rect(first.x, first.y, first.x + first.width, first.y + first.height)
         for (var i = 0; i < root.graph.nodes.count; ++i) {
-            var item = nodeRepeater.itemAt(i)
+            var item = nodeRepeater.getItemAt(i)
             bbox.x = Math.min(bbox.x, item.x)
             bbox.y = Math.min(bbox.y, item.y)
             bbox.width = Math.max(bbox.width, item.x + item.width)

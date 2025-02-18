@@ -21,10 +21,19 @@ SelectionBox {
         let selectedIndices = [];
         const mappedSelectionRect = mapToItem(container, selectionRect);
         for (var i = 0; i < modelInstantiator.count; ++i) {
-            const delegate = modelInstantiator.itemAt(i);
+            const delegate = modelInstantiator.getItemAt(i);
             const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height);
             if (Geom2D.rectRectIntersect(mappedSelectionRect, delegateRect)) {
                 selectedIndices.push(i);
+
+                // Check if the node is a backdrop
+                // If so add all of it's children indices as well
+                if (delegate.isBackdrop) {
+                    let children = delegate.getChildrenIndices(true);
+                    for (var c = 0; c < children.length; c++) {
+                        selectedIndices.push(children[c]);
+                    }
+                }
             }
         }
         delegateSelectionEnded(selectedIndices, modifiers);

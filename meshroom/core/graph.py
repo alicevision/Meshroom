@@ -19,7 +19,7 @@ from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
-from meshroom.core.nodeFactory import nodeFactory
+from meshroom.core.nodeFactory import createNode, nodeFactory
 from meshroom.core.typing import PathLike
 
 # Replace default encoder to support Enums
@@ -637,7 +637,7 @@ class Graph(BaseObject):
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 
-        n = self.addNode(Node(nodeType, position=position, **kwargs), uniqueName=name)
+        n = self.addNode(createNode(nodeType, position=position, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 

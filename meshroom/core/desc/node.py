@@ -1,34 +1,33 @@
+import enum
 import os
 import psutil
 import shlex
+from typing import List
 
 from .computation import Level, StaticNodeSize
-from .attribute import StringParam, ColorParam
+from .attribute import Attribute, StringParam, ColorParam, IntParam, FloatParam
 
 from meshroom.core import cgroup
 
 
-class Node(object):
+class Traits(enum.IntEnum):
+    """ Describes the characteristics of the Attribute Groups.
     """
-    """
-    internalFolder = '{cache}/{nodeType}/{uid}/'
-    cpu = Level.NORMAL
-    gpu = Level.NONE
-    ram = Level.NORMAL
-    packageName = ''
-    packageVersion = ''
-    internalInputs = [
-        StringParam(
-            name="invalidation",
-            label="Invalidation Message",
-            description="A message that will invalidate the node's output folder.\n"
-                        "This is useful for development, we can invalidate the output of the node when we modify the code.\n"
-                        "It is displayed in bold font in the invalidation/comment messages tooltip.",
-            value="",
-            semantic="multiline",
-            advanced=True,
-            uidIgnoreValue="",  # If the invalidation string is empty, it does not participate to the node's UID
-        ),
+
+    # Computable: Characterisics that holds invalidation attribute
+    COMPUTABLE = 1
+
+    # Incomputable: Characterisics that does not need processing
+    INCOMPUTABLE = 2
+
+    # Resizable: Characterisics that allows node's dimensions to be adjusted 
+    RESIZABLE = 3
+
+
+class AttributeFactory:
+
+    # Attribute Defines
+    BASIC = [
         StringParam(
             name="comment",
             label="Comments",
@@ -53,6 +52,72 @@ class Node(object):
             invalidate=False,
         )
     ]
+
+    INVALIDATION = [
+        StringParam(
+            name="invalidation",
+            label="Invalidation Message",
+            description="A message that will invalidate the node's output folder.\n"
+                        "This is useful for development, we can invalidate the output of the node when we modify the code.\n"
+                        "It is displayed in bold font in the invalidation/comment messages tooltip.",
+            value="",
+            semantic="multiline",
+            advanced=True,
+            uidIgnoreValue="",  # If the invalidation string is empty, it does not participate to the node's UID
+        )
+    ]
+
+    RESIZABLE = [
+        IntParam(
+            name="fontSize",
+            label="Font Size",
+            description="The Font size for the User Comment.",
+            value=12,
+            range=(6, 100, 1),
+        ),
+        FloatParam(
+            name="nodeWidth",
+            label="Node Width",
+            description="The Node's Width.",
+            value=600,
+            range=None,
+            enabled=False # Hidden always
+        ),
+        FloatParam(
+            name="nodeHeight",
+            label="Node Height",
+            description="The Node's Height.",
+            value=400,
+            range=None,
+            enabled=False # Hidden always
+        ),
+    ]
+
+    @classmethod
+    def getInternalParameters(cls, traits: Traits) -> List[Attribute]:
+        """ Returns an array of Attributes characterized by a given trait.
+        """
+        paramMap = {
+            Traits.COMPUTABLE: cls.INVALIDATION + cls.BASIC,
+            Traits.INCOMPUTABLE: cls.BASIC,
+            Traits.RESIZABLE: cls.BASIC + cls.RESIZABLE
+        }
+
+        return paramMap.get(traits)
+
+
+class Node(object):
+    """
+    """
+    internalFolder = '{cache}/{nodeType}/{uid}/'
+    cpu = Level.NORMAL
+    gpu = Level.NONE
+    ram = Level.NORMAL
+    packageName = ''
+    packageVersion = ''
+
+    internalInputs = AttributeFactory.getInternalParameters(Traits.COMPUTABLE)
+
     inputs = []
     outputs = []
     size = StaticNodeSize(1)
@@ -116,10 +181,16 @@ class InputNode(Node):
     """
     Node that does not need to be processed, it is just a placeholder for inputs.
     """
+
+    internalInputs = AttributeFactory.getInternalParameters(Traits.INCOMPUTABLE)
+
     def __init__(self):
         super(InputNode, self).__init__()
 
     def processChunk(self, chunk):
+        pass
+
+    def stopProcess(self, chunk):
         pass
 
 

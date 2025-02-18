@@ -14,7 +14,7 @@ import types
 import uuid
 from collections import namedtuple
 from enum import Enum
-from typing import Callable, Optional
+from typing import Callable, Optional, Type
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
@@ -573,6 +573,42 @@ class BaseNode(BaseObject):
         if self.hasInternalAttribute("comment"):
             return self.internalAttribute("comment").value
         return ""
+
+    def getFontSize(self):
+        """ Gets the Font Size of the node comment.
+
+        Returns:
+            int: The font size from the node if it exists, else 12 as default.
+        """
+        if self.hasInternalAttribute("fontSize"):
+            return self.internalAttribute("fontSize").value
+
+        # Default to 12
+        return 12
+
+    def getNodeWidth(self):
+        """ Gets the Width of the node from the internal attribute.
+
+        Returns:
+            int: The Width from the node if the attribute exists, else 160 as default.
+        """
+        if self.hasInternalAttribute("nodeWidth"):
+            return self.internalAttribute("nodeWidth").value
+
+        # Default to 160
+        return 160
+
+    def getNodeHeight(self):
+        """ Gets the Height of the node from the internal attribute.
+
+        Returns:
+            int: The Height from the node if the attribute exists, else 120 as default.
+        """
+        if self.hasInternalAttribute("nodeHeight"):
+            return self.internalAttribute("nodeHeight").value
+
+        # Default to 120
+        return 120
 
     @Slot(str, result=str)
     def nameToLabel(self, name):
@@ -1200,6 +1236,11 @@ class BaseNode(BaseObject):
     def _isInputNode(self):
         return isinstance(self.nodeDesc, desc.InputNode)
 
+    def _isBackdropNode(self) -> bool:
+        """ Returns True if the node is a Backdrop type.
+        """
+        return False
+
     @property
     def globalExecMode(self):
         return self._chunks.at(0).execModeName
@@ -1389,6 +1430,11 @@ class BaseNode(BaseObject):
     color = Property(str, getColor, notify=internalAttributesChanged)
     invalidation = Property(str, getInvalidationMessage, notify=internalAttributesChanged)
     comment = Property(str, getComment, notify=internalAttributesChanged)
+    fontSize = Property(int, getFontSize, notify=internalAttributesChanged)
+
+    # Node Dimensions
+    nodeWidth = Property(float, getNodeWidth, notify=internalAttributesChanged)
+    nodeHeight = Property(float, getNodeHeight, notify=internalAttributesChanged)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     valuesFile = Property(str, valuesFile.fget, notify=internalFolderChanged)
@@ -1408,6 +1454,7 @@ class BaseNode(BaseObject):
     # isCompatibilityNode: need lambda to evaluate the virtual function
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
+    isBackdrop = Property(bool, lambda self: self._isBackdropNode(), constant=True)
 
     globalExecModeChanged = Signal()
     globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)
@@ -1426,6 +1473,50 @@ class BaseNode(BaseObject):
     hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
+
+
+class Backdrop(BaseNode):
+    """ A Node serving as a Backdrop in the Graph.
+    """
+
+    def __init__(self, nodeType: str, position=None, parent=None, uid=None, **kwargs):
+        super().__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
+
+        if not self.nodeDesc:
+            raise UnknownNodeTypeError(nodeType)
+
+        self.packageName = self.nodeDesc.packageName
+        self.packageVersion = self.nodeDesc.packageVersion
+        self._internalFolder = self.nodeDesc.internalFolder
+
+        for attrDesc in self.nodeDesc.internalInputs:
+            self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False,
+                                                          node=self))
+
+    def _isBackdropNode(self) -> bool:
+        """ Returns True.
+        """
+        return True
+
+    def toDict(self) -> dict:
+        """ Returns the serialised data for the Backdrop.
+        """
+        internalInputs = {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
+
+        return {
+            'nodeType': self.nodeType,
+            'position': self._position,
+            'parallelization': {
+                'blockSize': 0,
+                'size': 0,
+                'split': 0
+            },
+            'uid': self._uid,
+            'internalFolder': self._internalFolder,
+            'inputs': {},
+            'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
+            'outputs': {},
+        }
 
 
 class Node(BaseNode):

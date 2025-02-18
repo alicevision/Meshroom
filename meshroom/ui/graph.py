@@ -375,9 +375,23 @@ class UIGraph(QObject):
         self._nodeSelection = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
 
+        # UI based animations can be controlled by this flag
+        self._disableAnimations = False
+
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
         self.filePollerRefreshChanged.connect(self._chunksMonitor.filePollerRefreshChanged)
+
+    @property
+    def disableAnimations(self) -> bool:
+        """ Returns whether the animations are currently disabled. """
+        return self._disableAnimations
+
+    @disableAnimations.setter
+    def disableAnimations(self, disable: bool):
+        """ Updates the Animation state for the UI graph. """
+        self._disableAnimations = disable
+        self.attributeChanged.emit()
 
     def setGraph(self, g):
         """ Set the internal graph. """
@@ -627,6 +641,18 @@ class UIGraph(QObject):
         """
         return commands.GroupedGraphModification(self._graph, self._undoStack, title, disableUpdates)
 
+    def groupedUIGraphModification(self, title, disableUpdates=True):
+        """ Get a GroupedUIGraphModification for this Graph.
+
+        Args:
+            title (str): the title of the macro command
+            disableUpdates (bool): whether to disable graph and ui updates
+
+        Returns:
+            GroupedGraphModification: the instantiated context manager
+        """
+        return commands.GroupedUIGraphModification(self, self._undoStack, title, disableUpdates)
+
     @Slot(str)
     def beginModification(self, name):
         """ Begin a Graph modification. Calls to beginModification and endModification may be nested, but
@@ -667,6 +693,40 @@ class UIGraph(QObject):
             position: The target position.
         """
         self.push(commands.MoveNodeCommand(self._graph, node, position))
+
+    @Slot(Node, float, float)
+    def resizeNode(self, node, width, height):
+        """ Resizes the Node.
+
+        Args:
+            node (Node): the node to move
+            width (float): Node width.
+            height (float): Node height.
+            position (QPoint): Node's position.
+        """
+        self.resizeAndMoveNode(node, width, height)
+
+    @Slot(Node, float, float, QPoint)
+    def resizeAndMoveNode(self, node, width, height, position=None):
+        """ Resizes the Node as well moves it in a single update.
+
+        Args:
+            node (Node): the node to move
+            width (float): Node width.
+            height (float): Node height.
+            position (QPoint): Node's position.
+        """
+        # Update the node size
+        with self.groupedUIGraphModification("Resize Node"):
+            if node.hasInternalAttribute("nodeWidth"):
+                self.setAttribute(node.internalAttribute("nodeWidth"), width)
+            if node.hasInternalAttribute("nodeHeight"):
+                self.setAttribute(node.internalAttribute("nodeHeight"), height)
+            
+            # If we have an offset, it means that the node was resized from the left side
+            # Update the node's actual position
+            if position:
+                self.moveNode(node, Position(position.x(), position.y()))
 
     @Slot(QPoint)
     def moveSelectedNodesBy(self, offset: QPoint):
@@ -1115,6 +1175,10 @@ class UIGraph(QObject):
     hoveredNodeChanged = Signal()
     # Currently hovered node
     hoveredNode = makeProperty(QObject, "_hoveredNode", hoveredNodeChanged, resetOnDestroy=True)
+
+    # Currently resizing a node
+    attributeChanged = Signal()
+    animationsDisabled = Property(bool, disableAnimations.fget, notify=attributeChanged)
 
     filePollerRefreshChanged = Signal(int)
     filePollerRefresh = Property(int, lambda self: self._chunksMonitor.filePollerRefresh, notify=filePollerRefreshChanged)

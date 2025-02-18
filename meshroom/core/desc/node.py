@@ -68,6 +68,11 @@ class Node(object):
         return attrValues
 
     @classmethod
+    def onNodeCreated(cls, node):
+        """Called after a node instance had been created from this node descriptor and added to a Graph."""
+        pass
+
+    @classmethod
     def update(cls, node):
         """ Method call before node's internal update on invalidation.
 

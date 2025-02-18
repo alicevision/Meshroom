@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, Optional
+from typing import Any, Iterable, Optional
 import weakref
 from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
@@ -256,6 +256,11 @@ class Graph(BaseObject):
             publishOutputs: (optional) Whether to keep 'Publish' nodes.
         """
         self._deserialize(Graph._loadGraphData(filepath))
+
+        # Creating nodes from a template is conceptually similar to explicit node creation,
+        # therefore the nodes descriptors' "onNodeCreated" callback is triggered for each
+        # node instance created by this process.
+        self._triggerNodeCreatedCallback(self.nodes)
 
         if not publishOutputs:
             with GraphModification(self):
@@ -621,15 +626,17 @@ class Graph(BaseObject):
 
         return inEdges, outEdges, outListAttributes
 
-    def addNewNode(self, nodeType, name=None, position=None, **kwargs):
+    def addNewNode(
+        self, nodeType: str, name: Optional[str] = None, position: Optional[str] = None, **kwargs
+    ) -> Node:
         """
         Create and add a new node to the graph.
 
         Args:
-            nodeType (str): the node type name.
-            name (str): if specified, the desired name for this node. If not unique, will be prefixed (_N).
-            position (Position): (optional) the position of the node
-            **kwargs: keyword arguments to initialize node's attributes
+            nodeType: the node type name.
+            name: if specified, the desired name for this node. If not unique, will be prefixed (_N).
+            position: the position of the node.
+            **kwargs: keyword arguments to initialize the created node's attributes.
 
         Returns:
              The newly created node.
@@ -637,9 +644,17 @@ class Graph(BaseObject):
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 
-        n = self.addNode(Node(nodeType, position=position, **kwargs), uniqueName=name)
-        n.updateInternals()
-        return n
+        node = self.addNode(Node(nodeType, position=position, **kwargs), uniqueName=name)
+        node.updateInternals()
+        self._triggerNodeCreatedCallback([node])
+        return node
+
+    def _triggerNodeCreatedCallback(self, nodes: Iterable[Node]):
+        """Trigger the `onNodeCreated` node descriptor callback for each node instance in `nodes`."""
+        with GraphModification(self):
+            for node in nodes:
+                if node.nodeDesc:
+                    node.nodeDesc.onNodeCreated(node)
 
     def _createUniqueNodeName(self, inputName: str, existingNames: Optional[set[str]] = None):
         """Create a unique node name based on the input name.

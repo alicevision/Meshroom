@@ -250,6 +250,9 @@ class MeshroomApp(QApplication):
         # be retrievable
         self._updatedRecentProjectFilesThumbnails = True
 
+        # Register components for QML before instantiating the engine
+        components.registerTypes()
+
         # QML engine setup
         qmlDir = os.path.join(pwd, "qml")
         url = os.path.join(qmlDir, "main.qml")
@@ -263,7 +266,6 @@ class MeshroomApp(QApplication):
             qInstallMessageHandler(MessageHandler.handler)
 
         self.engine.addImportPath(qmlDir)
-        components.registerTypes()
 
         # expose available node types that can be instantiated
         self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": nodesDesc[n].category} for n in sorted(nodesDesc.keys())})

@@ -237,7 +237,9 @@ Item {
                 }
 
                 // Add a "Pipelines" category, filled with the list of templates to create pipelines from the menu
-                categories["Pipelines"] = MeshroomApp.pipelineTemplateNames
+                if (MeshroomApp.pipelineTemplateNames.length > 0) {
+                    categories["Pipelines"] = MeshroomApp.pipelineTemplateNames
+                }
 
                 return categories
             }

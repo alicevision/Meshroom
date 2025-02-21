@@ -769,7 +769,7 @@ RowLayout {
                     var obj = cpt.createObject(groupItem,
                                                {
                                                    'model': Qt.binding(function() { return attribute.value }),
-                                                   'readOnly': Qt.binding(function() { return root.readOnly }),
+                                                   'readOnly': Qt.binding(function() { return !root.editable }),
                                                    'labelWidth': 100,  // Reduce label width for children (space gain)
                                                    'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
                                                    'filterText': Qt.binding(function() { return root.filterText }),

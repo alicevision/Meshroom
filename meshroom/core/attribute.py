@@ -472,11 +472,16 @@ class PushButtonParam(Attribute):
 
 class ChoiceParam(Attribute):
 
-    def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
+    def __init__(self, node, attributeDesc: desc.ChoiceParam, isOutput, root=None, parent=None):
         super(ChoiceParam, self).__init__(node, attributeDesc, isOutput, root, parent)
         self._values = None
 
+    def __len__(self):
+        return len(self.getValues())
+
     def getValues(self):
+        if (linkParam := self.getLinkParam()) is not None:
+            return linkParam.getValues()
         return self._values if self._values is not None else self.desc._values
 
     def conformValue(self, val):
@@ -494,6 +499,15 @@ class ChoiceParam(Attribute):
             raise ValueError("Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})".
                              format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
+    
+    def _set_value(self, value):
+        # Handle alternative serialization for ChoiceParam with overriden values.
+        serializedValueWithValuesOverrides = isinstance(value, dict)
+        if serializedValueWithValuesOverrides:
+            super()._set_value(value[self.desc._OVERRIDE_SERIALIZATION_KEY_VALUE])
+            self.setValues(value[self.desc._OVERRIDE_SERIALIZATION_KEY_VALUES])
+        else:
+            super()._set_value(value)
 
     def setValues(self, values):
         if values == self._values:
@@ -501,9 +515,18 @@ class ChoiceParam(Attribute):
         self._values = values
         self.valuesChanged.emit()
 
-    def __len__(self):
-        return len(self.getValues())
+    def getExportValue(self):
+        useStandardSerialization = self.isLink or not self.desc._saveValuesOverride or self._values is None
 
+        if useStandardSerialization:
+            return super().getExportValue()
+
+        return {
+            self.desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
+            self.desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
+        }
+
+    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     valuesChanged = Signal()
     values = Property(Variant, getValues, setValues, notify=valuesChanged)
 

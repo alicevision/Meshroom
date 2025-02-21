@@ -411,16 +411,33 @@ class PushButtonParam(Param):
 
 class ChoiceParam(Param):
     """
+    ChoiceParam is an Attribute that allows to choose a value among a list of possible values.
+
+    When using `exclusive=True`, the value is a single element of the list of possible values.
+    When using `exclusive=False`, the value is a list of elements of the list of possible values.
+    
+    Despite this being the standard behavior, ChoiceParam also supports custom value: it is possible to set any value, 
+    even outside list of possible values.
+
+    The list of possible values on a ChoiceParam instance can be overriden at runtime. 
+    If those changes needs to be persisted, `saveValuesOverride` should be set to True.
     """
-    def __init__(self, name, label, description, value, values, exclusive=True, group="allParams", joinChar=" ",
-                 advanced=False, enabled=True, invalidate=True, semantic="", validValue=True, errorMessage="",
+
+    # Keys for values override serialization schema (saveValuesOverride=True).
+    _OVERRIDE_SERIALIZATION_KEY_VALUE = "__ChoiceParam_value__"
+    _OVERRIDE_SERIALIZATION_KEY_VALUES = "__ChoiceParam_values__"
+
+    def __init__(self, name: str, label: str, description: str, value, values, exclusive=True, saveValuesOverride=False, 
+                 group="allParams", joinChar=" ", advanced=False, enabled=True, invalidate=True, semantic="", 
+                 validValue=True, errorMessage="",
                  visible=True, exposed=False):
-        assert values
+
         super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value,
                                           group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
                                           semantic=semantic, validValue=validValue, errorMessage=errorMessage,
                                           visible=visible, exposed=exposed)
         self._values = values
+        self._saveValuesOverride = saveValuesOverride
         self._exclusive = exclusive
         self._joinChar = joinChar
         if self._values:
@@ -447,6 +464,11 @@ class ChoiceParam(Param):
     def validateValue(self, value):
         if value is None:
             return value
+
+        serializedWithValuesOverride = isinstance(value, dict)
+        if serializedWithValuesOverride:
+            value = value[ChoiceParam._OVERRIDE_SERIALIZATION_KEY_VALUE]
+
         if self.exclusive:
             return self.conformValue(value)
 

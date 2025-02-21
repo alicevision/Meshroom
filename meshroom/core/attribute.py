@@ -862,6 +862,9 @@ class GroupAttribute(Attribute):
                 raise AttributeError(key)
 
     def _set_value(self, exportedValue):
+        if self._handleLinkValue(exportedValue):
+            return
+
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
@@ -876,6 +879,8 @@ class GroupAttribute(Attribute):
             raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
 
     def upgradeValue(self, exportedValue):
+        if self._handleLinkValue(exportedValue):
+            return
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
@@ -920,6 +925,9 @@ class GroupAttribute(Attribute):
             return None
 
     def uid(self):
+        if self.isLink:
+            return super().uid()
+
         uids = []
         for k, v in self._value.items():
             if v.enabled and v.invalidate:
@@ -927,13 +935,20 @@ class GroupAttribute(Attribute):
         return hashValue(uids)
 
     def _applyExpr(self):
-        for value in self._value:
-            value._applyExpr()
+        if self._linkExpression:
+            super()._applyExpr()
+        else:
+            for value in self._value:
+                value._applyExpr()
 
     def getExportValue(self):
-        return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
+        if linkParam := self.getLinkParam():
+            return linkParam.asLinkExpr()
+        return {key: attr.getExportValue() for key, attr in self._value.items()}
 
     def _isDefault(self):
+        if linkParam := self.getLinkParam():
+            return linkParam._isDefault()
         return all(v.isDefault for v in self._value)
 
     def defaultValue(self):

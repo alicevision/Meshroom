@@ -599,400 +599,422 @@ Page {
         }
     }
 
-    header: RowLayout {
-        spacing: 0
-        MaterialToolButton {
-            id: homeButton
-            text: MaterialIcons.home
+    header: Rectangle {
+        color: Qt.darker(activePalette.window, 1.15)
+        height: 26
 
-            font.pointSize: 18
+        RowLayout {
+            anchors.fill: parent
+            spacing: 0
+            MaterialToolButton {
+                id: homeButton
+                text: MaterialIcons.home
 
-            background: Rectangle {
-                color: homeButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.15)
-                border.color: Qt.darker(activePalette.window, 1.15)
-            }
+                topPadding: 0
+                bottomPadding: 0
 
-            onClicked: {
-                if (!ensureNotComputing())
-                    return
-                ensureSaved(function() {
-                    _reconstruction.clear()
-                    if (mainStack.depth == 1)
-                        mainStack.replace("Homepage.qml")
-                    else
-                        mainStack.pop()
-                })
-            }
-        }
-        MenuBar {
-            palette.window: Qt.darker(activePalette.window, 1.15)
-            Menu {
-                title: "File"
-                Action {
-                    id: newAction
-                    text: "New"
-                    shortcut: "Ctrl+N"
-                    onTriggered: ensureSaved(function() {
-                        _reconstruction.new()
+                font.pointSize: 18
+                palette.text: hovered ? Colors.sysPalette.highlight : Colors.sysPalette.text
+                background: Rectangle {
+                    color: Qt.darker(activePalette.window, 1.15)
+                    border.color: Qt.darker(activePalette.window, 1.15)
+                }
+
+                onClicked: {
+                    if (!ensureNotComputing())
+                        return
+                    ensureSaved(function() {
+                        _reconstruction.clear()
+                        if (mainStack.depth == 1)
+                            mainStack.replace("Homepage.qml")
+                        else
+                            mainStack.pop()
                     })
                 }
-                Menu {
-                    id: newPipelineMenu
-                    title: "New Pipeline"
-                    enabled: newPipelineMenuItems.model !== undefined && newPipelineMenuItems.model.length > 0
-                    property int maxWidth: 1000
-                    property int fullWidth: {
-                        var result = 0;
-                        for (var i = 0; i < count; ++i) {
-                            var item = itemAt(i)
-                            result = Math.max(item.implicitWidth + item.padding * 2, result)
-                        }
-                        return result;
+            }
+            Item {
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                MenuBar {
+                    Layout.fillHeight: true
+                    topPadding: 0
+                    bottomPadding: 0
+
+                    background: Rectangle {
+                        color: Qt.darker(activePalette.window, 1.15)
                     }
-                    implicitWidth: fullWidth
-                    Repeater {
-                        id: newPipelineMenuItems
-                        model: MeshroomApp.pipelineTemplateFiles
-                        MenuItem {
+                    Menu {
+                        title: "File"
+                        Action {
+                            id: newAction
+                            text: "New"
+                            shortcut: "Ctrl+N"
                             onTriggered: ensureSaved(function() {
-                                _reconstruction.new(modelData["key"])
+                                _reconstruction.new()
                             })
-
-                            text: fileTextMetrics.elidedText
-                            TextMetrics {
-                                id: fileTextMetrics
-                                text: modelData["name"]
-                                elide: Text.ElideLeft
-                                elideWidth: newPipelineMenu.maxWidth
-                            }
-
-                            ToolTip {
-                                id: toolTip
-
-                                delay: 200
-                                text: modelData["path"]
-                                visible: hovered
-                            }
                         }
-                    }
-                }
-                Action {
-                    id: openActionItem
-                    text: "Open"
-                    shortcut: "Ctrl+O"
-                    onTriggered: ensureSaved(function() {
-                            initFileDialogFolder(openFileDialog)
-                            openFileDialog.open()
-                        })
-                }
-                Menu {
-                    id: openRecentMenu
-                    title: "Open Recent"
-                    enabled: recentFilesMenuItems.model !== undefined && recentFilesMenuItems.model.length > 0
-                    property int maxWidth: 1000
-                    property int fullWidth: {
-                        var result = 0;
-                        for (var i = 0; i < count; ++i) {
-                            var item = itemAt(i)
-                            result = Math.max(item.implicitWidth + item.padding * 2, result)
-                        }
-                        return result
-                    }
-                    implicitWidth: fullWidth
-                    Repeater {
-                        id: recentFilesMenuItems
-                        model: MeshroomApp.recentProjectFiles
-                        MenuItem {
-                            onTriggered: ensureSaved(function() {
-                                openRecentMenu.dismiss()
-                                if (_reconstruction.load(modelData["path"])) {
-                                    MeshroomApp.addRecentProjectFile(modelData["path"])
-                                } else {
-                                    MeshroomApp.removeRecentProjectFile(modelData["path"])
+                        Menu {
+                            id: newPipelineMenu
+                            title: "New Pipeline"
+                            enabled: newPipelineMenuItems.model !== undefined && newPipelineMenuItems.model.length > 0
+                            property int maxWidth: 1000
+                            property int fullWidth: {
+                                var result = 0;
+                                for (var i = 0; i < count; ++i) {
+                                    var item = itemAt(i)
+                                    result = Math.max(item.implicitWidth + item.padding * 2, result)
                                 }
-                            })
-                            
-                            text: fileTextMetrics.elidedText
-                            TextMetrics {
-                                id: fileTextMetrics
-                                text: modelData["path"]
-                                elide: Text.ElideLeft
-                                elideWidth: openRecentMenu.maxWidth
+                                return result;
+                            }
+                            implicitWidth: fullWidth
+                            Repeater {
+                                id: newPipelineMenuItems
+                                model: MeshroomApp.pipelineTemplateFiles
+                                MenuItem {
+                                    onTriggered: ensureSaved(function() {
+                                        _reconstruction.new(modelData["key"])
+                                    })
+
+                                    text: fileTextMetrics.elidedText
+                                    TextMetrics {
+                                        id: fileTextMetrics
+                                        text: modelData["name"]
+                                        elide: Text.ElideLeft
+                                        elideWidth: newPipelineMenu.maxWidth
+                                    }
+
+                                    ToolTip {
+                                        id: toolTip
+
+                                        delay: 200
+                                        text: modelData["path"]
+                                        visible: hovered
+                                    }
+                                }
                             }
                         }
-                    }
-                }
-                MenuSeparator { }
-                Action {
-                    id: saveAction
-                    text: "Save"
-                    shortcut: "Ctrl+S"
-                    enabled: _reconstruction ? (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean : false
-                    onTriggered: {
-                        if (_reconstruction.graph.filepath) {
-                            // Get current time date
-                            var date = _reconstruction.graph.getFileDateVersionFromPath(_reconstruction.graph.filepath)
+                        Action {
+                            id: openActionItem
+                            text: "Open"
+                            shortcut: "Ctrl+O"
+                            onTriggered: ensureSaved(function() {
+                                    initFileDialogFolder(openFileDialog)
+                                    openFileDialog.open()
+                                })
+                        }
+                        Menu {
+                            id: openRecentMenu
+                            title: "Open Recent"
+                            enabled: recentFilesMenuItems.model !== undefined && recentFilesMenuItems.model.length > 0
+                            property int maxWidth: 1000
+                            property int fullWidth: {
+                                var result = 0;
+                                for (var i = 0; i < count; ++i) {
+                                    var item = itemAt(i)
+                                    result = Math.max(item.implicitWidth + item.padding * 2, result)
+                                }
+                                return result
+                            }
+                            implicitWidth: fullWidth
+                            Repeater {
+                                id: recentFilesMenuItems
+                                model: MeshroomApp.recentProjectFiles
+                                MenuItem {
+                                    onTriggered: ensureSaved(function() {
+                                        openRecentMenu.dismiss()
+                                        if (_reconstruction.load(modelData["path"])) {
+                                            MeshroomApp.addRecentProjectFile(modelData["path"])
+                                        } else {
+                                            MeshroomApp.removeRecentProjectFile(modelData["path"])
+                                        }
+                                    })
+                                    
+                                    text: fileTextMetrics.elidedText
+                                    TextMetrics {
+                                        id: fileTextMetrics
+                                        text: modelData["path"]
+                                        elide: Text.ElideLeft
+                                        elideWidth: openRecentMenu.maxWidth
+                                    }
+                                }
+                            }
+                        }
+                        MenuSeparator { }
+                        Action {
+                            id: saveAction
+                            text: "Save"
+                            shortcut: "Ctrl+S"
+                            enabled: _reconstruction ? (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean : false
+                            onTriggered: {
+                                if (_reconstruction.graph.filepath) {
+                                    // Get current time date
+                                    var date = _reconstruction.graph.getFileDateVersionFromPath(_reconstruction.graph.filepath)
 
-                            // Check if the file has been modified by another instance
-                            if (_reconstruction.graph.fileDateVersion !== date) {
-                                fileModifiedDialog.open()
-                            } else
-                                _reconstruction.save()
-                        } else {
-                            initFileDialogFolder(saveFileDialog)
-                            saveFileDialog.open()
+                                    // Check if the file has been modified by another instance
+                                    if (_reconstruction.graph.fileDateVersion !== date) {
+                                        fileModifiedDialog.open()
+                                    } else
+                                        _reconstruction.save()
+                                } else {
+                                    initFileDialogFolder(saveFileDialog)
+                                    saveFileDialog.open()
+                                }
+                            }
+                        }
+                        Action {
+                            id: saveAsAction
+                            text: "Save As..."
+                            shortcut: "Ctrl+Shift+S"
+                            onTriggered: {
+                                initFileDialogFolder(saveFileDialog)
+                                saveFileDialog.open()
+                            }
+                        }
+                        MenuSeparator { }
+                        Action {
+                            id: importImagesAction
+                            text: "Import Images"
+                            shortcut: "Ctrl+I"
+                            onTriggered: {
+                                initFileDialogFolder(importImagesDialog, true)
+                                importImagesDialog.open()
+                            }
+                        }
+
+                        MenuItem {
+                            action: removeAllImagesAction
+                            ToolTip.visible: hovered
+                            ToolTip.text: removeAllImagesAction.tooltip
+                        }
+
+                        MenuSeparator { }
+                        Menu {
+                            id: advancedMenu
+                            title: "Advanced"
+                            implicitWidth: 300
+
+                            Action {
+                                id: saveAsTemplateAction
+                                text: "Save As Template..."
+                                shortcut: Shortcut {
+                                    sequence: "Ctrl+Shift+T"
+                                    context: Qt.ApplicationShortcut
+                                    onActivated: saveAsTemplateAction.triggered()
+                                }
+                                onTriggered: {
+                                    initFileDialogFolder(saveTemplateDialog)
+                                    saveTemplateDialog.open()
+                                }
+                            }
+
+                            MenuItem {
+                                action: loadTemplateAction
+                                ToolTip.visible: hovered
+                                ToolTip.text: loadTemplateAction.tooltip
+                            }
+
+                            Action {
+                                id: importProjectAction
+                                text: "Import Project"
+                                shortcut: Shortcut {
+                                    sequence: "Ctrl+Shift+I"
+                                    context: Qt.ApplicationShortcut
+                                    onActivated: importProjectAction.triggered()
+                                }
+                                onTriggered: {
+                                    initFileDialogFolder(importProjectDialog)
+                                    importProjectDialog.open()
+                                }
+                            }
+
+                            MenuItem {
+                                action: removeImagesFromAllGroupsAction
+                                ToolTip.visible: hovered
+                                ToolTip.text: removeImagesFromAllGroupsAction.tooltip
+                            }
+                        }
+                        MenuSeparator { }
+                        Action {
+                            text: "Quit"
+                            onTriggered: _window.close()
+                        }
+                    }
+                    Menu {
+                        title: "Edit"
+                        MenuItem {
+                            action: undoAction
+                            ToolTip.visible: hovered
+                            ToolTip.text: undoAction.tooltip
+                        }
+                        MenuItem {
+                            action: redoAction
+                            ToolTip.visible: hovered
+                            ToolTip.text: redoAction.tooltip
+                        }
+                        MenuItem {
+                            action: cutAction
+                            ToolTip.visible: hovered
+                            ToolTip.text: cutAction.tooltip
+                        }
+                        MenuItem {
+                            action: copyAction
+                            ToolTip.visible: hovered
+                            ToolTip.text: copyAction.tooltip
+                        }
+                        MenuItem {
+                            action: pasteAction
+                            ToolTip.visible: hovered
+                            ToolTip.text: pasteAction.tooltip
+                        }
+                    }
+                    Menu {
+                        title: "View"
+                        MenuItem {
+                            id: graphEditorVisibilityCB
+                            text: "Graph Editor"
+                            checkable: true
+                            checked: true
+                        }
+                        MenuItem {
+                            id: liveSfMVisibilityCB
+                            text: "Live Reconstruction"
+                            checkable: true
+                            checked: false
+                        }
+                        MenuItem {
+                            id: imageViewerVisibilityCB
+                            text: "Image Viewer"
+                            checkable: true
+                            checked: true
+                        }
+                        MenuItem {
+                            id: viewer3DVisibilityCB
+                            text: "3D Viewer"
+                            checkable: true
+                            checked: true
+                        }
+                        MenuItem {
+                            id: imageGalleryVisibilityCB
+                            text: "Image Gallery"
+                            checkable: true
+                            checked: true
+                        }
+                        MenuSeparator {}
+                        Action {
+                            text: "Fullscreen"
+                            checkable: true
+                            checked: _window.visibility == ApplicationWindow.FullScreen
+                            shortcut: "Ctrl+F"
+                            onTriggered: _window.visibility == ApplicationWindow.FullScreen ? _window.showNormal() : showFullScreen()
+                        }
+                    }
+                    Menu {
+                        title: "Process"
+                        Action {
+                            text: "Compute all nodes"
+                            onTriggered: computeManager.compute(null)
+                            enabled: _reconstruction ? !_reconstruction.computingLocally : false
+                        }
+                        Action {
+                            text: "Submit all nodes"
+                            onTriggered: computeManager.submit(null)
+                            enabled: _reconstruction ? _reconstruction.canSubmit : false
+                        }
+                        MenuSeparator {}
+                        Action {
+                            text: "Stop computation"
+                            onTriggered: _reconstruction.stopExecution()
+                            enabled: _reconstruction ? _reconstruction.computingLocally : false
+                        }
+                    }
+                    Menu {
+                        title: "Help"
+                        Action {
+                            text: "Online Documentation"
+                            onTriggered: Qt.openUrlExternally("https://meshroom-manual.readthedocs.io")
+                        }
+                        Action {
+                            text: "About Meshroom"
+                            onTriggered: aboutDialog.open()
+                            // Should be StandardKey.HelpContents, but for some reason it's not stable
+                            // (may cause crash, requires pressing F1 twice after closing the popup)
+                            shortcut: "F1"
                         }
                     }
                 }
-                Action {
-                    id: saveAsAction
-                    text: "Save As..."
-                    shortcut: "Ctrl+Shift+S"
-                    onTriggered: {
-                        initFileDialogFolder(saveFileDialog)
-                        saveFileDialog.open()
-                    }
-                }
-                MenuSeparator { }
-                Action {
-                    id: importImagesAction
-                    text: "Import Images"
-                    shortcut: "Ctrl+I"
-                    onTriggered: {
-                        initFileDialogFolder(importImagesDialog, true)
-                        importImagesDialog.open()
-                    }
-                }
+            }
 
-                MenuItem {
-                    action: removeAllImagesAction
+            Row {
+                // Process buttons
+                MaterialToolButton {
+                    id: processButton
+
+                    font.pointSize: 18
+
+                    topPadding: 0
+                    bottomPadding: 0
+                    palette.text: hovered ? Colors.sysPalette.highlight : Colors.sysPalette.text
+
+                    text: !(_reconstruction.computingLocally) ? MaterialIcons.send : MaterialIcons.cancel_schedule_send
+
+                    ToolTip.text: !(_reconstruction.computingLocally) ? "Compute" : "Stop Computing"
                     ToolTip.visible: hovered
-                    ToolTip.text: removeAllImagesAction.tooltip
+
+                    background: Rectangle {
+                        color: Qt.darker(activePalette.window, 1.15)
+                        border.color: Qt.darker(activePalette.window, 1.15)
+                    }
+
+                    onClicked: !(_reconstruction.computingLocally) ? computeManager.compute(null) : _reconstruction.stopExecution()
                 }
 
-                MenuSeparator { }
-                Menu {
-                    id: advancedMenu
-                    title: "Advanced"
-                    implicitWidth: 300
+                MaterialToolButton {
+                    id: submitButton
 
-                    Action {
-                        id: saveAsTemplateAction
-                        text: "Save As Template..."
-                        shortcut: Shortcut {
-                            sequence: "Ctrl+Shift+T"
-                            context: Qt.ApplicationShortcut
-                            onActivated: saveAsTemplateAction.triggered()
-                        }
-                        onTriggered: {
-                            initFileDialogFolder(saveTemplateDialog)
-                            saveTemplateDialog.open()
-                        }
+                    font.pointSize: 18
+
+                    topPadding: 0
+                    bottomPadding: 0
+                    palette.text: hovered ? Colors.sysPalette.highlight : Colors.sysPalette.text
+                    
+                    visible: _reconstruction ? _reconstruction.canSubmit : false
+                    text: MaterialIcons.rocket_launch
+
+                    ToolTip.text: "Submit on Render Farm"
+                    ToolTip.visible: hovered
+
+                    background: Rectangle {
+                        color: Qt.darker(activePalette.window, 1.15)
+                        border.color: Qt.darker(activePalette.window, 1.15)
                     }
 
-                    MenuItem {
-                        action: loadTemplateAction
-                        ToolTip.visible: hovered
-                        ToolTip.text: loadTemplateAction.tooltip
-                    }
-
-                    Action {
-                        id: importProjectAction
-                        text: "Import Project"
-                        shortcut: Shortcut {
-                            sequence: "Ctrl+Shift+I"
-                            context: Qt.ApplicationShortcut
-                            onActivated: importProjectAction.triggered()
-                        }
-                        onTriggered: {
-                            initFileDialogFolder(importProjectDialog)
-                            importProjectDialog.open()
-                        }
-                    }
-
-                    MenuItem {
-                        action: removeImagesFromAllGroupsAction
-                        ToolTip.visible: hovered
-                        ToolTip.text: removeImagesFromAllGroupsAction.tooltip
-                    }
-                }
-                MenuSeparator { }
-                Action {
-                    text: "Quit"
-                    onTriggered: _window.close()
+                    onClicked: computeManager.submit(null)
                 }
             }
-            Menu {
-                title: "Edit"
-                MenuItem {
-                    action: undoAction
-                    ToolTip.visible: hovered
-                    ToolTip.text: undoAction.tooltip
-                }
-                MenuItem {
-                    action: redoAction
-                    ToolTip.visible: hovered
-                    ToolTip.text: redoAction.tooltip
-                }
-                MenuItem {
-                    action: cutAction
-                    ToolTip.visible: hovered
-                    ToolTip.text: cutAction.tooltip
-                }
-                MenuItem {
-                    action: copyAction
-                    ToolTip.visible: hovered
-                    ToolTip.text: copyAction.tooltip
-                }
-                MenuItem {
-                    action: pasteAction
-                    ToolTip.visible: hovered
-                    ToolTip.text: pasteAction.tooltip
-                }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
             }
-            Menu {
-                title: "View"
-                MenuItem {
-                    id: graphEditorVisibilityCB
-                    text: "Graph Editor"
-                    checkable: true
-                    checked: true
-                }
-                MenuItem {
-                    id: liveSfMVisibilityCB
-                    text: "Live Reconstruction"
-                    checkable: true
-                    checked: false
-                }
-                MenuItem {
-                    id: imageViewerVisibilityCB
-                    text: "Image Viewer"
-                    checkable: true
-                    checked: true
-                }
-                MenuItem {
-                    id: viewer3DVisibilityCB
-                    text: "3D Viewer"
-                    checkable: true
-                    checked: true
-                }
-                MenuItem {
-                    id: imageGalleryVisibilityCB
-                    text: "Image Gallery"
-                    checkable: true
-                    checked: true
-                }
-                MenuSeparator {}
-                Action {
-                    text: "Fullscreen"
-                    checkable: true
-                    checked: _window.visibility == ApplicationWindow.FullScreen
-                    shortcut: "Ctrl+F"
-                    onTriggered: _window.visibility == ApplicationWindow.FullScreen ? _window.showNormal() : showFullScreen()
-                }
-            }
-            Menu {
-                title: "Process"
-                Action {
-                    text: "Compute all nodes"
-                    onTriggered: computeManager.compute(null)
-                    enabled: _reconstruction ? !_reconstruction.computingLocally : false
-                }
-                Action {
-                    text: "Submit all nodes"
-                    onTriggered: computeManager.submit(null)
-                    enabled: _reconstruction ? _reconstruction.canSubmit : false
-                }
-                MenuSeparator {}
-                Action {
-                    text: "Stop computation"
-                    onTriggered: _reconstruction.stopExecution()
-                    enabled: _reconstruction ? _reconstruction.computingLocally : false
-                }
-            }
-            Menu {
-                title: "Help"
-                Action {
-                    text: "Online Documentation"
-                    onTriggered: Qt.openUrlExternally("https://meshroom-manual.readthedocs.io")
-                }
-                Action {
-                    text: "About Meshroom"
-                    onTriggered: aboutDialog.open()
-                    // Should be StandardKey.HelpContents, but for some reason it's not stable
-                    // (may cause crash, requires pressing F1 twice after closing the popup)
-                    shortcut: "F1"
-                }
-            }
-        }
 
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            color: Qt.darker(activePalette.window, 1.15)
-        }
-
-        Row {
-            // Process buttons
-            MaterialToolButton {
-                id: processButton
-
-                font.pointSize: 18
-
-                text: !(_reconstruction.computingLocally) ? MaterialIcons.send : MaterialIcons.cancel_schedule_send
-
-                ToolTip.text: !(_reconstruction.computingLocally) ? "Compute" : "Stop Computing"
+            // CompatibilityManager indicator
+            ToolButton {
+                id: compatibilityIssuesButton
+                visible: compatibilityManager.issueCount
+                text: MaterialIcons.warning
+                font.family: MaterialIcons.fontFamily
+                palette.buttonText: hovered ? Colors.sysPalette.highlight : "#FF9800"
+                font.pointSize: 12
+                onClicked: compatibilityManager.open()
+                ToolTip.text: "Compatibility Issues"
                 ToolTip.visible: hovered
 
-                background: Rectangle {
-                    color: processButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.15)
-                    border.color: Qt.darker(activePalette.window, 1.15)
-                }
-
-                onClicked: !(_reconstruction.computingLocally) ? computeManager.compute(null) : _reconstruction.stopExecution()
-            }
-
-            MaterialToolButton {
-                id: submitButton
-
-                font.pointSize: 18
-
-                visible: _reconstruction ? _reconstruction.canSubmit : false
-                text: MaterialIcons.rocket_launch
-
-                ToolTip.text: "Submit on Render Farm"
-                ToolTip.visible: hovered
+                Layout.fillHeight: true
 
                 background: Rectangle {
-                    color: submitButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.15)
+                    color: Qt.darker(activePalette.window, 1.15)
                     border.color: Qt.darker(activePalette.window, 1.15)
                 }
-
-                onClicked: computeManager.submit(null)
-            }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            color: Qt.darker(activePalette.window, 1.15)
-        }
-
-        // CompatibilityManager indicator
-        ToolButton {
-            id: compatibilityIssuesButton
-            visible: compatibilityManager.issueCount
-            text: MaterialIcons.warning
-            font.family: MaterialIcons.fontFamily
-            palette.buttonText: "#FF9800"
-            font.pointSize: 12
-            onClicked: compatibilityManager.open()
-            ToolTip.text: "Compatibility Issues"
-            ToolTip.visible: hovered
-
-            background: Rectangle {
-                color: compatibilityIssuesButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.15)
-                border.color: Qt.darker(activePalette.window, 1.15)
             }
         }
     }

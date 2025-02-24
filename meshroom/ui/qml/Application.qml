@@ -90,7 +90,7 @@ Page {
         }
     }
 
-    function validateFilepathForSave(filepath: string, sourceSaveDialog: Dialog): bool {
+    function validateFilepathForSave(filepath: string, sourceSaveDialog): bool {
         /**
          * Return true if `filepath` is valid for saving a file to disk.
          * Otherwise, show a warning dialog and returns false.

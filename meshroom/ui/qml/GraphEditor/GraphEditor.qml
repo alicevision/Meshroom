@@ -989,12 +989,12 @@ Item {
             id: dropArea
             anchors.fill: parent
             keys: ["text/uri-list"]
-            onEntered: {
+            onEntered: function(drag) {
                 nbMeshroomScenes = 0
                 nbDraggedFiles = drag.urls.length
 
                 drag.urls.forEach(function(file) {
-                    if (file.endsWith(".mg")) {
+                    if (String(file).endsWith(".mg")) {
                         nbMeshroomScenes++
                     }
                 })

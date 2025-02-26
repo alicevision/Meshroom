@@ -258,9 +258,15 @@ Sample pixels from Low range images for HDR creation.
                 node.nbBrackets.value = 1
                 return
 
+            # Get timestamp
+            ymdhms = findMetadata(d, ["Exif:DateTimeOriginal", "DateTimeOriginal", "DateTime", "Date Time", "Create Date", "ctime"], "")
+            timestamp = -1
+            if ymdhms != "":
+                timestamp = LdrToHdrSampling.getTimestamp(ymdhms)
+
             exposure = LdrToHdrSampling.getExposure((float(fnumber), float(shutterSpeed), float(iso)))
 
-            obj = avhdr.LuminanceInfo(viewpoint.viewId.value,viewpoint.path.value, exposure)
+            obj = avhdr.LuminanceInfo(viewpoint.viewId.value,viewpoint.path.value, exposure, timestamp)
             inputs.append(obj)
 
         obj = avhdr.estimateGroups(inputs)
@@ -282,3 +288,18 @@ Sample pixels from Low range images for HDR creation.
         fnumber, shutterSpeed, iso = exp
         obj = avsfmdata.ExposureSetting(shutterSpeed, fnumber, iso)
         return obj.getExposure()
+
+    @staticmethod
+    def getTimestamp(ymdhms):
+        import re
+        timecode = -1
+        if re.search("([\d]+):([\d]+):([\d]+) ([\d]+):([\d]+):([\d]+)", ymdhms) != None:
+            t = re.findall("([\d]+)(:| |)", ymdhms)
+            years = int(t[0][0])
+            months = int(t[1][0])
+            days = int(t[2][0])
+            hours = int(t[3][0])
+            minutes = int(t[4][0])
+            seconds = int(t[5][0])
+            timecode = ((((((((years * 12) + months) * 31) + days) * 24) + hours) * 60) + minutes) * 60 + seconds
+        return timecode

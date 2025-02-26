@@ -266,10 +266,28 @@ RowLayout {
                 id: textField
                 readOnly: !root.editable
                 text: attribute.value
+
+                // Don't disable the component to keep interactive features (text selection, context menu...).
+                // Only override the look by using the Disabled palette.
+                SystemPalette { 
+                    id: disabledPalette
+                    colorGroup: SystemPalette.Disabled
+                }
+
+                states: [
+                    State {
+                        when: readOnly
+                        PropertyChanges {
+                            target: textField
+                            color: disabledPalette.text
+                        }
+                    }
+                ]
+
                 selectByMouse: true
                 onEditingFinished: setTextFieldAttribute(text)
                 persistentSelection: false
-                property bool memoryActiveFocus: false
+
                 onAccepted: {
                     setTextFieldAttribute(text)
                     parameterLabel.forceActiveFocus()
@@ -294,56 +312,62 @@ RowLayout {
                             setTextFieldAttribute(drop.text)
                     }
                 }
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.RightButton
-                    onClicked: function(mouse) {
-                        // Do not lose the selection during the right click
-                        textField.persistentSelection = true
-                        // We store the status of the activeFocus before opening the popup
-                        textField.memoryActiveFocus = textField.activeFocus
-                        var menu = menuCopy.createObject(textField)
-                        menu.parent = textField
-                        menu.popup()
-                        if(textField.memoryActiveFocus) {
-                            // If the focus was active, we continue to display the cursor
-                            // to explain that we will insert the new text in this position (in case of "Paste" action)
-                            textField.cursorVisible = true
-                        }
-                        // We do not want the selection to be globally persistent
-                        textField.persistentSelection = false
-                    }
+                onPressed: (event) => {
+                    if(event.button == Qt.RightButton) {
+                        // Keep selection persistent while context menu is open to 
+                        // visualize what is being copied or what will be replaced on paste.
+                        persistentSelection = true;
+                        const menu = textFieldMenuComponent.createObject(textField);
+                        menu.popup();
 
-                    property Component menuCopy : Menu {
+                        if(selectedText === "") {
+                            cursorPosition = positionAt(event.x, event.y);
+                        }
+                    }
+                }
+
+                Component {
+                    id: textFieldMenuComponent
+                    Menu {
+                        onOpened: {
+                            // Keep cursor visible to see where pasting would happen.
+                            textField.cursorVisible = true;
+                        }
+                        onClosed: {
+                            // Disable selection persistency behavior once menu is closed and
+                            // give focus back to the parent TextField.
+                            textField.persistentSelection = false;
+                            textField.forceActiveFocus();
+                            destroy();
+                        }
                         MenuItem {
                             text: "Copy"
                             enabled: attribute.value != ""
                             onTriggered: {
-                                if (textField.selectionStart === textField.selectionEnd) {
-                                    // If no selection
-                                    Clipboard.clear()
-                                    Clipboard.setText(attribute.value)
-                                } else {
-                                    // Copy selection only
-                                    textField.copy()
+                                const hasSelection = textField.selectionStart !== textField.selectionEnd;
+                                if(hasSelection) {
+                                    // Use `TextField.copy` to copy only the current selection.
+                                    textField.copy();
+                                }
+                                else {
+                                    Clipboard.setText(attribute.value);
                                 }
                             }
                         }
                         MenuItem {
                             text: "Paste"
-                            enabled: Clipboard.getText() != "" && !readOnly
+                            enabled: !readOnly
                             onTriggered: {
-                                if (textField.memoryActiveFocus) {
-                                    // Replace the selected text with the clipboard
-                                    // or if there is no selection insert at the cursor position
-                                    var before = textField.text.substr(0, textField.selectionStart)
-                                    var after = textField.text.substr(textField.selectionEnd, textField.text.length)
-                                    setTextFieldAttribute(before + Clipboard.getText() + after)
-                                    // Set the cursor at the end of the added text
-                                    textField.cursorPosition = before.length + Clipboard.getText().length
-                                } else {
-                                    setTextFieldAttribute(Clipboard.getText())
+                                const clipboardText = Clipboard.getText();
+                                if (clipboardText.length === 0) {
+                                    return;
                                 }
+                                const before = textField.text.substr(0, textField.selectionStart);
+                                const after = textField.text.substr(textField.selectionEnd, textField.text.length);
+                                const updatedValue = before + clipboardText + after;
+                                setTextFieldAttribute(updatedValue);
+                                // Set the cursor at the end of the added text
+                                textField.cursorPosition = before.length + clipboardText.length;
                             }
                         }
                     } 

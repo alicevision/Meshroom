@@ -184,9 +184,9 @@ class ChunksMonitor(QObject):
         elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
             for c in self.monitorableChunks:
                 # Only chunks that are run externally should be monitored; when run locally, status changes are already notified
-                if c.isExtern():
+                if c.isExtern() or c._status.execMode is ExecMode.LOCAL_ISOLATED:
                     # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
-                    if c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING or c._status.status is Status.ERROR:
+                    if c._status.status in {Status.SUBMITTED, Status.RUNNING, Status.ERROR}:
                         files.append(c.statusFile)
                         chunks.append(c)
         return files, chunks
@@ -204,7 +204,7 @@ class ChunksMonitor(QObject):
             # update chunk status if last modification time has changed since previous record
             if fileModTime != chunk.statusFileLastModTime:
                 chunk.updateStatusFromCache()
-                chunk.node.updateOutputAttr()
+                chunk.node.loadOutputAttr()
 
     def onFilePollerRefreshUpdated(self):
         """
@@ -579,7 +579,7 @@ class UIGraph(QObject):
     def updateGraphComputingStatus(self):
         # update graph computing status
         computingLocally = any([
-                                (ch.status.execMode == ExecMode.LOCAL and
+                                (ch.status.execMode in {ExecMode.LOCAL, ExecMode.LOCAL_ISOLATED} and
                                 ch.status.sessionUid == sessionUid and
                                 ch.status.status in (Status.RUNNING, Status.SUBMITTED))
                                     for ch in self._sortedDFSChunks])

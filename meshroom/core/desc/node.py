@@ -1,9 +1,13 @@
+import logging
 import os
 import psutil
 import shlex
+import sys
 
 from .computation import Level, StaticNodeSize
 from .attribute import StringParam, ColorParam
+from .process import ProcessEnvironment
+from .config import getProcessEnvironment
 
 from meshroom.core import cgroup
 
@@ -280,3 +284,89 @@ class InitNode(object):
         for attr in attributesDict:
             if node.hasAttribute(attr):
                 node.attribute(attr).value = attributesDict[attr]
+
+
+class IsolatedEnvNode(CommandLineNode):
+    @classmethod
+    def getRuntimeEnv(cls) -> ProcessEnvironment:
+        return getProcessEnvironment(cls.__name__)
+
+    def processInEnvironment(self, chunk):
+        try:
+            IsolatedEnvNode._ensureGraphIsSaved(chunk.node)
+        except RuntimeError as e:
+            with open(chunk.logFile, "w") as logFile:
+                logFile.write(str(e))
+            raise
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = ProcessEnvironment.pythonPath()
+
+        runtimeEnv = self.getRuntimeEnv()
+        clArgs = f"{chunk.node.graph.filepath} --node {chunk.node.name} -i {chunk.range.iteration}"
+        fullCL = runtimeEnv.commandLine(clArgs)
+
+        logging.info(f"Starting env for '{chunk.node.name}' ({runtimeEnv}): {fullCL}")
+
+        # Change process process group to avoid meshroom main process being killed if the subprocess
+        # gets terminated by the user.
+        if sys.platform == "win32":
+            platformArgs = {"creationflags": psutil.CREATE_NEW_PROCESS_GROUP}
+        else:
+            platformArgs = {"preexec_fn": os.setsid}
+
+        with open(chunk.logFile, "w") as logF:
+            chunk.status.commandLine = fullCL
+            chunk.saveStatusFile()
+            chunk.subprocess = psutil.Popen(
+                shlex.split(fullCL),
+                stdout=logF,
+                stderr=logF,
+                cwd=chunk.node.internalFolder,
+                env=env,
+                **platformArgs,
+            )
+
+            chunk.subprocess.communicate()
+            chunk.subprocess.wait()
+
+            chunk.status.returnCode = chunk.subprocess.returncode
+
+        if chunk.subprocess.returncode != 0:
+            with open(chunk.logFile, "r") as logF:
+                logContent = "".join(logF.readlines())
+            raise RuntimeError(
+                'Error on node "{}":\nLog:\n{}'.format(chunk.name, logContent)
+            )
+    
+    @staticmethod
+    def _ensureGraphIsSaved(node):
+        """Raise a RuntimeError if the current node is not saved."""
+        if not IsolatedEnvNode._nodeSaved(node):
+            raise RuntimeError("File must be saved before computing in isolated environment.")
+
+    @staticmethod
+    def _nodeSaved(node):
+        """Returns whether a node is identical to its serialized counterpart in the current graph file."""
+        if not (filepath := node.graph.filepath):
+            return False
+
+        from meshroom.core.graph import loadGraph
+        g = loadGraph(filepath)
+        if (node := g.node(node.name)) is None:
+            return False
+        return node._uid == node._uid
+
+    def stopProcess(self, chunk):
+        # The same node could exists several times in the graph and
+        # only one would have the running subprocess; ignore all others
+        if not hasattr(chunk, "subprocess"):
+            return
+        if chunk.subprocess:
+            # Kill process tree
+            processes = chunk.subprocess.children(recursive=True) + [chunk.subprocess]
+            try:
+                for process in processes:
+                    process.terminate()
+            except psutil.NoSuchProcess:
+                pass

@@ -13,7 +13,7 @@ import time
 import types
 import uuid
 from collections import namedtuple
-from enum import Enum
+from enum import Enum, auto
 from typing import Callable, Optional
 
 import meshroom
@@ -55,9 +55,10 @@ class Status(Enum):
 
 
 class ExecMode(Enum):
-    NONE = 0
-    LOCAL = 1
-    EXTERN = 2
+    NONE = auto()
+    LOCAL = auto()
+    LOCAL_ISOLATED = auto()
+    EXTERN = auto()
 
 
 class StatusData(BaseObject):
@@ -405,6 +406,14 @@ class NodeChunk(BaseObject):
         if not forceCompute and self._status.status == Status.SUCCESS:
             logging.info("Node chunk already computed: {}".format(self.name))
             return
+        
+        # Start the process environment for nodes running in isolation.
+        # This only happens once, when the node has the SUBMITTED status.
+        # The sub-process will go through this method again, but the node status will have been set to RUNNING.
+        if isinstance(self.node.nodeDesc, desc.IsolatedEnvNode) and self._status.status is Status.SUBMITTED:
+            self._processInIsolatedEnvironment()
+            return
+
         global runningProcesses
         runningProcesses[self.name] = self
         self._status.initStartCompute()
@@ -415,6 +424,8 @@ class NodeChunk(BaseObject):
         self.statThread.start()
         try:
             self.node.nodeDesc.processChunk(self)
+            # NOTE: this assumes saving the output attributes for each chunk
+            self.node.saveOutputAttr()
         except Exception:
             if self._status.status != Status.STOPPED:
                 exceptionStatus = Status.ERROR
@@ -435,6 +446,15 @@ class NodeChunk(BaseObject):
             del runningProcesses[self.name]
 
         self.upgradeStatusTo(Status.SUCCESS)
+
+    def _processInIsolatedEnvironment(self):
+        """Process this node chunk in the isolated environment defined in the environment configuration."""
+        try:
+            self.upgradeStatusTo(Status.RUNNING, execMode=ExecMode.LOCAL_ISOLATED)
+            self.node.nodeDesc.processInEnvironment(self)
+        except:
+            self.upgradeStatusTo(Status.ERROR)
+            raise
 
     def stopProcess(self):
         if not self.isExtern():
@@ -1072,8 +1092,7 @@ class BaseNode(BaseObject):
 
     def postprocess(self):
         # Invoke the post process on Client Node to execute after the processing on the node is completed
-        self.nodeDesc.postprocess(self)
-        self.saveOutputAttr()
+        self.nodeDesc.postprocess(self)            
 
     def updateOutputAttr(self):
         if not self.nodeDesc:
@@ -1331,14 +1350,14 @@ class BaseNode(BaseObject):
         # Only locked nodes running in local with the same
         # sessionUid as the Meshroom instance can be stopped
         return (self.locked and self.getGlobalStatus() == Status.RUNNING and
-                self.globalExecMode == "LOCAL" and self.statusInThisSession())
+                self.globalExecMode in {"LOCAL", "LOCAL_ISOLATED"} and self.statusInThisSession())
 
     @Slot(result=bool)
     def canBeCanceled(self):
         # Only locked nodes submitted in local with the same
         # sessionUid as the Meshroom instance can be canceled
         return (self.locked and self.getGlobalStatus() == Status.SUBMITTED and
-                self.globalExecMode == "LOCAL" and self.statusInThisSession())
+                self.globalExecMode in {"LOCAL", "LOCAL_ISOLATED"} and self.statusInThisSession())
 
     def hasImageOutputAttribute(self):
         """

@@ -337,6 +337,8 @@ def initNodes():
     for f in nodesFolders:
         loadAllNodes(folder=f)
 
+    desc.configProcessEnvironmentsInit()
+
 
 def initSubmitters():
     meshroomFolder = os.path.dirname(os.path.dirname(__file__))

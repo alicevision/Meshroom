@@ -39,6 +39,9 @@ class EnvVar(Enum):
         str, "port:3768", "QML debugging params as expected by -qmljsdebugger"
     )
 
+    # Core
+    MESHROOM_CONFIG_PROCESS_ENVS = VarDefinition(str, "", "Process environments config files (colon separated)")
+
     @staticmethod
     def get(envVar: "EnvVar") -> Any:
         """Get the value of `envVar`, cast to the variable type."""

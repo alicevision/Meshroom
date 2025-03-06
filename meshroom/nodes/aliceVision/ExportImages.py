@@ -10,7 +10,7 @@ class ExportImages(desc.AVCommandLineNode):
     parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
-    category = 'Utils'
+    category = 'Export'
     documentation = '''
     Export images referenced in the input sfmData by transforming 
     them to adapt to the required target intrinsics. For example, the target
@@ -49,10 +49,10 @@ class ExportImages(desc.AVCommandLineNode):
             name="namingMode",
             label="Naming mode",
             description="image naming mode :\n"
-                        " - viewId: viewid.ext.\n"
-                        " - frameId: Frameid.ext.\n"
+                        " - viewid: viewid.ext.\n"
+                        " - frameid: Frameid.ext.\n"
                         " - keep: Keep original name.\n",
-            value="viewId",
+            value="frameid",
             values=["viewid", "frameid", "keep"],
         ),
         desc.ChoiceParam(

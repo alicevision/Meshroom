@@ -29,9 +29,9 @@ If applicable, copy paste the relevant log output (please embed the text in a ma
 **Desktop (please complete the following and other pertinent information):**
  - OS: [e.g. win 10, osx, ]
  - Python version [e.g. 2.6]
- - Qt/PySide version [e.g. 5.15.2]
+ - Qt/PySide version [e.g. 6.8.2]
  - Meshroom version: please specify if you are using a release version or your own build
-   - Binary version (if applicable) [e.g. 2019.1]
+   - Binary version (if applicable) [e.g. 2023.3.0]
    - Commit reference (if applicable) [e.g. 08ddbe2]
 
 **Additional context**

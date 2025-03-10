@@ -56,12 +56,12 @@ class IntrinsicsTransforming(desc.AVCommandLineNode):
             name="output",
             label="Output SfMData",
             description="Output SfMData file.",
-            value=desc.Node.internalFolder + "sfmData.abc",
+            value="{nodeCacheFolder}/sfmData.abc",
         ),
         desc.File(
             name="outputTracks",
             label="Output Tracks",
             description="Output Tracks file.",
-            value=desc.Node.internalFolder + "tracksFile.json",
+            value="{nodeCacheFolder}/tracksFile.json",
         ),
     ]

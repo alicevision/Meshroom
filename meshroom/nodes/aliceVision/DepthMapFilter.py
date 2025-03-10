@@ -113,7 +113,7 @@ This allows to filter unstable points before starting the fusion of all depth ma
             name="output",
             label="Filtered Depth Maps Folder",
             description="Output folder for generated depth maps.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}"
         ),
         # these attributes are only here to describe more accurately the output of the node
         # by specifying that it generates 2 sequences of images
@@ -123,7 +123,7 @@ This allows to filter unstable points before starting the fusion of all depth ma
             label="Depth Maps",
             description="Filtered depth maps.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_depthMap.exr",
+            value="{nodeCacheFolder}/<VIEW_ID>_depthMap.exr",
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -131,7 +131,7 @@ This allows to filter unstable points before starting the fusion of all depth ma
             label="Sim Maps",
             description="Filtered sim maps.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_simMap.exr",
+            value="{nodeCacheFolder}/<VIEW_ID>_simMap.exr",
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -139,7 +139,7 @@ This allows to filter unstable points before starting the fusion of all depth ma
             label="Normal Maps",
             description="Normal maps.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_normalMap.exr",
+            value="{nodeCacheFolder}/<VIEW_ID>_normalMap.exr",
             enabled=lambda node: node.computeNormalMaps.value,
             group="",  # do not export on the command line
         ),

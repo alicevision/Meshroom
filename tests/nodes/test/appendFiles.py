@@ -36,7 +36,7 @@ class AppendFiles(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''''',
-            value=desc.Node.internalFolder + 'appendText.txt',
+            value='{nodeCacheFolder}/appendText.txt',
         )
     ]
 

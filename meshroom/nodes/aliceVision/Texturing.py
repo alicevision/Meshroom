@@ -336,13 +336,13 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name="output",
             label="Folder",
             description="Folder for output mesh: OBJ, material and texture files.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
         desc.File(
             name="outputMesh",
             label="Mesh",
             description="Output mesh file.",
-            value=desc.Node.internalFolder + "texturedMesh.{outputMeshFileTypeValue}",
+            value="{nodeCacheFolder}/texturedMesh.{outputMeshFileTypeValue}",
             group="",
             ),
         desc.File(
@@ -350,22 +350,22 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             enabled=lambda node: node.outputMeshFileType.value == "obj",
             label="Material",
             description="Output material file.",
-            value=desc.Node.internalFolder + "texturedMesh.mtl",
+            value="{nodeCacheFolder}/texturedMesh.mtl",
             group="",
             ),
         desc.File(
             name="outputTextures",
             label="Textures",
             description="Output texture files.",
-            value=lambda attr: desc.Node.internalFolder + "texture_*." + attr.node.colorMapping.colorMappingFileType.value if attr.node.colorMapping.enable.value else "",
+            value=lambda attr: "{nodeCacheFolder}/texture_*." + attr.node.colorMapping.colorMappingFileType.value if attr.node.colorMapping.enable.value else "",
             group="",
         ),
     ]
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
         if fromVersion < Version(6, 0):
-            outputTextureFileType = attrValues['outputTextureFileType']
+            outputTextureFileType = attrValues["outputTextureFileType"]
             if isinstance(outputTextureFileType, str):
-                attrValues['colorMapping'] = {}
-                attrValues['colorMapping']['colorMappingFileType'] = outputTextureFileType
+                attrValues["colorMapping"] = {}
+                attrValues["colorMapping"]["colorMappingFileType"] = outputTextureFileType
         return attrValues

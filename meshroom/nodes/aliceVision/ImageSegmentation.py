@@ -81,14 +81,14 @@ Generate a mask with segmented labels for each pixel.
             name="output",
             label="Masks Folder",
             description="Output path for the masks.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
         desc.File(
             name="masks",
             label="Masks",
             description="Generated segmentation masks.",
             semantic="image",
-            value=lambda attr: desc.Node.internalFolder + "<VIEW_ID>.exr" if not attr.node.keepFilename.value else desc.Node.internalFolder + "<FILESTEM>.exr",
+            value=lambda attr: "{nodeCacheFolder}/<VIEW_ID>.exr" if not attr.node.keepFilename.value else "{nodeCacheFolder}/<FILESTEM>.exr",
             group="",
         ),
     ]

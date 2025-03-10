@@ -60,14 +60,14 @@ Can also be used to calibrate a lighting dome (RTI type).
             name="outputFile",
             label="Light File",
             description="Light information will be written here.",
-            value=desc.Node.internalFolder + "/lights.json",
+            value="{nodeCacheFolder}/lights.json",
         ),
         desc.File(
             name="lightingEstimationVisualization",
             label="Estimated Lighting Visualization",
             description="Estimated Lighting Visualization.",
             semantic="image",
-            value=desc.Node.internalFolder + "/<FILESTEM>_{methodValue}.png",
+            value="{nodeCacheFolder}/<FILESTEM>_{methodValue}.png",
             group=None,
         ),
     ]

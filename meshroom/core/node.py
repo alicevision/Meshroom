@@ -501,6 +501,7 @@ class BaseNode(BaseObject):
 
         self.packageName = self.packageVersion = ""
         self._internalFolder = ""
+        self._sourceCodeFolder = ""
 
         self._name = None
         self.graph = None
@@ -757,6 +758,8 @@ class BaseNode(BaseObject):
 
         """ Generate command variables using input attributes and resolved output attributes names and values. """
         self._cmdVars["uid"] = self._uid
+        self._cmdVars["nodeCacheFolder"] = self.internalFolder
+        self._cmdVars["nodeSourceCodeFolder"] = self.sourceCodeFolder
 
         # Evaluate input params
         for name, attr in self._attributes.objects.items():
@@ -766,7 +769,11 @@ class BaseNode(BaseObject):
 
         # For updating output attributes invalidation values
         cmdVarsNoCache = self._cmdVars.copy()
-        cmdVarsNoCache['cache'] = ''
+        cmdVarsNoCache["cache"] = ""
+
+        # Use "self._internalFolder" instead of "self.internalFolder" because we do not want it to be
+        # resolved with the {cache} information ("self.internalFolder" resolves "self._internalFolder")
+        cmdVarsNoCache["nodeCacheFolder"] = self._internalFolder.format(**cmdVarsNoCache)
 
         # Evaluate output params
         for name, attr in self._attributes.objects.items():
@@ -1021,8 +1028,10 @@ class BaseNode(BaseObject):
 
         # Update command variables / output attributes
         self._cmdVars = {
-            'cache': cacheDir or self.graph.cacheDir,
-            'nodeType': self.nodeType,
+            "cache": cacheDir or self.graph.cacheDir,
+            "nodeType": self.nodeType,
+            "nodeCacheFolder": self._internalFolder,
+            "nodeSourceCodeFolder": self.sourceCodeFolder
         }
         self._computeUid()
         self._buildCmdVars()
@@ -1038,6 +1047,10 @@ class BaseNode(BaseObject):
     @property
     def internalFolder(self):
         return self._internalFolder.format(**self._cmdVars)
+
+    @property
+    def sourceCodeFolder(self):
+        return self._sourceCodeFolder
 
     def updateStatusFromCache(self):
         """
@@ -1440,7 +1453,8 @@ class Node(BaseNode):
 
         self.packageName = self.nodeDesc.packageName
         self.packageVersion = self.nodeDesc.packageVersion
-        self._internalFolder = self.nodeDesc.internalFolder
+        self._internalFolder = "{cache}/{nodeType}/{uid}"
+        self._sourceCodeFolder = self.nodeDesc.sourceCodeFolder
 
         for attrDesc in self.nodeDesc.inputs:
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None), isOutput=False, node=self))

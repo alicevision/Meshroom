@@ -39,6 +39,6 @@ class ImportKnownPoses(desc.AVCommandLineNode):
             name="output",
             label="Output",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "/sfmData.abc",
+            value="{nodeCacheFolder}/sfmData.abc",
         ),
     ]

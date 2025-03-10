@@ -115,6 +115,6 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             name="output",
             label="Folder",
             description="Output path for the features and descriptors files (*.feat, *.desc).",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
     ]

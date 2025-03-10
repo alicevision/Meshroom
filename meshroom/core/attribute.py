@@ -276,8 +276,11 @@ class Attribute(BaseObject):
                 # To guarantee that each output attribute receives a unique ID, we add the attribute name to it.
                 return hashValue((self.name, self.node._uid))
             else:
-                # only dependent on the hash of its value without the cache folder
-                return hashValue(self._invalidationValue)
+                # Only dependent on the hash of its value without the cache folder.
+                # "/" at the end of the link is stripped to prevent having different UIDs depending on
+                # whether the invalidation value finishes with it or not
+                strippedInvalidationValue = self._invalidationValue.rstrip("/")
+                return hashValue(strippedInvalidationValue)
         if self.isLink:
             linkParam = self.getLinkParam(recursive=True)
             return linkParam.uid()
@@ -362,7 +365,14 @@ class Attribute(BaseObject):
         Return the value. If it is a string, expressions will be evaluated.
         '''
         if isinstance(self.value, str):
-            return Template(self.value).safe_substitute(os.environ)
+            substituted = Template(self.value).safe_substitute(os.environ)
+            try:
+                varResolved = substituted.format(**self.node._cmdVars)
+                return varResolved
+            except (KeyError, IndexError):
+                # Catch KeyErrors and IndexErros to be able to open files created prior to the support of
+                # relative variables (when self.node._cmdVars was not used to evaluate expressions in the attribute)
+                return substituted
         return self.value
 
     def getValueStr(self, withQuotes=True):

@@ -93,6 +93,6 @@ Compute the image warping for each input image in the panorama coordinate system
             name="output",
             label="Folder",
             description="Output folder.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
     ]

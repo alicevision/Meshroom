@@ -59,6 +59,6 @@ Select Connected Views based on SfM landmarks.
             name="output",
             label="Connected Views",
             description="List of connected views in a text file.",
-            value=desc.Node.internalFolder + "connectedViews.txt",
+            value="{nodeCacheFolder}/connectedViews.txt",
         ),
     ]

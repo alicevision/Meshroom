@@ -62,6 +62,6 @@ Dev notes:
             name="outputData",
             label="Color Checker Data",
             description="Output position and colorimetric data extracted from detected color checkers in the images.",
-            value=desc.Node.internalFolder + "/ccheckers.json",
+            value="{nodeCacheFolder}/ccheckers.json",
         ),
     ]

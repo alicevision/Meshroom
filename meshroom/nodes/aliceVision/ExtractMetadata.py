@@ -68,7 +68,7 @@ Using exifTool, this node extracts metadata of all images referenced in a sfmDat
             name="output",
             label="Result Folder",
             description="Output path for the resulting metadata files.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
     ]
 

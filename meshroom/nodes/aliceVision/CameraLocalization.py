@@ -191,12 +191,12 @@ class CameraLocalization(desc.AVCommandLineNode):
             name="outputAlembic",
             label="Alembic",
             description="Filename for the SfMData export file (where camera poses will be stored).",
-            value=desc.Node.internalFolder + "trackedCameras.abc",
+            value="{nodeCacheFolder}/trackedCameras.abc",
         ),
         desc.File(
             name="outputJSON",
             label="JSON File",
             description="Filename for the localization results as .json.",
-            value=desc.Node.internalFolder + "trackedCameras.json",
+            value="{nodeCacheFolder}/trackedCameras.json",
         ),
     ]

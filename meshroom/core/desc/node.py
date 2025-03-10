@@ -1,3 +1,5 @@
+from inspect import getfile
+from pathlib import Path
 import os
 import psutil
 import shlex
@@ -11,7 +13,6 @@ from meshroom.core import cgroup
 class Node(object):
     """
     """
-    internalFolder = '{cache}/{nodeType}/{uid}/'
     cpu = Level.NORMAL
     gpu = Level.NONE
     ram = Level.NORMAL
@@ -63,6 +64,7 @@ class Node(object):
     def __init__(self):
         super(Node, self).__init__()
         self.hasDynamicOutputAttribute = any(output.isDynamicValue for output in self.outputs)
+        self.sourceCodeFolder = Path(getfile(self.__class__)).parent.resolve().as_posix()
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
         return attrValues

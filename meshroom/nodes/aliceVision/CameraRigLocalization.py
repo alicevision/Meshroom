@@ -162,6 +162,6 @@ class CameraRigLocalization(desc.AVCommandLineNode):
             name="outputAlembic",
             label="Alembic",
             description="Filename for the SfMData export file (where camera poses will be stored).",
-            value=desc.Node.internalFolder + "trackedcameras.abc",
+            value="{nodeCacheFolder}/trackedcameras.abc",
         ),
     ]

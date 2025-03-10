@@ -46,12 +46,12 @@ This node allows select views from sfmData file using a regular expresion.
             name="outputSfMData_selected",
             label="SfMData_selected",
             description="Output SfMData file containing selected views.",
-            value=desc.Node.internalFolder + "/selectedSfmData.sfm",
+            value="{nodeCacheFolder}/selectedSfmData.sfm",
         ),
         desc.File(
             name="outputSfMData_unselected",
             label="SfMData_unselected",
             description="Output SfMData file containing remaining views.",
-            value=desc.Node.internalFolder + "/unselectedSfmData.sfm",
+            value="{nodeCacheFolder}/unselectedSfmData.sfm",
         ),
     ]

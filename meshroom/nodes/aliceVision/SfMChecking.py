@@ -40,7 +40,7 @@ class SfMChecking(desc.Node):
             name="output",
             label="SfM File",
             description="Path to the output SfM file.",
-            value=desc.Node.internalFolder + "sfmData.abc",
+            value="{nodeCacheFolder}/sfmData.abc",
         )
     ]
 

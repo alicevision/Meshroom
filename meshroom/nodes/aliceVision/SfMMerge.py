@@ -96,8 +96,8 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
     outputs = [
         desc.File(
             name="output",
-            label="SfMData",
+            label="SfMData", 
             description="Path to the output SfM file (in SfMData format).",
-            value=lambda attr: desc.Node.internalFolder + "sfmData.{fileExtValue}",
+            value="{nodeCacheFolder}/sfmData.{fileExtValue}",
         )
     ]

@@ -59,12 +59,12 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             label="Labels",
             description="",
             semantic="image",
-            value=desc.Node.internalFolder + "labels.exr",
+            value="{nodeCacheFolder}/labels.exr",
         ),
         desc.File(
             name="outputSfm",
             label="Output SfMData File",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "panorama.sfm",
+            value="{nodeCacheFolder}/panorama.sfm",
         ),
     ]

@@ -48,6 +48,6 @@ class ConvertDistortion(desc.AVCommandLineNode):
             name="output",
             label="Output",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfm.abc",
+            value="{nodeCacheFolder}/sfm.abc",
         ),
     ]

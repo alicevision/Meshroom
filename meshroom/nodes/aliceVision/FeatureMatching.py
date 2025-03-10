@@ -205,6 +205,6 @@ then it checks the number of features that validates this model and iterate thro
             name="output",
             label="Matches Folder",
             description="Path to a folder in which the computed matches are stored.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
     ]

@@ -64,6 +64,6 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             name="outputMesh",
             label="Mesh",
             description="Output mesh file.",
-            value=desc.Node.internalFolder + "mesh.{outputMeshFileTypeValue}",
+            value="{nodeCacheFolder}/mesh.{outputMeshFileTypeValue}",
         ),
     ]

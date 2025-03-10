@@ -39,14 +39,14 @@ class DepthMapRendering(desc.AVCommandLineNode):
             name="output",
             label="Folder",
             description="Output folder.",
-            value=desc.Node.internalFolder,
+            value="{nodeCacheFolder}",
         ),
         desc.File(
             name="depth",
             label="Depth Maps",
             description="Rendered depth maps.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_depthMap.exr",
+            value="{nodeCacheFolder}/<VIEW_ID>_depthMap.exr",
             group="",  # do not export on the command line
         ),
         desc.File(
@@ -54,7 +54,7 @@ class DepthMapRendering(desc.AVCommandLineNode):
             label="Masks",
             description="Masks.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>_mask.exr",
+            value="{nodeCacheFolder}/<VIEW_ID>_mask.exr",
             group="",  # do not export on the command line
         ),
     ]

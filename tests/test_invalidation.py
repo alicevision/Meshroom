@@ -11,7 +11,7 @@ class SampleNode(desc.Node):
         desc.StringParam(name='paramA', label='ParamA', description='', value='', invalidate=False)  # No impact on UID
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder)
+        desc.File(name='output', label='Output', description='', value="{nodeCacheFolder}")
     ]
 
 

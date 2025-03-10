@@ -94,6 +94,6 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             name="output",
             label="Output",
             description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfm.{fileExtValue}",
+            value="{nodeCacheFolder}/sfm.{fileExtValue}",
         ),
     ]

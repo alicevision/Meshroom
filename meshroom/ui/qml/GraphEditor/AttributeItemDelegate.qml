@@ -153,7 +153,7 @@ RowLayout {
                             visible: paramMenu.isFilepath
                             height: visible ? implicitHeight : 0
                             text: "Open File"
-                            onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                            onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.evalValue))
                         }
                     }
 

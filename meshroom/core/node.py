@@ -1174,6 +1174,9 @@ class BaseNode(BaseObject):
         """
         if isinstance(self.nodeDesc, desc.InputNode):
             return Status.INPUT
+        if not self._chunks:
+            return Status.NONE
+
         chunksStatus = [chunk.status.status for chunk in self._chunks]
 
         anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,

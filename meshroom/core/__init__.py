@@ -347,13 +347,11 @@ def initSubmitters():
 
 def initPipelines():
     meshroomFolder = os.path.dirname(os.path.dirname(__file__))
-    # Load pipeline templates: check in the default folder and any folder the user might have
-    # added to the environment variable
-    additionalPipelinesPath = os.environ.get("MESHROOM_PIPELINE_TEMPLATES_PATH", "").split(os.pathsep)
-    additionalPipelinesPath = [i for i in additionalPipelinesPath if i]
-    pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
+    # Load pipeline templates: check in any folder the user might have added to the environment variable
+    pipelinesPath = os.environ.get("MESHROOM_PIPELINE_TEMPLATES_PATH", "").split(os.pathsep)
+    pipelineTemplatesFolders = [i for i in pipelinesPath if i]
     for f in pipelineTemplatesFolders:
         if os.path.isdir(f):
             loadPipelineTemplates(f)
         else:
-            logging.error("Pipeline templates folder '{}' does not exist.".format(f))
+            logging.warning("Pipeline templates folder '{}' does not exist.".format(f))

@@ -415,6 +415,8 @@ class NodeChunk(BaseObject):
         self.statThread.start()
         try:
             self.node.nodeDesc.processChunk(self)
+            # NOTE: this assumes saving the output attributes for each chunk
+            self.node.saveOutputAttr()
         except Exception:
             if self._status.status != Status.STOPPED:
                 exceptionStatus = Status.ERROR
@@ -1086,7 +1088,6 @@ class BaseNode(BaseObject):
     def postprocess(self):
         # Invoke the post process on Client Node to execute after the processing on the node is completed
         self.nodeDesc.postprocess(self)
-        self.saveOutputAttr()
 
     def updateOutputAttr(self):
         if not self.nodeDesc:

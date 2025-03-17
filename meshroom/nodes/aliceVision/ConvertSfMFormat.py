@@ -80,6 +80,12 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             description="Export observations.",
             value=True,
         ),
+        desc.BoolParam(
+            name="surveys",
+            label="Surveys",
+            description="Export surveys.",
+            value=True,
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",

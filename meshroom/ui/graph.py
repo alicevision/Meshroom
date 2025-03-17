@@ -204,7 +204,7 @@ class ChunksMonitor(QObject):
             # update chunk status if last modification time has changed since previous record
             if fileModTime != chunk.statusFileLastModTime:
                 chunk.updateStatusFromCache()
-                chunk.node.updateOutputAttr()
+                chunk.node.loadOutputAttr()
 
     def onFilePollerRefreshUpdated(self):
         """

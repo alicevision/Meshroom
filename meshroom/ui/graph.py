@@ -186,7 +186,7 @@ class ChunksMonitor(QObject):
                 # Only chunks that are run externally should be monitored; when run locally, status changes are already notified
                 if c.isExtern():
                     # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
-                    if c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING or c._status.status is Status.ERROR:
+                    if c._status.status in {Status.SUBMITTED, Status.RUNNING, Status.ERROR}:
                         files.append(c.statusFile)
                         chunks.append(c)
         return files, chunks

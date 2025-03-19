@@ -1,41 +1,36 @@
 #!/usr/bin/env python
 # coding:utf-8
 
-from meshroom.core.graph import Graph
-from meshroom.core import pipelineTemplates, Version
+from meshroom.core import unregisterNodeType, pipelineTemplates, Version
 from meshroom.core.node import CompatibilityIssue, CompatibilityNode
 from meshroom.core.graphIO import GraphIO
 
-import json
 import meshroom
 
+import json
 
-def test_templateVersions():
-    """
-    This test checks that there is no compatibility issue with the nodes saved in the template files.
-    It fails when an upgrade of a templates is needed. Any template can still be opened even if its
-    nodes are not up-to-date, as they will be automatically upgraded.
-    """
-    meshroom.core.initNodes()
-    meshroom.core.initPipelines()
+def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
+    """ Check whether there is a compatibility issue with the nodes saved in the template provided with "path". """
+    if not nodesAlreadyLoaded:
+        meshroom.core.initNodes()
 
-    assert len(pipelineTemplates) >= 1
+    with open(path) as jsonFile:
+        fileData = json.load(jsonFile)
 
-    for _, path in pipelineTemplates.items():
-        with open(path) as jsonFile:
-            fileData = json.load(jsonFile)
-
+    try:
         graphData = fileData.get(GraphIO.Keys.Graph, fileData)
-
-        assert isinstance(graphData, dict)
+        if not isinstance(graphData, dict):
+            return False
 
         header = fileData.get(GraphIO.Keys.Header, {})
-        assert header.get("template", False)
+        if not header.get("template", False):
+            return False
         nodesVersions = header.get(GraphIO.Keys.NodesVersions, {})
 
         for _, nodeData in graphData.items():
             nodeType = nodeData["nodeType"]
-            assert nodeType in meshroom.core.nodesDesc
+            if not nodeType in meshroom.core.nodesDesc:
+                return False
 
             nodeDesc = meshroom.core.nodesDesc[nodeType]
             currentNodeVersion = meshroom.core.nodeVersion(nodeDesc)
@@ -58,4 +53,25 @@ def test_templateVersions():
                         compatibilityIssue = CompatibilityIssue.DescriptionConflict
                         break
 
-            assert compatibilityIssue is None, "{} in {} for node {}".format(compatibilityIssue, path, nodeType)
+            if compatibilityIssue is not None:
+                print("{} in {} for node {}".format(compatibilityIssue, path, nodeType))
+                return False
+
+        return True
+
+    finally:
+        if not nodesAlreadyLoaded:
+            nodeTypes = [nodeType for _, nodeType in meshroom.core.nodesDesc.items()]
+            for nodeType in nodeTypes:
+                unregisterNodeType(nodeType)
+
+
+def checkAllTemplatesVersions() -> bool:
+    meshroom.core.initNodes()
+    meshroom.core.initPipelines()
+
+    validVersions = []
+    for _, path in pipelineTemplates.items():
+        validVersions.append(checkTemplateVersions(path, nodesAlreadyLoaded=True))
+
+    return all(validVersions)

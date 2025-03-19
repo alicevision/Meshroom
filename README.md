@@ -96,7 +96,7 @@ If you want to build it yourself, see [**INSTALL.md**](INSTALL.md) to setup the 
 
 Get the source code and install runtime requirements:
 ```bash
-git clone --recursive git://github.com/alicevision/meshroom
+git clone --recursive https://github.com/alicevision/Meshroom.git
 cd meshroom
 pip install -r requirements.txt
 ```

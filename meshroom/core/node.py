@@ -255,7 +255,7 @@ class NodeChunk(BaseObject):
         self._status = StatusData(node.name, node.nodeType, node.packageName, node.packageVersion)
         self.statistics = stats.Statistics()
         self.statusFileLastModTime = -1
-        self._subprocess = None
+        self.subprocess = None
         # Notify update in filepaths when node's internal folder changes
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
 

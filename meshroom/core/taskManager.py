@@ -4,7 +4,8 @@ from enum import Enum
 
 import meshroom
 from meshroom.common import BaseObject, DictModel, Property, Signal, Slot
-from meshroom.core.node import Status
+from meshroom.core.node import Status, Node
+from meshroom.core.graph import Graph
 import meshroom.core.graph
 
 
@@ -96,7 +97,7 @@ class TaskManager(BaseObject):
     """
     Manage graph - local and external - computation tasks.
     """
-    def __init__(self, parent=None):
+    def __init__(self, parent: BaseObject = None):
         super(TaskManager, self).__init__(parent)
         self._graph = None
         self._nodes = DictModel(keyAttrName='_name', parent=self)
@@ -163,7 +164,7 @@ class TaskManager(BaseObject):
         self._thread = TaskThread(self)
         self._thread.start()
 
-    def compute(self, graph=None, toNodes=None, forceCompute=False, forceStatus=False):
+    def compute(self, graph: Graph = None, toNodes: list[Node] = None, forceCompute: bool = False, forceStatus: bool = False):
         """
         Start graph computation, from root nodes to leaves - or nodes in 'toNodes' if specified.
         Computation tasks (NodeChunk) happen in a separate thread (see TaskThread).

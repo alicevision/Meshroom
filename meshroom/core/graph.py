@@ -818,11 +818,11 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InitNode)]
         return nodes
 
-    def findNodeCandidates(self, nodeNameExpr):
+    def findNodeCandidates(self, nodeNameExpr: str) -> list[Node]:
         pattern = re.compile(nodeNameExpr)
         return [v for k, v in self._nodes.objects.items() if pattern.match(k)]
 
-    def findNode(self, nodeExpr):
+    def findNode(self, nodeExpr: str) -> Node:
         candidates = self.findNodeCandidates('^' + nodeExpr)
         if not candidates:
             raise KeyError('No node candidate for "{}"'.format(nodeExpr))

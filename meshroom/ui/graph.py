@@ -359,20 +359,20 @@ class UIGraph(QObject):
     UIGraph exposes undoable methods on its graph and computation in a separate thread.
     It also provides a monitoring of all its computation units (NodeChunks).
     """
-    def __init__(self, undoStack, taskManager, parent=None):
+    def __init__(self, undoStack: commands.UndoStack, taskManager: TaskManager, parent: QObject = None):
         super(UIGraph, self).__init__(parent)
         self._undoStack = undoStack
         self._taskManager = taskManager
-        self._graph = Graph('', self)
+        self._graph: Graph = Graph('', self)
 
         self._modificationCount = 0
-        self._chunksMonitor = ChunksMonitor(parent=self)
-        self._computeThread = Thread()
+        self._chunksMonitor: ChunksMonitor = ChunksMonitor(parent=self)
+        self._computeThread: Thread = Thread()
         self._computingLocally = self._submitted = False
-        self._sortedDFSChunks = QObjectListModel(parent=self)
-        self._layout = GraphLayout(self)
+        self._sortedDFSChunks: QObjectListModel = QObjectListModel(parent=self)
+        self._layout: GraphLayout = GraphLayout(self)
         self._selectedNode = None
-        self._nodeSelection = QItemSelectionModel(self._graph.nodes, parent=self)
+        self._nodeSelection: QItemSelectionModel = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
 
         self.submitLabel = "{projectName}"

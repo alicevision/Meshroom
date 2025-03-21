@@ -13,7 +13,7 @@ import time
 import types
 import uuid
 from collections import namedtuple
-from enum import Enum
+from enum import Enum, auto
 from typing import Callable, Optional
 
 import meshroom
@@ -55,9 +55,9 @@ class Status(Enum):
 
 
 class ExecMode(Enum):
-    NONE = 0
-    LOCAL = 1
-    EXTERN = 2
+    NONE = auto()
+    LOCAL = auto()
+    EXTERN = auto()
 
 
 class StatusData(BaseObject):
@@ -65,7 +65,7 @@ class StatusData(BaseObject):
     """
     dateTimeFormatting = '%Y-%m-%d %H:%M:%S.%f'
 
-    def __init__(self, nodeName='', nodeType='', packageName='', packageVersion='', parent=None):
+    def __init__(self, nodeName='', nodeType='', packageName='', packageVersion='', parent: BaseObject = None):
         super(StatusData, self).__init__(parent)
         self.status = Status.NONE
         self.execMode = ExecMode.NONE
@@ -1221,7 +1221,7 @@ class BaseNode(BaseObject):
     def globalExecMode(self):
         return self._chunks.at(0).execModeName
 
-    def getChunks(self):
+    def getChunks(self) -> list[NodeChunk]:
         return self._chunks
 
     def getSize(self):

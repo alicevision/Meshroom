@@ -7,8 +7,8 @@ import tempfile
 import uuid
 import logging
 import pkgutil
-
 import sys
+import traceback
 
 try:
     # for cx_freeze
@@ -65,6 +65,7 @@ def loadPlugins(folder, packageName, classType):
         package = importlib.import_module(packageName)
         packageName = package.packageName if hasattr(package, 'packageName') else package.__name__
         packageVersion = getattr(package, "__version__", None)
+        packagePath = os.path.dirname(package.__file__)
 
         for importer, pluginName, ispkg in pkgutil.iter_modules(package.__path__):
             pluginModuleName = '.' + pluginName
@@ -75,7 +76,7 @@ def loadPlugins(folder, packageName, classType):
                            if plugin.__module__ == '{}.{}'.format(package.__name__, pluginName)
                            and issubclass(plugin, classType)]
                 if not plugins:
-                    logging.warning("No class defined in plugin: {}".format(pluginModuleName))
+                    logging.warning(f"No class defined in plugin: {pluginModuleName}")
 
                 importPlugin = True
                 for p in plugins:
@@ -88,13 +89,23 @@ def loadPlugins(folder, packageName, classType):
                             break
                     p.packageName = packageName
                     p.packageVersion = packageVersion
+                    p.packagePath = packagePath
                 if importPlugin:
                     pluginTypes.extend(plugins)
             except Exception as e:
-                errors.append('  * {}: {}'.format(pluginName, str(e)))
+                tb = traceback.extract_tb(e.__traceback__)
+                last_call = tb[-1]
+                errors.append(f'  * {pluginName} ({type(e).__name__}): {str(e)}\n'
+                              # filename:lineNumber functionName
+                              f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
+                              # line of code with the error
+                              f'{last_call.line}'
+                              # Full traceback
+                              f'\n{traceback.format_exc()}\n\n'
+                              )
 
     if errors:
-        logging.warning('== The following "{package}" plugins could not be loaded ==\n'
+        logging.warning(' The following "{package}" plugins could not be loaded:\n'
                         '{errorMsg}\n'
                         .format(package=packageName, errorMsg='\n'.join(errors)))
     return pluginTypes

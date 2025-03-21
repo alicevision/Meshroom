@@ -7,7 +7,7 @@ import json
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
 from PySide6.QtCore import Qt, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QSurfaceFormat
 from PySide6.QtWidgets import QApplication
 
 import meshroom
@@ -189,7 +189,12 @@ class MeshroomApp(QApplication):
     def __init__(self, args):
         meshroom.core.initPipelines()
 
+
         QtArgs = [args[0], '-style', 'Fusion'] + args[1:]  # force Fusion style by default
+
+        #from PySide6.QtQml import QQmlDebuggingEnabler
+        #debugEnabled = QQmlDebuggingEnabler(True)
+        #QtArgs += ["-qmljsdebugger=port:8888"]
 
         args = createMeshroomParser(args)
 
@@ -212,6 +217,10 @@ class MeshroomApp(QApplication):
         font = self.font()
         font.setPointSize(9)
         self.setFont(font)
+
+        sFormat = QSurfaceFormat()
+        sFormat.setSwapInterval(0)
+        QSurfaceFormat.setDefaultFormat(sFormat)
 
         pwd = os.path.dirname(__file__)
         self.setWindowIcon(QIcon(os.path.join(pwd, "img/meshroom.svg")))
@@ -587,7 +596,7 @@ class MeshroomApp(QApplication):
 
     def _default8bitViewerEnabled(self):
         return bool(os.environ.get("MESHROOM_USE_8BIT_VIEWER", False))
-    
+
     def _defaultSequencePlayerEnabled(self):
         return bool(os.environ.get("MESHROOM_USE_SEQUENCE_PLAYER", True))
 

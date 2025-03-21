@@ -104,9 +104,14 @@ SfmDataEntity {
                 },
                 PhongMaterial{
                     id: mat
-                    ambient: _reconstruction && (viewId === _reconstruction.selectedViewId ||
-                                                 (viewId === _reconstruction.pickedViewId && syncPickedViewId)) ?
-                                 activePalette.highlight : customColor  // "#CCC"
+                    ambient: {
+                        if(!_reconstruction)
+                            return customColor
+                        if((syncPickedViewId && viewId === _reconstruction.pickedViewId) ||
+                           (viewId === _reconstruction.selectedViewId))
+                            return activePalette.highlight
+                        return customColor  // "#CCC"
+                    }
                 }
             ]
         }

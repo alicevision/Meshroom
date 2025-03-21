@@ -21,8 +21,8 @@ FocusScope {
     property url source
     property var viewIn3D
 
-    property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
-    property Component panoramaViewerComp: Qt.createComponent("PanoramaViewer.qml")
+    // property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
+    // property Component panoramaViewerComp: Qt.createComponent("PanoramaViewer.qml")
     property var useFloatImageViewer: displayHDR.checked
     property alias useLensDistortionViewer: displayLensDistortionViewer.checked
     property alias usePanoramaViewer: displayPanoramaViewer.checked
@@ -47,12 +47,12 @@ FocusScope {
         property variant viewpointMetadata: {
             // Metadata from viewpoint attribute
             // Read from the reconstruction object
-            if (_reconstruction) {
-                let vp = getViewpoint(_reconstruction.selectedViewId)
-                if (vp) {
-                    return JSON.parse(vp.childAttribute("metadata").value)
-                }
-            }
+            // if (_reconstruction) {
+            //     let vp = getViewpoint(_reconstruction.selectedViewId)
+            //     if (vp) {
+            //         return JSON.parse(vp.childAttribute("metadata").value)
+            //     }
+            // }
             return {}
         }
         property variant imgMetadata: {
@@ -63,13 +63,13 @@ FocusScope {
             }
             // Metadata from PhongImageViewer
             // Directly read from the image file on disk
-            if (phongImageViewerLoader.active) {
-                return phongImageViewerLoader.item.metadata
-            }
-            // Use viewpoint metadata for the special case of the 8-bit viewer
-            if (qtImageViewerLoader.active) {
-                return viewpointMetadata
-            }
+            // if (phongImageViewerLoader.active) {
+            //     return phongImageViewerLoader.item.metadata
+            // }
+            // // Use viewpoint metadata for the special case of the 8-bit viewer
+            // if (qtImageViewerLoader.active) {
+            //     return viewpointMetadata
+            // }
             return {}
         }
     }
@@ -218,19 +218,27 @@ FocusScope {
     }
 
     function getViewpoint(viewId) {
-        // Get viewpoint from cameraInit with matching id
-        // This requires to loop over all viewpoints
-        for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
-            var vp = _reconstruction.viewpoints.at(i)
-            if (vp.childAttribute("viewId").value == viewId) {
-                return vp
-            }
+        // print("getViewpoint: " + viewId)
+        var index = _reconstruction.viewIdToIndex(viewId)
+        if (index < 0) {
+            return undefined
         }
+        // print("getViewpoint index: " + index)
+        return _reconstruction.viewpoints.at(index)
 
-        return undefined
+        // // Get viewpoint from cameraInit with matching id
+        // // This requires to loop over all viewpoints
+        // for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
+        //     var vp = _reconstruction.viewpoints.at(i)
+        //     if (vp.childAttribute("viewId").value == viewId) {
+        //         return vp
+        //     }
+        // }
+
+        // return undefined
     }
 
-    function getImageFile() {
+    property string myImageFile: {
         if (useExternal) {
             // Entry point for getting the image file from an external URL
             return sourceExternal
@@ -238,28 +246,30 @@ FocusScope {
 
         if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
             // Entry point for getting the image file from the gallery
-            let vp = getViewpoint(_reconstruction.pickedViewId)
-            let path = vp ? vp.childAttribute("path").value : ""
-            _reconstruction.currentViewPath = path
+            // let vp = getViewpoint(_reconstruction.pickedViewId)
+            // let path = vp ? vp.childAttribute("path").value : ""
+            // _reconstruction.currentViewPath = path
+            var viewId = sequencePlayer.sortedViewIds[currentFrame - frameRange.min]
+            let path = _reconstruction.viewIdToPath(viewId)
             return Filepath.stringToUrl(path)
         }
 
-        if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput && displayedAttr &&
-            (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
-            // Entry point for getting the image file from a sequence defined by an output attribute
-            var path = sequence[currentFrame - frameRange.min]
-            _reconstruction.currentViewPath = path
-            return Filepath.stringToUrl(path)
-        }
+        // if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput && displayedAttr &&
+        //     (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
+        //     // Entry point for getting the image file from a sequence defined by an output attribute
+        //     var path = sequence[currentFrame - frameRange.min]
+        //     // _reconstruction.currentViewPath = path
+        //     return Filepath.stringToUrl(path)
+        // }
 
-        if (_reconstruction) {
-            // Entry point for getting the image file from an output attribute and associated to the current viewpoint
-            let vp = getViewpoint(_reconstruction.pickedViewId)
-            let path = displayedAttr ? displayedAttr.value : ""
-            let resolved = vp ? Filepath.resolve(path, vp) : path
-            _reconstruction.currentViewPath = resolved
-            return Filepath.stringToUrl(resolved)
-        }
+        // if (_reconstruction) {
+        //     // Entry point for getting the image file from an output attribute and associated to the current viewpoint
+        //     let vp = getViewpoint(_reconstruction.pickedViewId)
+        //     let path = displayedAttr ? displayedAttr.value : ""
+        //     let resolved = vp ? Filepath.resolve(path, vp) : path
+        //     // _reconstruction.currentViewPath = resolved
+        //     return Filepath.stringToUrl(resolved)
+        // }
 
         return undefined
     }
@@ -310,6 +320,7 @@ FocusScope {
                 enableSequencePlayerAction.checked = true
             }
         } else {
+            print("Viewer2D: buildOrderedSequence")
             let objs = []
             for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
                 objs.push(_reconstruction.viewpoints.at(i))
@@ -369,7 +380,7 @@ FocusScope {
 
     onDisplayedAttrValueChanged: {
         if (displayedNode && !displayedNode.hasSequenceOutput) {
-            root.source = getImageFile()
+            root.source = myImageFile
             root.sequence = []
         } else {
             root.source = ""
@@ -382,7 +393,7 @@ FocusScope {
     Connections {
         target: _reconstruction
         function onSelectedViewIdChanged() {
-            root.source = getImageFile()
+            root.source = myImageFile
             if (useExternal)
                 useExternal = false
         }
@@ -480,7 +491,7 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 ExifOrientedViewer {
                     id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active && !phongImageViewerLoader.active
+                    active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) // && !panoramaViewerLoader.active && !phongImageViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
                     orientationTag: imgContainer.orientationTag
@@ -553,7 +564,7 @@ FocusScope {
                             // Instantiate and initialize a FloatImage component dynamically using Loader.setSource
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
                             floatImageViewerLoader.setSource("FloatImage.qml", {
-                                "source":  Qt.binding(function() { return getImageFile() }),
+                                "source":  Qt.binding(function() { return myImageFile }),
                                 "gamma": Qt.binding(function() { return hdrImageToolbar.gammaValue }),
                                 "gain": Qt.binding(function() { return hdrImageToolbar.gainValue }),
                                 "channelModeString": Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
@@ -584,181 +595,181 @@ FocusScope {
                     }
                 }
 
-                // qtAliceVision Panorama Viewer
-                Loader {
-                    id: panoramaViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.usePanoramaViewer &&
-                            _reconstruction.activeNodes.get('sfm').node
-                    visible: (panoramaViewerLoader.status === Loader.Ready) && active
-                    anchors.centerIn: parent
+                // // qtAliceVision Panorama Viewer
+                // Loader {
+                //     id: panoramaViewerLoader
+                //     active: root.aliceVisionPluginAvailable && root.usePanoramaViewer &&
+                //             _reconstruction.activeNodes.get('sfm').node
+                //     visible: (panoramaViewerLoader.status === Loader.Ready) && active
+                //     anchors.centerIn: parent
 
-                    onActiveChanged: {
-                        if (active) {
-                            setSource("PanoramaViewer.qml", {
-                                "subdivisionsPano": Qt.binding(function() { return panoramaViewerToolbar.subdivisionsValue }),
-                                "cropFisheyePano": Qt.binding(function() { return root.cropFisheye }),
-                                "downscale": Qt.binding(function() { return panoramaViewerToolbar.downscaleValue }),
-                                "isEditable": Qt.binding(function() { return panoramaViewerToolbar.enableEdit }),
-                                "isHighlightable": Qt.binding(function() { return panoramaViewerToolbar.enableHover }),
-                                "displayGridPano": Qt.binding(function() { return panoramaViewerToolbar.displayGrid }),
-                                "mouseMultiplier": Qt.binding(function() { return panoramaViewerToolbar.mouseSpeed }),
-                                "msfmData": Qt.binding(function() { return (msfmDataLoader && msfmDataLoader.item && msfmDataLoader.status === Loader.Ready
-                                                                           && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
-                            })
-                        } else {
-                            // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
-                            setSource("", {})
-                            displayPanoramaViewer.checked = false
-                        }
-                    }
-                }
+                //     onActiveChanged: {
+                //         if (active) {
+                //             setSource("PanoramaViewer.qml", {
+                //                 "subdivisionsPano": Qt.binding(function() { return panoramaViewerToolbar.subdivisionsValue }),
+                //                 "cropFisheyePano": Qt.binding(function() { return root.cropFisheye }),
+                //                 "downscale": Qt.binding(function() { return panoramaViewerToolbar.downscaleValue }),
+                //                 "isEditable": Qt.binding(function() { return panoramaViewerToolbar.enableEdit }),
+                //                 "isHighlightable": Qt.binding(function() { return panoramaViewerToolbar.enableHover }),
+                //                 "displayGridPano": Qt.binding(function() { return panoramaViewerToolbar.displayGrid }),
+                //                 "mouseMultiplier": Qt.binding(function() { return panoramaViewerToolbar.mouseSpeed }),
+                //                 "msfmData": Qt.binding(function() { return (msfmDataLoader && msfmDataLoader.item && msfmDataLoader.status === Loader.Ready
+                //                                                            && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
+                //             })
+                //         } else {
+                //             // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                //             setSource("", {})
+                //             displayPanoramaViewer.checked = false
+                //         }
+                //     }
+                // }
 
-                // qtAliceVision Phong Image Viewer
-                ExifOrientedViewer {
-                    id: phongImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && displayPhongLighting.enabled && displayPhongLighting.checked
-                    visible: (phongImageViewerLoader.status === Loader.Ready) && active
-                    anchors.centerIn: parent
-                    orientationTag: imgContainer.orientationTag
-                    xOrigin: imgContainer.width / 2
-                    yOrigin: imgContainer.height / 2
+                // // qtAliceVision Phong Image Viewer
+                // ExifOrientedViewer {
+                //     id: phongImageViewerLoader
+                //     active: root.aliceVisionPluginAvailable && displayPhongLighting.enabled && displayPhongLighting.checked
+                //     visible: (phongImageViewerLoader.status === Loader.Ready) && active
+                //     anchors.centerIn: parent
+                //     orientationTag: imgContainer.orientationTag
+                //     xOrigin: imgContainer.width / 2
+                //     yOrigin: imgContainer.height / 2
 
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('PhotometricStereo').node : null
-                    property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
-                    property url sourcePath: getAlbedoFile()
-                    property url normalPath: getNormalFile()
-                    property bool fittedOnce: false
-                    property int previousWidth: 0
-                    property int previousHeight: 0
-                    property int previousOrientationTag: 1
+                //     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('PhotometricStereo').node : null
+                //     property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
+                //     property url sourcePath: getAlbedoFile()
+                //     property url normalPath: getNormalFile()
+                //     property bool fittedOnce: false
+                //     property int previousWidth: 0
+                //     property int previousHeight: 0
+                //     property int previousOrientationTag: 1
 
-                    function getAlbedoFile() {
+                //     function getAlbedoFile() {
 
-                        if(vp && activeNode && activeNode.hasAttribute("albedo")) {
-                            return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("albedo").value, vp))
-                        }
+                //         if(vp && activeNode && activeNode.hasAttribute("albedo")) {
+                //             return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("albedo").value, vp))
+                //         }
 
-                        return getImageFile()
-                    }
+                //         return myImageFile
+                //     }
 
-                    function getNormalFile() {
+                //     function getNormalFile() {
 
-                        if(vp && activeNode && activeNode.hasAttribute("normals")) {
-                            return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("normals").value, vp))
-                        }
+                //         if(vp && activeNode && activeNode.hasAttribute("normals")) {
+                //             return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("normals").value, vp))
+                //         }
 
-                        return getImageFile()
-                    }
+                //         return myImageFile
+                //     }
 
-                    onWidthChanged: {
-                        /* We want to do the auto-fit on the first display of an image from the group, and then keep its
-                         * scale when displaying another image from the group, so we need to know if an image in the
-                         * group has already been auto-fitted. If we change the group of images (when another project is
-                         * opened, for example, and the images have a different size), then another auto-fit needs to be
-                         * performed */
-                        if ((!fittedOnce && imgContainer.image && imgContainer.image.width > 0) ||
-                            (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
-                            var ret = fit()
-                            if (!ret)
-                                return
-                            fittedOnce = true
-                            previousWidth = width
-                            previousHeight = height
-                            if (orientationTag != undefined)
-                                previousOrientationTag = orientationTag
-                        }
-                    }
+                //     onWidthChanged: {
+                //         /* We want to do the auto-fit on the first display of an image from the group, and then keep its
+                //          * scale when displaying another image from the group, so we need to know if an image in the
+                //          * group has already been auto-fitted. If we change the group of images (when another project is
+                //          * opened, for example, and the images have a different size), then another auto-fit needs to be
+                //          * performed */
+                //         if ((!fittedOnce && imgContainer.image && imgContainer.image.width > 0) ||
+                //             (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
+                //             var ret = fit()
+                //             if (!ret)
+                //                 return
+                //             fittedOnce = true
+                //             previousWidth = width
+                //             previousHeight = height
+                //             if (orientationTag != undefined)
+                //                 previousOrientationTag = orientationTag
+                //         }
+                //     }
 
-                    onOrientationTagChanged: {
-                        /* For images of the same width and height but with different orientations, the auto-fit
-                         * will not be triggered by the "widthChanged()" signal, so it needs to be triggered upon
-                         * either a change in the image's size or in its orientation. */
-                        if (orientationTag != undefined && previousOrientationTag != orientationTag) {
-                            var ret = fit()
-                            if (!ret)
-                                return
-                            fittedOnce = true
-                            previousWidth = width
-                            previousHeight = height
-                            previousOrientationTag = orientationTag
-                        }
-                    }
+                //     onOrientationTagChanged: {
+                //         /* For images of the same width and height but with different orientations, the auto-fit
+                //          * will not be triggered by the "widthChanged()" signal, so it needs to be triggered upon
+                //          * either a change in the image's size or in its orientation. */
+                //         if (orientationTag != undefined && previousOrientationTag != orientationTag) {
+                //             var ret = fit()
+                //             if (!ret)
+                //                 return
+                //             fittedOnce = true
+                //             previousWidth = width
+                //             previousHeight = height
+                //             previousOrientationTag = orientationTag
+                //         }
+                //     }
 
-                    onActiveChanged: {
-                        if (active) {
-                            /* Instantiate and initialize a PhongImageViewer component dynamically using Loader.setSource
-                             * Note: It does not work to use previously created component, so we re-create it with setSource. */
-                            setSource("PhongImageViewer.qml", {
-                                'sourcePath':  Qt.binding(function() { return sourcePath }),
-                                'normalPath':  Qt.binding(function() { return normalPath }),
-                                'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
-                                'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
-                                'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
-                                'baseColor': Qt.binding(function() { return phongImageViewerToolbar.baseColorValue }),
-                                'textureOpacity': Qt.binding(function() { return phongImageViewerToolbar.textureOpacityValue }),
-                                'ka': Qt.binding(function() { return phongImageViewerToolbar.kaValue }),
-                                'kd': Qt.binding(function() { return phongImageViewerToolbar.kdValue }),
-                                'ks': Qt.binding(function() { return phongImageViewerToolbar.ksValue }),
-                                'shininess': Qt.binding(function() { return phongImageViewerToolbar.shininessValue }),
-                                'lightYaw': Qt.binding(function() { return -directionalLightPane.lightYawValue }), // left handed coordinate system
-                                'lightPitch': Qt.binding(function() { return directionalLightPane.lightPitchValue }),
-                            })
-                        } else {
-                            // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
-                            setSource("", {})
-                            fittedOnce = false
-                        }
-                    }
-                }
+                //     onActiveChanged: {
+                //         if (active) {
+                //             /* Instantiate and initialize a PhongImageViewer component dynamically using Loader.setSource
+                //              * Note: It does not work to use previously created component, so we re-create it with setSource. */
+                //             setSource("PhongImageViewer.qml", {
+                //                 'sourcePath':  Qt.binding(function() { return sourcePath }),
+                //                 'normalPath':  Qt.binding(function() { return normalPath }),
+                //                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
+                //                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
+                //                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
+                //                 'baseColor': Qt.binding(function() { return phongImageViewerToolbar.baseColorValue }),
+                //                 'textureOpacity': Qt.binding(function() { return phongImageViewerToolbar.textureOpacityValue }),
+                //                 'ka': Qt.binding(function() { return phongImageViewerToolbar.kaValue }),
+                //                 'kd': Qt.binding(function() { return phongImageViewerToolbar.kdValue }),
+                //                 'ks': Qt.binding(function() { return phongImageViewerToolbar.ksValue }),
+                //                 'shininess': Qt.binding(function() { return phongImageViewerToolbar.shininessValue }),
+                //                 'lightYaw': Qt.binding(function() { return -directionalLightPane.lightYawValue }), // left handed coordinate system
+                //                 'lightPitch': Qt.binding(function() { return directionalLightPane.lightPitchValue }),
+                //             })
+                //         } else {
+                //             // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                //             setSource("", {})
+                //             fittedOnce = false
+                //         }
+                //     }
+                // }
 
-                // Simple QML Image Viewer (using Qt or qtAliceVisionImageIO to load images)
-                ExifOrientedViewer {
-                    id: qtImageViewerLoader
-                    active: !floatImageViewerLoader.active && !panoramaViewerLoader.active && !phongImageViewerLoader.active
-                    anchors.centerIn: parent
-                    orientationTag: imgContainer.orientationTag
-                    xOrigin: imgContainer.width / 2
-                    yOrigin: imgContainer.height / 2
-                    sourceComponent: Image {
-                        id: qtImageViewer
-                        asynchronous: true
-                        smooth: false
-                        fillMode: Image.PreserveAspectFit
-                        onWidthChanged: if (status==Image.Ready) fit()
-                        source: getImageFile()
-                        onStatusChanged: {
-                            // Update cache source when image is loaded
-                            imageStatus = status
-                            if (status === Image.Ready)
-                                qtImageViewerCache.source = source
-                        }
+                // // Simple QML Image Viewer (using Qt or qtAliceVisionImageIO to load images)
+                // ExifOrientedViewer {
+                //     id: qtImageViewerLoader
+                //     active: !floatImageViewerLoader.active && !panoramaViewerLoader.active && !phongImageViewerLoader.active
+                //     anchors.centerIn: parent
+                //     orientationTag: imgContainer.orientationTag
+                //     xOrigin: imgContainer.width / 2
+                //     yOrigin: imgContainer.height / 2
+                //     sourceComponent: Image {
+                //         id: qtImageViewer
+                //         asynchronous: true
+                //         smooth: false
+                //         fillMode: Image.PreserveAspectFit
+                //         onWidthChanged: if (status==Image.Ready) fit()
+                //         source: myImageFile
+                //         onStatusChanged: {
+                //             // Update cache source when image is loaded
+                //             imageStatus = status
+                //             if (status === Image.Ready)
+                //                 qtImageViewerCache.source = source
+                //         }
 
-                        property var imageStatus: Image.Ready
+                //         property var imageStatus: Image.Ready
 
-                        // Image cache of the last loaded image
-                        // Only visible when the main one is loading, to maintain a displayed image for smoother transitions
-                        Image {
-                            id: qtImageViewerCache
+                //         // Image cache of the last loaded image
+                //         // Only visible when the main one is loading, to maintain a displayed image for smoother transitions
+                //         Image {
+                //             id: qtImageViewerCache
 
-                            anchors.fill: parent
-                            asynchronous: true
-                            smooth: parent.smooth
-                            fillMode: parent.fillMode
+                //             anchors.fill: parent
+                //             asynchronous: true
+                //             smooth: parent.smooth
+                //             fillMode: parent.fillMode
 
-                            visible: qtImageViewer.status === Image.Loading
-                        }
-                    }
-                }
+                //             visible: qtImageViewer.status === Image.Loading
+                //         }
+                //     }
+                // }
 
                 property var image: {
-                    if (floatImageViewerLoader.active)
+                    // if (floatImageViewerLoader.active)
                         floatImageViewerLoader.item
-                    else if (panoramaViewerLoader.active)
-                        panoramaViewerLoader.item
-                    else if (phongImageViewerLoader.active)
-                        phongImageViewerLoader.item
-                    else
-                        qtImageViewerLoader.item
+                    // else if (panoramaViewerLoader.active)
+                    //     panoramaViewerLoader.item
+                    // else if (phongImageViewerLoader.active)
+                    //     phongImageViewerLoader.item
+                    // else
+                    //     qtImageViewerLoader.item
                 }
                 width: image ? (image.width > 0 ? image.width : 1) : 1
                 height: image ? (image.height > 0 ? image.height : 1) : 1
@@ -977,7 +988,7 @@ FocusScope {
                             font.pointSize: 8
                             readOnly: true
                             selectByMouse: true
-                            text: (phongImageViewerLoader.active) ? Filepath.urlToString(phongImageViewerLoader.sourcePath) : Filepath.urlToString(getImageFile())
+                            // text: (phongImageViewerLoader.active) ? Filepath.urlToString(phongImageViewerLoader.sourcePath) : Filepath.urlToString(myImageFile)
                         }
 
                         // Write which node is being displayed
@@ -1301,26 +1312,26 @@ FocusScope {
                         }
                     }
 
-                    PhongImageViewerToolbar {
-                        id: phongImageViewerToolbar
+                    // PhongImageViewerToolbar {
+                    //     id: phongImageViewerToolbar
 
-                        anchors {
-                            bottom: parent.bottom
-                            left: parent.left
-                            margins: 2
-                        }
-                        visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active
-                    }
+                    //     anchors {
+                    //         bottom: parent.bottom
+                    //         left: parent.left
+                    //         margins: 2
+                    //     }
+                    //     visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active
+                    // }
 
-                    DirectionalLightPane {
-                        id: directionalLightPane
-                        anchors {
-                            bottom: parent.bottom
-                            right: parent.right
-                            margins: 2
-                        }
-                        visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active && phongImageViewerToolbar.displayLightController
-                    }
+                    // DirectionalLightPane {
+                    //     id: directionalLightPane
+                    //     anchors {
+                    //         bottom: parent.bottom
+                    //         right: parent.right
+                    //         margins: 2
+                    //     }
+                    //     visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active && phongImageViewerToolbar.displayLightController
+                    // }
                 }
 
                 FloatingPane {
@@ -1601,7 +1612,7 @@ FocusScope {
                             Layout.preferredWidth: model.reduce((acc, label) => Math.max(acc, fontMetrics.boundingRect(label).width), 0) + 3.0 * Qt.application.font.pixelSize
 
                             onNameChanged: {
-                                root.source = getImageFile()
+                                root.source = myImageFile
                                 root.sequence = getSequence()
                             }
                         }
@@ -1731,8 +1742,8 @@ FocusScope {
         visible: running
 
         onVisibleChanged: {
-            if (panoramaViewerLoader.active)
-                fit()
+            // if (panoramaViewerLoader.active)
+            //     fit()
         }
     }
 

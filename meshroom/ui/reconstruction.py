@@ -461,6 +461,8 @@ class Reconstruction(UIGraph):
         self._cameraInit = None                            # current CameraInit node
         self._cameraInits = QObjectListModel(parent=self)  # all CameraInit nodes
         self._buildingIntrinsics = False
+        self._mapViewIdToIndex = {}
+        self._mapViewIdToPath = {}
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
 
         self.cameraInitChanged.connect(self.onCameraInitChanged)
@@ -521,9 +523,38 @@ class Reconstruction(UIGraph):
     def onCameraInitChanged(self):
         if self._cameraInit is None:
             return
+
+        # Keep a mapping between viewId and viewpoint index in the active CameraInit
+        # print("Update mapViewIdToIndex: before len=" + str(len(self._mapViewIdToIndex)))
+        self._mapViewIdToIndex = {}
+        self._mapViewIdToPath = {}
+        for index, viewpoint in enumerate(self.viewpoints):
+            viewId = viewpoint.childAttribute("viewId").value
+
+            # print(f"index: {index}, viewId: {viewId}, type viewId: {type(viewId)}")
+            self._mapViewIdToIndex[viewId] = index
+            self._mapViewIdToPath[viewId] = viewpoint.childAttribute("path").value
+        # print("Update mapViewIdToIndex: after len=" + str(len(self._mapViewIdToIndex)))
+
         # Update active nodes when CameraInit changes
         nodes = self._graph.dfsOnDiscover(startNodes=[self._cameraInit], reverse=True)[0]
         self.setActiveNodes(nodes)
+
+    @Slot(str, result=int)
+    def viewIdToIndex(self, viewIdStr):
+        if not viewIdStr:
+            return -1
+        index = self._mapViewIdToIndex.get(int(viewIdStr), -1)
+        # print("Reconstruction.viewIdToIndex: " + str(type(viewId)))
+        # print("Reconstruction.viewIdToIndex: " + viewId + " => " + str(index))
+        return index
+
+    @Slot(str, result=str)
+    def viewIdToPath(self, viewIdStr):
+        if not viewIdStr:
+            return ""
+        path = self._mapViewIdToPath.get(int(viewIdStr), "")
+        return path
 
     @Slot()
     @Slot(str)

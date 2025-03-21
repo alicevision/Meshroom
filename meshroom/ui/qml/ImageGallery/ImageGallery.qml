@@ -186,7 +186,7 @@ Panel {
             highlightFollowsCurrentItem: true
             keyNavigationEnabled: true
             property bool updateSelectedViewFromGrid: true
-
+/*
             // Update grid current item when selected view changes
             Connections {
                 target: _reconstruction
@@ -195,7 +195,7 @@ Panel {
                         grid.updateCurrentIndexFromSelectionViewId()
                     }
                 }
-            }
+            }*/
             function makeCurrentItemVisible() {
                 grid.positionViewAtIndex(grid.currentIndex, GridView.Visible)
             }
@@ -215,7 +215,7 @@ Panel {
                     _reconstruction.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
                 }
             }
-
+/*
             // Update grid item when corresponding thumbnail is computed
             Connections {
                 target: ThumbnailCache
@@ -233,8 +233,10 @@ Panel {
                         }
                     }
                 }
-            }
+            }*/
 
+            model: m.viewpoints
+            /*
             model: SortFilterDelegateModel {
                 id: sortedModel
                 model: m.viewpoints
@@ -273,7 +275,6 @@ Panel {
 
                     return value
                 }
-
                 delegate: ImageDelegate {
                     id: imageDelegate
 
@@ -374,7 +375,7 @@ Panel {
                         }
                     }
                 }
-            }
+            }*/
 
             // Keyboard shortcut to change current image group
             Keys.priority: Keys.BeforeItem

@@ -36,7 +36,7 @@ FloatingPane {
         property int maxCacheMemory: viewer && viewer.ramInfo != undefined ? viewer.ramInfo.x / 4 : 0
     }
 
-    function updateReconstructionView() {
+     function updateReconstructionView() {
         if (isOutputSequence)
             return
         if (_reconstruction && m.frame >= frameRange.min && m.frame < frameRange.max + 1) {
@@ -383,15 +383,15 @@ FloatingPane {
                             Text {
                                 height: sync3DCheckBox.height
                                 verticalAlignment: Text.AlignVCenter
-                                text: {
-                                    // number of cached frames is the difference between the first and last frame of all intervals in the cache
-                                    let cachedFrames = viewer ? viewer.cachedFrames : []
-                                    let cachedFramesCount = 0
-                                    for (let i = 0; i < cachedFrames.length; i++) {
-                                        cachedFramesCount += cachedFrames[i].y - cachedFrames[i].x + 1
-                                    }
-                                    return "Cached Frames: " + (viewer ? cachedFramesCount : "0") + " / " + sortedViewIds.length
-                                }
+                                // text: {
+                                //     // number of cached frames is the difference between the first and last frame of all intervals in the cache
+                                //     let cachedFrames = viewer ? viewer.cachedFrames : []
+                                //     let cachedFramesCount = 0
+                                //     for (let i = 0; i < cachedFrames.length; i++) {
+                                //         cachedFramesCount += cachedFrames[i].y - cachedFrames[i].x + 1
+                                //     }
+                                //     return "Cached Frames: " + (viewer ? cachedFramesCount : "0") + " / " + sortedViewIds.length
+                                // }
                                 color: palette.text
                             }
 

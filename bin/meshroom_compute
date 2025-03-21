@@ -2,7 +2,14 @@
 import argparse
 import sys
 
-import meshroom
+try:
+    import meshroom
+except:
+    # If meshroom module is not in the PYTHONPATH, add our root using the relative path
+    import pathlib
+    meshroomRootFolder = pathlib.Path(__file__).parent.parent.resolve()
+    sys.path.append(meshroomRootFolder)
+    import meshroom
 meshroom.setupEnvironment()
 
 import meshroom.core.graph

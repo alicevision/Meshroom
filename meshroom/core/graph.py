@@ -672,7 +672,7 @@ class Graph(BaseObject):
                 return newName
             idx += 1
 
-    def node(self, nodeName):
+    def node(self, nodeName) -> Optional[Node]:
         return self._nodes.get(nodeName)
 
     def upgradeNode(self, nodeName) -> Node:

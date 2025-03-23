@@ -200,11 +200,14 @@ class ChunksMonitor(QObject):
             times: the last modification times for currently monitored files.
         """
         newRecords = dict(zip(self.monitoredChunks, times))
+        hasChanges = False
         for chunk, fileModTime in newRecords.items():
             # update chunk status if last modification time has changed since previous record
             if fileModTime != chunk.statusFileLastModTime:
                 chunk.updateStatusFromCache()
-                chunk.node.loadOutputAttr()
+                hasChanges = True
+        if hasChanges:
+            chunk.node.loadOutputAttr()
 
     def onFilePollerRefreshUpdated(self):
         """

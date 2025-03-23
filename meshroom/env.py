@@ -15,6 +15,8 @@ import sys
 from typing import Any, Type
 
 
+meshroomFolder = os.path.dirname(__file__)
+
 @dataclass
 class VarDefinition:
     """Environment variable definition."""
@@ -39,6 +41,12 @@ class EnvVar(Enum):
         str, "port:3768", "QML debugging params as expected by -qmljsdebugger"
     )
 
+    # Core
+    MESHROOM_PLUGINS_PATH = VarDefinition(str, "", "Paths to plugins folders")
+    MESHROOM_NODES_PATH = VarDefinition(str, "", "Paths to set of nodes folders")
+    MESHROOM_SUBMITTERS_PATH = VarDefinition(str, "", "Paths to set of submitters folders")
+    MESHROOM_PIPELINE_TEMPLATES_PATH = VarDefinition(str, "", "Paths to pipeline templates folders")
+
     @staticmethod
     def get(envVar: "EnvVar") -> Any:
         """Get the value of `envVar`, cast to the variable type."""
@@ -46,11 +54,18 @@ class EnvVar(Enum):
         return EnvVar._cast(value, envVar.value.valueType)
 
     @staticmethod
+    def getList(envVar: "EnvVar") -> list[Any]:
+        """Get the value of `envVar` as a list of non-empty strings."""
+        paths = EnvVar.get(envVar).split(os.pathsep)
+        # filter empty values
+        return [p for p in paths if p]
+
+    @staticmethod
     def _cast(value: str, valueType: Type) -> Any:
         if valueType is str:
             return value
         elif valueType is bool:
-            return value.lower() in {"true", "1", "on"}
+            return value.lower() in {"true", "1", "on", "yes", "y"}
         return valueType(value)
 
     @classmethod

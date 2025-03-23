@@ -335,10 +335,7 @@ class NodeChunk(BaseObject):
         data = self._status.toDict()
         statusFilepath = self.statusFile
         folder = os.path.dirname(statusFilepath)
-        try:
-            os.makedirs(folder)
-        except Exception:
-            pass
+        os.makedirs(folder, exist_ok=True)
 
         statusFilepathWriting = getWritingFilepath(statusFilepath)
         with open(statusFilepathWriting, 'w') as jsonFile:
@@ -376,8 +373,7 @@ class NodeChunk(BaseObject):
         data = self.statistics.toDict()
         statisticsFilepath = self.statisticsFile
         folder = os.path.dirname(statisticsFilepath)
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+        os.makedirs(folder, exist_ok=True)
         statisticsFilepathWriting = getWritingFilepath(statisticsFilepath)
         with open(statisticsFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)

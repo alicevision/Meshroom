@@ -16,7 +16,7 @@ meshroom.setupEnvironment()
 
 import meshroom.core
 import meshroom.core.graph
-from meshroom.core.node import Status
+from meshroom.core.node import Status, ExecMode
 
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
@@ -26,6 +26,8 @@ parser.add_argument('--node', metavar='NODE_NAME', type=str,
                     help='Process the node. It will generate an error if the dependencies are not already computed.')
 parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
                     help='Process the node with its dependencies.')
+parser.add_argument('--inCurrentEnv', help='Execute process in current env without creating a dedicated runtime environment.',
+                    action='store_true')
 parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
                     action='store_true')
 parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
@@ -81,7 +83,11 @@ if args.node:
             chunks = node.chunks
         for chunk in chunks:
             if chunk.status.status in submittedStatuses:
-                print('Warning: Node is already submitted with status "{}". See file: "{}"'.format(chunk.status.status.name, chunk.statusFile))
+                # Particular case for the LOCAL_ISOLATED, the node status is set to RUNNING by the submitter directly.
+                # We ensure that no other instance has started to compute, by checking that the sessionUid is empty.
+                if chunk.status.execMode == ExecMode.LOCAL_ISOLATED and not chunk.status.sessionUid and chunk.status.submitterSessionUid:
+                    continue
+                print(f'Warning: Node is already submitted with status "{chunk.status.status.name}". See file: "{chunk.statusFile}". ExecMode: {chunk.status.execMode.name}, SessionUid: {chunk.status.sessionUid}, submitterSessionUid: {chunk.status.submitterSessionUid}')
                 # sys.exit(-1)
 
     if args.extern:
@@ -91,9 +97,9 @@ if args.node:
     node.preprocess()
     if args.iteration != -1:
         chunk = node.chunks[args.iteration]
-        chunk.process(args.forceCompute)
+        chunk.process(args.forceCompute, args.inCurrentEnv)
     else:
-        node.process(args.forceCompute)
+        node.process(args.forceCompute, args.inCurrentEnv)
     node.postprocess()
 else:
     if args.iteration != -1:

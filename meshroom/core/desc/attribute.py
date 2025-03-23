@@ -80,7 +80,7 @@ class Attribute(BaseObject):
     #   This property only makes sense for output attributes.
     isExpression = Property(bool, lambda self: self._isExpression, constant=True)
     # isDynamicValue
-    #   The default value of the attribute's descriptor is None, so it's not an input value,
+    #   The default value of the attribute's descriptor is None, so it is not an input value,
     #   but an output value that is computed during the Node's process execution.
     isDynamicValue = Property(bool, lambda self: self._isDynamicValue, constant=True)
     group = Property(str, lambda self: self._group, constant=True)

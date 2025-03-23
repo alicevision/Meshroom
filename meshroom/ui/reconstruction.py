@@ -12,10 +12,14 @@ from PySide6.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVecto
 
 import meshroom.core
 import meshroom.common
+
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position, CompatibilityIssue
+from meshroom.core.taskManager import TaskManager
+
+from meshroom.ui import commands
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
 from meshroom.ui.components.filepath import FilepathHelper
@@ -450,7 +454,7 @@ class Reconstruction(UIGraph):
         "matchProvider": ["FeatureMatching", "StructureFromMotion"]
     }
 
-    def __init__(self, undoStack, taskManager, defaultPipeline="", parent=None):
+    def __init__(self, undoStack: commands.UndoStack, taskManager: TaskManager, defaultPipeline: str="", parent: QObject=None):
         super(Reconstruction, self).__init__(undoStack, taskManager, parent)
 
         # initialize member variables for key steps of the 3D reconstruction pipeline

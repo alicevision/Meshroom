@@ -23,11 +23,11 @@ from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttrib
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
 
-def getWritingFilepath(filepath):
+def getWritingFilepath(filepath: str) -> str:
     return filepath + '.writing.' + str(uuid.uuid4())
 
 
-def renameWritingToFinalPath(writingFilepath, filepath):
+def renameWritingToFinalPath(writingFilepath: str, filepath: str) -> str:
     if platform.system() == 'Windows':
         # On Windows, attempting to remove a file that is in use causes an exception to be raised.
         # So we may need multiple trials, if someone is reading it at the same time.
@@ -1061,7 +1061,7 @@ class BaseNode(BaseObject):
         s = self.globalStatus
         for chunk in self._chunks:
             chunk.updateStatusFromCache()
-        # logging.warning("updateStatusFromCache: {}, status: {} => {}".format(self.name, s, self.globalStatus))
+        # logging.warning(f"updateStatusFromCache: {self.name}, status: {s} => {self.globalStatus}")
         self.updateOutputAttr()
 
     def submit(self, forceCompute=False):

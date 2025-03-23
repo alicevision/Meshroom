@@ -116,7 +116,7 @@ class Node(object):
         raise NotImplementedError('No stopProcess implementation on node: {}'.format(chunk.node.name))
 
     def processChunk(self, chunk):
-        raise NotImplementedError('No processChunk implementation on node: "{}"'.format(chunk.node.name))
+        raise NotImplementedError(f'No processChunk implementation on node: "{chunk.node.name}"')
 
 
 class InputNode(Node):

@@ -209,15 +209,7 @@ class MeshroomApp(QApplication):
             self.debugger = QQmlDebuggingEnabler(printWarning=True)
             qtArgs = [f"-qmljsdebugger={debuggerParams}"]
 
-        logStringToPython = {
-            'fatal': logging.FATAL,
-            'error': logging.ERROR,
-            'warning': logging.WARNING,
-            'info': logging.INFO,
-            'debug': logging.DEBUG,
-            'trace': logging.DEBUG,
-        }
-        logging.getLogger().setLevel(logStringToPython[args.verbose])
+        logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
 
         super(MeshroomApp, self).__init__(inputArgs[:1] + qtArgs)
 

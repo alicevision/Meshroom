@@ -453,6 +453,16 @@ class Reconstruction(UIGraph):
         # Nodes that can be used to provide matches folders to the UI
         "matchProvider": ["FeatureMatching", "StructureFromMotion"]
     }
+    # Nodes accessed from the UI
+    uiNodes = [
+        "LdrToHdrMerge",
+        "LdrToHdrCalibration",
+        "ImageProcessing",
+        "PhotometricStereo",
+        "PanoramaInit",
+        "ColorCheckerDetection",
+        "SphereDetection",
+    ]
 
     def __init__(self, undoStack: commands.UndoStack, taskManager: TaskManager, defaultPipeline: str="", parent: QObject=None):
         super(Reconstruction, self).__init__(undoStack, taskManager, parent)
@@ -516,7 +526,11 @@ class Reconstruction(UIGraph):
         # Create all possible entries
         for category, _ in self.activeNodeCategories.items():
             self._activeNodes.add(ActiveNode(category, parent=self))
-        for nodeType, _ in meshroom.core.nodesDesc.items():
+        # For all nodes declared to be accessed by the UI
+        usedNodeTypes = {j for i in self.activeNodeCategories.values() for j in i}
+        allUiNodes = set(self.uiNodes) | usedNodeTypes
+        allLoadedNodeTypes = set(meshroom.core.nodesDesc.keys())
+        for nodeType in allUiNodes:
             self._activeNodes.add(ActiveNode(nodeType, parent=self))
 
     def clearActiveNodes(self):

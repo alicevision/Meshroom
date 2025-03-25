@@ -20,6 +20,7 @@ from .computation import (
     StaticNodeSize,
 )
 from .node import (
+    MrNodeType,
     AVCommandLineNode,
     BaseNode,
     CommandLineNode,

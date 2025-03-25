@@ -1,14 +1,14 @@
-import hashlib
 from contextlib import contextmanager
+import hashlib
 import importlib
 import inspect
-import os
-import tempfile
-import uuid
 import logging
+import os
 import pkgutil
 import sys
+import tempfile
 import traceback
+import uuid
 
 try:
     # for cx_freeze
@@ -21,7 +21,7 @@ except Exception:
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
-
+from .desc import MrNodeType
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
@@ -34,6 +34,7 @@ defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gett
 nodesDesc = {}
 submitters = {}
 pipelineTemplates = {}
+
 
 
 def hashValue(value):

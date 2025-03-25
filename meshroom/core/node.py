@@ -57,7 +57,6 @@ class Status(Enum):
 class ExecMode(Enum):
     NONE = auto()
     LOCAL = auto()
-    LOCAL_ISOLATED = auto()
     EXTERN = auto()
 
 
@@ -86,6 +85,7 @@ class StatusData(BaseObject):
         self.nodeType: str = ""
         self.packageName: str = ""
         self.packageVersion: str = ""
+        self.mrNodeType: desc.MrNodeType = desc.MrNodeType.NONE
         self.resetDynamicValues()
 
     def resetDynamicValues(self):
@@ -107,6 +107,14 @@ class StatusData(BaseObject):
         self._startTime = time.time()
         self.startDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
         # to get datetime obj: datetime.datetime.strptime(obj, self.dateTimeFormatting)
+
+    def initIsolatedCompute(self):
+        ''' When submitting a node, we reset the status information to ensure that we do not keep outdated information.
+        '''
+        self.resetDynamicValues()
+        self.mrNodeType = desc.MrNodeType.NODE
+        self.sessionUid = None
+        self.submitterSessionUid = meshroom.core.sessionUid
 
     def initSubmit(self):
         ''' When submitting a node, we reset the status information to ensure that we do not keep outdated information.
@@ -144,6 +152,10 @@ class StatusData(BaseObject):
         self.execMode = d.get('execMode', ExecMode.NONE)
         if not isinstance(self.execMode, ExecMode):
             self.execMode = ExecMode[self.execMode]
+        self.mrNodeType = d.get('mrNodeType', desc.MrNodeType.NONE)
+        if not isinstance(self.mrNodeType, desc.MrNodeType):
+            self.mrNodeType = desc.MrNodeType[self.mrNodeType]
+        
         self.nodeName = d.get('nodeName', '')
         self.nodeType = d.get('nodeType', '')
         self.packageName = d.get('packageName', '')
@@ -456,8 +468,8 @@ class NodeChunk(BaseObject):
     def _processInIsolatedEnvironment(self):
         """Process this node chunk in the isolated environment defined in the environment configuration."""
         try:
-            self._status.initSubmit()
-            self.upgradeStatusTo(Status.RUNNING, execMode=ExecMode.LOCAL_ISOLATED)
+            self._status.initIsolatedCompute()
+            self.upgradeStatusTo(Status.RUNNING, execMode=ExecMode.LOCAL)
             self.node.nodeDesc.processChunkInEnvironment(self)
         except:
             # status should be already updated by meshroom_compute
@@ -473,22 +485,25 @@ class NodeChunk(BaseObject):
         self.node.updateOutputAttr()
 
     def stopProcess(self):
-        if self.isExtern():
-            return
-        if self._status.status != Status.RUNNING:
-            return
+        # if self.isExtern() or self._status.status != Status.RUNNING:
+        #     return
 
         self.upgradeStatusTo(Status.STOPPED)
         self.node.nodeDesc.stopProcess(self)
 
     def isExtern(self):
-        """ The computation is managed externally by another instance of Meshroom, or by meshroom_compute on renderfarm).
+        """ The computation is managed externally by another instance of Meshroom.
         In the ambiguous case of an isolated environment, it is considered as local as we can stop it.
         """
-        if self._status.execMode == ExecMode.LOCAL_ISOLATED:
-            # It is a local isolated node, check if it is submitted by our current session.
-            return self._status.submitterSessionUid != meshroom.core.sessionUid
-        return self._status.sessionUid != meshroom.core.sessionUid
+        uid = self._status.submitterSessionUid  if self._status.mrNodeType == desc.MrNodeType.NODE else meshroom.core.sessionUid
+        return uid != meshroom.core.sessionUid
+
+    # def isIndependantProcess(self):
+    #     if self._status.execMode == ExecMode.EXTERN:
+    #         # Compute is managed by another instance of Meshroom
+    #         return True
+    #     # Compute is using a meshroom_compute subprocess
+    #     return self._status.mrNodeType == desc.MrNodeType.NODE
 
     statusChanged = Signal()
     status = Property(Variant, lambda self: self._status, notify=statusChanged)
@@ -1397,6 +1412,15 @@ class BaseNode(BaseObject):
             if chunk.status.submitterSessionUid != meshroom.core.sessionUid:
                 return False
         return True
+    
+    def initFromThisSession(self):
+        if not self._chunks:
+            return False
+        for chunk in self._chunks:
+            uid = chunk.status.submitterSessionUid if chunk.status.mrNodeType == desc.MrNodeType.NODE else chunk.status.sessionUid
+            if uid != meshroom.core.sessionUid:
+                return False
+        return True
 
     @Slot(result=bool)
     def canBeStopped(self):
@@ -1404,9 +1428,8 @@ class BaseNode(BaseObject):
         # sessionUid as the Meshroom instance can be stopped
         # logging.warning(f"[{self.name}] canBeStopped: globalExecMode={self.globalExecMode} globalStatus={self.getGlobalStatus()} statusInThisSession={self.statusInThisSession()}, submitterStatusInThisSession={self.submitterStatusInThisSession()}")
         return (self.getGlobalStatus() == Status.RUNNING and
-                ((self.globalExecMode == ExecMode.LOCAL.name and self.statusInThisSession()) or
-                 (self.globalExecMode == ExecMode.LOCAL_ISOLATED.name and self.submitterStatusInThisSession())
-                ))
+                self.globalExecMode == ExecMode.LOCAL.name and
+                self.initFromThisSession())
 
     @Slot(result=bool)
     def canBeCanceled(self):
@@ -1414,9 +1437,8 @@ class BaseNode(BaseObject):
         # sessionUid as the Meshroom instance can be canceled
         # logging.warning(f"[{self.name}] canBeCanceled: globalExecMode={self.globalExecMode} globalStatus={self.getGlobalStatus()} statusInThisSession={self.statusInThisSession()}, submitterStatusInThisSession={self.submitterStatusInThisSession()}")
         return (self.getGlobalStatus() == Status.SUBMITTED and
-                ((self.globalExecMode == ExecMode.LOCAL.name and self.statusInThisSession()) or
-                 (self.globalExecMode == ExecMode.LOCAL_ISOLATED.name and self.submitterStatusInThisSession())
-                ))
+                self.globalExecMode == ExecMode.LOCAL.name and
+                self.initFromThisSession())
 
     def hasImageOutputAttribute(self):
         """

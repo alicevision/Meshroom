@@ -30,7 +30,7 @@ from meshroom.core.graphIO import GraphIO
 from meshroom.core.taskManager import TaskManager
 
 from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position
-from meshroom.core import submitters
+from meshroom.core import submitters, MrNodeType
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
 
@@ -187,7 +187,7 @@ class ChunksMonitor(QObject):
                 # when run locally, status changes are already notified.
                 # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
                 if (c.isExtern() and c._status.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or (
-                    (c._status.execMode is ExecMode.LOCAL_ISOLATED) and (c._status.status in (Status.SUBMITTED, Status.RUNNING))):
+                    (c._status.mrNodeType == MrNodeType.NODE) and (c._status.status in (Status.SUBMITTED, Status.RUNNING))):
                         files.append(c.statusFile)
                         chunks.append(c)
         return files, chunks
@@ -201,13 +201,14 @@ class ChunksMonitor(QObject):
             times: the last modification times for currently monitored files.
         """
         newRecords = dict(zip(self.monitoredChunks, times))
-        hasChanges = False
+        hasChangesAndSuccess = False
         for chunk, fileModTime in newRecords.items():
             # update chunk status if last modification time has changed since previous record
             if fileModTime != chunk.statusFileLastModTime:
                 chunk.updateStatusFromCache()
-                hasChanges = True
-        if hasChanges:
+                if chunk.status.status == Status.SUCCESS:
+                    hasChangesAndSuccess = True
+        if hasChangesAndSuccess:
             chunk.node.loadOutputAttr()
 
     def onFilePollerRefreshUpdated(self):
@@ -583,8 +584,7 @@ class UIGraph(QObject):
     def updateGraphComputingStatus(self):
         # update graph computing status
         computingLocally = any([
-                                (((ch.status.execMode == ExecMode.LOCAL and ch.status.sessionUid == sessionUid) or
-                                    ch.status.execMode == ExecMode.LOCAL_ISOLATED) and
+                                ((ch.status.submitterSessionUid if ch.status.mrNodeType == MrNodeType.NODE else ch.status.sessionUid) == sessionUid) and (
                                 ch.status.status in (Status.RUNNING, Status.SUBMITTED))
                                     for ch in self._sortedDFSChunks])
         submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])

@@ -1,3 +1,4 @@
+import enum
 from inspect import getfile
 from pathlib import Path
 import logging
@@ -13,10 +14,16 @@ from .attribute import StringParam, ColorParam
 import meshroom
 from meshroom.core import cgroup
 
-
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent
 _MESHROOM_COMPUTE = _MESHROOM_ROOT / "bin" / "meshroom_compute"
 
+
+class MrNodeType(enum.Enum):
+    NONE = enum.auto()
+    BASENODE = enum.auto()
+    NODE = enum.auto()
+    COMMANDLINE = enum.auto()
+    INPUT = enum.auto()
 
 def isNodeSaved(node):
     """Returns whether a node is identical to its serialized counterpart in the current graph file."""
@@ -86,6 +93,9 @@ class BaseNode(object):
         super(BaseNode, self).__init__()
         self.hasDynamicOutputAttribute = any(output.isDynamicValue for output in self.outputs)
         self.sourceCodeFolder = Path(getfile(self.__class__)).parent.resolve().as_posix()
+
+    def getMrNodeType(self):
+        return MrNodeType.BASENODE
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
         return attrValues
@@ -236,6 +246,9 @@ class InputNode(BaseNode):
     def __init__(self):
         super(InputNode, self).__init__()
 
+    def getMrNodeType(self):
+        return MrNodeType.INPUT
+
     def processChunk(self, chunk):
         pass
 
@@ -244,6 +257,9 @@ class Node(BaseNode):
 
     def __init__(self):
         super(Node, self).__init__()
+
+    def getMrNodeType(self):
+        return MrNodeType.NODE
 
     def processChunkInEnvironment(self, chunk):
         if not isNodeSaved(chunk.node):
@@ -266,6 +282,9 @@ class CommandLineNode(BaseNode):
 
     def __init__(self):
         super(CommandLineNode, self).__init__()
+
+    def getMrNodeType(self):
+        return MrNodeType.COMMANDLINE
 
     def buildCommandLine(self, chunk):
 

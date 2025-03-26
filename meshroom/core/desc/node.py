@@ -143,9 +143,6 @@ class BaseNode(object):
         """
         pass
 
-    def stopProcess(self, chunk):
-        logging.warning(f'No stopProcess implementation on node: {chunk.node.name}')
-
     def processChunk(self, chunk):
         raise NotImplementedError(f'No processChunk implementation on node: "{chunk.node.name}"')
 
@@ -214,7 +211,7 @@ class BaseNode(object):
         # The same node could exists several times in the graph and
         # only one would have the running subprocess; ignore all others
         if not chunk.subprocess:
-            print(f"[{chunk.node.name}] stopProcess: no subprocess")
+            logging.warning(f"[{chunk.node.name}] stopProcess: no subprocess")
             return
 
         # Retrieve process tree

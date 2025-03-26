@@ -70,7 +70,7 @@ class TaskThread(Thread):
                         stopAndRestart = True
                         break
                     else:
-                        logging.error("Error on node computation: {}".format(e))
+                        logging.error(f"Error on node computation: {e}.")
                         nodesToRemove, _ = self._manager._graph.dfsOnDiscover(startNodes=[node], reverse=True)
                         # remove following nodes from the task queue
                         for n in nodesToRemove[1:]:  # exclude current node

@@ -20,7 +20,7 @@ from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, Sto
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
-from meshroom.core.typing import PathLike
+from meshroom.core.mtyping import PathLike
 
 # Replace default encoder to support Enums
 
@@ -1613,7 +1613,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                 chunk.process(forceCompute)
             node.postprocess()
         except Exception as e:
-            logging.error("Error on node computation: {}".format(e))
+            logging.error(f"Error on node computation: {e}")
             graph.clearSubmittedNodes()
             raise
 

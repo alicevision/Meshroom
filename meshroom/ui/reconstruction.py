@@ -215,8 +215,10 @@ class ViewpointWrapper(QObject):
         # trigger internal members updates when reconstruction members changes
         self._reconstruction.cameraInitChanged.connect(self._updateInitialParams)
         self._reconstruction.sfmReportChanged.connect(self._updateSfMParams)
-        self._activeNode_PrepareDenseScene.nodeChanged.connect(self._updateUndistortedImageParams)
-        self._activeNode_ExportAnimatedCamera.nodeChanged.connect(self._updateUndistortedImageParams)
+        if self._activeNode_PrepareDenseScene:
+            self._activeNode_PrepareDenseScene.nodeChanged.connect(self._updateUndistortedImageParams)
+        if self._activeNode_ExportAnimatedCamera:
+            self._activeNode_ExportAnimatedCamera.nodeChanged.connect(self._updateUndistortedImageParams)
 
     def _updateInitialParams(self):
         """ Update internal members depending on CameraInit. """
@@ -366,7 +368,7 @@ class ViewpointWrapper(QObject):
         if not self.solvedIntrinsics:
             return None
         focalLength = self.solvedIntrinsics["focalLength"]
-        
+
         #We assume that if the width is less than the weight
         #It's because the image has been rotated and not
         #because the sensor has some unusual shape
@@ -379,13 +381,13 @@ class ViewpointWrapper(QObject):
             return 2.0 * math.atan(float(sensorWidth) / (2.0 * float(focalLength))) * 180.0 / math.pi
         else:
             return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
-        
+
     @Property(type=float, notify=sfmParamsChanged)
     def pixelAspectRatio(self):
         """ Get camera pixel aspect ratio. """
         if not self.solvedIntrinsics:
             return 1.0
-        
+
         return float(self.solvedIntrinsics["pixelRatio"])
 
     @Property(type=QUrl, notify=undistortedImageParamsChanged)
@@ -887,7 +889,7 @@ class Reconstruction(UIGraph):
                         "Unknown file extensions: " + ', '.join(extensions)
                     )
                 )
-        
+
         # As the boolean is introduced to check if the project is loaded or not, the return value is added to the function.
         # The default value is False, which means the project is not loaded.
         return False
@@ -1095,7 +1097,9 @@ class Reconstruction(UIGraph):
         # Set the new active node (if it is not an unknown type)
         unknownType = isinstance(node, CompatibilityNode) and node.issue == CompatibilityIssue.UnknownNodeType
         if not unknownType:
-            self.activeNodes.get(node.nodeType).node = node
+            activeNode = self.activeNodes.get(node.nodeType)
+            if activeNode:
+                activeNode.node = node
 
     @Slot(QObject)
     def setActiveNodes(self, nodes):

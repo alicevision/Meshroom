@@ -187,7 +187,7 @@ class ChunksMonitor(QObject):
                 # when run locally, status changes are already notified.
                 # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
                 if (c.isExtern() and c._status.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or (
-                    (c._status.mrNodeType == MrNodeType.NODE) and (c._status.status in (Status.SUBMITTED, Status.RUNNING))):
+                    (c.node.getMrNodeType() == MrNodeType.NODE) and (c._status.status in (Status.SUBMITTED, Status.RUNNING))):
                         files.append(c.statusFile)
                         chunks.append(c)
         return files, chunks
@@ -584,7 +584,7 @@ class UIGraph(QObject):
     def updateGraphComputingStatus(self):
         # update graph computing status
         computingLocally = any([
-                                ((ch.status.submitterSessionUid if ch.status.mrNodeType == MrNodeType.NODE else ch.status.sessionUid) == sessionUid) and (
+                                ((ch.status.submitterSessionUid if ch.node.getMrNodeType() == MrNodeType.NODE else ch.status.sessionUid) == sessionUid) and (
                                 ch.status.status in (Status.RUNNING, Status.SUBMITTED))
                                     for ch in self._sortedDFSChunks])
         submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])

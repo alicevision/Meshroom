@@ -1339,7 +1339,7 @@ class BaseNode(BaseObject):
     @Slot()
     def updateDuplicatesStatusAndLocked(self):
         """ Update status of duplicate nodes without any latency and update locked. """
-        if self.name == self._chunks.at(0).statusNodeName:
+        if self.isMainNode():
             for node in self._duplicates:
                 node.updateStatusFromCache()
 
@@ -1378,7 +1378,7 @@ class BaseNode(BaseObject):
 
             # Check if at least one dependentNode is submitted or currently running
             for node in outputNodes:
-                if node.getGlobalStatus() in lockedStatus and node._chunks.at(0).statusNodeName == node.name:
+                if node.getGlobalStatus() in lockedStatus and node.isMainNode():
                     stayLocked = True
                     break
             if not stayLocked:
@@ -1387,7 +1387,7 @@ class BaseNode(BaseObject):
                 for node in inputNodes:
                     node.setLocked(False)
             return
-        elif currentStatus in lockedStatus and self._chunks.at(0).statusNodeName == self.name:
+        elif currentStatus in lockedStatus and self.isMainNode():
             self.setLocked(True)
             inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
             for node in inputNodes:
@@ -1451,6 +1451,16 @@ class BaseNode(BaseObject):
             if uid != meshroom.core.sessionUid:
                 return False
         return True
+    
+    def isMainNode(self) -> bool:
+        """ In case of a node with duplicates, we check that the node is the one driving the computation. """
+        if len(self._chunks) == 0:
+            return True
+        firstChunk = self._chunks.at(0)
+        if not firstChunk.statusNodeName:
+            # If nothing is declared, anyone could become the main (if there are duplicates).
+            return True
+        return firstChunk.statusNodeName == self.name
 
     @Slot(result=bool)
     def canBeStopped(self) -> bool:
@@ -1458,6 +1468,7 @@ class BaseNode(BaseObject):
         # sessionUid as the Meshroom instance can be stopped
         return (self.getGlobalStatus() == Status.RUNNING and
                 self.globalExecMode == ExecMode.LOCAL.name and
+                self.isMainNode() and
                 self.initFromThisSession())
 
     @Slot(result=bool)
@@ -1466,6 +1477,7 @@ class BaseNode(BaseObject):
         # sessionUid as the Meshroom instance can be canceled
         return (self.getGlobalStatus() == Status.SUBMITTED and
                 self.globalExecMode == ExecMode.LOCAL.name and
+                self.isMainNode() and
                 self.initFromThisSession())
 
     def hasImageOutputAttribute(self) -> bool:

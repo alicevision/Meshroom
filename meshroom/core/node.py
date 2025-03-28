@@ -535,7 +535,7 @@ class NodeChunk(BaseObject):
     statisticsFile = Property(str, statisticsFile.fget, notify=nodeFolderChanged)
 
     nodeName = Property(str, lambda self: self.node.name, constant=True)
-    statusNodeName = Property(str, lambda self: self._status.nodeName, constant=True)
+    statusNodeName = Property(str, lambda self: self._status.nodeName, notify=statusChanged)
 
     elapsedTime = Property(float, lambda self: self._status.elapsedTime, notify=statusChanged)
 

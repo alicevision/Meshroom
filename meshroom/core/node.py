@@ -515,9 +515,11 @@ class NodeChunk(BaseObject):
 
     def isExtern(self):
         """ The computation is managed externally by another instance of Meshroom.
-        In the ambiguous case of an isolated environment, it is considered as local as we can stop it.
+        In the ambiguous case of an isolated environment, it is considered as local as we can stop it (if it is run from the current Meshroom instance).
         """
-        uid = self._status.submitterSessionUid  if self.node.getMrNodeType() == MrNodeType.NODE else meshroom.core.sessionUid
+        if self._status.execMode == ExecMode.EXTERN:
+            return True
+        uid = self._status.submitterSessionUid  if self.node.getMrNodeType() == MrNodeType.NODE else self._status.sessionUid
         return uid != meshroom.core.sessionUid
 
     statusChanged = Signal()

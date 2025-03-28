@@ -68,14 +68,17 @@ class StatusData(BaseObject):
 
     def __init__(self, nodeName='', nodeType='', packageName='', packageVersion='', mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
         super(StatusData, self).__init__(parent)
-        self.reset()
+
         self.nodeName: str = nodeName
         self.nodeType: str = nodeType
         self.packageName: str = packageName
         self.packageVersion: str = packageVersion
         self.mrNodeType = mrNodeType
+
         self.sessionUid: Optional[str] = meshroom.core.sessionUid
         self.submitterSessionUid: Optional[str] = None
+
+        self.resetDynamicValues()
 
     def merge(self, other):
         self.startDateTime = min(self.startDateTime, other.startDateTime)
@@ -1420,7 +1423,7 @@ class BaseNode(BaseObject):
             self._hasDuplicates = bool(len(newList))
             self.hasDuplicatesChanged.emit()
 
-    def statusInThisSession(self):
+    def statusInThisSession(self) -> bool:
         if not self._chunks:
             return False
         for chunk in self._chunks:
@@ -1428,7 +1431,7 @@ class BaseNode(BaseObject):
                 return False
         return True
 
-    def submitterStatusInThisSession(self):
+    def submitterStatusInThisSession(self) -> bool:
         if not self._chunks:
             return False
         for chunk in self._chunks:
@@ -1436,8 +1439,8 @@ class BaseNode(BaseObject):
                 return False
         return True
     
-    def initFromThisSession(self):
-        if not self._chunks:
+    def initFromThisSession(self) -> bool:
+        if len(self._chunks) == 0:
             return False
         for chunk in self._chunks:
             mrNodeType = chunk.node.getMrNodeType()
@@ -1447,7 +1450,7 @@ class BaseNode(BaseObject):
         return True
 
     @Slot(result=bool)
-    def canBeStopped(self):
+    def canBeStopped(self) -> bool:
         # Only locked nodes running in local with the same
         # sessionUid as the Meshroom instance can be stopped
         return (self.getGlobalStatus() == Status.RUNNING and
@@ -1455,14 +1458,14 @@ class BaseNode(BaseObject):
                 self.initFromThisSession())
 
     @Slot(result=bool)
-    def canBeCanceled(self):
+    def canBeCanceled(self) -> bool:
         # Only locked nodes submitted in local with the same
         # sessionUid as the Meshroom instance can be canceled
         return (self.getGlobalStatus() == Status.SUBMITTED and
                 self.globalExecMode == ExecMode.LOCAL.name and
                 self.initFromThisSession())
 
-    def hasImageOutputAttribute(self):
+    def hasImageOutputAttribute(self) -> bool:
         """
         Return True if at least one attribute has the 'image' semantic (and can thus be loaded in the 2D Viewer),
         False otherwise.
@@ -1472,7 +1475,7 @@ class BaseNode(BaseObject):
                 return True
         return False
 
-    def hasSequenceOutputAttribute(self):
+    def hasSequenceOutputAttribute(self) -> bool:
         """
         Return True if at least one attribute has the 'sequence' semantic (and can thus be loaded in the 2D Viewer),
         False otherwise.

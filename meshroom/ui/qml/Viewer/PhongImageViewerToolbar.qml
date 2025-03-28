@@ -39,7 +39,13 @@ FloatingPane {
         RowLayout {
             // pane title
             Label {
-                text: _reconstruction && _reconstruction.activeNodes.get("PhotometricStereo").node ? _reconstruction.activeNodes.get("PhotometricStereo").node.label : ""
+                text: {
+                    if (_reconstruction) {
+                        if (_reconstruction.activeNodes.get("PhotometricStereo") !== null)
+                            return _reconstruction.activeNodes.get("Photometric Stereo").node.label
+                    }
+                    return ""
+                }
                 font.bold: true
                 Layout.fillWidth: true
             }

@@ -27,7 +27,13 @@ FocusScope {
     property alias useLensDistortionViewer: displayLensDistortionViewer.checked
     property alias usePanoramaViewer: displayPanoramaViewer.checked
 
-    property var activeNodeFisheye: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
+    property var activeNodeFisheye: {
+        if (_reconstruction) {
+            if (_reconstruction.activeNodes.get("PanoramaInit") !== null)
+                return _reconstruction.activeNodes.get("PanoramaInit").node
+        }
+        return null
+    }
     property bool cropFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
     property bool enable8bitViewer: enable8bitViewerAction.checked
     property bool enableSequencePlayer: enableSequencePlayerAction.checked
@@ -623,7 +629,13 @@ FocusScope {
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
 
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('PhotometricStereo').node : null
+                    property var activeNode: {
+                        if (_reconstruction) {
+                            if (_reconstruction.activeNodes.get("PhotometricStereo") !== null)
+                                return _reconstruction.activeNodes.get("PhotometricStereo").node
+                        }
+                        return null
+                    }
                     property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
                     property url sourcePath: getAlbedoFile()
                     property url normalPath: getNormalFile()
@@ -802,7 +814,13 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
+                    property var activeNode: {
+                        if (_reconstruction) {
+                            if (_reconstruction.activeNodes.get("PanoramaInit") !== null)
+                                return _reconstruction.activeNodes.get("PanoramaInit").node
+                        }
+                        return null
+                    }
                     active: displayFisheyeCircleLoader.checked && activeNode
 
                     sourceComponent: CircleGizmo {
@@ -839,7 +857,13 @@ FocusScope {
 
                 // LightingCalibration: display circle
                 ExifOrientedViewer {
-                    property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node 
+                    property var activeNode: {
+                        if (_reconstruction) {
+                            if (_reconstruction.activeNodes.get("SphereDetection") !== null)
+                                return _reconstruction.activeNodes.get("SphereDetection").node
+                        }
+                        return null
+                    }
     
                     anchors.centerIn: parent
                     orientationTag: imgContainer.orientationTag
@@ -933,7 +957,13 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ColorCheckerDetection").node : null
+                    property var activeNode: {
+                        if (_reconstruction) {
+                            if (_reconstruction.activeNodes.get("ColorCheckerDetection") !== null)
+                                return _reconstruction.activeNodes.get("ColorCheckerDetection").node
+                        }
+                        return null
+                    }
                     active: (displayColorCheckerViewerLoader.checked && activeNode)
 
                     sourceComponent: ColorCheckerViewer {
@@ -1289,7 +1319,13 @@ FocusScope {
                         id: ldrHdrCalibrationGraph
                         anchors.fill: parent
 
-                        property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("LdrToHdrCalibration").node : null
+                        property var activeNode: {
+                            if (_reconstruction) {
+                                if (_reconstruction.activeNodes.get("LdrToHdrCalibration"))
+                                    return _reconstruction.activeNodes.get("LdrToHdrCalibration").node
+                            }
+                            return null
+                        }
                         property var isEnabled: displayLdrHdrCalibrationGraph.checked && activeNode && activeNode.isComputed
                         active: isEnabled
 
@@ -1495,7 +1531,13 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayFisheyeCircleLoader
-                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
+                            property var activeNode: {
+                                if (_reconstruction) {
+                                    if (_reconstruction.activeNodes.get("PanoramaInit") !== null)
+                                        return _reconstruction.activeNodes.get("PanoramaInit").node
+                                }
+                                return null
+                            }
                             ToolTip.text: "Display Fisheye Circle: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.vignette
                             font.pointSize: 11
@@ -1508,7 +1550,13 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayLightingCircleLoader
-                            property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node
+                            property var activeNode: {
+                                if (_reconstruction) {
+                                    if (_reconstruction.activeNodes.get("SphereDetection") !== null)
+                                        return _reconstruction.activeNodes.get("SphereDetection").node
+                                }
+                                return null
+                            }
                             ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.location_searching
                             font.pointSize: 11
@@ -1521,7 +1569,13 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayPhongLighting
-                            property var activeNode: _reconstruction.activeNodes.get('PhotometricStereo').node
+                            property var activeNode: {
+                                if (_reconstruction) {
+                                    if (_reconstruction.activeNodes.get("PhotometricStereo") !== null)
+                                        return _reconstruction.activeNodes.get("PhotometricStereo").node
+                                }
+                                return null
+                            }
                             ToolTip.text: "Display Phong Lighting: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.light_mode
                             font.pointSize: 11
@@ -1533,7 +1587,13 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayColorCheckerViewerLoader
-                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ColorCheckerDetection").node : null
+                            property var activeNode: {
+                                if (_reconstruction) {
+                                    if (_reconstruction.activeNodes.get("ColorCheckerDetection") !== null)
+                                        return _reconstruction.activeNodes.get("ColorCheckerDetection").node
+                                }
+                                return null
+                            }
                             ToolTip.text: "Display Color Checker: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.view_comfy
                             font.pointSize: 11
@@ -1557,7 +1617,13 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayLdrHdrCalibrationGraph
-                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("LdrToHdrCalibration").node : null
+                            property var activeNode: {
+                                if (_reconstruction) {
+                                    if (_reconstruction.activeNodes.get("LdrToHdrCalibration") !== null)
+                                        return _reconstruction.activeNodes.get("LdrToHdrCalibration").node
+                                }
+                                return null
+                            }
                             property bool isComputed: activeNode && activeNode.isComputed
                             ToolTip.text: "Display Camera Response Function: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.timeline

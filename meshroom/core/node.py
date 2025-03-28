@@ -577,7 +577,8 @@ class BaseNode(BaseObject):
         self._internalFolder = ""
         self._sourceCodeFolder = ""
 
-        self._name = None
+        # temporary unique name for this node
+        self._name = f"_{nodeType}_{uuid.uuid1()}"
         self.graph = None
         self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)

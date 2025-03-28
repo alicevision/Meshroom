@@ -837,7 +837,13 @@ Panel {
         MaterialToolLabelButton {
             id: displayHDR
             Layout.minimumWidth: childrenRect.width
-            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("LdrToHdrMerge").node : null
+            property var activeNode: {
+                if (_reconstruction) {
+                    if (_reconstruction.activeNodes.get("LdrToHdrMerge") !== null)
+                        return _reconstruction.activeNodes.get("LdrToHdrMerge").node
+                }
+                return null
+            }
             ToolTip.text: "Visualize HDR images: " + (activeNode ? activeNode.label : "No Node")
             iconText: MaterialIcons.filter
             label: activeNode ? activeNode.attribute("nbBrackets").value : ""
@@ -879,7 +885,13 @@ Panel {
             id: imageProcessing
             Layout.minimumWidth: childrenRect.width
 
-            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ImageProcessing").node : null
+            property var activeNode: {
+                if (_reconstruction) {
+                    if (_reconstruction.activeNodes.get("ImageProcessing") !== null)
+                        return _reconstruction.activeNodes.get("ImageProcessing").node
+                }
+                return null
+            }
             font.pointSize: 15
             padding: 0
             ToolTip.text: "Preprocessed Images: " + (activeNode ? activeNode.label : "No Node")

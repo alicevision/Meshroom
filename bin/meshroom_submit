@@ -22,6 +22,7 @@ parser.add_argument("--submitLabel",
 
 args = parser.parse_args()
 
+meshroom.core.initPlugins()
 meshroom.core.initNodes()
 meshroom.core.initSubmitters()
 

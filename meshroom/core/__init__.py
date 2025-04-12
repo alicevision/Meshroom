@@ -4,6 +4,7 @@ import importlib
 import inspect
 import logging
 import os
+from pathlib import Path
 import pkgutil
 import sys
 import tempfile
@@ -343,6 +344,35 @@ def loadAllNodes(folder):
             logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
 
 
+def loadPluginFolder(folder):
+    if not os.path.isdir(folder):
+        logging.info(f"Plugin folder '{folder}' does not exist.")
+        return
+
+    mrFolder = Path(folder, 'meshroom')
+    if not mrFolder.exists():
+        logging.info(f"Plugin folder '{folder}' does not contain a 'meshroom' folder.")
+        return
+
+    binFolders = [Path(folder, 'bin')]
+    libFolders = [Path(folder, 'lib'), Path(folder, 'lib64')]
+    pythonPathFolders = [Path(folder)] + binFolders
+
+    loadAllNodes(folder=mrFolder)
+    loadPipelineTemplates(folder=mrFolder)
+
+
+def loadPluginsFolder(folder):
+    if not os.path.isdir(folder):
+        logging.debug(f"PluginSet folder '{folder}' does not exist.")
+        return
+    
+    for file in os.listdir(folder):
+        if os.path.isdir(file):
+            subFolder = os.path.join(folder, file)
+            loadPluginFolder(subFolder)
+
+
 def registerSubmitter(s):
     global submitters
     if s.name in submitters:
@@ -392,3 +422,9 @@ def initPipelines():
     for f in pipelineTemplatesFolders:
         loadPipelineTemplates(f)
 
+
+def initPlugins():
+    additionalpluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
+    nodesFolders = [os.path.join(meshroomFolder, 'plugins')] + additionalpluginsPath
+    for f in nodesFolders:
+        loadPluginFolder(folder=f)

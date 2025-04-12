@@ -61,6 +61,7 @@ if args.extern:
 else:
     logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
 
+meshroom.core.initPlugins()
 meshroom.core.initNodes()
 
 graph = meshroom.core.graph.loadGraph(args.graphFile)

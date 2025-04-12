@@ -25,18 +25,6 @@ class MrNodeType(enum.Enum):
     COMMANDLINE = enum.auto()
     INPUT = enum.auto()
 
-def isNodeSaved(node):
-    """Returns whether a node is identical to its serialized counterpart in the current graph file."""
-    filepath = node.graph.filepath
-    if not filepath:
-        return False
-
-    from meshroom.core.graph import loadGraph
-    graphSaved = loadGraph(filepath)
-    nodeSaved = graphSaved.node(node.name)
-    if nodeSaved is None:
-        return False
-    return nodeSaved._uid == node._uid
 
 class BaseNode(object):
     """
@@ -259,9 +247,6 @@ class Node(BaseNode):
         return MrNodeType.NODE
 
     def processChunkInEnvironment(self, chunk):
-        if not isNodeSaved(chunk.node):
-            raise RuntimeError("File must be saved before computing in isolated environment.")
-
         meshroomComputeCmd = f"python {_MESHROOM_COMPUTE} {chunk.node.graph.filepath} --node {chunk.node.name} --extern --inCurrentEnv"
         if len(chunk.node.getChunks()) > 1:
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"

@@ -515,6 +515,14 @@ class UIGraph(QObject):
         self.updateChunkMonitor(self._sortedDFSChunks)
 
     @Slot()
+    def saveAsTemp(self):
+        from meshroom.env import EnvVar
+        from datetime import datetime
+        tempFolder = EnvVar.get(EnvVar.MESHROOM_TEMP_PATH)
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M")
+        self._saveAs(os.path.join(tempFolder, f"meshroom_{timestamp}.mg"))
+
+    @Slot()
     def save(self):
         self._graph.save()
         self._undoStack.setClean()
@@ -531,6 +539,7 @@ class UIGraph(QObject):
     @Slot(list)
     def execute(self, nodes: Optional[Union[list[Node], Node]] = None):
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
+        self.save()  # always save the graph before computing
         self._taskManager.compute(self._graph, nodes)
         self.updateLockedUndoStack()  # explicitly call the update while it is already computing
 

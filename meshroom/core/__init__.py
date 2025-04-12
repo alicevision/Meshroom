@@ -31,7 +31,6 @@ logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=log
 sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
-defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))
 nodesDesc = {}
 submitters = {}
 pipelineTemplates = {}

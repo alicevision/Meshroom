@@ -134,6 +134,8 @@ Page {
         id: saveFileDialog
         options: Platform.FileDialog.DontUseNativeDialog
 
+        property var _callback: undefined
+
         signal closed(var result)
 
         title: "Save File"
@@ -150,8 +152,28 @@ Page {
             _reconstruction.saveAs(currentFile)
             MeshroomApp.addRecentProjectFile(currentFile.toString())
             closed(Platform.Dialog.Accepted)
+            fireCallback(Platform.Dialog.Accepted)
         }
-        onRejected: closed(Platform.Dialog.Rejected)
+        onRejected: {
+            closed(Platform.Dialog.Rejected)
+            fireCallback(Platform.Dialog.Rejected)
+        }
+
+        function fireCallback(rc)
+        {
+            // Call the callback and reset it
+            if (_callback)
+                _callback(rc)
+            _callback = undefined
+        }
+
+        // Open the unsaved dialog warning with an optional
+        // callback to fire when the dialog is accepted/discarded
+        function prompt(callback)
+        {
+            _callback = callback
+            open()
+        }
     }
 
     Platform.FileDialog {
@@ -218,8 +240,6 @@ Page {
     Item {
         id: computeManager
 
-        property bool warnIfUnsaved: true
-
         // Evaluate if graph computation can be submitted externally
         property bool canSubmit: _reconstruction ?
                                  _reconstruction.canSubmit                 // current setup allows to compute externally
@@ -227,7 +247,7 @@ Page {
                                  false
 
         function compute(nodes, force) {
-            if (!force && warnIfUnsaved && !_reconstruction.graph.filepath) {
+            if (!force && !_reconstruction.graph.filepath) {
                 unsavedComputeDialog.selectedNodes = nodes;
                 unsavedComputeDialog.open();
             }
@@ -339,29 +359,28 @@ Page {
             parent: Overlay.overlay
             preset: "Warning"
             title: "Unsaved Project"
-            text: "Data will be computed in the default cache folder if project remains unsaved."
-            detailedText: "Default cache folder: " + (_reconstruction ? _reconstruction.graph.cacheDir : "unknown")
-            helperText: "Save project first?"
+            text: "Saving the project is required."
+            helperText: "Choose a location to save the project, or use the default temporary path."
             standardButtons: Dialog.Discard | Dialog.Cancel | Dialog.Save
-
-            CheckBox {
-                Layout.alignment: Qt.AlignRight
-                text: "Don't ask again for this session"
-                padding: 0
-                onToggled: computeManager.warnIfUnsaved = !checked
-            }
 
             Component.onCompleted: {
                 // Set up discard button text
-                standardButton(Dialog.Discard).text = "Continue without Saving"
+                standardButton(Dialog.Discard).text = "Continue in Temp Folder"
+                standardButton(Dialog.Save).text = "Save As"
             }
 
             onDiscarded: {
+                _reconstruction.saveAsTemp()
                 close()
                 computeManager.compute(selectedNodes, true)
             }
 
-            onAccepted: saveAsAction.trigger()
+            onAccepted: {
+                initFileDialogFolder(saveFileDialog)
+                saveFileDialog.prompt(function(rc) {
+                    computeManager.compute(selectedNodes, true)
+                })
+            }
         }
 
         MessageDialog {
@@ -444,14 +463,10 @@ Page {
             }
             // Open "Save As" dialog
             else {
-                saveFileDialog.open()
-                function _callbackWrapper(rc) {
+                saveFileDialog.prompt(function(rc) {
                     if (rc === Platform.Dialog.Accepted)
                         fireCallback()
-
-                    saveFileDialog.closed.disconnect(_callbackWrapper)
-                }
-                saveFileDialog.closed.connect(_callbackWrapper)
+                })
             }
         }
 
@@ -463,8 +478,8 @@ Page {
             _callback = undefined
         }
 
-        /// Open the unsaved dialog warning with an optional
-        /// callback to fire when the dialog is accepted/discarded
+        // Open the unsaved dialog warning with an optional
+        // callback to fire when the dialog is accepted/discarded
         function prompt(callback)
         {
             _callback = callback

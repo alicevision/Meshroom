@@ -12,8 +12,8 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 import sys
+import tempfile
 from typing import Any, Type
-
 
 meshroomFolder = os.path.dirname(__file__)
 
@@ -46,6 +46,8 @@ class EnvVar(Enum):
     MESHROOM_NODES_PATH = VarDefinition(str, "", "Paths to set of nodes folders")
     MESHROOM_SUBMITTERS_PATH = VarDefinition(str, "", "Paths to set of submitters folders")
     MESHROOM_PIPELINE_TEMPLATES_PATH = VarDefinition(str, "", "Paths to et of pipeline templates folders")
+    MESHROOM_TEMP_PATH = VarDefinition(str, tempfile.gettempdir(), "Path to the temporary folder")
+
 
     @staticmethod
     def get(envVar: "EnvVar") -> Any:

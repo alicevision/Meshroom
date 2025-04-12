@@ -182,7 +182,6 @@ class Graph(BaseObject):
         edges = {B.input: A.output, C.input: B.output,}
 
     """
-    _cacheDir = ""
 
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
@@ -199,7 +198,7 @@ class Graph(BaseObject):
         # Edges: use dst attribute as unique key since it can only have one input connection
         self._edges = DictModel(keyAttrName='dst', parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
-        self.cacheDir = meshroom.core.defaultCacheFolder
+        self._cacheDir = ''
         self._filepath = ''
         self._fileDateVersion = 0
         self.header = {}
@@ -1354,7 +1353,7 @@ class Graph(BaseObject):
     def _unsetFilepath(self):
         self._filepath = ""
         self.name = ""
-        self.cacheDir = meshroom.core.defaultCacheFolder
+        self.cacheDir = ""
         self.filepathChanged.emit()
 
     def updateInternals(self, startNodes=None, force=False):

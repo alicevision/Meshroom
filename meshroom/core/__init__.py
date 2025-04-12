@@ -55,19 +55,34 @@ def add_to_path(p):
         sys.path = old_path
 
 
-def loadPlugins(folder, packageName, classType):
+def loadClasses(folder, packageName, classType):
     """
     """
-    pluginTypes = []
+    classes = []
     errors = []
 
+    resolvedFolder = str(Path(folder).resolve())
     # temporarily add folder to python path
-    with add_to_path(folder):
+    with add_to_path(resolvedFolder):
         # import node package
-        package = importlib.import_module(packageName)
-        packageName = package.packageName if hasattr(package, 'packageName') else package.__name__
-        packageVersion = getattr(package, "__version__", None)
-        packagePath = os.path.dirname(package.__file__)
+
+        try:
+            package = importlib.import_module(packageName)
+            packageName = package.packageName if hasattr(package, 'packageName') else package.__name__
+            packageVersion = getattr(package, "__version__", None)
+            packagePath = os.path.dirname(package.__file__)
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            last_call = tb[-1]
+            logging.warning(f'  * Failed to load package "{packageName}" from folder "{resolvedFolder}" ({type(e).__name__}): {str(e)}\n'
+                            # filename:lineNumber functionName
+                            f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
+                            # line of code with the error
+                            f'{last_call.line}'
+                            # Full traceback
+                            f'\n{traceback.format_exc()}\n\n'
+                            )
+            return []
 
         for importer, pluginName, ispkg in pkgutil.iter_modules(package.__path__):
             pluginModuleName = '.' + pluginName
@@ -93,7 +108,7 @@ def loadPlugins(folder, packageName, classType):
                     p.packageVersion = packageVersion
                     p.packagePath = packagePath
                 if importPlugin:
-                    pluginTypes.extend(plugins)
+                    classes.extend(plugins)
             except Exception as e:
                 tb = traceback.extract_tb(e.__traceback__)
                 last_call = tb[-1]
@@ -110,7 +125,7 @@ def loadPlugins(folder, packageName, classType):
         logging.warning(' The following "{package}" plugins could not be loaded:\n'
                         '{errorMsg}\n'
                         .format(package=packageName, errorMsg='\n'.join(errors)))
-    return pluginTypes
+    return classes
 
 
 def validateNodeDesc(nodeDesc):
@@ -314,7 +329,7 @@ def loadNodes(folder, packageName):
         logging.error("Node folder '{folder}' does not exist.")
         return
 
-    return loadPlugins(folder, packageName, desc.BaseNode)
+    return loadClasses(folder, packageName, desc.BaseNode)
 
 
 def loadAllNodes(folder):
@@ -340,7 +355,7 @@ def loadSubmitters(folder, packageName):
         logging.error(f"Submitters folder '{folder}' does not exist.")
         return
 
-    return loadPlugins(folder, packageName, BaseSubmitter)
+    return loadClasses(folder, packageName, BaseSubmitter)
 
 
 def loadPipelineTemplates(folder):

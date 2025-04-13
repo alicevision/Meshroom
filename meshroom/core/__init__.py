@@ -31,13 +31,12 @@ logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=log
 sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
-nodesDesc = {}
-submitters = {}
-pipelineTemplates = {}
+nodesDesc: dict[str, desc.BaseNode] = {}
+submitters: dict[str, BaseSubmitter] = {}
+pipelineTemplates: dict[str, str] = {}
 
 
-
-def hashValue(value):
+def hashValue(value) -> str:
     """ Hash 'value' using sha1. """
     hashObject = hashlib.sha1(str(value).encode('utf-8'))
     return hashObject.hexdigest()

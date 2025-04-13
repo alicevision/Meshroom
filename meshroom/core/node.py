@@ -601,44 +601,45 @@ class BaseNode(BaseObject):
     # i.e: a.b, a[0], a[0].b.c[1]
     attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
 
-    def __init__(self, nodeType, position=None, parent=None, uid=None, **kwargs):
+    def __init__(self, nodeType: str, position: Position = None, parent: BaseObject = None, uid: str = None, **kwargs):
         """
         Create a new Node instance based on the given node description.
         Any other keyword argument will be used to initialize this node's attributes.
 
         Args:
-            nodeDesc (desc.Node): the node description for this node
-            parent (BaseObject): this Node's parent
+            nodeType: name of the node type
+            parent: this Node's parent
             **kwargs: attributes values
         """
         super(BaseNode, self).__init__(parent)
-        self._nodeType = nodeType
-        self.nodeDesc = None
+        self._nodeType: str = nodeType
+        self.nodeDesc: desc.BaseNode = None
 
         # instantiate node description if nodeType is valid
         if nodeType in meshroom.core.nodesDesc:
             self.nodeDesc = meshroom.core.nodesDesc[nodeType]()
 
-        self.packageName = self.packageVersion = ""
-        self._internalFolder = ""
-        self._sourceCodeFolder = ""
+        self.packageName: str = ""
+        self.packageVersion: str = ""
+        self._internalFolder: str = ""
+        self._sourceCodeFolder: str = ""
 
         # temporary unique name for this node
-        self._name = f"_{nodeType}_{uuid.uuid1()}"
+        self._name: str = f"_{nodeType}_{uuid.uuid1()}"
         self.graph = None
-        self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
+        self.dirty: bool = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)
-        self._uid = uid
-        self._cmdVars = {}
-        self._size = 0
-        self._position = position or Position()
+        self._uid: str = uid
+        self._cmdVars: dict = {}
+        self._size: int = 0
+        self._position: Position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self._internalAttributes = DictModel(keyAttrName='name', parent=self)
-        self.invalidatingAttributes = set()
-        self._alive = True  # for QML side to know if the node can be used or is going to be deleted
-        self._locked = False
+        self.invalidatingAttributes: set = set()
+        self._alive: bool = True  # for QML side to know if the node can be used or is going to be deleted
+        self._locked: bool = False
         self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
-        self._hasDuplicates = False
+        self._hasDuplicates: bool = False
 
         self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)
 

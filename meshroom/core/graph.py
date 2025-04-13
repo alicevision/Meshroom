@@ -183,23 +183,23 @@ class Graph(BaseObject):
 
     """
 
-    def __init__(self, name, parent=None):
+    def __init__(self, name: str = "", parent: BaseObject = None):
         super(Graph, self).__init__(parent)
-        self.name = name
-        self._loading = False
-        self._saving = False
-        self._updateEnabled = True
-        self._updateRequested = False
-        self.dirtyTopology = False
+        self.name: str = name
+        self._loading: bool = False
+        self._saving: bool = False
+        self._updateEnabled: bool = True
+        self._updateRequested: bool = False
+        self.dirtyTopology: bool = False
         self._nodesMinMaxDepths = {}
         self._computationBlocked = {}
-        self._canComputeLeaves = True
+        self._canComputeLeaves: bool = True
         self._nodes = DictModel(keyAttrName='name', parent=self)
         # Edges: use dst attribute as unique key since it can only have one input connection
         self._edges = DictModel(keyAttrName='dst', parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
-        self._cacheDir = ''
-        self._filepath = ''
+        self._cacheDir: str = ''
+        self._filepath: str = ''
         self._fileDateVersion = 0
         self.header = {}
 

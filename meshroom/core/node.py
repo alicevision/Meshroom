@@ -535,8 +535,22 @@ class NodeChunk(BaseObject):
     def stopProcess(self):
         if self.isExtern():
             raise ValueError("Cannot stop process: node is computed externally (another instance of Meshroom)")
+
+        # Ensure that we are up-to-date
+        self.updateStatusFromCache()
+
         if self._status.status != Status.RUNNING:
-            raise ValueError(f"Cannot stop process: node is not running (status is: {self._status.status}).")
+            # When we stop the process of a node with multiple chunks, the Node function will call the stop function of each chunk.
+            # So, the chunck status could be SUBMITTED, RUNNING or ERROR.
+
+            if self._status.status is Status.SUBMITTED:
+                self.upgradeStatusTo(Status.NONE)
+            elif self._status.status in (Status.ERROR, Status.STOPPED, Status.KILLED, Status.SUCCESS, Status.NONE):
+                # Nothing to do, the computation is already stopped.
+                pass
+            else:
+                logging.debug(f"Cannot stop process: node is not running (status is: {self._status.status}).")
+            return
 
         self.node.nodeDesc.stopProcess(self)
 

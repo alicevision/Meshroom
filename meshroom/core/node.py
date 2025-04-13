@@ -1538,7 +1538,9 @@ class BaseNode(BaseObject):
         False otherwise.
         """
         for attr in self._attributes:
-            if attr.enabled and attr.isOutput and attr.desc.semantic == "image":
+            if not attr.enabled or not attr.isOutput:
+                continue
+            if attr.desc.semantic == "image":
                 return True
         return False
 
@@ -1548,8 +1550,9 @@ class BaseNode(BaseObject):
         False otherwise.
         """
         for attr in self._attributes:
-            if attr.enabled and attr.isOutput and (attr.desc.semantic == "sequence" or 
-                                                   attr.desc.semantic == "imageList"):
+            if not attr.enabled or not attr.isOutput:
+                continue
+            if attr.desc.semantic in ("sequence", "imageList"):
                 return True
         return False
 
@@ -1560,9 +1563,11 @@ class BaseNode(BaseObject):
         # List of supported extensions, taken from Viewer3DSettings
         supportedExts = ['.obj', '.stl', '.fbx', '.gltf', '.abc', '.ply']
         for attr in self._attributes:
+            if not attr.enabled or not attr.isOutput:
+                continue
             # If the attribute is a File attribute, it is an instance of str and can be iterated over
             hasSupportedExt = isinstance(attr.value, str) and any(ext in attr.value for ext in supportedExts)
-            if attr.enabled and attr.isOutput and hasSupportedExt:
+            if hasSupportedExt:
                 return True
         return False
 

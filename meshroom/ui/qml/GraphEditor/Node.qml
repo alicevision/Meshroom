@@ -274,7 +274,7 @@ Item {
 
                             // Submitted externally indicator
                             MaterialLabel {
-                                visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.isExternal
+                                visible: node.isExternal
                                 text: MaterialIcons.cloud
                                 padding: 2
                                 font.pointSize: 7
@@ -327,7 +327,7 @@ Item {
                                 text: MaterialIcons.visibility
                                 padding: 2
                                 font.pointSize: 7
-                                property bool displayable: ((["SUCCESS"].includes(node.globalStatus) && node.chunks.count > 0) || !node.isComputable)
+                                property bool displayable: !node.isComputable || (node.chunks.count > 0 && (["SUCCESS"].includes(node.globalStatus)))
                                 color: displayable ? palette.text : Qt.darker(palette.text, 1.8)
 
                                 ToolTip {

@@ -319,7 +319,6 @@ class NodeChunk(BaseObject):
         # Notify update in filepaths when node's internal folder changes
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
 
-        self.execModeNameChanged.connect(self.node.globalExecModeChanged)
 
     @property
     def index(self):
@@ -418,7 +417,6 @@ class NodeChunk(BaseObject):
 
         if execMode is not None:
             self._status.execMode = execMode
-            self.execModeNameChanged.emit()
         self._status.status = newStatus
         self.upgradeStatusFile()
 
@@ -570,8 +568,7 @@ class NodeChunk(BaseObject):
     statusChanged = Signal()
     status = Property(Variant, lambda self: self._status, notify=statusChanged)
     statusName = Property(str, statusName.fget, notify=statusChanged)
-    execModeNameChanged = Signal()
-    execModeName = Property(str, execModeName.fget, notify=execModeNameChanged)
+    execModeName = Property(str, execModeName.fget, notify=statusChanged)
     statisticsChanged = Signal()
 
     nodeFolderChanged = Signal()
@@ -1596,9 +1593,8 @@ class BaseNode(BaseObject):
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
 
-    globalExecModeChanged = Signal()
-    globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)
-    isExternal = Property(bool, isExtern, notify=globalExecModeChanged)
+    globalExecMode = Property(str, globalExecMode.fget, notify=globalStatusChanged)
+    isExternal = Property(bool, isExtern, notify=globalStatusChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
     isComputable = Property(bool, _isComputable, notify=globalStatusChanged)
     aliveChanged = Signal()

@@ -1565,6 +1565,8 @@ class BaseNode(BaseObject):
         for attr in self._attributes:
             if not attr.enabled or not attr.isOutput:
                 continue
+            if attr.desc.semantic == "3d":
+                return True
             # If the attribute is a File attribute, it is an instance of str and can be iterated over
             hasSupportedExt = isinstance(attr.value, str) and any(ext in attr.value for ext in supportedExts)
             if hasSupportedExt:

@@ -75,7 +75,7 @@ class StatusData(BaseObject):
         self.packageVersion: str = packageVersion
         self.mrNodeType = mrNodeType
 
-        self.sessionUid: Optional[str] = meshroom.core.sessionUid
+        self.sessionUid: Optional[str] = None
         self.submitterSessionUid: Optional[str] = None
 
         self.resetDynamicValues()
@@ -127,7 +127,9 @@ class StatusData(BaseObject):
         self.startDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
         # to get datetime obj: datetime.datetime.strptime(obj, self.dateTimeFormatting)
         self.status = Status.RUNNING
-        self.execMode = ExecMode.LOCAL
+        # Note: We do not modify the "execMode" here, as it is set in the init*Submit methods.
+        #       When we compute (from renderfarm or isolated environment),
+        #       we don't want to modify the execMode set from the submit.
 
     def initIsolatedCompute(self):
         ''' When submitting a node, we reset the status information to ensure that we do not keep outdated information.
@@ -318,7 +320,6 @@ class NodeChunk(BaseObject):
         self.subprocess = None
         # Notify update in filepaths when node's internal folder changes
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
-
 
     @property
     def index(self):
@@ -562,8 +563,11 @@ class NodeChunk(BaseObject):
         """
         if self._status.execMode == ExecMode.EXTERN:
             return True
-        uid = self._status.submitterSessionUid  if self.node.getMrNodeType() == MrNodeType.NODE else self._status.sessionUid
-        return uid != meshroom.core.sessionUid
+        elif self._status.execMode == ExecMode.LOCAL:
+            if self._status.status in (Status.SUBMITTED, Status.RUNNING):
+                return meshroom.core.sessionUid not in (self._status.submitterSessionUid, self._status.sessionUid)
+            return False
+        return False
 
     statusChanged = Signal()
     status = Property(Variant, lambda self: self._status, notify=statusChanged)
@@ -1033,6 +1037,8 @@ class BaseNode(BaseObject):
         chunk has completed locally before the computations were interrupted, its execution mode will always
         be local, even if computations resume externally.
         """
+        if len(self._chunks) == 0:
+            return False
         return any(chunk.isExtern() for chunk in self._chunks)
 
     @Slot()
@@ -1490,9 +1496,7 @@ class BaseNode(BaseObject):
         if len(self._chunks) == 0:
             return False
         for chunk in self._chunks:
-            mrNodeType = chunk.node.getMrNodeType()
-            uid = chunk.status.submitterSessionUid if mrNodeType == MrNodeType.NODE else chunk.status.sessionUid
-            if uid != meshroom.core.sessionUid:
+            if meshroom.core.sessionUid not in (chunk.status.sessionUid, chunk.status.submitterSessionUid):
                 return False
         return True
     
@@ -1508,6 +1512,8 @@ class BaseNode(BaseObject):
 
     @Slot(result=bool)
     def canBeStopped(self) -> bool:
+        if not self.isComputable:
+            return False
         # Only locked nodes running in local with the same
         # sessionUid as the Meshroom instance can be stopped
         return (self.getGlobalStatus() == Status.RUNNING and
@@ -1517,6 +1523,8 @@ class BaseNode(BaseObject):
 
     @Slot(result=bool)
     def canBeCanceled(self) -> bool:
+        if not self.isComputable:
+            return False
         # Only locked nodes submitted in local with the same
         # sessionUid as the Meshroom instance can be canceled
         return (self.getGlobalStatus() == Status.SUBMITTED and

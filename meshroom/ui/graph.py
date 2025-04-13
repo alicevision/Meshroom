@@ -593,10 +593,13 @@ class UIGraph(QObject):
     def updateGraphComputingStatus(self):
         # update graph computing status
         computingLocally = any([
-                                ((ch.status.submitterSessionUid if ch.node.getMrNodeType() == MrNodeType.NODE else ch.status.sessionUid) == sessionUid) and (
+                                ch.status.execMode == ExecMode.LOCAL and
+                                (sessionUid in (ch.status.submitterSessionUid, ch.status.sessionUid)) and (
                                 ch.status.status in (Status.RUNNING, Status.SUBMITTED))
                                     for ch in self._sortedDFSChunks])
-        submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])
+        # Note: We do not check sessionUid for the submitted status,
+        #       as the source instance of the submit has no importance.
+        submitted = any([ch.status.execMode == ExecMode.EXTERN and ch.status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
         if self._computingLocally != computingLocally or self._submitted != submitted:
             self._computingLocally = computingLocally
             self._submitted = submitted

@@ -574,35 +574,34 @@ Item {
                         });
                     }
 
-                    readonly property bool isSelectionOnlyComputableNodes: {
-                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                    readonly property bool selectionContainsComputableNodes: {
+                        return uigraph.nodeSelection.selectedIndexes.some(function(idx) {
                             const node = uigraph.graph.nodes.at(idx.row);
-                            return (
-                                node.isComputable
-                                && uigraph.graph.canComputeTopologically(node)
-                            );
+                            return node.isComputable;
                         });
                     }
 
                     readonly property bool canSelectionBeComputed: {
-                        if(!isSelectionOnlyComputableNodes)
+                        if(!selectionContainsComputableNodes)
                             return false;
                         if(isSelectionFullyComputed)
                             return true;
-                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                        var b = uigraph.nodeSelection.selectedIndexes.every(function(idx) {
                             const node = uigraph.graph.nodes.at(idx.row);
                             return (
-                                node.isComputed
+                                node.isComputed ||
+                                (uigraph.graph.canComputeTopologically(node) &&
                                 // canCompute if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
-                                || nodeSubmitOrComputeStatus[node] % 2 == 1
+                                nodeSubmitOrComputeStatus[node] % 2 == 1)
                             );
                         });
+                        return b
                     }
 
-                    readonly property bool isSelectionSubmittable: uigraph.canSubmit && isSelectionOnlyComputableNodes
+                    readonly property bool isSelectionSubmitable: uigraph.canSubmit && selectionContainsComputableNodes
 
                     readonly property bool canSelectionBeSubmitted: {
-                        if(!isSelectionOnlyComputableNodes)
+                        if(!selectionContainsComputableNodes)
                             return false;
                         if(isSelectionFullyComputed)
                             return true;
@@ -624,7 +623,7 @@ Item {
                     MenuItem {
                         id: computeMenuItem
                         text: nodeMenu.isSelectionFullyComputed ? "Recompute" : "Compute"
-                        visible: nodeMenu.isSelectionOnlyComputableNodes
+                        visible: nodeMenu.selectionContainsComputableNodes
                         height: visible ? implicitHeight : 0
                         enabled: nodeMenu.canSelectionBeComputed
 
@@ -645,7 +644,7 @@ Item {
                         id: submitMenuItem
 
                         text: nodeMenu.isSelectionFullyComputed ? "Re-Submit" : "Submit"
-                        visible: nodeMenu.isSelectionSubmittable
+                        visible: nodeMenu.isSelectionSubmitable
                         height: visible ? implicitHeight : 0
                         enabled: nodeMenu.canSelectionBeSubmitted
 
@@ -678,7 +677,7 @@ Item {
                     }
                     MenuItem {
                         text: "Open Folder"
-                        visible: nodeMenu.currentNode.isComputable 
+                        visible: nodeMenu.currentNode.isComputable
                         height: visible ? implicitHeight : 0
                         onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
                     }

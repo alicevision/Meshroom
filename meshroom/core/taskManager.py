@@ -330,7 +330,7 @@ class TaskManager(BaseObject):
     def checkNodesDependencies(self, graph, toNodes, context):
         """
         Check dependencies of nodes to process.
-        Update toNodes with computable/submittable nodes only.
+        Update toNodes with computable/submitable nodes only.
 
         Returns:
             bool: True if all the nodes can be processed. False otherwise.

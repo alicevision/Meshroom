@@ -5,7 +5,7 @@ from meshroom.core import desc, registerNodeType, unregisterNodeType
 from meshroom.core.node import Node
 
 
-class NodeWithAttributeChangedCallback(desc.Node):
+class NodeWithAttributeChangedCallback(desc.BaseNode):
     """
     A Node containing an input Attribute with an 'on{Attribute}Changed' method,
     called whenever the value of this attribute is changed explicitly.
@@ -182,7 +182,7 @@ class TestAttributeCallbackTriggerInGraph:
         assert loadedNodeB.affectedInput.value == 2
 
 
-class NodeWithCompoundAttributes(desc.Node):
+class NodeWithCompoundAttributes(desc.BaseNode):
     """
     A Node containing a variation of compound attributes (List/Groups),
     called whenever the value of this attribute is changed explicitly.
@@ -311,7 +311,7 @@ class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
         assert nodeB.affectedInput.value == 20
 
 
-class NodeWithDynamicOutputValue(desc.Node):
+class NodeWithDynamicOutputValue(desc.BaseNode):
     """
     A Node containing an output attribute which value is computed dynamically during graph execution.
     """
@@ -363,9 +363,9 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         assert nodeB.affectedInput.value == 0
 
     def test_connectingComputedDynamicOutputTriggersDownstreamAttributeChangedCallback(
-        self, graphWithIsolatedCache
+        self, graphSavedOnDisk
     ):
-        graph: Graph = graphWithIsolatedCache
+        graph: Graph = graphSavedOnDisk
         nodeA = graph.addNewNode(NodeWithDynamicOutputValue.__name__)
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
@@ -377,9 +377,9 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         assert nodeB.affectedInput.value == 40
 
     def test_dynamicOutputValueComputeDoesNotTriggerDownstreamAttributeChangedCallback(
-        self, graphWithIsolatedCache
+        self, graphSavedOnDisk
     ):
-        graph: Graph = graphWithIsolatedCache
+        graph: Graph = graphSavedOnDisk
         nodeA = graph.addNewNode(NodeWithDynamicOutputValue.__name__)
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
@@ -392,9 +392,9 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
 
         
     def test_clearingDynamicOutputValueDoesNotTriggerDownstreamAttributeChangedCallback(
-        self, graphWithIsolatedCache
+        self, graphSavedOnDisk
     ):
-        graph: Graph = graphWithIsolatedCache
+        graph: Graph = graphSavedOnDisk
         nodeA = graph.addNewNode(NodeWithDynamicOutputValue.__name__)
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 

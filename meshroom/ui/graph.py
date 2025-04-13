@@ -24,7 +24,7 @@ from PySide6.QtCore import (
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
-from meshroom.core.graph import Graph, Edge
+from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
 from meshroom.core.taskManager import TaskManager
@@ -516,11 +516,8 @@ class UIGraph(QObject):
 
     @Slot()
     def saveAsTemp(self):
-        from meshroom.env import EnvVar
-        from datetime import datetime
-        tempFolder = EnvVar.get(EnvVar.MESHROOM_TEMP_PATH)
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M")
-        self._saveAs(os.path.join(tempFolder, f"meshroom_{timestamp}.mg"))
+        projectPath = generateTempProjectFilepath()
+        self._saveAs(projectPath)
 
     @Slot()
     def save(self):

@@ -167,6 +167,19 @@ def blockNodeCallbacks(func):
     return inner
 
 
+def generateTempProjectFilepath(tmpFolder=None):
+    """
+    Generate a temporary project filepath.
+    This method is used to generate a temporary project file for the current graph.
+    """
+    from datetime import datetime
+    if tmpFolder is None:
+        from meshroom.env import EnvVar
+        tmpFolder = EnvVar.get(EnvVar.MESHROOM_TEMP_PATH)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    return os.path.join(tmpFolder, f"meshroom_{timestamp}.mg")
+
+
 class Graph(BaseObject):
     """
     _________________      _________________      _________________
@@ -1316,7 +1329,7 @@ class Graph(BaseObject):
     def _save(self, filepath=None, setupProjectFile=True, template=False):
         path = filepath or self._filepath
         if not path:
-            raise ValueError("filepath must be specified for unsaved files.")
+            path = generateTempProjectFilepath()
 
         data = self.serialize(template)
 
@@ -1328,6 +1341,21 @@ class Graph(BaseObject):
 
         # update the file date version
         self._fileDateVersion = os.path.getmtime(path)
+
+    def saveAsTemp(self, tmpFolder=None):
+        """
+        Save the current Meshroom graph as a temporary project file.
+        """
+        # Update the saving flag indicating that the current graph is being saved
+        self._saving = True
+        try:
+            self._saveAsTemp(tmpFolder)
+        finally:
+            self._saving = False
+
+    def _saveAsTemp(self, tmpFolder=None):
+        projectPath = generateTempProjectFilepath(tmpFolder)
+        self._save(projectPath)
 
     def _setFilepath(self, filepath):
         """
@@ -1593,6 +1621,8 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                 raise RuntimeError(msg)
 
     print('Nodes to execute: ', str([n.name for n in nodes]))
+
+    graph.save()
 
     for node in nodes:
         node.beginSequence(forceCompute)

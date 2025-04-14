@@ -570,11 +570,21 @@ Item {
 
                     readonly property bool isSelectionFullyComputed: {
                         return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                            return uigraph.graph.nodes.at(idx.row).isComputed;
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return node.isComputed;
                         });
                     }
 
-                    readonly property bool selectionContainsComputableNodes: {
+                    // Selection contains only compatibility nodes
+                    readonly property bool isSelectionFullyCompatibility: {
+                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return node.isCompatibilityNode;
+                        });
+                    }
+
+                    // Selection contains at least one computable node type
+                    readonly property bool selectionContainsComputableNodeType: {
                         return uigraph.nodeSelection.selectedIndexes.some(function(idx) {
                             const node = uigraph.graph.nodes.at(idx.row);
                             return node.isComputableType;
@@ -582,7 +592,9 @@ Item {
                     }
 
                     readonly property bool canSelectionBeComputed: {
-                        if(!selectionContainsComputableNodes)
+                        if(!selectionContainsComputableNodeType)
+                            return false;
+                        if(isSelectionFullyCompatibility)
                             return false;
                         if(isSelectionFullyComputed)
                             return true;
@@ -598,10 +610,12 @@ Item {
                         return b
                     }
 
-                    readonly property bool isSelectionSubmitable: uigraph.canSubmit && selectionContainsComputableNodes
+                    readonly property bool isSelectionSubmitable: uigraph.canSubmit && selectionContainsComputableNodeType
 
                     readonly property bool canSelectionBeSubmitted: {
-                        if(!selectionContainsComputableNodes)
+                        if(!selectionContainsComputableNodeType)
+                            return false;
+                        if(isSelectionFullyCompatibility)
                             return false;
                         if(isSelectionFullyComputed)
                             return true;
@@ -624,7 +638,7 @@ Item {
                     MenuItem {
                         id: computeMenuItem
                         text: nodeMenu.isSelectionFullyComputed ? "Re-Compute" : "Compute"
-                        visible: nodeMenu.selectionContainsComputableNodes
+                        visible: nodeMenu.selectionContainsComputableNodeType
                         height: visible ? implicitHeight : 0
                         enabled: nodeMenu.canSelectionBeComputed
 

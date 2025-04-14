@@ -952,7 +952,7 @@ class BaseNode(BaseObject):
     def nbParallelizationBlocks(self):
         return len(self._chunks)
 
-    def hasStatus(self, status):
+    def hasStatus(self, status: Status):
         if not self._chunks:
             return (status == Status.INPUT)
         for chunk in self._chunks:

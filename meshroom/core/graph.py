@@ -252,8 +252,8 @@ class Graph(BaseObject):
         Args:
             filepath: The path to the Meshroom Graph file to load.
         """
-        self._deserialize(Graph._loadGraphData(filepath))
         self._setFilepath(filepath)
+        self._deserialize(Graph._loadGraphData(filepath))
         self._fileDateVersion = os.path.getmtime(filepath)
 
     def initFromTemplate(self, filepath: PathLike, publishOutputs: bool = False):
@@ -293,7 +293,9 @@ class Graph(BaseObject):
         Args:
             graphData: The serialized Graph.
         """
-        self.clear()
+        self._clearGraphContent()
+        self.header.clear()
+
         self.header = graphData.get(GraphIO.Keys.Header, {})
         fileVersion = Version(self.header.get(GraphIO.Keys.FileVersion, "0.0"))
         graphContent = self._normalizeGraphContent(graphData, fileVersion)

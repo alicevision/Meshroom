@@ -110,10 +110,9 @@ if args.parser == 'boost':
         r'(?:\s*\])?' # potential ']'
         r'(?:\s+(?P<arg>\w+)?)?'  # potential arg
         r'(?:\s+\(\=(?P<defaultValue>.+)\))?'  # potential default value
-        '\\s+(?P<descriptionFirst>.*?)\n'  # end of the line
-        '(?P<descriptionNext>(?:\\s+[^-\\s].+?\n)*)'  # next documentation lines
-        '',
-        re.MULTILINE)
+        r'\s+(?P<descriptionFirst>.*?)\n'  # end of the line
+        r'(?P<descriptionNext>(?:\s+[^-\s].+?\n)*)'  # next documentation lines
+        , re.MULTILINE)
 elif args.parser == 'cmdLineLib':
     args_re = re.compile(
         '^'
@@ -123,9 +122,9 @@ elif args.parser == 'cmdLineLib':
         r'--(?P<argLongName>\w+)'  # argument long name
         r'(?:\s+(?P<arg>\w+)?)?'  # potential arg
         r'\]' # ']'
-        '()' # no default value
-        '(?P<descriptionFirst>.*?)?\n' # end of the line
-        '(?P<descriptionNext>(?:[^\\[\\w].+?\n)*)' # next documentation lines
+        r'()' # no default value
+        r'(?P<descriptionFirst>.*?)?\n' # end of the line
+        r'(?P<descriptionNext>(?:[^\[\w].+?\n)*)' # next documentation lines
         , re.MULTILINE)
 elif args.parser == 'basic':
     args_re = re.compile(r'()--(?P<argLongName>\w+)()()()()')

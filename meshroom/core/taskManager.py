@@ -339,7 +339,7 @@ class TaskManager(BaseObject):
         computed = []
         inputNodes = []
         for node in toNodes:
-            if not node.isComputable:
+            if not node.isComputableType:
                 inputNodes.append(node)
             elif context == "COMPUTATION":
                 if graph.canComputeTopologically(node) and graph.canSubmitOrCompute(node) % 2 == 1:

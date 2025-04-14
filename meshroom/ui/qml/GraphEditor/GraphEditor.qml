@@ -577,7 +577,7 @@ Item {
                     readonly property bool selectionContainsComputableNodes: {
                         return uigraph.nodeSelection.selectedIndexes.some(function(idx) {
                             const node = uigraph.graph.nodes.at(idx.row);
-                            return node.isComputable;
+                            return node.isComputableType;
                         });
                     }
 
@@ -608,9 +608,10 @@ Item {
                         return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
                             const node = uigraph.graph.nodes.at(idx.row);
                             return (
-                                node.isComputed
-                                // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
-                                || nodeSubmitOrComputeStatus[node] > 1
+                                node.isComputed ||
+                                (uigraph.graph.canComputeTopologically(node) &&
+                                 // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
+                                 nodeSubmitOrComputeStatus[node] > 1)
                             )
                         });
                     }
@@ -622,7 +623,7 @@ Item {
 
                     MenuItem {
                         id: computeMenuItem
-                        text: nodeMenu.isSelectionFullyComputed ? "Recompute" : "Compute"
+                        text: nodeMenu.isSelectionFullyComputed ? "Re-Compute" : "Compute"
                         visible: nodeMenu.selectionContainsComputableNodes
                         height: visible ? implicitHeight : 0
                         enabled: nodeMenu.canSelectionBeComputed
@@ -677,12 +678,12 @@ Item {
                     }
                     MenuItem {
                         text: "Open Folder"
-                        visible: nodeMenu.currentNode.isComputable
+                        visible: nodeMenu.currentNode.isComputableType
                         height: visible ? implicitHeight : 0
                         onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
                     }
                     MenuSeparator {
-                        visible: nodeMenu.currentNode.isComputable
+                        visible: nodeMenu.currentNode.isComputableType
                     }
                     MenuItem {
                         text: "Cut Node(s)"
@@ -748,12 +749,12 @@ Item {
                         }
                     }
                     MenuSeparator {
-                        visible: nodeMenu.currentNode.isComputable
+                        visible: nodeMenu.currentNode.isComputableType
                     }
                     MenuItem {
                         id: deleteDataMenuItem
                         text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
-                        visible: nodeMenu.currentNode.isComputable
+                        visible: nodeMenu.currentNode.isComputableType
                         height: visible ? implicitHeight : 0
                         enabled: {
                             if (!nodeMenu.currentNode)

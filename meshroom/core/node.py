@@ -652,7 +652,8 @@ class BaseNode(BaseObject):
                 raise e
 
     def getMrNodeType(self):
-        if self.isCompatibilityNode:
+        # In compatibility mode, we may or may not have access to the nodeDesc and its information about the node type.
+        if self.nodeDesc is None:
             return MrNodeType.NONE
         return self.nodeDesc.getMrNodeType()
 
@@ -960,12 +961,16 @@ class BaseNode(BaseObject):
         return True
 
     def _isComputed(self):
-        if not self.isComputable:
+        if not self.isComputableType:
             return True
         return self.hasStatus(Status.SUCCESS)
 
-    def _isComputable(self):
-        return self.getGlobalStatus() != Status.INPUT
+    def _isComputableType(self):
+        """ Return True if this node type is computable, False otherwise.
+        A computable node type can be in a context that does not allow computation.
+        """
+        # Ambiguous case for NONE, which could be used for compatibility nodes if we don't have any information about the node descriptor.
+        return self.getMrNodeType() != MrNodeType.INPUT
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -1511,7 +1516,9 @@ class BaseNode(BaseObject):
 
     @Slot(result=bool)
     def canBeStopped(self) -> bool:
-        if not self.isComputable:
+        if not self.isComputableType:
+            return False
+        if self.isCompatibilityNode:
             return False
         # Only locked nodes running in local with the same
         # sessionUid as the Meshroom instance can be stopped
@@ -1522,7 +1529,9 @@ class BaseNode(BaseObject):
 
     @Slot(result=bool)
     def canBeCanceled(self) -> bool:
-        if not self.isComputable:
+        if not self.isComputableType:
+            return False
+        if self.isCompatibilityNode:
             return False
         # Only locked nodes submitted in local with the same
         # sessionUid as the Meshroom instance can be canceled
@@ -1610,7 +1619,7 @@ class BaseNode(BaseObject):
     globalExecMode = Property(str, globalExecMode.fget, notify=globalStatusChanged)
     isExternal = Property(bool, isExtern, notify=globalStatusChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
-    isComputable = Property(bool, _isComputable, notify=globalStatusChanged)
+    isComputableType = Property(bool, _isComputableType, notify=globalStatusChanged)
     aliveChanged = Signal()
     alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)
     lockedChanged = Signal()

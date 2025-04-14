@@ -298,12 +298,11 @@ class LogManager:
             return logging.NOTSET
 
 
-runningProcesses = {}
+runningProcesses: dict[str, "NodeChunk"] = {}
 
 
 @atexit.register
 def clearProcessesStatus():
-    global runningProcesses
     for k, v in runningProcesses.items():
         v.upgradeStatusTo(Status.KILLED)
 
@@ -474,7 +473,6 @@ class NodeChunk(BaseObject):
             self._processInIsolatedEnvironment()
             return
 
-        global runningProcesses
         runningProcesses[self.name] = self
         self._status.setNode(self.node)
         self._status.initStartCompute()

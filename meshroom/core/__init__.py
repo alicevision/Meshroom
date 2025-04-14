@@ -310,7 +310,6 @@ def registerNodeType(nodeType):
 
     After registration, nodes of this type can be instantiated in a Graph.
     """
-    global nodesDesc
     if nodeType.__name__ in nodesDesc:
         logging.error(f"Node Desc {nodeType.__name__} is already registered.")
     nodesDesc[nodeType.__name__] = nodeType
@@ -318,7 +317,6 @@ def registerNodeType(nodeType):
 
 def unregisterNodeType(nodeType):
     """ Remove 'nodeType' from the list of register node types. """
-    global nodesDesc
     assert nodeType.__name__ in nodesDesc
     del nodesDesc[nodeType.__name__]
 
@@ -332,7 +330,6 @@ def loadNodes(folder, packageName):
 
 
 def loadAllNodes(folder):
-    global nodesDesc
     for importer, package, ispkg in pkgutil.walk_packages([folder]):
         if ispkg:
             nodeTypes = loadNodes(folder, package)
@@ -372,7 +369,6 @@ def loadPluginsFolder(folder):
 
 
 def registerSubmitter(s):
-    global submitters
     if s.name in submitters:
         logging.error(f"Submitter {s.name} is already registered.")
     submitters[s.name] = s
@@ -387,7 +383,6 @@ def loadSubmitters(folder, packageName):
 
 
 def loadPipelineTemplates(folder):
-    global pipelineTemplates
     if not os.path.isdir(folder):
         logging.error(f"Pipeline templates folder '{folder}' does not exist.")
         return

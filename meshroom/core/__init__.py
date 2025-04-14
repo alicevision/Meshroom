@@ -325,7 +325,7 @@ def unregisterNodeType(nodeType):
 
 def loadNodes(folder, packageName):
     if not os.path.isdir(folder):
-        logging.error("Node folder '{folder}' does not exist.")
+        logging.error(f"Node folder '{folder}' does not exist.")
         return
 
     return loadClasses(folder, packageName, desc.BaseNode)

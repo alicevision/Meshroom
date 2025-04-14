@@ -751,7 +751,7 @@ class Graph(BaseObject):
             try:
                 self.addEdge(self.attribute(srcName), self.attribute(dstName))
             except (KeyError, ValueError) as e:
-                logging.warning(f"Failed to restore edge {srcName} -> {dstName}: {str(e)}")
+                logging.warning(f"Failed to restore edge {srcName} -> {dstName}: {e}")
 
     def upgradeAllNodes(self):
         """ Upgrade all upgradable CompatibilityNode instances in the graph. """

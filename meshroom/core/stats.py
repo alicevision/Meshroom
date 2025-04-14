@@ -84,7 +84,7 @@ class ComputerStatistics:
             self._addKV('ioCounters', psutil.disk_io_counters())
             self.updateGpu()
         except Exception as e:
-            logging.debug(f'Failed to get statistics: "{str(e)}".')
+            logging.debug(f'Failed to get statistics: "{e}".')
 
     def updateGpu(self):
         if not self.nvidia_smi:
@@ -99,38 +99,38 @@ class ComputerStatistics:
             try:
                 self.gpuName = gpuTree.find('product_name').text
             except Exception as e:
-                logging.debug(f'Failed to get gpuName: "{str(e)}".')
+                logging.debug(f'Failed to get gpuName: "{e}".')
                 pass
             try:
                 gpuMemoryUsed = gpuTree.find('fb_memory_usage').find('used').text.split(" ")[0]
                 self._addKV('gpuMemoryUsed', gpuMemoryUsed)
             except Exception as e:
-                logging.debug(f'Failed to get gpuMemoryUsed: "{str(e)}".')
+                logging.debug(f'Failed to get gpuMemoryUsed: "{e}".')
                 pass
             try:
                 self.gpuMemoryTotal = gpuTree.find('fb_memory_usage').find('total').text.split(" ")[0]
             except Exception as e:
-                logging.debug(f'Failed to get gpuMemoryTotal: "{str(e)}".')
+                logging.debug(f'Failed to get gpuMemoryTotal: "{e}".')
                 pass
             try:
                 gpuUsed = gpuTree.find('utilization').find('gpu_util').text.split(" ")[0]
                 self._addKV('gpuUsed', gpuUsed)
             except Exception as e:
-                logging.debug(f'Failed to get gpuUsed: "{str(e)}".')
+                logging.debug(f'Failed to get gpuUsed: "{e}".')
                 pass
             try:
                 gpuTemperature = gpuTree.find('temperature').find('gpu_temp').text.split(" ")[0]
                 self._addKV('gpuTemperature', gpuTemperature)
             except Exception as e:
-                logging.debug(f'Failed to get gpuTemperature: "{str(e)}".')
+                logging.debug(f'Failed to get gpuTemperature: "{e}".')
                 pass
         except subprocess.TimeoutExpired as e:
-            logging.debug(f'Timeout when retrieving information from nvidia_smi: "{str(e)}".')
+            logging.debug(f'Timeout when retrieving information from nvidia_smi: "{e}".')
             p.kill()
             outs, errs = p.communicate()
             return
         except Exception as e:
-            logging.debug(f'Failed to get information from nvidia_smi: "{str(e)}".')
+            logging.debug(f'Failed to get information from nvidia_smi: "{e}".')
             return
 
     def toDict(self):
@@ -270,15 +270,15 @@ class Statistics:
         try:
             self.computer.fromDict(d.get('computer', {}))
         except Exception as e:
-            logging.debug(f'Failed while loading statistics: computer: "{str(e)}".')
+            logging.debug(f'Failed while loading statistics: computer: "{e}".')
         try:
             self.process.fromDict(d.get('process', {}))
         except Exception as e:
-            logging.debug(f'Failed while loading statistics: process: "{str(e)}".')
+            logging.debug(f'Failed while loading statistics: process: "{e}".')
         try:
             self.times = d.get('times', [])
         except Exception as e:
-            logging.debug(f'Failed while loading statistics: times: "{str(e)}".')
+            logging.debug(f'Failed while loading statistics: times: "{e}".')
 
 
 bytesPerGiga = 1024. * 1024. * 1024.

@@ -111,7 +111,7 @@ def loadClasses(folder, packageName, classType):
             except Exception as e:
                 tb = traceback.extract_tb(e.__traceback__)
                 last_call = tb[-1]
-                errors.append(f'  * {pluginName} ({type(e).__name__}): {str(e)}\n'
+                errors.append(f'  * {pluginName} ({type(e).__name__}): {e}\n'
                               # filename:lineNumber functionName
                               f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
                               # line of code with the error

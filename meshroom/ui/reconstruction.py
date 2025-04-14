@@ -231,7 +231,7 @@ class ViewpointWrapper(QObject):
                 # When the viewpoint attribute has already been deleted, metadata.value becomes a PySide property (whereas a string is expected)
                 self._metadata = json.loads(self._viewpoint.metadata.value) if isinstance(self._viewpoint.metadata.value, str) and self._viewpoint.metadata.value else None
             except Exception as e:
-                logging.warning(f"Failed to parse Viewpoint metadata: '{str(e)}', '{str(self._viewpoint.metadata.value)}'")
+                logging.warning(f"Failed to parse Viewpoint metadata: '{e}', '{str(self._viewpoint.metadata.value)}'")
                 self._metadata = {}
             if not self._metadata:
                 self._metadata = {}
@@ -994,7 +994,7 @@ class Reconstruction(UIGraph):
             # Retrieve the list of updated viewpoints and intrinsics
             views, intrinsics = cameraInitCopy.nodeDesc.buildIntrinsics(cameraInitCopy, additionalViews)
         except Exception as e:
-            logging.error(f"Error while building intrinsics: {str(e)}")
+            logging.error(f"Error while building intrinsics: {e}")
             raise
         finally:
             # Delete the duplicate

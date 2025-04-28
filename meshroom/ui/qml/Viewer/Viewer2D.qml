@@ -198,7 +198,7 @@ FocusScope {
         }
 
         // Node must be computed or at least running
-        if (node.isComputable && !node.isPartiallyFinished()) {
+        if (node.isComputableType && !node.isPartiallyFinished()) {
             return false
         }
 
@@ -361,7 +361,7 @@ FocusScope {
             }
         }
 
-        if (!displayedNode || displayedNode.isComputable)
+        if (!displayedNode || displayedNode.isComputableType)
             names.push("gallery")
 
         outputAttribute.names = names

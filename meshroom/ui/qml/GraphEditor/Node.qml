@@ -28,7 +28,7 @@ Item {
     property point position: Qt.point(x, y)
     /// Styling
     property color shadowColor: "#cc000000"
-    readonly property color defaultColor: isCompatibilityNode ? "#444" : !node.isComputable ? "#BA3D69" : activePalette.base
+    readonly property color defaultColor: isCompatibilityNode ? "#444" : !node.isComputableType ? "#BA3D69" : activePalette.base
     property color baseColor: defaultColor
 
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
@@ -274,7 +274,7 @@ Item {
 
                             // Submitted externally indicator
                             MaterialLabel {
-                                visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.isExternal
+                                visible: node.isExternal
                                 text: MaterialIcons.cloud
                                 padding: 2
                                 font.pointSize: 7
@@ -327,7 +327,7 @@ Item {
                                 text: MaterialIcons.visibility
                                 padding: 2
                                 font.pointSize: 7
-                                property bool displayable: ((["SUCCESS"].includes(node.globalStatus) && node.chunks.count > 0) || !node.isComputable)
+                                property bool displayable: !node.isComputableType || (node.chunks.count > 0 && (["SUCCESS"].includes(node.globalStatus)))
                                 color: displayable ? palette.text : Qt.darker(palette.text, 1.8)
 
                                 ToolTip {
@@ -363,19 +363,19 @@ Item {
                 }
 
                 // Node Chunks
-               NodeChunks {
-                   visible: node.isComputable
-                   defaultColor: Colors.sysPalette.mid
-                   implicitHeight: 3
-                   width: parent.width
-                   model: node ? node.chunks : undefined
+                NodeChunks {
+                    visible: node.isComputableType
+                    defaultColor: Colors.sysPalette.mid
+                    implicitHeight: 3
+                    width: parent.width
+                    model: node ? node.chunks : undefined
 
-                   Rectangle {
-                       anchors.fill: parent
-                       color: Colors.sysPalette.mid
-                       z: -1
-                   }
-               }
+                    Rectangle {
+                        anchors.fill: parent
+                        color: Colors.sysPalette.mid
+                        z: -1
+                    }
+                }
 
                 // Vertical Spacer
                 Item { width: parent.width; height: 2 }

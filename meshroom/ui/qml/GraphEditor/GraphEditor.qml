@@ -570,48 +570,62 @@ Item {
 
                     readonly property bool isSelectionFullyComputed: {
                         return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                            return uigraph.graph.nodes.at(idx.row).isComputed;
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return node.isComputed;
                         });
                     }
 
-                    readonly property bool isSelectionOnlyComputableNodes: {
+                    // Selection contains only compatibility nodes
+                    readonly property bool isSelectionFullyCompatibility: {
                         return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
                             const node = uigraph.graph.nodes.at(idx.row);
-                            return (
-                                node.isComputable
-                                && uigraph.graph.canComputeTopologically(node)
-                            );
+                            return node.isCompatibilityNode;
+                        });
+                    }
+
+                    // Selection contains at least one computable node type
+                    readonly property bool selectionContainsComputableNodeType: {
+                        return uigraph.nodeSelection.selectedIndexes.some(function(idx) {
+                            const node = uigraph.graph.nodes.at(idx.row);
+                            return node.isComputableType;
                         });
                     }
 
                     readonly property bool canSelectionBeComputed: {
-                        if(!isSelectionOnlyComputableNodes)
+                        if(!selectionContainsComputableNodeType)
+                            return false;
+                        if(isSelectionFullyCompatibility)
                             return false;
                         if(isSelectionFullyComputed)
                             return true;
-                        return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
+                        var b = uigraph.nodeSelection.selectedIndexes.every(function(idx) {
                             const node = uigraph.graph.nodes.at(idx.row);
                             return (
-                                node.isComputed
+                                node.isComputed ||
+                                (uigraph.graph.canComputeTopologically(node) &&
                                 // canCompute if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
-                                || nodeSubmitOrComputeStatus[node] % 2 == 1
+                                nodeSubmitOrComputeStatus[node] % 2 == 1)
                             );
                         });
+                        return b
                     }
 
-                    readonly property bool isSelectionSubmittable: uigraph.canSubmit && isSelectionOnlyComputableNodes
+                    readonly property bool isSelectionSubmitable: uigraph.canSubmit && selectionContainsComputableNodeType
 
                     readonly property bool canSelectionBeSubmitted: {
-                        if(!isSelectionOnlyComputableNodes)
+                        if(!selectionContainsComputableNodeType)
+                            return false;
+                        if(isSelectionFullyCompatibility)
                             return false;
                         if(isSelectionFullyComputed)
                             return true;
                         return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
                             const node = uigraph.graph.nodes.at(idx.row);
                             return (
-                                node.isComputed
-                                // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
-                                || nodeSubmitOrComputeStatus[node] > 1
+                                node.isComputed ||
+                                (uigraph.graph.canComputeTopologically(node) &&
+                                 // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
+                                 nodeSubmitOrComputeStatus[node] > 1)
                             )
                         });
                     }
@@ -623,8 +637,8 @@ Item {
 
                     MenuItem {
                         id: computeMenuItem
-                        text: nodeMenu.isSelectionFullyComputed ? "Recompute" : "Compute"
-                        visible: nodeMenu.isSelectionOnlyComputableNodes
+                        text: nodeMenu.isSelectionFullyComputed ? "Re-Compute" : "Compute"
+                        visible: nodeMenu.selectionContainsComputableNodeType
                         height: visible ? implicitHeight : 0
                         enabled: nodeMenu.canSelectionBeComputed
 
@@ -645,7 +659,7 @@ Item {
                         id: submitMenuItem
 
                         text: nodeMenu.isSelectionFullyComputed ? "Re-Submit" : "Submit"
-                        visible: nodeMenu.isSelectionSubmittable
+                        visible: nodeMenu.isSelectionSubmitable
                         height: visible ? implicitHeight : 0
                         enabled: nodeMenu.canSelectionBeSubmitted
 
@@ -678,12 +692,12 @@ Item {
                     }
                     MenuItem {
                         text: "Open Folder"
-                        visible: nodeMenu.currentNode.isComputable 
+                        visible: nodeMenu.currentNode.isComputableType
                         height: visible ? implicitHeight : 0
                         onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
                     }
                     MenuSeparator {
-                        visible: nodeMenu.currentNode.isComputable
+                        visible: nodeMenu.currentNode.isComputableType
                     }
                     MenuItem {
                         text: "Cut Node(s)"
@@ -749,12 +763,12 @@ Item {
                         }
                     }
                     MenuSeparator {
-                        visible: nodeMenu.currentNode.isComputable
+                        visible: nodeMenu.currentNode.isComputableType
                     }
                     MenuItem {
                         id: deleteDataMenuItem
                         text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
-                        visible: nodeMenu.currentNode.isComputable
+                        visible: nodeMenu.currentNode.isComputableType
                         height: visible ? implicitHeight : 0
                         enabled: {
                             if (!nodeMenu.currentNode)

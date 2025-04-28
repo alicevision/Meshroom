@@ -1,14 +1,15 @@
-import hashlib
 from contextlib import contextmanager
+import hashlib
 import importlib
 import inspect
-import os
-import tempfile
-import uuid
 import logging
+import os
+from pathlib import Path
 import pkgutil
-
 import sys
+import tempfile
+import traceback
+import uuid
 
 try:
     # for cx_freeze
@@ -19,7 +20,9 @@ except Exception:
     pass
 
 from meshroom.core.submitter import BaseSubmitter
+from meshroom.env import EnvVar, meshroomFolder
 from . import desc
+from .desc import MrNodeType
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
@@ -28,13 +31,12 @@ logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=log
 sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
-defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))
-nodesDesc = {}
-submitters = {}
-pipelineTemplates = {}
+nodesDesc: dict[str, desc.BaseNode] = {}
+submitters: dict[str, BaseSubmitter] = {}
+pipelineTemplates: dict[str, str] = {}
 
 
-def hashValue(value):
+def hashValue(value) -> str:
     """ Hash 'value' using sha1. """
     hashObject = hashlib.sha1(str(value).encode('utf-8'))
     return hashObject.hexdigest()
@@ -52,19 +54,34 @@ def add_to_path(p):
         sys.path = old_path
 
 
-def loadPlugins(folder, packageName, classType):
+def loadClasses(folder, packageName, classType):
     """
     """
-
-    pluginTypes = []
+    classes = []
     errors = []
 
+    resolvedFolder = str(Path(folder).resolve())
     # temporarily add folder to python path
-    with add_to_path(folder):
+    with add_to_path(resolvedFolder):
         # import node package
-        package = importlib.import_module(packageName)
-        packageName = package.packageName if hasattr(package, 'packageName') else package.__name__
-        packageVersion = getattr(package, "__version__", None)
+
+        try:
+            package = importlib.import_module(packageName)
+            packageName = package.packageName if hasattr(package, 'packageName') else package.__name__
+            packageVersion = getattr(package, "__version__", None)
+            packagePath = os.path.dirname(package.__file__)
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            last_call = tb[-1]
+            logging.warning(f'  * Failed to load package "{packageName}" from folder "{resolvedFolder}" ({type(e).__name__}): {str(e)}\n'
+                            # filename:lineNumber functionName
+                            f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
+                            # line of code with the error
+                            f'{last_call.line}'
+                            # Full traceback
+                            f'\n{traceback.format_exc()}\n\n'
+                            )
+            return []
 
         for importer, pluginName, ispkg in pkgutil.iter_modules(package.__path__):
             pluginModuleName = '.' + pluginName
@@ -75,7 +92,7 @@ def loadPlugins(folder, packageName, classType):
                            if plugin.__module__ == '{}.{}'.format(package.__name__, pluginName)
                            and issubclass(plugin, classType)]
                 if not plugins:
-                    logging.warning("No class defined in plugin: {}".format(pluginModuleName))
+                    logging.warning(f"No class defined in plugin: {pluginModuleName}")
 
                 importPlugin = True
                 for p in plugins:
@@ -88,16 +105,26 @@ def loadPlugins(folder, packageName, classType):
                             break
                     p.packageName = packageName
                     p.packageVersion = packageVersion
+                    p.packagePath = packagePath
                 if importPlugin:
-                    pluginTypes.extend(plugins)
+                    classes.extend(plugins)
             except Exception as e:
-                errors.append('  * {}: {}'.format(pluginName, str(e)))
+                tb = traceback.extract_tb(e.__traceback__)
+                last_call = tb[-1]
+                errors.append(f'  * {pluginName} ({type(e).__name__}): {str(e)}\n'
+                              # filename:lineNumber functionName
+                              f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
+                              # line of code with the error
+                              f'{last_call.line}'
+                              # Full traceback
+                              f'\n{traceback.format_exc()}\n\n'
+                              )
 
     if errors:
-        logging.warning('== The following "{package}" plugins could not be loaded ==\n'
+        logging.warning(' The following "{package}" plugins could not be loaded:\n'
                         '{errorMsg}\n'
                         .format(package=packageName, errorMsg='\n'.join(errors)))
-    return pluginTypes
+    return classes
 
 
 def validateNodeDesc(nodeDesc):
@@ -283,75 +310,114 @@ def registerNodeType(nodeType):
 
     After registration, nodes of this type can be instantiated in a Graph.
     """
-    global nodesDesc
     if nodeType.__name__ in nodesDesc:
-        logging.error("Node Desc {} is already registered.".format(nodeType.__name__))
+        logging.error(f"Node Desc {nodeType.__name__} is already registered.")
     nodesDesc[nodeType.__name__] = nodeType
 
 
 def unregisterNodeType(nodeType):
     """ Remove 'nodeType' from the list of register node types. """
-    global nodesDesc
     assert nodeType.__name__ in nodesDesc
     del nodesDesc[nodeType.__name__]
 
 
 def loadNodes(folder, packageName):
-    return loadPlugins(folder, packageName, desc.Node)
+    if not os.path.isdir(folder):
+        logging.error(f"Node folder '{folder}' does not exist.")
+        return
+
+    return loadClasses(folder, packageName, desc.BaseNode)
 
 
 def loadAllNodes(folder):
-    global nodesDesc
     for importer, package, ispkg in pkgutil.walk_packages([folder]):
         if ispkg:
             nodeTypes = loadNodes(folder, package)
             for nodeType in nodeTypes:
                 registerNodeType(nodeType)
-            logging.debug('Nodes loaded [{}]: {}'.format(package, ', '.join([nodeType.__name__ for nodeType in nodeTypes])))
+            nodesStr = ', '.join([nodeType.__name__ for nodeType in nodeTypes])
+            logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
+
+
+def loadPluginFolder(folder):
+    if not os.path.isdir(folder):
+        logging.info(f"Plugin folder '{folder}' does not exist.")
+        return
+
+    mrFolder = Path(folder, 'meshroom')
+    if not mrFolder.exists():
+        logging.info(f"Plugin folder '{folder}' does not contain a 'meshroom' folder.")
+        return
+
+    binFolders = [Path(folder, 'bin')]
+    libFolders = [Path(folder, 'lib'), Path(folder, 'lib64')]
+    pythonPathFolders = [Path(folder)] + binFolders
+
+    loadAllNodes(folder=mrFolder)
+    loadPipelineTemplates(folder=mrFolder)
+
+
+def loadPluginsFolder(folder):
+    if not os.path.isdir(folder):
+        logging.debug(f"PluginSet folder '{folder}' does not exist.")
+        return
+    
+    for file in os.listdir(folder):
+        if os.path.isdir(file):
+            subFolder = os.path.join(folder, file)
+            loadPluginFolder(subFolder)
 
 
 def registerSubmitter(s):
-    global submitters
     if s.name in submitters:
-        logging.error("Submitter {} is already registered.".format(s.name))
+        logging.error(f"Submitter {s.name} is already registered.")
     submitters[s.name] = s
 
 
 def loadSubmitters(folder, packageName):
-    return loadPlugins(folder, packageName, BaseSubmitter)
+    if not os.path.isdir(folder):
+        logging.error(f"Submitters folder '{folder}' does not exist.")
+        return
+
+    return loadClasses(folder, packageName, BaseSubmitter)
 
 
 def loadPipelineTemplates(folder):
-    global pipelineTemplates
+    if not os.path.isdir(folder):
+        logging.error(f"Pipeline templates folder '{folder}' does not exist.")
+        return
     for file in os.listdir(folder):
         if file.endswith(".mg") and file not in pipelineTemplates:
             pipelineTemplates[os.path.splitext(file)[0]] = os.path.join(folder, file)
 
 
 def initNodes():
-    meshroomFolder = os.path.dirname(os.path.dirname(__file__))
-    additionalNodesPath = os.environ.get("MESHROOM_NODES_PATH", "").split(os.pathsep)
-    # filter empty strings
-    additionalNodesPath = [i for i in additionalNodesPath if i]
+    additionalNodesPath = EnvVar.getList(EnvVar.MESHROOM_NODES_PATH)
     nodesFolders = [os.path.join(meshroomFolder, 'nodes')] + additionalNodesPath
     for f in nodesFolders:
         loadAllNodes(folder=f)
 
 
 def initSubmitters():
-    meshroomFolder = os.path.dirname(os.path.dirname(__file__))
-    subs = loadSubmitters(os.environ.get("MESHROOM_SUBMITTERS_PATH", meshroomFolder), 'submitters')
-    for sub in subs:
-        registerSubmitter(sub())
+    additionalPaths = EnvVar.getList(EnvVar.MESHROOM_SUBMITTERS_PATH)
+    allSubmittersFolders = [meshroomFolder] + additionalPaths
+    for folder in allSubmittersFolders:
+        subs = loadSubmitters(folder, 'submitters')
+        for sub in subs:
+            registerSubmitter(sub())
 
 
 def initPipelines():
-    meshroomFolder = os.path.dirname(os.path.dirname(__file__))
-    # Load pipeline templates: check in any folder the user might have added to the environment variable
-    pipelinesPath = os.environ.get("MESHROOM_PIPELINE_TEMPLATES_PATH", "").split(os.pathsep)
-    pipelineTemplatesFolders = [i for i in pipelinesPath if i]
+    # Load pipeline templates: check in the default folder and any folder the user might have
+    # added to the environment variable
+    additionalPipelinesPath = EnvVar.getList(EnvVar.MESHROOM_PIPELINE_TEMPLATES_PATH)
+    pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
     for f in pipelineTemplatesFolders:
-        if os.path.isdir(f):
-            loadPipelineTemplates(f)
-        else:
-            logging.warning("Pipeline templates folder '{}' does not exist.".format(f))
+        loadPipelineTemplates(f)
+
+
+def initPlugins():
+    additionalpluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
+    nodesFolders = [os.path.join(meshroomFolder, 'plugins')] + additionalpluginsPath
+    for f in nodesFolders:
+        loadPluginFolder(folder=f)

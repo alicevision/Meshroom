@@ -168,6 +168,7 @@ class _NodeCreator:
 
     def _createNode(self) -> Node:
         logging.info(f"Creating node '{self.name}'")
+        # TODO: user inputs/outputs may conflicts with internal names (like position, uid)
         return Node(
             self.nodeType,
             position=self.position,
@@ -187,7 +188,7 @@ class _NodeCreator:
         """Handle possible upgrades of CompatibilityNodes, when no computed data is associated to the Node."""
         if node.issue == CompatibilityIssue.UnknownNodeType:
             return node
-        
+
         # Nodes in templates are not meant to hold computation data.
         if self.inTemplate:
             logging.warning(f"Compatibility issue in template: performing automatic upgrade on '{self.name}'")

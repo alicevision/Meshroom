@@ -1,12 +1,22 @@
 #!/usr/bin/env python
 import argparse
+import logging
+import os
 import sys
 
-import meshroom
+try:
+    import meshroom
+except Exception:
+    # If meshroom module is not in the PYTHONPATH, add our root using the relative path
+    import pathlib
+    meshroomRootFolder = pathlib.Path(__file__).parent.parent.resolve()
+    sys.path.append(meshroomRootFolder)
+    import meshroom
 meshroom.setupEnvironment()
 
+import meshroom.core
 import meshroom.core.graph
-from meshroom.core.node import Status
+from meshroom.core.node import Status, ExecMode
 
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
@@ -16,6 +26,8 @@ parser.add_argument('--node', metavar='NODE_NAME', type=str,
                     help='Process the node. It will generate an error if the dependencies are not already computed.')
 parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
                     help='Process the node with its dependencies.')
+parser.add_argument('--inCurrentEnv', help='Execute process in current env without creating a dedicated runtime environment.',
+                    action='store_true')
 parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
                     action='store_true')
 parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
@@ -25,12 +37,31 @@ parser.add_argument('--extern', help='Use this option when you compute externall
 parser.add_argument('--cache', metavar='FOLDER', type=str,
                     default=None,
                     help='Override the cache folder')
+parser.add_argument('-v', '--verbose',
+                    help='Set the verbosity level for logging:\n'
+                            '  - fatal: Show only critical errors.\n'
+                            '  - error: Show errors only.\n'
+                            '  - warning: Show warnings and errors.\n'
+                            '  - info: Show standard informational messages.\n'
+                            '  - debug: Show detailed debug information.\n'
+                            '  - trace: Show all messages, including trace-level details.',
+                    default=os.environ.get('MESHROOM_VERBOSE', 'info'),
+                    choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'])
 
 parser.add_argument('-i', '--iteration', type=int,
                     default=-1, help='')
 
 args = parser.parse_args()
 
+# Setup the verbose level
+if args.extern:
+    # For extern computation, we want to focus on the node computation log.
+    # So, we avoid polluting the log with general warning about plugins, versions of nodes in file, etc.
+    logging.getLogger().setLevel(level=logging.ERROR)
+else:
+    logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
+
+meshroom.core.initPlugins()
 meshroom.core.initNodes()
 
 graph = meshroom.core.graph.loadGraph(args.graphFile)
@@ -53,15 +84,23 @@ if args.node:
             chunks = node.chunks
         for chunk in chunks:
             if chunk.status.status in submittedStatuses:
-                print('Warning: Node is already submitted with status "{}". See file: "{}"'.format(chunk.status.status.name, chunk.statusFile))
+                # Particular case for the local isolated, the node status is set to RUNNING by the submitter directly.
+                # We ensure that no other instance has started to compute, by checking that the sessionUid is empty.
+                if chunk.node.getMrNodeType() == meshroom.core.MrNodeType.NODE and not chunk.status.sessionUid and chunk.status.submitterSessionUid:
+                    continue
+                print(f'Warning: Node is already submitted with status "{chunk.status.status.name}". See file: "{chunk.statusFile}". ExecMode: {chunk.status.execMode.name}, SessionUid: {chunk.status.sessionUid}, submitterSessionUid: {chunk.status.submitterSessionUid}')
                 # sys.exit(-1)
+
+    if args.extern:
+        # Restore the log level
+        logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
 
     node.preprocess()
     if args.iteration != -1:
         chunk = node.chunks[args.iteration]
-        chunk.process(args.forceCompute)
+        chunk.process(args.forceCompute, args.inCurrentEnv)
     else:
-        node.process(args.forceCompute)
+        node.process(args.forceCompute, args.inCurrentEnv)
     node.postprocess()
 else:
     if args.iteration != -1:

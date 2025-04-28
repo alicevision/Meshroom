@@ -24,13 +24,13 @@ from PySide6.QtCore import (
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
-from meshroom.core.graph import Graph, Edge
+from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
 from meshroom.core.taskManager import TaskManager
 
 from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position
-from meshroom.core import submitters
+from meshroom.core import submitters, MrNodeType
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
 
@@ -183,10 +183,11 @@ class ChunksMonitor(QObject):
             return self.statusFiles, self.monitorableChunks
         elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
             for c in self.monitorableChunks:
-                # Only chunks that are run externally should be monitored; when run locally, status changes are already notified
-                if c.isExtern():
-                    # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
-                    if c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING or c._status.status is Status.ERROR:
+                # Only chunks that are run externally or local_isolated should be monitored,
+                # when run locally, status changes are already notified.
+                # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
+                if (c.isExtern() and c._status.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or (
+                    (c.node.getMrNodeType() == MrNodeType.NODE) and (c._status.status in (Status.SUBMITTED, Status.RUNNING))):
                         files.append(c.statusFile)
                         chunks.append(c)
         return files, chunks
@@ -200,11 +201,15 @@ class ChunksMonitor(QObject):
             times: the last modification times for currently monitored files.
         """
         newRecords = dict(zip(self.monitoredChunks, times))
+        hasChangesAndSuccess = False
         for chunk, fileModTime in newRecords.items():
             # update chunk status if last modification time has changed since previous record
             if fileModTime != chunk.statusFileLastModTime:
                 chunk.updateStatusFromCache()
-                chunk.node.updateOutputAttr()
+                if chunk.status.status == Status.SUCCESS:
+                    hasChangesAndSuccess = True
+        if hasChangesAndSuccess:
+            chunk.node.loadOutputAttr()
 
     def onFilePollerRefreshUpdated(self):
         """
@@ -359,20 +364,20 @@ class UIGraph(QObject):
     UIGraph exposes undoable methods on its graph and computation in a separate thread.
     It also provides a monitoring of all its computation units (NodeChunks).
     """
-    def __init__(self, undoStack, taskManager, parent=None):
+    def __init__(self, undoStack: commands.UndoStack, taskManager: TaskManager, parent: QObject = None):
         super(UIGraph, self).__init__(parent)
         self._undoStack = undoStack
         self._taskManager = taskManager
-        self._graph = Graph('', self)
+        self._graph: Graph = Graph('', self)
 
         self._modificationCount = 0
-        self._chunksMonitor = ChunksMonitor(parent=self)
-        self._computeThread = Thread()
+        self._chunksMonitor: ChunksMonitor = ChunksMonitor(parent=self)
+        self._computeThread: Thread = Thread()
         self._computingLocally = self._submitted = False
-        self._sortedDFSChunks = QObjectListModel(parent=self)
-        self._layout = GraphLayout(self)
+        self._sortedDFSChunks: QObjectListModel = QObjectListModel(parent=self)
+        self._layout: GraphLayout = GraphLayout(self)
         self._selectedNode = None
-        self._nodeSelection = QItemSelectionModel(self._graph.nodes, parent=self)
+        self._nodeSelection: QItemSelectionModel = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
 
         self.submitLabel = "{projectName}"
@@ -510,6 +515,11 @@ class UIGraph(QObject):
         self.updateChunkMonitor(self._sortedDFSChunks)
 
     @Slot()
+    def saveAsTemp(self):
+        projectPath = generateTempProjectFilepath()
+        self._saveAs(projectPath)
+
+    @Slot()
     def save(self):
         self._graph.save()
         self._undoStack.setClean()
@@ -526,6 +536,7 @@ class UIGraph(QObject):
     @Slot(list)
     def execute(self, nodes: Optional[Union[list[Node], Node]] = None):
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
+        self.save()  # always save the graph before computing
         self._taskManager.compute(self._graph, nodes)
         self.updateLockedUndoStack()  # explicitly call the update while it is already computing
 
@@ -579,11 +590,13 @@ class UIGraph(QObject):
     def updateGraphComputingStatus(self):
         # update graph computing status
         computingLocally = any([
-                                (ch.status.execMode == ExecMode.LOCAL and
-                                ch.status.sessionUid == sessionUid and
+                                ch.status.execMode == ExecMode.LOCAL and
+                                (sessionUid in (ch.status.submitterSessionUid, ch.status.sessionUid)) and (
                                 ch.status.status in (Status.RUNNING, Status.SUBMITTED))
                                     for ch in self._sortedDFSChunks])
-        submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])
+        # Note: We do not check sessionUid for the submitted status,
+        #       as the source instance of the submit has no importance.
+        submitted = any([ch.status.execMode == ExecMode.EXTERN and ch.status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
         if self._computingLocally != computingLocally or self._submitted != submitted:
             self._computingLocally = computingLocally
             self._submitted = submitted

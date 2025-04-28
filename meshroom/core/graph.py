@@ -20,7 +20,7 @@ from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, Sto
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
-from meshroom.core.typing import PathLike
+from meshroom.core.mtyping import PathLike
 
 # Replace default encoder to support Enums
 
@@ -167,6 +167,19 @@ def blockNodeCallbacks(func):
     return inner
 
 
+def generateTempProjectFilepath(tmpFolder=None):
+    """
+    Generate a temporary project filepath.
+    This method is used to generate a temporary project file for the current graph.
+    """
+    from datetime import datetime
+    if tmpFolder is None:
+        from meshroom.env import EnvVar
+        tmpFolder = EnvVar.get(EnvVar.MESHROOM_TEMP_PATH)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    return os.path.join(tmpFolder, f"meshroom_{timestamp}.mg")
+
+
 class Graph(BaseObject):
     """
     _________________      _________________      _________________
@@ -182,25 +195,24 @@ class Graph(BaseObject):
         edges = {B.input: A.output, C.input: B.output,}
 
     """
-    _cacheDir = ""
 
-    def __init__(self, name, parent=None):
+    def __init__(self, name: str = "", parent: BaseObject = None):
         super(Graph, self).__init__(parent)
-        self.name = name
-        self._loading = False
-        self._saving = False
-        self._updateEnabled = True
-        self._updateRequested = False
-        self.dirtyTopology = False
+        self.name: str = name
+        self._loading: bool = False
+        self._saving: bool = False
+        self._updateEnabled: bool = True
+        self._updateRequested: bool = False
+        self.dirtyTopology: bool = False
         self._nodesMinMaxDepths = {}
         self._computationBlocked = {}
-        self._canComputeLeaves = True
+        self._canComputeLeaves: bool = True
         self._nodes = DictModel(keyAttrName='name', parent=self)
         # Edges: use dst attribute as unique key since it can only have one input connection
         self._edges = DictModel(keyAttrName='dst', parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
-        self.cacheDir = meshroom.core.defaultCacheFolder
-        self._filepath = ''
+        self._cacheDir: str = ''
+        self._filepath: str = ''
         self._fileDateVersion = 0
         self.header = {}
 
@@ -240,8 +252,8 @@ class Graph(BaseObject):
         Args:
             filepath: The path to the Meshroom Graph file to load.
         """
-        self._deserialize(Graph._loadGraphData(filepath))
         self._setFilepath(filepath)
+        self._deserialize(Graph._loadGraphData(filepath))
         self._fileDateVersion = os.path.getmtime(filepath)
 
     def initFromTemplate(self, filepath: PathLike, publishOutputs: bool = False):
@@ -281,7 +293,9 @@ class Graph(BaseObject):
         Args:
             graphData: The serialized Graph.
         """
-        self.clear()
+        self._clearGraphContent()
+        self.header.clear()
+
         self.header = graphData.get(GraphIO.Keys.Header, {})
         fileVersion = Version(self.header.get(GraphIO.Keys.FileVersion, "0.0"))
         graphContent = self._normalizeGraphContent(graphData, fileVersion)
@@ -672,7 +686,7 @@ class Graph(BaseObject):
                 return newName
             idx += 1
 
-    def node(self, nodeName):
+    def node(self, nodeName) -> Optional[Node]:
         return self._nodes.get(nodeName)
 
     def upgradeNode(self, nodeName) -> Node:
@@ -818,11 +832,11 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InitNode)]
         return nodes
 
-    def findNodeCandidates(self, nodeNameExpr):
+    def findNodeCandidates(self, nodeNameExpr: str) -> list[Node]:
         pattern = re.compile(nodeNameExpr)
         return [v for k, v in self._nodes.objects.items() if pattern.match(k)]
 
-    def findNode(self, nodeExpr):
+    def findNode(self, nodeExpr: str) -> Node:
         candidates = self.findNodeCandidates('^' + nodeExpr)
         if not candidates:
             raise KeyError('No node candidate for "{}"'.format(nodeExpr))
@@ -1317,7 +1331,7 @@ class Graph(BaseObject):
     def _save(self, filepath=None, setupProjectFile=True, template=False):
         path = filepath or self._filepath
         if not path:
-            raise ValueError("filepath must be specified for unsaved files.")
+            path = generateTempProjectFilepath()
 
         data = self.serialize(template)
 
@@ -1329,6 +1343,21 @@ class Graph(BaseObject):
 
         # update the file date version
         self._fileDateVersion = os.path.getmtime(path)
+
+    def saveAsTemp(self, tmpFolder=None):
+        """
+        Save the current Meshroom graph as a temporary project file.
+        """
+        # Update the saving flag indicating that the current graph is being saved
+        self._saving = True
+        try:
+            self._saveAsTemp(tmpFolder)
+        finally:
+            self._saving = False
+
+    def _saveAsTemp(self, tmpFolder=None):
+        projectPath = generateTempProjectFilepath(tmpFolder)
+        self._save(projectPath)
 
     def _setFilepath(self, filepath):
         """
@@ -1354,7 +1383,7 @@ class Graph(BaseObject):
     def _unsetFilepath(self):
         self._filepath = ""
         self.name = ""
-        self.cacheDir = meshroom.core.defaultCacheFolder
+        self.cacheDir = ""
         self.filepathChanged.emit()
 
     def updateInternals(self, startNodes=None, force=False):
@@ -1595,6 +1624,8 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
 
     print('Nodes to execute: ', str([n.name for n in nodes]))
 
+    graph.save()
+
     for node in nodes:
         node.beginSequence(forceCompute)
 
@@ -1613,7 +1644,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                 chunk.process(forceCompute)
             node.postprocess()
         except Exception as e:
-            logging.error("Error on node computation: {}".format(e))
+            logging.error(f"Error on node computation: {e}")
             graph.clearSubmittedNodes()
             raise
 

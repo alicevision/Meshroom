@@ -9,7 +9,7 @@ from meshroom.core.attribute import ListAttribute, Attribute
 from meshroom.core.graph import Graph, GraphModification
 from meshroom.core.node import Position, CompatibilityIssue
 from meshroom.core.nodeFactory import nodeFactory
-from meshroom.core.typing import PathLike
+from meshroom.core.mtyping import PathLike
 
 
 class UndoCommand(QUndoCommand):

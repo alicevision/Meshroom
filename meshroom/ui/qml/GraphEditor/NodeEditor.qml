@@ -53,7 +53,7 @@ Panel {
     headerBar: RowLayout {
         Label {
             id: computationInfo
-            color: node && node.isComputable ? Colors.statusColors[node.globalStatus] : palette.text
+            color: node && node.isComputableType ? Colors.statusColors[node.globalStatus] : palette.text
             Timer {
                 id: timer
                 interval: 2500
@@ -72,7 +72,7 @@ Panel {
             font.italic: true
             visible: {
                 if (node !== null) {
-                    if (node.isComputable && (node.isFinishedOrRunning() || node.isSubmittedOrRunning() || node.globalStatus=="ERROR")) {
+                    if (node.isComputableType && (node.isFinishedOrRunning() || node.isSubmittedOrRunning() || node.globalStatus=="ERROR")) {
                         return true
                     }
                 }
@@ -378,7 +378,7 @@ Panel {
             id: tabBar
             visible: root.node !== null
 
-            property bool isComputable: root.node !== null && root.node.isComputable
+            property bool isComputableType: root.node !== null && root.node.isComputableType
 
             // The indices of the tab bar which can be shown for incomputable nodes
             readonly property var nonComputableTabIndices: [0, 4, 5];
@@ -394,21 +394,21 @@ Panel {
                 rightPadding: leftPadding
             }
             TabButton {
-                visible: tabBar.isComputable
+                visible: tabBar.isComputableType
                 width: !visible ? 0 : tabBar.width / tabBar.count
                 text: "Log"
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
-                visible: tabBar.isComputable
+                visible: tabBar.isComputableType
                 width: !visible ? 0 : tabBar.width / tabBar.count
                 text: "Statistics"
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
-                visible: tabBar.isComputable
+                visible: tabBar.isComputableType
                 width: !visible ? 0 : tabBar.width / tabBar.count
                 text: "Status"
                 leftPadding: 8
@@ -429,7 +429,7 @@ Panel {
             onVisibleChanged: {
                 // If we have a node selected and the node is not Computable
                 // Reset the currentIndex to 0, if the current index is not allowed for an incomputable node
-                if ((root.node && !root.node.isComputable) && (nonComputableTabIndices.indexOf(tabBar.currentIndex) === -1)) {
+                if ((root.node && !root.node.isComputableType) && (nonComputableTabIndices.indexOf(tabBar.currentIndex) === -1)) {
                     tabBar.currentIndex = 0;
                 }
             }

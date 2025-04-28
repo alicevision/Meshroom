@@ -1,16 +1,32 @@
+import enum
 from inspect import getfile
 from pathlib import Path
+import logging
 import os
 import psutil
 import shlex
+import shutil
+import sys
 
 from .computation import Level, StaticNodeSize
 from .attribute import StringParam, ColorParam
 
+import meshroom
 from meshroom.core import cgroup
 
+_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent
+_MESHROOM_COMPUTE = _MESHROOM_ROOT / "bin" / "meshroom_compute"
 
-class Node(object):
+
+class MrNodeType(enum.Enum):
+    NONE = enum.auto()
+    BASENODE = enum.auto()
+    NODE = enum.auto()
+    COMMANDLINE = enum.auto()
+    INPUT = enum.auto()
+
+
+class BaseNode(object):
     """
     """
     cpu = Level.NORMAL
@@ -62,16 +78,21 @@ class Node(object):
     category = 'Other'
 
     def __init__(self):
-        super(Node, self).__init__()
+        super(BaseNode, self).__init__()
         self.hasDynamicOutputAttribute = any(output.isDynamicValue for output in self.outputs)
         self.sourceCodeFolder = Path(getfile(self.__class__)).parent.resolve().as_posix()
+
+    def getMrNodeType(self):
+        return MrNodeType.BASENODE
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
         return attrValues
 
     @classmethod
     def onNodeCreated(cls, node):
-        """Called after a node instance had been created from this node descriptor and added to a Graph."""
+        """
+        Called after a node instance created from this node descriptor has been added to a Graph.
+        """
         pass
 
     @classmethod
@@ -112,25 +133,131 @@ class Node(object):
         """
         pass
 
-    def stopProcess(self, chunk):
-        raise NotImplementedError('No stopProcess implementation on node: {}'.format(chunk.node.name))
-
     def processChunk(self, chunk):
-        raise NotImplementedError('No processChunk implementation on node: "{}"'.format(chunk.node.name))
+        raise NotImplementedError(f'No processChunk implementation on node: "{chunk.node.name}"')
+
+    def executeChunkCommandLine(self, chunk, cmd, env=None):
+        try:
+            with open(chunk.logFile, 'w') as logF:
+                chunk.status.commandLine = cmd
+                chunk.saveStatusFile()
+                cmdList = shlex.split(cmd)
+                # Resolve executable to full path
+                prog = shutil.which(cmdList[0], path=env.get('PATH') if env else None)
+
+                print(f"Starting Process for '{chunk.node.name}'")
+                print(f' - commandLine: {cmd}')
+                print(f' - logFile: {chunk.logFile}')
+                if prog:
+                    cmdList[0] = prog
+                    print(f' - command full path: {prog}')
+
+                # Change the process group to avoid Meshroom main process being killed if the
+                # subprocess gets terminated by the user or an Out Of Memory (OOM kill).
+                if sys.platform == "win32":
+                    platformArgs = {"creationflags": psutil.CREATE_NEW_PROCESS_GROUP}
+                    # Note: DETACHED_PROCESS means fully detached process.
+                    # We don't want a fully detached process to ensure that if Meshroom is killed,
+                    # the subprocesses are killed too.
+                else:
+                    platformArgs = {"start_new_session": True}
+                    # Note: "preexec_fn"=os.setsid is the old way before python-3.2
+
+                chunk.subprocess = psutil.Popen(
+                    cmdList,
+                    stdout=logF,
+                    stderr=logF,
+                    cwd=chunk.node.internalFolder,
+                    env=env,
+                    **platformArgs,
+                )
+
+                if hasattr(chunk, "statThread"):
+                    # We only have a statThread if the node is running in the current process
+                    # and not in a dedicated environment/process.
+                    chunk.statThread.proc = chunk.subprocess
+
+                stdout, stderr = chunk.subprocess.communicate()
+
+                chunk.status.returnCode = chunk.subprocess.returncode
+
+                if chunk.subprocess.returncode and chunk.subprocess.returncode < 0:
+                    signal_num = -chunk.subprocess.returncode
+                    logF.write(f"Process was killed by signal: {signal_num}")
+                    try:
+                        status = chunk.subprocess.status()
+                        logF.write(f"Process status: {status}")
+                    except Exception:
+                        pass
+
+            if chunk.subprocess.returncode != 0:
+                with open(chunk.logFile, 'r') as logF:
+                    logContent = ''.join(logF.readlines())
+                raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(chunk.name, logContent))
+        finally:
+            chunk.subprocess = None
+
+    def stopProcess(self, chunk):
+        # The same node could exists several times in the graph and
+        # only one would have the running subprocess; ignore all others
+        if not chunk.subprocess:
+            logging.warning(f"[{chunk.node.name}] stopProcess: no subprocess")
+            return
+
+        # Retrieve process tree
+        processes = chunk.subprocess.children(recursive=True) + [chunk.subprocess]
+        logging.debug(f"[{chunk.node.name}] Processes to stop: {len(processes)}")
+        for process in processes:
+            try:
+                # With terminate, the process has a chance to handle cleanup
+                process.terminate()
+            except psutil.NoSuchProcess:
+                pass
+
+        # If it is still running, force kill it
+        for process in processes:
+            try:
+                # Use is_running() instead of poll() as we use a psutil.Process object
+                if process.is_running():  # Check if process is still alive
+                    process.kill()  # Forcefully kill it
+            except psutil.NoSuchProcess:
+                logging.info(f"[{chunk.node.name}] Process already terminated.")
+            except psutil.AccessDenied:
+                logging.info(f"[{chunk.node.name}] Permission denied to kill the process.")
 
 
-class InputNode(Node):
+class InputNode(BaseNode):
     """
     Node that does not need to be processed, it is just a placeholder for inputs.
     """
     def __init__(self):
         super(InputNode, self).__init__()
 
+    def getMrNodeType(self):
+        return MrNodeType.INPUT
+
     def processChunk(self, chunk):
         pass
 
 
-class CommandLineNode(Node):
+class Node(BaseNode):
+
+    def __init__(self):
+        super(Node, self).__init__()
+
+    def getMrNodeType(self):
+        return MrNodeType.NODE
+
+    def processChunkInEnvironment(self, chunk):
+        meshroomComputeCmd = f"python {_MESHROOM_COMPUTE} {chunk.node.graph.filepath} --node {chunk.node.name} --extern --inCurrentEnv"
+        if len(chunk.node.getChunks()) > 1:
+            meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
+
+        runtimeEnv = None
+        self.executeChunkCommandLine(chunk, meshroomComputeCmd, env=runtimeEnv)
+
+
+class CommandLineNode(BaseNode):
     """
     """
     commandLine = ''  # need to be defined on the node
@@ -140,66 +267,21 @@ class CommandLineNode(Node):
     def __init__(self):
         super(CommandLineNode, self).__init__()
 
+    def getMrNodeType(self):
+        return MrNodeType.COMMANDLINE
+
     def buildCommandLine(self, chunk):
-
         cmdPrefix = ''
-        # If rez available in env, we use it
-        if "REZ_ENV" in os.environ and chunk.node.packageVersion:
-            # If the node package is already in the environment, we don't need a new dedicated rez environment
-            alreadyInEnv = os.environ.get("REZ_{}_VERSION".format(chunk.node.packageName.upper()),
-                                          "").startswith(chunk.node.packageVersion)
-            if not alreadyInEnv:
-                cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get("REZ_ENV"),
-                                                                 packageFullName=chunk.node.packageFullName)
-
         cmdSuffix = ''
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
 
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
-    def stopProcess(self, chunk):
-        # The same node could exists several times in the graph and
-        # only one would have the running subprocess; ignore all others
-        if not hasattr(chunk, "subprocess"):
-            return
-        if chunk.subprocess:
-            # Kill process tree
-            processes = chunk.subprocess.children(recursive=True) + [chunk.subprocess]
-            try:
-                for process in processes:
-                    process.terminate()
-            except psutil.NoSuchProcess:
-                pass
-
     def processChunk(self, chunk):
-        try:
-            with open(chunk.logFile, 'w') as logF:
-                cmd = self.buildCommandLine(chunk)
-                chunk.status.commandLine = cmd
-                chunk.saveStatusFile()
-                print(' - commandLine: {}'.format(cmd))
-                print(' - logFile: {}'.format(chunk.logFile))
-                chunk.subprocess = psutil.Popen(shlex.split(cmd), stdout=logF, stderr=logF, cwd=chunk.node.internalFolder)
-
-                # Store process static info into the status file
-                # chunk.status.env = node.proc.environ()
-                # chunk.status.createTime = node.proc.create_time()
-
-                chunk.statThread.proc = chunk.subprocess
-                stdout, stderr = chunk.subprocess.communicate()
-                chunk.subprocess.wait()
-
-                chunk.status.returnCode = chunk.subprocess.returncode
-
-            if chunk.subprocess.returncode != 0:
-                with open(chunk.logFile, 'r') as logF:
-                    logContent = ''.join(logF.readlines())
-                raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(chunk.name, logContent))
-        except Exception:
-            raise
-        finally:
-            chunk.subprocess = None
+        cmd = self.buildCommandLine(chunk)
+        # TODO: Setup runtime env
+        self.executeChunkCommandLine(chunk, cmd)
 
 
 # Specific command line node for AliceVision apps
@@ -243,7 +325,8 @@ class InitNode(object):
         Args:
             node (Node): the node whose attributes must be initialized
             inputs (list): the user-provided list of input files/directories
-            recursiveInputs (list): the user-provided list of input directories to search recursively for images
+            recursiveInputs (list): the user-provided list of input directories to search
+                                    recursively for images
         """
         pass
 
@@ -265,7 +348,8 @@ class InitNode(object):
 
         Args:
             node (Node): the node whose attributes are to be extended
-            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the values to extend with
+            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the
+                                   values to extend with
         """
         for attr in attributesDict.keys():
             if node.hasAttribute(attr):
@@ -277,7 +361,8 @@ class InitNode(object):
 
         Args:
             node (Node): the node whose attributes are to be extended
-            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the values to set
+            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the
+                                   values to set
         """
         for attr in attributesDict:
             if node.hasAttribute(attr):

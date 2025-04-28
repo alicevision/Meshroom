@@ -509,18 +509,22 @@ class NodeChunk(BaseObject):
 
 
     def _processInIsolatedEnvironment(self):
-        """Process this node chunk in the isolated environment defined in the environment configuration."""
+        """
+        Process this node chunk in the isolated environment defined in the environment
+        configuration.
+        """
         try:
             self._status.setNode(self.node)
             self._status.initIsolatedCompute()
             self.upgradeStatusFile()
 
             self.node.nodeDesc.processChunkInEnvironment(self)
-        except:
+        except Exception:
             # status should be already updated by meshroom_compute
             self.updateStatusFromCache()
             if self._status.status not in (Status.ERROR, Status.STOPPED, Status.KILLED):
-                # If meshroom_compute has crashed or been killed, the status may have not been set to ERROR.
+                # If meshroom_compute has crashed or been killed, the status may have not been
+                # set to ERROR.
                 # In this particular case, we enforce it from here.
                 self.upgradeStatusTo(Status.ERROR)
             raise

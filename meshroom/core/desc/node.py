@@ -185,7 +185,7 @@ class BaseNode(object):
                     try:
                         status = chunk.subprocess.status()
                         logF.write(f"Process status: {status}")
-                    except:
+                    except Exception:
                         pass
 
             if chunk.subprocess.returncode != 0:
@@ -372,4 +372,3 @@ class InitNode(object):
         for attr in attributesDict:
             if node.hasAttribute(attr):
                 node.attribute(attr).value = attributesDict[attr]
-

@@ -90,7 +90,9 @@ class BaseNode(object):
 
     @classmethod
     def onNodeCreated(cls, node):
-        """Called after a node instance had been created from this node descriptor and added to a Graph."""
+        """
+        Called after a node instance created from this node descriptor has been added to a Graph.
+        """
         pass
 
     @classmethod
@@ -150,8 +152,8 @@ class BaseNode(object):
                     cmdList[0] = prog
                     print(f' - command full path: {prog}')
 
-                # Change the process group to avoid Meshroom main process being killed if the subprocess
-                # gets terminated by the user or an Out Of Memory (OOM kill).
+                # Change the process group to avoid Meshroom main process being killed if the
+                # subprocess gets terminated by the user or an Out Of Memory (OOM kill).
                 if sys.platform == "win32":
                     platformArgs = {"creationflags": psutil.CREATE_NEW_PROCESS_GROUP}
                     # Note: DETACHED_PROCESS means fully detached process.
@@ -269,17 +271,7 @@ class CommandLineNode(BaseNode):
         return MrNodeType.COMMANDLINE
 
     def buildCommandLine(self, chunk):
-
         cmdPrefix = ''
-        # # If rez available in env, we use it
-        # if "REZ_ENV" in os.environ and chunk.node.packageVersion:
-        #     # If the node package is already in the environment, we don't need a new dedicated rez environment
-        #     alreadyInEnv = os.environ.get("REZ_{}_VERSION".format(chunk.node.packageName.upper()),
-        #                                   "").startswith(chunk.node.packageVersion)
-        #     if not alreadyInEnv:
-        #         cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get("REZ_ENV"),
-        #                                                          packageFullName=chunk.node.packageFullName)
-
         cmdSuffix = ''
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
@@ -333,7 +325,8 @@ class InitNode(object):
         Args:
             node (Node): the node whose attributes must be initialized
             inputs (list): the user-provided list of input files/directories
-            recursiveInputs (list): the user-provided list of input directories to search recursively for images
+            recursiveInputs (list): the user-provided list of input directories to search
+                                    recursively for images
         """
         pass
 
@@ -355,7 +348,8 @@ class InitNode(object):
 
         Args:
             node (Node): the node whose attributes are to be extended
-            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the values to extend with
+            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the
+                                   values to extend with
         """
         for attr in attributesDict.keys():
             if node.hasAttribute(attr):
@@ -367,7 +361,8 @@ class InitNode(object):
 
         Args:
             node (Node): the node whose attributes are to be extended
-            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the values to set
+            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the
+                                   values to set
         """
         for attr in attributesDict:
             if node.hasAttribute(attr):

@@ -426,8 +426,8 @@ class TaskManager(BaseObject):
         flowEdges = graph.flowEdges(startNodes=toNodes)
         edgesToProcess = set(edgesToProcess).intersection(flowEdges)
 
-        logging.info("Nodes to process: {}".format(nodesToProcess))
-        logging.info("Edges to process: {}".format(edgesToProcess))
+        logging.info(f"Nodes to process: {nodesToProcess}")
+        logging.info(f"Edges to process: {edgesToProcess}")
 
         try:
             res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
@@ -442,7 +442,7 @@ class TaskManager(BaseObject):
             if not allReady:
                 self.raiseDependenciesMessage("SUBMITTING")
         except Exception as e:
-            logging.error("Error on submit : {}".format(e))
+            logging.error(f"Error on submit : {e}")
 
     def submitFromFile(self, graphFile, submitter, toNode=None, submitLabel="{projectName}"):
         """

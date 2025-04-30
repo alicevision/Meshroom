@@ -28,7 +28,7 @@ class FilepathHelper(QObject):
             str: String representation of 'path'
         """
         if not isinstance(path, (QUrl, str)):
-            raise TypeError("Unexpected data type: {}".format(path.__class__))
+            raise TypeError(f"Unexpected data type: {path.__class__}")
         if isinstance(path, QUrl):
             path = path.toLocalFile()
         return path

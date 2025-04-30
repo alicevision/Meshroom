@@ -66,7 +66,7 @@ class Edge(BaseObject):
         super(Edge, self).__init__(parent)
         self._src = weakref.ref(src)
         self._dst = weakref.ref(dst)
-        self._repr = "<Edge> {} -> {}".format(self._src(), self._dst())
+        self._repr = f"<Edge> {self._src()} -> {self._dst()}"
 
     @property
     def src(self):
@@ -839,12 +839,12 @@ class Graph(BaseObject):
     def findNode(self, nodeExpr: str) -> Node:
         candidates = self.findNodeCandidates('^' + nodeExpr)
         if not candidates:
-            raise KeyError('No node candidate for "{}"'.format(nodeExpr))
+            raise KeyError(f'No node candidate for "{nodeExpr}"')
         if len(candidates) > 1:
             for c in candidates:
                 if c.name == nodeExpr:
                     return c
-            raise KeyError('Multiple node candidates for "{}": {}'.format(nodeExpr, str([c.name for c in candidates])))
+            raise KeyError(f'Multiple node candidates for "{nodeExpr}": {str([c.name for c in candidates])}')
         return candidates[0]
 
     def findNodes(self, nodesExpr):
@@ -870,7 +870,7 @@ class Graph(BaseObject):
         if srcAttr.node.graph != self or dstAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
         if dstAttr in self.edges.keys():
-            raise RuntimeError('Destination attribute "{}" is already connected.'.format(dstAttr.getFullNameToNode()))
+            raise RuntimeError(f'Destination attribute "{dstAttr.getFullNameToNode()}" is already connected.')
         edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
@@ -887,7 +887,7 @@ class Graph(BaseObject):
     @changeTopology
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
-            raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.getFullNameToNode()))
+            raise RuntimeError(f'Attribute "{dstAttr.getFullNameToNode()}" is not connected')
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
@@ -1639,8 +1639,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                         node=n+1, nbNodes=len(nodes),
                         chunk=c+1, nbChunks=len(node.chunks), nodeName=node.nodeType))
                 else:
-                    print('\n[{node}/{nbNodes}] {nodeName}'.format(
-                        node=n + 1, nbNodes=len(nodes), nodeName=node.nodeType))
+                    print(f'\n[{n + 1}/{len(nodes)}] {node.nodeType}')
                 chunk.process(forceCompute)
             node.postprocess()
         except Exception as e:
@@ -1661,8 +1660,8 @@ def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
         logging.warning('Nothing to compute')
         return
 
-    logging.info("Nodes to process: {}".format(edgesToProcess))
-    logging.info("Edges to process: {}".format(edgesToProcess))
+    logging.info(f"Nodes to process: {edgesToProcess}")
+    logging.info(f"Edges to process: {edgesToProcess}")
 
     sub = None
     if submitter:
@@ -1680,7 +1679,7 @@ def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
             for node in nodesToProcess:
                 node.submit()  # update node status
     except Exception as e:
-        logging.error("Error on submit : {}".format(e))
+        logging.error(f"Error on submit : {e}")
 
 
 def submit(graphFile, submitter, toNode=None, submitLabel="{projectName}"):

@@ -89,7 +89,7 @@ def loadClasses(folder, packageName, classType):
             try:
                 pluginMod = importlib.import_module(pluginModuleName, package=package.__name__)
                 plugins = [plugin for name, plugin in inspect.getmembers(pluginMod, inspect.isclass)
-                           if plugin.__module__ == '{}.{}'.format(package.__name__, pluginName)
+                           if plugin.__module__ == f'{package.__name__}.{pluginName}'
                            and issubclass(plugin, classType)]
                 if not plugins:
                     logging.warning(f"No class defined in plugin: {pluginModuleName}")

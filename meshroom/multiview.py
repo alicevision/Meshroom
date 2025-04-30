@@ -161,7 +161,7 @@ def mvsPipeline(graph, sfm=None):
         list of Node: the created nodes
     """
     if sfm and not sfm.nodeType == "StructureFromMotion":
-        raise ValueError("Invalid node type. Expected StructureFromMotion, got {}.".format(sfm.nodeType))
+        raise ValueError(f"Invalid node type. Expected StructureFromMotion, got {sfm.nodeType}.")
 
     prepareDenseScene = graph.addNewNode('PrepareDenseScene',
                                          input=sfm.output if sfm else "")

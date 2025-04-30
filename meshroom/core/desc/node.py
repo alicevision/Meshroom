@@ -193,7 +193,7 @@ class BaseNode(object):
             if chunk.subprocess.returncode != 0:
                 with open(chunk.logFile, 'r') as logF:
                     logContent = ''.join(logF.readlines())
-                raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(chunk.name, logContent))
+                raise RuntimeError(f'Error on node "{chunk.name}":\nLog:\n{logContent}')
         finally:
             chunk.subprocess = None
 
@@ -299,12 +299,12 @@ class AVCommandLineNode(CommandLineNode):
             AVCommandLineNode.cmdMem = ''
             memSize = cgroup.getCgroupMemorySize()
             if memSize > 0:
-                AVCommandLineNode.cmdMem = ' --maxMemory={memSize}'.format(memSize=memSize)
+                AVCommandLineNode.cmdMem = f' --maxMemory={memSize}'
 
             AVCommandLineNode.cmdCore = ''
             coresCount = cgroup.getCgroupCpuCount()
             if coresCount > 0:
-                AVCommandLineNode.cmdCore = ' --maxCores={coresCount}'.format(coresCount=coresCount)
+                AVCommandLineNode.cmdCore = f' --maxCores={coresCount}'
 
             AVCommandLineNode.cgroupParsed = True
 

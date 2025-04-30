@@ -71,7 +71,7 @@ This node allows to copy files into a specific folder.
             if not outFiles:
                 error = 'Publish: input files listed, but nothing to publish'
                 chunk.logger.error(error)
-                chunk.logger.info('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+                chunk.logger.info(f'Listed input files: {[i.value for i in chunk.node.inputFiles.value]}')
                 raise RuntimeError(error)
 
             if not os.path.exists(chunk.node.output.value):
@@ -79,10 +79,10 @@ This node allows to copy files into a specific folder.
 
             for iFile, oFile in outFiles.items():
                 if os.path.isdir(iFile):  # If the input is a directory, copy the directory's content
-                    chunk.logger.info('Publish directory {} into {}'.format(iFile, oFile))
+                    chunk.logger.info(f'Publish directory {iFile} into {oFile}')
                     du.copy_tree(iFile, oFile)
                 else:
-                    chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
+                    chunk.logger.info(f'Publish file {iFile} into {oFile}')
                     shutil.copyfile(iFile, oFile)
             chunk.logger.info('Publish end')
         finally:

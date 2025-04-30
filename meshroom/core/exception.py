@@ -39,9 +39,9 @@ class UnknownNodeTypeError(GraphException):
 
 class NodeUpgradeError(GraphException):
     def __init__(self, nodeName, details=None):
-        msg = "Failed to upgrade node {}".format(nodeName)
+        msg = f"Failed to upgrade node {nodeName}"
         if details:
-            msg += ": {}".format(details)
+            msg += f": {details}"
         super(NodeUpgradeError, self).__init__(msg)
 
 

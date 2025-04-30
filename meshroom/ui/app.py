@@ -372,13 +372,13 @@ class MeshroomApp(QApplication):
                     return viewpoints[0].get("path", "")
 
         except FileNotFoundError:
-            logging.info("File {} not found on disk.".format(filepath))
+            logging.info(f"File {filepath} not found on disk.")
         except (json.JSONDecodeError, UnicodeDecodeError):
-            logging.info("Error while loading file {}.".format(filepath))
+            logging.info(f"Error while loading file {filepath}.")
         except KeyError as err:
-            logging.info("The following key does not exist: {}".format(str(err)))
+            logging.info(f"The following key does not exist: {str(err)}")
         except Exception as err:
-            logging.info("Exception: {}".format(str(err)))
+            logging.info(f"Exception: {str(err)}")
 
         return ""
 
@@ -436,7 +436,7 @@ class MeshroomApp(QApplication):
             projectFile (str or QUrl): path to the project file to add to the list
         """
         if not isinstance(projectFile, (QUrl, str)):
-            raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
+            raise TypeError(f"Unexpected data type: {projectFile.__class__}")
         if isinstance(projectFile, QUrl):
             projectFileNorm = projectFile.toLocalFile()
             if not projectFileNorm:
@@ -488,7 +488,7 @@ class MeshroomApp(QApplication):
         Otherwise, it is effectively removed and the QSettings are updated accordingly.
         """
         if not isinstance(projectFile, (QUrl, str)):
-            raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
+            raise TypeError(f"Unexpected data type: {projectFile.__class__}")
         if isinstance(projectFile, QUrl):
             projectFileNorm = projectFile.toLocalFile()
             if not projectFileNorm:
@@ -544,7 +544,7 @@ class MeshroomApp(QApplication):
             if not folderPath:
                 folderPath = imagesFolder.toString()
         else:
-            raise TypeError("Unexpected data type: {}".format(imagesFolder.__class__))
+            raise TypeError(f"Unexpected data type: {imagesFolder.__class__}")
 
         folders = self._recentImportedImagesFolders()
 
@@ -579,7 +579,7 @@ class MeshroomApp(QApplication):
             if not folderPath:
                 folderPath = imagesFolder.toString()
         else:
-            raise TypeError("Unexpected data type: {}".format(imagesFolder.__class__))
+            raise TypeError(f"Unexpected data type: {imagesFolder.__class__}")
 
         folders = self._recentImportedImagesFolders()
 
@@ -626,9 +626,9 @@ class MeshroomApp(QApplication):
         import platform
         import sys
         return {
-            'platform': '{} {}'.format(platform.system(), platform.release()),
-            'python': 'Python {}'.format(sys.version.split(" ")[0]),
-            'pyside': 'PySide6 {}'.format(PySideVersion)
+            'platform': f'{platform.system()} {platform.release()}',
+            'python': f"Python {sys.version.split(' ')[0]}",
+            'pyside': f'PySide6 {PySideVersion}'
         }
 
     systemInfo = Property(QJsonValue, _systemInfo, constant=True)

@@ -279,7 +279,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
         if key is None:
             return
         if key in self._objectByKey:
-            raise ValueError("Object key {}:{} is not unique".format(self._keyAttrName, key))
+            raise ValueError(f"Object key {self._keyAttrName}:{key} is not unique")
 
         self._objectByKey[key] = item
 

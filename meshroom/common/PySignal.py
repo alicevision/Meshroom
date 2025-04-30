@@ -86,7 +86,7 @@ class Signal(object):
         Connects the signal to any callable object
         """
         if not callable(slot):
-            raise ValueError("Connection to non-callable '%s' object failed" % slot.__class__.__name__)
+            raise ValueError(f"Connection to non-callable '{slot.__class__.__name__}' object failed")
 
         if isinstance(slot, (partial, Signal)) or '<' in slot.__name__:
             # If it's a partial, a Signal or a lambda. The '<' check is the only py2 and py3 compatible way I could find
@@ -199,7 +199,7 @@ class SignalFactory(dict):
         Emits a signal by name if it exists. Any additional args or kwargs are passed to the signal
         :param signalName: the signal name to emit
         """
-        assert signalName in self, "%s is not a registered signal" % signalName
+        assert signalName in self, f"{signalName} is not a registered signal"
         self[signalName].emit(*args, **kwargs)
 
     def connect(self, signalName, slot):
@@ -208,7 +208,7 @@ class SignalFactory(dict):
         :param signalName: the signal name to connect to
         :param slot: the callable slot to register
         """
-        assert signalName in self, "%s is not a registered signal" % signalName
+        assert signalName in self, f"{signalName} is not a registered signal"
         self[signalName].connect(slot)
 
     def block(self, signals=None, isBlocked=True):
@@ -230,7 +230,7 @@ class SignalFactory(dict):
 
         for signal in signals:
             if signal not in self:
-                raise RuntimeError("Could not find signal matching %s" % signal)
+                raise RuntimeError(f"Could not find signal matching {signal}")
             self[signal].block(isBlocked)
 
 

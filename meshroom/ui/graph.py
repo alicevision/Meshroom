@@ -849,14 +849,14 @@ class UIGraph(QObject):
         if isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
             self._addEdge(src.at(0), dst)
         elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
-            with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.getFullNameToNode())):
+            with self.groupedGraphModification(f"Insert and Add Edge on {dst.getFullNameToNode()}"):
                 self.appendAttribute(dst)
                 self._addEdge(src, dst.at(-1))
         else:
             self._addEdge(src, dst)
 
     def _addEdge(self, src, dst):
-        with self.groupedGraphModification("Connect '{}'->'{}'".format(src.getFullNameToNode(), dst.getFullNameToNode())):
+        with self.groupedGraphModification(f"Connect '{src.getFullNameToNode()}'->'{dst.getFullNameToNode()}'"):
             if dst in self._graph.edges.keys():
                 self.removeEdge(self._graph.edge(dst))
             self.push(commands.AddEdgeCommand(self._graph, src, dst))
@@ -864,7 +864,7 @@ class UIGraph(QObject):
     @Slot(Edge)
     def removeEdge(self, edge):
         if isinstance(edge.dst.root, ListAttribute):
-            with self.groupedGraphModification("Remove Edge and Delete {}".format(edge.dst.getFullNameToNode())):
+            with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.getFullNameToNode()}"):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
                 self.removeAttribute(edge.dst)
         else:
@@ -872,7 +872,7 @@ class UIGraph(QObject):
 
     @Slot(Edge, Attribute, Attribute, result=Edge)
     def replaceEdge(self, edge, newSrc, newDst):
-        with self.groupedGraphModification("Replace Edge '{}'->'{}' with '{}'->'{}'".format(edge.src.getFullNameToNode(), edge.dst.getFullNameToNode(), newSrc.getFullNameToNode(), newDst.getFullNameToNode())):
+        with self.groupedGraphModification(f"Replace Edge '{edge.src.getFullNameToNode()}'->'{edge.dst.getFullNameToNode()}' with '{newSrc.getFullNameToNode()}'->'{newDst.getFullNameToNode()}'"):
             self.removeEdge(edge)
             self.addEdge(newSrc, newDst)
         return self._graph.edge(newDst)
@@ -888,7 +888,7 @@ class UIGraph(QObject):
     @Slot(Attribute)
     def resetAttribute(self, attribute):
         """ Reset 'attribute' to its default value """
-        with self.groupedGraphModification("Reset Attribute '{}'".format(attribute.name)):
+        with self.groupedGraphModification(f"Reset Attribute '{attribute.name}'"):
             # if the attribute is a ListAttribute, remove all edges
             if isinstance(attribute, ListAttribute):
                 for edge in self._graph.edges:

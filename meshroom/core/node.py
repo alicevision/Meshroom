@@ -339,7 +339,7 @@ class NodeChunk(BaseObject):
     @property
     def name(self):
         if self.range.blockSize:
-            return "{}({})".format(self.node.name, self.index)
+            return f"{self.node.name}({self.index})"
         else:
             return self.node.name
 
@@ -479,7 +479,7 @@ class NodeChunk(BaseObject):
 
     def process(self, forceCompute=False, inCurrentEnv=False):
         if not forceCompute and self._status.status == Status.SUCCESS:
-            logging.info("Node chunk already computed: {}".format(self.name))
+            logging.info(f"Node chunk already computed: {self.name}")
             return
 
         # Start the process environment for nodes running in isolation.
@@ -517,7 +517,7 @@ class NodeChunk(BaseObject):
 
             if executionStatus:
                 self.upgradeStatusTo(executionStatus)
-            logging.info(" - elapsed time: {}".format(self._status.elapsedTimeStr))
+            logging.info(f" - elapsed time: {self._status.elapsedTimeStr}")
             # Ask and wait for the stats thread to stop
             self.statThread.stopRequest()
             self.statThread.join()
@@ -735,7 +735,7 @@ class BaseNode(BaseObject):
             str: the high-level label from the technical node name
         """
         t, idx = name.split("_")
-        return "{}{}".format(t, idx if int(idx) > 1 else "")
+        return f"{t}{idx if int(idx) > 1 else ''}"
 
     def getDocumentation(self):
         if not self.nodeDesc:
@@ -899,7 +899,7 @@ class BaseNode(BaseObject):
                 if group is not None:
                     # If there is a valid command line "group"
                     v = attr.getValueStr(withQuotes=True)
-                    cmdVars[name] = "--{name} {value}".format(name=name, value=v)
+                    cmdVars[name] = f"--{name} {v}"
                     # xxValue is exposed without quotes to allow to compose expressions
                     cmdVars[name + "Value"] = attr.getValueStr(withQuotes=False)
 
@@ -970,7 +970,7 @@ class BaseNode(BaseObject):
 
             v = attr.getValueStr(withQuotes=True)
 
-            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+            self._cmdVars[name] = f'--{name} {v}'
             # xxValue is exposed without quotes to allow to compose expressions
             self._cmdVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
 
@@ -1307,7 +1307,7 @@ class BaseNode(BaseObject):
             return
         valuesFile = self.valuesFile
         if not os.path.exists(valuesFile):
-            logging.warning("No output attr file: {}".format(valuesFile))
+            logging.warning(f"No output attr file: {valuesFile}")
             return
 
         # logging.warning("load output attr: {}, value: {}".format(self.name, valuesFile))
@@ -1806,7 +1806,7 @@ class Node(BaseNode):
                         chunk.range = range
             except RuntimeError:
                 # TODO: set node internal status to error
-                logging.warning("Invalid Parallelization on node {}".format(self._name))
+                logging.warning(f"Invalid Parallelization on node {self._name}")
                 self._chunks.clear()
         else:
             if len(self._chunks) != 1:
@@ -2001,7 +2001,7 @@ class CompatibilityNode(BaseNode):
     @property
     def issueDetails(self):
         if self.issue == CompatibilityIssue.UnknownNodeType:
-            return "Unknown node type: '{}'.".format(self.nodeType)
+            return f"Unknown node type: '{self.nodeType}'."
         elif self.issue == CompatibilityIssue.VersionConflict:
             return "Node version '{}' conflicts with current version '{}'.".format(
                 self.nodeDict["version"], nodeVersion(self.nodeDesc)
@@ -2077,7 +2077,7 @@ class CompatibilityNode(BaseNode):
         try:
             upgradedAttrValues = node.nodeDesc.upgradeAttributeValues(attrValues, self.version)
         except Exception as e:
-            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, repr(e)))
+            logging.error(f"Error in the upgrade implementation of the node: {self.name}.\n{repr(e)}")
             upgradedAttrValues = attrValues
 
         if not isinstance(upgradedAttrValues, dict):

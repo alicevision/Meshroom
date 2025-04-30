@@ -102,7 +102,7 @@ class QmlInstantEngine(QQmlApplicationEngine):
 
         # Make sure the file exists
         if not os.path.isfile(filename):
-            raise ValueError("addFile: file %s doesn't exist." % filename)
+            raise ValueError(f"addFile: file {filename} doesn't exist.")
 
         # Return if the file is already in our internal list
         if filename in self._watchedFiles:
@@ -135,7 +135,7 @@ class QmlInstantEngine(QQmlApplicationEngine):
         recursive -- if True, will search inside each subdirectories recursively.
         """
         if not os.path.isdir(dirname):
-            raise RuntimeError("addFilesFromDirectory : %s is not a valid directory." % dirname)
+            raise RuntimeError(f"addFilesFromDirectory : {dirname} is not a valid directory.")
 
         if recursive:
             for dirpath, dirnames, filenames in os.walk(dirname):
@@ -193,7 +193,7 @@ class QmlInstantEngine(QQmlApplicationEngine):
         QTimer.singleShot(200, lambda: self.addFile(filepath))
 
     def reload(self):
-        print("Reloading {}".format(self._sourceFile))
+        print(f"Reloading {self._sourceFile}")
         self.load(self._sourceFile)
 
 

@@ -26,7 +26,7 @@ class UndoCommand(QUndoCommand):
         try:
             self.redoImpl()
         except Exception:
-            logging.error("Error while redoing command '{}': \n{}".format(self.text(), traceback.format_exc()))
+            logging.error(f"Error while redoing command '{self.text()}': \n{traceback.format_exc()}")
 
     def undo(self):
         if not self._enabled:
@@ -34,7 +34,7 @@ class UndoCommand(QUndoCommand):
         try:
             self.undoImpl()
         except Exception:
-            logging.error("Error while undoing command '{}': \n{}".format(self.text(), traceback.format_exc()))
+            logging.error(f"Error while undoing command '{self.text()}': \n{traceback.format_exc()}")
 
     def redoImpl(self):
         # type: () -> bool
@@ -64,7 +64,7 @@ class UndoStack(QUndoStack):
         try:
             res = command.redoImpl()
         except Exception as e:
-            logging.error("Error while trying command '{}': \n{}".format(command.text(), traceback.format_exc()))
+            logging.error(f"Error while trying command '{command.text()}': \n{traceback.format_exc()}")
             res = False
         if res is not False:
             command.setEnabled(False)
@@ -144,7 +144,7 @@ class AddNodeCommand(GraphCommand):
     def redoImpl(self):
         node = self.graph.addNewNode(self.nodeType, position=self.position, **self.kwargs)
         self.nodeName = node.name
-        self.setText("Add Node {}".format(self.nodeName))
+        self.setText(f"Add Node {self.nodeName}")
         return node
 
     def undoImpl(self):
@@ -156,7 +156,7 @@ class RemoveNodeCommand(GraphCommand):
         super(RemoveNodeCommand, self).__init__(graph, parent)
         self.nodeDict = node.toDict()
         self.nodeName = node.getName()
-        self.setText("Remove Node {}".format(self.nodeName))
+        self.setText(f"Remove Node {self.nodeName}")
         self.outEdges = {}
         self.outListAttributes = {}  # maps attribute's key with a tuple containing the name of the list it is connected to and its value
 
@@ -221,7 +221,7 @@ class PasteNodesCommand(GraphCommand):
         nodes = self.graph.importGraphContent(graph)
 
         self.nodeNames = [node.name for node in nodes]
-        self.setText("Paste Node{} ({})".format("s" if len(self.nodeNames) > 1 else "", ", ".join(self.nodeNames)))
+        self.setText(f"Paste Node{'s' if len(self.nodeNames) > 1 else ''} ({', '.join(self.nodeNames)})")
         return nodes
 
     def undoImpl(self):
@@ -289,7 +289,7 @@ class SetAttributeCommand(GraphCommand):
         self.attrName = attribute.getFullNameToNode()
         self.value = value
         self.oldValue = attribute.getExportValue()
-        self.setText("Set Attribute '{}'".format(attribute.getFullNameToNode()))
+        self.setText(f"Set Attribute '{attribute.getFullNameToNode()}'")
 
     def redoImpl(self):
         if self.value == self.oldValue:
@@ -312,10 +312,10 @@ class AddEdgeCommand(GraphCommand):
         super(AddEdgeCommand, self).__init__(graph, parent)
         self.srcAttr = src.getFullNameToNode()
         self.dstAttr = dst.getFullNameToNode()
-        self.setText("Connect '{}'->'{}'".format(self.srcAttr, self.dstAttr))
+        self.setText(f"Connect '{self.srcAttr}'->'{self.dstAttr}'")
 
         if src.baseType != dst.baseType:
-            raise ValueError("Attribute types are not compatible and cannot be connected: '{}'({})->'{}'({})".format(self.srcAttr, src.baseType, self.dstAttr, dst.baseType))
+            raise ValueError(f"Attribute types are not compatible and cannot be connected: '{self.srcAttr}'({src.baseType})->'{self.dstAttr}'({dst.baseType})")
 
     def redoImpl(self):
         self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))
@@ -330,7 +330,7 @@ class RemoveEdgeCommand(GraphCommand):
         super(RemoveEdgeCommand, self).__init__(graph, parent)
         self.srcAttr = edge.src.getFullNameToNode()
         self.dstAttr = edge.dst.getFullNameToNode()
-        self.setText("Disconnect '{}'->'{}'".format(self.srcAttr, self.dstAttr))
+        self.setText(f"Disconnect '{self.srcAttr}'->'{self.dstAttr}'")
 
     def redoImpl(self):
         self.graph.removeEdge(self.graph.attribute(self.dstAttr))
@@ -349,7 +349,7 @@ class ListAttributeAppendCommand(GraphCommand):
         self.index = None
         self.count = 1
         self.value = value if value else None
-        self.setText("Append to {}".format(self.attrName))
+        self.setText(f"Append to {self.attrName}")
 
     def redoImpl(self):
         listAttribute = self.graph.attribute(self.attrName)
@@ -374,7 +374,7 @@ class ListAttributeRemoveCommand(GraphCommand):
         self.listAttrName = listAttribute.getFullNameToNode()
         self.index = listAttribute.index(attribute)
         self.value = attribute.getExportValue()
-        self.setText("Remove {}".format(attribute.getFullNameToNode()))
+        self.setText(f"Remove {attribute.getFullNameToNode()}")
 
     def redoImpl(self):
         listAttribute = self.graph.attribute(self.listAttrName)
@@ -392,7 +392,7 @@ class RemoveImagesCommand(GraphCommand):
         self.cameraInits = cameraInitNodes
         self.viewpoints = { cameraInit.name: cameraInit.attribute("viewpoints").getExportValue() for cameraInit in self.cameraInits }
         self.intrinsics = { cameraInit.name: cameraInit.attribute("intrinsics").getExportValue() for cameraInit in self.cameraInits }
-        self.title = "Remove{}Images".format(" " if len(self.cameraInits) == 1 else " All ")
+        self.title = f"Remove{' ' if len(self.cameraInits) == 1 else ' All '}Images"
         self.setText(self.title)
 
     def redoImpl(self):
@@ -421,7 +421,7 @@ class MoveNodeCommand(GraphCommand):
         self.nodeName = node.name
         self.oldPosition = node.position
         self.newPosition = position
-        self.setText("Move {}".format(self.nodeName))
+        self.setText(f"Move {self.nodeName}")
 
     def redoImpl(self):
         self.graph.node(self.nodeName).position = self.newPosition
@@ -440,7 +440,7 @@ class UpgradeNodeCommand(GraphCommand):
         self.nodeDict = node.toDict()
         self.nodeName = node.getName()
         self.compatibilityIssue = None
-        self.setText("Upgrade Node {}".format(self.nodeName))
+        self.setText(f"Upgrade Node {self.nodeName}")
 
     def redoImpl(self):
         if not (node := self.graph.node(self.nodeName)).canUpgrade:

@@ -46,9 +46,9 @@ class SimpleFarmSubmitter(BaseSubmitter):
                     continue
                 v = p.split('-')
                 self.reqPackages.append('-'.join([v[0], resolvedVersions[v[0]]]))
-            logging.debug('REZ Packages: {}'.format(str(self.reqPackages)))
+            logging.debug(f'REZ Packages: {str(self.reqPackages)}')
         elif 'REZ_MESHROOM_VERSION' in os.environ:
-            self.reqPackages = ["meshroom-{}".format(os.environ.get('REZ_MESHROOM_VERSION', ''))]
+            self.reqPackages = [f"meshroom-{os.environ.get('REZ_MESHROOM_VERSION', '')}"]
         else:
             self.reqPackages = None
 

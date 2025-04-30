@@ -77,7 +77,7 @@ class CsvData(QObject):
                 for idx, value in enumerate(elt):
                     dataList[idx].appendValue(value)
         except Exception as e:
-            logging.error("CsvData: Failed to load file: {}\n{}".format(self._filepath, str(e)))
+            logging.error(f"CsvData: Failed to load file: {self._filepath}\n{str(e)}")
 
         return dataList
 

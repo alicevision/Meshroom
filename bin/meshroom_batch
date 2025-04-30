@@ -98,8 +98,7 @@ advanced_group.add_argument(
 advanced_group.add_argument(
     '--cache', metavar='FOLDER', type=str,
     default=None,
-    help='Custom cache folder to write computation results. '
-         'If not set, the default cache folder will be used: ' + meshroom.core.defaultCacheFolder)
+    help='Custom cache folder to write computation results.')
 
 advanced_group.add_argument(
     '--compute', metavar='<yes/no>', type=lambda x: bool(distutils.util.strtobool(x)), default=True, required=False,
@@ -262,7 +261,7 @@ with meshroom.core.graph.GraphModification(graph):
         print("\n")
 
     # setup cache directory
-    graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder
+    graph.cacheDir = args.cache if args.cache else ""
 
 if args.save:
     graph.save(args.save, setupProjectFile=not bool(args.cache))

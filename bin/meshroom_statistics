@@ -45,7 +45,7 @@ parser.add_argument("--verbose", help="Print full status information",
 args = parser.parse_args()
 
 if not os.path.exists(args.graphFile):
-    print('ERROR: No graph file "{}".'.format(args.graphFile))
+    print(f'ERROR: No graph file "{args.graphFile}".')
     sys.exit(-1)
 
 graph = pg.loadGraph(args.graphFile)
@@ -64,7 +64,7 @@ else:
 
 for node in nodes:
     for chunk in node.chunks:
-        print('{}: {}\n'.format(chunk.name, chunk.statistics.toDict()))
+        print(f'{chunk.name}: {chunk.statistics.toDict()}\n')
 
 if args.exportHtml:
     with open(args.exportHtml, 'w') as fileObj:

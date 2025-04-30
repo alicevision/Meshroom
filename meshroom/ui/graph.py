@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 from collections.abc import Iterable
 import logging
 import os
@@ -7,7 +6,8 @@ import json
 from enum import Enum
 from threading import Thread, Event, Lock
 from multiprocessing.pool import ThreadPool
-from typing import Iterator, Optional, Union
+from typing import Optional, Union
+from collections.abc import Iterator
 
 from PySide6.QtCore import (
     Slot,
@@ -49,7 +49,7 @@ class FilesModTimePollerThread(QObject):
     timesAvailable = Signal(list)
 
     def __init__(self, parent=None):
-        super(FilesModTimePollerThread, self).__init__(parent)
+        super().__init__(parent)
         self._thread = None
         self._mutex = Lock()
         self._threadPool = ThreadPool(4)
@@ -140,7 +140,7 @@ class ChunksMonitor(QObject):
     Thus, for genericity, monitoring is based on regular polling and not file system watching.
     """
     def __init__(self, chunks=(), parent=None):
-        super(ChunksMonitor, self).__init__(parent)
+        super().__init__(parent)
         self.monitorableChunks = []
         self.monitoredChunks = []
         self._filesTimePoller = FilesModTimePollerThread(parent=self)
@@ -254,7 +254,7 @@ class GraphLayout(QObject):
     }
 
     def __init__(self, graph):
-        super(GraphLayout, self).__init__(graph)
+        super().__init__(graph)
         self.graph = graph
         self._depthMode = GraphLayout.DepthMode.MaxDepth
         self._nodeWidth = 160  # implicit node width
@@ -365,7 +365,7 @@ class UIGraph(QObject):
     It also provides a monitoring of all its computation units (NodeChunks).
     """
     def __init__(self, undoStack: commands.UndoStack, taskManager: TaskManager, parent: QObject = None):
-        super(UIGraph, self).__init__(parent)
+        super().__init__(parent)
         self._undoStack = undoStack
         self._taskManager = taskManager
         self._graph: Graph = Graph('', self)

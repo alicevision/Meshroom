@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 
 import os
 
@@ -15,7 +14,7 @@ def getCgroupMemorySize():
 
     cgroup = None
     try:
-        with open(filename, "r") as f:
+        with open(filename) as f:
 
             # cgroup file is a ':' separated table
             # lookup a line where the second field is "memory"
@@ -35,7 +34,7 @@ def getCgroupMemorySize():
     size = -1
     filename = f"/sys/fs/cgroup/memory/{cgroup}/memory.limit_in_bytes"
     try:
-        with open(filename, "r") as f:
+        with open(filename) as f:
             value = f.read().rstrip("\r\n")
             if value.isnumeric():
                 size = int(value)
@@ -72,7 +71,7 @@ def getCgroupCpuCount():
 
     cgroup = None
     try:
-        with open(filename, "r") as f:
+        with open(filename) as f:
 
             # cgroup file is a ':' separated table
             # lookup a line where the second field is "memory"
@@ -92,7 +91,7 @@ def getCgroupCpuCount():
     size = -1
     filename = f"/sys/fs/cgroup/cpuset/{cgroup}/cpuset.cpus"
     try:
-        with open(filename, "r") as f:
+        with open(filename) as f:
             value = f.read().rstrip("\r\n")
             nlist = parseNumericList(value)
             size = len(nlist)

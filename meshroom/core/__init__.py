@@ -161,7 +161,7 @@ def validateNodeDesc(nodeDesc):
     return errors
 
 
-class Version(object):
+class Version:
     """
     Version provides convenient properties and methods to manipulate and compare versions.
     """
@@ -173,19 +173,19 @@ class Version(object):
         """
         if len(args) == 0:
             self.components = tuple()
-            self.status = str()
+            self.status = ''
         elif len(args) == 1:
             versionName = args[0]
             if isinstance(versionName, str):
                 self.components, self.status = Version.toComponents(versionName)
             elif isinstance(versionName, (list, tuple)):
                 self.components = tuple([int(v) for v in versionName])
-                self.status = str()
+                self.status = ''
             else:
                 raise RuntimeError("Version: Unsupported input type.")
         else:
             self.components = tuple([int(v) for v in args])
-            self.status = str()
+            self.status = ''
 
     def __repr__(self):
         return self.name
@@ -245,9 +245,9 @@ class Version(object):
             tuple of int, string: split version numbers, status if any (or empty string)
         """
         if not versionName:
-            return (), str()
+            return (), ''
 
-        status = str()
+        status = ''
         # If there is a status, it is placed after a "-"
         splitComponents = versionName.split("-", maxsplit=1)
         if (len(splitComponents) > 1):  # If there is no status, splitComponents is equal to [versionName]

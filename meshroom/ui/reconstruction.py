@@ -29,7 +29,7 @@ class Message(QObject):
     """ Simple structure wrapping a high-level message. """
 
     def __init__(self, title, text, detailedText="", parent=None):
-        super(Message, self).__init__(parent)
+        super().__init__(parent)
         self._title = title
         self._text = text
         self._detailedText = detailedText
@@ -47,7 +47,7 @@ class LiveSfmManager(QObject):
     File watching is based on regular polling and not filesystem events to work on network mounts.
     """
     def __init__(self, reconstruction):
-        super(LiveSfmManager, self).__init__(reconstruction)
+        super().__init__(reconstruction)
         self.reconstruction = reconstruction
         self._folder = ''
         self.timerId = -1
@@ -188,7 +188,7 @@ class ViewpointWrapper(QObject):
             viewpointAttribute (GroupAttribute): viewpoint attribute
             reconstruction (Reconstruction): owner reconstruction of this Viewpoint
         """
-        super(ViewpointWrapper, self).__init__(parent=reconstruction)
+        super().__init__(parent=reconstruction)
         self._viewpoint = viewpointAttribute
         self._reconstruction = reconstruction
 
@@ -428,7 +428,7 @@ class ActiveNode(QObject):
     Hold one active node for a given NodeType.
     """
     def __init__(self, nodeType, parent=None):
-        super(ActiveNode, self).__init__(parent)
+        super().__init__(parent)
         self.nodeType = nodeType
         self._node = None
 
@@ -467,7 +467,7 @@ class Reconstruction(UIGraph):
     ]
 
     def __init__(self, undoStack: commands.UndoStack, taskManager: TaskManager, defaultPipeline: str="", parent: QObject=None):
-        super(Reconstruction, self).__init__(undoStack, taskManager, parent)
+        super().__init__(undoStack, taskManager, parent)
 
         # initialize member variables for key steps of the 3D reconstruction pipeline
         self._active = False
@@ -515,7 +515,7 @@ class Reconstruction(UIGraph):
     @Slot()
     def clear(self):
         self.clearActiveNodes()
-        super(Reconstruction, self).clear()
+        super().clear()
         self.setActive(False)
 
     def setDefaultPipeline(self, defaultPipeline):
@@ -554,7 +554,7 @@ class Reconstruction(UIGraph):
         # Lower the input and the dictionary keys to make sure that all input types can be found:
         # - correct pipeline name but the case does not match (e.g. panoramaHDR instead of panoramaHdr)
         # - lowercase pipeline name given through the "New Pipeline" menu
-        loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
+        loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
         filepath = loweredPipelineTemplates.get(p.lower(), p)
         return self._loadWithErrorReport(self.initFromTemplate, filepath)
 
@@ -698,7 +698,7 @@ class Reconstruction(UIGraph):
         if not os.path.exists(sfmFile):
             return QVector3D(0.0, 0.0, 0.0)
         # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
-        with open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(sfmFile, encoding='utf-8', errors='ignore') as f:
             data = json.load(f)
 
         intrinsics = data.get('intrinsics', [])
@@ -881,7 +881,7 @@ class Reconstruction(UIGraph):
 
         if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"] and not filesByType["meshroomScenes"]:
             if filesByType["other"]:
-                extensions = set([os.path.splitext(url)[1] for url in filesByType["other"]])
+                extensions = {os.path.splitext(url)[1] for url in filesByType["other"]}
                 self.error.emit(
                     Message(
                         "No Recognized Input File",

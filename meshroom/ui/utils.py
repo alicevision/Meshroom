@@ -21,7 +21,7 @@ class QmlInstantEngine(QQmlApplicationEngine):
         watching -- Defines whether the watcher is active (default: True)
         verbose -- if True, output log infos (default: False)
         """
-        super(QmlInstantEngine, self).__init__(parent)
+        super().__init__(parent)
 
         self._fileWatcher = QFileSystemWatcher()  # Internal Qt File Watcher
         self._sourceFile = ""
@@ -51,7 +51,7 @@ class QmlInstantEngine(QQmlApplicationEngine):
 
     def load(self, sourceFile):
         self._sourceFile = sourceFile
-        super(QmlInstantEngine, self).load(sourceFile)
+        super().load(sourceFile)
 
     def setWatching(self, watchValue):
         """

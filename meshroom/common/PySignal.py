@@ -16,13 +16,13 @@ from functools import partial
 from weakref import WeakMethod
 
 
-class Signal(object):
+class Signal:
     """
     The Signal is the core object that handles connection and emission .
     """
 
     def __init__(self):
-        super(Signal, self).__init__()
+        super().__init__()
         self._block = False
         self._sender = None
         self._slots = []
@@ -151,7 +151,7 @@ class Signal(object):
             return None
 
 
-class ClassSignal(object):
+class ClassSignal:
     """
     The class signal allows a signal to be set on a class rather than an instance.
     This emulates the behavior of a PyQt signal
@@ -234,7 +234,7 @@ class SignalFactory(dict):
             self[signal].block(isBlocked)
 
 
-class ClassSignalFactory(object):
+class ClassSignalFactory:
     """
     The class signal allows a signal factory to be set on a class rather than an instance.
     """

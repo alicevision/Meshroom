@@ -22,7 +22,7 @@ parser.add_argument("--verbose", help="Print full status information",
 args = parser.parse_args()
 
 if not os.path.exists(args.graphFile):
-    print('ERROR: No graph file "{}".'.format(args.node, args.graphFile))
+    print(f'ERROR: No graph file "{args.node}".')
     sys.exit(-1)
 
 graph = meshroom.core.graph.loadGraph(args.graphFile)
@@ -32,10 +32,10 @@ graph.update()
 if args.node:
     node = graph.node(args.node)
     if node is None:
-        print('ERROR: node "{}" does not exist in file "{}".'.format(args.node, args.graphFile))
+        print(f'ERROR: node "{args.node}" does not exist in file "{args.graphFile}".')
         sys.exit(-1)
     for chunk in node.chunks:
-        print('{}: {}'.format(chunk.name, chunk.status.status.name))
+        print(f'{chunk.name}: {chunk.status.status.name}')
     if args.verbose:
         print('statusFile: ', node.statusFile)
         pprint(node.status.toDict())
@@ -46,6 +46,6 @@ else:
     nodes, edges = graph.dfsOnFinish(startNodes=startNodes)
     for node in nodes:
         for chunk in node.chunks:
-            print('{}: {}'.format(chunk.name, chunk.status.status.name))
+            print(f'{chunk.name}: {chunk.status.status.name}')
     if args.verbose:
         pprint([n.status.toDict() for n in nodes])

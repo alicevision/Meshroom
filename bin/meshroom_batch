@@ -152,7 +152,7 @@ graph = meshroom.core.graph.Graph(name=args.pipeline)
 
 with meshroom.core.graph.GraphModification(graph):
     # initialize template pipeline
-    loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
+    loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
     if args.pipeline.lower() in loweredPipelineTemplates:
         graph.initFromTemplate(loweredPipelineTemplates[args.pipeline.lower()], publishOutputs=True if args.output else False)
     else:
@@ -232,7 +232,7 @@ with meshroom.core.graph.GraphModification(graph):
             raise RuntimeError("meshroom_batch requires a pipeline graph with at least one Publish node, none found.")
 
     if args.overrides:
-        with open(args.overrides, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(args.overrides, encoding='utf-8', errors='ignore') as f:
             data = json.load(f)
             for nodeName, overrides in data.items():
                 for attrName, value in overrides.items():
@@ -240,7 +240,7 @@ with meshroom.core.graph.GraphModification(graph):
 
     if args.paramOverrides:
         print("\n")
-        reExtract = re.compile('(\w+)([:.])(\w[\w.]*)=(.*)')
+        reExtract = re.compile(r'(\w+)([:.])(\w[\w.]*)=(.*)')
         for p in args.paramOverrides:
             result = reExtract.match(p)
             if not result:
@@ -249,12 +249,12 @@ with meshroom.core.graph.GraphModification(graph):
             if t == ':':
                 nodesOfType = graph.nodesOfType(node)
                 if not nodesOfType:
-                    raise ValueError('No node with the type "{}" in the scene.'.format(node))
+                    raise ValueError(f'No node with the type "{node}" in the scene.')
                 for n in nodesOfType:
-                    print('Overrides {node}.{param}={value}'.format(node=node, param=param, value=value))
+                    print(f'Overrides {node}.{param}={value}')
                     n.attribute(param).value = value
             elif t == '.':
-                print('Overrides {node}.{param}={value}'.format(node=node, param=param, value=value))
+                print(f'Overrides {node}.{param}={value}')
                 graph.findNode(node).attribute(param).value = value
             else:
                 raise ValueError('Invalid param override: ' + str(p))
@@ -265,10 +265,10 @@ with meshroom.core.graph.GraphModification(graph):
 
 if args.save:
     graph.save(args.save, setupProjectFile=not bool(args.cache))
-    print('File successfully saved: "{}"'.format(args.save))
+    print(f'File successfully saved: "{args.save}"')
 
 if not args.output:
-    print('No output set, results will be available in the cache folder: "{}"'.format(graph.cacheDir))
+    print(f'No output set, results will be available in the cache folder: "{graph.cacheDir}"')
 
 # find end nodes (None will compute all graph)
 toNodes = graph.findNodes(args.toNode) if args.toNode else None

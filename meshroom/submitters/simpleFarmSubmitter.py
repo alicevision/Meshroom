@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 
 import os
 import json
@@ -24,7 +23,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
     DEFAULT_TAGS = {'prod': ''}
 
     def __init__(self, parent=None):
-        super(SimpleFarmSubmitter, self).__init__(name='SimpleFarm', parent=parent)
+        super().__init__(name='SimpleFarm', parent=parent)
         self.engine = os.environ.get('MESHROOM_SIMPLEFARM_ENGINE', 'tractor')
         self.share = os.environ.get('MESHROOM_SIMPLEFARM_SHARE', 'vfx')
         self.prod = os.environ.get('PROD', 'mvg')

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 import atexit
 import copy
 import datetime
@@ -37,7 +36,7 @@ def renameWritingToFinalPath(writingFilepath: str, filepath: str) -> str:
                 os.remove(filepath)
                 # If remove is successful, we can stop the iterations
                 break
-            except WindowsError:
+            except OSError:
                 pass
     os.rename(writingFilepath, filepath)
 
@@ -70,7 +69,7 @@ class StatusData(BaseObject):
 
     def __init__(self, nodeName='', nodeType='', packageName='', packageVersion='',
                  mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
-        super(StatusData, self).__init__(parent)
+        super().__init__(parent)
 
         self.nodeName: str = nodeName
         self.nodeType: str = nodeType
@@ -267,7 +266,7 @@ class LogManager:
 
             f.close()
 
-        with open(self.chunk.logFile, 'r') as f:
+        with open(self.chunk.logFile) as f:
             content = f.read()
             self.progressBarPosition = content.rfind('\n')
 
@@ -320,7 +319,7 @@ def clearProcessesStatus():
 
 class NodeChunk(BaseObject):
     def __init__(self, node, range, parent=None):
-        super(NodeChunk, self).__init__(parent)
+        super().__init__(parent)
         self.node = node
         self.range = range
         self.logManager: LogManager = LogManager(self)
@@ -368,7 +367,7 @@ class NodeChunk(BaseObject):
             self._status.setNodeType(self.node)
         else:
             try:
-                with open(statusFile, 'r') as jsonFile:
+                with open(statusFile) as jsonFile:
                     statusData = json.load(jsonFile)
                 # logging.debug(f"updateStatusFromCache({self.node.name}): From status {self.status.status} to {statusData['status']}")
                 self._status.fromDict(statusData)
@@ -443,7 +442,7 @@ class NodeChunk(BaseObject):
         statisticsFile = self.statisticsFile
         if not os.path.exists(statisticsFile):
             return
-        with open(statisticsFile, 'r') as jsonFile:
+        with open(statisticsFile) as jsonFile:
             statisticsData = json.load(jsonFile)
         self.statistics.fromDict(statisticsData)
         if oldTimes != self.statistics.times:
@@ -635,7 +634,7 @@ class BaseNode(BaseObject):
             parent: this Node's parent
             **kwargs: attributes values
         """
-        super(BaseNode, self).__init__(parent)
+        super().__init__(parent)
         self._nodeType: str = nodeType
         self.nodeDesc: desc.BaseNode = None
 
@@ -1311,7 +1310,7 @@ class BaseNode(BaseObject):
             return
 
         # logging.warning("load output attr: {}, value: {}".format(self.name, valuesFile))
-        with open(valuesFile, 'r') as jsonFile:
+        with open(valuesFile) as jsonFile:
             data = json.load(jsonFile)
 
         # logging.warning(data)
@@ -1513,8 +1512,8 @@ class BaseNode(BaseObject):
         # If number of elements in both lists are identical,
         # we must check if their content is the same
         if len(newList) == len(self._duplicates):
-            newListName = set([node.name for node in newList])
-            oldListName = set([node.name for node in self._duplicates.values()])
+            newListName = {node.name for node in newList}
+            oldListName = {node.name for node in self._duplicates.values()}
 
             # If strict equality between both sets,
             # there is no need to set the new list
@@ -1689,7 +1688,7 @@ class Node(BaseNode):
     A standard Graph node based on a node type.
     """
     def __init__(self, nodeType, position=None, parent=None, uid=None, **kwargs):
-        super(Node, self).__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
+        super().__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
 
         if not self.nodeDesc:
             raise UnknownNodeTypeError(nodeType)
@@ -1834,7 +1833,7 @@ class CompatibilityNode(BaseNode):
     with all its inputs and precomputed outputs.
     """
     def __init__(self, nodeType, nodeDict, position=None, issue=CompatibilityIssue.UnknownIssue, parent=None):
-        super(CompatibilityNode, self).__init__(nodeType, position, parent)
+        super().__init__(nodeType, position, parent)
 
         self.issue = issue
         # Make a deepcopy of nodeDict to handle CompatibilityNode duplication

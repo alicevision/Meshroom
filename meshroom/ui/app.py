@@ -31,7 +31,7 @@ from meshroom.ui.utils import QmlInstantEngine
 from meshroom.ui import commands
 
 
-class MessageHandler(object):
+class MessageHandler:
     """
     MessageHandler that translates Qt logs to Python logging system.
     Also contains and filters a list of blacklisted QML warnings that end up in the
@@ -211,7 +211,7 @@ class MeshroomApp(QApplication):
 
         logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
 
-        super(MeshroomApp, self).__init__(inputArgs[:1] + qtArgs)
+        super().__init__(inputArgs[:1] + qtArgs)
 
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')

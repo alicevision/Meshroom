@@ -98,7 +98,7 @@ class TaskManager(BaseObject):
     Manage graph - local and external - computation tasks.
     """
     def __init__(self, parent: BaseObject = None):
-        super(TaskManager, self).__init__(parent)
+        super().__init__(parent)
         self._graph = None
         self._nodes = DictModel(keyAttrName='_name', parent=self)
         self._nodesToProcess = []
@@ -208,7 +208,7 @@ class TaskManager(BaseObject):
             chunksInConflict = self.getAlreadySubmittedChunks(nodes)
 
             if chunksInConflict:
-                chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
+                chunksStatus = {chunk.status.status.name for chunk in chunksInConflict}
                 chunksName = [node.name for node in chunksInConflict]
                 # Warning: Syntax and terms are parsed on QML side to recognize the error
                 # Syntax : [Context] ErrorType: ErrorMessage

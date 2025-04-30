@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 import copy
 import os
 import re
@@ -57,7 +56,7 @@ class Attribute(BaseObject):
             root (Attribute): (optional) the root Attribute (List or Group) containing this one
             parent (BaseObject): (optional) the parent BaseObject
         """
-        super(Attribute, self).__init__(parent)
+        super().__init__(parent)
         self._name = attributeDesc.name
         self._root = None if root is None else weakref.ref(root)
         self._node = weakref.ref(node)
@@ -473,7 +472,7 @@ def raiseIfLink(func):
 
 class PushButtonParam(Attribute):
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
-        super(PushButtonParam, self).__init__(node, attributeDesc, isOutput, root, parent)
+        super().__init__(node, attributeDesc, isOutput, root, parent)
 
     @Slot()
     def clicked(self):
@@ -483,7 +482,7 @@ class PushButtonParam(Attribute):
 class ChoiceParam(Attribute):
 
     def __init__(self, node, attributeDesc: desc.ChoiceParam, isOutput, root=None, parent=None):
-        super(ChoiceParam, self).__init__(node, attributeDesc, isOutput, root, parent)
+        super().__init__(node, attributeDesc, isOutput, root, parent)
         self._values = None
 
     def __len__(self):
@@ -544,7 +543,7 @@ class ChoiceParam(Attribute):
 class ListAttribute(Attribute):
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
-        super(ListAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
+        super().__init__(node, attributeDesc, isOutput, root, parent)
 
     def __len__(self):
         if self._value is None:
@@ -650,13 +649,13 @@ class ListAttribute(Attribute):
                 if value.invalidate:
                     uids.append(value.uid())
             return hashValue(uids)
-        return super(ListAttribute, self).uid()
+        return super().uid()
 
     def _applyExpr(self):
         if not self.node.graph:
             return
         if isinstance(self._value, ListAttribute) or Attribute.isLinkExpression(self._value):
-            super(ListAttribute, self)._applyExpr()
+            super()._applyExpr()
         else:
             for value in self._value:
                 value._applyExpr()
@@ -689,7 +688,7 @@ class ListAttribute(Attribute):
             return v
 
     def updateInternals(self):
-        super(ListAttribute, self).updateInternals()
+        super().updateInternals()
         for attr in self._value:
             attr.updateInternals()
 
@@ -711,11 +710,11 @@ class ListAttribute(Attribute):
 class GroupAttribute(Attribute):
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
-        super(GroupAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
+        super().__init__(node, attributeDesc, isOutput, root, parent)
 
     def __getattr__(self, key):
         try:
-            return super(GroupAttribute, self).__getattr__(key)
+            return super().__getattr__(key)
         except AttributeError:
             try:
                 return self._value.get(key)
@@ -831,7 +830,7 @@ class GroupAttribute(Attribute):
         return f'{strBegin}{s}{strEnd}'
 
     def updateInternals(self):
-        super(GroupAttribute, self).updateInternals()
+        super().updateInternals()
         for attr in self._value:
             attr.updateInternals()
 

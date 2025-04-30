@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 
 from meshroom.core import unregisterNodeType, pipelineTemplates, Version
 from meshroom.core.node import CompatibilityIssue, CompatibilityNode

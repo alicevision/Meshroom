@@ -17,6 +17,10 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
     n3 = g.addNewNode('AppendFiles', input=n1.output, input2=n2.output)
 
     # check that the attribute can retrieve its linked input attributes
+
+    assert n0.output.hasOutputConnections
+    assert not n3.output.hasOutputConnections
+
     assert len(n0.input.getLinkedInAttributes()) == 0
     assert len(n1.input.getLinkedInAttributes()) == 1
     assert n1.input.getLinkedInAttributes()[0] == n0.output
@@ -26,4 +30,10 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
     assert n1.output.getLinkedOutAttributes()[0] == n2.input
     assert n1.output.getLinkedOutAttributes()[1] == n3.input
 
+    n0.graph = None
+
+    # Bounding cases
+    assert not n0.output.hasOutputConnections
+    assert len(n0.input.getLinkedInAttributes()) == 0
+    assert len(n0.output.getLinkedOutAttributes()) == 0
     

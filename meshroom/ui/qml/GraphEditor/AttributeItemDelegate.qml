@@ -69,8 +69,13 @@ RowLayout {
                 topPadding: 7
                 ToolTip.text: shouldBeVisible ? object.linkParam.label : ""
 
-                onClicked: function(mouse) {
-                    root.inAttributeClicked(mouse, object.linkedInAttributes)               
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+
+                    onClicked: function(mouse) {
+                        root.inAttributeClicked(mouse, object.linkedInAttributes)               
+                    }
                 }
                 
             }
@@ -196,9 +201,15 @@ RowLayout {
                 Layout.alignment: Qt.AlignTop | Qt.AlignRight
                 topPadding: 7
 
-                onClicked: function(mouse) {
-                    root.outAttributeClicked(mouse, attribute.linkedOutAttributes)               
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+
+                    onClicked: function(mouse) {
+                        root.outAttributeClicked(mouse, attribute.linkedOutAttributes)               
+                    }
                 }
+                
 
             }
 

@@ -1346,10 +1346,20 @@ Page {
 
                     onInAttributeClicked: function(mouse, inAttributes) {
                         selectNodesFromAttributes(inAttributes)
+
+                        if (mouse.button === Qt.MiddleButton) {
+                            graphEditor.fit()
+                        }
+                        
                     }
 
                     onOutAttributeClicked: function(mouse, outAttributes) {                        
                         selectNodesFromAttributes(outAttributes)
+
+                        if (mouse.button === Qt.MiddleButton) {
+                            graphEditor.fit()
+                        }
+
                     }
 
                     function selectNodesFromAttributes(attributes) {

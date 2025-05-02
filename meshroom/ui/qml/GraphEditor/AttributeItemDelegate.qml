@@ -60,13 +60,16 @@ RowLayout {
 
             // In connection
             MaterialToolButton {
-                text: (object != undefined && object.isLink) ? MaterialIcons.login : " "
-                enabled: (object != undefined && object.isLink)
+                property var shouldBeVisible: (object != undefined && object.isLink)
+
+                text: shouldBeVisible ? MaterialIcons.login : " "
+                enabled: shouldBeVisible
                 font.pointSize: 8
                 anchors.top: parent.top
                 anchors.left: parent.left
                 topPadding: 7
-                ToolTip.text: (object != undefined && object.isLink) ? object.linkParam.label : ""
+                ToolTip.text: shouldBeVisible ? object.linkParam.label : ""
+
                 onClicked: function(mouse) {
                     root.inAttributeClicked(mouse, object.inputAttributes)               
                 }
@@ -186,9 +189,11 @@ RowLayout {
             }
 
             MaterialToolButton {
-                text: (attribute != undefined && attribute.hasOutputConnections) ? MaterialIcons.logout : ""
+                property var shouldBeVisible: (attribute != undefined && attribute.hasOutputConnections)
+
+                text: shouldBeVisible ? MaterialIcons.logout : ""
                 font.pointSize: 8
-                enabled: (attribute != undefined && attribute.hasOutputConnections)
+                enabled: shouldBeVisible
                 anchors.top: parent.top
                 anchors.right: parent.right
                 topPadding: 7

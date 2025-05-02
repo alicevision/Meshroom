@@ -63,6 +63,9 @@ RowLayout {
                 text: (object != undefined && object.isLink) ? MaterialIcons.login : " "
                 enabled: (object != undefined && object.isLink)
                 font.pointSize: 8
+                anchors.top: parent.top
+                anchors.left: parent.left
+                topPadding: 7
                 ToolTip.text: (object != undefined && object.isLink) ? object.linkParam.label : ""
                 onClicked: function(mouse) {
                     root.inAttributeClicked(mouse, object.inputAttributes)               
@@ -186,7 +189,10 @@ RowLayout {
                 text: (attribute != undefined && attribute.hasOutputConnections) ? MaterialIcons.logout : ""
                 font.pointSize: 8
                 enabled: (attribute != undefined && attribute.hasOutputConnections)
-                
+                anchors.top: parent.top
+                anchors.right: parent.right
+                topPadding: 7
+
                 onClicked: function(mouse) {
                     root.outAttributeClicked(mouse, attribute.outputAttributes)               
                 }

@@ -17,13 +17,13 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
     n3 = g.addNewNode('AppendFiles', input=n1.output, input2=n2.output)
 
     # check that the attribute can retrieve its linked input attributes
-    assert len(n0.input.getInputAttributes()) == 0
-    assert len(n1.input.getInputAttributes()) == 1
-    assert n1.input.getInputAttributes()[0] == n0.output
+    assert len(n0.input.getLinkedInAttributes()) == 0
+    assert len(n1.input.getLinkedInAttributes()) == 1
+    assert n1.input.getLinkedInAttributes()[0] == n0.output
     
-    assert len(n1.output.getOutputAttributes()) == 2
+    assert len(n1.output.getLinkedOutAttributes()) == 2
     
-    assert n1.output.getOutputAttributes()[0] == n2.input
-    assert n1.output.getOutputAttributes()[1] == n3.input
+    assert n1.output.getLinkedOutAttributes()[0] == n2.input
+    assert n1.output.getLinkedOutAttributes()[1] == n3.input
 
     

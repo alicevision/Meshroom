@@ -347,13 +347,12 @@ class Attribute(BaseObject):
         
         return [edge for edge in self.node.graph.edges.values() if edge.src == self]
     
-    def getInputAttributes(self) -> list["Edge"]:
+    def getLinkedInAttributes(self) -> list["Attribute"]:
         """ Return the upstreams connected attributes  """
 
         return [edge.src for edge in self.getInputConnections()]
     
-
-    def getOutputAttributes(self):
+    def getLinkedOutAttributes(self) -> list["Attribute"]:
         """ Return the downstreams connected attributes """
         
         return [edge.dst for edge in self.getOutputConnections()]
@@ -481,8 +480,8 @@ class Attribute(BaseObject):
     isLinkNested = isLink
     hasOutputConnectionsChanged = Signal()
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)
-    inputAttributes = Property(Variant, getInputAttributes)
-    outputAttributes = Property(Variant, getOutputAttributes)
+    linkedInAttributes = Property(Variant, getLinkedInAttributes)
+    linkedOutAttributes = Property(Variant, getLinkedOutAttributes)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True), notify=isLinkChanged)

@@ -71,7 +71,7 @@ RowLayout {
                 ToolTip.text: shouldBeVisible ? object.linkParam.label : ""
 
                 onClicked: function(mouse) {
-                    root.inAttributeClicked(mouse, object.inputAttributes)               
+                    root.inAttributeClicked(mouse, object.linkedInAttributes)               
                 }
                 
             }
@@ -199,7 +199,7 @@ RowLayout {
                 topPadding: 7
 
                 onClicked: function(mouse) {
-                    root.outAttributeClicked(mouse, attribute.outputAttributes)               
+                    root.outAttributeClicked(mouse, attribute.linkedOutAttributes)               
                 }
 
             }

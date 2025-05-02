@@ -692,6 +692,8 @@ RowLayout {
                                 obj.label.horizontalAlignment = Text.AlignHCenter
                                 obj.label.verticalAlignment = Text.AlignVCenter
                                 obj.doubleClicked.connect(function(attr) { root.doubleClicked(attr) })
+                                obj.inAttributeClicked.connect(function(mouse, inAttributes) { root.inAttributeClicked(mouse, inAttributes) })
+                                obj.outAttributeClicked.connect(function(mouse, outAttributes) { root.outAttributeClicked(mouse, outAttributes) })
                             }
                             ToolButton {
                                 enabled: root.editable

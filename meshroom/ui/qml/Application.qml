@@ -1346,50 +1346,12 @@ Page {
                         _reconstruction.selectedNode = n
                     }                   
 
-                    onInAttributeClicked: function(srcItem, mouse, inAttributes) {
-
-                        nodeEditor.currentAttributes = inAttributes
-
-                        if (mouse.button === Qt.RightButton) {
-
-                            const srcGlobal = srcItem.mapToGlobal(0, 0)
-                            const nodeEditorGlobal = nodeEditor.mapToGlobal(0, 0)
-                            contextMenu.x = srcGlobal.x - nodeEditorGlobal.x
-                            contextMenu.y = srcGlobal.y - nodeEditorGlobal.y - 14 // TODO: Couldn't found a way to avoid padding in position. 14 = navButtonIn.paddingTop * 2
-                            contextMenu.open()
-
-                            return
-                        }
-
-                        nodeEditor.selectNodesFromAttributes(nodeEditor.currentAttributes)
-
-                        if (mouse.button === Qt.MiddleButton) {
-                            graphEditor.fit()
-                        }
-                        
+                    onInAttributeClicked: function(srcItem, mouse, inAttributes) {                        
+                        _handleNavButtonClick(srcItem, mouse, inAttributes)                        
                     }
 
-                    onOutAttributeClicked: function(srcItem, mouse, outAttributes) {     
-
-                        nodeEditor.currentAttributes = outAttributes
-
-                        if (mouse.button === Qt.RightButton) {
-                            
-                            const srcGlobal = srcItem.mapToGlobal(0, 0)
-                            const nodeEditorGlobal = nodeEditor.mapToGlobal(0, 0)
-                            contextMenu.x = srcGlobal.x - nodeEditorGlobal.x
-                            contextMenu.y = srcGlobal.y - nodeEditorGlobal.y - 14 // TODO: Couldn't found a way to avoid padding in position. 14 = navButtonOut.paddingTop * 2
-                            contextMenu.open()
-
-                            return
-                        }
-
-                        nodeEditor.selectNodesFromAttributes(nodeEditor.currentAttributes)
-
-                        if (mouse.button === Qt.MiddleButton) {
-                            graphEditor.fit()
-                        }
-
+                    onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
+                        _handleNavButtonClick(srcItem, mouse, outAttributes)
                     }
 
                     Menu {
@@ -1401,14 +1363,14 @@ Page {
                             delegate: MenuItem {
                                 text: `${modelData.node.label}.${modelData.label}`
                                 onTriggered: {
-                                    nodeEditor.selectNodesFromAttributes([nodeEditor.currentAttributes[index]])
+                                    nodeEditor._selectNodesFromAttributes([nodeEditor.currentAttributes[index]])
                                 }
                             }
                         }
 
                     }
 
-                    function selectNodesFromAttributes(attributes) {
+                    function _selectNodesFromAttributes(attributes) {
                         /*
                             Retrieve the nodes from given attributes, and select its 
                         */
@@ -1424,6 +1386,29 @@ Page {
                         }
                         graphEditor.uigraph.selectNodes(nodes)
                     } 
+
+                    function _openLinkAttributesContextMenu(srcItem, mouse, attributes) {
+                        nodeEditor.currentAttributes = attributes
+                        const srcGlobal = srcItem.mapToGlobal(0, 0)
+                        const nodeEditorGlobal = nodeEditor.mapToGlobal(0, 0)
+                        navButtonContextMenu.x = srcGlobal.x - nodeEditorGlobal.x
+                        navButtonContextMenu.y = srcGlobal.y - nodeEditorGlobal.y - 14 // TODO: Couldn't found a way to avoid padding in position. 14 = navButtonOut.paddingTop * 2
+                        navButtonContextMenu.open()
+                    }
+
+                    function _handleNavButtonClick(srcItem, mouse, attributes) {
+
+                        if (mouse.button === Qt.RightButton) {
+                            nodeEditor._openLinkAttributesContextMenu(srcItem, mouse, attributes)
+                            return
+                        }
+
+                        nodeEditor._selectNodesFromAttributes(nodeEditor.currentAttributes)
+
+                        if (mouse.button === Qt.MiddleButton) {
+                            graphEditor.fit()
+                        }
+                    }
 
                 }
             }

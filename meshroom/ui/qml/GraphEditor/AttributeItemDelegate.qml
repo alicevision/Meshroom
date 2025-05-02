@@ -60,7 +60,7 @@ RowLayout {
 
             // In connection
             MaterialToolButton {
-                property var shouldBeVisible: (object != undefined && object.isLink)
+                property var shouldBeVisible: (object != undefined && object.isLinkNested)
 
                 text: shouldBeVisible ? MaterialIcons.login : " "
                 enabled: shouldBeVisible

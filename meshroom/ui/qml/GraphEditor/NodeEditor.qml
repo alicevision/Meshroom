@@ -21,6 +21,8 @@ Panel {
     property string nodeStartDateTime: ""
 
     signal attributeDoubleClicked(var mouse, var attribute)
+    signal inAttributeClicked(var mouse, var inAttributes)
+    signal outAttributeClicked(var mouse, var outAttributes)
     signal upgradeRequest()
 
     title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" + (node.label !== node.defaultLabel ? " (" + node.defaultLabel + ")" : "") : "")
@@ -301,6 +303,13 @@ Panel {
                             onAttributeDoubleClicked: function(mouse, attribute) { root.attributeDoubleClicked(mouse, attribute) }
                             onUpgradeRequest: root.upgradeRequest()
                             filterText: searchBar.text
+
+                            onInAttributeClicked: function(mouse, inAttributes) {
+                                root.inAttributeClicked(mouse, inAttributes)
+                            }
+                            onOutAttributeClicked: function(mouse, outAttributes) {
+                                root.outAttributeClicked(mouse, outAttributes)
+                            }
                         }
 
                         Loader {

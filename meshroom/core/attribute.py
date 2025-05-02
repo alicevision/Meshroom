@@ -12,6 +12,11 @@ from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, hashValue
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from meshroom.core.graph import Edge
+
 
 def attributeFactory(description, value, isOutput, node, root=None, parent=None):
     """
@@ -326,6 +331,33 @@ class Attribute(BaseObject):
                 any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
+    def getInputConnections(self) -> list["Edge"]:
+        """ Retrieve the upstreams connected edges """
+
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        
+        return [edge for edge in self.node.graph.edges.values() if edge.dst == self]
+
+    def getOutputConnections(self) -> list["Edge"]:
+        """ Retrieve all the edges connected to this attribute """
+
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        
+        return [edge for edge in self.node.graph.edges.values() if edge.src == self]
+    
+    def getInputAttributes(self) -> list["Edge"]:
+        """ Return the upstreams connected attributes  """
+
+        return [edge.src for edge in self.getInputConnections()]
+    
+
+    def getOutputAttributes(self):
+        """ Return the downstreams connected attributes """
+        
+        return [edge.dst for edge in self.getOutputConnections()]
+    
     def _applyExpr(self):
         """
         For string parameters with an expression (when loaded from file),
@@ -449,6 +481,8 @@ class Attribute(BaseObject):
     isLinkNested = isLink
     hasOutputConnectionsChanged = Signal()
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)
+    inputAttributes = Property(Variant, getInputAttributes)
+    outputAttributes = Property(Variant, getOutputAttributes)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True), notify=isLinkChanged)

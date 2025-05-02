@@ -1342,7 +1342,35 @@ Page {
                     onUpgradeRequest: {
                         var n = _reconstruction.upgradeNode(node)
                         _reconstruction.selectedNode = n
+                    }                   
+
+                    onInAttributeClicked: function(mouse, inAttributes) {
+                        selectNodesFromAttributes(inAttributes)
                     }
+
+                    onOutAttributeClicked: function(mouse, outAttributes) {                        
+                        selectNodesFromAttributes(outAttributes)
+                    }
+
+                    function selectNodesFromAttributes(attributes) {
+                        /*
+                            Retrieve the nodes from givn attributes, and select its 
+                        */
+
+                        console.log("attributes", attributes)
+
+                        if ( !attributes || attributes.length == 0) { return }
+
+                        graphEditor.uigraph.clearNodeSelection()
+                        
+                        const nodes = attributes.map( attr => attr.node)
+
+                        if (attributes.length == 1) {
+                            _reconstruction.selectedNode = attributes[0].node
+                        }
+                        graphEditor.uigraph.selectNodes(nodes)
+                    } 
+
                 }
             }
         }

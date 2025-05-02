@@ -26,6 +26,8 @@ RowLayout {
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
     signal doubleClicked(var mouse, var attr)
+    signal inAttributeClicked(var mouse, var inAttributes)
+    signal outAttributeClicked(var mouse, var outAttributes)
 
     spacing: 2
 
@@ -55,6 +57,18 @@ RowLayout {
             spacing: 0
             width: parent.width
             height: parent.height
+
+            // In connection
+            MaterialToolButton {
+                text: (object != undefined && object.isLink) ? MaterialIcons.login : " "
+                enabled: (object != undefined && object.isLink)
+                font.pointSize: 8
+                ToolTip.text: (object != undefined && object.isLink) ? object.linkParam.label : ""
+                onClicked: function(mouse) {
+                    root.inAttributeClicked(mouse, object.inputAttributes)               
+                }
+                
+            }
 
             Label {
                 id: parameterLabel
@@ -167,6 +181,18 @@ RowLayout {
                     }
                 }
             }
+
+            MaterialToolButton {
+                text: (attribute != undefined && attribute.hasOutputConnections) ? MaterialIcons.logout : ""
+                font.pointSize: 8
+                enabled: (attribute != undefined && attribute.hasOutputConnections)
+                
+                onClicked: function(mouse) {
+                    root.outAttributeClicked(mouse, attribute.outputAttributes)               
+                }
+
+            }
+
             MaterialLabel {
                 visible: attribute.desc.advanced
                 text: MaterialIcons.build

@@ -58,12 +58,12 @@ The Meshroom UI is divided into several key areas:
 
 AliceVision provides state-of-the-art 3D computer vision and machine learning algorithms that can be tested, analyzed and reused. The project is a result of collaboration between academia and industry to provide cutting-edge algorithms with the robustness and the quality required for production usage.
 AliceVision plugin provides pipelines for:
- - *3D Reconstruction* from multi-view images, see the [presentation of the pipeline steps](http://alicevision.github.io/#photogrammetry) and [some results on sketchfab](http://sketchfab.com/AliceVision)
- - *Camera Tracking*
- - *HDR fusion* of multi-bracketed photographies
- - *Panorama stitching* supports fisheye optics, but also the generation of high-resolution images using motorized head systems.
- - *Photometric Stereo* for geometric reconstruction from a single view with multiple lightings
- - *Multi-View Photometric Stereo* to combine photogrammetry and photometric stereo
+ - **3D Reconstruction** from multi-view images, see the [presentation of the pipeline steps](http://alicevision.github.io/#photogrammetry) and [some results on sketchfab](http://sketchfab.com/AliceVision)
+ - **Camera Tracking**
+ - **HDR fusion** of multi-bracketed photographies
+ - **Panorama stitching** supports fisheye optics, but also the generation of high-resolution images using motorized head systems.
+ - **Photometric Stereo** for geometric reconstruction from a single view with multiple lightings
+ - **Multi-View Photometric Stereo** to combine photogrammetry and photometric stereo
 
 
 ## Segmentation Plugin

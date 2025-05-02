@@ -1354,10 +1354,8 @@ Page {
 
                     function selectNodesFromAttributes(attributes) {
                         /*
-                            Retrieve the nodes from givn attributes, and select its 
+                            Retrieve the nodes from given attributes, and select its 
                         */
-
-                        console.log("attributes", attributes)
 
                         if ( !attributes || attributes.length == 0) { return }
 

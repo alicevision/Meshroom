@@ -11,7 +11,7 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
     #    ---------- n3
 
     g = Graph('')
-    n0 = g.addNewNode('Ls', input='/tmp')
+    n0 = g.addNewNode('Ls', input='')
     n1 = g.addNewNode('Ls', input=n0.output)
     n2 = g.addNewNode('Ls', input=n1.output)
     n3 = g.addNewNode('AppendFiles', input=n1.output, input2=n2.output)

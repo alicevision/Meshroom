@@ -16,8 +16,8 @@ ListView {
 
     signal upgradeRequest()
     signal attributeDoubleClicked(var mouse, var attribute)
-    signal inAttributeClicked(var mouse, var inAttributes)
-    signal outAttributeClicked(var mouse, var outAttributes)
+    signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
+    signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
 
     implicitHeight: contentHeight
 
@@ -46,11 +46,11 @@ ListView {
             onDoubleClicked: function(mouse, attr) {
                 root.attributeDoubleClicked(mouse, attr)
             }
-            onInAttributeClicked: function(mouse, inAttributes) {
-                root.inAttributeClicked(mouse, inAttributes)
+            onInAttributeClicked: function(srcItem, mouse, inAttributes) {
+                root.inAttributeClicked(srcItem, mouse, inAttributes)
             }
-            onOutAttributeClicked: function(mouse, outAttributes) {
-                root.outAttributeClicked(mouse, outAttributes)
+            onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
+                root.outAttributeClicked(srcItem, mouse, outAttributes)
             }
 
         }

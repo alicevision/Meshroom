@@ -1335,7 +1335,9 @@ Page {
                     SplitView.minimumWidth: 80
 
                     node: _reconstruction ? _reconstruction.selectedNode : null
-                    property bool computing: _reconstruction ? _reconstruction.computing : false
+                    property bool computing: _reconstruction ? _reconstruction.computing : false       
+                    property var currentAttributes: []
+
                     // Make NodeEditor readOnly when computing
                     readOnly: node ? node.locked : false
 
@@ -1344,8 +1346,22 @@ Page {
                         _reconstruction.selectedNode = n
                     }                   
 
-                    onInAttributeClicked: function(mouse, inAttributes) {
-                        selectNodesFromAttributes(inAttributes)
+                    onInAttributeClicked: function(srcItem, mouse, inAttributes) {
+
+                        nodeEditor.currentAttributes = inAttributes
+
+                        if (mouse.button === Qt.RightButton) {
+
+                            const srcGlobal = srcItem.mapToGlobal(0, 0)
+                            const nodeEditorGlobal = nodeEditor.mapToGlobal(0, 0)
+                            contextMenu.x = srcGlobal.x - nodeEditorGlobal.x
+                            contextMenu.y = srcGlobal.y - nodeEditorGlobal.y - 14 // TODO: Couldn't found a way to avoid padding in position. 14 = navButtonIn.paddingTop * 2
+                            contextMenu.open()
+
+                            return
+                        }
+
+                        nodeEditor.selectNodesFromAttributes(nodeEditor.currentAttributes)
 
                         if (mouse.button === Qt.MiddleButton) {
                             graphEditor.fit()
@@ -1353,11 +1369,41 @@ Page {
                         
                     }
 
-                    onOutAttributeClicked: function(mouse, outAttributes) {                        
-                        selectNodesFromAttributes(outAttributes)
+                    onOutAttributeClicked: function(srcItem, mouse, outAttributes) {     
+
+                        nodeEditor.currentAttributes = outAttributes
+
+                        if (mouse.button === Qt.RightButton) {
+                            
+                            const srcGlobal = srcItem.mapToGlobal(0, 0)
+                            const nodeEditorGlobal = nodeEditor.mapToGlobal(0, 0)
+                            contextMenu.x = srcGlobal.x - nodeEditorGlobal.x
+                            contextMenu.y = srcGlobal.y - nodeEditorGlobal.y - 14 // TODO: Couldn't found a way to avoid padding in position. 14 = navButtonOut.paddingTop * 2
+                            contextMenu.open()
+
+                            return
+                        }
+
+                        nodeEditor.selectNodesFromAttributes(nodeEditor.currentAttributes)
 
                         if (mouse.button === Qt.MiddleButton) {
                             graphEditor.fit()
+                        }
+
+                    }
+
+                    Menu {
+                        id: contextMenu
+
+                        Repeater {
+                            model: nodeEditor.currentAttributes
+
+                            delegate: MenuItem {
+                                text: `${modelData.node.label}.${modelData.label}`
+                                onTriggered: {
+                                    nodeEditor.selectNodesFromAttributes([nodeEditor.currentAttributes[index]])
+                                }
+                            }
                         }
 
                     }

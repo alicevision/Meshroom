@@ -26,8 +26,8 @@ RowLayout {
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
     signal doubleClicked(var mouse, var attr)
-    signal inAttributeClicked(var mouse, var inAttributes)
-    signal outAttributeClicked(var mouse, var outAttributes)
+    signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
+    signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
 
     spacing: 2
 
@@ -61,6 +61,7 @@ RowLayout {
             // In connection
             MaterialToolButton {
                 id: navButtonIn
+
                 property var shouldBeVisible: (object != undefined && object.isLinkNested)
 
                 text: shouldBeVisible ? MaterialIcons.login : " "
@@ -68,17 +69,16 @@ RowLayout {
                 font.pointSize: 8
                 Layout.alignment: Qt.AlignTop | Qt.AlignLeft 
                 topPadding: 7
-                ToolTip.text: shouldBeVisible ? object.linkParam.label : ""
 
                 MouseArea {
                     anchors.fill: parent
-                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.inAttributeClicked(mouse, object.linkedInAttributes)               
+                        root.inAttributeClicked(navButtonIn, mouse, object.linkedInAttributes)
                     }
                 }
-                
+                                
             }
 
             Label {
@@ -195,6 +195,7 @@ RowLayout {
 
             MaterialToolButton {
                 id: navButtonOut
+
                 property var shouldBeVisible: (attribute != undefined && attribute.hasOutputConnections)
 
                 text: shouldBeVisible ? MaterialIcons.logout : ""
@@ -205,10 +206,10 @@ RowLayout {
 
                 MouseArea {
                     anchors.fill: parent
-                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
-                    onClicked: function(mouse) {
-                        root.outAttributeClicked(mouse, attribute.linkedOutAttributes)               
+                    onClicked: function(mouse) {        
+                        root.outAttributeClicked(navButtonOut, mouse, attribute.linkedOutAttributes)               
                     }
                 }
                 
@@ -714,8 +715,8 @@ RowLayout {
                                 obj.label.horizontalAlignment = Text.AlignHCenter
                                 obj.label.verticalAlignment = Text.AlignVCenter
                                 obj.doubleClicked.connect(function(attr) { root.doubleClicked(attr) })
-                                obj.inAttributeClicked.connect(function(mouse, inAttributes) { root.inAttributeClicked(mouse, inAttributes) })
-                                obj.outAttributeClicked.connect(function(mouse, outAttributes) { root.outAttributeClicked(mouse, outAttributes) })
+                                obj.inAttributeClicked.connect(function(srcItem, mouse, inAttributes) { root.inAttributeClicked(srcItem, mouse, inAttributes) })
+                                obj.outAttributeClicked.connect(function(srcItem, mouse, outAttributes) { root.outAttributeClicked(srcItem, mouse, outAttributes) })
                             }
                             ToolButton {
                                 enabled: root.editable

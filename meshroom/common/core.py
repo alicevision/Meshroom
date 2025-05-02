@@ -126,13 +126,13 @@ def CoreSlot(*args, **kwargs):
 
 class CoreProperty(property):
     def __init__(self, ptype, fget=None, fset=None, **kwargs):
-        super(CoreProperty, self).__init__(fget, fset)
+        super().__init__(fget, fset)
 
 
-class CoreObject(object):
+class CoreObject:
 
     def __init__(self, parent=None, *args, **kwargs):
-        super(CoreObject, self).__init__()
+        super().__init__()
         self._parent = parent
         # Note: we do not use ClassSignal, as it can not be used in __del__.
         self.destroyed = PySignal.Signal()

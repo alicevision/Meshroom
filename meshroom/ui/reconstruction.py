@@ -29,7 +29,7 @@ class Message(QObject):
     """ Simple structure wrapping a high-level message. """
 
     def __init__(self, title, text, detailedText="", parent=None):
-        super(Message, self).__init__(parent)
+        super().__init__(parent)
         self._title = title
         self._text = text
         self._detailedText = detailedText
@@ -47,7 +47,7 @@ class LiveSfmManager(QObject):
     File watching is based on regular polling and not filesystem events to work on network mounts.
     """
     def __init__(self, reconstruction):
-        super(LiveSfmManager, self).__init__(reconstruction)
+        super().__init__(reconstruction)
         self.reconstruction = reconstruction
         self._folder = ''
         self.timerId = -1
@@ -84,7 +84,7 @@ class LiveSfmManager(QObject):
         """
         # print('[LiveSfmManager] Watching {} for images'.format(folder))
         if not os.path.isdir(folder):
-            raise RuntimeError("Invalid folder provided: {}".format(folder))
+            raise RuntimeError(f"Invalid folder provided: {folder}")
         self._folder = folder
         self.folderChanged.emit()
         self.cameraInit = self.sfm = None
@@ -188,7 +188,7 @@ class ViewpointWrapper(QObject):
             viewpointAttribute (GroupAttribute): viewpoint attribute
             reconstruction (Reconstruction): owner reconstruction of this Viewpoint
         """
-        super(ViewpointWrapper, self).__init__(parent=reconstruction)
+        super().__init__(parent=reconstruction)
         self._viewpoint = viewpointAttribute
         self._reconstruction = reconstruction
 
@@ -231,7 +231,7 @@ class ViewpointWrapper(QObject):
                 # When the viewpoint attribute has already been deleted, metadata.value becomes a PySide property (whereas a string is expected)
                 self._metadata = json.loads(self._viewpoint.metadata.value) if isinstance(self._viewpoint.metadata.value, str) and self._viewpoint.metadata.value else None
             except Exception as e:
-                logging.warning("Failed to parse Viewpoint metadata: '{}', '{}'".format(str(e), str(self._viewpoint.metadata.value)))
+                logging.warning(f"Failed to parse Viewpoint metadata: '{e}', '{str(self._viewpoint.metadata.value)}'")
                 self._metadata = {}
             if not self._metadata:
                 self._metadata = {}
@@ -428,7 +428,7 @@ class ActiveNode(QObject):
     Hold one active node for a given NodeType.
     """
     def __init__(self, nodeType, parent=None):
-        super(ActiveNode, self).__init__(parent)
+        super().__init__(parent)
         self.nodeType = nodeType
         self._node = None
 
@@ -467,7 +467,7 @@ class Reconstruction(UIGraph):
     ]
 
     def __init__(self, undoStack: commands.UndoStack, taskManager: TaskManager, defaultPipeline: str="", parent: QObject=None):
-        super(Reconstruction, self).__init__(undoStack, taskManager, parent)
+        super().__init__(undoStack, taskManager, parent)
 
         # initialize member variables for key steps of the 3D reconstruction pipeline
         self._active = False
@@ -515,7 +515,7 @@ class Reconstruction(UIGraph):
     @Slot()
     def clear(self):
         self.clearActiveNodes()
-        super(Reconstruction, self).clear()
+        super().clear()
         self.setActive(False)
 
     def setDefaultPipeline(self, defaultPipeline):
@@ -554,7 +554,7 @@ class Reconstruction(UIGraph):
         # Lower the input and the dictionary keys to make sure that all input types can be found:
         # - correct pipeline name but the case does not match (e.g. panoramaHDR instead of panoramaHdr)
         # - lowercase pipeline name given through the "New Pipeline" menu
-        loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
+        loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
         filepath = loweredPipelineTemplates.get(p.lower(), p)
         return self._loadWithErrorReport(self.initFromTemplate, filepath)
 
@@ -587,22 +587,22 @@ class Reconstruction(UIGraph):
             self.error.emit(
                 Message(
                     "No Such File",
-                    "Error While Loading '{}': No Such File.".format(os.path.basename(filepath)),
+                    f"Error While Loading '{os.path.basename(filepath)}': No Such File.",
                     ""
                 )
             )
-            logging.error("Error while loading '{}': No Such File.".format(filepath))
+            logging.error(f"Error while loading '{filepath}': No Such File.")
         except Exception:
             import traceback
             trace = traceback.format_exc()
             self.error.emit(
                 Message(
                     "Error While Loading Project File",
-                    "An unexpected error has occurred while loading file: '{}'".format(os.path.basename(filepath)),
+                    f"An unexpected error has occurred while loading file: '{os.path.basename(filepath)}'",
                     trace
                 )
             )
-            logging.error("Error while loading '{}'.".format(filepath))
+            logging.error(f"Error while loading '{filepath}'.")
             logging.error(trace)
 
         return False
@@ -698,7 +698,7 @@ class Reconstruction(UIGraph):
         if not os.path.exists(sfmFile):
             return QVector3D(0.0, 0.0, 0.0)
         # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
-        with open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(sfmFile, encoding='utf-8', errors='ignore') as f:
             data = json.load(f)
 
         intrinsics = data.get('intrinsics', [])
@@ -825,9 +825,9 @@ class Reconstruction(UIGraph):
             keyframeNode = self.addNewNode("KeyframeSelection", position=p)
             keyframeNode.inputPaths.value = filesByType["videos"]
             if len(filesByType["videos"]) == 1:
-                newVideoNodeMessage = "New node '{}' added for the input video.".format(keyframeNode.getLabel())
+                newVideoNodeMessage = f"New node '{keyframeNode.getLabel()}' added for the input video."
             else:
-                newVideoNodeMessage = "New node '{}' added for a rig of {} synchronized cameras.".format(keyframeNode.getLabel(), len(filesByType["videos"]))
+                newVideoNodeMessage = f"New node '{keyframeNode.getLabel()}' added for a rig of {len(filesByType['videos'])} synchronized cameras."
             self.info.emit(
                 Message(
                     "Video Input",
@@ -856,13 +856,13 @@ class Reconstruction(UIGraph):
                         Message(
                             "Panorama XML",
                             "XML file declared on PanoramaInit node",
-                            "XML file '{}' set on node '{}'".format(','.join(filesByType["panoramaInfo"]), ','.join([n.getLabel() for n in panoramaInitNodes])),
+                            f"XML file '{','.join(filesByType['panoramaInfo'])}' set on node '{','.join([n.getLabel() for n in panoramaInitNodes])}'",
                         ))
                 else:
                     self.error.emit(
                         Message(
                             "No PanoramaInit Node",
-                            "No PanoramaInit Node to set the Panorama file:\n'{}'.".format(','.join(filesByType["panoramaInfo"])),
+                            f"No PanoramaInit Node to set the Panorama file:\n'{','.join(filesByType['panoramaInfo'])}'.",
                             "",
                         ))
 
@@ -881,11 +881,11 @@ class Reconstruction(UIGraph):
 
         if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"] and not filesByType["meshroomScenes"]:
             if filesByType["other"]:
-                extensions = set([os.path.splitext(url)[1] for url in filesByType["other"]])
+                extensions = {os.path.splitext(url)[1] for url in filesByType["other"]}
                 self.error.emit(
                     Message(
                         "No Recognized Input File",
-                        "No recognized input file in the {} dropped files".format(len(filesByType["other"])),
+                        f"No recognized input file in the {len(filesByType['other'])} dropped files",
                         "Unknown file extensions: " + ', '.join(extensions)
                     )
                 )
@@ -994,7 +994,7 @@ class Reconstruction(UIGraph):
             # Retrieve the list of updated viewpoints and intrinsics
             views, intrinsics = cameraInitCopy.nodeDesc.buildIntrinsics(cameraInitCopy, additionalViews)
         except Exception as e:
-            logging.error("Error while building intrinsics: {}".format(str(e)))
+            logging.error(f"Error while building intrinsics: {e}")
             raise
         finally:
             # Delete the duplicate
@@ -1028,7 +1028,7 @@ class Reconstruction(UIGraph):
             commandTitle = "Augment Reconstruction ({} Images)"
 
         if rebuild:
-            commandTitle = "Rebuild '{}' Intrinsics".format(cameraInit.label)
+            commandTitle = f"Rebuild '{cameraInit.label}' Intrinsics"
 
         # No additional views: early return
         if not views:

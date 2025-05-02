@@ -54,5 +54,5 @@ with open(os.path.join(args.output, 'MaterialIcons.qml'), 'w') as qml_file:
                 name = name + str(index)
 
             names.append(name)
-            qml_file.write('    readonly property string {}: "\\u{}"\n'.format(name, code))
+            qml_file.write(f'    readonly property string {name}: "\\u{code}\"\n')
         qml_file.write('}\n')

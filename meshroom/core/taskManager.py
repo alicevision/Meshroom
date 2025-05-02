@@ -98,7 +98,7 @@ class TaskManager(BaseObject):
     Manage graph - local and external - computation tasks.
     """
     def __init__(self, parent: BaseObject = None):
-        super(TaskManager, self).__init__(parent)
+        super().__init__(parent)
         self._graph = None
         self._nodes = DictModel(keyAttrName='_name', parent=self)
         self._nodesToProcess = []
@@ -208,7 +208,7 @@ class TaskManager(BaseObject):
             chunksInConflict = self.getAlreadySubmittedChunks(nodes)
 
             if chunksInConflict:
-                chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
+                chunksStatus = {chunk.status.status.name for chunk in chunksInConflict}
                 chunksName = [node.name for node in chunksInConflict]
                 # Warning: Syntax and terms are parsed on QML side to recognize the error
                 # Syntax : [Context] ErrorType: ErrorMessage
@@ -426,8 +426,8 @@ class TaskManager(BaseObject):
         flowEdges = graph.flowEdges(startNodes=toNodes)
         edgesToProcess = set(edgesToProcess).intersection(flowEdges)
 
-        logging.info("Nodes to process: {}".format(nodesToProcess))
-        logging.info("Edges to process: {}".format(edgesToProcess))
+        logging.info(f"Nodes to process: {nodesToProcess}")
+        logging.info(f"Edges to process: {edgesToProcess}")
 
         try:
             res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
@@ -442,7 +442,7 @@ class TaskManager(BaseObject):
             if not allReady:
                 self.raiseDependenciesMessage("SUBMITTING")
         except Exception as e:
-            logging.error("Error on submit : {}".format(e))
+            logging.error(f"Error on submit : {e}")
 
     def submitFromFile(self, graphFile, submitter, toNode=None, submitLabel="{projectName}"):
         """

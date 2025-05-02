@@ -15,7 +15,7 @@ class GraphIO:
 
     __version__ = "2.0"
 
-    class Keys(object):
+    class Keys:
         """File Keys."""
 
         # Doesn't inherit enum to simplify usage (GraphIO.Keys.XX, without .value)
@@ -98,7 +98,7 @@ class GraphSerializer:
 
     def _getNodeTypesVersions(self) -> dict[str, str]:
         """Get registered versions of each node types in `nodes`, excluding CompatibilityNode instances."""
-        nodeTypes = set([node.nodeDesc.__class__ for node in self.nodes if isinstance(node, Node)])
+        nodeTypes = {node.nodeDesc.__class__ for node in self.nodes if isinstance(node, Node)}
         nodeTypesVersions = {
             nodeType.__name__: version
             for nodeType in nodeTypes

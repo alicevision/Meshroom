@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 import copy
 import os
 import re
@@ -57,7 +56,7 @@ class Attribute(BaseObject):
             root (Attribute): (optional) the root Attribute (List or Group) containing this one
             parent (BaseObject): (optional) the parent BaseObject
         """
-        super(Attribute, self).__init__(parent)
+        super().__init__(parent)
         self._name = attributeDesc.name
         self._root = None if root is None else weakref.ref(root)
         self._node = weakref.ref(node)
@@ -91,19 +90,19 @@ class Attribute(BaseObject):
     def getFullName(self):
         """ Name inside the Graph: groupName.name """
         if isinstance(self.root, ListAttribute):
-            return '{}[{}]'.format(self.root.getFullName(), self.root.index(self))
+            return f'{self.root.getFullName()}[{self.root.index(self)}]'
         elif isinstance(self.root, GroupAttribute):
-            return '{}.{}'.format(self.root.getFullName(), self.getName())
+            return f'{self.root.getFullName()}.{self.getName()}'
         return self.getName()
 
     def getFullNameToNode(self):
         """ Name inside the Graph: nodeName.groupName.name """
-        return '{}.{}'.format(self.node.name, self.getFullName())
+        return f'{self.node.name}.{self.getFullName()}'
 
     def getFullNameToGraph(self):
         """ Name inside the Graph: graphName.nodeName.groupName.name """
         graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
-        return '{}.{}'.format(graphName, self.getFullNameToNode())
+        return f'{graphName}.{self.getFullNameToNode()}'
 
     def asLinkExpr(self):
         """ Return link expression for this Attribute """
@@ -130,17 +129,17 @@ class Attribute(BaseObject):
         if isinstance(self.root, ListAttribute):
             return self.root.getFullLabel()
         elif isinstance(self.root, GroupAttribute):
-            return '{} {}'.format(self.root.getFullLabel(), self.getLabel())
+            return f'{self.root.getFullLabel()} {self.getLabel()}'
         return self.getLabel()
 
     def getFullLabelToNode(self):
         """ Label inside the Graph: nodeLabel groupLabel Label """
-        return '{} {}'.format(self.node.label, self.getFullLabel())
+        return f'{self.node.label} {self.getFullLabel()}'
 
     def getFullLabelToGraph(self):
         """ Label inside the Graph: graphName nodeLabel groupLabel Label """
         graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
-        return '{} {}'.format(graphName, self.getFullLabelToNode())
+        return f'{graphName} {self.getFullLabelToNode()}'
 
     def getEnabled(self):
         if isinstance(self.desc.enabled, types.FunctionType):
@@ -350,7 +349,7 @@ class Attribute(BaseObject):
                 g.addEdge(node.attribute(linkAttrName), self)
             except KeyError as err:
                 logging.warning('Connect Attribute from Expression failed.')
-                logging.warning('Expression: "{exp}"\nError: "{err}".'.format(exp=v, err=err))
+                logging.warning(f'Expression: "{v}"\nError: "{err}".')
             self.resetToDefaultValue()
 
     def getExportValue(self):
@@ -389,11 +388,11 @@ class Attribute(BaseObject):
             assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
             v = self.attributeDesc.joinChar.join(self.getEvalValue())
             if withQuotes and v:
-                return '"{}"'.format(v)
+                return f'"{v}"'
             return v
         # String, File, single value Choice are based on strings and should includes quotes to deal with spaces
         if withQuotes and isinstance(self.attributeDesc, (desc.StringParam, desc.File, desc.ChoiceParam)):
-            return '"{}"'.format(self.getEvalValue())
+            return f'"{self.getEvalValue()}"'
         return str(self.getEvalValue())
 
     def defaultValue(self):
@@ -473,7 +472,7 @@ def raiseIfLink(func):
 
 class PushButtonParam(Attribute):
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
-        super(PushButtonParam, self).__init__(node, attributeDesc, isOutput, root, parent)
+        super().__init__(node, attributeDesc, isOutput, root, parent)
 
     @Slot()
     def clicked(self):
@@ -483,7 +482,7 @@ class PushButtonParam(Attribute):
 class ChoiceParam(Attribute):
 
     def __init__(self, node, attributeDesc: desc.ChoiceParam, isOutput, root=None, parent=None):
-        super(ChoiceParam, self).__init__(node, attributeDesc, isOutput, root, parent)
+        super().__init__(node, attributeDesc, isOutput, root, parent)
         self._values = None
 
     def __len__(self):
@@ -544,7 +543,7 @@ class ChoiceParam(Attribute):
 class ListAttribute(Attribute):
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
-        super(ListAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
+        super().__init__(node, attributeDesc, isOutput, root, parent)
 
     def __len__(self):
         if self._value is None:
@@ -650,13 +649,13 @@ class ListAttribute(Attribute):
                 if value.invalidate:
                     uids.append(value.uid())
             return hashValue(uids)
-        return super(ListAttribute, self).uid()
+        return super().uid()
 
     def _applyExpr(self):
         if not self.node.graph:
             return
         if isinstance(self._value, ListAttribute) or Attribute.isLinkExpression(self._value):
-            super(ListAttribute, self)._applyExpr()
+            super()._applyExpr()
         else:
             for value in self._value:
                 value._applyExpr()
@@ -685,11 +684,11 @@ class ListAttribute(Attribute):
         else:
             v = self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=False) for v in self.value])
             if withQuotes and v:
-                return '"{}"'.format(v)
+                return f'"{v}"'
             return v
 
     def updateInternals(self):
-        super(ListAttribute, self).updateInternals()
+        super().updateInternals()
         for attr in self._value:
             attr.updateInternals()
 
@@ -711,11 +710,11 @@ class ListAttribute(Attribute):
 class GroupAttribute(Attribute):
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
-        super(GroupAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
+        super().__init__(node, attributeDesc, isOutput, root, parent)
 
     def __getattr__(self, key):
         try:
-            return super(GroupAttribute, self).__getattr__(key)
+            return super().__getattr__(key)
         except AttributeError:
             try:
                 return self._value.get(key)
@@ -730,11 +729,11 @@ class GroupAttribute(Attribute):
                 self._value.get(key).value = v
         elif isinstance(value, (list, tuple)):
             if len(self.desc._groupDesc) != len(value):
-                raise AttributeError("Incorrect number of values on GroupAttribute: {}".format(str(value)))
+                raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
             for attrDesc, v in zip(self.desc._groupDesc, value):
                 self._value.get(attrDesc.name).value = v
         else:
-            raise AttributeError("Failed to set on GroupAttribute: {}".format(str(value)))
+            raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
 
     def upgradeValue(self, exportedValue):
         value = self.validateValue(exportedValue)
@@ -745,11 +744,11 @@ class GroupAttribute(Attribute):
                     self._value.get(key).upgradeValue(v)
         elif isinstance(value, (list, tuple)):
             if len(self.desc._groupDesc) != len(value):
-                raise AttributeError("Incorrect number of values on GroupAttribute: {}".format(str(value)))
+                raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
             for attrDesc, v in zip(self.desc._groupDesc, value):
                 self._value.get(attrDesc.name).upgradeValue(v)
         else:
-            raise AttributeError("Failed to set on GroupAttribute: {}".format(str(value)))
+            raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
 
     def initValue(self):
         self._value = DictModel(keyAttrName='name', parent=self)
@@ -816,7 +815,7 @@ class GroupAttribute(Attribute):
                 strBegin = self.attributeDesc.brackets[0]
                 strEnd = self.attributeDesc.brackets[1]
             else:
-                raise AttributeError("Incorrect brackets on GroupAttribute: {}".format(self.attributeDesc.brackets))
+                raise AttributeError(f"Incorrect brackets on GroupAttribute: {self.attributeDesc.brackets}")
 
         # particular case when using space separator
         spaceSep = self.attributeDesc.joinChar == ' '
@@ -827,11 +826,11 @@ class GroupAttribute(Attribute):
         s = self.attributeDesc.joinChar.join(sortedSubValues)
 
         if withQuotes and not spaceSep:
-            return '"{}{}{}"'.format(strBegin, s, strEnd)
-        return '{}{}{}'.format(strBegin, s, strEnd)
+            return f'"{strBegin}{s}{strEnd}"'
+        return f'{strBegin}{s}{strEnd}'
 
     def updateInternals(self):
-        super(GroupAttribute, self).updateInternals()
+        super().updateInternals()
         for attr in self._value:
             attr.updateInternals()
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 
 
 class MeshroomException(Exception):
@@ -33,16 +32,16 @@ class UnknownNodeTypeError(GraphException):
     """
     def __init__(self, nodeType, msg=None):
         msg = "Unknown Node Type: " + nodeType
-        super(UnknownNodeTypeError, self).__init__(msg)
+        super().__init__(msg)
         self.nodeType = nodeType
 
 
 class NodeUpgradeError(GraphException):
     def __init__(self, nodeName, details=None):
-        msg = "Failed to upgrade node {}".format(nodeName)
+        msg = f"Failed to upgrade node {nodeName}"
         if details:
-            msg += ": {}".format(details)
-        super(NodeUpgradeError, self).__init__(msg)
+            msg += f": {details}"
+        super().__init__(msg)
 
 
 class GraphVisitMessage(GraphException):

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 
 from meshroom.core import unregisterNodeType, pipelineTemplates, Version
 from meshroom.core.node import CompatibilityIssue, CompatibilityNode
@@ -54,7 +53,7 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
                         break
 
             if compatibilityIssue is not None:
-                print("{} in {} for node {}".format(compatibilityIssue, path, nodeType))
+                print(f"{compatibilityIssue} in {path} for node {nodeType}")
                 return False
 
         return True

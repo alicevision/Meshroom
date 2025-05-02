@@ -14,7 +14,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
 
     def __init__(self, keyAttrName='', parent=None):
         """ Constructs an object list model with the given parent. """
-        super(QObjectListModel, self).__init__(parent)
+        super().__init__(parent)
 
         self._objects = list()      # Internal list of objects
         self._keyAttrName = keyAttrName
@@ -279,7 +279,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
         if key is None:
             return
         if key in self._objectByKey:
-            raise ValueError("Object key {}:{} is not unique".format(self._keyAttrName, key))
+            raise ValueError(f"Object key {self._keyAttrName}:{key} is not unique")
 
         self._objectByKey[key] = item
 
@@ -322,7 +322,7 @@ class QTypedObjectListModel(QObjectListModel):
     # TODO: handle notify signal to emit dataChanged signal
 
     def __init__(self, keyAttrName="name", T=QtCore.QObject, parent=None):
-        super(QTypedObjectListModel, self).__init__(keyAttrName, parent)
+        super().__init__(keyAttrName, parent)
 
         self._T = T
         blacklist = ["id", "index", "class", "model", "modelData"]
@@ -340,7 +340,7 @@ class QTypedObjectListModel(QObjectListModel):
                 print("Reserved role name: " + prop.name())
 
     def data(self, index, role):
-        obj = super(QTypedObjectListModel, self).data(index, self.ObjectRole)
+        obj = super().data(index, self.ObjectRole)
         if role == self.ObjectRole:
             return obj
         if obj:
@@ -355,7 +355,7 @@ class QTypedObjectListModel(QObjectListModel):
         if item.staticMetaObject != self._metaObject:
             raise TypeError("Invalid object type: expected {}, got {}".format(
                 self._metaObject.className(), item.staticMetaObject.className()))
-        super(QTypedObjectListModel, self)._referenceItem(item)
+        super()._referenceItem(item)
 
 
 class SortedModelByReference(QtCore.QSortFilterProxyModel):
@@ -363,7 +363,7 @@ class SortedModelByReference(QtCore.QSortFilterProxyModel):
     This proxy is useful if the model needs to be sorted a certain way for a specific use.
     """
     def __init__(self, parent):
-        super(SortedModelByReference, self).__init__(parent)
+        super().__init__(parent)
         self._reference = []
 
     def setReference(self, iterable):
@@ -385,7 +385,7 @@ class SortedModelByReference(QtCore.QSortFilterProxyModel):
 
     def sort(self):
         """ Sort the proxy and call invalidate() """
-        super(SortedModelByReference, self).sort(0, QtCore.Qt.AscendingOrder)
+        super().sort(0, QtCore.Qt.AscendingOrder)
         self.invalidate()
 
 

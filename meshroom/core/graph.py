@@ -1,10 +1,9 @@
-from __future__ import print_function
-
 import json
 import logging
 import os
 import re
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
+from collections.abc import Iterable
 import weakref
 from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
@@ -63,10 +62,10 @@ def GraphModification(graph):
 class Edge(BaseObject):
 
     def __init__(self, src, dst, parent=None):
-        super(Edge, self).__init__(parent)
+        super().__init__(parent)
         self._src = weakref.ref(src)
         self._dst = weakref.ref(dst)
-        self._repr = "<Edge> {} -> {}".format(self._src(), self._dst())
+        self._repr = f"<Edge> {self._src()} -> {self._dst()}"
 
     @property
     def src(self):
@@ -85,13 +84,13 @@ GRAY = 1
 BLACK = 2
 
 
-class Visitor(object):
+class Visitor:
     """
     Base class for Graph Visitors that does nothing.
     Sub-classes can override any method to implement specific algorithms.
     """
     def __init__(self, reverse, dependenciesOnly):
-        super(Visitor, self).__init__()
+        super().__init__()
         self.reverse = reverse
         self.dependenciesOnly = dependenciesOnly
 
@@ -197,7 +196,7 @@ class Graph(BaseObject):
     """
 
     def __init__(self, name: str = "", parent: BaseObject = None):
-        super(Graph, self).__init__(parent)
+        super().__init__(parent)
         self.name: str = name
         self._loading: bool = False
         self._saving: bool = False
@@ -339,7 +338,7 @@ class Graph(BaseObject):
             uidOccurrences = uidPattern.findall(updatedFileData)
             for occ in uidOccurrences:
                 uid = occ.split("\"")[-2]  # UID is second to last element
-                newUidStr = r'"uid": "{}"'.format(uid)
+                newUidStr = fr'"uid": "{uid}"'
                 updatedFileData = updatedFileData.replace(occ, newUidStr)
             graphContent = json.loads(updatedFileData)
 
@@ -751,7 +750,7 @@ class Graph(BaseObject):
             try:
                 self.addEdge(self.attribute(srcName), self.attribute(dstName))
             except (KeyError, ValueError) as e:
-                logging.warning(f"Failed to restore edge {srcName} -> {dstName}: {str(e)}")
+                logging.warning(f"Failed to restore edge {srcName} -> {dstName}: {e}")
 
     def upgradeAllNodes(self):
         """ Upgrade all upgradable CompatibilityNode instances in the graph. """
@@ -839,12 +838,12 @@ class Graph(BaseObject):
     def findNode(self, nodeExpr: str) -> Node:
         candidates = self.findNodeCandidates('^' + nodeExpr)
         if not candidates:
-            raise KeyError('No node candidate for "{}"'.format(nodeExpr))
+            raise KeyError(f'No node candidate for "{nodeExpr}"')
         if len(candidates) > 1:
             for c in candidates:
                 if c.name == nodeExpr:
                     return c
-            raise KeyError('Multiple node candidates for "{}": {}'.format(nodeExpr, str([c.name for c in candidates])))
+            raise KeyError(f'Multiple node candidates for "{nodeExpr}": {str([c.name for c in candidates])}')
         return candidates[0]
 
     def findNodes(self, nodesExpr):
@@ -856,11 +855,11 @@ class Graph(BaseObject):
         return self._edges.get(dstAttributeName)
 
     def getLeafNodes(self, dependenciesOnly):
-        nodesWithOutputLink = set([edge.src.node for edge in self.getEdges(dependenciesOnly)])
+        nodesWithOutputLink = {edge.src.node for edge in self.getEdges(dependenciesOnly)}
         return set(self._nodes) - nodesWithOutputLink
 
     def getRootNodes(self, dependenciesOnly):
-        nodesWithInputLink = set([edge.dst.node for edge in self.getEdges(dependenciesOnly)])
+        nodesWithInputLink = {edge.dst.node for edge in self.getEdges(dependenciesOnly)}
         return set(self._nodes) - nodesWithInputLink
 
     @changeTopology
@@ -870,7 +869,7 @@ class Graph(BaseObject):
         if srcAttr.node.graph != self or dstAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
         if dstAttr in self.edges.keys():
-            raise RuntimeError('Destination attribute "{}" is already connected.'.format(dstAttr.getFullNameToNode()))
+            raise RuntimeError(f'Destination attribute "{dstAttr.getFullNameToNode()}" is already connected.')
         edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
@@ -887,7 +886,7 @@ class Graph(BaseObject):
     @changeTopology
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
-            raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.getFullNameToNode()))
+            raise RuntimeError(f'Attribute "{dstAttr.getFullNameToNode()}" is not connected')
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
@@ -910,7 +909,7 @@ class Graph(BaseObject):
         return minDepth if minimal else maxDepth
 
     def getInputEdges(self, node, dependenciesOnly):
-        return set([edge for edge in self.getEdges(dependenciesOnly=dependenciesOnly) if edge.dst.node is node])
+        return {edge for edge in self.getEdges(dependenciesOnly=dependenciesOnly) if edge.dst.node is node}
 
     def _getInputEdgesPerNode(self, dependenciesOnly):
         nodeEdges = defaultdict(set)
@@ -1167,7 +1166,7 @@ class Graph(BaseObject):
         :return:
         """
         nodesStack = []
-        edgesScore = defaultdict(lambda: 0)
+        edgesScore = defaultdict(int)
         visitor = Visitor(reverse=False, dependenciesOnly=dependenciesOnly)
 
         def finishEdge(edge, graph):
@@ -1223,7 +1222,7 @@ class Graph(BaseObject):
     def getInputNodes(self, node, recursive, dependenciesOnly):
         """ Return either the first level input nodes of a node or the whole chain. """
         if not recursive:
-            return set([edge.src.node for edge in self.getEdges(dependenciesOnly) if edge.dst.node is node])
+            return {edge.src.node for edge in self.getEdges(dependenciesOnly) if edge.dst.node is node}
 
         inputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=False)
         return inputNodes[1:]  # exclude current node
@@ -1231,7 +1230,7 @@ class Graph(BaseObject):
     def getOutputNodes(self, node, recursive, dependenciesOnly):
         """ Return either the first level output nodes of a node or the whole chain. """
         if not recursive:
-            return set([edge.dst.node for edge in self.getEdges(dependenciesOnly) if edge.src.node is node])
+            return {edge.dst.node for edge in self.getEdges(dependenciesOnly) if edge.src.node is node}
 
         outputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=True)
         return outputNodes[1:]  # exclude current node
@@ -1253,7 +1252,7 @@ class Graph(BaseObject):
 
         class SCVisitor(Visitor):
             def __init__(self, reverse, dependenciesOnly):
-                super(SCVisitor, self).__init__(reverse, dependenciesOnly)
+                super().__init__(reverse, dependenciesOnly)
 
             canCompute = True
             canSubmit = True
@@ -1611,7 +1610,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
         chunksInConflict = getAlreadySubmittedChunks(nodes)
 
         if chunksInConflict:
-            chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
+            chunksStatus = {chunk.status.status.name for chunk in chunksInConflict}
             chunksName = [node.name for node in chunksInConflict]
             msg = 'WARNING: Some nodes are already submitted with status: {}\nNodes: {}'.format(
                   ', '.join(chunksStatus),
@@ -1639,8 +1638,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                         node=n+1, nbNodes=len(nodes),
                         chunk=c+1, nbChunks=len(node.chunks), nodeName=node.nodeType))
                 else:
-                    print('\n[{node}/{nbNodes}] {nodeName}'.format(
-                        node=n + 1, nbNodes=len(nodes), nodeName=node.nodeType))
+                    print(f'\n[{n + 1}/{len(nodes)}] {node.nodeType}')
                 chunk.process(forceCompute)
             node.postprocess()
         except Exception as e:
@@ -1661,8 +1659,8 @@ def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
         logging.warning('Nothing to compute')
         return
 
-    logging.info("Nodes to process: {}".format(edgesToProcess))
-    logging.info("Edges to process: {}".format(edgesToProcess))
+    logging.info(f"Nodes to process: {edgesToProcess}")
+    logging.info(f"Edges to process: {edgesToProcess}")
 
     sub = None
     if submitter:
@@ -1680,7 +1678,7 @@ def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
             for node in nodesToProcess:
                 node.submit()  # update node status
     except Exception as e:
-        logging.error("Error on submit : {}".format(e))
+        logging.error(f"Error on submit : {e}")
 
 
 def submit(graphFile, submitter, toNode=None, submitLabel="{projectName}"):

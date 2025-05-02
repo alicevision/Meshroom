@@ -8,7 +8,7 @@ class PaletteManager(QObject):
     Manages QApplication's palette and provides a toggle between a dark and a light theme.
     """
     def __init__(self, qmlEngine, parent=None):
-        super(PaletteManager, self).__init__(parent)
+        super().__init__(parent)
         self.qmlEngine = qmlEngine
         darkPalette = QPalette()
         window = QColor(50, 52, 55)

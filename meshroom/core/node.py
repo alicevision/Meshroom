@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding:utf-8
 import atexit
 import copy
 import datetime
@@ -37,7 +36,7 @@ def renameWritingToFinalPath(writingFilepath: str, filepath: str) -> str:
                 os.remove(filepath)
                 # If remove is successful, we can stop the iterations
                 break
-            except WindowsError:
+            except OSError:
                 pass
     os.rename(writingFilepath, filepath)
 
@@ -70,7 +69,7 @@ class StatusData(BaseObject):
 
     def __init__(self, nodeName='', nodeType='', packageName='', packageVersion='',
                  mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
-        super(StatusData, self).__init__(parent)
+        super().__init__(parent)
 
         self.nodeName: str = nodeName
         self.nodeType: str = nodeType
@@ -267,7 +266,7 @@ class LogManager:
 
             f.close()
 
-        with open(self.chunk.logFile, 'r') as f:
+        with open(self.chunk.logFile) as f:
             content = f.read()
             self.progressBarPosition = content.rfind('\n')
 
@@ -320,7 +319,7 @@ def clearProcessesStatus():
 
 class NodeChunk(BaseObject):
     def __init__(self, node, range, parent=None):
-        super(NodeChunk, self).__init__(parent)
+        super().__init__(parent)
         self.node = node
         self.range = range
         self.logManager: LogManager = LogManager(self)
@@ -339,7 +338,7 @@ class NodeChunk(BaseObject):
     @property
     def name(self):
         if self.range.blockSize:
-            return "{}({})".format(self.node.name, self.index)
+            return f"{self.node.name}({self.index})"
         else:
             return self.node.name
 
@@ -368,7 +367,7 @@ class NodeChunk(BaseObject):
             self._status.setNodeType(self.node)
         else:
             try:
-                with open(statusFile, 'r') as jsonFile:
+                with open(statusFile) as jsonFile:
                     statusData = json.load(jsonFile)
                 # logging.debug(f"updateStatusFromCache({self.node.name}): From status {self.status.status} to {statusData['status']}")
                 self._status.fromDict(statusData)
@@ -443,7 +442,7 @@ class NodeChunk(BaseObject):
         statisticsFile = self.statisticsFile
         if not os.path.exists(statisticsFile):
             return
-        with open(statisticsFile, 'r') as jsonFile:
+        with open(statisticsFile) as jsonFile:
             statisticsData = json.load(jsonFile)
         self.statistics.fromDict(statisticsData)
         if oldTimes != self.statistics.times:
@@ -479,7 +478,7 @@ class NodeChunk(BaseObject):
 
     def process(self, forceCompute=False, inCurrentEnv=False):
         if not forceCompute and self._status.status == Status.SUCCESS:
-            logging.info("Node chunk already computed: {}".format(self.name))
+            logging.info(f"Node chunk already computed: {self.name}")
             return
 
         # Start the process environment for nodes running in isolation.
@@ -517,7 +516,7 @@ class NodeChunk(BaseObject):
 
             if executionStatus:
                 self.upgradeStatusTo(executionStatus)
-            logging.info(" - elapsed time: {}".format(self._status.elapsedTimeStr))
+            logging.info(f" - elapsed time: {self._status.elapsedTimeStr}")
             # Ask and wait for the stats thread to stop
             self.statThread.stopRequest()
             self.statThread.join()
@@ -635,7 +634,7 @@ class BaseNode(BaseObject):
             parent: this Node's parent
             **kwargs: attributes values
         """
-        super(BaseNode, self).__init__(parent)
+        super().__init__(parent)
         self._nodeType: str = nodeType
         self.nodeDesc: desc.BaseNode = None
 
@@ -735,7 +734,7 @@ class BaseNode(BaseObject):
             str: the high-level label from the technical node name
         """
         t, idx = name.split("_")
-        return "{}{}".format(t, idx if int(idx) > 1 else "")
+        return f"{t}{idx if int(idx) > 1 else ''}"
 
     def getDocumentation(self):
         if not self.nodeDesc:
@@ -899,7 +898,7 @@ class BaseNode(BaseObject):
                 if group is not None:
                     # If there is a valid command line "group"
                     v = attr.getValueStr(withQuotes=True)
-                    cmdVars[name] = "--{name} {value}".format(name=name, value=v)
+                    cmdVars[name] = f"--{name} {v}"
                     # xxValue is exposed without quotes to allow to compose expressions
                     cmdVars[name + "Value"] = attr.getValueStr(withQuotes=False)
 
@@ -970,7 +969,7 @@ class BaseNode(BaseObject):
 
             v = attr.getValueStr(withQuotes=True)
 
-            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+            self._cmdVars[name] = f'--{name} {v}'
             # xxValue is exposed without quotes to allow to compose expressions
             self._cmdVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
 
@@ -1307,11 +1306,11 @@ class BaseNode(BaseObject):
             return
         valuesFile = self.valuesFile
         if not os.path.exists(valuesFile):
-            logging.warning("No output attr file: {}".format(valuesFile))
+            logging.warning(f"No output attr file: {valuesFile}")
             return
 
         # logging.warning("load output attr: {}, value: {}".format(self.name, valuesFile))
-        with open(valuesFile, 'r') as jsonFile:
+        with open(valuesFile) as jsonFile:
             data = json.load(jsonFile)
 
         # logging.warning(data)
@@ -1513,8 +1512,8 @@ class BaseNode(BaseObject):
         # If number of elements in both lists are identical,
         # we must check if their content is the same
         if len(newList) == len(self._duplicates):
-            newListName = set([node.name for node in newList])
-            oldListName = set([node.name for node in self._duplicates.values()])
+            newListName = {node.name for node in newList}
+            oldListName = {node.name for node in self._duplicates.values()}
 
             # If strict equality between both sets,
             # there is no need to set the new list
@@ -1689,7 +1688,7 @@ class Node(BaseNode):
     A standard Graph node based on a node type.
     """
     def __init__(self, nodeType, position=None, parent=None, uid=None, **kwargs):
-        super(Node, self).__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
+        super().__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
 
         if not self.nodeDesc:
             raise UnknownNodeTypeError(nodeType)
@@ -1806,7 +1805,7 @@ class Node(BaseNode):
                         chunk.range = range
             except RuntimeError:
                 # TODO: set node internal status to error
-                logging.warning("Invalid Parallelization on node {}".format(self._name))
+                logging.warning(f"Invalid Parallelization on node {self._name}")
                 self._chunks.clear()
         else:
             if len(self._chunks) != 1:
@@ -1834,7 +1833,7 @@ class CompatibilityNode(BaseNode):
     with all its inputs and precomputed outputs.
     """
     def __init__(self, nodeType, nodeDict, position=None, issue=CompatibilityIssue.UnknownIssue, parent=None):
-        super(CompatibilityNode, self).__init__(nodeType, position, parent)
+        super().__init__(nodeType, position, parent)
 
         self.issue = issue
         # Make a deepcopy of nodeDict to handle CompatibilityNode duplication
@@ -2001,7 +2000,7 @@ class CompatibilityNode(BaseNode):
     @property
     def issueDetails(self):
         if self.issue == CompatibilityIssue.UnknownNodeType:
-            return "Unknown node type: '{}'.".format(self.nodeType)
+            return f"Unknown node type: '{self.nodeType}'."
         elif self.issue == CompatibilityIssue.VersionConflict:
             return "Node version '{}' conflicts with current version '{}'.".format(
                 self.nodeDict["version"], nodeVersion(self.nodeDesc)
@@ -2077,7 +2076,7 @@ class CompatibilityNode(BaseNode):
         try:
             upgradedAttrValues = node.nodeDesc.upgradeAttributeValues(attrValues, self.version)
         except Exception as e:
-            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, repr(e)))
+            logging.error(f"Error in the upgrade implementation of the node: {self.name}.\n{repr(e)}")
             upgradedAttrValues = attrValues
 
         if not isinstance(upgradedAttrValues, dict):

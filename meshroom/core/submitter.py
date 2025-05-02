@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-# coding:utf-8
 
 from meshroom.common import BaseObject, Property
 
 
 class BaseSubmitter(BaseObject):
     def __init__(self, name, parent=None):
-        super(BaseSubmitter, self).__init__(parent)
+        super().__init__(parent)
         self._name = name
 
     def submit(self, nodes, edges, filepath, submitLabel="{projectName}"):

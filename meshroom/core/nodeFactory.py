@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Optional, Union
+from collections.abc import Iterable
 
 import meshroom.core
 from meshroom.core import Version, desc

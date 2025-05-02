@@ -65,8 +65,7 @@ RowLayout {
                 text: shouldBeVisible ? MaterialIcons.login : " "
                 enabled: shouldBeVisible
                 font.pointSize: 8
-                anchors.top: parent.top
-                anchors.left: parent.left
+                Layout.alignment: Qt.AlignTop | Qt.AlignLeft 
                 topPadding: 7
                 ToolTip.text: shouldBeVisible ? object.linkParam.label : ""
 
@@ -194,8 +193,7 @@ RowLayout {
                 text: shouldBeVisible ? MaterialIcons.logout : ""
                 font.pointSize: 8
                 enabled: shouldBeVisible
-                anchors.top: parent.top
-                anchors.right: parent.right
+                Layout.alignment: Qt.AlignTop | Qt.AlignRight
                 topPadding: 7
 
                 onClicked: function(mouse) {

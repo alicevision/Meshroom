@@ -35,9 +35,9 @@ The Meshroom UI is divided into several key areas:
  - **Node Editor**: It contains multiple tabs with:
    - **Attributes**: Displays the attributes and parameters of the selected node.
    - **Log**: Displays execution logs and error messages.
-   - **Statistics**: Displays resources consumption
+   - **Statistics**: Displays resource consumption
    - **Status**: Display some technical information on the node (workstation, start/end time, etc.)
-   - **Documentation**: The nodes help.
+   - **Documentation**: Node Documentation.
    - **Notes**: Change label or put some notes on the node to know why it’s used in this graph.
  - **2D & 3D Viewer**: Visualizes the output of certain nodes.
  - **Image Gallery**: Visualize the list of input files.

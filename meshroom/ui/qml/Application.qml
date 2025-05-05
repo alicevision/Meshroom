@@ -1354,14 +1354,21 @@ Page {
                         _handleNavButtonClick(srcItem, mouse, outAttributes)
                     }
 
+                    // NavButtonContextMenu
                     Menu {
-                        id: contextMenu
+                        id: navButtonContextMenu
 
                         Repeater {
                             model: nodeEditor.currentAttributes
 
                             delegate: MenuItem {
-                                text: `${modelData.node.label}.${modelData.label}`
+
+                                contentItem: Text {
+                                    text: `${modelData.node.label}.${modelData.label}`
+                                    elide: Text.ElideLeft
+                                    color: Colors.sysPalette.text
+                                }
+                                
                                 onTriggered: {
                                     nodeEditor._selectNodesFromAttributes([nodeEditor.currentAttributes[index]])
                                 }

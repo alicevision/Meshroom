@@ -749,7 +749,7 @@ class ListAttribute(Attribute):
         if not self.node.graph or not self.node.graph.edges:
             return []
         
-        return [edge for edge in self.node.graph.edges.values() if edge.dst in self._value]
+        return [edge for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
     
     # override
     def getOutputConnections(self) -> list["Edge"]:
@@ -757,9 +757,8 @@ class ListAttribute(Attribute):
         if not self.node.graph or not self.node.graph.edges:
             return []
         
-        return [edge for edge in self.node.graph.edges.values() if edge.src in self._value]
+        return [edge for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
         
-
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)

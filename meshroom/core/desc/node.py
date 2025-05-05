@@ -155,7 +155,8 @@ class BaseNode(object):
                 # Change the process group to avoid Meshroom main process being killed if the
                 # subprocess gets terminated by the user or an Out Of Memory (OOM kill).
                 if sys.platform == "win32":
-                    platformArgs = {"creationflags": psutil.CREATE_NEW_PROCESS_GROUP}
+                    from subprocess import CREATE_NEW_PROCESS_GROUP
+                    platformArgs = {"creationflags": CREATE_NEW_PROCESS_GROUP}
                     # Note: DETACHED_PROCESS means fully detached process.
                     # We don't want a fully detached process to ensure that if Meshroom is killed,
                     # the subprocesses are killed too.

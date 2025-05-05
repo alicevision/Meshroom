@@ -19,6 +19,7 @@ try:
 except Exception:
     pass
 
+from meshroom.core.plugins import ProcessEnv
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -349,9 +350,7 @@ def loadPluginFolder(folder):
         logging.info(f"Plugin folder '{folder}' does not contain a 'meshroom' folder.")
         return
 
-    binFolders = [Path(folder, 'bin')]
-    libFolders = [Path(folder, 'lib'), Path(folder, 'lib64')]
-    pythonPathFolders = [Path(folder)] + binFolders
+    processEnv = ProcessEnv(folder)
 
     loadAllNodes(folder=mrFolder)
     loadPipelineTemplates(folder=mrFolder)
@@ -361,7 +360,7 @@ def loadPluginsFolder(folder):
     if not os.path.isdir(folder):
         logging.debug(f"PluginSet folder '{folder}' does not exist.")
         return
-    
+
     for file in os.listdir(folder):
         if os.path.isdir(file):
             subFolder = os.path.join(folder, file)

@@ -1403,7 +1403,7 @@ Page {
                             return
                         }
 
-                        nodeEditor._selectNodesFromAttributes(nodeEditor.currentAttributes)
+                        nodeEditor._selectNodesFromAttributes(attributes)
 
                         if (mouse.button === Qt.MiddleButton) {
                             graphEditor.fit()

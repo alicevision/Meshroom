@@ -64,7 +64,7 @@ RowLayout {
 
                 property bool shouldBeVisible: (object != undefined && object.isLinkNested)
 
-                text: shouldBeVisible ? MaterialIcons.login : " "
+                text: shouldBeVisible ? MaterialIcons.login : "  "
                 enabled: shouldBeVisible
                 font.pointSize: 8
                 Layout.alignment: Qt.AlignTop | Qt.AlignLeft 
@@ -198,7 +198,7 @@ RowLayout {
 
                 property bool shouldBeVisible: (attribute != undefined && attribute.hasOutputConnections)
 
-                text: shouldBeVisible ? MaterialIcons.logout : ""
+                text: shouldBeVisible ? MaterialIcons.logout : " "
                 font.pointSize: 8
                 enabled: shouldBeVisible
                 Layout.alignment: Qt.AlignTop | Qt.AlignRight

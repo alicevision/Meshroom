@@ -128,7 +128,7 @@ def loadClasses(folder, packageName, classType):
     return classes
 
 
-def validateNodeDesc(nodeDesc):
+def validateNodeDesc(nodeDesc: desc.Node) -> list:
     """
     Check that the node has a valid description before being loaded. For the description
     to be valid, the default value of every parameter needs to correspond to the type
@@ -140,10 +140,10 @@ def validateNodeDesc(nodeDesc):
     "group", is invalid, then it will be added to the list as "group:x".
 
     Args:
-        nodeDesc (desc.Node): description of the node
+        nodeDesc: description of the node
 
     Returns:
-        errors (list): the list of invalid parameters if there are any, empty list otherwise
+        errors: the list of invalid parameters if there are any, empty list otherwise
     """
     errors = []
 
@@ -280,7 +280,7 @@ class Version:
         return self.components[2]
 
 
-def moduleVersion(moduleName, default=None):
+def moduleVersion(moduleName: str, default=None):
     """ Return the version of a module indicated with '__version__' keyword.
 
     Args:
@@ -293,7 +293,7 @@ def moduleVersion(moduleName, default=None):
     return getattr(sys.modules[moduleName], "__version__", default)
 
 
-def nodeVersion(nodeDesc, default=None):
+def nodeVersion(nodeDesc: desc.Node, default=None):
     """ Return node type version for the given node description class.
 
     Args:
@@ -306,7 +306,7 @@ def nodeVersion(nodeDesc, default=None):
     return moduleVersion(nodeDesc.__module__, default)
 
 
-def registerNodeType(nodeType):
+def registerNodeType(nodeType: desc.Node):
     """ Register a Node Type based on a Node Description class.
 
     After registration, nodes of this type can be instantiated in a Graph.
@@ -316,7 +316,7 @@ def registerNodeType(nodeType):
     nodesDesc[nodeType.__name__] = nodeType
 
 
-def unregisterNodeType(nodeType):
+def unregisterNodeType(nodeType: desc.Node):
     """ Remove 'nodeType' from the list of register node types. """
     assert nodeType.__name__ in nodesDesc
     del nodesDesc[nodeType.__name__]
@@ -367,7 +367,7 @@ def loadPluginsFolder(folder):
             loadPluginFolder(subFolder)
 
 
-def registerSubmitter(s):
+def registerSubmitter(s: BaseSubmitter):
     if s.name in submitters:
         logging.error(f"Submitter {s.name} is already registered.")
     submitters[s.name] = s

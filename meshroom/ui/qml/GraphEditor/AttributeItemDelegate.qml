@@ -62,7 +62,7 @@ RowLayout {
             MaterialToolButton {
                 id: navButtonIn
 
-                property var shouldBeVisible: (object != undefined && object.isLinkNested)
+                property bool shouldBeVisible: (object != undefined && object.isLinkNested)
 
                 text: shouldBeVisible ? MaterialIcons.login : " "
                 enabled: shouldBeVisible
@@ -196,7 +196,7 @@ RowLayout {
             MaterialToolButton {
                 id: navButtonOut
 
-                property var shouldBeVisible: (attribute != undefined && attribute.hasOutputConnections)
+                property bool shouldBeVisible: (attribute != undefined && attribute.hasOutputConnections)
 
                 text: shouldBeVisible ? MaterialIcons.logout : ""
                 font.pointSize: 8

@@ -56,8 +56,9 @@ The Meshroom UI is divided into several key areas:
 
 [AliceVision Repository](https://github.com/alicevision/AliceVision)
 
-AliceVision provides state-of-the-art 3D computer vision and machine learning algorithms that can be tested, analyzed and reused. The project is a result of collaboration between academia and industry to provide cutting-edge algorithms with the robustness and the quality required for production usage.
-AliceVision plugin provides pipelines for:
+AliceVision provides state-of-the-art 3D computer vision and machine learning algorithms that can be tested, analyzed, and reused.
+The project results from the collaboration between academia and industry to provide cutting-edge algorithms with the robustness and quality required for production usage.
+The AliceVision plugin provides pipelines for:
  - **3D Reconstruction** from multi-view images, see the [presentation of the pipeline steps](http://alicevision.github.io/#photogrammetry) and [some results on sketchfab](http://sketchfab.com/AliceVision)
  - **Camera Tracking**
  - **HDR fusion** of multi-bracketed photographies
@@ -68,12 +69,12 @@ AliceVision plugin provides pipelines for:
 
 ## Segmentation Plugin
 [MrSegmentation Repository](https://github.com/meshroomHub/mrSegmentation)
-Set of nodes for image segmentation from text prompts.
+A set of nodes for image segmentation from text prompts.
 
 
 ## DepthEstimation Plugin
 [MrDepthEstimation](https://github.com/meshroomHub/mrDepthEstimation)
-Set of nodes for depth estimation from an image sequence.
+A set of nodes for depth estimation from an image sequence.
 
 
 # Other plugins
@@ -89,7 +90,8 @@ Meshroom-Research focuses on evaluating and benchmarking Machine Learning nodes 
 ## MicMac Plugin
 [MeshroomMicMac Repository](https://github.com/alicevision/MeshroomMicMac)
 
-Exploratory plugin providing MicMac pipelines. It does not yet support the full invalidation system of Meshroom but is fully usable to adjust the pipeline and process it.
+An exploratory plugin providing MicMac pipelines. 
+It does not yet support the full invalidation system of Meshroom, but is fully usable to adjust the pipeline and process it.
 MicMac is a free open-source photogrammetric software for 3D reconstruction under development at the National Institute of Geographic and Forestry Information (French Mapping Agency, IGN) and the National School of Geographic Sciences (ENSG) within the LASTIG lab.
 
 
@@ -97,7 +99,7 @@ MicMac is a free open-source photogrammetric software for 3D reconstruction unde
 [MrGeolocation Repository](https://github.com/alicevision/mrGeolocation)
 
 The Meshroom Geolocation plugin consists of nodes that utilize the GPS data to download 2D and 3D maps. It could extract the embedded GPS data from photographs to accurately place and contextualize your 3D scans within their global geographical environment.
-You can retrieve a variety of maps: a 2D map (worldwide – using Open Street Map), an elevation model in 3D (worldwide – using NASA datasets), and a highly detailed 3D model from Lidar scans when available (France-only – using the open data France’s IGN Lidar datasets).
+You can retrieve a variety of maps: a 2D map (worldwide – using Open Street Map), an elevation model in 3D (worldwide – using NASA datasets), and a highly detailed 3D model from Lidar scans when available (France-only – using France’s open data IGN Lidar datasets).
 
 
 # License

@@ -68,7 +68,7 @@ The AliceVision plugin provides pipelines for:
 
 
 ## Segmentation Plugin
-[MrSegmentation Repository](https://github.com/meshroomHub/mrSegmentation)
+[MrSegmentation](https://github.com/meshroomHub/mrSegmentation)
 A set of nodes for image segmentation from text prompts.
 
 
@@ -82,13 +82,13 @@ A set of nodes for depth estimation from an image sequence.
 See the [MeshroomHub](https://github.com/meshroomHub) for more plugins.
 
 ## Research Plugin
-[Meshroom Research Repository](https://github.com/alicevision/MeshroomResearch)
+[Meshroom Research](https://github.com/alicevision/MeshroomResearch)
 
 Meshroom-Research focuses on evaluating and benchmarking Machine Learning nodes for 3D Computer Vision.
 
 
 ## MicMac Plugin
-[MeshroomMicMac Repository](https://github.com/alicevision/MeshroomMicMac)
+[MeshroomMicMac](https://github.com/alicevision/MeshroomMicMac)
 
 An exploratory plugin providing MicMac pipelines. 
 It does not yet support the full invalidation system of Meshroom, but is fully usable to adjust the pipeline and process it.
@@ -96,7 +96,7 @@ MicMac is a free open-source photogrammetric software for 3D reconstruction unde
 
 
 ## Geolocation Plugin
-[MrGeolocation Repository](https://github.com/alicevision/mrGeolocation)
+[MrGeolocation](https://github.com/alicevision/mrGeolocation)
 
 The Meshroom Geolocation plugin consists of nodes that utilize the GPS data to download 2D and 3D maps. It could extract the embedded GPS data from photographs to accurately place and contextualize your 3D scans within their global geographical environment.
 You can retrieve a variety of maps: a 2D map (worldwide – using Open Street Map), an elevation model in 3D (worldwide – using NASA datasets), and a highly detailed 3D model from Lidar scans when available (France-only – using France’s open data IGN Lidar datasets).

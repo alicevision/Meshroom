@@ -1,82 +1,112 @@
 # ![Meshroom - 3D Reconstruction Software](/docs/logo/banner-meshroom.png)
 
+Meshroom is an open-source, node-based visual programming framework—a flexible toolbox for creating, managing, and executing complex data processing pipelines.
+
+Meshroom uses a nodal system where each node represents a specific operation, and output attributes can seamlessly feed into subsequent steps. When a node’s attribute is modified, only the affected downstream nodes are invalidated, while cached intermediate results are reused to minimize unnecessary computation.
+
+Meshroom supports both local and distributed execution, enabling efficient parallel processing on render farms.
+It also includes interactive widgets for visualizing images and 3D data. Official releases come with built-in plugins for computer vision and machine learning tasks.
+
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2997/badge)](https://bestpractices.coreinfrastructure.org/projects/2997)
+[![Build status](https://github.com/alicevision/Meshroom/actions/workflows/continuous-integration.yml/badge.svg?branch=develop)](https://github.com/alicevision/Meshroom/actions/workflows/continuous-integration.yml)
 
-Meshroom is a free, open-source 3D Reconstruction Software based on the [AliceVision](https://github.com/alicevision/AliceVision) Photogrammetric Computer Vision framework.
+# Get the project
 
-Learn more details about the pipeline on [AliceVision website](http://alicevision.github.io).
-
-See [results of the pipeline on sketchfab](http://sketchfab.com/AliceVision).
-
-Continuous integration: [![Build status](https://github.com/alicevision/Meshroom/actions/workflows/continuous-integration.yml/badge.svg?branch=develop)](https://github.com/alicevision/Meshroom/actions/workflows/continuous-integration.yml)
+You can [download pre-compiled binaries for the latest release](https://github.com/alicevision/meshroom/releases).  
+If you want to build it yourself, see [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
 
 
-## Photogrammetry
+# Concepts
 
-Photogrammetry is the science of making measurements from photographs.
-It infers the geometry of a scene from a set of unordered photographs or videos.
-Photography is the projection of a 3D scene onto a 2D plane, losing depth information.
-The goal of photogrammetry is to reverse this process.
-
-See the [presentation of the pipeline steps](http://alicevision.github.io/#photogrammetry).
-
-
-## Manual
-
-https://meshroom-manual.readthedocs.io
+- **Graph, Nodes and Attributes**
+Nodes are the fundamental building blocks, each performing a specific task. A graph is a collection of interconnected nodes, defining the sequence of operations.  The nodes are connected through edges that represent the flow of data between them. Each node has a set of attributes or parameters that control its behavior. Adjusting a parameter triggers the invalidation of all connected nodes.
+- **Templates**
+Each plugin provides a set of pipeline templates. You can customize them and save your own templates.
+- **Local / Renderfarm**
+You can perform computations either locally or by using a render farm for distributed processing. As the computations proceed, you can monitor their progress and review the logs. It also keeps track of resource consumption to monitor the efficiency and identify the bottlenecks. You can use both local and renderfarm computation at the same time, as Meshroom keeps track of locked nodes while computing externally.
+- **Custom Plugins**
+You can create your custom plugin, in pure Python or through command lines to execute external software.
 
 
-## Tutorials
+# User Interface
 
-* [Meshroom: Open Source 3D Reconstruction Software](https://www.youtube.com/watch?v=v_O6tYKQEBA) by [Mikros Image](http://www.mikrosimage.com)
-
-  Overall presentation of the Meshroom software.
-
-* [Meshroom: Initial Pipeline, CCTags, using a Turntable and Known Camera Positions](https://www.youtube.com/watch?v=XUKu1apUuVE) by [mpr-projects](https://github.com/mpr-projects)
-
-  Overview of the default Meshroom 2023.3 pipeline, including masking, cctags and known camera positions.
-
-* [Meshroom Tutorial on Sketchfab](https://sketchfab.com/blogs/community/tutorial-meshroom-for-beginners) by [Mikros Image](http://www.mikrosimage.com)
-
-  Detailed tutorial with a focus on the features of the 2019.1 release.
-
-* [Photogrammetry 2 – 3D scanning with just PHONE/CAMERA simpler, better than ever!](https://www.youtube.com/watch?v=1D0EhSi-vvc) by [Prusa 3D Printer](https://blog.prusaprinters.org)
-
-  Overall presentation of the photogrammetry practice with Meshroom.
-
-* [How to 3D Photoscan Easy and Free! by ](https://www.youtube.com/watch?v=k4NTf0hMjtY) by [CG Geek](https://www.youtube.com/channel/UCG8AxMVa6eutIGxrdnDxWpQ)
-
-  Overall presentation of the protogrammetry practice with Meshroom and detailed presentation how to do the retolopogy in Blender.
-
-* [Meshroom Survival Guide](https://www.youtube.com/watch?v=eiEaHLNJJ94) by [Moviola](https://moviola.com)
-
-  Presentation of the Meshroom software with a focus on using it for Match Moving.
+The Meshroom UI is divided into several key areas:
+ - **Graph Editor**: The central area where nodes are placed and connected to form a processing pipeline.
+ - **Node Editor**: It contains multiple tabs with:
+   - **Attributes**: Displays the attributes and parameters of the selected node.
+   - **Log**: Displays execution logs and error messages.
+   - **Statistics**: Displays resource consumption
+   - **Status**: Display some technical information on the node (workstation, start/end time, etc.)
+   - **Documentation**: Node Documentation.
+   - **Notes**: Change label or put some notes on the node to know why it’s used in this graph.
+ - **2D & 3D Viewer**: Visualizes the output of certain nodes.
+ - **Image Gallery**: Visualize the list of input files.
 
 
-## Customization
-
-### Custom Pipelines
-
-You can create custom pipelines in the user interface and save it as template: `File > Advanced > Save As Template`.
-You can define the `MESHROOM_PIPELINE_TEMPLATES_PATH` environment variable to specific folders to make these pipelines available in Meshroom.
-In a standard precompiled version of Meshroom, you can also directly add custom pipelines in `lib/meshroom/pipelines`.
-
-### Custom Nodes
-
-You can create custom nodes in python and make them available in Meshroom using the `MESHROOM_NODES_PATH` environment variable.
-[Here is an example](meshroom/nodes/blender/ScenePreview.py) to launch a Blender rendering from Meshroom.
-In a standard precompiled version of Meshroom, you can also directly add custom nodes in `lib/meshroom/nodes`.
-To be recognized by Meshroom, a custom folder with nodes should be a Python module (an `__init__.py` file is needed).
+# Manual and Tutorials
+ - [Meshroom Manual](https://meshroom-manual.readthedocs.io)
+ - [Meshroom FAQ](https://github.com/alicevision/meshroom/wiki)
 
 
-## License
+# Plugins bundled by default
 
+## AliceVision Plugin
+
+[AliceVision Website](http://alicevision.org)
+
+[AliceVision Repository](https://github.com/alicevision/AliceVision)
+
+AliceVision provides state-of-the-art 3D computer vision and machine learning algorithms that can be tested, analyzed, and reused.
+The project results from the collaboration between academia and industry to provide cutting-edge algorithms with the robustness and quality required for production usage.
+The AliceVision plugin provides pipelines for:
+ - **3D Reconstruction** from multi-view images, see the [presentation of the pipeline steps](http://alicevision.github.io/#photogrammetry) and [some results on sketchfab](http://sketchfab.com/AliceVision)
+ - **Camera Tracking**
+ - **HDR fusion** of multi-bracketed photographies
+ - **Panorama stitching** supports fisheye optics, but also the generation of high-resolution images using motorized head systems.
+ - **Photometric Stereo** for geometric reconstruction from a single view with multiple lightings
+ - **Multi-View Photometric Stereo** to combine photogrammetry and photometric stereo
+
+
+## Segmentation Plugin
+[MrSegmentation](https://github.com/meshroomHub/mrSegmentation)
+A set of nodes for image segmentation from text prompts.
+
+
+## DepthEstimation Plugin
+[MrDepthEstimation](https://github.com/meshroomHub/mrDepthEstimation)
+A set of nodes for depth estimation from an image sequence.
+
+
+# Other plugins
+
+See the [MeshroomHub](https://github.com/meshroomHub) for more plugins.
+
+## Research Plugin
+[Meshroom Research](https://github.com/alicevision/MeshroomResearch)
+
+Meshroom-Research focuses on evaluating and benchmarking Machine Learning nodes for 3D Computer Vision.
+
+
+## MicMac Plugin
+[MeshroomMicMac](https://github.com/alicevision/MeshroomMicMac)
+
+An exploratory plugin providing MicMac pipelines. 
+It does not yet support the full invalidation system of Meshroom, but is fully usable to adjust the pipeline and process it.
+MicMac is a free open-source photogrammetric software for 3D reconstruction under development at the National Institute of Geographic and Forestry Information (French Mapping Agency, IGN) and the National School of Geographic Sciences (ENSG) within the LASTIG lab.
+
+
+## Geolocation Plugin
+[MrGeolocation](https://github.com/meshroomHub/mrGeolocation)
+
+The Meshroom Geolocation plugin consists of nodes that utilize the GPS data to download 2D and 3D maps. It could extract the embedded GPS data from photographs to accurately place and contextualize your 3D scans within their global geographical environment.
+You can retrieve a variety of maps: a 2D map (worldwide – using Open Street Map), an elevation model in 3D (worldwide – using NASA datasets), and a highly detailed 3D model from Lidar scans when available (France-only – using France’s open data IGN Lidar datasets).
+
+
+# License
 The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 
-## Citation
-
-If you use this project for a publication, please cite the [paper](https://hal.archives-ouvertes.fr/hal-03351139):
+# Citation
   ```
   @inproceedings{alicevision2021,
     title={{A}liceVision {M}eshroom: An open-source {3D} reconstruction pipeline},
@@ -88,71 +118,14 @@ If you use this project for a publication, please cite the [paper](https://hal.a
   }
   ```
 
-## Get the project
 
-You can [download pre-compiled binaries for the latest release](https://github.com/alicevision/meshroom/releases).  
-
-If you want to build it yourself, see [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
-
-Get the source code and install runtime requirements:
-```bash
-git clone --recursive https://github.com/alicevision/Meshroom.git
-cd meshroom
-pip install -r requirements.txt
-```
+# Contributing
+We welcome contributions! Check out our [Contribution Guidelines](CONTRIBUTING.md) to get started. Whether you're a developer, designer, or documentation enthusiast, there's a place for you in the Meshroom community.
 
 
-## Start Meshroom
+# Contact
 
-You need to have [AliceVision](https://github.com/alicevision/AliceVision) installation in your PATH (and LD_LIBRARY_PATH on Linux/macOS).
+Use the public mailing-list to ask questions or request features. It is also a good place for informal discussions like sharing results, interesting related technologies or publications: [forum@alicevision.org](https://groups.google.com/g/alicevision)
 
- - __Launch the User Interface__
+You can also contact the core team privately on: [team@alicevision.org](mailto:team@alicevision.org).
 
-```bash
-# Windows
-set PYTHONPATH=%CD% && python meshroom/ui
-# Linux/macOS
-PYTHONPATH=$PWD python meshroom/ui
-```
-
-On Ubuntu, you may have conflicts between native drivers and mesa drivers. In that case, you need to force usage of native drivers by adding them to the LD_LIBRARY_PATH:
-`LD_LIBRARY_PATH=/usr/lib/nvidia-340 PYTHONPATH=$PWD python meshroom/ui`
-You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver version.
-
- - __Launch a 3D reconstruction in command line__
-
-```bash
-# Windows: set PYTHONPATH=%CD% &&
-# Linux/macOS: PYTHONPATH=$PWD
-python bin/meshroom_batch --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
-```
-
-## Start Meshroom without building AliceVision
-
-To use Meshroom (ui) without building AliceVision
-*   Download a [release](https://github.com/alicevision/meshroom/releases)
-*   Checkout corresponding Meshroom (ui) version/tag to avoid versions incompatibilities
-*   `LD_LIBRARY_PATH=~/foo/Meshroom-2023.2.0/aliceVision/lib/ PATH=$PATH:~/foo/Meshroom-2023.2.0/aliceVision/bin/ PYTHONPATH=$PWD python3 meshroom/ui`
-
-## Start and Debug Meshroom in an IDE
-
-PyCharm Community is free IDE which can be used. To start and debug a project with that IDE,
-right-click on `Meshroom/ui/__main__.py` > `Debug`, then `Edit Configuration`, in `Environment variables` : 
-*   If you want to use aliceVision built by yourself add: `PATH=$PATH:/foo/build/Linux-x86_64/`
-*   If you want to use aliceVision release add: `LD_LIBRARY_PATH=/foo/Meshroom-2023.2.0/aliceVision/lib/;PATH=$PATH:/foo/Meshroom-2023.2.0/aliceVision/bin/` (Make sure that you are on the branch matching the right version)
-
-![image](https://user-images.githubusercontent.com/937836/127321375-3bf78e73-569d-414a-8649-de0307adf794.png)
-
-
-## FAQ
-
-See the [Meshroom wiki](https://github.com/alicevision/meshroom/wiki) for more information.
-
-
-## Contact
-
-Use the public mailing-list to ask questions or request features. It is also a good place for informal discussions like sharing results, interesting related technologies or publications:
-> [alicevision@googlegroups.com](mailto:alicevision@googlegroups.com)
-> [http://groups.google.com/group/alicevision](http://groups.google.com/group/alicevision)
-
-You can also contact the core team privately on: [alicevision-team@googlegroups.com](mailto:alicevision-team@googlegroups.com).

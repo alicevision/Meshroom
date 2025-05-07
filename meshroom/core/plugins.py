@@ -181,3 +181,129 @@ class NodePlugin(BaseObject):
         if self.plugin:
             return self.plugin.processEnv
         return None
+
+
+class NodePluginManager(BaseObject):
+    """
+    Manager for all the loaded Plugin objects as well as the registered NodePlugin objects.
+
+    Members:
+        _plugins: dictionary containing all the loaded Plugins, with their name as the key
+        _nodePlugins: dictionary containing all the NodePlugins that have been registered
+                      (a NodePlugin may exist without having been registered) with their name as
+                      the key
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self._plugins: dict[str: Plugin] = {}  # loaded plugins
+        self._nodePlugins: dict[str: NodePlugin] = {}  # registered node plugins
+
+    def isRegistered(self, name: str) -> bool:
+        """
+        Return whether the node plugin has been registered already.
+
+        Args:
+            name: the name of the node plugin whose registration needs to be checked.
+        """
+        return name in self._nodePlugins
+
+    def getPlugins(self) -> dict[str: Plugin]:
+        """
+        Return a dictionary containing all the loaded Plugins, with {key, value} =
+        {name, Plugin}.
+        """
+        return self._plugins
+
+    def getPlugin(self, name: str) -> Plugin:
+        """
+        Return the loaded Plugin object named "name".
+
+        Args:
+            name: the name of the Plugin, used upon its loading.
+
+        Returns:
+            Plugin | None: the loaded Plugin object if it exists, None otherwise.
+        """
+        if name in self._plugins:
+            return self._plugins[name]
+        return None
+
+    def addPlugin(self, plugin: Plugin):
+        """
+        Load a Plugin object.
+
+        Args:
+            plugin: the Plugin to load and add to the list of loaded plugins.
+        """
+        if not self.getPlugin(plugin.name):
+            self._plugins[plugin.name] = plugin
+
+    def getNodePlugins(self) -> dict[str: NodePlugin]:
+        """
+        Return a dictionary containing all the registered NodePlugins, with
+        {key, value} = {name, NodePlugin}.
+        """
+        return self._nodePlugins
+
+    def getNodePlugin(self, name: str) -> NodePlugin:
+        """
+        Return the NodePlugin object that has been registered under the name "name" if it exists.
+
+        Args:
+            name: the name of the NodePlugin used for its registration.
+
+        Returns:
+            NodePlugin | None: the loaded NodePlugin object if it exists, None otherwise.
+        """
+        if self.isRegistered(name):
+            return self._nodePlugins[name]
+        return None
+
+    def registerPlugin(self, name: str):
+        """
+        Register all the NodePlugins contained in the Plugin loaded as "name".
+
+        Args:
+           name: the name of the Plugin whose NodePlugins will be registered.
+        """
+        plugin = self.getPlugin(name)
+        if plugin:
+            for node in plugin._nodePlugins:
+                self.registerNode(plugin._nodePlugins[node])
+        else:
+            logging.error(f"No loaded Plugin named {name}.")
+
+    def registerNode(self, nodePlugin: NodePlugin):
+        """
+        Register a node plugin. A registered node plugin will become instantiable.
+        If it is already registered, or if there is an issue with the node description,
+        the node plugin will not be registered and its status will be updated.
+
+        Args:
+            nodePlugin: the node plugin to register.
+        """
+        name = nodePlugin.nodeDescriptor.__name__
+        if not self.isRegistered(name) and nodePlugin.status != NodePluginStatus.DESC_ERROR:
+            try:
+                self._nodePlugins[name] = nodePlugin
+                nodePlugin.status = NodePluginStatus.LOADED
+            except Exception as e:
+                logging.error(f"NodePlugin {name} could not be loaded: {e}")
+                nodePlugin.status = NodePluginStatus.ERROR
+
+    def unregisterNode(self, nodePlugin: NodePlugin):
+        """
+        Unregister a node plugin. When unregistered, a node plugin cannot be instantiated anymore.
+        If it is not registered already, nothing happens.
+
+        Args:
+            nodePlugin: the node plugin to unregister.
+        """
+        name = nodePlugin.nodeDescriptor.__name__
+        if self.isRegistered(name):
+            if nodePlugin.status != NodePluginStatus.LOADED:
+                logging.warning(f"NodePlugin {name} is registered but is not correctly loaded.")
+            del self._nodePlugins[name]
+            nodePlugin.status = NodePluginStatus.NOT_LOADED

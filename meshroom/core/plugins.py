@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 from enum import Enum
+from inspect import getfile
 from pathlib import Path
 
 from meshroom.common import BaseObject
@@ -126,9 +127,57 @@ class Plugin(BaseObject):
             logging.warning(f"Node plugin {name} is not part of the plugin {self.name}.")
 
 
-
 class NodePlugin(BaseObject):
     """
+    Based on a node description, a NodePlugin represents a loadable node.
+
+    Members:
+        plugin: the Plugin object that contains this node plugin
+        path: absolute path to the file containing the node's description
+        nodeDescriptor: the description of the node
+        status: the loading status on the node plugin
+        errors: the list of errors (if there are any) when validating the description
+                of the node or attempting to load it
+        processEnv: the environment required for the node plugin's process. It can either
+                    be specific to this node plugin, or be common for all the node plugins within
+                    the plugin
     """
+
     def __init__(self, nodeDesc: desc.Node, plugin: Plugin = None):
         super().__init__()
+        self.plugin: Plugin = plugin
+        self.path: str = Path(getfile(nodeDesc)).resolve().as_posix()
+        self.nodeDescriptor: desc.Node = nodeDesc
+
+        self.status: NodePluginStatus = NodePluginStatus.NOT_LOADED
+        self.errors: list[str] = validateNodeDesc(nodeDesc)
+
+        if self.errors:
+            self.status = NodePluginStatus.DESC_ERROR
+
+        self._processEnv = None
+
+    @property
+    def plugin(self):
+        """
+        Return the Plugin object that contains this node plugin.
+        If the node plugin has not been assigned to a plugin yet, this value will
+        be set to None.
+        """
+        return self._plugin
+
+    @plugin.setter
+    def plugin(self, plugin: Plugin):
+        self._plugin = plugin
+
+    @property
+    def processEnv(self):
+        """"
+        Return the process environment that is specific to the node plugin if it has any.
+        Otherwise, the Plugin's is returned.
+        """
+        if self._processEnv:
+            return self._processEnv
+        if self.plugin:
+            return self.plugin.processEnv
+        return None

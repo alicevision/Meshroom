@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from enum import Enum
 from pathlib import Path
 
 from meshroom.common import BaseObject
@@ -17,6 +18,16 @@ class ProcessEnv(BaseObject):
         self.binPaths: list = [Path(folder, "bin")]
         self.libPaths: list = [Path(folder, "lib"), Path(folder, "lib64")]
         self.pythonPathFolders: list = [Path(folder)] + self.binPaths
+
+
+class NodePluginStatus(Enum):
+    """
+    Loading status for NodePlugin objects.
+    """
+    NOT_LOADED = 0  # The node plugin exists but is not loaded and cannot be used (not registered)
+    LOADED = 1  # The node plugin is currently loaded and functional (it has been registered)
+    DESC_ERROR = 2  # The node plugin exists but has an invalid description
+    ERROR = 3  # The node plugin exists and is valid but could not be successfully loaded
 
 
 class Plugin(BaseObject):

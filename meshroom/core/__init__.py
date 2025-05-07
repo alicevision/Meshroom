@@ -19,7 +19,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import ProcessEnv
+from meshroom.core.plugins import validateNodeDesc, ProcessEnv
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -126,40 +126,6 @@ def loadClasses(folder, packageName, classType):
                         '{errorMsg}\n'
                         .format(package=packageName, errorMsg='\n'.join(errors)))
     return classes
-
-
-def validateNodeDesc(nodeDesc: desc.Node) -> list:
-    """
-    Check that the node has a valid description before being loaded. For the description
-    to be valid, the default value of every parameter needs to correspond to the type
-    of the parameter.
-    An empty returned list means that every parameter is valid, and so is the node's description.
-    If it is not valid, the returned list contains the names of the invalid parameters. In case
-    of nested parameters (parameters in groups or lists, for example), the name of the parameter
-    follows the name of the parent attributes. For example, if the attribute "x", contained in group
-    "group", is invalid, then it will be added to the list as "group:x".
-
-    Args:
-        nodeDesc: description of the node
-
-    Returns:
-        errors: the list of invalid parameters if there are any, empty list otherwise
-    """
-    errors = []
-
-    for param in nodeDesc.inputs:
-        err = param.checkValueTypes()
-        if err:
-            errors.append(err)
-
-    for param in nodeDesc.outputs:
-        if param.value is None:
-            continue
-        err = param.checkValueTypes()
-        if err:
-            errors.append(err)
-
-    return errors
 
 
 class Version:

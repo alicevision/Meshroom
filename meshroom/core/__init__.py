@@ -19,7 +19,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import validateNodeDesc, ProcessEnv
+from meshroom.core.plugins import validateNodeDesc, ProcessEnv, NodePluginManager
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -33,6 +33,7 @@ sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
 nodesDesc: dict[str, desc.BaseNode] = {}
+pluginManager: NodePluginManager = NodePluginManager()
 submitters: dict[str, BaseSubmitter] = {}
 pipelineTemplates: dict[str, str] = {}
 

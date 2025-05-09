@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 from enum import Enum
 from inspect import getfile
@@ -72,8 +73,10 @@ class Plugin(BaseObject):
     Members:
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
         path: the absolute path of the plugin
-        _nodePlugins: dictionary mapping the name of a node plugin to its corresponding
-                      NodePlugin object
+        _nodePlugins: dictionary mapping the name of a node plugin contained in the plugin
+                      to its corresponding NodePlugin object
+        _templates: dictionary mapping the name of templates (.mg files) associated to the plugin
+                    with their absolute paths
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
@@ -84,7 +87,10 @@ class Plugin(BaseObject):
         self._path: str = path
 
         self._nodePlugins: dict[str: NodePlugin] = {}
+        self._templates: dict[str: str] = {}
         self._processEnv: ProcessEnv = ProcessEnv(path)
+
+        self.loadTemplates()
 
     @property
     def name(self):
@@ -95,6 +101,11 @@ class Plugin(BaseObject):
     def path(self):
         """ Return the absolute path of the plugin. """
         return self._path
+
+    @property
+    def templates(self):
+        """ Return the list of templates associated to the plugin. """
+        return self._templates
 
     @property
     def processEnv(self):
@@ -125,6 +136,17 @@ class Plugin(BaseObject):
             del self._nodePlugins[name]
         else:
             logging.warning(f"Node plugin {name} is not part of the plugin {self.name}.")
+
+    def loadTemplates(self):
+        """
+        Load all the pipeline templates that are available within the plugin folder.
+        Whenever this method is called, the list of templates for the plugin is cleared,
+        before being filled again.
+        """
+        self._templates.clear()
+        for file in os.listdir(self.path):
+            if file.endswith(".mg"):
+                self._templates[os.path.splitext(file)[0]] = os.path.join(self.path, file)
 
 
 class NodePlugin(BaseObject):

@@ -104,7 +104,7 @@ RowLayout {
                     anchors.fill: parent
                     hoverEnabled: true
                     acceptedButtons: Qt.AllButtons
-                    onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
+                    onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
 
                     property Component menuComp: Menu {
                         id: paramMenu
@@ -167,6 +167,13 @@ RowLayout {
                     }
                 }
             }
+
+            MaterialLabel {
+                text: MaterialIcons.visibility
+                font.pointSize: 7
+                visible: attribute.isOutput && attribute === _reconstruction.displayedAttr2D
+            }
+
             MaterialLabel {
                 visible: attribute.desc.advanced
                 text: MaterialIcons.build

@@ -379,6 +379,10 @@ FocusScope {
         }
     }
 
+    onDisplayedAttrChanged: {
+        _reconstruction.displayedAttr2D = displayedAttr
+    }
+
     Connections {
         target: _reconstruction
         function onSelectedViewIdChanged() {

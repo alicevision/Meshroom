@@ -50,12 +50,12 @@ RowLayout {
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
         Layout.fillHeight: true
-
+        
         RowLayout {
             spacing: 0
             width: parent.width
             height: parent.height
-
+    
             Label {
                 id: parameterLabel
 
@@ -155,6 +155,7 @@ RowLayout {
                             text: "Open File"
                             onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.evalValue))
                         }
+
                     }
 
                     onClicked: function(mouse) {
@@ -171,7 +172,7 @@ RowLayout {
             MaterialLabel {
                 text: MaterialIcons.visibility
                 font.pointSize: 7
-                visible: attribute.isOutput && attribute === _reconstruction.displayedAttr2D
+                visible: attribute.isOutput && (attribute === _reconstruction.displayedAttr2D || _reconstruction.displayedAttrs3D.count && _reconstruction.displayedAttrs3D.contains(attribute))
             }
 
             MaterialLabel {
@@ -180,7 +181,8 @@ RowLayout {
                 color: palette.mid
                 font.pointSize: 8
                 padding: 4
-            }
+            }            
+
         }
     }
 

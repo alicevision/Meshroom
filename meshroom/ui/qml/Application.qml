@@ -1105,20 +1105,30 @@ Page {
                     for (var i = 0; i < node.attributes.count; i++) {
                         var attr = node.attributes.at(i)
                         if (attr.isOutput && attr.desc.semantic !== "image")
-                            if (!alreadyDisplay || attr.desc.semantic == "3D")
+                            if (!alreadyDisplay || attr.desc.semantic == "3D") {
                                 if (workspaceView.viewIn3D(attr, mouse))
                                         alreadyDisplay = true
+                            }
+                                
                         }
                 }
 
+                function viewIn2D(attribute, mouse) {
+                    workspaceView.viewer2D.tryLoadNode(attribute.node)
+                    workspaceView.viewer2D.setAttributeName(attribute.name)
+                }
+
                 function viewIn3D(attribute, mouse) {
-                    if (!panel3dViewer || (!attribute.node.has3DOutput && !attribute.node.hasAttribute("useBoundingBox")))
+
+                    if (!panel3dViewer || (!attribute.node.has3DOutput && !attribute.node.hasAttribute("useBoundingBox"))) {
                         return false
+                    }
                     var loaded = panel3dViewer.viewer3D.view(attribute)
 
                     // solo media if Control modifier was held
-                    if (loaded && mouse && mouse.modifiers & Qt.ControlModifier)
+                    if (loaded && mouse && mouse.modifiers & Qt.ControlModifier) {
                         panel3dViewer.viewer3D.solo(attribute)
+                    }
                     return loaded
                 }
             }
@@ -1343,8 +1353,21 @@ Page {
                         var n = _reconstruction.upgradeNode(node)
                         _reconstruction.selectedNode = n
                     }
+
+                    onAttributeDoubleClicked: function(mouse, attribute) {
+
+                        if (attribute.is2D) {
+                            workspaceView.viewIn2D(attribute, mouse)
+                        }
+
+                        else if (attribute.is3D) {
+                             workspaceView.viewIn3D(attribute, mouse)
+                        }
+                        
+                    }
                 }
             }
         }
     }
+
 }

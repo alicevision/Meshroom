@@ -107,6 +107,7 @@ Entity {
                 "label": label ? label : Filepath.basename(pathStr),
                 "section": "External"
         }))
+
     }
 
     function view(attribute) {
@@ -115,15 +116,16 @@ Entity {
             return
         }
 
-        var attrLabel = attribute.isOutput ? "" : attribute.fullName.replace(attribute.node.name, "")
         var section = attribute.node.label
+
         // Add file to the internal ListModel
         m.mediaModel.append(
             makeElement({
-                "label": section + attrLabel,
+                "label": `${section}.${attribute.label}`,
                 "section": section,
                 "attribute": attribute
         }))
+         
     }
 
     function remove(index) {
@@ -384,11 +386,15 @@ Entity {
         onObjectAdded: function(index, object) {
             // Notify object that it is now fully instantiated
             object.fullyInstantiated = true
+            _reconstruction.displayedAttrs3D.append(object.modelSource)
         }
 
         onObjectRemoved: function(index, object) {
             if (m.sourceToEntity[object.modelSource])
+                
                 delete m.sourceToEntity[object.modelSource]
+                _reconstruction.displayedAttrs3D.remove(object.modelSource)                           
         }
+
     }
 }

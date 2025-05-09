@@ -19,7 +19,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import validateNodeDesc, ProcessEnv, NodePluginManager
+from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, ProcessEnv
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -43,7 +43,6 @@ def hashValue(value) -> str:
     hashObject = hashlib.sha1(str(value).encode('utf-8'))
     return hashObject.hexdigest()
 
-
 @contextmanager
 def add_to_path(p):
     import sys
@@ -55,9 +54,15 @@ def add_to_path(p):
     finally:
         sys.path = old_path
 
-
-def loadClasses(folder, packageName, classType):
+def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
     """
+    Go over the Python module named "packageName" located in "folder" to find files
+    that contain classes of type "classType" and return these classes in a list.
+
+    Args:
+        folder: the folder to load the module from.
+        packageName: the name of the module to look for nodes in.
+        classType: the class to look for in the files that are inspected.
     """
     classes = []
     errors = []
@@ -69,7 +74,8 @@ def loadClasses(folder, packageName, classType):
 
         try:
             package = importlib.import_module(packageName)
-            packageName = package.packageName if hasattr(package, 'packageName') else package.__name__
+            packageName = package.packageName if hasattr(package, "packageName") \
+                else package.__name__
             packageVersion = getattr(package, "__version__", None)
             packagePath = os.path.dirname(package.__file__)
         except Exception as e:
@@ -85,31 +91,30 @@ def loadClasses(folder, packageName, classType):
                             )
             return []
 
-        for importer, pluginName, ispkg in pkgutil.iter_modules(package.__path__):
-            pluginModuleName = '.' + pluginName
+        for _, pluginName, _ in pkgutil.iter_modules(package.__path__):
+            pluginModuleName = "." + pluginName
 
             try:
                 pluginMod = importlib.import_module(pluginModuleName, package=package.__name__)
-                plugins = [plugin for name, plugin in inspect.getmembers(pluginMod, inspect.isclass)
-                           if plugin.__module__ == f'{package.__name__}.{pluginName}'
+                plugins = [plugin for _, plugin in inspect.getmembers(pluginMod, inspect.isclass)
+                           if plugin.__module__ == f"{package.__name__}.{pluginName}"
                            and issubclass(plugin, classType)]
+
                 if not plugins:
                     logging.warning(f"No class defined in plugin: {pluginModuleName}")
 
-                importPlugin = True
                 for p in plugins:
-                    if classType == desc.Node:
-                        nodeErrors = validateNodeDesc(p)
-                        if nodeErrors:
-                            errors.append("  * {}: The following parameters do not have valid default values/ranges: {}"
-                                          .format(pluginName, ", ".join(nodeErrors)))
-                            importPlugin = False
-                            break
                     p.packageName = packageName
                     p.packageVersion = packageVersion
                     p.packagePath = packagePath
-                if importPlugin:
-                    classes.extend(plugins)
+                    if classType == desc.BaseNode:
+                        nodePlugin = NodePlugin(p)
+                        if nodePlugin.errors:
+                            errors.append("  * {}: The following parameters do not have valid " \
+                                          "default values/ranges: {}".format(pluginName, ", ".join(nodePlugin.errors)))
+                        classes.append(nodePlugin)
+                    else:
+                        classes.append(p)
             except Exception as e:
                 tb = traceback.extract_tb(e.__traceback__)
                 last_call = tb[-1]
@@ -126,7 +131,42 @@ def loadClasses(folder, packageName, classType):
         logging.warning(' The following "{package}" plugins could not be loaded:\n'
                         '{errorMsg}\n'
                         .format(package=packageName, errorMsg='\n'.join(errors)))
+
     return classes
+
+def loadClassesNodes(folder: str, packageName: str) -> list[NodePlugin]:
+    """
+    Return the list of all the NodePlugins that were created following the search of the
+    Python module named "packageName" located in the folder "folder".
+    A NodePlugin is created when a file within "packageName" that contains a class inheriting
+    desc.BaseNode is found.
+
+    Args:
+        folder: the folder to load the module from.
+        packageName: the name of the module to look for nodes in.
+
+    Returns:
+        list[NodePlugin]: a list of all the NodePlugins that were created based on the
+                          module's search. If none has been created, an empty list is returned.
+    """
+    return loadClasses(folder, packageName, desc.BaseNode)
+
+def loadClassesSubmitters(folder: str, packageName: str) -> list[BaseSubmitter]:
+    """
+    Return the list of all the submitters that were found during the search of the
+    Python module named "packageName" that located in the folder "folder".
+    A submitter is found if a file within "packageName" contains a class inheriting
+    from BaseSubmitter.
+
+    Args:
+        folder: the folder to load the module from.
+        packageName: the name of the module to look for nodes in.
+
+    Returns:
+        list[BaseSubmitter]: a list of all the submitters that were found during the
+                             module's search
+    """
+    return loadClasses(folder, packageName, BaseSubmitter)
 
 
 class Version:
@@ -289,22 +329,28 @@ def unregisterNodeType(nodeType: desc.Node):
     del nodesDesc[nodeType.__name__]
 
 
-def loadNodes(folder, packageName):
+def loadNodes(folder, packageName) -> list[NodePlugin]:
     if not os.path.isdir(folder):
         logging.error(f"Node folder '{folder}' does not exist.")
-        return
+        return []
 
-    return loadClasses(folder, packageName, desc.BaseNode)
+    nodes = loadClassesNodes(folder, packageName)
+    return nodes
 
 
-def loadAllNodes(folder):
-    for importer, package, ispkg in pkgutil.walk_packages([folder]):
+def loadAllNodes(folder) -> list[Plugin]:
+    plugins = []
+    for _, package, ispkg in pkgutil.walk_packages([folder]):
         if ispkg:
-            nodeTypes = loadNodes(folder, package)
-            for nodeType in nodeTypes:
-                registerNodeType(nodeType)
-            nodesStr = ', '.join([nodeType.__name__ for nodeType in nodeTypes])
-            logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
+            plugin = Plugin(package, folder)
+            nodePlugins = loadNodes(folder, package)
+            if nodePlugins:
+                for node in nodePlugins:
+                    plugin.addNodePlugin(node)
+                nodesStr = ', '.join([node.nodeDescriptor.__name__ for node in nodePlugins])
+                logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
+                plugins.append(plugin)
+    return plugins
 
 
 def loadPluginFolder(folder):
@@ -319,8 +365,13 @@ def loadPluginFolder(folder):
 
     processEnv = ProcessEnv(folder)
 
-    loadAllNodes(folder=mrFolder)
-    loadPipelineTemplates(folder=mrFolder)
+    plugins = loadAllNodes(folder=mrFolder)
+    if plugins:
+        for plugin in plugins:
+            pluginManager.addPlugin(plugin)
+            pluginManager.registerPlugin(plugin.name)
+            pipelineTemplates.update(plugin.templates)
+    return plugins
 
 
 def loadPluginsFolder(folder):
@@ -345,10 +396,9 @@ def loadSubmitters(folder, packageName):
         logging.error(f"Submitters folder '{folder}' does not exist.")
         return
 
-    return loadClasses(folder, packageName, BaseSubmitter)
+    return loadClassesSubmitters(folder, packageName)
 
-
-def loadPipelineTemplates(folder):
+def loadPipelineTemplates(folder: str):
     if not os.path.isdir(folder):
         logging.error(f"Pipeline templates folder '{folder}' does not exist.")
         return
@@ -356,12 +406,15 @@ def loadPipelineTemplates(folder):
         if file.endswith(".mg") and file not in pipelineTemplates:
             pipelineTemplates[os.path.splitext(file)[0]] = os.path.join(folder, file)
 
-
 def initNodes():
     additionalNodesPath = EnvVar.getList(EnvVar.MESHROOM_NODES_PATH)
     nodesFolders = [os.path.join(meshroomFolder, 'nodes')] + additionalNodesPath
     for f in nodesFolders:
-        loadAllNodes(folder=f)
+        plugins = loadAllNodes(folder=f)
+        if plugins:
+            for plugin in plugins:
+                pluginManager.addPlugin(plugin)
+                pluginManager.registerPlugin(plugin.name)
 
 
 def initSubmitters():
@@ -380,6 +433,8 @@ def initPipelines():
     pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
     for f in pipelineTemplatesFolders:
         loadPipelineTemplates(f)
+    for plugin in pluginManager.getPlugins().values():
+        pipelineTemplates.update(plugin.templates)
 
 
 def initPlugins():

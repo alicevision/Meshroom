@@ -51,9 +51,9 @@ class ComputerStatistics:
         self.ramTotal = psutil.virtual_memory().total / (1024*1024*1024)
 
         if platform.system() == "Windows":
-            from distutils import spawn
+            import shutil
             # If the platform is Windows and nvidia-smi
-            self.nvidia_smi = spawn.find_executable('nvidia-smi')
+            self.nvidia_smi = shutil.which('nvidia-smi')
             if self.nvidia_smi is None:
                 # Could not be found from the environment path,
                 # try to find it from system drive with default installation path

@@ -18,7 +18,7 @@ def registeredNodeTypes(nodeTypes: list[Type[desc.Node]]):
 
 @contextmanager
 def overrideNodeTypeVersion(nodeType: Type[desc.Node], version: str):
-    """Helper context manager to override the version of a given node type."""
+    """ Helper context manager to override the version of a given node type. """
     unpatchedFunc = meshroom.core.nodeVersion
     with patch.object(
         meshroom.core,

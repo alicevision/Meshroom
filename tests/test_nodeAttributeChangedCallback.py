@@ -313,7 +313,8 @@ class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
 
 class NodeWithDynamicOutputValue(desc.BaseNode):
     """
-    A Node containing an output attribute which value is computed dynamically during graph execution.
+    A Node containing an output attribute which value is computed dynamically
+    during graph execution.
     """
 
     inputs = [
@@ -390,7 +391,6 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         assert nodeB.input.value == 20
         assert nodeB.affectedInput.value == 0
 
-        
     def test_clearingDynamicOutputValueDoesNotTriggerDownstreamAttributeChangedCallback(
         self, graphSavedOnDisk
     ):
@@ -450,9 +450,8 @@ class TestAttributeCallbackBehaviorOnGraphImport:
 
         nodeA.input.value = 5
         nodeB.affectedInput.value = 2
-        
+
         otherGraph = Graph("")
         otherGraph.importGraphContent(graph)
 
         assert otherGraph.node(nodeB.name).affectedInput.value == 2
-

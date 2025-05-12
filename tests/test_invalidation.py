@@ -7,8 +7,10 @@ from meshroom.core import desc, registerNodeType
 class SampleNode(desc.Node):
     """ Sample Node for unit testing """
     inputs = [
-        desc.File(name='input', label='Input', description='', value='',),
-        desc.StringParam(name='paramA', label='ParamA', description='', value='', invalidate=False)  # No impact on UID
+        desc.File(name="input", label="Input", description="", value="",),
+        desc.StringParam(name="paramA", label="ParamA",
+                         description="", value="",
+                         invalidate=False)  # No impact on UID
     ]
     outputs = [
         desc.File(name='output', label='Output', description='', value="{nodeCacheFolder}")
@@ -19,10 +21,10 @@ registerNodeType(SampleNode)
 
 
 def test_output_invalidation():
-    graph = Graph('')
-    n1 = graph.addNewNode('SampleNode', input='/tmp')
-    n2 = graph.addNewNode('SampleNode')
-    n3 = graph.addNewNode('SampleNode')
+    graph = Graph("")
+    n1 = graph.addNewNode("SampleNode", input="/tmp")
+    n2 = graph.addNewNode("SampleNode")
+    n3 = graph.addNewNode("SampleNode")
 
     graph.addEdges(
         (n1.output, n2.input),
@@ -52,9 +54,9 @@ def test_inputLinkInvalidation():
     """
     Input links should not change the invalidation.
     """
-    graph = Graph('')
-    n1 = graph.addNewNode('SampleNode')
-    n2 = graph.addNewNode('SampleNode')
+    graph = Graph("")
+    n1 = graph.addNewNode("SampleNode")
+    n2 = graph.addNewNode("SampleNode")
 
     graph.addEdges((n1.input, n2.input))
     assert n1.input.uid() == n2.input.uid()

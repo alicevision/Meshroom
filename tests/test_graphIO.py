@@ -255,7 +255,8 @@ class TestGraphPartialSerialization:
             otherGraph = Graph("")
             otherGraph._deserialize(graph.serializePartial([nodeA, nodeB]))
 
-            assert otherGraph.node(nodeB.name).listInput.linkParam == otherGraph.node(nodeA.name).listInput
+            assert otherGraph.node(nodeB.name).listInput.linkParam == \
+                otherGraph.node(nodeA.name).listInput
 
     def test_singleNodeWithInputConnectionFromNonSerializedNodeRemovesEdge(self):
         graph = Graph("")

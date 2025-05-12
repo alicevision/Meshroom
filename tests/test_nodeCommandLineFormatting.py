@@ -8,7 +8,8 @@ from meshroom.core.node import Node
 
 class NodeWithAttributesNeedingFormatting(desc.Node):
     """
-    A node containing list, file, choice and group attributes in order to test the formatting of the command line.
+    A node containing list, file, choice and group attributes in order to test the
+    formatting of the command line.
     """
     inputs = [
         desc.ListAttribute(
@@ -128,23 +129,28 @@ class TestCommandLineFormatting:
 
         # Assert that extending values when the list is not empty is working
         node.images.extend(inputImages)
-        assert node.images.getValueStr() == '"single value with space" "{}" "{}"'.format(inputImages[0],
-                                                                                         inputImages[1])
+        assert node.images.getValueStr() == \
+            '"single value with space" "{}" "{}"'.format(inputImages[0],
+                                                         inputImages[1])
 
-        # Values are not retrieved as strings in the command line, so quotes around them are not expected
-        assert node._cmdVars["imagesValue"] == 'single value with space {} {}'.format(inputImages[0],
-                                                                                      inputImages[1])
+        # Values are not retrieved as strings in the command line, so quotes around them are
+        # not expected
+        assert node._cmdVars["imagesValue"] == \
+            'single value with space {} {}'.format(inputImages[0],
+                                                   inputImages[1])
 
     def test_formatting_strings(self):
         graph = Graph("")
         node = graph.addNewNode("NodeWithAttributesNeedingFormatting")
         node._buildCmdVars()
 
-        # Assert an empty File attribute generates empty quotes when requesting its value as a string
+        # Assert an empty File attribute generates empty quotes when requesting its value as
+        # a string
         assert node.input.getValueStr() == '""'
         assert node._cmdVars["inputValue"] == ""
 
-        # Assert a Choice attribute with a non-empty default value is surrounded with quotes when requested as a string
+        # Assert a Choice attribute with a non-empty default value is surrounded with quotes
+        # when requested as a string
         assert node.method.getValueStr() == '"MethodC"'
         assert node._cmdVars["methodValue"] == "MethodC"
 
@@ -154,14 +160,18 @@ class TestCommandLineFormatting:
 
         # Assert that the list with one empty value generates empty quotes
         node.images.extend("")
-        assert node.images.getValueStr() == '""', "A list with one empty string should generate empty quotes"
-        assert node._cmdVars["imagesValue"] == "", "The value is always only the value, so empty here"
+        assert node.images.getValueStr() == '""', \
+            "A list with one empty string should generate empty quotes"
+        assert node._cmdVars["imagesValue"] == "", \
+            "The value is always only the value, so empty here"
 
         # Assert that a list with 2 empty strings generates quotes
         node.images.extend("")
-        assert node.images.getValueStr() == '"" ""', "A list with 2 empty strings should generate quotes"
+        assert node.images.getValueStr() == '"" ""', \
+            "A list with 2 empty strings should generate quotes"
         assert node._cmdVars["imagesValue"] == ' ', \
-            "The value is always only the value, so 2 empty strings with the space separator in the middle"
+            "The value is always only the value, so 2 empty strings with the " \
+            "space separator in the middle"
 
     def test_formatting_groups(self):
         graph = Graph("")

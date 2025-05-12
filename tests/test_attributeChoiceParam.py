@@ -84,7 +84,7 @@ class TestChoiceParam:
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(NodeWithChoiceParams.__name__)
         node.choice.values = ["D", "E", "F"]
-        
+
         graph.save()
         loadedGraph = loadGraph(graph.filepath)
 
@@ -143,7 +143,7 @@ class TestChoiceParamSavingCustomValues:
         node = graph.addNewNode(NodeWithChoiceParamsSavingValuesOverride.__name__)
         node.choice.values = ["D", "E", "F"]
         node.choiceMulti.values = ["D", "E", "F"]
-        
+
         graph.save()
         loadedGraph = loadGraph(graph.filepath)
 

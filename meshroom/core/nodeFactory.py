@@ -54,7 +54,9 @@ class _NodeCreator:
         self.internalFolder = self.nodeData.get("internalFolder")
         self.position = Position(*self.nodeData.get("position", []))
         self.uid = self.nodeData.get("uid", None)
-        self.nodeDesc = meshroom.core.nodesDesc.get(self.nodeType, None)
+        self.nodeDesc = None
+        if meshroom.core.pluginManager.isRegistered(self.nodeType):
+            self.nodeDesc = meshroom.core.pluginManager.getNodePlugin(self.nodeType).nodeDescriptor
 
     def create(self) -> Union[Node, CompatibilityNode]:
         compatibilityIssue = self._checkCompatibilityIssues()

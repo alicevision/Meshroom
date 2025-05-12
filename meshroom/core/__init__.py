@@ -32,7 +32,6 @@ logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=log
 sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
-nodesDesc: dict[str, desc.BaseNode] = {}
 pluginManager: NodePluginManager = NodePluginManager()
 submitters: dict[str, BaseSubmitter] = {}
 pipelineTemplates: dict[str, str] = {}
@@ -408,7 +407,7 @@ def loadPipelineTemplates(folder: str):
 
 def initNodes():
     additionalNodesPath = EnvVar.getList(EnvVar.MESHROOM_NODES_PATH)
-    nodesFolders = [os.path.join(meshroomFolder, 'nodes')] + additionalNodesPath
+    nodesFolders = [os.path.join(meshroomFolder, "nodes")] + additionalNodesPath
     for f in nodesFolders:
         plugins = loadAllNodes(folder=f)
         if plugins:

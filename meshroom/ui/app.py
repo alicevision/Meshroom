@@ -13,7 +13,7 @@ from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtWidgets import QApplication
 
 import meshroom
-from meshroom.core import nodesDesc
+from meshroom.core import pluginManager
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
 
@@ -261,7 +261,7 @@ class MeshroomApp(QApplication):
         self.engine.addImportPath(qmlDir)
 
         # expose available node types that can be instantiated
-        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": nodesDesc[n].category} for n in sorted(nodesDesc.keys())})
+        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getNodePlugins()[n].nodeDescriptor.category} for n in sorted(pluginManager.getNodePlugins().keys())})
 
         # instantiate Reconstruction object
         self._undoStack = commands.UndoStack(self)

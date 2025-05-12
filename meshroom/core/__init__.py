@@ -312,22 +312,6 @@ def nodeVersion(nodeDesc: desc.Node, default=None):
     return moduleVersion(nodeDesc.__module__, default)
 
 
-def registerNodeType(nodeType: desc.Node):
-    """ Register a Node Type based on a Node Description class.
-
-    After registration, nodes of this type can be instantiated in a Graph.
-    """
-    if nodeType.__name__ in nodesDesc:
-        logging.error(f"Node Desc {nodeType.__name__} is already registered.")
-    nodesDesc[nodeType.__name__] = nodeType
-
-
-def unregisterNodeType(nodeType: desc.Node):
-    """ Remove 'nodeType' from the list of register node types. """
-    assert nodeType.__name__ in nodesDesc
-    del nodesDesc[nodeType.__name__]
-
-
 def loadNodes(folder, packageName) -> list[NodePlugin]:
     if not os.path.isdir(folder):
         logging.error(f"Node folder '{folder}' does not exist.")

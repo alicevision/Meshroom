@@ -21,6 +21,7 @@ Panel {
     property string nodeStartDateTime: ""
 
     signal attributeDoubleClicked(var mouse, var attribute)
+    signal showAttributeInViewport(var attribute)
     signal upgradeRequest()
 
     title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" + (node.label !== node.defaultLabel ? " (" + node.defaultLabel + ")" : "") : "")
@@ -300,6 +301,7 @@ Panel {
                             readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: function(mouse, attribute) { root.attributeDoubleClicked(mouse, attribute) }
                             onUpgradeRequest: root.upgradeRequest()
+                            onShowInViewport: function (attribute) {root.showAttributeInViewport(attribute)}
                             filterText: searchBar.text
                         }
 

@@ -1131,6 +1131,19 @@ Page {
                     }
                     return loaded
                 }
+
+                function viewAttributeInViewport(mouse, attribute) {
+                    /* Display the current attribute in the corresponding viewport */
+
+                    if (attribute.is2D) {
+                        workspaceView.viewIn2D(attribute, mouse)
+                    }
+
+                    else if (attribute.is3D) {
+                            workspaceView.viewIn3D(attribute, mouse)
+                    }
+
+                }
             }
 
             MSplitView {
@@ -1354,17 +1367,14 @@ Page {
                         _reconstruction.selectedNode = n
                     }
 
-                    onAttributeDoubleClicked: function(mouse, attribute) {
-
-                        if (attribute.is2D) {
-                            workspaceView.viewIn2D(attribute, mouse)
-                        }
-
-                        else if (attribute.is3D) {
-                             workspaceView.viewIn3D(attribute, mouse)
-                        }
-                        
+                    onShowAttributeInViewport: function(attribute) {
+                        workspaceView.viewAttributeInViewport(null, attribute)
                     }
+
+                    onAttributeDoubleClicked: function(mouse, attribute) {
+                        workspaceView.viewAttributeInViewport(mouse, attribute)                        
+                    }
+                    
                 }
             }
         }

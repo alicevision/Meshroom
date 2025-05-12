@@ -26,6 +26,7 @@ RowLayout {
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
     signal doubleClicked(var mouse, var attr)
+    signal showInViewport(var attr)
 
     spacing: 2
 
@@ -162,6 +163,19 @@ RowLayout {
                         forceActiveFocus()
                         if (mouse.button == Qt.RightButton) {
                             var menu = menuComp.createObject(parameterLabel)
+                            
+                            // Could not found a way to do edit declaratively
+                            if (attribute.isOutput && (attribute.is2D || attribute.is3D) ) {
+                                const item = Qt.createQmlObject('import QtQuick.Controls 2.15; 
+                                MenuItem { 
+                                    text: "Show in viewport" 
+                                    onClicked: {
+                                        root.showInViewport(attribute)
+                                    }
+                                }', menu)
+                                menu.addItem(item)
+                            }
+                            
                             menu.parent = parameterLabel
                             menu.popup()
                         }

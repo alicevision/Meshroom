@@ -2,8 +2,9 @@
 # coding:utf-8
 
 from meshroom.core.graph import Graph, loadGraph, executeGraph
-from meshroom.core import desc, registerNodeType, unregisterNodeType
+from meshroom.core import desc, pluginManager
 from meshroom.core.node import Node
+from meshroom.core.plugins import NodePlugin
 
 
 class NodeWithAttributesNeedingFormatting(desc.Node):
@@ -100,13 +101,15 @@ class NodeWithAttributesNeedingFormatting(desc.Node):
     ]
 
 class TestCommandLineFormatting:
+    nodePlugin = NodePlugin(NodeWithAttributesNeedingFormatting)
+
     @classmethod
     def setup_class(cls):
-        registerNodeType(NodeWithAttributesNeedingFormatting)
+        pluginManager.registerNode(cls.nodePlugin)
 
     @classmethod
     def teardown_class(cls):
-        unregisterNodeType(NodeWithAttributesNeedingFormatting)
+        pluginManager.unregisterNode(cls.nodePlugin)
 
     def test_formatting_listOfFiles(self):
         inputImages = ["/non/existing/fileA", "/non/existing/with space/fileB"]

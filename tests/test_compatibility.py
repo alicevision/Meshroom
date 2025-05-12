@@ -7,8 +7,8 @@ import copy
 from typing import Type
 import pytest
 
-import meshroom.core
-from meshroom.core import desc, registerNodeType, unregisterNodeType
+from meshroom.core import desc, pluginManager
+from meshroom.core.plugins import NodePlugin
 from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
@@ -170,21 +170,22 @@ class SampleInputNodeV2(desc.InputNode):
 
 def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
     """Change the `nodeDesc` associated to `nodeType`."""
-    meshroom.core.nodesDesc[nodeType] = nodeDesc
+    pluginManager.getNodePlugins()[nodeType] = NodePlugin(nodeDesc)
 
 
 def test_unknown_node_type():
     """
     Test compatibility behavior for unknown node type.
     """
-    registerNodeType(SampleNodeV1)
+    nodePlugin = NodePlugin(SampleNodeV1)
+    pluginManager.registerNode(nodePlugin)
     g = Graph("")
     n = g.addNewNode("SampleNodeV1", input="/dev/null", paramA="foo")
     graphFile = os.path.join(tempfile.mkdtemp(), "test_unknown_node_type.mg")
     g.save(graphFile)
     internalFolder = n.internalFolder
     nodeName = n.name
-    unregisterNodeType(SampleNodeV1)
+    pluginManager.unregisterNode(nodePlugin)
 
 
     # Reload file
@@ -328,14 +329,18 @@ def test_description_conflict():
             raise ValueError("Unexpected node type: " + srcNode.nodeType)
 
     # Restore original node types
-    meshroom.core.nodesDesc = originalNodeTypes
-
+    pluginManager._nodePlugins = originalNodeTypes
 
 def test_upgradeAllNodes():
-    registerNodeType(SampleNodeV1)
-    registerNodeType(SampleNodeV2)
-    registerNodeType(SampleInputNodeV1)
-    registerNodeType(SampleInputNodeV2)
+    nodePluginSampleV1 = NodePlugin(SampleNodeV1)
+    nodePluginSampleV2 = NodePlugin(SampleNodeV2)
+    nodePluginSampleInputV1 = NodePlugin(SampleInputNodeV1)
+    nodePluginSampleInputV2 = NodePlugin(SampleInputNodeV2)
+
+    pluginManager.registerNode(nodePluginSampleV1)
+    pluginManager.registerNode(nodePluginSampleV2)
+    pluginManager.registerNode(nodePluginSampleInputV1)
+    pluginManager.registerNode(nodePluginSampleInputV2)
 
     g = Graph("")
     n1 = g.addNewNode("SampleNodeV1")
@@ -350,11 +355,13 @@ def test_upgradeAllNodes():
     g.save(graphFile)
 
     # Make SampleNodeV2 and SampleInputNodeV2 an unknown type
-    unregisterNodeType(SampleNodeV2)
-    unregisterNodeType(SampleInputNodeV2)
-    meshroom.core.nodesDesc[SampleNodeV1.__name__] = SampleNodeV2
-    meshroom.core.nodesDesc[SampleInputNodeV1.__name__] = SampleInputNodeV2
+    pluginManager.unregisterNode(nodePluginSampleV2)
+    pluginManager.unregisterNode(nodePluginSampleInputV2)
+
     # Replace SampleNodeV1 by SampleNodeV2 and SampleInputNodeV1 by SampleInputNodeV2
+    pluginManager.getNodePlugins()[nodePluginSampleV1.nodeDescriptor.__name__] = nodePluginSampleV2
+    pluginManager.getNodePlugins()[nodePluginSampleInputV1.nodeDescriptor.__name__] = \
+        nodePluginSampleInputV2
 
     # Reload file
     g = loadGraph(graphFile)
@@ -375,13 +382,15 @@ def test_upgradeAllNodes():
     assert n2Name in g.compatibilityNodes.keys()
     assert n4Name in g.compatibilityNodes.keys()
 
-    unregisterNodeType(SampleNodeV1)
-    unregisterNodeType(SampleInputNodeV1)
+    pluginManager.unregisterNode(nodePluginSampleV1)
+    pluginManager.unregisterNode(nodePluginSampleInputV1)
 
 
 def test_conformUpgrade():
-    registerNodeType(SampleNodeV5)
-    registerNodeType(SampleNodeV6)
+    nodePluginSampleV5 = NodePlugin(SampleNodeV5)
+    nodePluginSampleV6 = NodePlugin(SampleNodeV6)
+    pluginManager.registerNode(nodePluginSampleV5)
+    pluginManager.registerNode(nodePluginSampleV6)
 
     g = Graph("")
     n1 = g.addNewNode("SampleNodeV5")
@@ -391,7 +400,7 @@ def test_conformUpgrade():
     g.save(graphFile)
 
     # Replace SampleNodeV5 by SampleNodeV6
-    meshroom.core.nodesDesc[SampleNodeV5.__name__] = SampleNodeV6
+    pluginManager.getNodePlugins()[nodePluginSampleV5.nodeDescriptor.__name__] = nodePluginSampleV6
 
     # Reload file
     g = loadGraph(graphFile)
@@ -415,8 +424,8 @@ def test_conformUpgrade():
     # Check conformation
     assert len(upgradedNode.paramA.value) == 1
 
-    unregisterNodeType(SampleNodeV5)
-    unregisterNodeType(SampleNodeV6)
+    pluginManager.unregisterNode(nodePluginSampleV5)
+    pluginManager.unregisterNode(nodePluginSampleV6)
 
 
 class TestGraphLoadingWithStrictCompatibility:

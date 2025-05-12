@@ -1,6 +1,7 @@
-from meshroom.core import desc, registerNodeType, unregisterNodeType
+from meshroom.core import desc, pluginManager
 from meshroom.core.node import Node
 from meshroom.core.graph import Graph, loadGraph
+from meshroom.core.plugins import NodePlugin
 
 
 class NodeWithCreationCallback(desc.InputNode):
@@ -22,13 +23,15 @@ class NodeWithCreationCallback(desc.InputNode):
 
 
 class TestNodeCreationCallback:
+    nodePlugin = NodePlugin(NodeWithCreationCallback)
+
     @classmethod
     def setup_class(cls):
-        registerNodeType(NodeWithCreationCallback)
+        pluginManager.registerNode(cls.nodePlugin)
 
     @classmethod
     def teardown_class(cls):
-        unregisterNodeType(NodeWithCreationCallback)
+        pluginManager.unregisterNode(cls.nodePlugin)
 
     def test_notTriggeredOnNodeInstantiation(self):
         node = Node(NodeWithCreationCallback.__name__)

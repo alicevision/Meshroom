@@ -1,23 +1,25 @@
 from contextlib import contextmanager
 from unittest.mock import patch
-from typing import Type
 
 import meshroom
-from meshroom.core import registerNodeType, unregisterNodeType
-from meshroom.core import desc
+from meshroom.core import desc, pluginManager
+from meshroom.core.plugins import NodePlugin
 
 @contextmanager
-def registeredNodeTypes(nodeTypes: list[Type[desc.Node]]):
+def registeredNodeTypes(nodeTypes: list[desc.Node]):
+    nodePluginsList = {}
     for nodeType in nodeTypes:
-        registerNodeType(nodeType)
+        nodePlugin = NodePlugin(nodeType)
+        pluginManager.registerNode(nodePlugin)
+        nodePluginsList[nodeType] = nodePlugin
 
     yield
 
     for nodeType in nodeTypes:
-        unregisterNodeType(nodeType)
+        pluginManager.unregisterNode(nodePluginsList[nodeType])
 
 @contextmanager
-def overrideNodeTypeVersion(nodeType: Type[desc.Node], version: str):
+def overrideNodeTypeVersion(nodeType: desc.Node, version: str):
     """ Helper context manager to override the version of a given node type. """
     unpatchedFunc = meshroom.core.nodeVersion
     with patch.object(

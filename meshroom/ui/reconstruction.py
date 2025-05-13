@@ -453,7 +453,9 @@ class Reconstruction(UIGraph):
         # Nodes that can be used to provide features folders to the UI
         "featureProvider": ["FeatureExtraction", "FeatureMatching", "StructureFromMotion"],
         # Nodes that can be used to provide matches folders to the UI
-        "matchProvider": ["FeatureMatching", "StructureFromMotion"]
+        "matchProvider": ["FeatureMatching", "StructureFromMotion"],
+        # Nodes that can be used to provide tracks files to the UI
+        "trackProvider": ["TracksBuilding", "SfMBootstraping", "SfMExpanding"]
     }
     # Nodes accessed from the UI
     uiNodes = [

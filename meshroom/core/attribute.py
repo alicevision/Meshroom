@@ -11,6 +11,11 @@ from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, hashValue
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from meshroom.core.graph import Edge
+
 
 def attributeFactory(description, value, isOutput, node, root=None, parent=None):
     """
@@ -319,12 +324,35 @@ class Attribute(BaseObject):
         # safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return False
-        # if the attribute is a ListAttribute, we need to check if any of its elements has output connections
-        if isinstance(self, ListAttribute):
-            return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None or \
-                any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
+
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
+    def getInputConnections(self) -> list["Edge"]:
+        """ Retrieve the upstreams connected edges """
+
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        
+        return [edge for edge in self.node.graph.edges.values() if edge.dst == self]
+
+    def getOutputConnections(self) -> list["Edge"]:
+        """ Retrieve all the edges connected to this attribute """
+
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        
+        return [edge for edge in self.node.graph.edges.values() if edge.src == self]
+    
+    def getLinkedInAttributes(self) -> list["Attribute"]:
+        """ Return the upstreams connected attributes  """
+
+        return [edge.src for edge in self.getInputConnections()]
+    
+    def getLinkedOutAttributes(self) -> list["Attribute"]:
+        """ Return the downstreams connected attributes """
+        
+        return [edge.dst for edge in self.getOutputConnections()]
+    
     def _applyExpr(self):
         """
         For string parameters with an expression (when loaded from file),
@@ -448,6 +476,8 @@ class Attribute(BaseObject):
     isLinkNested = isLink
     hasOutputConnectionsChanged = Signal()
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)
+    linkedInAttributes = Property(Variant, getLinkedInAttributes)
+    linkedOutAttributes = Property(Variant, getLinkedOutAttributes)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True), notify=isLinkChanged)
@@ -699,12 +729,42 @@ class ListAttribute(Attribute):
         return self.isLink \
             or self.node.graph and self.isInput and self.node.graph._edges \
             and any(v in self.node.graph._edges.keys() for v in self._value)
+    
+    # override
+    @property
+    def hasOutputConnections(self):
+        """ Whether the attribute has output connections, i.e is the source of at least one edge. """
 
+        # safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return False
+        
+        return next((edge for edge in self.node.graph.edges.values() if edge.src in self._value), None) is not None or \
+            any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
+    
+    # override
+    def getInputConnections(self) -> list["Edge"]:
+
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        
+        return [edge for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
+    
+    # override
+    def getOutputConnections(self) -> list["Edge"]:
+
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        
+        return [edge for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
+        
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     baseType = Property(str, getBaseType, constant=True)
     isLinkNested = Property(bool, isLinkNested.fget)
+    hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=Attribute.hasOutputConnectionsChanged)
+
 
 
 class GroupAttribute(Attribute):

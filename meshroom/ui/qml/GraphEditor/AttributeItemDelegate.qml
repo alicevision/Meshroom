@@ -184,9 +184,12 @@ RowLayout {
             }
 
             MaterialLabel {
-                text: MaterialIcons.visibility
+                property bool isDisplayable: attribute.isOutput && (attribute.is2D || attribute.is3D)
+                property bool isDisplayed: attribute === _reconstruction.displayedAttr2D || _reconstruction.displayedAttrs3D.count && _reconstruction.displayedAttrs3D.contains(attribute)
+                text: isDisplayed ? MaterialIcons.visibility : MaterialIcons.visibility_off
+                enabled: isDisplayed
+                visible: isDisplayable
                 font.pointSize: 7
-                visible: attribute.isOutput && (attribute === _reconstruction.displayedAttr2D || _reconstruction.displayedAttrs3D.count && _reconstruction.displayedAttrs3D.contains(attribute))
             }
 
             MaterialLabel {

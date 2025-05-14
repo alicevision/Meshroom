@@ -198,8 +198,7 @@ RowLayout {
                 color: palette.mid
                 font.pointSize: 8
                 padding: 4
-            }            
-
+            }
         }
     }
 

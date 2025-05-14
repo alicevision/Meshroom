@@ -23,8 +23,12 @@ FloatingPane {
     property real gammaValue: Math.pow(gammaCtrl.value, slidersPowerValue)
     property alias channelModeValue: channelsCtrl.value
     property variant colorRGBA: null
+    property variant mousePosition: {return {x:0, y:0} }
 
     property bool colorPickerVisible: true
+
+    property int pixelX: 0
+    property int pixelY: 0
 
     background: Rectangle { color: root.palette.window }
 
@@ -136,6 +140,33 @@ FloatingPane {
             }
         }
 
+        RowLayout {
+
+            Label {
+                text: "x"
+            }
+            TextField {
+                id: xPixel
+                text: root.mousePosition.x
+                Layout.preferredWidth: 50
+                onTextEdited: {
+                    pixelX = parseInt(xPixel.text)
+                }
+            }
+            Label {
+                text: "y"
+            }
+            TextField {
+                id: yPixel
+                text: root.mousePosition.y
+                Layout.preferredWidth: 50
+                onTextEdited: {
+                    pixelY = parseInt(yPixel.text)
+                }
+            }
+
+        }
+
         Rectangle {
             visible: colorPickerVisible
             Layout.preferredWidth: 20
@@ -148,6 +179,7 @@ FloatingPane {
         RowLayout {
             spacing: 1
             visible: colorPickerVisible
+
             TextField {
                 id: red
                 property real value: root.colorRGBA ? root.colorRGBA.x : 0.0

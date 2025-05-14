@@ -427,17 +427,30 @@ FocusScope {
             }
 
             colorRGBA: {
+                                                    
                 if (!floatImageViewerLoader.item ||
                     floatImageViewerLoader.item.imageStatus !== Image.Ready) {
                     return null
                 }
-                if (floatImageViewerLoader.item.containsMouse === false) {
-                    return null
+                
+                /// Get the pixel color value at mouse position (when mouse hover the image)
+                if (floatImageViewerLoader.item.containsMouse === true) {
+                    return floatImageViewerLoader.item.pixelValueAt( mousePosition.x, mousePosition.y )
                 }
-                var pix = floatImageViewerLoader.item.pixelValueAt(Math.floor(floatImageViewerLoader.item.mouseX),
-                                                                   Math.floor(floatImageViewerLoader.item.mouseY))
-                return pix
+
+                // Get the pixel color value from text field value (let the possibility to user to set the x,y from ui)
+                return floatImageViewerLoader.item.pixelValueAt( parseInt(pixelX) , parseInt(pixelY) )
+                
+
             }
+
+            mousePosition: {
+                return {
+                    x: Math.floor(floatImageViewerLoader.item.mouseX), 
+                    y: Math.floor(floatImageViewerLoader.item.mouseY)
+                }
+            }
+               
         }
 
         LensDistortionToolbar {

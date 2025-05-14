@@ -1132,8 +1132,8 @@ Page {
                     return loaded
                 }
 
-                function viewAttributeInViewport(mouse, attribute) {
-                    /* Display the current attribute in the corresponding viewport */
+                function viewAttributeInViewer(mouse, attribute) {
+                    /* Display the current attribute in the corresponding viewer */
 
                     if (attribute.is2D) {
                         workspaceView.viewIn2D(attribute, mouse)
@@ -1367,12 +1367,12 @@ Page {
                         _reconstruction.selectedNode = n
                     }
 
-                    onShowAttributeInViewport: function(attribute) {
-                        workspaceView.viewAttributeInViewport(null, attribute)
+                    onShowAttributeInViewer: function(attribute) {
+                        workspaceView.viewAttributeInViewer(null, attribute)
                     }
 
                     onAttributeDoubleClicked: function(mouse, attribute) {
-                        workspaceView.viewAttributeInViewport(mouse, attribute)                        
+                        workspaceView.viewAttributeInViewer(mouse, attribute)                        
                     }
                     
                 }

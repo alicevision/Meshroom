@@ -16,7 +16,7 @@ ListView {
 
     signal upgradeRequest()
     signal attributeDoubleClicked(var mouse, var attribute)
-    signal showInViewport(var attribute)
+    signal showInViewer(var attribute)
 
     implicitHeight: contentHeight
 
@@ -44,8 +44,8 @@ ListView {
             onDoubleClicked: function(mouse, attr) {
                 root.attributeDoubleClicked(mouse, attr)
             }
-            onShowInViewport: function(attr) {
-                root.showInViewport(attr)
+            onShowInViewer: function(attr) {
+                root.showInViewer(attr)
             }
         }
 

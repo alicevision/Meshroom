@@ -26,7 +26,7 @@ RowLayout {
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
     signal doubleClicked(var mouse, var attr)
-    signal showInViewport(var attr)
+    signal showInViewer(var attr)
 
     spacing: 2
 
@@ -168,9 +168,9 @@ RowLayout {
                             if (attribute.isOutput && (attribute.is2D || attribute.is3D) ) {
                                 const item = Qt.createQmlObject('import QtQuick.Controls 2.15; 
                                 MenuItem { 
-                                    text: "Show in viewport" 
+                                    text: "Show in Viewer" 
                                     onClicked: {
-                                        root.showInViewport(attribute)
+                                        root.showInViewer(attribute)
                                     }
                                 }', menu)
                                 menu.addItem(item)

@@ -361,6 +361,41 @@ Page {
                             font.pointSize: 24
 
                             text: modelData["path"] ? (modelData["thumbnail"] ? "" : MaterialIcons.description) : MaterialIcons.folder_open
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                hoverEnabled: true
+
+                                onClicked: function(mouse) {
+                                    if (mouse.button === Qt.RightButton) {
+                                        projectContextMenu.x = mouse.x
+                                        projectContextMenu.y = mouse.y
+                                        projectContextMenu.open()
+                                    }
+                                }
+                            }
+
+                            Menu {
+                                id: projectContextMenu
+
+                                MenuItem {
+                                    text: "Open"
+                                    onTriggered: {                                        
+                                        if (_reconstruction.load(modelData["path"])) {
+                                            mainStack.push("Application.qml")
+                                            MeshroomApp.addRecentProjectFile(modelData["path"])
+                                        }
+                                    }
+                                }
+
+                                MenuItem {
+                                    text: "Delete"
+                                    onTriggered: {
+                                        MeshroomApp.removeRecentProjectFile(modelData["path"])
+                                    }
+                                }
+                            }
 
                             Image {
                                 id: thumbnail

@@ -1358,14 +1358,88 @@ Page {
                     SplitView.minimumWidth: 80
 
                     node: _reconstruction ? _reconstruction.selectedNode : null
-                    property bool computing: _reconstruction ? _reconstruction.computing : false
+                    property bool computing: _reconstruction ? _reconstruction.computing : false       
+                    property var currentAttributes: []
+
                     // Make NodeEditor readOnly when computing
                     readOnly: node ? node.locked : false
 
                     onUpgradeRequest: {
                         var n = _reconstruction.upgradeNode(node)
                         _reconstruction.selectedNode = n
+                    }                   
+
+                    onInAttributeClicked: function(srcItem, mouse, inAttributes) {                        
+                        _handleNavButtonClick(srcItem, mouse, inAttributes)                        
                     }
+
+                    onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
+                        _handleNavButtonClick(srcItem, mouse, outAttributes)
+                    }
+
+                    // NavButtonContextMenu
+                    Menu {
+                        id: navButtonContextMenu
+
+                        Repeater {
+                            model: nodeEditor.currentAttributes
+
+                            delegate: MenuItem {
+
+                                contentItem: Text {
+                                    text: `${modelData.node.label}.${modelData.label}`
+                                    elide: Text.ElideLeft
+                                    color: Colors.sysPalette.text
+                                }
+                                
+                                onTriggered: {
+                                    nodeEditor._selectNodesFromAttributes([nodeEditor.currentAttributes[index]])
+                                }
+                            }
+                        }
+
+                    }
+
+                    function _selectNodesFromAttributes(attributes) {
+                        /*
+                            Retrieve the nodes from given attributes, and select its 
+                        */
+
+                        if ( !attributes || attributes.length == 0) { return }
+
+                        graphEditor.uigraph.clearNodeSelection()
+                        
+                        const nodes = attributes.map( attr => attr.node)
+
+                        if (attributes.length == 1) {
+                            _reconstruction.selectedNode = attributes[0].node
+                        }
+                        graphEditor.uigraph.selectNodes(nodes)
+                    } 
+
+                    function _openLinkAttributesContextMenu(srcItem, mouse, attributes) {
+                        nodeEditor.currentAttributes = attributes
+                        const srcGlobal = srcItem.mapToGlobal(0, 0)
+                        const nodeEditorGlobal = nodeEditor.mapToGlobal(0, 0)
+                        navButtonContextMenu.x = srcGlobal.x - nodeEditorGlobal.x
+                        navButtonContextMenu.y = srcGlobal.y - nodeEditorGlobal.y - 14 // TODO: Couldn't found a way to avoid padding in position. 14 = navButtonOut.paddingTop * 2
+                        navButtonContextMenu.open()
+                    }
+
+                    function _handleNavButtonClick(srcItem, mouse, attributes) {
+
+                        if (mouse.button === Qt.RightButton) {
+                            nodeEditor._openLinkAttributesContextMenu(srcItem, mouse, attributes)
+                            return
+                        }
+
+                        nodeEditor._selectNodesFromAttributes(attributes)
+
+                        if (mouse.button === Qt.MiddleButton) {
+                            graphEditor.fit()
+                        }
+                    }
+
 
                     onShowAttributeInViewer: function(attribute) {
                         workspaceView.viewAttributeInViewer(null, attribute)

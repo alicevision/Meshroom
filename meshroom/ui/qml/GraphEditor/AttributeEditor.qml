@@ -16,6 +16,8 @@ ListView {
 
     signal upgradeRequest()
     signal attributeDoubleClicked(var mouse, var attribute)
+    signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
+    signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
     signal showInViewer(var attribute)
 
     implicitHeight: contentHeight
@@ -41,9 +43,17 @@ ListView {
             filterText: root.filterText
             objectsHideable: root.objectsHideable
             attribute: object
+
             onDoubleClicked: function(mouse, attr) {
                 root.attributeDoubleClicked(mouse, attr)
             }
+            onInAttributeClicked: function(srcItem, mouse, inAttributes) {
+                root.inAttributeClicked(srcItem, mouse, inAttributes)
+            }
+            onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
+                root.outAttributeClicked(srcItem, mouse, outAttributes)
+            }
+
             onShowInViewer: function(attr) {
                 root.showInViewer(attr)
             }

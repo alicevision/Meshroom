@@ -9,6 +9,14 @@ import Controls 1.0
 Page {
     id: root
 
+    function setCurrentTab(tabName) {
+        const tabIndex = tabPanel.tabs.indexOf(tabName)
+
+        if (tabIndex) {
+            tabPanel.currentTab = tabIndex
+        }
+    }
+
     onVisibleChanged: {
         logo.playing = false
         if (visible) {
@@ -369,9 +377,28 @@ Page {
 
                                 onClicked: function(mouse) {
                                     if (mouse.button === Qt.RightButton) {
+
+                                        if (!modelData["path"]) { return }
+
                                         projectContextMenu.x = mouse.x
                                         projectContextMenu.y = mouse.y
                                         projectContextMenu.open()
+                                        
+                                    }
+                                }
+
+                                onDoubleClicked: {
+                                    if (!modelData["path"]) {
+                                        initFileDialogFolder(openFileDialog)
+                                        openFileDialog.open()
+                                    } else {
+                                        // Open project
+                                        mainStack.push("Application.qml")
+                                        if (_reconstruction.load(modelData["path"])) {
+                                            MeshroomApp.addRecentProjectFile(modelData["path"])
+                                        } else {
+                                            MeshroomApp.removeRecentProjectFile(modelData["path"])
+                                        }
                                     }
                                 }
                             }
@@ -413,25 +440,8 @@ Page {
                                 anchors.centerIn: parent
                                 running: gridView.visible && modelData["thumbnail"] && thumbnail.status != Image.Ready
                                 visible: running
-                            }
+                            }                            
 
-                            Connections {
-                                target: projectDelegate
-                                function onClicked() {
-                                    if (!modelData["path"]) {
-                                        initFileDialogFolder(openFileDialog)
-                                        openFileDialog.open()
-                                    } else {
-                                        // Open project
-                                        mainStack.push("Application.qml")
-                                        if (_reconstruction.load(modelData["path"])) {
-                                            MeshroomApp.addRecentProjectFile(modelData["path"])
-                                        } else {
-                                            MeshroomApp.removeRecentProjectFile(modelData["path"])
-                                        }
-                                    }
-                                }
-                            }
                         }
                         Label {
                             id: project

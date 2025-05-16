@@ -23,7 +23,7 @@ FloatingPane {
     property real gammaValue: Math.pow(gammaCtrl.value, slidersPowerValue)
     property alias channelModeValue: channelsCtrl.value
     property variant colorRGBA: null
-    property variant mousePosition: {return {x:0, y:0} }
+    property variant mousePosition: ({x:0, y:0})
 
     property bool colorPickerVisible: true
 

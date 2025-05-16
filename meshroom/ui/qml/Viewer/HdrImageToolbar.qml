@@ -27,8 +27,8 @@ FloatingPane {
 
     property bool colorPickerVisible: true
 
-    property int pixelX: 0
-    property int pixelY: 0
+    property variant pixelX: null
+    property variant pixelY: null
 
     background: Rectangle { color: root.palette.window }
 
@@ -147,10 +147,12 @@ FloatingPane {
             }
             TextField {
                 id: xPixel
-                text: root.mousePosition.x
+                text: root.mousePosition ? root.mousePosition.x : null
                 Layout.preferredWidth: 50
+                validator: IntValidator {}
                 onTextEdited: {
-                    pixelX = parseInt(xPixel.text)
+                    const xPixelValue = parseInt(xPixel.text)
+                    pixelX = Number.isNaN(xPixelValue) ? null : xPixelValue
                 }
             }
             Label {
@@ -158,10 +160,12 @@ FloatingPane {
             }
             TextField {
                 id: yPixel
-                text: root.mousePosition.y
+                text: root.mousePosition ? root.mousePosition.y : null
                 Layout.preferredWidth: 50
+                validator: IntValidator {}
                 onTextEdited: {
-                    pixelY = parseInt(yPixel.text)
+                    const yPixelValue = parseInt(yPixel.text)
+                    pixelY = Number.isNaN(yPixelValue) ? null : yPixelValue
                 }
             }
 

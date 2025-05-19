@@ -14,10 +14,6 @@ FloatingPane {
     property real gammaDefaultValue: 1.0
     property string pixelCoordinatesPlaceholder: "--"
 
-    function resetDefaultValues() {
-        gainCtrl.value = root.gainDefaultValue
-        gammaCtrl.value = root.gammaDefaultValue
-    }
 
     property real slidersPowerValue: 4.0
     property real gainValue: Math.pow(gainCtrl.value, slidersPowerValue)
@@ -28,10 +24,24 @@ FloatingPane {
 
     property bool colorPickerVisible: true
 
-    property variant pixelX: null
-    property variant pixelY: null
+    property variant userDefinedXPixel: null
+    property variant userDefinedYPixel: null
 
     background: Rectangle { color: root.palette.window }
+
+    function resetDefaultValues() {
+        gainCtrl.value = root.gainDefaultValue
+        gammaCtrl.value = root.gammaDefaultValue
+    }
+
+    function resetPixelCoordinates() {
+        if(userDefinedXPixel !== null) { userDefinedXPixel = null }
+        if(userDefinedYPixel !== null) { userDefinedYPixel = null }        
+    }
+
+    onMousePositionChanged: {
+        resetPixelCoordinates()
+    }
 
     DoubleValidator {
         id: doubleValidator
@@ -154,7 +164,7 @@ FloatingPane {
                 validator: IntValidator {}
                 onTextEdited: {
                     const xPixelValue = parseInt(xPixel.text)
-                    pixelX = Number.isNaN(xPixelValue) ? null : xPixelValue
+                    userDefinedXPixel = Number.isNaN(xPixelValue) ? null : xPixelValue
                 }
             }
             Label {
@@ -168,7 +178,7 @@ FloatingPane {
                 validator: IntValidator {}
                 onTextEdited: {
                     const yPixelValue = parseInt(yPixel.text)
-                    pixelY = Number.isNaN(yPixelValue) ? null : yPixelValue
+                    userDefinedYPixel = Number.isNaN(yPixelValue) ? null : yPixelValue
                 }
             }
 

@@ -438,12 +438,12 @@ FocusScope {
                     return floatImageViewerLoader.item.pixelValueAt( mousePosition.x, mousePosition.y )
                 } 
 
-                if ( !Number.isInteger(pixelX) || !Number.isInteger(pixelY) ) {
+                if ( !Number.isInteger(userDefinedXPixel) || !Number.isInteger(userDefinedYPixel) ) {
                     return null
                 }
 
                 // Get the pixel color value from text field value (let the possibility to user to set the x,y from ui)
-                return floatImageViewerLoader.item.pixelValueAt( parseInt(pixelX) , parseInt(pixelY) )
+                return floatImageViewerLoader.item.pixelValueAt( parseInt(userDefinedXPixel) , parseInt(userDefinedYPixel) )
                 
             }
 

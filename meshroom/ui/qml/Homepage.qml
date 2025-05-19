@@ -9,14 +9,6 @@ import Controls 1.0
 Page {
     id: root
 
-    function setCurrentTab(tabName) {
-        const tabIndex = tabPanel.tabs.indexOf(tabName)
-
-        if (tabIndex) {
-            tabPanel.currentTab = tabIndex
-        }
-    }
-
     onVisibleChanged: {
         logo.playing = false
         if (visible) {
@@ -376,6 +368,7 @@ Page {
                                 hoverEnabled: true
 
                                 onClicked: function(mouse) {
+
                                     if (mouse.button === Qt.RightButton) {
 
                                         if (!modelData["path"]) { return }
@@ -383,15 +376,16 @@ Page {
                                         projectContextMenu.x = mouse.x
                                         projectContextMenu.y = mouse.y
                                         projectContextMenu.open()
+                                        return
                                         
                                     }
-                                }
-
-                                onDoubleClicked: {
+                                        
                                     if (!modelData["path"]) {
                                         initFileDialogFolder(openFileDialog)
                                         openFileDialog.open()
-                                    } else {
+                                    } 
+                                    
+                                    else {
                                         // Open project
                                         mainStack.push("Application.qml")
                                         if (_reconstruction.load(modelData["path"])) {
@@ -400,7 +394,9 @@ Page {
                                             MeshroomApp.removeRecentProjectFile(modelData["path"])
                                         }
                                     }
+                                    
                                 }
+
                             }
 
                             Menu {
@@ -440,7 +436,7 @@ Page {
                                 anchors.centerIn: parent
                                 running: gridView.visible && modelData["thumbnail"] && thumbnail.status != Image.Ready
                                 visible: running
-                            }                            
+                            }
 
                         }
                         Label {

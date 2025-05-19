@@ -737,14 +737,6 @@ Page {
                         }
                     }
                 }
-                Action {
-                    id: projectsPage
-                    text: "Projects ..."
-                    onTriggered: {
-                        const homepage = mainStack.replace("Homepage.qml")
-                        homepage.setCurrentTab("Projects")
-                    }
-                }
                 MenuSeparator { }
                 Action {
                     id: saveAction

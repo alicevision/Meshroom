@@ -12,6 +12,7 @@ FloatingPane {
 
     property real gainDefaultValue: 1.0
     property real gammaDefaultValue: 1.0
+    property string pixelCoordinatesPlaceholder: "--"
 
     function resetDefaultValues() {
         gainCtrl.value = root.gainDefaultValue
@@ -149,6 +150,7 @@ FloatingPane {
                 id: xPixel
                 text: root.mousePosition ? root.mousePosition.x : null
                 Layout.preferredWidth: 50
+                placeholderText: pixelCoordinatesPlaceholder
                 validator: IntValidator {}
                 onTextEdited: {
                     const xPixelValue = parseInt(xPixel.text)
@@ -162,6 +164,7 @@ FloatingPane {
                 id: yPixel
                 text: root.mousePosition ? root.mousePosition.y : null
                 Layout.preferredWidth: 50
+                placeholderText: pixelCoordinatesPlaceholder
                 validator: IntValidator {}
                 onTextEdited: {
                     const yPixelValue = parseInt(yPixel.text)

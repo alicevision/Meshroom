@@ -12,21 +12,36 @@ FloatingPane {
 
     property real gainDefaultValue: 1.0
     property real gammaDefaultValue: 1.0
+    property string pixelCoordinatesPlaceholder: "--"
 
-    function resetDefaultValues() {
-        gainCtrl.value = root.gainDefaultValue
-        gammaCtrl.value = root.gammaDefaultValue
-    }
 
     property real slidersPowerValue: 4.0
     property real gainValue: Math.pow(gainCtrl.value, slidersPowerValue)
     property real gammaValue: Math.pow(gammaCtrl.value, slidersPowerValue)
     property alias channelModeValue: channelsCtrl.value
     property variant colorRGBA: null
+    property variant mousePosition: ({x:0, y:0})
 
     property bool colorPickerVisible: true
 
+    property variant userDefinedXPixel: null
+    property variant userDefinedYPixel: null
+
     background: Rectangle { color: root.palette.window }
+
+    function resetDefaultValues() {
+        gainCtrl.value = root.gainDefaultValue
+        gammaCtrl.value = root.gammaDefaultValue
+    }
+
+    function resetPixelCoordinates() {
+        if(userDefinedXPixel !== null) { userDefinedXPixel = null }
+        if(userDefinedYPixel !== null) { userDefinedYPixel = null }        
+    }
+
+    onMousePositionChanged: {
+        resetPixelCoordinates()
+    }
 
     DoubleValidator {
         id: doubleValidator
@@ -136,6 +151,39 @@ FloatingPane {
             }
         }
 
+        RowLayout {
+
+            Label {
+                text: "x"
+            }
+            TextField {
+                id: xPixel
+                text: root.mousePosition ? root.mousePosition.x : null
+                Layout.preferredWidth: 40
+                placeholderText: pixelCoordinatesPlaceholder
+                validator: IntValidator { bottom: 0 }
+                onTextEdited: {
+                    const xPixelValue = parseInt(xPixel.text)
+                    userDefinedXPixel = Number.isNaN(xPixelValue) ? null : xPixelValue
+                }
+            }
+            Label {
+                text: "y"
+            }
+            TextField {
+                id: yPixel
+                text: root.mousePosition ? root.mousePosition.y : null
+                Layout.preferredWidth: 40
+                placeholderText: pixelCoordinatesPlaceholder
+                validator: IntValidator { bottom: 0 }
+                onTextEdited: {
+                    const yPixelValue = parseInt(yPixel.text)
+                    userDefinedYPixel = Number.isNaN(yPixelValue) ? null : yPixelValue
+                }
+            }
+
+        }
+
         Rectangle {
             visible: colorPickerVisible
             Layout.preferredWidth: 20
@@ -148,6 +196,7 @@ FloatingPane {
         RowLayout {
             spacing: 1
             visible: colorPickerVisible
+
             TextField {
                 id: red
                 property real value: root.colorRGBA ? root.colorRGBA.x : 0.0

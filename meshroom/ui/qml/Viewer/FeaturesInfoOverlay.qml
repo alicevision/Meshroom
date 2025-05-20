@@ -29,15 +29,15 @@ FloatingPane {
             ColumnLayout {
             // Node used to read features
                 Label {
-                    text: "featuresProvider : " + featuresNodeName
+                    text: "Features Provider: " + featuresNodeName
                     Layout.fillWidth: true
                 }
                 Label {
-                    text: "tracksProvider : " + tracksNodeName
+                    text: "Tracks Provider: " + tracksNodeName
                     Layout.fillWidth: true
                 }
                 Label {
-                    text: "sfmDataProvider : " + sfmdataNodeName
+                    text: "SfMData Provider: " + sfmdataNodeName
                     Layout.fillWidth: true
                 }
             }

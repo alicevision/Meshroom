@@ -1308,9 +1308,9 @@ FocusScope {
                             mfeatures: mfeaturesLoader.item
                             mtracks: mtracksLoader.item
                             msfmdata: msfmDataLoader.item
-                            featuresNodeName: (mfeaturesLoader.activeNode)? mfeaturesLoader.activeNode.label: "None"
-                            tracksNodeName: (mtracksLoader.activeNode)? mtracksLoader.activeNode.label: "None"
-                            sfmdataNodeName: (msfmDataLoader.activeNode)? msfmDataLoader.activeNode.label: "None"
+                            featuresNodeName: (mfeaturesLoader.activeNode) ? mfeaturesLoader.activeNode.label : "None"
+                            tracksNodeName: (mtracksLoader.activeNode) ? mtracksLoader.activeNode.label : "None"
+                            sfmdataNodeName: (msfmDataLoader.activeNode) ? msfmDataLoader.activeNode.label : "None"
                         }
                     }
 

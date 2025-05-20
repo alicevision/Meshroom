@@ -19,17 +19,31 @@ FloatingPane {
     property var mfeatures: null
     property var mtracks: null
     property var msfmdata: null
+    property var featuresNodeName: ""
+    property var tracksNodeName: ""
+    property var sfmdataNodeName: ""
 
     ColumnLayout {
         // Header
         RowLayout {
+            ColumnLayout {
             // Node used to read features
-            Label {
-                text: _reconstruction && _reconstruction.activeNodes.get("featureProvider").node ? _reconstruction.activeNodes.get("featureProvider").node.label : ""
-                Layout.fillWidth: true
+                Label {
+                    text: "Features Provider: " + featuresNodeName
+                    Layout.fillWidth: true
+                }
+                Label {
+                    text: "Tracks Provider: " + tracksNodeName
+                    Layout.fillWidth: true
+                }
+                Label {
+                    text: "SfMData Provider: " + sfmdataNodeName
+                    Layout.fillWidth: true
+                }
             }
             // Settings menu
             Loader {
+                Layout.alignment: Qt.AlignTop
                 active: root.pluginStatus === Loader.Ready
                 sourceComponent: MaterialToolButton {
                     text: MaterialIcons.settings

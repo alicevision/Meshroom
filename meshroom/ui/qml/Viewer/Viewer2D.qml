@@ -1194,16 +1194,30 @@ FocusScope {
                             if (!root.aliceVisionPluginAvailable) {
                                 return null
                             }
-                            return _reconstruction ? _reconstruction.activeNodes.get("matchProvider").node : null
+
+                            if (_reconstruction)
+                            {
+                                //Try first to use tracks
+                                if (_reconstruction.activeNodes.get("trackProvider").node)
+                                {
+                                    return _reconstruction.activeNodes.get("trackProvider").node
+                                }
+
+                                return _reconstruction.activeNodes.get("matchProvider").node
+                            }
+
+                            return null
                         }
+
                         property bool isComputed: activeNode && activeNode.isComputed
 
                         active: isUsed && isComputed
 
                         onActiveChanged: {
                             if (active) {
-                                // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
-                                // so it can fail safely if the c++ plugin is not available
+                                // instantiate and initialize a mTracks component 
+                                // dynamically using Loader.setSource so it can fail safely 
+                                // if the c++ plugin is not available
                                 setSource("MTracks.qml", {
                                     "matchingFolders": Qt.binding(function() {
                                         let result = []
@@ -1219,6 +1233,18 @@ FocusScope {
                                         }
                                         return result
                                     }),
+                                    "tracksFile": Qt.binding(function() {
+                                        let result = ""
+                                        if (activeNode) {
+                                            if (activeNode.nodeType == "TracksBuilding" && isComputed) {
+                                                result = activeNode.attribute("output").value
+                                            }
+                                            else if (activeNode.hasAttribute("tracksFilename")) {
+                                                result = activeNode.attribute("tracksFilename").value
+                                            }
+                                        }
+                                        return result
+                                    })
                                 })
                             } else {
                                 // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -1282,6 +1308,9 @@ FocusScope {
                             mfeatures: mfeaturesLoader.item
                             mtracks: mtracksLoader.item
                             msfmdata: msfmDataLoader.item
+                            featuresNodeName: (mfeaturesLoader.activeNode) ? mfeaturesLoader.activeNode.label : "None"
+                            tracksNodeName: (mtracksLoader.activeNode) ? mtracksLoader.activeNode.label : "None"
+                            sfmdataNodeName: (msfmDataLoader.activeNode) ? msfmDataLoader.activeNode.label : "None"
                         }
                     }
 

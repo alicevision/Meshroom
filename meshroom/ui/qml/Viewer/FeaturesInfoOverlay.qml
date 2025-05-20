@@ -43,7 +43,7 @@ FloatingPane {
             }
             // Settings menu
             Loader {
-                anchors.top: parent.top
+                Layout.alignment: Qt.AlignTop
                 active: root.pluginStatus === Loader.Ready
                 sourceComponent: MaterialToolButton {
                     text: MaterialIcons.settings

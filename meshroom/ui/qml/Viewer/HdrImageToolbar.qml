@@ -161,7 +161,7 @@ FloatingPane {
                 text: root.mousePosition ? root.mousePosition.x : null
                 Layout.preferredWidth: 50
                 placeholderText: pixelCoordinatesPlaceholder
-                validator: IntValidator {}
+                validator: IntValidator { bottom: 0 }
                 onTextEdited: {
                     const xPixelValue = parseInt(xPixel.text)
                     userDefinedXPixel = Number.isNaN(xPixelValue) ? null : xPixelValue
@@ -175,7 +175,7 @@ FloatingPane {
                 text: root.mousePosition ? root.mousePosition.y : null
                 Layout.preferredWidth: 50
                 placeholderText: pixelCoordinatesPlaceholder
-                validator: IntValidator {}
+                validator: IntValidator { bottom: 0 }
                 onTextEdited: {
                     const yPixelValue = parseInt(yPixel.text)
                     userDefinedYPixel = Number.isNaN(yPixelValue) ? null : yPixelValue

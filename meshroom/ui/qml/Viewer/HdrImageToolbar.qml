@@ -159,7 +159,7 @@ FloatingPane {
             TextField {
                 id: xPixel
                 text: root.mousePosition ? root.mousePosition.x : null
-                Layout.preferredWidth: 50
+                Layout.preferredWidth: 40
                 placeholderText: pixelCoordinatesPlaceholder
                 validator: IntValidator { bottom: 0 }
                 onTextEdited: {
@@ -173,7 +173,7 @@ FloatingPane {
             TextField {
                 id: yPixel
                 text: root.mousePosition ? root.mousePosition.y : null
-                Layout.preferredWidth: 50
+                Layout.preferredWidth: 40
                 placeholderText: pixelCoordinatesPlaceholder
                 validator: IntValidator { bottom: 0 }
                 onTextEdited: {

@@ -213,7 +213,10 @@ RowLayout {
                 text: isDisplayed ? MaterialIcons.visibility : MaterialIcons.visibility_off
                 enabled: isDisplayed
                 visible: isDisplayable
-                font.pointSize: 7
+
+                Layout.alignment: Qt.AlignRight
+                rightPadding: 5
+                font.pointSize: 8
             }
 
             MaterialToolButton {
@@ -224,8 +227,8 @@ RowLayout {
                 text: MaterialIcons.logout
                 font.pointSize: 8
                 enabled: shouldBeVisible
-                Layout.alignment: Qt.AlignTop | Qt.AlignRight
-                topPadding: 7
+                Layout.alignment: Qt.AlignRight
+                topPadding: 5
                 visible: shouldBeVisible
 
                 MouseArea {

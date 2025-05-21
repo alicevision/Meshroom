@@ -12,6 +12,7 @@ import inspect
 from collections.abc import Iterable, Sequence
 from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
+from meshroom.core.desc.validators import NotEmptyValidator
 from meshroom.core import desc, hashValue
 from meshroom.core.keyValues import KeyValues
 from meshroom.core.exception import InvalidEdgeError
@@ -84,6 +85,7 @@ class Attribute(BaseObject):
         self._enabled: bool = True
         self._depth: int = root.depth + 1 if root is not None else 0
         self._exposed: bool = root.exposed if root is not None else attributeDesc.exposed
+        self._description: str = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
         self._invalidationValue = ""  # invalidation value for output attributes
         self._value = None
@@ -234,6 +236,15 @@ class Attribute(BaseObject):
             # Internal attributes are set as inputs
             self.requestNodeUpdate()
         self.valueChanged.emit()
+
+    def _get_description(self):
+        return self._description
+
+    def _set_description(self, desc):
+        if self._description == desc:
+            return
+        self._description = desc
+        self.descriptionChanged.emit()
 
     def _getKeyValues(self):
         """
@@ -401,21 +412,6 @@ class Attribute(BaseObject):
         else:
             return self._getValue() == self.getDefaultValue()
 
-    def _isValid(self):
-        """
-        Check attribute description validValue:
-            - If it is a function, execute it and return the result
-            - Otherwise, simply return true
-        """
-        if callable(self._desc.validValue):
-            try:
-                return self._desc.validValue(self.node)
-            except Exception as exc:
-                if not self.node.isCompatibilityNode:
-                    logging.warning(f"Failed to evaluate 'isValid' (node lambda) for attribute '{self.fullName}': {exc}")
-                return True
-        return True
-
     def _is2dDisplayable(self) -> bool:
         """
         Return True if the current attribute is considered as a displayable 2D file.
@@ -486,6 +482,43 @@ class Attribute(BaseObject):
         """
         # Emit if the enable status has changed
         self._setEnabled(self._getEnabled())
+
+    def getErrorMessages(self) -> list[str]:
+        """ Execute the validators and aggregate the eventual error messages"""
+
+        result = []
+
+        for validator in self.desc.validators:
+            isValid, errorMessages = validator(self.node, self)
+
+            if isValid:
+                continue
+
+            for errorMessage in errorMessages:
+                result.append(errorMessage)
+
+        return result
+
+    def _isValid(self) -> bool:
+        """ Check the validation and return False if any validator return (False, erorrs)
+        """
+
+        for validator in self.desc.validators:
+            isValid, _ = validator(self.node, self)
+
+            if not isValid:
+                return False
+
+        return True
+
+    def _isMandatory(self) -> bool:
+        """ An attribute is considered as mandatory it contain a NotEmptyValidator """
+
+        for validator in self.desc.validators:
+            if isinstance(validator, NotEmptyValidator):
+                return True
+
+        return False
 
     def _getEnabled(self) -> bool:
         if callable(self._desc.enabled):
@@ -742,6 +775,9 @@ class Attribute(BaseObject):
 
     expressionApplied = Signal()
 
+    errorMessageChanged = Signal()
+    errorMessages = Property(Variant, lambda self: self.getErrorMessages(), notify=errorMessageChanged)
+    isMandatory = Property(bool, _isMandatory, constant=True )    
 
 def raiseIfLink(func):
     """

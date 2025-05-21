@@ -158,6 +158,10 @@ class ClassSignal:
     """
     _map = {}
 
+    def __init__(self, *args, **kwargs):
+        self._args = args
+        self._kwargs = kwargs
+
     def __get__(self, instance, owner):
         if instance is None:
             # When we access ClassSignal element on the class object without any instance,

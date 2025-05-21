@@ -22,6 +22,7 @@ QtObject {
     readonly property color lime: "#CDDC39"
     readonly property color grey: "#555555"
     readonly property color lightgrey: "#999999"
+    readonly property color warning: "#FF9800"
     readonly property color darkpurple: "#5c4885"
 
     readonly property var statusColors: {
@@ -66,7 +67,7 @@ QtObject {
         console.warn("Unknown status : " + chunk.status)
         return "magenta"
     }
-    
+
     function getNodeColor(node, overrides) {
         if (node === undefined)
             return "transparent"

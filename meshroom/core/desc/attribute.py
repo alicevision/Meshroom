@@ -6,6 +6,10 @@ from enum import auto, Enum
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList, strtobool, deprecated
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from meshroom.core.desc.validators import AttributeValidator
 
 # Pre-compile regexes for better performance on repeated calls
 _ACRONYM_RE = re.compile(r'([A-Z]+)([A-Z][a-z])')
@@ -62,7 +66,7 @@ class Attribute(BaseObject):
 
     def __init__(self, name, label, description, value, advanced, semantic, commandLineGroup, enabled,
                  keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
-                 validValue=True, errorMessage="", visible=True, exposed=False):
+                 validValue=True, errorMessage="", visible=True, exposed=False, validators:list["AttributeValidator"]=None):
         super(Attribute, self).__init__()
         self._name = name
         self._label = convertToLabel(name) if label is None else label
@@ -76,8 +80,6 @@ class Attribute(BaseObject):
         self._invalidate = invalidate
         self._semantic = semantic
         self._uidIgnoreValue = uidIgnoreValue
-        self._validValue = validValue
-        self._errorMessage = errorMessage
         self._visible = visible
         self._exposed = exposed
         self._isExpression = (isinstance(self._value, str) and "{" in self._value) \
@@ -85,6 +87,13 @@ class Attribute(BaseObject):
         self._isDynamicValue = (self._value is None)
         self._valueType = None
 
+        if validators is None:
+            self._validators = []
+        elif isinstance(validators, (list, tuple)):
+            self._validators = validators
+        else:
+            raise RuntimeError(f"Validators should be of type 'list[AttributeValidator]', the type '{type(validators)}' is not supported.")
+        
     def getInstanceType(self):
         """ Return the correct Attribute instance corresponding to the description. """
         # Import within the method to prevent cyclic dependencies
@@ -134,7 +143,11 @@ class Attribute(BaseObject):
         except ValueError:
             return False
         return True
-
+    
+    @property
+    def validators(self):
+        return self._validators
+    
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
@@ -161,8 +174,6 @@ class Attribute(BaseObject):
     invalidate = Property(Variant, lambda self: self._invalidate, constant=True)
     semantic = Property(str, lambda self: self._semantic, constant=True)
     uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
-    validValue = Property(Variant, lambda self: self._validValue, constant=True)
-    errorMessage = Property(str, lambda self: self._errorMessage, constant=True)
     # visible:
     #   The attribute is not displayed in the Graph Editor if False but still visible in the Node Editor.
     #   This property is useful to hide some attributes that are not relevant for the user.
@@ -181,7 +192,7 @@ class ListAttribute(Attribute):
     """ A list of Attributes """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, elementDesc, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
-                 advanced=False, semantic="", enabled=True, joinChar=" ", visible=True, exposed=False, value=None):
+                 advanced=False, semantic="", enabled=True, joinChar=" ", visible=True, exposed=False, value=None, validators=None):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         :param value: default value. Use None to declare a dynamic output ListAttribute
@@ -193,7 +204,7 @@ class ListAttribute(Attribute):
         
         super(ListAttribute, self).__init__(name=name, label=label, description=description, value=value,
                                             invalidate=False, commandLineGroup=commandLineGroup, advanced=advanced, semantic=semantic,
-                                            enabled=enabled, visible=visible, exposed=exposed)
+                                            enabled=enabled, visible=visible, exposed=exposed, validators=validators)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -239,7 +250,7 @@ class GroupAttribute(Attribute):
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, items, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, semantic="",  enabled=True, joinChar=" ", brackets=None, visible=True,
-                 exposed=False):
+                 exposed=False, validators=None):
         """
         :param items: the description of the Attributes composing this group
         """
@@ -250,7 +261,7 @@ class GroupAttribute(Attribute):
 
         super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={},
                                              commandLineGroup=commandLineGroup, advanced=advanced, invalidate=False, semantic=semantic,
-                                             enabled=enabled, visible=visible, exposed=exposed)
+                                             enabled=enabled, visible=visible, exposed=exposed, validators=validators)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -350,26 +361,26 @@ class Param(Attribute):
     """
     def __init__(self, name, label, description, value, commandLineGroup, advanced, semantic, enabled,
                  keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
-                 validValue=True, errorMessage="", visible=True, exposed=False):
+                 validValue=True, errorMessage="", visible=True, exposed=False, validators=None):
         super(Param, self).__init__(name=name, label=label, description=description, value=value,
                                     keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
                                     enabled=enabled, invalidate=invalidate, semantic=semantic,
                                     uidIgnoreValue=uidIgnoreValue, validValue=validValue,
-                                    errorMessage=errorMessage, visible=visible, exposed=exposed)
+                                    errorMessage=errorMessage, visible=visible, exposed=exposed, validators=validators)
 
 
 class File(Attribute):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label=None, description=None, value=None, group="allParams", commandLineGroup=_setParamSentinel, 
-                 advanced=False, invalidate=True, semantic="", enabled=True, visible=True, exposed=True):
-        
+    def __init__(self, name, label=None, description=None, value=None, group="allParams", commandLineGroup=_setParamSentinel,
+                 advanced=False, invalidate=True, semantic="", enabled=True, visible=True, exposed=True, validators=None):
+
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
-        super(File, self).__init__(name=name, label=label, description=description, value=value, 
-                                   commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, 
-                                   invalidate=invalidate, semantic=semantic, visible=visible, exposed=exposed)
+        super(File, self).__init__(name=name, label=label, description=description, value=value,
+                                   commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled,
+                                   invalidate=invalidate, semantic=semantic, visible=visible, exposed=exposed, validators=validators)
         self._valueType = str
 
     def validateValue(self, value):
@@ -395,15 +406,15 @@ class BoolParam(Param):
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, name, label=None, description=None, value=None, keyable=False, keyType=None,
-                 group="allParams", commandLineGroup=_setParamSentinel, advanced=False, 
-                 enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
-        
+                 group="allParams", commandLineGroup=_setParamSentinel, advanced=False,
+                 enabled=True, invalidate=True, semantic="", visible=True, exposed=False, validators=None):
+
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
         super(BoolParam, self).__init__(name=name, label=label, description=description, value=value,
-                                        keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, 
-                                        advanced=advanced, enabled=enabled, invalidate=invalidate, 
-                                        semantic=semantic, visible=visible, exposed=exposed)
+                                        keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup,
+                                        advanced=advanced, enabled=enabled, invalidate=invalidate,
+                                        semantic=semantic, visible=visible, exposed=exposed, validators=validators)
         self._valueType = bool
 
     def validateValue(self, value):
@@ -430,17 +441,17 @@ class IntParam(Param):
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, name, label=None, description=None, value=None, range=None, keyable=False, keyType=None,
-                 group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True, 
-                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
+                 group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True,
+                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False, validators=None):
         self._range = range
 
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
         super(IntParam, self).__init__(name=name, label=label, description=description, value=value,
-                                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, 
-                                       advanced=advanced, enabled=enabled, invalidate=invalidate, 
+                                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup,
+                                       advanced=advanced, enabled=enabled, invalidate=invalidate,
                                        semantic=semantic, validValue=validValue, errorMessage=errorMessage,
-                                       visible=visible, exposed=exposed)
+                                       visible=visible, exposed=exposed, validators=validators)
         self._valueType = int
 
     def validateValue(self, value):
@@ -470,16 +481,16 @@ class FloatParam(Param):
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, name, label=None, description=None, value=None, range=None, keyable=False, keyType=None,
-                 group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True, 
-                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
+                 group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True,
+                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False, validators=None):
         self._range = range
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value,
-                                         keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, 
-                                         advanced=advanced, enabled=enabled, invalidate=invalidate, 
+                                         keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup,
+                                         advanced=advanced, enabled=enabled, invalidate=invalidate,
                                          semantic=semantic, validValue=validValue, errorMessage=errorMessage,
-                                         visible=visible, exposed=exposed)
+                                         visible=visible, exposed=exposed, validators=validators)
         self._valueType = float
 
     def validateValue(self, value):
@@ -507,15 +518,15 @@ class PushButtonParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
-                 advanced=False, enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
-        
+    def __init__(self, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel,
+                 advanced=False, enabled=True, invalidate=True, semantic="", visible=True, exposed=False, validators=None):
+
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
         super(PushButtonParam, self).__init__(name=name, label=label, description=description, value=None,
-                                              commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, 
-                                              invalidate=invalidate, semantic=semantic, visible=visible, 
-                                              exposed=exposed)
+                                              commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled,
+                                              invalidate=invalidate, semantic=semantic, visible=visible,
+                                              exposed=exposed, validators=validators)
         self._valueType = None
 
     def getInstanceType(self):
@@ -550,15 +561,15 @@ class ChoiceParam(Param):
 
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, name: str, label=None, description=None, value=None, values=None, exclusive=True, saveValuesOverride=False,
-                 group="allParams", commandLineGroup=_setParamSentinel, joinChar=" ", advanced=False, enabled=True, 
-                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
+                 group="allParams", commandLineGroup=_setParamSentinel, joinChar=" ", advanced=False, enabled=True,
+                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False, validators=None):
 
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
         super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value,
-                                          commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, 
-                                          invalidate=invalidate, semantic=semantic, validValue=validValue, 
-                                          errorMessage=errorMessage, visible=visible, exposed=exposed)
+                                          commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled,
+                                          invalidate=invalidate, semantic=semantic, validValue=validValue,
+                                          errorMessage=errorMessage, visible=visible, exposed=exposed, validators=validators)
         self._values = values if values is not None else []
         self._saveValuesOverride = saveValuesOverride
         self._exclusive = exclusive
@@ -635,17 +646,17 @@ class StringParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label=None, description=None, value=None, group="allParams", commandLineGroup=_setParamSentinel, 
-                 advanced=False, enabled=True, invalidate=True, semantic="", uidIgnoreValue=None, validValue=True, 
-                 errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label=None, description=None, value=None, group="allParams", commandLineGroup=_setParamSentinel,
+                 advanced=False, enabled=True, invalidate=True, semantic="", uidIgnoreValue=None, validValue=True,
+                 errorMessage="", visible=True, exposed=False, validators=None):
 
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value,
-                                          commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, 
-                                          invalidate=invalidate, semantic=semantic, uidIgnoreValue=uidIgnoreValue, 
-                                          validValue=validValue, errorMessage=errorMessage, visible=visible, 
-                                          exposed=exposed)
+                                          commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled,
+                                          invalidate=invalidate, semantic=semantic, uidIgnoreValue=uidIgnoreValue,
+                                          validValue=validValue, errorMessage=errorMessage, visible=visible,
+                                          exposed=exposed, validators=validators)
         self._valueType = str
 
     def validateValue(self, value):
@@ -668,14 +679,14 @@ class ColorParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label=None, description=None, value=None, group="allParams", commandLineGroup=_setParamSentinel, 
-                 advanced=False, enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
-        
+    def __init__(self, name, label=None, description=None, value=None, group="allParams", commandLineGroup=_setParamSentinel,
+                 advanced=False, enabled=True, invalidate=True, semantic="", visible=True, exposed=False, validators=None):
+
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
         super(ColorParam, self).__init__(name=name, label=label, description=description, value=value,
-                                         commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, 
-                                         invalidate=invalidate, semantic=semantic, visible=visible, exposed=exposed)
+                                         commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled,
+                                         invalidate=invalidate, semantic=semantic, visible=visible, exposed=exposed, validators=validators)
         self._valueType = str
 
     def validateValue(self, value):

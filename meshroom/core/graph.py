@@ -1710,6 +1710,7 @@ class Graph(BaseObject):
     statusUpdated = Signal()
     canComputeLeavesChanged = Signal()
     canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
+    attributeValueChanged = Signal(Attribute)
 
 
 def loadGraph(filepath, strictCompatibility: bool = False) -> Graph:

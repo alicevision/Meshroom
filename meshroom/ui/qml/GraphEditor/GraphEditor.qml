@@ -870,6 +870,7 @@ Item {
 
                     mainSelected: uigraph.selectedNode === node
                     hovered: uigraph.hoveredNode === node
+                    hasWarnings: node.hasInvalidAttribute
 
                     // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
                     selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
@@ -1006,6 +1007,7 @@ Item {
                         enabled: !nodeRepeater.ongoingDrag
                         NumberAnimation { duration: 100 }
                     }
+
                 }
             }
         }

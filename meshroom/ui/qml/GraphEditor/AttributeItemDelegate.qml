@@ -29,7 +29,6 @@ RowLayout {
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
     signal showInViewer(var attr)
-    signal attributeEdited(var attribute)
 
     spacing: 2
 
@@ -382,7 +381,6 @@ RowLayout {
                     onEditingFinished: {
                         setTextFieldAttribute(text)
                         errorMessages = attribute.errorMessages
-                        root.attributeEdited(attribute)
                     }
 
                     onAccepted: {

@@ -1171,6 +1171,8 @@ class BaseNode(BaseObject):
         if callback:
             callback(self)
 
+        self.hasInvalidAttributeChanged.emit()
+
         if self.graph:
             # If we are in a graph, propagate the notification to the connected output attributes
             for edge in self.graph.outEdges(attr):
@@ -1622,6 +1624,12 @@ class BaseNode(BaseObject):
         
         return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3D), None) is not None
 
+    def _hasInvalidAttribute(self):
+        for attribute in self._attributes:
+            if len(attribute.errorMessages) > 0:
+                return True
+        return False
+
     name = Property(str, getName, constant=True)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
@@ -1673,6 +1681,9 @@ class BaseNode(BaseObject):
     hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
+
+    hasInvalidAttributeChanged = Signal()
+    hasInvalidAttribute = Property(bool, _hasInvalidAttribute, notify=hasInvalidAttributeChanged)
 
 
 class Node(BaseNode):

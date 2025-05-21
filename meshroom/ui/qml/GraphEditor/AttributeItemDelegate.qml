@@ -226,7 +226,7 @@ RowLayout {
                 enabled: shouldBeVisible
                 Layout.alignment: Qt.AlignTop | Qt.AlignRight
                 topPadding: 7
-                opacity: shouldBeVisible ? 1 : 0
+                visible: shouldBeVisible
 
                 MouseArea {
                     anchors.fill: parent

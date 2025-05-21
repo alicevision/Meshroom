@@ -51,7 +51,7 @@ class Attribute(BaseObject):
     stringIsLinkRe = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
     
     VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
-    VALID_3D_EXTENSIONS = ['.obj', '.stl', '.fbx', '.gltf', '.abc', '.ply']
+    VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".abc", ".ply"]
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         """

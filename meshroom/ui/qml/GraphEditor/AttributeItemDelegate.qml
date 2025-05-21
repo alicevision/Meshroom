@@ -53,7 +53,7 @@ RowLayout {
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
         Layout.fillHeight: true
-        
+
         RowLayout {
             spacing: 0
             width: parent.width
@@ -80,9 +80,9 @@ RowLayout {
                         root.inAttributeClicked(navButtonIn, mouse, object.linkedInAttributes)
                     }
                 }
-                                
+
             }
-    
+
             Label {
                 id: parameterLabel
 
@@ -189,7 +189,7 @@ RowLayout {
                         forceActiveFocus()
                         if (mouse.button == Qt.RightButton) {
                             var menu = menuComp.createObject(parameterLabel)
-                            
+
                             // Could not found a way to do edit declaratively
                             if (attribute.isOutput && (attribute.is2D || attribute.is3D) ) {
                                 const item = Qt.createQmlObject('import QtQuick.Controls 2.15; 
@@ -201,7 +201,7 @@ RowLayout {
                                 }', menu)
                                 menu.addItem(item)
                             }
-                            
+
                             menu.parent = parameterLabel
                             menu.popup()
                         }
@@ -238,7 +238,7 @@ RowLayout {
                         root.outAttributeClicked(navButtonOut, mouse, attribute.linkedOutAttributes)               
                     }
                 }
-                
+
 
             }
 

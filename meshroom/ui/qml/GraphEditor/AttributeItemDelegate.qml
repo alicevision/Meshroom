@@ -183,25 +183,23 @@ RowLayout {
                             onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.evalValue))
                         }
 
+                        MenuItem { 
+                            visible: attribute.isOutput && (attribute.is2D || attribute.is3D)
+                            height: visible ? implicitHeight : 0
+                            text: {
+                                if (attribute.is2D)
+                                    return "Show in 2D Viewer"
+                                return "Show in 3D Viewer"
+                            }
+                            onClicked: root.showInViewer(attribute)
+                        }
+
                     }
 
                     onClicked: function(mouse) {
                         forceActiveFocus()
                         if (mouse.button == Qt.RightButton) {
                             var menu = menuComp.createObject(parameterLabel)
-
-                            // Could not found a way to do edit declaratively
-                            if (attribute.isOutput && (attribute.is2D || attribute.is3D) ) {
-                                const item = Qt.createQmlObject('import QtQuick.Controls 2.15; 
-                                MenuItem { 
-                                    text: "Show in Viewer" 
-                                    onClicked: {
-                                        root.showInViewer(attribute)
-                                    }
-                                }', menu)
-                                menu.addItem(item)
-                            }
-
                             menu.parent = parameterLabel
                             menu.popup()
                         }

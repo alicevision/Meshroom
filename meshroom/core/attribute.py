@@ -9,6 +9,7 @@ import logging
 from collections.abc import Iterable, Sequence
 from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
+from meshroom.core.desc.validators import NotEmptyValidator
 from meshroom.core import desc, hashValue
 
 from typing import TYPE_CHECKING
@@ -481,6 +482,31 @@ class Attribute(BaseObject):
         
         return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS if self.desc.semantic == imageSemantic), None) is not None
 
+    def getErrorMessages(self) -> list[str]:
+        """ Execute the validators and aggregate the eventual error messages"""
+
+        result = []
+
+        for validator in self.desc._validators:
+            isValid, errorMessages = validator(self.node, self)
+
+            if isValid:
+                continue
+
+            for errorMessage in errorMessages:
+                result.append(errorMessage)
+        
+        return result
+
+    def _isMandatory(self) -> bool:
+        """ An attribute is considered as mandatory it contain a NotEmptyValidator """
+
+        for validator in self.desc.validators:
+            if isinstance(validator, NotEmptyValidator):
+                return True
+            
+        return False
+
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
     fullNameToNode = Property(str, getFullNameToNode, constant=True)
@@ -531,6 +557,10 @@ class Attribute(BaseObject):
     validValueChanged = Signal()
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
     root = Property(BaseObject, root.fget, constant=True)
+
+    errorMessageChanged = Signal()
+    errorMessages = Property(Variant, lambda self: self.getErrorMessages(), notify=errorMessageChanged)
+    isMandatory = Property(bool, _isMandatory, constant=True )
 
 
 def raiseIfLink(func):

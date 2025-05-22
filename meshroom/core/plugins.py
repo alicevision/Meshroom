@@ -148,6 +148,16 @@ class Plugin(BaseObject):
             if file.endswith(".mg"):
                 self._templates[os.path.splitext(file)[0]] = os.path.join(self.path, file)
 
+    def containsNodePlugin(self, name: str) -> bool:
+        """
+        Return whether the node plugin "name" is part of the plugin, independently from its
+        status.
+
+        Args:
+            name: the name of the node plugin to be checked.
+        """
+        return name in self._nodePlugins
+
 
 class NodePlugin(BaseObject):
     """
@@ -230,6 +240,22 @@ class NodePluginManager(BaseObject):
             name: the name of the node plugin whose registration needs to be checked.
         """
         return name in self._nodePlugins
+
+    def belongsToPlugin(self, name: str) -> Plugin:
+        """
+        Check whether the node plugin belongs to a loaded plugin, independently from
+        whether it has been registered or not.
+
+        Args:
+            name: the name of the node plugin that needs to be searched for across plugins.
+
+        Returns:
+            Plugin | None: the Plugin the node belongs to if it exists, None otherwise.
+        """
+        for plugin in self._plugins.values():
+            if plugin.containsNodePlugin(name):
+                return plugin
+        return None
 
     def getPlugins(self) -> dict[str: Plugin]:
         """

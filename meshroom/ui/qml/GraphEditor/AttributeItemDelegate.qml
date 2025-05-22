@@ -212,6 +212,7 @@ RowLayout {
                 text: isDisplayed ? MaterialIcons.visibility : MaterialIcons.visibility_off
                 enabled: isDisplayed
                 visible: isDisplayable
+                ToolTip.text: `This attribute is displayable in the ${attribute.is2D ? "2D" : "3D"} viewer.`
 
                 padding: 4
                 font.pointSize: 8
@@ -232,8 +233,8 @@ RowLayout {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
-                    onClicked: function(mouse) {        
-                        root.outAttributeClicked(navButtonOut, mouse, attribute.linkedOutAttributes)               
+                    onClicked: function(mouse) {
+                        root.outAttributeClicked(navButtonOut, mouse, attribute.linkedOutAttributes)
                     }
                 }
 

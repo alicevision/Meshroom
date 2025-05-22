@@ -68,9 +68,8 @@ RowLayout {
                 text: MaterialIcons.login
                 enabled: shouldBeVisible
                 font.pointSize: 8
-                Layout.alignment: Qt.AlignTop | Qt.AlignLeft 
-                topPadding: 7
-                opacity: shouldBeVisible ? 1: 0
+                Layout.fillHeight: true
+                visible: shouldBeVisible
 
                 MouseArea {
                     anchors.fill: parent
@@ -214,8 +213,7 @@ RowLayout {
                 enabled: isDisplayed
                 visible: isDisplayable
 
-                Layout.alignment: Qt.AlignRight
-                rightPadding: 5
+                padding: 4
                 font.pointSize: 8
             }
 
@@ -227,8 +225,7 @@ RowLayout {
                 text: MaterialIcons.logout
                 font.pointSize: 8
                 enabled: shouldBeVisible
-                Layout.alignment: Qt.AlignRight
-                topPadding: 5
+                Layout.fillHeight: true
                 visible: shouldBeVisible
 
                 MouseArea {

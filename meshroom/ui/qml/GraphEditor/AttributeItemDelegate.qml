@@ -471,7 +471,7 @@ RowLayout {
 
                 MaterialLabel {                
                     visible: !attribute.isOutput && errorMessages.length
-                    text: MaterialIcons.warning
+                    text: MaterialIcons.fmd_bad
                     ToolTip.text: errorMessages.join("\n")
                     color: "orange"
                 }

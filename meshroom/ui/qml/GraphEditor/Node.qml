@@ -407,7 +407,7 @@ Item {
                             // Attribute warnings
                             MaterialLabel {
                                 visible: hasWarnings
-                                text: MaterialIcons.warning
+                                text: MaterialIcons.fmd_bad
                                 color: "orange"
                                 padding: 2
                                 font.pointSize: 7

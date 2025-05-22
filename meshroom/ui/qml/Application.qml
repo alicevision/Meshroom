@@ -268,7 +268,15 @@ Page {
                 unsavedSubmitDialog.open()
             } else {
                 try {
-                    _reconstruction.submit(nodes)
+
+                    if ( nodes.find(node => node.hasInvalidAttribute) ) {
+                        submitWithWarningDialog.nodes = nodes
+                        submitWithWarningDialog.open()
+                    } else {
+                        submit.open()
+                        //_reconstruction.submit(nodes)
+                    }
+
                 }
                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
@@ -397,6 +405,26 @@ Page {
 
             onDiscarded: close()
             onAccepted: saveAsAction.trigger()
+        }
+
+        MessageDialog {
+            id: submitWithWarningDialog
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "Nodes have warnings"
+            text: "Some nodes have warnings, are you sure you want to submit ?"
+            helperText: "Submit even if some nodes have warnings"
+            standardButtons: Dialog.Cancel | Dialog.Ok
+
+            property var nodes: []
+
+            onDiscarded: close()
+            onAccepted: {
+                console.log("submit nodes", nodes)
+            }
         }
 
         MessageDialog {

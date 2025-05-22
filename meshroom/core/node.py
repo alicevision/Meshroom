@@ -642,9 +642,9 @@ class BaseNode(BaseObject):
         self.nodePlugin: plugins.Plugin = None
 
         # instantiate node description if nodeType is valid
-        if meshroom.core.pluginManager.getNodePlugin(nodeType):
-            self.nodeDesc = meshroom.core.pluginManager.getNodePlugin(nodeType).nodeDescriptor()
-            self.nodePlugin = meshroom.core.pluginManager.getNodePlugin(nodeType)
+        if meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType):
+            self.nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType).nodeDescriptor()
+            self.nodePlugin = meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType)
 
         self.packageName: str = ""
         self.packageVersion: str = ""

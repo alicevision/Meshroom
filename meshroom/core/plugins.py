@@ -262,14 +262,14 @@ class NodePluginManager(BaseObject):
         if not self.getPlugin(plugin.name):
             self._plugins[plugin.name] = plugin
 
-    def getNodePlugins(self) -> dict[str: NodePlugin]:
+    def getRegisteredNodePlugins(self) -> dict[str: NodePlugin]:
         """
         Return a dictionary containing all the registered NodePlugins, with
         {key, value} = {name, NodePlugin}.
         """
         return self._nodePlugins
 
-    def getNodePlugin(self, name: str) -> NodePlugin:
+    def getRegisteredNodePlugin(self, name: str) -> NodePlugin:
         """
         Return the NodePlugin object that has been registered under the name "name" if it exists.
 

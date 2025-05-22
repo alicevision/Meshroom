@@ -170,7 +170,7 @@ class SampleInputNodeV2(desc.InputNode):
 
 def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
     """Change the `nodeDesc` associated to `nodeType`."""
-    pluginManager.getNodePlugins()[nodeType] = NodePlugin(nodeDesc)
+    pluginManager.getRegisteredNodePlugins()[nodeType] = NodePlugin(nodeDesc)
 
 
 def test_unknown_node_type():
@@ -216,7 +216,7 @@ def test_description_conflict():
     Test compatibility behavior for conflicting node descriptions.
     """
     # Copy registered node types to be able to restore them
-    originalNodeTypes = copy.deepcopy(pluginManager.getNodePlugins())
+    originalNodeTypes = copy.deepcopy(pluginManager.getRegisteredNodePlugins())
 
     nodeTypes = [SampleNodeV1, SampleNodeV2, SampleNodeV3, SampleNodeV4, SampleNodeV5]
     nodes = []
@@ -242,7 +242,7 @@ def test_description_conflict():
     # Offset node types register to create description conflicts
     # Each node type name now reference the next one's implementation
     for i, nt in enumerate(nodeTypes[:-1]):
-        pluginManager.getNodePlugins()[nt.__name__] = NodePlugin(nodeTypes[i + 1])
+        pluginManager.getRegisteredNodePlugins()[nt.__name__] = NodePlugin(nodeTypes[i + 1])
 
     # Reload file
     g = loadGraph(graphFile)
@@ -359,8 +359,8 @@ def test_upgradeAllNodes():
     pluginManager.unregisterNode(nodePluginSampleInputV2)
 
     # Replace SampleNodeV1 by SampleNodeV2 and SampleInputNodeV1 by SampleInputNodeV2
-    pluginManager.getNodePlugins()[nodePluginSampleV1.nodeDescriptor.__name__] = nodePluginSampleV2
-    pluginManager.getNodePlugins()[nodePluginSampleInputV1.nodeDescriptor.__name__] = \
+    pluginManager.getRegisteredNodePlugins()[nodePluginSampleV1.nodeDescriptor.__name__] = nodePluginSampleV2
+    pluginManager.getRegisteredNodePlugins()[nodePluginSampleInputV1.nodeDescriptor.__name__] = \
         nodePluginSampleInputV2
 
     # Reload file
@@ -400,7 +400,7 @@ def test_conformUpgrade():
     g.save(graphFile)
 
     # Replace SampleNodeV5 by SampleNodeV6
-    pluginManager.getNodePlugins()[nodePluginSampleV5.nodeDescriptor.__name__] = nodePluginSampleV6
+    pluginManager.getRegisteredNodePlugins()[nodePluginSampleV5.nodeDescriptor.__name__] = nodePluginSampleV6
 
     # Reload file
     g = loadGraph(graphFile)

@@ -261,7 +261,7 @@ class MeshroomApp(QApplication):
         self.engine.addImportPath(qmlDir)
 
         # expose available node types that can be instantiated
-        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getNodePlugins()[n].nodeDescriptor.category} for n in sorted(pluginManager.getNodePlugins().keys())})
+        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getRegisteredNodePlugins()[n].nodeDescriptor.category} for n in sorted(pluginManager.getRegisteredNodePlugins().keys())})
 
         # instantiate Reconstruction object
         self._undoStack = commands.UndoStack(self)

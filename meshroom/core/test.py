@@ -31,7 +31,7 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
             if not meshroom.core.pluginManager.isRegistered(nodeType):
                 return False
 
-            nodeDesc = meshroom.core.pluginManager.getNodePlugin(nodeType)
+            nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType)
             currentNodeVersion = meshroom.core.nodeVersion(nodeDesc)
 
             inputs = nodeData.get("inputs", {})
@@ -60,7 +60,7 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
 
     finally:
         if not nodesAlreadyLoaded:
-            nodePlugins = meshroom.core.pluginManager.getNodePlugins()
+            nodePlugins = meshroom.core.pluginManager.getRegisteredNodePlugins()
             for node in nodePlugins:
                 meshroom.core.pluginManager.unregisterNode(node)
 

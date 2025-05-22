@@ -123,13 +123,14 @@ class _NodeCreator:
     def _checkAttributesAreCompatibleWithDescription(self) -> bool:
         return (
             self._checkAttributesCompatibility(self.nodeDesc.inputs, self.inputs)
-            and self._checkAttributesCompatibility(self.nodeDesc.internalInputs, self.internalInputs)
+            and self._checkAttributesCompatibility(self.nodeDesc.internalInputs,
+                                                   self.internalInputs)
             and self._checkAttributesCompatibility(self.nodeDesc.outputs, self.outputs)
         )
 
     def _checkInputAttributesNames(self) -> bool:
         def serializedInput(attr: desc.Attribute) -> bool:
-            """Filter that excludes not-serialized desc input attributes."""
+            """ Filter that excludes not-serialized desc input attributes. """
             if isinstance(attr, desc.PushButtonParam):
                 # PushButtonParam are not serialized has they do not hold a value.
                 return False
@@ -140,7 +141,7 @@ class _NodeCreator:
 
     def _checkOutputAttributesNames(self) -> bool:
         def serializedOutput(attr: desc.Attribute) -> bool:
-            """Filter that excludes not-serialized desc output attributes."""
+            """ Filter that excludes not-serialized desc output attributes. """
             if attr.isDynamicValue:
                 # Dynamic outputs values are not serialized with the node,
                 # as their value is written in the computed output data.

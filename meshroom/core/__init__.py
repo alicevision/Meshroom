@@ -257,7 +257,8 @@ class Version:
         status = ''
         # If there is a status, it is placed after a "-"
         splitComponents = versionName.split("-", maxsplit=1)
-        if (len(splitComponents) > 1):  # If there is no status, splitComponents is equal to [versionName]
+        # If there is no status, splitComponents is equal to [versionName]
+        if len(splitComponents) > 1:
             status = splitComponents[-1]
         return tuple([int(v) for v in splitComponents[0].split(".")]), status
 
@@ -354,6 +355,7 @@ def loadPluginFolder(folder):
             pluginManager.addPlugin(plugin)
             pluginManager.registerPlugin(plugin.name)
             pipelineTemplates.update(plugin.templates)
+
     return plugins
 
 
@@ -404,7 +406,7 @@ def initSubmitters():
     additionalPaths = EnvVar.getList(EnvVar.MESHROOM_SUBMITTERS_PATH)
     allSubmittersFolders = [meshroomFolder] + additionalPaths
     for folder in allSubmittersFolders:
-        subs = loadSubmitters(folder, 'submitters')
+        subs = loadSubmitters(folder, "submitters")
         for sub in subs:
             registerSubmitter(sub())
 
@@ -413,7 +415,7 @@ def initPipelines():
     # Load pipeline templates: check in the default folder and any folder the user might have
     # added to the environment variable
     additionalPipelinesPath = EnvVar.getList(EnvVar.MESHROOM_PIPELINE_TEMPLATES_PATH)
-    pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
+    pipelineTemplatesFolders = [os.path.join(meshroomFolder, "pipelines")] + additionalPipelinesPath
     for f in pipelineTemplatesFolders:
         loadPipelineTemplates(f)
     for plugin in pluginManager.getPlugins().values():
@@ -422,6 +424,6 @@ def initPipelines():
 
 def initPlugins():
     additionalpluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
-    nodesFolders = [os.path.join(meshroomFolder, 'plugins')] + additionalpluginsPath
+    nodesFolders = [os.path.join(meshroomFolder, "plugins")] + additionalpluginsPath
     for f in nodesFolders:
         loadPluginFolder(folder=f)

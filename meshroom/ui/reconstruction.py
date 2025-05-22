@@ -736,14 +736,16 @@ class Reconstruction(UIGraph):
         """
         if not startNode:
             return None
-        nodes = self._graph.dfsOnDiscover(startNodes=[startNode], filterTypes=nodeTypes, reverse=True)[0]
+        nodes = self._graph.dfsOnDiscover(startNodes=[startNode],
+                                          filterTypes=nodeTypes, reverse=True)[0]
         if not nodes:
             return None
         # order the nodes according to their depth in the graph, then according to their name
         nodes.sort(key=lambda n: (n.depth, n.name))
         node = nodes[-1]
         if preferredStatus:
-            node = next((n for n in reversed(nodes) if n.getGlobalStatus() == preferredStatus), node)
+            node = next((n for n in reversed(nodes)
+                         if n.getGlobalStatus() == preferredStatus), node)
         return node
 
     def addSfmAugmentation(self, withMVS=False):
@@ -800,7 +802,8 @@ class Reconstruction(UIGraph):
         This method allows to reduce process time by doing it on Python side.
 
         Args:
-            {images, videos, panoramaInfo, meshroomScenes, otherFiles}: Map containing the lists of paths for recognized images, videos, Meshroom scenes and other files.
+            {images, videos, panoramaInfo, meshroomScenes, otherFiles}: Map containing the
+                lists of paths for recognized images, videos, Meshroom scenes and other files.
             Node: cameraInit node used to add new images to it
             QPoint: position to locate the node (usually the mouse position)
         """
@@ -821,7 +824,8 @@ class Reconstruction(UIGraph):
                     else:
                         p = position
                     cameraInit = self.addNewNode("CameraInit", position=p)
-            self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType["images"], cameraInit,))
+            self._workerThreads.apply_async(func=self.importImagesSync,
+                                            args=(filesByType["images"], cameraInit,))
         if filesByType["videos"]:
             if self.nodes:
                 boundingBox = self.layout.boundingBox()
@@ -840,7 +844,8 @@ class Reconstruction(UIGraph):
                     newVideoNodeMessage,
                     "Warning: You need to manually compute the KeyframeSelection node \n"
                     "and then reimport the created images into Meshroom for the reconstruction.\n\n"
-                    "If you know the Camera Make/Model, it is highly recommended to declare them in the Node."
+                    "If you know the Camera Make/Model, it is highly recommended to declare "
+                    "them in the Node."
                 ))
 
         if filesByType["panoramaInfo"]:
@@ -848,15 +853,15 @@ class Reconstruction(UIGraph):
                 self.error.emit(
                     Message(
                         "Multiple XML files in input",
-                        "Ignore the xml Panorama files:\n\n'{}'.".format(',\n'.join(filesByType["panoramaInfo"])),
+                        "Ignore the XML Panorama files:\n\n'{}'.".format(',\n'.join(filesByType["panoramaInfo"])),
                         "",
                     ))
             else:
-                panoramaInitNodes = self.graph.nodesOfType('PanoramaInit')
+                panoramaInitNodes = self.graph.nodesOfType("PanoramaInit")
                 for panoramaInfoFile in filesByType["panoramaInfo"]:
                     for panoramaInitNode in panoramaInitNodes:
-                        panoramaInitNode.attribute('initializeCameras').value = 'File'
-                        panoramaInitNode.attribute('config').value = panoramaInfoFile
+                        panoramaInitNode.attribute("initializeCameras").value = "File"
+                        panoramaInitNode.attribute("config").value = panoramaInfoFile
                 if panoramaInitNodes:
                     self.info.emit(
                         Message(
@@ -918,7 +923,11 @@ class Reconstruction(UIGraph):
                 filesByType.extend(multiview.findFilesByTypeInFolder(localFile))
             else:
                 filesByType.addFile(localFile)
-        return {"images": filesByType.images, "videos": filesByType.videos, "panoramaInfo": filesByType.panoramaInfo, "meshroomScenes": filesByType.meshroomScenes, "other": filesByType.other}
+        return {"images": filesByType.images,
+                "videos": filesByType.videos,
+                "panoramaInfo": filesByType.panoramaInfo,
+                "meshroomScenes": filesByType.meshroomScenes,
+                "other": filesByType.other}
 
     def importImagesFromFolder(self, path, recursive=False):
         """

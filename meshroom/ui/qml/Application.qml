@@ -1105,7 +1105,7 @@ Page {
                     for (var i = 0; i < node.attributes.count; i++) {
                         var attr = node.attributes.at(i)
                         if (attr.isOutput && attr.desc.semantic !== "image")
-                            if (!alreadyDisplay || attr.desc.semantic == "3D") {
+                            if (!alreadyDisplay || attr.desc.semantic == "3d") {
                                 if (workspaceView.viewIn3D(attr, mouse))
                                         alreadyDisplay = true
                             }

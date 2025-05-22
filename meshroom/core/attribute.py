@@ -452,7 +452,6 @@ class Attribute(BaseObject):
     def _is3D(self) -> bool:
         """ Return True if the current attribute is considered as a 3d file """
 
-        # List of supported extensions, taken from Viewer3DSettings
         if self.desc.semantic == "3d":
             return True
         

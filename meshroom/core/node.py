@@ -1816,6 +1816,7 @@ class CompatibilityIssue(Enum):
     VersionConflict = 2  # mismatch between node's description version and serialized node data
     DescriptionConflict = 3  # mismatch between node's description attributes and serialized node data
     UidConflict = 4  # mismatch between computed UIDs and UIDs stored in serialized node data
+    PluginIssue = 5  # issue when loading the associated plugin
 
 
 class CompatibilityNode(BaseNode):

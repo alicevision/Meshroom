@@ -476,6 +476,10 @@ class Reconstruction(UIGraph):
         self._activeNodes = meshroom.common.DictModel(keyAttrName="nodeType")
         self.initActiveNodes()
 
+        # initialize activeAttributes (attributes currently visible in some viewers)
+        self._displayedAttr2D = None
+        self._displayedAttrs3D = meshroom.common.ListModel()
+
         # - CameraInit
         self._cameraInit = None                            # current CameraInit node
         self._cameraInits = QObjectListModel(parent=self)  # all CameraInit nodes
@@ -514,7 +518,6 @@ class Reconstruction(UIGraph):
     def setActive(self, active):
         self._active = active
 
-    @Slot()
     def clear(self):
         self.clearActiveNodes()
         super().clear()
@@ -1066,6 +1069,12 @@ class Reconstruction(UIGraph):
     buildingIntrinsicsChanged = Signal()
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
     liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
+
+    displayedAttr2DChanged = Signal()
+    displayedAttr2D = makeProperty(QObject, "_displayedAttr2D", displayedAttr2DChanged)   
+
+    displayedAttrs3DChanged = Signal()    
+    displayedAttrs3D = Property(QObject, lambda self: self._displayedAttrs3D, notify=displayedAttrs3DChanged)  
 
     @Slot(QObject)
     def setActiveNode(self, node, categories=True, inputs=True):

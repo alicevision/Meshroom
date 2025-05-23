@@ -23,6 +23,7 @@ Panel {
     signal attributeDoubleClicked(var mouse, var attribute)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
+    signal showAttributeInViewer(var attribute)
     signal upgradeRequest()
 
     title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" + (node.label !== node.defaultLabel ? " (" + node.defaultLabel + ")" : "") : "")
@@ -302,6 +303,7 @@ Panel {
                             readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: function(mouse, attribute) { root.attributeDoubleClicked(mouse, attribute) }
                             onUpgradeRequest: root.upgradeRequest()
+                            onShowInViewer: function (attribute) {root.showAttributeInViewer(attribute)}
                             filterText: searchBar.text
 
                             onInAttributeClicked: function(srcItem, mouse, inAttributes) {

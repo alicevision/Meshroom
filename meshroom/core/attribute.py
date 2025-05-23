@@ -49,6 +49,9 @@ class Attribute(BaseObject):
     """
     """
     stringIsLinkRe = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
+    
+    VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
+    VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".abc", ".ply"]
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         """
@@ -446,6 +449,27 @@ class Attribute(BaseObject):
         # Emit if the enable status has changed
         self.setEnabled(self.getEnabled())
 
+    def _is3D(self) -> bool:
+        """ Return True if the current attribute is considered as a 3d file """
+
+        if self.desc.semantic == "3d":
+            return True
+        
+        # If the attribute is a File attribute, it is an instance of str and can be iterated over
+        hasSupportedExt = isinstance(self.value, str) and any(ext in self.value for ext in Attribute.VALID_3D_EXTENSIONS)
+        if hasSupportedExt:
+            return True
+        
+        return False
+    
+    def _is2D(self) -> bool:
+        """ Return True if the current attribute is considered as a 2d file """
+        
+        if not self.desc.semantic:
+            return False
+        
+        return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS if self.desc.semantic == imageSemantic), None) is not None
+
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
     fullNameToNode = Property(str, getFullNameToNode, constant=True)
@@ -458,6 +482,8 @@ class Attribute(BaseObject):
     type = Property(str, getType, constant=True)
     baseType = Property(str, getType, constant=True)
     isReadOnly = Property(bool, _isReadOnly, constant=True)
+    is3D = Property(bool, _is3D, constant=True)
+    is2D = Property(bool, _is2D, constant=True)
 
     # Description of the attribute
     descriptionChanged = Signal()

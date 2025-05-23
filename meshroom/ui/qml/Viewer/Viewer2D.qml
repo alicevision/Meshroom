@@ -343,6 +343,10 @@ FocusScope {
         return []
     }
 
+    function setAttributeName(attrName) {
+        outputAttribute.setName(attrName)        
+    }
+
     onDisplayedNodeChanged: {
         if (!displayedNode) {
             root.source = ""
@@ -377,6 +381,10 @@ FocusScope {
             if (currentFrame > frameRange.max)
                 currentFrame = frameRange.min
         }
+    }
+
+    onDisplayedAttrChanged: {
+        _reconstruction.displayedAttr2D = displayedAttr
     }
 
     Connections {
@@ -1645,6 +1653,13 @@ FocusScope {
                             onNameChanged: {
                                 root.source = getImageFile()
                                 root.sequence = getSequence()
+                            }
+
+                            function setName(attrName) {
+                                const attrIndex = outputAttribute.names.indexOf(attrName)
+                                if (attrIndex > -1) {
+                                    outputAttribute.currentIndex = attrIndex
+                                }
                             }
                         }
 

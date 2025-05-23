@@ -28,6 +28,7 @@ RowLayout {
     signal doubleClicked(var mouse, var attr)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
+    signal showInViewer(var attr)
 
     spacing: 2
 
@@ -64,11 +65,11 @@ RowLayout {
 
                 property bool shouldBeVisible: (object != undefined && object.isLinkNested)
 
-                text: shouldBeVisible ? MaterialIcons.login : "  "
+                text: MaterialIcons.login
                 enabled: shouldBeVisible
                 font.pointSize: 8
-                Layout.alignment: Qt.AlignTop | Qt.AlignLeft 
-                topPadding: 7
+                Layout.fillHeight: true
+                visible: shouldBeVisible
 
                 MouseArea {
                     anchors.fill: parent
@@ -78,7 +79,7 @@ RowLayout {
                         root.inAttributeClicked(navButtonIn, mouse, object.linkedInAttributes)
                     }
                 }
-                                
+
             }
 
             Label {
@@ -87,6 +88,7 @@ RowLayout {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 horizontalAlignment: attribute.isOutput ? Qt.AlignRight : Qt.AlignLeft
+                verticalAlignment: Text.AlignVCenter
                 elide: Label.ElideRight
                 padding: 5
                 wrapMode: Label.WrapAtWordBoundaryOrAnywhere
@@ -129,7 +131,7 @@ RowLayout {
                     anchors.fill: parent
                     hoverEnabled: true
                     acceptedButtons: Qt.AllButtons
-                    onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
+                    onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
 
                     property Component menuComp: Menu {
                         id: paramMenu
@@ -180,6 +182,18 @@ RowLayout {
                             text: "Open File"
                             onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.evalValue))
                         }
+
+                        MenuItem { 
+                            visible: attribute.isOutput && (attribute.is2D || attribute.is3D)
+                            height: visible ? implicitHeight : 0
+                            text: {
+                                if (attribute.is2D)
+                                    return "Show in 2D Viewer"
+                                return "Show in 3D Viewer"
+                            }
+                            onClicked: root.showInViewer(attribute)
+                        }
+
                     }
 
                     onClicked: function(mouse) {
@@ -193,26 +207,38 @@ RowLayout {
                 }
             }
 
+            MaterialLabel {
+                property bool isDisplayable: attribute.isOutput && (attribute.is2D || attribute.is3D)
+                property bool isDisplayed: attribute === _reconstruction.displayedAttr2D || _reconstruction.displayedAttrs3D.count && _reconstruction.displayedAttrs3D.contains(attribute)
+                text: isDisplayed ? MaterialIcons.visibility : MaterialIcons.visibility_off
+                enabled: isDisplayed
+                visible: isDisplayable
+                ToolTip.text: `This attribute is displayable in the ${attribute.is2D ? "2D" : "3D"} viewer.`
+
+                padding: 4
+                font.pointSize: 8
+            }
+
             MaterialToolButton {
                 id: navButtonOut
 
                 property bool shouldBeVisible: (attribute != undefined && attribute.hasOutputConnections)
 
-                text: shouldBeVisible ? MaterialIcons.logout : " "
+                text: MaterialIcons.logout
                 font.pointSize: 8
                 enabled: shouldBeVisible
-                Layout.alignment: Qt.AlignTop | Qt.AlignRight
-                topPadding: 7
+                Layout.fillHeight: true
+                visible: shouldBeVisible
 
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
-                    onClicked: function(mouse) {        
-                        root.outAttributeClicked(navButtonOut, mouse, attribute.linkedOutAttributes)               
+                    onClicked: function(mouse) {
+                        root.outAttributeClicked(navButtonOut, mouse, attribute.linkedOutAttributes)
                     }
                 }
-                
+
 
             }
 

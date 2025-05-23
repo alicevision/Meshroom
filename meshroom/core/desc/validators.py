@@ -6,7 +6,6 @@ if TYPE_CHECKING:
 
 
 SuccessResponse = (True, [])
-Number = TypeVar("Number", int, float)
 
 
 class AttributeValidator(object):
@@ -51,15 +50,11 @@ class RangeValidator(AttributeValidator):
     """ Check if the attribute value is in the given range
     """
 
-    def __init__(self, min:Number, max:Number):
+    def __init__(self, min, max):
         self._min = min
         self._max = max
 
     def __call__(self, node:"Node", attribute: "Attribute") -> tuple[bool, list[str]]:
-        
-        if not isinstance(attribute, Number):
-            return (False, ["Attribute value should be a number"])
-        
 
         if attribute.value < self._min or attribute.value > self._max:
             return (False, [f"Value should be greater than {self._min} and less than {self._max}", 

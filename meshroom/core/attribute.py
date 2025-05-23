@@ -460,7 +460,7 @@ class Attribute(BaseObject):
     def updateInternals(self):
         # Emit if the enable status has changed
         self.setEnabled(self.getEnabled())
-
+    
     def _is3D(self) -> bool:
         """ Return True if the current attribute is considered as a 3d file """
 
@@ -487,7 +487,7 @@ class Attribute(BaseObject):
 
         result = []
 
-        for validator in self.desc._validators:
+        for validator in self.desc.validators:
             isValid, errorMessages = validator(self.node, self)
 
             if isValid:
@@ -498,6 +498,18 @@ class Attribute(BaseObject):
         
         return result
 
+    def _isValid(self) -> bool:
+        """ Check the validation and return False if any validator return (False, erorrs)
+        """
+
+        for validator in self.desc.validators:
+            isValid, _ = validator(self.node, self)
+
+            if not isValid:
+                return False
+        
+        return True
+     
     def _isMandatory(self) -> bool:
         """ An attribute is considered as mandatory it contain a NotEmptyValidator """
 
@@ -561,7 +573,7 @@ class Attribute(BaseObject):
     errorMessageChanged = Signal()
     errorMessages = Property(Variant, lambda self: self.getErrorMessages(), notify=errorMessageChanged)
     isMandatory = Property(bool, _isMandatory, constant=True )
-
+    isValid = Property(bool, _isValid, constant=True)
 
 def raiseIfLink(func):
     """ If Attribute instance is a link, raise a RuntimeError. """

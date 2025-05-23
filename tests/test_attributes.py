@@ -9,6 +9,17 @@ invalid3DExtensionFiles = [(f'test.{ext}', False) for ext in ('', 'exe', 'jpg', 
 
 valid2DSemantics= [(semantic, True) for semantic in ('image', 'imageList', 'sequence')]
 invalid2DSemantics = [(semantic, False) for semantic in ('3d', '', 'multiline', 'color/hue')]
+from tests.nodes.test.validableNode import ValidableNode
+import pytest
+
+import logging
+logger = logging.getLogger('test')
+
+valid3DExtensionFiles = [(f'test.{ext}', True) for ext in ('obj', 'stl', 'fbx', 'gltf', 'abc', 'ply')]
+invalid3DExtensionFiles = [(f'test.{ext}', False) for ext in ('', 'exe', 'jpg', 'png', 'py')]
+
+valid2DSemantics= [(semantic, True) for semantic in ('image', 'imageList', 'sequence')]
+invalid2DSemantics = [(semantic, False) for semantic in ('3d', '', 'multiline', 'color/hue')]
 
 
 def test_attribute_retrieve_linked_input_and_output_attributes():
@@ -46,7 +57,6 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
     assert not n0.output.hasOutputConnections
     assert len(n0.input.getLinkedInAttributes()) == 0
     assert len(n0.output.getLinkedOutAttributes()) == 0
-
 @pytest.mark.parametrize("givenFile,expected", valid3DExtensionFiles + invalid3DExtensionFiles)
 def test_attribute_is3D_file_extensions(givenFile, expected):
     """
@@ -99,3 +109,50 @@ def test_attribute_is2D_file_semantic(givenSemantic, expected):
 
     # Then
     assert n0.input.is2D == expected
+
+def test_attribute_notEmpty_validation():
+
+    # Given
+    g = Graph('')
+    node = g.addNewNode('ValidableNode')
+
+    # When
+    node.mandatory.value = ''
+
+    # Then
+    assert not node.mandatory.isValid
+    assert len(node.mandatory.getErrorMessages()) == 1
+    assert node.mandatory.isMandatory is True
+    assert node.hasInvalidAttribute
+
+    # When
+    node.mandatory.value = 'test'
+
+    # Then
+    assert node.mandatory.isValid
+    assert len(node.mandatory.getErrorMessages()) == 0
+    assert not node.hasInvalidAttribute
+
+def test_attribute_range_validation():
+
+    # Given
+    g = Graph('')
+    node = g.addNewNode('ValidableNode')
+    node.mandatory.value = 'test'
+
+    # When
+    node.floatRange.value = 2.0
+
+    # Then
+    assert not node.floatRange.isValid
+    assert len(node.floatRange.getErrorMessages()) == 2
+    assert node.mandatory.isMandatory is True
+    assert node.hasInvalidAttribute
+ 
+    # When
+    node.floatRange.value = 0.25
+
+    # Then
+    assert node.floatRange.isValid
+    assert len(node.mandatory.getErrorMessages()) == 0
+    assert not node.hasInvalidAttribute

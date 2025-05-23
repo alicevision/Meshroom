@@ -129,6 +129,14 @@ Page {
         return true;
     }
 
+    function getAllNodes() {
+        const nodes = []
+        for(let i=0; i<graphEditor.graph.nodes.count; i++) {
+            nodes.push(graphEditor.graph.nodes.at(i))
+        }        
+        return nodes
+    }
+
     // File dialogs
     Platform.FileDialog {
         id: saveFileDialog
@@ -266,22 +274,24 @@ Page {
         function submit(nodes) {
             if (!canSubmit) {
                 unsavedSubmitDialog.open()
-            } else {
+            } 
+            else {
                 try {
-
-                    if ( nodes.find(node => node.hasInvalidAttribute) ) {
+                    if(nodes == null) {
+                        nodes = getAllNodes()
+                    }
+                    if ( nodes && nodes.find(node => node.hasInvalidAttribute) ) {                        
                         submitWithWarningDialog.nodes = nodes
                         submitWithWarningDialog.open()
                     } else {
-                        submit.open()
-                        //_reconstruction.submit(nodes)
+                        _reconstruction.submit(nodes)
                     }
-
                 }
-                catch (error) {
+                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
-                    if (data.context === "SUBMITTING")
+                    if (data.context === "SUBMITTING") {
                         computeSubmitErrorDialog.openError(data.type, data.msg, nodes)
+                    }
                 }
             }
         }
@@ -423,7 +433,7 @@ Page {
 
             onDiscarded: close()
             onAccepted: {
-                console.log("submit nodes", nodes)
+                _reconstruction.submit(nodes)
             }
         }
 

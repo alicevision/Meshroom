@@ -95,21 +95,6 @@ Page {
                         text: "Sponsors"
                     }
 
-                    Image {
-                        Layout.alignment: Qt.AlignHCenter
-                        source: "../img/technicolor-group_rgb_primary_col-rev.png"
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Qt.openUrlExternally("https://www.technicolor.com/")
-
-                            hoverEnabled: true
-                            ToolTip.visible: containsMouse
-                            ToolTip.text: "Technicolor"
-                        }
-                    }
-
                     RowLayout {
                         id: brandsRow
 
@@ -118,7 +103,7 @@ Page {
                         spacing: 20
 
                         Image {
-                            source: "../img/MPC_TG.png"
+                            source: "../img/MPC.png"
 
                             MouseArea {
                                 anchors.fill: parent
@@ -132,7 +117,7 @@ Page {
                         }
 
                         Image {
-                            source: "../img/MILL_TG.png"
+                            source: "../img/MILL.png"
 
                             MouseArea {
                                 anchors.fill: parent
@@ -146,7 +131,7 @@ Page {
                         }
 
                         Image {
-                            source: "../img/MIKROS_TG.png"
+                            source: "../img/MIKROS.png"
 
                             MouseArea {
                                 anchors.fill: parent
@@ -156,20 +141,6 @@ Page {
                                 hoverEnabled: true
                                 ToolTip.visible: containsMouse
                                 ToolTip.text: "Mikros Animation"
-                            }
-                        }
-
-                        Image {
-                            source: "../img/TechnicolorGames_TG.png"
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Qt.openUrlExternally("https://www.technicolorgames.com/")
-
-                                hoverEnabled: true
-                                ToolTip.visible: containsMouse
-                                ToolTip.text: "Technicolor Games"
                             }
                         }
                     }

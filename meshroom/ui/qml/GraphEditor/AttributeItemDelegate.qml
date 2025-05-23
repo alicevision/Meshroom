@@ -88,6 +88,7 @@ RowLayout {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 horizontalAlignment: attribute.isOutput ? Qt.AlignRight : Qt.AlignLeft
+                verticalAlignment: Text.AlignVCenter
                 elide: Label.ElideRight
                 padding: 5
                 wrapMode: Label.WrapAtWordBoundaryOrAnywhere

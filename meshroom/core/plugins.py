@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import importlib
 import logging
 import os
+import sys
 
 from enum import Enum
 from inspect import getfile
@@ -63,7 +65,8 @@ class NodePluginStatus(Enum):
     NOT_LOADED = 0  # The node plugin exists but is not loaded and cannot be used (not registered)
     LOADED = 1  # The node plugin is currently loaded and functional (it has been registered)
     DESC_ERROR = 2  # The node plugin exists but has an invalid description
-    ERROR = 3  # The node plugin exists and is valid but could not be successfully loaded
+    LOADING_ERROR = 3  # The node plugin exists and is valid but could not be successfully registered
+    ERROR = 4  # Error when importing the node plugin from its module
 
 
 class Plugin(BaseObject):
@@ -196,6 +199,23 @@ class NodePlugin(BaseObject):
             self.status = NodePluginStatus.DESC_ERROR
 
         self._processEnv = None
+
+    def reload(self):
+        """ Reload the node plugin and update its status accordingly. """
+        updated = importlib.reload(sys.modules.get(self.nodeDescriptor.__module__))
+        descriptor = getattr(updated, self.nodeDescriptor.__name__)
+
+        if not descriptor:
+            self.status = NodePluginStatus.ERROR
+            return
+
+        self.nodeDescriptor = descriptor
+        self.errors = validateNodeDesc(descriptor)
+
+        if self.errors:
+            self.status = NodePluginStatus.DESC_ERROR
+        else:
+            self.status = NodePluginStatus.NOT_LOADED
 
     @property
     def plugin(self):
@@ -375,13 +395,14 @@ class NodePluginManager(BaseObject):
             nodePlugin: the node plugin to register.
         """
         name = nodePlugin.nodeDescriptor.__name__
-        if not self.isRegistered(name) and nodePlugin.status != NodePluginStatus.DESC_ERROR:
+        if not self.isRegistered(name) and nodePlugin.status not in (NodePluginStatus.DESC_ERROR,
+                                                                     NodePluginStatus.ERROR):
             try:
                 self._nodePlugins[name] = nodePlugin
                 nodePlugin.status = NodePluginStatus.LOADED
             except Exception as e:
                 logging.error(f"NodePlugin {name} could not be loaded: {e}")
-                nodePlugin.status = NodePluginStatus.ERROR
+                nodePlugin.status = NodePluginStatus.LOADING_ERROR
 
     def unregisterNode(self, nodePlugin: NodePlugin):
         """

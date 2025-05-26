@@ -6,7 +6,6 @@ from meshroom.core import pluginManager
 plugins = loadAllNodes(os.path.join(os.path.dirname(__file__), "nodes"))
 for plugin in plugins:
     pluginManager.addPlugin(plugin)
-    pluginManager.registerPlugin(plugin.name)
 
 if os.getenv("MESHROOM_PIPELINE_TEMPLATES_PATH", False):
     os.environ["MESHROOM_PIPELINE_TEMPLATES_PATH"] += os.pathsep + os.path.dirname(os.path.realpath(__file__))

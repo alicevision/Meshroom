@@ -353,7 +353,6 @@ def loadPluginFolder(folder):
     if plugins:
         for plugin in plugins:
             pluginManager.addPlugin(plugin)
-            pluginManager.registerPlugin(plugin.name)
             pipelineTemplates.update(plugin.templates)
 
     return plugins
@@ -399,7 +398,6 @@ def initNodes():
         if plugins:
             for plugin in plugins:
                 pluginManager.addPlugin(plugin)
-                pluginManager.registerPlugin(plugin.name)
 
 
 def initSubmitters():

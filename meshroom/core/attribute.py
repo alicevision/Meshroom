@@ -765,7 +765,7 @@ class ListAttribute(Attribute):
         if not self.node.graph or not self.node.graph.edges:
             return False
         
-        return next((edge for edge in self.node.graph.edges.values() if edge.src in self._value), None) is not None or \
+        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None or \
             any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
     
     # override

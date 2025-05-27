@@ -518,6 +518,7 @@ class Reconstruction(UIGraph):
     def setActive(self, active):
         self._active = active
 
+    @Slot()
     def clear(self):
         self.clearActiveNodes()
         super().clear()

@@ -24,26 +24,22 @@ RowLayout {
     property int labelWidth               // Shortcut to set the fixed size of the Label
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
+    property var errorMessages: attribute.errorMessages
 
     signal doubleClicked(var mouse, var attr)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
     signal showInViewer(var attr)
 
-    spacing: 2
-
-    function updateAttributeLabel() {
-        background.color = attribute.validValue ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
-
-        if (attribute.desc) {
-            var tooltip = ""
-            if (!attribute.validValue && attribute.desc.errorMessage !== "")
-                tooltip += "<i><b>Error: </b>" + Format.plainToHtml(attribute.desc.errorMessage) + "</i><br><br>"
-            tooltip += "<b> " + attribute.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(attribute.desc.description)
-
-            parameterTooltip.text = tooltip
+    Connections {
+        target: attribute
+        function onValueChanged() {
+            root.errorMessages = attribute.errorMessages
         }
+
     }
+
+    spacing: 2
 
     Pane {
         background: Rectangle {
@@ -272,6 +268,7 @@ RowLayout {
         }
     }
 
+
     Loader {
         Layout.fillWidth: true
         id: inputField
@@ -340,8 +337,7 @@ RowLayout {
             id: textFieldComponent
 
             RowLayout {
-                anchors.fill: parent
-                property var errorMessages: attribute.errorMessages
+                anchors.fill: parent                
 
                 TextField {
                     id: textField                
@@ -379,8 +375,7 @@ RowLayout {
                     persistentSelection: false
 
                     onEditingFinished: {
-                        setTextFieldAttribute(text)
-                        errorMessages = attribute.errorMessages
+                        setTextFieldAttribute(text)                        
                     }
 
                     onAccepted: {
@@ -469,15 +464,8 @@ RowLayout {
                     }
             }
 
-                MaterialLabel {                
-                    visible: !attribute.isOutput && errorMessages.length
-                    text: MaterialIcons.fmd_bad
-                    ToolTip.text: errorMessages.join("\n")
-                    color: "orange"
-                }
             }
-            
-            
+
         }
 
         Component {
@@ -861,5 +849,12 @@ RowLayout {
                 }
             }
         }
+    }
+
+    MaterialLabel {
+        visible: !attribute.isOutput && root.errorMessages.length
+        text: MaterialIcons.fmd_bad
+        ToolTip.text: root.errorMessages.join("\n")
+        color: "orange"
     }
 }

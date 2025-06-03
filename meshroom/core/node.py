@@ -1387,8 +1387,6 @@ class BaseNode(BaseObject):
     def getFusedStatus(self):
         if not self._chunks:
             return StatusData()
-        if len(self._chunks) == 1:
-            return self._chunks[0].status
         fusedStatus = StatusData()
         fusedStatus.fromDict(self._chunks[0].status.toDict())
         for chunk in self._chunks[1:]:

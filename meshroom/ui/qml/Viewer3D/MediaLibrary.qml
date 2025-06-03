@@ -386,14 +386,26 @@ Entity {
         onObjectAdded: function(index, object) {
             // Notify object that it is now fully instantiated
             object.fullyInstantiated = true
-            _reconstruction.displayedAttrs3D.append(object.modelSource)
+
+            // We only update the actually displayed attributes if the media.source is an attribute. 
+            // A string mean that a file has been dropped on the viewer3D
+            if (object.modelSource &&object.modelSource.hasOwnProperty("desc")) {
+                _reconstruction.displayedAttrs3D.append(object.modelSource)
+            }
+
         }
 
         onObjectRemoved: function(index, object) {
             if (m.sourceToEntity[object.modelSource])
                 
                 delete m.sourceToEntity[object.modelSource]
-                _reconstruction.displayedAttrs3D.remove(object.modelSource)                           
+
+                // We only update the actually displayed attributes if the media.source is an attribute. 
+                // A string mean that a file has been dropped on the viewer3D
+                if(object.modelSource && object.modelSource.hasOwnProperty("desc")) {
+                    _reconstruction.displayedAttrs3D.remove(object.modelSource)
+                }
+                                      
         }
 
     }

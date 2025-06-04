@@ -14,6 +14,7 @@ FocusScope {
     property variant node
     property variant currentChunkIndex
     property variant currentChunk
+    property bool isChunkValid: (root.currentChunkIndex >= 0 && root.currentChunk !== undefined)
 
     SystemPalette { id: activePalette }
 
@@ -22,7 +23,7 @@ FocusScope {
         clip: true
         anchors.fill: parent
 
-        property string currentFile: (root.currentChunkIndex >= 0 && root.currentChunk !== undefined) ? root.currentChunk["statusFile"] : ""
+        property string currentFile: root.isChunkValid ? root.currentChunk["statusFile"] : ""
         property url sourceFile: Filepath.stringToUrl(currentFile)
 
         sourceComponent: statViewerComponent
@@ -34,7 +35,11 @@ FocusScope {
             id: statusViewer
             property url source: componentLoader.sourceFile
             property var lastModified: undefined
+            property variant chunkStatus: root.isChunkValid ? root.currentChunk.status : undefined
 
+            onChunkStatusChanged: {
+                statusListModel.readSourceFile()
+            }
             onSourceChanged: {
                 statusListModel.readSourceFile()
             }

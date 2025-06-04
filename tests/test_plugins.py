@@ -3,7 +3,6 @@
 from meshroom.core import desc, pluginManager, loadClassesNodes
 from meshroom.core.plugins import NodePluginStatus, Plugin
 
-from itertools import islice
 import os
 
 class TestPluginWithValidNodesOnly:
@@ -21,7 +20,8 @@ class TestPluginWithValidNodesOnly:
 
     @classmethod
     def teardown_class(cls):
-        pluginManager.unregisterPlugin(cls.plugin)
+        for node in cls.plugin.nodes.values():
+            pluginManager.unregisterNode(node)
         cls.plugin = None
 
     def test_loadedPlugin(self):
@@ -127,7 +127,8 @@ class TestPluginWithInvalidNodes:
 
     @classmethod
     def teardown_class(cls):
-        pluginManager.unregisterPlugin(cls.plugin)
+        for node in cls.plugin.nodes.values():
+            pluginManager.unregisterNode(node)
         cls.plugin = None
     
     def test_loadedPlugin(self):

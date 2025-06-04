@@ -2,7 +2,8 @@
 # coding:utf-8
 from meshroom.core.graph import Graph
 from meshroom.core import desc, pluginManager
-from meshroom.core.plugins import NodePlugin
+
+from .utils import registerNodeDesc
 
 
 class SampleNode(desc.Node):
@@ -17,8 +18,7 @@ class SampleNode(desc.Node):
         desc.File(name='output', label='Output', description='', value="{nodeCacheFolder}")
     ]
 
-nodePlugin = NodePlugin(SampleNode)
-pluginManager.registerNode(nodePlugin)  # register standalone NodePlugin
+registerNodeDesc(SampleNode)  # register standalone NodePlugin
 
 def test_output_invalidation():
     graph = Graph("")

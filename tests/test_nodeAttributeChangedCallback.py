@@ -3,7 +3,8 @@
 from meshroom.core.graph import Graph, loadGraph, executeGraph
 from meshroom.core import desc, pluginManager
 from meshroom.core.node import Node
-from meshroom.core.plugins import NodePlugin
+
+from .utils import registerNodeDesc, unregisterNodeDesc
 
 
 class NodeWithAttributeChangedCallback(desc.BaseNode):
@@ -38,15 +39,14 @@ class NodeWithAttributeChangedCallback(desc.BaseNode):
 
 
 class TestNodeWithAttributeChangedCallback:
-    nodePlugin = NodePlugin(NodeWithAttributeChangedCallback)
 
     @classmethod
     def setup_class(cls):
-        pluginManager.registerNode(cls.nodePlugin)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
 
     @classmethod
     def teardown_class(cls):
-        pluginManager.unregisterNode(cls.nodePlugin)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
 
     def test_assignValueTriggersCallback(self):
         node = Node(NodeWithAttributeChangedCallback.__name__)
@@ -71,15 +71,14 @@ class TestNodeWithAttributeChangedCallback:
 
 
 class TestAttributeCallbackTriggerInGraph:
-    nodePlugin = NodePlugin(NodeWithAttributeChangedCallback)
 
     @classmethod
     def setup_class(cls):
-        pluginManager.registerNode(cls.nodePlugin)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
 
     @classmethod
     def teardown_class(cls):
-        pluginManager.unregisterNode(cls.nodePlugin)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
 
     def test_connectionTriggersCallback(self):
         graph = Graph("")
@@ -246,18 +245,16 @@ class NodeWithCompoundAttributes(desc.BaseNode):
 
 
 class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
-    nodePluginAttributeChangedCallback = NodePlugin(NodeWithAttributeChangedCallback)
-    nodePluginCompoundAttributes = NodePlugin(NodeWithCompoundAttributes)
 
     @classmethod
     def setup_class(cls):
-        pluginManager.registerNode(cls.nodePluginAttributeChangedCallback)
-        pluginManager.registerNode(cls.nodePluginCompoundAttributes)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
+        registerNodeDesc(NodeWithCompoundAttributes)
 
     @classmethod
     def teardown_class(cls):
-        pluginManager.unregisterNode(cls.nodePluginAttributeChangedCallback)
-        pluginManager.unregisterNode(cls.nodePluginCompoundAttributes)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
+        unregisterNodeDesc(NodeWithCompoundAttributes)
 
     def test_connectionToListElement(self):
         graph = Graph("")
@@ -349,18 +346,18 @@ class NodeWithDynamicOutputValue(desc.BaseNode):
 
 
 class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
-    nodePluginAttributeChangedCallback = NodePlugin(NodeWithAttributeChangedCallback)
-    nodePluginDynamicOutputValue = NodePlugin(NodeWithDynamicOutputValue)
+    # nodePluginAttributeChangedCallback = NodePlugin(NodeWithAttributeChangedCallback)
+    # nodePluginDynamicOutputValue = NodePlugin(NodeWithDynamicOutputValue)
 
     @classmethod
     def setup_class(cls):
-        pluginManager.registerNode(cls.nodePluginAttributeChangedCallback)
-        pluginManager.registerNode(cls.nodePluginDynamicOutputValue)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
+        registerNodeDesc(NodeWithDynamicOutputValue)
 
     @classmethod
     def teardown_class(cls):
-        pluginManager.unregisterNode(cls.nodePluginAttributeChangedCallback)
-        pluginManager.unregisterNode(cls.nodePluginDynamicOutputValue)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
+        unregisterNodeDesc(NodeWithDynamicOutputValue)
 
     def test_connectingUncomputedDynamicOutputDoesNotTriggerDownstreamAttributeChangedCallback(
         self,
@@ -443,15 +440,13 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
 
 
 class TestAttributeCallbackBehaviorOnGraphImport:
-    nodePlugin = NodePlugin(NodeWithAttributeChangedCallback)
-
     @classmethod
     def setup_class(cls):
-        pluginManager.registerNode(cls.nodePlugin)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
 
     @classmethod
     def teardown_class(cls):
-        pluginManager.unregisterNode(cls.nodePlugin)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
 
     def test_importingGraphDoesNotTriggerAttributeChangedCallbacks(self):
         graph = Graph("")

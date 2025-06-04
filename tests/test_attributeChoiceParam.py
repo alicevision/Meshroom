@@ -1,7 +1,7 @@
 from meshroom.core import desc, pluginManager
-from meshroom.core.plugins import NodePlugin
 from meshroom.core.graph import Graph, loadGraph
 
+from .utils import registerNodeDesc, unregisterNodeDesc
 
 class NodeWithChoiceParams(desc.Node):
     inputs = [
@@ -53,15 +53,14 @@ class NodeWithChoiceParamsSavingValuesOverride(desc.Node):
 
 
 class TestChoiceParam:
-    nodePlugin = NodePlugin(NodeWithChoiceParams)
 
     @classmethod
     def setup_class(cls):
-        pluginManager.registerNode(cls.nodePlugin)
+        registerNodeDesc(NodeWithChoiceParams)
 
     @classmethod
     def teardown_class(cls):
-        pluginManager.unregisterNode(cls.nodePlugin)
+        unregisterNodeDesc(NodeWithChoiceParams)
 
     def test_customValueIsSerialized(self, graphSavedOnDisk):
         graph: Graph = graphSavedOnDisk
@@ -120,15 +119,14 @@ class TestChoiceParam:
 
 
 class TestChoiceParamSavingCustomValues:
-    nodePlugin = NodePlugin(NodeWithChoiceParamsSavingValuesOverride)
 
     @classmethod
     def setup_class(cls):
-        pluginManager.registerNode(cls.nodePlugin)
+        registerNodeDesc(NodeWithChoiceParamsSavingValuesOverride)
 
     @classmethod
     def teardown_class(cls):
-        pluginManager.unregisterNode(cls.nodePlugin)
+        unregisterNodeDesc(NodeWithChoiceParamsSavingValuesOverride)
 
     def test_customValueIsSerialized(self, graphSavedOnDisk):
         graph: Graph = graphSavedOnDisk

@@ -13,7 +13,7 @@ from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
 
-from .utils import registeredNodeTypes, overrideNodeTypeVersion
+from .utils import registeredNodeTypes, overrideNodeTypeVersion, registerNodeDesc, unregisterNodeDesc
 
 
 SampleGroupV1 = [
@@ -177,15 +177,14 @@ def test_unknown_node_type():
     """
     Test compatibility behavior for unknown node type.
     """
-    nodePlugin = NodePlugin(SampleNodeV1)
-    pluginManager.registerNode(nodePlugin)
+    registerNodeDesc(SampleNodeV1)
     g = Graph("")
     n = g.addNewNode("SampleNodeV1", input="/dev/null", paramA="foo")
     graphFile = os.path.join(tempfile.mkdtemp(), "test_unknown_node_type.mg")
     g.save(graphFile)
     internalFolder = n.internalFolder
     nodeName = n.name
-    pluginManager.unregisterNode(nodePlugin)
+    unregisterNodeDesc(SampleNodeV1)
 
 
     # Reload file
@@ -224,7 +223,7 @@ def test_description_conflict():
 
     # Register and instantiate instances of all node types except last one
     for nt in nodeTypes[:-1]:
-        pluginManager.registerNode(NodePlugin(nt))
+        registerNodeDesc(nt)
         n = g.addNewNode(nt.__name__)
 
         if nt == SampleNodeV4:
@@ -332,15 +331,10 @@ def test_description_conflict():
     pluginManager._nodePlugins = originalNodeTypes
 
 def test_upgradeAllNodes():
-    nodePluginSampleV1 = NodePlugin(SampleNodeV1)
-    nodePluginSampleV2 = NodePlugin(SampleNodeV2)
-    nodePluginSampleInputV1 = NodePlugin(SampleInputNodeV1)
-    nodePluginSampleInputV2 = NodePlugin(SampleInputNodeV2)
-
-    pluginManager.registerNode(nodePluginSampleV1)
-    pluginManager.registerNode(nodePluginSampleV2)
-    pluginManager.registerNode(nodePluginSampleInputV1)
-    pluginManager.registerNode(nodePluginSampleInputV2)
+    registerNodeDesc(SampleNodeV1)
+    registerNodeDesc(SampleNodeV2)
+    registerNodeDesc(SampleInputNodeV1)
+    registerNodeDesc(SampleInputNodeV2)
 
     g = Graph("")
     n1 = g.addNewNode("SampleNodeV1")
@@ -354,14 +348,15 @@ def test_upgradeAllNodes():
     graphFile = os.path.join(tempfile.mkdtemp(), "test_description_conflict.mg")
     g.save(graphFile)
 
-    # Make SampleNodeV2 and SampleInputNodeV2 an unknown type
-    pluginManager.unregisterNode(nodePluginSampleV2)
-    pluginManager.unregisterNode(nodePluginSampleInputV2)
-
     # Replace SampleNodeV1 by SampleNodeV2 and SampleInputNodeV1 by SampleInputNodeV2
-    pluginManager.getRegisteredNodePlugins()[nodePluginSampleV1.nodeDescriptor.__name__] = nodePluginSampleV2
-    pluginManager.getRegisteredNodePlugins()[nodePluginSampleInputV1.nodeDescriptor.__name__] = \
-        nodePluginSampleInputV2
+    pluginManager.getRegisteredNodePlugins()[SampleNodeV1.__name__] = \
+        pluginManager.getRegisteredNodePlugin(SampleNodeV2.__name__)
+    pluginManager.getRegisteredNodePlugins()[SampleInputNodeV1.__name__] = \
+        pluginManager.getRegisteredNodePlugin(SampleInputNodeV2.__name__)
+
+    # Make SampleNodeV2 and SampleInputNodeV2 an unknown type
+    unregisterNodeDesc(SampleNodeV2)
+    unregisterNodeDesc(SampleInputNodeV2)
 
     # Reload file
     g = loadGraph(graphFile)
@@ -382,15 +377,13 @@ def test_upgradeAllNodes():
     assert n2Name in g.compatibilityNodes.keys()
     assert n4Name in g.compatibilityNodes.keys()
 
-    pluginManager.unregisterNode(nodePluginSampleV1)
-    pluginManager.unregisterNode(nodePluginSampleInputV1)
+    unregisterNodeDesc(SampleNodeV1)
+    unregisterNodeDesc(SampleInputNodeV1)
 
 
 def test_conformUpgrade():
-    nodePluginSampleV5 = NodePlugin(SampleNodeV5)
-    nodePluginSampleV6 = NodePlugin(SampleNodeV6)
-    pluginManager.registerNode(nodePluginSampleV5)
-    pluginManager.registerNode(nodePluginSampleV6)
+    registerNodeDesc(SampleNodeV5)
+    registerNodeDesc(SampleNodeV6)
 
     g = Graph("")
     n1 = g.addNewNode("SampleNodeV5")
@@ -400,7 +393,8 @@ def test_conformUpgrade():
     g.save(graphFile)
 
     # Replace SampleNodeV5 by SampleNodeV6
-    pluginManager.getRegisteredNodePlugins()[nodePluginSampleV5.nodeDescriptor.__name__] = nodePluginSampleV6
+    pluginManager.getRegisteredNodePlugins()[SampleNodeV5.__name__] = \
+        pluginManager.getRegisteredNodePlugin(SampleNodeV6.__name__)
 
     # Reload file
     g = loadGraph(graphFile)
@@ -424,8 +418,8 @@ def test_conformUpgrade():
     # Check conformation
     assert len(upgradedNode.paramA.value) == 1
 
-    pluginManager.unregisterNode(nodePluginSampleV5)
-    pluginManager.unregisterNode(nodePluginSampleV6)
+    unregisterNodeDesc(SampleNodeV5)
+    unregisterNodeDesc(SampleNodeV6)
 
 
 class TestGraphLoadingWithStrictCompatibility:
@@ -441,7 +435,6 @@ class TestGraphLoadingWithStrictCompatibility:
 
 
     def test_failsOnNodeDescriptionCompatibilityIssue(self, graphSavedOnDisk):
-
         with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
             graph: Graph = graphSavedOnDisk
             graph.addNewNode(SampleNodeV1.__name__)
@@ -456,7 +449,6 @@ class TestGraphLoadingWithStrictCompatibility:
 class TestGraphTemplateLoading:
 
     def test_failsOnUnknownNodeTypeError(self, graphSavedOnDisk):
-
         with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
             graph: Graph = graphSavedOnDisk
             graph.addNewNode(SampleNodeV1.__name__)

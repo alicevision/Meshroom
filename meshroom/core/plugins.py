@@ -184,6 +184,8 @@ class NodePlugin(BaseObject):
         processEnv: the environment required for the node plugin's process. It can either
                     be specific to this node plugin, or be common for all the node plugins within
                     the plugin
+        timestamp: the timestamp corresponding to the last time the node description's file has been
+                   modified
     """
 
     def __init__(self, nodeDesc: desc.Node, plugin: Plugin = None):
@@ -199,14 +201,23 @@ class NodePlugin(BaseObject):
             self.status = NodePluginStatus.DESC_ERROR
 
         self._processEnv = None
+        self._timestamp = os.path.getmtime(self.path)
 
     def reload(self):
         """ Reload the node plugin and update its status accordingly. """
+        if self._timestamp == os.path.getmtime(self.path):
+            logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Not reloading. The node description "
+                         f"at {self.path} has not been modified since the last load.")
+            return
+
         updated = importlib.reload(sys.modules.get(self.nodeDescriptor.__module__))
         descriptor = getattr(updated, self.nodeDescriptor.__name__)
+        self._timestamp = os.path.getmtime(self.path)
 
         if not descriptor:
             self.status = NodePluginStatus.ERROR
+            logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
+                          "was not found.")
             return
 
         self.nodeDescriptor = descriptor
@@ -214,8 +225,11 @@ class NodePlugin(BaseObject):
 
         if self.errors:
             self.status = NodePluginStatus.DESC_ERROR
+            logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
+                           "has description errors.")
         else:
             self.status = NodePluginStatus.NOT_LOADED
+            logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Successful reloading.")
 
     @property
     def plugin(self):

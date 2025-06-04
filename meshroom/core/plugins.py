@@ -333,7 +333,8 @@ class NodePluginManager(BaseObject):
         if not self.getPlugin(plugin.name):
             self._plugins[plugin.name] = plugin
             if registerNodePlugins:
-                self.registerPlugin(plugin.name)
+                for node in plugin.nodes:
+                    self.registerNode(plugin.nodes[node])
 
     def removePlugin(self, plugin: Plugin, unregisterNodePlugins: bool = True):
         """
@@ -348,7 +349,8 @@ class NodePluginManager(BaseObject):
         """
         if self.getPlugin(plugin.name):
             if unregisterNodePlugins:
-                self.unregisterPlugin(plugin.name)
+                for node in plugin.nodes.values():
+                    self.unregisterNode(node)
             del self._plugins[plugin.name]
 
     def getRegisteredNodePlugins(self) -> dict[str: NodePlugin]:
@@ -371,33 +373,6 @@ class NodePluginManager(BaseObject):
         if self.isRegistered(name):
             return self._nodePlugins[name]
         return None
-
-    def registerPlugin(self, name: str):
-        """
-        Register all the NodePlugins contained in the Plugin loaded as "name".
-
-        Args:
-            name: the name of the Plugin whose NodePlugins will be registered.
-        """
-        plugin = self.getPlugin(name)
-        if plugin:
-            for node in plugin.nodes:
-                self.registerNode(plugin.nodes[node])
-        else:
-            logging.error(f"No loaded Plugin named {name}.")
-
-    def unregisterPlugin(self, name: str):
-        """
-        Unregister all the NodePlugins contained in the Plugin loaded as "name"
-        that are currently registered.
-
-        Args:
-            name: the name of the Plugin whose NodePlugins will be unregistered.
-        """
-        plugin = self.getPlugin(name)
-        if plugin:
-            for node in plugin.nodes.values():
-                self.unregisterNode(node)
 
     def registerNode(self, nodePlugin: NodePlugin):
         """

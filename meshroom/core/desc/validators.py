@@ -5,8 +5,11 @@ if TYPE_CHECKING:
     from meshroom.core.node import Node
 
 
-SuccessResponse = (True, [])
+def success() -> tuple[bool, list[str]]:
+    return (True, [])
 
+def error(*messages: str) -> tuple[bool, list[str]]:
+    return (False, messages)
 
 class AttributeValidator(object):
     """ Interface for an attribute validation
@@ -41,9 +44,9 @@ class NotEmptyValidator(AttributeValidator):
     def __call__(self, node: "Node", attribute: "Attribute") -> tuple[bool, list[str]]:
 
         if attribute.value is None or attribute.value == "":
-            return (False, ["Empty value are not allowed"])
+            return error("Empty value are not allowed")
         
-        return SuccessResponse
+        return success()
 
 
 class RangeValidator(AttributeValidator):
@@ -57,7 +60,7 @@ class RangeValidator(AttributeValidator):
     def __call__(self, node:"Node", attribute: "Attribute") -> tuple[bool, list[str]]:
 
         if attribute.value < self._min or attribute.value > self._max:
-            return (False, [f"Value should be greater than {self._min} and less than {self._max}", 
-                            f"({self._min} < {attribute.value} < {self._max})"])
+            return error(f"Value should be greater than {self._min} and less than {self._max}", 
+                            f"({self._min} < {attribute.value} < {self._max})")
 
-        return SuccessResponse
+        return success()

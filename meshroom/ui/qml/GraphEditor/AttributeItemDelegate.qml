@@ -42,10 +42,6 @@ RowLayout {
     spacing: 2
 
     Pane {
-        background: Rectangle {
-            id: background
-            color: object != undefined && object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
-        }
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
         Layout.fillHeight: true
@@ -140,7 +136,6 @@ RowLayout {
                             enabled: root.editable && !attribute.isDefault
                             onTriggered: {
                                 _reconstruction.resetAttribute(attribute)
-                                updateAttributeLabel()
                             }
                         }
                         MenuItem {
@@ -256,14 +251,12 @@ RowLayout {
             case "IntParam":
             case "FloatParam":
                 _reconstruction.setAttribute(root.attribute, Number(value))
-                updateAttributeLabel()
                 break
             case "File":
                 _reconstruction.setAttribute(root.attribute, value)
                 break
             default:
                 _reconstruction.setAttribute(root.attribute, value.trim())
-                updateAttributeLabel()
                 break
         }
     }
@@ -495,6 +488,14 @@ RowLayout {
                         onEditingFinished: setTextFieldAttribute(text)
                         text: attribute.value
                         selectByMouse: true
+
+                        background: Rectangle {
+                            visible: errorMessages.length
+                            border.color: "orange"
+                            color: "transparent"
+                            radius: 2
+                        }
+
                         onPressed: {
                             root.forceActiveFocus()
                         }
@@ -608,6 +609,7 @@ RowLayout {
                 values: root.attribute.values
                 enabled: root.editable
                 customValueColor: Colors.orange
+
                 onToggled: (value, checked) => {
                     var currentValue = root.attribute.value;
                     if (!checked) {
@@ -644,6 +646,14 @@ RowLayout {
                     autoScroll: activeFocus
                     validator: attribute.type === "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
+
+                    background: Rectangle {
+                            visible: errorMessages.length
+                            border.color: "orange"
+                            color: "transparent"
+                            radius: 2
+                        }
+
                     onAccepted: {
                         setTextFieldAttribute(text)
 
@@ -679,7 +689,6 @@ RowLayout {
                         onPressedChanged: {
                             if (!pressed) {
                                 _reconstruction.setAttribute(attribute, formattedValue)
-                                updateAttributeLabel()
                             }
                         }
                     }

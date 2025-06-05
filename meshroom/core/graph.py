@@ -759,6 +759,16 @@ class Graph(BaseObject):
             for nodeName in nodeNames:
                 self.upgradeNode(nodeName)
 
+    def reloadAllNodes(self):
+        """
+        Replace all the node instances in the current graph with new node instances of the same
+        type. If the description of the nodes has changed, the reloaded nodes will reflect theses
+        changes.
+        """
+        for node in self._nodes.values():
+            newNode = nodeFactory(node.toDict(), node.nodeType, expectedUid=node._uid)
+            self.replaceNode(node.name, newNode)
+
     @Slot(str, result=Attribute)
     def attribute(self, fullName):
         # type: (str) -> Attribute

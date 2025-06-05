@@ -80,6 +80,8 @@ class StatusData(BaseObject):
         self.sessionUid: Optional[str] = None
         self.submitterSessionUid: Optional[str] = None
 
+        self.execMode: ExecMode = ExecMode.NONE
+
         self.resetDynamicValues()
 
     def setNode(self, node):
@@ -108,11 +110,11 @@ class StatusData(BaseObject):
         self.packageName: str = ""
         self.packageVersion: str = ""
         self.mrNodeType: MrNodeType = MrNodeType.NONE
+        self.execMode: ExecMode = ExecMode.NONE
         self.resetDynamicValues()
 
     def resetDynamicValues(self):
         self.status: Status = Status.NONE
-        self.execMode: ExecMode = ExecMode.NONE
         self.graph = ""
         self.commandLine: str = ""
         self.env: str = ""

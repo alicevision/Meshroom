@@ -556,6 +556,7 @@ Page {
         id: reloadAllNodesAction
         property string tooltip: "Reload all the node descriptions for all the registered plugins"
         text: "Reload All Nodes"
+        shortcut: "Ctrl+Shift+R"
         onTriggered: {
             _reconstruction.reloadAllNodes()
         }

@@ -205,23 +205,32 @@ class NodePlugin(BaseObject):
 
     def reload(self):
         """ Reload the node plugin and update its status accordingly. """
-        if self._timestamp == os.path.getmtime(self.path):
+        timestamp = 0.0
+        try:
+            timestamp = os.path.getmtime(self.path)
+        except FileNotFoundError:
+            self.status = NodePluginStatus.ERROR
+            logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The path at {self.path} was not "
+                           "not found.")
+            return
+
+        if self._timestamp == timestamp:
             logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Not reloading. The node description "
                          f"at {self.path} has not been modified since the last load.")
             return
 
         updated = importlib.reload(sys.modules.get(self.nodeDescriptor.__module__))
         descriptor = getattr(updated, self.nodeDescriptor.__name__)
-        self._timestamp = os.path.getmtime(self.path)
 
         if not descriptor:
             self.status = NodePluginStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
-                          "was not found.")
+                           "was not found.")
             return
 
         self.nodeDescriptor = descriptor
         self.errors = validateNodeDesc(descriptor)
+        self._timestamp = timestamp
 
         if self.errors:
             self.status = NodePluginStatus.DESC_ERROR

@@ -502,8 +502,12 @@ class Attribute(BaseObject):
     isLinkNested = isLink
     hasOutputConnectionsChanged = Signal()
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)
-    linkedInAttributes = Property(Variant, getLinkedInAttributes)
-    linkedOutAttributes = Property(Variant, getLinkedOutAttributes)
+
+    linkedInAttributesChanged = Signal()
+    linkedInAttributes = Property(Variant, getLinkedInAttributes, notify=linkedInAttributesChanged)
+    linkedOutAttributesChanged = Signal()
+    linkedOutAttributes = Property(Variant, getLinkedOutAttributes, notify=linkedOutAttributesChanged)
+
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True), notify=isLinkChanged)

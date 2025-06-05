@@ -4,6 +4,7 @@ from meshroom.core import desc, pluginManager, loadClassesNodes
 from meshroom.core.plugins import NodePluginStatus, Plugin
 
 import os
+import time
 
 class TestPluginWithValidNodesOnly:
     plugin = None
@@ -185,10 +186,23 @@ class TestPluginWithInvalidNodes:
         # Attempt to register node plugin
         pluginManager.registerNode(node)
         assert pluginManager.isRegistered(nodeName)
+
+        # Reload the node again without any change
+        node.reload()
+        assert pluginManager.isRegistered(nodeName)
         
+        # Hack to ensure that the timestamp of the file will be different after being rewritten
+        # Without it, on some systems, the operation is too fast and the timestamp does not change,
+        # cause the test to fail
+        time.sleep(0.1)
+
         # Restore the node file to its original state (with a description error)
         with open(node.path, "w") as f:
             f.write(originalFileContent)
+
+        timestampOr2 = os.path.getmtime(node.path)
+        print(f"New timestamp: {timestampOr2}")
+        print(os.stat(node.path))
         
         # Reload the node and assert it is invalid while still registered
         node.reload()

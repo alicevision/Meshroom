@@ -184,9 +184,4 @@ ApplicationWindow {
         replaceExit: Transition {}
     }
 
-    background: MouseArea {
-        onPressed: {
-            forceActiveFocus();
-        }
-    }
 }

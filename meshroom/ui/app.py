@@ -6,7 +6,7 @@ import json
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
-from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings, QObject, QEvent
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlDebuggingEnabler
 from PySide6.QtQuickControls2 import QQuickStyle
@@ -195,6 +195,21 @@ Additional Resources:
 
     return parser.parse_args(args[1:])
 
+
+class ClearFocusEventFilter(QObject):
+    """ Clear focus each time a mouse button is pressed
+    """
+
+    def eventFilter(self, watched: QObject, event: QtCore.QEvent) -> bool:
+        
+        if event.type() != QEvent.MouseButtonPress:
+            return False        
+    
+        focusObject = QApplication.focusObject()
+        if hasattr(focusObject, "setFocus"):
+            focusObject.setFocus(False)
+
+        return False
 
 class MeshroomApp(QApplication):
     """ Meshroom UI Application. """

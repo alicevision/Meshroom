@@ -19,8 +19,6 @@ class Attribute(BaseObject):
     def __init__(self, name, label, description, value, advanced, semantic, group, enabled, 
                  invalidate=True,
                  uidIgnoreValue=None, 
-                 validValue=True, 
-                 errorMessage="", 
                  visible=True, 
                  exposed=False, 
                  validators:list["AttributeValidator"]=None
@@ -37,8 +35,6 @@ class Attribute(BaseObject):
         self._invalidate = invalidate
         self._semantic = semantic
         self._uidIgnoreValue = uidIgnoreValue
-        self._validValue = validValue
-        self._errorMessage = errorMessage
         self._visible = visible
         self._exposed = exposed
         self._isExpression = (isinstance(self._value, str) and "{" in self._value) \
@@ -108,8 +104,6 @@ class Attribute(BaseObject):
     invalidate = Property(Variant, lambda self: self._invalidate, constant=True)
     semantic = Property(str, lambda self: self._semantic, constant=True)
     uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
-    validValue = Property(Variant, lambda self: self._validValue, constant=True)
-    errorMessage = Property(str, lambda self: self._errorMessage, constant=True)
     # visible:
     #   The attribute is not displayed in the Graph Editor if False but still visible in the Node Editor.
     #   This property is useful to hide some attributes that are not relevant for the user.
@@ -286,11 +280,11 @@ class Param(Attribute):
     """
     """
     def __init__(self, name, label, description, value, group, advanced, semantic, enabled, invalidate=True,
-                 uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False, validators=None):
+                 uidIgnoreValue=None, visible=True, exposed=False, validators=None):
         super(Param, self).__init__(name=name, label=label, description=description, value=value,
                                     group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                    semantic=semantic, uidIgnoreValue=uidIgnoreValue, validValue=validValue,
-                                    errorMessage=errorMessage, visible=visible, exposed=exposed, validators=validators)
+                                    semantic=semantic, uidIgnoreValue=uidIgnoreValue, visible=visible, exposed=exposed,
+                                    validators=validators)
 
 
 class File(Attribute):
@@ -351,11 +345,11 @@ class IntParam(Param):
     """
     """
     def __init__(self, name, label, description, value, range=None, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False, validators=None):
+                 invalidate=True, semantic="", visible=True, exposed=False, validators=None):
         self._range = range
         super(IntParam, self).__init__(name=name, label=label, description=description, value=value,
                                        group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                       semantic=semantic, validValue=validValue, errorMessage=errorMessage,
+                                       semantic=semantic,
                                        visible=visible, exposed=exposed, validators=validators)
         self._valueType = int
 
@@ -381,11 +375,11 @@ class FloatParam(Param):
     """
     """
     def __init__(self, name, label, description, value, range=None, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False, validators=None):
+                 invalidate=True, semantic="", visible=True, exposed=False, validators=None):
         self._range = range
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value,
                                          group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                         semantic=semantic, validValue=validValue, errorMessage=errorMessage,
+                                         semantic=semantic,
                                          visible=visible, exposed=exposed, validators=validators)
         self._valueType = float
 
@@ -447,13 +441,12 @@ class ChoiceParam(Param):
     _OVERRIDE_SERIALIZATION_KEY_VALUES = "__ChoiceParam_values__"
 
     def __init__(self, name: str, label: str, description: str, value, values, exclusive=True, saveValuesOverride=False, 
-                 group="allParams", joinChar=" ", advanced=False, enabled=True, invalidate=True, semantic="", 
-                 validValue=True, errorMessage="",
+                 group="allParams", joinChar=" ", advanced=False, enabled=True, invalidate=True, semantic="",
                  visible=True, exposed=False, validators=None):
 
         super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value,
                                           group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                          semantic=semantic, validValue=validValue, errorMessage=errorMessage,
+                                          semantic=semantic,
                                           visible=visible, exposed=exposed, validators=validators)
         self._values = values
         self._saveValuesOverride = saveValuesOverride
@@ -527,12 +520,12 @@ class StringParam(Param):
     """
     """
     def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", uidIgnoreValue=None, validValue=True, errorMessage="", visible=True,
+                 invalidate=True, semantic="", uidIgnoreValue=None, visible=True,
                  exposed=False, validators=None):
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value,
                                           group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                          semantic=semantic, uidIgnoreValue=uidIgnoreValue, validValue=validValue,
-                                          errorMessage=errorMessage, visible=visible, exposed=exposed, validators=validators)
+                                          semantic=semantic, uidIgnoreValue=uidIgnoreValue, 
+                                          visible=visible, exposed=exposed, validators=validators)
         self._valueType = str
 
     def validateValue(self, value):

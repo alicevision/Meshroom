@@ -74,7 +74,6 @@ class Attribute(BaseObject):
         self._isOutput: bool = isOutput
         self._label: str = attributeDesc.label
         self._enabled: bool = True
-        self._validValue: bool = True
         self._description: str = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
@@ -172,24 +171,6 @@ class Attribute(BaseObject):
         """ Value for which the attribute should be ignored during the UID computation. """
         return self.attributeDesc.uidIgnoreValue
 
-    def getValidValue(self):
-        """
-        Get the status of _validValue:
-            - If it is a function, execute it and return the result
-            - Otherwise, simply return its value
-        """
-        if isinstance(self.desc.validValue, types.FunctionType):
-            try:
-                return self.desc.validValue(self.node)
-            except Exception:
-                return True
-        return self._validValue
-
-    def setValidValue(self, value):
-        if self._validValue == value:
-            return
-        self._validValue = value
-
     def validateValue(self, value):
         return self.desc.validateValue(value)
 
@@ -227,7 +208,6 @@ class Attribute(BaseObject):
             self.requestNodeUpdate()
 
         self.valueChanged.emit()
-        self.validValueChanged.emit()
 
     @Slot()
     def _onValueChanged(self):
@@ -566,8 +546,6 @@ class Attribute(BaseObject):
     enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
     invalidate = Property(bool, lambda self: self._invalidate, constant=True)
     uidIgnoreValue = Property(Variant, getUidIgnoreValue, constant=True)
-    validValueChanged = Signal()
-    validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
     root = Property(BaseObject, root.fget, constant=True)
 
     errorMessageChanged = Signal()

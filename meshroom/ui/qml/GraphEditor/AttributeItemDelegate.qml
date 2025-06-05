@@ -102,11 +102,7 @@ RowLayout {
                     y: parameterMA.mouseY + 10
 
                     text: {
-                        var tooltip = ""
-                        if (!object.validValue && object.desc.errorMessage !== "")
-                            tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
-                        tooltip += "<b>" + object.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.description)
-                        return tooltip
+                        return `<b>${object.desc.name} :</b> ${attribute.type}  <br> ${Format.plainToHtml(object.description)}`
                     }
                     visible: parameterMA.containsMouse
                     delay: 800

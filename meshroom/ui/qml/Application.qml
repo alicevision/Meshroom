@@ -553,6 +553,15 @@ Page {
     }
 
     Action {
+        id: reloadAllNodesAction
+        property string tooltip: "Reload all the node descriptions for all the registered plugins"
+        text: "Reload All Nodes"
+        onTriggered: {
+            _reconstruction.reloadAllNodes()
+        }
+    }
+
+    Action {
         id: undoAction
 
         property string tooltip: 'Undo "' + (_reconstruction ? _reconstruction.undoStack.undoText : "Unknown") + '"'
@@ -829,6 +838,12 @@ Page {
                         action: removeImagesFromAllGroupsAction
                         ToolTip.visible: hovered
                         ToolTip.text: removeImagesFromAllGroupsAction.tooltip
+                    }
+
+                    MenuItem {
+                        action: reloadAllNodesAction
+                        ToolTip.visible: hovered
+                        ToolTip.text: reloadAllNodesAction.tooltip
                     }
                 }
                 MenuSeparator { }

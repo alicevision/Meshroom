@@ -553,6 +553,19 @@ class Reconstruction(UIGraph):
         self.setActiveNodes(nodes)
 
     @Slot()
+    def reloadAllNodes(self):
+        """
+        Reload all the NodePlugins from all the registered plugins.
+        The nodes in the graph will be updated to match the changes in the description, if
+        there was any.
+        """
+        for plugin in meshroom.core.pluginManager.getPlugins().values():
+            for node in plugin.nodes.values():
+                node.reload()
+
+        self._graph.reloadAllNodes()
+
+    @Slot()
     @Slot(str)
     def new(self, pipeline=None):
         """ Create a new pipeline. """

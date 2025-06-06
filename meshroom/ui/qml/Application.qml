@@ -841,27 +841,27 @@ Page {
                 title: "Edit"
                 MenuItem {
                     action: undoAction
-                    ToolTip.visible: hovered
+                    ToolTip.visible: hovered && undoAction.enabled
                     ToolTip.text: undoAction.tooltip
                 }
                 MenuItem {
                     action: redoAction
-                    ToolTip.visible: hovered
+                    ToolTip.visible: hovered && redoAction.enabled
                     ToolTip.text: redoAction.tooltip
                 }
                 MenuItem {
                     action: cutAction
-                    ToolTip.visible: hovered
+                    ToolTip.visible: hovered && cutAction.enabled
                     ToolTip.text: cutAction.tooltip
                 }
                 MenuItem {
                     action: copyAction
-                    ToolTip.visible: hovered
+                    ToolTip.visible: hovered && copyAction.enabled
                     ToolTip.text: copyAction.tooltip
                 }
                 MenuItem {
                     action: pasteAction
-                    ToolTip.visible: hovered
+                    ToolTip.visible: hovered && pasteAction.enabled
                     ToolTip.text: pasteAction.tooltip
                 }
             }
@@ -909,18 +909,18 @@ Page {
             Menu {
                 title: "Process"
                 Action {
-                    text: "Compute all nodes"
+                    text: "Compute All Nodes"
                     onTriggered: computeManager.compute(null)
                     enabled: _reconstruction ? !_reconstruction.computingLocally : false
                 }
                 Action {
-                    text: "Submit all nodes"
+                    text: "Submit All Nodes"
                     onTriggered: computeManager.submit(null)
                     enabled: _reconstruction ? _reconstruction.canSubmit : false
                 }
                 MenuSeparator {}
                 Action {
-                    text: "Stop computation"
+                    text: "Stop Computation"
                     onTriggered: _reconstruction.stopExecution()
                     enabled: _reconstruction ? _reconstruction.computingLocally : false
                 }

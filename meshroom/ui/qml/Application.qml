@@ -909,18 +909,18 @@ Page {
             Menu {
                 title: "Process"
                 Action {
-                    text: "Compute all nodes"
+                    text: "Compute All Nodes"
                     onTriggered: computeManager.compute(null)
                     enabled: _reconstruction ? !_reconstruction.computingLocally : false
                 }
                 Action {
-                    text: "Submit all nodes"
+                    text: "Submit All Nodes"
                     onTriggered: computeManager.submit(null)
                     enabled: _reconstruction ? _reconstruction.canSubmit : false
                 }
                 MenuSeparator {}
                 Action {
-                    text: "Stop computation"
+                    text: "Stop Computation"
                     onTriggered: _reconstruction.stopExecution()
                     enabled: _reconstruction ? _reconstruction.computingLocally : false
                 }

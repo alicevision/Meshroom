@@ -765,9 +765,15 @@ class Graph(BaseObject):
         type. If the description of the nodes has changed, the reloaded nodes will reflect theses
         changes.
         """
+        newNodes: dict[str, BaseNode] = {}
         for node in self._nodes.values():
             newNode = nodeFactory(node.toDict(), node.nodeType, expectedUid=node._uid)
-            self.replaceNode(node.name, newNode)
+            newNodes[node.name] = newNode
+
+        # Replace in a different loop to ensure all the nodes have been looped over: when looping
+        # over self._nodes and replacing nodes at the same time, some nodes might not be reached
+        for name, node in newNodes.items():
+            self.replaceNode(name, node)
 
     @Slot(str, result=Attribute)
     def attribute(self, fullName):

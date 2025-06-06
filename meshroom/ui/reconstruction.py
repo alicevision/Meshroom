@@ -559,11 +559,13 @@ class Reconstruction(UIGraph):
         The nodes in the graph will be updated to match the changes in the description, if
         there was any.
         """
+        nodeTypes: list[str] = []
         for plugin in meshroom.core.pluginManager.getPlugins().values():
             for node in plugin.nodes.values():
-                node.reload()
+                if node.reload():
+                    nodeTypes.append(node.nodeDescriptor.__name__)
 
-        self._graph.reloadAllNodes()
+        self._graph.reloadAllNodes(nodeTypes)
 
     @Slot()
     @Slot(str)

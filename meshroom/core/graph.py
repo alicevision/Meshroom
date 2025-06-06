@@ -759,16 +759,24 @@ class Graph(BaseObject):
             for nodeName in nodeNames:
                 self.upgradeNode(nodeName)
 
-    def reloadAllNodes(self):
+    def reloadAllNodes(self, nodeTypes: list[str]):
         """
-        Replace all the node instances in the current graph with new node instances of the same
-        type. If the description of the nodes has changed, the reloaded nodes will reflect theses
-        changes.
+        Replace all the node instances of "nodeTypes" in the current graph with new node instances of the
+        same type. If the description of the nodes has changed, the reloaded nodes will reflect theses
+        changes. If "nodeTypes" is empty, then the function returns immediately.
+
+        Args:
+            nodeTypes: the list of node types that will be reloaded.
         """
+        if not nodeTypes:
+            # No updated node to replace in the graph, nothing to do
+            return
+
         newNodes: dict[str, BaseNode] = {}
         for node in self._nodes.values():
-            newNode = nodeFactory(node.toDict(), node.nodeType, expectedUid=node._uid)
-            newNodes[node.name] = newNode
+            if node.nodeType in nodeTypes:
+                newNode = nodeFactory(node.toDict(), node.nodeType, expectedUid=node._uid)
+                newNodes[node.name] = newNode
 
         # Replace in a different loop to ensure all the nodes have been looped over: when looping
         # over self._nodes and replacing nodes at the same time, some nodes might not be reached

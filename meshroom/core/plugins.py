@@ -203,8 +203,15 @@ class NodePlugin(BaseObject):
         self._processEnv = None
         self._timestamp = os.path.getmtime(self.path)
 
-    def reload(self):
-        """ Reload the node plugin and update its status accordingly. """
+    def reload(self) -> bool:
+        """
+        Reload the node plugin and update its status accordingly. If the timestamp of the node plugin's
+        path has not changed since the last time the plugin has been loaded, then nothing will happen.
+
+        Returns:
+            bool: True if the node plugin has successfully been reloaded (i.e. there was no error, and
+                  some changes were made since its last loading), False otherwise.
+        """
         timestamp = 0.0
         try:
             timestamp = os.path.getmtime(self.path)
@@ -212,12 +219,12 @@ class NodePlugin(BaseObject):
             self.status = NodePluginStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The path at {self.path} was not "
                            "not found.")
-            return
+            return False
 
         if self._timestamp == timestamp:
             logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Not reloading. The node description "
                          f"at {self.path} has not been modified since the last load.")
-            return
+            return False
 
         updated = importlib.reload(sys.modules.get(self.nodeDescriptor.__module__))
         descriptor = getattr(updated, self.nodeDescriptor.__name__)
@@ -226,19 +233,20 @@ class NodePlugin(BaseObject):
             self.status = NodePluginStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
                            "was not found.")
-            return
+            return False
 
-        self.nodeDescriptor = descriptor
         self.errors = validateNodeDesc(descriptor)
-        self._timestamp = timestamp
-
         if self.errors:
             self.status = NodePluginStatus.DESC_ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
                            "has description errors.")
-        else:
-            self.status = NodePluginStatus.NOT_LOADED
-            logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Successful reloading.")
+            return False
+
+        self.nodeDescriptor = descriptor
+        self._timestamp = timestamp
+        self.status = NodePluginStatus.NOT_LOADED
+        logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Successful reloading.")
+        return True
 
     @property
     def plugin(self):

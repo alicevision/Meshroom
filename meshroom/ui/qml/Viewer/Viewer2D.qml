@@ -455,7 +455,7 @@ FocusScope {
                 
             }
 
-            mousePosition: (floatImageViewerLoader.item.containsMouse ? {
+            mousePosition: (floatImageViewerLoader.item && floatImageViewerLoader.item.containsMouse ? {
                     x: Math.floor(floatImageViewerLoader.item.mouseX), 
                     y: Math.floor(floatImageViewerLoader.item.mouseY)
                 } : null)

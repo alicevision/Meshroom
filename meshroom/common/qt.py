@@ -305,7 +305,8 @@ class QObjectListModel(QtCore.QAbstractListModel):
         key = getattr(item, self._keyAttrName, None)
         if key is None:
             return
-        assert key in self._objectByKey
+        if key not in self._objectByKey:
+            raise RuntimeError(f"{key} is not in the Model: {self._objectByKey.keys()}")
         del self._objectByKey[key]
 
     def onRequestDeletion(self, item):

@@ -18,7 +18,7 @@ from typing import Callable, Optional
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
-from meshroom.core import desc, stats, hashValue, nodeVersion, Version, MrNodeType
+from meshroom.core import desc, plugins, stats, hashValue, nodeVersion, Version, MrNodeType
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
@@ -201,7 +201,7 @@ class StatusData(BaseObject):
         self.mrNodeType = d.get("mrNodeType", MrNodeType.NONE)
         if not isinstance(self.mrNodeType, MrNodeType):
             self.mrNodeType = MrNodeType[self.mrNodeType]
-        
+
         self.nodeName = d.get("nodeName", "")
         self.nodeType = d.get("nodeType", "")
         self.packageName = d.get("packageName", "")
@@ -639,10 +639,12 @@ class BaseNode(BaseObject):
         super().__init__(parent)
         self._nodeType: str = nodeType
         self.nodeDesc: desc.BaseNode = None
+        self.nodePlugin: plugins.Plugin = None
 
         # instantiate node description if nodeType is valid
-        if nodeType in meshroom.core.nodesDesc:
-            self.nodeDesc = meshroom.core.nodesDesc[nodeType]()
+        if meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType):
+            self.nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType).nodeDescriptor()
+            self.nodePlugin = meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType)
 
         self.packageName: str = ""
         self.packageVersion: str = ""
@@ -1814,6 +1816,7 @@ class CompatibilityIssue(Enum):
     VersionConflict = 2  # mismatch between node's description version and serialized node data
     DescriptionConflict = 3  # mismatch between node's description attributes and serialized node data
     UidConflict = 4  # mismatch between computed UIDs and UIDs stored in serialized node data
+    PluginIssue = 5  # issue when loading the associated plugin
 
 
 class CompatibilityNode(BaseNode):

@@ -129,7 +129,7 @@ class ThumbnailCache(QObject):
             # Compute storage duration since last usage of thumbnail
             lastUsage = f_stat.st_mtime
             storageTime = now - lastUsage
-            logging.debug(f'[ThumbnailCache] Thumbnail {f_name} has been stored for {storageTime}s')
+            # logging.debug(f'[ThumbnailCache] Thumbnail {f_name} has been stored for {storageTime}s')
 
             if storageTime > ThumbnailCache.storageTimeLimit * 3600 * 24:
                 # Mark as removable if storage time exceeds limit

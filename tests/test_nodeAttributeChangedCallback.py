@@ -1,8 +1,10 @@
 # coding:utf-8
 
 from meshroom.core.graph import Graph, loadGraph, executeGraph
-from meshroom.core import desc, registerNodeType, unregisterNodeType
+from meshroom.core import desc, pluginManager
 from meshroom.core.node import Node
+
+from .utils import registerNodeDesc, unregisterNodeDesc
 
 
 class NodeWithAttributeChangedCallback(desc.BaseNode):
@@ -37,13 +39,14 @@ class NodeWithAttributeChangedCallback(desc.BaseNode):
 
 
 class TestNodeWithAttributeChangedCallback:
+
     @classmethod
     def setup_class(cls):
-        registerNodeType(NodeWithAttributeChangedCallback)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
 
     @classmethod
     def teardown_class(cls):
-        unregisterNodeType(NodeWithAttributeChangedCallback)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
 
     def test_assignValueTriggersCallback(self):
         node = Node(NodeWithAttributeChangedCallback.__name__)
@@ -68,13 +71,14 @@ class TestNodeWithAttributeChangedCallback:
 
 
 class TestAttributeCallbackTriggerInGraph:
+
     @classmethod
     def setup_class(cls):
-        registerNodeType(NodeWithAttributeChangedCallback)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
 
     @classmethod
     def teardown_class(cls):
-        unregisterNodeType(NodeWithAttributeChangedCallback)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
 
     def test_connectionTriggersCallback(self):
         graph = Graph("")
@@ -219,7 +223,7 @@ class NodeWithCompoundAttributes(desc.BaseNode):
                     desc.IntParam(
                         name="int", label="Int", description="", value=0, range=None
                     )
-                ],  
+                ],
             )
         ),
         desc.GroupAttribute(
@@ -241,15 +245,16 @@ class NodeWithCompoundAttributes(desc.BaseNode):
 
 
 class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
+
     @classmethod
     def setup_class(cls):
-        registerNodeType(NodeWithAttributeChangedCallback)
-        registerNodeType(NodeWithCompoundAttributes)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
+        registerNodeDesc(NodeWithCompoundAttributes)
 
     @classmethod
     def teardown_class(cls):
-        unregisterNodeType(NodeWithAttributeChangedCallback)
-        unregisterNodeType(NodeWithCompoundAttributes)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
+        unregisterNodeDesc(NodeWithCompoundAttributes)
 
     def test_connectionToListElement(self):
         graph = Graph("")
@@ -313,7 +318,8 @@ class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
 
 class NodeWithDynamicOutputValue(desc.BaseNode):
     """
-    A Node containing an output attribute which value is computed dynamically during graph execution.
+    A Node containing an output attribute which value is computed dynamically
+    during graph execution.
     """
 
     inputs = [
@@ -340,15 +346,18 @@ class NodeWithDynamicOutputValue(desc.BaseNode):
 
 
 class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
+    # nodePluginAttributeChangedCallback = NodePlugin(NodeWithAttributeChangedCallback)
+    # nodePluginDynamicOutputValue = NodePlugin(NodeWithDynamicOutputValue)
+
     @classmethod
     def setup_class(cls):
-        registerNodeType(NodeWithAttributeChangedCallback)
-        registerNodeType(NodeWithDynamicOutputValue)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
+        registerNodeDesc(NodeWithDynamicOutputValue)
 
     @classmethod
     def teardown_class(cls):
-        unregisterNodeType(NodeWithAttributeChangedCallback)
-        unregisterNodeType(NodeWithDynamicOutputValue)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
+        unregisterNodeDesc(NodeWithDynamicOutputValue)
 
     def test_connectingUncomputedDynamicOutputDoesNotTriggerDownstreamAttributeChangedCallback(
         self,
@@ -390,7 +399,6 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         assert nodeB.input.value == 20
         assert nodeB.affectedInput.value == 0
 
-        
     def test_clearingDynamicOutputValueDoesNotTriggerDownstreamAttributeChangedCallback(
         self, graphSavedOnDisk
     ):
@@ -434,11 +442,11 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
 class TestAttributeCallbackBehaviorOnGraphImport:
     @classmethod
     def setup_class(cls):
-        registerNodeType(NodeWithAttributeChangedCallback)
+        registerNodeDesc(NodeWithAttributeChangedCallback)
 
     @classmethod
     def teardown_class(cls):
-        unregisterNodeType(NodeWithAttributeChangedCallback)
+        unregisterNodeDesc(NodeWithAttributeChangedCallback)
 
     def test_importingGraphDoesNotTriggerAttributeChangedCallbacks(self):
         graph = Graph("")
@@ -450,9 +458,8 @@ class TestAttributeCallbackBehaviorOnGraphImport:
 
         nodeA.input.value = 5
         nodeB.affectedInput.value = 2
-        
+
         otherGraph = Graph("")
         otherGraph.importGraphContent(graph)
 
         assert otherGraph.node(nodeB.name).affectedInput.value == 2
-

@@ -44,7 +44,7 @@ def test_pipeline():
             if attr.isOutput and attr.enabled:
                 otherAttr = otherNode.attribute(key)
                 assert attr.uid() != otherAttr.uid()
-    
+
     # Test serialization/deserialization on both graphs
     for graph in [graph1, graph2]:
         filename = tempfile.mktemp()

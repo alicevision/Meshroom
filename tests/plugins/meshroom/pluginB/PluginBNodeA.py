@@ -1,15 +1,15 @@
+__version__ = "1.0"
+
 from meshroom.core import desc
 
-
-class Ls(desc.CommandLineNode):
-    commandLine = "ls {inputValue} > {outputValue}"
+class PluginBNodeA(desc.Node):
     inputs = [
         desc.File(
             name="input",
             label="Input",
             description="",
             value="",
-        )
+        ),
     ]
 
     outputs = [
@@ -17,6 +17,6 @@ class Ls(desc.CommandLineNode):
             name="output",
             label="Output",
             description="",
-            value="{nodeCacheFolder}/ls.txt",
-        )
+            value="",
+        ),
     ]

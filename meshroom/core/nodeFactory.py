@@ -54,7 +54,9 @@ class _NodeCreator:
         self.internalFolder = self.nodeData.get("internalFolder")
         self.position = Position(*self.nodeData.get("position", []))
         self.uid = self.nodeData.get("uid", None)
-        self.nodeDesc = meshroom.core.nodesDesc.get(self.nodeType, None)
+        self.nodeDesc = None
+        if meshroom.core.pluginManager.isRegistered(self.nodeType):
+            self.nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin(self.nodeType).nodeDescriptor
 
     def create(self) -> Union[Node, CompatibilityNode]:
         compatibilityIssue = self._checkCompatibilityIssues()
@@ -74,6 +76,8 @@ class _NodeCreator:
 
     def _checkCompatibilityIssues(self) -> Optional[CompatibilityIssue]:
         if self.nodeDesc is None:
+            if meshroom.core.pluginManager.belongsToPlugin(self.nodeType) is not None:
+                return CompatibilityIssue.PluginIssue
             return CompatibilityIssue.UnknownNodeType
 
         if not self._checkUidCompatibility():
@@ -121,13 +125,14 @@ class _NodeCreator:
     def _checkAttributesAreCompatibleWithDescription(self) -> bool:
         return (
             self._checkAttributesCompatibility(self.nodeDesc.inputs, self.inputs)
-            and self._checkAttributesCompatibility(self.nodeDesc.internalInputs, self.internalInputs)
+            and self._checkAttributesCompatibility(self.nodeDesc.internalInputs,
+                                                   self.internalInputs)
             and self._checkAttributesCompatibility(self.nodeDesc.outputs, self.outputs)
         )
 
     def _checkInputAttributesNames(self) -> bool:
         def serializedInput(attr: desc.Attribute) -> bool:
-            """Filter that excludes not-serialized desc input attributes."""
+            """ Filter that excludes not-serialized desc input attributes. """
             if isinstance(attr, desc.PushButtonParam):
                 # PushButtonParam are not serialized has they do not hold a value.
                 return False
@@ -138,7 +143,7 @@ class _NodeCreator:
 
     def _checkOutputAttributesNames(self) -> bool:
         def serializedOutput(attr: desc.Attribute) -> bool:
-            """Filter that excludes not-serialized desc output attributes."""
+            """ Filter that excludes not-serialized desc output attributes. """
             if attr.isDynamicValue:
                 # Dynamic outputs values are not serialized with the node,
                 # as their value is written in the computed output data.

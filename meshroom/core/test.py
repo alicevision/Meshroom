@@ -28,10 +28,10 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
 
         for _, nodeData in graphData.items():
             nodeType = nodeData["nodeType"]
-            if not nodeType in meshroom.core.nodesDesc:
+            if not meshroom.core.pluginManager.isRegistered(nodeType):
                 return False
 
-            nodeDesc = meshroom.core.nodesDesc[nodeType]
+            nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType)
             currentNodeVersion = meshroom.core.nodeVersion(nodeDesc)
 
             inputs = nodeData.get("inputs", {})
@@ -60,9 +60,9 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
 
     finally:
         if not nodesAlreadyLoaded:
-            nodeTypes = [nodeType for _, nodeType in meshroom.core.nodesDesc.items()]
-            for nodeType in nodeTypes:
-                unregisterNodeType(nodeType)
+            nodePlugins = meshroom.core.pluginManager.getRegisteredNodePlugins()
+            for node in nodePlugins:
+                meshroom.core.pluginManager.unregisterNode(node)
 
 
 def checkAllTemplatesVersions() -> bool:

@@ -39,4 +39,3 @@ class AppendFiles(desc.CommandLineNode):
             value='{nodeCacheFolder}/appendText.txt',
         )
     ]
-

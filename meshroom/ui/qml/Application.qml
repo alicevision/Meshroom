@@ -553,6 +553,16 @@ Page {
     }
 
     Action {
+        id: reloadPluginsAction
+        property string tooltip: "Reload the source code for all nodes from all registered plugins"
+        text: "Reload Plugins Source Code"
+        shortcut: "Ctrl+Shift+R"
+        onTriggered: {
+            _reconstruction.reloadPlugins()
+        }
+    }
+
+    Action {
         id: undoAction
 
         property string tooltip: 'Undo "' + (_reconstruction ? _reconstruction.undoStack.undoText : "Unknown") + '"'
@@ -829,6 +839,12 @@ Page {
                         action: removeImagesFromAllGroupsAction
                         ToolTip.visible: hovered
                         ToolTip.text: removeImagesFromAllGroupsAction.tooltip
+                    }
+
+                    MenuItem {
+                        action: reloadPluginsAction
+                        ToolTip.visible: hovered
+                        ToolTip.text: reloadPluginsAction.tooltip
                     }
                 }
                 MenuSeparator { }

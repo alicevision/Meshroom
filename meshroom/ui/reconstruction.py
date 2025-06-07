@@ -553,7 +553,7 @@ class Reconstruction(UIGraph):
         self.setActiveNodes(nodes)
 
     @Slot()
-    def reloadAllNodes(self):
+    def reloadPlugins(self):
         """
         Reload all the NodePlugins from all the registered plugins.
         The nodes in the graph will be updated to match the changes in the description, if
@@ -565,7 +565,7 @@ class Reconstruction(UIGraph):
                 if node.reload():
                     nodeTypes.append(node.nodeDescriptor.__name__)
 
-        self._graph.reloadAllNodes(nodeTypes)
+        self._graph.reloadNodePlugins(nodeTypes)
 
     @Slot()
     @Slot(str)

@@ -553,12 +553,12 @@ Page {
     }
 
     Action {
-        id: reloadAllNodesAction
-        property string tooltip: "Reload all the node descriptions for all the registered plugins"
-        text: "Reload All Nodes"
+        id: reloadPluginsAction
+        property string tooltip: "Reload the source code for all nodes from all registered plugins"
+        text: "Reload Plugins Source Code"
         shortcut: "Ctrl+Shift+R"
         onTriggered: {
-            _reconstruction.reloadAllNodes()
+            _reconstruction.reloadPlugins()
         }
     }
 
@@ -842,9 +842,9 @@ Page {
                     }
 
                     MenuItem {
-                        action: reloadAllNodesAction
+                        action: reloadPluginsAction
                         ToolTip.visible: hovered
-                        ToolTip.text: reloadAllNodesAction.tooltip
+                        ToolTip.text: reloadPluginsAction.tooltip
                     }
                 }
                 MenuSeparator { }

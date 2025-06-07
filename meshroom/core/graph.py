@@ -748,7 +748,12 @@ class Graph(BaseObject):
             if dstName in outListAttributes:
                 _recreateTargetListAttributeChildren(*outListAttributes[dstName])
             try:
-                self.addEdge(self.attribute(srcName), self.attribute(dstName))
+                srcAttr = self.attribute(srcName)
+                dstAttr = self.attribute(dstName)
+                if srcAttr is None or dstAttr is None:
+                    logging.warning(f"Failed to restore edge {srcName}{' (missing)' if srcAttr is None else ''} -> {dstName}{' (missing)' if dstAttr is None else ''}")
+                    continue
+                self.addEdge(srcAttr, dstAttr)
             except (KeyError, ValueError) as e:
                 logging.warning(f"Failed to restore edge {srcName} -> {dstName}: {e}")
 

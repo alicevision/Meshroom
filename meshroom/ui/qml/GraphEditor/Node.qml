@@ -32,7 +32,7 @@ Item {
     property color baseColor: defaultColor
 
     /// Shake Relevance
-    readonly property double maxAmplitude: 300.0;
+    readonly property double maxAmplitude: 500.0;
     readonly property int shakeThreshold: 5;
     
     property int shakeCounter: 0;

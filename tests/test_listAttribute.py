@@ -1,7 +1,7 @@
 from meshroom.core import desc
 from meshroom.core.graph import Graph
-from meshroom.core import registerNodeType, unregisterNodeType
 
+from .utils import registerNodeDesc, unregisterNodeDesc
 
 class NodeWithListAttribute(desc.Node):
     inputs = [
@@ -18,11 +18,11 @@ class TestListAttribute:
 
     @classmethod
     def setup_class(cls):
-        registerNodeType(NodeWithListAttribute)
+        registerNodeDesc(NodeWithListAttribute)
 
     @classmethod
     def teardown_class(cls):
-        unregisterNodeType(NodeWithListAttribute)
+        unregisterNodeDesc(NodeWithListAttribute)
 
     def test_lengthUsesLinkParam(self):
         graph = Graph("")

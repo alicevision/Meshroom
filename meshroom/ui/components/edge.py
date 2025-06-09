@@ -1,4 +1,4 @@
-from PySide6.QtCore import Signal, Property, QPointF, Qt, QObject
+from PySide6.QtCore import Signal, Property, QPointF, Qt, QObject, Slot, QRectF
 from PySide6.QtGui import QPainterPath, QVector2D
 from PySide6.QtQuick import QQuickItem
 
@@ -109,6 +109,17 @@ class EdgeMouseArea(QQuickItem):
             return
         self._containsMouse = value
         self.containsMouseChanged.emit()
+
+    @Slot(QPointF, QPointF, result=bool)
+    def intersectsSegment(self, p1, p2):
+        """ Checks whether the given segment (p1, p2) intersects with the Path. """
+        path = QPainterPath()
+        # Starting point
+        path.moveTo(p1)
+        # Create a diagonal line to the other end of the rect
+        path.lineTo(p2)
+        v = self._path.intersects(path)
+        return v
 
     thicknessChanged = Signal()
     thickness = Property(float, getThickness, setThickness, notify=thicknessChanged)

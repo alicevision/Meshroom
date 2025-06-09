@@ -110,16 +110,16 @@ class EdgeMouseArea(QQuickItem):
         self._containsMouse = value
         self.containsMouseChanged.emit()
 
-    @Slot(QRectF, result=bool)
-    def intersects(self, rect):
-        """ Checks whether the given rectangle's diagonal intersects with the Path. """
+    @Slot(QPointF, QPointF, result=bool)
+    def intersectsSegment(self, p1, p2):
+        """ Checks whether the given segment (p1, p2) intersects with the Path. """
         path = QPainterPath()
         # Starting point
-        path.moveTo(QPointF(rect.x(), rect.y()))
+        path.moveTo(p1)
         # Create a diagonal line to the other end of the rect
-        path.lineTo(QPointF(rect.width() + rect.x(), rect.height() + rect.y()))
-
-        return self._path.intersects(path)
+        path.lineTo(p2)
+        v = self._path.intersects(path)
+        return v
 
     thicknessChanged = Signal()
     thickness = Property(float, getThickness, setThickness, notify=thicknessChanged)

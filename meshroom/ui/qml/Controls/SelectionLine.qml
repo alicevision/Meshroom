@@ -9,7 +9,7 @@ Usage:
 2. Bind the selectionShape to the MouseArea by setting the `mouseArea` property.
 3. Call startSelection() with coordinates when the selection starts.
 4. Call endSelection() when the selection ends.
-5. Listen to the selectionEnded signal to get the rectangle whose Diagonal is the selection line.
+5. Listen to the selectionEnded signal to get the segment (defined by 2 points).
 */
 
 Item {
@@ -19,7 +19,7 @@ Item {
 
     readonly property bool active: mouseArea.drag.target == dragTarget
 
-    signal selectionEnded(rect selectionRect, int modifiers)
+    signal selectionEnded(point selectionP1, point selectionP2, int modifiers)
 
     function startSelection(mouse) {
         dragTarget.startPos.x = dragTarget.x = mouse.x;
@@ -33,8 +33,9 @@ Item {
             return;
         }
         mouseArea.drag.target = null;
-        const rect = Qt.rect(selectionShape.x, selectionShape.y, selectionShape.width, selectionShape.height)
-        selectionEnded(rect, dragTarget.modifiers);
+        const p1 = Qt.point(selectionShape.x, selectionShape.y);
+        const p2 = Qt.point(selectionShape.x + selectionShape.width, selectionShape.y + selectionShape.height);
+        selectionEnded(p1, p2, dragTarget.modifiers);
     }
 
     visible: active

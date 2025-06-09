@@ -17,12 +17,13 @@ SelectionLine {
     // Emitted when the selection has ended, with the list of selected indices and modifiers.
     signal delegateSelectionEnded(list<int> indices, int modifiers)
 
-    onSelectionEnded: function(selectionRect, modifiers) {
+    onSelectionEnded: function(selectionP1, selectionP2, modifiers) {
         let selectedIndices = [];
-        const mappedSelectionRect = mapToItem(container, selectionRect);
+        const mappedP1 = mapToItem(container, selectionP1);
+        const mappedP2 = mapToItem(container, selectionP2);
         for (var i = 0; i < modelInstantiator.count; ++i) {
             const delegate = modelInstantiator.itemAt(i);
-            if (delegate.intersects(mappedSelectionRect)) {
+            if (delegate.intersectsSegment(mappedP1, mappedP2)) {
                 selectedIndices.push(i);
             }
         }

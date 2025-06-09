@@ -56,7 +56,7 @@ Item {
             ShapePath {
                 strokeWidth: 2;
                 strokeStyle: ShapePath.DashLine;
-                strokeColor: "#FF0000";
+                strokeColor: "#CC3E3E";
                 dashPattern: [3, 2];
 
                 startX: 0;

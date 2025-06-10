@@ -46,6 +46,14 @@ def validateNodeDesc(nodeDesc: desc.Node) -> list:
     return errors
 
 
+class ProcessEnvType(Enum):
+    """ Supported process environments. """
+    DEFAULT = "default",
+    CONDA = "conda",
+    VIRTUALENV = "virtualenv",
+    REZ = "rez"
+
+
 class ProcessEnv(BaseObject):
     """
     Describes the environment required by a node's process.

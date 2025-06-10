@@ -32,8 +32,8 @@ class BaseNode(object):
     cpu = Level.NORMAL
     gpu = Level.NONE
     ram = Level.NORMAL
-    packageName = ''
-    packageVersion = ''
+    packageName = ""
+    packageVersion = ""
     internalInputs = [
         StringParam(
             name="invalidation",
@@ -151,11 +151,11 @@ class BaseNode(object):
                 prog = shutil.which(cmdList[0], path=env.get('PATH') if env else None)
 
                 print(f"Starting Process for '{chunk.node.name}'")
-                print(f' - commandLine: {cmd}')
-                print(f' - logFile: {chunk.logFile}')
+                print(f" - commandLine: {cmd}")
+                print(f" - logFile: {chunk.logFile}")
                 if prog:
                     cmdList[0] = prog
-                    print(f' - command full path: {prog}')
+                    print(f" - command full path: {prog}")
 
                 # Change the process group to avoid Meshroom main process being killed if the
                 # subprocess gets terminated by the user or an Out Of Memory (OOM kill).
@@ -197,8 +197,8 @@ class BaseNode(object):
                         pass
 
             if chunk.subprocess.returncode != 0:
-                with open(chunk.logFile, 'r') as logF:
-                    logContent = ''.join(logF.readlines())
+                with open(chunk.logFile, "r") as logF:
+                    logContent = "".join(logF.readlines())
                 raise RuntimeError(f'Error on node "{chunk.name}":\nLog:\n{logContent}')
         finally:
             chunk.subprocess = None
@@ -266,9 +266,9 @@ class Node(BaseNode):
 class CommandLineNode(BaseNode):
     """
     """
-    commandLine = ''  # need to be defined on the node
+    commandLine = ""  # need to be defined on the node
     parallelization = None
-    commandLineRange = ''
+    commandLineRange = ""
 
     def __init__(self):
         super(CommandLineNode, self).__init__()
@@ -277,10 +277,10 @@ class CommandLineNode(BaseNode):
         return MrNodeType.COMMANDLINE
 
     def buildCommandLine(self, chunk):
-        cmdPrefix = ''
-        cmdSuffix = ''
+        cmdPrefix = ""
+        cmdSuffix = ""
         if chunk.node.isParallelized and chunk.node.size > 1:
-            cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
+            cmdSuffix = " " + self.commandLineRange.format(**chunk.range.toDict())
 
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
@@ -294,23 +294,23 @@ class CommandLineNode(BaseNode):
 class AVCommandLineNode(CommandLineNode):
 
     cgroupParsed = False
-    cmdMem = ''
-    cmdCore = ''
+    cmdMem = ""
+    cmdCore = ""
 
     def __init__(self):
         super(AVCommandLineNode, self).__init__()
 
         if AVCommandLineNode.cgroupParsed is False:
 
-            AVCommandLineNode.cmdMem = ''
+            AVCommandLineNode.cmdMem = ""
             memSize = cgroup.getCgroupMemorySize()
             if memSize > 0:
-                AVCommandLineNode.cmdMem = f' --maxMemory={memSize}'
+                AVCommandLineNode.cmdMem = f" --maxMemory={memSize}"
 
-            AVCommandLineNode.cmdCore = ''
+            AVCommandLineNode.cmdCore = ""
             coresCount = cgroup.getCgroupCpuCount()
             if coresCount > 0:
-                AVCommandLineNode.cmdCore = f' --maxCores={coresCount}'
+                AVCommandLineNode.cmdCore = f" --maxCores={coresCount}"
 
             AVCommandLineNode.cgroupParsed = True
 

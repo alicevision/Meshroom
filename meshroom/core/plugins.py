@@ -57,13 +57,30 @@ class ProcessEnvType(Enum):
 class ProcessEnv(BaseObject):
     """
     Describes the environment required by a node's process.
+
+    Args:
+        folder: the source folder for the process.
+        envType: (optional) the type of process environment.
+        uri: (optional) the Unique Resource Identifier to activate the environment.
     """
 
-    def __init__(self, folder: str):
+    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.DEFAULT):
         super().__init__()
-        self.binPaths: list = [Path(folder, "bin")]
-        self.libPaths: list = [Path(folder, "lib"), Path(folder, "lib64")]
-        self.pythonPathFolders: list = [Path(folder)] + self.binPaths
+        self._folder = folder
+        self._processEnvType: ProcessEnvType = envType
+
+    def getEnvDict(self) -> dict:
+        """ Return the environment dictionary if it has been modified, None otherwise. """
+        return None
+
+    def getCommandPrefix(self) -> str:
+        """ Return the prefix to the command line that will be executed by the process. """
+        return ""
+
+    def getCommandSuffix(self) -> str:
+        """ Return the suffix to the command line that will be executed by the process. """
+        return ""
+
 
 
 class NodePluginStatus(Enum):

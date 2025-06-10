@@ -114,6 +114,31 @@ class DirTreeProcessEnv(ProcessEnv):
         return super().getCommandPrefix()
 
 
+class RezProcessEnv(ProcessEnv):
+    """
+    """
+    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.REZ, uri: str = ""):
+        super().__init__(folder, envType)
+
+        if envType != ProcessEnvType.REZ:
+            raise RuntimeError("Wrong process environment type.")
+        if not uri:
+            raise RuntimeError("Wrong URI for Rez environment process.")
+
+    def getEnvDict(self):
+        env = os.environ.copy()
+
+        return env
+
+    def getCommandPrefix(self):
+        if Path(self.uri).exists() and Path(self.uri).suffix == ".rxt":
+            return f"rez env -i {self.uri} -c '"
+        return f"rez env {self.uri} -c '"
+
+    def getCommandSuffix(self):
+        return "'"
+
+
 class NodePluginStatus(Enum):
     """
     Loading status for NodePlugin objects.

@@ -11,6 +11,7 @@ from pathlib import Path
 
 from meshroom.common import BaseObject
 from meshroom.core import desc
+from meshroom.core.desc.node import _MESHROOM_ROOT
 
 def validateNodeDesc(nodeDesc: desc.Node) -> list:
     """
@@ -81,6 +82,36 @@ class ProcessEnv(BaseObject):
         """ Return the suffix to the command line that will be executed by the process. """
         return ""
 
+
+class DirTreeProcessEnv(ProcessEnv):
+    """
+    """
+    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.DEFAULT, uri: str = ""):
+        super().__init__(folder, envType)
+        if envType == ProcessEnvType.REZ:
+            raise RuntimeError("Wrong process environment type.")
+        if not uri and envType != ProcessEnvType.DEFAULT:
+            raise RuntimeError("URI should be provided for the process environment.")
+
+        self.uri = uri
+        self.binPaths: list = [str(Path(folder, "bin"))]
+        self.libPaths: list = [str(Path(folder, "lib")), str(Path(folder, "lib64"))]
+        self.pythonPaths: list = [str(Path(folder))] + self.binPaths
+
+    def getEnvDict(self) -> dict:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = f"{_MESHROOM_ROOT}{os.pathsep}{os.pathsep.join(self.pythonPaths)}{os.pathsep}{os.getenv('PYTHONPATH', '')}"
+        env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
+        env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
+
+        return env
+
+    def getCommandPrefix(self) -> str:
+        if self._processEnvType == ProcessEnvType.CONDA:
+            return f"conda run -n {self.uri} "
+        if self._processEnvType == ProcessEnvType.VIRTUALENV:
+            return f"{self.uri}/bin/python "
+        return super().getCommandPrefix()
 
 
 class NodePluginStatus(Enum):

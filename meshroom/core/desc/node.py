@@ -78,8 +78,9 @@ class BaseNode(object):
     outputs = []
     size = StaticNodeSize(1)
     parallelization = None
-    documentation = ''
-    category = 'Other'
+    documentation = ""
+    category = "Other"
+    plugin = None
 
     def __init__(self):
         super(BaseNode, self).__init__()

@@ -193,6 +193,7 @@ class NodePlugin(BaseObject):
         self.plugin: Plugin = plugin
         self.path: str = Path(getfile(nodeDesc)).resolve().as_posix()
         self.nodeDescriptor: desc.Node = nodeDesc
+        self.nodeDescriptor.plugin = self
 
         self.status: NodePluginStatus = NodePluginStatus.NOT_LOADED
         self.errors: list[str] = validateNodeDesc(nodeDesc)

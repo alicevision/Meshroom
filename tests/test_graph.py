@@ -1,4 +1,7 @@
 from meshroom.core.graph import Graph
+from meshroom.core.exception import CyclicDependencyError
+
+import pytest
 
 
 def test_depth():
@@ -278,3 +281,20 @@ def test_duplicate_nodes():
     assert nMap[n2][0].input.getLinkParam() == nMap[n1][0].output
     assert nMap[n3][0].input.getLinkParam() == nMap[n1][0].output
     assert nMap[n3][0].input2.getLinkParam() == nMap[n2][0].output
+
+
+def test_acyclic_connection_should_raise_error():
+
+    # Given
+    graph = Graph("Test acyclic connection")
+    tB = graph.addNewNode("AppendText", inputText="echo B")
+    tC = graph.addNewNode("AppendText", inputText="echo C")
+
+    graph.addEdge(tB.output, tC.input)
+
+    # When
+    # Then
+    with pytest.raises(CyclicDependencyError):
+        graph.addEdge(tC.output, tB.input)
+
+

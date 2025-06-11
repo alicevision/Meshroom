@@ -881,10 +881,21 @@ class GroupAttribute(Attribute):
         if not linkedParam:
             return self._value
         
+        def linkAttributesValues(srcAttr, dstAttr):
+            
+            for i, attrDesc in enumerate(dstAttr.desc._groupDesc):
+                linkedAttrDesc = srcAttr.desc._groupDesc[i]
+
+                subSrcAttr = srcAttr._value.get(linkedAttrDesc.name)
+                subDstAttr = dstAttr._value.get(attrDesc.name)
+
+                if isinstance(linkedAttrDesc, desc.GroupAttribute) and isinstance(attrDesc, desc.GroupAttribute):
+                    linkAttributesValues(subSrcAttr, subDstAttr)
+                else:
+                    subDstAttr.value = subSrcAttr.value
+
         # If linked, the driver attributes values are copied to the current attribute
-        for i, attrDesc in enumerate(self.desc._groupDesc):
-            linkedAttrDesc = linkedParam.desc._groupDesc[i]
-            self._value.get(attrDesc.name).value = linkedParam._value.get(linkedAttrDesc.name).value
+        linkAttributesValues(linkedParam, self)
 
         return self._value
 
@@ -1036,7 +1047,9 @@ class GroupAttribute(Attribute):
             return False
         
         for i, attr in enumerate(self._value):
-            if attr.baseType != otherAttribute._value[i].baseType:
+            if isinstance(attr, GroupAttribute):
+                return attr._haveSameStructure(otherAttribute._value[i])
+            elif attr.baseType != otherAttribute._value[i].baseType:
                 return False
         
         return True

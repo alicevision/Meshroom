@@ -508,6 +508,20 @@ class Attribute(BaseObject):
             return False
         
         return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS if self.desc.semantic == imageSemantic), None) is not None
+    
+    @Slot(BaseObject, result=bool)
+    def validateConnectionFrom(self, otherAttribute: "Attribute") -> bool:
+        """ Check if the given attribute can be conected to the current Attribute
+        """
+        return self._validateConnectionFrom(otherAttribute)
+    
+    def _validateConnectionFrom(self, otherAttribute: "Attribute") -> bool:
+        """ Implementation of the connection validation
+
+            .. note:
+                Override this method to use custom connection validation logic
+        """
+        return self.baseType == otherAttribute.baseType
 
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
@@ -861,6 +875,19 @@ class GroupAttribute(Attribute):
             except KeyError:
                 raise AttributeError(key)
 
+    def _get_value(self):
+        linkedParam = self.getLinkParam()
+
+        if not linkedParam:
+            return self._value
+        
+        # If linked, the driver attributes values are copied to the current attribute
+        for i, attrDesc in enumerate(self.desc._groupDesc):
+            linkedAttrDesc = linkedParam.desc._groupDesc[i]
+            self._value.get(attrDesc.name).value = linkedParam._value.get(linkedAttrDesc.name).value
+
+        return self._value
+
     def _set_value(self, exportedValue):
         if self._handleLinkValue(exportedValue):
             return
@@ -992,6 +1019,28 @@ class GroupAttribute(Attribute):
     def matchText(self, text: str) -> bool:
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
+    def _validateConnectionFrom(self, otherAttribute:"Attribute") -> bool:
+
+        isValid = super()._validateConnectionFrom(otherAttribute=otherAttribute)
+
+        if not isValid:
+            return False
+
+        return self._haveSameStructure(otherAttribute)
+    
+    def _haveSameStructure(self, otherAttribute: "Attribute") -> bool:
+        """ Does the given attribute have the same number of attributes, and all ordered attributes have the same baseType
+        """
+        
+        if isinstance(otherAttribute._value, Iterable) and len(otherAttribute._value) != len(self._value):
+            return False
+        
+        for i, attr in enumerate(self._value):
+            if attr.baseType != otherAttribute._value[i].baseType:
+                return False
+        
+        return True
+    
     # Override value property
-    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    value = Property(Variant, _get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)

@@ -81,6 +81,7 @@ Item {
                 cameraInitIndex: reconstruction ? reconstruction.cameraInitIndex : -1
                 onRemoveImageRequest: function(attribute) { reconstruction.removeImage(attribute) }
                 onAllViewpointsCleared: reconstruction.selectedViewId = "-1"
+                galleryGrid.currentIndex: 0
                 onFilesDropped: function(drop, augmentSfm) {
                     if (drop["meshroomScenes"].length == 1) {
                         ensureSaved(function() {

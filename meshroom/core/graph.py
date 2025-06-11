@@ -15,7 +15,7 @@ import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
-from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit
+from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
@@ -132,6 +132,14 @@ class Visitor:
         """ Is invoked on a vertex after all of its out edges have been added to the search tree and all of the
         adjacent vertices have been discovered (but before their out-edges have been examined). """
         pass
+
+
+class DAGVisitor(Visitor):
+
+    def backEdge(self, e, g):
+        """ Is invoked on the back edges in the graph. Means that there is a cyclic dependency in the visited graph """
+
+        raise CyclicDependencyError("A cyclic dependency exists on the current DAG")
 
 
 def changeTopology(func):
@@ -889,7 +897,7 @@ class Graph(BaseObject):
         return set(self._nodes) - nodesWithInputLink
 
     @changeTopology
-    def addEdge(self, srcAttr: Attribute, dstAttr: Attribute):
+    def addEdge(self, srcAttr: Attribute, dstAttr: Attribute) -> "Edge":
         if not (srcAttr.node.graph == dstAttr.node.graph == self):
             raise InvalidEdgeError(
                 srcAttr.fullNameToGraph, dstAttr.fullNameToGraph, "Attributes do not belong to this Graph"
@@ -1030,7 +1038,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
+        visitor = DAGVisitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
         visitor.finishVertex = lambda vertex, graph: nodes.append(vertex)
         visitor.finishEdge = lambda edge, graph: edges.append(edge)
         self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst)
@@ -1055,7 +1063,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
+        visitor = DAGVisitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
 
         def discoverVertex(vertex, graph):
             if not filterTypes or vertex.nodeType in filterTypes:
@@ -1079,7 +1087,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor(reverse=False, dependenciesOnly=True)
+        visitor = DAGVisitor(reverse=False, dependenciesOnly=True)
 
         def discoverVertex(vertex, graph):
             if vertex.hasStatus(Status.SUCCESS):
@@ -1135,7 +1143,7 @@ class Graph(BaseObject):
         self._computationBlocked.clear()
 
         compatNodes = []
-        visitor = Visitor(reverse=False, dependenciesOnly=False)
+        visitor = DAGVisitor(reverse=False, dependenciesOnly=False)
 
         def discoverVertex(vertex, graph):
             # initialize depths
@@ -1193,7 +1201,7 @@ class Graph(BaseObject):
         """
         nodesStack = []
         edgesScore = defaultdict(int)
-        visitor = Visitor(reverse=False, dependenciesOnly=dependenciesOnly)
+        visitor = DAGVisitor(reverse=False, dependenciesOnly=dependenciesOnly)
 
         def finishEdge(edge, graph):
             u, v = edge
@@ -1276,7 +1284,7 @@ class Graph(BaseObject):
         if startNode.isAlreadySubmittedOrFinished():
             return 0
 
-        class SCVisitor(Visitor):
+        class SCVisitor(DAGVisitor):
             def __init__(self, reverse, dependenciesOnly):
                 super().__init__(reverse, dependenciesOnly)
 

@@ -64,3 +64,8 @@ class StopGraphVisit(GraphVisitMessage):
 class StopBranchVisit(GraphVisitMessage):
     """ Immediately stop branch visit. """
     pass
+
+
+class CyclicDependencyError(Exception):
+    """ Raised if a cyclic dependency is find in a DAG graph """
+    pass

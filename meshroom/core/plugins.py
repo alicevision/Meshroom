@@ -49,9 +49,7 @@ def validateNodeDesc(nodeDesc: desc.Node) -> list:
 
 class ProcessEnvType(Enum):
     """ Supported process environments. """
-    DEFAULT = "default",
-    CONDA = "conda",
-    VIRTUALENV = "virtualenv",
+    DIRTREE = "dirtree",
     REZ = "rez"
 
 
@@ -65,11 +63,11 @@ class ProcessEnv(BaseObject):
         uri: (optional) the Unique Resource Identifier to activate the environment.
     """
 
-    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.DEFAULT):
+    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.DIRTREE, uri: str = ""):
         super().__init__()
-        self._folder = folder
+        self._folder: str = folder
         self._processEnvType: ProcessEnvType = envType
-        self.uri = ""
+        self.uri: str = uri
 
     def getEnvDict(self) -> dict:
         """ Return the environment dictionary if it has been modified, None otherwise. """
@@ -87,15 +85,9 @@ class ProcessEnv(BaseObject):
 class DirTreeProcessEnv(ProcessEnv):
     """
     """
-    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.DEFAULT, uri: str = ""):
-        if envType == ProcessEnvType.REZ:
-            raise RuntimeError("Wrong process environment type.")
-        if not uri and envType != ProcessEnvType.DEFAULT:
-            raise RuntimeError("URI should be provided for the process environment.")
+    def __init__(self, folder: str):
+        super().__init__(folder, ProcessEnvType.DIRTREE)
 
-        super().__init__(folder, envType)
-
-        self.uri = uri
         self.binPaths: list = [str(Path(folder, "bin"))]
         self.libPaths: list = [str(Path(folder, "lib")), str(Path(folder, "lib64"))]
         self.pythonPaths: list = [str(Path(folder))] + self.binPaths
@@ -105,31 +97,18 @@ class DirTreeProcessEnv(ProcessEnv):
         env["PYTHONPATH"] = f"{_MESHROOM_ROOT}{os.pathsep}{os.pathsep.join(self.pythonPaths)}{os.pathsep}{os.getenv('PYTHONPATH', '')}"
         env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
         env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
-        # env["PYTHONPATH"] = f"{_MESHROOM_ROOT}{os.pathsep}{os.pathsep.join(self.pythonPaths)}"
-        # env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}"
-        # env["PATH"] = f"{os.pathsep.join(self.binPaths)}"
 
         return env
-
-    def getCommandPrefix(self) -> str:
-        if self._processEnvType == ProcessEnvType.CONDA:
-            return f"conda run -n {self.uri} "
-        if self._processEnvType == ProcessEnvType.VIRTUALENV:
-            return f"{self.uri}/bin/python "
-        return super().getCommandPrefix()
 
 
 class RezProcessEnv(ProcessEnv):
     """
     """
-    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.REZ, uri: str = ""):
-        if envType != ProcessEnvType.REZ:
-            raise RuntimeError("Wrong process environment type.")
+    def __init__(self, folder: str, uri: str = ""):
         if not uri:
-            raise RuntimeError("Wrong URI for Rez environment process.")
+            raise RuntimeError("Missing name of the Rez environment needs to be provided.")
+        super().__init__(folder, ProcessEnvType.REZ, uri)
 
-        super().__init__(folder, envType)
-        self.uri = uri
     def getEnvDict(self):
         env = os.environ.copy()
 
@@ -144,14 +123,10 @@ class RezProcessEnv(ProcessEnv):
         return "'"
 
 
-def processEnvFactory(folder: str, envType: str = "default", uri: str = "") -> ProcessEnv:
-    if envType == "default":
+def processEnvFactory(folder: str, envType: str = "dirtree", uri: str = "") -> ProcessEnv:
+    if envType == "dirtree":
         return DirTreeProcessEnv(folder)
-    if envType == "conda":
-        return DirTreeProcessEnv(folder, ProcessEnvType.CONDA, uri)
-    if envType == "virtualenv":
-        return DirTreeProcessEnv(folder, ProcessEnvType.VIRTUALENV, uri)
-    return RezProcessEnv(folder, ProcessEnvType.REZ, uri)
+    return RezProcessEnv(folder, uri=uri)
 
 
 class NodePluginStatus(Enum):

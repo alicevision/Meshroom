@@ -429,7 +429,6 @@ def initPlugins():
     for f in pluginsFolders:
         plugins = loadPluginFolder(folder=f)
         # Set the ProcessEnv for each plugin
-        # TODO: make the distinction between default, conda, and venv plugins from the get-go
         if plugins:
             for plugin in plugins:
                 plugin.processEnv = processEnvFactory(f)

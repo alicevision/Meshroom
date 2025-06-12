@@ -368,6 +368,11 @@ class NodePlugin(BaseObject):
             return self.plugin.processEnv
         return None
 
+    @property
+    def runtimeEnv(self) -> dict:
+        """ Return the environment dictionary for the runtime. """
+        return self.processEnv.getEnvDict()
+
 
 class NodePluginManager(BaseObject):
     """

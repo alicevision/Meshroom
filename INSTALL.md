@@ -56,20 +56,20 @@ To install all the requirements for runtime, development and packaging, simply r
 ```bash
 pip install -r requirements.txt -r dev_requirements.txt
 ```
-> Note: `dev_requirements` is only related to testing and packaging. It is not mandatory to run Meshroom.
+> [!NOTE]
+> `dev_requirements` is only related to testing and packaging. It is not mandatory to run Meshroom.
 
-> Note: It is recommended to use a [virtual python environment](https://docs.python.org/3.9/library/venv.html), like `python -v venv meshroom_venv`.
+> [!NOTE]
+> It is recommended to use a [virtual python environment](https://docs.python.org/3.9/library/venv.html), like `python -m venv meshroom_venv`.
 
 
 ### Qt/PySide
 
 * PySide >= 6.7
-Warning: The plugin AssimpSceneParser is missing from pre-built binaries, so it needs to be added manually (see https://bugreports.qt.io/browse/QTBUG-88821).
-It can either be taken from an older version, or directly downloaded from here:
-  * Linux: [libassimpsceneimport.so](https://drive.google.com/uc?export=download&id=1cTU7xrOsLI6ICgRSYz_t9E1lsrNF1kBB))
-  * Windows: [assimpsceneimport.dll](https://drive.google.com/uc?export=download&id=1X9X9d5W_lCwEHWwF748IdnN1YYipAQT_)
 
-and then copied into PySide's installation folder, in `plugins/sceneparsers`.
+> [!WARNING]
+> For PySide 6.8.0 and over on Windows, the following error may occur when leaving Meshroom's homepage: `Cannot load /path/to/pip/install/PySide6/qml/QtQuick/Scene3D/qtquickscene3dplugin.dll: specified module cannot be found`. This is caused by Qt63DQuickScene3D.dll which seems to be missing from the
+pip distribution, but can be retrieved from a standard Qt installation. Alternatively, the DLL for MSVC2022_64 can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv). It then needs to be placed in `/path/to/pip/install/PySide6`.
 
 
 ### AliceVision

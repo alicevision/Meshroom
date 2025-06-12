@@ -259,7 +259,7 @@ class Node(BaseNode):
         if len(chunk.node.getChunks()) > 1:
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
 
-        runtimeEnv = None
+        runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv
         self.executeChunkCommandLine(chunk, meshroomComputeCmd, env=runtimeEnv)
 
 
@@ -287,7 +287,7 @@ class CommandLineNode(BaseNode):
     def processChunk(self, chunk):
         cmd = self.buildCommandLine(chunk)
         # TODO: Setup runtime env
-        runtimeEnv = chunk.node.nodeDesc.plugin.processEnv.getEnvDict()
+        runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv
         print(runtimeEnv["PATH"])
         self.executeChunkCommandLine(chunk, cmd, env=runtimeEnv)
 

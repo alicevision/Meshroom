@@ -19,7 +19,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, ProcessEnv
+from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, ProcessEnv, processEnvFactory
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -351,11 +351,12 @@ def loadPluginFolder(folder):
         logging.info(f"Plugin folder '{folder}' does not contain a 'meshroom' folder.")
         return
 
-    processEnv = ProcessEnv(folder)
+    processEnv = processEnvFactory(folder)
 
     plugins = loadAllNodes(folder=mrFolder)
     if plugins:
         for plugin in plugins:
+            plugin.processEnv = processEnv
             pluginManager.addPlugin(plugin)
             pipelineTemplates.update(plugin.templates)
 

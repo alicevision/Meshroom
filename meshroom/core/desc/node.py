@@ -260,7 +260,9 @@ class Node(BaseNode):
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
 
         runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv
-        self.executeChunkCommandLine(chunk, meshroomComputeCmd, env=runtimeEnv)
+        cmdPrefix = chunk.node.nodeDesc.plugin.processEnv.getCommandPrefix()
+        cmdSuffix = chunk.node.nodeDesc.plugin.processEnv.getCommandSuffix()
+        self.executeChunkCommandLine(chunk, cmdPrefix + meshroomComputeCmd + cmdSuffix, env=runtimeEnv)
 
 
 class CommandLineNode(BaseNode):
@@ -276,7 +278,7 @@ class CommandLineNode(BaseNode):
     def getMrNodeType(self):
         return MrNodeType.COMMANDLINE
 
-    def buildCommandLine(self, chunk):
+    def buildCommandLine(self, chunk) -> str:
         cmdPrefix = chunk.node.nodeDesc.plugin.processEnv.getCommandPrefix()
         cmdSuffix = chunk.node.nodeDesc.plugin.processEnv.getCommandSuffix()
         if chunk.node.isParallelized and chunk.node.size > 1:
@@ -286,9 +288,7 @@ class CommandLineNode(BaseNode):
 
     def processChunk(self, chunk):
         cmd = self.buildCommandLine(chunk)
-        # TODO: Setup runtime env
         runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv
-        print(runtimeEnv["PATH"])
         self.executeChunkCommandLine(chunk, cmd, env=runtimeEnv)
 
 
@@ -316,7 +316,7 @@ class AVCommandLineNode(CommandLineNode):
 
             AVCommandLineNode.cgroupParsed = True
 
-    def buildCommandLine(self, chunk):
+    def buildCommandLine(self, chunk) -> str:
         commandLineString = super(AVCommandLineNode, self).buildCommandLine(chunk)
 
         return commandLineString + AVCommandLineNode.cmdMem + AVCommandLineNode.cmdCore

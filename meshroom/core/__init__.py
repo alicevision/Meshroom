@@ -341,7 +341,7 @@ def loadAllNodes(folder) -> list[Plugin]:
     return plugins
 
 
-def loadPluginFolder(folder):
+def loadPluginFolder(folder) -> list[Plugin]:
     if not os.path.isdir(folder):
         logging.info(f"Plugin folder '{folder}' does not exist.")
         return
@@ -351,12 +351,9 @@ def loadPluginFolder(folder):
         logging.info(f"Plugin folder '{folder}' does not contain a 'meshroom' folder.")
         return
 
-    processEnv = processEnvFactory(folder)
-
     plugins = loadAllNodes(folder=mrFolder)
     if plugins:
         for plugin in plugins:
-            plugin.processEnv = processEnv
             pluginManager.addPlugin(plugin)
             pipelineTemplates.update(plugin.templates)
 
@@ -426,7 +423,32 @@ def initPipelines():
 
 
 def initPlugins():
-    additionalpluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
-    nodesFolders = [os.path.join(meshroomFolder, "plugins")] + additionalpluginsPath
-    for f in nodesFolders:
-        loadPluginFolder(folder=f)
+    # Classic plugins (with a DirTreeProcessEnv)
+    additionalPluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
+    pluginsFolders = [os.path.join(meshroomFolder, "plugins")] + additionalPluginsPath
+    for f in pluginsFolders:
+        plugins = loadPluginFolder(folder=f)
+        # Set the ProcessEnv for each plugin
+        # TODO: make the distinction between default, conda, and venv plugins from the get-go
+        if plugins:
+            for plugin in plugins:
+                plugin.processEnv = processEnvFactory(f)
+
+    # Rez plugins (with a RezProcessEnv)
+    rezPlugins = initRezPlugins()
+
+
+def initRezPlugins():
+    rezPlugins = {}
+    rezList = EnvVar.getList(EnvVar.MESHROOM_REZ_PLUGINS)
+
+    for p in rezList:
+        name, path = p.split("=")
+        rezPlugins[name] = path  # "name" is the name of the Rez package
+        plugins = loadPluginFolder(folder=path)
+        # Set the ProcessEnv for Rez plugins
+        if plugins:
+            for plugin in plugins:
+                plugin.processEnv = processEnvFactory(path, "rez", name)
+
+    return rezPlugins

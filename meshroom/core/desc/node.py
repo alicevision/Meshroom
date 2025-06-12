@@ -277,17 +277,19 @@ class CommandLineNode(BaseNode):
         return MrNodeType.COMMANDLINE
 
     def buildCommandLine(self, chunk):
-        cmdPrefix = ""
-        cmdSuffix = ""
+        cmdPrefix = chunk.node.nodeDesc.plugin.processEnv.getCommandPrefix()
+        cmdSuffix = chunk.node.nodeDesc.plugin.processEnv.getCommandSuffix()
         if chunk.node.isParallelized and chunk.node.size > 1:
-            cmdSuffix = " " + self.commandLineRange.format(**chunk.range.toDict())
+            cmdSuffix = cmdSuffix + " " + self.commandLineRange.format(**chunk.range.toDict())
 
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
     def processChunk(self, chunk):
         cmd = self.buildCommandLine(chunk)
         # TODO: Setup runtime env
-        self.executeChunkCommandLine(chunk, cmd)
+        runtimeEnv = chunk.node.nodeDesc.plugin.processEnv.getEnvDict()
+        print(runtimeEnv["PATH"])
+        self.executeChunkCommandLine(chunk, cmd, env=runtimeEnv)
 
 
 # Specific command line node for AliceVision apps

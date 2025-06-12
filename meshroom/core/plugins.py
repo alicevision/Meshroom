@@ -69,6 +69,7 @@ class ProcessEnv(BaseObject):
         super().__init__()
         self._folder = folder
         self._processEnvType: ProcessEnvType = envType
+        self.uri = ""
 
     def getEnvDict(self) -> dict:
         """ Return the environment dictionary if it has been modified, None otherwise. """
@@ -87,11 +88,12 @@ class DirTreeProcessEnv(ProcessEnv):
     """
     """
     def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.DEFAULT, uri: str = ""):
-        super().__init__(folder, envType)
         if envType == ProcessEnvType.REZ:
             raise RuntimeError("Wrong process environment type.")
         if not uri and envType != ProcessEnvType.DEFAULT:
             raise RuntimeError("URI should be provided for the process environment.")
+
+        super().__init__(folder, envType)
 
         self.uri = uri
         self.binPaths: list = [str(Path(folder, "bin"))]
@@ -103,6 +105,9 @@ class DirTreeProcessEnv(ProcessEnv):
         env["PYTHONPATH"] = f"{_MESHROOM_ROOT}{os.pathsep}{os.pathsep.join(self.pythonPaths)}{os.pathsep}{os.getenv('PYTHONPATH', '')}"
         env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
         env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
+        # env["PYTHONPATH"] = f"{_MESHROOM_ROOT}{os.pathsep}{os.pathsep.join(self.pythonPaths)}"
+        # env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}"
+        # env["PATH"] = f"{os.pathsep.join(self.binPaths)}"
 
         return env
 
@@ -118,13 +123,13 @@ class RezProcessEnv(ProcessEnv):
     """
     """
     def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.REZ, uri: str = ""):
-        super().__init__(folder, envType)
-
         if envType != ProcessEnvType.REZ:
             raise RuntimeError("Wrong process environment type.")
         if not uri:
             raise RuntimeError("Wrong URI for Rez environment process.")
 
+        super().__init__(folder, envType)
+        self.uri = uri
     def getEnvDict(self):
         env = os.environ.copy()
 

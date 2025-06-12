@@ -139,6 +139,16 @@ class RezProcessEnv(ProcessEnv):
         return "'"
 
 
+def processEnvFactory(folder: str, envType: str = "default", uri: str = "") -> ProcessEnv:
+    if envType == "default":
+        return DirTreeProcessEnv(folder)
+    if envType == "conda":
+        return DirTreeProcessEnv(folder, ProcessEnvType.CONDA, uri)
+    if envType == "virtualenv":
+        return DirTreeProcessEnv(folder, ProcessEnvType.VIRTUALENV, uri)
+    return RezProcessEnv(folder, ProcessEnvType.REZ, uri)
+
+
 class NodePluginStatus(Enum):
     """
     Loading status for NodePlugin objects.
@@ -204,6 +214,9 @@ class Plugin(BaseObject):
         """ Return the environment required to successfully execute processes. """
         return self._processEnv
 
+    @processEnv.setter
+    def processEnv(self, processEnv: ProcessEnv):
+        self._processEnv = processEnv
     def addNodePlugin(self, nodePlugin: NodePlugin):
         """
         Add a node plugin to the current plugin object and assign it as its containing plugin.

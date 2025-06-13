@@ -622,12 +622,12 @@ class ListAttribute(Attribute):
         super().__init__(node, attributeDesc, isOutput, root, parent)
 
     def __len__(self):
-        if self._value is None:
+        if self.value is None:
             return 0
-        return len(self._value)
+        return len(self.value)
 
     def __iter__(self):
-        return iter(self._value)
+        return iter(self.value)
 
     def getBaseType(self):
         return self.attributeDesc.elementDesc.__class__.__name__
@@ -636,10 +636,10 @@ class ListAttribute(Attribute):
         """ Returns child attribute at index 'idx'. """
         # Implement 'at' rather than '__getitem__'
         # since the later is called spuriously when object is used in QML
-        return self._value.at(idx)
+        return self.value.at(idx)
 
     def index(self, item):
-        return self._value.indexOf(item)
+        return self.value.indexOf(item)
 
     def initValue(self):
         self.resetToDefaultValue()

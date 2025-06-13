@@ -14,8 +14,8 @@ import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
-from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
-from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
+from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute, AttributeAggregator
+from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit, AttributeCompatibilityError
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
@@ -899,12 +899,22 @@ class Graph(BaseObject):
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
         if dstAttr in self.edges.keys():
             raise RuntimeError(f'Destination attribute "{dstAttr.getFullNameToNode()}" is already connected.')
+        if not dstAttr.isCompatibleWith(srcAttr):
+            raise AttributeCompatibilityError(f'Attribute: "{srcAttr.name}" can not be connected to "{dstAttr.name}" because they are not compatible')
+
+        if isinstance(dstAttr, AttributeAggregator) and isinstance(srcAttr, AttributeAggregator):
+            dstSubAttrs = dstAttr.getAttributes()
+            for idx, srcSubAttr in enumerate(srcAttr.getAttributes()):
+                dstSubAttr = dstSubAttrs[idx]
+                self.addEdge(srcSubAttr, dstSubAttr)
+
         edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
         srcAttr.hasOutputConnectionsChanged.emit()
+
         return edge
 
     def addEdges(self, *edges):
@@ -916,6 +926,11 @@ class Graph(BaseObject):
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
             raise RuntimeError(f'Attribute "{dstAttr.getFullNameToNode()}" is not connected')
+        
+        if isinstance(dstAttr, AttributeAggregator):
+            for subDstSubAttr in dstAttr.getAttributes():
+                self.removeEdge(subDstSubAttr)
+
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()

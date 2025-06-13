@@ -106,7 +106,7 @@ RowLayout {
                 // Check if attributes are compatible to create a valid connection
                 if (root.readOnly                                            // Cannot connect on a read-only attribute
                     || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
-                    || drag.source.baseType !== inputDragTarget.baseType     // Not the same base type
+                    || !inputDragTarget.attribute.isCompatibleWith(drag.source.attribute)      //
                     || drag.source.nodeItem === inputDragTarget.nodeItem     // Connection between attributes of the same node
                     || (drag.source.isList && childrenRepeater.count)        // Source/target are lists but target already has children
                     || drag.source.connectorType === "input"                 // Refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
@@ -256,8 +256,8 @@ RowLayout {
             onEntered: function(drag) {
                 // Check if attributes are compatible to create a valid connection
                 if (drag.source.objectName != outputDragTarget.objectName   // Not an edge connector
-                    || drag.source.baseType !== outputDragTarget.baseType   // Not the same base type
-                    || drag.source.nodeItem === outputDragTarget.nodeItem   // Connection between attributes of the same node
+                    || outputDragTarget.attribute.isCompatibleWith(drag.source.attribute)   //
+                    || ! drag.source.nodeItem === outputDragTarget.nodeItem   // Connection between attributes of the same node
                     || (!drag.source.isList && outputDragTarget.isList)     // Connection between a list and a simple attribute
                     || (drag.source.isList && childrenRepeater.count)       // Source/target are lists but target already has children
                     || drag.source.connectorType === "output"               // Refuse to connect an output pin on another one

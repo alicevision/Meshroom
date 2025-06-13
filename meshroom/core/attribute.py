@@ -11,7 +11,7 @@ from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, hashValue
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
@@ -481,6 +481,19 @@ class Attribute(BaseObject):
         
         return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS if self.desc.semantic == imageSemantic), None) is not None
 
+    @Slot(BaseObject, result=bool)
+    def isCompatibleWith(self, otherAttribute: "Attribute") -> bool:
+        """ Check if the given attribute can be conected to the current Attribute
+        """
+        return self._isCompatibleWith(otherAttribute)
+
+    def _isCompatibleWith(self, otherAttribute: "Attribute") -> bool:
+        """ Implementation of the connection validation
+            .. note:
+                Override this method to use custom connection validation logic
+        """
+        return self.baseType == otherAttribute.baseType
+
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
     fullNameToNode = Property(str, getFullNameToNode, constant=True)
@@ -541,7 +554,14 @@ def raiseIfLink(func):
         return func(attr, *args, **kwargs)
     return wrapper
 
+@runtime_checkable
+class AttributeAggregator(Protocol):
+    """
+    Any class that manage subAttributes
+    """
 
+    def getAttributes(self) -> list[Attribute]: pass        
+    
 class PushButtonParam(Attribute):
     def __init__(self, node, attributeDesc: desc.PushButtonParam, isOutput: bool,
                  root=None, parent=None):
@@ -817,7 +837,6 @@ class ListAttribute(Attribute):
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=Attribute.hasOutputConnectionsChanged)
 
 
-
 class GroupAttribute(Attribute):
 
     def __init__(self, node, attributeDesc: desc.GroupAttribute, isOutput: bool,
@@ -833,6 +852,9 @@ class GroupAttribute(Attribute):
             except KeyError:
                 raise AttributeError(key)
 
+    def _get_value(self):
+        return self._value
+    
     def _set_value(self, exportedValue):
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
@@ -949,6 +971,35 @@ class GroupAttribute(Attribute):
     def matchText(self, text: str) -> bool:
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
+    def _isCompatibleWith(self, otherAttribute: Attribute):
+        isCompatible = super()._isCompatibleWith(otherAttribute)
+        
+        if not isCompatible:
+            return False
+        
+        return self._haveSameStructure(otherAttribute=otherAttribute)
+        
+    def _haveSameStructure(self, otherAttribute: Attribute) -> bool:
+        """ Does the given attribute have the same number of attributes, and all ordered attributes have the same baseType
+        """
+        
+        if isinstance(otherAttribute._value, Iterable) and len(otherAttribute._value) != len(self._value):
+            return False
+        
+        for i, attr in enumerate(self.getAttributes()):
+            otherAttr = list(otherAttribute._value)[i]
+            if isinstance(attr, GroupAttribute):
+                return attr._haveSameStructure(otherAttr)
+            elif not otherAttr:
+                return False
+            elif attr.baseType != otherAttr.baseType:
+                return False
+        
+        return True
+
+    def getAttributes(self):
+        return list(self._value)
+    
     # Override value property
-    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    value = Property(Variant, _get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)

@@ -1,5 +1,7 @@
 from meshroom.core.graph import Graph
+from meshroom.core.exception import AttributeCompatibilityError
 import math
+import pytest
 import logging
 
 logger = logging.getLogger('test')
@@ -27,7 +29,7 @@ def test_groupAttributes_with_same_structure_can_be_linked_and_only_calue_is_cop
     assert math.isclose(color.rgb.g.value, 2.0)
     assert math.isclose(color.rgb.b.value, 3.0)
 
-def test_groupAttributes_with_same_nested_structure_can_be_linked_and_only_calue_is_copied():
+def test_groupAttributes_with_same_nested_structure_can_be_linked_and_only_value_is_copied():
         
     # Given
     graph = Graph()
@@ -58,7 +60,7 @@ def test_groupAttributes_with_same_nested_structure_can_be_linked_and_only_calue
     assert math.isclose(nestedColor.rgb.test.g.value, 5.0)
     assert math.isclose(nestedColor.rgb.test.b.value, 6.0)
 
-def test_groupAttributes_with_smae_structure_should_allow_connection():
+def test_groupAttributes_with_same_structure_should_allow_connection():
 
     # Given
     graph = Graph()
@@ -66,10 +68,11 @@ def test_groupAttributes_with_smae_structure_should_allow_connection():
     nestedColor = graph.addNewNode("NestedColor")
     
     # When
-    acceptedConnection = nestedPosition.xyz.validateConnectionFrom(nestedColor.rgb)
+    graph.addEdge(nestedColor.rgb, nestedPosition.xyz)
 
     # Then
-    assert acceptedConnection == True
+    assert nestedPosition.xyz.isLink == True
+    assert nestedPosition.xyz.getLinkParam() == nestedColor.rgb
 
 def test_groupAttributes_with_different_structure_should_not_allow_connection():
 
@@ -78,8 +81,6 @@ def test_groupAttributes_with_different_structure_should_not_allow_connection():
     nestedPosition = graph.addNewNode("NestedPosition")
     nestedTest = graph.addNewNode("NestedTest")
     
-    # When
-    acceptedConnection = nestedPosition.xyz.validateConnectionFrom(nestedTest.xyz)
-
-    # Then
-    assert acceptedConnection == False
+    # When / Then
+    with pytest.raises(AttributeCompatibilityError):
+        graph.addEdge(nestedTest.xyz, nestedPosition.xyz)

@@ -484,7 +484,7 @@ Item {
                     property bool isValidEdge: src !== undefined && dst !== undefined
                     visible: isValidEdge && src.visible && dst.visible
 
-                    property bool forLoop: src.attribute.type === "ListAttribute" && dst.attribute.type != "ListAttribute"
+                    property bool forLoop: !!(src && src.attribute.type === "ListAttribute" && dst && dst.attribute.type != "ListAttribute")
 
                     property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge === edge)
 

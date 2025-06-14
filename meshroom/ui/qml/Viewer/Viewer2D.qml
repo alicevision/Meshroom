@@ -507,7 +507,6 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    property real targetSize: Math.max(width, height) * imgContainer.scale
                     property real resizeRatio: imgContainer.scale
 
                     function sizeChanged() {
@@ -590,7 +589,6 @@ FocusScope {
                                 "cropFisheye": false,
                                 "sequence": Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
                                 "resizeRatio": Qt.binding(function() { return floatImageViewerLoader.resizeRatio }),
-                                "targetSize": Qt.binding(function() { return floatImageViewerLoader.targetSize }),
                                 "useSequence": Qt.binding(function() { 
                                     return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence"))))
                                 }),

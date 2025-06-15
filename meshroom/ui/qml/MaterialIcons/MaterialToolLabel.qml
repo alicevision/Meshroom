@@ -18,10 +18,12 @@ Item {
     property alias labelIconMouseArea: mouseArea
     implicitWidth: childrenRect.width
     implicitHeight: childrenRect.height
-    anchors.rightMargin: 5
 
     RowLayout {
         id: contentRow
+        // If we are fitting to a top container, we need to propagate the "anchors.fill: parent"
+        // Otherwise, the component defines its own size based on its children.
+        anchors.fill: control.anchors.fill ? parent : undefined
         Label {
             id: iconItem
             font.family: MaterialIcons.fontFamily
@@ -29,11 +31,15 @@ Item {
             padding: 0
             text: ""
             color: control.labelIconColor
+            Layout.fillWidth: false
+            Layout.fillHeight: true
         }
         Label {
             id: labelItem
             text: ""
             color: control.labelIconColor
+            Layout.fillWidth: true
+            Layout.fillHeight: true
         }
     }
 

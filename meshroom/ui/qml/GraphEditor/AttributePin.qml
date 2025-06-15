@@ -47,8 +47,8 @@ RowLayout {
         visible: nameLabel.hovered
         delay: 500
 
-        y: nameLabel.y + nameLabel.height
         x: nameLabel.x
+        y: nameLabel.y + nameLabel.height
     }
 
     function updateLabel() {
@@ -77,146 +77,153 @@ RowLayout {
         }
     }
 
-    Rectangle {
-        visible: !root.attribute.isOutput
-        id: inputAnchor
-
-        width: 8
-        height: width
-        radius: root.isList ? 0 : width / 2
+    Item {
+        width: childrenRect.width
         Layout.alignment: Qt.AlignVCenter
-
-        border.color: Colors.sysPalette.mid
-        color: Colors.sysPalette.base
+        Layout.fillWidth: false
+        Layout.fillHeight: true
 
         Rectangle {
-            id: innerInputAnchor
-            property bool linkEnabled: true
-            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
-            radius: root.isList ? 0 : 2
-            anchors.fill: parent
-            anchors.margins: 2
-            color: {
-                if (inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop))
-                    return Colors.sysPalette.highlight
-                return Colors.sysPalette.text
-            }
-        }
+            visible: !root.attribute.isOutput
+            id: inputAnchor
 
-        DropArea {
-            id: inputDropArea
-
-            property bool acceptableDrop: false
-
-            // Add negative margins for DropArea to make the connection zone easier to reach
-            anchors.fill: parent
-            anchors.margins: -2
-            // Add horizontal negative margins according to the current layout
-            anchors.rightMargin: -root.width * 0.3
-
-            keys: [inputDragTarget.objectName]
-            onEntered: function(drag) {
-                // Check if attributes are compatible to create a valid connection
-                if (root.readOnly                                            // Cannot connect on a read-only attribute
-                    || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
-                    || drag.source.baseType !== inputDragTarget.baseType     // Not the same base type
-                    || drag.source.nodeItem === inputDragTarget.nodeItem     // Connection between attributes of the same node
-                    || (drag.source.isList && childrenRepeater.count)        // Source/target are lists but target already has children
-                    || drag.source.connectorType === "input"                 // Refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
-                    || (drag.source.isGroup || inputDragTarget.isGroup)      // Refuse connection between Groups, which is unsupported
-                   ) {
-                    // Refuse attributes connection
-                    drag.accepted = false
-                } else if (inputDragTarget.attribute.isLink) {  // Already connected attribute
-                    root.edgeAboutToBeRemoved(inputDragTarget.attribute)
-                }
-                inputDropArea.acceptableDrop = drag.accepted
-            }
-
-            onExited: {
-                if (inputDragTarget.attribute.isLink) {  // Already connected attribute
-                    root.edgeAboutToBeRemoved(undefined)
-                }
-                acceptableDrop = false
-                drag.source.dropAccepted = false
-            }
-
-            onDropped: function(drop) {
-                root.edgeAboutToBeRemoved(undefined)
-                _reconstruction.addEdge(drag.source.attribute, inputDragTarget.attribute)
-            }
-        }
-
-        Item {
-            id: inputDragTarget
-            objectName: "edgeConnector"
-            readonly property string connectorType: "input"
-            readonly property alias attribute: root.attribute
-            readonly property alias nodeItem: root.nodeItem
-            readonly property bool isOutput: Boolean(attribute.isOutput)
-            readonly property string baseType: attribute.baseType !== undefined ? attribute.baseType : ""
-            readonly property alias isList: root.isList
-            readonly property alias isGroup: root.isGroup
-            property bool dragAccepted: false
+            width: 8
+            height: width
+            radius: root.isList ? 0 : width / 2
             anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width
-            height: parent.height
-            Drag.keys: [inputDragTarget.objectName]
-            Drag.active: inputConnectMA.drag.active
-            Drag.hotSpot.x: width * 0.5
-            Drag.hotSpot.y: height * 0.5
-        }
 
-        MouseArea {
-            id: inputConnectMA
-            drag.target: root.attribute.isReadOnly ? undefined : inputDragTarget
-            drag.threshold: 0
-            // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
-            drag.smoothed: false
-            enabled: !root.readOnly
-            anchors.fill: parent
-            // Use the same negative margins as DropArea to ease pin selection
-            anchors.margins: inputDropArea.anchors.margins
-            anchors.leftMargin: inputDropArea.anchors.leftMargin
-            anchors.rightMargin: inputDropArea.anchors.rightMargin
+            border.color: Colors.sysPalette.mid
+            color: Colors.sysPalette.base
 
-            property bool dragTriggered: false  // An edge is being dragged from the output connector
-            property bool isPressed: false  // The mouse has been pressed but not yet released
-            property double initialX: 0.0
-            property double initialY: 0.0
-
-            onPressed: function(mouse) {
-                root.pressed(mouse)
-                isPressed = true
-                initialX = mouse.x
-                initialY = mouse.y
-            }
-            onReleased: function(mouse) {
-                inputDragTarget.Drag.drop()
-                isPressed = false
-                dragTriggered = false
-            }
-            onClicked: root.clicked()
-            onPositionChanged: function(mouse) {
-                // If there's been a significant (10px along the X- or Y- axis) while the mouse is being pressed,
-                // then we can consider being in the dragging state
-                if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
-                    dragTriggered = true
+            Rectangle {
+                id: innerInputAnchor
+                property bool linkEnabled: true
+                visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
+                radius: root.isList ? 0 : 2
+                anchors.fill: parent
+                anchors.margins: 2
+                color: {
+                    if (inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop))
+                        return Colors.sysPalette.highlight
+                    return Colors.sysPalette.text
                 }
             }
-            hoverEnabled: root.visible
-        }
 
-        Edge {
-            id: inputConnectEdge
-            visible: false
-            point1x: inputDragTarget.x + inputDragTarget.width / 2
-            point1y: inputDragTarget.y + inputDragTarget.height / 2
-            point2x: parent.width / 2
-            point2y: parent.width / 2
-            color: palette.highlight
-            thickness: outputDragTarget.dropAccepted ? 2 : 1
+            DropArea {
+                id: inputDropArea
+
+                property bool acceptableDrop: false
+
+                // Add negative margins for DropArea to make the connection zone easier to reach
+                anchors.fill: parent
+                anchors.margins: -2
+                // Add horizontal negative margins according to the current layout
+                anchors.rightMargin: -root.width * 0.3
+
+                keys: [inputDragTarget.objectName]
+                onEntered: function(drag) {
+                    // Check if attributes are compatible to create a valid connection
+                    if (root.readOnly                                            // Cannot connect on a read-only attribute
+                        || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
+                        || drag.source.baseType !== inputDragTarget.baseType     // Not the same base type
+                        || drag.source.nodeItem === inputDragTarget.nodeItem     // Connection between attributes of the same node
+                        || (drag.source.isList && childrenRepeater.count)        // Source/target are lists but target already has children
+                        || drag.source.connectorType === "input"                 // Refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
+                        || (drag.source.isGroup || inputDragTarget.isGroup)      // Refuse connection between Groups, which is unsupported
+                    ) {
+                        // Refuse attributes connection
+                        drag.accepted = false
+                    } else if (inputDragTarget.attribute.isLink) {  // Already connected attribute
+                        root.edgeAboutToBeRemoved(inputDragTarget.attribute)
+                    }
+                    inputDropArea.acceptableDrop = drag.accepted
+                }
+
+                onExited: {
+                    if (inputDragTarget.attribute.isLink) {  // Already connected attribute
+                        root.edgeAboutToBeRemoved(undefined)
+                    }
+                    acceptableDrop = false
+                    drag.source.dropAccepted = false
+                }
+
+                onDropped: function(drop) {
+                    root.edgeAboutToBeRemoved(undefined)
+                    _reconstruction.addEdge(drag.source.attribute, inputDragTarget.attribute)
+                }
+            }
+
+            Item {
+                id: inputDragTarget
+                objectName: "edgeConnector"
+                readonly property string connectorType: "input"
+                readonly property alias attribute: root.attribute
+                readonly property alias nodeItem: root.nodeItem
+                readonly property bool isOutput: Boolean(attribute.isOutput)
+                readonly property string baseType: attribute.baseType !== undefined ? attribute.baseType : ""
+                readonly property alias isList: root.isList
+                readonly property alias isGroup: root.isGroup
+                property bool dragAccepted: false
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width
+                height: parent.height
+                Drag.keys: [inputDragTarget.objectName]
+                Drag.active: inputConnectMA.drag.active
+                Drag.hotSpot.x: width * 0.5
+                Drag.hotSpot.y: height * 0.5
+            }
+
+            MouseArea {
+                id: inputConnectMA
+                drag.target: root.attribute.isReadOnly ? undefined : inputDragTarget
+                drag.threshold: 0
+                // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
+                drag.smoothed: false
+                enabled: !root.readOnly
+                anchors.fill: parent
+                // Use the same negative margins as DropArea to ease pin selection
+                anchors.margins: inputDropArea.anchors.margins
+                anchors.leftMargin: inputDropArea.anchors.leftMargin
+                anchors.rightMargin: inputDropArea.anchors.rightMargin
+
+                property bool dragTriggered: false  // An edge is being dragged from the output connector
+                property bool isPressed: false  // The mouse has been pressed but not yet released
+                property double initialX: 0.0
+                property double initialY: 0.0
+
+                onPressed: function(mouse) {
+                    root.pressed(mouse)
+                    isPressed = true
+                    initialX = mouse.x
+                    initialY = mouse.y
+                }
+                onReleased: function(mouse) {
+                    inputDragTarget.Drag.drop()
+                    isPressed = false
+                    dragTriggered = false
+                }
+                onClicked: root.clicked()
+                onPositionChanged: function(mouse) {
+                    // If there's been a significant (10px along the X- or Y- axis) while the mouse is being pressed,
+                    // then we can consider being in the dragging state
+                    if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
+                        dragTriggered = true
+                    }
+                }
+                hoverEnabled: root.visible
+            }
+
+            Edge {
+                id: inputConnectEdge
+                visible: false
+                point1x: inputDragTarget.x + inputDragTarget.width / 2
+                point1y: inputDragTarget.y + inputDragTarget.height / 2
+                point2x: parent.width / 2
+                point2y: parent.width / 2
+                color: palette.highlight
+                thickness: outputDragTarget.dropAccepted ? 2 : 1
+            }
         }
     }
 
@@ -225,29 +232,18 @@ RowLayout {
         id: nameContainer
         implicitHeight: childrenRect.height
         Layout.fillWidth: true
-        Layout.alignment: {
-            if (root.attribute.isOutput) {
-                return Qt.AlignRight | Qt.AlignVCenter
-            }
-            return Qt.AlignLeft | Qt.AlignVCenter
-        }
+        Layout.fillHeight: true
+        Layout.alignment: Qt.AlignVCenter
 
         MaterialToolLabel {
             id: nameLabel
 
-            anchors.rightMargin: 0
+            anchors.fill: parent
+            anchors.verticalCenter: parent.verticalCenter
+
+            anchors.margins: 0
             labelIconRow.layoutDirection: root.attribute.isOutput ? Qt.RightToLeft : Qt.LeftToRight
-            anchors.right: root.attribute && root.attribute.isOutput ? parent.right : undefined
             labelIconRow.spacing: 0
-            width: {
-                if (hovered) {
-                    return icon.width + label.contentWidth
-                } else {
-                    if (nameContainer.width > 0 && icon.width + label.contentWidth < nameContainer.width)
-                        return icon.width + label.contentWidth
-                    return nameContainer.width
-                }
-            }
 
             enabled: !root.readOnly
             visible: true
@@ -272,9 +268,9 @@ RowLayout {
             // Text
             label.text: root.attribute.label
             label.font.pointSize: 7
-            labelWidth: hovered ? label.contentWidth : nameLabel.width - icon.width
-            label.elide: hovered ? Text.ElideNone : Text.ElideMiddle
+            label.elide: Text.ElideRight
             label.horizontalAlignment: root.attribute && root.attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+            label.verticalAlignment: Text.AlignVCenter
 
             // Icon
             iconText: {
@@ -287,18 +283,9 @@ RowLayout {
             icon.horizontalAlignment: root.attribute && root.attribute.isOutput ? Text.AlignRight : Text.AlignLeft
 
             // Handle tree view for nested attributes
-            icon.leftPadding: {
-                if (root.attribute.depth != 0 && !root.attribute.isOutput) {
-                    return root.attribute.depth * 10
-                }
-                return 0
-            }
-            icon.rightPadding: {
-                if (root.attribute.depth != 0 && root.attribute.isOutput) {
-                    return root.attribute.depth * 10
-                }
-                return 0
-            }
+            property int groupPaddingWidth: root.attribute.depth * 10
+            icon.leftPadding: root.attribute.isOutput ? 0 : groupPaddingWidth
+            icon.rightPadding: root.attribute.isOutput ? groupPaddingWidth : 0
         }
     }
 

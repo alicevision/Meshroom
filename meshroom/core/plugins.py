@@ -395,6 +395,16 @@ class NodePlugin(BaseObject):
         """ Return the environment dictionary for the runtime. """
         return self.processEnv.getEnvDict()
 
+    @property
+    def commandPrefix(self) -> str:
+        """ Return the command prefix for the NodePlugin's execution. """
+        return self.processEnv.getCommandPrefix()
+
+    @property
+    def commandSuffix(self) -> str:
+        """ Return the command suffix for the NodePlugin's execution. """
+        return self.processEnv.getCommandSuffix()
+
 
 class NodePluginManager(BaseObject):
     """

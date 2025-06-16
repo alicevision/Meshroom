@@ -260,8 +260,8 @@ class Node(BaseNode):
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
 
         runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv
-        cmdPrefix = chunk.node.nodeDesc.plugin.processEnv.getCommandPrefix()
-        cmdSuffix = chunk.node.nodeDesc.plugin.processEnv.getCommandSuffix()
+        cmdPrefix = chunk.node.nodeDesc.plugin.commandPrefix
+        cmdSuffix = chunk.node.nodeDesc.plugin.commandSuffix
         self.executeChunkCommandLine(chunk, cmdPrefix + meshroomComputeCmd + cmdSuffix, env=runtimeEnv)
 
 
@@ -279,8 +279,8 @@ class CommandLineNode(BaseNode):
         return MrNodeType.COMMANDLINE
 
     def buildCommandLine(self, chunk) -> str:
-        cmdPrefix = chunk.node.nodeDesc.plugin.processEnv.getCommandPrefix()
-        cmdSuffix = chunk.node.nodeDesc.plugin.processEnv.getCommandSuffix()
+        cmdPrefix = chunk.node.nodeDesc.plugin.commandPrefix
+        cmdSuffix = chunk.node.nodeDesc.plugin.commandSuffix
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = cmdSuffix + " " + self.commandLineRange.format(**chunk.range.toDict())
 

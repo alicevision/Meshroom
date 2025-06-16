@@ -94,7 +94,7 @@ class DirTreeProcessEnv(ProcessEnv):
 
     def getEnvDict(self) -> dict:
         env = os.environ.copy()
-        env["PYTHONPATH"] = f"{_MESHROOM_ROOT}{os.pathsep}{os.pathsep.join(self.pythonPaths)}{os.pathsep}{os.getenv('PYTHONPATH', '')}"
+        env["PYTHONPATH"] = os.pathsep.join([f"{_MESHROOM_ROOT}"] + self.pythonPaths + [f"{os.getenv('PYTHONPATH', '')}"])
         env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
         env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
 
@@ -109,15 +109,57 @@ class RezProcessEnv(ProcessEnv):
             raise RuntimeError("Missing name of the Rez environment needs to be provided.")
         super().__init__(folder, ProcessEnvType.REZ, uri)
 
-    def getEnvDict(self):
-        env = os.environ.copy()
+    def resolveRezSubrequires(self) -> list[str]:
+        """
+        Return the list of packages defined for the node execution. These execution packages are named
+        subrequires.
+        Note: If a package does not have a version number, the version is aligned with the main Meshroom
+        environment (if this package is defined).
+        """
+        subrequires = os.environ.get(f"{self.uri.upper()}_SUBREQUIRES", "").split(os.pathsep)
+        packages = []
 
-        return env
+        # Packages that are resolved in the current environment
+        currentEnvPackages = []
+        if "REZ_REQUEST" in os.environ:
+            nonDefPackages = [n.split("-")[0] for n in os.getenv("REZ_REQUEST", "").split()]
+            resolvedPackages = os.getenv("REZ_RESOLVE", "").split()
+            resolvedVersions = {}
+            for package in resolvedPackages:
+                if package.startswith("~"):
+                    continue
+                version = package.split("-")
+                resolvedVersions[version[0]] = version[1]
+            currentEnvPackages = [package + "-" + resolvedVersions[package] for package in resolvedVersions.keys()]
+        logging.debug("Packages in the current environment: " + ", ".join(currentEnvPackages))
+
+        # Take packages with the set versions for those which have one, and try to take packages in the current
+        # environment (if they are resolved in it)
+        for package in subrequires:
+            if "-" in package:
+                packages.append(package)
+            else:
+                definedInParentEnv = False
+                for p in currentEnvPackages:
+                    if p.startswith(package + "-"):
+                        packages.append(p)
+                        definedInParentEnv = True
+                        break
+                if not definedInParentEnv:
+                    packages.append(package)
+
+        logging.debug("Packages for the execution environment: " + ", ".join(packages))
+        return packages
 
     def getCommandPrefix(self):
-        if Path(self.uri).exists() and Path(self.uri).suffix == ".rxt":
-            return f"rez env -i {self.uri} -c '"
-        return f"rez env {self.uri} -c '"
+        # TODO: make Windows-compatible
+
+        # Use the PYTHONPATH from the subrequires' environment (which will only be resolved once
+        # inside the execution environment) and add MESHROOM_ROOT and the plugin's folder itself
+        # to it
+        pythonPaths = f"{os.pathsep.join(['$PYTHONPATH', f'{_MESHROOM_ROOT}', f'{self._folder}'])}"
+
+        return f"rez env {' '.join(self.resolveRezSubrequires())} -c 'PYTHONPATH={pythonPaths} "
 
     def getCommandSuffix(self):
         return "'"

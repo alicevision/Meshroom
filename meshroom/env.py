@@ -42,12 +42,13 @@ class EnvVar(Enum):
     )
 
     # Core
-    MESHROOM_PLUGINS_PATH = VarDefinition(str, "", "Paths to plugins folders containing nodes, submitters and pipeline templates")
-    MESHROOM_NODES_PATH = VarDefinition(str, "", "Paths to set of nodes folders")
-    MESHROOM_SUBMITTERS_PATH = VarDefinition(str, "", "Paths to set of submitters folders")
-    MESHROOM_PIPELINE_TEMPLATES_PATH = VarDefinition(str, "", "Paths to et of pipeline templates folders")
-    MESHROOM_REZ_PLUGINS = VarDefinition(str, "", "Paths to plugins folders containing nodes, submitters and pipeline templates that will be executed in a Rez environment")
-    MESHROOM_TEMP_PATH = VarDefinition(str, tempfile.gettempdir(), "Path to the temporary folder")
+    MESHROOM_PLUGINS_PATH = VarDefinition(str, "", "Paths to plugins folders containing nodes, submitters and pipeline templates.")
+    MESHROOM_NODES_PATH = VarDefinition(str, "", "Paths to set of nodes folders.")
+    MESHROOM_SUBMITTERS_PATH = VarDefinition(str, "", "Paths to set of submitters folders.")
+    MESHROOM_PIPELINE_TEMPLATES_PATH = VarDefinition(str, "", "Paths to et of pipeline templates folders.")
+    MESHROOM_REZ_PLUGINS = VarDefinition(str, "", "List of Rez plugins, defined by the package name associated with the plugin's root path. "
+                                                  "For example, 'packageA=/path/to/packageA/version/root'.")
+    MESHROOM_TEMP_PATH = VarDefinition(str, tempfile.gettempdir(), "Path to the temporary folder.")
 
 
     @staticmethod

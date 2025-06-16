@@ -424,8 +424,8 @@ Page {
             icon.text: MaterialIcons.warning
             parent: Overlay.overlay
             preset: "Warning"
-            title: "Nodes have warnings"
-            text: "Some nodes have warnings, are you sure you want to submit ?"
+            title: "Nodes Containing Warnings"
+            text: "Some nodes contain warnings. Are you sure you want to submit?"
             helperText: "Submit even if some nodes have warnings"
             standardButtons: Dialog.Cancel | Dialog.Ok
 

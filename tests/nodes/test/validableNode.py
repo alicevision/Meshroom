@@ -2,7 +2,7 @@ from meshroom.core import desc
 from meshroom.core.desc.validators import NotEmptyValidator, RangeValidator
 
 
-class ValidableNode(desc.CommandLineNode):
+class NodeWithValidators(desc.CommandLineNode):
 
     inputs = [
         desc.StringParam(

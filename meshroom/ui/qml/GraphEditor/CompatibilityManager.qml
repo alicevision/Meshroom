@@ -57,7 +57,7 @@ MessageDialog {
                 + "This operation is undoable and can also be done manually in the Graph Editor."
                 : ""
 
-    ColumnLayout {
+    content: ColumnLayout {
         spacing: 16
 
         ListView {
@@ -67,6 +67,20 @@ MessageDialog {
             implicitHeight: contentHeight
             clip: true
             model: nodesModel
+
+            property int longestLabel: {
+                var longest = 0
+                for (var i = 0; i < issueCount; ++i) {
+                    var n = nodesModel.at(i)
+                    if (n.defaultLabel.length > longest)
+                        longest = n.defaultLabel.length
+                }
+                return longest
+            }
+
+            property int upgradableLabelWidth: {
+                return "Upgradable".length * root.textMetrics.width
+            }
 
             ScrollBar.vertical: MScrollBar { id: scrollbar }
 
@@ -79,9 +93,9 @@ MessageDialog {
                 background: Rectangle { color: Qt.darker(parent.palette.window, 1.15) }
                 RowLayout {
                     width: parent.width
-                    Label { text: "Node"; Layout.preferredWidth: 150; font.bold: true }
+                    Label { text: "Node"; Layout.preferredWidth: listView.longestLabel * root.textMetrics.width; font.bold: true }
                     Label { text: "Issue"; Layout.fillWidth: true; font.bold: true }
-                    Label { text: "Upgradable"; font.bold: true }
+                    Label { text: "Upgradable"; Layout.preferredWidth: listView.upgradableLabelWidth; font.bold: true }
                 }
             }
 
@@ -94,7 +108,7 @@ MessageDialog {
                 anchors.horizontalCenter: parent != null ? parent.horizontalCenter : undefined
 
                 Label {
-                    Layout.preferredWidth: 150
+                    Layout.preferredWidth: listView.longestLabel * root.textMetrics.width
                     text: compatibilityNodeDelegate.node ? compatibilityNodeDelegate.node.defaultLabel : ""
                 }
                 Label {
@@ -102,6 +116,8 @@ MessageDialog {
                     text: compatibilityNodeDelegate.node ? compatibilityNodeDelegate.node.issueDetails : ""
                 }
                 Label {
+                    Layout.preferredWidth: listView.upgradableLabelWidth
+                    horizontalAlignment: Text.AlignHCenter
                     text: compatibilityNodeDelegate.node && compatibilityNodeDelegate.node.canUpgrade ? MaterialIcons.check : MaterialIcons.clear
                     color: compatibilityNodeDelegate.node && compatibilityNodeDelegate.node.canUpgrade ? "#4CAF50" : "#F44336"
                     font.family: MaterialIcons.fontFamily

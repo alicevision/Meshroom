@@ -283,7 +283,7 @@ Item {
             border.color: {
 
                 if(hasWarnings === true) {
-                    return "orange"                    
+                    return Colors.warning                    
                 }
                 
                 if(root.mainSelected)
@@ -408,7 +408,7 @@ Item {
                             MaterialLabel {
                                 visible: hasWarnings
                                 text: MaterialIcons.fmd_bad
-                                color: "orange"
+                                color: Colors.warning
                                 padding: 2
                                 font.pointSize: 7
                                 palette.text: Colors.sysPalette.text

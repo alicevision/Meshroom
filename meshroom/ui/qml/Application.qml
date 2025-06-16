@@ -427,7 +427,7 @@ Page {
             title: "Nodes Containing Warnings"
             text: "Some nodes contain warnings. Are you sure you want to submit?"
             helperText: "Submit even if some nodes have warnings"
-            standardButtons: Dialog.Cancel | Dialog.Ok
+            standardButtons: Dialog.Cancel | Dialog.Yes
 
             property var nodes: []
 

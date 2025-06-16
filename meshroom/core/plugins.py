@@ -189,10 +189,10 @@ class Plugin(BaseObject):
     Members:
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
         path: the absolute path of the plugin
-        _nodePlugins: dictionary mapping the name of a node plugin contained in the plugin
-                      to its corresponding NodePlugin object
-        _templates: dictionary mapping the name of templates (.mg files) associated to the plugin
-                    with their absolute paths
+        nodePlugins: dictionary mapping the name of a node plugin contained in the plugin
+                     to its corresponding NodePlugin object
+        templates: dictionary mapping the name of templates (.mg files) associated to the plugin
+                   with their absolute paths
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
@@ -238,7 +238,9 @@ class Plugin(BaseObject):
 
     @processEnv.setter
     def processEnv(self, processEnv: ProcessEnv):
+        """ Set the environment required to successfully execute processes. """
         self._processEnv = processEnv
+
     def addNodePlugin(self, nodePlugin: NodePlugin):
         """
         Add a node plugin to the current plugin object and assign it as its containing plugin.
@@ -376,6 +378,7 @@ class NodePlugin(BaseObject):
 
     @plugin.setter
     def plugin(self, plugin: Plugin):
+        """ Assign this node plugin to a containing Plugin object. """
         self._plugin = plugin
 
     @property
@@ -411,8 +414,8 @@ class NodePluginManager(BaseObject):
     Manager for all the loaded Plugin objects as well as the registered NodePlugin objects.
 
     Members:
-        _plugins: dictionary containing all the loaded Plugins, with their name as the key
-        _nodePlugins: dictionary containing all the NodePlugins that have been registered
+        plugins: dictionary containing all the loaded Plugins, with their name as the key
+        nodePlugins: dictionary containing all the NodePlugins that have been registered
                       (a NodePlugin may exist without having been registered) with their name as
                       the key
     """

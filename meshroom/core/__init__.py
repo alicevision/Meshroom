@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import pkgutil
 import sys
-import tempfile
 import traceback
 import uuid
 
@@ -19,7 +18,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, ProcessEnv, processEnvFactory
+from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, processEnvFactory
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -42,6 +41,7 @@ def hashValue(value) -> str:
     hashObject = hashlib.sha1(str(value).encode('utf-8'))
     return hashObject.hexdigest()
 
+
 @contextmanager
 def add_to_path(p):
     import sys
@@ -52,6 +52,7 @@ def add_to_path(p):
         yield
     finally:
         sys.path = old_path
+
 
 def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
     """
@@ -137,6 +138,7 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
 
     return classes
 
+
 def loadClassesNodes(folder: str, packageName: str) -> list[NodePlugin]:
     """
     Return the list of all the NodePlugins that were created following the search of the
@@ -153,6 +155,7 @@ def loadClassesNodes(folder: str, packageName: str) -> list[NodePlugin]:
                           module's search. If none has been created, an empty list is returned.
     """
     return loadClasses(folder, packageName, desc.BaseNode)
+
 
 def loadClassesSubmitters(folder: str, packageName: str) -> list[BaseSubmitter]:
     """
@@ -384,6 +387,7 @@ def loadSubmitters(folder, packageName):
 
     return loadClassesSubmitters(folder, packageName)
 
+
 def loadPipelineTemplates(folder: str):
     if not os.path.isdir(folder):
         logging.error(f"Pipeline templates folder '{folder}' does not exist.")
@@ -391,6 +395,7 @@ def loadPipelineTemplates(folder: str):
     for file in os.listdir(folder):
         if file.endswith(".mg") and file not in pipelineTemplates:
             pipelineTemplates[os.path.splitext(file)[0]] = os.path.join(folder, file)
+
 
 def initNodes():
     additionalNodesPath = EnvVar.getList(EnvVar.MESHROOM_NODES_PATH)

@@ -13,6 +13,7 @@ from meshroom.common import BaseObject
 from meshroom.core import desc
 from meshroom.core.desc.node import _MESHROOM_ROOT
 
+
 def validateNodeDesc(nodeDesc: desc.Node) -> list:
     """
     Check that the node has a valid description before being loaded. For the description
@@ -122,7 +123,6 @@ class RezProcessEnv(ProcessEnv):
         # Packages that are resolved in the current environment
         currentEnvPackages = []
         if "REZ_REQUEST" in os.environ:
-            nonDefPackages = [n.split("-")[0] for n in os.getenv("REZ_REQUEST", "").split()]
             resolvedPackages = os.getenv("REZ_RESOLVE", "").split()
             resolvedVersions = {}
             for package in resolvedPackages:
@@ -335,7 +335,7 @@ class NodePlugin(BaseObject):
         except FileNotFoundError:
             self.status = NodePluginStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The path at {self.path} was not "
-                           "not found.")
+                          f"not found.")
             return False
 
         if self._timestamp == timestamp:
@@ -349,14 +349,14 @@ class NodePlugin(BaseObject):
         if not descriptor:
             self.status = NodePluginStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
-                           "was not found.")
+                          f"was not found.")
             return False
 
         self.errors = validateNodeDesc(descriptor)
         if self.errors:
             self.status = NodePluginStatus.DESC_ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
-                           "has description errors.")
+                          f"has description errors.")
             return False
 
         self.nodeDescriptor = descriptor

@@ -50,7 +50,7 @@ class Attribute(BaseObject):
     """
     """
     stringIsLinkRe = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
-    
+
     VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
     VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".abc", ".ply"]
 
@@ -82,7 +82,6 @@ class Attribute(BaseObject):
 
         self._value = None
         self.initValue()
-
 
     @property
     def node(self):
@@ -339,30 +338,26 @@ class Attribute(BaseObject):
 
     def getInputConnections(self) -> list["Edge"]:
         """ Retrieve the upstreams connected edges """
-
         if not self.node.graph or not self.node.graph.edges:
             return []
-        
+
         return [edge for edge in self.node.graph.edges.values() if edge.dst == self]
 
     def getOutputConnections(self) -> list["Edge"]:
         """ Retrieve all the edges connected to this attribute """
-
         if not self.node.graph or not self.node.graph.edges:
             return []
-        
+
         return [edge for edge in self.node.graph.edges.values() if edge.src == self]
-    
+
     def getLinkedInAttributes(self) -> list["Attribute"]:
         """ Return the upstreams connected attributes  """
-
         return [edge.src for edge in self.getInputConnections()]
-    
+
     def getLinkedOutAttributes(self) -> list["Attribute"]:
         """ Return the downstreams connected attributes """
-        
         return [edge.dst for edge in self.getOutputConnections()]
-    
+
     def _applyExpr(self):
         """
         For string parameters with an expression (when loaded from file),
@@ -431,8 +426,8 @@ class Attribute(BaseObject):
             return v
         # String, File, single value Choice are based on strings and should includes quotes
         # to deal with spaces
-        if withQuotes and \
-            isinstance(self.attributeDesc, (desc.StringParam, desc.File, desc.ChoiceParam)):
+        if withQuotes and isinstance(self.attributeDesc,
+                                     (desc.StringParam, desc.File, desc.ChoiceParam)):
             return f'"{self.getEvalValue()}"'
         return str(self.getEvalValue())
 
@@ -462,24 +457,23 @@ class Attribute(BaseObject):
 
     def _is3D(self) -> bool:
         """ Return True if the current attribute is considered as a 3d file """
-
         if self.desc.semantic == "3d":
             return True
-        
+
         # If the attribute is a File attribute, it is an instance of str and can be iterated over
         hasSupportedExt = isinstance(self.value, str) and any(ext in self.value for ext in Attribute.VALID_3D_EXTENSIONS)
         if hasSupportedExt:
             return True
-        
+
         return False
-    
+
     def _is2D(self) -> bool:
         """ Return True if the current attribute is considered as a 2d file """
-        
         if not self.desc.semantic:
             return False
-        
-        return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS if self.desc.semantic == imageSemantic), None) is not None
+
+        return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
+                     if self.desc.semantic == imageSemantic), None) is not None
 
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
@@ -666,7 +660,7 @@ class ListAttribute(Attribute):
     def upgradeValue(self, exportedValues):
         if not isinstance(exportedValues, list):
             if isinstance(exportedValues, ListAttribute) or \
-                Attribute.isLinkExpression(exportedValues):
+               Attribute.isLinkExpression(exportedValues):
                 self._set_value(exportedValues)
                 return
             raise RuntimeError("ListAttribute.upgradeValue: the given value is of type " +
@@ -762,7 +756,7 @@ class ListAttribute(Attribute):
             return self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=withQuotes)
                                                      for v in self.value])
         v = self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=False)
-                                                for v in self.value])
+                                              for v in self.value])
         if withQuotes and v:
             return f'"{v}"'
         return v
@@ -780,7 +774,7 @@ class ListAttribute(Attribute):
         return self.isLink \
             or self.node.graph and self.isInput and self.node.graph._edges \
             and any(v in self.node.graph._edges.keys() for v in self._value)
-    
+
     # override
     @property
     def hasOutputConnections(self):
@@ -789,33 +783,30 @@ class ListAttribute(Attribute):
         # safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return False
-        
+
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None or \
             any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
-    
+
     # override
     def getInputConnections(self) -> list["Edge"]:
-
         if not self.node.graph or not self.node.graph.edges:
             return []
-        
+
         return [edge for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
-    
+
     # override
     def getOutputConnections(self) -> list["Edge"]:
-
         if not self.node.graph or not self.node.graph.edges:
             return []
-        
+
         return [edge for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
-        
+
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     baseType = Property(str, getBaseType, constant=True)
     isLinkNested = Property(bool, isLinkNested.fget)
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=Attribute.hasOutputConnectionsChanged)
-
 
 
 class GroupAttribute(Attribute):

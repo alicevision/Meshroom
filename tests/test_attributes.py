@@ -1,4 +1,7 @@
 from meshroom.core.graph import Graph
+from tests.utils import registerNodeDesc
+from tests.nodes.test.nodeValidators import NodeWithValidators
+
 import pytest
 
 import logging
@@ -9,18 +12,8 @@ invalid3DExtensionFiles = [(f'test.{ext}', False) for ext in ('', 'exe', 'jpg', 
 
 valid2DSemantics= [(semantic, True) for semantic in ('image', 'imageList', 'sequence')]
 invalid2DSemantics = [(semantic, False) for semantic in ('3d', '', 'multiline', 'color/hue')]
-from tests.nodes.test.validableNode import ValidableNode
-import pytest
 
-import logging
-logger = logging.getLogger('test')
-
-valid3DExtensionFiles = [(f'test.{ext}', True) for ext in ('obj', 'stl', 'fbx', 'gltf', 'abc', 'ply')]
-invalid3DExtensionFiles = [(f'test.{ext}', False) for ext in ('', 'exe', 'jpg', 'png', 'py')]
-
-valid2DSemantics= [(semantic, True) for semantic in ('image', 'imageList', 'sequence')]
-invalid2DSemantics = [(semantic, False) for semantic in ('3d', '', 'multiline', 'color/hue')]
-
+registerNodeDesc(NodeWithValidators)  
 
 def test_attribute_retrieve_linked_input_and_output_attributes():
     """
@@ -57,6 +50,7 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
     assert not n0.output.hasOutputConnections
     assert len(n0.input.getLinkedInAttributes()) == 0
     assert len(n0.output.getLinkedOutAttributes()) == 0
+
 @pytest.mark.parametrize("givenFile,expected", valid3DExtensionFiles + invalid3DExtensionFiles)
 def test_attribute_is3D_file_extensions(givenFile, expected):
     """
@@ -74,7 +68,6 @@ def test_attribute_is3D_file_extensions(givenFile, expected):
 
     # Then
     assert n0.input.is3D == expected
-
 
 def test_attribute_i3D_by_description_semantic():
     """ """
@@ -114,7 +107,7 @@ def test_attribute_notEmpty_validation():
 
     # Given
     g = Graph('')
-    node = g.addNewNode('ValidableNode')
+    node = g.addNewNode('NodeWithValidators')
 
     # When
     node.mandatory.value = ''
@@ -137,7 +130,7 @@ def test_attribute_range_validation():
 
     # Given
     g = Graph('')
-    node = g.addNewNode('ValidableNode')
+    node = g.addNewNode('NodeWithValidators')
     node.mandatory.value = 'test'
 
     # When

@@ -1,10 +1,11 @@
 # coding:utf-8
 
-from meshroom.core import desc, pluginManager, loadClassesNodes
+from meshroom.core import pluginManager, loadClassesNodes
 from meshroom.core.plugins import NodePluginStatus, Plugin
 
 import os
 import time
+
 
 class TestPluginWithValidNodesOnly:
     plugin = None
@@ -37,13 +38,13 @@ class TestPluginWithValidNodesOnly:
         for nodeName, nodePlugin in plugin.nodes.items():
             assert nodePlugin.status == NodePluginStatus.LOADED
             assert pluginManager.isRegistered(nodeName)
-        
+
         # Assert the template has been loaded
         assert len(plugin.templates) == 1
         name = list(plugin.templates.keys())[0]
         assert name == "sharedTemplate"
         assert plugin.templates[name] == os.path.join(str(plugin.path), "sharedTemplate.mg")
-    
+
     def test_unloadPlugin(self):
         plugin = pluginManager.getPlugin("pluginA")
         assert plugin == self.plugin
@@ -74,7 +75,7 @@ class TestPluginWithValidNodesOnly:
         for nodeName, nodePlugin in plugin.nodes.items():
             assert nodePlugin.status == NodePluginStatus.NOT_LOADED
             assert not pluginManager.isRegistered(nodeName)
-        
+
         # Re-add the plugin and re-register the nodes
         pluginManager.addPlugin(plugin)
         assert pluginManager.getPlugin(plugin.name)
@@ -92,7 +93,7 @@ class TestPluginWithValidNodesOnly:
         # Unregister a node
         assert nodeA
         pluginManager.unregisterNode(nodeA)
-        
+
         # Check that the node has been fully unregistered:
         #   - its status is "NOT_LOADED"
         #   - it is still part of pluginA
@@ -100,7 +101,7 @@ class TestPluginWithValidNodesOnly:
         assert nodeA.status == NodePluginStatus.NOT_LOADED
         assert plugin.containsNodePlugin(nodeAName)
         assert nodeA.plugin == plugin
-        
+
         assert pluginManager.getRegisteredNodePlugin(nodeAName) is None
         assert nodeAName not in pluginManager.getRegisteredNodePlugins()
         assert len(pluginManager.getRegisteredNodePlugins()) == nbRegisteredNodes - 1
@@ -131,7 +132,7 @@ class TestPluginWithInvalidNodes:
         for node in cls.plugin.nodes.values():
             pluginManager.unregisterNode(node)
         cls.plugin = None
-    
+
     def test_loadedPlugin(self):
         # Assert that there are loaded plugins, and that "pluginB" is one of them
         assert len(pluginManager.getPlugins()) >= 1
@@ -174,11 +175,11 @@ class TestPluginWithInvalidNodes:
         originalFileContent = None
         with open(node.path, "r") as f:
             originalFileContent = f.read()
-        
+
         replaceFileContent = originalFileContent.replace('"not an integer"', '1')
         with open(node.path, "w") as f:
             f.write(replaceFileContent)
-        
+
         # Reload the node and assert it is valid
         node.reload()
         assert node.status == NodePluginStatus.NOT_LOADED
@@ -190,7 +191,7 @@ class TestPluginWithInvalidNodes:
         # Reload the node again without any change
         node.reload()
         assert pluginManager.isRegistered(nodeName)
-        
+
         # Hack to ensure that the timestamp of the file will be different after being rewritten
         # Without it, on some systems, the operation is too fast and the timestamp does not change,
         # cause the test to fail
@@ -203,7 +204,7 @@ class TestPluginWithInvalidNodes:
         timestampOr2 = os.path.getmtime(node.path)
         print(f"New timestamp: {timestampOr2}")
         print(os.stat(node.path))
-        
+
         # Reload the node and assert it is invalid while still registered
         node.reload()
         assert node.status == NodePluginStatus.DESC_ERROR

@@ -5,6 +5,7 @@ import meshroom
 from meshroom.core import desc, pluginManager
 from meshroom.core.plugins import NodePlugin, NodePluginStatus
 
+
 @contextmanager
 def registeredNodeTypes(nodeTypes: list[desc.Node]):
     nodePluginsList = {}
@@ -18,6 +19,7 @@ def registeredNodeTypes(nodeTypes: list[desc.Node]):
     for nodeType in nodeTypes:
         pluginManager.unregisterNode(nodePluginsList[nodeType])
 
+
 @contextmanager
 def overrideNodeTypeVersion(nodeType: desc.Node, version: str):
     """ Helper context manager to override the version of a given node type. """
@@ -29,11 +31,13 @@ def overrideNodeTypeVersion(nodeType: desc.Node, version: str):
     ):
         yield
 
+
 def registerNodeDesc(nodeDesc: desc.Node):
     name = nodeDesc.__name__
     if not pluginManager.isRegistered(name):
         pluginManager._nodePlugins[name] = NodePlugin(nodeDesc)
         pluginManager._nodePlugins[name].status = NodePluginStatus.LOADED
+
 
 def unregisterNodeDesc(nodeDesc: desc.Node):
     name = nodeDesc.__name__

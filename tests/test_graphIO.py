@@ -213,6 +213,7 @@ class TestImportGraphContent:
         assert len(otherGraph.compatibilityNodes) == 1
         assert otherGraph.node(node.name).issue is CompatibilityIssue.VersionConflict
 
+
 class TestGraphPartialSerialization:
     def test_emptyGraph(self):
         graph = Graph("")
@@ -357,8 +358,8 @@ class TestImportGraphContentFromMinimalGraphData:
         with registeredNodeTypes([SimpleNode]):
             sampleGraphContent = dedent("""
             {
-                "SimpleNode_1": { 
-                    "nodeType": "SimpleNode", "inputs": { "input": "{NotSerializedNode.output}" } 
+                "SimpleNode_1": {
+                    "nodeType": "SimpleNode", "inputs": { "input": "{NotSerializedNode.output}" }
                 }
             }
             """)

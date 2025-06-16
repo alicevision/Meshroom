@@ -1,7 +1,8 @@
-from meshroom.core import desc, pluginManager
+from meshroom.core import desc
 from meshroom.core.graph import Graph, loadGraph
 
 from .utils import registerNodeDesc, unregisterNodeDesc
+
 
 class NodeWithChoiceParams(desc.Node):
     inputs = [
@@ -26,6 +27,7 @@ class NodeWithChoiceParams(desc.Node):
             exposed=True,
         ),
     ]
+
 
 class NodeWithChoiceParamsSavingValuesOverride(desc.Node):
     inputs = [
@@ -140,7 +142,6 @@ class TestChoiceParamSavingCustomValues:
         assert loadedGraph.node(node.name).choice.value == "CustomValue"
         assert loadedGraph.node(node.name).choiceMulti.value == ["custom", "value"]
 
-
     def test_overridenValuesAreSerialized(self, graphSavedOnDisk):
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(NodeWithChoiceParamsSavingValuesOverride.__name__)
@@ -154,7 +155,6 @@ class TestChoiceParamSavingCustomValues:
 
         assert loadedNode.choice.values == ["D", "E", "F"]
         assert loadedNode.choiceMulti.values == ["D", "E", "F"]
-
 
     def test_connectionsAreSerialized(self, graphSavedOnDisk):
         graph: Graph = graphSavedOnDisk

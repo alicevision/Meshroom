@@ -2,6 +2,7 @@ __version__ = "1.0"
 
 from meshroom.core import desc
 
+
 class PluginBNodeA(desc.Node):
     inputs = [
         desc.File(

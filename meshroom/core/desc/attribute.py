@@ -42,7 +42,12 @@ class Attribute(BaseObject):
         self._isDynamicValue = (self._value is None)
         self._valueType = None
 
-        self._validators = validators if isinstance(validators, (list, tuple)) else []
+        if validators is None:
+            self._validators = []
+        elif isinstance(validators, (list, tuple)):
+            self._validators = validators
+        else:
+            raise RuntimeError(f"Validators should be of type 'list[AttributeValidator]', the type '{type(validators)}' is not supported.")
         
     def getInstanceType(self):
         """ Return the correct Attribute instance corresponding to the description. """

@@ -875,7 +875,7 @@ class BaseNode(BaseObject):
         for attr in self.invalidatingAttributes:
             if not attr.enabled:
                 continue  # Disabled params do not contribute to the uid
-            dynamicOutputAttr = attr.isLink and attr.getLinkParam(recursive=True).desc.isDynamicValue
+            dynamicOutputAttr = attr.getLinkParam(recursive=True) and attr.getLinkParam(recursive=True).desc.isDynamicValue
             # For dynamic output attributes, the UID does not depend on the attribute value.
             # In particular, when loading a project file, the UIDs are updated first,
             # and the node status and the dynamic output values are not yet loaded,

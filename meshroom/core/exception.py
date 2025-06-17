@@ -57,3 +57,14 @@ class StopGraphVisit(GraphVisitMessage):
 class StopBranchVisit(GraphVisitMessage):
     """ Immediately stop branch visit. """
     pass
+
+
+class AttributeCompatibilityError(GraphException):
+    """ 
+    Raised when trying to connect attributes that are incompatible
+    """
+
+class ConnectionError(GraphException):
+    """
+    Raised when trying to connect attributes
+    """

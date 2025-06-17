@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from meshroom.core import unregisterNodeType, pipelineTemplates, Version
+from meshroom.core import pipelineTemplates, Version
 from meshroom.core.node import CompatibilityIssue, CompatibilityNode
 from meshroom.core.graphIO import GraphIO
 

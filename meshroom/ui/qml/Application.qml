@@ -129,6 +129,14 @@ Page {
         return true;
     }
 
+    function getAllNodes() {
+        const nodes = []
+        for(let i=0; i<graphEditor.graph.nodes.count; i++) {
+            nodes.push(graphEditor.graph.nodes.at(i))
+        }        
+        return nodes
+    }
+
     // File dialogs
     Platform.FileDialog {
         id: saveFileDialog
@@ -266,14 +274,24 @@ Page {
         function submit(nodes) {
             if (!canSubmit) {
                 unsavedSubmitDialog.open()
-            } else {
+            } 
+            else {
                 try {
-                    _reconstruction.submit(nodes)
+                    if(nodes == null) {
+                        nodes = getAllNodes()
+                    }
+                    if ( nodes && nodes.find(node => node.hasInvalidAttribute) ) {                        
+                        submitWithWarningDialog.nodes = nodes
+                        submitWithWarningDialog.open()
+                    } else {
+                        _reconstruction.submit(nodes)
+                    }
                 }
-                catch (error) {
+                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
-                    if (data.context === "SUBMITTING")
+                    if (data.context === "SUBMITTING") {
                         computeSubmitErrorDialog.openError(data.type, data.msg, nodes)
+                    }
                 }
             }
         }
@@ -397,6 +415,26 @@ Page {
 
             onDiscarded: close()
             onAccepted: saveAsAction.trigger()
+        }
+
+        MessageDialog {
+            id: submitWithWarningDialog
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "Nodes Containing Warnings"
+            text: "Some nodes contain warnings. Are you sure you want to submit?"
+            helperText: "Submit even if some nodes have warnings"
+            standardButtons: Dialog.Cancel | Dialog.Yes
+
+            property var nodes: []
+
+            onDiscarded: close()
+            onAccepted: {
+                _reconstruction.submit(nodes)
+            }
         }
 
         MessageDialog {

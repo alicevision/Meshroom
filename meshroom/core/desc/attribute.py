@@ -6,13 +6,24 @@ from collections.abc import Iterable
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from meshroom.core.desc.validators import AttributeValidator
+
 
 class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, semantic, group, enabled, invalidate=True,
-                 uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, advanced, semantic, group, enabled, 
+                 invalidate=True,
+                 uidIgnoreValue=None, 
+                 visible=True, 
+                 exposed=False, 
+                 validators:list["AttributeValidator"]=None
+                 ):
+        
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
@@ -24,8 +35,6 @@ class Attribute(BaseObject):
         self._invalidate = invalidate
         self._semantic = semantic
         self._uidIgnoreValue = uidIgnoreValue
-        self._validValue = validValue
-        self._errorMessage = errorMessage
         self._visible = visible
         self._exposed = exposed
         self._isExpression = (isinstance(self._value, str) and "{" in self._value) \
@@ -33,6 +42,13 @@ class Attribute(BaseObject):
         self._isDynamicValue = (self._value is None)
         self._valueType = None
 
+        if validators is None:
+            self._validators = []
+        elif isinstance(validators, (list, tuple)):
+            self._validators = validators
+        else:
+            raise RuntimeError(f"Validators should be of type 'list[AttributeValidator]', the type '{type(validators)}' is not supported.")
+        
     def getInstanceType(self):
         """ Return the correct Attribute instance corresponding to the description. """
         # Import within the method to prevent cyclic dependencies
@@ -70,7 +86,11 @@ class Attribute(BaseObject):
         except ValueError:
             return False
         return True
-
+    
+    @property
+    def validators(self):
+        return self._validators
+    
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
@@ -89,8 +109,6 @@ class Attribute(BaseObject):
     invalidate = Property(Variant, lambda self: self._invalidate, constant=True)
     semantic = Property(str, lambda self: self._semantic, constant=True)
     uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
-    validValue = Property(Variant, lambda self: self._validValue, constant=True)
-    errorMessage = Property(str, lambda self: self._errorMessage, constant=True)
     # visible:
     #   The attribute is not displayed in the Graph Editor if False but still visible in the Node Editor.
     #   This property is useful to hide some attributes that are not relevant for the user.
@@ -108,7 +126,7 @@ class Attribute(BaseObject):
 class ListAttribute(Attribute):
     """ A list of Attributes """
     def __init__(self, elementDesc, name, label, description, group="allParams", advanced=False, semantic="",
-                 enabled=True, joinChar=" ", visible=True, exposed=False):
+                 enabled=True, joinChar=" ", visible=True, exposed=False, validators=None):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
@@ -116,7 +134,7 @@ class ListAttribute(Attribute):
         self._joinChar = joinChar
         super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[],
                                             invalidate=False, group=group, advanced=advanced, semantic=semantic,
-                                            enabled=enabled, visible=visible, exposed=exposed)
+                                            enabled=enabled, visible=visible, exposed=exposed, validators=validators)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -160,7 +178,7 @@ class ListAttribute(Attribute):
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
     def __init__(self, groupDesc, name, label, description, group="allParams", advanced=False, semantic="",
-                 enabled=True, joinChar=" ", brackets=None, visible=True, exposed=False):
+                 enabled=True, joinChar=" ", brackets=None, visible=True, exposed=False, validators=None):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
@@ -169,7 +187,7 @@ class GroupAttribute(Attribute):
         self._brackets = brackets
         super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={},
                                              group=group, advanced=advanced, invalidate=False, semantic=semantic,
-                                             enabled=enabled, visible=visible, exposed=exposed)
+                                             enabled=enabled, visible=visible, exposed=exposed, validators=validators)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -267,21 +285,21 @@ class Param(Attribute):
     """
     """
     def __init__(self, name, label, description, value, group, advanced, semantic, enabled, invalidate=True,
-                 uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
+                 uidIgnoreValue=None, visible=True, exposed=False, validators=None):
         super(Param, self).__init__(name=name, label=label, description=description, value=value,
                                     group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                    semantic=semantic, uidIgnoreValue=uidIgnoreValue, validValue=validValue,
-                                    errorMessage=errorMessage, visible=visible, exposed=exposed)
+                                    semantic=semantic, uidIgnoreValue=uidIgnoreValue, visible=visible, exposed=exposed,
+                                    validators=validators)
 
 
 class File(Attribute):
     """
     """
     def __init__(self, name, label, description, value, group="allParams", advanced=False, invalidate=True,
-                 semantic="", enabled=True, visible=True, exposed=True):
+                 semantic="", enabled=True, visible=True, exposed=True, validators=None):
         super(File, self).__init__(name=name, label=label, description=description, value=value, group=group,
                                    advanced=advanced, enabled=enabled, invalidate=invalidate, semantic=semantic,
-                                   visible=visible, exposed=exposed)
+                                   visible=visible, exposed=exposed, validators=validators)
         self._valueType = str
 
     def validateValue(self, value):
@@ -304,10 +322,10 @@ class BoolParam(Param):
     """
     """
     def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", visible=True, exposed=False):
+                 invalidate=True, semantic="", visible=True, exposed=False, validators=None):
         super(BoolParam, self).__init__(name=name, label=label, description=description, value=value,
                                         group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                        semantic=semantic, visible=visible, exposed=exposed)
+                                        semantic=semantic, visible=visible, exposed=exposed, validators=validators)
         self._valueType = bool
 
     def validateValue(self, value):
@@ -332,12 +350,12 @@ class IntParam(Param):
     """
     """
     def __init__(self, name, label, description, value, range=None, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
+                 invalidate=True, semantic="", visible=True, exposed=False, validators=None):
         self._range = range
         super(IntParam, self).__init__(name=name, label=label, description=description, value=value,
                                        group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                       semantic=semantic, validValue=validValue, errorMessage=errorMessage,
-                                       visible=visible, exposed=exposed)
+                                       semantic=semantic,
+                                       visible=visible, exposed=exposed, validators=validators)
         self._valueType = int
 
     def validateValue(self, value):
@@ -362,12 +380,12 @@ class FloatParam(Param):
     """
     """
     def __init__(self, name, label, description, value, range=None, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
+                 invalidate=True, semantic="", visible=True, exposed=False, validators=None):
         self._range = range
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value,
                                          group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                         semantic=semantic, validValue=validValue, errorMessage=errorMessage,
-                                         visible=visible, exposed=exposed)
+                                         semantic=semantic,
+                                         visible=visible, exposed=exposed, validators=validators)
         self._valueType = float
 
     def validateValue(self, value):
@@ -391,10 +409,10 @@ class PushButtonParam(Param):
     """
     """
     def __init__(self, name, label, description, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", visible=True, exposed=False):
+                 invalidate=True, semantic="", visible=True, exposed=False, validators=None):
         super(PushButtonParam, self).__init__(name=name, label=label, description=description, value=None,
                                               group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                              semantic=semantic, visible=visible, exposed=exposed)
+                                              semantic=semantic, visible=visible, exposed=exposed, validators=validators)
         self._valueType = None
 
     def getInstanceType(self):
@@ -428,14 +446,13 @@ class ChoiceParam(Param):
     _OVERRIDE_SERIALIZATION_KEY_VALUES = "__ChoiceParam_values__"
 
     def __init__(self, name: str, label: str, description: str, value, values, exclusive=True, saveValuesOverride=False, 
-                 group="allParams", joinChar=" ", advanced=False, enabled=True, invalidate=True, semantic="", 
-                 validValue=True, errorMessage="",
-                 visible=True, exposed=False):
+                 group="allParams", joinChar=" ", advanced=False, enabled=True, invalidate=True, semantic="",
+                 visible=True, exposed=False, validators=None):
 
         super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value,
                                           group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                          semantic=semantic, validValue=validValue, errorMessage=errorMessage,
-                                          visible=visible, exposed=exposed)
+                                          semantic=semantic,
+                                          visible=visible, exposed=exposed, validators=validators)
         self._values = values
         self._saveValuesOverride = saveValuesOverride
         self._exclusive = exclusive
@@ -508,12 +525,12 @@ class StringParam(Param):
     """
     """
     def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", uidIgnoreValue=None, validValue=True, errorMessage="", visible=True,
-                 exposed=False):
+                 invalidate=True, semantic="", uidIgnoreValue=None, visible=True,
+                 exposed=False, validators=None):
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value,
                                           group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                          semantic=semantic, uidIgnoreValue=uidIgnoreValue, validValue=validValue,
-                                          errorMessage=errorMessage, visible=visible, exposed=exposed)
+                                          semantic=semantic, uidIgnoreValue=uidIgnoreValue, 
+                                          visible=visible, exposed=exposed, validators=validators)
         self._valueType = str
 
     def validateValue(self, value):
@@ -534,10 +551,10 @@ class ColorParam(Param):
     """
     """
     def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", visible=True, exposed=False):
+                 invalidate=True, semantic="", visible=True, exposed=False, validators=None):
         super(ColorParam, self).__init__(name=name, label=label, description=description, value=value,
                                          group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                         semantic=semantic, visible=visible, exposed=exposed)
+                                         semantic=semantic, visible=visible, exposed=exposed, validators=validators)
         self._valueType = str
 
     def validateValue(self, value):

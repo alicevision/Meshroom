@@ -24,32 +24,24 @@ RowLayout {
     property int labelWidth               // Shortcut to set the fixed size of the Label
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
+    property var errorMessages: attribute.errorMessages
 
     signal doubleClicked(var mouse, var attr)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
     signal showInViewer(var attr)
 
-    spacing: 2
-
-    function updateAttributeLabel() {
-        background.color = attribute.validValue ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
-
-        if (attribute.desc) {
-            var tooltip = ""
-            if (!attribute.validValue && attribute.desc.errorMessage !== "")
-                tooltip += "<i><b>Error: </b>" + Format.plainToHtml(attribute.desc.errorMessage) + "</i><br><br>"
-            tooltip += "<b> " + attribute.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(attribute.desc.description)
-
-            parameterTooltip.text = tooltip
+    Connections {
+        target: attribute
+        function onValueChanged() {
+            root.errorMessages = attribute.errorMessages
         }
+
     }
 
+    spacing: 2
+
     Pane {
-        background: Rectangle {
-            id: background
-            color: object != undefined && object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
-        }
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
         Layout.fillHeight: true
@@ -93,7 +85,7 @@ RowLayout {
                 padding: 5
                 wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
-                text: object.label
+                text: attribute.isMandatory && attribute.isDefault ? `\* ${object.label}` : object.label
 
                 color: {
                     if (object != undefined && (object.hasOutputConnections || object.isLink) && !object.enabled)
@@ -110,11 +102,7 @@ RowLayout {
                     y: parameterMA.mouseY + 10
 
                     text: {
-                        var tooltip = ""
-                        if (!object.validValue && object.desc.errorMessage !== "")
-                            tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
-                        tooltip += "<b>" + object.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.description)
-                        return tooltip
+                        return `<b>${object.desc.name} :</b> ${attribute.type}  <br> ${Format.plainToHtml(object.description)}`
                     }
                     visible: parameterMA.containsMouse
                     delay: 800
@@ -144,7 +132,6 @@ RowLayout {
                             enabled: root.editable && !attribute.isDefault
                             onTriggered: {
                                 _reconstruction.resetAttribute(attribute)
-                                updateAttributeLabel()
                             }
                         }
                         MenuItem {
@@ -260,20 +247,20 @@ RowLayout {
             case "IntParam":
             case "FloatParam":
                 _reconstruction.setAttribute(root.attribute, Number(value))
-                updateAttributeLabel()
                 break
             case "File":
                 _reconstruction.setAttribute(root.attribute, value)
                 break
             default:
                 _reconstruction.setAttribute(root.attribute, value.trim())
-                updateAttributeLabel()
                 break
         }
     }
 
+
     Loader {
         Layout.fillWidth: true
+        id: inputField
 
         sourceComponent: {
             // PushButtonParam always has value == undefined, so it needs to be excluded from this check
@@ -337,117 +324,137 @@ RowLayout {
 
         Component {
             id: textFieldComponent
-            TextField {
-                id: textField
-                readOnly: !root.editable
-                text: attribute.value
 
-                // Don't disable the component to keep interactive features (text selection, context menu...).
-                // Only override the look by using the Disabled palette.
-                SystemPalette { 
-                    id: disabledPalette
-                    colorGroup: SystemPalette.Disabled
-                }
+            RowLayout {
+                anchors.fill: parent                
 
-                states: [
-                    State {
-                        when: readOnly
-                        PropertyChanges {
-                            target: textField
-                            color: disabledPalette.text
-                        }
+                TextField {
+                    id: textField                
+                    Layout.fillWidth: true
+                    
+                    readOnly: !root.editable
+                    text: attribute.value
+                    placeholderText: attribute.isMandatory ? "This field is required" : ""
+
+                    // Don't disable the component to keep interactive features (text selection, context menu...).
+                    // Only override the look by using the Disabled palette.
+                    SystemPalette { 
+                        id: disabledPalette
+                        colorGroup: SystemPalette.Disabled
                     }
-                ]
 
-                selectByMouse: true
-                onEditingFinished: setTextFieldAttribute(text)
-                persistentSelection: false
+                    background: Rectangle {
+                        visible: errorMessages.length
+                        border.color: "orange"
+                        color: "transparent"
+                        radius: 2
+                    }
 
-                onAccepted: {
-                    setTextFieldAttribute(text)
-                    parameterLabel.forceActiveFocus()
-                }
-                Keys.onPressed: function(event) {
-                    if ((event.key == Qt.Key_Escape)) {
-                        event.accepted = true
+                    states: [
+                        State {
+                            when: readOnly
+                            PropertyChanges {
+                                target: textField
+                                color: disabledPalette.text
+                            }
+                        }
+                    ]
+
+                    selectByMouse: true                    
+                    persistentSelection: false
+
+                    onEditingFinished: {
+                        setTextFieldAttribute(text)                        
+                    }
+
+                    onAccepted: {
+                        setTextFieldAttribute(text)
                         parameterLabel.forceActiveFocus()
                     }
-                }
-                Component.onDestruction: {
-                    if (activeFocus)
-                        setTextFieldAttribute(text)
-                }
-                DropArea {
-                    enabled: root.editable
-                    anchors.fill: parent
-                    onDropped: function(drop) {
-                        if (drop.hasUrls)
-                            setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
-                        else if (drop.hasText && drop.text != '')
-                            setTextFieldAttribute(drop.text)
-                    }
-                }
-                onPressed: (event) => {
-                    if(event.button == Qt.RightButton) {
-                        // Keep selection persistent while context menu is open to 
-                        // visualize what is being copied or what will be replaced on paste.
-                        persistentSelection = true;
-                        const menu = textFieldMenuComponent.createObject(textField);
-                        menu.popup();
-
-                        if(selectedText === "") {
-                            cursorPosition = positionAt(event.x, event.y);
+                    Keys.onPressed: function(event) {
+                        if ((event.key == Qt.Key_Escape)) {
+                            event.accepted = true
+                            parameterLabel.forceActiveFocus()
                         }
                     }
-                }
+                    Component.onDestruction: {
+                        if (activeFocus)
+                            setTextFieldAttribute(text)
+                    }
+                    DropArea {
+                        enabled: root.editable
+                        anchors.fill: parent
+                        onDropped: function(drop) {
+                            if (drop.hasUrls)
+                                setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
+                            else if (drop.hasText && drop.text != '')
+                                setTextFieldAttribute(drop.text)
+                        }
+                    }
+                    onPressed: (event) => {
+                        if(event.button == Qt.RightButton) {
+                            // Keep selection persistent while context menu is open to 
+                            // visualize what is being copied or what will be replaced on paste.
+                            persistentSelection = true;
+                            const menu = textFieldMenuComponent.createObject(textField);
+                            menu.popup();
 
-                Component {
-                    id: textFieldMenuComponent
-                    Menu {
-                        onOpened: {
-                            // Keep cursor visible to see where pasting would happen.
-                            textField.cursorVisible = true;
-                        }
-                        onClosed: {
-                            // Disable selection persistency behavior once menu is closed and
-                            // give focus back to the parent TextField.
-                            textField.persistentSelection = false;
-                            textField.forceActiveFocus();
-                            destroy();
-                        }
-                        MenuItem {
-                            text: "Copy"
-                            enabled: attribute.value != ""
-                            onTriggered: {
-                                const hasSelection = textField.selectionStart !== textField.selectionEnd;
-                                if(hasSelection) {
-                                    // Use `TextField.copy` to copy only the current selection.
-                                    textField.copy();
-                                }
-                                else {
-                                    Clipboard.setText(attribute.value);
-                                }
+                            if(selectedText === "") {
+                                cursorPosition = positionAt(event.x, event.y);
                             }
                         }
-                        MenuItem {
-                            text: "Paste"
-                            enabled: !readOnly
-                            onTriggered: {
-                                const clipboardText = Clipboard.getText();
-                                if (clipboardText.length === 0) {
-                                    return;
-                                }
-                                const before = textField.text.substr(0, textField.selectionStart);
-                                const after = textField.text.substr(textField.selectionEnd, textField.text.length);
-                                const updatedValue = before + clipboardText + after;
-                                setTextFieldAttribute(updatedValue);
-                                // Set the cursor at the end of the added text
-                                textField.cursorPosition = before.length + clipboardText.length;
+                    }    
+
+                    Component {
+                        id: textFieldMenuComponent
+                        Menu {
+                            onOpened: {
+                                // Keep cursor visible to see where pasting would happen.
+                                textField.cursorVisible = true;
                             }
-                        }
-                    } 
-                }
+                            onClosed: {
+                                // Disable selection persistency behavior once menu is closed and
+                                // give focus back to the parent TextField.
+                                textField.persistentSelection = false;
+                                textField.forceActiveFocus();
+                                destroy();
+                            }
+                            MenuItem {
+                                text: "Copy"
+                                enabled: attribute.value != ""
+                                onTriggered: {
+                                    const hasSelection = textField.selectionStart !== textField.selectionEnd;
+                                    if(hasSelection) {
+                                        // Use `TextField.copy` to copy only the current selection.
+                                        textField.copy();
+                                    }
+                                    else {
+                                        Clipboard.setText(attribute.value);
+                                    }
+                                }
+                            }
+                            MenuItem {
+                                text: "Paste"
+                                enabled: !readOnly
+                                onTriggered: {
+                                    const clipboardText = Clipboard.getText();
+                                    if (clipboardText.length === 0) {
+                                        return;
+                                    }
+                                    const before = textField.text.substr(0, textField.selectionStart);
+                                    const after = textField.text.substr(textField.selectionEnd, textField.text.length);
+                                    const updatedValue = before + clipboardText + after;
+                                    setTextFieldAttribute(updatedValue);
+                                    // Set the cursor at the end of the added text
+                                    textField.cursorPosition = before.length + clipboardText.length;
+                                }
+                            }
+                        } 
+                    }
             }
+
+            }
+
         }
 
         Component {
@@ -477,6 +484,14 @@ RowLayout {
                         onEditingFinished: setTextFieldAttribute(text)
                         text: attribute.value
                         selectByMouse: true
+
+                        background: Rectangle {
+                            visible: errorMessages.length
+                            border.color: "orange"
+                            color: "transparent"
+                            radius: 2
+                        }
+
                         onPressed: {
                             root.forceActiveFocus()
                         }
@@ -590,6 +605,7 @@ RowLayout {
                 values: root.attribute.values
                 enabled: root.editable
                 customValueColor: Colors.orange
+
                 onToggled: (value, checked) => {
                     var currentValue = root.attribute.value;
                     if (!checked) {
@@ -626,6 +642,14 @@ RowLayout {
                     autoScroll: activeFocus
                     validator: attribute.type === "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
+
+                    background: Rectangle {
+                            visible: errorMessages.length
+                            border.color: "orange"
+                            color: "transparent"
+                            radius: 2
+                        }
+
                     onAccepted: {
                         setTextFieldAttribute(text)
 
@@ -661,7 +685,6 @@ RowLayout {
                         onPressedChanged: {
                             if (!pressed) {
                                 _reconstruction.setAttribute(attribute, formattedValue)
-                                updateAttributeLabel()
                             }
                         }
                     }
@@ -830,5 +853,12 @@ RowLayout {
                 }
             }
         }
+    }
+
+    MaterialLabel {
+        visible: !attribute.isOutput && root.errorMessages.length
+        text: MaterialIcons.fmd_bad
+        ToolTip.text: root.errorMessages.join("\n")
+        color: "orange"
     }
 }

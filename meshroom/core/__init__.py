@@ -419,8 +419,7 @@ def initSubmitters():
 def initPipelines():
     # Load pipeline templates: check in the default folder and any folder the user might have
     # added to the environment variable
-    additionalPipelinesPath = EnvVar.getList(EnvVar.MESHROOM_PIPELINE_TEMPLATES_PATH)
-    pipelineTemplatesFolders = [os.path.join(meshroomFolder, "pipelines")] + additionalPipelinesPath
+    pipelineTemplatesFolders = EnvVar.getList(EnvVar.MESHROOM_PIPELINE_TEMPLATES_PATH)
     for f in pipelineTemplatesFolders:
         loadPipelineTemplates(f)
     for plugin in pluginManager.getPlugins().values():

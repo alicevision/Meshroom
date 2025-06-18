@@ -8,6 +8,7 @@ import sys
 from enum import Enum
 from inspect import getfile
 from pathlib import Path
+import glob
 
 from meshroom.common import BaseObject
 from meshroom.core import desc
@@ -91,7 +92,7 @@ class DirTreeProcessEnv(ProcessEnv):
 
         self.binPaths: list = [str(Path(folder, "bin"))]
         self.libPaths: list = [str(Path(folder, "lib")), str(Path(folder, "lib64"))]
-        self.pythonPaths: list = [str(Path(folder))] + self.binPaths
+        self.pythonPaths: list = [str(Path(folder))] + self.binPaths + glob.glob(f'{folder}/lib*/python[0-9].[0-9]*/site-packages', recursive=False)
 
     def getEnvDict(self) -> dict:
         env = os.environ.copy()

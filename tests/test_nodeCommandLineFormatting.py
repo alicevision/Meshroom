@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # coding:utf-8
 
-from meshroom.core.graph import Graph, loadGraph, executeGraph
-from meshroom.core import desc, pluginManager
-from meshroom.core.node import Node
+from meshroom.core.graph import Graph
+from meshroom.core import desc
 
 from .utils import registerNodeDesc, unregisterNodeDesc
 
@@ -100,6 +99,7 @@ class NodeWithAttributesNeedingFormatting(desc.Node):
             value="{nodeCacheFolder}",
         ),
     ]
+
 
 class TestCommandLineFormatting:
 

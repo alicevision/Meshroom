@@ -8,9 +8,12 @@ import sys
 from enum import Enum
 from inspect import getfile
 from pathlib import Path
+import glob
 
 from meshroom.common import BaseObject
 from meshroom.core import desc
+from meshroom.core.desc.node import _MESHROOM_ROOT
+
 
 def validateNodeDesc(nodeDesc: desc.Node) -> list:
     """
@@ -46,16 +49,127 @@ def validateNodeDesc(nodeDesc: desc.Node) -> list:
     return errors
 
 
+class ProcessEnvType(Enum):
+    """ Supported process environments. """
+    DIRTREE = "dirtree",
+    REZ = "rez"
+
+
 class ProcessEnv(BaseObject):
     """
     Describes the environment required by a node's process.
+
+    Args:
+        folder: the source folder for the process.
+        envType: (optional) the type of process environment.
+        uri: (optional) the Unique Resource Identifier to activate the environment.
     """
 
-    def __init__(self, folder: str):
+    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.DIRTREE, uri: str = ""):
         super().__init__()
-        self.binPaths: list = [Path(folder, "bin")]
-        self.libPaths: list = [Path(folder, "lib"), Path(folder, "lib64")]
-        self.pythonPathFolders: list = [Path(folder)] + self.binPaths
+        self._folder: str = folder
+        self._processEnvType: ProcessEnvType = envType
+        self.uri: str = uri
+
+    def getEnvDict(self) -> dict:
+        """ Return the environment dictionary if it has been modified, None otherwise. """
+        return None
+
+    def getCommandPrefix(self) -> str:
+        """ Return the prefix to the command line that will be executed by the process. """
+        return ""
+
+    def getCommandSuffix(self) -> str:
+        """ Return the suffix to the command line that will be executed by the process. """
+        return ""
+
+
+class DirTreeProcessEnv(ProcessEnv):
+    """
+    """
+    def __init__(self, folder: str):
+        super().__init__(folder, ProcessEnvType.DIRTREE)
+
+        self.binPaths: list = [str(Path(folder, "bin"))]
+        self.libPaths: list = [str(Path(folder, "lib")), str(Path(folder, "lib64"))]
+        self.pythonPaths: list = [str(Path(folder))] + self.binPaths + glob.glob(f'{folder}/lib*/python[0-9].[0-9]*/site-packages', recursive=False)
+
+    def getEnvDict(self) -> dict:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = os.pathsep.join([f"{_MESHROOM_ROOT}"] + self.pythonPaths + [f"{os.getenv('PYTHONPATH', '')}"])
+        env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
+        env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
+
+        return env
+
+
+class RezProcessEnv(ProcessEnv):
+    """
+    """
+    def __init__(self, folder: str, uri: str = ""):
+        if not uri:
+            raise RuntimeError("Missing name of the Rez environment needs to be provided.")
+        super().__init__(folder, ProcessEnvType.REZ, uri)
+
+    def resolveRezSubrequires(self) -> list[str]:
+        """
+        Return the list of packages defined for the node execution. These execution packages are named
+        subrequires.
+        Note: If a package does not have a version number, the version is aligned with the main Meshroom
+        environment (if this package is defined).
+        """
+        subrequires = os.environ.get(f"{self.uri.upper()}_SUBREQUIRES", "").split(os.pathsep)
+        packages = []
+
+        # Packages that are resolved in the current environment
+        currentEnvPackages = []
+        if "REZ_REQUEST" in os.environ:
+            resolvedPackages = os.getenv("REZ_RESOLVE", "").split()
+            resolvedVersions = {}
+            for package in resolvedPackages:
+                if package.startswith("~"):
+                    continue
+                version = package.split("-")
+                resolvedVersions[version[0]] = version[1]
+            currentEnvPackages = [package + "-" + resolvedVersions[package] for package in resolvedVersions.keys()]
+        logging.debug("Packages in the current environment: " + ", ".join(currentEnvPackages))
+
+        # Take packages with the set versions for those which have one, and try to take packages in the current
+        # environment (if they are resolved in it)
+        for package in subrequires:
+            if "-" in package:
+                packages.append(package)
+            else:
+                definedInParentEnv = False
+                for p in currentEnvPackages:
+                    if p.startswith(package + "-"):
+                        packages.append(p)
+                        definedInParentEnv = True
+                        break
+                if not definedInParentEnv:
+                    packages.append(package)
+
+        logging.debug("Packages for the execution environment: " + ", ".join(packages))
+        return packages
+
+    def getCommandPrefix(self):
+        # TODO: make Windows-compatible
+
+        # Use the PYTHONPATH from the subrequires' environment (which will only be resolved once
+        # inside the execution environment) and add MESHROOM_ROOT and the plugin's folder itself
+        # to it
+        pythonPaths = f"{os.pathsep.join(['$PYTHONPATH', f'{_MESHROOM_ROOT}', f'{self._folder}'])}"
+
+        return f"rez env {' '.join(self.resolveRezSubrequires())} -c 'PYTHONPATH={pythonPaths} "
+
+    def getCommandSuffix(self):
+        return "'"
+
+
+def processEnvFactory(folder: str, envType: str = "dirtree", uri: str = "") -> ProcessEnv:
+    if envType == "dirtree":
+        return DirTreeProcessEnv(folder)
+    return RezProcessEnv(folder, uri=uri)
 
 
 class NodePluginStatus(Enum):
@@ -76,10 +190,10 @@ class Plugin(BaseObject):
     Members:
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
         path: the absolute path of the plugin
-        _nodePlugins: dictionary mapping the name of a node plugin contained in the plugin
-                      to its corresponding NodePlugin object
-        _templates: dictionary mapping the name of templates (.mg files) associated to the plugin
-                    with their absolute paths
+        nodePlugins: dictionary mapping the name of a node plugin contained in the plugin
+                     to its corresponding NodePlugin object
+        templates: dictionary mapping the name of templates (.mg files) associated to the plugin
+                   with their absolute paths
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
@@ -122,6 +236,11 @@ class Plugin(BaseObject):
     def processEnv(self):
         """ Return the environment required to successfully execute processes. """
         return self._processEnv
+
+    @processEnv.setter
+    def processEnv(self, processEnv: ProcessEnv):
+        """ Set the environment required to successfully execute processes. """
+        self._processEnv = processEnv
 
     def addNodePlugin(self, nodePlugin: NodePlugin):
         """
@@ -193,6 +312,7 @@ class NodePlugin(BaseObject):
         self.plugin: Plugin = plugin
         self.path: str = Path(getfile(nodeDesc)).resolve().as_posix()
         self.nodeDescriptor: desc.Node = nodeDesc
+        self.nodeDescriptor.plugin = self
 
         self.status: NodePluginStatus = NodePluginStatus.NOT_LOADED
         self.errors: list[str] = validateNodeDesc(nodeDesc)
@@ -218,7 +338,7 @@ class NodePlugin(BaseObject):
         except FileNotFoundError:
             self.status = NodePluginStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The path at {self.path} was not "
-                           "not found.")
+                          f"not found.")
             return False
 
         if self._timestamp == timestamp:
@@ -232,17 +352,18 @@ class NodePlugin(BaseObject):
         if not descriptor:
             self.status = NodePluginStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
-                           "was not found.")
+                          f"was not found.")
             return False
 
         self.errors = validateNodeDesc(descriptor)
         if self.errors:
             self.status = NodePluginStatus.DESC_ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
-                           "has description errors.")
+                          f"has description errors.")
             return False
 
         self.nodeDescriptor = descriptor
+        self.nodeDescriptor.plugin = self
         self._timestamp = timestamp
         self.status = NodePluginStatus.NOT_LOADED
         logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Successful reloading.")
@@ -259,6 +380,7 @@ class NodePlugin(BaseObject):
 
     @plugin.setter
     def plugin(self, plugin: Plugin):
+        """ Assign this node plugin to a containing Plugin object. """
         self._plugin = plugin
 
     @property
@@ -273,14 +395,29 @@ class NodePlugin(BaseObject):
             return self.plugin.processEnv
         return None
 
+    @property
+    def runtimeEnv(self) -> dict:
+        """ Return the environment dictionary for the runtime. """
+        return self.processEnv.getEnvDict()
+
+    @property
+    def commandPrefix(self) -> str:
+        """ Return the command prefix for the NodePlugin's execution. """
+        return self.processEnv.getCommandPrefix()
+
+    @property
+    def commandSuffix(self) -> str:
+        """ Return the command suffix for the NodePlugin's execution. """
+        return self.processEnv.getCommandSuffix()
+
 
 class NodePluginManager(BaseObject):
     """
     Manager for all the loaded Plugin objects as well as the registered NodePlugin objects.
 
     Members:
-        _plugins: dictionary containing all the loaded Plugins, with their name as the key
-        _nodePlugins: dictionary containing all the NodePlugins that have been registered
+        plugins: dictionary containing all the loaded Plugins, with their name as the key
+        nodePlugins: dictionary containing all the NodePlugins that have been registered
                       (a NodePlugin may exist without having been registered) with their name as
                       the key
     """

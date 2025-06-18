@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import pkgutil
 import sys
-import tempfile
 import traceback
 import uuid
 
@@ -19,7 +18,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, ProcessEnv
+from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, processEnvFactory
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -42,6 +41,7 @@ def hashValue(value) -> str:
     hashObject = hashlib.sha1(str(value).encode('utf-8'))
     return hashObject.hexdigest()
 
+
 @contextmanager
 def add_to_path(p):
     import sys
@@ -52,6 +52,7 @@ def add_to_path(p):
         yield
     finally:
         sys.path = old_path
+
 
 def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
     """
@@ -137,6 +138,7 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
 
     return classes
 
+
 def loadClassesNodes(folder: str, packageName: str) -> list[NodePlugin]:
     """
     Return the list of all the NodePlugins that were created following the search of the
@@ -153,6 +155,7 @@ def loadClassesNodes(folder: str, packageName: str) -> list[NodePlugin]:
                           module's search. If none has been created, an empty list is returned.
     """
     return loadClasses(folder, packageName, desc.BaseNode)
+
 
 def loadClassesSubmitters(folder: str, packageName: str) -> list[BaseSubmitter]:
     """
@@ -341,7 +344,7 @@ def loadAllNodes(folder) -> list[Plugin]:
     return plugins
 
 
-def loadPluginFolder(folder):
+def loadPluginFolder(folder) -> list[Plugin]:
     if not os.path.isdir(folder):
         logging.info(f"Plugin folder '{folder}' does not exist.")
         return
@@ -350,8 +353,6 @@ def loadPluginFolder(folder):
     if not mrFolder.exists():
         logging.info(f"Plugin folder '{folder}' does not contain a 'meshroom' folder.")
         return
-
-    processEnv = ProcessEnv(folder)
 
     plugins = loadAllNodes(folder=mrFolder)
     if plugins:
@@ -386,6 +387,7 @@ def loadSubmitters(folder, packageName):
 
     return loadClassesSubmitters(folder, packageName)
 
+
 def loadPipelineTemplates(folder: str):
     if not os.path.isdir(folder):
         logging.error(f"Pipeline templates folder '{folder}' does not exist.")
@@ -393,6 +395,7 @@ def loadPipelineTemplates(folder: str):
     for file in os.listdir(folder):
         if file.endswith(".mg") and file not in pipelineTemplates:
             pipelineTemplates[os.path.splitext(file)[0]] = os.path.join(folder, file)
+
 
 def initNodes():
     additionalNodesPath = EnvVar.getList(EnvVar.MESHROOM_NODES_PATH)
@@ -425,7 +428,31 @@ def initPipelines():
 
 
 def initPlugins():
-    additionalpluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
-    nodesFolders = [os.path.join(meshroomFolder, "plugins")] + additionalpluginsPath
-    for f in nodesFolders:
-        loadPluginFolder(folder=f)
+    # Classic plugins (with a DirTreeProcessEnv)
+    additionalPluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
+    pluginsFolders = [os.path.join(meshroomFolder, "plugins")] + additionalPluginsPath
+    for f in pluginsFolders:
+        plugins = loadPluginFolder(folder=f)
+        # Set the ProcessEnv for each plugin
+        if plugins:
+            for plugin in plugins:
+                plugin.processEnv = processEnvFactory(f)
+
+    # Rez plugins (with a RezProcessEnv)
+    rezPlugins = initRezPlugins()
+
+
+def initRezPlugins():
+    rezPlugins = {}
+    rezList = EnvVar.getList(EnvVar.MESHROOM_REZ_PLUGINS)
+
+    for p in rezList:
+        name, path = p.split("=")
+        rezPlugins[name] = path  # "name" is the name of the Rez package
+        plugins = loadPluginFolder(folder=path)
+        # Set the ProcessEnv for Rez plugins
+        if plugins:
+            for plugin in plugins:
+                plugin.processEnv = processEnvFactory(path, "rez", name)
+
+    return rezPlugins

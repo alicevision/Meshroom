@@ -3,6 +3,7 @@ from meshroom.core.graph import Graph
 
 from .utils import registerNodeDesc, unregisterNodeDesc
 
+
 class NodeWithListAttribute(desc.Node):
     inputs = [
         desc.ListAttribute(
@@ -30,7 +31,7 @@ class TestListAttribute:
         nodeA = graph.addNewNode(NodeWithListAttribute.__name__)
         nodeB = graph.addNewNode(NodeWithListAttribute.__name__)
 
-        graph.addEdge(nodeA.listInput, nodeB.listInput) 
+        graph.addEdge(nodeA.listInput, nodeB.listInput)
 
         nodeA.listInput.append("test")
 
@@ -42,7 +43,7 @@ class TestListAttribute:
         nodeA = graph.addNewNode(NodeWithListAttribute.__name__)
         nodeB = graph.addNewNode(NodeWithListAttribute.__name__)
 
-        graph.addEdge(nodeA.listInput, nodeB.listInput) 
+        graph.addEdge(nodeA.listInput, nodeB.listInput)
 
         nodeA.listInput.extend(["A", "B", "C"])
 
@@ -55,7 +56,7 @@ class TestListAttribute:
         nodeA = graph.addNewNode(NodeWithListAttribute.__name__)
         nodeB = graph.addNewNode(NodeWithListAttribute.__name__)
 
-        graph.addEdge(nodeA.listInput, nodeB.listInput) 
+        graph.addEdge(nodeA.listInput, nodeB.listInput)
 
         nodeA.listInput.extend(["A", "B", "C"])
 

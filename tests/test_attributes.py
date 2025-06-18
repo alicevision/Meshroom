@@ -34,9 +34,9 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
     assert len(n0.input.getLinkedInAttributes()) == 0
     assert len(n1.input.getLinkedInAttributes()) == 1
     assert n1.input.getLinkedInAttributes()[0] == n0.output
-    
+
     assert len(n1.output.getLinkedOutAttributes()) == 2
-    
+
     assert n1.output.getLinkedOutAttributes()[0] == n2.input
     assert n1.output.getLinkedOutAttributes()[1] == n3.input
 
@@ -46,6 +46,7 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
     assert not n0.output.hasOutputConnections
     assert len(n0.input.getLinkedInAttributes()) == 0
     assert len(n0.output.getLinkedOutAttributes()) == 0
+
 
 @pytest.mark.parametrize("givenFile,expected", valid3DExtensionFiles + invalid3DExtensionFiles)
 def test_attribute_is3D_file_extensions(givenFile, expected):
@@ -71,7 +72,7 @@ def test_attribute_i3D_by_description_semantic():
 
     # Given
     g = Graph('')
-    n0 = g.addNewNode('Ls', input='')  
+    n0 = g.addNewNode('Ls', input='')
 
     assert not n0.output.is3D
 
@@ -80,6 +81,7 @@ def test_attribute_i3D_by_description_semantic():
 
     # Then
     assert n0.output.is3D
+
 
 @pytest.mark.parametrize("givenSemantic,expected", valid2DSemantics + invalid2DSemantics)
 def test_attribute_is2D_file_semantic(givenSemantic, expected):

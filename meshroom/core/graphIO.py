@@ -126,7 +126,7 @@ class TemplateGraphSerializer(GraphSerializer):
 
     def serializeNode(self, node: Node) -> dict:
         """Adapt node serialization to template graphs.
-        
+
         Instead of getting all the inputs and internal attribute keys, only get the keys of
         the attributes whose value is not the default one.
         The output attributes, UIDs, parallelization parameters and internal folder are
@@ -227,5 +227,3 @@ class PartialGraphSerializer(GraphSerializer):
             return {name: self._serializeAttribute(child) for name, child in attribute.value.items()}
 
         return attribute.getExportValue()
-
-

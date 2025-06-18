@@ -1,7 +1,7 @@
 # coding:utf-8
 
 from meshroom.core.graph import Graph, loadGraph, executeGraph
-from meshroom.core import desc, pluginManager
+from meshroom.core import desc
 from meshroom.core.node import Node
 
 from .utils import registerNodeDesc, unregisterNodeDesc
@@ -35,7 +35,6 @@ class NodeWithAttributeChangedCallback(desc.BaseNode):
 
     def processChunk(self, chunk):
         pass  # No-op.
-
 
 
 class TestNodeWithAttributeChangedCallback:

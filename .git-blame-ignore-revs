@@ -1,3 +1,7 @@
+# [core] Linting following CI's flake8 report
+9b4bd68d5aa9e5c3af5e4bfc4fe6aae06437ca88
+# [tests] Linting following CI's flake8 report
+9b6549cc1dd525658080303f7ad453bd4ec10f52
 # [GraphEditor] Indentation fix
 87c0cef605e4ef2b359d7e678155e79b65b2e762
 # [qt6][qml] Clean-up code and harmonize comments

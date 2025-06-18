@@ -1311,14 +1311,15 @@ class Graph(BaseObject):
         return str(self.toDict())
 
     def copy(self) -> "Graph":
-        """Create a copy of this Graph instance."""
+        """ Create a copy of this Graph instance. """
         graph = Graph("")
         graph._deserialize(self.serialize())
         return graph
 
     def serialize(self, asTemplate: bool = False) -> dict:
-        """Serialize this Graph instance.
-        
+        """
+        Serialize this Graph instance.
+
         Args:
             asTemplate: Whether to use the template serialization.
 
@@ -1329,7 +1330,8 @@ class Graph(BaseObject):
         return SerializerClass(self).serialize()
 
     def serializePartial(self, nodes: list[Node]) -> dict:
-        """Partially serialize this graph considering only the given list of `nodes`.
+        """
+        Partially serialize this graph considering only the given list of `nodes`.
 
         Args:
             nodes: The list of nodes to serialize.

@@ -1,4 +1,4 @@
-from meshroom.core import desc, pluginManager
+from meshroom.core import desc
 from meshroom.core.node import Node
 from meshroom.core.graph import Graph, loadGraph
 

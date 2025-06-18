@@ -167,7 +167,6 @@ class SampleInputNodeV2(desc.InputNode):
     ]
 
 
-
 def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
     """Change the `nodeDesc` associated to `nodeType`."""
     pluginManager.getRegisteredNodePlugins()[nodeType] = NodePlugin(nodeDesc)
@@ -185,7 +184,6 @@ def test_unknown_node_type():
     internalFolder = n.internalFolder
     nodeName = n.name
     unregisterNodeDesc(SampleNodeV1)
-
 
     # Reload file
     g = loadGraph(graphFile)
@@ -433,7 +431,6 @@ class TestGraphLoadingWithStrictCompatibility:
         with pytest.raises(GraphCompatibilityError):
             loadGraph(graph.filepath, strictCompatibility=True)
 
-
     def test_failsOnNodeDescriptionCompatibilityIssue(self, graphSavedOnDisk):
         with registeredNodeTypes([SampleNodeV1, SampleNodeV2]):
             graph: Graph = graphSavedOnDisk
@@ -488,6 +485,7 @@ class TestGraphTemplateLoading:
 
             loadGraph(graph.filepath, strictCompatibility=True)
 
+
 class TestVersionConflict:
 
     def test_loadingConflictingNodeVersionCreatesCompatibilityNodes(self, graphSavedOnDisk):
@@ -528,7 +526,7 @@ class UidTestingNodeV1(desc.Node):
 
 
 class UidTestingNodeV2(desc.Node):
-    """ 
+    """
     Changes from SampleNodeBV1:
         * 'param' has been added
     """
@@ -642,7 +640,6 @@ class TestUidConflict:
             assert checkNodeAConnectionsToNodeB()
             assert len(loadedGraph.compatibilityNodes) == 0
 
-
     def test_uidConflictDoesNotPropagateToValidDownstreamNodeThroughConnection(
             self, graphSavedOnDisk):
         with registeredNodeTypes([UidTestingNodeV1, UidTestingNodeV2]):
@@ -659,7 +656,7 @@ class TestUidConflict:
             assert len(loadedGraph.compatibilityNodes) == 1
 
     def test_uidConflictDoesNotPropagateToValidDownstreamNodeThroughListConnection(
-            self,graphSavedOnDisk):
+            self, graphSavedOnDisk):
         with registeredNodeTypes([UidTestingNodeV2, UidTestingNodeV3]):
             graph: Graph = graphSavedOnDisk
             nodeA = graph.addNewNode(UidTestingNodeV2.__name__)

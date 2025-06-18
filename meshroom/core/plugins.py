@@ -362,6 +362,7 @@ class NodePlugin(BaseObject):
             return False
 
         self.nodeDescriptor = descriptor
+        self.nodeDescriptor.plugin = self
         self._timestamp = timestamp
         self.status = NodePluginStatus.NOT_LOADED
         logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Successful reloading.")

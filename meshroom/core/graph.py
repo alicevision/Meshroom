@@ -15,7 +15,7 @@ import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
-from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
+from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
@@ -132,6 +132,14 @@ class Visitor:
         """ Is invoked on a vertex after all of its out edges have been added to the search tree and all of the
         adjacent vertices have been discovered (but before their out-edges have been examined). """
         pass
+
+
+class DAGVisitor(Visitor):
+
+    def backEdge(self, e, g):
+        """ Is invoked on the back edges in the graph. Means that there is a cyclic dependency in the visited graph """
+
+        raise CyclicDependencyError("A cyclic dependency exists on the current DAG")
 
 
 def changeTopology(func):
@@ -498,41 +506,38 @@ class Graph(BaseObject):
             node._applyExpr()
         return node
 
-    def copyNode(self, srcNode, withEdges=False):
+    def copyNode(self, srcNode: Node, withEdges: bool=False):
         """
         Get a copy instance of a node outside the graph.
 
         Args:
-            srcNode (Node): the node to copy
-            withEdges (bool): whether to copy edges
+            srcNode: the node to copy
+            withEdges: whether to copy edges
 
         Returns:
-            Node, dict: the created node instance,
-                        a dictionary of linked attributes with their original value (empty if withEdges is True)
+            The created node instance and the mapping of skipped edge per attribute (always empty if `withEdges` is True).
         """
+        def _removeLinkExpressions(attribute: Attribute, removed: dict[Attribute, str]):
+            """Recursively remove link expressions from the given root `attribute`."""
+            # Link expressions are only stored on input attributes.
+            if attribute.isOutput:
+                return
+
+            if attribute._linkExpression:
+                removed[attribute] = attribute._linkExpression
+                attribute._linkExpression = None
+            elif isinstance(attribute, (ListAttribute, GroupAttribute)):
+                for child in attribute.value:
+                    _removeLinkExpressions(child, removed)
+
         with GraphModification(self):
-            # create a new node of the same type and with the same attributes values
-            # keep links as-is so that CompatibilityNodes attributes can be created with correct automatic description
-            # (File params for link expressions)
-            node = nodeFactory(srcNode.toDict(), srcNode.nodeType)  # use nodeType as name
-            # skip edges: filter out attributes which are links by resetting default values
+            node = nodeFactory(srcNode.toDict(), name=srcNode.nodeType)
+
             skippedEdges = {}
             if not withEdges:
-                for n, attr in node.attributes.items():
-                    if attr.isOutput:
-                        # edges are declared in input with an expression linking
-                        # to another param (which could be an output)
-                        continue
-                    # find top-level links
-                    if Attribute.isLinkExpression(attr.value):
-                        skippedEdges[attr] = attr.value
-                        attr.resetToDefaultValue()
-                    # find links in ListAttribute children
-                    elif isinstance(attr, (ListAttribute, GroupAttribute)):
-                        for child in attr.value:
-                            if Attribute.isLinkExpression(child.value):
-                                skippedEdges[child] = child.value
-                                child.resetToDefaultValue()
+                for _, attr in node.attributes.items():
+                    _removeLinkExpressions(attr, skippedEdges)
+
         return node, skippedEdges
 
     def duplicateNodes(self, srcNodes):
@@ -892,11 +897,11 @@ class Graph(BaseObject):
         return set(self._nodes) - nodesWithInputLink
 
     @changeTopology
-    def addEdge(self, srcAttr, dstAttr):
-        assert isinstance(srcAttr, Attribute)
-        assert isinstance(dstAttr, Attribute)
-        if srcAttr.node.graph != self or dstAttr.node.graph != self:
-            raise RuntimeError('The attributes of the edge should be part of a common graph.')
+    def addEdge(self, srcAttr: Attribute, dstAttr: Attribute) -> "Edge":
+        if not (srcAttr.node.graph == dstAttr.node.graph == self):
+            raise InvalidEdgeError(
+                srcAttr.fullNameToGraph, dstAttr.fullNameToGraph, "Attributes do not belong to this Graph"
+            )
         if dstAttr in self.edges.keys():
             raise RuntimeError(f'Destination attribute "{dstAttr.getFullNameToNode()}" is already connected.')
         edge = Edge(srcAttr, dstAttr)
@@ -1033,7 +1038,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
+        visitor = DAGVisitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
         visitor.finishVertex = lambda vertex, graph: nodes.append(vertex)
         visitor.finishEdge = lambda edge, graph: edges.append(edge)
         self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst)
@@ -1058,7 +1063,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
+        visitor = DAGVisitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
 
         def discoverVertex(vertex, graph):
             if not filterTypes or vertex.nodeType in filterTypes:
@@ -1082,7 +1087,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor(reverse=False, dependenciesOnly=True)
+        visitor = DAGVisitor(reverse=False, dependenciesOnly=True)
 
         def discoverVertex(vertex, graph):
             if vertex.hasStatus(Status.SUCCESS):
@@ -1138,7 +1143,7 @@ class Graph(BaseObject):
         self._computationBlocked.clear()
 
         compatNodes = []
-        visitor = Visitor(reverse=False, dependenciesOnly=False)
+        visitor = DAGVisitor(reverse=False, dependenciesOnly=False)
 
         def discoverVertex(vertex, graph):
             # initialize depths
@@ -1196,7 +1201,7 @@ class Graph(BaseObject):
         """
         nodesStack = []
         edgesScore = defaultdict(int)
-        visitor = Visitor(reverse=False, dependenciesOnly=dependenciesOnly)
+        visitor = DAGVisitor(reverse=False, dependenciesOnly=dependenciesOnly)
 
         def finishEdge(edge, graph):
             u, v = edge
@@ -1279,7 +1284,7 @@ class Graph(BaseObject):
         if startNode.isAlreadySubmittedOrFinished():
             return 0
 
-        class SCVisitor(Visitor):
+        class SCVisitor(DAGVisitor):
             def __init__(self, reverse, dependenciesOnly):
                 super().__init__(reverse, dependenciesOnly)
 

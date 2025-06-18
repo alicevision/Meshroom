@@ -11,6 +11,13 @@ class GraphException(MeshroomException):
     pass
 
 
+class InvalidEdgeError(GraphException):
+    """Raised when an edge between two attributes cannot be created."""
+
+    def __init__(self, srcAttrName: str, dstAttrName: str, msg: str) -> None:
+        super().__init__(f"Failed to connect {srcAttrName}->{dstAttrName}: {msg}")
+
+
 class GraphCompatibilityError(GraphException):
     """
     Raised when node compatibility issues occur when loading a graph.
@@ -56,4 +63,9 @@ class StopGraphVisit(GraphVisitMessage):
 
 class StopBranchVisit(GraphVisitMessage):
     """ Immediately stop branch visit. """
+    pass
+
+
+class CyclicDependencyError(Exception):
+    """ Raised if a cyclic dependency is find in a DAG graph """
     pass

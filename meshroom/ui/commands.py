@@ -6,6 +6,7 @@ from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
+from meshroom.core.exception import CyclicDependencyError
 from meshroom.core.graph import Graph, GraphModification
 from meshroom.core.node import Position, CompatibilityIssue
 from meshroom.core.nodeFactory import nodeFactory
@@ -314,11 +315,17 @@ class AddEdgeCommand(GraphCommand):
         self.dstAttr = dst.getFullNameToNode()
         self.setText(f"Connect '{self.srcAttr}'->'{self.dstAttr}'")
 
-        if src.baseType != dst.baseType:
-            raise ValueError(f"Attribute types are not compatible and cannot be connected: '{self.srcAttr}'({src.baseType})->'{self.dstAttr}'({dst.baseType})")
+        if not dst.validateConnectionFrom(src):
+            raise ValueError(f"Attribute are not compatible and cannot be connected: '{self.srcAttr}'({src.baseType})->'{self.dstAttr}'({dst.baseType})")
 
     def redoImpl(self):
-        self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))
+
+        try:
+            self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))
+        except CyclicDependencyError:
+            self.graph.removeEdge(self.graph.attribute(self.dstAttr))
+            return False
+        
         return True
 
     def undoImpl(self):

@@ -479,8 +479,8 @@ Item {
                 model: nodeRepeater.loaded && root.graph ? root.graph.visibleEdges : undefined
 
                 delegate: Edge {
-                    property var src: root._attributeToDelegate[edge.src]
-                    property var dst: root._attributeToDelegate[edge.dst]
+                    property var src: recursivelyRetrieveAttributePin(edge.src)
+                    property var dst: recursivelyRetrieveAttributePin(edge.dst)
                     property bool isValidEdge: src !== undefined && dst !== undefined
                     visible: isValidEdge && src.visible && dst.visible
 
@@ -518,6 +518,30 @@ Item {
                                 edgeMenu.open()
                             }
                         }
+                    }
+
+                    function recursivelyRetrieveAttributePin(attribute) {
+                        /*
+                          Will try to retrieve thef first visible parent atribute of the given attribute
+                        */
+                        let dstAttributeDelegate = root._attributeToDelegate[attribute]
+                        if (dstAttributeDelegate && dstAttributeDelegate.visible) { return dstAttributeDelegate }
+                        
+                        let index = attribute.root.value.indexOf(attribute)
+                        let groupAttributeDelegate = null;
+                        let groupAttribute = attribute;
+
+                        while (!groupAttributeDelegate || (!groupAttributeDelegate.visible && groupAttribute && groupAttribute.root)) {
+                            groupAttribute = groupAttribute.root
+                            if (groupAttribute) {
+                                groupAttributeDelegate = root._attributeToDelegate[groupAttribute]
+                            }
+                        }
+                        if (groupAttributeDelegate) {
+                            return groupAttributeDelegate
+                        }
+                        
+                        return dstAttributeDelegate
                     }
                 }
             }

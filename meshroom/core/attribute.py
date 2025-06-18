@@ -60,8 +60,6 @@ class SubAttribute(Protocol):
 class ContainsSubAttributes(Protocol):
 
     def getSubAttributes(self) -> list['Attribute']: pass
-
-    def isFullyConnected(self) -> bool: pass
  
 class Attribute(BaseObject):
     """
@@ -332,8 +330,8 @@ class Attribute(BaseObject):
         """ Whether the input attribute is a link to another attribute. """
         # note: directly use self.node.graph._edges to avoid using the property that may become
         # invalid at some point
-        return self.node.graph and self.isInput and self.node.graph._edges and \
-            self in self.node.graph._edges.keys()
+        return bool(self.node.graph and self.isInput and self.node.graph._edges and \
+            self in self.node.graph._edges.keys())
 
     @staticmethod
     def isLinkExpression(value) -> bool:
@@ -1042,28 +1040,7 @@ class GroupAttribute(Attribute):
     def getSubAttributes(self):
         return list(self._value)
     
-    def getLinkParam(self, recursive=False):        
-        return super().getLinkParam(recursive=recursive)
-    
-    def isFullyConnected(self):
-        linkParam = None
-        for subAttr in self.getSubAttributes():
-
-            if isinstance(subAttr, GroupAttribute) and not subAttr._isFullyConnected():
-                return False
-            
-            if subAttr.isLink:
-                if not linkParam:
-                    linkParam = subAttr.getLinkParam().getParentAttribute()
-                elif subAttr.getLinkParam().getParentAttribute() != linkParam:
-                    return False
-            else:
-                return False
-
-        return True
-
     # Override value property
     value = Property(Variant, _get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     flatStaticChildren = Property(Variant, getFlatStaticChildren, constant=True)
-

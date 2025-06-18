@@ -476,7 +476,7 @@ Item {
                 id: edgesRepeater
 
                 // Delay edges loading after nodes (edges needs attribute pins to be created)
-                model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
+                model: nodeRepeater.loaded && root.graph ? root.graph.visibleEdges : undefined
 
                 delegate: Edge {
                     property var src: root._attributeToDelegate[edge.src]

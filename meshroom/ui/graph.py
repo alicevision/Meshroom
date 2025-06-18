@@ -384,6 +384,7 @@ class UIGraph(QObject):
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
         self.filePollerRefreshChanged.connect(self._chunksMonitor.filePollerRefreshChanged)
 
+
     def setGraph(self, g):
         """ Set the internal graph. """
         if self._graph:
@@ -874,7 +875,7 @@ class UIGraph(QObject):
     @Slot(list)
     def deleteEdgesByIndices(self, indices):
         with self.groupedGraphModification("Remove Edges"):
-            copied = list(self._graph.edges)
+            copied = list(self._graph.visibleEdges)
             for index in indices:
                 self.removeEdge(copied[index])
 

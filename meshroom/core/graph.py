@@ -24,7 +24,7 @@ from meshroom.core.mtyping import PathLike
 # Replace default encoder to support Enums
 
 DefaultJSONEncoder = json.JSONEncoder  # store the original one
-
+logger = logging.getLogger(__name__)
 
 class MyJSONEncoder(DefaultJSONEncoder):  # declare a new one with Enum support
     def default(self, obj):
@@ -61,11 +61,12 @@ def GraphModification(graph):
 
 class Edge(BaseObject):
 
-    def __init__(self, src, dst, parent=None):
+    def __init__(self, src, dst, parent=None, visible=True):
         super().__init__(parent)
         self._src = weakref.ref(src)
         self._dst = weakref.ref(dst)
         self._repr = f"<Edge> {self._src()} -> {self._dst()}"
+        self._visible = visible
 
     @property
     def src(self):
@@ -74,9 +75,17 @@ class Edge(BaseObject):
     @property
     def dst(self):
         return self._dst()
+    
+    def setVisible(self, visible: bool):
+        self._visible = visible
+    
+    def getVisible(self) -> bool:
+        return self._visible
 
     src = Property(Attribute, src.fget, constant=True)
     dst = Property(Attribute, dst.fget, constant=True)
+    isVisibleChanged = Signal()
+    isVisible = Property(bool, getVisible, setVisible, notify=isVisibleChanged)
 
 
 WHITE = 0
@@ -209,6 +218,7 @@ class Graph(BaseObject):
         self._nodes = DictModel(keyAttrName='name', parent=self)
         # Edges: use dst attribute as unique key since it can only have one input connection
         self._edges = DictModel(keyAttrName='dst', parent=self)
+        self._visiblEdges = DictModel(keyAttrName="dstAttr", parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
         self._cacheDir: str = ''
         self._filepath: str = ''
@@ -892,7 +902,7 @@ class Graph(BaseObject):
         return set(self._nodes) - nodesWithInputLink
 
     @changeTopology
-    def addEdge(self, srcAttr, dstAttr):
+    def addEdge(self, srcAttr, dstAttr, visible=True):
 
         assert isinstance(srcAttr, Attribute)
         assert isinstance(dstAttr, Attribute)
@@ -900,7 +910,7 @@ class Graph(BaseObject):
         if srcAttr.node.graph != self or dstAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
         if dstAttr in self.edges.keys():
-            raise RuntimeError(f'Destination attribute "{dstAttr.getFullNameToNode()}" is already connected.')            
+            self.removeEdge(dstAttr)
         if not dstAttr.isCompatibleWith(srcAttr):
             raise AttributeCompatibilityError(f'Attribute: "{srcAttr.name}" can not be connected to "{dstAttr.name}" because they are not compatible')
 
@@ -909,7 +919,7 @@ class Graph(BaseObject):
         if not shouldContinue:
             return None
         
-        edge = Edge(srcAttr, dstAttr)
+        edge = Edge(srcAttr, dstAttr, visible=visible)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
@@ -923,30 +933,33 @@ class Graph(BaseObject):
                 self.addEdge(*edge)
 
     def _beforeAddingEdge(self, srcAttr: Attribute, dstAttr: Attribute) -> bool:
-        
+
         if isinstance(dstAttr, ContainsSubAttributes) and isinstance(srcAttr, ContainsSubAttributes):
 
             # Connect the SubAttributes
             dstSubAttrs = dstAttr.getSubAttributes()
             for idx, srcSubAttr in enumerate(srcAttr.getSubAttributes()):
                 dstSubAttr = dstSubAttrs[idx]
+
                 if dstSubAttr.isLink:
                     self.removeEdge(dstSubAttr)
-                self.addEdge(srcSubAttr, dstSubAttr)
-            
-            return True
-        
+
+                self.addEdge(srcSubAttr, dstSubAttr, visible=False)
+
         return True
 
-    @changeTopology
     def removeEdge(self, dstAttr: 'Attribute'):
         if not isinstance(dstAttr, ContainsSubAttributes) and dstAttr not in self.edges.keys():
             raise RuntimeError(f'Attribute "{dstAttr.getFullNameToNode()}" is not connected')
         
         self._beforeRemovingEdge(dstAttr=dstAttr)
-        self._removeEdge(dstAttr=dstAttr)
+        try:
+            self._removeEdge(dstAttr=dstAttr)
+        except ValueError:
+            logger.warning(f"Trying to remove a connection on attribute:'{dstAttr.getFullLabelToNode()}' that is not conneced ")
         self._afterRemovingEdge(dstAttr=dstAttr)
 
+    @changeTopology
     def _removeEdge(self, dstAttr: 'Attribute'):
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
@@ -961,8 +974,11 @@ class Graph(BaseObject):
             dstAttrParent = dstAttr.getParentAttribute()
             if dstAttrParent and dstAttrParent.isLink:
                 self._removeEdge(dstAttrParent)
-                #raise ConnectionError(f"{dstAttr.getFullNameToNode()} can not be disconneted until it's parent ({dstAttrParent.getFullNameToNode()}) is connected")
-            # Connect the group attrbiute if its children are all connected to same
+                for subAttribute in dstAttrParent.getSubAttributes():
+                    connectedEdge = self._edges.get(subAttribute)
+                    if connectedEdge:
+                        connectedEdge.setVisible(True)
+            # Connect the group attribute if its children are all connected to same
             if isinstance(dstAttrParent, GroupAttribute) and dstAttrParent.getLinkParam():
                 self.addEdge(dstAttrParent.getLinkParam(), dstAttrParent)
                
@@ -1634,6 +1650,13 @@ class Graph(BaseObject):
                     except Exception:
                         pass
 
+    def getVisibleEdges(self):        
+        self._visiblEdges.clear()
+        for e in self.edges:
+            if e.getVisible():
+                self._visiblEdges.add(e)
+        return self._visiblEdges
+
     nodes = Property(BaseObject, nodes.fget, constant=True)
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
@@ -1647,6 +1670,7 @@ class Graph(BaseObject):
     updated = Signal()
     canComputeLeavesChanged = Signal()
     canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
+    visibleEdges = Property(BaseObject, getVisibleEdges, notify=updated)
 
 
 def loadGraph(filepath, strictCompatibility: bool = False) -> Graph:

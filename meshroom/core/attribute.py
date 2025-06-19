@@ -1000,8 +1000,10 @@ class GroupAttribute(Attribute):
         self._linkExpression = None
         self.resetToDefaultValue()
 
-
     def getExportValue(self):
+        if self.isLink:
+            return self.getLinkParam().asLinkExpr()
+        
         return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
 
     def _isDefault(self):

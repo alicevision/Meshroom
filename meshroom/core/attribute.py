@@ -10,6 +10,7 @@ import logging
 from collections.abc import Iterable, Sequence
 from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
+from meshroom.core.exception import InvalidEdgeError
 from meshroom.core import desc, hashValue
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
@@ -252,6 +253,26 @@ class Attribute(BaseObject):
         self.valueChanged.emit()
         self.validValueChanged.emit()
 
+    def _handleLinkValue(self, value) -> bool:
+        """
+        Handle assignment of a link if `value` is a serialized link expression or in-memory Attribute reference.
+        Returns: Whether the value has been handled as a link, False otherwise.
+        """
+        isAttribute = isinstance(value, Attribute)
+        isLinkExpression = Attribute.isLinkExpression(value)
+
+        if not isAttribute and not isLinkExpression:
+            return False
+
+        if isAttribute:
+            self._linkExpression = value.asLinkExpr()
+            # If the value is a direct reference to an attribute, it can be directly converted to an edge as
+            # the source attribute already exists in memory.
+            self._applyExpr()
+        elif isLinkExpression:
+            self._linkExpression = value
+        return True
+    
     @Slot()
     def _onValueChanged(self):
         self.node._onAttributeChanged(self)
@@ -882,6 +903,10 @@ class GroupAttribute(Attribute):
         return self._value
 
     def _set_value(self, exportedValue):
+
+        if self._handleLinkValue(exportedValue):
+            return
+        
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
@@ -947,8 +972,34 @@ class GroupAttribute(Attribute):
         return hashValue(uids)
 
     def _applyExpr(self):
-        for value in self._value:
-            value._applyExpr()
+
+        if not self._linkExpression:
+            for value in self._value:
+                value._applyExpr()
+            return
+
+        if not self.isInput or not (graph := self.node.graph):
+            return
+        
+        link = self._linkExpression[1:-1]
+        linkNodeName, linkAttrName = link.split(".")
+        try:
+            node = graph.node(linkNodeName)
+            if node is None:
+                raise InvalidEdgeError(self.fullNameToNode, link, "Source node does not exist")
+            attr = node.attribute(linkAttrName)
+            if attr is None:
+                raise InvalidEdgeError(self.fullNameToNode, link, "Source attribute does not exist")
+            graph.addEdge(attr, self)
+        except InvalidEdgeError as err:
+            logging.warning(err)
+        except Exception as err:
+            logging.warning("Unexpected error happened during edge creation")
+            logging.warning(f"Expression '{self._linkExpression}': {err}")
+
+        self._linkExpression = None
+        self.resetToDefaultValue()
+
 
     def getExportValue(self):
         return {key: attr.getExportValue() for key, attr in self._value.objects.items()}

@@ -68,3 +68,9 @@ class ConnectionError(GraphException):
     """
     Raised when trying to connect attributes
     """
+
+class InvalidEdgeError(GraphException):
+    """Raised when an edge between two attributes cannot be created."""
+
+    def __init__(self, srcAttrName: str, dstAttrName: str, msg: str) -> None:
+        super().__init__(f"Failed to connect {srcAttrName}->{dstAttrName}: {msg}")

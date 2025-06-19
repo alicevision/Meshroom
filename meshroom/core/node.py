@@ -1948,6 +1948,11 @@ class CompatibilityNode(BaseNode):
         if attrDesc is None:
             return None
 
+         # If it is a serialized link expression (no proper value to set/evaluate)
+        if Attribute.isLinkExpression(value):
+            return attrDesc
+
+
         # We have found a description, and we still need to
         # check if the value matches the attribute description.
 
@@ -1959,10 +1964,7 @@ class CompatibilityNode(BaseNode):
                     return None
             return attrDesc
 
-        # If it is a serialized link expression (no proper value to set/evaluate)
-        if Attribute.isLinkExpression(value):
-            return attrDesc
-
+       
         # If it passes the 'matchDescription' test
         if attrDesc.matchDescription(value, strict):
             return attrDesc

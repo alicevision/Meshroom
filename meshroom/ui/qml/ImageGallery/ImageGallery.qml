@@ -674,7 +674,9 @@ Panel {
                 text: MaterialIcons.navigate_next
                 property string nextGroupName: {
                     if (root.cameraInits && root.cameraInitIndex + 1 < root.cameraInits.count) {
-                        return root.cameraInits.at(root.cameraInitIndex + 1).label
+                        var group = root.cameraInits.at(root.cameraInitIndex + 1)
+                        if (group)
+                            return root.cameraInits.at(root.cameraInitIndex + 1).label
                     }
                     return ""
                 }

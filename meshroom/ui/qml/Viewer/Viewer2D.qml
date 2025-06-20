@@ -1797,11 +1797,7 @@ FocusScope {
 
         shortcut: "R"
         onTriggered: {
-            if (hdrImageToolbar.channelModeValue !== "r") {
-                hdrImageToolbar.channelModeValue = "r"
-            } else {
-                hdrImageToolbar.channelModeValue = "rgba"
-            }
+            hdrImageToolbar.toggleChannel("r", "rgba")
         }
     }
 
@@ -1810,11 +1806,7 @@ FocusScope {
 
         shortcut: "G"
         onTriggered: {
-            if (hdrImageToolbar.channelModeValue !== "g") {
-                hdrImageToolbar.channelModeValue = "g"
-            } else {
-                hdrImageToolbar.channelModeValue = "rgba"
-            }
+            hdrImageToolbar.toggleChannel("g", "rgba")
         }
     }
 
@@ -1823,11 +1815,7 @@ FocusScope {
 
         shortcut: "B"
         onTriggered: {
-            if (hdrImageToolbar.channelModeValue !== "b") {
-                hdrImageToolbar.channelModeValue = "b"
-            } else {
-                hdrImageToolbar.channelModeValue = "rgba"
-            }
+            hdrImageToolbar.toggleChannel("b", "rgba")
         }
     }
 
@@ -1836,11 +1824,7 @@ FocusScope {
 
         shortcut: "A"
         onTriggered: {
-            if (hdrImageToolbar.channelModeValue !== "a") {
-                hdrImageToolbar.channelModeValue = "a"
-            } else {
-                hdrImageToolbar.channelModeValue = "rgba"
-            }
+            hdrImageToolbar.toggleChannel("a", "rgba")
         }
     }
 

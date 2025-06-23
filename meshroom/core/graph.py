@@ -913,11 +913,6 @@ class Graph(BaseObject):
             self.removeEdge(dstAttr)
         if not dstAttr.isCompatibleWith(srcAttr):
             raise AttributeCompatibilityError(f'Attribute: "{srcAttr.name}" can not be connected to "{dstAttr.name}" because they are not compatible')
-
-        shouldContinue = self._beforeAddingEdge(srcAttr, dstAttr)
-
-        if not shouldContinue:
-            return None
         
         edge = Edge(srcAttr, dstAttr, visible=visible)
         self.edges.add(edge)
@@ -932,65 +927,17 @@ class Graph(BaseObject):
             for edge in edges:
                 self.addEdge(*edge)
 
-    def _beforeAddingEdge(self, srcAttr: Attribute, dstAttr: Attribute) -> bool:
-
-        if isinstance(dstAttr, ContainsSubAttributes) and isinstance(srcAttr, ContainsSubAttributes):
-
-            # Connect the SubAttributes
-            dstSubAttrs = dstAttr.getSubAttributes()
-            for idx, srcSubAttr in enumerate(srcAttr.getSubAttributes()):
-                dstSubAttr = dstSubAttrs[idx]
-
-                if dstSubAttr.isLink:
-                    self.removeEdge(dstSubAttr)
-
-                self.addEdge(srcSubAttr, dstSubAttr, visible=False)
-
-        return True
-
-    def removeEdge(self, dstAttr: 'Attribute'):
-        if not isinstance(dstAttr, ContainsSubAttributes) and dstAttr not in self.edges.keys():
-            raise RuntimeError(f'Attribute "{dstAttr.getFullNameToNode()}" is not connected')
-        
-        self._beforeRemovingEdge(dstAttr=dstAttr)
-        try:
-            self._removeEdge(dstAttr=dstAttr)
-        except ValueError:
-            logger.warning(f"Trying to remove a connection on attribute:'{dstAttr.getFullLabelToNode()}' that is not conneced ")
-        self._afterRemovingEdge(dstAttr=dstAttr)
-
     @changeTopology
-    def _removeEdge(self, dstAttr: 'Attribute'):
+    def removeEdge(self, dstAttr: 'Attribute'):
+
+        if not self.edges.get(dstAttr):
+            return
+
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
         edge.src.hasOutputConnectionsChanged.emit()
-
-    def _beforeRemovingEdge(self, dstAttr: 'Attribute') -> bool:
-
-        # Remove sub attribute's parent connection
-        if isinstance(dstAttr, SubAttribute):
-            dstAttrParent = dstAttr.getParentAttribute()
-            if dstAttrParent and dstAttrParent.isLink:
-                self._removeEdge(dstAttrParent)
-                for subAttribute in dstAttrParent.getSubAttributes():
-                    connectedEdge = self._edges.get(subAttribute)
-                    if connectedEdge:
-                        connectedEdge.setVisible(True)
-            # Connect the group attribute if its children are all connected to same
-            if isinstance(dstAttrParent, GroupAttribute) and dstAttrParent.getLinkParam():
-                self.addEdge(dstAttrParent.getLinkParam(), dstAttrParent)
-               
-        return True
-
-    def _afterRemovingEdge(self, dstAttr: 'Attribute'):
-
-        if isinstance(dstAttr, ContainsSubAttributes):
-            # Disconnect the sub attributes
-            for subDstSubAttr in dstAttr.getSubAttributes():
-                if isinstance(subDstSubAttr, Attribute) and subDstSubAttr.isLink:
-                    self.removeEdge(subDstSubAttr)
 
     def getDepth(self, node, minimal=False):
         """ Return node's depth in this Graph.

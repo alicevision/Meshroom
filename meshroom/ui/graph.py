@@ -23,7 +23,7 @@ from PySide6.QtCore import (
 
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
-from meshroom.core.attribute import Attribute, ListAttribute
+from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
@@ -854,8 +854,27 @@ class UIGraph(QObject):
             with self.groupedGraphModification(f"Insert and Add Edge on {dst.getFullNameToNode()}"):
                 self.appendAttribute(dst)
                 self._addEdge(src, dst.at(-1))
+        elif isinstance(dst, GroupAttribute) and isinstance(src, GroupAttribute):
+            with self.groupedGraphModification(f"Insert and Add Edge on {dst.getFullNameToNode()}"):
+                self._connectGroupAttributes(src, dst)
+
         else:
             self._addEdge(src, dst)
+
+    def _connectGroupAttributes(self, src: GroupAttribute, dst: GroupAttribute) -> None:
+        """ Connect a groupAttributes with an other GroupAttribute
+            SubAtttributes are also connected
+        """
+        srcSubAttributes = src.getSubAttributes()
+
+        for i, dstSubAttr in enumerate(dst.getSubAttributes()):
+            srcSubAttr = srcSubAttributes[i]
+            if isinstance(dstSubAttr, GroupAttribute) and isinstance(srcSubAttr, GroupAttribute):
+                self._connectGroupAttributes(srcSubAttr, dstSubAttr)
+            else:
+                self._addEdge(srcSubAttr, dstSubAttr)
+        
+        self._addEdge(src, dst)
 
     def _addEdge(self, src, dst):
         with self.groupedGraphModification(f"Connect '{src.getFullNameToNode()}'->'{dst.getFullNameToNode()}'"):
@@ -865,12 +884,48 @@ class UIGraph(QObject):
 
     @Slot(Edge)
     def removeEdge(self, edge):
-        if isinstance(edge.dst.root, ListAttribute):
-            with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.getFullNameToNode()}"):
-                self.push(commands.RemoveEdgeCommand(self._graph, edge))
-                self.removeAttribute(edge.dst)
-        else:
+        with self.groupedGraphModification(f"Remove edge {edge.dst.getFullNameToNode()}"):
+            if isinstance(edge.dst.root, ListAttribute):
+                with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.getFullNameToNode()}"):
+                    self.push(commands.RemoveEdgeCommand(self._graph, edge))
+                    self.removeAttribute(edge.dst)
+                return
+
+            # Handle groupAttribute deconnection
+            # Remove groupEdge and subAttributes edges
+            if isinstance(edge.dst, GroupAttribute):
+                with self.groupedGraphModification(f"Remove GroupAttribute edge and children edges {edge.dst.getFullNameToNode()}"):
+                    self._disconnectGroupAttributeChildren(edge)
+
+            # Handle groupAttribute child deconnection
+            if isinstance(edge.dst.root, GroupAttribute):
+                self._disconnectGroupAttributeChild(edge)
+
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
+
+    def _disconnectGroupAttributeChildren(self, edge: Edge):
+        with self.groupedGraphModification(f"Remove GroupAttribute children edges {edge.dst.getFullNameToNode()}"):
+
+            for subAttribute in edge.dst.getSubAttributes():
+
+                if not (subEdge := self.graph.edges.get(subAttribute)):
+                    continue
+
+                if isinstance(subAttribute, GroupAttribute):
+                    self._disconnectGroupAttributeChildren()
+
+                self.push(commands.RemoveEdgeCommand(self._graph, subEdge))
+
+    def _disconnectGroupAttributeChild(self, edge: Edge):
+        with self.groupedGraphModification(f"Remove GroupAttribute child {edge.dst.getFullNameToNode()}"):
+            self.push(commands.RemoveEdgeCommand(self._graph, edge))
+
+            # Remove groupAttribute connection, anytime one of its child is deconnected
+            if grpEdge := self.graph.edges.get(edge.dst.root):
+                if isinstance(grpEdge.dst.root, GroupAttribute):
+                    self._disconnectGroupAttributeChild(grpEdge)
+                else:
+                    self.push(commands.RemoveEdgeCommand(self._graph, grpEdge))
 
     @Slot(list)
     def deleteEdgesByIndices(self, indices):

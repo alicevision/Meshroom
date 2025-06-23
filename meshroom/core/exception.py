@@ -64,11 +64,6 @@ class AttributeCompatibilityError(GraphException):
     Raised when trying to connect attributes that are incompatible
     """
 
-class ConnectionError(GraphException):
-    """
-    Raised when trying to connect attributes
-    """
-
 class InvalidEdgeError(GraphException):
     """Raised when an edge between two attributes cannot be created."""
 

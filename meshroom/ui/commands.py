@@ -63,9 +63,6 @@ class UndoStack(QUndoStack):
         # type: (UndoCommand) -> bool
         try:
             res = command.redoImpl()
-        except ConnectionError as connectionError:
-            logging.warning(str(connectionError))
-            res = False
         except Exception as e:
             logging.error(f"Error while trying command '{command.text()}': \n{traceback.format_exc()}")
             res = False

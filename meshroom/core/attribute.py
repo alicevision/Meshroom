@@ -2,7 +2,6 @@
 import copy
 import os
 import re
-from typing import Optional
 import weakref
 import types
 import logging
@@ -13,13 +12,12 @@ from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, Di
 from meshroom.core.exception import InvalidEdgeError
 from meshroom.core import desc, hashValue
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
-
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
 
 
-def attributeFactory(description: str, value, isOutput: bool, node, root=None, parent=None, parentAttribute:'Attribute'=None):
+def attributeFactory(description: str, value, isOutput: bool, node, root=None, parent=None):
     """
     Create an Attribute based on description type.
 
@@ -31,7 +29,6 @@ def attributeFactory(description: str, value, isOutput: bool, node, root=None, p
                      Node's attributes
         root: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
         parent (BaseObject): (optional) the parent BaseObject if any
-        parentAttribute: (Attribute): (optional) the created attribute is child of the given parent
     """
     attr: Attribute = description.instanceType(node, description, isOutput, root, parent)
     if value is not None:
@@ -46,22 +43,8 @@ def attributeFactory(description: str, value, isOutput: bool, node, root=None, p
     #       performance issues when using the pyside backend.
     attr.valueChanged.connect(attr._onValueChanged)
 
-    if parentAttribute:
-        attr.getParentAttribute = lambda: parentAttribute
-
     return attr
 
-
-@runtime_checkable
-class SubAttribute(Protocol):
-
-    def getParentAttribute(self) -> 'Attribute': pass
-
-@runtime_checkable
-class ContainsSubAttributes(Protocol):
-
-    def getSubAttributes(self) -> list['Attribute']: pass
- 
 class Attribute(BaseObject):
     """
     """
@@ -939,7 +922,7 @@ class GroupAttribute(Attribute):
         self._value = DictModel(keyAttrName='name', parent=self)
         subAttributes = []
         for subAttrDesc in self.attributeDesc.groupDesc:
-            childAttr = attributeFactory(subAttrDesc, None, self.isOutput, self.node, self, parentAttribute=self)
+            childAttr = attributeFactory(subAttrDesc, None, self.isOutput, self.node, self)
             subAttributes.append(childAttr)
             childAttr.valueChanged.connect(self.valueChanged)
         self._value.reset(subAttributes)

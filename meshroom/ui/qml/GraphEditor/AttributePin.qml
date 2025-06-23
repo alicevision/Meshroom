@@ -30,28 +30,6 @@ RowLayout {
     readonly property bool isGroup: attribute && attribute.type === "GroupAttribute"
     readonly property bool isChild: attribute && attribute.root
     readonly property bool isConnected: attribute.isLinkNested || attribute.hasOutputConnections
-    readonly property bool hasSubInputLink: {
-                     if (root.isGroup && !root.attribute.isLink) {
-                        for (let i=0; i<root.attribute.value.count;i++) {
-                            let subAttr = root.attribute.value.at(i)
-                            if (subAttr.isLink) {
-                                return true
-                            }
-                        }
-                    }
-                    return false
-                }
-    readonly property bool hasSubOutputLink: {
-                     if (root.isGroup && !root.attribute.hasOutputConnections) {
-                        for (let i=0; i<root.attribute.value.count;i++) {
-                            let subAttr = root.attribute.value.at(i)
-                            if (subAttr.hasOutputConnections) {
-                                return true
-                            }
-                        }
-                    }
-                    return false
-                }
 
     signal childPinCreated(var childAttribute, var pin)
     signal childPinDeleted(var childAttribute, var pin)
@@ -120,15 +98,12 @@ RowLayout {
             Rectangle {
                 id: innerInputAnchor
                 property bool linkEnabled: true
-                visible: hasSubInputLink || inputConnectMA.containsMouse || childrenRepeater.count > 0 || (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
+                visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
                     
                 radius: root.isList ? 0 : 2
                 anchors.fill: parent
                 anchors.margins: 2
                 color: {
-                    if (hasSubInputLink) {
-                        return Qt.lighter(Colors.sysPalette.text, 0.5)
-                    }
                     if (inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop)) {
                         return Colors.sysPalette.highlight
                     }
@@ -331,14 +306,11 @@ RowLayout {
         Rectangle {
             id: innerOutputAnchor
             property bool linkEnabled: true
-            visible: hasSubOutputLink || (root.attribute.hasOutputConnections && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
+            visible: (root.attribute.hasOutputConnections && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
             radius: root.isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
             color: {
-                if (hasSubOutputLink) {
-                    return Qt.lighter(Colors.sysPalette.text, 0.5)
-                }
                 if (modelData.enabled && (outputConnectMA.containsMouse || outputConnectMA.drag.active ||
                                           (outputDropArea.containsDrag && outputDropArea.acceptableDrop)))
                     return Colors.sysPalette.highlight

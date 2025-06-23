@@ -39,6 +39,34 @@ FloatingPane {
         if(userDefinedYPixel !== null) { userDefinedYPixel = null }        
     }
 
+    function toggleChannel(channelName, defaultChannel) {
+        /* 
+            toggle channelBox to the given channelName.
+            If the channel is already set, the defaultChannel is set
+
+         */
+        if (!setChannel(channelName)) {
+            setChannel(defaultChannel)
+        }
+    }
+
+    function setChannel(channelName) {
+        /* 
+            set the given channel in the combobox
+         */
+        if (channelName === channelsCtrl.value) {
+            return false
+        }
+
+        const channelIndex = channelsCtrl.channels.indexOf(channelName)
+        if (channelIndex === -1 ) { 
+            return false 
+        }
+
+        channelsCtrl.currentIndex = channelIndex
+        return true
+    }
+
     onMousePositionChanged: {
         resetPixelCoordinates()
     }

@@ -9,7 +9,7 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
-    QT_DIR=/opt/Qt/6.6.3/gcc_64 \
+    QT_DIR=/opt/Qt/6.8.3/gcc_64 \
     QT_CI_LOGIN=alicevisionjunk@gmail.com \
     QT_CI_P=azerty1.
 
@@ -33,7 +33,7 @@ COPY dl/qt.run /tmp/qt
 RUN chmod +x qt.run
 RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses \
     --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore --no-force-installations --no-default-installations --confirm-command \
-    install qt.qt6.663.gcc_64 qt.qt6.663.addons.qtcharts qt.qt6.663.addons.qt3d
+    install qt.qt6.683.gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
 RUN rm qt.run
 
 # Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023

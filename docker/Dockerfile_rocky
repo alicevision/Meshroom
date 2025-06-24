@@ -15,7 +15,7 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
     AV_INSTALL=/opt/AliceVision_install \
-    QT_DIR=/opt/Qt/6.6.3/gcc_64 \
+    QT_DIR=/opt/Qt/6.8.3/gcc_64 \
     PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 COPY *.txt *.md *.py ${MESHROOM_DEV}/
@@ -55,14 +55,14 @@ RUN make "-j$(nproc)" && \
 		${MESHROOM_BUNDLE}/aliceVision/share/man/ \
 		aliceVision/share/pkgconfig
 
-# Download meshroomNodes and the models, install the requirements and set all the variables
+# Download mrSegmentation and the models, install the requirements and set all the variables
 WORKDIR ${MESHROOM_BUNDLE}
-RUN git clone https://github.com/alicevision/meshroomNodes.git meshroomNodes
+RUN git clone https://github.com/meshroomHub/mrSegmentation.git mrSegmentation
 RUN pip install --upgrade setuptools
-RUN pip install -r meshroomNodes/requirements.txt
-RUN rm meshroomNodes/requirements.txt meshroomNodes/setup.py
-ENV MESHROOM_NODES_PATH="${MESHROOM_BUNDLE}/meshroomNodes/meshroom/nodes"
-ENV PYTHONPATH="${PYTHONPATH}:${MESHROOM_BUNDLE}/meshroomNodes"
+RUN pip install -r mrSegmentation/requirements.txt
+RUN rm mrSegmentation/requirements.txt mrSegmentation/setup.py
+ENV MESHROOM_NODES_PATH="${MESHROOM_BUNDLE}/mrSegmentation/meshroom/nodes"
+ENV PYTHONPATH="${PYTHONPATH}:${MESHROOM_BUNDLE}/mrSegmentation"
 
 RUN git clone https://gitlab.com/alicevision/imagepromptnnmodels.git imagePromptNNModels
 RUN rm imagePromptNNModels/.gitattributes

@@ -15,8 +15,7 @@ ENV MESHROOM_DEV=/opt/Meshroom \
 
 # Install libs needed by Qt
 RUN dnf update -y
-RUN dnf install -y flex fontconfig freetype
-RUN dnf install -y glib2-devel libICE
+RUN dnf install -y flex fontconfig freetype glib2-devel libICE
 RUN dnf install -y libX11 libXext libXi libXrender libSM
 RUN dnf install -y libXt-devel mesa-libGLU-devel mesa-libOSMesa-devel mesa-libGL-devel mesa-libEGL-devel
 RUN dnf install -y zlib-devel systemd openssh-server
@@ -33,7 +32,7 @@ COPY dl/qt.run /tmp/qt
 RUN chmod +x qt.run
 RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses \
     --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore --no-force-installations --no-default-installations --confirm-command \
-    install qt.qt6.683.gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
+    install qt.qt6.683.linux_gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
 RUN rm qt.run
 
 # Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023
@@ -43,4 +42,4 @@ COPY ./*requirements.txt ./setup.py ${MESHROOM_DEV}/
 
 # Install Meshroom requirements and freeze bundle
 WORKDIR "${MESHROOM_DEV}"
-RUN python3 -m pip install -r dev_requirements.txt -r requirements.txt
+RUN python -m pip install -r dev_requirements.txt -r requirements.txt

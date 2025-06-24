@@ -3,7 +3,7 @@ set -ex
 
 test -z "$MESHROOM_VERSION" && MESHROOM_VERSION="$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)"
 test -z "$AV_VERSION" && echo "AliceVision version not specified, set AV_VERSION in the environment" && exit 1
-test -z "$CUDA_VERSION" && CUDA_VERSION="12.1.0"
+test -z "$CUDA_VERSION" && CUDA_VERSION="12.1.1"
 test -z "$ROCKY_VERSION" && ROCKY_VERSION="9"
 
 test -d docker || (

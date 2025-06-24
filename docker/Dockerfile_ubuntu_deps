@@ -54,7 +54,7 @@ RUN apt-get install -y --no-install-recommends \
 	software-properties-common
 
 # Install Python3
-RUN apt install python3-pip -y && pip3 install --upgrade pip
+# RUN apt install python3-pip -y && pip3 install --upgrade pip
 
 # Install Qt (to build plugins)
 WORKDIR /tmp/qt
@@ -62,7 +62,7 @@ COPY dl/qt.run /tmp/qt
 RUN chmod +x qt.run
 RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses \
     --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore --no-force-installations --no-default-installations --confirm-command \
-    install qt.qt6.683.gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
+    install qt.qt6.683.linux_gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
 RUN rm qt.run
 
 # Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023
@@ -72,4 +72,4 @@ COPY ./*requirements.txt ./setup.py ${MESHROOM_DEV}/
 
 # Install Meshroom requirements and freeze bundle
 WORKDIR "${MESHROOM_DEV}"
-RUN pip install -r dev_requirements.txt -r requirements.txt
+RUN python -m pip install -r dev_requirements.txt -r requirements.txt

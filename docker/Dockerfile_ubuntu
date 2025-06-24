@@ -24,7 +24,7 @@ COPY ./bin ${MESHROOM_DEV}/bin
 
 WORKDIR ${MESHROOM_DEV}
 
-RUN python3 setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
+RUN python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
         find ${MESHROOM_BUNDLE} -name "*Qt6Web*" -delete && \
         find ${MESHROOM_BUNDLE} -name "*Qt6Designer*" -delete && \
         rm -rf ${MESHROOM_BUNDLE}/lib/PySide6/typesystems/ \
@@ -54,8 +54,8 @@ RUN make "-j$(nproc)" && \
 # Download mrSegmentation and the models, install the requirements and set all the variables
 WORKDIR ${MESHROOM_BUNDLE}
 RUN git clone https://github.com/meshroomHub/mrSegmentation.git mrSegmentation
-RUN pip install --upgrade setuptools
-RUN pip install -r mrSegmentation/requirements.txt
+RUN python -m pip install --upgrade setuptools
+RUN python -m pip install -r mrSegmentation/requirements.txt
 RUN rm mrSegmentation/requirements.txt mrSegmentation/setup.py
 ENV MESHROOM_NODES_PATH="${MESHROOM_BUNDLE}/mrSegmentation/meshroom/nodes"
 ENV PYTHONPATH="${PYTHONPATH}:${MESHROOM_BUNDLE}/mrSegmentation"

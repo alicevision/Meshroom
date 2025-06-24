@@ -153,6 +153,8 @@ def setupEnvironment(backend=Backend.STANDALONE):
     else:
         addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))
 
+    addToEnvPath("PATH", os.environ.get("ALICEVISION_LIBPATH", ""))
+
 
 os.environ["QML_XHR_ALLOW_FILE_READ"] = '1'
 os.environ["QML_XHR_ALLOW_FILE_WRITE"] = '1'

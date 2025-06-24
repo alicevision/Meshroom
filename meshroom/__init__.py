@@ -150,10 +150,12 @@ def setupEnvironment(backend=Backend.STANDALONE):
             if key not in os.environ and os.path.exists(value):
                 logging.debug(f"Set {key}: {value}")
                 os.environ[key] = value
-    else:
-        addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))
 
-    addToEnvPath("PATH", os.environ.get("ALICEVISION_LIBPATH", ""))
+    addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))
+    if sys.platform == "win32":
+        addToEnvPath("PATH", os.environ.get("ALICEVISION_LIBPATH", ""))
+    else:
+        addToEnvPath("LD_LIBRARY_PATH", os.environ.get("ALICEVISION_LIBPATH", ""))
 
 
 os.environ["QML_XHR_ALLOW_FILE_READ"] = '1'

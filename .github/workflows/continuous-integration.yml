@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.9.13 ]
+        python-version: [ 3.11 ]
     env:
       MESHROOM_PLUGINS_PATH: "${{ github.workspace }}/../mrSegmentation/meshroom/"
 
@@ -68,7 +68,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [ 3.9.13 ]
+        python-version: [ 3.11 ]
     env:
       MESHROOM_NODES_PATH: "${{ github.workspace }}/../mrSegmentation/meshroom"
 

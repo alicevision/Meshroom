@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 
 import MaterialIcons 2.2
 import Utils 1.0
@@ -296,7 +296,13 @@ Item {
             anchors.fill: nodeContent
             color: node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color
             layer.enabled: true
-            layer.effect: DropShadow { radius: 3; color: shadowColor }
+            layer.effect: MultiEffect {
+                shadowColor: shadowColor
+                // Performance tip: Reduce blurMax (not shadowBlur) to minimize shadow blur.
+                shadowBlur: 1.0  // So we keep shadowBlur at 1.0.
+                shadowEnabled: true
+                blurMax: 4  // large values could impact performances
+            }
             radius: 3
             opacity: 0.7
         }

@@ -1,7 +1,7 @@
 ARG AV_VERSION
 ARG CUDA_VERSION
-ARG UBUNTU_VERSION
-FROM alicevision/alicevision:${AV_VERSION}-ubuntu${UBUNTU_VERSION}-cuda${CUDA_VERSION}
+ARG ROCKY_VERSION
+FROM alicevision/alicevision:${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
@@ -14,47 +14,17 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     QT_CI_P=azerty1.
 
 # Install libs needed by Qt
-RUN apt-get update && \
-	DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
-        flex \
-        fontconfig \
-        libfreetype6 \
-        libglib2.0-0 \ 
-        libice6 \
-        libx11-6 \
-        libxcb1 \
-        libxext6 \
-        libxi6 \
-        libxrender1 \
-        libsm6
-
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
-        libxt-dev \
-        libosmesa-dev \
-        libgl-dev \
-        libegl-dev \
-        libglu-dev \
-        libxkbcommon-x11-0 \
-        libz-dev \
-        systemd \
-        ssh
-
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
-        libxcb1-dev \
-        libxcb-icccm4 \
-        libxcb-render-util0 \
-        libxcb-shape0 \
-        libxcb-keysyms1 \
-        libxcb-image0 \
-        libxkbcommon-dev
-
-RUN apt-get install -y --no-install-recommends \
-	software-properties-common
-
-# Install Python3
-# RUN apt install python3-pip -y && pip3 install --upgrade pip
+RUN dnf update -y
+RUN dnf install -y flex fontconfig freetype glib2-devel libICE
+RUN dnf install -y libX11 libXext libXi libXrender libSM
+RUN dnf install -y libXt-devel mesa-libGLU-devel mesa-libOSMesa-devel mesa-libGL-devel mesa-libEGL-devel
+RUN dnf install -y zlib-devel systemd openssh-server
+RUN dnf install -y libxcb-devel \
+                   libxkbcommon-devel \
+                   libxkbcommon-x11-devel \
+                   xcb-util-wm xcb-util-image \
+                   xcb-util-keysyms \
+                   xcb-util-renderutil
 
 # Install Qt (to build plugins)
 WORKDIR /tmp/qt

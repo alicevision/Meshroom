@@ -1,13 +1,15 @@
 ARG MESHROOM_VERSION
 ARG AV_VERSION
 ARG CUDA_VERSION
-ARG UBUNTU_VERSION
-FROM alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-ubuntu${UBUNTU_VERSION}-cuda${CUDA_VERSION}
+ARG ROCKY_VERSION
+FROM alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
 # docker run -it --runtime nvidia -p 2222:22 --name meshroom -v</path/to/your/data>:/data alicevision/meshroom:develop-av2.2.8.develop-ubuntu20.04-cuda11.0
 # ssh -p 2222 -X root@<docker host> /opt/Meshroom_bundle/Meshroom # Password is 'meshroom'
+
+RUN dnf install -y patchelf
 
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
@@ -53,9 +55,10 @@ RUN make "-j$(nproc)" && \
 
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine
-RUN apt install ssh xauth && \
-	systemctl enable ssh && \
-	mkdir -p /run/sshd
+RUN dnf install -y openssh openssh-clients openssh-server xorg-x11-xauth
+RUN systemctl enable sshd && \
+    mkdir -p /run/sshd && \
+    ssh-keygen -A
 
 RUN sed -i "s/^.*X11Forwarding.*$/X11Forwarding yes/; s/^.*X11UseLocalhost.*$/X11UseLocalhost no/; s/^.*PermitRootLogin prohibit-password/PermitRootLogin yes/; s/^.*X11UseLocalhost.*/X11UseLocalhost no/;" /etc/ssh/sshd_config
 RUN echo "root:meshroom" | chpasswd
@@ -64,3 +67,4 @@ WORKDIR /root
 
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
+

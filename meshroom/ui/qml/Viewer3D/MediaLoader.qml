@@ -134,7 +134,9 @@ import Utils 1.0
 
                 obj.cameraSelected.connect(
                     function(viewId) {
-                        obj.selectedViewId = viewId
+                        if (viewId) {
+                            obj.selectedViewId = viewId
+                        }
                     }
                 )
             }

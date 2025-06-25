@@ -14,8 +14,8 @@ from .attribute import StringParam, ColorParam
 import meshroom
 from meshroom.core import cgroup
 
-_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent
-_MESHROOM_COMPUTE = _MESHROOM_ROOT / "bin" / "meshroom_compute"
+_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
+_MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 
 
 class MrNodeType(enum.Enum):
@@ -148,14 +148,14 @@ class BaseNode(object):
                 chunk.saveStatusFile()
                 cmdList = shlex.split(cmd)
                 # Resolve executable to full path
-                prog = shutil.which(cmdList[0], path=env.get('PATH') if env else None)
+                prog = shutil.which(cmdList[0], path=env.get("PATH") if env else None)
 
                 print(f"Starting Process for '{chunk.node.name}'")
                 print(f" - commandLine: {cmd}")
                 print(f" - logFile: {chunk.logFile}")
                 if prog:
-                    cmdList[0] = prog
-                    print(f" - command full path: {prog}")
+                    cmdList[0] = Path(prog).as_posix()
+                    print(f" - command full path: {cmdList[0]}")
 
                 # Change the process group to avoid Meshroom main process being killed if the
                 # subprocess gets terminated by the user or an Out Of Memory (OOM kill).

@@ -7,6 +7,7 @@ from collections.abc import Iterable
 import weakref
 from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
+from pathlib import Path
 
 from enum import Enum
 
@@ -1400,9 +1401,12 @@ class Graph(BaseObject):
             self._unsetFilepath()
             return
 
-        if self._filepath == filepath:
+        # Make sure the path is stored using the POSIX convention
+        # so that it can be used when creating sub-processes for node execution.
+        newFilepath = Path(filepath).as_posix()
+        if self._filepath == newFilepath:
             return
-        self._filepath = filepath
+        self._filepath = newFilepath
         # For now:
         #  * cache folder is located next to the graph file
         #  * graph name if the basename of the graph file

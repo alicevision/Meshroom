@@ -306,40 +306,72 @@ class SetAttributeCommand(GraphCommand):
         else:
             self.graph.internalAttribute(self.attrName).value = self.oldValue
 
+class EdgeCommand(GraphCommand):
+    """ This command handle the undoImplementation to re-apply all values and expressions to the node implied in the connection
+    """
 
-class AddEdgeCommand(GraphCommand):
     def __init__(self, graph, src, dst, parent=None):
         super().__init__(graph, parent)
         self.srcAttr = src.getFullNameToNode()
         self.dstAttr = dst.getFullNameToNode()
-        self.setText(f"Connect '{self.srcAttr}'->'{self.dstAttr}'")
+        self._srcNodeAttributesStates = []
+        self._dstNodeAttributesStates = []
+    
+    def _storeAttributes(self):
 
+        srcAttribute = self.getSrcAttribute()
+        dstAttribute = self.getDstAttribute()
+
+        for currentSrcAttribute in srcAttribute.node.getAttributes():
+            self._srcNodeAttributesStates.append(currentSrcAttribute.getExportValue())
+
+        for currentDstAttribute in dstAttribute.node.getAttributes():
+            self._dstNodeAttributesStates.append(currentDstAttribute.getExportValue())
+    
+    def getSrcAttribute(self):
+        return self.graph.attribute(self.srcAttr)
+    
+    def getDstAttribute(self):
+        return self.graph.attribute(self.dstAttr)
+    
+    def redoImpl(self):        
+        self._storeAttributes()
+    
+    def undoImpl(self):
+        srcNode = self.getSrcAttribute().node
+        dstNode = self.getDstAttribute().node
+
+        for idx, currentSrcAttribute in enumerate(srcNode.getAttributes()):
+            currentSrcAttribute.value = self._srcNodeAttributesStates[idx]
+            currentSrcAttribute._applyExpr()
+
+        for idx, currentDstAttribute in enumerate(dstNode.getAttributes()):
+            currentDstAttribute.value = self._dstNodeAttributesStates[idx]
+            currentDstAttribute._applyExpr()
+
+
+class AddEdgeCommand(EdgeCommand):
+    def __init__(self, graph, src, dst, parent=None):
+        super().__init__(graph, src, dst, parent)
+        self.setText(f"Connect '{self.srcAttr}'->'{self.dstAttr}'")
+        
         if src.baseType != dst.baseType:
             raise ValueError(f"Attribute types are not compatible and cannot be connected: '{self.srcAttr}'({src.baseType})->'{self.dstAttr}'({dst.baseType})")
 
     def redoImpl(self):
-        self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))
+        super().redoImpl()
+        self.getSrcAttribute().connectTo(self.getDstAttribute())
         return True
 
-    def undoImpl(self):
-        self.graph.removeEdge(self.graph.attribute(self.dstAttr))
-
-
-class RemoveEdgeCommand(GraphCommand):
+class RemoveEdgeCommand(EdgeCommand):
     def __init__(self, graph, edge, parent=None):
-        super().__init__(graph, parent)
-        self.srcAttr = edge.src.getFullNameToNode()
-        self.dstAttr = edge.dst.getFullNameToNode()
+        super().__init__(graph, edge.src, edge.dst, parent)
         self.setText(f"Disconnect '{self.srcAttr}'->'{self.dstAttr}'")
 
     def redoImpl(self):
-        self.graph.removeEdge(self.graph.attribute(self.dstAttr))
+        super().redoImpl()
+        self.getDstAttribute().disconnectAttribute()
         return True
-
-    def undoImpl(self):
-        self.graph.addEdge(self.graph.attribute(self.srcAttr),
-                           self.graph.attribute(self.dstAttr))
-
 
 class ListAttributeAppendCommand(GraphCommand):
     def __init__(self, graph, listAttribute, value, parent=None):

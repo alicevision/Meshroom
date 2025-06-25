@@ -402,7 +402,7 @@ class Attribute(BaseObject):
         if not g:
             return
         if isinstance(v, Attribute):
-            g.addEdge(v, self)
+            v.connectTo(self)
             self.resetToDefaultValue()
         elif self.isInput and Attribute.isLinkExpression(v):
             # value is a link to another attribute
@@ -412,7 +412,7 @@ class Attribute(BaseObject):
                 node = g.node(linkNodeName)
                 if not node:
                     raise KeyError(f"Node '{linkNodeName}' not found")
-                g.addEdge(node.attribute(linkAttrName), self)
+                node.attribute(linkAttrName).connectTo(self)
             except KeyError as err:
                 logging.warning('Connect Attribute from Expression failed.')
                 logging.warning(f'Expression: "{v}"\nError: "{err}".')
@@ -528,6 +528,27 @@ class Attribute(BaseObject):
                 Override this method to use custom connection validation logic
         """
         return self.baseType == otherAttribute.baseType
+
+    def connectTo(self, otherAttribute: "Attribute"):
+        """ Connect the current attribute as the source of the given one
+        """
+
+        if not (graph := self.node.graph):
+            return
+
+        graph.addEdge(self, otherAttribute)
+
+    def disconnectAttribute(self):
+        """ Disconnect the current attribute
+        """
+
+        if not (graph := self.node.graph):
+             return
+
+        graph.removeEdge(self)
+
+        if isinstance(self.root, Attribute):
+            self.root.disconnectAttribute()
 
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
@@ -965,7 +986,7 @@ class GroupAttribute(Attribute):
             return
         
         link = self._linkExpression[1:-1]
-        linkNodeName, linkAttrName = link.split(".")
+        linkNodeName, linkAttrName = link.split(".", 1)
         try:
             node = graph.node(linkNodeName)
             if node is None:
@@ -973,7 +994,7 @@ class GroupAttribute(Attribute):
             attr = node.attribute(linkAttrName)
             if attr is None:
                 raise InvalidEdgeError(self.fullNameToNode, link, "Source attribute does not exist")
-            graph.addEdge(attr, self)
+            attr.connectTo(self)
         except InvalidEdgeError as err:
             logging.warning(err)
         except Exception as err:
@@ -1075,7 +1096,20 @@ class GroupAttribute(Attribute):
 
     def getSubAttributes(self):
         return list(self._value)
-    
+
+    def connectTo(self, otherAttribute: "GroupAttribute"):
+        """ Connect the current attribute as the source of the given one
+
+        It connects automatically the subgroups
+        """
+
+        otherSubChildren = otherAttribute.getSubAttributes()
+
+        for idx, subAttr in enumerate(self.getSubAttributes()):
+            subAttr.connectTo(otherSubChildren[idx])
+        
+        super().connectTo(otherAttribute)
+
     # Override value property
     value = Property(Variant, _get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)

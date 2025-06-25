@@ -527,12 +527,18 @@ Item {
                         let dstAttributeDelegate = root._attributeToDelegate[attribute]
                         if (dstAttributeDelegate && dstAttributeDelegate.visible) { return dstAttributeDelegate }
                         
+                        if (!attribute || !attribute.root ) {
+                            return
+                        }
+
                         let index = attribute.root.value.indexOf(attribute)
                         let groupAttributeDelegate = null;
                         let groupAttribute = attribute;
 
-                        while (!groupAttributeDelegate || (!groupAttributeDelegate.visible && groupAttribute && groupAttribute.root)) {
-                            groupAttribute = groupAttribute.root
+                        while (groupAttribute && !groupAttributeDelegate || ( groupAttributeDelegate && !groupAttributeDelegate.visible && groupAttribute && groupAttribute.root)) {
+                            
+                            groupAttribute = groupAttribute ? groupAttribute.root : null
+
                             if (groupAttribute) {
                                 groupAttributeDelegate = root._attributeToDelegate[groupAttribute]
                             }

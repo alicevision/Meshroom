@@ -699,7 +699,7 @@ class Reconstruction(UIGraph):
         if not sfmFile or not os.path.isfile(sfmFile):
             self.tempCameraInit = None
             return
-        nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin("CameraInit")
+        nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin("CameraInit").nodeDescriptor()
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
         tmpCameraInit.locked = True

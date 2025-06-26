@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
 
-from meshroom.core.attribute import ListAttribute, Attribute
+from meshroom.core.attribute import ListAttribute, Attribute, GroupAttribute
 from meshroom.core.graph import Graph, GraphModification
 from meshroom.core.node import Position, CompatibilityIssue
 from meshroom.core.nodeFactory import nodeFactory
@@ -310,44 +310,65 @@ class EdgeCommand(GraphCommand):
     """ This command handle the undoImplementation to re-apply all values and expressions to the node implied in the connection
     """
 
+    class StoredAttribute():
+        """ Dataclass to store the given attribute to avoid too broad attribute serialization """
+
+        def __init__(self, attribute):
+            self.fullName = attribute.getFullNameToNode()
+            self.value = attribute.getExportValue()
+            self.isGroup = isinstance(attribute, GroupAttribute)
+    
     def __init__(self, graph, src, dst, parent=None):
         super().__init__(graph, parent)
+
         self.srcAttr = src.getFullNameToNode()
         self.dstAttr = dst.getFullNameToNode()
-        self._srcNodeAttributesStates = []
-        self._dstNodeAttributesStates = []
+        self._srcNodeAttributesStates: list[self.StoredAttribute] = []
+        self._dstNodeAttributesStates: list[self.StoredAttribute] = []
     
+    def _storeNodeAttributesTo(self, node, storedList, filteringPredicate=None):
+
+        for currentSrcAttribute in node.getAttributes():
+            if filteringPredicate and filteringPredicate(currentSrcAttribute) == False:
+                continue
+            storedList.append(self.StoredAttribute(currentSrcAttribute))
+            if isinstance(currentSrcAttribute, GroupAttribute):
+                for subAttribute in currentSrcAttribute.getFlatStaticChildren():
+                    storedList.append(self.StoredAttribute(subAttribute))
+
     def _storeAttributes(self):
+        self._storeNodeAttributesTo(self._getSrcAttribute().node, self._srcNodeAttributesStates, lambda attr: not attr.isInput)
+        self._storeNodeAttributesTo(self._getDstAttribute().node, self._dstNodeAttributesStates, lambda attr: attr.isInput)
 
-        srcAttribute = self.getSrcAttribute()
-        dstAttribute = self.getDstAttribute()
+    def _applyStoredAttributes(self):
+        srcNode = self._getSrcAttribute().node
+        dstNode = self._getDstAttribute().node
 
-        for currentSrcAttribute in srcAttribute.node.getAttributes():
-            self._srcNodeAttributesStates.append(currentSrcAttribute.getExportValue())
+        if not(graph := srcNode.graph) and not(graph := dstNode.graph):
+            return
 
-        for currentDstAttribute in dstAttribute.node.getAttributes():
-            self._dstNodeAttributesStates.append(currentDstAttribute.getExportValue())
-    
-    def getSrcAttribute(self):
+        attributesWithGroupAtEnd = sorted(self._srcNodeAttributesStates + self._dstNodeAttributesStates, 
+                                          key=lambda storedAttribute: storedAttribute.isGroup)
+
+        # Apply the group at last to ensure no side effects happen on connectAttribute()
+        for storedAttribute in attributesWithGroupAtEnd:
+            attribute = graph.attribute(storedAttribute.fullName)
+            graph.removeEdge(attribute)
+            attribute.value = storedAttribute.value
+            attribute._applyExpr()
+
+    def _getSrcAttribute(self):
         return self.graph.attribute(self.srcAttr)
-    
-    def getDstAttribute(self):
+
+    def _getDstAttribute(self):
         return self.graph.attribute(self.dstAttr)
-    
-    def redoImpl(self):        
+
+    def redoImpl(self):
         self._storeAttributes()
-    
+
     def undoImpl(self):
-        srcNode = self.getSrcAttribute().node
-        dstNode = self.getDstAttribute().node
+        self._applyStoredAttributes()
 
-        for idx, currentSrcAttribute in enumerate(srcNode.getAttributes()):
-            currentSrcAttribute.value = self._srcNodeAttributesStates[idx]
-            currentSrcAttribute._applyExpr()
-
-        for idx, currentDstAttribute in enumerate(dstNode.getAttributes()):
-            currentDstAttribute.value = self._dstNodeAttributesStates[idx]
-            currentDstAttribute._applyExpr()
 
 
 class AddEdgeCommand(EdgeCommand):
@@ -360,7 +381,7 @@ class AddEdgeCommand(EdgeCommand):
 
     def redoImpl(self):
         super().redoImpl()
-        self.getSrcAttribute().connectTo(self.getDstAttribute())
+        self._getSrcAttribute().connectTo(self._getDstAttribute())
         return True
 
 class RemoveEdgeCommand(EdgeCommand):
@@ -370,7 +391,7 @@ class RemoveEdgeCommand(EdgeCommand):
 
     def redoImpl(self):
         super().redoImpl()
-        self.getDstAttribute().disconnectAttribute()
+        self._getDstAttribute().disconnectAttribute()
         return True
 
 class ListAttributeAppendCommand(GraphCommand):

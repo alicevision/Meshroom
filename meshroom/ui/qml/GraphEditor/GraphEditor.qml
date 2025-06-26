@@ -482,7 +482,7 @@ Item {
                     property var src: recursivelyRetrieveAttributePin(edge.src)
                     property var dst: recursivelyRetrieveAttributePin(edge.dst)
                     property bool isValidEdge: src !== undefined && dst !== undefined
-                    visible: isValidEdge && src.visible && dst.visible
+                    visible: isValidEdge && src && dst && src.visible && dst.visible
 
                     property bool forLoop: src.attribute.type === "ListAttribute" && dst.attribute.type != "ListAttribute"
 

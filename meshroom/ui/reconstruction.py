@@ -266,7 +266,7 @@ class ViewpointWrapper(QObject):
         except Exception as e:
             self._undistortedImagePath = ''
             self._principalPointCorrected = False
-            logging.info("Failed to retrieve undistorted images path.")
+            logging.warning("Failed to retrieve undistorted images path.")
         self.undistortedImageParamsChanged.emit()
         self.principalPointCorrectedChanged.emit()
 
@@ -536,8 +536,9 @@ class Reconstruction(UIGraph):
             self._activeNodes.add(ActiveNode(category, parent=self))
         # For all nodes declared to be accessed by the UI
         usedNodeTypes = {j for i in self.activeNodeCategories.values() for j in i}
-        allUiNodes = set(self.uiNodes) | usedNodeTypes
         allLoadedNodeTypes = set(meshroom.core.pluginManager.getRegisteredNodePlugins().keys())
+        allUiNodes = set(self.uiNodes) | usedNodeTypes | allLoadedNodeTypes
+
         for nodeType in allUiNodes:
             self._activeNodes.add(ActiveNode(nodeType, parent=self))
 

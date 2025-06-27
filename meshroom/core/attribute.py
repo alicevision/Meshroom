@@ -536,6 +536,9 @@ class Attribute(BaseObject):
         if not (graph := self.node.graph):
             return None
 
+        if isinstance(otherAttribute.root, Attribute):
+            otherAttribute.root.disconnectEdge()
+
         return graph.addEdge(self, otherAttribute)
 
     def disconnectEdge(self):

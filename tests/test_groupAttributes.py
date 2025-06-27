@@ -3,6 +3,7 @@
 
 import os
 import tempfile
+import math
 
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode
@@ -40,6 +41,9 @@ def test_saveLoadGroupConnections():
     # Ensure the nodes are not CompatibilityNodes
     for node in graph.nodes:
         assert not isinstance(node, CompatibilityNode)
+    
+
+
 
 
 def test_groupAttributesFlatChildren():
@@ -101,3 +105,118 @@ def test_groupAttributesDepthLevels():
     intAttr = node.attribute("exposedInt")
     assert not isinstance(intAttr, GroupAttribute)
     assert intAttr.depth == 0
+
+def test_saveLoadGroupDirectConnections():
+    """
+    
+    """
+    graph = Graph("Connections between GroupAttributes")
+
+    # Create two "GroupAttributes" nodes with their default parameters
+    nodeA = graph.addNewNode("GroupAttributes")
+    nodeB = graph.addNewNode("GroupAttributes")
+
+    # Connect attributes within groups at different depth levels
+    graph.addEdges(
+        (nodeA.firstGroup, nodeB.firstGroup),
+        (nodeA.firstGroup, nodeB.firstGroup),
+    )
+
+    # Save the graph in a file
+    graphFile = os.path.join(tempfile.mkdtemp(), "test_io_group_connections.mg")
+    graph.save(graphFile)
+    
+    # Reload the graph
+    graph = loadGraph(graphFile)
+
+    assert graph.node("GroupAttributes_2").firstGroup.getLinkParam() == graph.node("GroupAttributes_1").firstGroup
+
+
+def test_groupAttributes_with_same_structure_should_allow_connection():
+
+    # Given
+    graph = Graph()
+    nestedPosition = graph.addNewNode("NestedPosition")
+    nestedColor = graph.addNewNode("NestedColor")
+    
+    # When
+    acceptedConnection = nestedPosition.xyz.isCompatibleWith(nestedColor.rgb)
+
+    # Then
+    assert acceptedConnection == True
+
+def test_groupAttributes_with_different_structure_should_not_allow_connection():
+
+    # Given
+    graph = Graph()
+    nestedPosition = graph.addNewNode("NestedPosition")
+    nestedTest = graph.addNewNode("NestedTest")
+    
+    # When
+    acceptedConnection = nestedPosition.xyz.isCompatibleWith(nestedTest.xyz)
+
+    # Then
+    assert acceptedConnection == False
+
+def test_groupAttributes_connection_should_connect_all_subAttributes():
+    # Given
+    graph = Graph()
+
+    nestedColor = graph.addNewNode("NestedColor")
+    nestedPosition = graph.addNewNode("NestedPosition")
+
+    assert nestedPosition.xyz.isLink == False
+    assert nestedPosition.xyz.x.isLink == False
+    assert nestedPosition.xyz.y.isLink == False
+    assert nestedPosition.xyz.z.isLink == False
+    assert nestedPosition.xyz.test.isLink == False
+    assert nestedPosition.xyz.test.x.isLink == False
+    assert nestedPosition.xyz.test.y.isLink == False
+    assert nestedPosition.xyz.test.z.isLink == False
+
+    # When
+    nestedColor.rgb.connectTo(nestedPosition.xyz)
+
+    # Then
+    assert nestedPosition.xyz.isLink == True
+    assert nestedPosition.xyz.x.isLink == True
+    assert nestedPosition.xyz.y.isLink == True
+    assert nestedPosition.xyz.z.isLink == True
+    assert nestedPosition.xyz.test.isLink == True
+    assert nestedPosition.xyz.test.x.isLink == True
+    assert nestedPosition.xyz.test.y.isLink == True
+    assert nestedPosition.xyz.test.z.isLink == True
+
+def test_connecting_a_subAttribute_should_disconnect_the_parent_groupAttribute():
+    # Given
+    graph = Graph()
+
+    nestedColor = graph.addNewNode("NestedColor")
+    nestedPosition = graph.addNewNode("NestedPosition")
+
+    nestedColor.rgb.connectTo(nestedPosition.xyz)
+
+    assert nestedPosition.xyz.isLink == True
+    assert nestedPosition.xyz.x.isLink == True
+    assert nestedPosition.xyz.y.isLink == True
+    assert nestedPosition.xyz.z.isLink == True
+    assert nestedPosition.xyz.test.isLink == True
+    assert nestedPosition.xyz.test.x.isLink == True
+    assert nestedPosition.xyz.test.y.isLink == True
+    assert nestedPosition.xyz.test.z.isLink == True
+
+    # When
+    r = nestedColor.rgb.r
+    z = nestedPosition.xyz.test.z
+    r.connectTo(z)
+
+    # Then
+
+    assert nestedPosition.xyz.isLink == False  # Disconnected because sub GroupAttribute has been disconnected
+    assert nestedPosition.xyz.x.isLink == True
+    assert nestedPosition.xyz.y.isLink == True
+    assert nestedPosition.xyz.z.isLink == True
+    assert nestedPosition.xyz.test.isLink == False # Disconnected because nestedPosition.xyz.test.z has been reconnected
+    assert nestedPosition.xyz.test.x.isLink == True
+    assert nestedPosition.xyz.test.y.isLink == True
+    assert nestedPosition.xyz.test.z.isLink == True 

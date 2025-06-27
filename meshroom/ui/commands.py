@@ -317,6 +317,7 @@ class EdgeCommand(GraphCommand):
             self.fullName = attribute.getFullNameToNode()
             self.value = attribute.getExportValue()
             self.isGroup = isinstance(attribute, GroupAttribute)
+            self.linkParam = attribute.getLinkParam().getFullNameToNode() if attribute.isLink else None
     
     def __init__(self, graph, src, dst, parent=None):
         super().__init__(graph, parent)
@@ -355,7 +356,11 @@ class EdgeCommand(GraphCommand):
             attribute = graph.attribute(storedAttribute.fullName)
             graph.removeEdge(attribute)
             attribute.value = storedAttribute.value
-            attribute._applyExpr()
+
+            if storedAttribute.linkParam:
+                graph.addEdge(graph.attribute(storedAttribute.linkParam), attribute)
+
+            #attribute._applyExpr()
 
     def _getSrcAttribute(self):
         return self.graph.attribute(self.srcAttr)

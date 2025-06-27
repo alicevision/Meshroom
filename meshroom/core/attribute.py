@@ -12,7 +12,7 @@ from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, Di
 from meshroom.core.exception import InvalidEdgeError
 from meshroom.core import desc, hashValue
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
 
@@ -529,16 +529,16 @@ class Attribute(BaseObject):
         """
         return self.baseType == otherAttribute.baseType
 
-    def connectTo(self, otherAttribute: "Attribute"):
+    def connectTo(self, otherAttribute: "Attribute") -> Optional["Edge"]:
         """ Connect the current attribute as the source of the given one
         """
 
         if not (graph := self.node.graph):
-            return
+            return None
 
-        graph.addEdge(self, otherAttribute)
+        return graph.addEdge(self, otherAttribute)
 
-    def disconnectAttribute(self):
+    def disconnectEdge(self):
         """ Disconnect the current attribute
         """
 
@@ -548,7 +548,7 @@ class Attribute(BaseObject):
         graph.removeEdge(self)
 
         if isinstance(self.root, Attribute):
-            self.root.disconnectAttribute()
+            self.root.disconnectEdge()
 
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
@@ -1097,7 +1097,7 @@ class GroupAttribute(Attribute):
     def getSubAttributes(self):
         return list(self._value)
 
-    def connectTo(self, otherAttribute: "GroupAttribute"):
+    def connectTo(self, otherAttribute: "GroupAttribute") -> Optional["Edge"]:
         """ Connect the current attribute as the source of the given one
 
         It connects automatically the subgroups
@@ -1107,8 +1107,8 @@ class GroupAttribute(Attribute):
 
         for idx, subAttr in enumerate(self.getSubAttributes()):
             subAttr.connectTo(otherSubChildren[idx])
-        
-        super().connectTo(otherAttribute)
+
+        return super().connectTo(otherAttribute)
 
     # Override value property
     value = Property(Variant, _get_value, _set_value, notify=Attribute.valueChanged)

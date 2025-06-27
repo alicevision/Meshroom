@@ -391,7 +391,7 @@ class RemoveEdgeCommand(EdgeCommand):
 
     def redoImpl(self):
         super().redoImpl()
-        self._getDstAttribute().disconnectAttribute()
+        self._getDstAttribute().disconnectEdge()
         return True
 
 class ListAttributeAppendCommand(GraphCommand):

@@ -23,7 +23,7 @@ from PySide6.QtCore import (
 
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
-from meshroom.core.attribute import Attribute, ListAttribute
+from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
@@ -383,6 +383,7 @@ class UIGraph(QObject):
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
         self.filePollerRefreshChanged.connect(self._chunksMonitor.filePollerRefreshChanged)
+
 
     def setGraph(self, g):
         """ Set the internal graph. """
@@ -853,6 +854,7 @@ class UIGraph(QObject):
             with self.groupedGraphModification(f"Insert and Add Edge on {dst.getFullNameToNode()}"):
                 self.appendAttribute(dst)
                 self._addEdge(src, dst.at(-1))
+
         else:
             self._addEdge(src, dst)
 
@@ -864,11 +866,13 @@ class UIGraph(QObject):
 
     @Slot(Edge)
     def removeEdge(self, edge):
-        if isinstance(edge.dst.root, ListAttribute):
-            with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.getFullNameToNode()}"):
-                self.push(commands.RemoveEdgeCommand(self._graph, edge))
-                self.removeAttribute(edge.dst)
-        else:
+        with self.groupedGraphModification(f"Remove edge {edge.dst.getFullNameToNode()}"):
+            if isinstance(edge.dst.root, ListAttribute):
+                with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.getFullNameToNode()}"):
+                    self.push(commands.RemoveEdgeCommand(self._graph, edge))
+                    self.removeAttribute(edge.dst)
+                return
+
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
     @Slot(list)

@@ -9,10 +9,10 @@ import logging
 from collections.abc import Iterable, Sequence
 from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
+from meshroom.core.exception import InvalidEdgeError
 from meshroom.core import desc, hashValue
 
-from typing import TYPE_CHECKING
-
+from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
 
@@ -44,7 +44,6 @@ def attributeFactory(description: str, value, isOutput: bool, node, root=None, p
     attr.valueChanged.connect(attr._onValueChanged)
 
     return attr
-
 
 class Attribute(BaseObject):
     """
@@ -121,7 +120,7 @@ class Attribute(BaseObject):
         """ Name inside the Graph: graphName.nodeName.groupName.name """
         graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
         return f'{graphName}.{self.getFullNameToNode()}'
-
+    
     def asLinkExpr(self) -> str:
         """ Return link expression for this Attribute """
         return "{" + self.getFullNameToNode() + "}"
@@ -237,6 +236,26 @@ class Attribute(BaseObject):
         self.valueChanged.emit()
         self.validValueChanged.emit()
 
+    def _handleLinkValue(self, value) -> bool:
+        """
+        Handle assignment of a link if `value` is a serialized link expression or in-memory Attribute reference.
+        Returns: Whether the value has been handled as a link, False otherwise.
+        """
+        isAttribute = isinstance(value, Attribute)
+        isLinkExpression = Attribute.isLinkExpression(value)
+
+        if not isAttribute and not isLinkExpression:
+            return False
+
+        if isAttribute:
+            self._linkExpression = value.asLinkExpr()
+            # If the value is a direct reference to an attribute, it can be directly converted to an edge as
+            # the source attribute already exists in memory.
+            self._applyExpr()
+        elif isLinkExpression:
+            self._linkExpression = value
+        return True
+    
     @Slot()
     def _onValueChanged(self):
         self.node._onAttributeChanged(self)
@@ -315,8 +334,8 @@ class Attribute(BaseObject):
         """ Whether the input attribute is a link to another attribute. """
         # note: directly use self.node.graph._edges to avoid using the property that may become
         # invalid at some point
-        return self.node.graph and self.isInput and self.node.graph._edges and \
-            self in self.node.graph._edges.keys()
+        return bool(self.node.graph and self.isInput and self.node.graph._edges and \
+            self in self.node.graph._edges.keys())
 
     @staticmethod
     def isLinkExpression(value) -> bool:
@@ -383,7 +402,7 @@ class Attribute(BaseObject):
         if not g:
             return
         if isinstance(v, Attribute):
-            g.addEdge(v, self)
+            v.connectTo(self)
             self.resetToDefaultValue()
         elif self.isInput and Attribute.isLinkExpression(v):
             # value is a link to another attribute
@@ -393,7 +412,7 @@ class Attribute(BaseObject):
                 node = g.node(linkNodeName)
                 if not node:
                     raise KeyError(f"Node '{linkNodeName}' not found")
-                g.addEdge(node.attribute(linkAttrName), self)
+                node.attribute(linkAttrName).connectTo(self)
             except KeyError as err:
                 logging.warning('Connect Attribute from Expression failed.')
                 logging.warning(f'Expression: "{v}"\nError: "{err}".')
@@ -497,6 +516,43 @@ class Attribute(BaseObject):
         
         return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS if self.desc.semantic == imageSemantic), None) is not None
 
+    @Slot(BaseObject, result=bool)
+    def isCompatibleWith(self, otherAttribute: "Attribute") -> bool:
+        """ Check if the given attribute can be conected to the current Attribute
+        """
+        return self._isCompatibleWith(otherAttribute)
+
+    def _isCompatibleWith(self, otherAttribute: "Attribute") -> bool:
+        """ Implementation of the connection validation
+            .. note:
+                Override this method to use custom connection validation logic
+        """
+        return self.baseType == otherAttribute.baseType
+
+    def connectTo(self, otherAttribute: "Attribute") -> Optional["Edge"]:
+        """ Connect the current attribute as the source of the given one
+        """
+
+        if not (graph := self.node.graph):
+            return None
+
+        if isinstance(otherAttribute.root, Attribute):
+            otherAttribute.root.disconnectEdge()
+
+        return graph.addEdge(self, otherAttribute)
+
+    def disconnectEdge(self):
+        """ Disconnect the current attribute
+        """
+
+        if not (graph := self.node.graph):
+             return
+
+        graph.removeEdge(self)
+
+        if isinstance(self.root, Attribute):
+            self.root.disconnectEdge()
+
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
     fullNameToNode = Property(str, getFullNameToNode, constant=True)
@@ -559,7 +615,6 @@ def raiseIfLink(func):
             raise RuntimeError("Can't modify connected Attribute")
         return func(attr, *args, **kwargs)
     return wrapper
-
 
 class PushButtonParam(Attribute):
     def __init__(self, node, attributeDesc: desc.PushButtonParam, isOutput: bool,
@@ -836,7 +891,6 @@ class ListAttribute(Attribute):
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=Attribute.hasOutputConnectionsChanged)
 
 
-
 class GroupAttribute(Attribute):
 
     def __init__(self, node, attributeDesc: desc.GroupAttribute, isOutput: bool,
@@ -852,7 +906,14 @@ class GroupAttribute(Attribute):
             except KeyError:
                 raise AttributeError(key)
 
+    def _get_value(self):
+        return self._value
+
     def _set_value(self, exportedValue):
+
+        if self._handleLinkValue(exportedValue):
+            return
+        
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
@@ -918,10 +979,38 @@ class GroupAttribute(Attribute):
         return hashValue(uids)
 
     def _applyExpr(self):
-        for value in self._value:
-            value._applyExpr()
+
+        if not self._linkExpression:
+            for value in self._value:
+                value._applyExpr()
+            return
+
+        if not self.isInput or not (graph := self.node.graph):
+            return
+        
+        link = self._linkExpression[1:-1]
+        linkNodeName, linkAttrName = link.split(".", 1)
+        try:
+            node = graph.node(linkNodeName)
+            if node is None:
+                raise InvalidEdgeError(self.fullNameToNode, link, "Source node does not exist")
+            attr = node.attribute(linkAttrName)
+            if attr is None:
+                raise InvalidEdgeError(self.fullNameToNode, link, "Source attribute does not exist")
+            attr.connectTo(self)
+        except InvalidEdgeError as err:
+            logging.warning(err)
+        except Exception as err:
+            logging.warning("Unexpected error happened during edge creation")
+            logging.warning(f"Expression '{self._linkExpression}': {err}")
+
+        self._linkExpression = None
+        self.resetToDefaultValue()
 
     def getExportValue(self):
+        if self.isLink:
+            return self.getLinkParam().asLinkExpr()
+        
         return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
 
     def _isDefault(self):
@@ -982,7 +1071,49 @@ class GroupAttribute(Attribute):
     def matchText(self, text: str) -> bool:
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
+    def _isCompatibleWith(self, otherAttribute: Attribute):
+        isCompatible = super()._isCompatibleWith(otherAttribute)
+        
+        if not isCompatible:
+            return False
+        
+        return self._haveSameStructure(otherAttribute=otherAttribute)
+        
+    def _haveSameStructure(self, otherAttribute: Attribute) -> bool:
+        """ Does the given attribute have the same number of attributes, and all ordered attributes have the same baseType
+        """
+        
+        if isinstance(otherAttribute._value, Iterable) and len(otherAttribute._value) != len(self._value):
+            return False
+        
+        for i, attr in enumerate(self.getSubAttributes()):
+            otherAttr = list(otherAttribute._value)[i]
+            if isinstance(attr, GroupAttribute):
+                return attr._haveSameStructure(otherAttr)
+            elif not otherAttr:
+                return False
+            elif attr.baseType != otherAttr.baseType:
+                return False
+        
+        return True
+
+    def getSubAttributes(self):
+        return list(self._value)
+
+    def connectTo(self, otherAttribute: "GroupAttribute") -> Optional["Edge"]:
+        """ Connect the current attribute as the source of the given one
+
+        It connects automatically the subgroups
+        """
+
+        otherSubChildren = otherAttribute.getSubAttributes()
+
+        for idx, subAttr in enumerate(self.getSubAttributes()):
+            subAttr.connectTo(otherSubChildren[idx])
+
+        return super().connectTo(otherAttribute)
+
     # Override value property
-    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    value = Property(Variant, _get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     flatStaticChildren = Property(Variant, getFlatStaticChildren, constant=True)

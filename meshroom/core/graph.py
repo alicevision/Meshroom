@@ -15,7 +15,7 @@ import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
-from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
+from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit, AttributeCompatibilityError
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
@@ -24,7 +24,7 @@ from meshroom.core.mtyping import PathLike
 # Replace default encoder to support Enums
 
 DefaultJSONEncoder = json.JSONEncoder  # store the original one
-
+logger = logging.getLogger(__name__)
 
 class MyJSONEncoder(DefaultJSONEncoder):  # declare a new one with Enum support
     def default(self, obj):
@@ -893,12 +893,17 @@ class Graph(BaseObject):
 
     @changeTopology
     def addEdge(self, srcAttr, dstAttr):
+
         assert isinstance(srcAttr, Attribute)
         assert isinstance(dstAttr, Attribute)
+
         if srcAttr.node.graph != self or dstAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
         if dstAttr in self.edges.keys():
-            raise RuntimeError(f'Destination attribute "{dstAttr.getFullNameToNode()}" is already connected.')
+            self.removeEdge(dstAttr)
+        if not dstAttr.isCompatibleWith(srcAttr):
+            raise AttributeCompatibilityError(f'Attribute: "{srcAttr.name}" can not be connected to "{dstAttr.name}" because they are not compatible')
+        
         edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
@@ -913,9 +918,11 @@ class Graph(BaseObject):
                 self.addEdge(*edge)
 
     @changeTopology
-    def removeEdge(self, dstAttr):
-        if dstAttr not in self.edges.keys():
-            raise RuntimeError(f'Attribute "{dstAttr.getFullNameToNode()}" is not connected')
+    def removeEdge(self, dstAttr: 'Attribute'):
+
+        if not self.edges.get(dstAttr):
+            return
+
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
@@ -1593,7 +1600,6 @@ class Graph(BaseObject):
     updated = Signal()
     canComputeLeavesChanged = Signal()
     canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
-
 
 def loadGraph(filepath, strictCompatibility: bool = False) -> Graph:
     """

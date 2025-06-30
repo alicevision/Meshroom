@@ -777,6 +777,8 @@ RowLayout {
                                                })
                     obj.Layout.fillWidth = true;
                     obj.attributeDoubleClicked.connect(function(attr) {root.doubleClicked(attr)})
+                    obj.onInAttributeClicked.connect(function(srcItem, mouse, inAttributes) {root.inAttributeClicked(srcItem, mouse, inAttributes)})
+                    obj.onOutAttributeClicked.connect(function(srcItem, mouse, outAttributes) {root.outAttributeClicked(srcItem, mouse, outAttributes)})
                 }
             }
         }

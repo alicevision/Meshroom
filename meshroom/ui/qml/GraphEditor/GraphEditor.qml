@@ -476,13 +476,13 @@ Item {
                 id: edgesRepeater
 
                 // Delay edges loading after nodes (edges needs attribute pins to be created)
-                model: nodeRepeater.loaded && root.graph ? root.graph.visibleEdges : undefined
+                model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
 
                 delegate: Edge {
                     property var src: recursivelyRetrieveAttributePin(edge.src)
                     property var dst: recursivelyRetrieveAttributePin(edge.dst)
                     property bool isValidEdge: src !== undefined && dst !== undefined
-                    visible: isValidEdge && src && dst && src.visible && dst.visible
+                    visible: isValidEdge && src && dst
 
                     property bool forLoop: src.attribute.type === "ListAttribute" && dst.attribute.type != "ListAttribute"
 

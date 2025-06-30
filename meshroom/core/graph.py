@@ -61,12 +61,11 @@ def GraphModification(graph):
 
 class Edge(BaseObject):
 
-    def __init__(self, src, dst, parent=None, visible=True):
+    def __init__(self, src, dst, parent=None):
         super().__init__(parent)
         self._src = weakref.ref(src)
         self._dst = weakref.ref(dst)
         self._repr = f"<Edge> {self._src()} -> {self._dst()}"
-        self._visible = visible
 
     @property
     def src(self):
@@ -75,17 +74,9 @@ class Edge(BaseObject):
     @property
     def dst(self):
         return self._dst()
-    
-    def setVisible(self, visible: bool):
-        self._visible = visible
-    
-    def getVisible(self) -> bool:
-        return self._visible
 
     src = Property(Attribute, src.fget, constant=True)
     dst = Property(Attribute, dst.fget, constant=True)
-    isVisibleChanged = Signal()
-    isVisible = Property(bool, getVisible, setVisible, notify=isVisibleChanged)
 
 
 WHITE = 0
@@ -218,7 +209,6 @@ class Graph(BaseObject):
         self._nodes = DictModel(keyAttrName='name', parent=self)
         # Edges: use dst attribute as unique key since it can only have one input connection
         self._edges = DictModel(keyAttrName='dst', parent=self)
-        self._visiblEdges = DictModel(keyAttrName="dstAttr", parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
         self._cacheDir: str = ''
         self._filepath: str = ''
@@ -902,7 +892,7 @@ class Graph(BaseObject):
         return set(self._nodes) - nodesWithInputLink
 
     @changeTopology
-    def addEdge(self, srcAttr, dstAttr, visible=True):
+    def addEdge(self, srcAttr, dstAttr):
 
         assert isinstance(srcAttr, Attribute)
         assert isinstance(dstAttr, Attribute)
@@ -914,7 +904,7 @@ class Graph(BaseObject):
         if not dstAttr.isCompatibleWith(srcAttr):
             raise AttributeCompatibilityError(f'Attribute: "{srcAttr.name}" can not be connected to "{dstAttr.name}" because they are not compatible')
         
-        edge = Edge(srcAttr, dstAttr, visible=visible)
+        edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
@@ -1597,13 +1587,6 @@ class Graph(BaseObject):
                     except Exception:
                         pass
 
-    def getVisibleEdges(self):        
-        self._visiblEdges.clear()
-        for e in self.edges:
-            if e.getVisible():
-                self._visiblEdges.add(e)
-        return self._visiblEdges
-
     nodes = Property(BaseObject, nodes.fget, constant=True)
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
@@ -1617,8 +1600,6 @@ class Graph(BaseObject):
     updated = Signal()
     canComputeLeavesChanged = Signal()
     canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
-    visibleEdges = Property(BaseObject, getVisibleEdges, notify=updated)
-
 
 def loadGraph(filepath, strictCompatibility: bool = False) -> Graph:
     """

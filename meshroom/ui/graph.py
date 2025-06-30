@@ -878,7 +878,7 @@ class UIGraph(QObject):
     @Slot(list)
     def deleteEdgesByIndices(self, indices):
         with self.groupedGraphModification("Remove Edges"):
-            copied = list(self._graph.visibleEdges)
+            copied = list(self._graph.edges)
             for index in indices:
                 self.removeEdge(copied[index])
 

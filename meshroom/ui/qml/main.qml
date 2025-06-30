@@ -111,8 +111,10 @@ ApplicationWindow {
             // If the dialog that's being opened is the "import images" dialog, use the "imagesFolder" property
             // which contains the last folder used to import images rather than the folder in which
             // projects have been saved
-            if (importImages && currentItem.imagesFolder.toString() !== "" && Filepath.exists(imagesFolder)) {
-                folder = currentItem.imagesFolder
+
+            const imageFolderPath = currentItem.imagesFolder.toString()
+            if (importImages && imageFolderPath !== "" && Filepath.exists(imageFolderPath)) {
+                folder = Filepath.stringToUrl(imageFolderPath)
             }
         }
 

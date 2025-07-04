@@ -23,8 +23,8 @@ Entity {
         window: root.window
 
         // Update node meshing slider values when the gizmo has changed: translation, rotation, scale, type
-        transformGizmo.onGizmoChanged: {
-
+        transformGizmo.onGizmoChanged: function(translation, rotation, scale, type) {
+            
             var rotationEuler_cv = Qt.vector3d(rotation.x, rotation.y, rotation.z)
             var rotation_gl = Transformations3DHelper.convertRotationFromCV2GL(rotationEuler_cv)
 

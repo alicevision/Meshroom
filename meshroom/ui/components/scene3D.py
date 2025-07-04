@@ -293,7 +293,7 @@ class Transformations3DHelper(QObject):
             value = value if value >= 0 else -value # Make sure to have only positive scale (because negative scale can make issues with matrix decomposition)
             currentRow[i] = value
 
-            scaleMat.setRow(i, QVector3D(currentRow[0], currentRow[1], currentRow[2])) # Apply the new row to the scale matrix
+            scaleMat.setRow(i, QVector4D(currentRow[0], currentRow[1], currentRow[2], currentRow[3])) # Apply the new row to the scale matrix
 
         # Compute the new model matrix (POSITION * ROTATION * SCALE) and set it to the Transform
         mat = initialPosMat * initialRotMat * scaleMat

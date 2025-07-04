@@ -22,12 +22,12 @@ ObjectPicker {
     
     hoverEnabled: true
 
-    onPressed: {
+    onPressed: function(mouse) {
         mouseController.enabled = true
         mouseController.objectPicker = this
         root.isPressed = true
-        screenPoint = pick.position
-        button = pick.button
+        screenPoint = mouse.position
+        button = mouse.button
         pickedChanged(this)
     }
     onEntered: {

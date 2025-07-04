@@ -19,6 +19,7 @@ test -f dl/qt.run || \
 # DEPENDENCIES
 docker build \
 	--rm \
+	--progress=plain \
 	--build-arg "CUDA_VERSION=${CUDA_VERSION}" \
 	--build-arg "UBUNTU_VERSION=${UBUNTU_VERSION}" \
 	--build-arg "AV_VERSION=${AV_VERSION}" \
@@ -28,6 +29,7 @@ docker build \
 # Meshroom
 docker build \
 	--rm \
+	--progress=plain \
 	--build-arg "MESHROOM_VERSION=${MESHROOM_VERSION}" \
 	--build-arg "CUDA_VERSION=${CUDA_VERSION}" \
 	--build-arg "UBUNTU_VERSION=${UBUNTU_VERSION}" \

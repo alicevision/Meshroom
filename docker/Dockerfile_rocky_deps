@@ -38,7 +38,7 @@ RUN rm qt.run
 # Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023
 RUN find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
 
-COPY ./*requirements.txt ./setup.py ${MESHROOM_DEV}/
+COPY ./*requirements.txt ${MESHROOM_DEV}/
 
 # Install Meshroom requirements and freeze bundle
 WORKDIR "${MESHROOM_DEV}"

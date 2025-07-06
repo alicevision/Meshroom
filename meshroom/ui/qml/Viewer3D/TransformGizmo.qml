@@ -221,7 +221,7 @@ Entity {
         property var objectPicker: null
         property bool enabled: false
 
-        onPositionChanged: {
+        onPositionChanged: function(mouse) {
             if (objectPicker && objectPicker.button === Qt.LeftButton) {
                 root.focusGizmoPriority = true
 
@@ -295,7 +295,7 @@ Entity {
                 resetMenu.popup(window)
             }
         }
-        onReleased: {
+        onReleased: function(mouse) {
             if (objectPicker && mouse.button === Qt.LeftButton) {
                 const type = objectPicker.gizmoType
                 objectPicker = null  // To prevent going again in the onPositionChanged
@@ -486,7 +486,7 @@ Entity {
                     gizmoAxis: axis
                     gizmoType: TransformGizmo.Type.SCALE
 
-                    onPickedChanged: {
+                    onPickedChanged: function(picker) {
                         // Save the current transformations of the OBJECT
                         this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix)
                         // Compute a scale unit at picking time
@@ -549,7 +549,7 @@ Entity {
                     gizmoAxis: axis
                     gizmoType: TransformGizmo.Type.TRANSLATION
 
-                    onPickedChanged: {
+                    onPickedChanged: function(picker) {
                         // Save the current transformations of the OBJECT
                         this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix)
                         // Compute a scale unit at picking time
@@ -627,7 +627,7 @@ Entity {
                             gizmoType: TransformGizmo.Type.ALL
                             property var gizmoDirection: direction
 
-                            onPickedChanged: {
+                            onPickedChanged: function (picker) {
                                 // Save the current transformations of the OBJECT
                                 this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix)
                                 // Compute a scale unit at picking time
@@ -678,7 +678,7 @@ Entity {
                     gizmoAxis: axis
                     gizmoType: TransformGizmo.Type.ROTATION
 
-                    onPickedChanged: {
+                    onPickedChanged: function(picker) {
                         // Save the current transformations of the OBJECT
                         this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix)
                         // No need to compute a scale unit for rotation

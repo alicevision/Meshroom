@@ -94,6 +94,13 @@ class DirTreeProcessEnv(ProcessEnv):
         self.libPaths: list = [str(Path(folder, "lib")), str(Path(folder, "lib64"))]
         self.pythonPaths: list = [str(Path(folder))] + self.binPaths + glob.glob(f'{folder}/lib*/python[0-9].[0-9]*/site-packages', recursive=False)
 
+        if sys.platform == "win32":
+            # For Windows platforms, try and include the content of the virtual env if it exists
+            # The virtual env is expected to be named as its containing folder
+            venvPath = f"{folder}/{Path(folder).name}/Lib/site-packages"
+            if os.path.exists(venvPath):
+                self.pythonPaths.append(str(Path(venvPath)))
+
     def getEnvDict(self) -> dict:
         env = os.environ.copy()
         env["PYTHONPATH"] = os.pathsep.join([f"{_MESHROOM_ROOT}"] + self.pythonPaths + [f"{os.getenv('PYTHONPATH', '')}"])

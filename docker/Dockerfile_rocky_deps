@@ -30,8 +30,9 @@ RUN dnf install -y libxcb-devel \
 WORKDIR /tmp/qt
 COPY dl/qt.run /tmp/qt
 RUN chmod +x qt.run
-RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses \
-    --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore --no-force-installations --no-default-installations --confirm-command \
+RUN ./qt.run --root /opt/Qt --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations \
+    --accept-licenses --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore \
+    --no-force-installations --no-default-installations --confirm-command \
     install qt.qt6.683.linux_gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
 RUN rm qt.run
 

@@ -148,6 +148,7 @@ FloatingPane {
             id: frameInput
 
             tooltipText: "Frame"
+            displayButtons: true
 
             range: frameRange
 

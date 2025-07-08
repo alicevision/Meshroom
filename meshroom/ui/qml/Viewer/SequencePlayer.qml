@@ -149,11 +149,17 @@ FloatingPane {
 
             tooltipText: "Frame"
 
-            value: m.frame
             range: frameRange
 
             onValueChanged: {
                 m.frame = value
+            }
+
+            Binding {
+                target: frameInput
+                property: "value"
+                value: m.frame
+                when: !frameInput.activeFocus
             }
         }
 
@@ -184,6 +190,8 @@ FloatingPane {
 
             Layout.fillWidth: true
 
+            value: m.frame
+
             stepSize: 1
             snapMode: Slider.SnapAlways
             live: true
@@ -207,12 +215,6 @@ FloatingPane {
                 text: m.frame
             }
 
-            Connections {
-                target: m
-                function onFrameChanged() {
-                    frameSlider.value = m.frame
-                }
-            }
 
             background: Rectangle {
                 x: frameSlider.leftPadding

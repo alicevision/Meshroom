@@ -32,7 +32,7 @@ sys.path = sys.path[:4]
 
 def run(*args):
     m = __import__("__main__")
-    importer = zipimport.zipimporter(os.path.dirname(os.__file__))
+    importer = zipimport.zipimporter(DIR_NAME + "/lib/library.zip")
     if len(args) == 0:
         name, ext = os.path.splitext(os.path.basename(os.path.normcase(FILE_NAME)))
         moduleName = "%s__main__" % name

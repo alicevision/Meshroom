@@ -26,6 +26,7 @@ COPY ./bin ${MESHROOM_DEV}/bin
 
 WORKDIR ${MESHROOM_DEV}
 
+# Generate the exe for Meshroom and clean-up the bundle folder
 RUN python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
         find ${MESHROOM_BUNDLE} -name "*Qt6Web*" -delete && \
         find ${MESHROOM_BUNDLE} -name "*Qt6Designer*" -delete && \
@@ -39,6 +40,10 @@ RUN python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
                 ${MESHROOM_BUNDLE}/lib/PySide6/designer
 
 WORKDIR ${MESHROOM_BUILD}
+
+# Move the bundled installation of AliceVision into Meshroom's bundle
+RUN mkdir ${MESHROOM_BUNDLE}/aliceVision && \
+    mv /opt/AliceVision_bundle/* ${MESHROOM_BUNDLE}/aliceVision
 
 # Build Meshroom plugins
 RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"

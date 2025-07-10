@@ -22,12 +22,13 @@ if DIR_NAME not in paths:
     paths.insert(0, os.path.join(DIR_NAME, "lib"))
     paths.insert(0, os.path.join(DIR_NAME, "aliceVision", "lib"))
     paths.insert(0, os.path.join(DIR_NAME, "aliceVision", "lib64"))
+    paths.insert(0, os.path.join(DIR_NAME, "lib", "PySide6", "Qt", "qml", "QtQuick", "Dialogs"))
 
     os.environ["LD_LIBRARY_PATH"] = os.pathsep.join(paths)
     os.execv(sys.executable, sys.argv)
 
 sys.frozen = True
-sys.path = sys.path[:4]
+sys.path = sys.path[:5]
 
 
 def run(*args):

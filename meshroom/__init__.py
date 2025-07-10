@@ -129,9 +129,9 @@ def setupEnvironment(backend=Backend.STANDALONE):
         semanticSegmentationModel = os.path.join(aliceVisionShareDir, "fcn_resnet50.onnx")
 
         env = {
-            'PATH': aliceVisionBinDir,
-            'QT_PLUGIN_PATH': [qtPluginsDir],
-            'QML2_IMPORT_PATH': [os.path.join(qtPluginsDir, "qml")]
+            "PATH": aliceVisionBinDir,
+            "QT_PLUGIN_PATH": [qtPluginsDir],
+            "QML2_IMPORT_PATH": [os.path.join(qtPluginsDir, "qml")]
         }
 
         for key, value in env.items():
@@ -150,6 +150,11 @@ def setupEnvironment(backend=Backend.STANDALONE):
             if key not in os.environ and os.path.exists(value):
                 logging.debug(f"Set {key}: {value}")
                 os.environ[key] = value
+
+        # Add nodes and templates from AliceVision
+        aliceVisionPluginDir = os.path.join(aliceVisionDir, "share", "meshroom")
+        addToEnvPath("MESHROOM_NODES_PATH", aliceVisionPluginDir)
+        addToEnvPath("MESHROOM_PIPELINE_TEMPLATES_PATH", aliceVisionPluginDir)
 
     addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))
     if sys.platform == "win32":

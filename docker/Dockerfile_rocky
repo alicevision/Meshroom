@@ -68,6 +68,10 @@ RUN cp ${QT_DIR}/lib/libQt63DQuickScene3D.so.6.8.3 ${MESHROOM_BUNDLE}/lib/PySide
     cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Logic/libQt63DLogic.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
     cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Render/libQt63DRender.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs
 
+# Copy libOpenGL in the bundle: needed by QtAliceVision as a side effect of a Qt6 bug
+RUN cp /usr/lib64/libOpenGL.so.0.0.0 ${MESHROOM_BUNDLE}/lib
+RUN mv ${MESHROOM_BUNDLE}/lib/libOpenGL.so.0.0.0 ${MESHROOM_BUNDLE}/lib/libOpenGL.so.0
+
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine
 RUN dnf install -y openssh openssh-clients openssh-server xorg-x11-xauth

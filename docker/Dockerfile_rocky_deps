@@ -25,6 +25,7 @@ RUN dnf install -y libxcb-devel \
                    xcb-util-wm xcb-util-image \
                    xcb-util-keysyms \
                    xcb-util-renderutil
+RUN dnf install -y libglvnd-opengl
 
 # Install Qt (to build plugins)
 WORKDIR /tmp/qt

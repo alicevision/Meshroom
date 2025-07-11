@@ -15,7 +15,10 @@ import meshroom
 from meshroom.core import cgroup
 
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
-_MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
+if getattr(sys, "frozen", False):  # When in release package mode, the path to meshroom_compute differs
+    _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT).parent / "meshroom_compute").as_posix()
+else:
+    _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 
 
 class MrNodeType(enum.Enum):

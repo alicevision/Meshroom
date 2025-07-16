@@ -25,7 +25,7 @@ if DIR_NAME not in paths:
     paths.insert(0, os.path.join(DIR_NAME, "lib", "PySide6", "Qt", "qml", "QtQuick", "Dialogs"))
 
     os.environ["LD_LIBRARY_PATH"] = os.pathsep.join(paths)
-    os.environ["PYTHONPATH"] = os.path.join(DIR_NAME, "aliceVision", "lib", "python")
+    os.environ["PYTHONPATH"] = os.path.join(DIR_NAME, "aliceVision", "lib", "python") + os.pathsep + os.path.join(DIR_NAME, "aliceVision", "lib", "python3.11", "site-packages")
     os.execv(sys.executable, sys.argv)
 
 sys.frozen = True
@@ -40,6 +40,8 @@ def run(*args):
         moduleName = "%s__main__" % name
     else:
         moduleName = args[0]
-    sys.path.append(os.getenv("PYTHONPATH", ""))
+    pythonPaths = os.getenv("PYTHONPATH", "").split(os.pathsep)
+    for p in pythonPaths:
+        sys.path.append(p)
     code = importer.get_code(moduleName)
     exec(code, m.__dict__)

@@ -203,7 +203,7 @@ class MeshroomApp(QApplication):
 
         args = createMeshroomParser(inputArgs)
         qtArgs = []
-    
+
         if EnvVar.get(EnvVar.MESHROOM_QML_DEBUG):
             debuggerParams = EnvVar.get(EnvVar.MESHROOM_QML_DEBUG_PARAMS)
             self.debugger = QQmlDebuggingEnabler(printWarning=True)
@@ -673,10 +673,26 @@ class MeshroomApp(QApplication):
         ]
 
     def _default8bitViewerEnabled(self):
-        return bool(os.environ.get("MESHROOM_USE_8BIT_VIEWER", False))
-    
+        return self._getEnvironmentVariableValue("MESHROOM_USE_8BIT_VIEWER", False)
+
     def _defaultSequencePlayerEnabled(self):
-        return bool(os.environ.get("MESHROOM_USE_SEQUENCE_PLAYER", True))
+        return self._getEnvironmentVariableValue("MESHROOM_USE_SEQUENCE_PLAYER", True)
+
+    def _getEnvironmentVariableValue(self, key: str, defaultValue: bool) -> bool:
+        """
+        Fetch the value of a provided environment variable if it exists, and ensure it is correctly
+        evaluated.
+
+        Args:
+            key: the key for the environment variable
+            defaultValue: the value to use if the key does not exist
+        """
+        val = os.environ.get(key, defaultValue)
+        # os.environ.get returns a string if the key exists, no matter its value, and converting a
+        # string to a bool always evaluates to "True"
+        if val != True and str(val).lower() in ("0", "false", "off"):
+            return False
+        return True
 
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)

@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 
-
 class VersionStatus(Enum):
     release = 1
     develop = 2
@@ -15,7 +14,7 @@ __version__ = "2026.1.0"
 __version_status__ = VersionStatus.develop
 
 if __version_status__ is VersionStatus.develop:
-    __version__ += "-" + __version_status__.name
+    __version__ += "+" + __version_status__.name
 
 __version_label__ = __version__
 # Modify version label if we are in a development phase.
@@ -31,7 +30,7 @@ if __version_status__ is VersionStatus.develop:
             __version_label__ += " branch=" + branchName
     else:
         # Add a generic default label "develop"
-        __version_label__ += "-" + __version_status__.name
+        __version_label__ += "+" + __version_status__.name
 
     # Allow override from env variable
     if "REZ_MESHROOM_VERSION" in os.environ:

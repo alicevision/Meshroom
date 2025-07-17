@@ -29,9 +29,6 @@ if __version_status__ is VersionStatus.develop:
             data = headFile.readlines()
             branchName = data[0].split('/')[-1].strip()
             __version_label__ += ".branch." + re.sub('[^0-9a-zA-Z]+', '.', branchName)
-    else:
-        # Add a generic default label "develop"
-        __version_label__ += "+" + __version_status__.name
 
     # Allow override from env variable
     if "REZ_MESHROOM_VERSION" in os.environ:

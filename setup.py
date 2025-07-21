@@ -46,6 +46,17 @@ build_exe_options = {
     "packages": ["meshroom.nodes", "meshroom.submitters"],
     "includes": [
         "idna.idnadata",  # Dependency needed by SketchfabUpload node, but not detected by cx_Freeze
+        "timeit",
+        "pickletools",
+        "modulefinder",
+        "cProfile",
+        "colorsys",
+        "xml.dom.minidom",
+        "http.cookies",
+        "filecmp",
+        "logging.handlers",
+        "cmath",
+        "numpy"
     ],
     "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md"]
 }

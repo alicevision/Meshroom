@@ -78,6 +78,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
                    - vlfeat_K80L3.tree  # voctree file
        - lib/      # Python lib folder
        - qtPlugins/
+       - plugins/
        Meshroom    # main executable
        COPYING.md  # Meshroom COPYING file
     """
@@ -123,6 +124,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
         aliceVisionBinDir = os.path.join(aliceVisionDir, "bin")
         aliceVisionShareDir = os.path.join(aliceVisionDir, "share", "aliceVision")
         qtPluginsDir = os.path.join(rootDir, "qtPlugins")
+        pluginsDir = os.path.join(rootDir, "plugins")
         sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
         voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.SIFT.tree")
         sphereDetectionModel = os.path.join(aliceVisionShareDir, "sphereDetection_Mask-RCNN.onnx")
@@ -137,6 +139,12 @@ def setupEnvironment(backend=Backend.STANDALONE):
         for key, value in env.items():
             logging.debug(f"Add to {key}: {value}")
             addToEnvPath(key, value, 0)
+
+        # Add all available plugins
+        if os.path.exists(pluginsDir):
+            subfolders = [f.path for f in os.scandir(pluginsDir) if f.is_dir()]
+            for plugin in subfolders:
+                addToEnvPath("MESHROOM_PLUGINS_PATH", plugin, 0)
 
         variables = {
             "ALICEVISION_ROOT": aliceVisionDir,

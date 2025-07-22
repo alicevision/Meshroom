@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import logging
 import os
+import re
 import sys
 
 from enum import Enum
@@ -90,9 +91,11 @@ class DirTreeProcessEnv(ProcessEnv):
     def __init__(self, folder: str):
         super().__init__(folder, ProcessEnvType.DIRTREE)
 
+        venvLibPaths = glob.glob(f'{folder}/lib*/python[0-9].[0-9]*/site-packages', recursive=False)
+
         self.binPaths: list = [str(Path(folder, "bin"))]
         self.libPaths: list = [str(Path(folder, "lib")), str(Path(folder, "lib64"))]
-        self.pythonPaths: list = [str(Path(folder))] + self.binPaths + glob.glob(f'{folder}/lib*/python[0-9].[0-9]*/site-packages', recursive=False)
+        self.pythonPaths: list = [str(Path(folder))] + self.binPaths + venvLibPaths
 
         if sys.platform == "win32":
             # For Windows platforms, try and include the content of the virtual env if it exists
@@ -100,6 +103,17 @@ class DirTreeProcessEnv(ProcessEnv):
             venvPath = f"{folder}/{Path(folder).name}/Lib/site-packages"
             if os.path.exists(venvPath):
                 self.pythonPaths.append(str(Path(venvPath)))
+        else:
+            # For Linux platforms, lib paths may need to be discovered recursively to be properly
+            # added to LD_LIBRARY_PATH
+            extraLibPaths = []
+            regex = re.compile(r"^lib(\d{2})?$")
+            for venvPath in venvLibPaths:
+                for path, directories, _ in os.walk(venvPath):
+                    for directory in directories:
+                        if re.match(regex, directory):
+                            extraLibPaths.append(os.path.join(path, directory))
+            self.libPaths = self.libPaths + extraLibPaths
 
     def getEnvDict(self) -> dict:
         env = os.environ.copy()

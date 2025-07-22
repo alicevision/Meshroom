@@ -10,4 +10,5 @@ import meshroom.ui
 import meshroom.ui.app
 
 meshroom.ui.uiInstance = meshroom.ui.app.MeshroomApp(sys.argv)
+meshroom.ui.uiInstance.aboutToQuit.connect(meshroom.ui.uiInstance.terminateManual)
 meshroom.ui.uiInstance.exec()

@@ -331,6 +331,11 @@ class MeshroomApp(QApplication):
 
         self.engine.load(os.path.normpath(url))
 
+    def terminateManual(self):
+        self.engine.clearComponentCache()
+        self.engine.collectGarbage()
+        self.engine.deleteLater()
+
     def _pipelineTemplateFiles(self):
         templates = []
         for key in sorted(meshroom.core.pipelineTemplates.keys()):

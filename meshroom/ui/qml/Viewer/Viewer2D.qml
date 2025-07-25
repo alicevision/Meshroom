@@ -713,14 +713,14 @@ FocusScope {
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
                                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
-                                'baseColor': Qt.binding(function() { return phongImageViewerToolbar.baseColorValue }),
-                                'textureOpacity': Qt.binding(function() { return phongImageViewerToolbar.textureOpacityValue }),
-                                'ka': Qt.binding(function() { return phongImageViewerToolbar.kaValue }),
-                                'kd': Qt.binding(function() { return phongImageViewerToolbar.kdValue }),
-                                'ks': Qt.binding(function() { return phongImageViewerToolbar.ksValue }),
-                                'shininess': Qt.binding(function() { return phongImageViewerToolbar.shininessValue }),
-                                'lightYaw': Qt.binding(function() { return -directionalLightPane.lightYawValue }), // left handed coordinate system
-                                'lightPitch': Qt.binding(function() { return directionalLightPane.lightPitchValue }),
+                                'baseColor': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.baseColorValue : "#ffffff" }),
+                                'textureOpacity': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.textureOpacityValue : 0.0}),
+                                'ka': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.kaValue : 0.0 }),
+                                'kd': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.kdValue : 0.0 }),
+                                'ks': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.ksValue : 0.0 }),
+                                'shininess': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.shininessValue : 0.0 }),
+                                'lightYaw': Qt.binding(function() { return directionalLightPaneLoader.status === Loader.Ready ? -directionalLightPaneLoader.item.lightYawValue : 0.0 }), // left handed coordinate system
+                                'lightPitch': Qt.binding(function() { return directionalLightPaneLoader.status === Loader.Ready ? directionalLightPaneLoader.item.lightPitchValue : 0.0 }),
                             })
                         } else {
                             // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -1349,25 +1349,29 @@ FocusScope {
                         }
                     }
 
-                    PhongImageViewerToolbar {
-                        id: phongImageViewerToolbar
-
+                    Loader {
+                        id: phongImageViewerToolbarLoader
+                        active: phongImageViewerLoader.status === Loader.Ready
                         anchors {
                             bottom: parent.bottom
                             left: parent.left
                             margins: 2
                         }
-                        visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active
+                        sourceComponent: PhongImageViewerToolbar {
+                        }
                     }
 
-                    DirectionalLightPane {
-                        id: directionalLightPane
+                    Loader {
+                        id: directionalLightPaneLoader
+                        active: phongImageViewerToolbarLoader.status === Loader.Ready
                         anchors {
                             bottom: parent.bottom
                             right: parent.right
                             margins: 2
                         }
-                        visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active && phongImageViewerToolbar.displayLightController
+                        sourceComponent: DirectionalLightPane {
+                            visible: phongImageViewerToolbarLoader.item.displayLightController
+                        }
                     }
                 }
 

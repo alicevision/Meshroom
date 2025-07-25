@@ -642,7 +642,7 @@ FocusScope {
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
 
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('PhotometricStereo').node : null
+                    property var selectedNode: _reconstruction ? _reconstruction.selectedNode : null
                     property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
                     property url sourcePath: getAlbedoFile()
                     property url normalPath: getNormalFile()
@@ -652,21 +652,31 @@ FocusScope {
                     property int previousOrientationTag: 1
 
                     function getAlbedoFile() {
+                        
+                        if(vp && selectedNode && selectedNode.hasAttribute("albedo"))
+                            return Filepath.stringToUrl(Filepath.resolve(selectedNode.attribute("albedo").value, vp))
 
-                        if(vp && activeNode && activeNode.hasAttribute("albedo")) {
-                            return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("albedo").value, vp))
-                        }
+                        const imageFileUrl = getImageFile()
+                        var imageFile = Filepath.urlToString(imageFileUrl)
 
-                        return getImageFile()
+                        if(imageFile.includes("_normals"))
+                            return Filepath.stringToUrl(imageFile.replace("_normals", "_albedo"))
+
+                        return imageFileUrl
                     }
 
                     function getNormalFile() {
 
-                        if(vp && activeNode && activeNode.hasAttribute("normals")) {
-                            return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("normals").value, vp))
-                        }
+                        if(vp && selectedNode && selectedNode.hasAttribute("normals"))
+                            return Filepath.stringToUrl(Filepath.resolve(selectedNode.attribute("normals").value, vp))
 
-                        return getImageFile()
+                        const imageFileUrl = getImageFile()
+                        var imageFile = Filepath.urlToString(imageFileUrl)
+
+                        if(imageFile.includes("_albedo"))
+                            return Filepath.stringToUrl(imageFile.replace("_albedo", "_normals"))
+
+                        return imageFileUrl
                     }
 
                     onWidthChanged: {

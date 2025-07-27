@@ -547,4 +547,54 @@ class ColorParam(Param):
             raise ValueError('ColorParam value should be a string containing either an SVG name or an hexadecimal '
                              'color code (param: {}, value: {}, type: {})'.format(self.name, value, type(value)))
         return value
+    
+    def checkValueTypes(self): #TODO : check
+        if not isinstance(self.value, str):
+            return self.name
+        return ""
 
+
+class Point2DParam(GroupAttribute):
+    """
+    Point2DParam
+    """
+    def __new__(cls, name, label, description, group="allParams", advanced=False, semantic="point2d", 
+                enabled=True, joinChar=" ", brackets=None, visible=True, exposed=False):
+        
+        pointDesc = GroupAttribute(name="observation", label="Observation", description="Point observation.", groupDesc=[
+            IntParam(name="viewId", label="View Id", description="View id.", value=-1, range=None),
+            FloatParam(name="x", label="X", description="Point x coordinate", value=0.0, range=(0.0, 10000.0, 0.5)),
+            FloatParam(name="y", label="Y", description="Point y coordinate", value=0.0, range=(0.0, 10000.0, 0.5))
+        ])
+
+        groupDesc = [
+            ColorParam(name="color", label="Color", description="Point Color.", value="#ffffff", group=None, invalidate=False),
+            ListAttribute(name="point", label="Point", description="Point position for each view id.", group=group, elementDesc=pointDesc)
+        ]
+
+        return GroupAttribute(groupDesc=groupDesc, name=name, label=label, description=description,
+                            group=None, advanced=advanced, semantic=semantic, enabled=enabled,
+                            joinChar=joinChar, brackets=brackets, visible=visible, exposed=exposed)
+
+class CircleParam(GroupAttribute):
+    """
+    Circle2DParam
+    """
+    def __new__(cls, name, label, description, group="allParams", advanced=False, semantic="circle", 
+                enabled=True, joinChar=" ", brackets=None, visible=True, exposed=False):
+
+        circleDesc = GroupAttribute(name="observation", label="Observation", description="Circle observation.", groupDesc=[
+            IntParam(name="viewId", label="View Id", description="View id.", value=-1, range=None),
+            FloatParam(name="centerX", label="Center X", description="Circle center x coordinate.", value=0.0, range=(0.0, 10000.0, 0.5)),
+            FloatParam(name="centerY", label="Center Y", description="Circle center y coordinate.", value=0.0, range=(0.0, 10000.0, 0.5)),
+            FloatParam(name="radius", label="Radius", description="Circle radius.", value=10.0, range=(0.0, 10000.0, 0.5))
+        ])
+
+        groupDesc = [
+            ColorParam(name="color", label="Color", description="Circle Color.", value="#ffffff", group=None, invalidate=False),
+            ListAttribute(name="circle", label="Circle", description="Circle properties for each view id.", group=group, elementDesc=circleDesc)
+        ]
+        return GroupAttribute(groupDesc=groupDesc, name=name, label=label, description=description,
+                              group=None, advanced=advanced, semantic=semantic, enabled=enabled,
+                              joinChar=joinChar, brackets=brackets, visible=visible, exposed=exposed)
+        

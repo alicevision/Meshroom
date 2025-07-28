@@ -27,7 +27,6 @@ Item {
     /// Combined x and y
     property point position: Qt.point(x, y)
     /// Styling
-    property color shadowColor: "#cc000000"
     readonly property color defaultColor: isCompatibilityNode ? "#444" : !node.isComputableType ? "#BA3D69" : activePalette.base
     property color baseColor: defaultColor
 
@@ -297,7 +296,7 @@ Item {
             color: node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color
             layer.enabled: true
             layer.effect: MultiEffect {
-                shadowColor: shadowColor
+                shadowColor: activePalette.shadow
                 // Performance tip: Reduce blurMax (not shadowBlur) to minimize shadow blur.
                 shadowBlur: 1.0  // So we keep shadowBlur at 1.0.
                 shadowEnabled: true

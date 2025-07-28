@@ -346,7 +346,7 @@ Item {
                             Layout.fillWidth: true
                             text: node ? node.label : ""
                             padding: 4
-                            color: root.mainSelected ? "white" : activePalette.text
+                            color: root.mainSelected ? activePalette.highlightedText : activePalette.text
                             elide: Text.ElideMiddle
                             font.pointSize: 8
                         }

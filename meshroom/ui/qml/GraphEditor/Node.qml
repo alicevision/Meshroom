@@ -27,7 +27,7 @@ Item {
     /// Combined x and y
     property point position: Qt.point(x, y)
     /// Styling
-    readonly property color defaultColor: isCompatibilityNode ? "#444" : !node.isComputableType ? "#BA3D69" : activePalette.base
+    readonly property color defaultColor: isCompatibilityNode ? activePalette.mid : !node.isComputableType ? "#BA3D69" : activePalette.base
     property color baseColor: defaultColor
 
     /// Shake Relevance

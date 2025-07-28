@@ -123,7 +123,6 @@ ApplicationWindow {
 
     Platform.FileDialog {
         id: openFileDialog
-        options: Platform.FileDialog.DontUseNativeDialog
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {

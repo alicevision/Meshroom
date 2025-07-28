@@ -304,7 +304,7 @@ Item {
                 blurMax: 4  // large values could impact performances
             }
             radius: 3
-            opacity: 0.7
+            opacity: 0.85
         }
 
         Rectangle {

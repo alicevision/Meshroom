@@ -42,6 +42,8 @@ class PaletteManager(QObject):
 
         self.darkPalette = darkPalette
         self.defaultPalette = QApplication.instance().palette()
+        self.defaultPalette.setColor(QPalette.Text, QColor(50, 50, 50))
+        self.defaultPalette.setColor(QPalette.HighlightedText, Qt.black)
         self.togglePalette()
 
     @Slot()

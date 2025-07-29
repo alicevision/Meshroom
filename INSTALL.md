@@ -82,31 +82,43 @@ Meshroom relies on the [AliceVision](https://github.com/alicevision/AliceVision)
 AliceVision's binaries must be in the path while running Meshroom.
 To build AliceVision, follow this [guide](https://github.com/alicevision/AliceVision/blob/develop/INSTALL.md) and add the installation in your PATH (and LD_LIBRARY_PATH on Linux/macOS).
 
+The following environment variable must always be set with the location of AliceVision's install directory:
+```
+ALICEVISION_ROOT=/path/to/AliceVision/install/directory
+```
+
+AliceVision provides nodes and templates for Meshroom, which need to be declared to Meshroom with the following environment variables:
+```
+MESHROOM_NODES_PATH={ALICEVISION_ROOT}/share/meshroom
+MESHROOM_PIPELINE_TEMPLATES_PATH={ALICEVISION_ROOT}/share/meshroom
+```
+
 Meshroom also relies on specific files provided with AliceVision.
-* sensor database: a text database of sensor width per camera model.
+* Sensor database: a text database of sensor width per camera model.
 Provided in AliceVision source tree: {ALICEVISION_REPOSITORY}/src/aliceVision/sensorDB/cameraSensors.db
-* voctree (optional): for larger datasets (>200 images), greatly improves image matching performances.
+* Voctree (optional): for larger datasets (>200 images), greatly improves image matching performances.
 It can be downloaded [here](https://gitlab.com/alicevision/trainedVocabularyTreeData/raw/master/vlfeat_K80L3.SIFT.tree).
-* sphere detection model (optional): for the automated sphere detection in stereo photometry.
+* Sphere detection model (optional): for the automated sphere detection in stereo photometry.
 It can be downloaded [here](https://gitlab.com/alicevision/SphereDetectionModel/-/raw/main/sphereDetection_Mask-RCNN.onnx).
-* semantic segmentation model (optional): for the semantic segmentation of objects.
+* Semantic segmentation model (optional): for the semantic segmentation of objects.
 It can be downloaded [here](https://gitlab.com/alicevision/semanticSegmentationModel/-/raw/main/fcn_resnet50.onnx).
 
-Environment variables must be set for Meshroom to find those files:
+Environment variables need to be set for Meshroom to find those files:
 ```
 ALICEVISION_SENSOR_DB=/path/to/database
 ALICEVISION_VOCTREE=/path/to/voctree
 ALICEVISION_SPHERE_DETECTION_MODEL=/path/to/detection/model
 ALICEVISION_SEMANTIC_SEGMENTATION_MODEL=/path/to/segmentation/model
-ALICEVISION_ROOT=/path/to/AliceVision/install/directory
 ```
+If these variables are not set, Meshroom will by default look for them in `{ALICEVISION_ROOT}/share/aliceVision`.
 
 
-### Qt AliceVision Plugin
+### QtAliceVision Plugin
 
-[QtAliceVision](https://github.com/alicevision/QtAliceVision)
+[QtAliceVision](https://github.com/alicevision/QtAliceVision), an additional Qt plugin, can be built to extend Meshroom UI features.
 
-An additional Qt plugin can be built to extend Meshroom UI features. Note that it is optional but highly recommended.
+Note that it is optional but highly recommended.
+
 This plugin uses AliceVision to load and visualize intermediate reconstruction files and OpenImageIO as backend to read images (including RAW/EXR).
 It also adds support for Alembic file loading in Meshroom's 3D viewport, which allows to visualize sparse reconstruction results (point clouds and cameras).
 

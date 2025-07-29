@@ -137,3 +137,59 @@ It also adds support for Alembic file loading in Meshroom's 3D viewport, which a
 QML2_IMPORT_PATH=/path/to/QtAliceVision/install/qml
 QT_PLUGIN_PATH=/path/to/QtAliceVision/install
 ```
+
+## Adding custom nodes, templates and plugins
+
+In addition to the nodes and templates provided by Meshroom and AliceVision, custom ones can be created, loaded by, and used in Meshroom.
+
+### Custom nodes
+
+Nodes need to be provided to Meshroom as Python modules, using the `MESHROOM_NODES_PATH` environment variable.
+
+For example, to add a set of three custom nodes (`CustomNodeA`, `CustomNodeB` and `CustomNodeC`) to Meshroom, a Python
+module containing these nodes must be created:
+```
+├── folderA
+│   ├── customNodes
+│   │   ├── __init__.py
+│   │   ├── CustomNodeA.py
+│   │   ├── CustomNodeB.py
+│   │   └── CustomNodeC.py
+├── folderB
+```
+
+Its containing folder must then be added to `MESHROOM_NODES_PATH`:
+- On Windows:
+  ```
+  set MESHROOM_NODES_PATH=/path/to/folderA;%MESHROOM_NODES_PATH%
+  ```
+- On Linux:
+  ```
+  export MESHROOM_NODES_PATH=/path/to/folderA:$MESHROOM_NODES_PATH
+  ```
+
+> [!NOTE]
+> A valid Meshroom node is a Python file that contains a class inheriting `meshroom.core.desc.BaseNode`.
+> Before loading a node, Meshroom checks whether its description (the content of its class) is valid.
+> If it is not, the node is rejected with an error log describing which part is invalid.
+
+### Custom templates
+
+The list of pipelines can also be enriched with custom templates, that are declared to Meshroom with the environment
+variable `MESHROOM_PIPELINE_TEMPLATES_PATH`.
+
+For example, if a couple of custom templates are saved in a folder "customTemplates", the variable should be set as follows:
+- On Windows:
+  ```
+  set MESHROOM_PIPELINE_TEMPLATES_PATH=/path/to/customTemplate;%MESHROOM_PIPELINE_TEMPLATES_PATH%
+  ```
+- On Linux:
+  ```
+  export MESHROOM_PIPELINE_TEMPLATES_PATH=/path/to/customTemplates:$MESHROOM_PIPELINE_TEMPLATES_PATH
+  ```
+
+> [!TIP]
+> A template can be a Meshroom graph of any type, but it is generally expected to be a graph saved in "minimal mode".
+> In "minimal mode", the .mg file only contains, for each node of the graph, the attributes that have non-default values.
+> To save a graph in "minimal mode", use the `File > Advanced > Save As Template` menu.
+

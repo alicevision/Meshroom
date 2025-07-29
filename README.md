@@ -68,21 +68,18 @@ The AliceVision plugin provides pipelines for:
 
 
 ## Segmentation Plugin
-[MrSegmentation](https://github.com/meshroomHub/mrSegmentation)
-A set of nodes for image segmentation from text prompts.
-
-
-## DepthEstimation Plugin
-[MrDepthEstimation](https://github.com/meshroomHub/mrDepthEstimation)
-A set of nodes for depth estimation from an image sequence.
-
+[MrSegmentation](https://github.com/meshroomHub/mrSegmentation): A set of nodes for image segmentation from text prompts.
 
 # Other plugins
 
-See the [MeshroomHub](https://github.com/meshroomHub) for more plugins.
+See [MeshroomHub](https://github.com/meshroomHub) for more plugins.
+
+## DepthEstimation Plugin
+[MrDepthEstimation](https://github.com/meshroomHub/mrDepthEstimation): A set of nodes for depth estimation from an image sequence.
+
 
 ## Research Plugin
-[Meshroom Research](https://github.com/alicevision/MeshroomResearch)
+[Meshroom Research](https://github.com/meshroomHub/MeshroomResearch)
 
 Meshroom-Research focuses on evaluating and benchmarking Machine Learning nodes for 3D Computer Vision.
 
@@ -128,4 +125,3 @@ We welcome contributions! Check out our [Contribution Guidelines](CONTRIBUTING.m
 Use the public mailing-list to ask questions or request features. It is also a good place for informal discussions like sharing results, interesting related technologies or publications: [forum@alicevision.org](https://groups.google.com/g/alicevision)
 
 You can also contact the core team privately on: [team@alicevision.org](mailto:team@alicevision.org).
-

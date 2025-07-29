@@ -68,8 +68,12 @@ pip install -r requirements.txt -r dev_requirements.txt
 * PySide >= 6.7
 
 > [!WARNING]
-> For PySide 6.8.0 and over on Windows, the following error may occur when leaving Meshroom's homepage: `Cannot load /path/to/pip/install/PySide6/qml/QtQuick/Scene3D/qtquickscene3dplugin.dll: specified module cannot be found`. This is caused by Qt63DQuickScene3D.dll which seems to be missing from the
-pip distribution, but can be retrieved from a standard Qt installation. Alternatively, the DLL for MSVC2022_64 can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv). It then needs to be placed in `/path/to/pip/install/PySide6`.
+> For PySide 6.8.0 and over, the following error may occur when leaving Meshroom's homepage: `Cannot load /path/to/pip/install/PySide6/qml/QtQuick/Scene3D/qtquickscene3dplugin.dll: specified module cannot be found`.
+> This is caused by Qt63DQuickScene3D.dll which seems to be missing from the pip distribution, but can be retrieved from a standard Qt installation. 
+> On recent Linux systems such as Ubuntu 25, this can be resolved by installing `libqt63dquickscene3d6` using the package manager.
+> Alternatively:
+> - On Windows, the DLL for MSVC2022_64 can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv). It then needs to be placed in `/path/to/pip/install/PySide6`.
+> - On Linux, the .so (here, Rocky9-based) can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1dq7rm_Egc-sQF6j6_E55f60INyxt1ega). It then needs to be placed in `/path/to/pip/install/PySide6/Qt/qml/QtQuick/Scene3D`.
 
 
 ### AliceVision
@@ -99,6 +103,7 @@ ALICEVISION_ROOT=/path/to/AliceVision/install/directory
 
 
 ### Qt AliceVision Plugin
+
 [QtAliceVision](https://github.com/alicevision/QtAliceVision)
 
 An additional Qt plugin can be built to extend Meshroom UI features. Note that it is optional but highly recommended.

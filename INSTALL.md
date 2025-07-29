@@ -36,7 +36,7 @@ python bin/meshroom_batch --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
 ```
 
 
-## Use Prebuilt AliceVision
+## Use prebuilt AliceVision
 
 Download a [Release](https://github.com/alicevision/meshroom/releases) or extract files from a recent AliceVision build on [Dockerhub](https://hub.docker.com/r/alicevision/alicevision).
 
@@ -47,7 +47,7 @@ You may need to checkout the corresponding Meshroom version/tag to avoid version
 
 ## Install Requirements
 
-### Python Environment
+### Python environment
 
 * Windows: Python 3 (>=3.9)
 * Linux: Python 3 (>=3.9)
@@ -60,7 +60,7 @@ pip install -r requirements.txt -r dev_requirements.txt
 > `dev_requirements` is only related to testing and packaging. It is not mandatory to run Meshroom.
 
 > [!NOTE]
-> It is recommended to use a [virtual python environment](https://docs.python.org/3.9/library/venv.html), like `python -m venv meshroom_venv`.
+> It is recommended to use a [virtual Python environment](https://docs.python.org/3.9/library/venv.html), like `python -m venv meshroom_venv`.
 
 
 ### Qt/PySide
@@ -113,7 +113,7 @@ ALICEVISION_SEMANTIC_SEGMENTATION_MODEL=/path/to/segmentation/model
 If these variables are not set, Meshroom will by default look for them in `{ALICEVISION_ROOT}/share/aliceVision`.
 
 
-### QtAliceVision Plugin
+### QtAliceVision plugin
 
 [QtAliceVision](https://github.com/alicevision/QtAliceVision), an additional Qt plugin, can be built to extend Meshroom UI features.
 

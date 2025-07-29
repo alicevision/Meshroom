@@ -33,7 +33,6 @@ Page {
     Settings {
         id: settingsUILayout
         category: "UILayout"
-        property alias showLiveReconstruction: liveSfMVisibilityCB.checked
         property alias showGraphEditor: graphEditorVisibilityCB.checked
         property alias showImageViewer: imageViewerVisibilityCB.checked
         property alias showViewer3D: viewer3DVisibilityCB.checked
@@ -883,12 +882,6 @@ Page {
                     text: "Graph Editor"
                     checkable: true
                     checked: true
-                }
-                MenuItem {
-                    id: liveSfMVisibilityCB
-                    text: "Live Reconstruction"
-                    checkable: true
-                    checked: false
                 }
                 MenuItem {
                     id: imageViewerVisibilityCB

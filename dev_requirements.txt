@@ -1,5 +1,8 @@
 # packaging
 cx_Freeze==7.2.10
 
+# Python binding packaging
+numpy==1.*
+
 # testing
 pytest

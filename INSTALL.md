@@ -1,4 +1,4 @@
-# Development
+# Meshroom
 This guide will help you setup a development environment to launch and contribute to Meshroom.
 
 
@@ -112,6 +112,17 @@ ALICEVISION_SEMANTIC_SEGMENTATION_MODEL=/path/to/segmentation/model
 ```
 If these variables are not set, Meshroom will by default look for them in `{ALICEVISION_ROOT}/share/aliceVision`.
 
+#### mrSegmentation plugin
+
+Some templates provided by AliceVision contain nodes that are not packaged with AliceVision.
+These nodes are part of the mrSegmentation plugin, which can be found [here](https://github.com/MeshroomHub/mrSegmentation).
+
+To build and install mrSegmentation, follow this [guide](https://github.com/MeshroomHub/mrSegmentation/blob/main/INSTALL.md).
+
+For mrSegmentation nodes to be correctly detected by Meshroom, the following environment variable should be set:
+```commandline
+MESHROOM_PLUGINS_PATH=/path/to/mrSegmentation
+```
 
 ### QtAliceVision plugin
 

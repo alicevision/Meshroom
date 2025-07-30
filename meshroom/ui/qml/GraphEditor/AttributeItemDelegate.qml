@@ -822,8 +822,8 @@ RowLayout {
                     }
 
                     background: ShaderEffect {
-                        width: control.availableWidth
-                        height: control.availableHeight
+                        width: slider.availableWidth
+                        height: slider.availableHeight
                         blending: false
                         fragmentShader: "qrc:/shaders/AttributeItemDelegate.frag.qsb"
                     }

@@ -1072,6 +1072,38 @@ FocusScope {
                         }
                     }
                 }
+                FloatingPane {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    Layout.preferredHeight: childrenRect.height
+                    visible: phongImageViewerLoader.item !== null && 
+                             phongImageViewerLoader.item.imageStatus === Image.Error && 
+                             phongImageViewerLoader.sourcePath != ""
+                    Layout.alignment: Qt.AlignHCenter
+                    RowLayout {
+                        anchors.fill: parent
+                        Label {
+                            font.pointSize: 8
+                            text: {
+                                if (phongImageViewerLoader.item !== null) {
+                                    switch (phongImageViewerLoader.item.status) {
+                                        case 2:  // AliceVision.PhongImageViewer.EStatus.MISSING_FILE
+                                            return "Invalid / Missing File(s)"
+                                        case 4:  // AliceVision.PhongImageViewer.EStatus.LOADING_ERROR
+                                            return "Error"
+                                        default:
+                                            return ""
+                                    }
+                                }
+                                return ""
+                            }
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
+                }
 
                 Item {
                     id: imgPlaceholder

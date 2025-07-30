@@ -12,8 +12,11 @@ It also includes interactive widgets for visualizing images and 3D data. Officia
 
 # Get the project
 
-You can [download pre-compiled binaries for the latest release](https://github.com/alicevision/meshroom/releases).  
+You can [download pre-compiled binaries for the latest release](https://github.com/alicevision/meshroom/releases).
+
 If you want to build it yourself, see [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
+
+To use Meshroom with custom plugins, see [**INSTALL_PLUGINS.md**](INSTALL_PLUGINS.md).
 
 
 # Concepts

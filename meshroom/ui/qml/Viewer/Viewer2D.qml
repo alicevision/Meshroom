@@ -652,31 +652,39 @@ FocusScope {
                     property int previousOrientationTag: 1
 
                     function getAlbedoFile() {
+                        // get the image file from an external URL
+                        if (useExternal) {
+                            var externalFile = Filepath.urlToString(sourceExternal)
+                            if(externalFile.includes("_normals"))
+                                return Filepath.stringToUrl(externalFile.replace("_normals", "_albedo"))
+                            return sourceExternal
+                        }
                         
+                        // get the image file from selected node albedo attribute
                         if(vp && selectedNode && selectedNode.hasAttribute("albedo"))
                             return Filepath.stringToUrl(Filepath.resolve(selectedNode.attribute("albedo").value, vp))
 
-                        const imageFileUrl = getImageFile()
-                        var imageFile = Filepath.urlToString(imageFileUrl)
-
-                        if(imageFile.includes("_normals"))
-                            return Filepath.stringToUrl(imageFile.replace("_normals", "_albedo"))
-
-                        return imageFileUrl
+                        // no valid image file, return empty url
+                        return ""
                     }
 
                     function getNormalFile() {
+                        // get the image file from an external URL
+                        if (useExternal) {
+                            var externalFile = Filepath.urlToString(sourceExternal)
+                            if(externalFile.includes("_normals"))
+                                return sourceExternal
+                            if(externalFile.includes("_albedo"))
+                                return Filepath.stringToUrl(externalFile.replace("_albedo", "_normals"))
+                            return "" // invalid external file
+                        }
 
+                        // get the image file from selected node normals attribute
                         if(vp && selectedNode && selectedNode.hasAttribute("normals"))
                             return Filepath.stringToUrl(Filepath.resolve(selectedNode.attribute("normals").value, vp))
-
-                        const imageFileUrl = getImageFile()
-                        var imageFile = Filepath.urlToString(imageFileUrl)
-
-                        if(imageFile.includes("_albedo"))
-                            return Filepath.stringToUrl(imageFile.replace("_albedo", "_normals"))
-
-                        return imageFileUrl
+                            
+                        // no valid image file, return empty url
+                        return ""
                     }
 
                     onWidthChanged: {

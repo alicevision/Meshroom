@@ -457,9 +457,9 @@ class Reconstruction(UIGraph):
         # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
         # Nodes that can be used to provide features folders to the UI
-        "featureProvider": ["FeatureExtraction", "FeatureMatching", "StructureFromMotion"],
+        "featureProvider": ["FeatureExtraction", "FeatureMatching", "StructureFromMotion", "RomaSampler"],
         # Nodes that can be used to provide matches folders to the UI
-        "matchProvider": ["FeatureMatching", "StructureFromMotion"],
+        "matchProvider": ["FeatureMatching", "StructureFromMotion", "RomaSampler"],
         # Nodes that can be used to provide tracks files to the UI
         "trackProvider": ["TracksBuilding", "SfMBootstraping", "SfMExpanding"]
     }

@@ -731,14 +731,14 @@ FocusScope {
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
                                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
-                                'baseColor': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.baseColorValue : "#ffffff" }),
-                                'textureOpacity': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.textureOpacityValue : 0.0}),
-                                'ka': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.kaValue : 0.0 }),
-                                'kd': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.kdValue : 0.0 }),
-                                'ks': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.ksValue : 0.0 }),
-                                'shininess': Qt.binding(function() { return phongImageViewerToolbarLoader.status === Loader.Ready ? phongImageViewerToolbarLoader.item.shininessValue : 0.0 }),
-                                'lightYaw': Qt.binding(function() { return directionalLightPaneLoader.status === Loader.Ready ? -directionalLightPaneLoader.item.lightYawValue : 0.0 }), // left handed coordinate system
-                                'lightPitch': Qt.binding(function() { return directionalLightPaneLoader.status === Loader.Ready ? directionalLightPaneLoader.item.lightPitchValue : 0.0 }),
+                                'baseColor': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.baseColorValue : "#ffffff" }),
+                                'textureOpacity': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.textureOpacityValue : 0.0}),
+                                'ka': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.kaValue : 0.0 }),
+                                'kd': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.kdValue : 0.0 }),
+                                'ks': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.ksValue : 0.0 }),
+                                'shininess': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.shininessValue : 0.0 }),
+                                'lightYaw': Qt.binding(function() { return directionalLightPaneLoader.item !== null ? -directionalLightPaneLoader.item.lightYawValue : 0.0 }), // left handed coordinate system
+                                'lightPitch': Qt.binding(function() { return directionalLightPaneLoader.item !== null ? directionalLightPaneLoader.item.lightPitchValue : 0.0 }),
                             })
                         } else {
                             // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -1420,7 +1420,7 @@ FocusScope {
                             margins: 2
                         }
                         sourceComponent: DirectionalLightPane {
-                            visible: phongImageViewerToolbarLoader.item.displayLightController
+                            visible: phongImageViewerToolbarLoader.item !== null && phongImageViewerToolbarLoader.item.displayLightController
                         }
                     }
                 }

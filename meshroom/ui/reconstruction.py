@@ -203,6 +203,7 @@ class ViewpointWrapper(QObject):
         self._undistortedImagePath = ''
         self._activeNode_PrepareDenseScene = self._reconstruction.activeNodes.get("PrepareDenseScene")
         self._activeNode_ExportAnimatedCamera = self._reconstruction.activeNodes.get("ExportAnimatedCamera")
+        self._activeNode_ExportImages = self._reconstruction.activeNodes.get("ExportImages")
         self._principalPointCorrected = False
         self.principalPointCorrectedChanged.connect(self.uvCenterOffsetChanged)
         self.sfmParamsChanged.connect(self.uvCenterOffsetChanged)
@@ -219,6 +220,8 @@ class ViewpointWrapper(QObject):
             self._activeNode_PrepareDenseScene.nodeChanged.connect(self._updateUndistortedImageParams)
         if self._activeNode_ExportAnimatedCamera:
             self._activeNode_ExportAnimatedCamera.nodeChanged.connect(self._updateUndistortedImageParams)
+        if self._activeNode_ExportImages:
+            self._activeNode_ExportImages.nodeChanged.connect(self._updateUndistortedImageParams)
 
     def _updateInitialParams(self):
         """ Update internal members depending on CameraInit. """
@@ -254,11 +257,14 @@ class ViewpointWrapper(QObject):
         """ Update internal members depending on PrepareDenseScene or ExportAnimatedCamera. """
         # undistorted image path
         try:
-            if self._activeNode_ExportAnimatedCamera.node:
+            if self._activeNode_ExportAnimatedCamera and self._activeNode_ExportAnimatedCamera.node:
                 self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_ExportAnimatedCamera.node.outputImages.value, self._viewpoint)
-                self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value
-            elif self._activeNode_PrepareDenseScene.node:
+                self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value            
+            elif self._activeNode_PrepareDenseScene and self._activeNode_PrepareDenseScene.node:
                 self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_PrepareDenseScene.node.undistorted.value, self._viewpoint)
+                self._principalPointCorrected = False
+            elif self._activeNode_ExportImages and self._activeNode_ExportImages.node:
+                self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_ExportImages.node.undistorted.value, self._viewpoint)
                 self._principalPointCorrected = False
             else:
                 self._undistortedImagePath = ''

@@ -56,17 +56,33 @@ Repeater  {
             Layout.fillWidth: true
         }
 
-        // shape observation add / remove 
+        // shape observation add 
         MaterialToolButton {
             font.pointSize: 8
             padding: 4
             width: 20
             height:20
-            text: (model.observation === undefined) ? MaterialIcons.add : MaterialIcons.clear
-            visible: model.isEditable
+            text: MaterialIcons.add
+            visible: (model.observation === undefined) && model.isEditable
+            onClicked: ShapeEditor.addCurrentObservation(model.shapeName)
             Rectangle {
                 anchors.fill: parent
-                color: (model.observation === undefined) ? "#3300ff00" : "#33ff0000"
+                color: "#3300ff00"
+            }
+        }
+
+        // shape observation remove 
+        MaterialToolButton {
+            font.pointSize: 8
+            padding: 4
+            width: 20
+            height:20
+            text: MaterialIcons.clear
+            visible: (model.observation !== undefined) && model.isEditable
+            onClicked: ShapeEditor.removeCurrentObservation(model.shapeName)
+            Rectangle {
+                anchors.fill: parent
+                color: "#33ff0000"
             }
         }
 

@@ -23,6 +23,7 @@ Repeater  {
             font.pointSize: 8
             padding: 4
             text: (model.isVisible) ? MaterialIcons.visibility : MaterialIcons.visibility_off
+            opacity: (model.isVisible) ? 1.0 : 0.5
             enabled: true
             onClicked: shapeListInspector.model.updateShapeVisibility(model.modelIndex, !model.isVisible)
         }

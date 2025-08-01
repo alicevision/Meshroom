@@ -1,4 +1,5 @@
 from PySide6.QtCore import QAbstractListModel, QModelIndex, Qt, Slot
+from PySide6.QtGui import QColor
 from meshroom.core.attribute import Attribute
 from .shapeData import ShapeData
 import json
@@ -102,8 +103,8 @@ class ShapeListModel(QAbstractListModel):
         observations = {}
         isStatic = True
         for attribute in shapeAttribute.value:
-            if attribute.type == "ColorParam":
-                properties["color"] = attribute.value
+            if attribute.name == "hue":
+                properties["color"] = QColor.fromHslF(attribute.value, 1, 0.5, a=1.0).name(QColor.HexArgb)
             if attribute.type == "ListAttribute":
                 isStatic = False
                 for observationAttribute in attribute.value:

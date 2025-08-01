@@ -64,7 +64,7 @@ Repeater  {
             width: 20
             height:20
             text: MaterialIcons.location_searching
-            visible: model.isEditable
+            visible: (model.isEditable && !model.isStatic)
             onClicked : {
                 if(model.observation === undefined) 
                     ShapeEditor.addCurrentObservation(model.shapeName)

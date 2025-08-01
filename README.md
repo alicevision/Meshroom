@@ -84,6 +84,7 @@ See [MeshroomHub](https://github.com/meshroomHub) for more plugins.
 ## RoMa Plugin
 
 [MrRoma](https://github.com/meshroomHub/mrRoma): A set of nodes for RoMa (robust dense feature matching).
+The plugin leverages foundation models to provide pixel-dense correspondence estimation with reliable certainty maps, enabling robust matching even under extreme variations in scale, illumination, viewpoint, and texture.
 
 
 ## GSplat Plugin

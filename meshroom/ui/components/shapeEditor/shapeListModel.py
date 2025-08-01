@@ -82,11 +82,9 @@ class ShapeListModel(QAbstractListModel):
                 for childAttribute in attribute.value:
                     self.__buildCurrentNodeShape(childAttribute)
             return
-        
         shape = self.__buildShapeFromAttribute(attribute) # build shape
         if shape is not None:
             self._shapes.append(shape)
-             #attribute.valueChanged.connect(self.updateShape(len(self._shapes) - 1)) # TODO: connect at attribute level
 
     def __buildShapeFromAttribute(self, shapeAttribute:Attribute):
         """Build and return the shape data of the given attribute."""

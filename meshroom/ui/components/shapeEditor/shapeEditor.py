@@ -1,4 +1,5 @@
 from PySide6.QtCore import QObject, Slot, Property
+from meshroom.core.attribute import Attribute
 from meshroom.ui.reconstruction import Reconstruction
 from .shapeListModel import ShapeListModel
 from .shapeFileListModel import ShapeFileListModel
@@ -10,6 +11,7 @@ class ShapeEditor(QObject):
     def __init__(self, activeProject:Reconstruction, parent=None):
         super().__init__(parent)
         self._enable = False
+        self._currentNode = None
         self._activeProject = activeProject
         # build empty models
         self._currentNodeShapeList = ShapeListModel(name="Node Parameters", currentViewId=self._activeProject.selectedViewId, parent=self)
@@ -34,15 +36,17 @@ class ShapeEditor(QObject):
         # connect active project update signals
         # build or clear the models
         if enable:
+            # connect project signals
             self._activeProject.selectedViewIdChanged.connect(self._onSelectedViewIdChanged)
             self._activeProject.selectedNodeChanged.connect(self._onSelectedNodeChanged)
-            self._onSelectedViewIdChanged()
-            self._onSelectedViewIdChanged()
+            self._onSelectedViewIdChanged() # force view Id update
+            self._onSelectedNodeChanged() # force current node update
         else :
+            # disconnect project signals
             self._activeProject.selectedViewIdChanged.disconnect(self._onSelectedViewIdChanged)
             self._activeProject.selectedNodeChanged.disconnect(self._onSelectedNodeChanged)
-            self._currentNodeShapeList.clear()
-            self._currentNodeFileShapeLists.clear()
+            self._currentNodeShapeList.clear() # clear model
+            self._currentNodeFileShapeLists.clear() # clear model
         self._enable = enable  
 
     @Slot()
@@ -56,13 +60,16 @@ class ShapeEditor(QObject):
     @Slot()
     def _onSelectedNodeChanged(self):
         """Callback when the active project selected node changes."""
-        # check selected node is valid
-        if self._activeProject.selectedNode is None:
+        # disconnect previous current node changed signal
+        if self._currentNode is not None:
+            self._currentNode.internalsUpdated.disconnect(self._onSelectedNodeChanged)
+        # update current node
+        self._currentNode = self._activeProject.selectedNode
+        # check current node is valid
+        if self._currentNode is None:
             return
-        # connect node changed signal
-        # TODO: find better update signal, at attribute level
-        # TODO: disconnect
-        self._activeProject.selectedNode.internalAttributesChanged.connect(self._onSelectedNodeChanged)
+        # connect current node changed signal
+        self._activeProject.selectedNode.internalsUpdated.connect(self._onSelectedNodeChanged)
         # load node parameters shapes
         self._currentNodeShapeList.loadShapesFromNode(self._activeProject.selectedNode)
         # find node shape file parameters
@@ -70,7 +77,6 @@ class ShapeEditor(QObject):
         nodeShapeFileNames = []
         for attribute in self._activeProject.selectedNode.attributes:
             self.__getShapeFiles(attribute, nodeShapeFileNames)
-        print(nodeShapeFileNames) # TODO: Remove
         # load node shape file parameters
         for filepath in nodeShapeFileNames:
             self._currentNodeFileShapeLists.addShapeListFile(name=os.path.basename(filepath), filepath=filepath)

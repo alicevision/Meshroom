@@ -53,7 +53,7 @@ class ShapeListModel(QAbstractListModel):
                     type = itemData.get("type", "unknown")
                     properties = itemData.get("properties", {})
                     observations = itemData.get("observations", {})
-                    self._shapes.append(ShapeData(name, type, properties, observations, isEditable=False))
+                    self._shapes.append(ShapeData(name, type, properties, observations, isStatic=(len(observations)<=0), isEditable=False))
         except FileNotFoundError:
             print("No shapes found to load.")
         except json.JSONDecodeError as e:
@@ -100,17 +100,19 @@ class ShapeListModel(QAbstractListModel):
         # build shape properties/observations from child attributes
         properties = {}
         observations = {}
+        isStatic = True
         for attribute in shapeAttribute.value:
             if attribute.type == "ColorParam":
                 properties["color"] = attribute.value
             if attribute.type == "ListAttribute":
+                isStatic = False
                 for observationAttribute in attribute.value:
                     observation = {}
                     for propertyAttribute in observationAttribute.value:
                         observation[propertyAttribute.name] = propertyAttribute.value
                     observations[str(observation.get("viewId", -1))] = observation
         # add the new shape
-        return ShapeData(name=shapeAttribute.name, type=shapeAttribute.desc.semantic, properties=properties, observations=observations)
+        return ShapeData(name=shapeAttribute.name, type=shapeAttribute.desc.semantic, properties=properties, observations=observations, isStatic=isStatic)
     
     def clear(self):
         """Clear all ths shapes and update the model."""

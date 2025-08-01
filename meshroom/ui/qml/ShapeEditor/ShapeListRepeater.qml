@@ -38,6 +38,7 @@ Repeater {
                 shapeLoader.item.modelIndex = model.modelIndex;   // set modelIndex for the shape
                 shapeLoader.item.properties = model.properties;   // set properties for the shape
                 shapeLoader.item.observation = model.observation; // set observation for the shape
+                shapeLoader.item.isEditable = model.isEditable;   // set editable state for the shape
             }
         }
     }

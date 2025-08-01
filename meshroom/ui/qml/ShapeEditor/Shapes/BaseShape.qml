@@ -20,6 +20,9 @@ Shape {
     // shape observation
     property var observation: ({})
 
+    // shape is editable
+    property bool isEditable: false
+
     // default stroke color of the shape
     readonly property color defaultStrokeColor: "#ffffffff"
 

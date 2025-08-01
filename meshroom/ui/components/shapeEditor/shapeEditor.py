@@ -82,6 +82,7 @@ class ShapeEditor(QObject):
             self._currentNodeFileShapeLists.addShapeListFile(name=os.path.basename(filepath), filepath=filepath)
 
     def __getShapeFiles(self, attribute, list):
+        """Recursive function that build a list of shape json file from a parent attribute."""
         # check if the attribute is a shape attribute
         if not attribute.desc.semantic == "shapesFile":
             # recusive call if ListAttribute or GroupAttribute
@@ -92,3 +93,57 @@ class ShapeEditor(QObject):
         # check if the shape file exists  
         if os.path.exists(attribute.value):     
             list.append(attribute.value)
+
+    def __getShapeObservationsAttribute(self, shapeName:str) -> Attribute:
+        """Get the observations attribute of the given shape."""
+        # check shapeName and current node
+        if shapeName is None or self._currentNode is None:
+            return None
+        # get current node shape attribute
+        attribute = self._currentNode.attribute(shapeName)
+        # check shape attribute
+        if attribute is None and attribute.type != "GroupAttribute":
+            return None
+        # get observation list attribute
+        listAttribute = None
+        for childAttribute in attribute.value:
+            if childAttribute.type == "ListAttribute":
+                listAttribute = childAttribute
+        return listAttribute
+
+    def __getShapeCurrentObservationAttribute(self, shapeName:str) -> Attribute:
+        """Get the current observation attribute of the given shape."""
+        # get shape observations list attribute
+        observationsAttribute = self.__getShapeObservationsAttribute(shapeName)
+         # check shape observations list attribute
+        if observationsAttribute is None:
+            return None
+        # find observation group attribute
+        for attribute in observationsAttribute:
+            viewIdAttribute = attribute.childAttribute("viewId")
+            if viewIdAttribute is not None and str(viewIdAttribute.value) == self._activeProject._selectedViewId:
+                return attribute
+        # no observation found
+        return None
+
+    @Slot(str)
+    def addCurrentObservation(self, shapeName:str):
+        """Add the current view id observation for the given shape."""
+        # get shape observations list attribute
+        observationsAttribute = self.__getShapeObservationsAttribute(shapeName)
+        # check shape observations list attribute
+        if observationsAttribute is None:
+            return
+        # add current observation
+        self._activeProject.appendAttribute(observationsAttribute, "{\"viewId\": " + self._activeProject._selectedViewId + "}")
+
+    @Slot(str)
+    def removeCurrentObservation(self, shapeName:str):
+        """Remove the current view id observation for the given shape."""
+        # get shape current observation group attribute
+        observationAttribute = self.__getShapeCurrentObservationAttribute(shapeName)
+        # check shape current observation group attribute
+        if observationAttribute is None:
+            return
+        # remove current observation
+        self._activeProject.removeAttribute(observationAttribute)

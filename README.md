@@ -88,7 +88,7 @@ See [MeshroomHub](https://github.com/meshroomHub) for more plugins.
 
 ## GSplat Plugin
 
-[MrGSplat](https://github.com/meshroomHub/mrGSplat): A set of nodes to run GSplat in Meshroom.
+[MrGSplat](https://github.com/meshroomHub/mrGSplat): A set of nodes for 3D Gaussian Splatting reconstruction. The plugin integrates seamlessly with AliceVision's photogrammetry pipeline, allowing users to create Gaussian splat representations from multi-view images and to render new viewpoints.
 
 
 ## Research Plugin

@@ -78,16 +78,28 @@ The AliceVision plugin provides pipelines for:
 See [MeshroomHub](https://github.com/meshroomHub) for more plugins.
 
 ## DepthEstimation Plugin
+
 [MrDepthEstimation](https://github.com/meshroomHub/mrDepthEstimation): A set of nodes for depth estimation from an image sequence.
+
+## RoMa Plugin
+
+[MrRoma](https://github.com/meshroomHub/mrRoma): A set of nodes for RoMa (robust dense feature matching).
+
+
+## GSplat Plugin
+
+[MrGSplat](https://github.com/meshroomHub/mrGSplat): A set of nodes to run GSplat in Meshroom.
 
 
 ## Research Plugin
+
 [Meshroom Research](https://github.com/meshroomHub/MeshroomResearch)
 
 Meshroom-Research focuses on evaluating and benchmarking Machine Learning nodes for 3D Computer Vision.
 
 
 ## MicMac Plugin
+
 [MeshroomMicMac](https://github.com/alicevision/MeshroomMicMac)
 
 An exploratory plugin providing MicMac pipelines. 

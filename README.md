@@ -79,7 +79,8 @@ See [MeshroomHub](https://github.com/meshroomHub) for more plugins.
 
 ## DepthEstimation Plugin
 
-[MrDepthEstimation](https://github.com/meshroomHub/mrDepthEstimation): A set of nodes for depth estimation from an image sequence.
+[MrDepthEstimation](https://github.com/meshroomHub/mrDepthEstimation): A set of nodes for AI-based monocular depth estimation from image sequences. The plugin leverages deep learning models to predict depth information from single images, enabling depth estimation in new scenarios.
+
 
 ## RoMa Plugin
 
@@ -109,6 +110,7 @@ MicMac is a free open-source photogrammetric software for 3D reconstruction unde
 
 
 ## Geolocation Plugin
+
 [MrGeolocation](https://github.com/meshroomHub/mrGeolocation)
 
 The Meshroom Geolocation plugin consists of nodes that utilize the GPS data to download 2D and 3D maps. It could extract the embedded GPS data from photographs to accurately place and contextualize your 3D scans within their global geographical environment.
@@ -116,6 +118,7 @@ You can retrieve a variety of maps: a 2D map (worldwide – using Open Street Ma
 
 
 # License
+
 The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 

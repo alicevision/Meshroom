@@ -71,7 +71,7 @@ The AliceVision plugin offers comprehensive pipelines for:
 
 ## Segmentation Plugin
 
-[MrSegmentation](https://github.com/meshroomHub/mrSegmentation): A set of nodes for image segmentation from text prompts.
+[MrSegmentation](https://github.com/meshroomHub/mrSegmentation): A set of nodes for AI-powered image segmentation from natural language prompts. The plugin leverages foundation models to automatically identify and isolate specific objects or regions in images based on textual descriptions, enabling intuitive content-aware processing workflows.
 
 
 # Other plugins

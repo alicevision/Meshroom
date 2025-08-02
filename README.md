@@ -103,10 +103,7 @@ A research-oriented plugin for evaluating and benchmarking cutting-edge Machine 
 ## MicMac Plugin
 
 [MeshroomMicMac](https://github.com/alicevision/MeshroomMicMac)
-
-An exploratory plugin providing MicMac pipelines. 
-It does not yet support the full invalidation system of Meshroom, but is fully usable to adjust the pipeline and process it.
-MicMac is a free open-source photogrammetric software for 3D reconstruction under development at the National Institute of Geographic and Forestry Information (French Mapping Agency, IGN) and the National School of Geographic Sciences (ENSG) within the LASTIG lab.
+An exploratory plugin integrating MicMac's photogrammetric algorithms into Meshroom workflows. MicMac is a mature open-source photogrammetric software developed by the National Institute of Geographic and Forestry Information (French Mapping Agency, IGN) and the National School of Geographic Sciences (ENSG) within the LASTIG lab, offering specialized tools for surveying and mapping applications. While the plugin doesn't yet support Meshroom's full invalidation system, it provides fully functional pipelines for users seeking MicMac's specific photogrammetric capabilities.
 
 
 ## Geolocation Plugin

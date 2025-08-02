@@ -97,8 +97,7 @@ The plugin leverages foundation models to provide pixel-dense correspondence est
 ## Research Plugin
 
 [Meshroom Research](https://github.com/meshroomHub/MeshroomResearch)
-
-Meshroom-Research focuses on evaluating and benchmarking Machine Learning nodes for 3D Computer Vision.
+A research-oriented plugin for evaluating and benchmarking cutting-edge Machine Learning algorithms in 3D Computer Vision. The plugin provides experimental nodes and evaluation frameworks to test new methodologies, compare algorithm performance, and validate research innovations before integration into production pipelines.
 
 
 ## MicMac Plugin

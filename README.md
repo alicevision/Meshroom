@@ -59,19 +59,20 @@ The Meshroom UI is divided into several key areas:
 
 [AliceVision Repository](https://github.com/alicevision/AliceVision)
 
-AliceVision provides state-of-the-art 3D computer vision and machine learning algorithms that can be tested, analyzed, and reused.
-The project results from the collaboration between academia and industry to provide cutting-edge algorithms with the robustness and quality required for production usage.
-The AliceVision plugin provides pipelines for:
- - **3D Reconstruction** from multi-view images, see the [presentation of the pipeline steps](http://alicevision.github.io/#photogrammetry) and [some results on sketchfab](http://sketchfab.com/AliceVision)
- - **Camera Tracking**
- - **HDR fusion** of multi-bracketed photographies
- - **Panorama stitching** supports fisheye optics, but also the generation of high-resolution images using motorized head systems.
- - **Photometric Stereo** for geometric reconstruction from a single view with multiple lightings
- - **Multi-View Photometric Stereo** to combine photogrammetry and photometric stereo
+AliceVision provides state-of-the-art 3D Computer Vision and Machine Learning algorithms that analyze and understand image content to transform collections of regular 2D photographs into detailed 3D models, camera positions, and scene geometry. Born from collaboration between academia and industry, it delivers research-grade algorithms with production-level robustness and quality.
+The AliceVision plugin offers comprehensive pipelines for:
+- **3D Reconstruction** from multi-view images ([pipeline overview](http://alicevision.github.io/#photogrammetry), [results on Sketchfab](http://sketchfab.com/AliceVision))
+- **Camera Tracking** for camera motion estimation
+- **HDR Fusion** from multi-bracketed photography
+- **Panorama Stitching** including fisheye support and motorized head systems
+- **Photometric Stereo** for geometric reconstruction from a single view with multiple lightings
+- **Multi-View Photometric Stereo** combining photogrammetry with photometric stereo
 
 
 ## Segmentation Plugin
+
 [MrSegmentation](https://github.com/meshroomHub/mrSegmentation): A set of nodes for image segmentation from text prompts.
+
 
 # Other plugins
 

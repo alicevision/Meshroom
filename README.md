@@ -109,9 +109,7 @@ An exploratory plugin integrating MicMac's photogrammetric algorithms into Meshr
 ## Geolocation Plugin
 
 [MrGeolocation](https://github.com/meshroomHub/mrGeolocation)
-
-The Meshroom Geolocation plugin consists of nodes that utilize the GPS data to download 2D and 3D maps. It could extract the embedded GPS data from photographs to accurately place and contextualize your 3D scans within their global geographical environment.
-You can retrieve a variety of maps: a 2D map (worldwide – using Open Street Map), an elevation model in 3D (worldwide – using NASA datasets), and a highly detailed 3D model from Lidar scans when available (France-only – using France’s open data IGN Lidar datasets).
+A plugin for geospatial integration that extracts GPS data from photographs and downloads contextual geographic information. The plugin automatically places 3D reconstructions within their real-world geographical environment by retrieving worldwide 2D maps (OpenStreetMap), global elevation models (NASA datasets), and high-resolution 3D Lidar models where available (France via IGN open data). This enables accurate georeferencing and contextual visualization of photogrammetric reconstructions.
 
 
 # License

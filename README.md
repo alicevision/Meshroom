@@ -21,14 +21,12 @@ To use Meshroom with custom plugins, see [**INSTALL_PLUGINS.md**](INSTALL_PLUGIN
 
 # Concepts
 
-- **Graph, Nodes and Attributes**
-Nodes are the fundamental building blocks, each performing a specific task. A graph is a collection of interconnected nodes, defining the sequence of operations.  The nodes are connected through edges that represent the flow of data between them. Each node has a set of attributes or parameters that control its behavior. Adjusting a parameter triggers the invalidation of all connected nodes.
-- **Templates**
-Each plugin provides a set of pipeline templates. You can customize them and save your own templates.
-- **Local / Renderfarm**
-You can perform computations either locally or by using a render farm for distributed processing. As the computations proceed, you can monitor their progress and review the logs. It also keeps track of resource consumption to monitor the efficiency and identify the bottlenecks. You can use both local and renderfarm computation at the same time, as Meshroom keeps track of locked nodes while computing externally.
-- **Custom Plugins**
-You can create your custom plugin, in pure Python or through command lines to execute external software.
+- **Graph**: A collection of interconnected nodes that defines the sequence of operations to represent your complete data processing workflow.
+- **Nodes**: The fundamental building blocks, each performing a specific task. Nodes are connected through edges that represent the flow of data between them.
+- **Attributes**: Parameters that control how each node behaves. When an attribute is modified, it triggers the invalidation of all connected downstream nodes while preserving cached intermediate results.
+- **Templates**: Ready-to-use pipeline configurations provided by plugins. You can customize existing templates or create and save your own.
+- **Local / Renderfarm**: Choose between local processing or distributed computation on render farms. You can monitor progress, review logs, track resource consumption, and use both modes simultaneously as Meshroom manages node locking during external computation.
+- **Custom Plugins**: Extend Meshroom's capabilities by creating your own nodes in Python or by integrating external command-line tools.
 
 
 # User Interface

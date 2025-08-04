@@ -471,36 +471,32 @@ Panel {
                     opacity: 0.8
                 }
 
-                ColumnLayout {
+                Label {
+                    id: addArea
                     anchors.fill: parent
                     visible: dropArea.containsDrag
-                    spacing: 1
-                    Label {
-                        id: addArea
-                        property bool hovered: dropArea.drag.y < height
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        text: {
-                            if (nbMeshroomScenes != nbDraggedFiles && nbMeshroomScenes != 0) {
-                                return "Cannot Add Projects And Images Together"
-                            }
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: {
+                        if (nbMeshroomScenes != nbDraggedFiles && nbMeshroomScenes != 0) {
+                            return "Cannot Add Projects And Images Together"
+                        }
 
-                            if (nbMeshroomScenes == 1 && nbMeshroomScenes == nbDraggedFiles) {
-                                return "Load Project"
-                            } else if (nbMeshroomScenes == nbDraggedFiles) {
-                                return "Only One Project"
-                            } else {
-                                return "Add Images"
-                            }
+                        if (nbMeshroomScenes == 1 && nbMeshroomScenes == nbDraggedFiles) {
+                            return "Load Project"
+                        } else if (nbMeshroomScenes == nbDraggedFiles) {
+                            return "Only One Project"
+                        } else {
+                            return "Add Images"
                         }
-                        font.bold: true
-                        background: Rectangle {
-                            color: parent.hovered ? parent.palette.highlight : parent.palette.window
-                            opacity: 0.8
-                            border.color: parent.palette.highlight
-                        }
+                    }
+                    font.bold: true
+                    background: Rectangle {
+                        color: dropArea.containsDrag ? parent.palette.highlight : parent.palette.window
+                        opacity: 0.8
+                        border.color: parent.palette.highlight
                     }
                 }
             }

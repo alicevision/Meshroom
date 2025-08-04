@@ -640,43 +640,6 @@ class Reconstruction(UIGraph):
                          if n.getGlobalStatus() == preferredStatus), node)
         return node
 
-    def addSfmAugmentation(self, withMVS=False):
-        """
-        Create a new augmentation step connected to the last SfM node of this Reconstruction and
-        return the created CameraInit and SfM nodes.
-
-        If the Reconstruction is not initialized (empty initial CameraInit), this method won't
-        create anything and return initial CameraInit and SfM nodes.
-
-        Args:
-            withMVS (bool): whether to create the MVS pipeline after the augmentation
-
-        Returns:
-            Node, Node: CameraInit, StructureFromMotion
-        """
-        sfm = self.lastSfmNode()
-        if not sfm:
-            return None, None
-
-        if len(self._cameraInits) == 1:
-            assert self._cameraInit == self._cameraInits[0]
-            # Initial CameraInit is empty, use this one
-            if len(self._cameraInits[0].viewpoints) == 0:
-                return self._cameraInit, sfm
-
-        # enable updates between duplication and layout to get correct depths during layout
-        with self.groupedGraphModification("SfM Augmentation", disableUpdates=False):
-            # disable graph updates when adding augmentation branch
-            with self.groupedGraphModification("Augmentation", disableUpdates=True):
-                sfm, mvs = multiview.sfmAugmentation(self, self.lastSfmNode(), withMVS=withMVS)
-            first, last = sfm[0], mvs[-1] if mvs else sfm[-1]
-            # use graph current bounding box height to spawn the augmentation branch
-            bb = self.layout.boundingBox()
-            self.layout.autoLayout(first, last, bb[0], bb[3] + self._layout.gridSpacing)
-
-        self.sfmAugmented.emit(first, last)
-        return sfm[0], sfm[-1]
-
     @Slot(result="QVariantList")
     def allImagePaths(self):
         """ Get all image paths in the reconstruction. """
@@ -883,7 +846,7 @@ class Reconstruction(UIGraph):
 
         # Duplicate 'cameraInit' outside the graph.
         #   => allows to compute intrinsics without modifying the node or the graph
-        # If cameraInit is None (i.e: SfM augmentation):
+        # If cameraInit is None:
         #   * create an uninitialized node
         #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
         inputs = cameraInit.toDict()["inputs"] if cameraInit else {}
@@ -924,15 +887,7 @@ class Reconstruction(UIGraph):
 
     def onIntrinsicsAvailable(self, cameraInit, views, intrinsics, rebuild=False):
         """ Update CameraInit with given views and intrinsics. """
-        augmentSfM = cameraInit is None
         commandTitle = "Add {} Images"
-
-        # SfM augmentation
-        if augmentSfM:
-            # filter out views already involved in the reconstruction
-            allViewIds = self.allViewIds()
-            views = [view for view in views if int(view["viewId"]) not in allViewIds]
-            commandTitle = "Augment Reconstruction ({} Images)"
 
         if rebuild:
             commandTitle = f"Rebuild '{cameraInit.label}' Intrinsics"
@@ -942,11 +897,8 @@ class Reconstruction(UIGraph):
             return
 
         commandTitle = commandTitle.format(len(views))
-        # allow updates between commands so that node depths
-        # are updated after "addSfmAugmentation" (useful for auto layout)
+        # allow updates between commands so that node depths (useful for auto layout)
         with self.groupedGraphModification(commandTitle, disableUpdates=False):
-            if augmentSfM:
-                cameraInit, self.sfm = self.addSfmAugmentation(withMVS=True)
             with self.groupedGraphModification("Set Views and Intrinsics"):
                 self.setAttribute(cameraInit.viewpoints, views)
                 self.setAttribute(cameraInit.intrinsics, intrinsics)
@@ -1211,7 +1163,6 @@ class Reconstruction(UIGraph):
     sfmReportChanged = Signal()
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
-    sfmAugmented = Signal(Node, Node)
 
     nbCameras = Property(int, reconstructedCamerasCount, notify=sfmReportChanged)
 

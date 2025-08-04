@@ -105,7 +105,6 @@ Item {
 
     Platform.FileDialog {
         id: loadScriptDialog
-        options: Platform.FileDialog.DontUseNativeDialog
         title: "Load Script"
         nameFilters: ["Python Script (*.py)"]
         onAccepted: {
@@ -116,7 +115,6 @@ Item {
 
     Platform.FileDialog {
         id: saveScriptDialog
-        options: Platform.FileDialog.DontUseNativeDialog
         title: "Save script"
         nameFilters: ["Python Script (*.py)"]
         fileMode: Platform.FileDialog.SaveFile

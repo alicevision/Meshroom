@@ -132,7 +132,6 @@ Page {
     // File dialogs
     Platform.FileDialog {
         id: saveFileDialog
-        options: Platform.FileDialog.DontUseNativeDialog
 
         property var _callback: undefined
 
@@ -178,7 +177,6 @@ Page {
 
     Platform.FileDialog {
         id: saveTemplateDialog
-        options: Platform.FileDialog.DontUseNativeDialog
 
         signal closed(var result)
 
@@ -202,7 +200,6 @@ Page {
 
     Platform.FileDialog {
         id: loadTemplateDialog
-        options: Platform.FileDialog.DontUseNativeDialog
         title: "Load Template"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
@@ -215,7 +212,6 @@ Page {
 
     Platform.FileDialog {
         id: importImagesDialog
-        options: Platform.FileDialog.DontUseNativeDialog
         title: "Import Images"
         fileMode: Platform.FileDialog.OpenFiles
         nameFilters: []
@@ -228,7 +224,6 @@ Page {
 
     Platform.FileDialog {
         id: importProjectDialog
-        options: Platform.FileDialog.DontUseNativeDialog
         title: "Import Project"
         fileMode: Platform.FileDialog.OpenFile
         nameFilters: ["Meshroom Graphs (*.mg)"]

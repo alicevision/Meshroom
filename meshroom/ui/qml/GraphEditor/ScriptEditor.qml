@@ -7,7 +7,7 @@ import Controls 1.0
 import MaterialIcons 2.2
 import Utils 1.0
 
-import Qt.labs.platform 1.0 as Platform
+import Qt.labs.platform as Platform
 
 import ScriptEditor 1.0
 

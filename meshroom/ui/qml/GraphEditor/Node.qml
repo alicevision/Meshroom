@@ -27,8 +27,7 @@ Item {
     /// Combined x and y
     property point position: Qt.point(x, y)
     /// Styling
-    property color shadowColor: "#cc000000"
-    readonly property color defaultColor: isCompatibilityNode ? "#444" : !node.isComputableType ? "#BA3D69" : activePalette.base
+    readonly property color defaultColor: isCompatibilityNode ? activePalette.mid : !node.isComputableType ? "#BA3D69" : activePalette.base
     property color baseColor: defaultColor
 
     /// Shake Relevance
@@ -297,14 +296,14 @@ Item {
             color: node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color
             layer.enabled: true
             layer.effect: MultiEffect {
-                shadowColor: shadowColor
+                shadowColor: activePalette.shadow
                 // Performance tip: Reduce blurMax (not shadowBlur) to minimize shadow blur.
                 shadowBlur: 1.0  // So we keep shadowBlur at 1.0.
                 shadowEnabled: true
                 blurMax: 4  // large values could impact performances
             }
             radius: 3
-            opacity: 0.7
+            opacity: 0.85
         }
 
         Rectangle {
@@ -347,7 +346,7 @@ Item {
                             Layout.fillWidth: true
                             text: node ? node.label : ""
                             padding: 4
-                            color: root.mainSelected ? "white" : activePalette.text
+                            color: root.mainSelected ? activePalette.highlightedText : activePalette.text
                             elide: Text.ElideMiddle
                             font.pointSize: 8
                         }

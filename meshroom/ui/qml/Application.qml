@@ -5,7 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import Qt.labs.platform 1.0 as Platform
+import Qt.labs.platform as Platform
 import QtQuick.Dialogs
 
 import GraphEditor 1.0

@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MaterialIcons 2.2
-import Qt.labs.platform 1.0 as Platform
+import Qt.labs.platform as Platform
 
 import Controls 1.0
 

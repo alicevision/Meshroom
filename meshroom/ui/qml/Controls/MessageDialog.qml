@@ -86,6 +86,7 @@ Dialog {
             visible: text != ""
             onLinkActivated: function(link) { Qt.openUrlExternally(link) }
 
+            Layout.minimumWidth: 500
             Layout.preferredWidth: titleLabel.width
             wrapMode: Text.WordWrap
         }
@@ -96,6 +97,7 @@ Dialog {
             visible: text != ""
             onLinkActivated: function(link) { Qt.openUrlExternally(link) }
 
+            Layout.minimumWidth: 500
             Layout.preferredWidth: titleLabel.width
             wrapMode: Text.WordWrap
         }
@@ -105,6 +107,7 @@ Dialog {
             visible: text != ""
             onLinkActivated: function(link) { Qt.openUrlExternally(link) }
 
+            Layout.minimumWidth: 500
             Layout.preferredWidth: titleLabel.width
             wrapMode: Text.WordWrap
         }

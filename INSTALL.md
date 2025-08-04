@@ -1,4 +1,4 @@
-# Development
+# Meshroom installation
 This guide will help you setup a development environment to launch and contribute to Meshroom.
 
 
@@ -36,7 +36,7 @@ python bin/meshroom_batch --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
 ```
 
 
-## Use Prebuilt AliceVision
+## Use prebuilt AliceVision
 
 Download a [Release](https://github.com/alicevision/meshroom/releases) or extract files from a recent AliceVision build on [Dockerhub](https://hub.docker.com/r/alicevision/alicevision).
 
@@ -47,7 +47,7 @@ You may need to checkout the corresponding Meshroom version/tag to avoid version
 
 ## Install Requirements
 
-### Python Environment
+### Python environment
 
 * Windows: Python 3 (>=3.9)
 * Linux: Python 3 (>=3.9)
@@ -60,7 +60,7 @@ pip install -r requirements.txt -r dev_requirements.txt
 > `dev_requirements` is only related to testing and packaging. It is not mandatory to run Meshroom.
 
 > [!NOTE]
-> It is recommended to use a [virtual python environment](https://docs.python.org/3.9/library/venv.html), like `python -m venv meshroom_venv`.
+> It is recommended to use a [virtual Python environment](https://docs.python.org/3.9/library/venv.html), like `python -m venv meshroom_venv`.
 
 
 ### Qt/PySide
@@ -68,8 +68,12 @@ pip install -r requirements.txt -r dev_requirements.txt
 * PySide >= 6.7
 
 > [!WARNING]
-> For PySide 6.8.0 and over on Windows, the following error may occur when leaving Meshroom's homepage: `Cannot load /path/to/pip/install/PySide6/qml/QtQuick/Scene3D/qtquickscene3dplugin.dll: specified module cannot be found`. This is caused by Qt63DQuickScene3D.dll which seems to be missing from the
-pip distribution, but can be retrieved from a standard Qt installation. Alternatively, the DLL for MSVC2022_64 can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv). It then needs to be placed in `/path/to/pip/install/PySide6`.
+> For PySide 6.8.0 and over, the following error may occur when leaving Meshroom's homepage: `Cannot load /path/to/pip/install/PySide6/qml/QtQuick/Scene3D/qtquickscene3dplugin.dll: specified module cannot be found`.
+> This is caused by Qt63DQuickScene3D.dll which seems to be missing from the pip distribution, but can be retrieved from a standard Qt installation. 
+> On recent Linux systems such as Ubuntu 25, this can be resolved by installing `libqt63dquickscene3d6` using the package manager.
+> Alternatively:
+> - On Windows, the DLL for MSVC2022_64 can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv). It then needs to be placed in `/path/to/pip/install/PySide6`.
+> - On Linux, the .so (here, Rocky9-based) can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1dq7rm_Egc-sQF6j6_E55f60INyxt1ega). It then needs to be placed in `/path/to/pip/install/PySide6/Qt/qml/QtQuick/Scene3D`.
 
 
 ### AliceVision
@@ -78,30 +82,54 @@ Meshroom relies on the [AliceVision](https://github.com/alicevision/AliceVision)
 AliceVision's binaries must be in the path while running Meshroom.
 To build AliceVision, follow this [guide](https://github.com/alicevision/AliceVision/blob/develop/INSTALL.md) and add the installation in your PATH (and LD_LIBRARY_PATH on Linux/macOS).
 
+The following environment variable must always be set with the location of AliceVision's install directory:
+```
+ALICEVISION_ROOT=/path/to/AliceVision/install/directory
+```
+
+AliceVision provides nodes and templates for Meshroom, which need to be declared to Meshroom with the following environment variables:
+```
+MESHROOM_NODES_PATH={ALICEVISION_ROOT}/share/meshroom
+MESHROOM_PIPELINE_TEMPLATES_PATH={ALICEVISION_ROOT}/share/meshroom
+```
+
 Meshroom also relies on specific files provided with AliceVision.
-* sensor database: a text database of sensor width per camera model.
+* Sensor database: a text database of sensor width per camera model.
 Provided in AliceVision source tree: {ALICEVISION_REPOSITORY}/src/aliceVision/sensorDB/cameraSensors.db
-* voctree (optional): for larger datasets (>200 images), greatly improves image matching performances.
+* Voctree (optional): for larger datasets (>200 images), greatly improves image matching performances.
 It can be downloaded [here](https://gitlab.com/alicevision/trainedVocabularyTreeData/raw/master/vlfeat_K80L3.SIFT.tree).
-* sphere detection model (optional): for the automated sphere detection in stereo photometry.
+* Sphere detection model (optional): for the automated sphere detection in stereo photometry.
 It can be downloaded [here](https://gitlab.com/alicevision/SphereDetectionModel/-/raw/main/sphereDetection_Mask-RCNN.onnx).
-* semantic segmentation model (optional): for the semantic segmentation of objects.
+* Semantic segmentation model (optional): for the semantic segmentation of objects.
 It can be downloaded [here](https://gitlab.com/alicevision/semanticSegmentationModel/-/raw/main/fcn_resnet50.onnx).
 
-Environment variables must be set for Meshroom to find those files:
+Environment variables need to be set for Meshroom to find those files:
 ```
 ALICEVISION_SENSOR_DB=/path/to/database
 ALICEVISION_VOCTREE=/path/to/voctree
 ALICEVISION_SPHERE_DETECTION_MODEL=/path/to/detection/model
 ALICEVISION_SEMANTIC_SEGMENTATION_MODEL=/path/to/segmentation/model
-ALICEVISION_ROOT=/path/to/AliceVision/install/directory
+```
+If these variables are not set, Meshroom will by default look for them in `{ALICEVISION_ROOT}/share/aliceVision`.
+
+#### mrSegmentation plugin
+
+Some templates provided by AliceVision contain nodes that are not packaged with AliceVision.
+These nodes are part of the mrSegmentation plugin, which can be found [here](https://github.com/MeshroomHub/mrSegmentation).
+
+To build and install mrSegmentation, follow this [guide](https://github.com/MeshroomHub/mrSegmentation/blob/main/INSTALL.md).
+
+For mrSegmentation nodes to be correctly detected by Meshroom, the following environment variable should be set:
+```
+MESHROOM_PLUGINS_PATH=/path/to/mrSegmentation
 ```
 
+### QtAliceVision plugin
 
-### Qt AliceVision Plugin
-[QtAliceVision](https://github.com/alicevision/QtAliceVision)
+[QtAliceVision](https://github.com/alicevision/QtAliceVision), an additional Qt plugin, can be built to extend Meshroom UI features.
 
-An additional Qt plugin can be built to extend Meshroom UI features. Note that it is optional but highly recommended.
+Note that it is optional but highly recommended.
+
 This plugin uses AliceVision to load and visualize intermediate reconstruction files and OpenImageIO as backend to read images (including RAW/EXR).
 It also adds support for Alembic file loading in Meshroom's 3D viewport, which allows to visualize sparse reconstruction results (point clouds and cameras).
 
@@ -109,3 +137,62 @@ It also adds support for Alembic file loading in Meshroom's 3D viewport, which a
 QML2_IMPORT_PATH=/path/to/QtAliceVision/install/qml
 QT_PLUGIN_PATH=/path/to/QtAliceVision/install
 ```
+
+## Adding custom nodes, templates and plugins
+
+In addition to the nodes and templates provided by Meshroom and AliceVision, custom ones can be created, loaded by, and used in Meshroom.
+
+### Custom nodes
+
+Nodes need to be provided to Meshroom as Python modules, using the `MESHROOM_NODES_PATH` environment variable.
+
+For example, to add a set of three custom nodes (`CustomNodeA`, `CustomNodeB` and `CustomNodeC`) to Meshroom, a Python
+module containing these nodes must be created:
+```
+├── folderA
+│   ├── customNodes
+│   │   ├── __init__.py
+│   │   ├── CustomNodeA.py
+│   │   ├── CustomNodeB.py
+│   │   └── CustomNodeC.py
+├── folderB
+```
+
+Its containing folder must then be added to `MESHROOM_NODES_PATH`:
+- On Windows:
+  ```
+  set MESHROOM_NODES_PATH=/path/to/folderA;%MESHROOM_NODES_PATH%
+  ```
+- On Linux:
+  ```
+  export MESHROOM_NODES_PATH=/path/to/folderA:$MESHROOM_NODES_PATH
+  ```
+
+> [!NOTE]
+> A valid Meshroom node is a Python file that contains a class inheriting `meshroom.core.desc.BaseNode`.
+> Before loading a node, Meshroom checks whether its description (the content of its class) is valid.
+> If it is not, the node is rejected with an error log describing which part is invalid.
+
+### Custom templates
+
+The list of pipelines can also be enriched with custom templates, that are declared to Meshroom with the environment
+variable `MESHROOM_PIPELINE_TEMPLATES_PATH`.
+
+For example, if a couple of custom templates are saved in a folder "customTemplates", the variable should be set as follows:
+- On Windows:
+  ```
+  set MESHROOM_PIPELINE_TEMPLATES_PATH=/path/to/customTemplate;%MESHROOM_PIPELINE_TEMPLATES_PATH%
+  ```
+- On Linux:
+  ```
+  export MESHROOM_PIPELINE_TEMPLATES_PATH=/path/to/customTemplates:$MESHROOM_PIPELINE_TEMPLATES_PATH
+  ```
+
+> [!TIP]
+> A template can be a Meshroom graph of any type, but it is generally expected to be a graph saved in "minimal mode".
+> In "minimal mode", the .mg file only contains, for each node of the graph, the attributes that have non-default values.
+> To save a graph in "minimal mode", use the `File > Advanced > Save As Template` menu.
+
+### Custom plugins
+
+To add and use custom plugins with Meshroom, follow [**INSTALL_PLUGINS.md**](INSTALL_PLUGINS.md).

@@ -1,0 +1,42 @@
+# Meshroom plugins installation
+
+Plugins are collections of nodes and templates with their own dependencies. Plugin maintainers have flexibility in organizing their code, as Meshroom only requires a few directories to recognize nodes and pipelines.
+
+## Required Structure
+
+- **Meshroom folder**: All plugin nodes and templates must be placed within a `./meshroom/` directory
+- **Configuration file (optional)**: `./meshroom/config.json` file allows to define custom environment variables for the plugin  
+- **Virtual environment (optional)**: If you have specific dependencies, you can create a virtual environment in a folder with the plugin name and this python will be used when computing the node.
+
+## Example Structure
+
+For a plugin named "customPlugin", Meshroom expects this layout:
+```
+├── customPlugin/                # Plugin root folder
+│   ├── meshroom/                # Meshroom nodes and pipelines
+│   │   ├── customNodes1/        # Set of nodes
+│   │   │   ├── __init__.py      # Required to be a python module
+│   │   │   ├── NodeA.py
+│   │   │   ├── NodeB.py
+│   │   ├── customNodes2/        # Another set of nodes if needed
+│   │   │   ├── __init__.py
+│   │   │   ├── NodeC.py
+│   │   │   ├── NodeD.py
+│   │   ├── customTemplate1.mg   # Ready-to-use pipeline templates
+│   │   ├── customTemplate2.mg
+│   │   ├── config.json          # Optional plugin configuration file
+│   ├── customPlugin/            # Optional virtual environment with installed dependencies
+│   └── ...                      # Custom code (any structure)
+```
+
+## Loading the Plugin
+
+The "customPlugin" will be loaded automatically when Meshroom starts by setting the `MESHROOM_PLUGINS_PATH` environment variable:
+- On Windows:
+  ```
+  set MESHROOM_PLUGINS_PATH=/path/to/customPlugin;%MESHROOM_PLUGINS_PATH%
+  ```
+- On Linux:
+  ```
+  export MESHROOM_PLUGINS_PATH=/path/to/customPlugin:$MESHROOM_PLUGINS_PATH
+  ```

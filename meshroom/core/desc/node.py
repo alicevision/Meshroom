@@ -288,7 +288,7 @@ class CommandLineNode(BaseNode):
         cmdPrefix = chunk.node.nodeDesc.plugin.commandPrefix
         cmdSuffix = chunk.node.nodeDesc.plugin.commandSuffix
         if chunk.node.isParallelized and chunk.node.size > 1:
-            cmdSuffix = cmdSuffix + " " + self.commandLineRange.format(**chunk.range.toDict())
+            cmdSuffix = " " + self.commandLineRange.format(**chunk.range.toDict()) + " " + cmdSuffix
 
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 

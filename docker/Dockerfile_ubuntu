@@ -38,6 +38,10 @@ RUN python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
 
 WORKDIR ${MESHROOM_BUILD}
 
+# Move the bundled installation of AliceVision into Meshroom's bundle
+RUN mkdir ${MESHROOM_BUNDLE}/aliceVision && \
+    mv /opt/AliceVision_bundle/* ${MESHROOM_BUNDLE}/aliceVision
+
 # Build Meshroom plugins
 RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
 RUN make "-j$(nproc)" QtAliceVision
@@ -50,6 +54,16 @@ RUN make "-j$(nproc)" && \
 		${MESHROOM_BUNDLE}/aliceVision/share/libraw \
 		${MESHROOM_BUNDLE}/aliceVision/share/man/ \
 		aliceVision/share/pkgconfig
+
+# PySide6: copy missing libQt63DQuickScene3D.so along with its dependencies to avoid runtime issues
+RUN cp ${QT_DIR}/lib/libQt63DQuickScene3D.so.6.8.3 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
+    mv ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs/libQt63DQuickScene3D.so.6.8.3 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs/libQt63DQuickScene3D.so.6 && \
+    cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/lib/libQt6Concurrent.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
+    cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Animation/libQt63DAnimation.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
+    cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Core/libQt63DCore.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
+    cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Input/libQt63DInput.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
+    cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Logic/libQt63DLogic.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
+    cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Render/libQt63DRender.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs
 
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine

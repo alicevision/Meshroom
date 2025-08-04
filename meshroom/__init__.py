@@ -78,6 +78,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
                    - vlfeat_K80L3.tree  # voctree file
        - lib/      # Python lib folder
        - qtPlugins/
+       - plugins/
        Meshroom    # main executable
        COPYING.md  # Meshroom COPYING file
     """
@@ -123,20 +124,27 @@ def setupEnvironment(backend=Backend.STANDALONE):
         aliceVisionBinDir = os.path.join(aliceVisionDir, "bin")
         aliceVisionShareDir = os.path.join(aliceVisionDir, "share", "aliceVision")
         qtPluginsDir = os.path.join(rootDir, "qtPlugins")
+        pluginsDir = os.path.join(rootDir, "plugins")
         sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
         voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.SIFT.tree")
         sphereDetectionModel = os.path.join(aliceVisionShareDir, "sphereDetection_Mask-RCNN.onnx")
         semanticSegmentationModel = os.path.join(aliceVisionShareDir, "fcn_resnet50.onnx")
 
         env = {
-            'PATH': aliceVisionBinDir,
-            'QT_PLUGIN_PATH': [qtPluginsDir],
-            'QML2_IMPORT_PATH': [os.path.join(qtPluginsDir, "qml")]
+            "PATH": aliceVisionBinDir,
+            "QT_PLUGIN_PATH": [qtPluginsDir],
+            "QML2_IMPORT_PATH": [os.path.join(qtPluginsDir, "qml")]
         }
 
         for key, value in env.items():
             logging.debug(f"Add to {key}: {value}")
             addToEnvPath(key, value, 0)
+
+        # Add all available plugins
+        if os.path.exists(pluginsDir):
+            subfolders = [f.path for f in os.scandir(pluginsDir) if f.is_dir()]
+            for plugin in subfolders:
+                addToEnvPath("MESHROOM_PLUGINS_PATH", plugin, 0)
 
         variables = {
             "ALICEVISION_ROOT": aliceVisionDir,
@@ -150,6 +158,11 @@ def setupEnvironment(backend=Backend.STANDALONE):
             if key not in os.environ and os.path.exists(value):
                 logging.debug(f"Set {key}: {value}")
                 os.environ[key] = value
+
+        # Add nodes and templates from AliceVision
+        aliceVisionPluginDir = os.path.join(aliceVisionDir, "share", "meshroom")
+        addToEnvPath("MESHROOM_NODES_PATH", aliceVisionPluginDir)
+        addToEnvPath("MESHROOM_PIPELINE_TEMPLATES_PATH", aliceVisionPluginDir)
 
     addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))
     if sys.platform == "win32":

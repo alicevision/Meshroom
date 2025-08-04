@@ -7,8 +7,10 @@ Meshroom uses a nodal system where each node represents a specific operation, an
 Meshroom supports both local and distributed execution, enabling efficient parallel processing on render farms.
 It also includes interactive widgets for visualizing images and 3D data. Official releases come with built-in plugins for computer vision and machine learning tasks.
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/alicevision/Meshroom)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2997/badge)](https://bestpractices.coreinfrastructure.org/projects/2997)
 [![Build status](https://github.com/alicevision/Meshroom/actions/workflows/continuous-integration.yml/badge.svg?branch=develop)](https://github.com/alicevision/Meshroom/actions/workflows/continuous-integration.yml)
+
 
 # Get the project
 

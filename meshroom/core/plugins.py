@@ -99,10 +99,10 @@ class DirTreeProcessEnv(ProcessEnv):
 
         if sys.platform == "win32":
             # For Windows platforms, try and include the content of the virtual env if it exists
-            # The virtual env is expected to be named as its containing folder
-            venvPath = f"{folder}/{Path(folder).name}/Lib/site-packages"
-            if os.path.exists(venvPath):
-                self.pythonPaths.append(str(Path(venvPath)))
+            # The virtual env is expected to be named "venv"
+            venvPath = Path(folder, "venv", "Lib", "site-packages")
+            if venvPath.exists():
+                self.pythonPaths.append(venvPath.as_posix())
         else:
             # For Linux platforms, lib paths may need to be discovered recursively to be properly
             # added to LD_LIBRARY_PATH

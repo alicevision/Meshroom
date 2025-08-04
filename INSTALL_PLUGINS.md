@@ -6,7 +6,7 @@ Plugins are collections of nodes and templates with their own dependencies. Plug
 
 - **Meshroom folder**: All plugin nodes and templates must be placed within a `./meshroom/` directory
 - **Configuration file (optional)**: `./meshroom/config.json` file allows to define custom environment variables for the plugin  
-- **Virtual environment (optional)**: If you have specific dependencies, you can create a virtual environment in a folder with the plugin name and this python will be used when computing the node.
+- **Virtual environment (optional)**: If you have specific dependencies, you can create a virtual environment named "venv" in a folder and this Python will be used when computing the node.
 
 ## Example Structure
 
@@ -25,7 +25,7 @@ For a plugin named "customPlugin", Meshroom expects this layout:
 │   │   ├── customTemplate1.mg   # Ready-to-use pipeline templates
 │   │   ├── customTemplate2.mg
 │   │   ├── config.json          # Optional plugin configuration file
-│   ├── customPlugin/            # Optional virtual environment with installed dependencies
+│   ├── venv/                    # Optional virtual environment with installed dependencies
 │   └── ...                      # Custom code (any structure)
 ```
 

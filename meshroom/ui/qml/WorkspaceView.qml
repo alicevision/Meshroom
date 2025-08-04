@@ -82,15 +82,15 @@ Item {
                 onRemoveImageRequest: function(attribute) { reconstruction.removeImage(attribute) }
                 onAllViewpointsCleared: reconstruction.selectedViewId = "-1"
                 galleryGrid.currentIndex: 0
-                onFilesDropped: function(drop, augmentSfm) {
+                onFilesDropped: function(drop) {
                     if (drop["meshroomScenes"].length == 1) {
                         ensureSaved(function() {
-                            if (reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)) {
+                            if (reconstruction.handleFilesUrl(drop, cameraInit)) {
                                 MeshroomApp.addRecentProjectFile(drop["meshroomScenes"][0])
                             }
                         })
                     } else {
-                        reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)
+                        reconstruction.handleFilesUrl(drop, cameraInit)
                     }
                 }
             }

@@ -35,7 +35,7 @@ Panel {
 
     signal removeImageRequest(var attribute)
     signal allViewpointsCleared()
-    signal filesDropped(var drop, var augmentSfm)
+    signal filesDropped(var drop)
 
     title: "Image Gallery"
     implicitWidth: (root.defaultCellSize + 2) * 2
@@ -456,9 +456,8 @@ Panel {
                     nbMeshroomScenes = filesByType["meshroomScenes"].length
                 }
                 onDropped: function(drop) {
-                    var augmentSfm = augmentArea.hovered
                     if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
-                        root.filesDropped(filesByType, augmentSfm)
+                        root.filesDropped(filesByType)
                     } else {
                         errorDialog.open()
                     }
@@ -499,35 +498,6 @@ Panel {
                         font.bold: true
                         background: Rectangle {
                             color: parent.hovered ? parent.palette.highlight : parent.palette.window
-                            opacity: 0.8
-                            border.color: parent.palette.highlight
-                        }
-                    }
-
-                    // DropArea overlay
-                    Label {
-                        id: augmentArea
-                        property bool hovered: visible && dropArea.drag.y >= y
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: parent.height * 0.3
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        text: "Augment Reconstruction"
-                        font.bold: true
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        visible: {
-                            if (nbMeshroomScenes > 0) {
-                                return false
-                            }
-
-                            if (m.viewpoints) {
-                                return m.viewpoints.count > 0
-                            } else {
-                                return false
-                            }
-                        }
-                        background: Rectangle {
-                            color: parent.hovered ? palette.highlight : palette.window
                             opacity: 0.8
                             border.color: parent.palette.highlight
                         }

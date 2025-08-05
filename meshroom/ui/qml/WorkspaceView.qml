@@ -25,7 +25,7 @@ Item {
     readonly property alias imageGallery: imageGallery
 
     // Use settings instead of visible property as property changes are not propagated
-    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D || settingsUILayout.showLiveReconstruction
+    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
@@ -65,7 +65,7 @@ Item {
 
         MSplitView {
             id: leftSplitView
-            visible: settingsUILayout.showImageGallery || settingsUILayout.showLiveReconstruction
+            visible: settingsUILayout.showImageGallery
             orientation: Qt.Vertical
             SplitView.preferredWidth: imageGallery.defaultCellSize * 2 + 20
             SplitView.minimumWidth: imageGallery.defaultCellSize
@@ -82,23 +82,17 @@ Item {
                 onRemoveImageRequest: function(attribute) { reconstruction.removeImage(attribute) }
                 onAllViewpointsCleared: reconstruction.selectedViewId = "-1"
                 galleryGrid.currentIndex: 0
-                onFilesDropped: function(drop, augmentSfm) {
+                onFilesDropped: function(drop) {
                     if (drop["meshroomScenes"].length == 1) {
                         ensureSaved(function() {
-                            if (reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)) {
+                            if (reconstruction.handleFilesUrl(drop, cameraInit)) {
                                 MeshroomApp.addRecentProjectFile(drop["meshroomScenes"][0])
                             }
                         })
                     } else {
-                        reconstruction.handleFilesUrl(drop, augmentSfm ? null : cameraInit)
+                        reconstruction.handleFilesUrl(drop, cameraInit)
                     }
                 }
-            }
-            LiveSfmView {
-                id: liveSfmView
-                visible: settingsUILayout.showLiveReconstruction
-                reconstruction: root.reconstruction
-                SplitView.preferredHeight: childrenRect.height
             }
         }
 

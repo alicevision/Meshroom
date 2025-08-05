@@ -39,134 +39,6 @@ class Message(QObject):
     detailedText = Property(str, lambda self: self._detailedText, constant=True)
 
 
-class LiveSfmManager(QObject):
-    """
-    Manage a live SfM reconstruction by creating augmentation steps in the graph over time,
-    based on images progressively added to a watched folder.
-
-    File watching is based on regular polling and not filesystem events to work on network mounts.
-    """
-    def __init__(self, reconstruction):
-        super().__init__(reconstruction)
-        self.reconstruction = reconstruction
-        self._folder = ''
-        self.timerId = -1
-        self.minImagesPerStep = 4
-        self.watchTimerInterval = 1000
-        self.allImages = []
-        self.cameraInit = None
-        self.sfm = None
-        self._running = False
-
-    def reset(self):
-        self.stop(False)
-        self.sfm = None
-        self.cameraInit = None
-
-    def setRunning(self, value):
-        if self._running == value:
-            return
-        if self._running:
-            self.killTimer(self.timerId)
-        else:
-            self.timerId = self.startTimer(self.watchTimerInterval)
-        self._running = value
-        self.runningChanged.emit()
-
-    @Slot(str, int)
-    def start(self, folder, minImagesPerStep):
-        """
-        Start live SfM augmentation.
-
-        Args:
-            folder (str): the folder to watch in which images are added over time
-            minImagesPerStep (int): minimum number of images in an augmentation step
-        """
-        # print('[LiveSfmManager] Watching {} for images'.format(folder))
-        if not os.path.isdir(folder):
-            raise RuntimeError(f"Invalid folder provided: {folder}")
-        self._folder = folder
-        self.folderChanged.emit()
-        self.cameraInit = self.sfm = None
-        self.allImages = self.reconstruction.allImagePaths()
-        self.minImagesPerStep = minImagesPerStep
-        self.setRunning(True)
-        self.update()  # trigger initial update
-
-    @Slot()
-    def stop(self, requestCompute=True):
-        """ Stop the live SfM reconstruction.
-
-        Request the computation of the last augmentation step if any.
-        """
-        self.setRunning(False)
-        if requestCompute:
-            self.computeStep()
-
-    def timerEvent(self, evt):
-        self.update()
-
-    def update(self):
-        """
-        Look for new images in the watched folder and create SfM augmentation step (or modify existing one)
-        to include those images to the reconstruction.
-        """
-        # Get all new images in the watched folder
-        imagesInFolder = multiview.findFilesByTypeInFolder(self._folder).images
-        newImages = set(imagesInFolder).difference(self.allImages)
-        for imagePath in newImages:
-            # print('[LiveSfmManager] New image file : {}'.format(imagePath))
-            if not self.cameraInit:
-                # Start graph modification: until 'computeAugmentation' is called, every commands
-                # used will be part of this macro
-                self.reconstruction.beginModification("SfM Augmentation")
-                # Add SfM augmentation step in the graph
-                self.cameraInit, self.sfm = self.reconstruction.addSfmAugmentation()
-            self.addImageToStep(imagePath)
-
-        # If we have enough images and the graph is not being computed, compute augmentation step
-        if len(self.imagesInStep()) >= self.minImagesPerStep and not self.reconstruction.computing:
-            self.computeStep()
-
-    def addImageToStep(self, path):
-        """ Add an image to the current augmentation step. """
-        self.reconstruction.appendAttribute(self.cameraInit.viewpoints, {'path': path})
-        self.allImages.append(path)
-
-    def imagePathsInCameraInit(self, node):
-        """ Get images in the given CameraInit node. """
-        assert node.nodeType == 'CameraInit'
-        return [vp.path.value for vp in node.viewpoints.value]
-
-    def imagesInStep(self):
-        """ Get images in the current augmentation step. """
-        return self.imagePathsInCameraInit(self.cameraInit) if self.cameraInit else []
-
-
-    @Slot()
-    def computeStep(self):
-        """ Freeze the current augmentation step and request its computation.
-        A new step will be created once another image is added to the watched folder during 'update'.
-        """
-        if not self.cameraInit:
-            return
-
-        # print('[LiveSfmManager] Compute SfM augmentation')
-        # Build intrinsics in the main thread
-        self.reconstruction.buildIntrinsics(self.cameraInit, [])
-        self.cameraInit = None
-        sfm = self.sfm
-        self.sfm = None
-        # Stop graph modification and start sfm computation
-        self.reconstruction.endModification()
-        self.reconstruction.execute(sfm)
-
-    runningChanged = Signal()
-    running = Property(bool, lambda self: self._running, notify=runningChanged)
-    folderChanged = Signal()
-    folder = Property(str, lambda self: self._folder, notify=folderChanged)
-
-
 class ViewpointWrapper(QObject):
     """
     ViewpointWrapper is a high-level object that wraps an input image in the context of a Reconstruction.
@@ -506,7 +378,6 @@ class Reconstruction(UIGraph):
         self._selectedViewId = None
         self._selectedViewpoint = None
         self._pickedViewId = None
-        self._liveSfmManager = LiveSfmManager(self)
 
         self._currentViewPath = ""
 
@@ -637,7 +508,6 @@ class Reconstruction(UIGraph):
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
-        self._liveSfmManager.reset()
         self.selectedViewId = "-1"
         self.tempCameraInit = None
         self.updateCameraInits()
@@ -769,43 +639,6 @@ class Reconstruction(UIGraph):
             node = next((n for n in reversed(nodes)
                          if n.getGlobalStatus() == preferredStatus), node)
         return node
-
-    def addSfmAugmentation(self, withMVS=False):
-        """
-        Create a new augmentation step connected to the last SfM node of this Reconstruction and
-        return the created CameraInit and SfM nodes.
-
-        If the Reconstruction is not initialized (empty initial CameraInit), this method won't
-        create anything and return initial CameraInit and SfM nodes.
-
-        Args:
-            withMVS (bool): whether to create the MVS pipeline after the augmentation
-
-        Returns:
-            Node, Node: CameraInit, StructureFromMotion
-        """
-        sfm = self.lastSfmNode()
-        if not sfm:
-            return None, None
-
-        if len(self._cameraInits) == 1:
-            assert self._cameraInit == self._cameraInits[0]
-            # Initial CameraInit is empty, use this one
-            if len(self._cameraInits[0].viewpoints) == 0:
-                return self._cameraInit, sfm
-
-        # enable updates between duplication and layout to get correct depths during layout
-        with self.groupedGraphModification("SfM Augmentation", disableUpdates=False):
-            # disable graph updates when adding augmentation branch
-            with self.groupedGraphModification("Augmentation", disableUpdates=True):
-                sfm, mvs = multiview.sfmAugmentation(self, self.lastSfmNode(), withMVS=withMVS)
-            first, last = sfm[0], mvs[-1] if mvs else sfm[-1]
-            # use graph current bounding box height to spawn the augmentation branch
-            bb = self.layout.boundingBox()
-            self.layout.autoLayout(first, last, bb[0], bb[3] + self._layout.gridSpacing)
-
-        self.sfmAugmented.emit(first, last)
-        return sfm[0], sfm[-1]
 
     @Slot(result="QVariantList")
     def allImagePaths(self):
@@ -1013,7 +846,7 @@ class Reconstruction(UIGraph):
 
         # Duplicate 'cameraInit' outside the graph.
         #   => allows to compute intrinsics without modifying the node or the graph
-        # If cameraInit is None (i.e: SfM augmentation):
+        # If cameraInit is None:
         #   * create an uninitialized node
         #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
         inputs = cameraInit.toDict()["inputs"] if cameraInit else {}
@@ -1054,15 +887,7 @@ class Reconstruction(UIGraph):
 
     def onIntrinsicsAvailable(self, cameraInit, views, intrinsics, rebuild=False):
         """ Update CameraInit with given views and intrinsics. """
-        augmentSfM = cameraInit is None
         commandTitle = "Add {} Images"
-
-        # SfM augmentation
-        if augmentSfM:
-            # filter out views already involved in the reconstruction
-            allViewIds = self.allViewIds()
-            views = [view for view in views if int(view["viewId"]) not in allViewIds]
-            commandTitle = "Augment Reconstruction ({} Images)"
 
         if rebuild:
             commandTitle = f"Rebuild '{cameraInit.label}' Intrinsics"
@@ -1072,11 +897,8 @@ class Reconstruction(UIGraph):
             return
 
         commandTitle = commandTitle.format(len(views))
-        # allow updates between commands so that node depths
-        # are updated after "addSfmAugmentation" (useful for auto layout)
+        # allow updates between commands so that node depths (useful for auto layout)
         with self.groupedGraphModification(commandTitle, disableUpdates=False):
-            if augmentSfM:
-                cameraInit, self.sfm = self.addSfmAugmentation(withMVS=True)
             with self.groupedGraphModification("Set Views and Intrinsics"):
                 self.setAttribute(cameraInit.viewpoints, views)
                 self.setAttribute(cameraInit.intrinsics, intrinsics)
@@ -1100,7 +922,6 @@ class Reconstruction(UIGraph):
     intrinsicsBuilt = Signal(QObject, list, list, bool)
     buildingIntrinsicsChanged = Signal()
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
-    liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
 
     displayedAttr2DChanged = Signal()
     displayedAttr2D = makeProperty(QObject, "_displayedAttr2D", displayedAttr2DChanged)   
@@ -1342,7 +1163,6 @@ class Reconstruction(UIGraph):
     sfmReportChanged = Signal()
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
-    sfmAugmented = Signal(Node, Node)
 
     nbCameras = Property(int, reconstructedCamerasCount, notify=sfmReportChanged)
 

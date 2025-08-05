@@ -102,6 +102,8 @@ It can be downloaded [here](https://gitlab.com/alicevision/trainedVocabularyTree
 It can be downloaded [here](https://gitlab.com/alicevision/SphereDetectionModel/-/raw/main/sphereDetection_Mask-RCNN.onnx).
 * Semantic segmentation model (optional): for the semantic segmentation of objects.
 It can be downloaded [here](https://gitlab.com/alicevision/semanticSegmentationModel/-/raw/main/fcn_resnet50.onnx).
+* Color chart detection models (optional): for the detection of color charts.
+It can be downloaded [here](https://gitlab.com/alicevision/ColorchartDetectionModel).
 
 Environment variables need to be set for Meshroom to find those files:
 ```
@@ -109,6 +111,7 @@ ALICEVISION_SENSOR_DB=/path/to/database
 ALICEVISION_VOCTREE=/path/to/voctree
 ALICEVISION_SPHERE_DETECTION_MODEL=/path/to/detection/model
 ALICEVISION_SEMANTIC_SEGMENTATION_MODEL=/path/to/segmentation/model
+ALICEVISION_COLORCHARTDETECTION_MODEL_FOLDER=/path/to/ColorChartDetectionModel
 ```
 If these variables are not set, Meshroom will by default look for them in `{ALICEVISION_ROOT}/share/aliceVision`.
 

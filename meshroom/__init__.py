@@ -129,6 +129,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
         voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.SIFT.tree")
         sphereDetectionModel = os.path.join(aliceVisionShareDir, "sphereDetection_Mask-RCNN.onnx")
         semanticSegmentationModel = os.path.join(aliceVisionShareDir, "fcn_resnet50.onnx")
+        colorChartDetectionModelFolder = os.path.join(aliceVisionShareDir, "ColorChartDetectionModel")
 
         env = {
             "PATH": aliceVisionBinDir,
@@ -151,7 +152,8 @@ def setupEnvironment(backend=Backend.STANDALONE):
             "ALICEVISION_SENSOR_DB": sensorDBPath,
             "ALICEVISION_VOCTREE": voctreePath,
             "ALICEVISION_SPHERE_DETECTION_MODEL": sphereDetectionModel,
-            "ALICEVISION_SEMANTIC_SEGMENTATION_MODEL": semanticSegmentationModel
+            "ALICEVISION_SEMANTIC_SEGMENTATION_MODEL": semanticSegmentationModel,
+            "ALICEVISION_COLORCHARTDETECTION_MODEL_FOLDER": colorChartDetectionModelFolder
         }
 
         for key, value in variables.items():

@@ -499,6 +499,12 @@ class NodePlugin(BaseObject):
         """ Return the command suffix for the NodePlugin's execution. """
         return self.processEnv.getCommandSuffix()
 
+    @property
+    def configEnv(self) -> dict[str: str]:
+        """ Return the plugin's configuration dictionary. """
+        if self.plugin:
+            return self.plugin.configEnv
+        return {}
 
 class NodePluginManager(BaseObject):
     """

@@ -1,7 +1,7 @@
 import os
 
 # Supported image extensions
-imageExtensions = (
+imageExtensions = [
     # bmp:
     '.bmp',
     # cineon:
@@ -57,17 +57,17 @@ imageExtensions = (
     '.zfile',
     # osl:
     '.osl', '.oso', '.oslgroup', '.oslbody',
-    )
-videoExtensions = (
+    ]
+videoExtensions = [
     '.avi', '.mov', '.qt',
     '.mkv', '.webm',
     '.mp4', '.mpg', '.mpeg', '.m2v', '.m4v',
     '.wmv',
     '.ogv', '.ogg',
     '.mxf',
-    )
-panoramaInfoExtensions = ('.xml')
-meshroomSceneExtensions = ('.mg')
+    ]
+panoramaInfoExtensions = ['.xml']
+meshroomSceneExtensions = ['.mg']
 
 
 def hasExtension(filepath, extensions):

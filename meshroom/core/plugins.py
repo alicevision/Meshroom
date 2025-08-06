@@ -268,6 +268,14 @@ class Plugin(BaseObject):
         """ Set the environment required to successfully execute processes. """
         self._processEnv = processEnv
 
+    @property
+    def configEnv(self):
+        """
+        Return the dictionary containing the environment variables and their values
+        provided in the plugin's configuration file.
+        """
+        return self._configEnv
+
     def addNodePlugin(self, nodePlugin: NodePlugin):
         """
         Add a node plugin to the current plugin object and assign it as its containing plugin.

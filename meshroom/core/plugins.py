@@ -63,13 +63,17 @@ class ProcessEnv(BaseObject):
 
     Args:
         folder: the source folder for the process.
+        configEnv: the dictionary containing the environment variables defined in a configuration file
+                   for the process to run.
         envType: (optional) the type of process environment.
         uri: (optional) the Unique Resource Identifier to activate the environment.
     """
 
-    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.DIRTREE, uri: str = ""):
+    def __init__(self, folder: str, configEnv: dict[str, str],
+                 envType: ProcessEnvType = ProcessEnvType.DIRTREE, uri: str = ""):
         super().__init__()
         self._folder: str = folder
+        self._configEnv: dict[str: str] = configEnv
         self._processEnvType: ProcessEnvType = envType
         self.uri: str = uri
 
@@ -89,8 +93,8 @@ class ProcessEnv(BaseObject):
 class DirTreeProcessEnv(ProcessEnv):
     """
     """
-    def __init__(self, folder: str):
-        super().__init__(folder, ProcessEnvType.DIRTREE)
+    def __init__(self, folder: str, configEnv: dict[str: str]):
+        super().__init__(folder, configEnv, envType=ProcessEnvType.DIRTREE)
 
         venvLibPaths = glob.glob(f'{folder}/lib*/python[0-9].[0-9]*/site-packages', recursive=False)
 
@@ -128,10 +132,10 @@ class DirTreeProcessEnv(ProcessEnv):
 class RezProcessEnv(ProcessEnv):
     """
     """
-    def __init__(self, folder: str, uri: str = ""):
+    def __init__(self, folder: str, configEnv: dict[str: str], uri: str = ""):
         if not uri:
             raise RuntimeError("Missing name of the Rez environment needs to be provided.")
-        super().__init__(folder, ProcessEnvType.REZ, uri)
+        super().__init__(folder, configEnv, envType=ProcessEnvType.REZ, uri=uri)
 
     def resolveRezSubrequires(self) -> list[str]:
         """
@@ -188,10 +192,10 @@ class RezProcessEnv(ProcessEnv):
         return "'"
 
 
-def processEnvFactory(folder: str, envType: str = "dirtree", uri: str = "") -> ProcessEnv:
+def processEnvFactory(folder: str, configEnv: dict[str: str], envType: str = "dirtree", uri: str = "") -> ProcessEnv:
     if envType == "dirtree":
-        return DirTreeProcessEnv(folder)
-    return RezProcessEnv(folder, uri=uri)
+        return DirTreeProcessEnv(folder, configEnv)
+    return RezProcessEnv(folder, configEnv, uri=uri)
 
 
 class NodePluginStatus(Enum):

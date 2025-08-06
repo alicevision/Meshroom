@@ -126,6 +126,14 @@ class DirTreeProcessEnv(ProcessEnv):
         env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
         env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
 
+        for k, val in self._configEnv.items():
+            # Preserve user-defined environment variables:
+            # manually set environment variable values take precedence over config file defaults.
+            if k in env:
+                continue
+
+            env[k] = val
+
         return env
 
 

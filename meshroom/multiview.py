@@ -72,6 +72,8 @@ meshroomSceneExtensions = ('.mg')
 
 def hasExtension(filepath, extensions):
     """ Return whether filepath is one of the following extensions. """
+    if os.path.isdir(filepath):
+        return False
     return os.path.splitext(filepath)[1].lower() in extensions
 
 

@@ -136,13 +136,29 @@ def findFilesByTypeInFolder(folder, recursive=False):
             continue
         elif os.path.isdir(currentFolder):
             if recursive:
+                # Get through all of the depth levels
                 for root, directories, files in os.walk(currentFolder):
                     for filename in files:
                         output.addFile(os.path.join(root, filename))
             else:
-                output.addFiles([os.path.join(currentFolder, filename) for filename in os.listdir(currentFolder)])
+                # Only get the first level of depth, so top-level folders'
+                # files will be added, if they exist.
+                # This may prevent from importing nothing at all when files
+                # are nested a level down
+                try:
+                    root, directories, files = next(os.walk(currentFolder))
+                    output.addFiles([os.path.join(root, file) for file in files])
+                    for directory in directories:
+                        for file in os.listdir(os.path.join(root, directory)):
+                            filepath = os.path.join(root, directory, file)
+                            if os.path.isfile(filepath):
+                                output.addFile(filepath)
+                except (StopIteration, OSError):
+                    # Directory empty or inaccessible, skip processing
+                    pass
+
         else:
-            # if not a directory or a file, it may be an expression
+            # If not a directory or a file, it may be an expression
             import glob
             paths = glob.glob(currentFolder)
             filesByType = findFilesByTypeInFolder(paths, recursive=recursive)

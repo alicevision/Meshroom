@@ -230,6 +230,7 @@ class Plugin(BaseObject):
                    with their absolute paths
         configEnv: the environment variables and their values, as described in the plugin's
                    configuration file
+        configFullEnv: the static merge of os.environ and configEnv, with os.environ taking precedence
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
@@ -242,6 +243,7 @@ class Plugin(BaseObject):
         self._nodePlugins: dict[str: NodePlugin] = {}
         self._templates: dict[str: str] = {}
         self._configEnv: dict[str: str] = {}
+        self._configFullEnv: dict[str: str] = {}
         self._processEnv: ProcessEnv = ProcessEnv(path, self._configEnv)
 
         self.loadTemplates()
@@ -287,6 +289,11 @@ class Plugin(BaseObject):
         provided in the plugin's configuration file.
         """
         return self._configEnv
+
+    @property
+    def configFullEnv(self):
+        """ Return the fusion of the os.environ dictionary with the configEnv dictionary. """
+        return self._configFullEnv
 
     def addNodePlugin(self, nodePlugin: NodePlugin):
         """
@@ -366,6 +373,9 @@ class Plugin(BaseObject):
             logging.error(f"Malformed JSON in the configuration file for {self.name}: {err}")
         except IOError as err:
             logging.error(f"Error while accessing the configuration file for {self.name}: {err}")
+
+        # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
+        self._configFullEnv = self._configEnv | os.environ
 
     def containsNodePlugin(self, name: str) -> bool:
         """
@@ -500,10 +510,10 @@ class NodePlugin(BaseObject):
         return self.processEnv.getCommandSuffix()
 
     @property
-    def configEnv(self) -> dict[str: str]:
-        """ Return the plugin's configuration dictionary. """
+    def configFullEnv(self) -> dict[str: str]:
+        """ Return the plugin's full environment dictionary. """
         if self.plugin:
-            return self.plugin.configEnv
+            return self.plugin.configFullEnv
         return {}
 
 class NodePluginManager(BaseObject):

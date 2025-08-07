@@ -76,10 +76,11 @@ class ProcessEnv(BaseObject):
         self._configEnv: dict[str: str] = configEnv
         self._processEnvType: ProcessEnvType = envType
         self.uri: str = uri
+        self._env: dict = None
 
     def getEnvDict(self) -> dict:
         """ Return the environment dictionary if it has been modified, None otherwise. """
-        return None
+        return self._env
 
     def getCommandPrefix(self) -> str:
         """ Return the prefix to the command line that will be executed by the process. """
@@ -120,21 +121,21 @@ class DirTreeProcessEnv(ProcessEnv):
                             extraLibPaths.append(os.path.join(path, directory))
             self.libPaths = self.libPaths + extraLibPaths
 
-    def getEnvDict(self) -> dict:
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join([f"{_MESHROOM_ROOT}"] + self.pythonPaths + [f"{os.getenv('PYTHONPATH', '')}"])
-        env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
-        env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
+        # Setup the environment dictionary
+        self._env = os.environ.copy()
+        self._env["PYTHONPATH"] = os.pathsep.join(
+            [f"{_MESHROOM_ROOT}"] + self.pythonPaths + [f"{os.getenv('PYTHONPATH', '')}"])
+        self._env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
+        self._env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
 
         for k, val in self._configEnv.items():
             # Preserve user-defined environment variables:
             # manually set environment variable values take precedence over config file defaults.
-            if k in env:
+            if k in self._env:
                 continue
 
-            env[k] = val
+            self._env[k] = val
 
-        return env
 
 
 class RezProcessEnv(ProcessEnv):

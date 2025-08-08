@@ -763,12 +763,15 @@ class Reconstruction(UIGraph):
     @Slot("QList<QUrl>", result="QVariantMap")
     def getFilesByTypeFromDrop(self, urls):
         """
+        Given a list of filepaths, sort them into distinct categories and return a map for all
+        these categories.
 
         Args:
             urls: list of filepaths
 
         Returns:
-            {images, videos, panoramaInfo, meshroomScenes, otherFiles}: Map containing the lists of paths for recognized images, videos, Meshroom scenes and other files.
+            {images, videos, panoramaInfo, meshroomScenes, otherFiles}: Map containing the lists of paths for
+            recognized images, videos, Meshroom scenes and other files.
         """
         # Build the list of images paths
         filesByType = multiview.FilesByType()

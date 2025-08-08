@@ -952,6 +952,8 @@ class UIGraph(QObject):
 
     @Slot(Attribute)
     def removeImage(self, image):
+        if image is None:
+            return
         with self.groupedGraphModification("Remove Image"):
             # look if the viewpoint's intrinsic is used by another viewpoint
             # if not, remove it

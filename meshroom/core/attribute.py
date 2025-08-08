@@ -397,7 +397,8 @@ class Attribute(BaseObject):
         Return the value. If it is a string, expressions will be evaluated.
         """
         if isinstance(self.value, str):
-            substituted = Template(self.value).safe_substitute(os.environ)
+            env = self.node.nodePlugin.configFullEnv if self.node.nodePlugin else os.environ
+            substituted = Template(self.value).safe_substitute(env)
             try:
                 varResolved = substituted.format(**self.node._cmdVars)
                 return varResolved

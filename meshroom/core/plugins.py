@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import glob
 import importlib
+import json
 import logging
 import os
 import re
@@ -9,7 +11,6 @@ import sys
 from enum import Enum
 from inspect import getfile
 from pathlib import Path
-import glob
 
 from meshroom.common import BaseObject
 from meshroom.core import desc
@@ -62,19 +63,24 @@ class ProcessEnv(BaseObject):
 
     Args:
         folder: the source folder for the process.
+        configEnv: the dictionary containing the environment variables defined in a configuration file
+                   for the process to run.
         envType: (optional) the type of process environment.
         uri: (optional) the Unique Resource Identifier to activate the environment.
     """
 
-    def __init__(self, folder: str, envType: ProcessEnvType = ProcessEnvType.DIRTREE, uri: str = ""):
+    def __init__(self, folder: str, configEnv: dict[str, str],
+                 envType: ProcessEnvType = ProcessEnvType.DIRTREE, uri: str = ""):
         super().__init__()
         self._folder: str = folder
+        self._configEnv: dict[str: str] = configEnv
         self._processEnvType: ProcessEnvType = envType
         self.uri: str = uri
+        self._env: dict = None
 
     def getEnvDict(self) -> dict:
         """ Return the environment dictionary if it has been modified, None otherwise. """
-        return None
+        return self._env
 
     def getCommandPrefix(self) -> str:
         """ Return the prefix to the command line that will be executed by the process. """
@@ -88,8 +94,8 @@ class ProcessEnv(BaseObject):
 class DirTreeProcessEnv(ProcessEnv):
     """
     """
-    def __init__(self, folder: str):
-        super().__init__(folder, ProcessEnvType.DIRTREE)
+    def __init__(self, folder: str, configEnv: dict[str: str]):
+        super().__init__(folder, configEnv, envType=ProcessEnvType.DIRTREE)
 
         venvLibPaths = glob.glob(f'{folder}/lib*/python[0-9].[0-9]*/site-packages', recursive=False)
 
@@ -115,22 +121,30 @@ class DirTreeProcessEnv(ProcessEnv):
                             extraLibPaths.append(os.path.join(path, directory))
             self.libPaths = self.libPaths + extraLibPaths
 
-    def getEnvDict(self) -> dict:
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join([f"{_MESHROOM_ROOT}"] + self.pythonPaths + [f"{os.getenv('PYTHONPATH', '')}"])
-        env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
-        env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
+        # Setup the environment dictionary
+        self._env = os.environ.copy()
+        self._env["PYTHONPATH"] = os.pathsep.join(
+            [f"{_MESHROOM_ROOT}"] + self.pythonPaths + [f"{os.getenv('PYTHONPATH', '')}"])
+        self._env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
+        self._env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
 
-        return env
+        for k, val in self._configEnv.items():
+            # Preserve user-defined environment variables:
+            # manually set environment variable values take precedence over config file defaults.
+            if k in self._env:
+                continue
+
+            self._env[k] = val
+
 
 
 class RezProcessEnv(ProcessEnv):
     """
     """
-    def __init__(self, folder: str, uri: str = ""):
+    def __init__(self, folder: str, configEnv: dict[str: str], uri: str = ""):
         if not uri:
             raise RuntimeError("Missing name of the Rez environment needs to be provided.")
-        super().__init__(folder, ProcessEnvType.REZ, uri)
+        super().__init__(folder, configEnv, envType=ProcessEnvType.REZ, uri=uri)
 
     def resolveRezSubrequires(self) -> list[str]:
         """
@@ -187,10 +201,10 @@ class RezProcessEnv(ProcessEnv):
         return "'"
 
 
-def processEnvFactory(folder: str, envType: str = "dirtree", uri: str = "") -> ProcessEnv:
+def processEnvFactory(folder: str, configEnv: dict[str: str], envType: str = "dirtree", uri: str = "") -> ProcessEnv:
     if envType == "dirtree":
-        return DirTreeProcessEnv(folder)
-    return RezProcessEnv(folder, uri=uri)
+        return DirTreeProcessEnv(folder, configEnv)
+    return RezProcessEnv(folder, configEnv, uri=uri)
 
 
 class NodePluginStatus(Enum):
@@ -215,6 +229,9 @@ class Plugin(BaseObject):
                      to its corresponding NodePlugin object
         templates: dictionary mapping the name of templates (.mg files) associated to the plugin
                    with their absolute paths
+        configEnv: the environment variables and their values, as described in the plugin's
+                   configuration file
+        configFullEnv: the static merge of os.environ and configEnv, with os.environ taking precedence
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
@@ -226,9 +243,12 @@ class Plugin(BaseObject):
 
         self._nodePlugins: dict[str: NodePlugin] = {}
         self._templates: dict[str: str] = {}
-        self._processEnv: ProcessEnv = ProcessEnv(path)
+        self._configEnv: dict[str: str] = {}
+        self._configFullEnv: dict[str: str] = {}
+        self._processEnv: ProcessEnv = ProcessEnv(path, self._configEnv)
 
         self.loadTemplates()
+        self.loadConfig()
 
     @property
     def name(self):
@@ -262,6 +282,19 @@ class Plugin(BaseObject):
     def processEnv(self, processEnv: ProcessEnv):
         """ Set the environment required to successfully execute processes. """
         self._processEnv = processEnv
+
+    @property
+    def configEnv(self):
+        """
+        Return the dictionary containing the environment variables and their values
+        provided in the plugin's configuration file.
+        """
+        return self._configEnv
+
+    @property
+    def configFullEnv(self):
+        """ Return the fusion of the os.environ dictionary with the configEnv dictionary. """
+        return self._configFullEnv
 
     def addNodePlugin(self, nodePlugin: NodePlugin):
         """
@@ -298,6 +331,52 @@ class Plugin(BaseObject):
         for file in os.listdir(self.path):
             if file.endswith(".mg"):
                 self._templates[os.path.splitext(file)[0]] = os.path.join(self.path, file)
+
+    def loadConfig(self):
+        """
+        Load the plugin's configuration file if it exists and saves all its environment variables
+        and their values, if they are valid.
+        The configuration file is expected to be named "config.json", located at the top-level of
+        the plugin.
+        """
+        try:
+            with open(os.path.join(self.path, "config.json")) as config:
+                content = json.load(config)
+                for entry in content:
+                    # An entry is expected to be formatted as follows:
+                    # { "key": "key_of_var", "type": "type_of_value", "value": "var_value" }
+                    # If "type" is not provided, it is assumed to be "string"
+                    k = entry.get("key", None)
+                    t = entry.get("type", None)
+                    val = entry.get("value", None)
+
+                    if not k or not val:
+                        logging.warning(f"Invalid entry in configuration file for {self.name}: {entry}.")
+                        continue
+
+                    if t == "path":
+                        if os.path.isabs(val):
+                            resolvedPath = Path(val).resolve()
+                        else:
+                            resolvedPath = Path(os.path.join(self.path, val)).resolve()
+
+                        if resolvedPath.exists():
+                            val = resolvedPath.as_posix()
+                        else:
+                            logging.warning(f"{k}: {resolvedPath.as_posix()} does not exist "
+                                            f"(path before resolution: {val}).")
+
+                    self._configEnv[k] = str(val)
+
+        except FileNotFoundError:
+            logging.debug(f"No configuration file 'config.json' was found for {self.name}.")
+        except json.JSONDecodeError as err:
+            logging.error(f"Malformed JSON in the configuration file for {self.name}: {err}")
+        except IOError as err:
+            logging.error(f"Error while accessing the configuration file for {self.name}: {err}")
+
+        # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
+        self._configFullEnv = self._configEnv | os.environ
 
     def containsNodePlugin(self, name: str) -> bool:
         """
@@ -431,6 +510,12 @@ class NodePlugin(BaseObject):
         """ Return the command suffix for the NodePlugin's execution. """
         return self.processEnv.getCommandSuffix()
 
+    @property
+    def configFullEnv(self) -> dict[str: str]:
+        """ Return the plugin's full environment dictionary. """
+        if self.plugin:
+            return self.plugin.configFullEnv
+        return {}
 
 class NodePluginManager(BaseObject):
     """

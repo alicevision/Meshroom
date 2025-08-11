@@ -3,6 +3,368 @@
 For algorithmic changes related to the photogrammetric pipeline, 
 please refer to [AliceVision changelog](https://github.com/alicevision/AliceVision/blob/develop/CHANGES.md).
 
+## Meshroom 2025.1.0 (2025/08/13)
+
+Meshroom has now become a node-based visual programming toolbox for creating, managing, and executing complex data processing pipelines, with a new plugin architecture.
+Standard computer vision pipelines such as photogrammetry, camera tracking, HDR panorama, Lidar Meshing, Raw image files conversion and color calibration are now unified within the AliceVision plugin, featuring numerous improvements and optimizations.
+Additionally, new AI-powered capabilities include a semantic segmentation plugin and a collection of open-source extensions available via the new MeshroomHub: https://github.com/meshroomHub. This platform enables Gaussian Splatting, monocular depth estimation, and other exploratory features, welcoming developer contributions to expand and enhance these capabilities for upcoming releases.
+
+### Highlights
+
+#### Meshroom New Features
+
+- **Advanced Plugin Architecture**: Dedicated sub-process isolation for Python nodes with independent local environments
+- **Integrated Development Tools**:
+  - Built-in Python script editor
+  - Node’s source code hot-reload for rapid node development iterations
+- **Enhanced GraphEditor**:
+  - Dynamic output attributes enabling new workflow usages
+  - New InputNode type enabling interactive evaluation without explicit computation
+  - Multiple edge disconnection methods and node colorization for better user experience
+  - Node notifications to attribute changes
+- **Enhanced 2D Viewer**:
+  - Initial timeline integration with sequence playback controls
+  - New Reflectance Transformation Imaging (RTI) Viewer: Interactive visualization of albedo and normal maps with real-time lighting control
+  - New Home Page: featuring pipeline templates and quick access to recent projects.
+
+#### AliceVision Plugin New Features
+
+- New Pipelines
+  - **Color Calibration**: Automated color correction from color charts
+  - **Raw to EXR conversion**: Professional image format processing
+  - **Object Reconstruction**: Targeted reconstruction with automatic object segmentation
+  - **Turntable Object Reconstruction**: Streamlined workflow for rotating object capture
+  - **360° Object Reconstruction**: Reconstruction of complete dual-sided scanning
+  - **LiDAR Processing**: Native E57 file import with integrated mesh generation
+  - **Multi-View Photometric Stereo**: Advanced surface detail reconstruction with multiple light sources for each viewpoint.
+- Pipelines Improvements
+  - **Camera Tracking pipeline**: improved stability and reliability
+  - **Introduced experimental fine-grained pipelines** for increased modularity and workflow flexibility
+- Core Enhancements
+  - **Python Bindings Integration**: Enhanced AliceVision accessibility with native Python support for streamlined Machine Learning workflows
+
+#### New MrSegmentation Plugin
+
+AI segmentation nodes that identify and isolate image objects using natural language prompts, enabling intuitive content-aware processing through foundation models.
+
+#### MeshroomHub Plugins
+
+New exploratory Machine Learning plugins on [MeshroomHub](github.com/meshroomHub):
+- mrGSplat: Gaussian Splat optimization and rendering
+- mrDepthEstimation: Monocular depth inference
+- mrDenseMotion: Optical flow estimation
+- mrRoma: Dense deep feature matching
+- mrIntrinsicImageDecomposition: Albedo, normals, and material extraction
+- mrDeblurring: Video deblurring
+- mrGeolocation: GPS extraction and geographic models download
+
+Based on [AliceVision 3.3.0](https://github.com/alicevision/AliceVision/tree/v3.3.0).
+
+### Major Features
+
+- Add an "E57" importer node [PR](https://github.com/alicevision/Meshroom/pull/2308)
+- First node for Lidar Meshing [PR](https://github.com/alicevision/Meshroom/pull/2324)
+- New InputNode for nodes without computation and support for all param types in output (and no more limited to File type) [PR](https://github.com/alicevision/Meshroom/pull/2364)
+- [core] New dynamic output attributes [PR](https://github.com/alicevision/Meshroom/pull/2432)
+- First Homepage [PR](https://github.com/alicevision/Meshroom/pull/2452)
+- Qt6.6.3 / PySide6.6.3.1 upgrade [PR](https://github.com/alicevision/Meshroom/pull/2599)
+- New MultiView Photometric Stereo pipeline and new sfmFilter node [PR](https://github.com/alicevision/Meshroom/pull/2582)
+- [ui] Python Script Editor Improvements [PR](https://github.com/alicevision/Meshroom/pull/2587)
+- New local isolated computation for python nodes [PR](https://github.com/alicevision/Meshroom/pull/2703)
+- New Plugin Architecture for Node Registration [PR](https://github.com/alicevision/Meshroom/pull/2733)
+- [ui]: Introduction of multiple ways to remove Node Edges [PR](https://github.com/alicevision/Meshroom/pull/2644)
+- [core] Runtime-specific environments support [PR](https://github.com/alicevision/Meshroom/pull/2747)
+- [Photometric Stereo] MultiView fusion in Texturing [PR](https://github.com/alicevision/Meshroom/pull/2243)
+- Add a Python ScriptEditor in the GraphEditor tab [PR](https://github.com/alicevision/Meshroom/pull/2456)
+
+### Features
+
+- Custom loader for .pc.ply point clouds [PR](https://github.com/alicevision/Meshroom/pull/2346)
+- Lidar nodes [PR](https://github.com/alicevision/Meshroom/pull/2365)
+- [ui] Viewer2D: Display lighting circle with auto detected sphere [PR](https://github.com/alicevision/Meshroom/pull/2413)
+- [ui] RGBA shortcuts for Image Viewer [PR](https://github.com/alicevision/Meshroom/pull/2425)
+- [ui] Shortcuts in Viewer2D and SequencePlayer [PR](https://github.com/alicevision/Meshroom/pull/2430)
+- [ui] node time computation and chunks count in node editor header [PR](https://github.com/alicevision/Meshroom/pull/1867)
+- [core/ui] Load image sequence from node's output in SequencePlayer [PR](https://github.com/alicevision/Meshroom/pull/2375)
+- [core] Forward the onAttributeChanged notification to all linked attributes [PR](https://github.com/alicevision/Meshroom/pull/2453)
+- add 3de undistortion models [PR](https://github.com/alicevision/Meshroom/pull/2446)
+- [GraphEditor] Base `ChoiceParam` model on attribute instead of description [PR](https://github.com/alicevision/Meshroom/pull/2494)
+- [core] Reference the attribute's instance type in its description [PR](https://github.com/alicevision/Meshroom/pull/2493)
+- [ui] Improve command line help message [PR](https://github.com/alicevision/Meshroom/pull/2518)
+- Added Pre and Post process functions on the Base Node [PR](https://github.com/alicevision/Meshroom/pull/2539)
+- [ui] Add and improve multiple UI tools for Photometric stereo [PR](https://github.com/alicevision/Meshroom/pull/2444)
+- Refactor Node selection for better UX and performance [PR](https://github.com/alicevision/Meshroom/pull/2605)
+- New SfMColorizing Node [PR](https://github.com/alicevision/Meshroom/pull/2610)
+- Update sfm pipeline to accept meshes [PR](https://github.com/alicevision/Meshroom/pull/2642)
+- Enable Fitting of selected Nodes in the Graph Editor when Fit is invoked  [PR](https://github.com/alicevision/Meshroom/pull/2652)
+- Add relative paths to nodes as variables [PR](https://github.com/alicevision/Meshroom/pull/2629)
+- Node to inject survey points in the SFM [PR](https://github.com/alicevision/Meshroom/pull/2696)
+- [ui] AttributeEditor: Feature/attribute navigation buttons [PR](https://github.com/alicevision/Meshroom/pull/2716)
+- [ui] Homepage: Project can be removed with right click [PR](https://github.com/alicevision/Meshroom/pull/2724)
+- [ui] Viewer2D: Add the pixel (x,y) values in the toolbar (editable) [PR](https://github.com/alicevision/Meshroom/pull/2723)
+- [ui] AttributeEditor: Allow displaying attibute in corresponding viewport  [PR](https://github.com/alicevision/Meshroom/pull/2722)
+- Update to Qt/PySide 6.8.3 [PR](https://github.com/alicevision/Meshroom/pull/2692)
+- Add a "ConvertDistortion" node [PR](https://github.com/alicevision/Meshroom/pull/2353)
+- [ui] Sync SequencePlayer and Viewer3D [PR](https://github.com/alicevision/Meshroom/pull/2360)
+- Viewer3D: Adjust bounding-box by moving faces [PR](https://github.com/alicevision/Meshroom/pull/2385)
+- [core/ui] Add support for PushButton attribute [PR](https://github.com/alicevision/Meshroom/pull/2382)
+- First version of For Loop implementation [PR](https://github.com/alicevision/Meshroom/pull/2504)
+- Generate depthmaps from sfmData and mesh [PR](https://github.com/alicevision/Meshroom/pull/2556)
+- [ui] Use the improved Sequence Player and enable it by default [PR](https://github.com/alicevision/Meshroom/pull/2557)
+- [AttributePin] Add tooltip to display type of attribute [PR](https://github.com/alicevision/Meshroom/pull/2527)
+- [core/ui] "Exposed" property added to attributeDesc [PR](https://github.com/alicevision/Meshroom/pull/2528)
+- Extract more metadata using exifTool [PR](https://github.com/alicevision/Meshroom/pull/2645)
+- Add equirectangular camera model in `CameraInit` [PR](https://github.com/alicevision/Meshroom/pull/2630)
+- Fix: Improve large project file loading performance [PR](https://github.com/alicevision/Meshroom/pull/2665)
+- UI: Redesign ChoiceParam UI component [PR](https://github.com/alicevision/Meshroom/pull/2656)
+- Create new pipeline for testing modular sfm [PR](https://github.com/alicevision/Meshroom/pull/2664)
+- [ui] Graph Editor Update: Quick Node Coloring with the Color Selector Tool [PR](https://github.com/alicevision/Meshroom/pull/2604)
+- [doc] README.md: Add DeepWiki link, the AI documentation you can talk to [PR](https://github.com/alicevision/Meshroom/pull/2792)
+
+### Other Improvements
+
+- Start Development 2024.1.0 [PR](https://github.com/alicevision/Meshroom/pull/2268)
+- ImageSegmentation: add an option to choose between cpu and gpu [PR](https://github.com/alicevision/Meshroom/pull/2267)
+- [Viewer] Display error labels when an image cannot be loaded [PR](https://github.com/alicevision/Meshroom/pull/2250)
+- [MaterialIcons] Add script to generate the list of available MaterialIcons and update it [PR](https://github.com/alicevision/Meshroom/pull/2247)
+- Add option to keep input filename in imageSegmentation [PR](https://github.com/alicevision/Meshroom/pull/2288)
+- Add camera color spaces [PR](https://github.com/alicevision/Meshroom/pull/2251)
+- [docker] Fix link to download `libassimpsceneimport.so` in Docker images [PR](https://github.com/alicevision/Meshroom/pull/2310)
+- Added PLY to list of supported files in 3D viewer [PR](https://github.com/alicevision/Meshroom/pull/2316)
+- E57 importer is now generating multiple sfmData [PR](https://github.com/alicevision/Meshroom/pull/2318)
+- Added semantic logic to display multiple 3d objects [PR](https://github.com/alicevision/Meshroom/pull/2320)
+- [submitters] Update SimpleFarm configuration tags [PR](https://github.com/alicevision/Meshroom/pull/2348)
+- [ui] drag&drop: common behavior for graph editor and image gallery [PR](https://github.com/alicevision/Meshroom/pull/2342)
+- [core] Add new type of ChoiceParam that changes dynamically [PR](https://github.com/alicevision/Meshroom/pull/2350)
+- [ui] Add new FilterComboBox for ChoiceParam attributes [PR](https://github.com/alicevision/Meshroom/pull/2358)
+- [core/ui] Hide output attributes flagged for visualisation [PR](https://github.com/alicevision/Meshroom/pull/2369)
+- Update ripple constraints [PR](https://github.com/alicevision/Meshroom/pull/2374)
+- Hide disabled File attributes and their connections [PR](https://github.com/alicevision/Meshroom/pull/1925)
+- [ui] Sequence Player UX improvements (fps, slider, frame) [PR](https://github.com/alicevision/Meshroom/pull/2362)
+- [core] BugFix : Upgrade of Dynamic Choice Param fixed [PR](https://github.com/alicevision/Meshroom/pull/2380)
+- [ui] Bounding Box are usable in other nodes, not only Meshing [PR](https://github.com/alicevision/Meshroom/pull/2391)
+- [ui] Cut option available in GraphEditor [PR](https://github.com/alicevision/Meshroom/pull/2399)
+- [core] Set internal attributes when copy/pasting nodes [PR](https://github.com/alicevision/Meshroom/pull/2390)
+- [ImageGallery] Display CameraInit label and defaultLabel to avoid confusion [PR](https://github.com/alicevision/Meshroom/pull/2383)
+- [GraphEditor] Internal Custom Color Picker disabled when node is locked [PR](https://github.com/alicevision/Meshroom/pull/2384)
+- Bump requests from 2.27.1 to 2.32.0 [PR](https://github.com/alicevision/Meshroom/pull/2405)
+- [ui] Selected node header set to base color [PR](https://github.com/alicevision/Meshroom/pull/2401)
+- [ui] Remove intrinsic if not used by any viewpoint [PR](https://github.com/alicevision/Meshroom/pull/2395)
+- [ui] Right click on text element in AttributeEditor open Copy/Paste menu [PR](https://github.com/alicevision/Meshroom/pull/2366)
+- [ui] Fix BoundingBox visibility icon because of mapping name [PR](https://github.com/alicevision/Meshroom/pull/2386)
+- Add track coordinates [PR](https://github.com/alicevision/Meshroom/pull/2406)
+- [ui] Conversion of relative paths to absolute ones [PR](https://github.com/alicevision/Meshroom/pull/2412)
+- [core] Compare last saved date before saving to prevent overwrite [PR](https://github.com/alicevision/Meshroom/pull/2414)
+- Fix 3D Viewer zooming problem [PR](https://github.com/alicevision/Meshroom/pull/2379)
+- [ui] Use ExportAnimatedCamera output for image overlay in Viewer3D [PR](https://github.com/alicevision/Meshroom/pull/2398)
+- [GraphEditor] Eye on displayable node even if not computed [PR](https://github.com/alicevision/Meshroom/pull/2427)
+- [ui] Add "large" option to multiline string param [PR](https://github.com/alicevision/Meshroom/pull/2437)
+- [ui] Auto Update CameraInit when displaying node [PR](https://github.com/alicevision/Meshroom/pull/2431)
+- Fix compatibility upgrade issue [PR](https://github.com/alicevision/Meshroom/pull/2436)
+- Depth map filter: display normals if enabled [PR](https://github.com/alicevision/Meshroom/pull/2442)
+- [ui] do not use native dialog [PR](https://github.com/alicevision/Meshroom/pull/2439)
+- File export ordering [PR](https://github.com/alicevision/Meshroom/pull/2440)
+- [SequencePlayer] Fetching option added [PR](https://github.com/alicevision/Meshroom/pull/2415)
+- Provide access to the current frame from the graph [PR](https://github.com/alicevision/Meshroom/pull/2443)
+- Update ripple with "cuda" instead of "gpu" [PR](https://github.com/alicevision/Meshroom/pull/2448)
+- Provide access to the path of the currently displayed frame [PR](https://github.com/alicevision/Meshroom/pull/2449)
+- [Viewer] Fix all QML errors on the Sequence Player [PR](https://github.com/alicevision/Meshroom/pull/2451)
+- Remove plugin loading from core __init__ [PR](https://github.com/alicevision/Meshroom/pull/2458)
+- [ui] Sequence Player UI Modifications [PR](https://github.com/alicevision/Meshroom/pull/2445)
+- [ui] Add MESHROOM_USE_SEQUENCE_PLAYER environment variable [PR](https://github.com/alicevision/Meshroom/pull/2463)
+- Display ION container version in Meshroom  [PR](https://github.com/alicevision/Meshroom/pull/2468)
+- Compute or Submit selected nodes [PR](https://github.com/alicevision/Meshroom/pull/2459)
+- Add new SfMExpanding node [PR](https://github.com/alicevision/Meshroom/pull/2416)
+- Add squeeze option [PR](https://github.com/alicevision/Meshroom/pull/2466)
+- [Viewer] Current frame for Sequence should not be set during changes of Image Gallery [PR](https://github.com/alicevision/Meshroom/pull/2472)
+- Remove some computers even for normal tasks [PR](https://github.com/alicevision/Meshroom/pull/2479)
+- [GraphEditor] Implementation of Recompute Button [PR](https://github.com/alicevision/Meshroom/pull/2473)
+- [core] Attribute: Directly access description's type in `getType()` [PR](https://github.com/alicevision/Meshroom/pull/2490)
+- [Viewer] Update error values for QtAV's `EStatus` enum [PR](https://github.com/alicevision/Meshroom/pull/2491)
+- [GraphEditor] Improve visibility of chunks in progress bar [PR](https://github.com/alicevision/Meshroom/pull/2507)
+- [ui] Correctly lose focus on `StringParam` when clicking outside of its text field [PR](https://github.com/alicevision/Meshroom/pull/2512)
+- Multiple shots: Align and merge multiple SfM from feature matches [PR](https://github.com/alicevision/Meshroom/pull/2484)
+- Homepage Quick Adjustments [PR](https://github.com/alicevision/Meshroom/pull/2520)
+- Add locks for intrinsics [PR](https://github.com/alicevision/Meshroom/pull/2517)
+- sfmTransform: Add option to lineup camera motion with object/lidar given an external camera pose [PR](https://github.com/alicevision/Meshroom/pull/2524)
+- [ui] Open project from browser in homepage & quick adjustments [PR](https://github.com/alicevision/Meshroom/pull/2525)
+- [ui] Minor UI modifications [PR](https://github.com/alicevision/Meshroom/pull/2530)
+- [ui] Fix click on Category in Node Menu to keep the nodes displayed [PR](https://github.com/alicevision/Meshroom/pull/2526)
+- [core] Simplify attribute invalidation in nodes' descriptions [PR](https://github.com/alicevision/Meshroom/pull/2523)
+- UI Changes [PR](https://github.com/alicevision/Meshroom/pull/2531)
+- [AttributeItemDelegate] Position the attribute description tooltip [PR](https://github.com/alicevision/Meshroom/pull/2532)
+- [ui] Add View Image Gallery Parameter [PR](https://github.com/alicevision/Meshroom/pull/2541)
+- [core] Simplify node descriptions [PR](https://github.com/alicevision/Meshroom/pull/2538)
+- Use export distortion and new segmentation node in templates [PR](https://github.com/alicevision/Meshroom/pull/2549)
+- Add wireframe for Qt6 [PR](https://github.com/alicevision/Meshroom/pull/2561)
+- Change picking behavior for qt6 upgrade [PR](https://github.com/alicevision/Meshroom/pull/2564)
+- [qt6] Fix 8Bits image viewer zoom/fit [PR](https://github.com/alicevision/Meshroom/pull/2565)
+- [blender] Adapt `ScenePreview`'s Blender script to pixel ratio [PR](https://github.com/alicevision/Meshroom/pull/2572)
+- Update panorama display [PR](https://github.com/alicevision/Meshroom/pull/2573)
+- Fix attribute value change propagation and callback handling [PR](https://github.com/alicevision/Meshroom/pull/2586)
+- Tracking pipelines segmentation update [PR](https://github.com/alicevision/Meshroom/pull/2583)
+- [qt6]|Viewer3D] Fix mouse for camera controller [PR](https://github.com/alicevision/Meshroom/pull/2566)
+- Discard attribute changed callbacks during graph loading [PR](https://github.com/alicevision/Meshroom/pull/2598)
+- Split `meshroom.core.desc` module into a package with submodules [PR](https://github.com/alicevision/Meshroom/pull/2592)
+- [ui] Minor UI stabilization fixes for Qt 6 [PR](https://github.com/alicevision/Meshroom/pull/2606)
+- [ui] Fix field of view functions for tall images [PR](https://github.com/alicevision/Meshroom/pull/2609)
+- [Viewer3D] Apply the pixel aspect ratio for the Frame Overlay [PR](https://github.com/alicevision/Meshroom/pull/2533)
+- [ui] Improve Search Bar component [PR](https://github.com/alicevision/Meshroom/pull/2581)
+- [BugFix] File save dialog now requires a valid filename [PR](https://github.com/alicevision/Meshroom/pull/2602)
+- [GraphEditor] AttributeItemDelegate: Use MaterialLabel for uncomputed attributes [PR](https://github.com/alicevision/Meshroom/pull/2616)
+- CI: add codecov [PR](https://github.com/alicevision/Meshroom/pull/2618)
+- Sfm Bootstraping parameterization [PR](https://github.com/alicevision/Meshroom/pull/2619)
+- Fix Qt6-induced issues [PR](https://github.com/alicevision/Meshroom/pull/2620)
+- [ui] GraphEditor: Address Key Event Conflicts in Node Menu [PR](https://github.com/alicevision/Meshroom/pull/2622)
+- [ui] Add Validation for Save file path accessibility [PR](https://github.com/alicevision/Meshroom/pull/2625)
+- [ui] NodeEditor: Addressed Tab Retention when switching Node selection [PR](https://github.com/alicevision/Meshroom/pull/2624)
+- Add support for QML debugging/profiling [PR](https://github.com/alicevision/Meshroom/pull/2623)
+- [GraphEditor] Fix injections into signal handlers with JS functions [PR](https://github.com/alicevision/Meshroom/pull/2627)
+- [ui] "About" dialog: Fix some display issues [PR](https://github.com/alicevision/Meshroom/pull/2640)
+- Update version number and copyrights [PR](https://github.com/alicevision/Meshroom/pull/2639)
+- SelectionBox: Fixed the offset on the selection box highlight appearing in the Graph Editor when dragging to select Nodes [PR](https://github.com/alicevision/Meshroom/pull/2647)
+- [ui] Moved Auto-Layout Depth Settings under Graph Editor Menu [PR](https://github.com/alicevision/Meshroom/pull/2646)
+- Enable merge of multiple sfmDatas [PR](https://github.com/alicevision/Meshroom/pull/2654)
+- [ui][fix] Edge: Fixing an issue with mouse event on Custom EdgeMouseArea causing Crash [PR](https://github.com/alicevision/Meshroom/pull/2650)
+- [ui] Refactor the access to the list of recent project files [PR](https://github.com/alicevision/Meshroom/pull/2637)
+- Mask processing node [PR](https://github.com/alicevision/Meshroom/pull/2658)
+- Export Maya .mel Script  [PR](https://github.com/alicevision/Meshroom/pull/2617)
+- Refactor Graph de/serialization [PR](https://github.com/alicevision/Meshroom/pull/2612)
+- Node: Propagate attribute change via `valueChanged` signal [PR](https://github.com/alicevision/Meshroom/pull/2657)
+- [qml] Fix QML warnings related to chunks [PR](https://github.com/alicevision/Meshroom/pull/2673)
+- Add maya scene export [PR](https://github.com/alicevision/Meshroom/pull/2674)
+- NodeAPI: Trigger node creation callback only for explicit new node creation [PR](https://github.com/alicevision/Meshroom/pull/2671)
+- [ui] app: Register components to QML before instantiating the engine [PR](https://github.com/alicevision/Meshroom/pull/2676)
+- [ui] Application: fix save-as dialog not working properly (Qt6.7+) [PR](https://github.com/alicevision/Meshroom/pull/2683)
+- [GraphEditor] Only display "Pipelines" menu when templates are available [PR](https://github.com/alicevision/Meshroom/pull/2678)
+- [qml] Fix QML warnings when dropping project files into the Graph Editor [PR](https://github.com/alicevision/Meshroom/pull/2680)
+- Export USD Node [PR](https://github.com/alicevision/Meshroom/pull/2667)
+- [ui] AttributeEditor: Generic TextField param editor improvements [PR](https://github.com/alicevision/Meshroom/pull/2686)
+- ChoiceParam: add option to serialize overriden values [PR](https://github.com/alicevision/Meshroom/pull/2682)
+- [core] Node: Status should be `NONE` when there is no chunk [PR](https://github.com/alicevision/Meshroom/pull/2695)
+- Move nodes and templates to AliceVision's repository [PR](https://github.com/alicevision/Meshroom/pull/2697)
+- Remove internal and no longer used files [PR](https://github.com/alicevision/Meshroom/pull/2711)
+- Modernize to python 3.9 using flynt and pyupgrade [PR](https://github.com/alicevision/Meshroom/pull/2710)
+- [doc] README: Clarified distinction between Meshroom engine, user interface, and plugins [PR](https://github.com/alicevision/Meshroom/pull/2718)
+- Use shutil to load nvidia-smi [PR](https://github.com/alicevision/Meshroom/pull/2721)
+- [ui] Viewer2D can display the content of tracks files [PR](https://github.com/alicevision/Meshroom/pull/2720)
+- [ui] [fix] Attribute: Fix the qml warnings on intrisincs [PR](https://github.com/alicevision/Meshroom/pull/2739)
+- [ui] Application: Use CamelCase and disable tooltips when menus are disabled [PR](https://github.com/alicevision/Meshroom/pull/2742)
+- ListAttribute: fix methods not considering connected attribute's value [PR](https://github.com/alicevision/Meshroom/pull/2660)
+- [fix] remove targetSize in viewer2d which was removed in qtAliceVision [PR](https://github.com/alicevision/Meshroom/pull/2746)
+- [ui] Homepage: Update logos of sponsors [PR](https://github.com/alicevision/Meshroom/pull/2729)
+- [ui] Rework of MessageDialog for CompatibilityManager and SensorDBDialog [PR](https://github.com/alicevision/Meshroom/pull/2537)
+- [qml] Fix some minor QML warnings [PR](https://github.com/alicevision/Meshroom/pull/2756)
+- Add support for `ALICEVISION_LIBPATH` environment variable [PR](https://github.com/alicevision/Meshroom/pull/2757)
+- [docker] minor updates [PR](https://github.com/alicevision/Meshroom/pull/2765)
+- [core] plugins: Add support for virtual environments on Windows [PR](https://github.com/alicevision/Meshroom/pull/2768)
+- [core] Adding rangeBlocksCount to `Parallelization` [PR](https://github.com/alicevision/Meshroom/pull/2767)
+- Bump requests from 2.32.0 to 2.32.4 [PR](https://github.com/alicevision/Meshroom/pull/2743)
+- Fix colorHueComponent slider background [PR](https://github.com/alicevision/Meshroom/pull/2788)
+- [core] plugins: Look recursively for "lib" directories in Linux venv [PR](https://github.com/alicevision/Meshroom/pull/2777)
+- [core] plugins: Virtual environments should be named "venv" instead of having the plugin's name [PR](https://github.com/alicevision/Meshroom/pull/2793)
+- [qml] Minor UI fixes [PR](https://github.com/alicevision/Meshroom/pull/2783)
+- [qml] Use native FileDialogs [PR](https://github.com/alicevision/Meshroom/pull/2784)
+- Set the default environment variables for the color chart detection models [PR](https://github.com/alicevision/Meshroom/pull/2796)
+- [ui] Remove the `Live Reconstruction` and `Augment Reconstruction` features [PR](https://github.com/alicevision/Meshroom/pull/2786)
+- Improve behaviour when dropping folders [PR](https://github.com/alicevision/Meshroom/pull/2797)
+- [core] plugins: Load plugin's configuration file upon its initialisation [PR](https://github.com/alicevision/Meshroom/pull/2778)
+- [core] plugins: Downgrade the log level when loading the config file [PR](https://github.com/alicevision/Meshroom/pull/2798)
+
+### Bugfixes
+
+- Fix duplicated icon in MaterialIcons [PR](https://github.com/alicevision/Meshroom/pull/2277)
+- Correctly delete thread pools when exiting Meshroom with Python 3.9 [PR](https://github.com/alicevision/Meshroom/pull/2286)
+- [Viewer] Viewer: Fix various issues with the 2D Viewer [PR](https://github.com/alicevision/Meshroom/pull/2283)
+- Use the correct response file to display the graph of the Camera Response Function [PR](https://github.com/alicevision/Meshroom/pull/2282)
+- Update `ListAttributes` identically when removing edges or nodes [PR](https://github.com/alicevision/Meshroom/pull/2280)
+- Upgrade intrinsics for distortion [PR](https://github.com/alicevision/Meshroom/pull/2349)
+- [ui] Correctly display images from node outputs even if there is no `CameraInit` node [PR](https://github.com/alicevision/Meshroom/pull/2363)
+- [ui] Scroll available in FilterComboBox [PR](https://github.com/alicevision/Meshroom/pull/2376)
+- [Viewer] fix lens distortion viewer status when switching between projects [PR](https://github.com/alicevision/Meshroom/pull/2377)
+- [ui] Fix drag and drop of heavy number of frames [PR](https://github.com/alicevision/Meshroom/pull/2378)
+- SequencePlayer: Forbid "selecting" an invalid frame number [PR](https://github.com/alicevision/Meshroom/pull/2388)
+- [ui] Prevent Feature Points to display on external images [PR](https://github.com/alicevision/Meshroom/pull/2389)
+- [ui/core] Fix get latest SfM node for previz [PR](https://github.com/alicevision/Meshroom/pull/2396)
+- [nodes/ui] Fix ExportAnimatedCamera outputs for ScenePreview use [PR](https://github.com/alicevision/Meshroom/pull/2420)
+- [fix] Various fixes [PR](https://github.com/alicevision/Meshroom/pull/2419)
+- Prevent updates of the latest SfM node when the graph's topology is dirty [PR](https://github.com/alicevision/Meshroom/pull/2435)
+- [Utils] `getTimeStr`: Round up the number of minutes correctly [PR](https://github.com/alicevision/Meshroom/pull/2254)
+- [ui] Graph: Connect all chunks when setting a graph for the first time [PR](https://github.com/alicevision/Meshroom/pull/2454)
+- [core] Exclude edges from `InputNode` nodes in `dfsToProcess` [PR](https://github.com/alicevision/Meshroom/pull/2455)
+- [core] Values of ChoiceParam should be a list, Error message added for initialisation [PR](https://github.com/alicevision/Meshroom/pull/2469)
+- Some fixes for dynamic output attributes [PR](https://github.com/alicevision/Meshroom/pull/2470)
+- [ui] Fix local computation of subgraphs for unsaved projects [PR](https://github.com/alicevision/Meshroom/pull/2471)
+- [ui] Fix Camera Init Group Index should stay the same at adding or removing CameraInit events [PR](https://github.com/alicevision/Meshroom/pull/2474)
+- [Viewer2D] Only reset index of currentFrame if the currentFrame is after max of frameRange [PR](https://github.com/alicevision/Meshroom/pull/2480)
+- [ui] setSfm only depends on nodes with category "sfm" and CameraInit should be set only if it is different from the current one [PR](https://github.com/alicevision/Meshroom/pull/2476)
+- [GraphEditor] AttributeItemDelegate: Return valid component for `PushButton` [PR](https://github.com/alicevision/Meshroom/pull/2482)
+- Initialize `core` plugins at different moments [PR](https://github.com/alicevision/Meshroom/pull/2487)
+- [ui] app: Correctly reload list of available templates [PR](https://github.com/alicevision/Meshroom/pull/2499)
+- [core] Catch exception for calls to optional descriptor method on node creation [PR](https://github.com/alicevision/Meshroom/pull/2500)
+- [ui] Improve sequence display [PR](https://github.com/alicevision/Meshroom/pull/2502)
+- [ui] GraphEditor.newNodeMenu: fix unstable menu height [PR](https://github.com/alicevision/Meshroom/pull/2511)
+- [ui] Add proper distinction between the main window and the application [PR](https://github.com/alicevision/Meshroom/pull/2521)
+- [ui] Fix function evaluations in invalid QML context and minor fixes [PR](https://github.com/alicevision/Meshroom/pull/2519)
+- Fix Several Compatibility Nodes Operations [PR](https://github.com/alicevision/Meshroom/pull/2506)
+- [main] Fix imagesFolder variable in order to save when gallery is not empty [PR](https://github.com/alicevision/Meshroom/pull/2535)
+- [bin] Import correct `Graph` objects for `meshroom_batch` [PR](https://github.com/alicevision/Meshroom/pull/2536)
+- Fix homepage SplitViews [PR](https://github.com/alicevision/Meshroom/pull/2545)
+- [core] Check provided template folder exists before attempting to load it [PR](https://github.com/alicevision/Meshroom/pull/2552)
+- [img] Remove incorrect sRGB profile from UiO logo [PR](https://github.com/alicevision/Meshroom/pull/2555)
+- [ui] multiple fixes related to split view and node status checks [PR](https://github.com/alicevision/Meshroom/pull/2568)
+- [ui] Various minor UI fixes [PR](https://github.com/alicevision/Meshroom/pull/2563)
+- [core] Node: Do not automatically upgrade unknown nodes in templates [PR](https://github.com/alicevision/Meshroom/pull/2558)
+- [GraphEditor] Node: Check if unexposed `ListAttributes` contain links [PR](https://github.com/alicevision/Meshroom/pull/2578)
+- [GraphEditor] Edge: Correctly update the `EdgeMouseArea` when moving nodes [PR](https://github.com/alicevision/Meshroom/pull/2613)
+- Fix projects disappearing from the list of recent projects [PR](https://github.com/alicevision/Meshroom/pull/2615)
+- [ImageGallery] Intrinsics table: Always fully instantiate the model before populating it [PR](https://github.com/alicevision/Meshroom/pull/2655)
+- [ui] Graph: In minimal refresh, do not poll files for chunks run locally [PR](https://github.com/alicevision/Meshroom/pull/2672)
+- Fix Meshroom App CLI `latest` option [PR](https://github.com/alicevision/Meshroom/pull/2675)
+- [bin] `meshroom_batch`: Stop using removed `defaultCacheFolder` [PR](https://github.com/alicevision/Meshroom/pull/2715)
+- [desc] Import `CREATE_NEW_PROCESS_GROUP` flag from `subprocess` [PR](https://github.com/alicevision/Meshroom/pull/2719)
+- [ui] Reconstruction: Restore the `Slot` status of the `clear` method [PR](https://github.com/alicevision/Meshroom/pull/2732)
+- [core] attribute: Fix `hasOutputConnections` for ListAttributes [PR](https://github.com/alicevision/Meshroom/pull/2731)
+- Fix elapsed time when there is only one chunk [PR](https://github.com/alicevision/Meshroom/pull/2734)
+- bugfix ExecMode status [PR](https://github.com/alicevision/Meshroom/pull/2737)
+- [ui] Update node status when modified [PR](https://github.com/alicevision/Meshroom/pull/2738)
+- [ui] [fix] MediaLibrary: Check if the model.source is actually an Attribute… [PR](https://github.com/alicevision/Meshroom/pull/2736)
+- [ui] [fix] Viewer2D: Failure on MousePosition on some edge cases [PR](https://github.com/alicevision/Meshroom/pull/2741)
+- [core] Templates test: Remove outdated `unregisterNodeType` import [PR](https://github.com/alicevision/Meshroom/pull/2750)
+- [ui] GraphEditor fix: Remove useless link between height and implicitHeight [PR](https://github.com/alicevision/Meshroom/pull/2749)
+- [core] Templates test: Access node descriptor from `NodePlugin` object [PR](https://github.com/alicevision/Meshroom/pull/2751)
+- [core] Stop checking for templates in "pipelines" folder [PR](https://github.com/alicevision/Meshroom/pull/2752)
+- [ui] [fix] Viewer2D: using the keyboard shortcuts (r,g,b,a) break the channelBox combobox [PR](https://github.com/alicevision/Meshroom/pull/2753)
+- [ui] Reconstruction: Fix setup of temporary `CameraInit` nodes [PR](https://github.com/alicevision/Meshroom/pull/2762)
+- [core] [fix] Fix camera see through not working when multiple cameraInit and image overlay dind't display anythind [PR](https://github.com/alicevision/Meshroom/pull/2761)
+- [core] desc.node: Ensure all paths are sent to the command line as POSIX strings [PR](https://github.com/alicevision/Meshroom/pull/2760)
+- [ui] Nodes: Update the deprecated import of QGraphicEffects. [PR](https://github.com/alicevision/Meshroom/pull/2755)
+- [ui] Import images: Fix that trying to import images twic, the dialog… [PR](https://github.com/alicevision/Meshroom/pull/2763)
+- Meshing: boundingBox working with qt6 [PR](https://github.com/alicevision/Meshroom/pull/2766)
+- Fix manual frame selection in viewer 2D [PR](https://github.com/alicevision/Meshroom/pull/2769)
+- [ui] app: Correctly evaluate env vars that enable/disable components [PR](https://github.com/alicevision/Meshroom/pull/2772)
+- Fix for QFontDatabase crash on exit [PR](https://github.com/alicevision/Meshroom/pull/2776)
+- [ui] Add project to recent projects when dropping a file [PR](https://github.com/alicevision/Meshroom/pull/2483)
+- [ui] fix: Overlay image doesn't work on pipeline "Photogrametry experimental"  [PR](https://github.com/alicevision/Meshroom/pull/2780)
+- [core] Parallelization: the cmdline suffix should be at the end [PR](https://github.com/alicevision/Meshroom/pull/2794)
+
+### CI, Documentation and Build
+
+- Add environment variable for the CI [PR](https://github.com/alicevision/Meshroom/pull/2492)
+- Adding new tutorial [PR](https://github.com/alicevision/Meshroom/pull/2546)
+- [ci] Use GitHub's workflows for the Windows CI instead of appveyor [PR](https://github.com/alicevision/Meshroom/pull/2551)
+- [ci] Codecov: enable support for test run reports [PR](https://github.com/alicevision/Meshroom/pull/2659)
+- change git clone link to use https link in "get the project" [PR](https://github.com/alicevision/Meshroom/pull/2700)
+- [ci] Update Python version from 3.9.13 to 3.11 [PR](https://github.com/alicevision/Meshroom/pull/2758)
+- [docker] Add Dockerfiles for Rocky 9 and handle Qt 6 installation [PR](https://github.com/alicevision/Meshroom/pull/2626)
+- [doc] Update `INSTALL.md` and `README.md` files [PR](https://github.com/alicevision/Meshroom/pull/2787)
+- [build] Fixes for the generation of Meshroom's executable [PR](https://github.com/alicevision/Meshroom/pull/2770)
+- [doc] README.md: Add DeepWiki link, the AI documentation you can talk to [PR](https://github.com/alicevision/Meshroom/pull/2792)
+
+### Contributors
+
+[cbentejac](https://github.com/cbentejac), [demoulinv](https://github.com/demoulinv), [dependabot[bot]](https://github.com/apps/dependabot), [dyster](https://github.com/dyster), [elyasbny](https://github.com/elyasbny), [emmanuel-ferdman](https://github.com/emmanuel-ferdman), [fabiencastan](https://github.com/fabiencastan), [gregoire-dl](https://github.com/gregoire-dl), [jmelou](https://github.com/jmelou), [Just-Kiel](https://github.com/Just-Kiel), [mh0g](https://github.com/mh0g), [natowi](https://github.com/natowi), [nicolas-lambert-tc](https://github.com/nicolas-lambert-tc), [sbrood](https://github.com/sbrood), [servantftransperfect](https://github.com/servantftransperfect), [Sh1r0Yaksha](https://github.com/Sh1r0Yaksha), [waaake](https://github.com/waaake), [yann-lty](https://github.com/yann-lty)
+
 ## Meshroom 2023.3.0 (2023/12/07)
 
 Based on [AliceVision 3.2.0](https://github.com/alicevision/AliceVision/tree/v3.2.0).

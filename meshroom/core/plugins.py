@@ -363,8 +363,8 @@ class Plugin(BaseObject):
                         if resolvedPath.exists():
                             val = resolvedPath.as_posix()
                         else:
-                            logging.warning(f"{k}: {resolvedPath.as_posix()} does not exist "
-                                            f"(path before resolution: {val}).")
+                            logging.debug(f"{k}: {resolvedPath.as_posix()} does not exist "
+                                          f"(path before resolution: {val}).")
 
                     self._configEnv[k] = str(val)
 

@@ -137,7 +137,7 @@ Panel {
             padding: 2
             checkable: true
             checked: galleryMenu.visible
-            onClicked: galleryMenu.open()
+            onClicked: galleryMenu.visible ? galleryMenu.close() : galleryMenu.open()
             Menu {
                 id: galleryMenu
                 y: parent.height

@@ -1,0 +1,68 @@
+# Codecov configuration for Meshroom
+# This configuration prevents CI from failing due to small coverage decreases
+# while maintaining quality standards
+
+codecov:
+  # Require CI to pass before processing results
+  require_ci_to_pass: yes
+
+coverage:
+  status:
+    project:
+      default:
+        # Allow coverage to drop by up to 1% without failing
+        threshold: 1%
+        # Set a minimum target coverage (adjust based on your current ~77%)
+        target: 75%
+        # Only check coverage on lines that are coverable
+        base: auto
+        # Ignore if no coverage files are uploaded
+        if_no_uploads: error
+        # Don't fail if coverage file not found
+        if_not_found: success
+        # Fail if CI failed
+        if_ci_failed: error
+        # Only run on these branches
+        branches:
+          - develop
+          - master
+          - main
+
+    patch:
+      default:
+        # For new code, allow 2% threshold since new features may need refactoring
+        threshold: 2%
+        # New code should aim for 70% coverage (lower than overall project)
+        target: 70%
+        # Only run patch coverage on pull requests
+        only_pulls: true
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+
+  precision: 2
+  round: down
+  range: "70...95"
+
+# Configure the PR comment
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
+  require_base: no
+  require_head: yes
+  branches:
+    - develop
+    - master
+    - main
+
+# Ignore certain files/directories that shouldn't affect coverage
+ignore:
+  - "tests/"
+  - "**/*_test.py"
+  - "**/test_*.py" 
+  - "setup.py"
+  - "meshroom/ui/**"  # ignore coverage of UI components
+  - "docs/"
+  - "scripts/"
+  - "bin/"

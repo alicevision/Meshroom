@@ -44,18 +44,6 @@ coverage:
   round: down
   range: "70...95"
 
-# Configure the PR comment
-comment:
-  layout: "reach,diff,flags,tree"
-  behavior: default
-  require_changes: false
-  require_base: no
-  require_head: yes
-  branches:
-    - develop
-    - master
-    - main
-
 # Ignore certain files/directories that shouldn't affect coverage
 ignore:
   - "tests/"

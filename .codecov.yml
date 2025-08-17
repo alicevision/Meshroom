@@ -62,7 +62,6 @@ ignore:
   - "**/*_test.py"
   - "**/test_*.py" 
   - "setup.py"
-  - "meshroom/ui/**"  # ignore coverage of UI components
   - "docs/"
   - "scripts/"
   - "bin/"

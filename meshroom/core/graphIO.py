@@ -1,5 +1,7 @@
 from enum import Enum
 from typing import Any, TYPE_CHECKING, Union
+import os
+import re
 
 import meshroom
 from meshroom.core import Version
@@ -119,10 +121,41 @@ class GraphSerializer:
 class TemplateGraphSerializer(GraphSerializer):
     """Serializer for serializing a graph as a template."""
 
+    # Known path variables that should be normalized in templates
+    PATH_VARIABLE_MAPPINGS = {
+        # RDS segmentation model paths
+        r'/s/apps/packages/[^/]*/recognition[^/]*': '${RDS_RECOGNITION_MODEL_PATH}',
+        r'/s/apps/packages/[^/]*/detection[^/]*model': '${RDS_DETECTION_MODEL_PATH}',
+        r'/s/apps/packages/[^/]*/detection[^/]*config': '${RDS_DETECTION_CONFIG_PATH}',
+        # Fix incorrect variable syntax: {VAR} should be ${VAR}
+        r'\{([A-Z_]+_PATH)\}': r'${\1}',
+    }
+
     def serializeHeader(self) -> dict:
         header = super().serializeHeader()
         header[GraphIO.Keys.Template] = True
         return header
+
+    def _normalizePathVariable(self, value: str) -> str:
+        """
+        Normalize hardcoded paths and incorrect variable syntax in template values.
+        
+        Args:
+            value: The attribute value to normalize
+            
+        Returns:
+            The normalized value with proper environment variable syntax
+        """
+        if not isinstance(value, str):
+            return value
+            
+        normalized_value = value
+        
+        # Apply all path variable mappings
+        for pattern, replacement in self.PATH_VARIABLE_MAPPINGS.items():
+            normalized_value = re.sub(pattern, replacement, normalized_value, flags=re.IGNORECASE)
+        
+        return normalized_value
 
     def serializeNode(self, node: Node) -> dict:
         """Adapt node serialization to template graphs.
@@ -131,6 +164,8 @@ class TemplateGraphSerializer(GraphSerializer):
         the attributes whose value is not the default one.
         The output attributes, UIDs, parallelization parameters and internal folder are
         not relevant for templates, so they are explicitly removed from the returned dictionary.
+        
+        Additionally, normalizes path variables to use proper environment variable syntax.
         """
         # For now, implemented as a post-process to update the default serialization.
         nodeData = super().serializeNode(node)
@@ -147,16 +182,23 @@ class TemplateGraphSerializer(GraphSerializer):
             # check that attribute is not a link for choice attributes
             if attribute.isDefault and not attribute.isLink:
                 del nodeData["inputs"][attrName]
+            else:
+                # Normalize path variables in the serialized value
+                nodeData["inputs"][attrName] = self._normalizePathVariable(nodeData["inputs"][attrName])
 
         for attrName in internalInputKeys:
             attribute = node.internalAttribute(attrName)
             # check that internal attribute is not a link for choice attributes
             if attribute.isDefault and not attribute.isLink:
                 del nodeData["internalInputs"][attrName]
+            else:
+                # Normalize path variables in the serialized value
+                nodeData["internalInputs"][attrName] = self._normalizePathVariable(nodeData["internalInputs"][attrName])
 
         # If all the internal attributes are set to their default values, remove the entry
-        if len(nodeData["internalInputs"]) == 0:
-            del nodeData["internalInputs"]
+        if len(nodeData.get("internalInputs", {})) == 0:
+            if "internalInputs" in nodeData:
+                del nodeData["internalInputs"]
 
         del nodeData["outputs"]
         del nodeData["uid"]

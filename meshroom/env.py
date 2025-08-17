@@ -49,6 +49,11 @@ class EnvVar(Enum):
     MESHROOM_REZ_PLUGINS = VarDefinition(str, "", "List of Rez plugins, defined by the package name associated with the plugin's root path. "
                                                   "For example, 'packageA=/path/to/packageA/version/root'.")
     MESHROOM_TEMP_PATH = VarDefinition(str, tempfile.gettempdir(), "Path to the temporary folder.")
+    
+    # Model paths for external plugins
+    RDS_RECOGNITION_MODEL_PATH = VarDefinition(str, "", "Path to the RDS recognition model for segmentation.")
+    RDS_DETECTION_MODEL_PATH = VarDefinition(str, "", "Path to the RDS detection model for segmentation.")
+    RDS_DETECTION_CONFIG_PATH = VarDefinition(str, "", "Path to the RDS detection config for segmentation.")
 
 
     @staticmethod

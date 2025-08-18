@@ -89,8 +89,7 @@ pip install -r requirements.txt -r dev_requirements.txt
 
 ### AliceVision
 
-Meshroom relies on the [AliceVision](https://github.com/alicevision/AliceVision) framework for visualization of images and 3D data.
-AliceVision's binaries must be in the path while running Meshroom.
+[AliceVision](https://github.com/alicevision/AliceVision)'s binaries must be in the path while running Meshroom.
 To build AliceVision, follow this [guide](https://github.com/alicevision/AliceVision/blob/develop/INSTALL.md) and add the installation in your PATH (and LD_LIBRARY_PATH on Linux/macOS).
 
 The following environment variable must always be set with the location of AliceVision's install directory:
@@ -104,26 +103,7 @@ MESHROOM_NODES_PATH={ALICEVISION_ROOT}/share/meshroom
 MESHROOM_PIPELINE_TEMPLATES_PATH={ALICEVISION_ROOT}/share/meshroom
 ```
 
-Meshroom also relies on specific files provided with AliceVision.
-* Sensor database: a text database of sensor width per camera model.
-Provided in AliceVision source tree: {ALICEVISION_REPOSITORY}/src/aliceVision/sensorDB/cameraSensors.db
-* Voctree (optional): for larger datasets (>200 images), greatly improves image matching performances.
-It can be downloaded [here](https://gitlab.com/alicevision/trainedVocabularyTreeData/raw/master/vlfeat_K80L3.SIFT.tree).
-* Sphere detection model (optional): for the automated sphere detection in stereo photometry.
-It can be downloaded [here](https://gitlab.com/alicevision/SphereDetectionModel/-/raw/main/sphereDetection_Mask-RCNN.onnx).
-* Semantic segmentation model (optional): for the semantic segmentation of objects.
-It can be downloaded [here](https://gitlab.com/alicevision/semanticSegmentationModel/-/raw/main/fcn_resnet50.onnx).
-* Color chart detection models (optional): for the detection of color charts.
-It can be downloaded [here](https://gitlab.com/alicevision/ColorchartDetectionModel).
-
-Environment variables need to be set for Meshroom to find those files:
-```
-ALICEVISION_SENSOR_DB=/path/to/database
-ALICEVISION_VOCTREE=/path/to/voctree
-ALICEVISION_SPHERE_DETECTION_MODEL=/path/to/detection/model
-ALICEVISION_SEMANTIC_SEGMENTATION_MODEL=/path/to/segmentation/model
-ALICEVISION_COLORCHARTDETECTION_MODEL_FOLDER=/path/to/ColorChartDetectionModel
-```
+Meshroom also relies on [specific files provided with AliceVision](https://github.com/alicevision/AliceVision/blob/doc/updateInstall/INSTALL.md#environment-variables-to-set-for-meshroom), set through environment variables.
 If these variables are not set, Meshroom will by default look for them in `{ALICEVISION_ROOT}/share/aliceVision`.
 
 #### mrSegmentation plugin

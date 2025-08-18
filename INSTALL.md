@@ -1,6 +1,23 @@
 # Meshroom Installation
 This guide will help you setup a development environment to launch and contribute to Meshroom.
 
+## Table of Contents
+
+1. [Quick Start](#quick-start)
+2. [Installation from source code](#installation-from-source-code)
+3. [Use a prebuilt AliceVision](#use-a-prebuilt-alicevision)
+4. [Start Meshroom](#start-meshroom)
+5. [Install Requirements](#install-requirements)
+    1. [Python environment](#python-environment)
+    2. [Qt/PySide](#qtpyside)
+    3. [AliceVision](#alicevision)
+    4. [mrSegmentation plugin](#mrsegmentation-plugin)
+    5. [QtAliceVision plugin](#qtalicevision-plugin)
+6. [Adding custom nodes, templates and plugins](#adding-custom-nodes-templates-and-plugins)
+    1. [Custom nodes](#custom-nodes)
+    2. [Custom templates](#custom-templates)
+    3. [Custom plugins](#custom-plugins)
+
 
 ## Quick Start
 

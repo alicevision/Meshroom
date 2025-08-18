@@ -23,6 +23,14 @@ cd meshroom
 pip install -r requirements.txt
 ```
 
+## Use a prebuilt AliceVision
+
+Meshroom relies on the [AliceVision](https://github.com/alicevision/AliceVision) framework for visualization of images and 3D data.
+Download a [Release](https://github.com/alicevision/meshroom/releases) or extract files from a recent AliceVision build on [Dockerhub](https://hub.docker.com/r/alicevision/alicevision).
+
+`LD_LIBRARY_PATH=~/foo/Meshroom-2023.2.0/aliceVision/lib/ PATH=$PATH:~/foo/Meshroom-2023.2.0/aliceVision/bin/ PYTHONPATH=$PWD python3 meshroom/ui`
+
+You may need to checkout the corresponding Meshroom version/tag to avoid versions incompatibilities.
 
 ## Start Meshroom
 
@@ -46,15 +54,6 @@ You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver 
 # Linux/macOS: PYTHONPATH=$PWD
 python bin/meshroom_batch --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
 ```
-
-
-## Use prebuilt AliceVision
-
-Download a [Release](https://github.com/alicevision/meshroom/releases) or extract files from a recent AliceVision build on [Dockerhub](https://hub.docker.com/r/alicevision/alicevision).
-
-`LD_LIBRARY_PATH=~/foo/Meshroom-2023.2.0/aliceVision/lib/ PATH=$PATH:~/foo/Meshroom-2023.2.0/aliceVision/bin/ PYTHONPATH=$PWD python3 meshroom/ui`
-
-You may need to checkout the corresponding Meshroom version/tag to avoid versions incompatibilities.
 
 
 ## Install Requirements

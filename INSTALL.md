@@ -1,6 +1,18 @@
-# Meshroom installation
+# Meshroom Installation
 This guide will help you setup a development environment to launch and contribute to Meshroom.
 
+
+## Quick Start
+
+To quickly run Meshroom without setting up a development environment, follow these simple steps:
+
+1. **Download the prebuilt binaries**:
+    * Visit the [Releases](https://github.com/alicevision/meshroom/releases) page.
+    * Download the latest release that is suitable for your operating system.
+2. **Extract the archive**:
+    * On Windows: right-click on the .zip file and select "Extract All", or run `unzip Meshroom-x.y.z.zip` in a terminal.
+    * On Linux: in a terminal, run `tar -xzvf Meshroom.x.y.z.tar.gz`.
+3. **Run Meshroom**: in the extracted folder, double-click on the "Meshroom" executable to launch it.
 
 ## Installation from source code
 

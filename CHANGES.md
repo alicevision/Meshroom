@@ -3,7 +3,7 @@
 For algorithmic changes related to the photogrammetric pipeline, 
 please refer to [AliceVision changelog](https://github.com/alicevision/AliceVision/blob/develop/CHANGES.md).
 
-## Meshroom 2025.1.0 (2025/08/13)
+## Meshroom 2025.1.0 (2025/08/18)
 
 Meshroom has now become a node-based visual programming toolbox for creating, managing, and executing complex data processing pipelines, with a new plugin architecture.
 Standard computer vision pipelines such as photogrammetry, camera tracking, HDR panorama, Lidar Meshing, Raw image files conversion and color calibration are now unified within the AliceVision plugin, featuring numerous improvements and optimizations.
@@ -49,7 +49,8 @@ AI segmentation nodes that identify and isolate image objects using natural lang
 
 #### MeshroomHub Plugins
 
-New exploratory Machine Learning plugins on [MeshroomHub](github.com/meshroomHub):
+We're excited to introduce new experimental Machine Learning plugins available on [MeshroomHub](https://github.com/meshroomHub).
+These plugins showcase the future of Meshroom workflows, though they currently require developer setup and cannot be installed through the user interface yet.
 - mrGSplat: Gaussian Splat optimization and rendering
 - mrDepthEstimation: Monocular depth inference
 - mrDenseMotion: Optical flow estimation

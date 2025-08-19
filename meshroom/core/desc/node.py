@@ -260,7 +260,7 @@ class Node(BaseNode):
         return MrNodeType.NODE
 
     def processChunkInEnvironment(self, chunk):
-        meshroomComputeCmd = f"{_MESHROOM_COMPUTE_EXE} {chunk.node.graph.filepath} --node {chunk.node.name} --extern --inCurrentEnv"
+        meshroomComputeCmd = f"{_MESHROOM_COMPUTE_EXE} \"{chunk.node.graph.filepath}\" --node {chunk.node.name} --extern --inCurrentEnv"
 
         if len(chunk.node.getChunks()) > 1:
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"

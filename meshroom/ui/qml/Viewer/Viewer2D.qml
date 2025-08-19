@@ -1299,10 +1299,11 @@ FocusScope {
                     Loader {
                         id: shapeEditorInspector
                         active: shapeEditorViewerLoader.status === Loader.Ready
+                        width: 200
                         anchors {
-                            bottom: parent.bottom
+                            top: parent.top
                             left: parent.left
-                            margins: 2
+                            bottom: parent.bottom
                         }
                         sourceComponent: ShapeEditorInspector {}
                     }

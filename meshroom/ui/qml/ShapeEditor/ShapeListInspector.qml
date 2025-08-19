@@ -15,7 +15,7 @@ Repeater  {
     id: shapeListInspector
 
     delegate: RowLayout {
-        Layout.leftMargin: 2
+        Layout.leftMargin: 0
         Layout.rightMargin: 10
 
         // shape visibility
@@ -62,7 +62,7 @@ Repeater  {
             font.pointSize: 8
             padding: 4
             width: 20
-            height:20
+            height: 20
             text: MaterialIcons.location_searching
             visible: (model.isEditable && !model.isStatic)
             onClicked : {

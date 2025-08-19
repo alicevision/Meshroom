@@ -14,74 +14,51 @@ FloatingPane {
     id: root
 
     // pane properties
-    anchors.margins: 0
-    padding: 5
-    radius: 0
-    width: 200
+    padding: 4
+    anchors.fill: parent
+    anchors.leftMargin: 0
 
-    ColumnLayout {
+    // scroll view
+    ScrollView {
+        id: inspectorScrollView
         anchors.fill: parent
-        spacing: 5
 
-        // header
-        RowLayout {
-            // pane title
-            Label {
-                text: "Shape Inspector"
-                font.bold: true
-                Layout.fillWidth: true
-            }
+        // disable horizontal scroll
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-            // minimize or maximize button
-            MaterialToolButton {
-                id: bodyButton
-                text: shapeInspectorBody.visible ? MaterialIcons.arrow_drop_down : MaterialIcons.arrow_drop_up
-                font.pointSize: 10
-                ToolTip.text: shapeInspectorBody.visible ? "Minimize" : "Maximize"
-                onClicked: { shapeInspectorBody.visible = !shapeInspectorBody.visible }
-            }
-        }
-
-        // body
+        // main column layout
         ColumnLayout {
-            id: shapeInspectorBody
+            width: root.width - inspectorScrollView.effectiveScrollBarWidth // leave some space for scroll bar
             spacing: 2
 
-            RowLayout {
-                Layout.topMargin: 5
-                Layout.bottomMargin: 5
-                Label {
-                    text: "Node Parameters"
-                    font.pointSize: 8
-                    font.bold: true
-                }
+            // node shape parameters section label
+            Label {
+                Layout.fillWidth: true
+                padding: 2
+                background: Rectangle { color: parent.palette.mid }
+                text: "Node Parameters"
             }
 
-            // current node parameters shapes
+            // current node shape parameters 
             ShapeListInspector {
                 model: ShapeEditor.nodeShapeList
             }
 
-            // current node files shape lists
+            // current node shapes files
             Repeater {
                 model: ShapeEditor.nodeFileShapeLists
                 delegate: ColumnLayout {
                     spacing: 2
 
-                    RowLayout {
-                        Layout.topMargin: 8
-                        Layout.bottomMargin: 5
-                        MaterialLabel {
-                            font.pointSize: 10
-                            text: MaterialIcons.insert_drive_file
-                        }
-                        Label {
-                            text: shapeListName
-                            font.pointSize: 8
-                            font.bold: true
-                        }
+                    // shapes file section label
+                    Label {
+                        Layout.fillWidth: true
+                        padding: 2
+                        background: Rectangle { color: parent.palette.mid }
+                        text: shapeListName
                     }
-
+                    
+                    // file shape parameters 
                     ShapeListInspector { 
                         model: shapeListModel
                     }

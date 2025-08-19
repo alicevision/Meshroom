@@ -3,23 +3,25 @@ This guide will help you setup a development environment to launch and contribut
 
 ## Table of Contents
 
-1. [Quick Start](#quick-start)
+1. [Use prebuilt release](#use-prebuilt-release)
 2. [Installation from source code](#installation-from-source-code)
-3. [Use a prebuilt AliceVision](#use-a-prebuilt-alicevision)
-4. [Start Meshroom](#start-meshroom)
-5. [Install Requirements](#install-requirements)
-    1. [Python environment](#python-environment)
-    2. [Qt/PySide](#qtpyside)
-    3. [AliceVision](#alicevision)
-    4. [mrSegmentation plugin](#mrsegmentation-plugin)
-    5. [QtAliceVision plugin](#qtalicevision-plugin)
-6. [Adding custom nodes, templates and plugins](#adding-custom-nodes-templates-and-plugins)
+    1. [Install minimal dependencies](#install-minimal-dependencies)
+        1. [Python environment](#python-environment)
+        2. [Qt/PySide](#qtpyside)
+    2. [Install dependencies](#install-dependencies)
+        1. [AliceVision](#alicevision)
+        2. [QtAliceVision](#qtalicevision)
+    3. [Install plugins](#install-plugins)
+        1. [mrSegmentation plugin](#mrsegmentation-plugin)
+        2. [MeshroomHub](#meshroomhub)
+    4. [Start Meshroom](#start-meshroom)
+3. [Adding custom nodes, templates and plugins](#adding-custom-nodes-templates-and-plugins)
     1. [Custom nodes](#custom-nodes)
     2. [Custom templates](#custom-templates)
     3. [Custom plugins](#custom-plugins)
 
 
-## Quick Start
+## Use prebuilt release 
 
 To quickly run Meshroom without setting up a development environment, follow these simple steps:
 
@@ -37,19 +39,109 @@ Get the source code and install runtime requirements:
 ```bash
 git clone --recursive https://github.com/alicevision/Meshroom.git
 cd meshroom
-pip install -r requirements.txt
 ```
 
-## Use a prebuilt AliceVision
+### Install minimal dependencies
 
-Meshroom relies on the [AliceVision](https://github.com/alicevision/AliceVision) framework for visualization of images and 3D data.
-Download a [Release](https://github.com/alicevision/meshroom/releases) or extract files from a recent AliceVision build on [Dockerhub](https://hub.docker.com/r/alicevision/alicevision).
+To use Meshroom nodal system without any visualization option, you can rely on a minimal set of dependencies.
 
-`LD_LIBRARY_PATH=~/foo/Meshroom-2023.2.0/aliceVision/lib/ PATH=$PATH:~/foo/Meshroom-2023.2.0/aliceVision/bin/ PYTHONPATH=$PWD python3 meshroom/ui`
 
-You may need to checkout the corresponding Meshroom version/tag to avoid versions incompatibilities.
+#### Python environment
 
-## Start Meshroom
+* Windows: Python 3 (>=3.9)
+* Linux: Python 3 (>=3.9)
+
+To install all the requirements for runtime, development and packaging, simply run:
+```bash
+pip install -r requirements.txt -r dev_requirements.txt
+```
+> [!NOTE]
+> `dev_requirements` is only related to testing and packaging. It is not mandatory to run Meshroom.
+
+> [!NOTE]
+> It is recommended to use a [virtual Python environment](https://docs.python.org/3.9/library/venv.html), like `python -m venv meshroom_venv`.
+
+
+#### Qt/PySide
+
+* PySide >= 6.7
+
+> [!WARNING]
+> For PySide 6.8.0 and over, the following error may occur when leaving Meshroom's homepage: `Cannot load /path/to/pip/install/PySide6/qml/QtQuick/Scene3D/qtquickscene3dplugin.dll: specified module cannot be found`.
+> This is caused by Qt63DQuickScene3D.dll which seems to be missing from the pip distribution, but can be retrieved from a standard Qt installation. 
+> On recent Linux systems such as Ubuntu 25, this can be resolved by installing `libqt63dquickscene3d6` using the package manager.
+> Alternatively:
+> - On Windows, the DLL for MSVC2022_64 can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv). It then needs to be placed in `/path/to/pip/install/PySide6`.
+> - On Linux, the .so (here, Rocky9-based) can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1dq7rm_Egc-sQF6j6_E55f60INyxt1ega). It then needs to be placed in `/path/to/pip/install/PySide6/Qt/qml/QtQuick/Scene3D`.
+
+
+### Install dependencies
+
+You can install AliceVision to get access to 3D Computer Vision and Machine Learning nodes and pipelines. Additionally, you can install QtAliceVision to get access to Image and 3D data visualization within Meshroom.
+
+#### AliceVision
+
+[AliceVision](https://github.com/alicevision/AliceVision)'s binaries must be in the path while running Meshroom.
+
+The easiest way is to download prebuild binaries from the release. You can download a [Release](https://github.com/alicevision/AliceVision/releases) or extract files from a recent AliceVision build on [Dockerhub](https://hub.docker.com/r/alicevision/alicevision).
+
+Alternatively, you can build AliceVision manually from the source code by following this [guide](https://github.com/alicevision/AliceVision/blob/develop/INSTALL.md).
+
+Then add the `bin` and `lib` folders into your `PATH` (and `LD_LIBRARY_PATH` on Linux/macOS) environment variables.
+
+The following environment variable must always be set with the location of AliceVision's install directory:
+```
+ALICEVISION_ROOT=/path/to/AliceVision/install/directory
+```
+
+AliceVision provides nodes and templates for Meshroom, which need to be declared to Meshroom with the following environment variables:
+```
+MESHROOM_NODES_PATH={ALICEVISION_ROOT}/share/meshroom
+MESHROOM_PIPELINE_TEMPLATES_PATH={ALICEVISION_ROOT}/share/meshroom
+```
+
+Meshroom also relies on [specific files provided with AliceVision](https://github.com/alicevision/AliceVision/blob/develop/INSTALL.md#environment-variables-to-set-for-meshroom), set through environment variables.
+If these variables are not set, Meshroom will by default look for them in `{ALICEVISION_ROOT}/share/aliceVision`.
+
+> [!NOTE]
+> You may need to checkout the corresponding Meshroom version/tag to avoid versions incompatibilities.
+
+
+#### QtAliceVision
+
+[QtAliceVision](https://github.com/alicevision/QtAliceVision), an additional Qt plugin, can be built to extend Meshroom UI features.
+
+Note that it is optional but highly recommended.
+
+This plugin uses AliceVision to load and visualize intermediate reconstruction files and OpenImageIO as backend to read images (including RAW/EXR).
+It also adds support for Alembic file loading in Meshroom's 3D viewport, which allows to visualize sparse reconstruction results (point clouds and cameras).
+
+```
+QML2_IMPORT_PATH=/path/to/QtAliceVision/install/qml
+QT_PLUGIN_PATH=/path/to/QtAliceVision/install
+```
+
+
+### Install plugins
+
+#### mrSegmentation plugin
+
+Some templates provided by AliceVision contain nodes that are not packaged with AliceVision.
+These nodes are part of the mrSegmentation plugin, which can be found [here](https://github.com/MeshroomHub/mrSegmentation).
+
+To build and install mrSegmentation, follow this [guide](https://github.com/MeshroomHub/mrSegmentation/blob/main/INSTALL.md).
+
+For mrSegmentation nodes to be correctly detected by Meshroom, the following environment variable should be set:
+```
+MESHROOM_PLUGINS_PATH=/path/to/mrSegmentation
+```
+
+#### MeshroomHub
+
+You can find many experimental Machine Learning plugins on [MeshroomHub](https://github.com/meshroomHub).
+
+
+### Start Meshroom
 
  - __Launch the User Interface__
 
@@ -70,83 +162,6 @@ You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver 
 # Windows: set PYTHONPATH=%CD% &&
 # Linux/macOS: PYTHONPATH=$PWD
 python bin/meshroom_batch --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
-```
-
-
-## Install Requirements
-
-### Python environment
-
-* Windows: Python 3 (>=3.9)
-* Linux: Python 3 (>=3.9)
-
-To install all the requirements for runtime, development and packaging, simply run:
-```bash
-pip install -r requirements.txt -r dev_requirements.txt
-```
-> [!NOTE]
-> `dev_requirements` is only related to testing and packaging. It is not mandatory to run Meshroom.
-
-> [!NOTE]
-> It is recommended to use a [virtual Python environment](https://docs.python.org/3.9/library/venv.html), like `python -m venv meshroom_venv`.
-
-
-### Qt/PySide
-
-* PySide >= 6.7
-
-> [!WARNING]
-> For PySide 6.8.0 and over, the following error may occur when leaving Meshroom's homepage: `Cannot load /path/to/pip/install/PySide6/qml/QtQuick/Scene3D/qtquickscene3dplugin.dll: specified module cannot be found`.
-> This is caused by Qt63DQuickScene3D.dll which seems to be missing from the pip distribution, but can be retrieved from a standard Qt installation. 
-> On recent Linux systems such as Ubuntu 25, this can be resolved by installing `libqt63dquickscene3d6` using the package manager.
-> Alternatively:
-> - On Windows, the DLL for MSVC2022_64 can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv). It then needs to be placed in `/path/to/pip/install/PySide6`.
-> - On Linux, the .so (here, Rocky9-based) can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1dq7rm_Egc-sQF6j6_E55f60INyxt1ega). It then needs to be placed in `/path/to/pip/install/PySide6/Qt/qml/QtQuick/Scene3D`.
-
-
-### AliceVision
-
-[AliceVision](https://github.com/alicevision/AliceVision)'s binaries must be in the path while running Meshroom.
-To build AliceVision, follow this [guide](https://github.com/alicevision/AliceVision/blob/develop/INSTALL.md) and add the installation in your PATH (and LD_LIBRARY_PATH on Linux/macOS).
-
-The following environment variable must always be set with the location of AliceVision's install directory:
-```
-ALICEVISION_ROOT=/path/to/AliceVision/install/directory
-```
-
-AliceVision provides nodes and templates for Meshroom, which need to be declared to Meshroom with the following environment variables:
-```
-MESHROOM_NODES_PATH={ALICEVISION_ROOT}/share/meshroom
-MESHROOM_PIPELINE_TEMPLATES_PATH={ALICEVISION_ROOT}/share/meshroom
-```
-
-Meshroom also relies on [specific files provided with AliceVision](https://github.com/alicevision/AliceVision/blob/doc/updateInstall/INSTALL.md#environment-variables-to-set-for-meshroom), set through environment variables.
-If these variables are not set, Meshroom will by default look for them in `{ALICEVISION_ROOT}/share/aliceVision`.
-
-#### mrSegmentation plugin
-
-Some templates provided by AliceVision contain nodes that are not packaged with AliceVision.
-These nodes are part of the mrSegmentation plugin, which can be found [here](https://github.com/MeshroomHub/mrSegmentation).
-
-To build and install mrSegmentation, follow this [guide](https://github.com/MeshroomHub/mrSegmentation/blob/main/INSTALL.md).
-
-For mrSegmentation nodes to be correctly detected by Meshroom, the following environment variable should be set:
-```
-MESHROOM_PLUGINS_PATH=/path/to/mrSegmentation
-```
-
-### QtAliceVision plugin
-
-[QtAliceVision](https://github.com/alicevision/QtAliceVision), an additional Qt plugin, can be built to extend Meshroom UI features.
-
-Note that it is optional but highly recommended.
-
-This plugin uses AliceVision to load and visualize intermediate reconstruction files and OpenImageIO as backend to read images (including RAW/EXR).
-It also adds support for Alembic file loading in Meshroom's 3D viewport, which allows to visualize sparse reconstruction results (point clouds and cameras).
-
-```
-QML2_IMPORT_PATH=/path/to/QtAliceVision/install/qml
-QT_PLUGIN_PATH=/path/to/QtAliceVision/install
 ```
 
 ## Adding custom nodes, templates and plugins

@@ -13,6 +13,9 @@ import QtQuick
 Rectangle {
     id: root
 
+    // handle moved signal
+    signal moved()
+    
     // handle display size
     property real size : 10.0
 
@@ -49,6 +52,7 @@ Rectangle {
         xAxis.enabled: root.xAxisEnabled
         yAxis.enabled: root.yAxisEnabled
         margin: size * 2 // handle interaction area
+        onActiveChanged: { if (!active) { root.moved() } }
         enabled: root.visible
     }
 

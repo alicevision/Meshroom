@@ -252,6 +252,7 @@ class InputNode(BaseNode):
 
 
 class Node(BaseNode):
+    pythonExecutable = "python"
 
     def __init__(self):
         super(Node, self).__init__()

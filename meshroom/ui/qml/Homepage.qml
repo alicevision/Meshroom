@@ -361,8 +361,6 @@ Page {
                                         mainStack.push("Application.qml")
                                         if (_reconstruction.load(modelData["path"])) {
                                             MeshroomApp.addRecentProjectFile(modelData["path"])
-                                        } else {
-                                            MeshroomApp.removeRecentProjectFile(modelData["path"])
                                         }
                                     }
                                     

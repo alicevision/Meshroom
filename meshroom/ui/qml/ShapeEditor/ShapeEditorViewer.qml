@@ -15,15 +15,9 @@ Item {
     // container scale ratio
     property real scaleRatio: (1 / root.containerScale)
 
-    // current node parameters shape list
-    ShapeListRepeater {
-        model: ShapeEditor.nodeShapeList
-        scaleRatio: root.scaleRatio
-    }
-
-    // current node files shape lists
+    // current node shape lists
     Repeater {
-        model: ShapeEditor.nodeFileShapeLists
+        model: ShapeEditor.nodeShapeLists
         delegate: ShapeListRepeater { 
             model: shapeListModel
             scaleRatio: root.scaleRatio

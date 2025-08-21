@@ -30,16 +30,15 @@ BaseShapeLayer {
             PathLine { x: handleP2.x; y: handleP2.y }
         }
 
-        // selection click
-        TapHandler {
+        // selection area
+        MouseArea  {
+            x: Math.min(handleP1.x, handleP2.x)
+            y: Math.min(handleP1.y, handleP2.y)
+            width: Math.max(handleP1.x, handleP2.x) 
+            height: Math.max(handleP1.y, handleP2.y)
             acceptedButtons: Qt.LeftButton
-            onTapped: { root.selected = (root.editable ? true : false); }
-            enabled: root.editable && !root.selected
-        }
-
-        // selection hover
-        HoverHandler {
             cursorShape: Qt.PointingHandCursor
+            onClicked: root.selectionRequested()
             enabled: root.editable && !root.selected
         }
 

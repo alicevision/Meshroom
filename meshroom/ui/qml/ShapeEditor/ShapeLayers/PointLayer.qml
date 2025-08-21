@@ -29,13 +29,16 @@ BaseShapeLayer {
         // selection click
         TapHandler {
             acceptedButtons: Qt.LeftButton
-            onTapped: { root.selected = (root.editable ? true : false); }
+            gesturePolicy: TapHandler.WithinBounds
+            grabPermissions: PointerHandler.CanTakeOverFromAnything 
+            onTapped: root.selectionRequested()
             enabled: root.editable && !root.selected
         }
         
         // selection hover
         HoverHandler {
             cursorShape: root.selected ? Qt.SizeAllCursor : Qt.PointingHandCursor
+            grabPermissions: PointerHandler.CanTakeOverFromAnything 
             enabled: root.editable
         }
 

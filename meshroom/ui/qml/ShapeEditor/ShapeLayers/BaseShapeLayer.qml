@@ -17,6 +17,9 @@ Item {
     // shape layer fills the parent
     anchors.fill: parent
 
+    // signal to request selection
+    signal selectionRequested()
+
     // shape model index
     property int modelIndex: -1
 

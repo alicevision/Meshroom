@@ -54,16 +54,15 @@ BaseShapeLayer {
             PathLine { x: handleHeight.x; y: handleHeight.y }
         }
 
-        // selection click
-        TapHandler {
+        // selection area
+        MouseArea  {
+            x: handleCenter.x - rectangleWidth * 0.5
+            y: handleCenter.y - rectangleHeight * 0.5
+            width: rectangleWidth
+            height: rectangleHeight
             acceptedButtons: Qt.LeftButton
-            onTapped: { root.selected = (root.editable ? true : false); }
-            enabled: root.editable && !root.selected
-        }
-
-        // selection hover
-        HoverHandler {
             cursorShape: Qt.PointingHandCursor
+            onClicked: root.selectionRequested()
             enabled: root.editable && !root.selected
         }
 

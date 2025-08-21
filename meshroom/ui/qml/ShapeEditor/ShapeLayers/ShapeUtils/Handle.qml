@@ -36,6 +36,7 @@ Rectangle {
     // handle hover handler
     HoverHandler {
         cursorShape: dragHandler.cursorShape
+        grabPermissions: PointerHandler.CanTakeOverFromAnything  
         margin: size * 2 // handle interaction area
         enabled: root.visible
     }
@@ -44,6 +45,7 @@ Rectangle {
     DragHandler {
         id: dragHandler
         cursorShape: Qt.SizeBDiagCursor
+        grabPermissions: PointerHandler.CanTakeOverFromAnything 
         xAxis.enabled: root.xAxisEnabled
         yAxis.enabled: root.yAxisEnabled
         margin: size * 2 // handle interaction area

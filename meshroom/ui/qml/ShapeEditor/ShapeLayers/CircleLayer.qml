@@ -58,19 +58,18 @@ BaseShapeLayer {
             PathLine { x: handleRadius.x; y: handleRadius.y }
         }
 
-        // selection click
-        TapHandler {
+        // selection area
+        MouseArea  {
+            x: handleCenter.x - root.circleRadius
+            y: handleCenter.y - root.circleRadius
+            width: root.circleRadius * 2
+            height: root.circleRadius * 2
             acceptedButtons: Qt.LeftButton
-            onTapped: { root.selected = (root.editable ? true : false); }
-            enabled: root.editable && !root.selected
-        }
-
-        // selection hover
-        HoverHandler {
             cursorShape: Qt.PointingHandCursor
+            onClicked: root.selectionRequested()
             enabled: root.editable && !root.selected
         }
-
+       
         // handle for circle center
         ShapeUtils.Handle {
             id: handleCenter

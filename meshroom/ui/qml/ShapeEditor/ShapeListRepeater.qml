@@ -8,16 +8,13 @@ import QtQuick
 * @param scaleRatio - container scale ratio (scroll zoom)
 */
 Repeater {
-    id: shapeListRepeater
+    id: root
     
     // container scale ratio
     property real scaleRatio: 1.0
 
     delegate: Loader {
-        id: shapeLoader
-
-        // container scale ratio
-        property real scaleRatio: shapeListRepeater.scaleRatio
+        id: shapeLayerLoader
         
         // determine the source QML file based on the shape type 
         // shape should be visible
@@ -25,20 +22,24 @@ Repeater {
         source: {
             if (model.isVisible === false)        return "";
             if (model.observation === undefined)  return "";
-            if (model.shapeType === "point2d")    return "Shapes/PointShape.qml";
-            if (model.shapeType === "line")       return "Shapes/LineShape.qml";
-            if (model.shapeType === "circle")     return "Shapes/CircleShape.qml";
-            if (model.shapeType === "rectangle")  return "Shapes/RectangleShape.qml";
-            if (model.shapeType === "text")       return "Shapes/TextShape.qml";
+            if (model.shapeType === "point2d")    return "ShapeLayers/PointLayer.qml";
+            if (model.shapeType === "line")       return "ShapeLayers/LineLayer.qml";
+            if (model.shapeType === "circle")     return "ShapeLayers/CircleLayer.qml";
+            if (model.shapeType === "rectangle")  return "ShapeLayers/RectangleLayer.qml";
+            if (model.shapeType === "text")       return "ShapeLayers/TextLayer.qml";
             return "";
         }
 
         onLoaded: {
-            if (shapeLoader.item) {
-                shapeLoader.item.modelIndex = model.modelIndex;   // set modelIndex for the shape
-                shapeLoader.item.properties = model.properties;   // set properties for the shape
-                shapeLoader.item.observation = model.observation; // set observation for the shape
-                shapeLoader.item.isEditable = model.isEditable;   // set editable state for the shape
+            if (shapeLayerLoader.item) {
+                // set properties from the model
+                shapeLayerLoader.item.modelIndex = model.modelIndex;   // set modelIndex
+                shapeLayerLoader.item.properties = model.properties;   // set properties
+                shapeLayerLoader.item.observation = model.observation; // set observation
+                shapeLayerLoader.item.editable = model.isEditable;     // set editable state
+
+                // set scale ratio
+                shapeLayerLoader.item.scaleRatio = Qt.binding(function() { return root.scaleRatio });    
             }
         }
     }

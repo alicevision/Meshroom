@@ -31,26 +31,13 @@ FloatingPane {
             width: root.width - inspectorScrollView.effectiveScrollBarWidth // leave some space for scroll bar
             spacing: 2
 
-            // node shape parameters section label
-            Label {
-                Layout.fillWidth: true
-                padding: 2
-                background: Rectangle { color: parent.palette.mid }
-                text: "Node Parameters"
-            }
-
-            // current node shape parameters 
-            ShapeListInspector {
-                model: ShapeEditor.nodeShapeList
-            }
-
-            // current node shapes files
+            // current node shapes lists
             Repeater {
-                model: ShapeEditor.nodeFileShapeLists
+                model: ShapeEditor.nodeShapeLists
                 delegate: ColumnLayout {
                     spacing: 2
 
-                    // shapes file section label
+                    // shape list section label
                     Label {
                         Layout.fillWidth: true
                         padding: 2
@@ -58,7 +45,7 @@ FloatingPane {
                         text: shapeListName
                     }
                     
-                    // file shape parameters 
+                    // shape list parameters 
                     ShapeListInspector { 
                         model: shapeListModel
                     }

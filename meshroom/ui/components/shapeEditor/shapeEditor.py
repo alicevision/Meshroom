@@ -2,8 +2,7 @@ from PySide6.QtCore import QObject, Slot, Property
 from meshroom.core.attribute import Attribute
 from meshroom.ui.reconstruction import Reconstruction
 from .shapeListModel import ShapeListModel
-from .shapeFileListModel import ShapeFileListModel
-import os
+from .shapeNodeModel import ShapeNodeModel
 
 class ShapeEditor(QObject):
     """Controller to manage interactions between qml and the current node shapes data models."""
@@ -13,19 +12,12 @@ class ShapeEditor(QObject):
         self._enable = False
         self._currentNode = None
         self._activeProject = activeProject
-        # build empty models
-        self._currentNodeShapeList = ShapeListModel(name="Node Parameters", currentViewId=self._activeProject.selectedViewId, parent=self)
-        self._currentNodeFileShapeLists = ShapeFileListModel(currentViewId=self._activeProject.selectedViewId, parent=self)
+        self._currentNodeShapeLists = ShapeNodeModel(currentViewId=self._activeProject.selectedViewId, parent=self)
 
     @Property(type=QObject, constant=True)
-    def nodeShapeList(self):
-        """Expose the current node shape list model to qml."""
-        return self._currentNodeShapeList
-    
-    @Property(type=QObject, constant=True)
-    def nodeFileShapeLists(self):
-        """Expose the current node output files shape lists model to qml."""
-        return self._currentNodeFileShapeLists
+    def nodeShapeLists(self):
+        """Expose the current node shape lists model to qml."""
+        return self._currentNodeShapeLists
     
     @Slot(bool)
     def enable(self, enable: bool): 
@@ -45,17 +37,14 @@ class ShapeEditor(QObject):
             # disconnect project signals
             self._activeProject.selectedViewIdChanged.disconnect(self._onSelectedViewIdChanged)
             self._activeProject.selectedNodeChanged.disconnect(self._onSelectedNodeChanged)
-            self._currentNodeShapeList.clear() # clear model
-            self._currentNodeFileShapeLists.clear() # clear model
+            self._currentNodeShapeLists.clear() # clear model
         self._enable = enable  
 
     @Slot()
     def _onSelectedViewIdChanged(self):
         """Callback when the active project selected view id changes."""
-        # update node shape list
-        self._currentNodeShapeList.setCurrentViewId(self._activeProject.selectedViewId)
-        # update node shape file lists
-        self._currentNodeFileShapeLists.setCurrentViewId(self._activeProject.selectedViewId)
+        # update node shape lists
+        self._currentNodeShapeLists.setCurrentViewId(self._activeProject.selectedViewId)
 
     @Slot()
     def _onSelectedNodeChanged(self):
@@ -70,29 +59,8 @@ class ShapeEditor(QObject):
             return
         # connect current node changed signal
         self._activeProject.selectedNode.internalsUpdated.connect(self._onSelectedNodeChanged)
-        # load node parameters shapes
-        self._currentNodeShapeList.loadShapesFromNode(self._activeProject.selectedNode)
-        # find node shape file parameters
-        self._currentNodeFileShapeLists.clear()
-        nodeShapeFileNames = []
-        for attribute in self._activeProject.selectedNode.attributes:
-            self.__getShapeFiles(attribute, nodeShapeFileNames)
-        # load node shape file parameters
-        for filepath in nodeShapeFileNames:
-            self._currentNodeFileShapeLists.addShapeListFile(name=os.path.basename(filepath), filepath=filepath)
-
-    def __getShapeFiles(self, attribute, list):
-        """Recursive function that build a list of shape json file from a parent attribute."""
-        # check if the attribute is a shape attribute
-        if not attribute.desc.semantic == "shapesFile":
-            # recusive call if ListAttribute or GroupAttribute
-            if attribute.type == "ListAttribute" or attribute.type == "GroupAttribute":
-                for childAttribute in attribute.value:
-                    self.__getShapeFiles(childAttribute, list)
-            return
-        # check if the shape file exists  
-        if os.path.exists(attribute.value):     
-            list.append(attribute.value)
+        # load node shape parameters and files
+        self._currentNodeShapeLists.loadFromNode(self._activeProject.selectedNode)
 
     def __getShapeObservationsAttribute(self, shapeName:str) -> Attribute:
         """Get the observations attribute of the given shape."""

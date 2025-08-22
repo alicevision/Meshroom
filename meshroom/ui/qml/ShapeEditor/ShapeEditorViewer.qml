@@ -59,4 +59,11 @@ Item {
             }
         }
     }
+
+    // reset selection
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        gesturePolicy: TapHandler.WithinBounds
+        onTapped: { root.selectedShapeName = "" }
+    }
 }

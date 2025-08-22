@@ -143,9 +143,9 @@ executables = [
 setup(
     name="Meshroom",
     description="Meshroom",
-    install_requires=['psutil', 'PySide6', 'markdown'],
+    install_requires=["psutil", "PySide6", "markdown"],
     setup_requires=[
-        'cx_Freeze'
+        "cx_Freeze"
     ],
     version=meshroom.__version__,
     options={"build_exe": build_exe_options},

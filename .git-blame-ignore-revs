@@ -1,3 +1,5 @@
+# [build] `setup.py`: Use double quotes everywhere
+a1537e2b212088417bf3f78ecf32f8d0701faa50
 # [core] Linting following CI's flake8 report
 9b4bd68d5aa9e5c3af5e4bfc4fe6aae06437ca88
 # [tests] Linting following CI's flake8 report

@@ -19,8 +19,8 @@ BaseShapeLayer {
     id: root
 
     // circle radius from handleRadius position
-    property real circleRadius: Math.max(1.0, Math.sqrt(Math.pow(handleRadius.x - root.observation.centerX, 2) +
-                                                        Math.pow(handleRadius.y - root.observation.centerY, 2)))
+    property real circleRadius: Math.max(1.0, Math.sqrt(Math.pow(handleRadius.x - handleCenter.x, 2) +
+                                                        Math.pow(handleRadius.y - handleCenter.y, 2)))
                                      
     // circle shape
     Shape {

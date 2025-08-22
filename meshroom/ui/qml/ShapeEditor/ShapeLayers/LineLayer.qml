@@ -37,7 +37,7 @@ BaseShapeLayer {
             width: Math.max(handleP1.x, handleP2.x) 
             height: Math.max(handleP1.y, handleP2.y)
             acceptedButtons: Qt.LeftButton
-            cursorShape: Qt.PointingHandCursor
+            cursorShape: root.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: root.selectionRequested()
             enabled: root.editable && !root.selected
         }

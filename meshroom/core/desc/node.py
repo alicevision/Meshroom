@@ -15,12 +15,8 @@ import meshroom
 from meshroom.core import cgroup
 
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
-if getattr(sys, "frozen", False):  # When in release package mode, the path to meshroom_compute differs
-    _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT).parent / "meshroom_compute").as_posix()
-    _MESHROOM_COMPUTE_EXE = _MESHROOM_COMPUTE
-else:
-    _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
-    _MESHROOM_COMPUTE_EXE = f"python {_MESHROOM_COMPUTE}"
+_MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
+_MESHROOM_COMPUTE_EXE = f"python {_MESHROOM_COMPUTE}"
 
 
 class MrNodeType(enum.Enum):

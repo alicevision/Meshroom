@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import Controls 1.0
 import MaterialIcons 2.2
+import ShapeEditor 1.0
 import Utils 1.0
 
 FocusScope {
@@ -814,6 +815,29 @@ FocusScope {
                     }
                 }
 
+                // ShapeEditorViewer: display shapes and texts
+                ExifOrientedViewer {
+                    id: shapeEditorViewerLoader
+                    anchors.centerIn: parent
+                    width: imgContainer.width
+                    height: imgContainer.height
+                    xOrigin: imgContainer.width * 0.5
+                    yOrigin: imgContainer.height * 0.5
+                    orientationTag: imgContainer.orientationTag
+                    active: displayShapeEditor.checked
+
+                    onActiveChanged: {
+                        if (active) {
+                            setSource("../ShapeEditor/ShapeEditorViewer.qml", {"containerScale": Qt.binding(function() { return imgContainer.scale })})
+                            ShapeEditor.enable(true) // enable ShapeEditor
+                        } else {
+                            // forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                            setSource("", {})
+                            ShapeEditor.enable(false)  // disable ShapeEditor
+                        }
+                    }
+                }
+
                 // FisheyeCircleViewer: display fisheye circle
                 // Note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
                 ExifOrientedViewer {
@@ -1273,6 +1297,18 @@ FocusScope {
                     }
 
                     Loader {
+                        id: shapeEditorInspector
+                        active: shapeEditorViewerLoader.status === Loader.Ready
+                        width: 200
+                        anchors {
+                            top: parent.top
+                            left: parent.left
+                            bottom: parent.bottom
+                        }
+                        sourceComponent: ShapeEditorInspector {}
+                    }
+
+                    Loader {
                         id: sfmStatsView
                         anchors.fill: parent
                         active: msfmDataLoader.status === Loader.Ready && displaySfmStatsView.checked
@@ -1539,6 +1575,16 @@ FocusScope {
                                 if (enabled == false)
                                     checked = false
                             }
+                        }
+
+                        MaterialToolButton {
+                            id: displayShapeEditor
+                            ToolTip.text: "Display Shape Editor"
+                            text: MaterialIcons.edit_square
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
                         }
 
                         MaterialToolButton {

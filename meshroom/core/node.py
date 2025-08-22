@@ -1230,6 +1230,9 @@ class BaseNode(BaseObject):
         if self.internalFolder != folder:
             self.internalFolderChanged.emit()
 
+        # Node is fully uodated
+        self.internalsUpdated.emit()
+
     def updateInternalAttributes(self):
         self.internalAttributesChanged.emit()
 
@@ -1631,6 +1634,7 @@ class BaseNode(BaseObject):
     x = Property(float, lambda self: self._position.x, notify=positionChanged)
     y = Property(float, lambda self: self._position.y, notify=positionChanged)
     attributes = Property(BaseObject, getAttributes, constant=True)
+    internalsUpdated = Signal() # internal parameters and output attributes fully updated
     internalAttributes = Property(BaseObject, getInternalAttributes, constant=True)
     internalAttributesChanged = Signal()
     label = Property(str, getLabel, notify=internalAttributesChanged)

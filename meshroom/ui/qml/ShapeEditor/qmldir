@@ -1,0 +1,4 @@
+module ShapeEditor
+
+ShapeEditorInspector 1.0 ShapeEditorInspector.qml
+ShapeEditorViewer 1.0 ShapeEditorViewer.qml

@@ -52,6 +52,7 @@ class Attribute(BaseObject):
     stringIsLinkRe = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
 
     VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
+    VALID_2D_SHAPE_SEMANTICS = ["point2d", "circle", "shapesFile"]
     VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".abc", ".ply"]
 
     def __init__(self, node, attributeDesc: desc.Attribute, isOutput: bool, root=None, parent=None):
@@ -475,6 +476,14 @@ class Attribute(BaseObject):
 
         return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
                      if self.desc.semantic == imageSemantic), None) is not None
+    
+    def _is2DShape(self) -> bool:
+        """ Return True if the current attribute is considered as a 2d shape / shape file"""
+        if not self.desc.semantic:
+            return False
+
+        return next((shapeSemantic for shapeSemantic in Attribute.VALID_2D_SHAPE_SEMANTICS
+                        if self.desc.semantic == shapeSemantic), None) is not None
 
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
@@ -490,6 +499,7 @@ class Attribute(BaseObject):
     isReadOnly = Property(bool, _isReadOnly, constant=True)
     is3D = Property(bool, _is3D, constant=True)
     is2D = Property(bool, _is2D, constant=True)
+    is2DShape = Property(bool, _is2DShape, constant=True)
 
     # Description of the attribute
     descriptionChanged = Signal()

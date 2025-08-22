@@ -1,0 +1,3 @@
+from .shapeEditor import (
+    ShapeEditor
+)

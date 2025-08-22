@@ -61,7 +61,7 @@ BaseShapeLayer {
             width: rectangleWidth
             height: rectangleHeight
             acceptedButtons: Qt.LeftButton
-            cursorShape: Qt.PointingHandCursor
+            cursorShape: root.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: root.selectionRequested()
             enabled: root.editable && !root.selected
         }

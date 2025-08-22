@@ -65,11 +65,11 @@ BaseShapeLayer {
             width: root.circleRadius * 2
             height: root.circleRadius * 2
             acceptedButtons: Qt.LeftButton
-            cursorShape: Qt.PointingHandCursor
+            cursorShape: root.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: root.selectionRequested()
             enabled: root.editable && !root.selected
         }
-       
+        
         // handle for circle center
         ShapeUtils.Handle {
             id: handleCenter

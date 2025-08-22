@@ -20,7 +20,7 @@ BaseShapeLayer {
 
     // line shape
     Shape {
-        id: lineShape
+        id: draggableLine
 
         // line path
         ShapePath {
@@ -50,6 +50,12 @@ BaseShapeLayer {
             size: getScaledHandleSize()
             cursorShape: Qt.SizeAllCursor
             visible: root.editable && root.selected
+            onMoved: {
+                ShapeEditor.updateCurrentObservation(root.name, { 
+                    x1: handleP1.x + draggableLine.x,
+                    y1: handleP1.y + draggableLine.y,
+                })
+            }
         }
 
         // handle for p2
@@ -60,6 +66,12 @@ BaseShapeLayer {
             size: getScaledHandleSize()
             cursorShape: Qt.SizeAllCursor
             visible: root.editable && root.selected
+            onMoved: {
+                ShapeEditor.updateCurrentObservation(root.name, { 
+                    x2: handleP2.x + draggableLine.x,
+                    y2: handleP2.y + draggableLine.y,
+                })
+            }
         }
 
         // handle for line center
@@ -68,9 +80,17 @@ BaseShapeLayer {
             x: (handleP1.x + handleP2.x) * 0.5
             y: (handleP1.y + handleP2.y) * 0.5
             size: getScaledHandleSize()
-            target: lineShape
+            target: draggableLine
             cursorShape: Qt.SizeAllCursor
             visible: root.editable && root.selected
+            onMoved: {
+                ShapeEditor.updateCurrentObservation(root.name, { 
+                    x1: handleP1.x + draggableLine.x,
+                    y1: handleP1.y + draggableLine.y,
+                    x2: handleP2.x + draggableLine.x,
+                    y2: handleP2.y + draggableLine.y,
+                })
+            }
         }
     }
 }

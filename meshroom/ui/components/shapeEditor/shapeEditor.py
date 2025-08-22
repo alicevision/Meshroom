@@ -62,13 +62,18 @@ class ShapeEditor(QObject):
         # load node shape parameters and files
         self._currentNodeShapeLists.loadFromNode(self._activeProject.selectedNode)
 
+    def __getCurrentNodeAttribute(self, attributeName:str) -> Attribute:
+        """Get an attribute of the current node."""
+        # check attribute name and current node
+        if attributeName is None or self._currentNode is None:
+            return None
+        # return attribute
+        return self._currentNode.attribute(attributeName)
+
     def __getShapeObservationsAttribute(self, shapeName:str) -> Attribute:
         """Get the observations attribute of the given shape."""
-        # check shapeName and current node
-        if shapeName is None or self._currentNode is None:
-            return None
         # get current node shape attribute
-        attribute = self._currentNode.attribute(shapeName)
+        attribute = self.__getCurrentNodeAttribute(shapeName)
         # check shape attribute
         if attribute is None and attribute.type != "GroupAttribute":
             return None
@@ -110,8 +115,33 @@ class ShapeEditor(QObject):
         """Remove the current view id observation for the given shape."""
         # get shape current observation group attribute
         observationAttribute = self.__getShapeCurrentObservationAttribute(shapeName)
-        # check shape current observation group attribute
+        # check shape current observation list attribute
         if observationAttribute is None:
             return
         # remove current observation
         self._activeProject.removeAttribute(observationAttribute)
+
+    @Slot(str, "QVariant")
+    def updateCurrentObservation(self, shapeName:str, observationVariant):
+        """Update the current observation for the given shape."""
+        observation = observationVariant.toVariant()
+        # check observation type
+        if not isinstance(observation, dict):
+            return
+        # get observation attribute
+        observationAttribute = self.__getShapeCurrentObservationAttribute(shapeName)
+        #  check shape current observation list attribute
+        if observationAttribute is None:
+            # no observation attribute
+            # shape is static, get shape attribute
+            observationAttribute = self.__getCurrentNodeAttribute(shapeName)
+            #  check attribute
+            if observationAttribute is None:
+                return
+        # update shape observation attributes
+        with self._activeProject.groupedGraphModification("Update Shape"):
+            for name, value in observation.items():
+                attribute = observationAttribute.childAttribute(name)
+                if attribute is not None:
+                    self._activeProject.setAttribute(attribute, str(value))
+        

@@ -7,7 +7,7 @@ import "ShapeUtils" as ShapeUtils
 * RectangleLayer
 *
 * @biref Allows to display and modify a rectangle.
-* @param modelIndex - the given shape index
+* @param name - the given shape name
 * @param properties - the given shape style properties
 * @param observation - the given shape position and dimensions for the current view
 * @param editable - the shape is editable

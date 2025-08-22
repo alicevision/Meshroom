@@ -20,8 +20,8 @@ Item {
     // signal to request selection
     signal selectionRequested()
 
-    // shape model index
-    property int modelIndex: -1
+    // shape name
+    property string name: ""
 
     // shape properties
     property var properties: ({})

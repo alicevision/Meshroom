@@ -4,7 +4,7 @@ import QtQuick
 * PointLayer
 *
 * @biref Allows to display and modify a 2d point.
-* @param modelIndex - the given shape index
+* @param name - the given shape name
 * @param properties - the given shape style properties
 * @param observation - the given shape position and dimensions for the current view
 * @param editable - the shape is editable

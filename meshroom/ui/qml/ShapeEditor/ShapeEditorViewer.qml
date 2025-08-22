@@ -15,11 +15,8 @@ Item {
     // container scale ratio
     property real scaleRatio: (1 / root.containerScale)
 
-    // current node selected shape list index
-    property int selectedShapeListIndex: -1
-
-    // current node selected shape index
-    property int selectedShapeIndex: -1 
+    // current node selected shape name
+    property string selectedShapeName: ""
 
     // current node shape lists
     Repeater {
@@ -27,10 +24,6 @@ Item {
         delegate: Repeater {
             id: shapeListRepeater
             model: shapeListModel
-
-            // shape list index
-            property int shapeListIndex: modelIndex
-
             delegate: Loader {
                 id: shapeLayerLoader
                 
@@ -51,21 +44,16 @@ Item {
                 onLoaded: {
                     if (shapeLayerLoader.item) {
                         // set properties from the model
-                        shapeLayerLoader.item.modelIndex = model.modelIndex;   // set modelIndex
+                        shapeLayerLoader.item.name = model.shapeName;          // set name
                         shapeLayerLoader.item.properties = model.properties;   // set properties
                         shapeLayerLoader.item.observation = model.observation; // set observation
                         shapeLayerLoader.item.editable = model.isEditable;     // set editable state
-                        // set scale ratio
+                        // binding scale ratio 
                         shapeLayerLoader.item.scaleRatio = Qt.binding(function() { return root.scaleRatio });   
-                        // set selected state
-                        shapeLayerLoader.item.selected = Qt.binding(function() { 
-                            return shapeListRepeater.shapeListIndex === root.selectedShapeListIndex && model.modelIndex === root.selectedShapeIndex 
-                        }); 
+                        // binding selected state
+                        shapeLayerLoader.item.selected = Qt.binding(function() { return model.shapeName === root.selectedShapeName }); 
                         // connect selection requested signal 
-                        item.selectionRequested.connect(() => {
-                            root.selectedShapeListIndex = shapeListRepeater.shapeListIndex
-                            root.selectedShapeIndex = model.modelIndex
-                        })
+                        item.selectionRequested.connect(() => { root.selectedShapeName = model.shapeName })
                     }
                 }
             }

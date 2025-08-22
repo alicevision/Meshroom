@@ -19,7 +19,7 @@ BaseShapeLayer {
 
     // point shape
     Rectangle {
-        id: pointShape
+        id: draggablePoint
         x: root.observation.x - (size * 0.5)
         y: root.observation.y - (size * 0.5)
         width: size
@@ -44,9 +44,17 @@ BaseShapeLayer {
 
         // drag
         DragHandler {
-            target: pointShape
+            target: draggablePoint
             cursorShape: Qt.SizeAllCursor
             enabled: root.editable && root.selected
+            onActiveChanged: { 
+                if (!active) { 
+                    ShapeEditor.updateCurrentObservation(root.name, { 
+                        x: draggablePoint.x + root.size * 0.5, 
+                        y: draggablePoint.y + root.size * 0.5
+                    })
+                }
+            }
         }
     }
 }

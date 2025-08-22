@@ -44,6 +44,13 @@ __pycache__
 *.qmlc
 *.jsc
 
+# QtCreator project files
+*.cflags
+*.cxxflags
+*.creator*
+*.files
+*.includes
+
 *.dll
 
 *.lib

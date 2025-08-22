@@ -19,7 +19,7 @@ BaseShapeLayer {
     id: root
 
     // rectangle width from handleWidth position
-    property real rectangleWidth: Math.max(1.0, Math.abs(root.observation.centerX - handleWidth.x) * 2)
+    property real rectangleWidth: Math.max(1.0, Math.abs(handleCenter.x- handleWidth.x) * 2)
 
     // rectangle height from handleHeight position
     property real rectangleHeight: Math.max(1.0, Math.abs(root.observation.centerY - handleHeight.y) * 2)

@@ -26,7 +26,7 @@ BaseShapeLayer {
 
     // rectangle shape
     Shape {
-        id : rectangleShape
+        id : draggableRectangle
 
         // rectangle path 
         ShapePath {
@@ -72,9 +72,15 @@ BaseShapeLayer {
             x: root.observation.centerX || 0
             y: root.observation.centerY || 0
             size: getScaledHandleSize()
-            target: rectangleShape
+            target: draggableRectangle
             cursorShape: Qt.SizeAllCursor
             visible: root.editable && root.selected
+            onMoved: {
+                ShapeEditor.updateCurrentObservation(root.name, { 
+                    centerX: handleCenter.x + draggableRectangle.x,
+                    centerY: handleCenter.y + draggableRectangle.y,
+                })
+            }
         }
 
         // handle for rectangle width
@@ -86,6 +92,9 @@ BaseShapeLayer {
             yAxisEnabled: false
             cursorShape: Qt.SizeHorCursor
             visible: root.editable && root.selected
+            onMoved: {
+                ShapeEditor.updateCurrentObservation(root.name, { width: root.rectangleWidth })
+            }
         }
 
         // handle for rectangle height
@@ -97,6 +106,9 @@ BaseShapeLayer {
             xAxisEnabled: false
             cursorShape: Qt.SizeVerCursor
             visible: root.editable && root.selected
+            onMoved: {
+                ShapeEditor.updateCurrentObservation(root.name, { height: root.rectangleHeight })
+            }
         }
     }
 }

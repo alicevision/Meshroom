@@ -27,6 +27,9 @@ __pycache__
 /dist
 /dl
 
+# virtual environment
+/venv
+
 # tests
 /.tests
 /.pytest_cache
@@ -40,6 +43,13 @@ __pycache__
 
 *.qmlc
 *.jsc
+
+# QtCreator project files
+*.cflags
+*.cxxflags
+*.creator*
+*.files
+*.includes
 
 *.dll
 

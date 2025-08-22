@@ -27,6 +27,9 @@ __pycache__
 /dist
 /dl
 
+# virtual environment
+/venv
+
 # tests
 /.tests
 /.pytest_cache

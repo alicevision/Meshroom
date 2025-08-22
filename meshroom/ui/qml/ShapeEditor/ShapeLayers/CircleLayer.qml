@@ -24,7 +24,7 @@ BaseShapeLayer {
                                      
     // circle shape
     Shape {
-        id: circleShape
+        id: draggableShape
 
         // circle path
         ShapePath {
@@ -76,9 +76,15 @@ BaseShapeLayer {
             x: root.observation.centerX || 0
             y: root.observation.centerY || 0
             size: getScaledHandleSize()
-            target: circleShape
+            target: draggableShape
             cursorShape: Qt.SizeAllCursor
             visible: root.editable && root.selected
+            onMoved: {
+                ShapeEditor.updateCurrentObservation(root.name, { 
+                    centerX: handleCenter.x + draggableShape.x, 
+                    centerY: handleCenter.y + draggableShape.y 
+                })
+            }
         }
 
         // handle for circle radius
@@ -89,6 +95,9 @@ BaseShapeLayer {
             size: getScaledHandleSize()
             cursorShape: Qt.SizeBDiagCursor
             visible: root.editable && root.selected
+            onMoved: {
+                ShapeEditor.updateCurrentObservation(root.name, { radius: root.circleRadius })
+            }
         }
     }
 }

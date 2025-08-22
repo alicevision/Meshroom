@@ -1,3 +1,5 @@
+# [build] `setup.py`: Use double quotes everywhere
+571de38ef1a9e72e6c1d2a997b60de5bd3caa5bf
 # [bin] `meshroom_batch`: Minor clean-up in the file
 15d9ecd888faa7216cfc5d97d473f5717a3118a3
 # [core] Linting following CI's flake8 report

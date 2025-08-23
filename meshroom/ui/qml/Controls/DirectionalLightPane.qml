@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects // for OpacityMask & Glow
+import QtQuick.Shapes
 import MaterialIcons 2.2
 import Utils 1.0
 
@@ -13,7 +13,6 @@ import Utils 1.0
 * @param lightYawValue - directional light yaw (degrees)
 * @param lightPitchValue - directional light pitch (degrees)
 */
-
 FloatingPane {
     id: root
 
@@ -36,9 +35,9 @@ FloatingPane {
     // update 2d controller if pitch value changed
     onLightPitchValueChanged: { lightBallController.update() }
 
+    // pane properties
     anchors.margins: 0
     padding: 5
-    radius: 0
 
     ColumnLayout {
         anchors.fill: parent
@@ -152,65 +151,72 @@ FloatingPane {
                         y = controllerRadius * Math.sin(angleRad)
                     }
 
-                    // compute distance function for light gradient emulation
-                    var distanceRatio = Math.min(distance, controllerRadius) / controllerRadius
-                    var distanceFunct = distanceRatio * distanceRatio * 0.3 
-
                     // update light point
                     lightPoint.x = lightPoint.startOffset + x
                     lightPoint.y = lightPoint.startOffset + y
-
-                    // update light gradient
-                    lightGradient.angle = angleRad * (180 / Math.PI) // radians to degrees
-                    lightGradient.horizontalRadius = controllerSize * (1 - distanceFunct)
-                    lightGradient.verticalRadius = controllerSize * (1 + distanceFunct)
-                    lightGradient.horizontalOffset = x * (1 - distanceFunct)
-                    lightGradient.verticalOffset = y * (1 - distanceFunct)
                 }
 
-                RadialGradient {
-                    id: lightGradient
+               
+                // light ball controller shapes
+                Shape {
                     anchors.centerIn: parent
-                    width: controllerSize
-                    height: width
-                    horizontalRadius: controllerSize
-                    verticalRadius: controllerSize
-                    angle: 0
-                    gradient: Gradient {
-                        GradientStop { position: 0.00; color: "#FFFFFFFF" }
-                        GradientStop { position: 0.10; color: "#FFAAAAAA" }
-                        GradientStop { position: 0.50; color: "#FF0C0C0C" }
-                    }
-                    layer.enabled: true
-                    layer.effect: OpacityMask {
-                        id: mask
-                        maskSource: Rectangle {
-                            height: lightGradient.height
-                            width: lightGradient.width
-                            radius: 180 // circle
+                    width: parent.width
+                    height: parent.height
+
+                    // ball shape
+                    ShapePath {
+                        strokeWidth: 0
+
+                        // shade gradient
+                        fillGradient: RadialGradient {
+                            centerX: lightPoint.x + lightPoint.radius
+                            centerY: lightPoint.y + lightPoint.radius
+                            centerRadius: controllerSize
+                            focalX: (lightPoint.x - lightPoint.startOffset) * 0.75 + lightPoint.startOffset + lightPoint.radius
+                            focalY: (lightPoint.y - lightPoint.startOffset) * 0.75 + lightPoint.startOffset + lightPoint.radius
+                            focalRadius: 2 
+                            GradientStop { position: 0.00; color: "#FFCCCCCC" }
+                            GradientStop { position: 0.05; color: "#FFAAAAAA" }
+                            GradientStop { position: 0.50; color: "#FF0C0C0C" }
+                        }
+
+                        // ball circle path
+                        PathRectangle {
+                            x: 0
+                            y: 0
+                            width: controllerSize
+                            height: controllerSize
+                            radius: controllerSize * 0.5 // circle shape
                         }
                     }
-                }
 
-                Rectangle {
-                    id: lightPoint
+                    // light point shape
+                    ShapePath {
+                        strokeWidth: 0
 
-                    property double startOffset : (parent.width - width) * 0.5 
+                        // glow gradient
+                        fillGradient: RadialGradient {
+                            centerX: lightPoint.x + centerRadius
+                            centerY: lightPoint.y + centerRadius
+                            centerRadius: lightPoint.radius
+                            focalX: centerX
+                            focalY: centerY
+                            GradientStop { position: 0.4; color: "#FFFFFFFF" }
+                            GradientStop { position: 0.75; color: "#33FFFFFF" }
+                            GradientStop { position: 1.0; color: "#00FFFFFF" }
+                        }
 
-                    x: startOffset
-                    y: startOffset
-                    width: controllerRadius / 6
-                    height: width
-                    radius: 180 // circle
-                    color: "white"
-                }
-
-                Glow {
-                    anchors.fill: lightPoint
-                    radius: controllerRadius / 5
-                    samples: 17
-                    color: "white"
-                    source: lightPoint
+                        // point circle path
+                        PathRectangle {
+                            id: lightPoint
+                            readonly property double startOffset : (lightBallController.width - width) * 0.5 
+                            x: startOffset
+                            y: startOffset
+                            width: controllerRadius * 0.4
+                            height: width
+                            radius: width * 0.5  // circle shape
+                        }
+                    }
                 }
 
                 MouseArea {

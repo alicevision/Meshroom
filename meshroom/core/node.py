@@ -1947,9 +1947,18 @@ class CompatibilityNode(BaseNode):
         attrDesc = next((d for d in refAttributes if d.name == name), None)
         if attrDesc is None:
             return None
+
         # We have found a description, and we still need to
         # check if the value matches the attribute description.
-        #
+
+        # If it is a GroupAttribute, all attributes within the group should be matched individually
+        # so that links that can be correctly evaluated
+        if isinstance(attrDesc, desc.GroupAttribute):
+            for k, v in value.items():
+                if CompatibilityNode.attributeDescFromName(attrDesc.groupDesc, k, v, strict=True) is None:
+                    return None
+            return attrDesc
+
         # If it is a serialized link expression (no proper value to set/evaluate)
         if Attribute.isLinkExpression(value):
             return attrDesc

@@ -77,6 +77,9 @@ class Attribute(BaseObject):
         self._description: str = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
+        self._exposed = root.exposed if root is not None else attributeDesc.exposed
+        self._depth = root.depth + 1 if root is not None else 0
+
         # invalidation value for output attributes
         self._invalidationValue = ""
 
@@ -90,6 +93,12 @@ class Attribute(BaseObject):
     @property
     def root(self):
         return self._root() if self._root else None
+
+    def getDepth(self):
+        return self._depth
+
+    def getExposed(self) -> bool:
+        return self._exposed
 
     def getName(self) -> str:
         """ Attribute name """
@@ -374,7 +383,7 @@ class Attribute(BaseObject):
         elif self.isInput and Attribute.isLinkExpression(v):
             # value is a link to another attribute
             link = v[1:-1]
-            linkNodeName, linkAttrName = link.split('.')
+            linkNodeName, linkAttrName = link.split('.', 1)
             try:
                 node = g.node(linkNodeName)
                 if not node:
@@ -456,6 +465,13 @@ class Attribute(BaseObject):
         # Emit if the enable status has changed
         self.setEnabled(self.getEnabled())
 
+    def getFlatStaticChildren(self):
+        """ Return a list of all the attributes that refer to this instance as their parent through
+        the 'root' property. If no such attribute exist, return an empty list. The depth difference is not
+        taken into account in the list, which is thus always flat. """
+        # For all attributes but GroupAttributes, there cannot be any child
+        return []
+
     def _is3D(self) -> bool:
         """ Return True if the current attribute is considered as a 3d file """
         if self.desc.semantic == "3d":
@@ -488,6 +504,7 @@ class Attribute(BaseObject):
     type = Property(str, getType, constant=True)
     baseType = Property(str, getType, constant=True)
     isReadOnly = Property(bool, _isReadOnly, constant=True)
+    exposed = Property(bool, getExposed, constant=True)
     is3D = Property(bool, _is3D, constant=True)
     is2D = Property(bool, _is2D, constant=True)
 
@@ -526,6 +543,8 @@ class Attribute(BaseObject):
     validValueChanged = Signal()
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
     root = Property(BaseObject, root.fget, constant=True)
+    depth = Property(int, getDepth, constant=True)
+    flatStaticChildren = Property(Variant, getFlatStaticChildren, constant=True)
 
 
 def raiseIfLink(func):
@@ -937,6 +956,20 @@ class GroupAttribute(Attribute):
         for attr in self._value:
             attr.updateInternals()
 
+    def getFlatStaticChildren(self):
+        """ Return a list of all the attributes that refer to this instance of GroupAttribute as their parent
+        through the 'root' property. In the case of GroupAttributes, any attribute within said group will be
+        a child. The depth difference is not taken into account when generating the list, which is thus always
+        flat. """
+        attributes = []
+
+        # Iterate over the values and add the flat children of every child (if they exist)
+        for attribute in self._value:
+            attributes.append(attribute)
+            attributes = attributes + attribute.getFlatStaticChildren()
+
+        return attributes
+
     @Slot(str, result=bool)
     def matchText(self, text: str) -> bool:
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
@@ -944,3 +977,4 @@ class GroupAttribute(Attribute):
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+    flatStaticChildren = Property(Variant, getFlatStaticChildren, constant=True)

@@ -128,7 +128,7 @@ Item {
                 anchors.centerIn: parent
 
                 iconText: MaterialIcons.loop
-                label: (root.iteration + 1) + "/" + root.loopSize + " "
+                label.text: (root.iteration + 1) + "/" + root.loopSize + " "
 
                 labelIconColor: palette.base
                 ToolTip.text: "Foreach Loop"

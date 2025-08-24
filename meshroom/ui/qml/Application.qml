@@ -1359,7 +1359,7 @@ Page {
                 NodeEditor {
                     id: nodeEditor
                     SplitView.preferredWidth: 500
-                    SplitView.minimumWidth: 80
+                    SplitView.minimumWidth: 350
 
                     node: _reconstruction ? _reconstruction.selectedNode : null
                     property bool computing: _reconstruction ? _reconstruction.computing : false       

@@ -166,6 +166,11 @@ class RezProcessEnv(ProcessEnv):
                     continue
                 version = package.split("-")
                 resolvedVersions[version[0]] = version[1]
+
+                # Add the plugin's package
+                if version[0] == self.uri:
+                    packages.append(f"{version[0]}-{version[1]}")
+
             currentEnvPackages = [package + "-" + resolvedVersions[package] for package in resolvedVersions.keys()]
         logging.debug("Packages in the current environment: " + ", ".join(currentEnvPackages))
 

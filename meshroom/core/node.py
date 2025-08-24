@@ -499,6 +499,8 @@ class NodeChunk(BaseObject):
         self.statThread = stats.StatisticsThread(self)
         self.statThread.start()
         try:
+            if self.node.nodeDesc is None:
+                raise RuntimeError("Node description empty. This could be coming from a wrong MESHROOM_NODES_PATH environment variable.")
             self.node.nodeDesc.processChunk(self)
             # NOTE: this assumes saving the output attributes for each chunk
             self.node.saveOutputAttr()

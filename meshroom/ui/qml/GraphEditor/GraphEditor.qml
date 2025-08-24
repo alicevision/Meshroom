@@ -228,7 +228,8 @@ Item {
             function importPipeline(pipeline) {
                 if (MeshroomApp.pipelineTemplateNames.includes(pipeline)) {
                     var url = MeshroomApp.pipelineTemplateFiles[MeshroomApp.pipelineTemplateNames.indexOf(pipeline)]["path"]
-                    var nodes = uigraph.importProject(Filepath.stringToUrl(url), spawnPosition)
+                    // Importing a template, so the "Publish" nodes must be excluded
+                    var nodes = uigraph.importProject(Filepath.stringToUrl(url), spawnPosition, false)
                     uigraph.selectedNode = nodes[0]
                     uigraph.selectNodes(nodes)
                     return true

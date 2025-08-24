@@ -408,28 +408,34 @@ class Graph(BaseObject):
             self.replaceNode(node.name, compatibilityNode)
 
 
-    def importGraphContentFromFile(self, filepath: PathLike) -> list[Node]:
-        """Import the content (nodes and edges) of another Graph file into this Graph instance.
+    def importGraphContentFromFile(self, filepath: PathLike, publishOutputs: bool = True) -> list[Node]:
+        """
+        Import the content (nodes and edges) of another Graph file into this Graph instance.
+        "Publish" nodes may be excluded (for example if the input Graph file is a template).
 
         Args:
             filepath: The path to the Graph file to import.
+            publishOutputs: Whether to keep "Publish" nodes.
 
         Returns:
             The list of newly created Nodes.
         """
         graph = loadGraph(filepath)
-        return self.importGraphContent(graph)
+        return self.importGraphContent(graph, publishOutputs)
 
     @blockNodeCallbacks
-    def importGraphContent(self, graph: "Graph") -> list[Node]:
+    def importGraphContent(self, graph: "Graph", publishOutputs: bool = True) -> list[Node]:
         """
         Import the content (node and edges) of another `graph` into this Graph instance.
 
         Nodes are imported with their original names if possible, otherwise a new unique name is generated
         from their node type.
 
+        "Publish" nodes may be excluded (for example if `graph` comes from a template file).
+
         Args:
             graph: The graph to import.
+            publishOutputs: Whether to keep the imported "Publish" nodes.
 
         Returns:
             The list of newly created Nodes.
@@ -452,6 +458,9 @@ class Graph(BaseObject):
             with GraphModification(self):
                 for srcNode in nodes:
                     node = self._deserializeNode(srcNode.toDict(), srcNode.name, graph)
+                    if node.nodeType == "Publish" and not publishOutputs:
+                        self.removeNode(node.name)
+                        continue
                     importedNodes.append(node)
                 self._applyExpr()
             return importedNodes

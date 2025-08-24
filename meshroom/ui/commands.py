@@ -252,15 +252,16 @@ class ImportProjectCommand(GraphCommand):
     Handle the import of a project into a Graph.
     """
 
-    def __init__(self, graph: Graph, filepath: PathLike, position=None, yOffset=0, parent=None):
+    def __init__(self, graph: Graph, filepath: PathLike, publishOutputs=True, position=None, yOffset=0, parent=None):
         super().__init__(graph, parent)
         self.filepath = filepath
+        self.publishOutputs = publishOutputs
         self.importedNames = []
         self.position = position
         self.yOffset = yOffset
 
     def redoImpl(self):
-        importedNodes = self.graph.importGraphContentFromFile(self.filepath)
+        importedNodes = self.graph.importGraphContentFromFile(self.filepath, publishOutputs=self.publishOutputs)
         self.setText(f"Import Project ({len(importedNodes)} nodes)")
 
         lowestY = 0

@@ -238,6 +238,13 @@ Page {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
+                // Reset project selection when switching tabs
+                onCurrentTabChanged: {
+                    if (currentTab === 1) {
+                        gridView.selectedIndex = -1
+                    }
+                }
+
                 ListView {
                     id: pipelinesListView
                     visible: tabPanel.currentTab === 0
@@ -280,11 +287,21 @@ Page {
                     cellHeight: cellWidth
                     anchors.margins: 10
 
+                    // Property to track which project is currently selected
+                    property int selectedIndex: -1
+
                     model: {
                         // Request latest thumbnail paths
                         if (mainStack.currentItem instanceof Homepage)
                             MeshroomApp.updateRecentProjectFilesThumbnails()
                         return [{"path": null, "thumbnail": null}].concat(MeshroomApp.recentProjectFiles)
+                    }
+
+                    // Reset selection when model changes if index is out of bounds
+                    onModelChanged: {
+                        if (selectedIndex >= count) {
+                            selectedIndex = -1
+                        }
                     }
 
                     // Update grid item when corresponding thumbnail is computed
@@ -332,6 +349,14 @@ Page {
                             font.pointSize: 24
 
                             text: modelData["path"] ? (modelData["thumbnail"] ? "" : MaterialIcons.description) : MaterialIcons.folder_open
+
+                            // Add visual highlighting when this project is selected
+                            background: Rectangle {
+                                color: projectDelegate.hovered ? Qt.darker(projectDelegate.palette.base, 0.6) : "transparent"
+                                border.width: gridView.selectedIndex === index ? 2 : 0
+                                border.color: gridView.selectedIndex === index ? "#ff0000" : "transparent"
+                                radius: 4
+                            }
                             
                             MouseArea {
                                 anchors.fill: parent
@@ -339,6 +364,9 @@ Page {
                                 hoverEnabled: true
 
                                 onClicked: function(mouse) {
+
+                                    // Set the selected index to highlight this project
+                                    gridView.selectedIndex = index
 
                                     if (mouse.button === Qt.RightButton) {
 
@@ -375,7 +403,8 @@ Page {
 
                                 MenuItem {
                                     text: "Open"
-                                    onTriggered: {                                        
+                                    onTriggered: {
+                                        gridView.selectedIndex = index
                                         if (_reconstruction.load(modelData["path"])) {
                                             mainStack.push("Application.qml")
                                             MeshroomApp.addRecentProjectFile(modelData["path"])
@@ -386,6 +415,10 @@ Page {
                                 MenuItem {
                                     text: "Delete"
                                     onTriggered: {
+                                        // Clear selection if deleting the selected item
+                                        if (gridView.selectedIndex === index) {
+                                            gridView.selectedIndex = -1
+                                        }
                                         MeshroomApp.removeRecentProjectFile(modelData["path"])
                                     }
                                 }

@@ -288,7 +288,7 @@ FloatingPane {
             text: MaterialIcons.settings
             font.pointSize: 11
             padding: 2
-            onClicked: infoMenu.open()
+            onClicked: infoMenu.visible ? infoMenu.close() : infoMenu.open()
             checkable: true
             checked: infoMenu.visible
 

@@ -113,7 +113,7 @@ Item {
                     padding: 2
                     checkable: true
                     checked: imageViewerMenu.visible
-                    onClicked: imageViewerMenu.open()
+                    onClicked: imageViewerMenu.visible ? imageViewerMenu.close() : imageViewerMenu.open()
                     Menu {
                         id: imageViewerMenu
                         y: parent.height

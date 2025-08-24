@@ -125,7 +125,7 @@ Panel {
             text: MaterialIcons.more_vert
             font.pointSize: 11
             padding: 2
-            onClicked: settingsMenu.open()
+            onClicked: settingsMenu.visible ? settingsMenu.close() : settingsMenu.open()
             checkable: true
             checked: settingsMenu.visible
             Menu {

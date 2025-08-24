@@ -1184,7 +1184,7 @@ Page {
                             text: MaterialIcons.more_vert
                             font.pointSize: 11
                             padding: 2
-                            onClicked: graphEditorMenu.open()
+                            onClicked: graphEditorMenu.visible ? graphEditorMenu.close() : graphEditorMenu.open()
                             checkable: true
                             checked: graphEditorMenu.visible
                             Menu {

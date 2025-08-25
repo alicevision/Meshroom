@@ -691,6 +691,29 @@ class UIGraph(QObject):
                 self.moveNode(node, position)
 
     @Slot()
+    def alignVertically(self):
+        """ All nodes are moved vertically to the same position than the firstly selected node """
+        selectedNodes = self.getSelectedNodes()
+        
+        if len(selectedNodes) < 2:
+            return
+        
+        for selectedNode in selectedNodes:
+            self.moveNode(selectedNode, Position(selectedNode.x, selectedNodes[0].y))
+
+    @Slot()
+    def alignHorizontally(self):
+        """ All nodes are moved horizontally to the same position than the firstly selected node """
+
+        selectedNodes = self.getSelectedNodes()
+        
+        if len(selectedNodes) < 2:
+            return
+        
+        for selectedNode in selectedNodes:
+            self.moveNode(selectedNode, Position(selectedNodes[0].x, selectedNode.y))
+
+    @Slot()
     def removeSelectedNodes(self):
         """Remove selected nodes from the graph."""
         self.removeNodes(list(self.iterSelectedNodes()))

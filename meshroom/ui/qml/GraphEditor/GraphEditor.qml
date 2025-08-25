@@ -130,7 +130,12 @@ Item {
             }
         } else if (event.key === Qt.Key_V && event.modifiers === Qt.ControlModifier) {
             pasteNodes()
-        } else if (event.key === Qt.Key_Tab) {
+        } else if (event.key === Qt.Key_V && event.modifiers === Qt.ShiftModifier) {
+            uigraph.alignVertically()
+        } else if (event.key === Qt.Key_H && event.modifiers === Qt.ShiftModifier) {
+            uigraph.alignHorizontally()
+        }
+        else if (event.key === Qt.Key_Tab) {
             event.accepted = true
             if (mouseArea.containsMouse) {
                 newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)

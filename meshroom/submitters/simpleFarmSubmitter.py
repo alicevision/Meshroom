@@ -4,6 +4,7 @@ import os
 import json
 import logging
 import getpass
+import re
 
 import simpleFarm
 from meshroom.core.desc import Level
@@ -21,6 +22,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
     environment = {}
     ENGINE = ''
     DEFAULT_TAGS = {'prod': ''}
+    REZ_DELIMITER_PATTERN = re.compile(r"(-|==|>=|>|<=|<)")
 
     def __init__(self, parent=None):
         super().__init__(name='SimpleFarm', parent=parent)
@@ -28,7 +30,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
         self.share = os.environ.get('MESHROOM_SIMPLEFARM_SHARE', 'vfx')
         self.prod = os.environ.get('PROD', 'mvg')
         if 'REZ_REQUEST' in os.environ:
-            packages = os.environ.get('REZ_REQUEST', '').split()
+            packages = os.environ.get('REZ_USED_REQUEST', '').split()
             resolvedPackages = os.environ.get('REZ_RESOLVE', '').split()
             resolvedVersions = {}
             for r in resolvedPackages:
@@ -38,13 +40,20 @@ class SimpleFarmSubmitter(BaseSubmitter):
                 # logging.info('REZ: {}'.format(str(r)))
                 v = r.split('-')
                 # logging.info('    v: {}'.format(str(v)))
-                if len(v) >= 2:
+                if len(v) == 2:
                     resolvedVersions[v[0]] = v[1]
+                elif len(v) > 2:  # Handle case with multiple hyphen-minus
+                    resolvedVersions[v[0]] = "-".join(v[1:])
+            usedPackages = set()  # Use set to remove duplicates
             for p in packages:
-                if p.startswith('~'):
+                if p.startswith('~') or p.startswith("!"):
                     continue
-                v = p.split('-')
-                self.reqPackages.append('-'.join([v[0], resolvedVersions[v[0]]]))
+                v = self.REZ_DELIMITER_PATTERN.split(p)
+                usedPackages.add(v[0])
+            for p in usedPackages:
+                # Use "==" to make sure we have the same version in the job that the one we have in the env
+                # where meshroom is launched
+                self.reqPackages.append("==".join([p, resolvedVersions[p]]))
             logging.debug(f'REZ Packages: {str(self.reqPackages)}')
         elif 'REZ_MESHROOM_VERSION' in os.environ:
             self.reqPackages = [f"meshroom-{os.environ.get('REZ_MESHROOM_VERSION', '')}"]

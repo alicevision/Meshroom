@@ -48,7 +48,7 @@ RowLayout {
     Pane {
         background: Rectangle {
             id: background
-            color: object != undefined && object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
+            color: attribute != undefined && attribute.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
         }
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
@@ -63,7 +63,7 @@ RowLayout {
             MaterialToolButton {
                 id: navButtonIn
 
-                property bool shouldBeVisible: (object != undefined && object.isLinkNested)
+                property bool shouldBeVisible: (attribute != undefined && attribute.isLinkNested)
 
                 text: MaterialIcons.login
                 enabled: shouldBeVisible
@@ -76,7 +76,7 @@ RowLayout {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.inAttributeClicked(navButtonIn, mouse, object.linkedInAttributes)
+                        root.inAttributeClicked(navButtonIn, mouse, attribute.linkedInAttributes)
                     }
                 }
 
@@ -93,10 +93,10 @@ RowLayout {
                 padding: 5
                 wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
-                text: object.label
+                text: attribute.label
 
                 color: {
-                    if (object != undefined && (object.hasOutputConnections || object.isLink) && !object.enabled)
+                    if (attribute != undefined && (attribute.hasOutputConnections || attribute.isLink) && !attribute.enabled)
                         return Colors.lightgrey
                     else
                         return palette.text
@@ -111,9 +111,9 @@ RowLayout {
 
                     text: {
                         var tooltip = ""
-                        if (!object.validValue && object.desc.errorMessage !== "")
-                            tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
-                        tooltip += "<b>" + object.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.description)
+                        if (!attribute.validValue && attribute.desc.errorMessage !== "")
+                            tooltip += "<i><b>Error: </b>" + Format.plainToHtml(attribute.desc.errorMessage) + "</i><br><br>"
+                        tooltip += "<b>" + attribute.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(attribute.description)
                         return tooltip
                     }
                     visible: parameterMA.containsMouse
@@ -121,10 +121,10 @@ RowLayout {
                 }
 
                 // Make label bold if attribute's value is not the default one
-                font.bold: !object.isOutput && !object.isDefault
+                font.bold: !attribute.isOutput && !attribute.isDefault
 
                 // Make label italic if attribute is a link
-                font.italic: object.isLink
+                font.italic: attribute.isLink
 
                 MouseArea {
                     id: parameterMA

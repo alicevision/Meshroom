@@ -309,7 +309,8 @@ class LogManager:
 
     @staticmethod
     def textToLevel(text):
-        if text == "critical":
+        text = text.lower()
+        if text in ["critical", "fatal"]:
             return logging.CRITICAL
         elif text == "error":
             return logging.ERROR
@@ -319,6 +320,8 @@ class LogManager:
             return logging.INFO
         elif text == "debug":
             return logging.DEBUG
+        elif text == "trace":
+            return logging.TRACE
         else:
             return logging.NOTSET
 
@@ -725,6 +728,15 @@ class BaseNode(BaseObject):
                 return label
         return self.getDefaultLabel()
 
+    def getNodeLogLevel(self):
+        """
+        Returns:
+            str: the user-provided log level used for logging on process launched by this node
+        """
+        if self.hasInternalAttribute("nodeDefaultLogLevel"):
+            return self.internalAttribute("nodeDefaultLogLevel").value.strip()
+        return "info"
+    
     def getColor(self):
         """
         Returns:
@@ -1315,8 +1327,7 @@ class BaseNode(BaseObject):
         # Setup logger
         rootLogger = logging.getLogger()
         self._logManager = LogManager(rootLogger, logFile)
-        self._logManager.configureLogger()
-        rootLogger.setLevel(logging.INFO)  # Set info by default
+        self._logManager.start(self.getNodeLogLevel())
 
     def restoreLogger(self):
         self._logManager.restorePreviousLogger()

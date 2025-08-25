@@ -174,13 +174,15 @@ class _NodeCreator:
 
     def _createNode(self) -> Node:
         logging.info(f"Creating node '{self.name}'")
-        # TODO: user inputs/outputs may conflicts with internal names (like position, uid)
+        # TODO: user inputs/outputs may conflicts with internal names (like logLevel, position, uid)
+        # The line below can cause UI issues but at least prevent crashes
+        internalInputs = {k: v for k, v in self.internalInputs.items() if k not in self.inputs.keys()}
         return Node(
             self.nodeType,
             position=self.position,
             uid=self.uid,
             **self.inputs,
-            **self.internalInputs,
+            **internalInputs,
             **self.outputs,
         )
 

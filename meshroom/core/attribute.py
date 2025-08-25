@@ -101,6 +101,8 @@ class Attribute(BaseObject):
             return f'{self.root.getFullName()}[{self.root.index(self)}]'
         elif isinstance(self.root, GroupAttribute):
             return f'{self.root.getFullName()}.{self.getName()}'
+        elif isinstance(self.root, MapAttribute):
+            return f'{self.root.getFullName()}["{self.root.key(self)}"]'
         return self.getName()
 
     def getFullNameToNode(self) -> str:
@@ -941,6 +943,123 @@ class GroupAttribute(Attribute):
     def matchText(self, text: str) -> bool:
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
+    # Override value property
+    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+
+
+class MapAttribute(Attribute):
+    """ 
+    Map attribute composed of (string, Attribute) pairs.
+    """
+
+    class Pair(BaseObject):
+        """ 
+        Pair of (string, Attribute) for MapAttribute model.
+        """
+        def __init__(self, key: str, attribute: Attribute, parent=None):
+            super().__init__(parent)
+            self._key = key
+            self._attribute = attribute
+
+        def getKey(self) -> str:
+            return self._key
+        
+        def getAttribute(self) -> Attribute:
+            return self._attribute
+
+        key = Property(str, getKey, constant=True)
+        attribute = Property("QVariant", getAttribute, constant=True)
+
+    def __init__(self, node, attributeDesc: desc.MapAttribute, isOutput: bool,
+                 root=None, parent=None):
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+
+    def _set_value(self, value):
+        # Link to another attribute
+        if isinstance(value, MapAttribute) or Attribute.isLinkExpression(value):
+            self._value = value
+        # New value
+        else:
+            newValue = self.desc.validateValue(value)
+            for key, attr in newValue.items():
+                self.add(key, attr)
+            
+    def upgradeValue(self, exportedValue):
+        # TODO
+        pass
+
+    def initValue(self):
+        self.resetToDefaultValue()
+
+    def resetToDefaultValue(self):
+        self._value = DictModel(keyAttrName='key', parent=self)
+        self.valueChanged.emit()
+
+    def uid(self):
+        if isinstance(self.value, DictModel):
+            uids = []
+            for pair in self._value:
+                if pair.attribute.invalidate:
+                    uids.append(pair.key)
+                    uids.append(pair.attribute.uid())
+            return hashValue(uids)
+        return super().uid()
+            
+    #TODO: def _applyExpr(self):
+
+    def getExportValue(self):
+        return { pair.key: pair.attribute.getExportValue() for pair in self._value }
+
+    def defaultValue(self):
+        return {}
+
+    def _isDefault(self) -> bool:
+        return len(self._value) == 0
+    
+    def getPrimitiveValue(self, exportDefault=True):
+        if exportDefault:
+            return { pair.key: pair.attribute.getPrimitiveValue(exportDefault=exportDefault) for pair in self._value }
+        return { pair.key: pair.attribute.getPrimitiveValue(exportDefault=exportDefault) for pair in self._value
+                if not pair.attribute.isDefault }
+
+    def getValueStr(self, withQuotes=True):
+        return "" # TOD0: json serialization?
+
+    def updateInternals(self):
+        super().updateInternals()
+        for pair in self._value:
+            pair.attribute.updateInternals()
+
+    def key(self, attribute):
+        for pair in self._value:
+            if attribute is pair.attribute:
+                return pair.key
+        return None
+        
+    @Slot(str, result=Attribute)
+    def get(self, key: str) -> Attribute:
+        try:
+            return self._value.get(key).attribute
+        except KeyError:
+            return None
+        
+    @raiseIfLink
+    def add(self, key, value):
+        attribute = attributeFactory(self.attributeDesc.itemDesc, value, self.isOutput, self.node, self)
+        if self._value.get(key) is None:
+            self._value.add(MapAttribute.Pair(key, attribute))
+            self.valueChanged.emit()
+            #TODO: self._applyExpr()
+            self.requestGraphUpdate()
+
+    @raiseIfLink
+    def remove(self, key):
+        pair = self._value.get(key)
+        self._value.remove(pair)
+        self.valueChanged.emit()
+        self.requestGraphUpdate()
+    
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)

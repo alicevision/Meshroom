@@ -262,6 +262,70 @@ class GroupAttribute(Attribute):
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
     brackets = Property(str, lambda self: self._brackets, constant=True)
 
+class MapAttribute(Attribute):
+    """ A macro Attribute Map composed of (string, Attribute) pairs."""
+
+    def __init__(self, itemDesc, name, label, description, group="allParams", advanced=False, 
+                 semantic="", enabled=True, visible=True, exposed=False):
+        """
+        :param itemDesc: the description of the Attribute used as value in the map
+        """
+        self._itemDesc = itemDesc
+        super(MapAttribute, self).__init__(name=name, label=label, description=description, value={},
+                                           group=group, advanced=advanced, invalidate=False, semantic=semantic,
+                                           enabled=enabled, visible=visible, exposed=exposed)
+        
+    def getInstanceType(self):
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import MapAttribute
+        return MapAttribute
+    
+    def validateValue(self, value):
+        """ Ensure value is compatible with the map description and convert value if needed. """
+        if value is None:
+            return value
+        if JSValue is not None and isinstance(value, JSValue):
+            # Note: we could use isArray(), property("length").toInt() to retrieve all values
+            raise ValueError("MapAttribute.validateValue: cannot recognize QJSValue. "
+                             "Please, use JSON.stringify(value) in QML.")
+        if isinstance(value, str):
+            # Alternative solution to set values from QML is to convert values to JSON string
+            # In this case, it works with all data types
+            value = ast.literal_eval(value)
+        if isinstance(value, dict):
+            # Validate each (key, value) pair
+            for k, v in value.items():
+                # Keys must be strings
+                if not isinstance(k, str):
+                    raise ValueError(f"MapAttribute keys must be strings, got {type(k)} for key: {k}")
+                # Validate value if elementDesc has validation  
+                if hasattr(self._itemDesc, 'validateValue'):
+                    self._itemDesc.validateValue(v)
+        else:
+            raise ValueError("MapAttribute only supports dict input values (param:{}, value:{}, type:{})".
+                             format(self.name, value, type(value)))
+        return value
+    
+    def checkValueTypes(self):
+        """ Check item description value types. """
+        return self._itemDesc.checkValueTypes()
+    
+    def matchDescription(self, value, strict=True):
+        """ Check that every child value pair match description. """
+        if not super(MapAttribute, self).matchDescription(value):
+            return False
+        # Each child (key, value) must match (string, item attribute description)
+        for k, v in value.items():
+            # Key must be string
+            if not isinstance(k, str):
+                return False
+            # Value must match item attribute description
+            if not self._itemDesc.matchDescription(v, strict):
+                return False
+        return True
+    
+    itemDesc = Property(Variant, lambda self: self._itemDesc, constant=True)
+    invalidate = Property(Variant, lambda self: self._itemDesc.invalidate, constant=True)
 
 class Param(Attribute):
     """

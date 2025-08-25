@@ -8,6 +8,7 @@ from .attribute import (
     GroupAttribute,
     IntParam,
     ListAttribute,
+    MapAttribute,
     PushButtonParam,
     StringParam,
 )

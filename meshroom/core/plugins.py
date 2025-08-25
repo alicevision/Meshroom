@@ -141,6 +141,9 @@ class DirTreeProcessEnv(ProcessEnv):
 class RezProcessEnv(ProcessEnv):
     """
     """
+    
+    REZ_DELIMITER_PATTERN = re.compile(r"(-|==|>=|>|<=|<)")
+    
     def __init__(self, folder: str, configEnv: dict[str: str], uri: str = ""):
         if not uri:
             raise RuntimeError("Missing name of the Rez environment needs to be provided.")
@@ -158,30 +161,31 @@ class RezProcessEnv(ProcessEnv):
 
         # Packages that are resolved in the current environment
         currentEnvPackages = []
+        resolvedVersions = {}
         if "REZ_REQUEST" in os.environ:
             resolvedPackages = os.getenv("REZ_RESOLVE", "").split()
-            resolvedVersions = {}
             for package in resolvedPackages:
                 if package.startswith("~"):
                     continue
+                currentEnvPackages.append(package)
                 version = package.split("-")
-                resolvedVersions[version[0]] = version[1]
-            currentEnvPackages = [package + "-" + resolvedVersions[package] for package in resolvedVersions.keys()]
+                if len(version) == 2:
+                    resolvedVersions[version[0]] = version[1]
+                elif len(version) > 2:  # Handle case with multiple hyphen-minus
+                    resolvedVersions[version[0]] = "-".join(version[1:])
         logging.debug("Packages in the current environment: " + ", ".join(currentEnvPackages))
 
         # Take packages with the set versions for those which have one, and try to take packages in the current
         # environment (if they are resolved in it)
         for package in subrequires:
-            if "-" in package:
+            if self.REZ_DELIMITER_PATTERN.findall(package):  # The subrequires ask for a specific version
                 packages.append(package)
             else:
-                definedInParentEnv = False
-                for p in currentEnvPackages:
-                    if p.startswith(package + "-"):
-                        packages.append(p)
-                        definedInParentEnv = True
-                        break
-                if not definedInParentEnv:
+                packageName = self.REZ_DELIMITER_PATTERN.split(package)[0]
+                resolvedVersion = resolvedVersions.get(packageName)
+                if (resolvedVersion!=None) and (resolvedVersion!=""):
+                    packages.append(packageName + "==" + resolvedVersion)
+                else:
                     packages.append(package)
 
         logging.debug("Packages for the execution environment: " + ", ".join(packages))

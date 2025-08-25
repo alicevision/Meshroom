@@ -219,6 +219,14 @@ RowLayout {
                 font.pointSize: 8
             }
 
+            MaterialLabel {
+                visible: attribute.is2DShape
+                text: MaterialIcons.edit_square
+                color: palette.mid
+                font.pointSize: 8
+                padding: 4
+            }
+
             MaterialToolButton {
                 id: navButtonOut
 

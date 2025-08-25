@@ -435,20 +435,21 @@ class Reconstruction(UIGraph):
 
     @Slot()
     def reloadPlugins(self):
+        """ Launch _reloadPlugins in a worker thread to avoid blocking the ui. """
+        self._workerThreads.apply_async(func=self._reloadPlugins, args=())
+
+    def _reloadPlugins(self):
         """
         Reload all the NodePlugins from all the registered plugins.
         The nodes in the graph will be updated to match the changes in the description, if
         there was any.
         """
-        def _reloadPlugins(reconstruction):
-            nodeTypes: list[str] = []
-            for plugin in meshroom.core.pluginManager.getPlugins().values():
-                for node in plugin.nodes.values():
-                    if node.reload():
-                        nodeTypes.append(node.nodeDescriptor.__name__)
-            reconstruction.pluginsReloaded.emit(nodeTypes)
-        
-        self._workerThreads.apply_async(func=lambda: _reloadPlugins(self), args=())
+        nodeTypes: list[str] = []
+        for plugin in meshroom.core.pluginManager.getPlugins().values():
+            for node in plugin.nodes.values():
+                if node.reload():
+                    nodeTypes.append(node.nodeDescriptor.__name__)
+        self.pluginsReloaded.emit(nodeTypes)
 
     @Slot(list)
     def _onPluginsReloaded(self, nodeTypes: list):

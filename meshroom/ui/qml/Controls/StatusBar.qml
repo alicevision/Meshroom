@@ -91,11 +91,11 @@ RowLayout {
             statusBar.message = msg
             statusBarTimer.interval = duration !== undefined ? duration : root.interval
             statusBarTimer.restart()
+            MeshroomApp.forceUIUpdate()
         }
     }
 
     function showMessage(msg, status=undefined, duration=undefined) {
         statusBar.showMessage(msg, status, duration)
-        MeshroomApp.forceUIUpdate()
     }
 }

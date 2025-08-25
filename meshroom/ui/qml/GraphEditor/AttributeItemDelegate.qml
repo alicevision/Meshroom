@@ -296,6 +296,8 @@ RowLayout {
                     return listAttributeComponent
                 case "GroupAttribute":
                     return groupAttributeComponent
+                case "MapAttribute":
+                    return mapAttributeComponent
                 case "StringParam":
                     if (attribute.desc.semantic.includes('multiline'))
                         return textAreaComponent
@@ -775,6 +777,112 @@ RowLayout {
                                                })
                     obj.Layout.fillWidth = true;
                     obj.attributeDoubleClicked.connect(function(attr) {root.doubleClicked(attr)})
+                }
+            }
+        }
+
+        Component {
+            id: mapAttributeComponent
+            ColumnLayout {
+                id: mapAttributeLayout
+                width: parent.width
+                property bool expanded: false
+                Pane {
+                    background: Rectangle {
+                        color: Qt.darker(parent.palette.window, 1.1) 
+                    }
+                    padding: 0
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    RowLayout {
+                        spacing: 4
+                        Label {
+                            horizontalAlignment: attribute.isOutput ? Qt.AlignRight : Qt.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Label.ElideRight
+                            padding: 10
+                            wrapMode: Label.WrapAtWordBoundaryOrAnywhere
+                            text: "Add Key"
+                        }
+                        TextField {
+                            id: textField
+                            readOnly: !root.editable
+                            text: "0"
+                            enabled: root.editable
+                        }
+                        ToolButton {
+                            text: MaterialIcons.add_circle_outline
+                            font.family: MaterialIcons.fontFamily
+                            font.pointSize: 11
+                            padding: 2
+                            enabled: root.editable
+                            onClicked: _reconstruction.addAttributePair(attribute, textField.text.trim(), undefined)
+                        }
+                    }
+                }
+                RowLayout {
+                    spacing: 4
+                    ToolButton {
+                        text: mapAttributeLayout.expanded  ? MaterialIcons.keyboard_arrow_down : MaterialIcons.keyboard_arrow_right
+                        font.family: MaterialIcons.fontFamily
+                        onClicked: mapAttributeLayout.expanded = !mapAttributeLayout.expanded
+                    }
+                    Label {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: attribute.value.count + " pairs"
+                    }
+                }
+                ListView {
+                    id: lv
+                    model: mapAttributeLayout.expanded ? attribute.value : undefined
+                    visible: model !== undefined && count > 0
+                    implicitHeight: Math.min(contentHeight, 300)
+                    Layout.fillWidth: true
+                    Layout.margins: 4
+                    clip: true
+                    spacing: 4
+
+                    ScrollBar.vertical: MScrollBar { id: sb }
+
+                    delegate: Loader {
+                        active: !objectsHideable
+                            || ((object.attribute.isDefault && GraphEditorSettings.showDefaultAttributes || !object.attribute.isDefault && GraphEditorSettings.showModifiedAttributes)
+                            && (object.attribute.isLinkNested && GraphEditorSettings.showLinkAttributes || !object.attribute.isLinkNested && GraphEditorSettings.showNotLinkAttributes))
+                        visible: active
+                        sourceComponent: RowLayout {
+                            id: item
+                            property var childAttrib: object.attribute
+                            layoutDirection: Qt.RightToLeft
+                            width: lv.width - sb.width
+                            Component.onCompleted: {
+                                var cpt = Qt.createComponent("AttributeItemDelegate.qml")
+                                var obj = cpt.createObject(item,
+                                                        {
+                                                            'attribute': Qt.binding(function() { return item.childAttrib }),
+                                                            'readOnly': Qt.binding(function() { return !root.editable }),
+                                                            'labelWidth': 60,  // same label width for each pairs
+                                                        })
+                                obj.Layout.fillWidth = true
+                                obj.label.text = object.key
+                                obj.label.horizontalAlignment = Text.AlignHCenter
+                                obj.label.verticalAlignment = Text.AlignVCenter
+                                obj.doubleClicked.connect(function(attr) { root.doubleClicked(attr) })
+                                obj.inAttributeClicked.connect(function(srcItem, mouse, inAttributes) { root.inAttributeClicked(srcItem, mouse, inAttributes) })
+                                obj.outAttributeClicked.connect(function(srcItem, mouse, outAttributes) { root.outAttributeClicked(srcItem, mouse, outAttributes) })
+
+                            }
+                            ToolButton {
+                                enabled: root.editable
+                                text: MaterialIcons.remove_circle_outline
+                                font.family: MaterialIcons.fontFamily
+                                font.pointSize: 11
+                                padding: 2
+                                ToolTip.text: "Remove Element"
+                                ToolTip.visible: hovered
+                                onClicked: _reconstruction.removeAttributePair(attribute, object.key)
+                            }
+                        }
+                    }
                 }
             }
         }

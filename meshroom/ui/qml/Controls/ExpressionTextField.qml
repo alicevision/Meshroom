@@ -29,6 +29,9 @@ TextField {
             var result = MathEvaluator.eval(root.text)
             if (isInt) {
                 result = parseInt(result)
+            } else {
+                // Probably useless
+                result = parseFloat(result)
             }
             root.text = result
             hasExprError = false

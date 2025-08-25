@@ -4,6 +4,9 @@
 var symbols = {
     pi: Math.PI,
     e: Math.E,
+};
+
+var functions = {
     abs: Math.abs,
     min: Math.min,
     max: Math.max,
@@ -24,18 +27,20 @@ var symbols = {
  * @returns        float or int
  */
 function eval(expr) {
-    // Replace symbols
+    // Additionally replace the "," to "."
+    expr = expr.replace(",", ".").replace(" ", "")
+
+    // Only allow numbers, operators, parentheses, and function names
+    if (!/^[0-9+\-*/^()e.,\s]*$/.test(expr.replace(/\b[a-zA-Z]+\b/g, ""))) {
+        throw "Invalid characters in expression";
+    }
+
+    // Replace symbols and functions
     for (var symbol in symbols) {
-        // Match each symbol only if they are at the beginning or end of the word
         expr = expr.replace(new RegExp("\\b" + symbol + "\\b", "g"), symbols[symbol]);
     }
-    
-    // Additionally replace the "," to "."
-    expr = expr.replace(',','.')
-    
-    // Only allow numbers, operators, parentheses, and function names
-    if (!/^[0-9+\-*/^().,\s]*$/.test(expr.replace(/\b[a-zA-Z]+\b/g, ""))) {
-        throw "Invalid characters in expression";
+    for (var func in functions) {  // Warning : not really a map
+        expr = expr.replace(new RegExp("\\b" + func + "\\b", "g"), "Math." + func);
     }
 
     // Eval with function to avoid issues with undeclared variables

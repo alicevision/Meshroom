@@ -19,7 +19,7 @@ from typing import Callable, Optional
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
 from meshroom.core import desc, plugins, stats, hashValue, nodeVersion, Version, MrNodeType
-from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
+from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, MapAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
 
@@ -623,7 +623,7 @@ class BaseNode(BaseObject):
 
     # Regexp handling complex attribute names with recursive understanding of Lists and Groups
     # i.e: a.b, a[0], a[0].b.c[1]
-    attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
+    attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?(?:\[\"(?P<key>\w+)\"\])?')
 
     def __init__(self, nodeType: str, position: Position = None, parent: BaseObject = None,
                  uid: str = None, **kwargs):
@@ -756,7 +756,7 @@ class BaseNode(BaseObject):
         if '[' in name or '.' in name:
             p = self.attributeRE.findall(name)
 
-            for n, idx in p:
+            for n, idx, key in p:
                 # first step: get root attribute
                 if att is None:
                     att = self._attributes.get(n)
@@ -766,8 +766,12 @@ class BaseNode(BaseObject):
                     att = att.value.get(n)
                 if idx != '':
                     # get child Attribute in List
-                    assert isinstance(att, ListAttribute)
+                    assert isinstance(att, ListAttribute) 
                     att = att.value.at(int(idx))
+                if key != '':
+                    # get pair(key, Attribute) in Map
+                    assert isinstance(att, MapAttribute)
+                    att = att.get(key)
         else:
             att = self._attributes.getr(name)
         return att

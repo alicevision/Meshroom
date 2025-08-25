@@ -386,6 +386,9 @@ class Reconstruction(UIGraph):
         # react to internal graph changes to update those variables
         self.graphChanged.connect(self.onGraphChanged)
 
+        # Connect the pluginsReloaded signal to the onPluginsReloaded function
+        self.pluginsReloaded.connect(self._onPluginsReloaded)
+
         self.setDefaultPipeline(defaultPipeline)
 
     def __del__(self):
@@ -432,6 +435,10 @@ class Reconstruction(UIGraph):
 
     @Slot()
     def reloadPlugins(self):
+        """ Launch _reloadPlugins in a worker thread to avoid blocking the ui. """
+        self._workerThreads.apply_async(func=self._reloadPlugins, args=())
+
+    def _reloadPlugins(self):
         """
         Reload all the NodePlugins from all the registered plugins.
         The nodes in the graph will be updated to match the changes in the description, if
@@ -442,8 +449,12 @@ class Reconstruction(UIGraph):
             for node in plugin.nodes.values():
                 if node.reload():
                     nodeTypes.append(node.nodeDescriptor.__name__)
+        self.pluginsReloaded.emit(nodeTypes)
 
+    @Slot(list)
+    def _onPluginsReloaded(self, nodeTypes: list):
         self._graph.reloadNodePlugins(nodeTypes)
+        self.parent().showMessage("Plugins reloaded !", "ok")
 
     @Slot()
     @Slot(str)
@@ -930,7 +941,9 @@ class Reconstruction(UIGraph):
     displayedAttr2D = makeProperty(QObject, "_displayedAttr2D", displayedAttr2DChanged)   
 
     displayedAttrs3DChanged = Signal()    
-    displayedAttrs3D = Property(QObject, lambda self: self._displayedAttrs3D, notify=displayedAttrs3DChanged)  
+    displayedAttrs3D = Property(QObject, lambda self: self._displayedAttrs3D, notify=displayedAttrs3DChanged)
+    
+    pluginsReloaded = Signal(list)
 
     @Slot(QObject)
     def setActiveNode(self, node, categories=True, inputs=True):

@@ -6,7 +6,7 @@ import json
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
-from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtCore import QObject, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlDebuggingEnabler
 from PySide6.QtQuickControls2 import QQuickStyle
@@ -353,6 +353,20 @@ class MeshroomApp(QApplication):
     def reloadTemplateList(self):
         meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
+    
+    @Slot()
+    def forceUIUpdate(self):
+        """ Force UI to process pending events
+        Necessary when we want to update the UI while a trigger is still running (e.g. reloadPlugins)
+        """
+        self.processEvents()
+    
+    def showMessage(self, message, status=None, duration=5000):
+        root = self.engine.rootObjects()
+        if root:
+            statusBar = root[0].findChild(QObject, "statusBar")
+            if statusBar is not None:
+                statusBar.showMessage(message, status, duration)
 
     def _retrieveThumbnailPath(self, filepath: str) -> str:
         """

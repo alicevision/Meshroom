@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import Utils 1.0
+
 /**
  * MaterialToolButton is a standard ToolButton using MaterialIcons font.
  * It also shows up its tooltip when hovered.
@@ -10,8 +12,10 @@ import QtQuick.Layouts
 ToolButton {
     id: control
     font.family: MaterialIcons.fontFamily
-    padding: 4
-    font.pointSize: 13
+    padding: UISettings.dp(4)
+    font.pointSize: UISettings.mediumFont
+    implicitWidth: UISettings.toolButtonSize
+    implicitHeight: UISettings.toolButtonSize
     ToolTip.visible: ToolTip.text && hovered
     ToolTip.delay: 100
     Component.onCompleted:  {

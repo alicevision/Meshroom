@@ -6,7 +6,7 @@ import json
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
-from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlDebuggingEnabler
 from PySide6.QtQuickControls2 import QQuickStyle
@@ -211,14 +211,26 @@ class MeshroomApp(QApplication):
 
         logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
 
+        # Enable high-DPI scaling before creating QApplication
+        QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
         super().__init__(inputArgs[:1] + qtArgs)
+
+        # Get DPI information and calculate scaling factors
+        self._dpiInfo = self._getDpiInfo()
+        self._scalingSettings = self._loadScalingSettings()
 
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
         self.setApplicationVersion(meshroom.__version_label__)
 
+        # Apply font scaling
         font = self.font()
-        font.setPointSize(9)
+        basePointSize = 9
+        scaledPointSize = int(basePointSize * self._scalingSettings["fontScale"])
+        font.setPointSize(scaledPointSize)
         self.setFont(font)
 
         # Use Fusion style by default.
@@ -330,6 +342,120 @@ class MeshroomApp(QApplication):
             self.addRecentProjectFile(args.save)
 
         self.engine.load(os.path.normpath(url))
+
+    def _getDpiInfo(self):
+        """Get DPI information from the primary screen."""
+        screen = self.primaryScreen()
+        if screen:
+            dpi = screen.logicalDotsPerInch()
+            physicalDpi = screen.physicalDotsPerInch()
+            devicePixelRatio = screen.devicePixelRatio()
+            return {
+                "logicalDpi": dpi,
+                "physicalDpi": physicalDpi, 
+                "devicePixelRatio": devicePixelRatio,
+                "isHighDpi": dpi > 96 or devicePixelRatio > 1.0
+            }
+        return {"logicalDpi": 96, "physicalDpi": 96, "devicePixelRatio": 1.0, "isHighDpi": False}
+
+    def _calculateAutoScaleFactor(self):
+        """Calculate automatic UI scale factor based on DPI."""
+        dpi = self._dpiInfo["logicalDpi"]
+        deviceRatio = self._dpiInfo["devicePixelRatio"]
+        
+        # Base DPI is 96 (typical for 1x scaling)
+        baseDpi = 96
+        
+        # Calculate scale factor from DPI
+        dpiScale = dpi / baseDpi
+        
+        # Use the maximum of DPI scale and device pixel ratio
+        autoScale = max(dpiScale, deviceRatio)
+        
+        # Clamp to reasonable values (0.5x to 4.0x)
+        return max(0.5, min(4.0, autoScale))
+
+    def _loadScalingSettings(self):
+        """Load scaling settings from QSettings with automatic defaults."""
+        settings = QSettings()
+        settings.beginGroup("Display")
+        
+        autoScale = self._calculateAutoScaleFactor()
+        
+        scalingSettings = {
+            "uiScale": settings.value("uiScale", autoScale, type=float),
+            "fontScale": settings.value("fontScale", autoScale, type=float),
+            "autoDetect": settings.value("autoDetect", True, type=bool)
+        }
+        
+        settings.endGroup()
+        return scalingSettings
+
+    def _saveScalingSettings(self):
+        """Save current scaling settings to QSettings."""
+        settings = QSettings()
+        settings.beginGroup("Display")
+        
+        settings.setValue("uiScale", self._scalingSettings["uiScale"])
+        settings.setValue("fontScale", self._scalingSettings["fontScale"])
+        settings.setValue("autoDetect", self._scalingSettings["autoDetect"])
+        
+        settings.endGroup()
+        settings.sync()
+
+    @Slot(float)
+    def setUiScale(self, scale):
+        """Set UI scale factor."""
+        self._scalingSettings["uiScale"] = max(0.5, min(4.0, scale))
+        self._saveScalingSettings()
+        self.scalingSettingsChanged.emit()
+
+    @Slot(float)
+    def setFontScale(self, scale):
+        """Set font scale factor."""
+        self._scalingSettings["fontScale"] = max(0.5, min(4.0, scale))
+        
+        # Apply font scaling immediately
+        font = self.font()
+        basePointSize = 9
+        scaledPointSize = int(basePointSize * scale)
+        font.setPointSize(scaledPointSize)
+        self.setFont(font)
+        
+        self._saveScalingSettings()
+        self.scalingSettingsChanged.emit()
+
+    @Slot(bool)
+    def setAutoDetect(self, autoDetect):
+        """Enable/disable automatic DPI detection."""
+        self._scalingSettings["autoDetect"] = autoDetect
+        
+        if autoDetect:
+            autoScale = self._calculateAutoScaleFactor()
+            self.setUiScale(autoScale)
+            self.setFontScale(autoScale)
+        
+        self._saveScalingSettings()
+
+    @Slot()
+    def resetScalingToDefaults(self):
+        """Reset scaling settings to automatic defaults."""
+        autoScale = self._calculateAutoScaleFactor()
+        self._scalingSettings = {
+            "uiScale": autoScale,
+            "fontScale": autoScale,
+            "autoDetect": True
+        }
+        
+        # Apply font scaling immediately
+        font = self.font()
+        basePointSize = 9
+        scaledPointSize = int(basePointSize * autoScale)
+        font.setPointSize(scaledPointSize)
+        self.setFont(font)
+        
+        self._saveScalingSettings()
+        self.scalingSettingsChanged.emit()
 
     def terminateManual(self):
         self.engine.clearComponentCache()
@@ -701,6 +827,12 @@ class MeshroomApp(QApplication):
 
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)
+
+    scalingSettingsChanged = Signal()
+    dpiInfo = Property("QVariantMap", lambda self: self._dpiInfo, constant=True)
+    uiScale = Property(float, lambda self: self._scalingSettings["uiScale"], notify=scalingSettingsChanged)
+    fontScale = Property(float, lambda self: self._scalingSettings["fontScale"], notify=scalingSettingsChanged)
+    autoDetectDpi = Property(bool, lambda self: self._scalingSettings["autoDetect"], notify=scalingSettingsChanged)
 
     changelogModel = Property("QVariantList", _changelogModel, constant=True)
     licensesModel = Property("QVariantList", _licensesModel, constant=True)

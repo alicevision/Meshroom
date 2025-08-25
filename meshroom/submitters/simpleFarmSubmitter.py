@@ -43,8 +43,9 @@ class SimpleFarmSubmitter(BaseSubmitter):
             for p in packages:
                 if p.startswith('~'):
                     continue
-                v = p.split('-')
-                self.reqPackages.append('-'.join([v[0], resolvedVersions[v[0]]]))
+                delimiter = "==" if "==" in p else "-"
+                v = p.split(delimiter)
+                self.reqPackages.append(delimiter.join([v[0], resolvedVersions[v[0]]]))
             logging.debug(f'REZ Packages: {str(self.reqPackages)}')
         elif 'REZ_MESHROOM_VERSION' in os.environ:
             self.reqPackages = [f"meshroom-{os.environ.get('REZ_MESHROOM_VERSION', '')}"]

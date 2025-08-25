@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
 
-from meshroom.core.attribute import ListAttribute, Attribute
+from meshroom.core.attribute import ListAttribute, MapAttribute, Attribute
 from meshroom.core.graph import Graph, GraphModification
 from meshroom.core.node import Position, CompatibilityIssue
 from meshroom.core.nodeFactory import nodeFactory
@@ -385,6 +385,41 @@ class ListAttributeRemoveCommand(GraphCommand):
         listAttribute = self.graph.attribute(self.listAttrName)
         listAttribute.insert(self.index, self.value)
 
+class MapAttributeAddPairCommand(GraphCommand):
+    def __init__(self, graph, mapAttribute, key, value, parent=None):
+        super().__init__(graph, parent)
+        assert isinstance(mapAttribute, MapAttribute)
+        self.attrName = mapAttribute.getFullNameToNode()
+        self.key = key
+        self.value = value
+        self.setText(f"Add to {self.attrName} with key {self.key}")
+
+    def redoImpl(self):
+        mapAttribute = self.graph.attribute(self.attrName)
+        mapAttribute.add(self.key, self.value)
+        return True
+
+    def undoImpl(self):
+        mapAttribute = self.graph.attribute(self.attrName)
+        mapAttribute.remove(self.key)
+
+class MapAttributeRemovePairCommand(GraphCommand):
+    def __init__(self, graph, mapAttribute, key, parent=None):
+        super().__init__(graph, parent)
+        assert isinstance(mapAttribute, MapAttribute)
+        self.attrName = mapAttribute.getFullNameToNode()
+        self.key = key
+        self.value = mapAttribute.get(key).getExportValue()
+        self.setText(f"Remove {self.attrName} with key {self.key}")
+
+    def redoImpl(self):
+        mapAttribute = self.graph.attribute(self.attrName)
+        mapAttribute.remove(self.key)
+        return True
+
+    def undoImpl(self):
+        mapAttribute = self.graph.attribute(self.attrName)
+        mapAttribute.add(self.key, self.value)
 
 class RemoveImagesCommand(GraphCommand):
     def __init__(self, graph, cameraInitNodes, parent=None):

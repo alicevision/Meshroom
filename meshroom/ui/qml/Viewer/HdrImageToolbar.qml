@@ -114,7 +114,7 @@ FloatingPane {
                     gainCtrl.value = gainDefaultValue
                 }
             }
-            TextField {
+            ExpressionTextField {
                 id: gainLabel
 
                 ToolTip.visible: ToolTip.text && hovered
@@ -124,7 +124,6 @@ FloatingPane {
                 text: gainValue.toFixed(2)
                 Layout.preferredWidth: textMetrics_gainValue.width
                 selectByMouse: true
-                validator: doubleValidator
                 onAccepted: {
                     gainCtrl.value = Math.pow(Number(gainLabel.text), 1.0 / slidersPowerValue)
                 }
@@ -154,7 +153,7 @@ FloatingPane {
                     gammaCtrl.value = gammaDefaultValue;
                 }
             }
-            TextField {
+            ExpressionTextField {
                 id: gammaLabel
 
                 ToolTip.visible: ToolTip.text && hovered
@@ -164,7 +163,6 @@ FloatingPane {
                 text: gammaValue.toFixed(2)
                 Layout.preferredWidth: textMetrics_gainValue.width
                 selectByMouse: true
-                validator: doubleValidator
                 onAccepted: {
                     gammaCtrl.value = Math.pow(Number(gammaLabel.text), 1.0 / slidersPowerValue)
                 }

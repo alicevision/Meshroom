@@ -233,20 +233,6 @@ Item {
                                 Viewer3DSettings.syncWithPickedViewId = viewer2D.sync3DSelected
                             }
                         }
-                        
-                        // Load reconstructed model
-                        Button {
-                            readonly property var outputAttribute: _reconstruction && _reconstruction.texturing ? _reconstruction.texturing.attribute("outputMesh") : null
-                            readonly property bool outputReady: outputAttribute && _reconstruction.texturing.globalStatus === "SUCCESS"
-                            readonly property int outputMediaIndex: c_viewer3D.library.find(outputAttribute)
-
-                            text: "Load Model"
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 10
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: outputReady && outputMediaIndex == -1
-                            onClicked: viewer3D.view(_reconstruction.texturing.attribute("outputMesh"))
-                        }
                     }
                     
                     // Inspector Panel

@@ -59,22 +59,22 @@ RowLayout {
 
         function showMessage(msg, status=undefined, duration=undefined) {
             var textColor = defaultColor
-            var logMsg = "[Message][INFO]"
+            var logLevel = "info"
             switch (status) {
                 case "ok": {
-                    logMsg = "[Message][ERR]"
+                    logLevel = "info"
                     textColor = Qt.lighter("green", 1.6)
                     statusBarButton.text = MaterialIcons.check_circle
                     break
                 }
                 case "warning": {
-                    logMsg = "[Message][WARN]"
+                    logLevel = "warn"
                     textColor = Qt.lighter("yellow", 1.4)
                     statusBarButton.text = MaterialIcons.warning
                     break
                 }
                 case "error": {
-                    logMsg = "[Message][ERR ]"
+                    logLevel = "error"
                     textColor = Qt.lighter("red", 1.4)
                     statusBarButton.text = MaterialIcons.error
                     break
@@ -84,7 +84,7 @@ RowLayout {
                 }
             }
             if (logMessage === true) {
-                console.log(logMsg + " " + msg)
+                console.log("[Message][" + logLevel.toUpperCase().padEnd(5) + "] " + msg)
             }
             statusBarField.color = textColor
             statusBarButton.contentItem.color = textColor

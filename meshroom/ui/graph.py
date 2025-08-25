@@ -690,28 +690,50 @@ class UIGraph(QObject):
                 position = Position(node.x + offset.x(), node.y + offset.y())
                 self.moveNode(node, position)
 
-    @Slot()
-    def alignVertically(self):
-        """ All nodes are moved vertically to the same position than the firstly selected node """
+    def getMeanPosition(self):
+        """ Get the average Position of selected nodes """
+        # Not great, would be better if Position was a non-tuple class
         selectedNodes = self.getSelectedNodes()
-        
-        if len(selectedNodes) < 2:
-            return
-        
+        sum_pose = [0, 0]
+        nb_tot = 0
         for selectedNode in selectedNodes:
-            self.moveNode(selectedNode, Position(selectedNode.x, selectedNodes[0].y))
+            sum_pose[0] += selectedNode.x
+            sum_pose[1] += selectedNode.y
+            nb_tot += 1
+        return Position(int(sum_pose[0] / nb_tot), int(sum_pose[1] / nb_tot))
 
     @Slot()
     def alignHorizontally(self):
-        """ All nodes are moved horizontally to the same position than the firstly selected node """
-
+        """ All nodes are moved horizontally to the same position, on an average position of selected nodes """
+        nodePadding = 50
         selectedNodes = self.getSelectedNodes()
-        
         if len(selectedNodes) < 2:
             return
         
-        for selectedNode in selectedNodes:
-            self.moveNode(selectedNode, Position(selectedNodes[0].x, selectedNode.y))
+        # Make sure the list is correctly ordered
+        selectedNodes = sorted(selectedNodes, key=lambda node:node.x)
+        
+        meanX, meanY = self.getMeanPosition()
+        nodeWidth = self.layout.nodeWidth
+        # Compute the first node X position
+        totalWidth = len(selectedNodes) * nodeWidth + (len(selectedNodes) - 1) * nodePadding
+        startX = int(meanX - totalWidth / 2 + nodeWidth / 2)
+        with self.groupedGraphModification("Align nodes horizontally"):
+            for i, selectedNode in enumerate(selectedNodes):
+                x = startX + i * (nodeWidth + nodePadding)
+                self.moveNode(selectedNode, Position(x, meanY))
+
+    @Slot()
+    def alignVertically(self):
+        """ All nodes are moved vertically to the same position, on an average position of selected nodes """
+        selectedNodes = self.getSelectedNodes()
+        if len(selectedNodes) < 2:
+            return
+        
+        meanX, _ = self.getMeanPosition()
+        with self.groupedGraphModification("Align nodes vertically"):
+            for selectedNode in selectedNodes:
+                self.moveNode(selectedNode, Position(meanX, selectedNode.y))
 
     @Slot()
     def removeSelectedNodes(self):

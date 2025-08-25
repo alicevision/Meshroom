@@ -9,7 +9,7 @@ import shutil
 import sys
 
 from .computation import Level, StaticNodeSize
-from .attribute import StringParam, ColorParam
+from .attribute import StringParam, ColorParam, ChoiceParam
 
 import meshroom
 from meshroom.core import cgroup
@@ -69,6 +69,14 @@ class BaseNode(object):
             description="Customize the default label (to replace the technical name of the node "
                         "instance).",
             value="",
+            invalidate=False,
+        ),
+        ChoiceParam(
+            name='nodeDefaultLogLevel',
+            label='Default logging level',
+            description='''Default logging level for the node (critical, error, warning, info, debug).''',
+            value='info',
+            values=['critical', 'error', 'warning', 'info', 'debug', 'trace'],
             invalidate=False,
         ),
         ColorParam(

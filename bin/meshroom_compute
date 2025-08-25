@@ -95,6 +95,7 @@ if args.node:
         # Restore the log level
         logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
 
+    node.prepareLogger(args.iteration)
     node.preprocess()
     if args.iteration != -1:
         chunk = node.chunks[args.iteration]
@@ -102,6 +103,7 @@ if args.node:
     else:
         node.process(args.forceCompute, args.inCurrentEnv)
     node.postprocess()
+    node.restoreLogger()
 else:
     if args.iteration != -1:
         print('Error: "--iteration" only make sense when used with "--node".')

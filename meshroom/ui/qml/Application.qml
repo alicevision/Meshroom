@@ -552,7 +552,8 @@ Page {
         text: "Reload Plugins Source Code"
         shortcut: "Ctrl+Shift+R"
         onTriggered: {
-            _reconstruction.reloadPlugins()
+            statusBar.showMessage("Reloading plugins...")
+            _reconstruction.reloadPlugins()  // This will handle the message to show that it finished properly
         }
     }
 
@@ -1023,9 +1024,10 @@ Page {
         rightPadding: 4
         palette.window: Qt.darker(activePalette.window, 1.15)
 
-        // Cache Folder
         RowLayout {
+            anchors.fill: parent
             spacing: 0
+
             MaterialToolButton {
                 font.pointSize: 8
                 text: MaterialIcons.folder_open
@@ -1039,6 +1041,17 @@ Page {
                 text: _reconstruction ? _reconstruction.graph.cacheDir : "Unknown"
                 color: Qt.darker(palette.text, 1.2)
                 background: Item {}
+            }
+
+            // Spacer to push status bar to the right
+            Item { Layout.fillWidth: true }
+
+            StatusBar {
+                id: statusBar
+                objectName: "statusBar"  // Expose to python
+                height: parent.height
+                defaultColor: Qt.darker(palette.text, 1.2)
+                defaultIcon : MaterialIcons.comment
             }
         }
     }

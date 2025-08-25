@@ -757,14 +757,11 @@ class BaseNode(BaseObject):
             ("modulePath", self.nodeDesc.plugin.path),
         ])
         # Infos from the plugin module
-        try:
-            plugin_module = sys.modules[self.nodeDesc.__module__]
-            if getattr(plugin_module, "__author__", None):
-                infos["author"] = plugin_module.__author__
-            if getattr(plugin_module, "__version__", None):
-                infos["version"] = plugin_module.__version__
-        except:
-            pass
+        plugin_module = sys.modules.get(self.nodeDesc.__module__)
+        if getattr(plugin_module, "__author__", None):
+            infos["author"] = plugin_module.__author__
+        if getattr(plugin_module, "__version__", None):
+            infos["version"] = plugin_module.__version__
         # Additional node infos 
         # They can be stored in a __nodeInfo__ parameter
         # We can also use it to override variables here (like author or version)

@@ -38,7 +38,6 @@ FocusScope {
                             id: nodeInfoKey
                             anchors.margins: 2
                             color: Qt.darker(activePalette.window, 1.1)
-                            //Layout.preferredWidth: sizeHandle.x
                             Layout.preferredWidth: nodeDocColumnLayout.keyColumnWidth
                             Layout.minimumWidth: 0.2 * parent.width
                             Layout.maximumWidth: 0.8 * parent.width
@@ -98,7 +97,6 @@ FocusScope {
                 width: parent.width
                 height: childrenRect.height
                 Layout.preferredWidth: width
-                // anchors.fill: parent
                 spacing: 3
                 model: node.nodeInfos
                 delegate: nodeInfoItem
@@ -107,10 +105,10 @@ FocusScope {
             TextEdit {
                 id: documentationText
                 anchors.top: nodeInfoListView.bottom
+                padding: 8
                 topPadding: 15
                 Layout.preferredWidth: width
                 width: parent.parent.parent.width
-                padding: 8
                 textFormat: TextEdit.MarkdownText
                 selectByMouse: true
                 selectionColor: activePalette.highlight

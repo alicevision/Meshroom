@@ -23,7 +23,7 @@ from PySide6.QtCore import (
 
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
-from meshroom.core.attribute import Attribute, ListAttribute
+from meshroom.core.attribute import Attribute, ListAttribute, MapAttribute
 from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
@@ -949,6 +949,21 @@ class UIGraph(QObject):
     @Slot(Attribute)
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
+
+    @Slot(Attribute, str, QJsonValue)
+    def addAttributePair(self, attribute, key:str, value=QJsonValue()):
+        if isinstance(value, QJsonValue):
+            if value.isArray():
+                pyValue = value.toArray().toVariantList()
+            else:
+                pyValue = None if value.isNull() or value.isUndefined() else value.toObject()
+        else:
+            pyValue = value
+        self.push(commands.MapAttributeAddPairCommand(self._graph, attribute, key, pyValue))
+
+    @Slot(Attribute, str)
+    def removeAttributePair(self, attribute, key:str):
+        self.push(commands.MapAttributeRemovePairCommand(self._graph, attribute, key))
 
     @Slot(Attribute)
     def removeImage(self, image):

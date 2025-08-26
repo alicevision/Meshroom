@@ -1006,9 +1006,18 @@ class MapAttribute(Attribute):
             return hashValue(uids)
         return super().uid()
             
-    #TODO: def _applyExpr(self):
+    def _applyExpr(self):
+        if not self.node.graph:
+            return
+        if isinstance(self._value, MapAttribute) or Attribute.isLinkExpression(self._value):
+            super()._applyExpr()
+        else:
+            for pair in self._value:
+                pair.attribute._applyExpr()
 
     def getExportValue(self):
+        if self.isLink:
+            return self.getLinkParam().asLinkExpr()
         return { pair.key: pair.attribute.getExportValue() for pair in self._value }
 
     def defaultValue(self):
@@ -1052,18 +1061,33 @@ class MapAttribute(Attribute):
             return None
         
     @raiseIfLink
-    def add(self, key, value):
+    def add(self, key: str, value):
+        """ Add a new pair (key, attribute) from given key and attribute. """
         attribute = attributeFactory(self.attributeDesc.itemDesc, value, self.isOutput, self.node, self)
+        # Add new pair if key does not exist
         if self._value.get(key) is None:
+            # Add new pair
             self._value.add(MapAttribute.Pair(key, attribute))
+            self._applyExpr()
+             # Update graph
             self.valueChanged.emit()
-            #TODO: self._applyExpr()
             self.requestGraphUpdate()
 
     @raiseIfLink
-    def remove(self, key):
+    def remove(self, key: str):
+        """ Remove a pair (key, attribute) from a given key. """
+        # Get pair from key
         pair = self._value.get(key)
+        # Remove potential links
+        if self.node.graph:
+            from meshroom.core.graph import GraphModification
+            with GraphModification(self.node.graph):
+                if pair.attribute.isLink:
+                    # delete edge if the attribute is linked
+                    self.node.graph.removeEdge(pair.attribute)
+        # Remove pair from model
         self._value.remove(pair)
+        # Update graph
         self.valueChanged.emit()
         self.requestGraphUpdate()
     

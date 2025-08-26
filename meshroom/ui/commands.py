@@ -409,7 +409,7 @@ class MapAttributeRemovePairCommand(GraphCommand):
         assert isinstance(mapAttribute, MapAttribute)
         self.attrName = mapAttribute.getFullNameToNode()
         self.key = key
-        self.value = mapAttribute.get(key).getExportValue()
+        self.value = mapAttribute.attribute(key).getExportValue()
         self.setText(f"Remove {self.attrName} with key {self.key}")
 
     def redoImpl(self):

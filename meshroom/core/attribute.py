@@ -1037,8 +1037,11 @@ class MapAttribute(Attribute):
                 return pair.key
         return None
         
-    @Slot(str, result=Attribute)
-    def get(self, key: str) -> Attribute:
+    def attribute(self, key: str) -> Attribute:
+        """ 
+        Get the attribute of the given key.
+        :return: the corresponding attribute or None if not found
+        """
         try:
             return self._value.get(key).attribute
         except KeyError:

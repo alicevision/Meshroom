@@ -1031,7 +1031,11 @@ class MapAttribute(Attribute):
         for pair in self._value:
             pair.attribute.updateInternals()
 
-    def key(self, attribute):
+    def key(self, attribute: Attribute) -> str:
+        """ 
+        Get the key of the given attribute. 
+        :return: the corresponding key or None if not found
+        """
         for pair in self._value:
             if attribute is pair.attribute:
                 return pair.key

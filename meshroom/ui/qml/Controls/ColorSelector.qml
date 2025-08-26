@@ -64,9 +64,39 @@ MaterialToolButton {
         padding: 4
         width: (root.height * 4) + (padding * 4)
 
-        // center the current color
+        // Smart positioning to avoid clipping
         y: -height
-        x: -width + root.width + padding
+        x: {
+            // Get the root's position in its parent coordinates
+            // This works because mapToItem maps to parent coordinates by default when parent is null
+            const parentPos = root.mapToItem(null, 0, 0)
+            const parentWidth = root.parent ? root.parent.width : 800 // fallback width
+            
+            // Calculate space available on left and right
+            const spaceOnLeft = parentPos.x
+            const spaceOnRight = parentWidth - (parentPos.x + root.width)
+            
+            // Required space for positioning to the left
+            const requiredSpaceLeft = width - root.width - padding
+            
+            // Check if there's enough space on the left
+            if (spaceOnLeft >= requiredSpaceLeft) {
+                // Position to the left (original behavior)
+                return -width + root.width + padding
+            } else if (spaceOnRight >= width + padding) {
+                // Position to the right if there's space
+                return root.width + padding
+            } else {
+                // Not enough space on either side, position to minimize clipping
+                // If more space on right, align to right edge of button
+                if (spaceOnRight > spaceOnLeft) {
+                    return root.width + padding
+                } else {
+                    // Align to left edge of button
+                    return -width + root.width + padding
+                }
+            }
+        }
 
         // Layout of the Colors
         Grid {

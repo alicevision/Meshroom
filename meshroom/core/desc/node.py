@@ -143,8 +143,14 @@ class BaseNode(object):
         """
         pass
 
+    def process(self, node):
+        raise NotImplementedError(f'No process implementation on node: "{node.name}"')
+    
     def processChunk(self, chunk):
-        raise NotImplementedError(f'No processChunk implementation on node: "{chunk.node.name}"')
+        if self.parallelization is None:
+            self.process(chunk.node)
+        else:
+            raise NotImplementedError(f'No process implementation on node: "{chunk.node.name}"')
 
     def executeChunkCommandLine(self, chunk, cmd, env=None):
         try:

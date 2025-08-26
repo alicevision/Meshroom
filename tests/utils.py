@@ -2,9 +2,10 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 import meshroom
-from meshroom.core import desc, pluginManager
+from meshroom.core import desc, pluginManager, loadPluginFolder
 from meshroom.core.plugins import NodePlugin, NodePluginStatus
 
+import os
 
 @contextmanager
 def registeredNodeTypes(nodeTypes: list[desc.Node]):
@@ -45,3 +46,12 @@ def unregisterNodeDesc(nodeDesc: desc.Node):
         plugin = pluginManager.getRegisteredNodePlugin(name)
         plugin.status = NodePluginStatus.NOT_LOADED
         del pluginManager._nodePlugins[name]
+
+@contextmanager
+def registeredPlugins(folder: str):
+    plugins = loadPluginFolder(folder)
+
+    yield
+
+    for plugin in plugins:
+        pluginManager.removePlugin(plugin)

@@ -982,8 +982,8 @@ class MapAttribute(Attribute):
         # New value
         else:
             newValue = self.desc.validateValue(value)
-            for key, attr in newValue.items():
-                self.add(key, attr)
+            for k, v in newValue.items():
+                self.add(k, v)
             
     def upgradeValue(self, exportedValue):
         # TODO

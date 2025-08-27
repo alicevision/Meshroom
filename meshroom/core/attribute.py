@@ -457,7 +457,6 @@ class Attribute(BaseObject):
 
     valueChanged = Signal()
     value = Property(Variant, _getValue, _setValue, notify=valueChanged)
-    valueStr = Property(Variant, getValueStr, notify=valueChanged)
     evalValue = Property(Variant, getEvalValue, notify=valueChanged)
     isOutput = Property(bool, isOutput.fget, constant=True)
     isLinkChanged = Signal()

@@ -113,7 +113,7 @@ RowLayout {
                         var tooltip = ""
                         if (!object.validValue && object.desc.errorMessage !== "")
                             tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
-                        tooltip += "<b>" + object.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.description)
+                        tooltip += "<b>" + object.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.desc.description)
                         return tooltip
                     }
                     visible: parameterMA.containsMouse

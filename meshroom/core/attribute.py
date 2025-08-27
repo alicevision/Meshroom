@@ -73,7 +73,6 @@ class Attribute(BaseObject):
         self._label: str = attributeDesc.label
         self._enabled: bool = True
         self._validValue: bool = True
-        self._description: str = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
         # invalidation value for output attributes
@@ -235,15 +234,6 @@ class Attribute(BaseObject):
             return
         self._label = label
         self.labelChanged.emit()
-
-    def _get_description(self):
-        return self._description
-
-    def _set_description(self, desc):
-        if self._description == desc:
-            return
-        self._description = desc
-        self.descriptionChanged.emit()
 
     def upgradeValue(self, exportedValue):
         self._set_value(exportedValue)
@@ -489,10 +479,6 @@ class Attribute(BaseObject):
     isReadOnly = Property(bool, _isReadOnly, constant=True)
     is3D = Property(bool, _is3D, constant=True)
     is2D = Property(bool, _is2D, constant=True)
-
-    # Description of the attribute
-    descriptionChanged = Signal()
-    description = Property(str, _get_description, _set_description, notify=descriptionChanged)
 
     # Definition of the attribute
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)

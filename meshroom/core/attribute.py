@@ -279,8 +279,7 @@ class Attribute(BaseObject):
             return linkParam.getLinkParam(recursive)
         return linkParam
 
-    @property
-    def hasOutputConnections(self) -> bool:
+    def _hasOutputConnections(self) -> bool:
         """
         Whether the attribute has output connections, i.e is the source of at least one edge.
         """
@@ -455,7 +454,7 @@ class Attribute(BaseObject):
     isLink = Property(bool, _isLink, notify=isLinkChanged)
     isLinkNested = isLink
     hasOutputConnectionsChanged = Signal()
-    hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)
+    hasOutputConnections = Property(bool, _hasOutputConnections, notify=hasOutputConnectionsChanged)
 
     linkedInAttributesChanged = Signal()
     linkedInAttributes = Property(Variant, _getLinkedInAttributes, notify=linkedInAttributesChanged)
@@ -721,8 +720,7 @@ class ListAttribute(Attribute):
             and any(v in self.node.graph._edges.keys() for v in self._value)
 
     # override
-    @property
-    def hasOutputConnections(self):
+    def _hasOutputConnections(self):
         """ Whether the attribute has output connections, i.e is the source of at least one edge. """
 
         # safety check to avoid evaluation errors
@@ -730,7 +728,7 @@ class ListAttribute(Attribute):
             return False
 
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None or \
-            any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
+            any(attr._hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
 
     # override
     def getInputConnections(self) -> list["Edge"]:
@@ -751,7 +749,7 @@ class ListAttribute(Attribute):
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
     isLinkNested = Property(bool, isLinkNested.fget)
-    hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=Attribute.hasOutputConnectionsChanged)
+    hasOutputConnections = Property(bool, _hasOutputConnections, notify=Attribute.hasOutputConnectionsChanged)
 
 
 class GroupAttribute(Attribute):

@@ -49,8 +49,7 @@ def attributeFactory(description: str, value, isOutput: bool, node, root=None, p
 class Attribute(BaseObject):
     """
     """
-    stringIsLinkRe = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
-
+    LINK_EXPRESSION_REGEX =  re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
     VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
     VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".abc", ".ply"]
 
@@ -314,7 +313,7 @@ class Attribute(BaseObject):
         Return whether the given argument is a link expression.
         A link expression is a string matching the {nodeName.attrName} pattern.
         """
-        return isinstance(value, str) and Attribute.stringIsLinkRe.match(value)
+        return isinstance(value, str) and Attribute.LINK_EXPRESSION_REGEX.match(value)
 
     def getLinkParam(self, recursive=False):
         if not self.isLink:

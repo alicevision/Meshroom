@@ -32,7 +32,7 @@ def attributeFactory(description: str, value, isOutput: bool, node, root=None, p
     """
     attr: Attribute = description.instanceType(node, description, isOutput, root, parent)
     if value is not None:
-        attr._set_value(value)
+        attr._setValue(value)
     else:
         attr.resetToDefaultValue()
 
@@ -174,12 +174,12 @@ class Attribute(BaseObject):
     def validateValue(self, value):
         return self.desc.validateValue(value)
 
-    def _get_value(self):
+    def _getValue(self):
         if self.isLink:
             return self.getLinkParam().value
         return self._value
 
-    def _set_value(self, value):
+    def _setValue(self, value):
         if self._value == value:
             return
 
@@ -221,14 +221,14 @@ class Attribute(BaseObject):
         self.labelChanged.emit()
 
     def upgradeValue(self, exportedValue):
-        self._set_value(exportedValue)
+        self._setValue(exportedValue)
 
     def initValue(self):
         if self.desc._valueType is not None:
             self._value = self.desc._valueType()
 
     def resetToDefaultValue(self):
-        self._set_value(copy.copy(self.defaultValue()))
+        self._setValue(copy.copy(self.defaultValue()))
 
     def requestGraphUpdate(self):
         if self.node.graph:
@@ -468,7 +468,7 @@ class Attribute(BaseObject):
     desc = Property(desc.Attribute, lambda self: self._desc, constant=True)
 
     valueChanged = Signal()
-    value = Property(Variant, _get_value, _set_value, notify=valueChanged)
+    value = Property(Variant, _getValue, _setValue, notify=valueChanged)
     valueStr = Property(Variant, getValueStr, notify=valueChanged)
     evalValue = Property(Variant, getEvalValue, notify=valueChanged)
     isOutput = Property(bool, isOutput.fget, constant=True)
@@ -546,14 +546,14 @@ class ChoiceParam(Attribute):
                              format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
-    def _set_value(self, value):
+    def _setValue(self, value):
         # Handle alternative serialization for ChoiceParam with overriden values.
         serializedValueWithValuesOverrides = isinstance(value, dict)
         if serializedValueWithValuesOverrides:
-            super()._set_value(value[self.desc._OVERRIDE_SERIALIZATION_KEY_VALUE])
+            super()._setValue(value[self.desc._OVERRIDE_SERIALIZATION_KEY_VALUE])
             self.setValues(value[self.desc._OVERRIDE_SERIALIZATION_KEY_VALUES])
         else:
-            super()._set_value(value)
+            super()._setValue(value)
 
     def setValues(self, values):
         if values == self._values:
@@ -573,7 +573,7 @@ class ChoiceParam(Attribute):
             self.desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
         }
 
-    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     valuesChanged = Signal()
     values = Property(Variant, getValues, setValues, notify=valuesChanged)
 
@@ -611,7 +611,7 @@ class ListAttribute(Attribute):
         self._value = ListModel(parent=self)
         self.valueChanged.emit()
 
-    def _set_value(self, value):
+    def _setValue(self, value):
         if self.node.graph:
             self.remove(0, len(self))
         # Link to another attribute
@@ -630,7 +630,7 @@ class ListAttribute(Attribute):
         if not isinstance(exportedValues, list):
             if isinstance(exportedValues, ListAttribute) or \
                Attribute.isLinkExpression(exportedValues):
-                self._set_value(exportedValues)
+                self._setValue(exportedValues)
                 return
             raise RuntimeError("ListAttribute.upgradeValue: the given value is of type " +
                                str(type(exportedValues)) + " but a 'list' is expected.")
@@ -771,7 +771,7 @@ class ListAttribute(Attribute):
         return [edge for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
 
     # Override value property setter
-    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     baseType = Property(str, getBaseType, constant=True)
     isLinkNested = Property(bool, isLinkNested.fget)
@@ -793,7 +793,7 @@ class GroupAttribute(Attribute):
             except KeyError:
                 raise AttributeError(key)
 
-    def _set_value(self, exportedValue):
+    def _setValue(self, exportedValue):
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
@@ -910,5 +910,5 @@ class GroupAttribute(Attribute):
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
     # Override value property
-    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)

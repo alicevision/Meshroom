@@ -81,14 +81,6 @@ class Attribute(BaseObject):
         self._value = None
         self.initValue()
 
-    @property
-    def node(self):
-        return self._node()
-
-    @property
-    def root(self):
-        return self._root() if self._root else None
-
     def getName(self) -> str:
         """ Attribute name """
         return self._name
@@ -498,13 +490,13 @@ class Attribute(BaseObject):
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True),
                              notify=isLinkChanged)
-    node = Property(BaseObject, node.fget, constant=True)
+    node = Property(BaseObject, lambda self: self._node(), constant=True)
     enabledChanged = Signal()
     enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
     invalidate = Property(bool, lambda self: self._invalidate, constant=True)
     validValueChanged = Signal()
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
-    root = Property(BaseObject, root.fget, constant=True)
+    root = Property(BaseObject, lambda self: self._root() if self._root else None, constant=True)
 
 
 def raiseIfLink(func):

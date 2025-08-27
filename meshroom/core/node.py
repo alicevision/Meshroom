@@ -882,7 +882,7 @@ class BaseNode(BaseObject):
             # so we should not read the attribute value.
             if not dynamicOutputAttr and attr.value == attr.desc.uidIgnoreValue:
                 continue  # For non-dynamic attributes, check if the value should be ignored
-            uidAttributes.append((attr.getName(), attr.uid()))
+            uidAttributes.append((attr.name, attr.uid()))
         uidAttributes.sort()
 
         # Adding the node type prevents ending up with two identical UIDs for different node types

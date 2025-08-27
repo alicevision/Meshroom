@@ -65,7 +65,6 @@ class Attribute(BaseObject):
             parent (BaseObject): (optional) the parent BaseObject
         """
         super().__init__(parent)
-        self._name: str = attributeDesc.name
         self._root = None if root is None else weakref.ref(root)
         self._node = weakref.ref(node)
         self._desc: desc.Attribute = attributeDesc
@@ -80,25 +79,27 @@ class Attribute(BaseObject):
         self._value = None
         self.initValue()
 
-    def getName(self) -> str:
-        """ Attribute name """
-        return self._name
-
-    def getFullName(self) -> str:
-        """ Name inside the Graph: groupName.name """
+    def _getNameFromNode(self) -> str:
+        """ 
+        Get the attribute name following the path from the node to the attribute.
+        Return: nodeName.groupName.subGroupName.name 
+        """
+        return f'{self._node.name}.{self._getNameFromRoot()}'
+    
+    def _getNameFromRoot(self) -> str:
+        """ 
+        Get the attribute name following the path from the node root to the attribute.
+        Return: groupName.subGroupName.name 
+        """
         if isinstance(self.root, ListAttribute):
-            return f'{self.root.getFullName()}[{self.root.index(self)}]'
+            return f'{self.root.nameFromRoot}[{self.root.index(self)}]'
         elif isinstance(self.root, GroupAttribute):
-            return f'{self.root.getFullName()}.{self.getName()}'
-        return self.getName()
-
-    def getFullNameToNode(self) -> str:
-        """ Name inside the Graph: nodeName.groupName.name """
-        return f'{self.node.name}.{self.getFullName()}'
+            return f'{self.root.nameFromRoot}.{self._desc.name}'
+        return self._desc.name
 
     def asLinkExpr(self) -> str:
         """ Return link expression for this Attribute """
-        return "{" + self.getFullNameToNode() + "}"
+        return "{" + self._getNameFromNode() + "}"
 
     def _getLabel(self) -> str:
         return self._label
@@ -403,9 +404,9 @@ class Attribute(BaseObject):
         return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
                      if self.desc.semantic == imageSemantic), None) is not None
 
-    name = Property(str, getName, constant=True)
-    fullName = Property(str, getFullName, constant=True)
-    fullNameToNode = Property(str, getFullNameToNode, constant=True)
+    nameFromNode = Property(str, _getNameFromNode, constant=True)
+    nameFromRoot = Property(str, _getNameFromRoot, constant=True)
+    name = Property(str, lambda self: self._desc._name, constant=True)
     labelChanged = Signal()
     label = Property(str, _getLabel, _setLabel, notify=labelChanged)
     type = Property(str, lambda self: self._desc.type, constant=True)

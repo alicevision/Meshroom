@@ -849,14 +849,14 @@ class UIGraph(QObject):
         if isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
             self._addEdge(src.at(0), dst)
         elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
-            with self.groupedGraphModification(f"Insert and Add Edge on {dst.getFullNameToNode()}"):
+            with self.groupedGraphModification(f"Insert and Add Edge on {dst.nameFromNode}"):
                 self.appendAttribute(dst)
                 self._addEdge(src, dst.at(-1))
         else:
             self._addEdge(src, dst)
 
     def _addEdge(self, src, dst):
-        with self.groupedGraphModification(f"Connect '{src.getFullNameToNode()}'->'{dst.getFullNameToNode()}'"):
+        with self.groupedGraphModification(f"Connect '{src.nameFromNode}'->'{dst.nameFromNode}'"):
             if dst in self._graph.edges.keys():
                 self.removeEdge(self._graph.edge(dst))
             self.push(commands.AddEdgeCommand(self._graph, src, dst))
@@ -864,7 +864,7 @@ class UIGraph(QObject):
     @Slot(Edge)
     def removeEdge(self, edge):
         if isinstance(edge.dst.root, ListAttribute):
-            with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.getFullNameToNode()}"):
+            with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.nameFromNode}"):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
                 self.removeAttribute(edge.dst)
         else:
@@ -891,7 +891,7 @@ class UIGraph(QObject):
 
     @Slot(Edge, Attribute, Attribute, result=Edge)
     def replaceEdge(self, edge, newSrc, newDst):
-        with self.groupedGraphModification(f"Replace Edge '{edge.src.getFullNameToNode()}'->'{edge.dst.getFullNameToNode()}' with '{newSrc.getFullNameToNode()}'->'{newDst.getFullNameToNode()}'"):
+        with self.groupedGraphModification(f"Replace Edge '{edge.src.nameFromNode}'->'{edge.dst.nameFromNode}' with '{newSrc.nameFromNode}'->'{newDst.nameFromNode}'"):
             self.removeEdge(edge)
             self.addEdge(newSrc, newDst)
         return self._graph.edge(newDst)

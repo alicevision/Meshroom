@@ -109,9 +109,9 @@ class Attribute(BaseObject):
         return self.fullLabel.lower().find(text.lower()) > -1
 
     def _getEnabled(self) -> bool:
-        if isinstance(self.desc.enabled, types.FunctionType):
+        if isinstance(self._desc.enabled, types.FunctionType):
             try:
-                return self.desc.enabled(self.node)
+                return self._desc.enabled(self.node)
             except Exception:
                 # Node implementation may fail due to version mismatch
                 return True
@@ -129,15 +129,15 @@ class Attribute(BaseObject):
             - If it is a function, execute it and return the result
             - Otherwise, simply return true
         """
-        if isinstance(self.desc.validValue, types.FunctionType):
+        if isinstance(self._desc.validValue, types.FunctionType):
             try:
-                return self.desc.validValue(self.node)
+                return self._desc.validValue(self.node)
             except Exception:
                 return True
         return True
 
     def validateValue(self, value):
-        return self.desc.validateValue(value)
+        return self._desc.validateValue(value)
 
     def _getValue(self):
         if self.isLink:
@@ -189,8 +189,8 @@ class Attribute(BaseObject):
         self._setValue(exportedValue)
 
     def initValue(self):
-        if self.desc._valueType is not None:
-            self._value = self.desc._valueType()
+        if self._desc._valueType is not None:
+            self._value = self._desc._valueType()
 
     def resetToDefaultValue(self):
         self._setValue(copy.copy(self.defaultValue()))
@@ -211,7 +211,7 @@ class Attribute(BaseObject):
         Compute the UID for the attribute.
         """
         if self.isOutput:
-            if self.desc.isDynamicValue:
+            if self._desc.isDynamicValue:
                 # If the attribute is a dynamic output, the UID is derived from the node UID.
                 # To guarantee that each output attribute receives a unique ID, we add the attribute
                 # name to it.
@@ -317,7 +317,7 @@ class Attribute(BaseObject):
     def getExportValue(self):
         if self.isLink:
             return self.getLinkParam().asLinkExpr()
-        if self.isOutput and self.desc.isExpression:
+        if self.isOutput and self._desc.isExpression:
             return self.defaultValue()
         return self.value
 
@@ -398,11 +398,11 @@ class Attribute(BaseObject):
 
     def _is2D(self) -> bool:
         """ Return True if the current attribute is considered as a 2d file """
-        if not self.desc.semantic:
+        if not self._desc.semantic:
             return False
 
         return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
-                     if self.desc.semantic == imageSemantic), None) is not None
+                     if self._desc.semantic == imageSemantic), None) is not None
 
     nameFromNode = Property(str, _getNameFromNode, constant=True)
     nameFromRoot = Property(str, _getNameFromRoot, constant=True)
@@ -479,14 +479,14 @@ class ChoiceParam(Attribute):
     def getValues(self):
         if (linkParam := self.getLinkParam()) is not None:
             return linkParam.getValues()
-        return self._values if self._values is not None else self.desc._values
+        return self._values if self._values is not None else self._desc._values
 
     def conformValue(self, val):
         """ Conform 'val' to the correct type and check for its validity """
-        return self.desc.conformValue(val)
+        return self._desc.conformValue(val)
 
     def validateValue(self, value):
-        if self.desc.exclusive:
+        if self._desc.exclusive:
             return self.conformValue(value)
 
         if isinstance(value, str):
@@ -501,8 +501,8 @@ class ChoiceParam(Attribute):
         # Handle alternative serialization for ChoiceParam with overriden values.
         serializedValueWithValuesOverrides = isinstance(value, dict)
         if serializedValueWithValuesOverrides:
-            super()._setValue(value[self.desc._OVERRIDE_SERIALIZATION_KEY_VALUE])
-            self.setValues(value[self.desc._OVERRIDE_SERIALIZATION_KEY_VALUES])
+            super()._setValue(value[self._desc._OVERRIDE_SERIALIZATION_KEY_VALUE])
+            self.setValues(value[self._desc._OVERRIDE_SERIALIZATION_KEY_VALUES])
         else:
             super()._setValue(value)
 
@@ -513,15 +513,15 @@ class ChoiceParam(Attribute):
         self.valuesChanged.emit()
 
     def getExportValue(self):
-        useStandardSerialization = self.isLink or not self.desc._saveValuesOverride or \
+        useStandardSerialization = self.isLink or not self._desc._saveValuesOverride or \
             self._values is None
 
         if useStandardSerialization:
             return super().getExportValue()
 
         return {
-            self.desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
-            self.desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
+            self._desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
+            self._desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
         }
 
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
@@ -570,7 +570,7 @@ class ListAttribute(Attribute):
             # During initialization self._value may not be set
             if self._value is None:
                 self._value = ListModel(parent=self)
-            newValue = self.desc.validateValue(value)
+            newValue = self._desc.validateValue(value)
             self.extend(newValue)
         self.requestGraphUpdate()
 
@@ -746,9 +746,9 @@ class GroupAttribute(Attribute):
             for key, v in value.items():
                 self._value.get(key).value = v
         elif isinstance(value, (list, tuple)):
-            if len(self.desc._groupDesc) != len(value):
+            if len(self._desc._groupDesc) != len(value):
                 raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
-            for attrDesc, v in zip(self.desc._groupDesc, value):
+            for attrDesc, v in zip(self._desc._groupDesc, value):
                 self._value.get(attrDesc.name).value = v
         else:
             raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
@@ -761,9 +761,9 @@ class GroupAttribute(Attribute):
                 if key in self._value.keys():
                     self._value.get(key).upgradeValue(v)
         elif isinstance(value, (list, tuple)):
-            if len(self.desc._groupDesc) != len(value):
+            if len(self._desc._groupDesc) != len(value):
                 raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
-            for attrDesc, v in zip(self.desc._groupDesc, value):
+            for attrDesc, v in zip(self._desc._groupDesc, value):
                 self._value.get(attrDesc.name).upgradeValue(v)
         else:
             raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
@@ -778,7 +778,7 @@ class GroupAttribute(Attribute):
         self._value.reset(subAttributes)
 
     def resetToDefaultValue(self):
-        for attrDesc in self.desc._groupDesc:
+        for attrDesc in self._desc._groupDesc:
             self._value.get(attrDesc.name).resetToDefaultValue()
 
     @Slot(str, result=Attribute)

@@ -106,12 +106,6 @@ class Attribute(BaseObject):
         """ Return link expression for this Attribute """
         return "{" + self.getFullNameToNode() + "}"
 
-    def getType(self) -> str:
-        return self._desc.type
-
-    def getBaseType(self) -> str:
-        return self.getType()
-
     def getLabel(self) -> str:
         return self._label
 
@@ -458,8 +452,8 @@ class Attribute(BaseObject):
     fullLabel = Property(str, getFullLabel, constant=True)
     fullLabelToNode = Property(str, getFullLabelToNode, constant=True)
     fullLabelToGraph = Property(str, getFullLabelToGraph, constant=True)
-    type = Property(str, getType, constant=True)
-    baseType = Property(str, getType, constant=True)
+    type = Property(str, lambda self: self._desc.type, constant=True)
+    baseType = Property(str, lambda self: self._desc.type, constant=True)
     isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode, constant=True)
     is3D = Property(bool, _is3D, constant=True)
     is2D = Property(bool, _is2D, constant=True)
@@ -591,9 +585,6 @@ class ListAttribute(Attribute):
 
     def __iter__(self):
         return iter(self.value)
-
-    def getBaseType(self):
-        return self._desc.elementDesc.__class__.__name__
 
     def at(self, idx):
         """ Returns child attribute at index 'idx'. """
@@ -773,7 +764,7 @@ class ListAttribute(Attribute):
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
-    baseType = Property(str, getBaseType, constant=True)
+    baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
     isLinkNested = Property(bool, isLinkNested.fget)
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=Attribute.hasOutputConnectionsChanged)
 

@@ -344,7 +344,7 @@ class Attribute(BaseObject):
             return self.defaultValue()
         return self.value
 
-    def getEvalValue(self):
+    def _getEvalValue(self):
         """
         Return the value. If it is a string, expressions will be evaluated.
         """
@@ -373,15 +373,15 @@ class Attribute(BaseObject):
         if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
             # Ensure value is a list as expected
             assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
-            v = self._desc.joinChar.join(self.getEvalValue())
+            v = self._desc.joinChar.join(self._getEvalValue())
             if withQuotes and v:
                 return f'"{v}"'
             return v
         # String, File, single value Choice are based on strings and should includes quotes
         # to deal with spaces
         if withQuotes and isinstance(self._desc, (desc.StringParam, desc.File, desc.ChoiceParam)):
-            return f'"{self.getEvalValue()}"'
-        return str(self.getEvalValue())
+            return f'"{self._getEvalValue()}"'
+        return str(self._getEvalValue())
 
     def defaultValue(self):
         if isinstance(self._desc.value, types.FunctionType):
@@ -447,7 +447,7 @@ class Attribute(BaseObject):
 
     valueChanged = Signal()
     value = Property(Variant, _getValue, _setValue, notify=valueChanged)
-    evalValue = Property(Variant, getEvalValue, notify=valueChanged)
+    evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
     isInput = Property(bool, lambda self: not self._isOutput, constant=True)
     isOutput = Property(bool, lambda self: self._isOutput, constant=True)
     isLinkChanged = Signal()

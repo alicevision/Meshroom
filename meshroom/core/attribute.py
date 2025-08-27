@@ -107,7 +107,7 @@ class Attribute(BaseObject):
         return "{" + self.getFullNameToNode() + "}"
 
     def getType(self) -> str:
-        return self.attributeDesc.type
+        return self._desc.type
 
     def _isReadOnly(self) -> bool:
         return not self._isOutput and self.node.isCompatibilityNode

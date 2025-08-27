@@ -229,14 +229,6 @@ class Attribute(BaseObject):
         if self.node:
             self.node.updateInternalAttributes()
 
-    @property
-    def isOutput(self) -> bool:
-        return self._isOutput
-
-    @property
-    def isInput(self) -> bool:
-        return not self._isOutput
-
     def uid(self) -> str:
         """
         Compute the UID for the attribute.
@@ -458,7 +450,8 @@ class Attribute(BaseObject):
     valueChanged = Signal()
     value = Property(Variant, _getValue, _setValue, notify=valueChanged)
     evalValue = Property(Variant, getEvalValue, notify=valueChanged)
-    isOutput = Property(bool, isOutput.fget, constant=True)
+    isInput = Property(bool, lambda self: not self._isOutput, constant=True)
+    isOutput = Property(bool, lambda self: self._isOutput, constant=True)
     isLinkChanged = Signal()
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
     isLinkNested = isLink

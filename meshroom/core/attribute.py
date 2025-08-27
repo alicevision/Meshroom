@@ -109,9 +109,6 @@ class Attribute(BaseObject):
     def getType(self) -> str:
         return self._desc.type
 
-    def _isReadOnly(self) -> bool:
-        return not self._isOutput and self.node.isCompatibilityNode
-
     def getBaseType(self) -> str:
         return self.getType()
 
@@ -463,7 +460,7 @@ class Attribute(BaseObject):
     fullLabelToGraph = Property(str, getFullLabelToGraph, constant=True)
     type = Property(str, getType, constant=True)
     baseType = Property(str, getType, constant=True)
-    isReadOnly = Property(bool, _isReadOnly, constant=True)
+    isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode, constant=True)
     is3D = Property(bool, _is3D, constant=True)
     is2D = Property(bool, _is2D, constant=True)
 

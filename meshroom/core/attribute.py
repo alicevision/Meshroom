@@ -710,8 +710,7 @@ class ListAttribute(Attribute):
         for attr in self._value:
             attr.updateInternals()
 
-    @property
-    def isLinkNested(self) -> bool:
+    def _isLinkNested(self) -> bool:
         """ Whether the attribute or any of its elements is a link to another attribute. """
         # note: directly use self.node.graph._edges to avoid using the property that may become
         # invalid at some point
@@ -748,7 +747,7 @@ class ListAttribute(Attribute):
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
-    isLinkNested = Property(bool, isLinkNested.fget)
+    isLinkNested = Property(bool, _isLinkNested)
     hasOutputConnections = Property(bool, _hasOutputConnections, notify=Attribute.hasOutputConnectionsChanged)
 
 

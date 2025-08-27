@@ -254,8 +254,7 @@ class Attribute(BaseObject):
             return hashValue([hashValue(v) for v in sorted(self._value)])
         return hashValue(self._value)
 
-    @property
-    def isLink(self) -> bool:
+    def _isLink(self) -> bool:
         """ Whether the input attribute is a link to another attribute. """
         # note: directly use self.node.graph._edges to avoid using the property that may become
         # invalid at some point
@@ -453,7 +452,7 @@ class Attribute(BaseObject):
     isInput = Property(bool, lambda self: not self._isOutput, constant=True)
     isOutput = Property(bool, lambda self: self._isOutput, constant=True)
     isLinkChanged = Signal()
-    isLink = Property(bool, isLink.fget, notify=isLinkChanged)
+    isLink = Property(bool, _isLink, notify=isLinkChanged)
     isLinkNested = isLink
     hasOutputConnectionsChanged = Signal()
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)

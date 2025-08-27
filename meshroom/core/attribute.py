@@ -164,10 +164,6 @@ class Attribute(BaseObject):
         self._enabled = v
         self.enabledChanged.emit()
 
-    def getUidIgnoreValue(self):
-        """ Value for which the attribute should be ignored during the UID computation. """
-        return self._desc.uidIgnoreValue
-
     def getValidValue(self):
         """
         Get the status of _validValue:
@@ -506,7 +502,6 @@ class Attribute(BaseObject):
     enabledChanged = Signal()
     enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
     invalidate = Property(bool, lambda self: self._invalidate, constant=True)
-    uidIgnoreValue = Property(Variant, getUidIgnoreValue, constant=True)
     validValueChanged = Signal()
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
     root = Property(BaseObject, root.fget, constant=True)

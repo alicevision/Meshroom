@@ -880,7 +880,7 @@ class BaseNode(BaseObject):
             # In particular, when loading a project file, the UIDs are updated first,
             # and the node status and the dynamic output values are not yet loaded,
             # so we should not read the attribute value.
-            if not dynamicOutputAttr and attr.value == attr.uidIgnoreValue:
+            if not dynamicOutputAttr and attr.value == attr.desc.uidIgnoreValue:
                 continue  # For non-dynamic attributes, check if the value should be ignored
             uidAttributes.append((attr.getName(), attr.uid()))
         uidAttributes.sort()

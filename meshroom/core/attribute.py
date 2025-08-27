@@ -138,7 +138,7 @@ class Attribute(BaseObject):
         graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
         return f'{graphName} {self.getFullLabelToNode()}'
 
-    def getEnabled(self) -> bool:
+    def _getEnabled(self) -> bool:
         if isinstance(self.desc.enabled, types.FunctionType):
             try:
                 return self.desc.enabled(self.node)
@@ -147,7 +147,7 @@ class Attribute(BaseObject):
                 return True
         return self._desc.enabled
 
-    def setEnabled(self, v):
+    def _setEnabled(self, v):
         if self._enabled == v:
             return
         self._enabled = v
@@ -427,7 +427,7 @@ class Attribute(BaseObject):
 
     def updateInternals(self):
         # Emit if the enable status has changed
-        self.setEnabled(self.getEnabled())
+        self._setEnabled(self._getEnabled())
 
     def _is3D(self) -> bool:
         """ Return True if the current attribute is considered as a 3d file """
@@ -489,7 +489,7 @@ class Attribute(BaseObject):
                              notify=isLinkChanged)
     node = Property(BaseObject, lambda self: self._node(), constant=True)
     enabledChanged = Signal()
-    enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
+    enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
     invalidate = Property(bool, lambda self: self._invalidate, constant=True)
     validValueChanged = Signal()
     validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)

@@ -96,11 +96,6 @@ class Attribute(BaseObject):
         """ Name inside the Graph: nodeName.groupName.name """
         return f'{self.node.name}.{self.getFullName()}'
 
-    def getFullNameToGraph(self) -> str:
-        """ Name inside the Graph: graphName.nodeName.groupName.name """
-        graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
-        return f'{graphName}.{self.getFullNameToNode()}'
-
     def asLinkExpr(self) -> str:
         """ Return link expression for this Attribute """
         return "{" + self.getFullNameToNode() + "}"
@@ -411,7 +406,6 @@ class Attribute(BaseObject):
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
     fullNameToNode = Property(str, getFullNameToNode, constant=True)
-    fullNameToGraph = Property(str, getFullNameToGraph, constant=True)
     labelChanged = Signal()
     label = Property(str, _getLabel, _setLabel, notify=labelChanged)
     type = Property(str, lambda self: self._desc.type, constant=True)

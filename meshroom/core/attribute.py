@@ -72,7 +72,6 @@ class Attribute(BaseObject):
         self._isOutput: bool = isOutput
         self._label: str = attributeDesc.label
         self._enabled: bool = True
-        self._validValue: bool = True
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
         # invalidation value for output attributes
@@ -147,23 +146,18 @@ class Attribute(BaseObject):
         self._enabled = v
         self.enabledChanged.emit()
 
-    def getValidValue(self):
+    def _hasValidValue(self):
         """
-        Get the status of _validValue:
+        Check attribute description validValue:
             - If it is a function, execute it and return the result
-            - Otherwise, simply return its value
+            - Otherwise, simply return true
         """
         if isinstance(self.desc.validValue, types.FunctionType):
             try:
                 return self.desc.validValue(self.node)
             except Exception:
                 return True
-        return self._validValue
-
-    def setValidValue(self, value):
-        if self._validValue == value:
-            return
-        self._validValue = value
+        return True
 
     def validateValue(self, value):
         return self.desc.validateValue(value)
@@ -202,7 +196,7 @@ class Attribute(BaseObject):
             self.requestNodeUpdate()
 
         self.valueChanged.emit()
-        self.validValueChanged.emit()
+        self.hasValidValueChanged.emit()
 
     @Slot()
     def _onValueChanged(self):
@@ -485,8 +479,8 @@ class Attribute(BaseObject):
     enabledChanged = Signal()
     enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
     invalidate = Property(bool, lambda self: self._invalidate, constant=True)
-    validValueChanged = Signal()
-    validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
+    hasValidValueChanged = Signal()
+    hasValidValue = Property(bool, _hasValidValue, notify=hasValidValueChanged)
     root = Property(BaseObject, lambda self: self._root() if self._root else None, constant=True)
 
 

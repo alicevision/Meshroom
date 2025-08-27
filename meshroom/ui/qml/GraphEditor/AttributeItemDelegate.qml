@@ -33,11 +33,11 @@ RowLayout {
     spacing: 2
 
     function updateAttributeLabel() {
-        background.color = attribute.validValue ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
+        background.color = attribute.hasValidValue ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
 
         if (attribute.desc) {
             var tooltip = ""
-            if (!attribute.validValue && attribute.desc.errorMessage !== "")
+            if (!attribute.hasValidValue && attribute.desc.errorMessage !== "")
                 tooltip += "<i><b>Error: </b>" + Format.plainToHtml(attribute.desc.errorMessage) + "</i><br><br>"
             tooltip += "<b> " + attribute.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(attribute.desc.description)
 
@@ -48,7 +48,7 @@ RowLayout {
     Pane {
         background: Rectangle {
             id: background
-            color: object != undefined && object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
+            color: object != undefined && object.hasValidValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
         }
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
@@ -111,7 +111,7 @@ RowLayout {
 
                     text: {
                         var tooltip = ""
-                        if (!object.validValue && object.desc.errorMessage !== "")
+                        if (!object.hasValidValue && object.desc.errorMessage !== "")
                             tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
                         tooltip += "<b>" + object.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.desc.description)
                         return tooltip

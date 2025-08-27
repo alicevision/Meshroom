@@ -68,7 +68,7 @@ class Attribute(BaseObject):
         self._name: str = attributeDesc.name
         self._root = None if root is None else weakref.ref(root)
         self._node = weakref.ref(node)
-        self.attributeDesc: desc.Attribute = attributeDesc
+        self._desc: desc.Attribute = attributeDesc
         self._isOutput: bool = isOutput
         self._label: str = attributeDesc.label
         self._enabled: bool = True
@@ -156,7 +156,7 @@ class Attribute(BaseObject):
             except Exception:
                 # Node implementation may fail due to version mismatch
                 return True
-        return self.attributeDesc.enabled
+        return self._desc.enabled
 
     def setEnabled(self, v):
         if self._enabled == v:
@@ -166,7 +166,7 @@ class Attribute(BaseObject):
 
     def getUidIgnoreValue(self):
         """ Value for which the attribute should be ignored during the UID computation. """
-        return self.attributeDesc.uidIgnoreValue
+        return self._desc.uidIgnoreValue
 
     def getValidValue(self):
         """
@@ -407,24 +407,23 @@ class Attribute(BaseObject):
         If it is a list with one empty string element, it will returns 2 quotes.
         """
         # ChoiceParam with multiple values should be combined
-        if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
+        if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
             # Ensure value is a list as expected
             assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
-            v = self.attributeDesc.joinChar.join(self.getEvalValue())
+            v = self._desc.joinChar.join(self.getEvalValue())
             if withQuotes and v:
                 return f'"{v}"'
             return v
         # String, File, single value Choice are based on strings and should includes quotes
         # to deal with spaces
-        if withQuotes and isinstance(self.attributeDesc,
-                                     (desc.StringParam, desc.File, desc.ChoiceParam)):
+        if withQuotes and isinstance(self._desc, (desc.StringParam, desc.File, desc.ChoiceParam)):
             return f'"{self.getEvalValue()}"'
         return str(self.getEvalValue())
 
     def defaultValue(self):
-        if isinstance(self.desc.value, types.FunctionType):
+        if isinstance(self._desc.value, types.FunctionType):
             try:
-                return self.desc.value(self)
+                return self._desc.value(self)
             except Exception as e:
                 if not self.node.isCompatibilityNode:
                     # Log message only if we are not in compatibility mode
@@ -433,7 +432,7 @@ class Attribute(BaseObject):
                 return None
         # Need to force a copy, for the case where the value is a list
         # (avoid reference to the desc value)
-        return copy.copy(self.desc.value)
+        return copy.copy(self._desc.value)
 
     def _isDefault(self) -> bool:
         return self.value == self.defaultValue()
@@ -447,7 +446,7 @@ class Attribute(BaseObject):
 
     def _is3D(self) -> bool:
         """ Return True if the current attribute is considered as a 3d file """
-        if self.desc.semantic == "3d":
+        if self._desc.semantic == "3d":
             return True
 
         # If the attribute is a File attribute, it is an instance of str and can be iterated over
@@ -481,7 +480,7 @@ class Attribute(BaseObject):
     is2D = Property(bool, _is2D, constant=True)
 
     # Definition of the attribute
-    desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
+    desc = Property(desc.Attribute, lambda self: self._desc, constant=True)
 
     valueChanged = Signal()
     value = Property(Variant, _get_value, _set_value, notify=valueChanged)
@@ -610,7 +609,7 @@ class ListAttribute(Attribute):
         return iter(self.value)
 
     def getBaseType(self):
-        return self.attributeDesc.elementDesc.__class__.__name__
+        return self._desc.elementDesc.__class__.__name__
 
     def at(self, idx):
         """ Returns child attribute at index 'idx'. """
@@ -654,7 +653,7 @@ class ListAttribute(Attribute):
 
         attrs = []
         for v in exportedValues:
-            a = attributeFactory(self.attributeDesc.elementDesc, None, self.isOutput,
+            a = attributeFactory(self._desc.elementDesc, None, self.isOutput,
                                  self.node, self)
             a.upgradeValue(v)
             attrs.append(a)
@@ -673,7 +672,7 @@ class ListAttribute(Attribute):
         if self._value is None:
             self._value = ListModel(parent=self)
         values = value if isinstance(value, list) else [value]
-        attrs = [attributeFactory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self)
+        attrs = [attributeFactory(self._desc.elementDesc, v, self.isOutput, self.node, self)
                  for v in values]
         self._value.insert(index, attrs)
         self.valueChanged.emit()
@@ -738,10 +737,10 @@ class ListAttribute(Attribute):
 
     def getValueStr(self, withQuotes=True) -> str:
         assert isinstance(self.value, ListModel)
-        if self.attributeDesc.joinChar == ' ':
-            return self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=withQuotes)
+        if self._desc.joinChar == ' ':
+            return self._desc.joinChar.join([v.getValueStr(withQuotes=withQuotes)
                                                      for v in self.value])
-        v = self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=False)
+        v = self._desc.joinChar.join([v.getValueStr(withQuotes=False)
                                               for v in self.value])
         if withQuotes and v:
             return f'"{v}"'
@@ -842,7 +841,7 @@ class GroupAttribute(Attribute):
     def initValue(self):
         self._value = DictModel(keyAttrName='name', parent=self)
         subAttributes = []
-        for subAttrDesc in self.attributeDesc.groupDesc:
+        for subAttrDesc in self._desc.groupDesc:
             childAttr = attributeFactory(subAttrDesc, None, self.isOutput, self.node, self)
             subAttributes.append(childAttr)
             childAttr.valueChanged.connect(self.valueChanged)
@@ -898,20 +897,20 @@ class GroupAttribute(Attribute):
         # add brackets if requested
         strBegin = ''
         strEnd = ''
-        if self.attributeDesc.brackets is not None:
-            if len(self.attributeDesc.brackets) == 2:
-                strBegin = self.attributeDesc.brackets[0]
-                strEnd = self.attributeDesc.brackets[1]
+        if self._desc.brackets is not None:
+            if len(self._desc.brackets) == 2:
+                strBegin = self._desc.brackets[0]
+                strEnd = self._desc.brackets[1]
             else:
-                raise AttributeError(f"Incorrect brackets on GroupAttribute: {self.attributeDesc.brackets}")
+                raise AttributeError(f"Incorrect brackets on GroupAttribute: {self._desc.brackets}")
 
         # particular case when using space separator
-        spaceSep = self.attributeDesc.joinChar == ' '
+        spaceSep = self._desc.joinChar == ' '
 
         # sort values based on child attributes group description order
         sortedSubValues = [self._value.get(attr.name).getValueStr(withQuotes=spaceSep)
-                           for attr in self.attributeDesc.groupDesc]
-        s = self.attributeDesc.joinChar.join(sortedSubValues)
+                           for attr in self._desc.groupDesc]
+        s = self._desc.joinChar.join(sortedSubValues)
 
         if withQuotes and not spaceSep:
             return f'"{strBegin}{s}{strEnd}"'

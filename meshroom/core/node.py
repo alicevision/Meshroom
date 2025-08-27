@@ -897,8 +897,8 @@ class BaseNode(BaseObject):
         """
         def _buildAttributeCmdVars(cmdVars, name, attr):
             if attr.enabled:
-                group = attr.attributeDesc.group(attr.node) \
-                        if isinstance(attr.attributeDesc.group, types.FunctionType) else attr.attributeDesc.group
+                group = attr.desc.group(attr.node) \
+                        if isinstance(attr.desc.group, types.FunctionType) else attr.desc.group
                 if group is not None:
                     # If there is a valid command line "group"
                     v = attr.getValueStr(withQuotes=True)
@@ -944,7 +944,7 @@ class BaseNode(BaseObject):
                 continue  # skip inputs
 
             # Apply expressions for File attributes
-            if attr.attributeDesc.isExpression:
+            if attr.desc.isExpression:
                 defaultValue = ""
                 # Do not evaluate expression for disabled attributes
                 # (the expression may refer to other attributes that are not defined)
@@ -978,8 +978,8 @@ class BaseNode(BaseObject):
             self._cmdVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
 
             if v:
-                self._cmdVars[attr.attributeDesc.group] = \
-                    self._cmdVars.get(attr.attributeDesc.group, '') + ' ' + self._cmdVars[name]
+                self._cmdVars[attr.desc.group] = \
+                    self._cmdVars.get(attr.desc.group, '') + ' ' + self._cmdVars[name]
 
     @property
     def isParallelized(self):

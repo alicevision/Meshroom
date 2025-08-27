@@ -297,7 +297,7 @@ def test_description_conflict():
                 isinstance(upgradedNode.nodeDesc, SampleNodeV4)
 
             assert hasattr(upgradedNode, "paramA")
-            assert isinstance(upgradedNode.paramA.attributeDesc, desc.ListAttribute)
+            assert isinstance(upgradedNode.paramA.desc, desc.ListAttribute)
             # paramA child attributes invalidate UID
             assert upgradedNode.internalFolder != srcNode.internalFolder
 
@@ -305,7 +305,7 @@ def test_description_conflict():
             # V4 => V5: 'paramA' elementDesc has changed from SampleGroupV1 to SampleGroupV2
             assert len(compatNode.attributes) == 3
             assert hasattr(compatNode, "paramA")
-            groupAttribute = compatNode.paramA.attributeDesc.elementDesc
+            groupAttribute = compatNode.paramA.desc.elementDesc
 
             assert isinstance(groupAttribute, desc.GroupAttribute)
             # Check that Compatibility node respect SampleGroupV1 description

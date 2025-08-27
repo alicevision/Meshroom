@@ -105,31 +105,12 @@ class Attribute(BaseObject):
         """ Return link expression for this Attribute """
         return "{" + self.getFullNameToNode() + "}"
 
-    def getLabel(self) -> str:
+    def _getLabel(self) -> str:
         return self._label
 
     @Slot(str, result=bool)
     def matchText(self, text: str) -> bool:
         return self.fullLabel.lower().find(text.lower()) > -1
-
-    def getFullLabel(self) -> str:
-        """
-        Full Label includes the name of all parent groups, e.g. 'groupLabel subGroupLabel Label'.
-        """
-        if isinstance(self.root, ListAttribute):
-            return self.root.getFullLabel()
-        elif isinstance(self.root, GroupAttribute):
-            return f'{self.root.getFullLabel()} {self.getLabel()}'
-        return self.getLabel()
-
-    def getFullLabelToNode(self) -> str:
-        """ Label inside the Graph: nodeLabel groupLabel Label """
-        return f'{self.node.label} {self.getFullLabel()}'
-
-    def getFullLabelToGraph(self) -> str:
-        """ Label inside the Graph: graphName nodeLabel groupLabel Label """
-        graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
-        return f'{graphName} {self.getFullLabelToNode()}'
 
     def _getEnabled(self) -> bool:
         if isinstance(self.desc.enabled, types.FunctionType):
@@ -202,7 +183,7 @@ class Attribute(BaseObject):
     def _onValueChanged(self):
         self.node._onAttributeChanged(self)
 
-    def _set_label(self, label):
+    def _setLabel(self, label):
         if self._label == label:
             return
         self._label = label
@@ -432,10 +413,7 @@ class Attribute(BaseObject):
     fullNameToNode = Property(str, getFullNameToNode, constant=True)
     fullNameToGraph = Property(str, getFullNameToGraph, constant=True)
     labelChanged = Signal()
-    label = Property(str, getLabel, _set_label, notify=labelChanged)
-    fullLabel = Property(str, getFullLabel, constant=True)
-    fullLabelToNode = Property(str, getFullLabelToNode, constant=True)
-    fullLabelToGraph = Property(str, getFullLabelToGraph, constant=True)
+    label = Property(str, _getLabel, _setLabel, notify=labelChanged)
     type = Property(str, lambda self: self._desc.type, constant=True)
     baseType = Property(str, lambda self: self._desc.type, constant=True)
     isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode, constant=True)

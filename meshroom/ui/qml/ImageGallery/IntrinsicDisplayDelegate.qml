@@ -14,7 +14,7 @@ RowLayout {
     property string toolTipText: {
         if (!attribute || Object.keys(attribute).length === 0)
             return ""
-        return attribute.fullLabel
+        return attribute.label
     }
 
     Pane {

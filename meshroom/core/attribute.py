@@ -69,7 +69,6 @@ class Attribute(BaseObject):
         self._node = weakref.ref(node)
         self._desc: desc.Attribute = attributeDesc
         self._isOutput: bool = isOutput
-        self._label: str = attributeDesc.label
         self._enabled: bool = True
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
 
@@ -100,9 +99,6 @@ class Attribute(BaseObject):
     def asLinkExpr(self) -> str:
         """ Return link expression for this Attribute """
         return "{" + self._getNameFromNode() + "}"
-
-    def _getLabel(self) -> str:
-        return self._label
 
     @Slot(str, result=bool)
     def matchText(self, text: str) -> bool:
@@ -178,12 +174,6 @@ class Attribute(BaseObject):
     @Slot()
     def _onValueChanged(self):
         self.node._onAttributeChanged(self)
-
-    def _setLabel(self, label):
-        if self._label == label:
-            return
-        self._label = label
-        self.labelChanged.emit()
 
     def upgradeValue(self, exportedValue):
         self._setValue(exportedValue)
@@ -407,8 +397,7 @@ class Attribute(BaseObject):
     nameFromNode = Property(str, _getNameFromNode, constant=True)
     nameFromRoot = Property(str, _getNameFromRoot, constant=True)
     name = Property(str, lambda self: self._desc._name, constant=True)
-    labelChanged = Signal()
-    label = Property(str, _getLabel, _setLabel, notify=labelChanged)
+    label = Property(str, lambda self: self._desc.label, constant=True)
     type = Property(str, lambda self: self._desc.type, constant=True)
     baseType = Property(str, lambda self: self._desc.type, constant=True)
     isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode, constant=True)

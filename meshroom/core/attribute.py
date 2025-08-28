@@ -367,6 +367,14 @@ class Attribute(BaseObject):
         # Emit if the enable status has changed
         self._setEnabled(self._getEnabled())
 
+    def _is2D(self) -> bool:
+        """ Return True if the current attribute is considered as a 2d file """
+        if not self._desc.semantic:
+            return False
+
+        return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
+                     if self._desc.semantic == imageSemantic), None) is not None
+
     def _is3D(self) -> bool:
         """ Return True if the current attribute is considered as a 3d file """
         if self._desc.semantic == "3d":
@@ -379,55 +387,46 @@ class Attribute(BaseObject):
 
         return False
 
-    def _is2D(self) -> bool:
-        """ Return True if the current attribute is considered as a 2d file """
-        if not self._desc.semantic:
-            return False
-
-        return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
-                     if self._desc.semantic == imageSemantic), None) is not None
+    node = Property(BaseObject, lambda self: self._node(), constant=True)
+    root = Property(BaseObject, lambda self: self._root() if self._root else None, constant=True)
 
     fullName = Property(str, _getFullName, constant=True)
     rootName = Property(str, _getRootName, constant=True)
+    desc = Property(desc.Attribute, lambda self: self._desc, constant=True)
     name = Property(str, lambda self: self._desc._name, constant=True)
     label = Property(str, lambda self: self._desc.label, constant=True)
     type = Property(str, lambda self: self._desc.type, constant=True)
     baseType = Property(str, lambda self: self._desc.type, constant=True)
+    isInput = Property(bool, lambda self: not self._isOutput, constant=True)
+    isOutput = Property(bool, lambda self: self._isOutput, constant=True)
     isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode, constant=True)
-    is3D = Property(bool, _is3D, constant=True)
     is2D = Property(bool, _is2D, constant=True)
+    is3D = Property(bool, _is3D, constant=True)
 
-    # Definition of the attribute
-    desc = Property(desc.Attribute, lambda self: self._desc, constant=True)
+    enabledChanged = Signal()
+    enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
+    invalidate = Property(bool, lambda self: self._invalidate, constant=True)
 
     valueChanged = Signal()
     value = Property(Variant, _getValue, _setValue, notify=valueChanged)
     evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
-    isInput = Property(bool, lambda self: not self._isOutput, constant=True)
-    isOutput = Property(bool, lambda self: self._isOutput, constant=True)
+    isDefault = Property(bool, _isDefault, notify=valueChanged)
+    hasValidValueChanged = Signal()
+    hasValidValue = Property(bool, _hasValidValue, notify=hasValidValueChanged)
+
     isLinkChanged = Signal()
     isLink = Property(bool, _isLink, notify=isLinkChanged)
     hasAnyLink = isLink
-
+    linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
+    rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True),
+                             notify=isLinkChanged)
+    
     inputConnectionsChanged = Signal()
     inputConnections = Property(Variant, _getInputConnections, notify=inputConnectionsChanged)
     outputConnectionsChanged = Signal()
     outputConnections = Property(Variant, _getOutputConnections, notify=outputConnectionsChanged)
     hasOutputConnectionsChanged = Signal()
     hasOutputConnections = Property(bool, _hasOutputConnections, notify=hasOutputConnectionsChanged)
-
-    isDefault = Property(bool, _isDefault, notify=valueChanged)
-    linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
-    rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True),
-                             notify=isLinkChanged)
-    node = Property(BaseObject, lambda self: self._node(), constant=True)
-    enabledChanged = Signal()
-    enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
-    invalidate = Property(bool, lambda self: self._invalidate, constant=True)
-    hasValidValueChanged = Signal()
-    hasValidValue = Property(bool, _hasValidValue, notify=hasValidValueChanged)
-    root = Property(BaseObject, lambda self: self._root() if self._root else None, constant=True)
-
 
 def raiseIfLink(func):
     """ If Attribute instance is a link, raise a RuntimeError. """

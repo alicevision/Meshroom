@@ -560,7 +560,7 @@ class Graph(BaseObject):
 
             # re-create edges taking into account what has been duplicated
             for attr, linkExpression in duplicateEdges.items():
-                # logging.warning("attr={} linkExpression={}".format(attr.nameFromRoot, linkExpression))
+                # logging.warning("attr={} linkExpression={}".format(attr.rootName, linkExpression))
                 link = linkExpression[1:-1]  # remove starting '{' and trailing '}'
                 # get source node and attribute name
                 edgeSrcNodeName, edgeSrcAttrName = link.split(".", 1)
@@ -594,12 +594,12 @@ class Graph(BaseObject):
         Remove the node identified by 'nodeName' from the graph.
         Returns:
             - a dictionary containing the incoming edges removed by this operation:
-                {dstAttr.nameFromNode, srcAttr.nameFromNode}
+                {dstAttr.fullName, srcAttr.fullName}
             - a dictionary containing the outgoing edges removed by this operation:
-                {dstAttr.nameFromNode, srcAttr.nameFromNode}
+                {dstAttr.fullName, srcAttr.fullName}
             - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
                 prior to the removal of all edges:
-                {dstAttr.nameFromNode, (dstAttr.root.nameFromNode, dstAttr.index, dstAttr.value)}
+                {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
         inEdges = {}
@@ -614,13 +614,13 @@ class Graph(BaseObject):
             # - once we have collected all the information, the edges (and perhaps the entries in ListAttributes) can
             #   actually be removed
             for edge in self.nodeOutEdges(node):
-                outEdges[edge.dst.nameFromNode] = edge.src.nameFromNode
+                outEdges[edge.dst.fullName] = edge.src.fullName
 
                 if isinstance(edge.dst.root, ListAttribute):
                     index = edge.dst.root.index(edge.dst)
-                    outListAttributes[edge.dst.nameFromNode] = (edge.dst.root.nameFromNode,
-                                                                       index, edge.dst.value
-                                                                       if edge.dst.value else None)
+                    outListAttributes[edge.dst.fullName] = (edge.dst.root.fullName,
+                                                            index, edge.dst.value
+                                                            if edge.dst.value else None)
 
             for edge in self.nodeOutEdges(node):
                 self.removeEdge(edge.dst)
@@ -632,7 +632,7 @@ class Graph(BaseObject):
 
             for edge in self.nodeInEdges(node):
                 self.removeEdge(edge.dst)
-                inEdges[edge.dst.nameFromNode] = edge.src.nameFromNode
+                inEdges[edge.dst.fullName] = edge.src.fullName
 
             node.alive = False
             self._nodes.remove(node)
@@ -698,12 +698,12 @@ class Graph(BaseObject):
         Returns:
             - the upgraded (newly created) node
             - a dictionary containing the incoming edges removed by this operation:
-                {dstAttr.nameFromNode, srcAttr.nameFromNode}
+                {dstAttr.fullName, srcAttr.fullName}
             - a dictionary containing the outgoing edges removed by this operation:
-                {dstAttr.nameFromNode, srcAttr.nameFromNode}
+                {dstAttr.fullName, srcAttr.fullName}
             - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
                 prior to the removal of all edges:
-                {dstAttr.nameFromNode, (dstAttr.root.nameFromNode, dstAttr.index, dstAttr.value)}
+                {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
         if not isinstance(node, CompatibilityNode):
@@ -730,10 +730,10 @@ class Graph(BaseObject):
         
         Args:
             outEdges: a dictionary containing the outgoing edges removed by a call to "removeNode".
-                {dstAttr.nameFromNode, srcAttr.nameFromNode}
+                {dstAttr.fullName, srcAttr.fullName}
             outListAttributes: a dictionary containing the values, indices and keys of attributes that were connected
                 to a ListAttribute prior to the removal of all edges.
-                {dstAttr.nameFromNode, (dstAttr.root.nameFromNode, dstAttr.index, dstAttr.value)}
+                {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
         """
         def _recreateTargetListAttributeChildren(listAttrName: str, index: int, value: Any):
             listAttr = self.attribute(listAttrName)
@@ -899,7 +899,7 @@ class Graph(BaseObject):
         if srcAttr.node.graph != self or dstAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
         if dstAttr in self.edges.keys():
-            raise RuntimeError(f'Destination attribute "{dstAttr.nameFromNode}" is already connected.')
+            raise RuntimeError(f'Destination attribute "{dstAttr.fullName}" is already connected.')
         edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
@@ -916,7 +916,7 @@ class Graph(BaseObject):
     @changeTopology
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
-            raise RuntimeError(f'Attribute "{dstAttr.nameFromNode}" is not connected')
+            raise RuntimeError(f'Attribute "{dstAttr.fullName}" is not connected')
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()

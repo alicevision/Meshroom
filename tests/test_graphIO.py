@@ -54,7 +54,7 @@ def compareGraphsContent(graphA: Graph, graphB: Graph) -> bool:
         return set([(node.name, node.nodeType, node.isCompatibilityNode) for node in graph.nodes])
 
     def _buildEdgesSet(graph: Graph):
-        return set([(edge.src.nameFromRoot, edge.dst.nameFromRoot) for edge in graph.edges])
+        return set([(edge.src.rootName, edge.dst.rootName) for edge in graph.edges])
 
     nodesSetA, edgesSetA = _buildNodesSet(graphA), _buildEdgesSet(graphA)
     nodesSetB, edgesSetB = _buildNodesSet(graphB), _buildEdgesSet(graphB)

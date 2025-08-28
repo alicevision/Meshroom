@@ -78,27 +78,27 @@ class Attribute(BaseObject):
         self._value = None
         self.initValue()
 
-    def _getNameFromNode(self) -> str:
+    def _getFullName(self) -> str:
         """ 
         Get the attribute name following the path from the node to the attribute.
         Return: nodeName.groupName.subGroupName.name 
         """
-        return f'{self._node.name}.{self._getNameFromRoot()}'
+        return f'{self.node.name}.{self._getRootName()}'
     
-    def _getNameFromRoot(self) -> str:
+    def _getRootName(self) -> str:
         """ 
         Get the attribute name following the path from the node root to the attribute.
         Return: groupName.subGroupName.name 
         """
         if isinstance(self.root, ListAttribute):
-            return f'{self.root.nameFromRoot}[{self.root.index(self)}]'
+            return f'{self.root.rootName}[{self.root.index(self)}]'
         elif isinstance(self.root, GroupAttribute):
-            return f'{self.root.nameFromRoot}.{self._desc.name}'
+            return f'{self.root.rootName}.{self._desc.name}'
         return self._desc.name
 
     def asLinkExpr(self) -> str:
         """ Return link expression for this Attribute """
-        return "{" + self._getNameFromNode() + "}"
+        return "{" + self._getFullName() + "}"
 
     @Slot(str, result=bool)
     def matchText(self, text: str) -> bool:
@@ -394,8 +394,8 @@ class Attribute(BaseObject):
         return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
                      if self._desc.semantic == imageSemantic), None) is not None
 
-    nameFromNode = Property(str, _getNameFromNode, constant=True)
-    nameFromRoot = Property(str, _getNameFromRoot, constant=True)
+    fullName = Property(str, _getFullName, constant=True)
+    rootName = Property(str, _getRootName, constant=True)
     name = Property(str, lambda self: self._desc._name, constant=True)
     label = Property(str, lambda self: self._desc.label, constant=True)
     type = Property(str, lambda self: self._desc.type, constant=True)

@@ -76,7 +76,7 @@ RowLayout {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.inAttributeClicked(navButtonIn, mouse, object.linkedInAttributes)
+                        root.inAttributeClicked(navButtonIn, mouse, object.inputConnections)
                     }
                 }
 
@@ -235,7 +235,7 @@ RowLayout {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.outAttributeClicked(navButtonOut, mouse, attribute.linkedOutAttributes)
+                        root.outAttributeClicked(navButtonOut, mouse, attribute.outputConnections)
                     }
                 }
 

@@ -246,6 +246,21 @@ class Attribute(BaseObject):
             return linkParam.getLinkParam(recursive)
         return linkParam
 
+    def _getInputConnections(self) -> list["Attribute"]:
+        """ Return the upstreams connected attributes  """
+        # safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        return [edge.src for edge in self.node.graph.edges.values() if edge.dst == self]
+
+
+    def _getOutputConnections(self) -> list["Attribute"]:
+        """ Return the downstreams connected attributes """
+        # safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self]
+    
     def _hasOutputConnections(self) -> bool:
         """
         Whether the attribute has output connections, i.e is the source of at least one edge.
@@ -254,28 +269,6 @@ class Attribute(BaseObject):
         if not self.node.graph or not self.node.graph.edges:
             return False
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
-
-    def getInputConnections(self) -> list["Edge"]:
-        """ Retrieve the upstreams connected edges """
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-
-        return [edge for edge in self.node.graph.edges.values() if edge.dst == self]
-
-    def getOutputConnections(self) -> list["Edge"]:
-        """ Retrieve all the edges connected to this attribute """
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-
-        return [edge for edge in self.node.graph.edges.values() if edge.src == self]
-
-    def _getLinkedInAttributes(self) -> list["Attribute"]:
-        """ Return the upstreams connected attributes  """
-        return [edge.src for edge in self.getInputConnections()]
-
-    def _getLinkedOutAttributes(self) -> list["Attribute"]:
-        """ Return the downstreams connected attributes """
-        return [edge.dst for edge in self.getOutputConnections()]
 
     def _applyExpr(self):
         """
@@ -415,13 +408,13 @@ class Attribute(BaseObject):
     isLinkChanged = Signal()
     isLink = Property(bool, _isLink, notify=isLinkChanged)
     isLinkNested = isLink
+
+    inputConnectionsChanged = Signal()
+    inputConnections = Property(Variant, _getInputConnections, notify=inputConnectionsChanged)
+    outputConnectionsChanged = Signal()
+    outputConnections = Property(Variant, _getOutputConnections, notify=outputConnectionsChanged)
     hasOutputConnectionsChanged = Signal()
     hasOutputConnections = Property(bool, _hasOutputConnections, notify=hasOutputConnectionsChanged)
-
-    linkedInAttributesChanged = Signal()
-    linkedInAttributes = Property(Variant, _getLinkedInAttributes, notify=linkedInAttributesChanged)
-    linkedOutAttributesChanged = Signal()
-    linkedOutAttributes = Property(Variant, _getLinkedOutAttributes, notify=linkedOutAttributesChanged)
 
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
@@ -680,37 +673,11 @@ class ListAttribute(Attribute):
             or self.node.graph and self.isInput and self.node.graph._edges \
             and any(v in self.node.graph._edges.keys() for v in self._value)
 
-    # override
-    def _hasOutputConnections(self):
-        """ Whether the attribute has output connections, i.e is the source of at least one edge. """
-
-        # safety check to avoid evaluation errors
-        if not self.node.graph or not self.node.graph.edges:
-            return False
-
-        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None or \
-            any(attr._hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
-
-    # override
-    def getInputConnections(self) -> list["Edge"]:
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-
-        return [edge for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
-
-    # override
-    def getOutputConnections(self) -> list["Edge"]:
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-
-        return [edge for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
-
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
     isLinkNested = Property(bool, _isLinkNested)
-    hasOutputConnections = Property(bool, _hasOutputConnections, notify=Attribute.hasOutputConnectionsChanged)
 
 
 class GroupAttribute(Attribute):

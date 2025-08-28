@@ -119,7 +119,7 @@ class Attribute(BaseObject):
         self._enabled = v
         self.enabledChanged.emit()
 
-    def _hasValidValue(self):
+    def _isValid(self):
         """
         Check attribute description validValue:
             - If it is a function, execute it and return the result
@@ -169,7 +169,6 @@ class Attribute(BaseObject):
             self.requestNodeUpdate()
 
         self.valueChanged.emit()
-        self.hasValidValueChanged.emit()
 
     @Slot()
     def _onValueChanged(self):
@@ -411,8 +410,7 @@ class Attribute(BaseObject):
     value = Property(Variant, _getValue, _setValue, notify=valueChanged)
     evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
-    hasValidValueChanged = Signal()
-    hasValidValue = Property(bool, _hasValidValue, notify=hasValidValueChanged)
+    isValid = Property(bool, _isValid, notify=valueChanged)
 
     isLinkChanged = Signal()
     isLink = Property(bool, _isLink, notify=isLinkChanged)

@@ -407,7 +407,7 @@ class Attribute(BaseObject):
     isOutput = Property(bool, lambda self: self._isOutput, constant=True)
     isLinkChanged = Signal()
     isLink = Property(bool, _isLink, notify=isLinkChanged)
-    isLinkNested = isLink
+    hasAnyLink = isLink
 
     inputConnectionsChanged = Signal()
     inputConnections = Property(Variant, _getInputConnections, notify=inputConnectionsChanged)
@@ -665,7 +665,7 @@ class ListAttribute(Attribute):
         for attr in self._value:
             attr.updateInternals()
 
-    def _isLinkNested(self) -> bool:
+    def _hasAnyLink(self) -> bool:
         """ Whether the attribute or any of its elements is a link to another attribute. """
         # note: directly use self.node.graph._edges to avoid using the property that may become
         # invalid at some point
@@ -677,7 +677,7 @@ class ListAttribute(Attribute):
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
-    isLinkNested = Property(bool, _isLinkNested)
+    hasAnyLink = Property(bool, _hasAnyLink)
 
 
 class GroupAttribute(Attribute):

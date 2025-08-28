@@ -63,7 +63,7 @@ RowLayout {
             MaterialToolButton {
                 id: navButtonIn
 
-                property bool shouldBeVisible: (object != undefined && object.isLinkNested)
+                property bool shouldBeVisible: (object != undefined && object.hasAnyLink)
 
                 text: MaterialIcons.login
                 enabled: shouldBeVisible
@@ -721,7 +721,7 @@ RowLayout {
                     delegate: Loader {
                         active: !objectsHideable
                             || ((object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
-                            && (object.isLinkNested && GraphEditorSettings.showLinkAttributes || !object.isLinkNested && GraphEditorSettings.showNotLinkAttributes))
+                            && (object.hasAnyLink && GraphEditorSettings.showLinkAttributes || !object.hasAnyLink && GraphEditorSettings.showNotLinkAttributes))
                         visible: active
                         sourceComponent: RowLayout {
                             id: item

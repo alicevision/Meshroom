@@ -32,7 +32,7 @@ ListView {
             || ((!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)
             && (object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
             && (object.isOutput && GraphEditorSettings.showOutputAttributes || !object.isOutput && GraphEditorSettings.showInputAttributes)
-            && (object.isLinkNested && GraphEditorSettings.showLinkAttributes || !object.isLink && GraphEditorSettings.showNotLinkAttributes))
+            && (object.hasAnyLink && GraphEditorSettings.showLinkAttributes || !object.isLink && GraphEditorSettings.showNotLinkAttributes))
             ) && object.matchText(filterText)
         visible: active
 

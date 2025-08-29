@@ -108,9 +108,9 @@ class Attribute(BaseObject):
         """ Return link expression for this Attribute """
         return "{" + self._getFullName() + "}"
 
-    @Slot(str, result=bool)
-    def matchText(self, text: str) -> bool:
-        return self.fullLabel.lower().find(text.lower()) > -1
+    def updateInternals(self):
+        # Emit if the enable status has changed
+        self._setEnabled(self._getEnabled())
 
     def _getEnabled(self) -> bool:
         if isinstance(self._desc.enabled, types.FunctionType):
@@ -127,21 +127,114 @@ class Attribute(BaseObject):
         self._enabled = v
         self.enabledChanged.emit()
 
-    def _isValid(self):
-        """
-        Check attribute description validValue:
-            - If it is a function, execute it and return the result
-            - Otherwise, simply return true
-        """
-        if isinstance(self._desc.validValue, types.FunctionType):
-            try:
-                return self._desc.validValue(self.node)
-            except Exception:
-                return True
-        return True
+    def requestNodeUpdate(self):
+        # Update specific node information that do not affect the rest of the graph
+        # (like internal attributes)
+        if self.node:
+            self.node.updateInternalAttributes()
 
-    def validateValue(self, value):
-        return self._desc.validateValue(value)
+    def requestGraphUpdate(self):
+        if self.node.graph:
+            self.node.graph.markNodesDirty(self.node)
+            self.node.graph.update()
+
+    def uid(self) -> str:
+        """
+        Compute the UID for the attribute.
+        """
+        if self.isOutput:
+            if self._desc.isDynamicValue:
+                # If the attribute is a dynamic output, the UID is derived from the node UID.
+                # To guarantee that each output attribute receives a unique ID, we add the attribute
+                # name to it.
+                return hashValue((self.name, self.node._uid))
+            else:
+                # Only dependent on the hash of its value without the cache folder.
+                # "/" at the end of the link is stripped to prevent having different UIDs depending
+                # on whether the invalidation value finishes with it or not
+                strippedInvalidationValue = self._invalidationValue.rstrip("/")
+                return hashValue(strippedInvalidationValue)
+        if self.isLink:
+            linkRootAttribute = self._getDirectInputLink(recursive=True)
+            return linkRootAttribute.uid()
+        if isinstance(self._value, (list, tuple, set,)):
+            # non-exclusive choice param
+            # hash of sorted values hashed
+            return hashValue([hashValue(v) for v in sorted(self._value)])
+        return hashValue(self._value)
+    
+    def upgradeValue(self, exportedValue):
+        self._setValue(exportedValue)
+
+    def getValueStr(self, withQuotes=True) -> str:
+        """
+        Return the value formatted as a string with quotes to deal with spaces.
+        If it is a string, expressions will be evaluated.
+        If it is an empty string, it will returns 2 quotes.
+        If it is an empty list, it will returns a really empty string.
+        If it is a list with one empty string element, it will returns 2 quotes.
+        """
+        # ChoiceParam with multiple values should be combined
+        if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
+            # Ensure value is a list as expected
+            assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
+            v = self._desc.joinChar.join(self._getEvalValue())
+            if withQuotes and v:
+                return f'"{v}"'
+            return v
+        # String, File, single value Choice are based on strings and should includes quotes
+        # to deal with spaces
+        if withQuotes and isinstance(self._desc, (desc.StringParam, desc.File, desc.ChoiceParam)):
+            return f'"{self._getEvalValue()}"'
+        return str(self._getEvalValue())
+    
+    def getPrimitiveValue(self, exportDefault=True):
+        return self._value
+    
+    def getExportValue(self):
+        if self.isLink:
+            return self._getDirectInputLink().asLinkExpr()
+        if self.isOutput and self._desc.isExpression:
+            return self.defaultValue()
+        return self.value
+    
+    def defaultValue(self):
+        if isinstance(self._desc.value, types.FunctionType):
+            try:
+                return self._desc.value(self)
+            except Exception as e:
+                if not self.node.isCompatibilityNode:
+                    # Log message only if we are not in compatibility mode
+                    logging.warning("Failed to evaluate default value (node lambda) for attribute '{}': {}".
+                                    format(self.name, e))
+                return None
+        # Need to force a copy, for the case where the value is a list
+        # (avoid reference to the desc value)
+        return copy.copy(self._desc.value)
+    
+    def resetToDefaultValue(self):
+        self._setValue(copy.copy(self.defaultValue()))
+
+    def initValue(self):
+        if self._desc._valueType is not None:
+            self._value = self._desc._valueType()
+
+    def _getEvalValue(self):
+        """
+        Return the value. If it is a string, expressions will be evaluated.
+        """
+        if isinstance(self.value, str):
+            env = self.node.nodePlugin.configFullEnv if self.node.nodePlugin else os.environ
+            substituted = Template(self.value).safe_substitute(env)
+            try:
+                varResolved = substituted.format(**self.node._cmdVars)
+                return varResolved
+            except (KeyError, IndexError):
+                # Catch KeyErrors and IndexErros to be able to open files created prior to the
+                # support of relative variables (when self.node._cmdVars was not used to evaluate
+                # expressions in the attribute)
+                return substituted
+        return self.value
 
     def _getValue(self):
         if self.isLink:
@@ -178,56 +271,6 @@ class Attribute(BaseObject):
 
         self.valueChanged.emit()
 
-    @Slot()
-    def _onValueChanged(self):
-        self.node._onAttributeChanged(self)
-
-    def upgradeValue(self, exportedValue):
-        self._setValue(exportedValue)
-
-    def initValue(self):
-        if self._desc._valueType is not None:
-            self._value = self._desc._valueType()
-
-    def resetToDefaultValue(self):
-        self._setValue(copy.copy(self.defaultValue()))
-
-    def requestGraphUpdate(self):
-        if self.node.graph:
-            self.node.graph.markNodesDirty(self.node)
-            self.node.graph.update()
-
-    def requestNodeUpdate(self):
-        # Update specific node information that do not affect the rest of the graph
-        # (like internal attributes)
-        if self.node:
-            self.node.updateInternalAttributes()
-
-    def uid(self) -> str:
-        """
-        Compute the UID for the attribute.
-        """
-        if self.isOutput:
-            if self._desc.isDynamicValue:
-                # If the attribute is a dynamic output, the UID is derived from the node UID.
-                # To guarantee that each output attribute receives a unique ID, we add the attribute
-                # name to it.
-                return hashValue((self.name, self.node._uid))
-            else:
-                # Only dependent on the hash of its value without the cache folder.
-                # "/" at the end of the link is stripped to prevent having different UIDs depending
-                # on whether the invalidation value finishes with it or not
-                strippedInvalidationValue = self._invalidationValue.rstrip("/")
-                return hashValue(strippedInvalidationValue)
-        if self.isLink:
-            linkRootAttribute = self._getDirectInputLink(recursive=True)
-            return linkRootAttribute.uid()
-        if isinstance(self._value, (list, tuple, set,)):
-            # non-exclusive choice param
-            # hash of sorted values hashed
-            return hashValue([hashValue(v) for v in sorted(self._value)])
-        return hashValue(self._value)
-
     def _applyExpr(self):
         """
         For string parameters with an expression (when loaded from file),
@@ -255,78 +298,29 @@ class Attribute(BaseObject):
                 logging.warning(f'Expression: "{v}"\nError: "{err}".')
             self.resetToDefaultValue()
 
-    def getExportValue(self):
-        if self.isLink:
-            return self._getDirectInputLink().asLinkExpr()
-        if self.isOutput and self._desc.isExpression:
-            return self.defaultValue()
-        return self.value
+    def validateValue(self, value):
+        return self._desc.validateValue(value)
 
-    def _getEvalValue(self):
+    def _isValid(self):
         """
-        Return the value. If it is a string, expressions will be evaluated.
+        Check attribute description validValue:
+            - If it is a function, execute it and return the result
+            - Otherwise, simply return true
         """
-        if isinstance(self.value, str):
-            env = self.node.nodePlugin.configFullEnv if self.node.nodePlugin else os.environ
-            substituted = Template(self.value).safe_substitute(env)
+        if isinstance(self._desc.validValue, types.FunctionType):
             try:
-                varResolved = substituted.format(**self.node._cmdVars)
-                return varResolved
-            except (KeyError, IndexError):
-                # Catch KeyErrors and IndexErros to be able to open files created prior to the
-                # support of relative variables (when self.node._cmdVars was not used to evaluate
-                # expressions in the attribute)
-                return substituted
-        return self.value
-
-    def getValueStr(self, withQuotes=True) -> str:
-        """
-        Return the value formatted as a string with quotes to deal with spaces.
-        If it is a string, expressions will be evaluated.
-        If it is an empty string, it will returns 2 quotes.
-        If it is an empty list, it will returns a really empty string.
-        If it is a list with one empty string element, it will returns 2 quotes.
-        """
-        # ChoiceParam with multiple values should be combined
-        if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
-            # Ensure value is a list as expected
-            assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
-            v = self._desc.joinChar.join(self._getEvalValue())
-            if withQuotes and v:
-                return f'"{v}"'
-            return v
-        # String, File, single value Choice are based on strings and should includes quotes
-        # to deal with spaces
-        if withQuotes and isinstance(self._desc, (desc.StringParam, desc.File, desc.ChoiceParam)):
-            return f'"{self._getEvalValue()}"'
-        return str(self._getEvalValue())
-
-    def defaultValue(self):
-        if isinstance(self._desc.value, types.FunctionType):
-            try:
-                return self._desc.value(self)
-            except Exception as e:
-                if not self.node.isCompatibilityNode:
-                    # Log message only if we are not in compatibility mode
-                    logging.warning("Failed to evaluate default value (node lambda) for attribute '{}': {}".
-                                    format(self.name, e))
-                return None
-        # Need to force a copy, for the case where the value is a list
-        # (avoid reference to the desc value)
-        return copy.copy(self._desc.value)
+                return self._desc.validValue(self.node)
+            except Exception:
+                return True
+        return True
 
     def _isDefault(self) -> bool:
         return self.value == self.defaultValue()
 
-    def getPrimitiveValue(self, exportDefault=True):
-        return self._value
-
-    def updateInternals(self):
-        # Emit if the enable status has changed
-        self._setEnabled(self._getEnabled())
-
     def _is2dDisplayable(self) -> bool:
-        """ Return True if the current attribute is considered as a displayable 2d file """
+        """ 
+        Return True if the current attribute is considered as a displayable 2d file 
+        """
         if not self._desc.semantic:
             return False
 
@@ -334,7 +328,9 @@ class Attribute(BaseObject):
                      if self._desc.semantic == imageSemantic), None) is not None
 
     def _is3dDisplayable(self) -> bool:
-        """ Return True if the current attribute is considered as a displayable 3d file """
+        """ 
+        Return True if the current attribute is considered as a displayable 3d file 
+        """
         if self._desc.semantic == "3d":
             return True
 
@@ -406,6 +402,15 @@ class Attribute(BaseObject):
             return False
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
     
+    # Slots
+
+    @Slot()
+    def _onValueChanged(self):
+        self.node._onAttributeChanged(self)
+    
+    @Slot(str, result=bool)
+    def matchText(self, text: str) -> bool:
+        return self.label.lower().find(text.lower()) > -1
     
     # Properties and signals 
 

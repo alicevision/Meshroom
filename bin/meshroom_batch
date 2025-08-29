@@ -58,7 +58,7 @@ general_group.add_argument(
     default=os.environ.get('MESHROOM_DEFAULT_PIPELINE', 'photogrammetry'),
     help='Template pipeline among those listed or a Meshroom file containing a custom pipeline to run on input images:\n'
     + '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates])
-    + '\nRequirements: the graph must contain one CameraInit node, and one Publish node if --output is set.',
+    + '\nRequirements: the graph must contain one CameraInit node, and one ExportFiles node if --output is set.',
     )
 
 general_group.add_argument(
@@ -154,10 +154,10 @@ with meshroom.core.graph.GraphModification(graph):
     # initialize template pipeline
     loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
     if args.pipeline.lower() in loweredPipelineTemplates:
-        graph.initFromTemplate(loweredPipelineTemplates[args.pipeline.lower()], publishOutputs=True if args.output else False)
+        graph.initFromTemplate(loweredPipelineTemplates[args.pipeline.lower()], exportOutputs=True if args.output else False)
     else:
         # custom pipeline
-        graph.initFromTemplate(args.pipeline, publishOutputs=True if args.output else False)
+        graph.initFromTemplate(args.pipeline, exportOutputs=True if args.output else False)
     
     def parseInputs(inputs, uniqueInitNode):
         """Utility method for parsing the input and inputRecursive arguments."""
@@ -221,15 +221,15 @@ with meshroom.core.graph.GraphModification(graph):
         graph.setVerbose(args.verbose)
 
     if args.output:
-        # if there is more than 1 Publish node, they will all be set to the same output;
+        # if there is more than 1 ExportFiles node, they will all be set to the same output;
         # depending on what they are connected to, some input files might be overwritten in the output folder
-        # (e.g. if two Publish nodes are connected to two Texturing nodes)
-        publishNodes = graph.nodesOfType('Publish')
-        if len(publishNodes) > 0:
-            for node in publishNodes:
+        # (e.g. if two ExportFiles nodes are connected to two Texturing nodes)
+        exportNodes = graph.nodesOfType('ExportFiles')
+        if len(exportNodes) > 0:
+            for node in exportNodes:
                 node.output.value = os.path.abspath(args.output)
         else:
-            raise RuntimeError("meshroom_batch requires a pipeline graph with at least one Publish node, none found.")
+            raise RuntimeError("meshroom_batch requires a pipeline graph with at least one ExportFiles node, none found.")
 
     if args.overrides:
         with open(args.overrides, encoding='utf-8', errors='ignore') as f:

@@ -62,8 +62,11 @@ general_group.add_argument(
     )
 
 general_group.add_argument(
-    '-o', '--output', metavar='FOLDER', type=str, required=False,
+    '-o', '--output', metavar='FOLDER PUBLISH_INSTANCE=FOLDER',
+    type=str, required=False, nargs='*',
     help='Output folder where results should be copied to. '
+         'If the output folder is provided without specifiying the instance of a Publish node, '
+         'all the Publish nodes in the scene will be set with the same ouput folder value. '
          'If not set, results will have to be retrieved directly from the cache folder.')
 
 general_group.add_argument(
@@ -129,7 +132,6 @@ advanced_group.add_argument(
     help='Execute job with a specific submitter.')
 
 args = parser.parse_args()
-
 
 logStringToPython = {
     'fatal': logging.FATAL,
@@ -221,15 +223,48 @@ with meshroom.core.graph.GraphModification(graph):
         graph.setVerbose(args.verbose)
 
     if args.output:
-        # if there is more than 1 Publish node, they will all be set to the same output;
-        # depending on what they are connected to, some input files might be overwritten in the output folder
-        # (e.g. if two Publish nodes are connected to two Texturing nodes)
+        # The output folders for Publish nodes can be set as follows:
+        # - for each node, the output folder is specified following the
+        #   "Publish_name=/output/folder/path" convention.
+        # - a path is provided without specifying which Publish node should be set with it:
+        #   all the Publish nodes will be set with it.
+        # - some Publish nodes have their path specified, and another path is provided
+        #   without specifying a node: all Publish nodes with dedicated will have their own
+        #   output folders set, and those which have not been specified will be set with the
+        #   other path.
+        # - some Publish nodes have their output folder specified while others do not: all
+        #   the nodes with specified folders will use the provided values, and those without
+        #   any will be set with the output folder of the first specified Publish node.
+        # - several output folders are provided without specifying any node: the last one will
+        #   be used to set all the Publish nodes' output folders.
+
+        # Check that there is at least one Publish node
         publishNodes = graph.nodesOfType('Publish')
-        if len(publishNodes) > 0:
-            for node in publishNodes:
-                node.output.value = os.path.abspath(args.output)
-        else:
-            raise RuntimeError("meshroom_batch requires a pipeline graph with at least one Publish node, none found.")
+        if len(publishNodes) == 0:
+            raise RuntimeError('meshroom_batch requires a pipeline graph with at least ' +
+                               'one Publish node, none found.')
+
+        reExtract = re.compile(r'(\w+)=(.*)')  # NodeName=value
+        globalPublishPath = ""
+        for p in args.output:
+            result = reExtract.match(p)
+            if not result:  # If the argument is only a path, set it for the global path
+                globalPublishPath = p
+                continue
+
+            node, value = result.groups()
+            for i, n in enumerate(publishNodes):  # Find the correct Publish node in the list
+                if n.name == node:  # If found, set the value, and remove it from the list
+                    n.output.value = value
+                    publishNodes.pop(i)
+                    if globalPublishPath == "":  # Fallback in case some nodes would have no path
+                        globalPublishPath = value
+                    break
+
+        for n in publishNodes:  # Set the remaining Publish nodes with the global path
+            n.output.value = globalPublishPath
+    else:
+        print(f'No output set, results will be available in the cache folder: "{graph.cacheDir}"')
 
     if args.overrides:
         with open(args.overrides, encoding='utf-8', errors='ignore') as f:
@@ -266,9 +301,6 @@ with meshroom.core.graph.GraphModification(graph):
 if args.save:
     graph.save(args.save, setupProjectFile=not bool(args.cache))
     print(f'File successfully saved: "{args.save}"')
-
-if not args.output:
-    print(f'No output set, results will be available in the cache folder: "{graph.cacheDir}"')
 
 # find end nodes (None will compute all graph)
 toNodes = graph.findNodes(args.toNode) if args.toNode else None

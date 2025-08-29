@@ -411,61 +411,69 @@ class Attribute(BaseObject):
     
     # Properties and signals 
 
+    # The node that contains this attribute.
     node = Property(BaseObject, lambda self: self._node(), constant=True)
+    # The attribute that contains this attribute.
     root = Property(BaseObject, lambda self: self._root() if self._root else None, constant=True)
-
+    # The attribute name following the path from the node to the attribute.
     fullName = Property(str, _getFullName, constant=True)
+    # The attribute name following the path from the node root to the attribute.
     rootName = Property(str, _getRootName, constant=True)
+    # The description object of the attribute.
     desc = Property(desc.Attribute, lambda self: self._desc, constant=True)
+    # The name of the attribute.
     name = Property(str, lambda self: self._desc._name, constant=True)
+    # The human-readable label for the attribute.
     label = Property(str, lambda self: self._desc.label, constant=True)
+    # The type of attribute as a string.
     type = Property(str, lambda self: self._desc.type, constant=True)
+    # The type of the elements of the attribute as a string.
     baseType = Property(str, lambda self: self._desc.type, constant=True)
+    # Whether the attribute is a node input attribute.
     isInput = Property(bool, lambda self: not self._isOutput, constant=True)
+    # Whether the attribute is a node output attribute.
     isOutput = Property(bool, lambda self: self._isOutput, constant=True)
+    # Whether the attribute is a read-only attribute.
     isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode, constant=True)
-
+    # Whether changing this attribute invalidates cached results.
+    invalidate = Property(bool, lambda self: self._invalidate, constant=True)
+    # Whether this attribute is enabled.
     enabledChanged = Signal()
     enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
-    invalidate = Property(bool, lambda self: self._invalidate, constant=True)
 
+    # Attribute value properties and signals
     valueChanged = Signal()
     value = Property(Variant, _getValue, _setValue, notify=valueChanged)
     evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
+
+    # Whether the attribute value is the default value.
     isDefault = Property(bool, lambda self: self.value == self.getDefaultValue(), notify=valueChanged)
+    # Whether the attribute value is valid.
     isValid = Property(bool, _isValid, notify=valueChanged)
+    # Whether the attribute value is displayable in 2d.
     is2dDisplayable = Property(bool, _is2dDisplayable, constant=True)
+    # Whether the attribute value is displayable in 3d.
     is3dDisplayable = Property(bool, _is3dDisplayable, constant=True)
     
-
     # Attribute link properties and signals
-
     inputLinksChanged = Signal()
     outputLinksChanged = Signal()
 
-    # isLink:
     # Whether the attribute is a direct link to another attribute.
     isLink = Property(bool, _isLink, notify=inputLinksChanged)
-    # directInputRootLink:
-    #   The direct upstream connected root attribute.
+    # The direct upstream connected root attribute.
     directInputRootLink = Property(Variant, lambda self: self._getDirectInputLink(recursive=True), notify=inputLinksChanged)
-    # directInputLink:
-    #   The direct upstream connected attribute.
+    # The direct upstream connected attribute.
     directInputLink = Property(BaseObject, _getDirectInputLink, notify=inputLinksChanged)
-    # directOutputLinks:
-    #   The list of direct downstream connected attributes.
+    # The list of direct downstream connected attributes.
     directOutputLinks = Property(Variant, _getDirectOutputLinks, notify=outputLinksChanged)
-    # allInputLinks:
-    #   The list of upstream connected attributes for the attribute or any of its elements.
+    # The list of upstream connected attributes for the attribute or any of its elements.
     allInputLinks = Property(Variant, _getAllInputLinks, notify=inputLinksChanged)
-    # allOutputLinks:
-    #   The list of downstream connected attributes for the attribute or any of its elements.
+    # The list of downstream connected attributes for the attribute or any of its elements.
     allOutputLinks = Property(Variant, _getAllOutputLinks, notify=outputLinksChanged)
-    # hasAnyInputLinks:
-    #   Whether the attribute or any of its elements is a link to another attribute.
+    # Whether the attribute or any of its elements is a link to another attribute.
     hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=inputLinksChanged)
-    # hasAnyOutputLinks:
-    #   Whether the attribute or any of its elements is linked by another attribute.
+    # Whether the attribute or any of its elements is linked by another attribute.
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
 
 def raiseIfLink(func):

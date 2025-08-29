@@ -314,9 +314,6 @@ class Attribute(BaseObject):
                 return True
         return True
 
-    def _isDefault(self) -> bool:
-        return self.value == self.getDefaultValue()
-
     def _is2dDisplayable(self) -> bool:
         """ 
         Return True if the current attribute is considered as a displayable 2d file 
@@ -435,7 +432,7 @@ class Attribute(BaseObject):
     valueChanged = Signal()
     value = Property(Variant, _getValue, _setValue, notify=valueChanged)
     evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
-    isDefault = Property(bool, _isDefault, notify=valueChanged)
+    isDefault = Property(bool, lambda self: self.value == self.getDefaultValue(), notify=valueChanged)
     isValid = Property(bool, _isValid, notify=valueChanged)
     is2dDisplayable = Property(bool, _is2dDisplayable, constant=True)
     is3dDisplayable = Property(bool, _is3dDisplayable, constant=True)
@@ -682,9 +679,6 @@ class ListAttribute(Attribute):
     def getDefaultValue(self) -> list:
         return []
 
-    def _isDefault(self) -> bool:
-        return len(self._value) == 0
-
     def getPrimitiveValue(self, exportDefault=True):
         if exportDefault:
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value]
@@ -746,7 +740,7 @@ class ListAttribute(Attribute):
 
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
-    isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+    isDefault = Property(bool, lambda self: len(self.value) == 0, notify=Attribute.valueChanged)
     baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
 
     # Override attribute link properties
@@ -843,9 +837,6 @@ class GroupAttribute(Attribute):
     def getExportValue(self):
         return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
 
-    def _isDefault(self):
-        return all(v.isDefault for v in self._value)
-
     def getDefaultValue(self):
         return {key: attr.getDefaultValue() for key, attr in self._value.items()}
 
@@ -889,4 +880,4 @@ class GroupAttribute(Attribute):
 
     # Override value property
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
-    isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+    isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value), notify=Attribute.valueChanged)

@@ -84,7 +84,7 @@ class Attribute(BaseObject):
         self._invalidationValue = ""
 
         self._value = None
-        self.initValue()
+        self._initValue()
 
     def _getFullName(self) -> str:
         """ 
@@ -215,7 +215,7 @@ class Attribute(BaseObject):
     def resetToDefaultValue(self):
         self._setValue(copy.copy(self.getDefaultValue()))
 
-    def initValue(self):
+    def _initValue(self):
         if self._desc._valueType is not None:
             self._value = self._desc._valueType()
 
@@ -576,7 +576,7 @@ class ListAttribute(Attribute):
     def index(self, item):
         return self.value.indexOf(item)
 
-    def initValue(self):
+    def _initValue(self):
         self.resetToDefaultValue()
 
     def resetToDefaultValue(self):
@@ -800,7 +800,7 @@ class GroupAttribute(Attribute):
         else:
             raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
 
-    def initValue(self):
+    def _initValue(self):
         self._value = DictModel(keyAttrName='name', parent=self)
         subAttributes = []
         for subAttrDesc in self._desc.groupDesc:

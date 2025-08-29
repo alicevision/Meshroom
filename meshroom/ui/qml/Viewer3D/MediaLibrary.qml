@@ -213,7 +213,7 @@ Entity {
                 // Whether dependencies are statified (applies for output/connected input attributes only)
                 readonly property bool dependencyReady: {
                     if (attribute) {
-                        const rootAttribute = attribute.isLink ? attribute.rootLinkParam : attribute
+                        const rootAttribute = attribute.isLink ? attribute.directInputRootLink : attribute
                         if (rootAttribute.isOutput)
                             return rootAttribute.node.globalStatus === "SUCCESS"
                     }

@@ -63,7 +63,7 @@ RowLayout {
             MaterialToolButton {
                 id: navButtonIn
 
-                property bool shouldBeVisible: (object != undefined && object.hasAnyLink)
+                property bool shouldBeVisible: (object != undefined && object.hasAnyInputLinks)
 
                 text: MaterialIcons.login
                 enabled: shouldBeVisible
@@ -76,7 +76,7 @@ RowLayout {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.inAttributeClicked(navButtonIn, mouse, object.inputConnections)
+                        root.inAttributeClicked(navButtonIn, mouse, object.allInputLinks)
                     }
                 }
 
@@ -96,7 +96,7 @@ RowLayout {
                 text: object.label
 
                 color: {
-                    if (object != undefined && (object.hasOutputConnections || object.isLink) && !object.enabled)
+                    if (object != undefined && (object.hasAnyOutputLinks || object.isLink) && !object.enabled)
                         return Colors.lightgrey
                     else
                         return palette.text
@@ -222,7 +222,7 @@ RowLayout {
             MaterialToolButton {
                 id: navButtonOut
 
-                property bool shouldBeVisible: (attribute != undefined && attribute.hasOutputConnections)
+                property bool shouldBeVisible: (attribute != undefined && attribute.hasAnyOutputLinks)
 
                 text: MaterialIcons.logout
                 font.pointSize: 8
@@ -721,7 +721,7 @@ RowLayout {
                     delegate: Loader {
                         active: !objectsHideable
                             || ((object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
-                            && (object.hasAnyLink && GraphEditorSettings.showLinkAttributes || !object.hasAnyLink && GraphEditorSettings.showNotLinkAttributes))
+                            && (object.hasAnyInputLinks && GraphEditorSettings.showLinkAttributes || !object.hasAnyInputLinks && GraphEditorSettings.showNotLinkAttributes))
                         visible: active
                         sourceComponent: RowLayout {
                             id: item

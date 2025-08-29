@@ -206,7 +206,7 @@ RowLayout {
             anchors.right: attribute && attribute.isOutput ? parent.right : undefined
             rightPadding: 0
             color: {
-                if ((object.hasOutputConnections || object.isLink) && !object.enabled)
+                if ((object.hasAnyOutputLinks || object.isLink) && !object.enabled)
                     return Colors.lightgrey
                 return hovered ? palette.highlight : palette.text
             }
@@ -229,7 +229,7 @@ RowLayout {
         Rectangle {
             id: innerOutputAnchor
             property bool linkEnabled: true
-            visible: (attribute.hasOutputConnections && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
+            visible: (attribute.hasAnyOutputLinks && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
             radius: isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2

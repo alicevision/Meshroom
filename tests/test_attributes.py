@@ -28,24 +28,24 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
 
     # check that the attribute can retrieve its linked input attributes
 
-    assert n0.output.hasOutputConnections
-    assert not n3.output.hasOutputConnections
+    assert n0.output.hasAnyOutputLinks
+    assert not n3.output.hasAnyOutputLinks
 
-    assert len(n0.input.inputConnections) == 0
-    assert len(n1.input.inputConnections) == 1
-    assert n1.input.inputConnections[0] == n0.output
+    assert len(n0.input.allInputLinks) == 0
+    assert len(n1.input.allInputLinks) == 1
+    assert n1.input.allInputLinks[0] == n0.output
 
-    assert len(n1.output.outputConnections) == 2
+    assert len(n1.output.allOutputLinks) == 2
 
-    assert n1.output.outputConnections[0] == n2.input
-    assert n1.output.outputConnections[1] == n3.input
+    assert n1.output.allOutputLinks[0] == n2.input
+    assert n1.output.allOutputLinks[1] == n3.input
 
     n0.graph = None
 
     # Bounding cases
-    assert not n0.output.hasOutputConnections
-    assert len(n0.input.inputConnections) == 0
-    assert len(n0.output.outputConnections) == 0
+    assert not n0.output.hasAnyOutputLinks
+    assert len(n0.input.allInputLinks) == 0
+    assert len(n0.output.allOutputLinks) == 0
 
 
 @pytest.mark.parametrize("givenFile,expected", valid3DExtensionFiles + invalid3DExtensionFiles)

@@ -274,7 +274,7 @@ def test_duplicate_nodes():
 
     # Check connections
     # Access directly index 0 because we know there is a single duplicate for each parent node
-    assert nMap[n1][0].input.getLinkParam() == n0.output
-    assert nMap[n2][0].input.getLinkParam() == nMap[n1][0].output
-    assert nMap[n3][0].input.getLinkParam() == nMap[n1][0].output
-    assert nMap[n3][0].input2.getLinkParam() == nMap[n2][0].output
+    assert nMap[n1][0].input.directInputLink == n0.output
+    assert nMap[n2][0].input.directInputLink == nMap[n1][0].output
+    assert nMap[n3][0].input.directInputLink == nMap[n1][0].output
+    assert nMap[n3][0].input2.directInputLink == nMap[n2][0].output

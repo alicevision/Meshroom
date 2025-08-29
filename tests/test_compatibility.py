@@ -607,7 +607,7 @@ class TestUidConflict:
             loadedNodeA = loadedGraph.node(nodeA.name)
             loadedNodeB = loadedGraph.node(nodeB.name)
 
-            assert loadedNodeB.param.at(0).linkParam == loadedNodeA.output
+            assert loadedNodeB.param.at(0).directInputLink == loadedNodeA.output
 
     def test_upgradingConflictingNodesPreserveConnections(self, graphSavedOnDisk):
         with registeredNodeTypes([UidTestingNodeV2]):
@@ -627,8 +627,8 @@ class TestUidConflict:
                 loadedNodeA = loadedGraph.node(nodeA.name)
                 loadedNodeB = loadedGraph.node(nodeB.name)
                 return (
-                    loadedNodeB.param.at(0).linkParam == loadedNodeA.output
-                    and loadedNodeB.input.linkParam == loadedNodeA.output
+                    loadedNodeB.param.at(0).directInputLink == loadedNodeA.output
+                    and loadedNodeB.input.directInputLink == loadedNodeA.output
                 )
 
             loadedGraph = loadGraph(graph.filepath)

@@ -92,7 +92,7 @@ class DynamicNodeSize(object):
         param = node.attribute(self._param)
         # Link: use linked node's size
         if param.isLink:
-            return param.getLinkParam().node.size
+            return param.directInputLink.node.size
         # ListAttribute: use list size
         if isinstance(param.desc, ListAttribute):
             return len(param)
@@ -120,7 +120,7 @@ class MultiDynamicNodeSize(object):
         for param in self._params:
             param = node.attribute(param)
             if param.isLink:
-                size += param.getLinkParam().node.size
+                size += param.directInputLink.node.size
             elif isinstance(param.desc, ListAttribute):
                 size += len(param)
             else:

@@ -535,7 +535,7 @@ Item {
                                 delegate: Loader {
                                     id: outputLoader
                                     active: Boolean(object.isOutput && object.desc.visible)
-                                    visible: Boolean(object.enabled || object.hasOutputConnections)
+                                    visible: Boolean(object.enabled || object.hasAnyOutputLinks)
                                     anchors.right: parent.right
                                     width: outputs.width
 
@@ -630,8 +630,8 @@ Item {
                                     delegate: Loader {
                                         id: paramLoader
                                         active: !object.isOutput && !object.desc.exposed && object.desc.visible
-                                        visible: Boolean(object.enabled || object.hasAnyLink || object.hasOutputConnections)
-                                        property bool isFullyActive: Boolean(m.displayParams || object.hasAnyLink || object.hasOutputConnections)
+                                        visible: Boolean(object.enabled || object.hasAnyInputLinks || object.hasAnyOutputLinks)
+                                        property bool isFullyActive: Boolean(m.displayParams || object.hasAnyInputLinks || object.hasAnyOutputLinks)
                                         width: parent.width
 
                                         sourceComponent: AttributePin {

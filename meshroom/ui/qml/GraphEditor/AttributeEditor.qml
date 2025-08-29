@@ -27,12 +27,12 @@ ListView {
     ScrollBar.vertical: MScrollBar { id: scrollBar }
 
     delegate: Loader {
-        active: (object.enabled || object.hasOutputConnections) && (
+        active: (object.enabled || object.hasAnyOutputLinks) && (
             !objectsHideable
             || ((!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)
             && (object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
             && (object.isOutput && GraphEditorSettings.showOutputAttributes || !object.isOutput && GraphEditorSettings.showInputAttributes)
-            && (object.hasAnyLink && GraphEditorSettings.showLinkAttributes || !object.isLink && GraphEditorSettings.showNotLinkAttributes))
+            && (object.hasAnyInputLinks && GraphEditorSettings.showLinkAttributes || !object.isLink && GraphEditorSettings.showNotLinkAttributes))
             ) && object.matchText(filterText)
         visible: active
 

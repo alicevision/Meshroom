@@ -53,6 +53,14 @@ class Attribute(BaseObject):
     VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
     VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".abc", ".ply"]
 
+    @staticmethod
+    def isLinkExpression(value) -> bool:
+        """
+        Return whether the given argument is a link expression.
+        A link expression is a string matching the {nodeName.attrName} pattern.
+        """
+        return isinstance(value, str) and Attribute.LINK_EXPRESSION_REGEX.match(value)
+
     def __init__(self, node, attributeDesc: desc.Attribute, isOutput: bool, root=None, parent=None):
         """
         Attribute constructor
@@ -137,7 +145,7 @@ class Attribute(BaseObject):
 
     def _getValue(self):
         if self.isLink:
-            return self.getLinkParam().value
+            return self._getDirectInputLink().value
         return self._value
 
     def _setValue(self, value):
@@ -212,62 +220,13 @@ class Attribute(BaseObject):
                 strippedInvalidationValue = self._invalidationValue.rstrip("/")
                 return hashValue(strippedInvalidationValue)
         if self.isLink:
-            linkParam = self.getLinkParam(recursive=True)
-            return linkParam.uid()
+            linkRootAttribute = self._getDirectInputLink(recursive=True)
+            return linkRootAttribute.uid()
         if isinstance(self._value, (list, tuple, set,)):
             # non-exclusive choice param
             # hash of sorted values hashed
             return hashValue([hashValue(v) for v in sorted(self._value)])
         return hashValue(self._value)
-
-    def _isLink(self) -> bool:
-        """ Whether the input attribute is a link to another attribute. """
-        # note: directly use self.node.graph._edges to avoid using the property that may become
-        # invalid at some point
-        return self.node.graph and self.isInput and self.node.graph._edges and \
-            self in self.node.graph._edges.keys()
-
-    @staticmethod
-    def isLinkExpression(value) -> bool:
-        """
-        Return whether the given argument is a link expression.
-        A link expression is a string matching the {nodeName.attrName} pattern.
-        """
-        return isinstance(value, str) and Attribute.LINK_EXPRESSION_REGEX.match(value)
-
-    def getLinkParam(self, recursive=False):
-        if not self.isLink:
-            return None
-        linkParam = self.node.graph.edge(self).src
-        if not recursive:
-            return linkParam
-        if linkParam.isLink:
-            return linkParam.getLinkParam(recursive)
-        return linkParam
-
-    def _getInputConnections(self) -> list["Attribute"]:
-        """ Return the upstreams connected attributes  """
-        # safety check to avoid evaluation errors
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-        return [edge.src for edge in self.node.graph.edges.values() if edge.dst == self]
-
-
-    def _getOutputConnections(self) -> list["Attribute"]:
-        """ Return the downstreams connected attributes """
-        # safety check to avoid evaluation errors
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-        return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self]
-    
-    def _hasOutputConnections(self) -> bool:
-        """
-        Whether the attribute has output connections, i.e is the source of at least one edge.
-        """
-        # safety check to avoid evaluation errors
-        if not self.node.graph or not self.node.graph.edges:
-            return False
-        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
     def _applyExpr(self):
         """
@@ -298,7 +257,7 @@ class Attribute(BaseObject):
 
     def getExportValue(self):
         if self.isLink:
-            return self.getLinkParam().asLinkExpr()
+            return self._getDirectInputLink().asLinkExpr()
         if self.isOutput and self._desc.isExpression:
             return self.defaultValue()
         return self.value
@@ -385,6 +344,70 @@ class Attribute(BaseObject):
             return True
 
         return False
+    
+    def _isLink(self) -> bool:
+        """ 
+        Whether the attribute is a link to another attribute. 
+        """
+        return self.node.graph and self.isInput and self.node.graph._edges and \
+            self in self.node.graph._edges.keys()
+  
+    def _getDirectInputLink(self, recursive=False) -> "Attribute":
+        """ 
+        Return the direct upstream connected attribute.
+        :param recursive: recursive call, return the root attribute
+        """
+        if not self.isLink:
+            return None
+        linkAttribute = self.node.graph.edge(self).src
+        if recursive and linkAttribute.isLink:
+            return linkAttribute._getDirectInputLink(recursive)
+        return linkAttribute
+
+    def _getDirectOutputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of direct downstream connected attributes.
+        """
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self]
+    
+    def _getAllInputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of upstream connected attributes for the attribute or any of its elements.
+        """
+        directInputLink = self._getDirectInputLink()
+        if directInputLink is None: 
+            return []
+        return [directInputLink]
+
+    def _getAllOutputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of downstream connected attributes for the attribute or any of its elements.
+        """
+        return self._getDirectOutputLinks()
+
+    def _hasAnyInputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its elements is a link to another attribute.
+        """
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return False
+        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
+
+    def _hasAnyOutputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its elements is linked by another attribute.
+        """
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return False
+        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
+    
+    
+    # Properties and signals 
 
     node = Property(BaseObject, lambda self: self._node(), constant=True)
     root = Property(BaseObject, lambda self: self._root() if self._root else None, constant=True)
@@ -399,8 +422,6 @@ class Attribute(BaseObject):
     isInput = Property(bool, lambda self: not self._isOutput, constant=True)
     isOutput = Property(bool, lambda self: self._isOutput, constant=True)
     isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode, constant=True)
-    is2D = Property(bool, _is2D, constant=True)
-    is3D = Property(bool, _is3D, constant=True)
 
     enabledChanged = Signal()
     enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
@@ -411,20 +432,39 @@ class Attribute(BaseObject):
     evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     isValid = Property(bool, _isValid, notify=valueChanged)
-
-    isLinkChanged = Signal()
-    isLink = Property(bool, _isLink, notify=isLinkChanged)
-    hasAnyLink = isLink
-    linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
-    rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True),
-                             notify=isLinkChanged)
+    is2D = Property(bool, _is2D, constant=True)
+    is3D = Property(bool, _is3D, constant=True)
     
-    inputConnectionsChanged = Signal()
-    inputConnections = Property(Variant, _getInputConnections, notify=inputConnectionsChanged)
-    outputConnectionsChanged = Signal()
-    outputConnections = Property(Variant, _getOutputConnections, notify=outputConnectionsChanged)
-    hasOutputConnectionsChanged = Signal()
-    hasOutputConnections = Property(bool, _hasOutputConnections, notify=hasOutputConnectionsChanged)
+
+    # Attribute link properties and signals
+
+    inputLinksChanged = Signal()
+    outputLinksChanged = Signal()
+
+    # isLink:
+    # Whether the attribute is a direct link to another attribute.
+    isLink = Property(bool, _isLink, notify=inputLinksChanged)
+    # directInputRootLink:
+    #   The direct upstream connected root attribute.
+    directInputRootLink = Property(Variant, lambda self: self._getDirectInputLink(recursive=True), notify=inputLinksChanged)
+    # directInputLink:
+    #   The direct upstream connected attribute.
+    directInputLink = Property(BaseObject, _getDirectInputLink, notify=inputLinksChanged)
+    # directOutputLinks:
+    #   The list of direct downstream connected attributes.
+    directOutputLinks = Property(Variant, _getDirectOutputLinks, notify=outputLinksChanged)
+    # allInputLinks:
+    #   The list of upstream connected attributes for the attribute or any of its elements.
+    allInputLinks = Property(Variant, _getAllInputLinks, notify=inputLinksChanged)
+    # allOutputLinks:
+    #   The list of downstream connected attributes for the attribute or any of its elements.
+    allOutputLinks = Property(Variant, _getAllOutputLinks, notify=outputLinksChanged)
+    # hasAnyInputLinks:
+    #   Whether the attribute or any of its elements is a link to another attribute.
+    hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=inputLinksChanged)
+    # hasAnyOutputLinks:
+    #   Whether the attribute or any of its elements is linked by another attribute.
+    hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
 
 def raiseIfLink(func):
     """ If Attribute instance is a link, raise a RuntimeError. """
@@ -456,7 +496,7 @@ class ChoiceParam(Attribute):
         return len(self.getValues())
 
     def getValues(self):
-        if (linkParam := self.getLinkParam()) is not None:
+        if (linkParam := self._getDirectInputLink()) is not None:
             return linkParam.getValues()
         return self._values if self._values is not None else self._desc._values
 
@@ -631,7 +671,7 @@ class ListAttribute(Attribute):
 
     def getExportValue(self):
         if self.isLink:
-            return self.getLinkParam().asLinkExpr()
+            return self._getDirectInputLink().asLinkExpr()
         return [attr.getExportValue() for attr in self._value]
 
     def defaultValue(self) -> list:
@@ -661,20 +701,54 @@ class ListAttribute(Attribute):
         super().updateInternals()
         for attr in self._value:
             attr.updateInternals()
+    
+    # Override
+    def _getAllInputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of upstream connected attributes for the attribute or any of its elements."
+        """
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        return [edge.src for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
 
-    def _hasAnyLink(self) -> bool:
-        """ Whether the attribute or any of its elements is a link to another attribute. """
-        # note: directly use self.node.graph._edges to avoid using the property that may become
-        # invalid at some point
-        return self.isLink \
-            or self.node.graph and self.isInput and self.node.graph._edges \
-            and any(v in self.node.graph._edges.keys() for v in self._value)
+    # Override
+    def _getAllOutputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of downstream connected attributes for the attribute or any of its elements."
+        """
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
+    
+    # Override
+    def _hasAnyInputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its elements is a link to another attribute.
+        """
+        return super()._hasAnyInputLinks() or \
+               any(attribute.hasAnyInputLinks for attribute in self._value if hasattr(attribute, 'hasAnyInputLinks'))
+
+    # Override
+    def _hasAnyOutputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its elements is linked by another attribute.
+        """
+        return super()._hasAnyOutputLinks() or \
+               any(attribute.hasAnyOutputLinks for attribute in self._value if hasattr(attribute, 'hasAnyOutputLinks'))
+            
 
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
-    hasAnyLink = Property(bool, _hasAnyLink)
+
+    # Override attribute link properties
+    allInputLinks = Property(Variant, _getAllInputLinks, notify=Attribute.inputLinksChanged)
+    allOutputLinks = Property(Variant, _getAllOutputLinks, notify=Attribute.outputLinksChanged)
+    hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=Attribute.inputLinksChanged)
+    hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=Attribute.outputLinksChanged)
 
 
 class GroupAttribute(Attribute):

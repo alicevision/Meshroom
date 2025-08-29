@@ -904,8 +904,8 @@ class Graph(BaseObject):
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
-        dstAttr.isLinkChanged.emit()
-        srcAttr.hasOutputConnectionsChanged.emit()
+        dstAttr.inputLinksChanged.emit()
+        srcAttr.outputLinksChanged.emit()
         return edge
 
     def addEdges(self, *edges):
@@ -920,8 +920,8 @@ class Graph(BaseObject):
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
-        dstAttr.isLinkChanged.emit()
-        edge.src.hasOutputConnectionsChanged.emit()
+        dstAttr.inputLinksChanged.emit()
+        edge.src.outputLinksChanged.emit()
 
     def getDepth(self, node, minimal=False):
         """ Return node's depth in this Graph.
@@ -1242,7 +1242,7 @@ class Graph(BaseObject):
             attr = e.src
             if dependenciesOnly:
                 if attr.isLink:
-                    attr = attr.getLinkParam(recursive=True)
+                    attr = attr.directInputRootLink
                 if not attr.isOutput:
                     continue
             newE = Edge(attr, e.dst)

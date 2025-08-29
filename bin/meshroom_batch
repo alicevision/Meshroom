@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 import argparse
-import os
-import sys
 import distutils.util
 import json
+import logging
+import os
 import re
+import sys
 
+import meshroom.core.graph
 from meshroom import setupEnvironment
 
 setupEnvironment()
-
-import meshroom.core.graph
-import logging
 
 meshroom.core.initPipelines()
 
@@ -56,9 +55,11 @@ general_group.add_argument(
     metavar='FILE.mg / PIPELINE',
     type=str,
     default=os.environ.get('MESHROOM_DEFAULT_PIPELINE', 'photogrammetry'),
-    help='Template pipeline among those listed or a Meshroom file containing a custom pipeline to run on input images:\n'
-    + '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates])
-    + '\nRequirements: the graph must contain one CameraInit node, and one Publish node if --output is set.',
+    help='Template pipeline among those listed or a Meshroom file containing a custom pipeline '
+         'to run on input images:\n' +
+         '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates]) + 
+         '\nRequirements: the graph must contain at least one CameraInit node, and at least '
+         'one Publish node if --output is set.',
     )
 
 general_group.add_argument(
@@ -71,7 +72,8 @@ general_group.add_argument(
 
 general_group.add_argument(
     '-s', '--save', metavar='FILE', type=str, required=False,
-    help='Save the configured Meshroom graph to a project file. It will setup the cache folder accordingly if not explicitly changed by --cache.')
+    help='Save the configured Meshroom graph to a project file. It will setup the cache folder '
+         'accordingly if not explicitly changed by --cache.')
 
 general_group.add_argument(
     '--submit', help='Submit on renderfarm instead of local computation.',
@@ -156,11 +158,12 @@ with meshroom.core.graph.GraphModification(graph):
     # initialize template pipeline
     loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
     if args.pipeline.lower() in loweredPipelineTemplates:
-        graph.initFromTemplate(loweredPipelineTemplates[args.pipeline.lower()], publishOutputs=True if args.output else False)
+        graph.initFromTemplate(loweredPipelineTemplates[args.pipeline.lower()],
+                               publishOutputs=True if args.output else False)
     else:
         # custom pipeline
         graph.initFromTemplate(args.pipeline, publishOutputs=True if args.output else False)
-    
+
     def parseInputs(inputs, uniqueInitNode):
         """Utility method for parsing the input and inputRecursive arguments."""
         mapInputs = {}
@@ -195,14 +198,14 @@ with meshroom.core.graph.GraphModification(graph):
             nodeInputs = inputGroup[-1].split(';')
             mapInputs[nodeName] = [os.path.abspath(path) for path in nodeInputs]
         return mapInputs
-    
+
     # get init nodes
     initNodes = graph.findInitNodes()
     uniqueInitNode = initNodes[0] if (len(initNodes) == 1) else None
 
     # parse inputs for each init node
     mapInput = parseInputs(args.input, uniqueInitNode)
-    
+
     # parse recursive inputs for each init node
     mapInputRecursive = parseInputs(args.inputRecursive, uniqueInitNode)
 
@@ -310,10 +313,11 @@ if args.submit:
     if not args.save:
         raise ValueError('Need to save the project to file to submit on renderfarm.')
     # submit on renderfarm
-    meshroom.core.graph.submit(args.save, args.submitter, toNode=args.toNode, submitLabel=args.submitLabel)
+    meshroom.core.graph.submit(args.save, args.submitter, toNode=args.toNode,
+                               submitLabel=args.submitLabel)
 elif args.compute:
     # find end nodes (None will compute all graph)
     toNodes = graph.findNodes(args.toNode) if args.toNode else None
     # start computation
-    meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
-
+    meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute,
+                                     forceStatus=args.forceStatus)

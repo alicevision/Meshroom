@@ -58,13 +58,13 @@ def test_attribute_is3D_file_extensions(givenFile, expected):
     n0 = g.addNewNode('Ls', input='')
 
     # Given
-    assert not n0.input.is3D
+    assert not n0.input.is3dDisplayable
 
     # When
     n0.input.value = givenFile
 
     # Then
-    assert n0.input.is3D == expected
+    assert n0.input.is3dDisplayable == expected
 
 
 def test_attribute_i3D_by_description_semantic():
@@ -74,13 +74,13 @@ def test_attribute_i3D_by_description_semantic():
     g = Graph('')
     n0 = g.addNewNode('Ls', input='')
 
-    assert not n0.output.is3D
+    assert not n0.output.is3dDisplayable
 
     # When
     n0.output.desc._semantic = "3d"
 
     # Then
-    assert n0.output.is3D
+    assert n0.output.is3dDisplayable
 
 
 @pytest.mark.parametrize("givenSemantic,expected", valid2DSemantics + invalid2DSemantics)
@@ -94,10 +94,10 @@ def test_attribute_is2D_file_semantic(givenSemantic, expected):
 
     # Given
     n0.input.desc._semantic = ""
-    assert not n0.input.is2D
+    assert not n0.input.is2dDisplayable
 
     # When
     n0.input.desc._semantic = givenSemantic
 
     # Then
-    assert n0.input.is2D == expected
+    assert n0.input.is2dDisplayable == expected

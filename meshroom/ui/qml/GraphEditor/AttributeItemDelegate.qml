@@ -184,10 +184,10 @@ RowLayout {
                         }
 
                         MenuItem { 
-                            visible: attribute.isOutput && (attribute.is2D || attribute.is3D)
+                            visible: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable)
                             height: visible ? implicitHeight : 0
                             text: {
-                                if (attribute.is2D)
+                                if (attribute.is2dDisplayable)
                                     return "Show in 2D Viewer"
                                 return "Show in 3D Viewer"
                             }
@@ -208,12 +208,12 @@ RowLayout {
             }
 
             MaterialLabel {
-                property bool isDisplayable: attribute.isOutput && (attribute.is2D || attribute.is3D)
+                property bool isDisplayable: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable)
                 property bool isDisplayed: attribute === _reconstruction.displayedAttr2D || _reconstruction.displayedAttrs3D.count && _reconstruction.displayedAttrs3D.contains(attribute)
                 text: isDisplayed ? MaterialIcons.visibility : MaterialIcons.visibility_off
                 enabled: isDisplayed
                 visible: isDisplayable
-                ToolTip.text: `This attribute is displayable in the ${attribute.is2D ? "2D" : "3D"} viewer.`
+                ToolTip.text: `This attribute is displayable in the ${attribute.is2dDisplayable ? "2D" : "3D"} viewer.`
 
                 padding: 4
                 font.pointSize: 8

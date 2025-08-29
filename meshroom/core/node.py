@@ -1620,7 +1620,7 @@ class BaseNode(BaseObject):
         False otherwise.
         """
         
-        return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3D), None) is not None
+        return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3dDisplayable), None) is not None
 
     name = Property(str, getName, constant=True)
     defaultLabel = Property(str, getDefaultLabel, constant=True)

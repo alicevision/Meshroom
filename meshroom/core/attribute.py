@@ -325,16 +325,16 @@ class Attribute(BaseObject):
         # Emit if the enable status has changed
         self._setEnabled(self._getEnabled())
 
-    def _is2D(self) -> bool:
-        """ Return True if the current attribute is considered as a 2d file """
+    def _is2dDisplayable(self) -> bool:
+        """ Return True if the current attribute is considered as a displayable 2d file """
         if not self._desc.semantic:
             return False
 
         return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
                      if self._desc.semantic == imageSemantic), None) is not None
 
-    def _is3D(self) -> bool:
-        """ Return True if the current attribute is considered as a 3d file """
+    def _is3dDisplayable(self) -> bool:
+        """ Return True if the current attribute is considered as a displayable 3d file """
         if self._desc.semantic == "3d":
             return True
 
@@ -432,8 +432,8 @@ class Attribute(BaseObject):
     evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     isValid = Property(bool, _isValid, notify=valueChanged)
-    is2D = Property(bool, _is2D, constant=True)
-    is3D = Property(bool, _is3D, constant=True)
+    is2dDisplayable = Property(bool, _is2dDisplayable, constant=True)
+    is3dDisplayable = Property(bool, _is3dDisplayable, constant=True)
     
 
     # Attribute link properties and signals

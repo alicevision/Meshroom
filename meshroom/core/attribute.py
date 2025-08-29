@@ -195,10 +195,10 @@ class Attribute(BaseObject):
         if self.isLink:
             return self._getDirectInputLink().asLinkExpr()
         if self.isOutput and self._desc.isExpression:
-            return self.defaultValue()
+            return self.getDefaultValue()
         return self.value
     
-    def defaultValue(self):
+    def getDefaultValue(self):
         if isinstance(self._desc.value, types.FunctionType):
             try:
                 return self._desc.value(self)
@@ -213,7 +213,7 @@ class Attribute(BaseObject):
         return copy.copy(self._desc.value)
     
     def resetToDefaultValue(self):
-        self._setValue(copy.copy(self.defaultValue()))
+        self._setValue(copy.copy(self.getDefaultValue()))
 
     def initValue(self):
         if self._desc._valueType is not None:
@@ -315,7 +315,7 @@ class Attribute(BaseObject):
         return True
 
     def _isDefault(self) -> bool:
-        return self.value == self.defaultValue()
+        return self.value == self.getDefaultValue()
 
     def _is2dDisplayable(self) -> bool:
         """ 
@@ -679,7 +679,7 @@ class ListAttribute(Attribute):
             return self._getDirectInputLink().asLinkExpr()
         return [attr.getExportValue() for attr in self._value]
 
-    def defaultValue(self) -> list:
+    def getDefaultValue(self) -> list:
         return []
 
     def _isDefault(self) -> bool:
@@ -846,8 +846,8 @@ class GroupAttribute(Attribute):
     def _isDefault(self):
         return all(v.isDefault for v in self._value)
 
-    def defaultValue(self):
-        return {key: attr.defaultValue() for key, attr in self._value.items()}
+    def getDefaultValue(self):
+        return {key: attr.getDefaultValue() for key, attr in self._value.items()}
 
     def getPrimitiveValue(self, exportDefault=True):
         if exportDefault:

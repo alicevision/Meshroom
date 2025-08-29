@@ -211,7 +211,7 @@ class PartialGraphSerializer(GraphSerializer):
             if isinstance(attribute.root, ListAttribute):
                 return None
             # Otherwise, return the default value for this attribute.
-            return attribute.defaultValue()
+            return attribute.getDefaultValue()
 
         if isinstance(attribute, ListAttribute):
             # Recusively serialize each child of the ListAttribute, skipping those for which the attribute

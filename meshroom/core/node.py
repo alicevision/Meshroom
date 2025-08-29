@@ -950,7 +950,7 @@ class BaseNode(BaseObject):
                 # (the expression may refer to other attributes that are not defined)
                 if attr.enabled:
                     try:
-                        defaultValue = attr.defaultValue()
+                        defaultValue = attr.getDefaultValue()
                     except AttributeError:
                         # If we load an old scene, the lambda associated to the 'value' could try to
                         # access other params that could not exist yet

@@ -914,7 +914,7 @@ class UIGraph(QObject):
                     # if the edge is connected to one of the ListAttribute's elements, remove it
                     if edge.src in attribute.value:
                         self.removeEdge(edge)
-            self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
+            self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.getDefaultValue()))
 
     @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):

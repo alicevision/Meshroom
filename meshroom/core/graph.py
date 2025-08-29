@@ -256,7 +256,7 @@ class Graph(BaseObject):
         self._deserialize(Graph._loadGraphData(filepath))
         self._fileDateVersion = os.path.getmtime(filepath)
 
-    def initFromTemplate(self, filepath: PathLike, publishOutputs: bool = False):
+    def initFromTemplate(self, filepath: PathLike, exportOutputs: bool = False):
         """
         Deserialize a template Meshroom Graph ".mg" file in place.
 
@@ -265,7 +265,7 @@ class Graph(BaseObject):
 
         Args:
             filepath: The path to the Meshroom Graph file to load.
-            publishOutputs: (optional) Whether to keep 'Publish' nodes.
+            exportOutputs: (optional) Whether to keep 'ExportFiles' nodes.
         """
         self._deserialize(Graph._loadGraphData(filepath))
 
@@ -274,9 +274,9 @@ class Graph(BaseObject):
         # node instance created by this process.
         self._triggerNodeCreatedCallback(self.nodes)
 
-        if not publishOutputs:
+        if not exportOutputs:
             with GraphModification(self):
-                for node in [node for node in self.nodes if node.nodeType == "Publish"]:
+                for node in [node for node in self.nodes if node.nodeType == "ExportFiles"]:
                     self.removeNode(node.name)
 
     @staticmethod

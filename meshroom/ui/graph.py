@@ -469,10 +469,10 @@ class UIGraph(QObject):
         self.setGraph(g)
 
     @Slot(str, bool, result=bool)
-    def initFromTemplate(self, filepath, publishOutputs=False):
+    def initFromTemplate(self, filepath, exportOutputs=False):
         graph = Graph("")
         if filepath:
-            graph.initFromTemplate(filepath, publishOutputs=publishOutputs)
+            graph.initFromTemplate(filepath, exportOutputs=exportOutputs)
         self.setGraph(graph)
 
     @Slot(QUrl, result="QVariantList")

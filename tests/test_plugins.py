@@ -2,7 +2,7 @@
 
 from meshroom.core import pluginManager, loadClassesNodes
 from meshroom.core.plugins import NodePluginStatus, Plugin
-from .utils import registeredPlugins
+from .utils import overrideOsEnvironmentVariables, registeredPlugins
 
 from pathlib import Path
 import os
@@ -260,13 +260,14 @@ class TestPluginsConfiguration:
 
     def test_loadedConfigWithOnlyExistingKeys(self):
         # Set the keys from the config file in the current environment
-        env = os.environ.copy()
-        os.environ[self.CONFIG_PATH[0]] = self.CONFIG_PATH[2]
-        os.environ[self.ERRONEOUS_CONFIG_PATH[0]] = self.ERRONEOUS_CONFIG_PATH[2]
-        os.environ[self.CONFIG_STRING[0]] = self.CONFIG_STRING[2]
+        environment = {
+            self.CONFIG_PATH[0]: self.CONFIG_PATH[2],
+            self.ERRONEOUS_CONFIG_PATH[0]: self.ERRONEOUS_CONFIG_PATH[2],
+            self.CONFIG_STRING[0]: self.CONFIG_STRING[2]
+        }
 
         folder = os.path.join(os.path.dirname(__file__), "plugins")
-        with registeredPlugins(folder):
+        with (overrideOsEnvironmentVariables(environment), registeredPlugins(folder)):
             plugin = pluginManager.getPlugin("pluginA")
             assert plugin
 
@@ -295,17 +296,15 @@ class TestPluginsConfiguration:
             assert config[self.CONFIG_STRING[0]] != self.CONFIG_STRING[2]
             assert configFullEnv[self.CONFIG_STRING[0]] == self.CONFIG_STRING[2]
 
-        # Restore os.environ to its original state
-        os.environ = env
-
     def test_loadedConfigWithSomeExistingKeys(self):
         # Set some keys from the config file in the current environment
-        env = os.environ.copy()
-        os.environ[self.ERRONEOUS_CONFIG_PATH[0]] = self.ERRONEOUS_CONFIG_PATH[2]
-        os.environ[self.CONFIG_STRING[0]] = self.CONFIG_STRING[2]
+        environment = {
+            self.ERRONEOUS_CONFIG_PATH[0]: self.ERRONEOUS_CONFIG_PATH[2],
+            self.CONFIG_STRING[0]: self.CONFIG_STRING[2]
+        }
 
         folder = os.path.join(os.path.dirname(__file__), "plugins")
-        with registeredPlugins(folder):
+        with (overrideOsEnvironmentVariables(environment), registeredPlugins(folder)):
             plugin = pluginManager.getPlugin("pluginA")
             assert plugin
 
@@ -335,6 +334,3 @@ class TestPluginsConfiguration:
 
             assert config[self.CONFIG_STRING[0]] != self.CONFIG_STRING[2]
             assert configFullEnv[self.CONFIG_STRING[0]] == self.CONFIG_STRING[2]
-
-        # Restore os.environ to its original state
-        os.environ = env

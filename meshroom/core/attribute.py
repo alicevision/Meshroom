@@ -100,7 +100,7 @@ class Attribute(BaseObject):
 
     def asLinkExpr(self) -> str:
         """ 
-        Return link expression for this Attribute 
+        Return the link expression for this Attribute 
         """
         return "{" + self._getFullName() + "}"
 
@@ -116,12 +116,17 @@ class Attribute(BaseObject):
             self.node.updateInternalAttributes()
 
     def _initValue(self):
+        """
+        Initialize the attribute value.
+        Called in the attribute factory for each attributes.
+        """
         if self._desc._valueType is not None:
             self._value = self._desc._valueType()
 
     def _getEvalValue(self):
         """
-        Return the value. If it is a string, expressions will be evaluated.
+        Return the value of a the attribute.
+        For string, expressions will be evaluated.
         """
         if isinstance(self.value, str):
             env = self.node.nodePlugin.configFullEnv if self.node.nodePlugin else os.environ
@@ -137,11 +142,17 @@ class Attribute(BaseObject):
         return self.value
 
     def _getValue(self):
+        """
+        Return the value of the attribute or the linked attribute value.
+        """
         if self.isLink:
             return self._getDirectInputLink().value
         return self._value
 
     def _setValue(self, value):
+        """
+        Set the attribute value from a given value, a given function or a given attribute. 
+        """
         if self._value == value:
             return
         if isinstance(value, Attribute) or Attribute.isLinkExpression(value):
@@ -196,9 +207,15 @@ class Attribute(BaseObject):
             self.resetToDefaultValue()
 
     def resetToDefaultValue(self):
+        """
+        Reset the attribute to its default value.
+        """
         self._setValue(copy.copy(self.getDefaultValue()))
 
     def getDefaultValue(self):
+        """
+        Get the attribute default value.
+        """
         if isinstance(self._desc.value, types.FunctionType):
             try:
                 return self._desc.value(self)
@@ -213,6 +230,9 @@ class Attribute(BaseObject):
         return copy.copy(self._desc.value)
 
     def getSerializedValue(self):
+        """
+        Get the attribute value serialized.
+        """
         if self.isLink:
             return self._getDirectInputLink().asLinkExpr()
         if self.isOutput and self._desc.isExpression:
@@ -245,9 +265,15 @@ class Attribute(BaseObject):
         return str(self._getEvalValue())
 
     def validateValue(self, value):
+        """ 
+        Ensure value is compatible with the attribute description and convert value if needed. 
+        """
         return self._desc.validateValue(value)
 
     def upgradeValue(self, exportedValue):
+        """ 
+        Upgrade the attribute value within a compatibility node.
+        """
         self._setValue(exportedValue)
 
     def _isValid(self):
@@ -310,6 +336,9 @@ class Attribute(BaseObject):
         return hashValue(self._value)
 
     def updateInternals(self):
+        """
+        Update attribute internal properties.
+        """
         # Emit if the enable status has changed
         self._setEnabled(self._getEnabled())
 

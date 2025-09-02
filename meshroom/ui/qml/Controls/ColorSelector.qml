@@ -33,7 +33,7 @@ MaterialToolButton {
                             "#C16162",
                         ]
 
-    // When a color gets selected/choosen
+    // When a color gets selected/chosen
     signal colorSelected(var color)
 
     // Toggles the visibility of the popup
@@ -64,9 +64,9 @@ MaterialToolButton {
         padding: 4
         width: (root.height * 4) + (padding * 4)
 
-        // center the current color
+        // Center the current color on the tool button
         y: -height
-        x: -width + root.width + padding
+        x: -width / 2 + (root.width + padding) / 2
 
         // Layout of the Colors
         Grid {

@@ -146,7 +146,7 @@ class Attribute(BaseObject):
         Return the value of the attribute or the linked attribute value.
         """
         if self.isLink:
-            return self._getDirectInputLink().value
+            return self._getInputLink().value
         return self._value
 
     def _setValue(self, value):
@@ -234,7 +234,7 @@ class Attribute(BaseObject):
         Get the attribute value serialized.
         """
         if self.isLink:
-            return self._getDirectInputLink().asLinkExpr()
+            return self._getInputLink().asLinkExpr()
         if self.isOutput and self._desc.isExpression:
             return self.getDefaultValue()
         return self.value
@@ -327,7 +327,7 @@ class Attribute(BaseObject):
                 strippedInvalidationValue = self._invalidationValue.rstrip("/")
                 return hashValue(strippedInvalidationValue)
         if self.isLink:
-            linkRootAttribute = self._getDirectInputLink(recursive=True)
+            linkRootAttribute = self._getInputLink(recursive=True)
             return linkRootAttribute.uid()
         if isinstance(self._value, (list, tuple, set,)):
             # non-exclusive choice param
@@ -364,7 +364,7 @@ class Attribute(BaseObject):
         return self.node.graph and self.isInput and self.node.graph._edges and \
             self in self.node.graph._edges.keys()
 
-    def _getDirectInputLink(self, recursive=False) -> "Attribute":
+    def _getInputLink(self, recursive=False) -> "Attribute":
         """ 
         Return the direct upstream connected attribute.
         :param recursive: recursive call, return the root attribute
@@ -373,7 +373,7 @@ class Attribute(BaseObject):
             return None
         linkAttribute = self.node.graph.edge(self).src
         if recursive and linkAttribute.isLink:
-            return linkAttribute._getDirectInputLink(recursive)
+            return linkAttribute._getInputLink(recursive)
         return linkAttribute
 
     def _getDirectOutputLinks(self) -> list["Attribute"]:
@@ -389,7 +389,7 @@ class Attribute(BaseObject):
         """ 
         Return the list of upstream connected attributes for the attribute or any of its elements.
         """
-        inputLink = self._getDirectInputLink()
+        inputLink = self._getInputLink()
         if inputLink is None: 
             return []
         return [inputLink]
@@ -481,9 +481,9 @@ class Attribute(BaseObject):
     # Whether the attribute is a direct link to another attribute.
     isLink = Property(bool, _isLink, notify=inputLinksChanged)
     # The direct upstream connected root attribute.
-    inputRootLink = Property(Variant, lambda self: self._getDirectInputLink(recursive=True), notify=inputLinksChanged)
+    inputRootLink = Property(Variant, lambda self: self._getInputLink(recursive=True), notify=inputLinksChanged)
     # The direct upstream connected attribute.
-    inputLink = Property(BaseObject, _getDirectInputLink, notify=inputLinksChanged)
+    inputLink = Property(BaseObject, _getInputLink, notify=inputLinksChanged)
     # The list of direct downstream connected attributes.
     outputLinks = Property(Variant, _getDirectOutputLinks, notify=outputLinksChanged)
     # The list of upstream connected attributes for the attribute or any of its elements.
@@ -528,7 +528,7 @@ class ChoiceParam(Attribute):
         return len(self.getValues())
 
     def getValues(self):
-        if (linkParam := self._getDirectInputLink()) is not None:
+        if (linkParam := self._getInputLink()) is not None:
             return linkParam.getValues()
         return self._values if self._values is not None else self._desc._values
 
@@ -685,7 +685,7 @@ class ListAttribute(Attribute):
     # Override
     def getSerializedValue(self):
         if self.isLink:
-            return self._getDirectInputLink().asLinkExpr()
+            return self._getInputLink().asLinkExpr()
         return [attr.getSerializedValue() for attr in self._value]
 
     # Override

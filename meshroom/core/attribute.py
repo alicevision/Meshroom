@@ -407,7 +407,7 @@ class Attribute(BaseObject):
         # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return False
-        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
+        return next((edge for edge in self.node.graph.edges.values() if edge.dst == self), None) is not None
 
     def _hasAnyOutputLinks(self) -> bool:
         """

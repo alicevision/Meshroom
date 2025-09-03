@@ -485,7 +485,7 @@ class Attribute(BaseObject):
     # The direct upstream connected attribute.
     inputLink = Property(BaseObject, _getDirectInputLink, notify=inputLinksChanged)
     # The list of direct downstream connected attributes.
-    directOutputLinks = Property(Variant, _getDirectOutputLinks, notify=outputLinksChanged)
+    outputLinks = Property(Variant, _getDirectOutputLinks, notify=outputLinksChanged)
     # The list of upstream connected attributes for the attribute or any of its elements.
     allInputLinks = Property(Variant, _getAllInputLinks, notify=inputLinksChanged)
     # The list of downstream connected attributes for the attribute or any of its elements.

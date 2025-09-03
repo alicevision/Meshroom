@@ -200,7 +200,7 @@ class PartialGraphSerializer(GraphSerializer):
         Serialize `attribute` (recursively for list/groups) and deal with attributes being connected
         to nodes that are not part of the partial list of nodes to serialize.
         """
-        linkAttribute = attribute.directInputLink
+        linkAttribute = attribute.inputLink
 
         if linkAttribute is not None:
             # Use standard link serialization if upstream node is part of the serialization.

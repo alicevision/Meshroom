@@ -116,8 +116,8 @@ class TestChoiceParam:
         loadedGraph = loadGraph(graph.filepath)
         loadedNodeA = loadedGraph.node(nodeA.name)
         loadedNodeB = loadedGraph.node(nodeB.name)
-        assert loadedNodeB.choice.directInputLink == loadedNodeA.choice
-        assert loadedNodeB.choiceMulti.directInputLink == loadedNodeA.choiceMulti
+        assert loadedNodeB.choice.inputLink == loadedNodeA.choice
+        assert loadedNodeB.choiceMulti.inputLink == loadedNodeA.choiceMulti
 
 
 class TestChoiceParamSavingCustomValues:
@@ -168,5 +168,5 @@ class TestChoiceParamSavingCustomValues:
         loadedGraph = loadGraph(graph.filepath)
         loadedNodeA = loadedGraph.node(nodeA.name)
         loadedNodeB = loadedGraph.node(nodeB.name)
-        assert loadedNodeB.choice.directInputLink == loadedNodeA.choice
-        assert loadedNodeB.choiceMulti.directInputLink == loadedNodeA.choiceMulti
+        assert loadedNodeB.choice.inputLink == loadedNodeA.choice
+        assert loadedNodeB.choiceMulti.inputLink == loadedNodeA.choiceMulti

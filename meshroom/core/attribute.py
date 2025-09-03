@@ -389,10 +389,10 @@ class Attribute(BaseObject):
         """ 
         Return the list of upstream connected attributes for the attribute or any of its elements.
         """
-        directInputLink = self._getDirectInputLink()
-        if directInputLink is None: 
+        inputLink = self._getDirectInputLink()
+        if inputLink is None: 
             return []
-        return [directInputLink]
+        return [inputLink]
 
     def _getAllOutputLinks(self) -> list["Attribute"]:
         """ 
@@ -483,7 +483,7 @@ class Attribute(BaseObject):
     # The direct upstream connected root attribute.
     inputRootLink = Property(Variant, lambda self: self._getDirectInputLink(recursive=True), notify=inputLinksChanged)
     # The direct upstream connected attribute.
-    directInputLink = Property(BaseObject, _getDirectInputLink, notify=inputLinksChanged)
+    inputLink = Property(BaseObject, _getDirectInputLink, notify=inputLinksChanged)
     # The list of direct downstream connected attributes.
     directOutputLinks = Property(Variant, _getDirectOutputLinks, notify=outputLinksChanged)
     # The list of upstream connected attributes for the attribute or any of its elements.

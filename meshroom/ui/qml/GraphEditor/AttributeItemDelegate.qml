@@ -235,7 +235,7 @@ RowLayout {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.outAttributeClicked(navButtonOut, mouse, attribute.outputConnections)
+                        root.outAttributeClicked(navButtonOut, mouse, attribute.allOutputLinks)
                     }
                 }
 

@@ -89,7 +89,7 @@ class Attribute(BaseObject):
 
     def _getRootName(self) -> str:
         """ 
-        Get the attribute name following the path from the node root to the attribute.
+        Get the attribute name following the path from the root attribute.
         Return: groupName.subGroupName.name 
         """
         if isinstance(self.root, ListAttribute):
@@ -436,7 +436,7 @@ class Attribute(BaseObject):
     root = Property(BaseObject, lambda self: self._root() if self._root else None, constant=True)
     # The attribute name following the path from the node to the attribute.
     fullName = Property(str, _getFullName, constant=True)
-    # The attribute name following the path from the node root to the attribute.
+    # The attribute name following the path from the root attribute.
     rootName = Property(str, _getRootName, constant=True)
     # The description object of the attribute.
     desc = Property(desc.Attribute, lambda self: self._desc, constant=True)

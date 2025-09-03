@@ -1760,9 +1760,9 @@ class Node(BaseNode):
                 pass
 
     def toDict(self):
-        inputs = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
-        internalInputs = {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
-        outputs = ({k: v.getExportValue() for k, v in self._attributes.objects.items()
+        inputs = {k: v.getSerializedValue() for k, v in self._attributes.objects.items() if v.isInput}
+        internalInputs = {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items()}
+        outputs = ({k: v.getSerializedValue() for k, v in self._attributes.objects.items()
                     if v.isOutput and not v.desc.isDynamicValue})
 
         return {
@@ -2012,14 +2012,14 @@ class CompatibilityNode(BaseNode):
         # if node has not been added to a graph, return serialized node inputs
         if not self.graph:
             return self._inputs
-        return {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
+        return {k: v.getSerializedValue() for k, v in self._attributes.objects.items() if v.isInput}
 
     @property
     def internalInputs(self):
         """ Get current node's internal attributes """
         if not self.graph:
             return self._internalInputs
-        return {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
+        return {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items()}
 
     def toDict(self):
         """

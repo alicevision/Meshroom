@@ -288,7 +288,7 @@ class SetAttributeCommand(GraphCommand):
         super().__init__(graph, parent)
         self.attrName = attribute.fullName
         self.value = value
-        self.oldValue = attribute.getExportValue()
+        self.oldValue = attribute.getSerializedValue()
         self.setText(f"Set Attribute '{attribute.fullName}'")
 
     def redoImpl(self):
@@ -373,7 +373,7 @@ class ListAttributeRemoveCommand(GraphCommand):
         assert isinstance(listAttribute, ListAttribute)
         self.listAttrName = listAttribute.fullName
         self.index = listAttribute.index(attribute)
-        self.value = attribute.getExportValue()
+        self.value = attribute.getSerializedValue()
         self.setText(f"Remove {attribute.fullName}")
 
     def redoImpl(self):
@@ -390,8 +390,8 @@ class RemoveImagesCommand(GraphCommand):
     def __init__(self, graph, cameraInitNodes, parent=None):
         super().__init__(graph, parent)
         self.cameraInits = cameraInitNodes
-        self.viewpoints = { cameraInit.name: cameraInit.attribute("viewpoints").getExportValue() for cameraInit in self.cameraInits }
-        self.intrinsics = { cameraInit.name: cameraInit.attribute("intrinsics").getExportValue() for cameraInit in self.cameraInits }
+        self.viewpoints = { cameraInit.name: cameraInit.attribute("viewpoints").getSerializedValue() for cameraInit in self.cameraInits }
+        self.intrinsics = { cameraInit.name: cameraInit.attribute("intrinsics").getSerializedValue() for cameraInit in self.cameraInits }
         self.title = f"Remove{' ' if len(self.cameraInits) == 1 else ' All '}Images"
         self.setText(self.title)
 

@@ -960,15 +960,15 @@ class UIGraph(QObject):
             intrinsicId = image.intrinsicId.value
 
             intrinsicUsed = False
-            for intrinsic in self.cameraInit.attribute("viewpoints").getExportValue():
-                if image.getExportValue() != intrinsic and intrinsic['intrinsicId'] == intrinsicId:
+            for intrinsic in self.cameraInit.attribute("viewpoints").getSerializedValue():
+                if image.getSerializedValue() != intrinsic and intrinsic['intrinsicId'] == intrinsicId:
                     intrinsicUsed = True
                     break
 
             if not intrinsicUsed:
                 #find the intrinsic and remove it
                 for intrinsic in self.cameraInit.attribute("intrinsics"):
-                    if intrinsic.getExportValue()["intrinsicId"] == intrinsicId:
+                    if intrinsic.getSerializedValue()["intrinsicId"] == intrinsicId:
                         self.removeAttribute(intrinsic)
                         break
 

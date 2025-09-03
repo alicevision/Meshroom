@@ -212,7 +212,7 @@ class Attribute(BaseObject):
         # (avoid reference to the desc value)
         return copy.copy(self._desc.value)
 
-    def getExportValue(self):
+    def getSerializedValue(self):
         if self.isLink:
             return self._getDirectInputLink().asLinkExpr()
         if self.isOutput and self._desc.isExpression:
@@ -537,11 +537,11 @@ class ChoiceParam(Attribute):
             super()._setValue(value)
 
     # Override
-    def getExportValue(self):
+    def getSerializedValue(self):
         useStandardSerialization = self.isLink or not self._desc._saveValuesOverride or \
             self._values is None
         if useStandardSerialization:
-            return super().getExportValue()
+            return super().getSerializedValue()
         return {
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
@@ -654,10 +654,10 @@ class ListAttribute(Attribute):
         return []
 
     # Override
-    def getExportValue(self):
+    def getSerializedValue(self):
         if self.isLink:
             return self._getDirectInputLink().asLinkExpr()
-        return [attr.getExportValue() for attr in self._value]
+        return [attr.getSerializedValue() for attr in self._value]
 
     # Override
     def getPrimitiveValue(self, exportDefault=True):
@@ -819,8 +819,8 @@ class GroupAttribute(Attribute):
         return {key: attr.getDefaultValue() for key, attr in self._value.items()}
 
     # Override
-    def getExportValue(self):
-        return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
+    def getSerializedValue(self):
+        return {key: attr.getSerializedValue() for key, attr in self._value.objects.items()}
 
     # Override
     def getPrimitiveValue(self, exportDefault=True):

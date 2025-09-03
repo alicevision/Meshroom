@@ -205,7 +205,7 @@ class PartialGraphSerializer(GraphSerializer):
         if linkAttribute is not None:
             # Use standard link serialization if upstream node is part of the serialization.
             if linkAttribute.node in self.nodes:
-                return attribute.getExportValue()
+                return attribute.getSerializedValue()
             # Skip link serialization otherwise.
             # If part of a list, this entry can be discarded.
             if isinstance(attribute.root, ListAttribute):
@@ -226,4 +226,4 @@ class PartialGraphSerializer(GraphSerializer):
             # Recursively serialize each child of the group attribute.
             return {name: self._serializeAttribute(child) for name, child in attribute.value.items()}
 
-        return attribute.getExportValue()
+        return attribute.getSerializedValue()

@@ -14,6 +14,8 @@ QtObject {
     readonly property color orange: "#FF9800"
     readonly property color yellow: "#FFEB3B"
     readonly property color red: "#F44336"
+    readonly property color crimson: "#DC143C"
+    readonly property color firebrick: "#B22222"
     readonly property color blue: "#03A9F4"
     readonly property color cyan: "#00BCD4"
     readonly property color pink: "#E91E63"

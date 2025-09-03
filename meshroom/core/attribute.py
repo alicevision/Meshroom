@@ -478,13 +478,13 @@ class Attribute(BaseObject):
     inputLinksChanged = Signal()
     outputLinksChanged = Signal()
 
-    # Whether the attribute is a direct link to another attribute.
+    # Whether the attribute is a link to another attribute.
     isLink = Property(bool, _isLink, notify=inputLinksChanged)
-    # The direct upstream connected root attribute.
+    # The upstream connected root attribute.
     inputRootLink = Property(Variant, lambda self: self._getInputLink(recursive=True), notify=inputLinksChanged)
-    # The direct upstream connected attribute.
+    # The upstream connected attribute.
     inputLink = Property(BaseObject, _getInputLink, notify=inputLinksChanged)
-    # The list of direct downstream connected attributes.
+    # The list of downstream connected attributes.
     outputLinks = Property(Variant, _getOutputLinks, notify=outputLinksChanged)
     # The list of upstream connected attributes for the attribute or any of its elements.
     allInputLinks = Property(Variant, _getAllInputLinks, notify=inputLinksChanged)

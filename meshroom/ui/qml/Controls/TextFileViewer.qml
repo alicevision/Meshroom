@@ -285,8 +285,10 @@ Item {
                                     // Color line according to log level
                                     if (text.indexOf("[warning]") >= 0)
                                         return Colors.orange
-                                    else if(text.indexOf("[error]") >= 0)
+                                    else if (text.indexOf("[error]") >= 0)
                                         return Colors.red
+                                    else if (text.indexOf("[fatal]") >= 0 || text.indexOf("[critical]") >= 0)
+                                        return Colors.firebrick
                                     return palette.text
                                 }
                             }

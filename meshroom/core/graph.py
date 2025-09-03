@@ -1242,7 +1242,7 @@ class Graph(BaseObject):
             attr = e.src
             if dependenciesOnly:
                 if attr.isLink:
-                    attr = attr.directInputRootLink
+                    attr = attr.inputRootLink
                 if not attr.isOutput:
                     continue
             newE = Edge(attr, e.dst)

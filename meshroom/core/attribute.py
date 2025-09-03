@@ -481,7 +481,7 @@ class Attribute(BaseObject):
     # Whether the attribute is a direct link to another attribute.
     isLink = Property(bool, _isLink, notify=inputLinksChanged)
     # The direct upstream connected root attribute.
-    directInputRootLink = Property(Variant, lambda self: self._getDirectInputLink(recursive=True), notify=inputLinksChanged)
+    inputRootLink = Property(Variant, lambda self: self._getDirectInputLink(recursive=True), notify=inputLinksChanged)
     # The direct upstream connected attribute.
     directInputLink = Property(BaseObject, _getDirectInputLink, notify=inputLinksChanged)
     # The list of direct downstream connected attributes.

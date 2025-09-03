@@ -376,7 +376,7 @@ class Attribute(BaseObject):
             return linkAttribute._getInputLink(recursive)
         return linkAttribute
 
-    def _getDirectOutputLinks(self) -> list["Attribute"]:
+    def _getOutputLinks(self) -> list["Attribute"]:
         """ 
         Return the list of direct downstream connected attributes.
         """
@@ -398,7 +398,7 @@ class Attribute(BaseObject):
         """ 
         Return the list of downstream connected attributes for the attribute or any of its elements.
         """
-        return self._getDirectOutputLinks()
+        return self._getOutputLinks()
 
     def _hasAnyInputLinks(self) -> bool:
         """
@@ -485,7 +485,7 @@ class Attribute(BaseObject):
     # The direct upstream connected attribute.
     inputLink = Property(BaseObject, _getInputLink, notify=inputLinksChanged)
     # The list of direct downstream connected attributes.
-    outputLinks = Property(Variant, _getDirectOutputLinks, notify=outputLinksChanged)
+    outputLinks = Property(Variant, _getOutputLinks, notify=outputLinksChanged)
     # The list of upstream connected attributes for the attribute or any of its elements.
     allInputLinks = Property(Variant, _getAllInputLinks, notify=inputLinksChanged)
     # The list of downstream connected attributes for the attribute or any of its elements.

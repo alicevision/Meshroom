@@ -75,7 +75,7 @@ This node allows to copy files into a specific folder.
                 raise RuntimeError(error)
 
             if not os.path.exists(chunk.node.output.value):
-                os.mkdir(chunk.node.output.value)
+                os.makedirs(chunk.node.output.value)
 
             for iFile, oFile in outFiles.items():
                 if os.path.isdir(iFile):  # If the input is a directory, copy the directory's content

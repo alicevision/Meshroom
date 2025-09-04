@@ -1,3 +1,5 @@
+# [bin] `meshroom_batch`: Minor clean-up in the file
+15d9ecd888faa7216cfc5d97d473f5717a3118a3
 # [core] Linting following CI's flake8 report
 9b4bd68d5aa9e5c3af5e4bfc4fe6aae06437ca88
 # [tests] Linting following CI's flake8 report

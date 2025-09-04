@@ -691,6 +691,8 @@ Page {
                                 delay: 200
                                 text: modelData["path"]
                                 visible: hovered
+                                x: newPipelineMenu.implicitWidth
+                                y: newPipelineMenuItems.implicitHeight
                             }
                         }
                     }

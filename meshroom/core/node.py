@@ -760,6 +760,8 @@ class BaseNode(BaseObject):
         plugin_module = sys.modules.get(self.nodeDesc.__module__)
         if getattr(plugin_module, "__author__", None):
             infos["author"] = plugin_module.__author__
+        if getattr(plugin_module, "__license__", None):
+            infos["license"] = plugin_module.__license__
         if getattr(plugin_module, "__version__", None):
             infos["version"] = plugin_module.__version__
         # Additional node infos 

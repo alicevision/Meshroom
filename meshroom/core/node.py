@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import atexit
 import copy
 import datetime
@@ -11,7 +12,7 @@ import shutil
 import time
 import types
 import uuid
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from enum import Enum, auto
 from typing import Callable, Optional
 
@@ -743,8 +744,36 @@ class BaseNode(BaseObject):
     def getDocumentation(self):
         if not self.nodeDesc:
             return ""
-        return self.nodeDesc.documentation
-
+        if self.nodeDesc.documentation:
+            return self.nodeDesc.documentation
+        else:
+            return self.nodeDesc.__doc__
+    
+    def getNodeInfos(self):
+        if not self.nodeDesc:
+            return []
+        infos = OrderedDict([
+            ("module", self.nodeDesc.__module__),
+            ("modulePath", self.nodeDesc.plugin.path),
+        ])
+        # Infos from the plugin module
+        try:
+            plugin_module = sys.modules[self.nodeDesc.__module__]
+            if getattr(plugin_module, "__author__", None):
+                infos["author"] = plugin_module.__author__
+            if getattr(plugin_module, "__version__", None):
+                infos["version"] = plugin_module.__version__
+        except:
+            pass
+        # Additional node infos 
+        # They can be stored in a __nodeInfo__ parameter
+        # We can also use it to override variables here (like author or version)
+        additionalNodeInfos = getattr(self.nodeDesc, "__nodeInfo__", None)
+        if additionalNodeInfos:
+            for key, value in additionalNodeInfos:
+                infos[key] = value
+        return [{"key": k, "value": v} for k, v in infos.items()]
+    
     @property
     def packageFullName(self):
         return '-'.join([self.packageName, self.packageVersion])
@@ -1626,6 +1655,7 @@ class BaseNode(BaseObject):
     defaultLabel = Property(str, getDefaultLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
+    nodeInfos = Property(Variant, getNodeInfos, constant=True)
     positionChanged = Signal()
     position = Property(Variant, position.fget, position.fset, notify=positionChanged)
     x = Property(float, lambda self: self._position.x, notify=positionChanged)

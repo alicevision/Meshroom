@@ -104,9 +104,9 @@ FocusScope {
 
             TextEdit {
                 id: documentationText
-                anchors.top: nodeInfoListView.bottom
                 padding: 8
-                topPadding: 15
+                topPadding: 20
+                Layout.alignment: Qt.AlignTop | Qt.AlignLeft
                 Layout.preferredWidth: width
                 width: parent.parent.parent.width
                 textFormat: TextEdit.MarkdownText

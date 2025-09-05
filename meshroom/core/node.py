@@ -756,7 +756,7 @@ class BaseNode(BaseObject):
             ("module", self.nodeDesc.__module__),
             ("modulePath", self.nodeDesc.plugin.path),
         ])
-        # Infos from the plugin module
+        # > Infos from the plugin module
         plugin_module = sys.modules.get(self.nodeDesc.__module__)
         if getattr(plugin_module, "__author__", None):
             infos["author"] = plugin_module.__author__
@@ -764,9 +764,12 @@ class BaseNode(BaseObject):
             infos["license"] = plugin_module.__license__
         if getattr(plugin_module, "__version__", None):
             infos["version"] = plugin_module.__version__
-        # Additional node infos 
-        # They can be stored in a __nodeInfo__ parameter
-        # We can also use it to override variables here (like author or version)
+        # > Overrides at the node-level
+        if getattr(self.nodeDesc, "author", None):
+            infos["author"] = self.nodeDesc.author
+        if getattr(self.nodeDesc, "version", None):
+            infos["version"] = self.nodeDesc.version
+        # > Additional node infos stored in a __nodeInfo__ parameter
         additionalNodeInfos = getattr(self.nodeDesc, "__nodeInfo__", None)
         if additionalNodeInfos:
             for key, value in additionalNodeInfos:

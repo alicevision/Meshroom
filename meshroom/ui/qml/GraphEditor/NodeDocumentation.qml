@@ -45,6 +45,7 @@ FocusScope {
                             Layout.fillHeight: true
                             Label {
                                 text: modelData.key
+                                font.capitalization: Font.Capitalize
                                 anchors.fill: parent
                                 anchors.top: parent.top
                                 topPadding: 4

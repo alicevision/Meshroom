@@ -9,7 +9,7 @@ from collections.abc import Iterable, Sequence
 from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, hashValue
-
+from meshroom.core.keyValues import KeyValues
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -77,6 +77,7 @@ class Attribute(BaseObject):
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
         self._invalidationValue = "" # invalidation value for output attributes
         self._value = None
+        self._keyValues = None # list of pairs (key, value) for keyable attribute
         self._initValue()
 
     def _getFullName(self) -> str:
@@ -119,7 +120,12 @@ class Attribute(BaseObject):
         Initialize the attribute value.
         Called in the attribute factory for each attributes.
         """
-        if self._desc._valueType is not None:
+        if self._desc.keyable:
+            # Keyable attribute, initialize keyValues from attribute description
+            self._keyValues = KeyValues(self._desc)
+            # Send signal and updates if keyValues changed
+            self._keyValues.pairsChanged.connect(self._onKeyValuesChanged)
+        elif self._desc._valueType is not None:
             self._value = self._desc._valueType()
 
     def _getEvalValue(self):
@@ -144,6 +150,8 @@ class Attribute(BaseObject):
         """
         Return the value of the attribute or the linked attribute value.
         """
+        if self.keyable:
+            raise RuntimeError(f"Cannot get value of {self._getFullName()}, the attribute is keyable.")
         if self.isLink:
             return self._getInputLink().value
         return self._value
@@ -157,6 +165,14 @@ class Attribute(BaseObject):
         if isinstance(value, Attribute) or Attribute.isLinkExpression(value):
             # if we set a link to another attribute
             self._value = value
+            if self.keyable:
+                self._keyValues.reset()
+        elif self.keyable and isinstance(value, dict):
+            # keyable attribute initialize from a dict
+            self.keyValues.resetFromDict(value)
+        elif self.keyable:
+            # keyable attribute but value is not a dict
+            raise RuntimeError(f"Cannot set value of {self._getFullName()}, the attribute is keyable.")
         elif callable(value):
             # evaluate the function
             self._value = value(self)
@@ -177,6 +193,16 @@ class Attribute(BaseObject):
             # Internal attributes are set as inputs
             self.requestNodeUpdate()
         self.valueChanged.emit()
+
+    def _getKeyValues(self):
+        """
+        Return the per-key values object of the attribute or of the linked attribute.
+        """
+        if not self.keyable:
+            raise RuntimeError(f"Cannot get keyValues of {self._getFullName()}, the attribute is not keyable.")
+        if self.isLink:
+            return self._getInputLink().keyValues
+        return self._keyValues
 
     def _applyExpr(self):
         """
@@ -209,7 +235,11 @@ class Attribute(BaseObject):
         """
         Reset the attribute to its default value.
         """
-        self._setValue(copy.copy(self.getDefaultValue()))
+        if self.keyable:
+            self._value = None
+            self._keyValues.reset()
+        else:
+            self._setValue(copy.copy(self.getDefaultValue()))
 
     def getDefaultValue(self):
         """
@@ -232,6 +262,8 @@ class Attribute(BaseObject):
         """
         if self.isLink:
             return self._getInputLink().asLinkExpr()
+        if self.keyable:
+            return self._keyValues.getSerializedValues()
         if self.isOutput and self._desc.isExpression:
             return self.getDefaultValue()
         return self.value
@@ -247,6 +279,9 @@ class Attribute(BaseObject):
         If it is an empty list, it will returns a really empty string.
         If it is a list with one empty string element, it will returns 2 quotes.
         """
+        # Keyable attribute, for now return the list of pairs as a JSON sting
+        if self.keyable:
+            return self._keyValues.getJson()
         # ChoiceParam with multiple values should be combined
         if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
             # Ensure value is a list as expected
@@ -273,6 +308,12 @@ class Attribute(BaseObject):
         """
         self._setValue(exportedValue)
 
+    def _isDefault(self):
+        if self.keyable:
+            return len(self._keyValues.pairs) == 0
+        else:
+            return self._getValue() == self.getDefaultValue()
+        
     def _isValid(self):
         """
         Check attribute description validValue:
@@ -328,6 +369,8 @@ class Attribute(BaseObject):
         if self.isLink:
             linkRootAttribute = self._getInputLink(recursive=True)
             return linkRootAttribute.uid()
+        if self.keyable:
+            return self._keyValues.uid()
         if isinstance(self._value, (list, tuple, set,)):
             # non-exclusive choice param
             # hash of sorted values hashed
@@ -421,6 +464,17 @@ class Attribute(BaseObject):
     # Slots
 
     @Slot()
+    def _onKeyValuesChanged(self):
+        """
+        For keyable attribute, when the list or pairs (key, value) is modified this method should be called.
+        Emit Attribute.valueChanged and update node / graph like _setValue().
+        """
+        if self.isInput:
+            self.requestGraphUpdate()
+            self.requestNodeUpdate()
+        self.valueChanged.emit()
+
+    @Slot()
     def _onValueChanged(self):
         self.node._onAttributeChanged(self)
 
@@ -464,9 +518,13 @@ class Attribute(BaseObject):
     valueChanged = Signal()
     value = Property(Variant, _getValue, _setValue, notify=valueChanged)
     evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
+    # Whether the attribute can have a distinct value per key.
+    keyable = Property(bool, lambda self: self._desc.keyable, constant=True)
+    # The list of pairs (key, value) of the attribute.
+    keyValues = Property(Variant, _getKeyValues, notify=valueChanged)
 
     # Whether the attribute value is the default value.
-    isDefault = Property(bool, lambda self: self.value == self.getDefaultValue(), notify=valueChanged)
+    isDefault = Property(bool, _isDefault, notify=valueChanged)
     # Whether the attribute value is valid.
     isValid = Property(bool, _isValid, notify=valueChanged)
     # Whether the attribute value is displayable in 2d.

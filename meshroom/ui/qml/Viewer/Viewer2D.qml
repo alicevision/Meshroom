@@ -1175,7 +1175,7 @@ FocusScope {
                             }
                             if (displayPanoramaViewer.checked) {
                                 sfmNode = _reconstruction.activeNodes.get('SfMTransform').node
-                                var previousNode = sfmNode.attribute("input").rootLinkParam.node
+                                var previousNode = sfmNode.attribute("input").inputRootLink.node
                                 return previousNode
                             }
                             return sfmNode
@@ -1444,7 +1444,7 @@ FocusScope {
                                 if (!activeNode.hasAttribute("input"))
                                     return false
                                 var inputAttr = activeNode.attribute("input")
-                                var inputAttrLink = inputAttr.rootLinkParam
+                                var inputAttrLink = inputAttr.inputRootLink
                                 if (!inputAttrLink)
                                     return false
                                 return inputAttrLink.node.isComputed
@@ -1495,7 +1495,7 @@ FocusScope {
                                 var inputAttr = activeNode.attribute("input")
                                 if (!inputAttr)
                                     return false
-                                var inputAttrLink = inputAttr.rootLinkParam
+                                var inputAttrLink = inputAttr.inputRootLink
                                 if (!inputAttrLink)
                                     return false
                                 return inputAttrLink.node.isComputed

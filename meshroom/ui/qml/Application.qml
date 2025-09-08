@@ -1139,7 +1139,7 @@ Page {
                 function viewAttributeInViewer(mouse, attribute) {
                     /* Display the current attribute in the corresponding viewer */
 
-                    if (attribute.is2D) {
+                    if (attribute.is2dDisplayable) {
                         workspaceView.viewIn2D(attribute, mouse)
                     }
 

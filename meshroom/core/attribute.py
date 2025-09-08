@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
 
-
 def attributeFactory(description: str, value, isOutput: bool, node, root=None, parent=None):
     """
     Create an Attribute based on description type.
@@ -32,27 +31,32 @@ def attributeFactory(description: str, value, isOutput: bool, node, root=None, p
     """
     attr: Attribute = description.instanceType(node, description, isOutput, root, parent)
     if value is not None:
-        attr._set_value(value)
+        attr._setValue(value)
     else:
         attr.resetToDefaultValue()
-
     # Only connect slot that reacts to value change once initial value has been set.
     # NOTE: This should be handled by the Node class, but we're currently limited by our core
     #       signal implementation that does not support emitting parameters.
     #       And using a lambda here to send the attribute as a parameter causes
     #       performance issues when using the pyside backend.
     attr.valueChanged.connect(attr._onValueChanged)
-
     return attr
 
 
 class Attribute(BaseObject):
     """
     """
-    stringIsLinkRe = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
-
+    LINK_EXPRESSION_REGEX = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
     VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
     VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".abc", ".ply"]
+
+    @staticmethod
+    def isLinkExpression(value) -> bool:
+        """
+        Return whether the given argument is a link expression.
+        A link expression is a string matching the {nodeName.attrName} pattern.
+        """
+        return isinstance(value, str) and Attribute.LINK_EXPRESSION_REGEX.match(value)
 
     def __init__(self, node, attributeDesc: desc.Attribute, isOutput: bool, root=None, parent=None):
         """
@@ -66,195 +70,39 @@ class Attribute(BaseObject):
             parent (BaseObject): (optional) the parent BaseObject
         """
         super().__init__(parent)
-        self._name: str = attributeDesc.name
         self._root = None if root is None else weakref.ref(root)
         self._node = weakref.ref(node)
-        self.attributeDesc: desc.Attribute = attributeDesc
+        self._desc: desc.Attribute = attributeDesc
         self._isOutput: bool = isOutput
-        self._label: str = attributeDesc.label
         self._enabled: bool = True
-        self._validValue: bool = True
-        self._description: str = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
-
-        # invalidation value for output attributes
-        self._invalidationValue = ""
-
+        self._invalidationValue = "" # invalidation value for output attributes
         self._value = None
-        self.initValue()
+        self._initValue()
 
-    @property
-    def node(self):
-        return self._node()
+    def _getFullName(self) -> str:
+        """ 
+        Get the attribute name following the path from the node to the attribute.
+        Return: nodeName.groupName.subGroupName.name 
+        """
+        return f'{self.node.name}.{self._getRootName()}'
 
-    @property
-    def root(self):
-        return self._root() if self._root else None
-
-    def getName(self) -> str:
-        """ Attribute name """
-        return self._name
-
-    def getFullName(self) -> str:
-        """ Name inside the Graph: groupName.name """
+    def _getRootName(self) -> str:
+        """ 
+        Get the attribute name following the path from the root attribute.
+        Return: groupName.subGroupName.name 
+        """
         if isinstance(self.root, ListAttribute):
-            return f'{self.root.getFullName()}[{self.root.index(self)}]'
+            return f'{self.root.rootName}[{self.root.index(self)}]'
         elif isinstance(self.root, GroupAttribute):
-            return f'{self.root.getFullName()}.{self.getName()}'
-        return self.getName()
-
-    def getFullNameToNode(self) -> str:
-        """ Name inside the Graph: nodeName.groupName.name """
-        return f'{self.node.name}.{self.getFullName()}'
-
-    def getFullNameToGraph(self) -> str:
-        """ Name inside the Graph: graphName.nodeName.groupName.name """
-        graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
-        return f'{graphName}.{self.getFullNameToNode()}'
+            return f'{self.root.rootName}.{self._desc.name}'
+        return self._desc.name
 
     def asLinkExpr(self) -> str:
-        """ Return link expression for this Attribute """
-        return "{" + self.getFullNameToNode() + "}"
-
-    def getType(self) -> str:
-        return self.attributeDesc.type
-
-    def _isReadOnly(self) -> bool:
-        return not self._isOutput and self.node.isCompatibilityNode
-
-    def getBaseType(self) -> str:
-        return self.getType()
-
-    def getLabel(self) -> str:
-        return self._label
-
-    @Slot(str, result=bool)
-    def matchText(self, text: str) -> bool:
-        return self.fullLabel.lower().find(text.lower()) > -1
-
-    def getFullLabel(self) -> str:
+        """ 
+        Return the link expression for this Attribute 
         """
-        Full Label includes the name of all parent groups, e.g. 'groupLabel subGroupLabel Label'.
-        """
-        if isinstance(self.root, ListAttribute):
-            return self.root.getFullLabel()
-        elif isinstance(self.root, GroupAttribute):
-            return f'{self.root.getFullLabel()} {self.getLabel()}'
-        return self.getLabel()
-
-    def getFullLabelToNode(self) -> str:
-        """ Label inside the Graph: nodeLabel groupLabel Label """
-        return f'{self.node.label} {self.getFullLabel()}'
-
-    def getFullLabelToGraph(self) -> str:
-        """ Label inside the Graph: graphName nodeLabel groupLabel Label """
-        graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
-        return f'{graphName} {self.getFullLabelToNode()}'
-
-    def getEnabled(self) -> bool:
-        if isinstance(self.desc.enabled, types.FunctionType):
-            try:
-                return self.desc.enabled(self.node)
-            except Exception:
-                # Node implementation may fail due to version mismatch
-                return True
-        return self.attributeDesc.enabled
-
-    def setEnabled(self, v):
-        if self._enabled == v:
-            return
-        self._enabled = v
-        self.enabledChanged.emit()
-
-    def getUidIgnoreValue(self):
-        """ Value for which the attribute should be ignored during the UID computation. """
-        return self.attributeDesc.uidIgnoreValue
-
-    def getValidValue(self):
-        """
-        Get the status of _validValue:
-            - If it is a function, execute it and return the result
-            - Otherwise, simply return its value
-        """
-        if isinstance(self.desc.validValue, types.FunctionType):
-            try:
-                return self.desc.validValue(self.node)
-            except Exception:
-                return True
-        return self._validValue
-
-    def setValidValue(self, value):
-        if self._validValue == value:
-            return
-        self._validValue = value
-
-    def validateValue(self, value):
-        return self.desc.validateValue(value)
-
-    def _get_value(self):
-        if self.isLink:
-            return self.getLinkParam().value
-        return self._value
-
-    def _set_value(self, value):
-        if self._value == value:
-            return
-
-        if isinstance(value, Attribute) or Attribute.isLinkExpression(value):
-            # if we set a link to another attribute
-            self._value = value
-        elif isinstance(value, types.FunctionType):
-            # evaluate the function
-            self._value = value(self)
-        else:
-            # if we set a new value, we use the attribute descriptor validator to check the
-            # validity of the value and apply some conversion if needed
-            convertedValue = self.validateValue(value)
-            self._value = convertedValue
-
-        # Request graph update when input parameter value is set
-        # and parent node belongs to a graph
-        # Output attributes value are set internally during the update process,
-        # which is why we don't trigger any update in this case
-        # TODO: update only the nodes impacted by this change
-        # TODO: only update the graph if this attribute participates to a UID
-        if self.isInput:
-            self.requestGraphUpdate()
-            # TODO: only call update of the node if the attribute is internal
-            # Internal attributes are set as inputs
-            self.requestNodeUpdate()
-
-        self.valueChanged.emit()
-        self.validValueChanged.emit()
-
-    @Slot()
-    def _onValueChanged(self):
-        self.node._onAttributeChanged(self)
-
-    def _set_label(self, label):
-        if self._label == label:
-            return
-        self._label = label
-        self.labelChanged.emit()
-
-    def _get_description(self):
-        return self._description
-
-    def _set_description(self, desc):
-        if self._description == desc:
-            return
-        self._description = desc
-        self.descriptionChanged.emit()
-
-    def upgradeValue(self, exportedValue):
-        self._set_value(exportedValue)
-
-    def initValue(self):
-        if self.desc._valueType is not None:
-            self._value = self.desc._valueType()
-
-    def resetToDefaultValue(self):
-        self._set_value(copy.copy(self.defaultValue()))
+        return "{" + self._getFullName() + "}"
 
     def requestGraphUpdate(self):
         if self.node.graph:
@@ -267,96 +115,69 @@ class Attribute(BaseObject):
         if self.node:
             self.node.updateInternalAttributes()
 
-    @property
-    def isOutput(self) -> bool:
-        return self._isOutput
-
-    @property
-    def isInput(self) -> bool:
-        return not self._isOutput
-
-    def uid(self) -> str:
+    def _initValue(self):
         """
-        Compute the UID for the attribute.
+        Initialize the attribute value.
+        Called in the attribute factory for each attributes.
         """
-        if self.isOutput:
-            if self.desc.isDynamicValue:
-                # If the attribute is a dynamic output, the UID is derived from the node UID.
-                # To guarantee that each output attribute receives a unique ID, we add the attribute
-                # name to it.
-                return hashValue((self.name, self.node._uid))
-            else:
-                # Only dependent on the hash of its value without the cache folder.
-                # "/" at the end of the link is stripped to prevent having different UIDs depending
-                # on whether the invalidation value finishes with it or not
-                strippedInvalidationValue = self._invalidationValue.rstrip("/")
-                return hashValue(strippedInvalidationValue)
+        if self._desc._valueType is not None:
+            self._value = self._desc._valueType()
+
+    def _getEvalValue(self):
+        """
+        Return the value of a the attribute.
+        For string, expressions will be evaluated.
+        """
+        if isinstance(self.value, str):
+            env = self.node.nodePlugin.configFullEnv if self.node.nodePlugin else os.environ
+            substituted = Template(self.value).safe_substitute(env)
+            try:
+                varResolved = substituted.format(**self.node._cmdVars)
+                return varResolved
+            except (KeyError, IndexError):
+                # Catch KeyErrors and IndexErros to be able to open files created prior to the
+                # support of relative variables (when self.node._cmdVars was not used to evaluate
+                # expressions in the attribute)
+                return substituted
+        return self.value
+
+    def _getValue(self):
+        """
+        Return the value of the attribute or the linked attribute value.
+        """
         if self.isLink:
-            linkParam = self.getLinkParam(recursive=True)
-            return linkParam.uid()
-        if isinstance(self._value, (list, tuple, set,)):
-            # non-exclusive choice param
-            # hash of sorted values hashed
-            return hashValue([hashValue(v) for v in sorted(self._value)])
-        return hashValue(self._value)
+            return self._getInputLink().value
+        return self._value
 
-    @property
-    def isLink(self) -> bool:
-        """ Whether the input attribute is a link to another attribute. """
-        # note: directly use self.node.graph._edges to avoid using the property that may become
-        # invalid at some point
-        return self.node.graph and self.isInput and self.node.graph._edges and \
-            self in self.node.graph._edges.keys()
-
-    @staticmethod
-    def isLinkExpression(value) -> bool:
+    def _setValue(self, value):
         """
-        Return whether the given argument is a link expression.
-        A link expression is a string matching the {nodeName.attrName} pattern.
+        Set the attribute value from a given value, a given function or a given attribute. 
         """
-        return isinstance(value, str) and Attribute.stringIsLinkRe.match(value)
-
-    def getLinkParam(self, recursive=False):
-        if not self.isLink:
-            return None
-        linkParam = self.node.graph.edge(self).src
-        if not recursive:
-            return linkParam
-        if linkParam.isLink:
-            return linkParam.getLinkParam(recursive)
-        return linkParam
-
-    @property
-    def hasOutputConnections(self) -> bool:
-        """
-        Whether the attribute has output connections, i.e is the source of at least one edge.
-        """
-        # safety check to avoid evaluation errors
-        if not self.node.graph or not self.node.graph.edges:
-            return False
-        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
-
-    def getInputConnections(self) -> list["Edge"]:
-        """ Retrieve the upstreams connected edges """
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-
-        return [edge for edge in self.node.graph.edges.values() if edge.dst == self]
-
-    def getOutputConnections(self) -> list["Edge"]:
-        """ Retrieve all the edges connected to this attribute """
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-
-        return [edge for edge in self.node.graph.edges.values() if edge.src == self]
-
-    def getLinkedInAttributes(self) -> list["Attribute"]:
-        """ Return the upstreams connected attributes  """
-        return [edge.src for edge in self.getInputConnections()]
-
-    def getLinkedOutAttributes(self) -> list["Attribute"]:
-        """ Return the downstreams connected attributes """
-        return [edge.dst for edge in self.getOutputConnections()]
+        if self._value == value:
+            return
+        if isinstance(value, Attribute) or Attribute.isLinkExpression(value):
+            # if we set a link to another attribute
+            self._value = value
+        elif isinstance(value, types.FunctionType):
+            # evaluate the function
+            self._value = value(self)
+        else:
+            # if we set a new value, we use the attribute descriptor validator to check the
+            # validity of the value and apply some conversion if needed
+            convertedValue = self.validateValue(value)
+            self._value = convertedValue
+        # Request graph update when input parameter value is set
+        # and parent node belongs to a graph
+        # Output attributes value are set internally during the update process,
+        # which is why we don't trigger any update in this case
+        # TODO: update only the nodes impacted by this change
+        # TODO: only update the graph if this attribute participates to a UID
+        if self.isInput:
+            self.requestGraphUpdate()
+            # TODO: only call update of the node if the attribute is internal
+            # Internal attributes are set as inputs
+            self.requestNodeUpdate()
+        self.valueChanged.emit()
 
     def _applyExpr(self):
         """
@@ -385,29 +206,41 @@ class Attribute(BaseObject):
                 logging.warning(f'Expression: "{v}"\nError: "{err}".')
             self.resetToDefaultValue()
 
-    def getExportValue(self):
+    def resetToDefaultValue(self):
+        """
+        Reset the attribute to its default value.
+        """
+        self._setValue(copy.copy(self.getDefaultValue()))
+
+    def getDefaultValue(self):
+        """
+        Get the attribute default value.
+        """
+        if isinstance(self._desc.value, types.FunctionType):
+            try:
+                return self._desc.value(self)
+            except Exception as e:
+                if not self.node.isCompatibilityNode:
+                    # Log message only if we are not in compatibility mode
+                    logging.warning("Failed to evaluate default value (node lambda) for attribute '{}': {}".
+                                    format(self.name, e))
+                return None
+        # Need to force a copy, for the case where the value is a list
+        # (avoid reference to the desc value)
+        return copy.copy(self._desc.value)
+
+    def getSerializedValue(self):
+        """
+        Get the attribute value serialized.
+        """
         if self.isLink:
-            return self.getLinkParam().asLinkExpr()
-        if self.isOutput and self.desc.isExpression:
-            return self.defaultValue()
+            return self._getInputLink().asLinkExpr()
+        if self.isOutput and self._desc.isExpression:
+            return self.getDefaultValue()
         return self.value
 
-    def getEvalValue(self):
-        """
-        Return the value. If it is a string, expressions will be evaluated.
-        """
-        if isinstance(self.value, str):
-            env = self.node.nodePlugin.configFullEnv if self.node.nodePlugin else os.environ
-            substituted = Template(self.value).safe_substitute(env)
-            try:
-                varResolved = substituted.format(**self.node._cmdVars)
-                return varResolved
-            except (KeyError, IndexError):
-                # Catch KeyErrors and IndexErros to be able to open files created prior to the
-                # support of relative variables (when self.node._cmdVars was not used to evaluate
-                # expressions in the attribute)
-                return substituted
-        return self.value
+    def getPrimitiveValue(self, exportDefault=True):
+        return self._value
 
     def getValueStr(self, withQuotes=True) -> str:
         """
@@ -418,118 +251,255 @@ class Attribute(BaseObject):
         If it is a list with one empty string element, it will returns 2 quotes.
         """
         # ChoiceParam with multiple values should be combined
-        if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
+        if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
             # Ensure value is a list as expected
             assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
-            v = self.attributeDesc.joinChar.join(self.getEvalValue())
+            v = self._desc.joinChar.join(self._getEvalValue())
             if withQuotes and v:
                 return f'"{v}"'
             return v
         # String, File, single value Choice are based on strings and should includes quotes
         # to deal with spaces
-        if withQuotes and isinstance(self.attributeDesc,
-                                     (desc.StringParam, desc.File, desc.ChoiceParam)):
-            return f'"{self.getEvalValue()}"'
-        return str(self.getEvalValue())
+        if withQuotes and isinstance(self._desc, (desc.StringParam, desc.File, desc.ChoiceParam)):
+            return f'"{self._getEvalValue()}"'
+        return str(self._getEvalValue())
 
-    def defaultValue(self):
-        if isinstance(self.desc.value, types.FunctionType):
+    def validateValue(self, value):
+        """ 
+        Ensure value is compatible with the attribute description and convert value if needed. 
+        """
+        return self._desc.validateValue(value)
+
+    def upgradeValue(self, exportedValue):
+        """ 
+        Upgrade the attribute value within a compatibility node.
+        """
+        self._setValue(exportedValue)
+
+    def _isValid(self):
+        """
+        Check attribute description validValue:
+            - If it is a function, execute it and return the result
+            - Otherwise, simply return true
+        """
+        if isinstance(self._desc.validValue, types.FunctionType):
             try:
-                return self.desc.value(self)
-            except Exception as e:
-                if not self.node.isCompatibilityNode:
-                    # Log message only if we are not in compatibility mode
-                    logging.warning("Failed to evaluate default value (node lambda) for attribute '{}': {}".
-                                    format(self.name, e))
-                return None
-        # Need to force a copy, for the case where the value is a list
-        # (avoid reference to the desc value)
-        return copy.copy(self.desc.value)
+                return self._desc.validValue(self.node)
+            except Exception:
+                return True
+        return True
 
-    def _isDefault(self) -> bool:
-        return self.value == self.defaultValue()
+    def _is2dDisplayable(self) -> bool:
+        """ 
+        Return True if the current attribute is considered as a displayable 2d file 
+        """
+        if not self._desc.semantic:
+            return False
+        return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
+                     if self._desc.semantic == imageSemantic), None) is not None
 
-    def getPrimitiveValue(self, exportDefault=True):
-        return self._value
-
-    def updateInternals(self):
-        # Emit if the enable status has changed
-        self.setEnabled(self.getEnabled())
-
-    def _is3D(self) -> bool:
-        """ Return True if the current attribute is considered as a 3d file """
-        if self.desc.semantic == "3d":
+    def _is3dDisplayable(self) -> bool:
+        """ 
+        Return True if the current attribute is considered as a displayable 3d file 
+        """
+        if self._desc.semantic == "3d":
             return True
-
         # If the attribute is a File attribute, it is an instance of str and can be iterated over
         hasSupportedExt = isinstance(self.value, str) and any(ext in self.value for ext in Attribute.VALID_3D_EXTENSIONS)
         if hasSupportedExt:
             return True
-
         return False
 
-    def _is2D(self) -> bool:
-        """ Return True if the current attribute is considered as a 2d file """
-        if not self.desc.semantic:
+    def uid(self) -> str:
+        """
+        Compute the UID for the attribute.
+        """
+        if self.isOutput:
+            if self._desc.isDynamicValue:
+                # If the attribute is a dynamic output, the UID is derived from the node UID.
+                # To guarantee that each output attribute receives a unique ID, we add the attribute
+                # name to it.
+                return hashValue((self.name, self.node._uid))
+            else:
+                # Only dependent on the hash of its value without the cache folder.
+                # "/" at the end of the link is stripped to prevent having different UIDs depending
+                # on whether the invalidation value finishes with it or not
+                strippedInvalidationValue = self._invalidationValue.rstrip("/")
+                return hashValue(strippedInvalidationValue)
+        if self.isLink:
+            linkRootAttribute = self._getInputLink(recursive=True)
+            return linkRootAttribute.uid()
+        if isinstance(self._value, (list, tuple, set,)):
+            # non-exclusive choice param
+            # hash of sorted values hashed
+            return hashValue([hashValue(v) for v in sorted(self._value)])
+        return hashValue(self._value)
+
+    def updateInternals(self):
+        """
+        Update attribute internal properties.
+        """
+        # Emit if the enable status has changed
+        self._setEnabled(self._getEnabled())
+
+    def _getEnabled(self) -> bool:
+        if isinstance(self._desc.enabled, types.FunctionType):
+            try:
+                return self._desc.enabled(self.node)
+            except Exception:
+                # Node implementation may fail due to version mismatch
+                return True
+        return self._desc.enabled
+
+    def _setEnabled(self, v):
+        if self._enabled == v:
+            return
+        self._enabled = v
+        self.enabledChanged.emit()
+
+    def _isLink(self) -> bool:
+        """ 
+        Whether the attribute is a link to another attribute. 
+        """
+        return self.node.graph and self.isInput and self.node.graph._edges and \
+            self in self.node.graph._edges.keys()
+
+    def _getInputLink(self, recursive=False) -> "Attribute":
+        """ 
+        Return the direct upstream connected attribute.
+        :param recursive: recursive call, return the root attribute
+        """
+        if not self.isLink:
+            return None
+        linkAttribute = self.node.graph.edge(self).src
+        if recursive and linkAttribute.isLink:
+            return linkAttribute._getInputLink(recursive)
+        return linkAttribute
+
+    def _getOutputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of direct downstream connected attributes.
+        """
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self]
+
+    def _getAllInputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of upstream connected attributes for the attribute or any of its elements.
+        """
+        inputLink = self._getInputLink()
+        if inputLink is None: 
+            return []
+        return [inputLink]
+
+    def _getAllOutputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of downstream connected attributes for the attribute or any of its elements.
+        """
+        return self._getOutputLinks()
+
+    def _hasAnyInputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its elements is a link to another attribute.
+        """
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
             return False
+        return next((edge for edge in self.node.graph.edges.values() if edge.dst == self), None) is not None
 
-        return next((imageSemantic for imageSemantic in Attribute.VALID_IMAGE_SEMANTICS
-                     if self.desc.semantic == imageSemantic), None) is not None
+    def _hasAnyOutputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its elements is linked by another attribute.
+        """
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return False
+        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
-    name = Property(str, getName, constant=True)
-    fullName = Property(str, getFullName, constant=True)
-    fullNameToNode = Property(str, getFullNameToNode, constant=True)
-    fullNameToGraph = Property(str, getFullNameToGraph, constant=True)
-    labelChanged = Signal()
-    label = Property(str, getLabel, _set_label, notify=labelChanged)
-    fullLabel = Property(str, getFullLabel, constant=True)
-    fullLabelToNode = Property(str, getFullLabelToNode, constant=True)
-    fullLabelToGraph = Property(str, getFullLabelToGraph, constant=True)
-    type = Property(str, getType, constant=True)
-    baseType = Property(str, getType, constant=True)
-    isReadOnly = Property(bool, _isReadOnly, constant=True)
-    is3D = Property(bool, _is3D, constant=True)
-    is2D = Property(bool, _is2D, constant=True)
+    # Slots
 
-    # Description of the attribute
-    descriptionChanged = Signal()
-    description = Property(str, _get_description, _set_description, notify=descriptionChanged)
+    @Slot()
+    def _onValueChanged(self):
+        self.node._onAttributeChanged(self)
 
-    # Definition of the attribute
-    desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
+    @Slot(str, result=bool)
+    def matchText(self, text: str) -> bool:
+        return self.label.lower().find(text.lower()) > -1
 
-    valueChanged = Signal()
-    value = Property(Variant, _get_value, _set_value, notify=valueChanged)
-    valueStr = Property(Variant, getValueStr, notify=valueChanged)
-    evalValue = Property(Variant, getEvalValue, notify=valueChanged)
-    isOutput = Property(bool, isOutput.fget, constant=True)
-    isLinkChanged = Signal()
-    isLink = Property(bool, isLink.fget, notify=isLinkChanged)
-    isLinkNested = isLink
-    hasOutputConnectionsChanged = Signal()
-    hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)
+    # Properties and signals 
 
-    linkedInAttributesChanged = Signal()
-    linkedInAttributes = Property(Variant, getLinkedInAttributes, notify=linkedInAttributesChanged)
-    linkedOutAttributesChanged = Signal()
-    linkedOutAttributes = Property(Variant, getLinkedOutAttributes, notify=linkedOutAttributesChanged)
-
-    isDefault = Property(bool, _isDefault, notify=valueChanged)
-    linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
-    rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True),
-                             notify=isLinkChanged)
-    node = Property(BaseObject, node.fget, constant=True)
-    enabledChanged = Signal()
-    enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
+    # The node that contains this attribute.
+    node = Property(BaseObject, lambda self: self._node(), constant=True)
+    # The attribute that contains this attribute.
+    root = Property(BaseObject, lambda self: self._root() if self._root else None, constant=True)
+    # The attribute name following the path from the node to the attribute.
+    fullName = Property(str, _getFullName, constant=True)
+    # The attribute name following the path from the root attribute.
+    rootName = Property(str, _getRootName, constant=True)
+    # The description object of the attribute.
+    desc = Property(desc.Attribute, lambda self: self._desc, constant=True)
+    # The name of the attribute.
+    name = Property(str, lambda self: self._desc._name, constant=True)
+    # The human-readable label for the attribute.
+    label = Property(str, lambda self: self._desc.label, constant=True)
+    # The type of attribute as a string.
+    type = Property(str, lambda self: self._desc.type, constant=True)
+    # The type of the elements of the attribute as a string.
+    baseType = Property(str, lambda self: self._desc.type, constant=True)
+    # Whether the attribute is a node input attribute.
+    isInput = Property(bool, lambda self: not self._isOutput, constant=True)
+    # Whether the attribute is a node output attribute.
+    isOutput = Property(bool, lambda self: self._isOutput, constant=True)
+    # Whether the attribute is a read-only attribute.
+    isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode, constant=True)
+    # Whether changing this attribute invalidates cached results.
     invalidate = Property(bool, lambda self: self._invalidate, constant=True)
-    uidIgnoreValue = Property(Variant, getUidIgnoreValue, constant=True)
-    validValueChanged = Signal()
-    validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
-    root = Property(BaseObject, root.fget, constant=True)
+    # Whether this attribute is enabled.
+    enabledChanged = Signal()
+    enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
+
+    # Attribute value properties and signals
+    valueChanged = Signal()
+    value = Property(Variant, _getValue, _setValue, notify=valueChanged)
+    evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
+
+    # Whether the attribute value is the default value.
+    isDefault = Property(bool, lambda self: self.value == self.getDefaultValue(), notify=valueChanged)
+    # Whether the attribute value is valid.
+    isValid = Property(bool, _isValid, notify=valueChanged)
+    # Whether the attribute value is displayable in 2d.
+    is2dDisplayable = Property(bool, _is2dDisplayable, constant=True)
+    # Whether the attribute value is displayable in 3d.
+    is3dDisplayable = Property(bool, _is3dDisplayable, constant=True)
+    
+    # Attribute link properties and signals
+    inputLinksChanged = Signal()
+    outputLinksChanged = Signal()
+
+    # Whether the attribute is a link to another attribute.
+    isLink = Property(bool, _isLink, notify=inputLinksChanged)
+    # The upstream connected root attribute.
+    inputRootLink = Property(Variant, lambda self: self._getInputLink(recursive=True), notify=inputLinksChanged)
+    # The upstream connected attribute.
+    inputLink = Property(BaseObject, _getInputLink, notify=inputLinksChanged)
+    # The list of downstream connected attributes.
+    outputLinks = Property(Variant, _getOutputLinks, notify=outputLinksChanged)
+    # The list of upstream connected attributes for the attribute or any of its elements.
+    allInputLinks = Property(Variant, _getAllInputLinks, notify=inputLinksChanged)
+    # The list of downstream connected attributes for the attribute or any of its elements.
+    allOutputLinks = Property(Variant, _getAllOutputLinks, notify=outputLinksChanged)
+    # Whether the attribute or any of its elements is a link to another attribute.
+    hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=inputLinksChanged)
+    # Whether the attribute or any of its elements is linked by another attribute.
+    hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
 
 
 def raiseIfLink(func):
-    """ If Attribute instance is a link, raise a RuntimeError. """
+    """ 
+    If Attribute instance is a link, raise a RuntimeError.
+    """
     def wrapper(attr, *args, **kwargs):
         if attr.isLink:
             raise RuntimeError("Can't modify connected Attribute")
@@ -558,34 +528,9 @@ class ChoiceParam(Attribute):
         return len(self.getValues())
 
     def getValues(self):
-        if (linkParam := self.getLinkParam()) is not None:
+        if (linkParam := self._getInputLink()) is not None:
             return linkParam.getValues()
-        return self._values if self._values is not None else self.desc._values
-
-    def conformValue(self, val):
-        """ Conform 'val' to the correct type and check for its validity """
-        return self.desc.conformValue(val)
-
-    def validateValue(self, value):
-        if self.desc.exclusive:
-            return self.conformValue(value)
-
-        if isinstance(value, str):
-            value = value.split(',')
-
-        if not isinstance(value, Iterable):
-            raise ValueError("Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
-        return [self.conformValue(v) for v in value]
-
-    def _set_value(self, value):
-        # Handle alternative serialization for ChoiceParam with overriden values.
-        serializedValueWithValuesOverrides = isinstance(value, dict)
-        if serializedValueWithValuesOverrides:
-            super()._set_value(value[self.desc._OVERRIDE_SERIALIZATION_KEY_VALUE])
-            self.setValues(value[self.desc._OVERRIDE_SERIALIZATION_KEY_VALUES])
-        else:
-            super()._set_value(value)
+        return self._values if self._values is not None else self._desc._values
 
     def setValues(self, values):
         if values == self._values:
@@ -593,19 +538,45 @@ class ChoiceParam(Attribute):
         self._values = values
         self.valuesChanged.emit()
 
-    def getExportValue(self):
-        useStandardSerialization = self.isLink or not self.desc._saveValuesOverride or \
+    # Override
+    def validateValue(self, value):
+        if self._desc.exclusive:
+            return self._conformValue(value)
+        if isinstance(value, str):
+            value = value.split(',')
+        if not isinstance(value, Iterable):
+            raise ValueError("Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})".
+                             format(self.name, value, type(value)))
+        return [self._conformValue(v) for v in value]
+
+    def _conformValue(self, val):
+        """ 
+        Conform 'val' to the correct type and check for its validity
+        """
+        return self._desc.conformValue(val)
+
+    # Override
+    def _setValue(self, value):
+        # Handle alternative serialization for ChoiceParam with overriden values.
+        serializedValueWithValuesOverrides = isinstance(value, dict)
+        if serializedValueWithValuesOverrides:
+            super()._setValue(value[self._desc._OVERRIDE_SERIALIZATION_KEY_VALUE])
+            self.setValues(value[self._desc._OVERRIDE_SERIALIZATION_KEY_VALUES])
+        else:
+            super()._setValue(value)
+
+    # Override
+    def getSerializedValue(self):
+        useStandardSerialization = self.isLink or not self._desc._saveValuesOverride or \
             self._values is None
-
         if useStandardSerialization:
-            return super().getExportValue()
-
+            return super().getSerializedValue()
         return {
-            self.desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
-            self.desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
+            self._desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
+            self._desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
         }
 
-    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     valuesChanged = Signal()
     values = Property(Variant, getValues, setValues, notify=valuesChanged)
 
@@ -624,11 +595,10 @@ class ListAttribute(Attribute):
     def __iter__(self):
         return iter(self.value)
 
-    def getBaseType(self):
-        return self.attributeDesc.elementDesc.__class__.__name__
-
     def at(self, idx):
-        """ Returns child attribute at index 'idx'. """
+        """ 
+        Returns child attribute at index 'idx'.
+        """
         # Implement 'at' rather than '__getitem__'
         # since the later is called spuriously when object is used in QML
         return self.value.at(idx)
@@ -636,68 +606,25 @@ class ListAttribute(Attribute):
     def index(self, item):
         return self.value.indexOf(item)
 
-    def initValue(self):
-        self.resetToDefaultValue()
-
-    def resetToDefaultValue(self):
-        self._value = ListModel(parent=self)
-        self.valueChanged.emit()
-
-    def _set_value(self, value):
-        if self.node.graph:
-            self.remove(0, len(self))
-        # Link to another attribute
-        if isinstance(value, ListAttribute) or Attribute.isLinkExpression(value):
-            self._value = value
-        # New value
-        else:
-            # During initialization self._value may not be set
-            if self._value is None:
-                self._value = ListModel(parent=self)
-            newValue = self.desc.validateValue(value)
-            self.extend(newValue)
-        self.requestGraphUpdate()
-
-    def upgradeValue(self, exportedValues):
-        if not isinstance(exportedValues, list):
-            if isinstance(exportedValues, ListAttribute) or \
-               Attribute.isLinkExpression(exportedValues):
-                self._set_value(exportedValues)
-                return
-            raise RuntimeError("ListAttribute.upgradeValue: the given value is of type " +
-                               str(type(exportedValues)) + " but a 'list' is expected.")
-
-        attrs = []
-        for v in exportedValues:
-            a = attributeFactory(self.attributeDesc.elementDesc, None, self.isOutput,
-                                 self.node, self)
-            a.upgradeValue(v)
-            attrs.append(a)
-        index = len(self._value)
-        self._value.insert(index, attrs)
-        self.valueChanged.emit()
-        self._applyExpr()
-        self.requestGraphUpdate()
-
     @raiseIfLink
     def append(self, value):
         self.extend([value])
+
+    @raiseIfLink
+    def extend(self, values):
+        self.insert(len(self), values)
 
     @raiseIfLink
     def insert(self, index, value):
         if self._value is None:
             self._value = ListModel(parent=self)
         values = value if isinstance(value, list) else [value]
-        attrs = [attributeFactory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self)
+        attrs = [attributeFactory(self._desc.elementDesc, v, self.isOutput, self.node, self)
                  for v in values]
         self._value.insert(index, attrs)
         self.valueChanged.emit()
         self._applyExpr()
         self.requestGraphUpdate()
-
-    @raiseIfLink
-    def extend(self, values):
-        self.insert(len(self), values)
 
     @raiseIfLink
     def remove(self, index, count=1):
@@ -716,15 +643,27 @@ class ListAttribute(Attribute):
         self.requestGraphUpdate()
         self.valueChanged.emit()
 
-    def uid(self):
-        if isinstance(self.value, ListModel):
-            uids = []
-            for value in self.value:
-                if value.invalidate:
-                    uids.append(value.uid())
-            return hashValue(uids)
-        return super().uid()
+    # Override
+    def _initValue(self):
+        self.resetToDefaultValue()
 
+    # Override
+    def _setValue(self, value):
+        if self.node.graph:
+            self.remove(0, len(self))
+        # Link to another attribute
+        if isinstance(value, ListAttribute) or Attribute.isLinkExpression(value):
+            self._value = value
+        # New value
+        else:
+            # During initialization self._value may not be set
+            if self._value is None:
+                self._value = ListModel(parent=self)
+            newValue = self._desc.validateValue(value)
+            self.extend(newValue)
+        self.requestGraphUpdate()
+
+    # Override
     def _applyExpr(self):
         if not self.node.graph:
             return
@@ -734,80 +673,124 @@ class ListAttribute(Attribute):
             for value in self._value:
                 value._applyExpr()
 
-    def getExportValue(self):
-        if self.isLink:
-            return self.getLinkParam().asLinkExpr()
-        return [attr.getExportValue() for attr in self._value]
+    # Override
+    def resetToDefaultValue(self):
+        self._value = ListModel(parent=self)
+        self.valueChanged.emit()
 
-    def defaultValue(self) -> list:
+    # Override
+    def getDefaultValue(self) -> list:
         return []
 
-    def _isDefault(self) -> bool:
-        return len(self._value) == 0
+    # Override
+    def getSerializedValue(self):
+        if self.isLink:
+            return self._getInputLink().asLinkExpr()
+        return [attr.getSerializedValue() for attr in self._value]
 
+    # Override
     def getPrimitiveValue(self, exportDefault=True):
         if exportDefault:
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value]
         return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value
                 if not attr.isDefault]
 
+    # Override
     def getValueStr(self, withQuotes=True) -> str:
         assert isinstance(self.value, ListModel)
-        if self.attributeDesc.joinChar == ' ':
-            return self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=withQuotes)
+        if self._desc.joinChar == ' ':
+            return self._desc.joinChar.join([v.getValueStr(withQuotes=withQuotes)
                                                      for v in self.value])
-        v = self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=False)
+        v = self._desc.joinChar.join([v.getValueStr(withQuotes=False)
                                               for v in self.value])
         if withQuotes and v:
             return f'"{v}"'
         return v
 
+    # Override
+    def upgradeValue(self, exportedValues):
+        if not isinstance(exportedValues, list):
+            if isinstance(exportedValues, ListAttribute) or \
+               Attribute.isLinkExpression(exportedValues):
+                self._setValue(exportedValues)
+                return
+            raise RuntimeError("ListAttribute.upgradeValue: the given value is of type " +
+                               str(type(exportedValues)) + " but a 'list' is expected.")
+        attrs = []
+        for v in exportedValues:
+            a = attributeFactory(self._desc.elementDesc, None, self.isOutput,
+                                 self.node, self)
+            a.upgradeValue(v)
+            attrs.append(a)
+        index = len(self._value)
+        self._value.insert(index, attrs)
+        self.valueChanged.emit()
+        self._applyExpr()
+        self.requestGraphUpdate()
+
+    # Override
+    def uid(self):
+        if isinstance(self.value, ListModel):
+            uids = []
+            for value in self.value:
+                if value.invalidate:
+                    uids.append(value.uid())
+            return hashValue(uids)
+        return super().uid()
+
+    # Override
     def updateInternals(self):
         super().updateInternals()
         for attr in self._value:
             attr.updateInternals()
 
-    @property
-    def isLinkNested(self) -> bool:
-        """ Whether the attribute or any of its elements is a link to another attribute. """
-        # note: directly use self.node.graph._edges to avoid using the property that may become
-        # invalid at some point
-        return self.isLink \
-            or self.node.graph and self.isInput and self.node.graph._edges \
-            and any(v in self.node.graph._edges.keys() for v in self._value)
-
-    # override
-    @property
-    def hasOutputConnections(self):
-        """ Whether the attribute has output connections, i.e is the source of at least one edge. """
-
-        # safety check to avoid evaluation errors
-        if not self.node.graph or not self.node.graph.edges:
-            return False
-
-        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None or \
-            any(attr.hasOutputConnections for attr in self._value if hasattr(attr, 'hasOutputConnections'))
-
-    # override
-    def getInputConnections(self) -> list["Edge"]:
+    # Override
+    def _getAllInputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of upstream connected attributes for the attribute or any of its elements."
+        """
+        # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return []
+        return [edge.src for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
 
-        return [edge for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
-
-    # override
-    def getOutputConnections(self) -> list["Edge"]:
+    # Override
+    def _getAllOutputLinks(self) -> list["Attribute"]:
+        """ 
+        Return the list of downstream connected attributes for the attribute or any of its elements."
+        """
+        # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return []
+        return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
 
-        return [edge for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
+    # Override
+    def _hasAnyInputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its elements is a link to another attribute.
+        """
+        return super()._hasAnyInputLinks() or \
+               any(attribute.hasAnyInputLinks for attribute in self._value if hasattr(attribute, 'hasAnyInputLinks'))
+
+    # Override
+    def _hasAnyOutputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its elements is linked by another attribute.
+        """
+        return super()._hasAnyOutputLinks() or \
+               any(attribute.hasAnyOutputLinks for attribute in self._value if hasattr(attribute, 'hasAnyOutputLinks'))
+
 
     # Override value property setter
-    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
-    isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
-    baseType = Property(str, getBaseType, constant=True)
-    isLinkNested = Property(bool, isLinkNested.fget)
-    hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=Attribute.hasOutputConnectionsChanged)
+    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
+    isDefault = Property(bool, lambda self: len(self.value) == 0, notify=Attribute.valueChanged)
+    baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
+
+    # Override attribute link properties
+    allInputLinks = Property(Variant, _getAllInputLinks, notify=Attribute.inputLinksChanged)
+    allOutputLinks = Property(Variant, _getAllOutputLinks, notify=Attribute.outputLinksChanged)
+    hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=Attribute.inputLinksChanged)
+    hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=Attribute.outputLinksChanged)
 
 
 class GroupAttribute(Attribute):
@@ -825,20 +808,78 @@ class GroupAttribute(Attribute):
             except KeyError:
                 raise AttributeError(key)
 
-    def _set_value(self, exportedValue):
+    # Override
+    def _initValue(self):
+        self._value = DictModel(keyAttrName='name', parent=self)
+        subAttributes = []
+        for subAttrDesc in self._desc.groupDesc:
+            childAttr = attributeFactory(subAttrDesc, None, self.isOutput, self.node, self)
+            subAttributes.append(childAttr)
+            childAttr.valueChanged.connect(self.valueChanged)
+        self._value.reset(subAttributes)
+
+    # Override
+    def _setValue(self, exportedValue):
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
             for key, v in value.items():
                 self._value.get(key).value = v
         elif isinstance(value, (list, tuple)):
-            if len(self.desc._groupDesc) != len(value):
+            if len(self._desc._groupDesc) != len(value):
                 raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
-            for attrDesc, v in zip(self.desc._groupDesc, value):
+            for attrDesc, v in zip(self._desc._groupDesc, value):
                 self._value.get(attrDesc.name).value = v
         else:
             raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
 
+    # Override
+    def _applyExpr(self):
+        for value in self._value:
+            value._applyExpr()
+
+    # Override
+    def resetToDefaultValue(self):
+        for attrDesc in self._desc._groupDesc:
+            self._value.get(attrDesc.name).resetToDefaultValue()
+
+    # Override
+    def getDefaultValue(self):
+        return {key: attr.getDefaultValue() for key, attr in self._value.items()}
+
+    # Override
+    def getSerializedValue(self):
+        return {key: attr.getSerializedValue() for key, attr in self._value.objects.items()}
+
+    # Override
+    def getPrimitiveValue(self, exportDefault=True):
+        if exportDefault:
+            return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()}
+        return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()
+                if not attr.isDefault}
+
+    # Override
+    def getValueStr(self, withQuotes=True):
+        # add brackets if requested
+        strBegin = ''
+        strEnd = ''
+        if self._desc.brackets is not None:
+            if len(self._desc.brackets) == 2:
+                strBegin = self._desc.brackets[0]
+                strEnd = self._desc.brackets[1]
+            else:
+                raise AttributeError(f"Incorrect brackets on GroupAttribute: {self._desc.brackets}")
+        # particular case when using space separator
+        spaceSep = self._desc.joinChar == ' '
+        # sort values based on child attributes group description order
+        sortedSubValues = [self._value.get(attr.name).getValueStr(withQuotes=spaceSep)
+                           for attr in self._desc.groupDesc]
+        s = self._desc.joinChar.join(sortedSubValues)
+        if withQuotes and not spaceSep:
+            return f'"{strBegin}{s}{strEnd}"'
+        return f'{strBegin}{s}{strEnd}'
+
+    # Override
     def upgradeValue(self, exportedValue):
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
@@ -847,25 +888,26 @@ class GroupAttribute(Attribute):
                 if key in self._value.keys():
                     self._value.get(key).upgradeValue(v)
         elif isinstance(value, (list, tuple)):
-            if len(self.desc._groupDesc) != len(value):
+            if len(self._desc._groupDesc) != len(value):
                 raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
-            for attrDesc, v in zip(self.desc._groupDesc, value):
+            for attrDesc, v in zip(self._desc._groupDesc, value):
                 self._value.get(attrDesc.name).upgradeValue(v)
         else:
             raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
 
-    def initValue(self):
-        self._value = DictModel(keyAttrName='name', parent=self)
-        subAttributes = []
-        for subAttrDesc in self.attributeDesc.groupDesc:
-            childAttr = attributeFactory(subAttrDesc, None, self.isOutput, self.node, self)
-            subAttributes.append(childAttr)
-            childAttr.valueChanged.connect(self.valueChanged)
-        self._value.reset(subAttributes)
+    # Override
+    def uid(self):
+        uids = []
+        for k, v in self._value.items():
+            if v.enabled and v.invalidate:
+                uids.append(v.uid())
+        return hashValue(uids)
 
-    def resetToDefaultValue(self):
-        for attrDesc in self.desc._groupDesc:
-            self._value.get(attrDesc.name).resetToDefaultValue()
+    # Override
+    def updateInternals(self):
+        super().updateInternals()
+        for attr in self._value:
+            attr.updateInternals()
 
     @Slot(str, result=Attribute)
     def childAttribute(self, key: str) -> Attribute:
@@ -883,64 +925,11 @@ class GroupAttribute(Attribute):
         except KeyError:
             return None
 
-    def uid(self):
-        uids = []
-        for k, v in self._value.items():
-            if v.enabled and v.invalidate:
-                uids.append(v.uid())
-        return hashValue(uids)
-
-    def _applyExpr(self):
-        for value in self._value:
-            value._applyExpr()
-
-    def getExportValue(self):
-        return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
-
-    def _isDefault(self):
-        return all(v.isDefault for v in self._value)
-
-    def defaultValue(self):
-        return {key: attr.defaultValue() for key, attr in self._value.items()}
-
-    def getPrimitiveValue(self, exportDefault=True):
-        if exportDefault:
-            return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()}
-        return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()
-                if not attr.isDefault}
-
-    def getValueStr(self, withQuotes=True):
-        # add brackets if requested
-        strBegin = ''
-        strEnd = ''
-        if self.attributeDesc.brackets is not None:
-            if len(self.attributeDesc.brackets) == 2:
-                strBegin = self.attributeDesc.brackets[0]
-                strEnd = self.attributeDesc.brackets[1]
-            else:
-                raise AttributeError(f"Incorrect brackets on GroupAttribute: {self.attributeDesc.brackets}")
-
-        # particular case when using space separator
-        spaceSep = self.attributeDesc.joinChar == ' '
-
-        # sort values based on child attributes group description order
-        sortedSubValues = [self._value.get(attr.name).getValueStr(withQuotes=spaceSep)
-                           for attr in self.attributeDesc.groupDesc]
-        s = self.attributeDesc.joinChar.join(sortedSubValues)
-
-        if withQuotes and not spaceSep:
-            return f'"{strBegin}{s}{strEnd}"'
-        return f'{strBegin}{s}{strEnd}'
-
-    def updateInternals(self):
-        super().updateInternals()
-        for attr in self._value:
-            attr.updateInternals()
-
+    # Override
     @Slot(str, result=bool)
     def matchText(self, text: str) -> bool:
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
     # Override value property
-    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
-    isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
+    isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value), notify=Attribute.valueChanged)

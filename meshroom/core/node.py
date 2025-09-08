@@ -875,14 +875,14 @@ class BaseNode(BaseObject):
         for attr in self.invalidatingAttributes:
             if not attr.enabled:
                 continue  # Disabled params do not contribute to the uid
-            dynamicOutputAttr = attr.isLink and attr.getLinkParam(recursive=True).desc.isDynamicValue
+            dynamicOutputAttr = attr.isLink and attr.inputRootLink.desc.isDynamicValue
             # For dynamic output attributes, the UID does not depend on the attribute value.
             # In particular, when loading a project file, the UIDs are updated first,
             # and the node status and the dynamic output values are not yet loaded,
             # so we should not read the attribute value.
-            if not dynamicOutputAttr and attr.value == attr.uidIgnoreValue:
+            if not dynamicOutputAttr and attr.value == attr.desc.uidIgnoreValue:
                 continue  # For non-dynamic attributes, check if the value should be ignored
-            uidAttributes.append((attr.getName(), attr.uid()))
+            uidAttributes.append((attr.name, attr.uid()))
         uidAttributes.sort()
 
         # Adding the node type prevents ending up with two identical UIDs for different node types
@@ -897,8 +897,8 @@ class BaseNode(BaseObject):
         """
         def _buildAttributeCmdVars(cmdVars, name, attr):
             if attr.enabled:
-                group = attr.attributeDesc.group(attr.node) \
-                        if isinstance(attr.attributeDesc.group, types.FunctionType) else attr.attributeDesc.group
+                group = attr.desc.group(attr.node) \
+                        if isinstance(attr.desc.group, types.FunctionType) else attr.desc.group
                 if group is not None:
                     # If there is a valid command line "group"
                     v = attr.getValueStr(withQuotes=True)
@@ -944,13 +944,13 @@ class BaseNode(BaseObject):
                 continue  # skip inputs
 
             # Apply expressions for File attributes
-            if attr.attributeDesc.isExpression:
+            if attr.desc.isExpression:
                 defaultValue = ""
                 # Do not evaluate expression for disabled attributes
                 # (the expression may refer to other attributes that are not defined)
                 if attr.enabled:
                     try:
-                        defaultValue = attr.defaultValue()
+                        defaultValue = attr.getDefaultValue()
                     except AttributeError:
                         # If we load an old scene, the lambda associated to the 'value' could try to
                         # access other params that could not exist yet
@@ -978,8 +978,8 @@ class BaseNode(BaseObject):
             self._cmdVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
 
             if v:
-                self._cmdVars[attr.attributeDesc.group] = \
-                    self._cmdVars.get(attr.attributeDesc.group, '') + ' ' + self._cmdVars[name]
+                self._cmdVars[attr.desc.group] = \
+                    self._cmdVars.get(attr.desc.group, '') + ' ' + self._cmdVars[name]
 
     @property
     def isParallelized(self):
@@ -1620,7 +1620,7 @@ class BaseNode(BaseObject):
         False otherwise.
         """
         
-        return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3D), None) is not None
+        return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3dDisplayable), None) is not None
 
     name = Property(str, getName, constant=True)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
@@ -1760,9 +1760,9 @@ class Node(BaseNode):
                 pass
 
     def toDict(self):
-        inputs = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
-        internalInputs = {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
-        outputs = ({k: v.getExportValue() for k, v in self._attributes.objects.items()
+        inputs = {k: v.getSerializedValue() for k, v in self._attributes.objects.items() if v.isInput}
+        internalInputs = {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items()}
+        outputs = ({k: v.getSerializedValue() for k, v in self._attributes.objects.items()
                     if v.isOutput and not v.desc.isDynamicValue})
 
         return {
@@ -2012,14 +2012,14 @@ class CompatibilityNode(BaseNode):
         # if node has not been added to a graph, return serialized node inputs
         if not self.graph:
             return self._inputs
-        return {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
+        return {k: v.getSerializedValue() for k, v in self._attributes.objects.items() if v.isInput}
 
     @property
     def internalInputs(self):
         """ Get current node's internal attributes """
         if not self.graph:
             return self._internalInputs
-        return {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
+        return {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items()}
 
     def toDict(self):
         """

@@ -28,24 +28,24 @@ def test_attribute_retrieve_linked_input_and_output_attributes():
 
     # check that the attribute can retrieve its linked input attributes
 
-    assert n0.output.hasOutputConnections
-    assert not n3.output.hasOutputConnections
+    assert n0.output.hasAnyOutputLinks
+    assert not n3.output.hasAnyOutputLinks
 
-    assert len(n0.input.getLinkedInAttributes()) == 0
-    assert len(n1.input.getLinkedInAttributes()) == 1
-    assert n1.input.getLinkedInAttributes()[0] == n0.output
+    assert len(n0.input.allInputLinks) == 0
+    assert len(n1.input.allInputLinks) == 1
+    assert n1.input.allInputLinks[0] == n0.output
 
-    assert len(n1.output.getLinkedOutAttributes()) == 2
+    assert len(n1.output.allOutputLinks) == 2
 
-    assert n1.output.getLinkedOutAttributes()[0] == n2.input
-    assert n1.output.getLinkedOutAttributes()[1] == n3.input
+    assert n1.output.allOutputLinks[0] == n2.input
+    assert n1.output.allOutputLinks[1] == n3.input
 
     n0.graph = None
 
     # Bounding cases
-    assert not n0.output.hasOutputConnections
-    assert len(n0.input.getLinkedInAttributes()) == 0
-    assert len(n0.output.getLinkedOutAttributes()) == 0
+    assert not n0.output.hasAnyOutputLinks
+    assert len(n0.input.allInputLinks) == 0
+    assert len(n0.output.allOutputLinks) == 0
 
 
 @pytest.mark.parametrize("givenFile,expected", valid3DExtensionFiles + invalid3DExtensionFiles)
@@ -58,13 +58,13 @@ def test_attribute_is3D_file_extensions(givenFile, expected):
     n0 = g.addNewNode('Ls', input='')
 
     # Given
-    assert not n0.input.is3D
+    assert not n0.input.is3dDisplayable
 
     # When
     n0.input.value = givenFile
 
     # Then
-    assert n0.input.is3D == expected
+    assert n0.input.is3dDisplayable == expected
 
 
 def test_attribute_i3D_by_description_semantic():
@@ -74,13 +74,13 @@ def test_attribute_i3D_by_description_semantic():
     g = Graph('')
     n0 = g.addNewNode('Ls', input='')
 
-    assert not n0.output.is3D
+    assert not n0.output.is3dDisplayable
 
     # When
     n0.output.desc._semantic = "3d"
 
     # Then
-    assert n0.output.is3D
+    assert n0.output.is3dDisplayable
 
 
 @pytest.mark.parametrize("givenSemantic,expected", valid2DSemantics + invalid2DSemantics)
@@ -94,10 +94,10 @@ def test_attribute_is2D_file_semantic(givenSemantic, expected):
 
     # Given
     n0.input.desc._semantic = ""
-    assert not n0.input.is2D
+    assert not n0.input.is2dDisplayable
 
     # When
     n0.input.desc._semantic = givenSemantic
 
     # Then
-    assert n0.input.is2D == expected
+    assert n0.input.is2dDisplayable == expected

@@ -33,11 +33,11 @@ RowLayout {
     spacing: 2
 
     function updateAttributeLabel() {
-        background.color = attribute.validValue ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
+        background.color = attribute.isValid ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
 
         if (attribute.desc) {
             var tooltip = ""
-            if (!attribute.validValue && attribute.desc.errorMessage !== "")
+            if (!attribute.isValid && attribute.desc.errorMessage !== "")
                 tooltip += "<i><b>Error: </b>" + Format.plainToHtml(attribute.desc.errorMessage) + "</i><br><br>"
             tooltip += "<b> " + attribute.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(attribute.desc.description)
 
@@ -48,7 +48,7 @@ RowLayout {
     Pane {
         background: Rectangle {
             id: background
-            color: object != undefined && object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
+            color: object != undefined && object.isValid ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
         }
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
@@ -63,7 +63,7 @@ RowLayout {
             MaterialToolButton {
                 id: navButtonIn
 
-                property bool shouldBeVisible: (object != undefined && object.isLinkNested)
+                property bool shouldBeVisible: (object != undefined && object.hasAnyInputLinks)
 
                 text: MaterialIcons.login
                 enabled: shouldBeVisible
@@ -76,7 +76,7 @@ RowLayout {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.inAttributeClicked(navButtonIn, mouse, object.linkedInAttributes)
+                        root.inAttributeClicked(navButtonIn, mouse, object.allInputLinks)
                     }
                 }
 
@@ -96,7 +96,7 @@ RowLayout {
                 text: object.label
 
                 color: {
-                    if (object != undefined && (object.hasOutputConnections || object.isLink) && !object.enabled)
+                    if (object != undefined && (object.hasAnyOutputLinks || object.isLink) && !object.enabled)
                         return Colors.lightgrey
                     else
                         return palette.text
@@ -111,9 +111,9 @@ RowLayout {
 
                     text: {
                         var tooltip = ""
-                        if (!object.validValue && object.desc.errorMessage !== "")
+                        if (!object.isValid && object.desc.errorMessage !== "")
                             tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
-                        tooltip += "<b>" + object.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.description)
+                        tooltip += "<b>" + object.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(object.desc.description)
                         return tooltip
                     }
                     visible: parameterMA.containsMouse
@@ -184,10 +184,10 @@ RowLayout {
                         }
 
                         MenuItem { 
-                            visible: attribute.isOutput && (attribute.is2D || attribute.is3D)
+                            visible: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable)
                             height: visible ? implicitHeight : 0
                             text: {
-                                if (attribute.is2D)
+                                if (attribute.is2dDisplayable)
                                     return "Show in 2D Viewer"
                                 return "Show in 3D Viewer"
                             }
@@ -208,12 +208,12 @@ RowLayout {
             }
 
             MaterialLabel {
-                property bool isDisplayable: attribute.isOutput && (attribute.is2D || attribute.is3D)
+                property bool isDisplayable: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable)
                 property bool isDisplayed: attribute === _reconstruction.displayedAttr2D || _reconstruction.displayedAttrs3D.count && _reconstruction.displayedAttrs3D.contains(attribute)
                 text: isDisplayed ? MaterialIcons.visibility : MaterialIcons.visibility_off
                 enabled: isDisplayed
                 visible: isDisplayable
-                ToolTip.text: `This attribute is displayable in the ${attribute.is2D ? "2D" : "3D"} viewer.`
+                ToolTip.text: `This attribute is displayable in the ${attribute.is2dDisplayable ? "2D" : "3D"} viewer.`
 
                 padding: 4
                 font.pointSize: 8
@@ -222,7 +222,7 @@ RowLayout {
             MaterialToolButton {
                 id: navButtonOut
 
-                property bool shouldBeVisible: (attribute != undefined && attribute.hasOutputConnections)
+                property bool shouldBeVisible: (attribute != undefined && attribute.hasAnyOutputLinks)
 
                 text: MaterialIcons.logout
                 font.pointSize: 8
@@ -235,7 +235,7 @@ RowLayout {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.outAttributeClicked(navButtonOut, mouse, attribute.linkedOutAttributes)
+                        root.outAttributeClicked(navButtonOut, mouse, attribute.allOutputLinks)
                     }
                 }
 
@@ -721,7 +721,7 @@ RowLayout {
                     delegate: Loader {
                         active: !objectsHideable
                             || ((object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
-                            && (object.isLinkNested && GraphEditorSettings.showLinkAttributes || !object.isLinkNested && GraphEditorSettings.showNotLinkAttributes))
+                            && (object.hasAnyInputLinks && GraphEditorSettings.showLinkAttributes || !object.hasAnyInputLinks && GraphEditorSettings.showNotLinkAttributes))
                         visible: active
                         sourceComponent: RowLayout {
                             id: item

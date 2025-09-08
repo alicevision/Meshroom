@@ -49,6 +49,15 @@ class Attribute(BaseObject):
         """
         raise NotImplementedError("Attribute.validateValue is an abstract function that should be "
                                   "implemented in the derived class.")
+    
+    def validateKeyValues(self, keyValues):
+        """ Return validated/conformed 'keyValues'.
+
+        Raises:
+            ValueError: if a value does not have the proper type
+        """
+        return isinstance(keyValues, dict) and \
+               all(isinstance(k, str) and self.validateValue(v) for k,v in keyValues.items())
 
     def checkValueTypes(self):
         """ Returns the attribute's name if the default value's type is invalid or if the range's type (when available)
@@ -68,7 +77,10 @@ class Attribute(BaseObject):
             strict: strict test for the match (for instance, regarding a group with some parameter changes)
         """
         try:
-            self.validateValue(value)
+            if self._keyable:
+                self.validateKeyValues(value)
+            else:
+                self.validateValue(value)
         except ValueError:
             return False
         return True

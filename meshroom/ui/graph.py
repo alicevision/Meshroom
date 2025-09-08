@@ -970,6 +970,11 @@ class UIGraph(QObject):
         """ Add the given (key, value) pair to the given keyable attribute. """
         self.push(commands.AddAttributeKeyValueCommand(self._graph, attribute, key, value))
 
+    @Slot(Attribute, str)
+    def addAttributeKeyDefaultValue(self, attribute, key):
+        """ Add the given key with the default value to the given keyable attribute. """
+        self.push(commands.AddAttributeKeyValueCommand(self._graph, attribute, key, attribute.getDefaultValue()))
+
     @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):
         """ Upgrade a CompatibilityNode. """

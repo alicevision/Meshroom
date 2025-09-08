@@ -366,6 +366,33 @@ class AddAttributeKeyValueCommand(GraphCommand):
                 self.graph.internalAttribute(self.attrName).keyValues.add(self.key, self.oldValue)
         return True
 
+class RemoveAttributeKeyCommand(GraphCommand):
+    def __init__(self, graph, attribute, key, parent=None):
+        super().__init__(graph, parent)
+        self.attrName = attribute.fullName
+        self.keyable = attribute.keyable
+        self.key = key
+        self.oldValue = None if not attribute.keyable else attribute.keyValues.pairs.get(int(key))
+        self.setText(f"Remove (key, value) for attribute '{attribute.fullName}' at key: '{key}'")
+
+    def redoImpl(self):
+        if not self.keyable or self.oldValue == None:
+            return False
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).keyValues.remove(self.key)
+        else:
+            self.graph.internalAttribute(self.attrName).keyValues.remove(self.key)
+        return True
+
+    def undoImpl(self):
+        if not self.keyable or self.oldValue == None:
+            return False    
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).keyValues.add(self.key, self.oldValue)
+        else:
+            self.graph.internalAttribute(self.attrName).keyValues.add(self.key, self.oldValue)
+        return True
+    
 class AddEdgeCommand(GraphCommand):
     def __init__(self, graph, src, dst, parent=None):
         super().__init__(graph, parent)

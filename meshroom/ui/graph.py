@@ -975,6 +975,11 @@ class UIGraph(QObject):
         """ Add the given key with the default value to the given keyable attribute. """
         self.push(commands.AddAttributeKeyValueCommand(self._graph, attribute, key, attribute.getDefaultValue()))
 
+    @Slot(Attribute, str)
+    def removeAttributeKey(self, attribute, key):
+        """ Remove the given key from the given keyable attribute. """
+        self.push(commands.RemoveAttributeKeyCommand(self._graph, attribute, key))
+
     @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):
         """ Upgrade a CompatibilityNode. """

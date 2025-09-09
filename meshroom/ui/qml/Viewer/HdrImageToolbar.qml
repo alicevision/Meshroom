@@ -135,6 +135,9 @@ FloatingPane {
                         } else {
                             gainCtrl.value = Math.pow(Number(gainLabel.evaluatedValue), 1.0 / slidersPowerValue)
                         }
+                    } else {
+                        gainLabel.evaluatedValue = 0
+                        gainCtrl.value = gainLabel.evaluatedValue
                     }
                 }
             }
@@ -184,6 +187,9 @@ FloatingPane {
                         } else {
                             gammaCtrl.value = Math.pow(Number(gammaLabel.evaluatedValue), 1.0 / slidersPowerValue)
                         }
+                    } else {
+                        gainLabel.evaluatedValue = 0
+                        gainCtrl.value = gainLabel.evaluatedValue
                     }
                 }
             }

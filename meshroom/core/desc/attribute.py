@@ -3,7 +3,6 @@ import distutils.util
 import os
 import types
 from collections.abc import Iterable
-import math
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList
 
@@ -342,7 +341,7 @@ class IntParam(Param):
         self._valueType = int
 
     def validateValue(self, value):
-        if value is None or math.isnan(value):
+        if value is None or isinstance(value, str):
             return value
         # Handle unsigned int values that are translated to int by shiboken and may overflow
         try:
@@ -372,7 +371,7 @@ class FloatParam(Param):
         self._valueType = float
 
     def validateValue(self, value):
-        if value is None:
+        if value is None or isinstance(value, str):
             return value
         try:
             return float(value)

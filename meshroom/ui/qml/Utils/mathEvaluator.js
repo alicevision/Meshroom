@@ -20,6 +20,18 @@ var functions = {
 };
 
 
+function removeLeadingZeros(str) {
+    return str.replace(/\b0*(\d+(?:\.\d*)?)/g, (match, number) => {
+        // If the number starts with a decimal, add a leading zero
+        if (number.startsWith('.')) {
+            return '0' + number;
+        }
+        // Otherwise just return the number without leading zeros
+        return number;
+    });
+}
+
+
 /**
  * Evaluate an expression
  * 
@@ -27,13 +39,14 @@ var functions = {
  * @returns        float or int
  */
 function eval(expr) {
-    // Additionally replace the "," to "."
-    expr = expr.replace(",", ".").replace(" ", "")
+    // Warning : commas are for separating function args and dot to indicate decimals
 
     // Only allow numbers, operators, parentheses, and function names
     if (!/^[0-9+\-*/^()e.,\s]*$/.test(expr.replace(/\b[a-zA-Z]+\b/g, ""))) {
         throw "Invalid characters in expression";
     }
+
+    expr = removeLeadingZeros(expr);
 
     // Replace symbols and functions
     for (var symbol in symbols) {

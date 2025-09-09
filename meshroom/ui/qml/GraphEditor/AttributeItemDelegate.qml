@@ -259,7 +259,9 @@ RowLayout {
         switch (attribute.type) {
             case "IntParam":
             case "FloatParam":
-                _reconstruction.setAttribute(root.attribute, Number(value))
+                // We don't set a number because we want to keep the invalid expression
+                // _reconstruction.setAttribute(root.attribute, Number(value))
+                _reconstruction.setAttribute(root.attribute, value)
                 updateAttributeLabel()
                 break
             case "File":
@@ -606,6 +608,7 @@ RowLayout {
             id: sliderComponent
             RowLayout {
                 ExpressionTextField {
+                    id: expressionTextField 
                     implicitWidth: 100
                     Layout.fillWidth: !slider.active
                     enabled: root.editable
@@ -618,17 +621,30 @@ RowLayout {
                     // of the number. When we are editing (item is in focus), the content should follow the editing.
                     autoScroll: activeFocus
                     isInt: attribute.type === "FloatParam" ? false : true
-                    onEditingFinished: setTextFieldAttribute(text)
+                    
+                    onEditingFinished: {
+                        if (hasExprError)
+                            setTextFieldAttribute(expressionTextField.text)  // On the undo stack we keep the expression
+                        else
+                            setTextFieldAttribute(expressionTextField.evaluatedValue)
+                    }
                     onAccepted: {
-                        setTextFieldAttribute(text)
-
+                        if (hasExprError)
+                            setTextFieldAttribute(expressionTextField.text)  // On the undo stack we keep the expression
+                        else
+                            setTextFieldAttribute(expressionTextField.evaluatedValue)
                         // When the text is too long, display the left part
                         // (with the most important values and cut the floating point details)
                         ensureVisible(0)
                     }
+                    
                     Component.onDestruction: {
-                        if (activeFocus)
-                            setTextFieldAttribute(text)
+                        if (activeFocus) {
+                            if (hasExprError)
+                                setTextFieldAttribute(expressionTextField.text)
+                            else
+                                setTextFieldAttribute(expressionTextField.evaluatedValue)
+                        }
                     }
                     Component.onCompleted: {
                         // When the text is too long, display the left part

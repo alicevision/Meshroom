@@ -14,14 +14,14 @@ import types
 import uuid
 from collections import namedtuple, OrderedDict
 from enum import Enum, auto
-from typing import Callable, Optional
-
+from typing import Callable, Optional, List
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
 from meshroom.core import desc, plugins, stats, hashValue, nodeVersion, Version, MrNodeType
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
+from meshroom.core.mtyping import PathLike
 
 
 def getWritingFilepath(filepath: str) -> str:
@@ -222,17 +222,17 @@ class LogManager:
     dateTimeFormatting = '%H:%M:%S'
 
     def __init__(self, logger, logFile):
-        self.logger = logger
-        self.logFile = logFile
-        self._previousHandlers = []
-        self._previousLevel = 0
-    
+        self.logger: logging.Logger = logger
+        self.logFile: PathLike = logFile
+        self._previousHandlers: List[logging.Handler] = []
+        self._previousLevel: int = 0
+
     class Formatter(logging.Formatter):
         def format(self, record):
             # Make level name lower case
             record.levelname = record.levelname.lower()
             return logging.Formatter.format(self, record)
-    
+
     def configureLogger(self):
         self._previousLevel = self.logger.level
         self._previousHandlers = []
@@ -244,7 +244,7 @@ class LogManager:
                                    self.dateTimeFormatting)
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-    
+
     def restorePreviousLogger(self):
         for h in self.logger.handlers[:]:
             self.logger.removeHandler(h)
@@ -683,7 +683,7 @@ class BaseNode(BaseObject):
         self._uid: str = uid
         self._cmdVars: dict = {}
         self._size: int = 0
-        self._logManager: LogManager = None
+        self._logManager: Optional[LogManager] = None
         self._position: Position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self._internalAttributes = DictModel(keyAttrName='name', parent=self)

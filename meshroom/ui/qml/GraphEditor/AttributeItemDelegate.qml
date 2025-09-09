@@ -605,14 +605,7 @@ RowLayout {
         Component {
             id: sliderComponent
             RowLayout {
-                TextField {
-                    IntValidator {
-                        id: intValidator
-                    }
-                    DoubleValidator {
-                        id: doubleValidator
-                        locale: 'C'  // Use '.' decimal separator disregarding the system locale
-                    }
+                ExpressionTextField {
                     implicitWidth: 100
                     Layout.fillWidth: !slider.active
                     enabled: root.editable
@@ -624,7 +617,7 @@ RowLayout {
                     // When the value change keep the text align to the left to be able to read the most important part
                     // of the number. When we are editing (item is in focus), the content should follow the editing.
                     autoScroll: activeFocus
-                    validator: attribute.type === "FloatParam" ? doubleValidator : intValidator
+                    isInt: attribute.type === "FloatParam" ? false : true
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: {
                         setTextFieldAttribute(text)

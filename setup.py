@@ -58,7 +58,7 @@ build_exe_options = {
         "cmath",
         "numpy"
     ],
-    "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md"]
+    "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md", "bin"]
 }
 if os.path.isdir(os.path.join(currentDir, "tractor")):
     build_exe_options["packages"].append("tractor")
@@ -143,9 +143,9 @@ executables = [
 setup(
     name="Meshroom",
     description="Meshroom",
-    install_requires=['psutil', 'pytest', 'PySide6', 'markdown'],
+    install_requires=["psutil", "PySide6", "markdown"],
     setup_requires=[
-        'cx_Freeze'
+        "cx_Freeze"
     ],
     version=meshroom.__version__,
     options={"build_exe": build_exe_options},

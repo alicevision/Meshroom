@@ -38,7 +38,7 @@ def getViewElements(vp):
 
 
 def replacePatterns(input, pattern, replacements):
-    # Use all substrings of "input" matching the regex "pattern" as a key to substitute themselves by their value in the dictionnary "replacements".
+    # Use all substrings of "input" matching the regex "pattern" as a key to substitute themselves by their value in the dictionary "replacements".
     # If "replacements" does not contain the key, the key is removed from "input" to build the resolved string.
     def replaceMatch(match):
         key = match.group()

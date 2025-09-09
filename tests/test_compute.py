@@ -3,10 +3,7 @@
 """
 In this test we test the code that is usually launched directly from the meshroom_compute script
 
-TODO : Directly test by launching the executable
-- We can get the path with `desc.node._MESHROOM_COMPUTE_EXE`
-- However this is not implemented yet because it requires to create a plugin that meshroom could discover
-  and I didn't want to create a plugin just for what I'm doing here right now (which is testing the logger)
+TODO : We could directly test by launching the executable (`desc.node._MESHROOM_COMPUTE_EXE`)
 """
 
 import os

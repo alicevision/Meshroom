@@ -10,7 +10,9 @@ from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, hashValue
 from meshroom.core.keyValues import KeyValues
-from typing import TYPE_CHECKING
+from meshroom.core.exception import InvalidEdgeError
+
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
@@ -79,6 +81,7 @@ class Attribute(BaseObject):
         self._invalidationValue = ""  # invalidation value for output attributes
         self._value = None
         self._keyValues = None  # list of pairs (key, value) for keyable attribute
+        self._linkExpression: Optional[str] = None
         self._initValue()
 
     def _getFullName(self) -> str:
@@ -163,11 +166,10 @@ class Attribute(BaseObject):
         """
         if self._value == value:
             return
-        if isinstance(value, Attribute) or Attribute.isLinkExpression(value):
-            # if we set a link to another attribute
-            self._value = value
+        if self._handleLinkValue(value):
             if self.keyable:
                 self._keyValues.reset()
+            return
         elif self.keyable and isinstance(value, dict):
             # keyable attribute initialize from a dict
             self.keyValues.resetFromDict(value)
@@ -206,37 +208,67 @@ class Attribute(BaseObject):
             return self._getInputLink().keyValues
         return self._keyValues
 
+    def _handleLinkValue(self, value) -> bool:
+        """
+        Handle the assignment of a link if `value` is a serialized link expression
+        or an in-memory Attribute reference.
+
+        Returns:
+            True if the value has been handled as a link, False otherwise.
+        """
+        isAttribute = isinstance(value, Attribute)
+        isLinkExpression = Attribute.isLinkExpression(value)
+
+        if not isAttribute and not isLinkExpression:
+            return False
+
+        if isAttribute:
+            self._linkExpression = value.asLinkExpr()
+            # If the value is a direct reference to an attribute, it can directly
+            # be converted to an edge as the source attribute already exists in
+            # memory.
+            self._applyExpr()
+        elif isLinkExpression:
+            self._linkExpression = value
+        return True
+
     def _applyExpr(self):
         """
         For string parameters with an expression (when loaded from file),
         this function convert the expression into a real edge in the graph
         and clear the string value.
         """
-        v = self._value
-        g = self.node.graph
-        if not g:
+        if not self.isInput or not self._linkExpression:
             return
-        if isinstance(v, Attribute):
-            g.addEdge(v, self)
-            self.resetToDefaultValue()
-        elif self.isInput and Attribute.isLinkExpression(v):
-            # value is a link to another attribute
-            link = v[1:-1]
-            linkNodeName, linkAttrName = "", ""
-            try:
-                linkNodeName, linkAttrName = link.split('.')
-            except ValueError as err:
-                logging.warning('Retrieve Connected Attribute from Expression failed.')
-                logging.warning(f'Expression: "{link}"\nError: "{err}".')
-            try:
-                node = g.node(linkNodeName)
-                if not node:
-                    raise KeyError(f"Node '{linkNodeName}' not found")
-                g.addEdge(node.attribute(linkAttrName), self)
-            except KeyError as err:
-                logging.warning('Connect Attribute from Expression failed.')
-                logging.warning(f'Expression: "{v}"\nError: "{err}".')
-            self.resetToDefaultValue()
+
+        if not (graph := self.node.graph):
+            return
+
+        link = self._linkExpression[1:-1]
+        linkNodeName, linkAttrName = "", ""
+
+        try:
+            linkNodeName, linkAttrName = link.split(".")
+        except ValueError as err:
+            logging.warning('Retrieve Connected Attribute from Expression failed.')
+            logging.warning(f'Expression: "{link}"\nError: "{err}".')
+
+        try:
+            node = graph.node(linkNodeName)
+            if node is None:
+                raise InvalidEdgeError(self.fullName, link, "Source node does not exist.")
+            attr = node.attribute(linkAttrName)
+            if attr is None:
+                raise InvalidEdgeError(self.fullName, link, "Source attribute does not exist.")
+            graph.addEdge(attr, self)
+        except InvalidEdgeError as err:
+            logging.warning(err)
+        except Exception as err:
+            logging.warning("Unexpected error happened during edge creation.")
+            logging.warning(f"Expression '{self._linkExpression}': {err}.")
+
+        self._linkExpression = None
+        self.resetToDefaultValue()
 
     def resetToDefaultValue(self):
         """
@@ -725,9 +757,8 @@ class ListAttribute(Attribute):
     def _setValue(self, value):
         if self.node.graph:
             self.remove(0, len(self))
-        # Link to another attribute
-        if isinstance(value, ListAttribute) or Attribute.isLinkExpression(value):
-            self._value = value
+        if self._handleLinkValue(value):
+            return
         # New value
         else:
             # During initialization self._value may not be set
@@ -739,9 +770,7 @@ class ListAttribute(Attribute):
 
     # Override
     def _applyExpr(self):
-        if not self.node.graph:
-            return
-        if isinstance(self._value, ListAttribute) or Attribute.isLinkExpression(self._value):
+        if self._linkExpression:
             super()._applyExpr()
         else:
             for value in self._value:
@@ -783,11 +812,9 @@ class ListAttribute(Attribute):
 
     # Override
     def upgradeValue(self, exportedValues):
+        if self._handleLinkValue(exportedValues):
+            return
         if not isinstance(exportedValues, list):
-            if isinstance(exportedValues, ListAttribute) or \
-               Attribute.isLinkExpression(exportedValues):
-                self._setValue(exportedValues)
-                return
             raise RuntimeError("ListAttribute.upgradeValue: the given value is of type " +
                                str(type(exportedValues)) + " but a 'list' is expected.")
         attrs = []

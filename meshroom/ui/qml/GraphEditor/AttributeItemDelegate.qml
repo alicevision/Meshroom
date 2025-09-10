@@ -259,7 +259,9 @@ RowLayout {
         switch (attribute.type) {
             case "IntParam":
             case "FloatParam":
-                _reconstruction.setAttribute(root.attribute, Number(value))
+                // We don't set a number because we want to keep the invalid expression
+                // _reconstruction.setAttribute(root.attribute, Number(value))
+                _reconstruction.setAttribute(root.attribute, value)
                 updateAttributeLabel()
                 break
             case "File":
@@ -605,14 +607,8 @@ RowLayout {
         Component {
             id: sliderComponent
             RowLayout {
-                TextField {
-                    IntValidator {
-                        id: intValidator
-                    }
-                    DoubleValidator {
-                        id: doubleValidator
-                        locale: 'C'  // Use '.' decimal separator disregarding the system locale
-                    }
+                ExpressionTextField {
+                    id: expressionTextField 
                     implicitWidth: 100
                     Layout.fillWidth: !slider.active
                     enabled: root.editable
@@ -624,18 +620,31 @@ RowLayout {
                     // When the value change keep the text align to the left to be able to read the most important part
                     // of the number. When we are editing (item is in focus), the content should follow the editing.
                     autoScroll: activeFocus
-                    validator: attribute.type === "FloatParam" ? doubleValidator : intValidator
-                    onEditingFinished: setTextFieldAttribute(text)
+                    isInt: attribute.type === "FloatParam" ? false : true
+                    
+                    onEditingFinished: {
+                        if (hasExprError)
+                            setTextFieldAttribute(expressionTextField.text)  // On the undo stack we keep the expression
+                        else
+                            setTextFieldAttribute(expressionTextField.evaluatedValue)
+                    }
                     onAccepted: {
-                        setTextFieldAttribute(text)
-
+                        if (hasExprError)
+                            setTextFieldAttribute(expressionTextField.text)  // On the undo stack we keep the expression
+                        else
+                            setTextFieldAttribute(expressionTextField.evaluatedValue)
                         // When the text is too long, display the left part
                         // (with the most important values and cut the floating point details)
                         ensureVisible(0)
                     }
+                    
                     Component.onDestruction: {
-                        if (activeFocus)
-                            setTextFieldAttribute(text)
+                        if (activeFocus) {
+                            if (hasExprError)
+                                setTextFieldAttribute(expressionTextField.text)
+                            else
+                                setTextFieldAttribute(expressionTextField.evaluatedValue)
+                        }
                     }
                     Component.onCompleted: {
                         // When the text is too long, display the left part

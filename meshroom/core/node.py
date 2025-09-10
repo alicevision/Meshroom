@@ -14,14 +14,14 @@ import types
 import uuid
 from collections import namedtuple, OrderedDict
 from enum import Enum, auto
-from typing import Callable, Optional
-
+from typing import Callable, Optional, List
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
 from meshroom.core import desc, plugins, stats, hashValue, nodeVersion, Version, MrNodeType
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
+from meshroom.core.mtyping import PathLike
 
 
 def getWritingFilepath(filepath: str) -> str:
@@ -221,9 +221,11 @@ class StatusData(BaseObject):
 class LogManager:
     dateTimeFormatting = '%H:%M:%S'
 
-    def __init__(self, chunk):
-        self.chunk = chunk
-        self.logger = logging.getLogger(chunk.node.getName())
+    def __init__(self, logger, logFile):
+        self.logger: logging.Logger = logger
+        self.logFile: PathLike = logFile
+        self._previousHandlers: List[logging.Handler] = []
+        self._previousLevel: int = 0
 
     class Formatter(logging.Formatter):
         def format(self, record):
@@ -232,19 +234,29 @@ class LogManager:
             return logging.Formatter.format(self, record)
 
     def configureLogger(self):
+        self._previousLevel = self.logger.level
+        self._previousHandlers = []
         for handler in self.logger.handlers[:]:
+            self._previousHandlers.append(handler)
             self.logger.removeHandler(handler)
-        handler = logging.FileHandler(self.chunk.logFile)
+        handler = logging.FileHandler(self.logFile)
         formatter = self.Formatter('[%(asctime)s.%(msecs)03d][%(levelname)s] %(message)s',
                                    self.dateTimeFormatting)
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
+    def restorePreviousLogger(self):
+        for h in self.logger.handlers[:]:
+            self.logger.removeHandler(h)
+        for h in self._previousHandlers:
+            self.logger.addHandler(h)
+        self.logger.setLevel(self._previousLevel)
+
     def start(self, level):
         # Clear log file
-        open(self.chunk.logFile, 'w').close()
-
+        open(self.logFile, 'w').close()
         self.configureLogger()
+        self.logger.propagate = False
         self.logger.setLevel(self.textToLevel(level))
         self.progressBar = False
 
@@ -261,7 +273,7 @@ class LogManager:
         self.currentProgressTics = 0
         self.progressBar = True
 
-        with open(self.chunk.logFile, 'a') as f:
+        with open(self.logFile, 'a') as f:
             if message:
                 f.write(message+'\n')
             f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
@@ -269,7 +281,7 @@ class LogManager:
 
             f.close()
 
-        with open(self.chunk.logFile) as f:
+        with open(self.logFile) as f:
             content = f.read()
             self.progressBarPosition = content.rfind('\n')
 
@@ -281,7 +293,7 @@ class LogManager:
 
         tics = round((value/self.progressEnd)*51)
 
-        with open(self.chunk.logFile, 'r+') as f:
+        with open(self.logFile, 'r+') as f:
             text = f.read()
             for i in range(tics-self.currentProgressTics):
                 text = text[:self.progressBarPosition]+'*'+text[self.progressBarPosition:]
@@ -296,8 +308,10 @@ class LogManager:
 
         self.progressBar = False
 
-    def textToLevel(self, text):
-        if text == "critical":
+    @staticmethod
+    def textToLevel(text):
+        text = text.lower()
+        if text in ["critical", "fatal"]:
             return logging.CRITICAL
         elif text == "error":
             return logging.ERROR
@@ -307,6 +321,8 @@ class LogManager:
             return logging.INFO
         elif text == "debug":
             return logging.DEBUG
+        elif text == "trace":
+            return logging.TRACE
         else:
             return logging.NOTSET
 
@@ -325,7 +341,7 @@ class NodeChunk(BaseObject):
         super().__init__(parent)
         self.node = node
         self.range = range
-        self.logManager: LogManager = LogManager(self)
+        self._logManager = None
         self._status: StatusData = StatusData(node.name, node.nodeType, node.packageName,
                                               node.packageVersion, node.getMrNodeType())
         self.statistics: stats.Statistics = stats.Statistics()
@@ -344,6 +360,13 @@ class NodeChunk(BaseObject):
             return f"{self.node.name}({self.index})"
         else:
             return self.node.name
+    
+    @property
+    def logManager(self):
+        if self._logManager is None:
+            logger = logging.getLogger(self.node.getName())
+            self._logManager = LogManager(logger, self.logFile)
+        return self._logManager
 
     @property
     def statusName(self):
@@ -660,6 +683,7 @@ class BaseNode(BaseObject):
         self._uid: str = uid
         self._cmdVars: dict = {}
         self._size: int = 0
+        self._logManager: Optional[LogManager] = None
         self._position: Position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self._internalAttributes = DictModel(keyAttrName='name', parent=self)
@@ -705,6 +729,15 @@ class BaseNode(BaseObject):
                 return label
         return self.getDefaultLabel()
 
+    def getNodeLogLevel(self):
+        """
+        Returns:
+            str: the user-provided log level used for logging on process launched by this node
+        """
+        if self.hasInternalAttribute("nodeDefaultLogLevel"):
+            return self.internalAttribute("nodeDefaultLogLevel").value.strip()
+        return "info"
+    
     def getColor(self):
         """
         Returns:
@@ -1311,6 +1344,24 @@ class BaseNode(BaseObject):
         # Invoke the post process on Client Node to execute after the processing on the
         # node is completed
         self.nodeDesc.postprocess(self)
+
+    def getLogHandlers(self):
+        return self._handlers
+
+    def prepareLogger(self, iteration=-1):
+        # Get file handler path
+        logFileName = "log"
+        if iteration != -1:
+            chunk = self.chunks[iteration]
+            logFileName = str(chunk.index) + ".log"
+        logFile = os.path.join(self.graph.cacheDir, self.internalFolder, logFileName)
+        # Setup logger
+        rootLogger = logging.getLogger()
+        self._logManager = LogManager(rootLogger, logFile)
+        self._logManager.start(self.getNodeLogLevel())
+
+    def restoreLogger(self):
+        self._logManager.restorePreviousLogger()
 
     def updateOutputAttr(self):
         if not self.nodeDesc:

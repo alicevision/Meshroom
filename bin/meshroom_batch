@@ -8,7 +8,7 @@ import re
 import sys
 
 import meshroom.core.graph
-from meshroom import setupEnvironment
+from meshroom import setupEnvironment, logStringToPython
 
 setupEnvironment()
 
@@ -135,14 +135,6 @@ advanced_group.add_argument(
 
 args = parser.parse_args()
 
-logStringToPython = {
-    'fatal': logging.FATAL,
-    'error': logging.ERROR,
-    'warning': logging.WARNING,
-    'info': logging.INFO,
-    'debug': logging.DEBUG,
-    'trace': logging.DEBUG,
-}
 logging.getLogger().setLevel(logStringToPython[args.verbose])
 
 if not args.input and not args.inputRecursive:

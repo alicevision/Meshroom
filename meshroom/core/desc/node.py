@@ -9,10 +9,11 @@ import shutil
 import sys
 
 from .computation import Level, StaticNodeSize
-from .attribute import StringParam, ColorParam
+from .attribute import StringParam, ColorParam, ChoiceParam
 
 import meshroom
 from meshroom.core import cgroup
+from meshroom.core.utils import VERBOSE_LEVEL
 
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
@@ -65,6 +66,14 @@ class BaseNode(object):
             description="Customize the default label (to replace the technical name of the node "
                         "instance).",
             value="",
+            invalidate=False,
+        ),
+        ChoiceParam(
+            name="nodeDefaultLogLevel",
+            label="Default Logging Level",
+            description="Default logging level for the node (critical, error, warning, info, debug).",
+            value="info",
+            values=VERBOSE_LEVEL,
             invalidate=False,
         ),
         ColorParam(

@@ -261,7 +261,6 @@ RowLayout {
             case "FloatParam":
                 // We don't set a number because we want to keep the invalid expression
                 _reconstruction.setAttribute(root.attribute, Number(value))
-                // _reconstruction.setAttribute(root.attribute, value)
                 updateAttributeLabel()
                 break
             case "File":

@@ -7,12 +7,6 @@ from collections.abc import Iterable
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList
 
 
-
-def isanumber(s):
-    """ Returns True if string is a number. """
-    return s.replace('.','',1).isdigit()
-
-
 class Attribute(BaseObject):
     """
     """
@@ -347,9 +341,7 @@ class IntParam(Param):
         self._valueType = int
 
     def validateValue(self, value):
-        if isinstance(value, str) and isanumber(value):
-            return int(float(value))
-        if value is None or isinstance(value, str):
+        if value is None:
             return value
         # Handle unsigned int values that are translated to int by shiboken and may overflow
         try:
@@ -379,9 +371,7 @@ class FloatParam(Param):
         self._valueType = float
 
     def validateValue(self, value):
-        if isinstance(value, str) and isanumber(value):
-            return float(value)
-        if value is None or isinstance(value, str):
+        if value is None:
             return value
         try:
             return float(value)

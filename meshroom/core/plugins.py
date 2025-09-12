@@ -97,25 +97,36 @@ class DirTreeProcessEnv(ProcessEnv):
     def __init__(self, folder: str, configEnv: dict[str: str]):
         super().__init__(folder, configEnv, envType=ProcessEnvType.DIRTREE)
 
-        venvLibPaths = glob.glob(f'{folder}/lib*/python[0-9].[0-9]*/site-packages', recursive=False)
+        # If there is a virtual environment, it is expected to be named "venv".
+        # Beside the virtual environment, a standard "bin"/"lib"/"lib64" hierarchy at
+        # the top level of the plugin folder is expected.
+        venvFolder = Path(folder, "venv")
 
-        self.binPaths: list = [str(Path(folder, "bin"))]
-        self.libPaths: list = [str(Path(folder, "lib")), str(Path(folder, "lib64"))]
-        self.pythonPaths: list = [str(Path(folder))] + self.binPaths + venvLibPaths
+        # Find all the libs that are not directly at the "lib*"-level
+        envLibPaths = glob.glob(f'{folder}/lib*/python[0-9].[0-9]*/site-packages',
+                                recursive=False)
+        venvLibPaths = glob.glob(f'{venvFolder}/lib*/python[0-9].[0-9]*/site-packages',
+                                 recursive=False)
+
+        self.binPaths: list = [str(Path(folder, "bin")), str(Path(venvFolder, "bin"))]
+        self.libPaths: list = [str(Path(folder, "lib")), str(Path(folder, "lib64")),
+                               str(Path(venvFolder, "lib")), str(Path(venvFolder, "lib64"))]
+        self.pythonPaths: list = [str(Path(folder)), str(Path(venvFolder))] + \
+                                 self.binPaths + envLibPaths + venvLibPaths
 
         if sys.platform == "win32":
             # For Windows platforms, try and include the content of the virtual env if it exists
             # The virtual env is expected to be named "venv"
-            venvPath = Path(folder, "venv", "Lib", "site-packages")
-            if venvPath.exists():
-                self.pythonPaths.append(venvPath.as_posix())
+            venvLibPath = Path(venvFolder, "Lib", "site-packages")
+            if venvLibPath.exists():
+                self.pythonPaths.append(venvLibPath.as_posix())
         else:
             # For Linux platforms, lib paths may need to be discovered recursively to be properly
             # added to LD_LIBRARY_PATH
             extraLibPaths = []
             regex = re.compile(r"^lib(\d{2})?$")
-            for venvPath in venvLibPaths:
-                for path, directories, _ in os.walk(venvPath):
+            for envPath in envLibPaths + venvLibPaths:
+                for path, directories, _ in os.walk(envPath):
                     for directory in directories:
                         if re.match(regex, directory):
                             extraLibPaths.append(os.path.join(path, directory))
@@ -135,7 +146,6 @@ class DirTreeProcessEnv(ProcessEnv):
                 continue
 
             self._env[k] = val
-
 
 
 class RezProcessEnv(ProcessEnv):

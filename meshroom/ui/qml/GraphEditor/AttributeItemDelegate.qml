@@ -260,8 +260,7 @@ RowLayout {
             case "IntParam":
             case "FloatParam":
                 // We don't set a number because we want to keep the invalid expression
-                // _reconstruction.setAttribute(root.attribute, Number(value))
-                _reconstruction.setAttribute(root.attribute, value)
+                _reconstruction.setAttribute(root.attribute, Number(value))
                 updateAttributeLabel()
                 break
             case "File":
@@ -623,15 +622,11 @@ RowLayout {
                     isInt: attribute.type === "FloatParam" ? false : true
                     
                     onEditingFinished: {
-                        if (hasExprError)
-                            setTextFieldAttribute(expressionTextField.text)  // On the undo stack we keep the expression
-                        else
+                        if (!hasExprError)
                             setTextFieldAttribute(expressionTextField.evaluatedValue)
                     }
                     onAccepted: {
-                        if (hasExprError)
-                            setTextFieldAttribute(expressionTextField.text)  // On the undo stack we keep the expression
-                        else
+                        if (!hasExprError)
                             setTextFieldAttribute(expressionTextField.evaluatedValue)
                         // When the text is too long, display the left part
                         // (with the most important values and cut the floating point details)
@@ -640,9 +635,7 @@ RowLayout {
                     
                     Component.onDestruction: {
                         if (activeFocus) {
-                            if (hasExprError)
-                                setTextFieldAttribute(expressionTextField.text)
-                            else
+                            if (!hasExprError)
                                 setTextFieldAttribute(expressionTextField.evaluatedValue)
                         }
                     }

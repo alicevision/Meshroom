@@ -341,7 +341,7 @@ class IntParam(Param):
         self._valueType = int
 
     def validateValue(self, value):
-        if value is None or isinstance(value, str):
+        if value is None:
             return value
         # Handle unsigned int values that are translated to int by shiboken and may overflow
         try:
@@ -371,7 +371,7 @@ class FloatParam(Param):
         self._valueType = float
 
     def validateValue(self, value):
-        if value is None or isinstance(value, str):
+        if value is None:
             return value
         try:
             return float(value)

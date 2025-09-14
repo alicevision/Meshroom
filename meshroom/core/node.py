@@ -409,25 +409,24 @@ class NodeChunk(BaseObject):
     @property
     def statusFile(self):
         if self.range.blockSize == 0:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, "status")
+            return os.path.join(self.node.internalFolder, "status")
         else:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder,
+            return os.path.join(self.node.internalFolder,
                                 str(self.index) + ".status")
 
     @property
     def statisticsFile(self):
         if self.range.blockSize == 0:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, "statistics")
+            return os.path.join(self.node.internalFolder, "statistics")
         else:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder,
-                                str(self.index) + ".statistics")
+            return os.path.join(self.node.internalFolder, str(self.index) + ".statistics")
 
     @property
     def logFile(self):
         if self.range.blockSize == 0:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, "log")
+            return os.path.join(self.node.internalFolder, "log")
         else:
-            return os.path.join(self.node.graph.cacheDir, self.node.internalFolder,
+            return os.path.join(self.node.internalFolder,
                                 str(self.index) + ".log")
 
     def saveStatusFile(self):
@@ -913,7 +912,7 @@ class BaseNode(BaseObject):
 
     @property
     def valuesFile(self):
-        return os.path.join(self.graph.cacheDir, self.internalFolder, 'values')
+        return os.path.join(self.internalFolder, 'values')
 
     def getInputNodes(self, recursive, dependenciesOnly):
         return self.graph.getInputNodes(self, recursive=recursive,

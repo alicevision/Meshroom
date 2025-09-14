@@ -194,7 +194,12 @@ class Attribute(BaseObject):
         elif self.isInput and Attribute.isLinkExpression(v):
             # value is a link to another attribute
             link = v[1:-1]
-            linkNodeName, linkAttrName = link.split('.')
+            linkNodeName, linkAttrName = "", ""
+            try:
+                linkNodeName, linkAttrName = link.split('.')
+            except ValueError as err:
+                logging.warning('Retrieve Connected Attribute from Expression failed.')
+                logging.warning(f'Expression: "{link}"\nError: "{err}".')
             try:
                 node = g.node(linkNodeName)
                 if not node:

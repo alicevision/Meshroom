@@ -131,11 +131,11 @@ class Attribute(BaseObject):
             env = self.node.nodePlugin.configFullEnv if self.node.nodePlugin else os.environ
             substituted = Template(self.value).safe_substitute(env)
             try:
-                varResolved = substituted.format(**self.node._cmdVars, **self.node._staticCmdVars)
+                varResolved = substituted.format(**self.node._expVars, **self.node._staticExpVars)
                 return varResolved
             except (KeyError, IndexError):
                 # Catch KeyErrors and IndexErros to be able to open files created prior to the
-                # support of relative variables (when self.node._cmdVars was not used to evaluate
+                # support of relative variables (when self.node._expVars was not used to evaluate
                 # expressions in the attribute)
                 return substituted
         return self.value

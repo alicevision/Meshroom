@@ -306,7 +306,7 @@ class CommandLineNode(BaseNode):
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = " " + self.commandLineRange.format(**chunk.range.toDict()) + " " + cmdSuffix
 
-        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars, **chunk.node._staticCmdVars, **cmdLineVars) + cmdSuffix
+        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._expVars, **chunk.node._staticExpVars, **cmdLineVars) + cmdSuffix
 
     def processChunk(self, chunk):
         cmd = self.buildCommandLine(chunk)

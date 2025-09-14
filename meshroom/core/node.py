@@ -681,7 +681,7 @@ class BaseNode(BaseObject):
         self.dirty: bool = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)
         self._uid: str = uid
-        self._cmdVars: dict = {}
+        self._expVars: dict = {}
         self._size: int = 0
         self._logManager: Optional[LogManager] = None
         self._position: Position = position or Position()
@@ -695,7 +695,7 @@ class BaseNode(BaseObject):
 
         self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)
 
-        self._staticCmdVars = {
+        self._staticExpVars = {
             "nodeType": self.nodeType,
             "nodeSourceCodeFolder": self.sourceCodeFolder
         }
@@ -965,24 +965,24 @@ class BaseNode(BaseObject):
             nodeType=self.nodeType,
             uid=self._uid)
 
-    def _buildCmdVars(self):
+    def _buildExpVars(self):
         """
         Generate command variables using input attributes and resolved output attributes
         names and values.
         """
-        def _buildAttributeCmdVars(cmdVars, name, attr):
+        def _buildAttributeExpVars(expVars, name, attr):
             if attr.enabled:
                 # xxValue is exposed without quotes to allow to compose expressions
-                cmdVars[name + "Value"] = attr.getValueStr(withQuotes=False)
+                expVars[name + "Value"] = attr.getValueStr(withQuotes=False)
 
                 if isinstance(attr, GroupAttribute):
                     assert isinstance(attr.value, DictModel)
                     # If the GroupAttribute is not set in a single command line argument,
                     # the sub-attributes may need to be exposed individually
                     for v in attr._value:
-                        _buildAttributeCmdVars(cmdVars, v.name, v)
+                        _buildAttributeExpVars(expVars, v.name, v)
 
-        self._cmdVars = {
+        self._expVars = {
             "uid": self._uid,
             "nodeCacheFolder": self._internalFolder,
         }
@@ -991,16 +991,16 @@ class BaseNode(BaseObject):
         for name, attr in self._attributes.objects.items():
             if attr.isOutput:
                 continue  # skip outputs
-            _buildAttributeCmdVars(self._cmdVars, name, attr)
+            _buildAttributeExpVars(self._expVars, name, attr)
 
         # For updating output attributes invalidation values
-        cmdVarsNoCache = self._cmdVars.copy()
-        cmdVarsNoCache["cache"] = ""
+        expVarsNoCache = self._expVars.copy()
+        expVarsNoCache["cache"] = ""
 
         # Use "self._internalFolder" instead of "self.internalFolder" because we do not want it to
         # be resolved with the {cache} information ("self.internalFolder" resolves
         # "self._internalFolder")
-        cmdVarsNoCache["nodeCacheFolder"] = self._internalFolderExp.format(**cmdVarsNoCache, **self._staticCmdVars)
+        expVarsNoCache["nodeCacheFolder"] = self._internalFolderExp.format(**expVarsNoCache, **self._staticExpVars)
 
         # Evaluate output params
         for name, attr in self._attributes.objects.items():
@@ -1022,8 +1022,8 @@ class BaseNode(BaseObject):
                                         format(nodeName=self.name, attrName=attr.name))
                     if defaultValue is not None:
                         try:
-                            attr.value = defaultValue.format(**self._cmdVars)
-                            attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
+                            attr.value = defaultValue.format(**self._expVars)
+                            attr._invalidationValue = defaultValue.format(**expVarsNoCache)
                         except KeyError as e:
                             logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with '
                                             'value "{defaultValue}".\nError: {err}'.
@@ -1036,7 +1036,7 @@ class BaseNode(BaseObject):
                                             err=str(e)))
 
             # xxValue is exposed without quotes to allow to compose expressions
-            self._cmdVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
+            self._expVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
 
 
     def createCmdLineVars(self):
@@ -1332,7 +1332,7 @@ class BaseNode(BaseObject):
         # Update command variables / output attributes
         self._computeUid()
         self._computeInternalFolder(cacheDir)
-        self._buildCmdVars()
+        self._buildExpVars()
         if self.nodeDesc:
             self.nodeDesc.postUpdate(self)
         # Notify internal folder change if needed

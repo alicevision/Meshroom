@@ -673,6 +673,7 @@ class BaseNode(BaseObject):
         self.packageVersion: str = ""
         self._internalFolder: str = ""
         self._sourceCodeFolder: str = ""
+        self._internalFolderExp = "{cache}/{nodeType}/{uid}"
 
         # temporary unique name for this node
         self._name: str = f"_{nodeType}_{uuid.uuid1()}"
@@ -693,6 +694,11 @@ class BaseNode(BaseObject):
         self._hasDuplicates: bool = False
 
         self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)
+
+        self._staticCmdVars = {
+            "nodeType": self.nodeType,
+            "nodeSourceCodeFolder": self.sourceCodeFolder
+        }
 
     def __getattr__(self, k):
         try:
@@ -953,6 +959,12 @@ class BaseNode(BaseObject):
         uidAttributes.append(self.nodeType)
         self._uid = hashValue(uidAttributes)
 
+    def _computeInternalFolder(self, cacheDir):
+        self._internalFolder = self._internalFolderExp.format(
+            cache=cacheDir or self.graph.cacheDir,
+            nodeType=self.nodeType,
+            uid=self._uid)
+
     def _buildCmdVars(self):
         """
         Generate command variables using input attributes and resolved output attributes
@@ -960,31 +972,20 @@ class BaseNode(BaseObject):
         """
         def _buildAttributeCmdVars(cmdVars, name, attr):
             if attr.enabled:
-                group = attr.desc.group(attr.node) \
-                        if callable(attr.desc.group) else attr.desc.group
-                if group is not None:
-                    # If there is a valid command line "group"
-                    v = attr.getValueStr(withQuotes=True)
-                    cmdVars[name] = f"--{name} {v}"
-                    # xxValue is exposed without quotes to allow to compose expressions
-                    cmdVars[name + "Value"] = attr.getValueStr(withQuotes=False)
+                # xxValue is exposed without quotes to allow to compose expressions
+                cmdVars[name + "Value"] = attr.getValueStr(withQuotes=False)
 
-                    # List elements may give a fully empty string and will not be sent to the command line.
-                    # String attributes will return only quotes if it is empty and thus will be send to the command line.
-                    # But a List of string containing 1 element,
-                    # and this element is an empty string will also return quotes and will be sent to the command line.
-                    if v:
-                        cmdVars[group] = cmdVars.get(group, "") + " " + cmdVars[name]
-                elif isinstance(attr, GroupAttribute):
+                if isinstance(attr, GroupAttribute):
                     assert isinstance(attr.value, DictModel)
                     # If the GroupAttribute is not set in a single command line argument,
                     # the sub-attributes may need to be exposed individually
                     for v in attr._value:
                         _buildAttributeCmdVars(cmdVars, v.name, v)
 
-        self._cmdVars["uid"] = self._uid
-        self._cmdVars["nodeCacheFolder"] = self.internalFolder
-        self._cmdVars["nodeSourceCodeFolder"] = self.sourceCodeFolder
+        self._cmdVars = {
+            "uid": self._uid,
+            "nodeCacheFolder": self._internalFolder,
+        }
 
         # Evaluate input params
         for name, attr in self._attributes.objects.items():
@@ -999,7 +1000,7 @@ class BaseNode(BaseObject):
         # Use "self._internalFolder" instead of "self.internalFolder" because we do not want it to
         # be resolved with the {cache} information ("self.internalFolder" resolves
         # "self._internalFolder")
-        cmdVarsNoCache["nodeCacheFolder"] = self._internalFolder.format(**cmdVarsNoCache)
+        cmdVarsNoCache["nodeCacheFolder"] = self._internalFolderExp.format(**cmdVarsNoCache, **self._staticCmdVars)
 
         # Evaluate output params
         for name, attr in self._attributes.objects.items():
@@ -1034,15 +1035,60 @@ class BaseNode(BaseObject):
                                             format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
                                             err=str(e)))
 
-            v = attr.getValueStr(withQuotes=True)
-
-            self._cmdVars[name] = f'--{name} {v}'
             # xxValue is exposed without quotes to allow to compose expressions
             self._cmdVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
 
-            if v:
-                self._cmdVars[attr.desc.group] = \
-                    self._cmdVars.get(attr.desc.group, '') + ' ' + self._cmdVars[name]
+
+    def createCmdLineVars(self):
+        """
+        Generate command variables using input attributes and resolved output attributes
+        names and values.
+        """
+        def _buildAttributeCmdLineVars(cmdLineVars, name, attr):
+            if attr.enabled:
+                group = attr.desc.group(attr.node) \
+                        if callable(attr.desc.group) else attr.desc.group
+                if group:
+                    # If there is a valid command line "group"
+                    v = attr.getValueStr(withQuotes=True)
+
+                    # List elements may give a fully empty string and will not be sent to the command line.
+                    # String attributes will return only quotes if it is empty and thus will be send to the command line.
+                    # But a List of string containing 1 element,
+                    # and this element is an empty string will also return quotes and will be sent to the command line.
+                    if v:
+                        cmdLineVars[group] = cmdLineVars.get(group, "") + f" --{name} {v}"
+                elif isinstance(attr, GroupAttribute):
+                    assert isinstance(attr.value, DictModel)
+                    # If the GroupAttribute is not set in a single command line argument,
+                    # the sub-attributes may need to be exposed individually
+                    for v in attr._value:
+                        _buildAttributeCmdLineVars(cmdLineVars, v.name, v)
+
+        cmdLineVars = {}
+
+        # Evaluate input params
+        for name, attr in self._attributes.objects.items():
+            if attr.isOutput:
+                continue  # skip outputs
+            _buildAttributeCmdLineVars(cmdLineVars, name, attr)
+
+        # Evaluate output params
+        for name, attr in self._attributes.objects.items():
+            if attr.isInput:
+                continue  # skip inputs
+            if not attr.desc.group:
+                continue  # skip attributes without group
+
+            v = attr.getValueStr(withQuotes=True)
+
+            if not v:
+                continue  # skip empty strings
+
+            cmdLineVars[attr.desc.group] = \
+                cmdLineVars.get(attr.desc.group, '') + f' --{name} {v}'
+
+        return cmdLineVars
 
     @property
     def isParallelized(self):
@@ -1284,18 +1330,13 @@ class BaseNode(BaseObject):
             folder = ''
 
         # Update command variables / output attributes
-        self._cmdVars = {
-            "cache": cacheDir or self.graph.cacheDir,
-            "nodeType": self.nodeType,
-            "nodeCacheFolder": self._internalFolder,
-            "nodeSourceCodeFolder": self.sourceCodeFolder
-        }
         self._computeUid()
+        self._computeInternalFolder(cacheDir)
         self._buildCmdVars()
         if self.nodeDesc:
             self.nodeDesc.postUpdate(self)
         # Notify internal folder change if needed
-        if self.internalFolder != folder:
+        if self._internalFolder != folder:
             self.internalFolderChanged.emit()
 
     def updateInternalAttributes(self):
@@ -1303,7 +1344,7 @@ class BaseNode(BaseObject):
 
     @property
     def internalFolder(self):
-        return self._internalFolder.format(**self._cmdVars)
+        return self._internalFolder
 
     @property
     def sourceCodeFolder(self):
@@ -1359,7 +1400,7 @@ class BaseNode(BaseObject):
         if iteration != -1:
             chunk = self.chunks[iteration]
             logFileName = str(chunk.index) + ".log"
-        logFile = os.path.join(self.graph.cacheDir, self.internalFolder, logFileName)
+        logFile = os.path.join(self.internalFolder, logFileName)
         # Setup logger
         rootLogger = logging.getLogger()
         self._logManager = LogManager(rootLogger, logFile)
@@ -1775,7 +1816,6 @@ class Node(BaseNode):
 
         self.packageName = self.nodeDesc.packageName
         self.packageVersion = self.nodeDesc.packageVersion
-        self._internalFolder = "{cache}/{nodeType}/{uid}"
         self._sourceCodeFolder = self.nodeDesc.sourceCodeFolder
 
         for attrDesc in self.nodeDesc.inputs:
@@ -1862,7 +1902,6 @@ class Node(BaseNode):
                 'split': self.nbParallelizationBlocks
             },
             'uid': self._uid,
-            'internalFolder': self._internalFolder,
             'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
             'outputs': outputs,
@@ -1925,7 +1964,6 @@ class CompatibilityNode(BaseNode):
         self._inputs = self.nodeDict.get("inputs", {})
         self._internalInputs = self.nodeDict.get("internalInputs", {})
         self.outputs = self.nodeDict.get("outputs", {})
-        self._internalFolder = self.nodeDict.get("internalFolder", "")
         self._uid = self.nodeDict.get("uid", None)
 
         # Restore parallelization settings

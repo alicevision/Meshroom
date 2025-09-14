@@ -300,12 +300,13 @@ class CommandLineNode(BaseNode):
         return MrNodeType.COMMANDLINE
 
     def buildCommandLine(self, chunk) -> str:
+        cmdLineVars = chunk.node.createCmdLineVars()
         cmdPrefix = chunk.node.nodeDesc.plugin.commandPrefix
         cmdSuffix = chunk.node.nodeDesc.plugin.commandSuffix
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = " " + self.commandLineRange.format(**chunk.range.toDict()) + " " + cmdSuffix
 
-        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
+        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars, **chunk.node._staticCmdVars, **cmdLineVars) + cmdSuffix
 
     def processChunk(self, chunk):
         cmd = self.buildCommandLine(chunk)

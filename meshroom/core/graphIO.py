@@ -160,7 +160,6 @@ class TemplateGraphSerializer(GraphSerializer):
 
         del nodeData["outputs"]
         del nodeData["uid"]
-        del nodeData["internalFolder"]
         del nodeData["parallelization"]
 
         return nodeData

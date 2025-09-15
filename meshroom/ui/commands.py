@@ -429,8 +429,9 @@ class AddEdgeCommand(GraphCommand):
         self.dstAttr = dst.fullName
         self.setText(f"Connect '{self.srcAttr}'->'{self.dstAttr}'")
 
-        if src.baseType != dst.baseType:
-            raise ValueError(f"Attribute types are not compatible and cannot be connected: '{self.srcAttr}'({src.baseType})->'{self.dstAttr}'({dst.baseType})")
+        if not dst.validateIncomingConnection(src):
+            raise ValueError(f"Attribute types are not compatible and cannot be connected: "
+                             f"'{self.srcAttr}'({src.baseType})->'{self.dstAttr}'({dst.baseType})")
 
     def redoImpl(self):
         self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))

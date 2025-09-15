@@ -103,10 +103,11 @@ RowLayout {
 
             keys: [inputDragTarget.objectName]
             onEntered: function(drag) {
+                var validIncomingConnection = inputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
                 // Check if attributes are compatible to create a valid connection
                 if (root.readOnly                                            // Cannot connect on a read-only attribute
                     || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
-                    || drag.source.baseType !== inputDragTarget.baseType     // Not the same base type
+                    || !validIncomingConnection                              // Connection is not allowed
                     || drag.source.nodeItem === inputDragTarget.nodeItem     // Connection between attributes of the same node
                     || (drag.source.isList && childrenRepeater.count)        // Source/target are lists but target already has children
                     || drag.source.connectorType === "input"                 // Refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
@@ -140,7 +141,6 @@ RowLayout {
             readonly property alias attribute: root.attribute
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: Boolean(attribute.isOutput)
-            readonly property string baseType: attribute.baseType !== undefined ? attribute.baseType : ""
             readonly property alias isList: root.isList
             property bool dragAccepted: false
             anchors.verticalCenter: parent.verticalCenter
@@ -254,9 +254,10 @@ RowLayout {
 
             keys: [outputDragTarget.objectName]
             onEntered: function(drag) {
+                var validIncomingConnection = outputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
                 // Check if attributes are compatible to create a valid connection
                 if (drag.source.objectName != outputDragTarget.objectName   // Not an edge connector
-                    || drag.source.baseType !== outputDragTarget.baseType   // Not the same base type
+                    || !validIncomingConnection                             // Connection is not allowed
                     || drag.source.nodeItem === outputDragTarget.nodeItem   // Connection between attributes of the same node
                     || (!drag.source.isList && outputDragTarget.isList)     // Connection between a list and a simple attribute
                     || (drag.source.isList && childrenRepeater.count)       // Source/target are lists but target already has children
@@ -288,7 +289,6 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: Boolean(attribute.isOutput)
             readonly property alias isList: root.isList
-            readonly property string baseType: attribute.baseType !== undefined ? attribute.baseType : ""
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter

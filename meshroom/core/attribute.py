@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import annotations
+
 import copy
 import os
 import re
@@ -451,8 +453,8 @@ class Attribute(BaseObject):
         return self.node.graph and self.isInput and self.node.graph._edges and \
             self in self.node.graph._edges.keys()
 
-    def _getInputLink(self, recursive=False) -> "Attribute":
-        """
+    def _getInputLink(self, recursive=False) -> Attribute:
+        """ 
         Return the direct upstream connected attribute.
         :param recursive: recursive call, return the root attribute
         """
@@ -463,8 +465,8 @@ class Attribute(BaseObject):
             return linkAttribute._getInputLink(recursive)
         return linkAttribute
 
-    def _getOutputLinks(self) -> list["Attribute"]:
-        """
+    def _getOutputLinks(self) -> list[Attribute]:
+        """ 
         Return the list of direct downstream connected attributes.
         """
         # Safety check to avoid evaluation errors
@@ -472,8 +474,8 @@ class Attribute(BaseObject):
             return []
         return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self]
 
-    def _getAllInputLinks(self) -> list["Attribute"]:
-        """
+    def _getAllInputLinks(self) -> list[Attribute]:
+        """ 
         Return the list of upstream connected attributes for the attribute or any of its elements.
         """
         inputLink = self._getInputLink()
@@ -481,8 +483,8 @@ class Attribute(BaseObject):
             return []
         return [inputLink]
 
-    def _getAllOutputLinks(self) -> list["Attribute"]:
-        """
+    def _getAllOutputLinks(self) -> list[Attribute]:
+        """ 
         Return the list of downstream connected attributes for the attribute or any of its elements.
         """
         return self._getOutputLinks()
@@ -846,7 +848,7 @@ class ListAttribute(Attribute):
             attr.updateInternals()
 
     # Override
-    def _getAllInputLinks(self) -> list["Attribute"]:
+    def _getAllInputLinks(self) -> list[Attribute]:
         """
         Return the list of upstream connected attributes for the attribute or any of its elements.
         """
@@ -856,7 +858,7 @@ class ListAttribute(Attribute):
         return [edge.src for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
 
     # Override
-    def _getAllOutputLinks(self) -> list["Attribute"]:
+    def _getAllOutputLinks(self) -> list[Attribute]:
         """
         Return the list of downstream connected attributes for the attribute or any of its elements.
         """

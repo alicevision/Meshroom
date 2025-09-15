@@ -1059,6 +1059,41 @@ class GroupAttribute(Attribute):
         for attr in self._value:
             attr.updateInternals()
 
+    # Override
+    def _getFlatStaticChildren(self) -> list[Attribute]:
+        attributes = []
+
+        # Iterate over the values and add the flat children of every child (if they exist)
+        for attribute in self.value:
+            attributes.append(attribute)
+            attributes += attribute.flatStaticChildren
+
+        return attributes
+
+    # Override
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        valid = super()._validateIncomingConnection(connectingAttribute)
+
+        if not valid:  # Attributes are not of the same base type
+            return False
+
+        return self._hasMatchingStructure(connectingAttribute)
+
+    def _hasMatchingStructure(self, otherAttribute: Attribute) -> bool:
+        """
+        """
+        flatAttrs = self.flatStaticChildren
+        otherFlatAttrs = otherAttribute.flatStaticChildren
+
+        if len(flatAttrs) != len(otherFlatAttrs):
+            return False
+
+        for index, attribute in enumerate(flatAttrs):
+            if attribute.baseType != otherFlatAttrs[index].baseType:
+                return False
+
+        return True
+
     @Slot(str, result=Attribute)
     def childAttribute(self, key: str) -> Attribute:
         """
@@ -1082,7 +1117,10 @@ class GroupAttribute(Attribute):
 
     # Override value property
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
-    isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value), notify=Attribute.valueChanged)
+    # Override flatStaticChildren property
+    flatStaticChildren = Property(Variant, _getFlatStaticChildren, constant=True)
+    isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value),
+                         notify=Attribute.valueChanged)
 
 
 class GeometryAttribute(GroupAttribute):

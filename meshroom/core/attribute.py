@@ -507,6 +507,18 @@ class Attribute(BaseObject):
             return False
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        """
+        Validation of the connection of "connectingAttribute" on this Attribute.
+        This method can be overridden.
+
+        Args:
+            connectingAttribute: the Attribute attempting to connect to this one.
+
+        Returns:
+            True if the connection is valid, False otherwise.
+        """
+        return self.baseType == connectingAttribute.baseType
 
     # Slots
 
@@ -529,7 +541,13 @@ class Attribute(BaseObject):
     def matchText(self, text: str) -> bool:
         return self.label.lower().find(text.lower()) > -1
 
-    # Properties and signals
+    @Slot(BaseObject, result=bool)
+    def validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        """
+        Return True if this Attribute can receive a connection from
+        "connectingAttribute", False otherwise.
+        """
+        return self._validateIncomingConnection(connectingAttribute)
 
     # Properties and signals
 

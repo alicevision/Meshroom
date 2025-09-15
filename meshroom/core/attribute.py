@@ -79,6 +79,7 @@ class Attribute(BaseObject):
         self._desc: desc.Attribute = attributeDesc
         self._isOutput: bool = isOutput
         self._enabled: bool = True
+        self._depth: int = root.depth + 1 if root is not None else 0
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
         self._invalidationValue = ""  # invalidation value for output attributes
         self._value = None
@@ -507,6 +508,14 @@ class Attribute(BaseObject):
             return False
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
+    def _getFlatStaticChildren(self) -> list[Attribute]:
+        """
+        Return a list of all the attributes that refer to this Attribute as their parent through the
+        "root" property. If no such attribute exist, return an empty list.
+        The depth difference is not taken into account in the list, which is thus always flat.
+        """
+        return []
+
     def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
         """
         Validation of the connection of "connectingAttribute" on this Attribute.
@@ -580,6 +589,8 @@ class Attribute(BaseObject):
     # Whether this attribute is enabled.
     enabledChanged = Signal()
     enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
+    # Depth level of this attribute.
+    depth = Property(int, lambda self: self._depth, constant=True)
 
     # Attribute value properties and signals
     valueChanged = Signal()
@@ -621,6 +632,8 @@ class Attribute(BaseObject):
     hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=inputLinksChanged)
     # Whether the attribute or any of its elements is linked by another attribute.
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
+    # The list of attributes that refer to this one as their parent.
+    flatStaticChildren = Property(Variant, _getFlatStaticChildren, constant=True)
 
     expressionApplied = Signal()
 

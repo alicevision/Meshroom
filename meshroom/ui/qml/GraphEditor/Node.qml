@@ -577,7 +577,7 @@ Item {
 
                                 delegate: Loader {
                                     id: inputLoader
-                                    active: !object.isOutput && object.desc.exposed && object.desc.visible
+                                    active: !object.isOutput && object.exposed && object.desc.visible
                                     visible: Boolean(object.enabled)
                                     width: inputs.width
 
@@ -637,7 +637,7 @@ Item {
                                     model: node ? node.attributes : undefined
                                     delegate: Loader {
                                         id: paramLoader
-                                        active: !object.isOutput && !object.desc.exposed && object.desc.visible
+                                        active: !object.isOutput && !object.exposed && object.desc.visible
                                         visible: Boolean(object.enabled || object.hasAnyInputLinks || object.hasAnyOutputLinks)
                                         property bool isFullyActive: Boolean(m.displayParams || object.hasAnyInputLinks || object.hasAnyOutputLinks)
                                         width: parent.width

@@ -80,6 +80,7 @@ class Attribute(BaseObject):
         self._isOutput: bool = isOutput
         self._enabled: bool = True
         self._depth: int = root.depth + 1 if root is not None else 0
+        self._exposed: bool = root.exposed if root is not None else attributeDesc.exposed
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
         self._invalidationValue = ""  # invalidation value for output attributes
         self._value = None
@@ -591,6 +592,9 @@ class Attribute(BaseObject):
     enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
     # Depth level of this attribute.
     depth = Property(int, lambda self: self._depth, constant=True)
+    # Whether the attribute is exposed (if it has a parent, the parent's value
+    # takes precedence over the description's).
+    exposed = Property(bool, lambda self: self._exposed, constant=True)
 
     # Attribute value properties and signals
     valueChanged = Signal()

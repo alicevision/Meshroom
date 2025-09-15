@@ -466,7 +466,7 @@ class Attribute(BaseObject):
         return linkAttribute
 
     def _getOutputLinks(self) -> list[Attribute]:
-        """ 
+        """
         Return the list of direct downstream connected attributes.
         """
         # Safety check to avoid evaluation errors
@@ -475,7 +475,7 @@ class Attribute(BaseObject):
         return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self]
 
     def _getAllInputLinks(self) -> list[Attribute]:
-        """ 
+        """
         Return the list of upstream connected attributes for the attribute or any of its elements.
         """
         inputLink = self._getInputLink()
@@ -484,7 +484,7 @@ class Attribute(BaseObject):
         return [inputLink]
 
     def _getAllOutputLinks(self) -> list[Attribute]:
-        """ 
+        """
         Return the list of downstream connected attributes for the attribute or any of its elements.
         """
         return self._getOutputLinks()
@@ -507,6 +507,7 @@ class Attribute(BaseObject):
             return False
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
+
     # Slots
 
     @Slot()
@@ -527,6 +528,8 @@ class Attribute(BaseObject):
     @Slot(str, result=bool)
     def matchText(self, text: str) -> bool:
         return self.label.lower().find(text.lower()) > -1
+
+    # Properties and signals
 
     # Properties and signals
 
@@ -1014,7 +1017,7 @@ class GroupAttribute(Attribute):
             return super().uid()
 
         uids = []
-        for k, v in self._value.items():
+        for _, v in self._value.items():
             if v.enabled and v.invalidate:
                 uids.append(v.uid())
         return hashValue(uids)

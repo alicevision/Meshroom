@@ -3,6 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import MaterialIcons 2.2
 
+import Utils 1.0
+
 RowLayout {
     id: root
 

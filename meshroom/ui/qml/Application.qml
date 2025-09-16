@@ -1050,7 +1050,6 @@ Page {
                 id: statusBar
                 objectName: "statusBar"  // Expose to python
                 height: parent.height
-                defaultColor: Qt.darker(palette.text, 1.2)
                 defaultIcon : MaterialIcons.comment
             }
         }

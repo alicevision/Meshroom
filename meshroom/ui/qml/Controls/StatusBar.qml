@@ -6,7 +6,7 @@ import MaterialIcons 2.2
 RowLayout {
     id: root
 
-    property color  defaultColor: "white"
+    property color  defaultColor: Qt.darker(palette.text, 1.2)
     property string defaultIcon : MaterialIcons.circle
     property int    interval    : 5000
     property bool   logMessage  : false
@@ -34,6 +34,8 @@ RowLayout {
         ToolTip.text: "Open Messages UI"
         // TODO : Open messages UI
         // onClicked: statusBar.showMessage("NotImplementedError : Cannot open interface", "error", 2000)
+        enabled: false  // TODO: to remove when implemented  
+        ToolTip.visible: false  // TODO: to remove when implemented  
         Component.onCompleted: {
             statusBarButton.contentItem.color = defaultColor
         }
@@ -57,25 +59,24 @@ RowLayout {
         id: statusBar
         property string message: ""
 
-        function showMessage(msg, status=undefined, duration=undefined) {
+        function showMessage(msg, status=undefined, duration=root.interval) {
             var textColor = defaultColor
             var logLevel = "info"
             switch (status) {
                 case "ok": {
-                    logLevel = "info"
-                    textColor = Qt.lighter("green", 1.6)
+                    statusBarField.color = Colors.green
                     statusBarButton.text = MaterialIcons.check_circle
                     break
                 }
                 case "warning": {
                     logLevel = "warn"
-                    textColor = Qt.lighter("yellow", 1.4)
+                    statusBarField.color = Colors.orange
                     statusBarButton.text = MaterialIcons.warning
                     break
                 }
                 case "error": {
                     logLevel = "error"
-                    textColor = Qt.lighter("red", 1.4)
+                    statusBarField.color = Colors.red
                     statusBarButton.text = MaterialIcons.error
                     break
                 }
@@ -86,16 +87,22 @@ RowLayout {
             if (logMessage === true) {
                 console.log("[Message][" + logLevel.toUpperCase().padEnd(5) + "] " + msg)
             }
-            statusBarField.color = textColor
-            statusBarButton.contentItem.color = textColor
+            statusBarButton.contentItem.color = statusBarField.color
             statusBar.message = msg
-            statusBarTimer.interval = duration !== undefined ? duration : root.interval
+            statusBarTimer.interval = duration
             statusBarTimer.restart()
             MeshroomApp.forceUIUpdate()
         }
     }
 
-    function showMessage(msg, status=undefined, duration=undefined) {
+    function showMessage(msg, status=undefined, duration=root.interval) {
         statusBar.showMessage(msg, status, duration)
+    }
+
+    Connections {
+        target: _messageController
+        function onMessage(message, color, duration) {
+            showMessage(message, color, duration)
+        }
     }
 }

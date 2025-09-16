@@ -25,6 +25,7 @@ from meshroom.ui.components.filepath import FilepathHelper
 from meshroom.ui.components.scene3D import Scene3DHelper, Transformations3DHelper
 from meshroom.ui.components.scriptEditor import ScriptEditorManager
 from meshroom.ui.components.thumbnail import ThumbnailCache
+from meshroom.ui.components.statusBar import MessageController
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
@@ -281,6 +282,8 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("ThumbnailCache", ThumbnailCache(parent=self))
 
         # additional context properties
+        self._messageController = MessageController(parent=self)
+        self.engine.rootContext().setContextProperty("_messageController", self._messageController)
         self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
         self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
@@ -362,11 +365,7 @@ class MeshroomApp(QApplication):
         self.processEvents()
     
     def showMessage(self, message, status=None, duration=5000):
-        root = self.engine.rootObjects()
-        if root:
-            statusBar = root[0].findChild(QObject, "statusBar")
-            if statusBar is not None:
-                statusBar.showMessage(message, status, duration)
+        self._messageController.sendMessage(message, status, duration)
 
     def _retrieveThumbnailPath(self, filepath: str) -> str:
         """

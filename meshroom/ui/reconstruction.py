@@ -454,7 +454,7 @@ class Reconstruction(UIGraph):
     @Slot(list)
     def _onPluginsReloaded(self, nodeTypes: list):
         self._graph.reloadNodePlugins(nodeTypes)
-        self.parent().showMessage("Plugins reloaded !", "ok")
+        self.parent().showMessage("Plugins reloaded!", "ok")
 
     @Slot()
     @Slot(str)

@@ -7,8 +7,9 @@ from multiprocessing.pool import ThreadPool
 from threading import Thread
 from typing import Callable
 
-from PySide6.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint
+from PySide6.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint, QRegularExpression
 from PySide6.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
+from PySide6.QtQml import QQmlContext
 
 import meshroom.core
 import meshroom.common
@@ -930,7 +931,7 @@ class Reconstruction(UIGraph):
     displayedAttr2D = makeProperty(QObject, "_displayedAttr2D", displayedAttr2DChanged)   
 
     displayedAttrs3DChanged = Signal()    
-    displayedAttrs3D = Property(QObject, lambda self: self._displayedAttrs3D, notify=displayedAttrs3DChanged)  
+    displayedAttrs3D = Property(QObject, lambda self: self._displayedAttrs3D, notify=displayedAttrs3DChanged)
 
     @Slot(QObject)
     def setActiveNode(self, node, categories=True, inputs=True):

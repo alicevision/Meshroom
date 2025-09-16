@@ -523,9 +523,6 @@ class NodeChunk(BaseObject):
         self.statThread = stats.StatisticsThread(self)
         self.statThread.start()
         
-        # Display message
-        
-        
         try:
             self.node.nodeDesc.processChunk(self)
             # NOTE: this assumes saving the output attributes for each chunk

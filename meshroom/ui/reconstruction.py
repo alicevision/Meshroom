@@ -7,9 +7,8 @@ from multiprocessing.pool import ThreadPool
 from threading import Thread
 from typing import Callable
 
-from PySide6.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint, QRegularExpression
+from PySide6.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint
 from PySide6.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
-from PySide6.QtQml import QQmlContext
 
 import meshroom.core
 import meshroom.common
@@ -387,6 +386,9 @@ class Reconstruction(UIGraph):
         # react to internal graph changes to update those variables
         self.graphChanged.connect(self.onGraphChanged)
 
+        # Connect the pluginsReloaded signal to the onPluginsReloaded function
+        self.pluginsReloaded.connect(self._onPluginsReloaded)
+
         self.setDefaultPipeline(defaultPipeline)
 
     def __del__(self):
@@ -438,13 +440,20 @@ class Reconstruction(UIGraph):
         The nodes in the graph will be updated to match the changes in the description, if
         there was any.
         """
-        nodeTypes: list[str] = []
-        for plugin in meshroom.core.pluginManager.getPlugins().values():
-            for node in plugin.nodes.values():
-                if node.reload():
-                    nodeTypes.append(node.nodeDescriptor.__name__)
+        def _reloadPlugins(reconstruction):
+            nodeTypes: list[str] = []
+            for plugin in meshroom.core.pluginManager.getPlugins().values():
+                for node in plugin.nodes.values():
+                    if node.reload():
+                        nodeTypes.append(node.nodeDescriptor.__name__)
+            reconstruction.pluginsReloaded.emit(nodeTypes)
+        
+        self._workerThreads.apply_async(func=lambda: _reloadPlugins(self), args=())
 
+    @Slot(list)
+    def _onPluginsReloaded(self, nodeTypes: list):
         self._graph.reloadNodePlugins(nodeTypes)
+        self.parent().showMessage("Plugins reloaded !", "ok")
 
     @Slot()
     @Slot(str)
@@ -932,6 +941,8 @@ class Reconstruction(UIGraph):
 
     displayedAttrs3DChanged = Signal()    
     displayedAttrs3D = Property(QObject, lambda self: self._displayedAttrs3D, notify=displayedAttrs3DChanged)
+    
+    pluginsReloaded = Signal(list)
 
     @Slot(QObject)
     def setActiveNode(self, node, categories=True, inputs=True):

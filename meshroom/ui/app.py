@@ -362,9 +362,11 @@ class MeshroomApp(QApplication):
         self.processEvents()
     
     def showMessage(self, message, status=None, duration=5000):
-        root = self.engine.rootObjects()[0]
-        statusBar = root.findChild(QObject, "statusBar")
-        statusBar.showMessage(message, status, duration)
+        root = self.engine.rootObjects()
+        if root:
+            statusBar = root[0].findChild(QObject, "statusBar")
+            if statusBar is not None:
+                statusBar.showMessage(message, status, duration)
 
     def _retrieveThumbnailPath(self, filepath: str) -> str:
         """

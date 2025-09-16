@@ -553,8 +553,7 @@ Page {
         shortcut: "Ctrl+Shift+R"
         onTriggered: {
             statusBar.showMessage("Reloading plugins...")
-            _reconstruction.reloadPlugins()
-            statusBar.showMessage("Plugins reloaded !", "ok")
+            _reconstruction.reloadPlugins()  // This will handle the message to show that it finished properly
         }
     }
 

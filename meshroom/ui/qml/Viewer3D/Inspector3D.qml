@@ -241,7 +241,7 @@ FloatingPane {
 
                         MaterialToolLabel {
                             iconText: MaterialIcons.stop
-                            label: {
+                            label.text: {
                                 var id = undefined
                                 // Ensure there are entries in resectionGroups and a valid resectionId before accessing anything
                                 if (Viewer3DSettings.resectionId !== undefined && Viewer3DSettings.resectionGroups &&
@@ -259,7 +259,7 @@ FloatingPane {
 
                         MaterialToolLabel {
                             iconText: MaterialIcons.auto_awesome_motion
-                            label: {
+                            label.text: {
                                 let currentCameras = 0
                                 if (Viewer3DSettings.resectionGroups) {
                                     for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
@@ -277,7 +277,7 @@ FloatingPane {
 
                         MaterialToolLabel {
                             iconText: MaterialIcons.videocam
-                            label: {
+                            label.text: {
                                 let totalCameras = 0
                                 if (Viewer3DSettings.resectionGroups) {
                                     for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {

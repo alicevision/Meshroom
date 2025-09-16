@@ -42,76 +42,114 @@ def executeChunks(node, tmpPath, size):
     return logFiles
 
 
+_INPUTS = [
+    desc.IntParam(
+        name="input",
+        label="Input",
+        description="input",
+        value=0,
+    ),
+]
+_OUTPUTS = [
+    desc.IntParam(
+        name="output",
+        label="Output",
+        description="Output",
+        value=None,
+    ),
+]
+
 class TestNodeA(desc.BaseNode):
+    """
+    Test process with chunks
+    """
     __test__ = False
-    
+    _size = 2
     size = desc.StaticNodeSize(2)
     parallelization = desc.Parallelization(blockSize=1)
-
-    inputs = [
-        desc.IntParam(
-            name="input",
-            label="Input",
-            description="input",
-            value=0,
-        ),
-    ]
-    outputs = [
-        desc.IntParam(
-            name="output",
-            label="Output",
-            description="Output",
-            value=None,
-        ),
-    ]
+    inputs = _INPUTS
+    outputs = _OUTPUTS
 
     def processChunk(self, chunk):
         chunk.logManager.start("info")
-        chunk.logger.info("> Message A")
-        LOGGER.info(f"> Message B")
+        iteration = chunk.range.iteration
+        nbBlocks = chunk.range.nbBlocks
+        chunk.logger.info(f"> (chunk.logger) {chunk.node.name}")
+        LOGGER.info(f"> (root logger) {iteration}/{nbBlocks}")
         chunk.logManager.end()
 
 
 class TestNodeB(TestNodeA):
+    """
+    Test process with 1 chunk but still implementing processChunk
+    """
+    __test__ = False
+    _size = 1
     size = desc.StaticNodeSize(1)
     parallelization = None
 
 
+class TestNodeC(desc.BaseNode):
+    """
+    Test process without chunks and without processChunk
+    """
+    __test__ = False
+    size = desc.StaticNodeSize(1)
+    parallelization = None
+    inputs = _INPUTS
+    outputs = _OUTPUTS
+
+    def process(self, node):
+        LOGGER.info(f"> {node.name}")
+
+
 class TestNodeLogger:
     
-    reA = re.compile(r"\[\d{2}:\d{2}:\d{2}\.\d{3}\]\[info\] > Message A")
-    reB = re.compile(r"\[\d{2}:\d{2}:\d{2}\.\d{3}\]\[info\] > Message B")
-
+    logPrefix = r"\[\d{2}:\d{2}:\d{2}\.\d{3}\]\[info\] > "
+    
     @classmethod
     def setup_class(cls):
         registerNodeDesc(TestNodeA)
         registerNodeDesc(TestNodeB)
+        registerNodeDesc(TestNodeC)
 
     @classmethod
     def teardown_class(cls):
         unregisterNodeDesc(TestNodeA)
         unregisterNodeDesc(TestNodeB)
-
-    def test_nodeWithChunks(self, tmp_path):
+        unregisterNodeDesc(TestNodeC)
+    
+    def test_processChunks(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = tmp_path
-        node = graph.addNewNode(TestNodeA.__name__)
-        # Compute
-        logFiles = executeChunks(node, tmp_path, 2)
-        for chunkId, logFile in logFiles.items():
+        # TestNodeA : multiple chunks
+        nodeA = graph.addNewNode(TestNodeA.__name__)
+        logFiles = executeChunks(nodeA, tmp_path, 2)
+        for chunkIndex, logFile in logFiles.items():
             with open(logFile, "r") as f:
                 content = f.read()
-                assert len(self.reA.findall(content)) == 1
-                assert len(self.reB.findall(content)) == 1
+                reg = re.compile(self.logPrefix + r"\(chunk.logger\) TestNodeA_1")
+                assert len(reg.findall(content)) == 1
+                reg = re.compile(self.logPrefix + r"\(root logger\) " + f"{chunkIndex}/2")
+                assert len(reg.findall(content)) == 1
+        # TestNodeA : single chunk
+        nodeB = graph.addNewNode(TestNodeB.__name__)
+        logFiles = executeChunks(nodeB, tmp_path, 1)
+        for chunkIndex, logFile in logFiles.items():
+            with open(logFile, "r") as f:
+                content = f.read()
+                reg = re.compile(self.logPrefix + r"\(chunk.logger\) TestNodeB_1")
+                assert len(reg.findall(content)) == 1
+                reg = re.compile(self.logPrefix + r"\(root logger\) 0/0")
+                assert len(reg.findall(content)) == 1
     
-    def test_nodeWithoutChunks(self, tmp_path):
+    def test_process(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = tmp_path
-        node = graph.addNewNode(TestNodeB.__name__)
-        # Compute
+        node = graph.addNewNode(TestNodeC.__name__)
         logFiles = executeChunks(node, tmp_path, 1)
         for _, logFile in logFiles.items():
             with open(logFile, "r") as f:
                 content = f.read()
-                assert len(self.reA.findall(content)) == 1
-                assert len(self.reB.findall(content)) == 1
+                reg = re.compile(self.logPrefix + "TestNodeC_1")
+                assert len(reg.findall(content)) == 1

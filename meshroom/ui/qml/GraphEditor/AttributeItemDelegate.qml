@@ -149,7 +149,7 @@ RowLayout {
                         }
                         MenuItem {
                             text: "Copy"
-                            enabled: attribute.value != ""
+                            enabled: !attribute.keyable && attribute.value != ""
                             onTriggered: {
                                 Clipboard.clear()
                                 Clipboard.setText(attribute.value)
@@ -157,7 +157,7 @@ RowLayout {
                         }
                         MenuItem {
                             text: "Paste"
-                            enabled: Clipboard.getText() != "" && root.editable
+                            enabled: Clipboard.getText() != "" && !attribute.keyable && root.editable
                             onTriggered: {
                                 _reconstruction.setAttribute(attribute, Clipboard.getText())
                             }
@@ -260,7 +260,10 @@ RowLayout {
             case "IntParam":
             case "FloatParam":
                 // We don't set a number because we want to keep the invalid expression
-                _reconstruction.setAttribute(root.attribute, Number(value))
+                if(attribute.keyable)
+                    _reconstruction.addAttributeKeyValue(root.attribute, _reconstruction.selectedViewId, Number(value))
+                else
+                    _reconstruction.setAttribute(root.attribute, Number(value))
                 updateAttributeLabel()
                 break
             case "File":
@@ -274,11 +277,12 @@ RowLayout {
     }
 
     Loader {
+        id: attributeLoader
         Layout.fillWidth: true
 
         sourceComponent: {
             // PushButtonParam always has value == undefined, so it needs to be excluded from this check
-            if (attribute.type != "PushButtonParam" && attribute.value === undefined) {
+            if (attribute.type != "PushButtonParam" && !attribute.keyable && attribute.value === undefined) {
                 return notComputedComponent
             }
             switch (attribute.type) {
@@ -612,7 +616,9 @@ RowLayout {
                     Layout.fillWidth: !slider.active
                     enabled: root.editable
                     // Cast value to string to avoid intrusive scientific notations on numbers
-                    property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : attribute.value)
+                    property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : 
+                                                        attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_reconstruction.selectedViewId) : 
+                                                        attribute.value)
                     text: displayValue
                     selectByMouse: true
                     // Note: Use autoScroll as a workaround for alignment
@@ -654,7 +660,7 @@ RowLayout {
                         readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
                         readonly property real formattedValue: value.toFixed(stepDecimalCount)
                         enabled: root.editable
-                        value: attribute.value
+                        value: attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_reconstruction.selectedViewId) : attribute.value
                         from: attribute.desc.range[0]
                         to: attribute.desc.range[1]
                         stepSize: attribute.desc.range[2]
@@ -662,7 +668,10 @@ RowLayout {
 
                         onPressedChanged: {
                             if (!pressed) {
-                                _reconstruction.setAttribute(attribute, formattedValue)
+                                if(attribute.keyable)
+                                    _reconstruction.addAttributeKeyValue(attribute, _reconstruction.selectedViewId, formattedValue)
+                                else
+                                    _reconstruction.setAttribute(attribute, formattedValue)
                                 updateAttributeLabel()
                             }
                         }
@@ -676,8 +685,18 @@ RowLayout {
             Row {
                 CheckBox {
                     enabled: root.editable
-                    checked: attribute.value
-                    onToggled: _reconstruction.setAttribute(attribute, !attribute.value)
+                    checked: attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_reconstruction.selectedViewId) : attribute.value
+                    onToggled: {
+                        if(attribute.keyable) 
+                        {
+                            const value = attribute.keyValues.getValueAtKeyOrDefault(_reconstruction.selectedViewId)
+                            _reconstruction.addAttributeKeyValue(attribute, _reconstruction.selectedViewId, !value)
+                        }
+                        else 
+                        {
+                            _reconstruction.setAttribute(attribute, !attribute.value)
+                        }
+                    }
                 }
             }
         }
@@ -830,6 +849,25 @@ RowLayout {
                         fragmentShader: "qrc:/shaders/AttributeItemDelegate.frag.qsb"
                     }
                 }
+            }
+        }
+    }
+
+    // Add or remove key button for keyable attribute
+    Loader {
+        active: attribute.keyable
+        sourceComponent: MaterialToolButton {
+            font.pointSize: 5
+            padding: 6
+            text: MaterialIcons.circle
+            checkable: true
+            checked: attribute.keyable && attribute.keyValues.hasKey(_reconstruction.selectedViewId)
+            enabled: root.editable
+            onClicked: {
+                if (attribute.keyValues.hasKey(_reconstruction.selectedViewId))
+                    _reconstruction.removeAttributeKey(attribute, _reconstruction.selectedViewId)
+                else
+                    _reconstruction.addAttributeKeyDefaultValue(attribute, _reconstruction.selectedViewId)
             }
         }
     }

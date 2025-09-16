@@ -63,3 +63,8 @@ class StopGraphVisit(GraphVisitMessage):
 class StopBranchVisit(GraphVisitMessage):
     """ Immediately stop branch visit. """
     pass
+
+
+class CyclicDependencyError(GraphVisitMessage):
+    """ Do not start visiting the graph. """
+    pass

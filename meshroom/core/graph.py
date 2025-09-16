@@ -17,7 +17,7 @@ from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core import submitters
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
-from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit
+from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
@@ -121,7 +121,7 @@ class Visitor:
 
     def backEdge(self, e, g):
         """ Is invoked on the back edges in the graph. """
-        pass
+        raise CyclicDependencyError("A cyclic dependency exists on the current graph.")
 
     def forwardOrCrossEdge(self, e, g):
         """

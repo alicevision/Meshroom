@@ -252,7 +252,7 @@ class Attribute(BaseObject):
         linkNodeName, linkAttrName = "", ""
 
         try:
-            linkNodeName, linkAttrName = link.split(".")
+            linkNodeName, linkAttrName = link.split(".", 1)
         except ValueError as err:
             logging.warning('Retrieve Connected Attribute from Expression failed.')
             logging.warning(f'Expression: "{link}"\nError: "{err}".')

@@ -1207,7 +1207,7 @@ Page {
                 TabPanel {
                     id: graphEditorPanel
                     SplitView.fillWidth: true
-                    SplitView.minimumWidth: 80
+                    SplitView.minimumWidth: 350
 
                     padding: 4
                     tabs: ["Graph Editor", "Task Manager", "Script Editor"]
@@ -1406,7 +1406,7 @@ Page {
                 NodeEditor {
                     id: nodeEditor
                     SplitView.preferredWidth: 500
-                    SplitView.minimumWidth: 80
+                    SplitView.minimumWidth: 350
 
                     node: _reconstruction ? _reconstruction.selectedNode : null
                     property bool computing: _reconstruction ? _reconstruction.computing : false       

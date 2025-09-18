@@ -691,6 +691,8 @@ Page {
                                 delay: 200
                                 text: modelData["path"]
                                 visible: hovered
+                                x: newPipelineMenu.implicitWidth
+                                y: newPipelineMenuItems.implicitHeight
                             }
                         }
                     }
@@ -785,8 +787,13 @@ Page {
 
                 MenuItem {
                     action: removeAllImagesAction
-                    ToolTip.visible: hovered
-                    ToolTip.text: removeAllImagesAction.tooltip
+
+                    ToolTip {
+                        visible: parent.hovered
+                        text: removeAllImagesAction.tooltip
+                        x: parent.implicitWidth
+                        y: 0
+                    }
                 }
 
                 MenuSeparator { }
@@ -811,8 +818,13 @@ Page {
 
                     MenuItem {
                         action: loadTemplateAction
-                        ToolTip.visible: hovered
-                        ToolTip.text: loadTemplateAction.tooltip
+
+                        ToolTip {
+                            visible: parent.hovered
+                            text: loadTemplateAction.tooltip
+                            x: advancedMenu.implicitWidth
+                            y: 0
+                        }
                     }
 
                     Action {
@@ -831,14 +843,24 @@ Page {
 
                     MenuItem {
                         action: removeImagesFromAllGroupsAction
-                        ToolTip.visible: hovered
-                        ToolTip.text: removeImagesFromAllGroupsAction.tooltip
+
+                        ToolTip {
+                            visible: parent.hovered
+                            text: removeImagesFromAllGroupsAction.tooltip
+                            x: advancedMenu.implicitWidth
+                            y: 0
+                        }
                     }
 
                     MenuItem {
                         action: reloadPluginsAction
-                        ToolTip.visible: hovered
-                        ToolTip.text: reloadPluginsAction.tooltip
+
+                        ToolTip {
+                            visible: parent.hovered
+                            text: reloadPluginsAction.tooltip
+                            x: advancedMenu.implicitWidth
+                            y: 0
+                        }
                     }
                 }
                 MenuSeparator { }
@@ -851,28 +873,53 @@ Page {
                 title: "Edit"
                 MenuItem {
                     action: undoAction
-                    ToolTip.visible: hovered && undoAction.enabled
-                    ToolTip.text: undoAction.tooltip
+
+                    ToolTip {
+                        visible: parent.hovered && undoAction.enabled
+                        text: undoAction.tooltip
+                        x: parent.implicitWidth
+                        y: 0
+                    }
                 }
                 MenuItem {
                     action: redoAction
-                    ToolTip.visible: hovered && redoAction.enabled
-                    ToolTip.text: redoAction.tooltip
+
+                    ToolTip {
+                        visible: parent.hovered && redoAction.enabled
+                        text: redoAction.tooltip
+                        x: parent.implicitWidth
+                        y: 0
+                    }
                 }
                 MenuItem {
                     action: cutAction
-                    ToolTip.visible: hovered && cutAction.enabled
-                    ToolTip.text: cutAction.tooltip
+
+                    ToolTip {
+                        visible: parent.hovered && cutAction.enabled
+                        text: cutAction.tooltip
+                        x: parent.implicitWidth
+                        y: 0
+                    }
                 }
                 MenuItem {
                     action: copyAction
-                    ToolTip.visible: hovered && copyAction.enabled
-                    ToolTip.text: copyAction.tooltip
+
+                    ToolTip {
+                        visible: parent.hovered && copyAction.enabled
+                        text: copyAction.tooltip
+                        x: parent.implicitWidth
+                        y: 0
+                    }
                 }
                 MenuItem {
                     action: pasteAction
-                    ToolTip.visible: hovered && pasteAction.enabled
-                    ToolTip.text: pasteAction.tooltip
+
+                    ToolTip {
+                        visible: parent.hovered && pasteAction.enabled
+                        text: pasteAction.tooltip
+                        x: parent.implicitWidth
+                        y: 0
+                    }
                 }
             }
             Menu {

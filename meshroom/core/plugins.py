@@ -135,7 +135,7 @@ class DirTreeProcessEnv(ProcessEnv):
         # Setup the environment dictionary
         self._env = os.environ.copy()
         self._env["PYTHONPATH"] = os.pathsep.join(
-            [f"{_MESHROOM_ROOT}"] + self.pythonPaths + [f"{os.getenv('PYTHONPATH', '')}"])
+            [f"{_MESHROOM_ROOT}"] + self.pythonPaths + [os.getenv('PYTHONPATH', '')])
         self._env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
         self._env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
 

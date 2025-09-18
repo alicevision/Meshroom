@@ -57,17 +57,17 @@ general_group.add_argument(
     default=os.environ.get('MESHROOM_DEFAULT_PIPELINE', 'photogrammetry'),
     help='Template pipeline among those listed or a Meshroom file containing a custom pipeline '
          'to run on input images:\n' +
-         '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates]) + 
-         '\nRequirements: the graph must contain at least one CameraInit node, and at least '
-         'one Publish node if --output is set.',
+         '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates]) +
+         '\nRequirements: the graph must contain one CameraInit node, and at least '
+         'one CopyFiles node if --output is set.',
     )
 
 general_group.add_argument(
-    '-o', '--output', metavar='FOLDER PUBLISH_INSTANCE=FOLDER',
+    '-o', '--output', metavar='FOLDER COPYFILES_INSTANCE=FOLDER',
     type=str, required=False, nargs='*',
     help='Output folder where results should be copied to. '
-         'If the output folder is provided without specifiying the instance of a Publish node, '
-         'all the Publish nodes in the scene will be set with the same ouput folder value. '
+         'If the output folder is provided without specifiying the instance of a CopyFiles node, '
+         'all the CopyFiles nodes in the scene will be set with the same ouput folder value. '
          'If not set, results will have to be retrieved directly from the cache folder.')
 
 general_group.add_argument(
@@ -151,10 +151,10 @@ with meshroom.core.graph.GraphModification(graph):
     loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
     if args.pipeline.lower() in loweredPipelineTemplates:
         graph.initFromTemplate(loweredPipelineTemplates[args.pipeline.lower()],
-                               publishOutputs=True if args.output else False)
+                               copyOutputs=True if args.output else False)
     else:
         # custom pipeline
-        graph.initFromTemplate(args.pipeline, publishOutputs=True if args.output else False)
+        graph.initFromTemplate(args.pipeline, copyOutputs=True if args.output else False)
 
     def parseInputs(inputs, uniqueInitNode):
         """Utility method for parsing the input and inputRecursive arguments."""
@@ -218,46 +218,46 @@ with meshroom.core.graph.GraphModification(graph):
         graph.setVerbose(args.verbose)
 
     if args.output:
-        # The output folders for Publish nodes can be set as follows:
+        # The output folders for CopyFiles nodes can be set as follows:
         # - for each node, the output folder is specified following the
-        #   "Publish_name=/output/folder/path" convention.
-        # - a path is provided without specifying which Publish node should be set with it:
-        #   all the Publish nodes will be set with it.
-        # - some Publish nodes have their path specified, and another path is provided
-        #   without specifying a node: all Publish nodes with dedicated will have their own
+        #   "CopyFiles_name=/output/folder/path" convention.
+        # - a path is provided without specifying which CopyFiles node should be set with it:
+        #   all the CopyFiles nodes will be set with it.
+        # - some CopyFiles nodes have their path specified, and another path is provided
+        #   without specifying a node: all CopyFiles nodes with dedicated will have their own
         #   output folders set, and those which have not been specified will be set with the
         #   other path.
-        # - some Publish nodes have their output folder specified while others do not: all
+        # - some CopyFiles nodes have their output folder specified while others do not: all
         #   the nodes with specified folders will use the provided values, and those without
-        #   any will be set with the output folder of the first specified Publish node.
+        #   any will be set with the output folder of the first specified CopyFiles node.
         # - several output folders are provided without specifying any node: the last one will
-        #   be used to set all the Publish nodes' output folders.
+        #   be used to set all the CopyFiles nodes' output folders.
 
-        # Check that there is at least one Publish node
-        publishNodes = graph.nodesOfType('Publish')
-        if len(publishNodes) == 0:
+        # Check that there is at least one CopyFiles node
+        copyNodes = graph.nodesOfType('CopyFiles')
+        if len(copyNodes) == 0:
             raise RuntimeError('meshroom_batch requires a pipeline graph with at least ' +
-                               'one Publish node, none found.')
+                               'one CopyFiles node, none found.')
 
         reExtract = re.compile(r'(\w+)=(.*)')  # NodeName=value
-        globalPublishPath = ""
+        globalCopyPath = ''
         for p in args.output:
             result = reExtract.match(p)
             if not result:  # If the argument is only a path, set it for the global path
-                globalPublishPath = p
+                globalCopyPath = p
                 continue
 
             node, value = result.groups()
-            for i, n in enumerate(publishNodes):  # Find the correct Publish node in the list
+            for i, n in enumerate(copyNodes):  # Find the correct CopyFiles node in the list
                 if n.name == node:  # If found, set the value, and remove it from the list
                     n.output.value = value
-                    publishNodes.pop(i)
-                    if globalPublishPath == "":  # Fallback in case some nodes would have no path
-                        globalPublishPath = value
+                    copyNodes.pop(i)
+                    if globalCopyPath == '':  # Fallback in case some nodes would have no path
+                        globalCopyPath = value
                     break
 
-        for n in publishNodes:  # Set the remaining Publish nodes with the global path
-            n.output.value = globalPublishPath
+        for n in copyNodes:  # Set the remaining CopyPath nodes with the global path
+            n.output.value = globalCopyPath
     else:
         print(f'No output set, results will be available in the cache folder: "{graph.cacheDir}"')
 

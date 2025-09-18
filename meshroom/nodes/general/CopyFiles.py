@@ -9,32 +9,32 @@ import glob
 import os
 
 
-class Publish(desc.Node):
-    size = desc.DynamicNodeSize('inputFiles')
+class CopyFiles(desc.Node):
+    size = desc.DynamicNodeSize("inputFiles")
 
-    category = 'Export'
-    documentation = '''
+    category = "Export"
+    documentation = """
 This node allows to copy files into a specific folder.
-'''
+"""
 
     inputs = [
         desc.ListAttribute(
             elementDesc=desc.File(
                 name="input",
                 label="Input",
-                description="File or folder to publish.",
+                description="File or folder to copy.",
                 value="",
             ),
             name="inputFiles",
             label="Input Files",
-            description="Input files or folders' content to publish.",
+            description="Input files or folders' content to copy.",
             exposed=True,
             group="",
         ),
         desc.File(
             name="output",
             label="Output Folder",
-            description="Folder to publish to.",
+            description="Folder to copy to.",
             value="",
         ),
         desc.ChoiceParam(
@@ -51,7 +51,8 @@ This node allows to copy files into a specific folder.
         for inputFile in inputFiles:
             for f in glob.glob(inputFile.value):
                 if os.path.isdir(f):
-                    paths[f] = outDir  # Do not concatenate the input folder's name with the output's
+                    # Do not concatenate the input folder's name with the output's
+                    paths[f] = outDir
                 else:
                     paths[f] = os.path.join(outDir, os.path.basename(f))
         return paths
@@ -59,9 +60,9 @@ This node allows to copy files into a specific folder.
     def processChunk(self, chunk):
         try:
             chunk.logManager.start(chunk.node.verboseLevel.value)
-            
+
             if not chunk.node.inputFiles:
-                chunk.logger.warning('Nothing to publish')
+                chunk.logger.warning("No file to copy.")
                 return
             if not chunk.node.output.value:
                 return
@@ -69,21 +70,22 @@ This node allows to copy files into a specific folder.
             outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
             if not outFiles:
-                error = 'Publish: input files listed, but nothing to publish'
+                error = "CopyFiles: input files listed, but nothing to copy."
                 chunk.logger.error(error)
-                chunk.logger.info(f'Listed input files: {[i.value for i in chunk.node.inputFiles.value]}')
+                chunk.logger.info(f"Listed input files: {[i.value for i in chunk.node.inputFiles.value]}.")
                 raise RuntimeError(error)
 
             if not os.path.exists(chunk.node.output.value):
                 os.makedirs(chunk.node.output.value)
 
             for iFile, oFile in outFiles.items():
-                if os.path.isdir(iFile):  # If the input is a directory, copy the directory's content
-                    chunk.logger.info(f'Publish directory {iFile} into {oFile}')
+                # If the input is a directory, copy the directory's content
+                if os.path.isdir(iFile):
+                    chunk.logger.info(f"CopyFiles directory {iFile} into {oFile}.")
                     du.copy_tree(iFile, oFile)
                 else:
-                    chunk.logger.info(f'Publish file {iFile} into {oFile}')
+                    chunk.logger.info(f"CopyFiles file {iFile} into {oFile}.")
                     shutil.copyfile(iFile, oFile)
-            chunk.logger.info('Publish end')
+            chunk.logger.info("CopyFiles end.")
         finally:
             chunk.logManager.end()

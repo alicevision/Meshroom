@@ -6,7 +6,7 @@ import json
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
-from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtCore import QObject, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlDebuggingEnabler
 from PySide6.QtQuickControls2 import QQuickStyle
@@ -25,6 +25,7 @@ from meshroom.ui.components.filepath import FilepathHelper
 from meshroom.ui.components.scene3D import Scene3DHelper, Transformations3DHelper
 from meshroom.ui.components.scriptEditor import ScriptEditorManager
 from meshroom.ui.components.thumbnail import ThumbnailCache
+from meshroom.ui.components.statusBar import MessageController
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
@@ -281,6 +282,8 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("ThumbnailCache", ThumbnailCache(parent=self))
 
         # additional context properties
+        self._messageController = MessageController(parent=self)
+        self.engine.rootContext().setContextProperty("_messageController", self._messageController)
         self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
         self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
@@ -353,6 +356,16 @@ class MeshroomApp(QApplication):
     def reloadTemplateList(self):
         meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
+    
+    @Slot()
+    def forceUIUpdate(self):
+        """ Force UI to process pending events
+        Necessary when we want to update the UI while a trigger is still running (e.g. reloadPlugins)
+        """
+        self.processEvents()
+    
+    def showMessage(self, message, status=None, duration=5000):
+        self._messageController.sendMessage(message, status, duration)
 
     def _retrieveThumbnailPath(self, filepath: str) -> str:
         """

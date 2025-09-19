@@ -21,3 +21,4 @@ SelectionBox 1.0 SelectionBox.qml
 SelectionLine 1.0 SelectionLine.qml
 DelegateSelectionBox 1.0 DelegateSelectionBox.qml
 DelegateSelectionLine 1.0 DelegateSelectionLine.qml
+StatusBar 1.0 StatusBar.qml

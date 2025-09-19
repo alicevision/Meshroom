@@ -839,7 +839,7 @@ class Reconstruction(UIGraph):
         self.error.emit(
             Message(
                 "Failed to Import Images",
-                "You probably have a corrupted image within the images that you are trying to import.",
+                "A corrupted image in the import set or an installation error may have caused this issue.",
                 ""  # msg
             )
         )

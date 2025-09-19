@@ -10,6 +10,27 @@ import sys
 import meshroom.core.graph
 from meshroom import setupEnvironment, logStringToPython
 
+def parseInitInputs(inputs: list[str]) -> dict[str, str]:
+    """Utility method for parsing the input and inputRecursive arguments.
+    Args:
+        inputs: Command line values in format 'nodeName=value' or just 'value' to set it on all init nodes
+
+    Returns:
+        Dict mapping node names (or empty string if it applies to all) to their input values
+
+    Raises:
+        ValueError: If input format is invalid
+    """
+    mapInputs = {}
+    for inp in inputs:
+        # Stop after the first occurrence
+        inputGroup = inp.split('=', 1)
+        nodeName = inputGroup[0] if len(inputGroup) == 2 else ""
+        nodeInputs = inputGroup[-1].split(',')
+        mapInputs[nodeName] = [os.path.abspath(path) for path in nodeInputs]
+    return mapInputs
+
+
 setupEnvironment()
 
 meshroom.core.initPipelines()
@@ -40,13 +61,13 @@ Additional Resources:
 
 general_group = parser.add_argument_group('General Options')
 general_group.add_argument(
-    '-i', '--input', metavar='NODEINSTANCE:"SFM/FOLDERS/IMAGES;..."', type=str, nargs='*',
+    '-i', '--input', metavar='NODEINSTANCE="SFM/FOLDERS/IMAGES,..."', type=str, nargs='*',
     default=[],
     help='Input folder containing images or folders of images or file (.sfm or .json) '
          'with images paths and optionally predefined camera intrinsics.')
 
 general_group.add_argument(
-    '-I', '--inputRecursive', metavar='NODEINSTANCE:"FOLDERS/IMAGES;..."', type=str, nargs='*',
+    '-I', '--inputRecursive', metavar='NODEINSTANCE="FOLDERS/IMAGES,..."', type=str, nargs='*',
     default=[],
     help='Input folders containing all images recursively.')
 
@@ -156,60 +177,30 @@ with meshroom.core.graph.GraphModification(graph):
         # custom pipeline
         graph.initFromTemplate(args.pipeline, copyOutputs=True if args.output else False)
 
-    def parseInputs(inputs, uniqueInitNode):
-        """Utility method for parsing the input and inputRecursive arguments."""
-        mapInputs = {}
-        for inp in inputs:
-            # Stop after the first occurrence to handle multiple input paths on Windows platforms
-            inputGroup = inp.split(':', 1)
-            nodeName = None
-            if len(inputGroup) == 1 and uniqueInitNode:
-                nodeName = uniqueInitNode.getName()
-            elif len(inputGroup) == 2:
-                # If inputGroup[0] is a valid node name, use it as such.
-                if (inputGroup[0] in graph.toDict().keys()):
-                    nodeName = inputGroup[0]
-                # Otherwise, the platform might be Windows and inputGroup[0] is part of the input path:
-                # in that case, we should behave as if len(inputGroup) == 1, use the uniqueInitNode's name
-                # and re-join the path together.
-                elif uniqueInitNode:
-                    nodeName = uniqueInitNode.getName()
-                    inputGroup = [":".join(inputGroup)]
-                else:
-                    print('Syntax error in input argument')
-            # If a node name has been provided and the platform is Windows, the length of inputGroup might be
-            # 3: first the node name, then the first path of the input path, then the rest of the input path.
-            # The input path should also be re-joined here.
-            elif len(inputGroup) == 3:
-                nodeName = inputGroup[0]
-                inputGroup[1] = ":".join(inputGroup[1:])
-                inputGroup.pop(-1)
-            else:
-                print('Syntax error in input argument')
-                sys.exit(1)
-            nodeInputs = inputGroup[-1].split(';')
-            mapInputs[nodeName] = [os.path.abspath(path) for path in nodeInputs]
-        return mapInputs
+    if args.input:
+        # get init nodes
+        initNodes = graph.findInitNodes()
+        initNodesNames = [n.getName() for n in initNodes]
 
-    # get init nodes
-    initNodes = graph.findInitNodes()
-    uniqueInitNode = initNodes[0] if (len(initNodes) == 1) else None
+        # parse inputs for each init node
+        mapInput = parseInitInputs(args.input)
 
-    # parse inputs for each init node
-    mapInput = parseInputs(args.input, uniqueInitNode)
+        # parse recursive inputs for each init node
+        mapInputRecursive = parseInitInputs(args.inputRecursive)
 
-    # parse recursive inputs for each init node
-    mapInputRecursive = parseInputs(args.inputRecursive, uniqueInitNode)
+        # check that input nodes exist in the pipeline template
+        for nodeName in mapInput.keys() | mapInputRecursive.keys():
+            if nodeName and nodeName not in initNodesNames:
+                raise RuntimeError(f"Failed to find the Init Node '{nodeName}' in your pipeline.\nAvailable Init Nodes: {initNodesNames}")
 
-    # feed inputs and recursive inputs to init nodes
-    for initNode in initNodes:
-        nodeName = initNode.getName()
-        inp = mapInput.get(nodeName)
-        inpRec = mapInputRecursive.get(nodeName)
-        if not inp and not inpRec:
-            print(f'Nothing to compute for node {nodeName}.')
-            sys.exit(1)
-        initNode.nodeDesc.initialize(initNode, inp, inpRec)
+        # feed inputs (recursive and non-recursive paths) to corresponding init nodes
+        for initNode in initNodes:
+            nodeName = initNode.getName()
+            # Retrieve input per node and inputs for all init node types
+            input = mapInput.get(nodeName, []) + mapInput.get("", [])
+            # Retrieve recursive inputs
+            inputRec = mapInputRecursive.get(nodeName, []) + mapInputRecursive.get("", [])
+            initNode.nodeDesc.initialize(initNode, input, inputRec)
 
     if not graph.canComputeLeaves:
         raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")

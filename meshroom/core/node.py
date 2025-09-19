@@ -1191,6 +1191,9 @@ class BaseNode(BaseObject):
     def _updateChunks(self):
         pass
 
+    def _updateNodeSize(self):
+        self.setSize(self.nodeDesc.size.computeSize(self))
+
     def _getAttributeChangedCallback(self, attr: Attribute) -> Optional[Callable]:
         """ Get the node descriptor-defined value changed callback associated to `attr` if any. """
 
@@ -1271,6 +1274,8 @@ class BaseNode(BaseObject):
 
         for attr in self._attributes:
             attr.updateInternals()
+
+        self._updateNodeSize()
 
         # Update chunks splitting
         self._updateChunks()
@@ -1868,7 +1873,6 @@ class Node(BaseNode):
         """ Update Node's computation task splitting into NodeChunks based on its description """
         if isinstance(self.nodeDesc, desc.InputNode):
             return
-        self.setSize(self.nodeDesc.size.computeSize(self))
         if self.isParallelized:
             try:
                 ranges = self.nodeDesc.parallelization.getRanges(self)
@@ -1950,6 +1954,10 @@ class CompatibilityNode(BaseNode):
 
     def _isCompatibilityNode(self):
         return True
+
+    def _updateNodeSize(self):
+        # Block the recompute of the node size for compatibility nodes
+        pass
 
     @staticmethod
     def attributeDescFromValue(attrName, value, isOutput):

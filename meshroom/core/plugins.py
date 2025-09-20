@@ -203,7 +203,7 @@ class RezProcessEnv(ProcessEnv):
                     packages.append(package)
 
         def extractPackageName(packageString: str) -> str:
-            return re.split(r'[-=<>!~]+', packageString, 1)[0]
+            return self.REZ_DELIMITER_PATTERN.split(packageString, maxsplit=1)[0]
         packageNames = [extractPackageName(package) for package in packages]
 
         for package in _MESHROOM_COMPUTE_DEPS:

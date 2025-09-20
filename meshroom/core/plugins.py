@@ -152,7 +152,7 @@ class RezProcessEnv(ProcessEnv):
     """
     """
     
-    REZ_DELIMITER_PATTERN = re.compile(r"(-|==|>=|>|<=|<)")
+    REZ_DELIMITER_PATTERN = re.compile(r"-|==|>=|>|<=|<")
     
     def __init__(self, folder: str, configEnv: dict[str: str], uri: str = ""):
         if not uri:
@@ -167,35 +167,39 @@ class RezProcessEnv(ProcessEnv):
         environment (if this package is defined).
         """
         subrequires = os.environ.get(f"{self.uri.upper()}_SUBREQUIRES", "").split(os.pathsep)
-        packages = []
+        if not subrequires:
+            return []
 
+        packages = []
         # Packages that are resolved in the current environment
         currentEnvPackages = []
         resolvedVersions = {}
-        if "REZ_REQUEST" in os.environ:
-            resolvedPackages = os.getenv("REZ_RESOLVE", "").split()
+        if "REZ_USED_RESOLVE" in os.environ:
+            resolvedPackages = os.getenv("REZ_USED_RESOLVE", "").split()
             for package in resolvedPackages:
                 if package.startswith("~"):
                     continue
                 currentEnvPackages.append(package)
-                version = package.split("-")
-                if len(version) == 2:
-                    resolvedVersions[version[0]] = version[1]
-                elif len(version) > 2:  # Handle case with multiple hyphen-minus
-                    resolvedVersions[version[0]] = "-".join(version[1:])
+                name, version = self.REZ_DELIMITER_PATTERN.split(package, maxsplit=1)
+                resolvedVersions[name] = version
         logging.debug("Packages in the current environment: " + ", ".join(currentEnvPackages))
 
         # Take packages with the set versions for those which have one, and try to take packages in the current
         # environment (if they are resolved in it)
         for package in subrequires:
-            if self.REZ_DELIMITER_PATTERN.findall(package):  # The subrequires ask for a specific version
-                packages.append(package)
-            else:
-                packageName = self.REZ_DELIMITER_PATTERN.split(package)[0]
-                resolvedVersion = resolvedVersions.get(packageName)
-                if (resolvedVersion!=None) and (resolvedVersion!=""):
-                    packages.append(packageName + "==" + resolvedVersion)
-                else:
+            packageTuple = self.REZ_DELIMITER_PATTERN.split(package, maxsplit=1)
+            match len(packageTuple):
+                case 1:
+                    # Only the package name in the subrequires.
+                    # Search for a corresponding version in the parent environment.
+                    packageName = packageTuple[0]
+                    parentResolvedVersion = resolvedVersions.get(packageName)
+                    if parentResolvedVersion:
+                        packages.append(f"{packageName}=={parentResolvedVersion}")
+                    else:
+                        packages.append(package)
+                case 2:
+                    # The subrequires ask for a specific version
                     packages.append(package)
 
         logging.debug("Packages for the execution environment: " + ", ".join(packages))

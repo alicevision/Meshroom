@@ -22,15 +22,15 @@ class SimpleFarmSubmitter(BaseSubmitter):
     environment = {}
     ENGINE = ''
     DEFAULT_TAGS = {'prod': ''}
-    REZ_DELIMITER_PATTERN = re.compile(r"(-|==|>=|>|<=|<)")
+    REZ_DELIMITER_PATTERN = re.compile(r"-|==|>=|>|<=|<")
 
     def __init__(self, parent=None):
         super().__init__(name='SimpleFarm', parent=parent)
         self.engine = os.environ.get('MESHROOM_SIMPLEFARM_ENGINE', 'tractor')
         self.share = os.environ.get('MESHROOM_SIMPLEFARM_SHARE', 'vfx')
         self.prod = os.environ.get('PROD', 'mvg')
-        if 'REZ_REQUEST' in os.environ:
-            packages = os.environ.get('REZ_USED_REQUEST', '').split()
+        if 'REZ_USED_REQUEST' in os.environ:
+            requestPackages = os.environ.get('REZ_USED_REQUEST', '').split()
             resolvedPackages = os.environ.get('REZ_RESOLVE', '').split()
             resolvedVersions = {}
             for r in resolvedPackages:
@@ -38,22 +38,19 @@ class SimpleFarmSubmitter(BaseSubmitter):
                 if r.startswith('~'):
                     continue
                 # logging.info('REZ: {}'.format(str(r)))
-                v = r.split('-')
+                name, version = r.split('-', maxsplit=1)
                 # logging.info('    v: {}'.format(str(v)))
-                if len(v) == 2:
-                    resolvedVersions[v[0]] = v[1]
-                elif len(v) > 2:  # Handle case with multiple hyphen-minus
-                    resolvedVersions[v[0]] = "-".join(v[1:])
-            usedPackages = set()  # Use set to remove duplicates
-            for p in packages:
-                if p.startswith('~') or p.startswith("!"):
+                resolvedVersions[name] = version
+            requestPackageNames = set()  # Use set to remove duplicates
+            for p in requestPackages:
+                if p.startswith('~'):
                     continue
-                v = self.REZ_DELIMITER_PATTERN.split(p)
-                usedPackages.add(v[0])
-            for p in usedPackages:
-                # Use "==" to make sure we have the same version in the job that the one we have in the env
-                # where meshroom is launched
-                self.reqPackages.append("==".join([p, resolvedVersions[p]]))
+                v = self.REZ_DELIMITER_PATTERN.split(p, maxsplit=1)
+                requestPackageNames.add(v[0])
+            for p in requestPackageNames:
+                # Use "==" to guarantee that the job uses the exact same version
+                # as the environment where Meshroom was launched.
+                self.reqPackages.append(f"{p}=={resolvedVersions[p]}")
             logging.debug(f'REZ Packages: {str(self.reqPackages)}')
         elif 'REZ_MESHROOM_VERSION' in os.environ:
             self.reqPackages = [f"meshroom-{os.environ.get('REZ_MESHROOM_VERSION', '')}"]

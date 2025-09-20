@@ -14,7 +14,7 @@ from pathlib import Path
 
 from meshroom.common import BaseObject
 from meshroom.core import desc
-from meshroom.core.desc.node import _MESHROOM_ROOT
+from meshroom.core.desc.node import _MESHROOM_ROOT, _MESHROOM_COMPUTE_DEPS
 
 
 def validateNodeDesc(nodeDesc: desc.Node) -> list:
@@ -161,10 +161,10 @@ class RezProcessEnv(ProcessEnv):
 
     def resolveRezSubrequires(self) -> list[str]:
         """
-        Return the list of packages defined for the node execution. These execution packages are named
-        subrequires.
-        Note: If a package does not have a version number, the version is aligned with the main Meshroom
-        environment (if this package is defined).
+        Return the list of packages defined for the node execution. These execution packages are
+        named subrequires.
+        Note: If a package does not have a version number, the version is aligned with the main
+        Meshroom environment (if this package is defined).
         """
         subrequires = os.environ.get(f"{self.uri.upper()}_SUBREQUIRES", "").split(os.pathsep)
         if not subrequires:
@@ -184,8 +184,8 @@ class RezProcessEnv(ProcessEnv):
                 resolvedVersions[name] = version
         logging.debug("Packages in the current environment: " + ", ".join(currentEnvPackages))
 
-        # Take packages with the set versions for those which have one, and try to take packages in the current
-        # environment (if they are resolved in it)
+        # Take packages with the set versions for those which have one, and try to take packages
+        # in the current environment (if they are resolved in it)
         for package in subrequires:
             packageTuple = self.REZ_DELIMITER_PATTERN.split(package, maxsplit=1)
             match len(packageTuple):
@@ -201,6 +201,19 @@ class RezProcessEnv(ProcessEnv):
                 case 2:
                     # The subrequires ask for a specific version
                     packages.append(package)
+
+        def extractPackageName(packageString: str) -> str:
+            return re.split(r'[-=<>!~]+', packageString, 1)[0]
+        packageNames = [extractPackageName(package) for package in packages]
+
+        for package in _MESHROOM_COMPUTE_DEPS:
+            # For packages that are required by meshroom_compute, do not specify any version
+            # or align it with Meshroom's: the version will be found during the resolution of
+            # the environment based on the other packages.
+            # If any of these packages is already part of the environment a plugin's dependency,
+            # do not add it
+            if package not in packageNames:
+                packages.append(package)
 
         logging.debug("Packages for the execution environment: " + ", ".join(packages))
         return packages

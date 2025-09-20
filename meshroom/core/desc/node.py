@@ -17,6 +17,7 @@ from meshroom.core.utils import VERBOSE_LEVEL
 
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
+_MESHROOM_COMPUTE_DEPS = ["psutil"]
 
 
 class MrNodeType(enum.Enum):

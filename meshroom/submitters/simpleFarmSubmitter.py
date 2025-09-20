@@ -112,7 +112,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
                 tags=mainTags,
                 requirements={'service': str(','.join(allRequirements))},
                 environment=self.environment,
-                user=os.environ.get('USER', os.environ.get('FARM_USER', getpass.getuser())),
+                user=os.environ.get('FARM_USER', os.environ.get('USER', getpass.getuser())),
                 )
 
         nodeNameToTask = {}

@@ -61,15 +61,22 @@ Additional Resources:
 
 general_group = parser.add_argument_group('General Options')
 general_group.add_argument(
-    '-i', '--input', metavar='NODEINSTANCE="SFM/FOLDERS/IMAGES,..."', type=str, nargs='*',
+    '-i', '--input', 
+    metavar='FILE FOLDER NODEINSTANCE=FILE,FOLDER,...', 
+    type=str,
+    nargs='*',
     default=[],
-    help='Input folder containing images or folders of images or file (.sfm or .json) '
-         'with images paths and optionally predefined camera intrinsics.')
+    help='Input files and folders to process. '
+         'When multiple Init Nodes exist in the pipeline, inputs are applied to all by default. '
+         'To target a specific Init Node, use the format Node1=input1,input2 Node2=input3')
 
 general_group.add_argument(
-    '-I', '--inputRecursive', metavar='NODEINSTANCE="FOLDERS/IMAGES,..."', type=str, nargs='*',
+    '-I', '--inputRecursive',
+    metavar='FOLDER FOLDER_2 NODEINSTANCE=FOLDER,FOLDER_2,...',
+    type=str,
+    nargs='*',
     default=[],
-    help='Input folders containing all images recursively.')
+    help='Recursively scan these directories for input files.')
 
 general_group.add_argument(
     '-p', '--pipeline',
@@ -78,18 +85,16 @@ general_group.add_argument(
     default=os.environ.get('MESHROOM_DEFAULT_PIPELINE', 'photogrammetry'),
     help='Template pipeline among those listed or a Meshroom file containing a custom pipeline '
          'to run on input images:\n' +
-         '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates]) +
-         '\nRequirements: the graph must contain one CameraInit node, and at least '
-         'one CopyFiles node if --output is set.',
-    )
+         '\n'.join(['    - ' + p for p in meshroom.core.pipelineTemplates]))
 
 general_group.add_argument(
-    '-o', '--output', metavar='FOLDER COPYFILES_INSTANCE=FOLDER',
-    type=str, required=False, nargs='*',
-    help='Output folder where results should be copied to. '
-         'If the output folder is provided without specifiying the instance of a CopyFiles node, '
-         'all the CopyFiles nodes in the scene will be set with the same ouput folder value. '
-         'If not set, results will have to be retrieved directly from the cache folder.')
+    '-o', '--output', 
+    metavar='FOLDER COPYFILES_INSTANCE=FOLDER',
+    type=str,
+    required=False,
+    nargs='*',
+    help='Output folder for copying results. '
+         'Sets output folder for all CopyFiles nodes, or target specific nodes using COPYFILES_INSTANCE=FOLDER.')
 
 general_group.add_argument(
     '-s', '--save', metavar='FILE', type=str, required=False,

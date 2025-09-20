@@ -158,10 +158,6 @@ args = parser.parse_args()
 
 logging.getLogger().setLevel(logStringToPython[args.verbose])
 
-if not args.input and not args.inputRecursive:
-    print('Nothing to compute. You need to set --input or --inputRecursive.')
-    sys.exit(1)
-
 meshroom.core.initPlugins()
 meshroom.core.initNodes()
 

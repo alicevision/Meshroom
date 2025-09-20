@@ -38,7 +38,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
                 if r.startswith('~'):
                     continue
                 # logging.info('REZ: {}'.format(str(r)))
-                name, version = r.split('-', maxsplit=1)
+                name, version = self.REZ_DELIMITER_PATTERN.split(r, maxsplit=1)
                 # logging.info('    v: {}'.format(str(v)))
                 resolvedVersions[name] = version
             requestPackageNames = set()  # Use set to remove duplicates

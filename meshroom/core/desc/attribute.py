@@ -29,7 +29,7 @@ class Attribute(BaseObject):
         self._visible = visible
         self._exposed = exposed
         self._isExpression = (isinstance(self._value, str) and "{" in self._value) \
-            or isinstance(self._value, types.FunctionType)
+            or callable(self._value)
         self._isDynamicValue = (self._value is None)
         self._valueType = None
 

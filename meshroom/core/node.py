@@ -963,7 +963,7 @@ class BaseNode(BaseObject):
         def _buildAttributeCmdVars(cmdVars, name, attr):
             if attr.enabled:
                 group = attr.desc.group(attr.node) \
-                        if isinstance(attr.desc.group, types.FunctionType) else attr.desc.group
+                        if callable(attr.desc.group) else attr.desc.group
                 if group is not None:
                     # If there is a valid command line "group"
                     v = attr.getValueStr(withQuotes=True)

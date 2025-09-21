@@ -158,7 +158,7 @@ class Attribute(BaseObject):
         if isinstance(value, Attribute) or Attribute.isLinkExpression(value):
             # if we set a link to another attribute
             self._value = value
-        elif isinstance(value, types.FunctionType):
+        elif callable(value):
             # evaluate the function
             self._value = value(self)
         else:
@@ -216,7 +216,7 @@ class Attribute(BaseObject):
         """
         Get the attribute default value.
         """
-        if isinstance(self._desc.value, types.FunctionType):
+        if callable(self._desc.value):
             try:
                 return self._desc.value(self)
             except Exception as e:
@@ -282,7 +282,7 @@ class Attribute(BaseObject):
             - If it is a function, execute it and return the result
             - Otherwise, simply return true
         """
-        if isinstance(self._desc.validValue, types.FunctionType):
+        if callable(self._desc.validValue):
             try:
                 return self._desc.validValue(self.node)
             except Exception:
@@ -343,7 +343,7 @@ class Attribute(BaseObject):
         self._setEnabled(self._getEnabled())
 
     def _getEnabled(self) -> bool:
-        if isinstance(self._desc.enabled, types.FunctionType):
+        if callable(self._desc.enabled):
             try:
                 return self._desc.enabled(self.node)
             except Exception:

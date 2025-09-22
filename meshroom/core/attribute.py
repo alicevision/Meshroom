@@ -264,11 +264,11 @@ class Attribute(BaseObject):
             attr = node.attribute(linkAttrName)
             if attr is None:
                 raise InvalidEdgeError(self.fullName, link, "Source attribute does not exist.")
-            graph.addEdge(attr, self)
+            attr.connectTo(self)
         except InvalidEdgeError as err:
             logging.warning(err)
         except Exception as err:
-            logging.warning("Unexpected error happened during edge creation.")
+            logging.warning("An unexpected error happened during edge creation.")
             logging.warning(f"Expression '{self._linkExpression}': {err}.")
 
         self._linkExpression = None
@@ -452,8 +452,7 @@ class Attribute(BaseObject):
         """
         Whether the attribute is a link to another attribute.
         """
-        return self.node.graph and self.isInput and self.node.graph._edges and \
-            self in self.node.graph._edges.keys()
+        return bool(self.node.graph and self.isInput and self.node.graph._edges and self in self.node.graph._edges.keys())
 
     def _getInputLink(self, recursive=False) -> Attribute:
         """ 

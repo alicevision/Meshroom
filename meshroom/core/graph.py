@@ -909,13 +909,16 @@ class Graph(BaseObject):
         return set(self._nodes) - nodesWithInputLink
 
     @changeTopology
-    def addEdge(self, srcAttr: Attribute, dstAttr: Attribute):
+    def addEdge(self, srcAttr: Attribute, dstAttr: Attribute) -> Edge:
         if not srcAttr.node.graph == dstAttr.node.graph == self:
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    "Attributes do not belong to this graph.")
         if dstAttr in self.edges.keys():
+            self.removeEdge(dstAttr)
+
+        if not dstAttr.validateIncomingConnection(srcAttr):
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
-                                   "Destination is already connected.")
+                                   f"Attributes are not compatible (src base type: {srcAttr.baseType}; dst base type: {dstAttr.baseType}).")
         edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
@@ -930,9 +933,10 @@ class Graph(BaseObject):
                 self.addEdge(*edge)
 
     @changeTopology
-    def removeEdge(self, dstAttr):
-        if dstAttr not in self.edges.keys():
-            raise RuntimeError(f'Attribute "{dstAttr.fullName}" is not connected')
+    def removeEdge(self, dstAttr: Attribute):
+        if not self.edges.get(dstAttr):
+            return
+
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()

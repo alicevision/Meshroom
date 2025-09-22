@@ -530,6 +530,35 @@ class Attribute(BaseObject):
         """
         return self.baseType == connectingAttribute.baseType
 
+    def connectTo(self, dstAttribute: Attribute) -> Optional[Edge]:
+        """
+        Connect this Attribute to "dstAttribute".
+
+        Args:
+            dstAttribute: the destination Attribute
+
+        Returns:
+            The connecting Edge object if the connection was successful, None otherwise.
+        """
+        if not (graph := self.node.graph):
+            return None
+
+        if isinstance(dstAttribute.root, Attribute):
+            dstAttribute.root.disconnectEdge()
+
+        return graph.addEdge(self, dstAttribute)
+
+    def disconnectEdge(self):
+        """
+        """
+        if not (graph := self.node.graph):
+            return
+
+        graph.removeEdge(self)
+
+        if isinstance(self.root, Attribute):
+            self.root.disconnectEdge()
+
     # Slots
 
     @Slot()
@@ -1097,6 +1126,24 @@ class GroupAttribute(Attribute):
                 return False
 
         return True
+
+    # Override
+    def connectTo(self, dstAttribute: GroupAttribute) -> Optional[Edge]:
+        """
+        Connect this GroupAttribute to "dstAttribute". The nested attributes in the group
+        are automatically connected.
+
+        Args:
+            dstAttribute: the destination Attribute
+
+        Returns:
+            The connecting Edge object if the connection was successful, None otherwise.
+        """
+        nestedDstAttributes = list(dstAttribute.value)
+
+        for index, nestedAttribute in enumerate(list(self.value)):
+            nestedAttribute.connectTo(nestedDstAttributes[index])
+        return super().connectTo(dstAttribute)
 
     @Slot(str, result=Attribute)
     def childAttribute(self, key: str) -> Attribute:

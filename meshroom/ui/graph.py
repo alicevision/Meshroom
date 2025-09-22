@@ -1172,11 +1172,11 @@ class UIGraph(QObject):
 
     @Slot(Edge)
     def removeEdge(self, edge):
-        if isinstance(edge.dst.root, ListAttribute):
-            with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.fullName}"):
+        with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.fullName}"):
+            if isinstance(edge.dst.root, ListAttribute):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
                 self.removeAttribute(edge.dst)
-        else:
+                return
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
     @Slot(list)

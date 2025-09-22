@@ -1,25 +1,30 @@
 import os
 import re
 
+pattern = r"(?P<FILESTEM_PREFIX>.*?)(?P<FRAMEID_STR>[-._]\d+)?(?P<EXTENSION>\.\w{3,4})"
+compiled_pattern = re.compile(pattern)
+compiled_frameId = re.compile(r"(\D+)?(?P<FRAMEID>\d+$)")
+
 def getFileElements(inputFilePath: str):
 
     filename = os.path.basename(inputFilePath)
-    pattern = r"(?P<FILESTEM>.*?)(?P<FRAME_ID>[-._]\d+)?(?P<EXTENSION>\.\w{3,4})"
-    match = re.search(pattern, filename)
-    frameId = match.group("FRAME_ID")
+    match = compiled_pattern.search(filename)
+    frameId_str = match.group("FRAMEID_STR")
     
     fileElements = {}
     if match:
         fileElements = {
             "<PATH>": inputFilePath,
             "<FILENAME>": filename,
-            "<FILESTEM>": match.group("FILESTEM"),
-            "<FILESTEM_PREFIX>": match.group("FILESTEM"),
+            "<FILESTEM>": match.group("FILESTEM_PREFIX"),
+            "<FILESTEM_PREFIX>": match.group("FILESTEM_PREFIX"),
             "<EXTENSION>": match.group("EXTENSION"),
         }
-    if frameId is not None:
-        fileElements["<FRAMEID>"] = frameId
-        fileElements["<FILESTEM>"] += frameId
+    if frameId_str is not None:
+        fileElements["<FRAMEID_STR>"] = frameId_str
+        fileElements["<FILESTEM>"] += frameId_str
+        match_frameId = compiled_frameId.search(frameId_str)
+        fileElements["<FRAMEID>"] = match_frameId.group("FRAMEID")
 
     return fileElements
 
@@ -43,8 +48,10 @@ def replacePatterns(input, pattern, replacements):
     def replaceMatch(match):
         key = match.group()
         return replacements.get(key, "")
-    return re.sub(pattern, replaceMatch, input)
+    return pattern.sub(replaceMatch, input)
 
+
+compiled_element = re.compile(r"<\w*>")
 
 def resolvePath(input, outputTemplate: str) -> str:
 
@@ -53,7 +60,7 @@ def resolvePath(input, outputTemplate: str) -> str:
     else:
         replacements = getViewElements(input)
 
-    resolved = replacePatterns(outputTemplate, r"<\w*>", replacements)
+    resolved = replacePatterns(outputTemplate, compiled_element, replacements)
 
     return resolved
 

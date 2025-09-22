@@ -3,7 +3,6 @@ import copy
 import os
 import re
 import weakref
-import types
 import logging
 
 from collections.abc import Iterable, Sequence

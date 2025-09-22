@@ -1,7 +1,6 @@
 import ast
 import distutils.util
 import os
-import types
 from collections.abc import Iterable
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList

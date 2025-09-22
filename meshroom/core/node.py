@@ -10,7 +10,6 @@ import platform
 import re
 import shutil
 import time
-import types
 import uuid
 from collections import namedtuple, OrderedDict
 from enum import Enum, auto

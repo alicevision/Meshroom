@@ -483,13 +483,44 @@ Item {
                 model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
 
                 delegate: Edge {
-                    property var src: root._attributeToDelegate[edge.src]
-                    property var dst: root._attributeToDelegate[edge.dst]
-                    property bool isValidEdge: src !== undefined && dst !== undefined
+                    function getAttributePin(attribute) {
+                        // Get the first visible parent of "attribute"
+                        let dstAttributeDelegate = root._attributeToDelegate[attribute]
+                        if (dstAttributeDelegate && dstAttributeDelegate.visible) {
+                            return dstAttributeDelegate
+                        }
+
+                        if (!attribute || !attribute.root) {
+                            return null
+                        }
+
+                        let index = Array.from(attribute.root.value).indexOf(attribute)
+                        let groupAttributeDelegate = null
+                        let groupAttribute = attribute
+
+                        while (groupAttribute && !groupAttributeDelegate ||
+                               (groupAttributeDelegate && !groupAttributeDelegate.visible && groupAttribute && groupAttribute.root)) {
+                            groupAttribute = groupAttribute ? groupAttribute.root : null
+
+                            if (groupAttribute) {
+                                groupAttributeDelegate = root._attributeToDelegate[groupAttribute]
+                            }
+                        }
+
+                        if (groupAttributeDelegate) {
+                            return groupAttributeDelegate
+                        }
+
+                        return dstAttributeDelegate
+                    }
+
+                    property var src: getAttributePin(edge.src)
+                    property var dst: getAttributePin(edge.dst)
+                    property bool isValidEdge: src !== null && dst !== null
                     visible: isValidEdge && src.visible && dst.visible
 
                     property bool forLoop: {
-                        if (src !== undefined && dst !== undefined) {
+                        if (src !== null && dst !== null) {
                             return src.attribute.type === "ListAttribute" && dst.attribute.type != "ListAttribute"
                         }
                         return false

@@ -242,11 +242,9 @@ Item {
          */
         if (Boolean(attribute.enabled)) {
             // If the parent is a GroupAttribute, use the status of the parent's pin to determine visibility
-            // UNLESS the child attribute is already connected
+            // UNLESS the child attribute is already connected with a visible edge
             if (attribute.root && attribute.root.baseType === "GroupAttribute") {
-                var visible = Boolean(parentPins.get(attribute.root.name) ||
-                                      attribute.hasAnyOutputLinks ||
-                                      attribute.hasAnyInputLinks)
+                var visible = Boolean(parentPins.get(attribute.root.name))
                 if (!visible && parentPins.has(attribute.name) && parentPins.get(attribute.name) === true) {
                     parentPins.set(attribute.name, false)
                     pin.expanded = false

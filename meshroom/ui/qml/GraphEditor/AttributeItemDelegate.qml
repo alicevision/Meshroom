@@ -802,7 +802,21 @@ RowLayout {
                                                    'filterText': Qt.binding(function() { return root.filterText }),
                                                })
                     obj.Layout.fillWidth = true;
-                    obj.attributeDoubleClicked.connect(function(attr) {root.doubleClicked(attr)})
+                    obj.attributeDoubleClicked.connect(
+                        function(attr) {
+                            root.doubleClicked(attr)
+                        }
+                    )
+                    obj.inAttributeClicked.connect(
+                        function(srcItem, mouse, inAttributes) {
+                            root.inAttributeClicked(srcItem, mouse, inAttributes)
+                        }
+                    )
+                    obj.outAttributeClicked.connect(
+                        function(srcItem, mouse, outAttributes) {
+                            root.outAttributeClicked(srcItem, mouse, outAttributes)
+                        }
+                    )
                 }
             }
         }

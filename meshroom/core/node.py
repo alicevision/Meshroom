@@ -2480,6 +2480,15 @@ class CompatibilityNode(BaseNode):
         if Attribute.isLinkExpression(value):
             return attrDesc
 
+        # If it is a GroupAttribute, all the attributes within the group should be matched
+        # individually so that links can correctly be evaluated.
+        if isinstance(attrDesc, desc.GroupAttribute):
+            for k, v in value.items():
+                if CompatibilityNode.attributeDescFromName(attrDesc.groupDesc,
+                                                           k, v, strict=True) is None:
+                    return None
+            return attrDesc
+
         # If it passes the 'matchDescription' test
         if attrDesc.matchDescription(value, strict):
             return attrDesc

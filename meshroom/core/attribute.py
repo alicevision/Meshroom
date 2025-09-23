@@ -220,9 +220,7 @@ class Attribute(BaseObject):
                 return self._desc.value(self)
             except Exception as e:
                 if not self.node.isCompatibilityNode:
-                    # Log message only if we are not in compatibility mode
-                    logging.warning("Failed to evaluate default value (node lambda) for attribute '{}': {}".
-                                    format(self.name, e))
+                    logging.warning(f"Failed to evaluate 'defaultValue' (node lambda) for attribute '{self.fullName}': {e}")
                 return None
         # Need to force a copy, for the case where the value is a list
         # (avoid reference to the desc value)
@@ -284,7 +282,9 @@ class Attribute(BaseObject):
         if callable(self._desc.validValue):
             try:
                 return self._desc.validValue(self.node)
-            except Exception:
+            except Exception as e:
+                if not self.node.isCompatibilityNode:
+                    logging.warning(f"Failed to evaluate 'isValid' (node lambda) for attribute '{self.fullName}': {e}")
                 return True
         return True
 
@@ -345,8 +345,9 @@ class Attribute(BaseObject):
         if callable(self._desc.enabled):
             try:
                 return self._desc.enabled(self.node)
-            except Exception:
-                # Node implementation may fail due to version mismatch
+            except Exception as e:
+                if not self.node.isCompatibilityNode:
+                    logging.warning(f"Failed to evaluate 'enabled' (node lambda) for attribute '{self.fullName}': {e}")
                 return True
         return self._desc.enabled
 

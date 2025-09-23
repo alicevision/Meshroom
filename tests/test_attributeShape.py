@@ -384,9 +384,9 @@ class TestShapeAttribute:
 
         # Add link:
         # nodeB.pointList is a link for nodeA.pointList
-        graph.addEdge(nodeA.pointList, nodeB.pointList)
+        nodeA.pointList.connectTo(nodeB.pointList)
         # nodeB.point is a link for nodeA.point
-        graph.addEdge(nodeA.point, nodeB.point)
+        nodeA.point.connectTo(nodeB.point)
 
         # Check link
         assert nodeB.pointList.isLink == True

@@ -1,4 +1,7 @@
+from meshroom.core.exception import CyclicDependencyError
 from meshroom.core.graph import Graph
+
+import pytest
 
 
 def test_depth():
@@ -8,10 +11,8 @@ def test_depth():
     tB = graph.addNewNode("AppendText", inputText="echo B")
     tC = graph.addNewNode("AppendText", inputText="echo C")
 
-    graph.addEdges(
-        (tA.output, tB.input),
-        (tB.output, tC.input),
-        )
+    tA.output.connectTo(tB.input)
+    tB.output.connectTo(tC.input)
 
     assert tA.depth == 0
     assert tB.depth == 1
@@ -26,12 +27,10 @@ def test_depth_diamond_graph():
     tC = graph.addNewNode("AppendText", inputText="echo C")
     tD = graph.addNewNode("AppendFiles")
 
-    graph.addEdges(
-        (tA.output, tB.input),
-        (tA.output, tC.input),
-        (tB.output, tD.input),
-        (tC.output, tD.input2),
-    )
+    tA.output.connectTo(tB.input)
+    tA.output.connectTo(tC.input)
+    tB.output.connectTo(tD.input)
+    tC.output.connectTo(tD.input2)
 
     assert tA.depth == 0
     assert tB.depth == 1
@@ -72,16 +71,13 @@ def test_depth_diamond_graph2():
     #      \     /
     #       \   /
     #         D
-    graph.addEdges(
-        (tA.output, tB.input),
-        (tB.output, tC.input),
-        (tB.output, tD.input),
-
-        (tA.output, tE.input),
-        (tB.output, tE.input2),
-        (tC.output, tE.input3),
-        (tD.output, tE.input4),
-    )
+    tA.output.connectTo(tB.input)
+    tB.output.connectTo(tC.input)
+    tB.output.connectTo(tD.input)
+    tA.output.connectTo(tE.input)
+    tB.output.connectTo(tE.input2)
+    tC.output.connectTo(tE.input3)
+    tD.output.connectTo(tE.input4)
 
     assert tA.depth == 0
     assert tB.depth == 1
@@ -130,17 +126,13 @@ def test_transitive_reduction():
     #      \     /
     #       \   /
     #         D
-    graph.addEdges(
-        (tA.output, tE.input),
-
-        (tA.output, tB.input),
-        (tB.output, tC.input),
-        (tB.output, tD.input),
-
-        (tB.output, tE.input4),
-        (tC.output, tE.input3),
-        (tD.output, tE.input2),
-    )
+    tA.output.connectTo(tE.input)
+    tA.output.connectTo(tB.input)
+    tB.output.connectTo(tC.input)
+    tB.output.connectTo(tD.input)
+    tB.output.connectTo(tE.input4)
+    tC.output.connectTo(tE.input3)
+    tD.output.connectTo(tE.input2)
 
     flowEdges = graph.flowEdges()
     flowEdgesRes = [(tB, tA),

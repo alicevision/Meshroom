@@ -28,10 +28,8 @@ def test_output_invalidation():
     n2 = graph.addNewNode("SampleNode")
     n3 = graph.addNewNode("SampleNode")
 
-    graph.addEdges(
-        (n1.output, n2.input),
-        (n1.output, n3.input)
-    )
+    n1.output.connectTo(n2.input)
+    n1.output.connectTo(n3.input)
 
     # N1.output ----- N2.input
     #                \
@@ -60,6 +58,6 @@ def test_inputLinkInvalidation():
     n1 = graph.addNewNode("SampleNode")
     n2 = graph.addNewNode("SampleNode")
 
-    graph.addEdges((n1.input, n2.input))
+    n1.input.connectTo(n2.input)
     assert n1.input.uid() == n2.input.uid()
     assert n1.output.value == n2.output.value

@@ -102,7 +102,7 @@ class TestImportGraphContent:
             nodeA_1 = graph.addNewNode(SimpleNode.__name__)
             nodeA_2 = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA_1.output, nodeA_2.input)
+            nodeA_1.output.connectTo(nodeA_2.input)
 
             otherGraph = Graph("")
             otherGraph.importGraphContent(graph)
@@ -115,7 +115,7 @@ class TestImportGraphContent:
             nodeA_1 = graph.addNewNode(SimpleNode.__name__)
             nodeA_2 = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA_1.output, nodeA_2.input)
+            nodeA_1.output.connectTo(nodeA_2.input)
 
             otherGraph = Graph("")
             otherGraph.importGraphContent(graph)
@@ -128,7 +128,7 @@ class TestImportGraphContent:
             nodeA_1 = graph.addNewNode(SimpleNode.__name__)
             nodeA_2 = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA_1.output, nodeA_2.input)
+            nodeA_1.output.connectTo(nodeA_2.input)
 
         otherGraph = Graph("")
         otherGraph.importGraphContent(graph)
@@ -157,7 +157,7 @@ class TestImportGraphContent:
             nodeA_1 = graph.addNewNode(SimpleNode.__name__)
             nodeA_2 = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA_1.output, nodeA_2.input)
+            nodeA_1.output.connectTo(nodeA_2.input)
 
             graph.importGraphContent(graph)
 
@@ -170,7 +170,7 @@ class TestImportGraphContent:
             nodeA_1 = graph.addNewNode(SimpleNode.__name__)
             nodeA_2 = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA_1.output, nodeA_2.input)
+            nodeA_1.output.connectTo(nodeA_2.input)
             graph.save()
 
             otherGraph = Graph("")
@@ -187,7 +187,7 @@ class TestImportGraphContent:
             nodeA_1 = graph.addNewNode(SimpleNode.__name__)
             nodeA_2 = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA_1.output, nodeA_2.input)
+            nodeA_1.output.connectTo(nodeA_2.input)
             graph.save()
 
         otherGraph = Graph("")
@@ -230,7 +230,7 @@ class TestGraphPartialSerialization:
             nodeA = graph.addNewNode(SimpleNode.__name__)
             nodeB = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA.output, nodeB.input)
+            nodeA.output.connectTo(nodeB.input)
 
             partialSerializedGraph = graph.serializePartial([nodeA, nodeB])
             standardSerializedGraph = graph.serialize()
@@ -251,7 +251,7 @@ class TestGraphPartialSerialization:
             nodeA = graph.addNewNode(NodeWithListAttributes.__name__)
             nodeB = graph.addNewNode(NodeWithListAttributes.__name__)
 
-            graph.addEdge(nodeA.listInput, nodeB.listInput)
+            nodeA.listInput.connectTo(nodeB.listInput)
 
             otherGraph = Graph("")
             otherGraph._deserialize(graph.serializePartial([nodeA, nodeB]))
@@ -266,7 +266,7 @@ class TestGraphPartialSerialization:
             nodeA = graph.addNewNode(SimpleNode.__name__)
             nodeB = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA.output, nodeB.input)
+            nodeA.output.connectTo(nodeB.input)
 
             serializedGraph = graph.serializePartial([nodeB])
 
@@ -285,7 +285,7 @@ class TestGraphPartialSerialization:
             nodeB = graph.addNewNode(NodeWithListAttributes.__name__)
 
             nodeB.listInput.append("")
-            graph.addEdge(nodeA.output, nodeB.listInput.at(0))
+            nodeA.output.connectTo(nodeB.listInput.at(0))
 
             otherGraph = Graph("")
             otherGraph._deserialize(graph.serializePartial([nodeB]))
@@ -300,7 +300,7 @@ class TestGraphPartialSerialization:
             nodeB = graph.addNewNode(NodeWithListAttributes.__name__)
 
             nodeB.group.listInput.append("")
-            graph.addEdge(nodeA.output, nodeB.group.listInput.at(0))
+            nodeA.output.connectTo(nodeB.group.listInput.at(0))
 
             otherGraph = Graph("")
             otherGraph._deserialize(graph.serializePartial([nodeB]))
@@ -316,7 +316,7 @@ class TestGraphCopy:
             nodeA = graph.addNewNode(SimpleNode.__name__)
             nodeB = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA.output, nodeB.input)
+            nodeA.output.connectTo(nodeB.input)
 
             graphCopy = graph.copy()
             assert compareGraphsContent(graph, graphCopy)
@@ -328,7 +328,7 @@ class TestGraphCopy:
             nodeA = graph.addNewNode(SimpleNode.__name__)
             nodeB = graph.addNewNode(SimpleNode.__name__)
 
-            graph.addEdge(nodeA.output, nodeB.input)
+            nodeA.output.connectTo(nodeB.input)
 
         graphCopy = graph.copy()
         assert not compareGraphsContent(graph, graphCopy)

@@ -220,7 +220,7 @@ class TestKeyableAttribute:
 
         # Add link:
         # nodeB.keyableInt is a link for nodeA.keyableInt
-        graph.addEdge(nodeA.keyableInt, nodeB.keyableInt)
+        nodeA.keyableInt.connectTo(nodeB.keyableInt)
 
         # Check link
         assert nodeB.keyableInt.isLink == True

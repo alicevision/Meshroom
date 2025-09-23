@@ -100,7 +100,7 @@ class TestChoiceParam:
         nodeA = graph.addNewNode(NodeWithChoiceParams.__name__)
         nodeB = graph.addNewNode(NodeWithChoiceParams.__name__)
         nodeA.choice.values = ["D", "E", "F"]
-        graph.addEdge(nodeA.choice, nodeB.choice)
+        nodeA.choice.connectTo(nodeB.choice)
 
         assert nodeB.choice.values == ["D", "E", "F"]
 
@@ -108,8 +108,8 @@ class TestChoiceParam:
         graph: Graph = graphSavedOnDisk
         nodeA = graph.addNewNode(NodeWithChoiceParams.__name__)
         nodeB = graph.addNewNode(NodeWithChoiceParams.__name__)
-        graph.addEdge(nodeA.choice, nodeB.choice)
-        graph.addEdge(nodeA.choiceMulti, nodeB.choiceMulti)
+        nodeA.choice.connectTo(nodeB.choice)
+        nodeA.choiceMulti.connectTo(nodeB.choiceMulti)
 
         graph.save()
 
@@ -160,8 +160,8 @@ class TestChoiceParamSavingCustomValues:
         graph: Graph = graphSavedOnDisk
         nodeA = graph.addNewNode(NodeWithChoiceParamsSavingValuesOverride.__name__)
         nodeB = graph.addNewNode(NodeWithChoiceParamsSavingValuesOverride.__name__)
-        graph.addEdge(nodeA.choice, nodeB.choice)
-        graph.addEdge(nodeA.choiceMulti, nodeB.choiceMulti)
+        nodeA.choice.connectTo(nodeB.choice)
+        nodeA.choiceMulti.connectTo(nodeB.choiceMulti)
 
         graph.save()
 

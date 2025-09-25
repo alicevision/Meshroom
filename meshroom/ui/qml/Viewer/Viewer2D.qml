@@ -642,7 +642,7 @@ FocusScope {
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
 
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('PhotometricStereo').node : null
+                    property var selectedNode: _reconstruction ? _reconstruction.selectedNode : null
                     property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
                     property url sourcePath: getAlbedoFile()
                     property url normalPath: getNormalFile()
@@ -652,21 +652,39 @@ FocusScope {
                     property int previousOrientationTag: 1
 
                     function getAlbedoFile() {
-
-                        if(vp && activeNode && activeNode.hasAttribute("albedo")) {
-                            return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("albedo").value, vp))
+                        // get the image file from an external URL
+                        if (useExternal) {
+                            var externalFile = Filepath.urlToString(sourceExternal)
+                            if(externalFile.includes("_normals"))
+                                return Filepath.stringToUrl(externalFile.replace("_normals", "_albedo"))
+                            return sourceExternal
                         }
+                        
+                        // get the image file from selected node albedo attribute
+                        if(vp && selectedNode && selectedNode.hasAttribute("albedo"))
+                            return Filepath.stringToUrl(Filepath.resolve(selectedNode.attribute("albedo").value, vp))
 
-                        return getImageFile()
+                        // no valid image file, return empty url
+                        return ""
                     }
 
                     function getNormalFile() {
-
-                        if(vp && activeNode && activeNode.hasAttribute("normals")) {
-                            return Filepath.stringToUrl(Filepath.resolve(activeNode.attribute("normals").value, vp))
+                        // get the image file from an external URL
+                        if (useExternal) {
+                            var externalFile = Filepath.urlToString(sourceExternal)
+                            if(externalFile.includes("_normals"))
+                                return sourceExternal
+                            if(externalFile.includes("_albedo"))
+                                return Filepath.stringToUrl(externalFile.replace("_albedo", "_normals"))
+                            return "" // invalid external file
                         }
 
-                        return getImageFile()
+                        // get the image file from selected node normals attribute
+                        if(vp && selectedNode && selectedNode.hasAttribute("normals"))
+                            return Filepath.stringToUrl(Filepath.resolve(selectedNode.attribute("normals").value, vp))
+                            
+                        // no valid image file, return empty url
+                        return ""
                     }
 
                     onWidthChanged: {
@@ -713,14 +731,14 @@ FocusScope {
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
                                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
-                                'baseColor': Qt.binding(function() { return phongImageViewerToolbar.baseColorValue }),
-                                'textureOpacity': Qt.binding(function() { return phongImageViewerToolbar.textureOpacityValue }),
-                                'ka': Qt.binding(function() { return phongImageViewerToolbar.kaValue }),
-                                'kd': Qt.binding(function() { return phongImageViewerToolbar.kdValue }),
-                                'ks': Qt.binding(function() { return phongImageViewerToolbar.ksValue }),
-                                'shininess': Qt.binding(function() { return phongImageViewerToolbar.shininessValue }),
-                                'lightYaw': Qt.binding(function() { return -directionalLightPane.lightYawValue }), // left handed coordinate system
-                                'lightPitch': Qt.binding(function() { return directionalLightPane.lightPitchValue }),
+                                'baseColor': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.baseColorValue : "#ffffff" }),
+                                'textureOpacity': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.textureOpacityValue : 0.0}),
+                                'ka': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.kaValue : 0.0 }),
+                                'kd': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.kdValue : 0.0 }),
+                                'ks': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.ksValue : 0.0 }),
+                                'shininess': Qt.binding(function() { return phongImageViewerToolbarLoader.item !== null ? phongImageViewerToolbarLoader.item.shininessValue : 0.0 }),
+                                'lightYaw': Qt.binding(function() { return directionalLightPaneLoader.item !== null ? -directionalLightPaneLoader.item.lightYawValue : 0.0 }), // left handed coordinate system
+                                'lightPitch': Qt.binding(function() { return directionalLightPaneLoader.item !== null ? directionalLightPaneLoader.item.lightPitchValue : 0.0 }),
                             })
                         } else {
                             // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -1062,6 +1080,38 @@ FocusScope {
                         }
                     }
                 }
+                FloatingPane {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    Layout.preferredHeight: childrenRect.height
+                    visible: phongImageViewerLoader.item !== null && 
+                             phongImageViewerLoader.item.imageStatus === Image.Error && 
+                             phongImageViewerLoader.sourcePath != ""
+                    Layout.alignment: Qt.AlignHCenter
+                    RowLayout {
+                        anchors.fill: parent
+                        Label {
+                            font.pointSize: 8
+                            text: {
+                                if (phongImageViewerLoader.item !== null) {
+                                    switch (phongImageViewerLoader.item.status) {
+                                        case 2:  // AliceVision.PhongImageViewer.EStatus.MISSING_FILE
+                                            return "Invalid / Missing File(s)"
+                                        case 4:  // AliceVision.PhongImageViewer.EStatus.LOADING_ERROR
+                                            return "Error"
+                                        default:
+                                            return ""
+                                    }
+                                }
+                                return ""
+                            }
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
+                }
 
                 Item {
                     id: imgPlaceholder
@@ -1349,25 +1399,29 @@ FocusScope {
                         }
                     }
 
-                    PhongImageViewerToolbar {
-                        id: phongImageViewerToolbar
-
+                    Loader {
+                        id: phongImageViewerToolbarLoader
+                        active: phongImageViewerLoader.status === Loader.Ready
                         anchors {
                             bottom: parent.bottom
                             left: parent.left
                             margins: 2
                         }
-                        visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active
+                        sourceComponent: PhongImageViewerToolbar {
+                        }
                     }
 
-                    DirectionalLightPane {
-                        id: directionalLightPane
+                    Loader {
+                        id: directionalLightPaneLoader
+                        active: phongImageViewerToolbarLoader.status === Loader.Ready
                         anchors {
                             bottom: parent.bottom
                             right: parent.right
                             margins: 2
                         }
-                        visible: root.aliceVisionPluginAvailable && phongImageViewerLoader.active && phongImageViewerToolbar.displayLightController
+                        sourceComponent: DirectionalLightPane {
+                            visible: phongImageViewerToolbarLoader.item !== null && phongImageViewerToolbarLoader.item.displayLightController
+                        }
                     }
                 }
 

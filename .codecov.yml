@@ -46,9 +46,6 @@ coverage:
 
 # Ignore certain files/directories that shouldn't affect coverage
 ignore:
-  - "tests/"
-  - "**/*_test.py"
-  - "**/test_*.py" 
   - "setup.py"
   - "docs/"
   - "scripts/"

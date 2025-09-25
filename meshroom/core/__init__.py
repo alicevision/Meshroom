@@ -262,8 +262,9 @@ class Version:
             return (), ''
 
         status = ''
-        # If there is a status, it is placed after a "-"
-        splitComponents = versionName.split("-", maxsplit=1)
+        # If there is a status, it is placed after a "-" (up to Meshroom 2025.1.0) or a "+"
+        versionName = versionName.replace("-", "+")  # Keep compatibility for scenes created with 2025.1.0 or older
+        splitComponents = versionName.split("+", maxsplit=1)
         # If there is no status, splitComponents is equal to [versionName]
         if len(splitComponents) > 1:
             status = splitComponents[-1]

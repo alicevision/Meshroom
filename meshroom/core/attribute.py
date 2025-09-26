@@ -252,6 +252,9 @@ class Attribute(BaseObject):
                 if not self.node.isCompatibilityNode:
                     logging.warning(f"Failed to evaluate 'defaultValue' (node lambda) for attribute '{self.fullName}': {e}")
                 return None
+        # keyable attribute default value
+        if self.keyable:
+            return {}
         # Need to force a copy, for the case where the value is a list
         # (avoid reference to the desc value)
         return copy.copy(self._desc.value)

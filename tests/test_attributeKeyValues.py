@@ -64,10 +64,15 @@ class TestKeyableAttribute:
         assert nodeA.keyableInt.isDefault 
         assert nodeA.keyableFloat.isDefault
 
+        # Check attribute description value
+        assert nodeA.keyableBool.desc.value == True
+        assert nodeA.keyableInt.desc.value  == 5
+        assert nodeA.keyableFloat.desc.value  == 5.5
+
         # Check attribute default value
-        assert nodeA.keyableBool.getDefaultValue() == True
-        assert nodeA.keyableInt.getDefaultValue() == 5
-        assert nodeA.keyableFloat.getDefaultValue() == 5.5
+        assert nodeA.keyableBool.getDefaultValue() == {}
+        assert nodeA.keyableInt.getDefaultValue() == {}
+        assert nodeA.keyableFloat.getDefaultValue() == {}
 
         # Check attribute serialized value
         assert nodeA.keyableBool.getSerializedValue() == {}

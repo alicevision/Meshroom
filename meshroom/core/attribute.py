@@ -539,6 +539,8 @@ class Attribute(BaseObject):
     is2dDisplayable = Property(bool, _is2dDisplayable, constant=True)
     # Whether the attribute value is displayable in 3d.
     is3dDisplayable = Property(bool, _is3dDisplayable, constant=True)
+    # Whether the attribute is a shape or a shape list, managed by the ShapeEditor and ShapeViewer.
+    hasDisplayableShape = Property(bool, lambda self: False, constant=True)
     
     # Attribute link properties and signals
     inputLinksChanged = Signal()

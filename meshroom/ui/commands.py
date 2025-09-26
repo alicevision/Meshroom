@@ -399,6 +399,29 @@ class SetObservationCommand(GraphCommand):
             else:
                 self.graph.internalAttribute(self.attrName).setObservation(self.key, self.oldObservation)
         return True
+
+class RemoveObservationCommand(GraphCommand):
+    def __init__(self, graph, attribute, key, parent=None):
+        super().__init__(graph, parent)
+        self.attrName = attribute.fullName
+        self.key = key
+        self.oldObservation = attribute.getObservation(key)
+        self.setText(f"Remove observation for shape attribute '{attribute.fullName}' at key: '{key}'")
+
+    def redoImpl(self):
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).removeObservation(self.key)
+        else:
+            self.graph.internalAttribute(self.attrName).removeObservation(self.key)
+        return True
+
+    def undoImpl(self):
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).setObservation(self.key, self.oldObservation)
+        else:
+            self.graph.internalAttribute(self.attrName).setObservation(self.key, self.oldObservation)
+        return True
+
 class AddEdgeCommand(GraphCommand):
     def __init__(self, graph, src, dst, parent=None):
         super().__init__(graph, parent)

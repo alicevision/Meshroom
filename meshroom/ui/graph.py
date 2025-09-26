@@ -978,6 +978,14 @@ class UIGraph(QObject):
         """ Remove the given key from the given keyable attribute. """
         self.push(commands.RemoveAttributeKeyCommand(self._graph, attribute, key))
 
+    @Slot(str, str, "QVariant")
+    def setObservationFromName(self, shapeFullName, key, observation):
+        """ Set the given observation for the given shape attribute name. """
+        shape = self.graph.attribute(shapeFullName)
+        if shape is None:
+            shape = self.graph.internalAttribute(shapeFullName)
+        self.push(commands.SetObservationCommand(self._graph, shape, key, observation))
+
     @Slot(ShapeAttribute, str, "QVariant")
     def setObservation(self, shape, key, observation):
         """ Set the given observation for the given shape attribute. """

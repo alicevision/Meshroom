@@ -23,7 +23,7 @@ from PySide6.QtCore import (
 
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
-from meshroom.core.attribute import Attribute, ListAttribute
+from meshroom.core.attribute import Attribute, ListAttribute, ShapeAttribute
 from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
@@ -977,6 +977,16 @@ class UIGraph(QObject):
     def removeAttributeKey(self, attribute, key):
         """ Remove the given key from the given keyable attribute. """
         self.push(commands.RemoveAttributeKeyCommand(self._graph, attribute, key))
+
+    @Slot(ShapeAttribute, str, "QVariant")
+    def setObservation(self, shape, key, observation):
+        """ Set the given observation for the given shape attribute. """
+        self.push(commands.SetObservationCommand(self._graph, shape, key, observation))
+
+    @Slot(ShapeAttribute, str)
+    def removeObservation(self, shape, key):
+        """ Remove the given observation for the given shape attribute. """
+        self.push(commands.RemoveObservationCommand(self._graph, shape, key))
 
     @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):

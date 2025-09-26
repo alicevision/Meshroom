@@ -1749,6 +1749,16 @@ class BaseNode(BaseObject):
         """
         
         return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3dDisplayable), None) is not None
+    
+    def _hasDisplayableShape(self):
+        """
+        Return True if at least one attribute is a ShapeAttribute, a ShapeListAttribute or a shape File.
+        Note: These attributes can be loaded in the the ShapeViewer / ShapeEditor.
+        False otherwise.
+        """
+        return next((attr for attr in self._attributes if attr.hasDisplayableShape or \
+                     attr.desc.semantic == "shapeFile"), None) is not None
+    
 
     name = Property(str, getName, constant=True)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
@@ -1802,6 +1812,8 @@ class BaseNode(BaseObject):
     hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
+    # Whether the node contains a ShapeAttribute, a ShapeListAttribute or a shape File.
+    hasDisplayableShape = Property(bool, _hasDisplayableShape, constant=True)
 
 
 class Node(BaseNode):

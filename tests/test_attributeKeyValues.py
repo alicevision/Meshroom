@@ -66,8 +66,8 @@ class TestKeyableAttribute:
 
         # Check attribute description value
         assert nodeA.keyableBool.desc.value == True
-        assert nodeA.keyableInt.desc.value  == 5
-        assert nodeA.keyableFloat.desc.value  == 5.5
+        assert nodeA.keyableInt.desc.value == 5
+        assert nodeA.keyableFloat.desc.value == 5.5
 
         # Check attribute default value
         assert nodeA.keyableBool.getDefaultValue() == {}

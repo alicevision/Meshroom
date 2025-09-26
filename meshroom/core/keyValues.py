@@ -29,7 +29,7 @@ class KeyValues(BaseObject):
         """
         super().__init__(parent)
         self._desc = desc
-        self._pairs = DictModel(keyAttrName="key")
+        self._pairs = DictModel(keyAttrName="key", parent=self)
         # TODO: Add interpolation. For now no interpolation.
 
     def reset(self):
@@ -45,7 +45,7 @@ class KeyValues(BaseObject):
         """
         self._pairs.clear()
         for k,v in pairs.items():
-            self._pairs.add(KeyValues.KeyValuePair(int(k), self._desc.validateValue(v)))
+            self._pairs.add(KeyValues.KeyValuePair(int(k), self._desc.validateValue(v), self))
         self.pairsChanged.emit()
 
     def add(self, key: str, value: Any):
@@ -61,7 +61,7 @@ class KeyValues(BaseObject):
         if pair is not None:
             self._pairs.remove(pair)
         # Add new pair
-        self._pairs.add(KeyValues.KeyValuePair(int(key), self._desc.validateValue(value)))
+        self._pairs.add(KeyValues.KeyValuePair(int(key), self._desc.validateValue(value), self))
         self.pairsChanged.emit()
 
     def remove(self, key: str):

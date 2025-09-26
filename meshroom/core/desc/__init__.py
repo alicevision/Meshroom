@@ -11,6 +11,15 @@ from .attribute import (
     PushButtonParam,
     StringParam,
 )
+from .shapeAttribute import (
+    Shape,
+    ShapeList,
+    Size2d,
+    Point2d,
+    Line2d,
+    Rectangle,
+    Circle
+)
 from .computation import (
     DynamicNodeSize,
     Level,

@@ -79,7 +79,7 @@ class KeyValues(BaseObject):
         """
         Return the list of pairs serialized.
         """
-        return { pair.key: pair.value for pair in self._pairs }
+        return { str(pair.key): pair.value for pair in self._pairs }
 
     def getJson(self) -> str:
         """

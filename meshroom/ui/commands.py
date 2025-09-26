@@ -305,32 +305,6 @@ class SetAttributeCommand(GraphCommand):
             self.graph.attribute(self.attrName).value = self.oldValue
         else:
             self.graph.internalAttribute(self.attrName).value = self.oldValue
-
-class ResetAttributeKeyValuesCommand(GraphCommand):
-    def __init__(self, graph, attribute, parent=None):
-        super().__init__(graph, parent)
-        self.attrName = attribute.fullName
-        self.keyable = attribute.keyable
-        self.oldKeyValues = None if not attribute.keyable else attribute.keyValues.getSerializedValues()
-        self.setText(f"Reset keyable attribute '{attribute.fullName}'")
-
-    def redoImpl(self):
-        if not self.keyable:
-            return False
-        if self.graph.attribute(self.attrName) is not None:
-            self.graph.attribute(self.attrName).keyValues.reset()
-        else:
-            self.graph.internalAttribute(self.attrName).keyValues.reset()
-        return True
-
-    def undoImpl(self):
-        if not self.keyable:
-            return False    
-        if self.graph.attribute(self.attrName) is not None:
-            self.graph.attribute(self.attrName).keyValues.resetFromDict(self.oldKeyValues)
-        else:
-            self.graph.internalAttribute(self.attrName).keyValues.resetFromDict(self.oldKeyValues)
-        return True
     
 class AddAttributeKeyValueCommand(GraphCommand):
     def __init__(self, graph, attribute, key, value, parent=None):

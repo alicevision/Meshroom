@@ -953,10 +953,6 @@ class UIGraph(QObject):
     def resetAttribute(self, attribute):
         """ Reset 'attribute' to its default value """
         with self.groupedGraphModification(f"Reset Attribute '{attribute.name}'"):
-            # if the attribute is keyable reset keyValues
-            if attribute.keyable:
-                self.push(commands.ResetAttributeKeyValuesCommand(self._graph, attribute))
-                return
             # if the attribute is a ListAttribute, remove all edges
             if isinstance(attribute, ListAttribute):
                 for edge in self._graph.edges:

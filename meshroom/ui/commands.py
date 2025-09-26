@@ -313,7 +313,9 @@ class AddAttributeKeyValueCommand(GraphCommand):
         self.keyable = attribute.keyable
         self.key = key
         self.value = value
-        self.oldValue = None if not attribute.keyable else attribute.keyValues.pairs.get(int(key))
+        self.oldValue = None
+        if attribute.keyable and attribute.keyValues.hasKey(key):
+             self.oldValue = attribute.keyValues.pairs.get(int(key)).value
         self.setText(f"Add (key, value) for attribute '{attribute.fullName}' at key: '{key}'")
 
     def redoImpl(self):
@@ -346,7 +348,9 @@ class RemoveAttributeKeyCommand(GraphCommand):
         self.attrName = attribute.fullName
         self.keyable = attribute.keyable
         self.key = key
-        self.oldValue = None if not attribute.keyable else attribute.keyValues.pairs.get(int(key))
+        self.oldValue = None
+        if attribute.keyable and attribute.keyValues.hasKey(key):
+             self.oldValue = attribute.keyValues.pairs.get(int(key)).value
         self.setText(f"Remove (key, value) for attribute '{attribute.fullName}' at key: '{key}'")
 
     def redoImpl(self):

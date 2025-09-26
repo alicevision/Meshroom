@@ -1200,3 +1200,48 @@ class ShapeAttribute(GroupAttribute):
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
     # Override value property.
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
+
+class ShapeListAttribute(ListAttribute):
+    """
+    ListAttribute subtype tailored for shape-specific handling.
+    """
+
+    def __init__(self, node, attributeDesc: desc.ShapeList, isOutput: bool,
+                 root=None, parent=None):
+        self._visible = True
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+
+    def getShapesAsDicts(self):
+        """
+        Return the shape list attribute value as dict.
+        """
+        return [shapeAttribute.getValueAsDict() for shapeAttribute in self.value]
+
+    def _getVisible(self) -> bool:
+        """ 
+        Return whether the shape list is visible for display.
+        """
+        if self.isLink:
+            return self.inputLink.isVisible
+        return self._visible
+    
+    def _setVisible(self, visible:bool):
+        """ 
+        Set the shape visibility for display.
+        """
+        if self.isLink:
+            self.inputLink.isVisible = visible
+        else:
+            self._visible = visible
+        for attribute in self.value:
+            if isinstance(attribute, ShapeAttribute):
+                attribute.isVisible = visible
+        self.shapeListChanged.emit()
+
+    # Properties and signals
+    # Emitted when a shape list related property changed.
+    shapeListChanged = Signal()
+    # Whether the shape list is displayable.
+    isVisible = Property(bool, _getVisible, _setVisible, notify=shapeListChanged)
+    # Override hasDisplayableShape property.
+    hasDisplayableShape = Property(bool, lambda self: True, constant=True)

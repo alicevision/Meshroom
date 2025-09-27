@@ -1717,7 +1717,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayImageOutputIn3D
-                            enabled: root.aliceVisionPluginAvailable && _reconstruction && displayedNode && Filepath.basename(root.source).includes("depthMap")
+                            enabled: root.aliceVisionPluginAvailable && _reconstruction && displayedNode && Filepath.basename(root.source).includes("depth")
                             ToolTip.text: "View Depth Map in 3D"
                             text: MaterialIcons.input
                             font.pointSize: 11

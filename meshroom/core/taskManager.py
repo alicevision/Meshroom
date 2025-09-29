@@ -388,7 +388,7 @@ class TaskManager(BaseObject):
         sub = None
         if submitter:
             sub = meshroom.core.submitters.get(submitter, None)
-        elif len(meshroom.core.submitters) == 1:
+        elif len(meshroom.core.submitters) >= 1:
             # if only one submitter available use it
             allSubmitters = meshroom.core.submitters.values()
             sub = next(iter(allSubmitters))  # retrieve the first element

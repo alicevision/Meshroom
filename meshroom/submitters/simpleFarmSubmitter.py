@@ -15,7 +15,7 @@ binDir = os.path.dirname(os.path.dirname(os.path.dirname(currentDir)))
 
 class SimpleFarmSubmitter(BaseSubmitter):
 
-    filepath = os.environ.get('SIMPLEFARMCONFIG', os.path.join(currentDir, 'simpleFarmConfig.json'))
+    filepath = os.environ.get('SIMPLEFARMCONFIG', os.path.join(currentDir, 'tractorConfig.json'))
     config = json.load(open(filepath))
 
     reqPackages = []

@@ -732,7 +732,7 @@ class MeshroomApp(QApplication):
     
     @Slot(str)
     def setDefaultSubmitter(self, name):
-        logging.warning(f"Submitter is now set to : {name}")
+        logging.info(f"Submitter is now set to : {name}")
         self._defaultSubmitterName = name
     
     activeProjectChanged = Signal()

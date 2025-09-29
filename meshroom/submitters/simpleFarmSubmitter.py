@@ -87,15 +87,11 @@ class SimpleFarmSubmitter(BaseSubmitter):
         allRequirements.extend(self.config['RAM'].get(node.nodeDesc.ram.name, []))
         allRequirements.extend(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
 
+        executable = 'meshroom_compute' if self.reqPackages else os.path.join(binDir, 'meshroom_compute')
+        taskCommand = f"{executable} --node {node.name} \"{meshroomFile}\" {parallelArgs} --extern"
         task = simpleFarm.Task(
-            name=node.name,
-            command='{exe} --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(
-                exe='meshroom_compute' if self.reqPackages else os.path.join(binDir, 'meshroom_compute'),
-                nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
-            tags=tags,
-            rezPackages=self.reqPackages,
-            requirements={'service': str(','.join(allRequirements))},
-            **arguments)
+            name=node.name, command=taskCommand, tags=tags, rezPackages=self.reqPackages,
+            requirements={'service': str(','.join(allRequirements))}, **arguments)
         return task
 
     def submit(self, nodes, edges, filepath, submitLabel="{projectName}"):

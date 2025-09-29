@@ -1711,7 +1711,7 @@ def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
         res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
         if res:
             for node in nodesToProcess:
-                node.submit()  # update node status
+                node.initStatusOnSubmit()  # update node status
     except Exception as e:
         logging.error(f"Error on submit : {e}")
 

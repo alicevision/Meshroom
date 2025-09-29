@@ -1320,7 +1320,8 @@ class BaseNode(BaseObject):
         # logging.warning(f"updateStatusFromCache: {self.name}, status: {s} => {self.globalStatus}")
         self.updateOutputAttr()
 
-    def submit(self, forceCompute=False):
+    def initStatusOnSubmit(self, forceCompute=False):
+        """ Prepare chunks status when the node is in a graph that was submitted """
         for chunk in self._chunks:
             if forceCompute or chunk.status.status != Status.SUCCESS:
                 chunk._status.setNode(self)

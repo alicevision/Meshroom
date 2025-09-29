@@ -188,19 +188,18 @@ class RezProcessEnv(ProcessEnv):
         # in the current environment (if they are resolved in it)
         for package in subrequires:
             packageTuple = self.REZ_DELIMITER_PATTERN.split(package, maxsplit=1)
-            match len(packageTuple):
-                case 1:
-                    # Only the package name in the subrequires.
-                    # Search for a corresponding version in the parent environment.
-                    packageName = packageTuple[0]
-                    parentResolvedVersion = resolvedVersions.get(packageName)
-                    if parentResolvedVersion:
-                        packages.append(f"{packageName}=={parentResolvedVersion}")
-                    else:
-                        packages.append(package)
-                case 2:
-                    # The subrequires ask for a specific version
+            if len(packageTuple) == 1:
+                # Only the package name in the subrequires.
+                # Search for a corresponding version in the parent environment.
+                packageName = packageTuple[0]
+                parentResolvedVersion = resolvedVersions.get(packageName)
+                if parentResolvedVersion:
+                    packages.append(f"{packageName}=={parentResolvedVersion}")
+                else:
                     packages.append(package)
+            elif len(packageTuple) == 2:
+                # The subrequires ask for a specific version
+                packages.append(package)
 
         def extractPackageName(packageString: str) -> str:
             return self.REZ_DELIMITER_PATTERN.split(packageString, maxsplit=1)[0]

@@ -23,7 +23,8 @@ RowLayout {
     property alias label: parameterLabel  // Accessor to the internal Label (attribute's name)
     property int labelWidth               // Shortcut to set the fixed size of the Label
 
-    readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
+    readonly property bool editable: !attribute.isOutput && !attribute.isLink &&   
+                                     !readOnly && !(attribute.keyable && _reconstruction.selectedViewId === "-1")
 
     signal doubleClicked(var mouse, var attr)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)

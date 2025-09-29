@@ -1,5 +1,5 @@
 {
-    "BASE": ["mikrosRender", "!ld7"],
+    "BASE": ["mikrosRender"],
     "CPU": {
         "NONE": [],
         "NORMAL": ["mikrosRender"],

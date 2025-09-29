@@ -82,10 +82,10 @@ class SimpleFarmSubmitter(BaseSubmitter):
 
         tags['nbFrames'] = nbFrames
         tags['prod'] = self.prod
-        allRequirements = list()
-        allRequirements.extend(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
-        allRequirements.extend(self.config['RAM'].get(node.nodeDesc.ram.name, []))
-        allRequirements.extend(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
+        allRequirements = set()
+        allRequirements.update(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
+        allRequirements.update(self.config['RAM'].get(node.nodeDesc.ram.name, []))
+        allRequirements.update(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
 
         executable = 'meshroom_compute' if self.reqPackages else os.path.join(binDir, 'meshroom_compute')
         taskCommand = f"{executable} --node {node.name} \"{meshroomFile}\" {parallelArgs} --extern"

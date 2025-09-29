@@ -454,10 +454,10 @@ class TractorSubmitter(BaseSubmitter):
                 optionalArgs["chunks"] = {'start': 0, 'end': nbBlocks - 1, 'step': 1}
         tags['nbFrames'] = node.size
         tags['prod'] = self.prod
-        allRequirements = list()
-        allRequirements.extend(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
-        allRequirements.extend(self.config['RAM'].get(node.nodeDesc.ram.name, []))
-        allRequirements.extend(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
+        allRequirements = set()
+        allRequirements.update(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
+        allRequirements.update(self.config['RAM'].get(node.nodeDesc.ram.name, []))
+        allRequirements.update(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
         exe = "meshroom_compute" if self.reqPackages else os.path.join(binDir, "meshroom_compute")
         taskCommand = f"{exe} --node {node.name} \"{meshroomFile}\" --extern"
         task = Task(

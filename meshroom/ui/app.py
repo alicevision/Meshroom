@@ -722,11 +722,15 @@ class MeshroomApp(QApplication):
             isDefault : True if this is the current submitter
         """
         submittersList = []
-        for s in meshroom.core.submitters:
+        for i, s in enumerate(meshroom.core.submitters):
             submitterName = s.name if isinstance(s, BaseSubmitter) else s
+            # If no explicit default submitter, this will be the first one
+            isDefault = (i == 0)
+            if self._defaultSubmitterName:
+                isDefault = (submitterName == self._defaultSubmitterName)
             submittersList.append({
                 "name": submitterName,
-                "isDefault": True if submitterName == self._defaultSubmitterName else False
+                "isDefault": isDefault
             })
         return submittersList
     

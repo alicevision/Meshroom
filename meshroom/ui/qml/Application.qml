@@ -979,7 +979,7 @@ Page {
                 MenuSeparator {}
                 Menu {
                     id: submitterSelectionMenu
-                    title: "Submitter selection"
+                    title: "Submitter Selection"
                     enabled: submitterItems.model !== undefined && submitterItems.model.length > 0
                     Repeater {
                         id: submitterItems
@@ -987,7 +987,6 @@ Page {
                         RadioButton {
                             text: modelData["name"]
                             checked: modelData["isDefault"]
-                            // checked: MeshroomApp.submittersListModel[0]["name"] == modelData["name"]
                             onClicked: MeshroomApp.setDefaultSubmitter(modelData["name"])
                         }
                     }

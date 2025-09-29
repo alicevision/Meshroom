@@ -443,6 +443,10 @@ class TractorSubmitter(BaseSubmitter):
             self.environment['REZ_DEV_PACKAGES_ROOT'] = os.environ['REZ_DEV_PACKAGES_ROOT']
         if 'REZ_PROD_PACKAGES_PATH' in os.environ:
             self.environment['REZ_PROD_PACKAGES_PATH'] = os.environ['REZ_PROD_PACKAGES_PATH']
+        if 'PROD' in os.environ:
+            self.environment['PROD'] = os.environ['PROD']
+        if 'PROD_ROOT' in os.environ:
+            self.environment['PROD_ROOT'] = os.environ['PROD_ROOT']
 
     def createTask(self, meshroomFile, node):
         tags = self.DEFAULT_TAGS.copy()  # copy to not modify default tags
@@ -488,7 +492,7 @@ class TractorSubmitter(BaseSubmitter):
             tags=mainTags,
             requirements={'service': str(','.join(allRequirements))},
             environment=self.environment,
-            user=os.environ.get('USER', os.environ.get('FARM_USER', getpass.getuser())),
+            user=os.environ.get('FARM_USER', os.environ.get('USER', getpass.getuser())),
         )
 
         nodeUidToTask = {}

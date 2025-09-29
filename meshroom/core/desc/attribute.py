@@ -414,11 +414,11 @@ class ChoiceParam(Param):
 
     When using `exclusive=True`, the value is a single element of the list of possible values.
     When using `exclusive=False`, the value is a list of elements of the list of possible values.
-    
-    Despite this being the standard behavior, ChoiceParam also supports custom value: it is possible to set any value, 
-    even outside list of possible values.
 
-    The list of possible values on a ChoiceParam instance can be overriden at runtime. 
+    Despite this being the standard behavior, ChoiceParam also supports custom value: it is possible
+    to set any value, even outside the list of possible values.
+
+    The list of possible values on a ChoiceParam instance can be overriden at runtime.
     If those changes needs to be persisted, `saveValuesOverride` should be set to True.
     """
 
@@ -426,14 +426,15 @@ class ChoiceParam(Param):
     _OVERRIDE_SERIALIZATION_KEY_VALUE = "__ChoiceParam_value__"
     _OVERRIDE_SERIALIZATION_KEY_VALUES = "__ChoiceParam_values__"
 
-    def __init__(self, name: str, label: str, description: str, value, values, exclusive=True, saveValuesOverride=False, 
-                 group="allParams", joinChar=" ", advanced=False, enabled=True, invalidate=True, semantic="", 
-                 validValue=True, errorMessage="",
+    def __init__(self, name: str, label: str, description: str, value, values, exclusive=True,
+                 saveValuesOverride=False, group="allParams", joinChar=" ", advanced=False,
+                 enabled=True, invalidate=True, semantic="", validValue=True, errorMessage="",
                  visible=True, exposed=False):
 
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value,
-                                          group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                          semantic=semantic, validValue=validValue, errorMessage=errorMessage,
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description,
+                                          value=value, group=group, advanced=advanced,
+                                          enabled=enabled, invalidate=invalidate, semantic=semantic,
+                                          validValue=validValue, errorMessage=errorMessage,
                                           visible=visible, exposed=exposed)
         self._values = values
         self._saveValuesOverride = saveValuesOverride
@@ -475,8 +476,8 @@ class ChoiceParam(Param):
             value = value.split(',')
 
         if not isinstance(value, Iterable):
-            raise ValueError("Non-exclusive ChoiceParam value should be iterable (param: {}, value: {}, type: {}).".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"Non-exclusive ChoiceParam value should be iterable "
+                             f"(param: {self.name}, value: {value}, type: {type(value)}).")
 
         return [self.conformValue(v) for v in value]
 
@@ -485,14 +486,14 @@ class ChoiceParam(Param):
         if not isinstance(self._values, list):
             return self.name
 
-        # If the choices are not exclusive, check that 'value' is a list, and check that it does not contain values that
-        # are not available
+        # If the choices are not exclusive, check that 'value' is a list, and check that it
+        # does not contain values that are not available
         elif not self.exclusive and (not isinstance(self._value, list) or
                                      not all(val in self._values for val in self._value)):
             return self.name
 
-        # If the choices are exclusive, the value should NOT be a list but it can contain any value that is not in the
-        # list of possible ones
+        # If the choices are exclusive, the value should NOT be a list but it can contain
+        # any value that is not in the list of possible ones
         elif self.exclusive and isinstance(self._value, list):
             return self.name
 
@@ -506,21 +507,24 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", uidIgnoreValue=None, validValue=True, errorMessage="", visible=True,
-                 exposed=False):
-        super(StringParam, self).__init__(name=name, label=label, description=description, value=value,
-                                          group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                          semantic=semantic, uidIgnoreValue=uidIgnoreValue, validValue=validValue,
-                                          errorMessage=errorMessage, visible=visible, exposed=exposed)
+    def __init__(self, name, label, description, value, group="allParams", advanced=False,
+                 enabled=True, invalidate=True, semantic="", uidIgnoreValue=None, validValue=True,
+                 errorMessage="", visible=True, exposed=False):
+        super(StringParam, self).__init__(name=name, label=label, description=description,
+                                          value=value, group=group, advanced=advanced,
+                                          enabled=enabled, invalidate=invalidate, semantic=semantic,
+                                          uidIgnoreValue=uidIgnoreValue, validValue=validValue,
+                                          errorMessage=errorMessage, visible=visible,
+                                          exposed=exposed)
         self._valueType = str
 
     def validateValue(self, value):
         if value is None:
             return value
         if not isinstance(value, str):
-            raise ValueError("StringParam value should be a string (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"StringParam value should be a string "
+                             f"(param:{self.name}, value:{value}, type:{type(value)})")
+
         return value
 
     def checkValueTypes(self):
@@ -532,10 +536,11 @@ class StringParam(Param):
 class ColorParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", visible=True, exposed=False):
-        super(ColorParam, self).__init__(name=name, label=label, description=description, value=value,
-                                         group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
+    def __init__(self, name, label, description, value, group="allParams", advanced=False,
+                 enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
+        super(ColorParam, self).__init__(name=name, label=label, description=description,
+                                         value=value, group=group, advanced=advanced,
+                                         enabled=enabled, invalidate=invalidate,
                                          semantic=semantic, visible=visible, exposed=exposed)
         self._valueType = str
 
@@ -543,7 +548,7 @@ class ColorParam(Param):
         if value is None:
             return value
         if not isinstance(value, str) or len(value.split(" ")) > 1:
-            raise ValueError('ColorParam value should be a string containing either an SVG name or an hexadecimal '
-                             'color code (param: {}, value: {}, type: {})'.format(self.name, value, type(value)))
+            raise ValueError(f"ColorParam value should be a string containing either an SVG "
+                             f"name or an hexadecimal color code (param: {self.name}, "
+                             f"value: {value}, type: {type(value)})")
         return value
-

@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 
+
 class VersionStatus(Enum):
     release = 1
     develop = 2
@@ -42,16 +43,18 @@ isFrozen = getattr(sys, "frozen", False)
 
 useMultiChunks = util.strtobool(os.environ.get("MESHROOM_USE_MULTI_CHUNKS", "True"))
 
-# Logging
 
+# Logging
 def addTraceLevel():
     """ From https://stackoverflow.com/a/35804945 """
     levelName, methodName, levelNum = 'TRACE', 'trace', logging.DEBUG - 5
-    if hasattr(logging, levelName) or hasattr(logging, methodName)or hasattr(logging.getLoggerClass(), methodName):
-       return
+    if hasattr(logging, levelName) or hasattr(logging, methodName) or hasattr(logging.getLoggerClass(), methodName):
+        return
+
     def logForLevel(self, message, *args, **kwargs):
         if self.isEnabledFor(levelNum):
             self._log(levelNum, message, args, **kwargs)
+
     def logToRoot(message, *args, **kwargs):
         logging.log(levelNum, message, *args, **kwargs)
 
@@ -76,7 +79,8 @@ def setupEnvironment(backend=Backend.STANDALONE):
     """
     Setup environment for Meshroom to work in a prebuilt, standalone configuration.
 
-    Use 'MESHROOM_INSTALL_DIR' to simulate standalone configuration with a path to a Meshroom installation folder.
+    Use 'MESHROOM_INSTALL_DIR' to simulate standalone configuration with a path to a Meshroom
+    installation folder.
 
     # Meshroom standalone structure
 

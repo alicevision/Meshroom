@@ -238,7 +238,7 @@ class Graph(BaseObject):
     def isLoading(self):
         """ Return True if the graph is currently being loaded. """
         return self._loading
-    
+
     @property
     def isSaving(self):
         """ Return True if the graph is currently being saved. """
@@ -310,18 +310,18 @@ class Graph(BaseObject):
 
             # Create graph edges by resolving attributes expressions
             self._applyExpr()
-            
-        # Templates are specific: they contain only the minimal amount of 
+
+        # Templates are specific: they contain only the minimal amount of
         # serialized data to describe the graph structure.
         # They are not meant to be computed: therefore, we can early return here,
         # as uid conflict evaluation is only meaningful for nodes with computed data.
         if isTemplate:
             return
 
-        # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the
-        # nodes' links have been resolved and their UID computations are all complete.
-        # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
-        # that were computed.
+        # By this point, the graph has been fully loaded and an updateInternals has been triggered,
+        # so all the nodes' links have been resolved and their UID computations are all complete.
+        # It is now possible to check whether the UIDs stored in the graph file for each node
+        # correspond to the ones that were computed.
         self._evaluateUidConflicts(graphContent)
 
     def _normalizeGraphContent(self, graphData: dict, fileVersion: Version) -> dict:
@@ -358,21 +358,25 @@ class Graph(BaseObject):
         self._addNode(node, nodeName)
         return node
 
-    def _getNodeTypeVersionFromHeader(self, nodeType: str, default: Optional[str] = None) -> Optional[str]:
+    def _getNodeTypeVersionFromHeader(self, nodeType: str,
+                                      default: Optional[str] = None) -> Optional[str]:
         nodeVersions = self.header.get(GraphIO.Keys.NodesVersions, {})
         return nodeVersions.get(nodeType, default)
 
     def _evaluateUidConflicts(self, graphContent: dict):
         """
-        Compare the computed UIDs of all the nodes in the graph with the UIDs serialized in `graphContent`. If there
-        are mismatches, the nodes with the unexpected UID are replaced with "UidConflict" compatibility nodes.
+        Compare the computed UIDs of all the nodes in the graph with the UIDs serialized
+        in `graphContent`. If there are mismatches, the nodes with the unexpected UID are
+        replaced with "UidConflict" compatibility nodes.
   
         Args:
             graphContent: The serialized Graph content.
         """
 
         def _serializedNodeUidMatchesComputedUid(nodeData: dict, node: BaseNode) -> bool:
-            """Returns whether the serialized UID matches the one computed in the `node` instance."""
+            """
+            Returns whether the serialized UID matches the one computed in the `node` instance.
+            """
             if isinstance(node, CompatibilityNode):
                 return True
             serializedUid = nodeData.get("uid", None)
@@ -390,23 +394,24 @@ class Graph(BaseObject):
 
         logging.warning("UID Compatibility issues found: recreating conflicting nodes as CompatibilityNodes.")
 
-        # A uid conflict is contagious: if a node has a uid conflict, all of its downstream nodes may be 
-        # impacted as well, as the uid flows through connections.
-        # Therefore, we deal with conflicting uid nodes by depth: replacing a node with a CompatibilityNode restores
-        # the serialized uid, which might solve "false-positives" downstream conflicts as well.
+        # A uid conflict is contagious: if a node has a uid conflict, all of its downstream
+        # nodes may be impacted as well, as the uid flows through connections.
+        # Therefore, we deal with conflicting uid nodes by depth: replacing a node with a
+        # CompatibilityNode restores the serialized uid, which might solve "false-positives"
+        # downstream conflicts as well.
         nodesSortedByDepth = sorted(uidConflictingNodes, key=lambda node: node.minDepth)
         for node in nodesSortedByDepth:
             nodeData = graphContent[node.name]
-            # Evaluate if the node uid is still conflicting at this point, or if it has been resolved by an
-            # upstream node replacement.
+            # Evaluate if the node uid is still conflicting at this point, or if it has been
+            # resolved by an upstream node replacement.
             if _serializedNodeUidMatchesComputedUid(nodeData, node):
                 continue
             expectedUid = node._uid
-            compatibilityNode = nodeFactory(graphContent[node.name], node.name, expectedUid=expectedUid)
+            compatibilityNode = nodeFactory(graphContent[node.name], node.name,
+                                            expectedUid=expectedUid)
             # This operation will trigger a graph update that will recompute the uids of all nodes,
             # allowing the iterative resolution of uid conflicts.
             self.replaceNode(node.name, compatibilityNode)
-
 
     def importGraphContentFromFile(self, filepath: PathLike) -> list[Node]:
         """Import the content (nodes and edges) of another Graph file into this Graph instance.
@@ -425,8 +430,8 @@ class Graph(BaseObject):
         """
         Import the content (node and edges) of another `graph` into this Graph instance.
 
-        Nodes are imported with their original names if possible, otherwise a new unique name is generated
-        from their node type.
+        Nodes are imported with their original names if possible, otherwise a new unique
+        name is generated from their node type.
 
         Args:
             graph: The graph to import.
@@ -509,12 +514,13 @@ class Graph(BaseObject):
 
         Returns:
             Node, dict: the created node instance,
-                        a dictionary of linked attributes with their original value (empty if withEdges is True)
+                        a dictionary of linked attributes with their original value
+                        (empty if withEdges is True)
         """
         with GraphModification(self):
             # create a new node of the same type and with the same attributes values
-            # keep links as-is so that CompatibilityNodes attributes can be created with correct automatic description
-            # (File params for link expressions)
+            # keep links as-is so that CompatibilityNodes attributes can be created with
+            # correct automatic description (File params for link expressions)
             node = nodeFactory(srcNode.toDict(), srcNode.nodeType)  # use nodeType as name
             # skip edges: filter out attributes which are links by resetting default values
             skippedEdges = {}
@@ -597,8 +603,8 @@ class Graph(BaseObject):
                 {dstAttr.fullName, srcAttr.fullName}
             - a dictionary containing the outgoing edges removed by this operation:
                 {dstAttr.fullName, srcAttr.fullName}
-            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
-                prior to the removal of all edges:
+            - a dictionary containing the values, indices and keys of attributes that were
+                connected to a ListAttribute prior to the removal of all edges:
                 {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
@@ -609,10 +615,10 @@ class Graph(BaseObject):
         # Remove all edges arriving to and starting from this node
         with GraphModification(self):
             # Two iterations over the outgoing edges are necessary:
-            # - the first one is used to collect all the information about the edges while they are all there
-            #   (overall context)
-            # - once we have collected all the information, the edges (and perhaps the entries in ListAttributes) can
-            #   actually be removed
+            # - the first one is used to collect all the information about the edges while they
+            #   are all there (overall context)
+            # - once we have collected all the information, the edges (and perhaps the entries
+            #   in ListAttributes) can actually be removed
             for edge in self.nodeOutEdges(node):
                 outEdges[edge.dst.fullName] = edge.src.fullName
 
@@ -625,7 +631,8 @@ class Graph(BaseObject):
             for edge in self.nodeOutEdges(node):
                 self.removeEdge(edge.dst)
 
-                # Remove the corresponding attributes from the ListAttributes instead of just emptying their values
+                # Remove the corresponding attributes from the ListAttributes instead of
+                # just emptying their values
                 if isinstance(edge.dst.root, ListAttribute):
                     index = edge.dst.root.index(edge.dst)
                     edge.dst.root.remove(index)
@@ -648,7 +655,8 @@ class Graph(BaseObject):
 
         Args:
             nodeType: the node type name.
-            name: if specified, the desired name for this node. If not unique, will be prefixed (_N).
+            name: if specified, the desired name for this node. If not unique,
+                  will be prefixed (_N).
             position: the position of the node.
             **kwargs: keyword arguments to initialize the created node's attributes.
 
@@ -664,18 +672,22 @@ class Graph(BaseObject):
         return node
 
     def _triggerNodeCreatedCallback(self, nodes: Iterable[Node]):
-        """Trigger the `onNodeCreated` node descriptor callback for each node instance in `nodes`."""
+        """
+        Trigger the `onNodeCreated` node descriptor callback for each node instance in `nodes`.
+        """
         with GraphModification(self):
             for node in nodes:
                 if node.nodeDesc:
                     node.nodeDesc.onNodeCreated(node)
 
     def _createUniqueNodeName(self, inputName: str, existingNames: Optional[set[str]] = None):
-        """Create a unique node name based on the input name.
+        """
+        Create a unique node name based on the input name.
 
         Args:
             inputName: The desired node name.
-            existingNames: (optional) If specified, consider this set for uniqueness check, instead of the list of nodes.
+            existingNames: (optional) If specified, consider this set for uniqueness check,
+                           instead of the list of nodes.
         """
         existingNodeNames = existingNames or set(self._nodes.objects.keys())
 
@@ -701,8 +713,8 @@ class Graph(BaseObject):
                 {dstAttr.fullName, srcAttr.fullName}
             - a dictionary containing the outgoing edges removed by this operation:
                 {dstAttr.fullName, srcAttr.fullName}
-            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
-                prior to the removal of all edges:
+            - a dictionary containing the values, indices and keys of attributes that were connected
+                to a ListAttribute prior to the removal of all edges:
                 {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
@@ -714,7 +726,8 @@ class Graph(BaseObject):
 
     @changeTopology
     def replaceNode(self, nodeName: str, newNode: BaseNode):
-        """Replace the node idenfitied by `nodeName` with `newNode`, while restoring compatible edges.
+        """
+        Replace the node idenfitied by `nodeName` with `newNode`, while restoring compatible edges.
 
         Args:
             nodeName: The name of the Node to replace.
@@ -724,15 +737,15 @@ class Graph(BaseObject):
             _, outEdges, outListAttributes = self.removeNode(nodeName)
             self.addNode(newNode, nodeName)
             self._restoreOutEdges(outEdges, outListAttributes)
-    
+
     def _restoreOutEdges(self, outEdges: dict[str, str], outListAttributes):
         """Restore output edges that were removed during a call to "removeNode".
-        
+
         Args:
             outEdges: a dictionary containing the outgoing edges removed by a call to "removeNode".
                 {dstAttr.fullName, srcAttr.fullName}
-            outListAttributes: a dictionary containing the values, indices and keys of attributes that were connected
-                to a ListAttribute prior to the removal of all edges.
+            outListAttributes: a dictionary containing the values, indices and keys of attributes
+                that were connected to a ListAttribute prior to the removal of all edges.
                 {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
         """
         def _recreateTargetListAttributeChildren(listAttrName: str, index: int, value: Any):
@@ -745,14 +758,17 @@ class Graph(BaseObject):
                 listAttr.insert(index, value)
 
         for dstName, srcName in outEdges.items():
-            # Re-create the entries in ListAttributes that were completely removed during the call to "removeNode"
+            # Re-create the entries in ListAttributes that were completely removed during the call
+            # to "removeNode"
             if dstName in outListAttributes:
                 _recreateTargetListAttributeChildren(*outListAttributes[dstName])
             try:
                 srcAttr = self.attribute(srcName)
                 dstAttr = self.attribute(dstName)
                 if srcAttr is None or dstAttr is None:
-                    logging.warning(f"Failed to restore edge {srcName}{' (missing)' if srcAttr is None else ''} -> {dstName}{' (missing)' if dstAttr is None else ''}")
+                    logging.warning(f"Failed to restore edge {srcName}"
+                                    f"{' (missing)' if srcAttr is None else ''} -> "
+                                    f"{dstName}{' (missing)' if dstAttr is None else ''}")
                     continue
                 self.addEdge(srcAttr, dstAttr)
             except (KeyError, ValueError) as e:
@@ -767,9 +783,9 @@ class Graph(BaseObject):
 
     def reloadNodePlugins(self, nodeTypes: list[str]):
         """
-        Replace all the node instances of "nodeTypes" in the current graph with new node instances of the
-        same type. If the description of the nodes has changed, the reloaded nodes will reflect theses
-        changes. If "nodeTypes" is empty, then the function returns immediately.
+        Replace all the node instances of "nodeTypes" in the current graph with new node instances
+        of the same type. If the description of the nodes has changed, the reloaded nodes will
+        reflect theses changes. If "nodeTypes" is empty, then the function returns immediately.
 
         Args:
             nodeTypes: the list of node types that will be reloaded.
@@ -846,7 +862,8 @@ class Graph(BaseObject):
 
         Args:
             nodeType (str): the node type name to consider.
-            sortedByIndex (bool): whether to sort the nodes by their index (see Graph.sortNodesByIndex)
+            sortedByIndex (bool): whether to sort the nodes by their index
+                                  (see Graph.sortNodesByIndex)
         Returns:
             list[Node]: the list of nodes matching the given nodeType.
         """
@@ -858,7 +875,8 @@ class Graph(BaseObject):
         Returns:
             list[Node]: the list of Init nodes (nodes inheriting from InitNode)
         """
-        nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InitNode)]
+        nodes = [n for n in self._nodes.values()
+                 if isinstance(n.nodeDesc, meshroom.core.desc.InitNode)]
         return nodes
 
     def findNodeCandidates(self, nodeNameExpr: str) -> list[Node]:
@@ -873,7 +891,8 @@ class Graph(BaseObject):
             for c in candidates:
                 if c.name == nodeExpr:
                     return c
-            raise KeyError(f'Multiple node candidates for "{nodeExpr}": {str([c.name for c in candidates])}')
+            raise KeyError(f'Multiple node candidates for "{nodeExpr}": '
+                           f'{str([c.name for c in candidates])}')
         return candidates[0]
 
     def findNodes(self, nodesExpr):
@@ -929,7 +948,8 @@ class Graph(BaseObject):
 
         Args:
             node (Node): the node to consider.
-            minimal (bool): whether to return the minimal depth instead of the maximal one (default).
+            minimal (bool): whether to return the minimal depth instead of the maximal
+                            one (default).
         Returns:
             int: the node's depth in this Graph.
         """
@@ -939,7 +959,8 @@ class Graph(BaseObject):
         return minDepth if minimal else maxDepth
 
     def getInputEdges(self, node, dependenciesOnly):
-        return {edge for edge in self.getEdges(dependenciesOnly=dependenciesOnly) if edge.dst.node is node}
+        return {edge for edge in self.getEdges(dependenciesOnly=dependenciesOnly)
+                if edge.dst.node is node}
 
     def _getInputEdgesPerNode(self, dependenciesOnly):
         nodeEdges = defaultdict(set)
@@ -970,8 +991,8 @@ class Graph(BaseObject):
         if longestPathFirst and visitor.reverse:
             # Because we have no knowledge of the node's count between a node and its leaves,
             # it is not possible to handle this case at the moment
-            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and visitor.reverse=True are not "
-                                      "compatible yet.")
+            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and visitor.reverse=True "
+                                      "are not compatible yet.")
 
         nodes = startNodes or (self.getRootNodes(visitor.dependenciesOnly)
                                if visitor.reverse else self.getLeafNodes(visitor.dependenciesOnly))
@@ -1000,13 +1021,15 @@ class Graph(BaseObject):
         children = nodeChildren[u]
         if longestPathFirst:
             assert not self.dirtyTopology
-            children = sorted(children, reverse=True, key=lambda item: self._nodesMinMaxDepths[item][1])
+            children = sorted(children, reverse=True,
+                              key=lambda item: self._nodesMinMaxDepths[item][1])
         for v in children:
             visitor.examineEdge((u, v), self)
             if colors[v] == WHITE:
                 visitor.treeEdge((u, v), self)
                 # (u,v) is a tree edge
-                self.dfsVisit(v, visitor, colors, nodeChildren, longestPathFirst)  # TODO: avoid recursion
+                # TODO: avoid recursion
+                self.dfsVisit(v, visitor, colors, nodeChildren, longestPathFirst)
             elif colors[v] == GRAY:
                 # (u,v) is a back edge
                 visitor.backEdge((u, v), self)
@@ -1017,7 +1040,8 @@ class Graph(BaseObject):
         colors[u] = BLACK
         visitor.finishVertex(u, self)
 
-    def dfsOnFinish(self, startNodes=None, longestPathFirst=False, reverse=False, dependenciesOnly=False):
+    def dfsOnFinish(self, startNodes=None, longestPathFirst=False, reverse=False,
+                    dependenciesOnly=False):
         """
         Return the node chain from startNodes to the graph roots/leaves.
         Order is defined by the visit and finishVertex event.
@@ -1040,7 +1064,8 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst)
         return nodes, edges
 
-    def dfsOnDiscover(self, startNodes=None, filterTypes=None, longestPathFirst=False, reverse=False, dependenciesOnly=False):
+    def dfsOnDiscover(self, startNodes=None, filterTypes=None, longestPathFirst=False,
+                      reverse=False, dependenciesOnly=False):
         """
         Return the node chain from startNodes to the graph roots/leaves.
         Order is defined by the visit and discoverVertex event.
@@ -1163,7 +1188,8 @@ class Graph(BaseObject):
                 depthMin = inputDepths[0] + 1
             else:
                 depthMin = min(currentDepths[0], inputDepths[0] + 1)
-            self._nodesMinMaxDepths[currentVertex] = (depthMin, max(currentDepths[1], inputDepths[1] + 1))
+            self._nodesMinMaxDepths[currentVertex] = (depthMin, max(currentDepths[1],
+                                                                    inputDepths[1] + 1))
 
             # update computability
             if currentVertex.hasStatus(Status.SUCCESS):
@@ -1218,8 +1244,8 @@ class Graph(BaseObject):
 
     def flowEdges(self, startNodes=None, dependenciesOnly=True):
         """
-        Return as few edges as possible, such that if there is a directed path from one vertex to another in the
-        original graph, there is also such a path in the reduction.
+        Return as few edges as possible, such that if there is a directed path from one vertex
+        to another in the original graph, there is also such a path in the reduction.
 
         :param startNodes:
         :return: the remaining edges after a transitive reduction of the graph.
@@ -1252,24 +1278,27 @@ class Graph(BaseObject):
     def getInputNodes(self, node, recursive, dependenciesOnly):
         """ Return either the first level input nodes of a node or the whole chain. """
         if not recursive:
-            return {edge.src.node for edge in self.getEdges(dependenciesOnly) if edge.dst.node is node}
+            return {edge.src.node for edge in self.getEdges(dependenciesOnly)
+                    if edge.dst.node is node}
 
-        inputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=False)
+        inputNodes, _ = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=False)
         return inputNodes[1:]  # exclude current node
 
     def getOutputNodes(self, node, recursive, dependenciesOnly):
         """ Return either the first level output nodes of a node or the whole chain. """
         if not recursive:
-            return {edge.dst.node for edge in self.getEdges(dependenciesOnly) if edge.src.node is node}
+            return {edge.dst.node for edge in self.getEdges(dependenciesOnly)
+                    if edge.src.node is node}
 
-        outputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=True)
+        outputNodes, _ = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=True)
         return outputNodes[1:]  # exclude current node
 
     @Slot(Node, result=int)
     def canSubmitOrCompute(self, startNode):
         """
         Check if a node can be submitted/computed.
-        It does not depend on the topology of the graph and is based on the node status and its dependencies.
+        It does not depend on the topology of the graph and is based on the node status and its
+        dependencies.
 
         Returns:
             int: 0 = cannot be submitted or computed /
@@ -1411,7 +1440,8 @@ class Graph(BaseObject):
         #  * cache folder is located next to the graph file
         #  * graph name if the basename of the graph file
         self.name = os.path.splitext(os.path.basename(filepath))[0]
-        self.cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
+        self.cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)),
+                                     meshroom.core.cacheFolderName)
         self.filepathChanged.emit()
 
     def _unsetFilepath(self):
@@ -1421,7 +1451,7 @@ class Graph(BaseObject):
         self.filepathChanged.emit()
 
     def updateInternals(self, startNodes=None, force=False):
-        nodes, edges = self.dfsOnFinish(startNodes=startNodes)
+        nodes, _ = self.dfsOnFinish(startNodes=startNodes)
         for node in nodes:
             if node.dirty or force:
                 node.updateInternals()
@@ -1487,7 +1517,7 @@ class Graph(BaseObject):
         See Also:
             Graph.update, Graph.updateInternals, Graph.updateStatusFromCache
         """
-        nodes, edges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True)
+        nodes, _ = self.dfsOnDiscover(startNodes=[fromNode], reverse=True)
         for node in nodes:
             node.dirty = True
 
@@ -1529,7 +1559,9 @@ class Graph(BaseObject):
         return chunks
 
     def getChunks(self, nodes=None):
-        """ Returns the list of NodeChunks for the given list of nodes (for all nodes if nodes is None) """
+        """
+        Returns the list of NodeChunks for the given list of nodes (for all nodes if nodes is None)
+        """
         chunks = []
         for node in nodes or self.nodes:
             chunks += [chunk for chunk in node.chunks]
@@ -1591,14 +1623,17 @@ class Graph(BaseObject):
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
     isSaving = Property(bool, isSaving.fget, constant=True)
-    fileReleaseVersion = Property(str, lambda self: self.header.get(GraphIO.Keys.ReleaseVersion, "0.0"),
+    fileReleaseVersion = Property(str,
+                                  lambda self: self.header.get(GraphIO.Keys.ReleaseVersion, "0.0"),
                                   notify=filepathChanged)
-    fileDateVersion = Property(float, fileDateVersion.fget, fileDateVersion.fset, notify=filepathChanged)
+    fileDateVersion = Property(float, fileDateVersion.fget, fileDateVersion.fset,
+                               notify=filepathChanged)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
     updated = Signal()
     canComputeLeavesChanged = Signal()
-    canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
+    canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves,
+                                notify=canComputeLeavesChanged)
 
 
 def loadGraph(filepath, strictCompatibility: bool = False) -> Graph:
@@ -1607,20 +1642,23 @@ def loadGraph(filepath, strictCompatibility: bool = False) -> Graph:
 
     Args:
         filepath: The path to the Meshroom Graph file.
-        strictCompatibility: If True, raise a GraphCompatibilityError if the loaded Graph has node compatibility issues.
+        strictCompatibility: If True, raise a GraphCompatibilityError if the loaded Graph
+                             has node compatibility issues.
 
     Returns:
         Graph: The loaded Graph instance.
 
     Raises:
-        GraphCompatibilityError: If the Graph has node compatibility issues and `strictCompatibility` is True.
+        GraphCompatibilityError: If the Graph has node compatibility issues and
+                                 `strictCompatibility` is True.
     """
     graph = Graph("")
     graph.load(filepath)
 
     compatibilityIssues = len(graph.compatibilityNodes) > 0
     if compatibilityIssues and strictCompatibility:
-        raise GraphCompatibilityError(filepath, {n.name: str(n.issue) for n in graph.compatibilityNodes})
+        raise GraphCompatibilityError(filepath,
+                                      {n.name: str(n.issue) for n in graph.compatibilityNodes})
 
     graph.update()
     return graph
@@ -1639,9 +1677,9 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
     """
     """
     if forceCompute:
-        nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
+        nodes, _ = graph.dfsOnFinish(startNodes=toNodes)
     else:
-        nodes, edges = graph.dfsToProcess(startNodes=toNodes)
+        nodes, _ = graph.dfsToProcess(startNodes=toNodes)
         chunksInConflict = getAlreadySubmittedChunks(nodes)
 
         if chunksInConflict:

@@ -16,7 +16,7 @@ meshroom.setupEnvironment()
 
 import meshroom.core
 import meshroom.core.graph
-from meshroom.core.node import Status, ExecMode
+from meshroom.core.node import Status
 
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')

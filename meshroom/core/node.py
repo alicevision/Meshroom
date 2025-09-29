@@ -172,7 +172,7 @@ class StatusData(BaseObject):
     def initEndCompute(self):
         self.sessionUid = meshroom.core.sessionUid
         self.endDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
-        if self._startTime != None:
+        if self._startTime is not None:
             self.elapsedTime = time.time() - self._startTime
 
     @property
@@ -359,7 +359,7 @@ class NodeChunk(BaseObject):
             return f"{self.node.name}({self.index})"
         else:
             return self.node.name
-    
+
     @property
     def logManager(self):
         if self._logManager is None:
@@ -394,11 +394,13 @@ class NodeChunk(BaseObject):
             try:
                 with open(statusFile) as jsonFile:
                     statusData = json.load(jsonFile)
-                # logging.debug(f"updateStatusFromCache({self.node.name}): From status {self.status.status} to {statusData['status']}")
+                logging.debug(f"updateStatusFromCache({self.node.name}): From status "
+                              f"{self.status.status} to {statusData['status']}")
                 self._status.fromDict(statusData)
                 self.statusFileLastModTime = os.path.getmtime(statusFile)
             except Exception as e:
-                logging.debug(f"updateStatusFromCache({self.node.name}): Error while loading status file {statusFile}: {e}")
+                logging.debug(f"updateStatusFromCache({self.node.name}): "
+                              f"Error while loading status file {statusFile}: {e}")
                 self.statusFileLastModTime = -1
                 self._status.reset()
                 self._status.setNodeType(self.node)
@@ -453,7 +455,8 @@ class NodeChunk(BaseObject):
 
     def upgradeStatusTo(self, newStatus, execMode=None):
         if newStatus.value < self._status.status.value:
-            logging.warning(f"Downgrade status on node '{self.name}' from {self._status.status} to {newStatus}")
+            logging.warning(f"Downgrade status on node '{self.name}' "
+                            f"from {self._status.status} to {newStatus}")
 
         if execMode is not None:
             self._status.execMode = execMode
@@ -521,7 +524,7 @@ class NodeChunk(BaseObject):
         executionStatus = None
         self.statThread = stats.StatisticsThread(self)
         self.statThread.start()
-        
+
         try:
             self.node.nodeDesc.processChunk(self)
             # NOTE: this assumes saving the output attributes for each chunk
@@ -548,7 +551,6 @@ class NodeChunk(BaseObject):
             self.statThread.join()
             self.statistics = stats.Statistics()
             del runningProcesses[self.name]
-
 
     def _processInIsolatedEnvironment(self):
         """
@@ -594,7 +596,8 @@ class NodeChunk(BaseObject):
                 # Nothing to do, the computation is already stopped.
                 pass
             else:
-                logging.debug(f"Cannot stop process: node is not running (status is: {self._status.status}).")
+                logging.debug(f"Cannot stop process: node is not running (status is: "
+                              f"{self._status.status}).")
             return
 
         self.node.nodeDesc.stopProcess(self)
@@ -613,7 +616,8 @@ class NodeChunk(BaseObject):
             return True
         elif self._status.execMode == ExecMode.LOCAL:
             if self._status.status in (Status.SUBMITTED, Status.RUNNING):
-                return meshroom.core.sessionUid not in (self._status.submitterSessionUid, self._status.sessionUid)
+                return meshroom.core.sessionUid not in (self._status.submitterSessionUid,
+                                                        self._status.sessionUid)
             return False
         return False
 
@@ -737,7 +741,7 @@ class BaseNode(BaseObject):
         if self.hasInternalAttribute("nodeDefaultLogLevel"):
             return self.internalAttribute("nodeDefaultLogLevel").value.strip()
         return "info"
-    
+
     def getColor(self):
         """
         Returns:
@@ -781,7 +785,7 @@ class BaseNode(BaseObject):
             return self.nodeDesc.documentation
         else:
             return self.nodeDesc.__doc__
-    
+
     def getNodeInfos(self):
         if not self.nodeDesc:
             return []
@@ -808,7 +812,7 @@ class BaseNode(BaseObject):
             for key, value in additionalNodeInfos:
                 infos[key] = value
         return [{"key": k, "value": v} for k, v in infos.items()]
-    
+
     @property
     def packageFullName(self):
         return '-'.join([self.packageName, self.packageVersion])
@@ -970,10 +974,12 @@ class BaseNode(BaseObject):
                     # xxValue is exposed without quotes to allow to compose expressions
                     cmdVars[name + "Value"] = attr.getValueStr(withQuotes=False)
 
-                    # List elements may give a fully empty string and will not be sent to the command line.
-                    # String attributes will return only quotes if it is empty and thus will be send to the command line.
-                    # But a List of string containing 1 element,
-                    # and this element is an empty string will also return quotes and will be sent to the command line.
+                    # List elements may give a fully empty string and will not be sent to the
+                    # command line.
+                    # String attributes will return only quotes if it is empty and thus will be
+                    # send to the command line.
+                    # But a List of string containing 1 element, and this element is an empty
+                    # string will also return quotes and will be sent to the command line.
                     if v:
                         cmdVars[group] = cmdVars.get(group, "") + " " + cmdVars[name]
                 elif isinstance(attr, GroupAttribute):
@@ -1027,13 +1033,13 @@ class BaseNode(BaseObject):
                         except KeyError as e:
                             logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with '
                                             'value "{defaultValue}".\nError: {err}'.
-                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
-                                            err=str(e)))
+                                            format(nodeName=self.name, attrName=attr.name,
+                                                   defaultValue=defaultValue, err=str(e)))
                         except ValueError as e:
                             logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value '
                                             '"{defaultValue}".\nError: {err}'.
-                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
-                                            err=str(e)))
+                                            format(nodeName=self.name, attrName=attr.name,
+                                                   defaultValue=defaultValue, err=str(e)))
 
             v = attr.getValueStr(withQuotes=True)
 
@@ -1161,7 +1167,7 @@ class BaseNode(BaseObject):
     @Slot()
     def clearSubmittedChunks(self):
         """
-        Reset all submitted chunks to Status.NONE. This method should be used to clear 
+        Reset all submitted chunks to Status.NONE. This method should be used to clear
         inconsistent status if a computation failed without informing the graph.
 
         Warnings:
@@ -1314,7 +1320,7 @@ class BaseNode(BaseObject):
         """
         Update node status based on status file content/existence.
         """
-        s = self.globalStatus
+        # s = self.globalStatus
         for chunk in self._chunks:
             chunk.updateStatusFromCache()
         # logging.warning(f"updateStatusFromCache: {self.name}, status: {s} => {self.globalStatus}")
@@ -1456,7 +1462,7 @@ class BaseNode(BaseObject):
             return Status.INPUT
         if not self._chunks:
             return Status.NONE
-        if len( self._chunks) == 1:
+        if len(self._chunks) == 1:
             return self._chunks[0].status.status
 
         chunksStatus = [chunk.status.status for chunk in self._chunks]
@@ -1637,12 +1643,16 @@ class BaseNode(BaseObject):
         if len(self._chunks) == 0:
             return False
         for chunk in self._chunks:
-            if meshroom.core.sessionUid not in (chunk.status.sessionUid, chunk.status.submitterSessionUid):
+            if meshroom.core.sessionUid not in (chunk.status.sessionUid,
+                                                chunk.status.submitterSessionUid):
                 return False
         return True
 
     def isMainNode(self) -> bool:
-        """ In case of a node with duplicates, we check that the node is the one driving the computation. """
+        """
+        In case of a node with duplicates, we check that the node is the one driving the
+        computation.
+        """
         if len(self._chunks) == 0:
             return True
         firstChunk = self._chunks.at(0)
@@ -1706,8 +1716,8 @@ class BaseNode(BaseObject):
         Return True if at least one attribute is a File that can be loaded in the 3D Viewer,
         False otherwise.
         """
-        
-        return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3dDisplayable), None) is not None
+        return next((attr for attr in self._attributes if attr.enabled and
+                     attr.isOutput and attr.is3dDisplayable), None) is not None
 
     name = Property(str, getName, constant=True)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
@@ -1736,9 +1746,11 @@ class BaseNode(BaseObject):
     sizeChanged = Signal()
     size = Property(int, getSize, notify=sizeChanged)
     globalStatusChanged = Signal()
-    globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
+    globalStatus = Property(str, lambda self: self.getGlobalStatus().name,
+                            notify=globalStatusChanged)
     fusedStatus = Property(StatusData, getFusedStatus, notify=globalStatusChanged)
-    elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
+    elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime,
+                           notify=globalStatusChanged)
     recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime,
                                     notify=globalStatusChanged)
     # isCompatibilityNode: need lambda to evaluate the virtual function
@@ -1848,8 +1860,10 @@ class Node(BaseNode):
                 pass
 
     def toDict(self):
-        inputs = {k: v.getSerializedValue() for k, v in self._attributes.objects.items() if v.isInput}
-        internalInputs = {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items()}
+        inputs = {k: v.getSerializedValue() for k, v in self._attributes.objects.items()
+                  if v.isInput}
+        internalInputs = {k: v.getSerializedValue() for k, v
+                          in self._internalAttributes.objects.items()}
         outputs = ({k: v.getSerializedValue() for k, v in self._attributes.objects.items()
                     if v.isOutput and not v.desc.isDynamicValue})
 
@@ -1908,11 +1922,13 @@ class CompatibilityIssue(Enum):
 
 class CompatibilityNode(BaseNode):
     """
-    Fallback BaseNode subclass to instantiate Nodes having compatibility issues with current type description.
+    Fallback BaseNode subclass to instantiate Nodes having compatibility issues with current type
+    description.
     CompatibilityNode creates an 'empty-shell' exposing the deserialized node as-is,
     with all its inputs and precomputed outputs.
     """
-    def __init__(self, nodeType, nodeDict, position=None, issue=CompatibilityIssue.UnknownIssue, parent=None):
+    def __init__(self, nodeType, nodeDict, position=None, issue=CompatibilityIssue.UnknownIssue,
+                 parent=None):
         super().__init__(nodeType, position, parent)
 
         self.issue = issue
@@ -2029,10 +2045,12 @@ class CompatibilityNode(BaseNode):
             refAttributes ([desc.Attribute]): reference Attributes to look for a description
             name (str): attribute's name
             value: attribute's value
-            strict: strict test for the match (for instance, regarding a group with some parameter changes)
+            strict: strict test for the match (for instance, regarding a group with some
+                    parameter changes)
 
         Returns:
-            desc.Attribute: an attribute description from refAttributes if a match is found, None otherwise.
+            desc.Attribute: an attribute description from refAttributes if a match is found,
+                            None otherwise.
         """
         # from original node description based on attribute's name
         attrDesc = next((d for d in refAttributes if d.name == name), None)
@@ -2147,7 +2165,8 @@ class CompatibilityNode(BaseNode):
 
         commonInternalAttributes = []
         for attrName, value in self._internalInputs.items():
-            if self.attributeDescFromName(self.nodeDesc.internalInputs, attrName, value, strict=False):
+            if self.attributeDescFromName(self.nodeDesc.internalInputs, attrName, value,
+                                          strict=False):
                 # store internal attributes that could be used during node upgrade
                 commonInternalAttributes.append(attrName)
 
@@ -2177,4 +2196,3 @@ class CompatibilityNode(BaseNode):
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)
     issueDetails = Property(str, issueDetails.fget, constant=True)
-

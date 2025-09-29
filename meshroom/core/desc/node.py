@@ -2,7 +2,6 @@ import enum
 from inspect import getfile
 from pathlib import Path
 import logging
-import os
 import psutil
 import shlex
 import shutil
@@ -150,7 +149,7 @@ class BaseNode(object):
 
     def process(self, node):
         raise NotImplementedError(f'No process implementation on node: "{node.name}"')
-    
+
     def processChunk(self, chunk):
         if self.parallelization is None:
             self.process(chunk.node)

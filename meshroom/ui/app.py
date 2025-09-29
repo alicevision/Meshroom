@@ -6,7 +6,7 @@ import json
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
-from PySide6.QtCore import QObject, QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlDebuggingEnabler
 from PySide6.QtQuickControls2 import QQuickStyle
@@ -75,6 +75,7 @@ class MessageHandler:
             elif any(w in message for w in cls.qmlWarningsBlacklist):
                 return
         MessageHandler.logFunctions[messageType](message)
+
 
 def createMeshroomParser(args):
 
@@ -239,9 +240,9 @@ class MeshroomApp(QApplication):
 
         # Initialize the list of recent project files
         self._recentProjectFiles = self._getRecentProjectFilesFromSettings()
-        # Flag set to True if, for all the project files in the list, thumbnails have been retrieved when they
-        # are available. If set to False, then all the paths in the list are accurate, but some thumbnails might
-        # be retrievable
+        # Flag set to True if, for all the project files in the list, thumbnails have been
+        # retrieved when they are available. If set to False, then all the paths in the list
+        # are accurate, but some thumbnails might be retrievable
         self._updatedRecentProjectFilesThumbnails = True
 
         # Register components for QML before instantiating the engine
@@ -267,7 +268,9 @@ class MeshroomApp(QApplication):
         # instantiate Reconstruction object
         self._undoStack = commands.UndoStack(self)
         self._taskManager = TaskManager(self)
-        self._activeProject = Reconstruction(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
+        self._activeProject = Reconstruction(undoStack=self._undoStack,
+                                             taskManager=self._taskManager,
+                                             defaultPipeline=args.pipeline, parent=self)
         self._activeProject.setSubmitLabel(args.submitLabel)
         self.engine.rootContext().setContextProperty("_reconstruction", self._activeProject)
 
@@ -277,15 +280,18 @@ class MeshroomApp(QApplication):
         # => expose them as context properties instead
         self.engine.rootContext().setContextProperty("Filepath", FilepathHelper(parent=self))
         self.engine.rootContext().setContextProperty("Scene3DHelper", Scene3DHelper(parent=self))
-        self.engine.rootContext().setContextProperty("Transformations3DHelper", Transformations3DHelper(parent=self))
+        self.engine.rootContext().setContextProperty("Transformations3DHelper",
+                                                     Transformations3DHelper(parent=self))
         self.engine.rootContext().setContextProperty("Clipboard", ClipboardHelper(parent=self))
         self.engine.rootContext().setContextProperty("ThumbnailCache", ThumbnailCache(parent=self))
 
         # additional context properties
         self._messageController = MessageController(parent=self)
         self.engine.rootContext().setContextProperty("_messageController", self._messageController)
-        self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
-        self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
+        self.engine.rootContext().setContextProperty("_PaletteManager",
+                                                     PaletteManager(self.engine, parent=self))
+        self.engine.rootContext().setContextProperty("ScriptEditorManager",
+                                                     ScriptEditorManager(parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
 
         # request any potential computation to stop on exit
@@ -356,21 +362,23 @@ class MeshroomApp(QApplication):
     def reloadTemplateList(self):
         meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
-    
+
     @Slot()
     def forceUIUpdate(self):
-        """ Force UI to process pending events
-        Necessary when we want to update the UI while a trigger is still running (e.g. reloadPlugins)
+        """
+        Force UI to process pending events.
+        Necessary when we want to update the UI while a trigger is still running
+        (e.g. reloadPlugins).
         """
         self.processEvents()
-    
+
     def showMessage(self, message, status=None, duration=5000):
         self._messageController.sendMessage(message, status, duration)
 
     def _retrieveThumbnailPath(self, filepath: str) -> str:
         """
-        Given the path of a project file, load this file and try to retrieve the path to its thumbnail, i.e. its
-        first viewpoint image.
+        Given the path of a project file, load this file and try to retrieve the path
+        to its thumbnail, i.e. its first viewpoint image.
 
         Args:
             filepath: the path of the project file to retrieve the thumbnail from
@@ -402,12 +410,13 @@ class MeshroomApp(QApplication):
 
     def _getRecentProjectFilesFromSettings(self) -> list[dict[str, str]]:
         """
-        Read the list of recent project files from the QSettings, retrieve their filepath, and if it exists, their
-        thumbnail.
+        Read the list of recent project files from the QSettings, retrieve their filepath,
+        and if it exists, their thumbnail.
 
         Returns:
-            The list containing dictionaries of the form {"path": "/path/to/project/file", "thumbnail":
-            "/path/to/thumbnail"} based on the recent projects stored in the QSettings.
+            The list containing dictionaries of the form {"path": "/path/to/project/file",
+            "thumbnail": "/path/to/thumbnail"} based on the recent projects stored in the
+            QSettings.
         """
         projects = []
         settings = QSettings()
@@ -426,9 +435,9 @@ class MeshroomApp(QApplication):
     @Slot()
     def updateRecentProjectFilesThumbnails(self) -> None:
         """
-        If there are thumbnails that may be retrievable (meaning the list of projects has been updated minimally),
-        update the list of recent project files by reading the QSettings and retrieving the thumbnails if they are
-        available.
+        If there are thumbnails that may be retrievable (meaning the list of projects has been
+        updated minimally), update the list of recent project files by reading the QSettings and
+        retrieving the thumbnails if they are available.
         """
         if not self._updatedRecentProjectFilesThumbnails:
             self._updateRecentProjectFilesThumbnails()
@@ -444,11 +453,11 @@ class MeshroomApp(QApplication):
     def addRecentProjectFile(self, projectFile) -> None:
         """
         Add a project file to the list of recent project files.
-        The function ensures that the file is not present more than once in the list and trims it so it
-        never exceeds a set number of projects.
+        The function ensures that the file is not present more than once in the list and trims
+        it so it never exceeds a set number of projects.
         QSettings are updated accordingly.
-        The update of the list of recent projects files is minimal: the filepath is added, but there is no
-        attempt to retrieve its corresponding thumbnail.
+        The update of the list of recent projects files is minimal: the filepath is added, but
+        there is no attempt to retrieve its corresponding thumbnail.
 
         Args:
             projectFile (str or QUrl): path to the project file to add to the list
@@ -502,7 +511,8 @@ class MeshroomApp(QApplication):
     def removeRecentProjectFile(self, projectFile) -> None:
         """
         Remove a given project file from the list of recent project files.
-        If the provided filepath is not already present in the list of recent project files, nothing is done.
+        If the provided filepath is not already present in the list of recent project files,
+        nothing is done.
         Otherwise, it is effectively removed and the QSettings are updated accordingly.
         """
         if not isinstance(projectFile, (QUrl, str)):
@@ -708,7 +718,7 @@ class MeshroomApp(QApplication):
         val = os.environ.get(key, defaultValue)
         # os.environ.get returns a string if the key exists, no matter its value, and converting a
         # string to a bool always evaluates to "True"
-        if val != True and str(val).lower() in ("0", "false", "off"):
+        if not val and str(val).lower() in ("0", "false", "off"):
             return False
         return True
 
@@ -720,9 +730,13 @@ class MeshroomApp(QApplication):
     pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
     recentImportedImagesFoldersChanged = Signal()
-    pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
-    pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames, notify=pipelineTemplateFilesChanged)
-    recentProjectFiles = Property("QVariantList", lambda self: self._recentProjectFiles, notify=recentProjectFilesChanged)
-    recentImportedImagesFolders = Property("QVariantList", _recentImportedImagesFolders, notify=recentImportedImagesFoldersChanged)
+    pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles,
+                                     notify=pipelineTemplateFilesChanged)
+    pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames,
+                                     notify=pipelineTemplateFilesChanged)
+    recentProjectFiles = Property("QVariantList", lambda self: self._recentProjectFiles,
+                                  notify=recentProjectFilesChanged)
+    recentImportedImagesFolders = Property("QVariantList", _recentImportedImagesFolders,
+                                           notify=recentImportedImagesFoldersChanged)
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)
     defaultSequencePlayerEnabled = Property(bool, _defaultSequencePlayerEnabled, constant=True)

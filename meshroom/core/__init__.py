@@ -22,7 +22,7 @@ from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, process
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
-from .desc import MrNodeType
+from .desc import MrNodeType  # Not used here but simplifies imports for files that need it
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
@@ -81,7 +81,8 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             last_call = tb[-1]
-            logging.warning(f'  * Failed to load package "{packageName}" from folder "{resolvedFolder}" ({type(e).__name__}): {str(e)}\n'
+            logging.warning(f'  * Failed to load package "{packageName}" from folder '
+                            f'"{resolvedFolder}" ({type(e).__name__}): {str(e)}\n'
                             # filename:lineNumber functionName
                             f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
                             # line of code with the error
@@ -105,7 +106,8 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                     isPackage = hasattr(pluginMod, "__path__")
                     # Sub-folders/Packages should not raise a warning
                     if not isPackage:
-                        logging.warning(f"No class defined in plugin: {package.__name__}.{pluginName} ('{pluginMod.__file__}')")
+                        logging.warning(f"No class defined in plugin: "
+                                        f"{package.__name__}.{pluginName} ('{pluginMod.__file__}')")
 
                 for p in plugins:
                     p.packageName = packageName
@@ -114,8 +116,8 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                     if classType == desc.BaseNode:
                         nodePlugin = NodePlugin(p)
                         if nodePlugin.errors:
-                            errors.append("  * {}: The following parameters do not have valid " \
-                                          "default values/ranges: {}".format(pluginName, ", ".join(nodePlugin.errors)))
+                            errors.append(f"  * {pluginName}: The following parameters do not have "
+                                          f"valid default values/ranges: {', '.join(nodePlugin.errors)}")
                         classes.append(nodePlugin)
                     else:
                         classes.append(p)
@@ -438,7 +440,7 @@ def initPlugins():
                 plugin.processEnv = processEnvFactory(f, plugin.configEnv)
 
     # Rez plugins (with a RezProcessEnv)
-    rezPlugins = initRezPlugins()
+    initRezPlugins()
 
 
 def initRezPlugins():
@@ -452,6 +454,7 @@ def initRezPlugins():
         # Set the ProcessEnv for Rez plugins
         if plugins:
             for plugin in plugins:
-                plugin.processEnv = processEnvFactory(path, plugin.configEnv, envType="rez", uri=name)
+                plugin.processEnv = processEnvFactory(path, plugin.configEnv, envType="rez",
+                                                      uri=name)
 
     return rezPlugins

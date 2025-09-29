@@ -26,7 +26,8 @@ class UndoCommand(QUndoCommand):
         try:
             self.redoImpl()
         except Exception:
-            logging.error(f"Error while redoing command '{self.text()}': \n{traceback.format_exc()}")
+            logging.error(f"Error while redoing command '{self.text()}': "
+                          f"\n{traceback.format_exc()}")
 
     def undo(self):
         if not self._enabled:
@@ -34,7 +35,8 @@ class UndoCommand(QUndoCommand):
         try:
             self.undoImpl()
         except Exception:
-            logging.error(f"Error while undoing command '{self.text()}': \n{traceback.format_exc()}")
+            logging.error(f"Error while undoing command '{self.text()}': "
+                          f"\n{traceback.format_exc()}")
 
     def redoImpl(self):
         # type: () -> bool
@@ -64,7 +66,8 @@ class UndoStack(QUndoStack):
         try:
             res = command.redoImpl()
         except Exception as e:
-            logging.error(f"Error while trying command '{command.text()}': \n{traceback.format_exc()}")
+            logging.error(f"Error while trying command '{command.text()}': "
+                          f"\n{traceback.format_exc()}")
             res = False
         if res is not False:
             command.setEnabled(False)
@@ -114,9 +117,11 @@ class UndoStack(QUndoStack):
     index = Property(int, QUndoStack.index, notify=_indexChanged)
 
     isUndoableIndexChanged = Signal()
-    isUndoableIndex = Property(bool, lambda self: self.index > self._undoableIndex, notify=isUndoableIndexChanged)
+    isUndoableIndex = Property(bool, lambda self: self.index > self._undoableIndex,
+                               notify=isUndoableIndexChanged)
     lockedRedoChanged = Signal()
-    lockedRedo = Property(bool, lambda self: self._lockedRedo, setLockedRedo, notify=lockedRedoChanged)
+    lockedRedo = Property(bool, lambda self: self._lockedRedo, setLockedRedo,
+                          notify=lockedRedoChanged)
 
 
 class GraphCommand(UndoCommand):
@@ -139,7 +144,7 @@ class AddNodeCommand(GraphCommand):
             elif isinstance(value, list):
                 for idx, v in enumerate(value):
                     if isinstance(v, Attribute):
-                         value[idx] = v.asLinkExpr()
+                        value[idx] = v.asLinkExpr()
 
     def redoImpl(self):
         node = self.graph.addNewNode(self.nodeType, position=self.position, **self.kwargs)
@@ -161,7 +166,8 @@ class RemoveNodeCommand(GraphCommand):
         self.outListAttributes = {}  # maps attribute's key with a tuple containing the name of the list it is connected to and its value
 
     def redoImpl(self):
-        # keep outEdges (inEdges are serialized in nodeDict so unneeded here) and outListAttributes to be able to recreate the deleted elements in ListAttributes
+        # keep outEdges (inEdges are serialized in nodeDict so unneeded here) and outListAttributes
+        # to be able to recreate the deleted elements in ListAttributes
         _, self.outEdges, self.outListAttributes = self.graph.removeNode(self.nodeName)
         return True
 
@@ -169,7 +175,7 @@ class RemoveNodeCommand(GraphCommand):
         with GraphModification(self.graph):
             node = nodeFactory(self.nodeDict, self.nodeName)
             self.graph.addNode(node, self.nodeName)
-            assert (node.getName() == self.nodeName)
+            assert node.getName() == self.nodeName
             self.graph._restoreOutEdges(self.outEdges, self.outListAttributes)
 
 
@@ -183,10 +189,11 @@ class DuplicateNodesCommand(GraphCommand):
         self.setText("Duplicate Nodes")
 
     def redoImpl(self):
-        srcNodes = [ self.graph.node(i) for i in self.srcNodeNames ]
+        srcNodes = [self.graph.node(i) for i in self.srcNodeNames]
         # flatten the list of duplicated nodes to avoid lists within the list
-        duplicates = [ n for nodes in list(self.graph.duplicateNodes(srcNodes).values()) for n in nodes ]
-        self.duplicates = [ n.name for n in duplicates ]
+        duplicates = [n for nodes in list(self.graph.duplicateNodes(srcNodes).values())
+                      for n in nodes]
+        self.duplicates = [n.name for n in duplicates]
         return duplicates
 
     def undoImpl(self):
@@ -209,11 +216,12 @@ class PasteNodesCommand(GraphCommand):
         graph = Graph("")
         try:
             graph._deserialize(self.data)
-        except:
+        except Exception:
             return False
 
         boundingBoxCenter = self._boundingBoxCenter(graph.nodes)
-        offset = Position(self.position.x - boundingBoxCenter.x, self.position.y - boundingBoxCenter.y)
+        offset = Position(self.position.x - boundingBoxCenter.x,
+                          self.position.y - boundingBoxCenter.y)
 
         for node in graph.nodes:
             node.position = Position(node.position.x + offset.x, node.position.y + offset.y)
@@ -221,7 +229,8 @@ class PasteNodesCommand(GraphCommand):
         nodes = self.graph.importGraphContent(graph)
 
         self.nodeNames = [node.name for node in nodes]
-        self.setText(f"Paste Node{'s' if len(self.nodeNames) > 1 else ''} ({', '.join(self.nodeNames)})")
+        self.setText(f"Paste Node{'s' if len(self.nodeNames) > 1 else ''} "
+                     f"({', '.join(self.nodeNames)})")
         return nodes
 
     def undoImpl(self):
@@ -230,7 +239,7 @@ class PasteNodesCommand(GraphCommand):
 
     def _boundingBox(self, nodes) -> tuple[int, int, int, int]:
         if not nodes:
-            return (0, 0, 0 , 0)
+            return (0, 0, 0, 0)
 
         minX = maxX = nodes[0].x
         minY = maxY = nodes[0].y
@@ -246,6 +255,7 @@ class PasteNodesCommand(GraphCommand):
     def _boundingBoxCenter(self, nodes):
         minX, minY, maxX, maxY = self._boundingBox(nodes)
         return Position((minX + maxX) / 2, (minY + maxY) / 2)
+
 
 class ImportProjectCommand(GraphCommand):
     """
@@ -271,9 +281,11 @@ class ImportProjectCommand(GraphCommand):
         for node in importedNodes:
             self.importedNames.append(node.name)
             if self.position is not None:
-                self.graph.node(node.name).position = Position(node.x + self.position.x, node.y + self.position.y)
+                self.graph.node(node.name).position = Position(node.x + self.position.x,
+                                                               node.y + self.position.y)
             else:
-                self.graph.node(node.name).position = Position(node.x, node.y + lowestY + self.yOffset)
+                self.graph.node(node.name).position = Position(node.x,
+                                                               node.y + lowestY + self.yOffset)
 
         return importedNodes
 
@@ -315,7 +327,8 @@ class AddEdgeCommand(GraphCommand):
         self.setText(f"Connect '{self.srcAttr}'->'{self.dstAttr}'")
 
         if src.baseType != dst.baseType:
-            raise ValueError(f"Attribute types are not compatible and cannot be connected: '{self.srcAttr}'({src.baseType})->'{self.dstAttr}'({dst.baseType})")
+            raise ValueError(f"Attribute types are not compatible and cannot be connected: "
+                             f"'{self.srcAttr}'({src.baseType})->'{self.dstAttr}'({dst.baseType})")
 
     def redoImpl(self):
         self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))
@@ -390,8 +403,10 @@ class RemoveImagesCommand(GraphCommand):
     def __init__(self, graph, cameraInitNodes, parent=None):
         super().__init__(graph, parent)
         self.cameraInits = cameraInitNodes
-        self.viewpoints = { cameraInit.name: cameraInit.attribute("viewpoints").getSerializedValue() for cameraInit in self.cameraInits }
-        self.intrinsics = { cameraInit.name: cameraInit.attribute("intrinsics").getSerializedValue() for cameraInit in self.cameraInits }
+        self.viewpoints = {cameraInit.name: cameraInit.attribute("viewpoints").getSerializedValue()
+                           for cameraInit in self.cameraInits}
+        self.intrinsics = {cameraInit.name: cameraInit.attribute("intrinsics").getSerializedValue()
+                           for cameraInit in self.cameraInits}
         self.title = f"Remove{' ' if len(self.cameraInits) == 1 else ' All '}Images"
         self.setText(self.title)
 
@@ -478,8 +493,9 @@ class EnableGraphUpdateCommand(GraphCommand):
 
 @contextmanager
 def GroupedGraphModification(graph, undoStack, title, disableUpdates=True):
-    """ A context manager that creates a macro command disabling (if not already) graph update by default
-    and resetting its status after nested block execution.
+    """
+    A context manager that creates a macro command disabling (if not already) graph update
+    by default and resetting its status after nested block execution.
 
     Args:
         graph (Graph): the Graph that will be modified

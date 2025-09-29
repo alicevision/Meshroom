@@ -29,7 +29,7 @@ from meshroom.core.graphIO import GraphIO
 
 from meshroom.core.taskManager import TaskManager
 
-from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position
+from meshroom.core.node import Node, Status, ExecMode, CompatibilityNode, Position
 from meshroom.core import submitters, MrNodeType
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty

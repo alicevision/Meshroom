@@ -17,6 +17,7 @@ from typing import Any, Type
 
 meshroomFolder = os.path.dirname(__file__)
 
+
 @dataclass
 class VarDefinition:
     """Environment variable definition."""

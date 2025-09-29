@@ -7,7 +7,6 @@ import getpass
 import re
 
 import simpleFarm
-from meshroom.core.desc import Level
 from meshroom.core.submitter import BaseSubmitter
 
 currentDir = os.path.dirname(os.path.realpath(__file__))

@@ -4,7 +4,6 @@ import math
 import os
 from collections.abc import Iterable
 from multiprocessing.pool import ThreadPool
-from threading import Thread
 from typing import Callable
 
 from PySide6.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint

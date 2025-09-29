@@ -10,10 +10,6 @@ from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, hashValue
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from meshroom.core.graph import Edge
 
 def attributeFactory(description: str, value, isOutput: bool, node, root=None, parent=None):
     """
@@ -75,21 +71,21 @@ class Attribute(BaseObject):
         self._isOutput: bool = isOutput
         self._enabled: bool = True
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
-        self._invalidationValue = "" # invalidation value for output attributes
+        self._invalidationValue = ""  # invalidation value for output attributes
         self._value = None
         self._initValue()
 
     def _getFullName(self) -> str:
-        """ 
+        """
         Get the attribute name following the path from the node to the attribute.
-        Return: nodeName.groupName.subGroupName.name 
+        Return: nodeName.groupName.subGroupName.name
         """
         return f'{self.node.name}.{self._getRootName()}'
 
     def _getRootName(self) -> str:
-        """ 
+        """
         Get the attribute name following the path from the root attribute.
-        Return: groupName.subGroupName.name 
+        Return: groupName.subGroupName.name
         """
         if isinstance(self.root, ListAttribute):
             return f'{self.root.rootName}[{self.root.index(self)}]'
@@ -98,8 +94,8 @@ class Attribute(BaseObject):
         return self._desc.name
 
     def asLinkExpr(self) -> str:
-        """ 
-        Return the link expression for this Attribute 
+        """
+        Return the link expression for this Attribute
         """
         return "{" + self._getFullName() + "}"
 
@@ -150,7 +146,7 @@ class Attribute(BaseObject):
 
     def _setValue(self, value):
         """
-        Set the attribute value from a given value, a given function or a given attribute. 
+        Set the attribute value from a given value, a given function or a given attribute.
         """
         if self._value == value:
             return
@@ -220,7 +216,8 @@ class Attribute(BaseObject):
                 return self._desc.value(self)
             except Exception as e:
                 if not self.node.isCompatibilityNode:
-                    logging.warning(f"Failed to evaluate 'defaultValue' (node lambda) for attribute '{self.fullName}': {e}")
+                    logging.warning(f"Failed to evaluate 'defaultValue' (node lambda) "
+                                    f"for attribute '{self.fullName}': {e}")
                 return None
         # Need to force a copy, for the case where the value is a list
         # (avoid reference to the desc value)
@@ -284,13 +281,14 @@ class Attribute(BaseObject):
                 return self._desc.validValue(self.node)
             except Exception as e:
                 if not self.node.isCompatibilityNode:
-                    logging.warning(f"Failed to evaluate 'isValid' (node lambda) for attribute '{self.fullName}': {e}")
+                    logging.warning(f"Failed to evaluate 'isValid' (node lambda) for "
+                                    f"attribute '{self.fullName}': {e}")
                 return True
         return True
 
     def _is2dDisplayable(self) -> bool:
-        """ 
-        Return True if the current attribute is considered as a displayable 2d file 
+        """
+        Return True if the current attribute is considered as a displayable 2d file
         """
         if not self._desc.semantic:
             return False
@@ -304,7 +302,8 @@ class Attribute(BaseObject):
         if self._desc.semantic == "3d":
             return True
         # If the attribute is a File attribute, it is an instance of str and can be iterated over
-        hasSupportedExt = isinstance(self.value, str) and any(ext in self.value for ext in Attribute.VALID_3D_EXTENSIONS)
+        hasSupportedExt = isinstance(self.value, str) and any(ext in self.value for
+                                                              ext in Attribute.VALID_3D_EXTENSIONS)
         if hasSupportedExt:
             return True
         return False
@@ -358,14 +357,14 @@ class Attribute(BaseObject):
         self.enabledChanged.emit()
 
     def _isLink(self) -> bool:
-        """ 
-        Whether the attribute is a link to another attribute. 
+        """
+        Whether the attribute is a link to another attribute.
         """
         return self.node.graph and self.isInput and self.node.graph._edges and \
             self in self.node.graph._edges.keys()
 
     def _getInputLink(self, recursive=False) -> "Attribute":
-        """ 
+        """
         Return the direct upstream connected attribute.
         :param recursive: recursive call, return the root attribute
         """
@@ -377,7 +376,7 @@ class Attribute(BaseObject):
         return linkAttribute
 
     def _getOutputLinks(self) -> list["Attribute"]:
-        """ 
+        """
         Return the list of direct downstream connected attributes.
         """
         # Safety check to avoid evaluation errors
@@ -386,16 +385,16 @@ class Attribute(BaseObject):
         return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self]
 
     def _getAllInputLinks(self) -> list["Attribute"]:
-        """ 
+        """
         Return the list of upstream connected attributes for the attribute or any of its elements.
         """
         inputLink = self._getInputLink()
-        if inputLink is None: 
+        if inputLink is None:
             return []
         return [inputLink]
 
     def _getAllOutputLinks(self) -> list["Attribute"]:
-        """ 
+        """
         Return the list of downstream connected attributes for the attribute or any of its elements.
         """
         return self._getOutputLinks()
@@ -407,7 +406,8 @@ class Attribute(BaseObject):
         # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return False
-        return next((edge for edge in self.node.graph.edges.values() if edge.dst == self), None) is not None
+        return next((edge for edge in self.node.graph.edges.values()
+                     if edge.dst == self), None) is not None
 
     def _hasAnyOutputLinks(self) -> bool:
         """
@@ -416,7 +416,8 @@ class Attribute(BaseObject):
         # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return False
-        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
+        return next((edge for edge in self.node.graph.edges.values()
+                     if edge.src == self), None) is not None
 
     # Slots
 
@@ -428,7 +429,7 @@ class Attribute(BaseObject):
     def matchText(self, text: str) -> bool:
         return self.label.lower().find(text.lower()) > -1
 
-    # Properties and signals 
+    # Properties and signals
 
     # The node that contains this attribute.
     node = Property(BaseObject, lambda self: self._node(), constant=True)
@@ -453,7 +454,8 @@ class Attribute(BaseObject):
     # Whether the attribute is a node output attribute.
     isOutput = Property(bool, lambda self: self._isOutput, constant=True)
     # Whether the attribute is a read-only attribute.
-    isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode, constant=True)
+    isReadOnly = Property(bool, lambda self: not self._isOutput and self.node.isCompatibilityNode,
+                          constant=True)
     # Whether changing this attribute invalidates cached results.
     invalidate = Property(bool, lambda self: self._invalidate, constant=True)
     # Whether this attribute is enabled.
@@ -466,14 +468,15 @@ class Attribute(BaseObject):
     evalValue = Property(Variant, _getEvalValue, notify=valueChanged)
 
     # Whether the attribute value is the default value.
-    isDefault = Property(bool, lambda self: self.value == self.getDefaultValue(), notify=valueChanged)
+    isDefault = Property(bool, lambda self: self.value == self.getDefaultValue(),
+                         notify=valueChanged)
     # Whether the attribute value is valid.
     isValid = Property(bool, _isValid, notify=valueChanged)
     # Whether the attribute value is displayable in 2d.
     is2dDisplayable = Property(bool, _is2dDisplayable, constant=True)
     # Whether the attribute value is displayable in 3d.
     is3dDisplayable = Property(bool, _is3dDisplayable, constant=True)
-    
+
     # Attribute link properties and signals
     inputLinksChanged = Signal()
     outputLinksChanged = Signal()
@@ -481,7 +484,8 @@ class Attribute(BaseObject):
     # Whether the attribute is a link to another attribute.
     isLink = Property(bool, _isLink, notify=inputLinksChanged)
     # The upstream connected root attribute.
-    inputRootLink = Property(Variant, lambda self: self._getInputLink(recursive=True), notify=inputLinksChanged)
+    inputRootLink = Property(Variant, lambda self: self._getInputLink(recursive=True),
+                             notify=inputLinksChanged)
     # The upstream connected attribute.
     inputLink = Property(BaseObject, _getInputLink, notify=inputLinksChanged)
     # The list of downstream connected attributes.
@@ -497,7 +501,7 @@ class Attribute(BaseObject):
 
 
 def raiseIfLink(func):
-    """ 
+    """
     If Attribute instance is a link, raise a RuntimeError.
     """
     def wrapper(attr, *args, **kwargs):
@@ -545,12 +549,12 @@ class ChoiceParam(Attribute):
         if isinstance(value, str):
             value = value.split(',')
         if not isinstance(value, Iterable):
-            raise ValueError("Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"Non exclusive ChoiceParam value should be iterable "
+                             f"(param:{self.name}, value:{value}, type:{type(value)})")
         return [self._conformValue(v) for v in value]
 
     def _conformValue(self, val):
-        """ 
+        """
         Conform 'val' to the correct type and check for its validity
         """
         return self._desc.conformValue(val)
@@ -596,7 +600,7 @@ class ListAttribute(Attribute):
         return iter(self.value)
 
     def at(self, idx):
-        """ 
+        """
         Returns child attribute at index 'idx'.
         """
         # Implement 'at' rather than '__getitem__'
@@ -700,9 +704,9 @@ class ListAttribute(Attribute):
         assert isinstance(self.value, ListModel)
         if self._desc.joinChar == ' ':
             return self._desc.joinChar.join([v.getValueStr(withQuotes=withQuotes)
-                                                     for v in self.value])
+                                             for v in self.value])
         v = self._desc.joinChar.join([v.getValueStr(withQuotes=False)
-                                              for v in self.value])
+                                      for v in self.value])
         if withQuotes and v:
             return f'"{v}"'
         return v
@@ -746,23 +750,25 @@ class ListAttribute(Attribute):
 
     # Override
     def _getAllInputLinks(self) -> list["Attribute"]:
-        """ 
-        Return the list of upstream connected attributes for the attribute or any of its elements."
+        """
+        Return the list of upstream connected attributes for the attribute or any of its elements.
         """
         # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return []
-        return [edge.src for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
+        return [edge.src for edge in self.node.graph.edges.values()
+                if edge.dst == self or edge.dst in self._value]
 
     # Override
     def _getAllOutputLinks(self) -> list["Attribute"]:
-        """ 
-        Return the list of downstream connected attributes for the attribute or any of its elements."
+        """
+        Return the list of downstream connected attributes for the attribute or any of its elements.
         """
         # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return []
-        return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
+        return [edge.dst for edge in self.node.graph.edges.values()
+                if edge.src == self or edge.src in self._value]
 
     # Override
     def _hasAnyInputLinks(self) -> bool:
@@ -770,7 +776,8 @@ class ListAttribute(Attribute):
         Whether the attribute or any of its elements is a link to another attribute.
         """
         return super()._hasAnyInputLinks() or \
-               any(attribute.hasAnyInputLinks for attribute in self._value if hasattr(attribute, 'hasAnyInputLinks'))
+            any(attribute.hasAnyInputLinks for attribute in self._value
+                if hasattr(attribute, 'hasAnyInputLinks'))
 
     # Override
     def _hasAnyOutputLinks(self) -> bool:
@@ -778,8 +785,8 @@ class ListAttribute(Attribute):
         Whether the attribute or any of its elements is linked by another attribute.
         """
         return super()._hasAnyOutputLinks() or \
-               any(attribute.hasAnyOutputLinks for attribute in self._value if hasattr(attribute, 'hasAnyOutputLinks'))
-
+            any(attribute.hasAnyOutputLinks for attribute in self._value
+                if hasattr(attribute, 'hasAnyOutputLinks'))
 
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)

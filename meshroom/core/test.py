@@ -8,8 +8,12 @@ import meshroom
 
 import json
 
+
 def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
-    """ Check whether there is a compatibility issue with the nodes saved in the template provided with "path". """
+    """
+    Check whether there is a compatibility issue with the nodes saved in the template provided
+    with "path".
+    """
     if not nodesAlreadyLoaded:
         meshroom.core.initNodes()
 

@@ -63,8 +63,8 @@ class ProcessEnv(BaseObject):
 
     Args:
         folder: the source folder for the process.
-        configEnv: the dictionary containing the environment variables defined in a configuration file
-                   for the process to run.
+        configEnv: the dictionary containing the environment variables defined in a configuration
+                   file for the process to run.
         envType: (optional) the type of process environment.
         uri: (optional) the Unique Resource Identifier to activate the environment.
     """
@@ -112,7 +112,7 @@ class DirTreeProcessEnv(ProcessEnv):
         self.libPaths: list = [str(Path(folder, "lib")), str(Path(folder, "lib64")),
                                str(Path(venvFolder, "lib")), str(Path(venvFolder, "lib64"))]
         self.pythonPaths: list = [str(Path(folder)), str(Path(venvFolder))] + \
-                                 self.binPaths + envLibPaths + venvLibPaths
+            self.binPaths + envLibPaths + venvLibPaths
 
         if sys.platform == "win32":
             # For Windows platforms, try and include the content of the virtual env if it exists
@@ -151,9 +151,9 @@ class DirTreeProcessEnv(ProcessEnv):
 class RezProcessEnv(ProcessEnv):
     """
     """
-    
+
     REZ_DELIMITER_PATTERN = re.compile(r"-|==|>=|>|<=|<")
-    
+
     def __init__(self, folder: str, configEnv: dict[str: str], uri: str = ""):
         if not uri:
             raise RuntimeError("Missing name of the Rez environment needs to be provided.")
@@ -406,7 +406,8 @@ class Plugin(BaseObject):
         except IOError as err:
             logging.error(f"Error while accessing the configuration file for {self.name}: {err}")
 
-        # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
+        # If both dictionaries have identical keys, os.environ overwrites existing values
+        # from _configEnv
         self._configFullEnv = self._configEnv | os.environ
 
     def containsNodePlugin(self, name: str) -> bool:
@@ -456,12 +457,13 @@ class NodePlugin(BaseObject):
 
     def reload(self) -> bool:
         """
-        Reload the node plugin and update its status accordingly. If the timestamp of the node plugin's
-        path has not changed since the last time the plugin has been loaded, then nothing will happen.
+        Reload the node plugin and update its status accordingly. If the timestamp of the node
+        plugin's path has not changed since the last time the plugin has been loaded, then nothing
+        will happen.
 
         Returns:
-            bool: True if the node plugin has successfully been reloaded (i.e. there was no error, and
-                  some changes were made since its last loading), False otherwise.
+            bool: True if the node plugin has successfully been reloaded (i.e. there was no error,
+                  and some changes were made since its last loading), False otherwise.
         """
         timestamp = 0.0
         try:
@@ -548,6 +550,7 @@ class NodePlugin(BaseObject):
             return self.plugin.configFullEnv
         return {}
 
+
 class NodePluginManager(BaseObject):
     """
     Manager for all the loaded Plugin objects as well as the registered NodePlugin objects.
@@ -633,10 +636,10 @@ class NodePluginManager(BaseObject):
 
         Args:
             plugin: the Plugin to remove from the list of loaded plugins.
-            unregisterNodePlugins: True if all the nodes from the plugin should be unregistered (if they
-                                   are registered) at the same time as the plugin is unloaded. Otherwise,
-                                   the registered NodePlugins will remain while the Plugin itself will
-                                   be unloaded.
+            unregisterNodePlugins: True if all the nodes from the plugin should be unregistered
+                                   (if they are registered) at the same time as the plugin is
+                                   unloaded. Otherwise, the registered NodePlugins will remain
+                                   while the Plugin itself will be unloaded.
         """
         if self.getPlugin(plugin.name):
             if unregisterNodePlugins:

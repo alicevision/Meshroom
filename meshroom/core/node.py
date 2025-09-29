@@ -1756,7 +1756,7 @@ class BaseNode(BaseObject):
         Note: These attributes can be loaded in the the ShapeViewer / ShapeEditor.
         False otherwise.
         """
-        return next((attr for attr in self._attributes if attr.hasDisplayableShape or \
+        return next((attr for attr in self._attributes if attr.hasDisplayableShape or
                      attr.desc.semantic == "shapeFile"), None) is not None
     
 

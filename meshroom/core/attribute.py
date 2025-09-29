@@ -1096,7 +1096,7 @@ class ShapeAttribute(GroupAttribute):
         """
         Whether all child attributes are keyable.
         """
-        return all((isinstance(attribute, ShapeAttribute) and attribute.shapeKeyable) or \
+        return all((isinstance(attribute, ShapeAttribute) and attribute.shapeKeyable) or
                     attribute.keyable for attribute in self.value)
 
     def _getNbObservations(self) -> int:
@@ -1119,8 +1119,8 @@ class ShapeAttribute(GroupAttribute):
         """
         if not self.shapeKeyable:
             return True
-        return all((isinstance(attribute, ShapeAttribute) and attribute.hasObservation(key)) or \
-                   (not isinstance(attribute, ShapeAttribute) and attribute.keyValues.hasKey(key)) \
+        return all((isinstance(attribute, ShapeAttribute) and attribute.hasObservation(key)) or
+                   (not isinstance(attribute, ShapeAttribute) and attribute.keyValues.hasKey(key))
                    for attribute in self.value)
     
     @raiseIfLink

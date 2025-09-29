@@ -585,7 +585,9 @@ class UIGraph(QObject):
         self.save()  # graph must be saved before being submitted
         self._undoStack.clear()  # the undo stack must be cleared
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
-        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), nodes, submitLabel=self.submitLabel)
+        mrDefaultSubmitter = os.environ.get('MESHROOM_DEFAULT_SUBMITTER', '')
+        chosenSubmitter = self.parent()._defaultSubmitterName or mrDefaultSubmitter
+        self._taskManager.submit(self._graph, chosenSubmitter, nodes, submitLabel=self.submitLabel)
 
     def updateGraphComputingStatus(self):
         # update graph computing status

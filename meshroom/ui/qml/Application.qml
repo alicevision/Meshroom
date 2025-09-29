@@ -976,6 +976,22 @@ Page {
                     onTriggered: _reconstruction.stopExecution()
                     enabled: _reconstruction ? _reconstruction.computingLocally : false
                 }
+                MenuSeparator {}
+                Menu {
+                    id: submitterSelectionMenu
+                    title: "Submitter selection"
+                    enabled: submitterItems.model !== undefined && submitterItems.model.length > 0
+                    Repeater {
+                        id: submitterItems
+                        model: MeshroomApp.submittersListModel
+                        RadioButton {
+                            text: modelData["name"]
+                            checked: modelData["isDefault"]
+                            // checked: MeshroomApp.submittersListModel[0]["name"] == modelData["name"]
+                            onClicked: MeshroomApp.setDefaultSubmitter(modelData["name"])
+                        }
+                    }
+                }
             }
             Menu {
                 title: "Help"

@@ -8,11 +8,8 @@ import logging
 
 from meshroom.core.submitter import BaseSubmitter
 
-try:
-    import submitters.tractorApi as tractorApi
-except ImportError:
-    import tractorApi
-    
+import meshroom.submitters.tractorApi.api as tractorApi
+
 
 currentDir = os.path.dirname(os.path.realpath(__file__))
 binDir = os.path.dirname(os.path.dirname(os.path.dirname(currentDir)))

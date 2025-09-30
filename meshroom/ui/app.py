@@ -14,6 +14,7 @@ from PySide6.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import pluginManager
+from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
 
@@ -266,6 +267,7 @@ class MeshroomApp(QApplication):
 
         # instantiate Reconstruction object
         self._undoStack = commands.UndoStack(self)
+        self._defaultSubmitterName = os.environ.get('MESHROOM_DEFAULT_SUBMITTER', '')
         self._taskManager = TaskManager(self)
         self._activeProject = Reconstruction(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
         self._activeProject.setSubmitLabel(args.submitLabel)
@@ -711,7 +713,32 @@ class MeshroomApp(QApplication):
         if val != True and str(val).lower() in ("0", "false", "off"):
             return False
         return True
-
+    
+    def _submittersList(self):
+        """
+        Get the list of available submitters
+        Model provides :
+            name : the name of the submitter
+            isDefault : True if this is the current submitter
+        """
+        submittersList = []
+        for i, s in enumerate(meshroom.core.submitters):
+            submitterName = s.name if isinstance(s, BaseSubmitter) else s
+            # If no explicit default submitter, this will be the first one
+            isDefault = (i == 0)
+            if self._defaultSubmitterName:
+                isDefault = (submitterName == self._defaultSubmitterName)
+            submittersList.append({
+                "name": submitterName,
+                "isDefault": isDefault
+            })
+        return submittersList
+    
+    @Slot(str)
+    def setDefaultSubmitter(self, name):
+        logging.info(f"Submitter is now set to : {name}")
+        self._defaultSubmitterName = name
+    
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)
 
@@ -726,3 +753,4 @@ class MeshroomApp(QApplication):
     recentImportedImagesFolders = Property("QVariantList", _recentImportedImagesFolders, notify=recentImportedImagesFoldersChanged)
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)
     defaultSequencePlayerEnabled = Property(bool, _defaultSequencePlayerEnabled, constant=True)
+    submittersListModel = Property("QVariantList", _submittersList, constant=True)

@@ -120,16 +120,19 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                     else:
                         classes.append(p)
             except Exception as e:
-                tb = traceback.extract_tb(e.__traceback__)
-                last_call = tb[-1]
-                errors.append(f'  * {pluginName} ({type(e).__name__}): {e}\n'
-                              # filename:lineNumber functionName
-                              f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
-                              # line of code with the error
-                              f'{last_call.line}'
-                              # Full traceback
-                              f'\n{traceback.format_exc()}\n\n'
-                              )
+                if classType == BaseSubmitter:
+                    logging.warning(f" Could not load submitter {pluginName} from package '{package.__name__}'")
+                else:
+                    tb = traceback.extract_tb(e.__traceback__)
+                    last_call = tb[-1]
+                    errors.append(f'  * {pluginName} ({type(e).__name__}): {e}\n'
+                                # filename:lineNumber functionName
+                                f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
+                                # line of code with the error
+                                f'{last_call.line}'
+                                # Full traceback
+                                f'\n{traceback.format_exc()}\n\n'
+                                )
 
     if errors:
         logging.warning(' The following "{package}" plugins could not be loaded:\n'
@@ -381,12 +384,22 @@ def registerSubmitter(s: BaseSubmitter):
     submitters[s.name] = s
 
 
-def loadSubmitters(folder, packageName):
+def loadSubmitters(folder, packageName) -> list[BaseSubmitter]:
     if not os.path.isdir(folder):
         logging.error(f"Submitters folder '{folder}' does not exist.")
         return
 
     return loadClassesSubmitters(folder, packageName)
+
+
+def loadAllSubmitters(folder) -> list[BaseSubmitter]:
+    submitters = []
+    for _, package, ispkg in pkgutil.iter_modules([folder]):
+        if ispkg:
+            subs = loadSubmitters(folder, package)
+            if subs:
+                submitters.extend(subs)
+    return submitters
 
 
 def loadPipelineTemplates(folder: str):
@@ -409,10 +422,20 @@ def initNodes():
 
 
 def initSubmitters():
+    """ Detect and register submitter plugins
+    Note: Make sure the package name (folder inside the additionalPaths folders)
+          are unique : so we cannot name them "submitters" because it's already taken
+          by the submitters package inside meshroom
+    """
+    # Load meshroom default submitters
+    # Use directly loadSubmitters because we don't want any folder except submitters to be registered
+    subs = loadSubmitters(meshroomFolder, "submitters")
+    for sub in subs:
+        registerSubmitter(sub())
+    # Load additional submitters
     additionalPaths = EnvVar.getList(EnvVar.MESHROOM_SUBMITTERS_PATH)
-    allSubmittersFolders = [meshroomFolder] + additionalPaths
-    for folder in allSubmittersFolders:
-        subs = loadSubmitters(folder, "submitters")
+    for folder in additionalPaths:
+        subs = loadAllSubmitters(folder)
         for sub in subs:
             registerSubmitter(sub())
 

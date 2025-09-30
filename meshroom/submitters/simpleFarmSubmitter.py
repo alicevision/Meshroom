@@ -15,7 +15,7 @@ binDir = os.path.dirname(os.path.dirname(os.path.dirname(currentDir)))
 
 class SimpleFarmSubmitter(BaseSubmitter):
 
-    filepath = os.environ.get('SIMPLEFARMCONFIG', os.path.join(currentDir, 'simpleFarmConfig.json'))
+    filepath = os.environ.get('SIMPLEFARMCONFIG', os.path.join(currentDir, 'tractorConfig.json'))
     config = json.load(open(filepath))
 
     reqPackages = []
@@ -82,20 +82,16 @@ class SimpleFarmSubmitter(BaseSubmitter):
 
         tags['nbFrames'] = nbFrames
         tags['prod'] = self.prod
-        allRequirements = list()
-        allRequirements.extend(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
-        allRequirements.extend(self.config['RAM'].get(node.nodeDesc.ram.name, []))
-        allRequirements.extend(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
+        allRequirements = set()
+        allRequirements.update(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
+        allRequirements.update(self.config['RAM'].get(node.nodeDesc.ram.name, []))
+        allRequirements.update(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
 
+        executable = 'meshroom_compute' if self.reqPackages else os.path.join(binDir, 'meshroom_compute')
+        taskCommand = f"{executable} --node {node.name} \"{meshroomFile}\" {parallelArgs} --extern"
         task = simpleFarm.Task(
-            name=node.name,
-            command='{exe} --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(
-                exe='meshroom_compute' if self.reqPackages else os.path.join(binDir, 'meshroom_compute'),
-                nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
-            tags=tags,
-            rezPackages=self.reqPackages,
-            requirements={'service': str(','.join(allRequirements))},
-            **arguments)
+            name=node.name, command=taskCommand, tags=tags, rezPackages=self.reqPackages,
+            requirements={'service': str(','.join(allRequirements))}, **arguments)
         return task
 
     def submit(self, nodes, edges, filepath, submitLabel="{projectName}"):

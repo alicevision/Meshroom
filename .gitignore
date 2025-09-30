@@ -11,6 +11,8 @@
 .DS_Store
 # Windows
 Thumbs.db
+# vscode
+.vscode
 
 # python
 *.pyc
@@ -19,6 +21,7 @@ __pycache__
 
 # backup files
 *.json
+!*Config.json
 
 # datas or personal files
 /data

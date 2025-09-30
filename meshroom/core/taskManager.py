@@ -388,7 +388,7 @@ class TaskManager(BaseObject):
         sub = None
         if submitter:
             sub = meshroom.core.submitters.get(submitter, None)
-        elif len(meshroom.core.submitters) == 1:
+        elif len(meshroom.core.submitters) >= 1:
             # if only one submitter available use it
             allSubmitters = meshroom.core.submitters.values()
             sub = next(iter(allSubmitters))  # retrieve the first element
@@ -434,7 +434,7 @@ class TaskManager(BaseObject):
             if res:
                 for node in nodesToProcess:
                     node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
-                    node.submit()  # update node status
+                    node.initStatusOnSubmit()  # update node status
             self._nodes.update(nodesToProcess)
             self._nodesExtern.extend(nodesToProcess)
 

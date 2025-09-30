@@ -1,5 +1,5 @@
 {
-    "BASE": ["mikrosRender", "!ld7"],
+    "BASE": ["mikrosRender"],
     "CPU": {
         "NONE": [],
         "NORMAL": ["mikrosRender"],
@@ -16,3 +16,4 @@
         "INTENSIVE": ["cuda16G"]
     }
 }
+ 

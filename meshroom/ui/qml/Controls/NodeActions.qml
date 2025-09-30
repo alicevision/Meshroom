@@ -117,6 +117,8 @@ Item {
         property int submitButtonState: NodeActions.ButtonState.LAUNCHABLE
 
         function getComputeButtonState(node) {
+            if (!node.isComputableType || node.isCompatibilityNode)
+                return NodeActions.ButtonState.DISABLED
             if (node.canBeStopped()) return NodeActions.ButtonState.STOPPABLE
             if (node.canBeCanceled()) return NodeActions.ButtonState.STOPPABLE
             if (actionHeader.nodeIsLocked) return NodeActions.ButtonState.DISABLED
@@ -133,6 +135,8 @@ Item {
         }
 
         function getSubmitButtonState(node) {
+            if (!node.isComputableType || node.isCompatibilityNode)
+                return NodeActions.ButtonState.DISABLED
             if (actionHeader.nodeIsLocked || node.canBeStopped()) {
                 return NodeActions.ButtonState.DISABLED
             }

@@ -13,7 +13,7 @@ class MathEvaluator:
         print(mev.evaluate("pow(2, 8)"))
         print(mev.evaluate("round(sin(pi), 3)"))
     """
-    
+
     # Allowed math symbols
     allowed_symbols = {
         "e": math.e, "pi": math.pi,
@@ -21,6 +21,7 @@ class MathEvaluator:
         "pow": pow, "round": round, "abs": abs, "min": min, "max": max,
         "sqrt": math.sqrt, "log": math.log
     }
+
     # Allowed AST node types
     allowed_nodes = (
         ast.Expression, ast.BinOp, ast.UnaryOp, ast.Call, ast.Name, ast.Load,
@@ -29,6 +30,7 @@ class MathEvaluator:
         ast.LShift, ast.RShift, ast.Invert,
         ast.Constant
     )
+
     def _validate_ast(self, node):
         for child in ast.walk(node):
             if not isinstance(child, self.allowed_nodes):
@@ -37,6 +39,7 @@ class MathEvaluator:
             if isinstance(child, ast.Name):
                 if child.id not in self.allowed_symbols:
                     raise ValueError(f"Unknown symbol: {child.id}")
+
     def evaluate(self, expr: str):
         if any(bad in expr for bad in ('\n', '#')):
             raise ValueError(f"Invalid expression: {expr}")

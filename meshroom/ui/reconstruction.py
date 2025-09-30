@@ -1179,6 +1179,7 @@ class Reconstruction(UIGraph):
             res = mev.evaluate(expr)
             return [res, False]
         except Exception as err:
+            self.parent().showMessage(f"Invalid field expression: {expr}", "error")
             return [None, True]
 
     selectedViewIdChanged = Signal()

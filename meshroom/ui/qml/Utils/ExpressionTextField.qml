@@ -106,7 +106,9 @@ TextField {
         }
     }
 
-    Component.onCompleted: {
-        refreshStatus()
+    Component.onDestruction: {
+        if (textChanged) {
+            root.accepted()
+        }
     }
 }

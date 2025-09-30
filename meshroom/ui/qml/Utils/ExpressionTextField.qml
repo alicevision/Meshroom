@@ -6,6 +6,7 @@ TextField {
 
     // evaluated numeric value (NaN if invalid)
     // It helps keeping the connection that text has so that we don't loose ability to undo/reset
+    property bool textChanged: false
     property real evaluatedValue: 0
 
     property bool hasExprError: false
@@ -39,7 +40,7 @@ TextField {
                 _res = _res.toFixed(decimals)
             return _res
         } else {
-            console.error("Error : Expression", _text, "is invalid")
+            console.error("Error: Expression", _text, "is invalid")
             return NaN
         }
     }
@@ -62,6 +63,7 @@ TextField {
             evaluatedValue = previousEvaluatedValue
             raiseError()
         }
+        textChanged = false
     }
 
     // onAccepted and onEditingFinished will break the bindings to text
@@ -70,29 +72,37 @@ TextField {
     // No need to restore the binding if the expression has an error because we don't break it
 
     onAccepted: {
-        updateExpression()
-        if (!hasExprError && !isNaN(evaluatedValue)) {
-            // Commit the result value to the text field
-            if (isInt)
-                root.text = Number(evaluatedValue).toFixed(0)
-            else
-                root.text = Number(evaluatedValue).toFixed(decimals)
+        if (textChanged)
+        {
+            updateExpression()
+            if (!hasExprError && !isNaN(evaluatedValue)) {
+                // Commit the result value to the text field
+                if (isInt)
+                    root.text = Number(evaluatedValue).toFixed(0)
+                else
+                    root.text = Number(evaluatedValue).toFixed(decimals)
+            }
         }
     }
 
     onEditingFinished: {
-        updateExpression()
-        if (!hasExprError && !isNaN(evaluatedValue)) {
-            if (isInt)
-                root.text = Number(evaluatedValue).toFixed(0)
-            else
-                root.text = Number(evaluatedValue).toFixed(decimals)
+        if (textChanged)
+        {
+            updateExpression()
+            if (!hasExprError && !isNaN(evaluatedValue)) {
+                if (isInt)
+                    root.text = Number(evaluatedValue).toFixed(0)
+                else
+                    root.text = Number(evaluatedValue).toFixed(decimals)
+            }
         }
     }
 
     onTextChanged: {
         if (!activeFocus) {
             refreshStatus()
+        } else {
+            textChanged = true
         }
     }
 

@@ -670,7 +670,7 @@ RowLayout {
                             if (!pressed) {
                                 _reconstruction.setAttribute(attribute, formattedValue)
                                 updateAttributeLabel()
-                            } 
+                            }
                         }
                     }
                 }

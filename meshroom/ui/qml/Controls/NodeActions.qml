@@ -82,6 +82,10 @@ Item {
             y = nodeScreenY - height - headerOffset
         }
 
+        onWidthChanged: {
+            updatePosition()
+        }
+
         // Update position when the user moves on the graph
         Connections {
             target: root.draggable
@@ -163,9 +167,9 @@ Item {
 
         // Set initial state & position
         onSelectedNodeDelegateChanged: {
-            updatePosition()
             if (actionHeader.selectedNode) {
                 actionHeader.updateProperties(actionHeader.selectedNode)
+                Qt.callLater(actionHeader.updatePosition)
             }
         }
 

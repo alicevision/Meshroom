@@ -212,7 +212,11 @@ Item {
                 enabled: actionHeader.computeButtonState % 2 == 1  // Launchable & Stoppable
                 background: Rectangle {
                     color: {
-                        if (!computeButton.enabled) return activePalette.button
+                        if (!computeButton.enabled) {
+                            if (actionHeader.nodeSubmitted) 
+                                return Qt.darker(Colors.statusColors["SUBMITTED"], 1.2)
+                            return activePalette.button
+                        }
                         if (actionHeader.computeButtonState == NodeActions.ButtonState.STOPPABLE)
                             return computeButton.hovered ? Colors.orange : Qt.darker(Colors.orange, 1.3)
                         return computeButton.hovered ? activePalette.highlight : activePalette.button
@@ -270,9 +274,11 @@ Item {
                 enabled: actionHeader.submitButtonState != NodeActions.ButtonState.DISABLED
                 background: Rectangle {
                     color: {
-                        if (!submitButton.enabled) return activePalette.button
-                        if (actionHeader.nodeSubmitted) 
-                            return Qt.darker(Colors.statusColors["SUBMITTED"], 1.2)
+                        if (!submitButton.enabled) {
+                            if (actionHeader.nodeSubmitted) 
+                                return Qt.darker(Colors.statusColors["SUBMITTED"], 1.2)
+                            return activePalette.button
+                        }
                         return submitButton.hovered ? activePalette.highlight : activePalette.button
                     }
                     opacity: submitButton.hovered ? 1 : root._opacity

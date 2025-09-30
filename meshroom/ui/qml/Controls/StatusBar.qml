@@ -34,10 +34,11 @@ RowLayout {
         font.pointSize: 8
         text: defaultIcon
         ToolTip.text: "Open Messages UI"
-        // TODO : Open messages UI
-        // onClicked: statusBar.showMessage("NotImplementedError : Cannot open interface", "error", 2000)
-        enabled: false  // TODO: to remove when implemented  
-        ToolTip.visible: false  // TODO: to remove when implemented  
+        onClicked: {
+            var component = Qt.createComponent("StatusMessages.qml")
+            var window    = component.createObject(root)
+            window.show()
+        }
         Component.onCompleted: {
             statusBarButton.contentItem.color = defaultColor
         }
@@ -99,12 +100,14 @@ RowLayout {
 
     function showMessage(msg, status=undefined, duration=root.interval) {
         statusBar.showMessage(msg, status, duration)
+        // Add message to the message list
+        _messageController.storeMessage(msg, status)
     }
 
     Connections {
         target: _messageController
         function onMessage(message, color, duration) {
-            showMessage(message, color, duration)
+            root.showMessage(message, color, duration)
         }
     }
 }

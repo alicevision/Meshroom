@@ -25,7 +25,6 @@ ApplicationWindow {
     }
 
     function getBackgroundColor(status) {
-        // var color = Qt.darker(getColor(status), 1.2)
         var color = getColor(status)
         var alphaValue = status == "info" ? 0.05 : 0.1
         return Qt.rgba(color.r, color.g, color.b, alphaValue)
@@ -77,7 +76,7 @@ ApplicationWindow {
             }
 
             MaterialToolButton {
-                ToolTip.text: "Copy the content as a dict"
+                ToolTip.text: "Copy the messages"
                 text: MaterialIcons.content_copy
                 font.pointSize: 16
                 palette.base: systemPalette.base
@@ -107,6 +106,7 @@ ApplicationWindow {
             ListView {
                 id: messageListView
                 model: _messageController.messages
+                verticalLayoutDirection: ListView.TopToBottom
                 spacing: 5
 
                 delegate: Rectangle {
@@ -157,7 +157,7 @@ ApplicationWindow {
                 // Empty state
                 Text {
                     anchors.centerIn: parent
-                    text: "No messages to display"
+                    text: "No message to display"
                     color: Qt.darker(systemPalette.windowText, 1.5)
                     font.pointSize: 12
                     visible: messageListView.count === 0

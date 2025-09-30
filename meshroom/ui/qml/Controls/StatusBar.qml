@@ -103,7 +103,7 @@ RowLayout {
         // Add message to the message list
         _messageController.storeMessage(msg, status)
     }
-    
+
     Connections {
         target: _messageController
         function onMessage(message, color, duration) {

@@ -622,12 +622,18 @@ RowLayout {
                     isInt: attribute.type === "FloatParam" ? false : true
                     
                     onEditingFinished: {
-                        if (!hasExprError)
+                        if (!hasExprError) {
                             setTextFieldAttribute(expressionTextField.evaluatedValue)
+                            // Restore binding
+                            expressionTextField.text = Qt.binding(function() { return String(expressionTextField.displayValue); })
+                        }
                     }
                     onAccepted: {
-                        if (!hasExprError)
+                        if (!hasExprError) {
                             setTextFieldAttribute(expressionTextField.evaluatedValue)
+                            // Restore binding
+                            expressionTextField.text = Qt.binding(function() { return String(expressionTextField.displayValue); })
+                        }
                         // When the text is too long, display the left part
                         // (with the most important values and cut the floating point details)
                         ensureVisible(0)
@@ -664,7 +670,7 @@ RowLayout {
                             if (!pressed) {
                                 _reconstruction.setAttribute(attribute, formattedValue)
                                 updateAttributeLabel()
-                            }
+                            } 
                         }
                     }
                 }

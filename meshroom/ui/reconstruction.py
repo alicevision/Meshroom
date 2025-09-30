@@ -1179,7 +1179,7 @@ class Reconstruction(UIGraph):
             res = mev.evaluate(expr)
             return [res, False]
         except Exception as err:
-            return [None, err]
+            return [None, True]
 
     selectedViewIdChanged = Signal()
     selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)

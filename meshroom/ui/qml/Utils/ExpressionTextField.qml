@@ -30,16 +30,6 @@ TextField {
         hasExprError = false
     }
 
-    function reset(_value) {
-        clearError()
-        evaluatedValue = _value
-        if (isInt) {
-            root.text = _value.toFixed(0)
-        } else {
-            root.text = _value.toFixed(decimals)
-        }
-    }
-
     function getEvalExpression(_text) {
         var [_res, _err] = _reconstruction.evaluateMathExpression(_text)
         if (_err == false) {
@@ -49,7 +39,7 @@ TextField {
                 _res = _res.toFixed(decimals)
             return _res
         } else {
-            console.error("Error evaluating expression (", _text, "):", _err)
+            console.error("Error : Expression", _text, "is invalid")
             return NaN
         }
     }
@@ -65,27 +55,39 @@ TextField {
     function updateExpression() {
         var previousEvaluatedValue = evaluatedValue
         var result = getEvalExpression(root.text)
-        console.log("[ExpressionTextField] updateExpression", root.text, "->", result)
         if (!isNaN(result)) {
             evaluatedValue = result
             clearError()
-            // return result
         } else {
             evaluatedValue = previousEvaluatedValue
             raiseError()
-            // return NaN
         }
     }
 
-    // When user commits input, evaluate but do NOT overwrite text
+    // onAccepted and onEditingFinished will break the bindings to text
+    // so if used on fields that needs to be driven by sliders or other qml element,
+    // the binding needs to be restored
+    // No need to restore the binding if the expression has an error because we don't break it
+
     onAccepted: {
-        console.log("[ExpressionTextField] onAccepted", root.text)
         updateExpression()
+        if (!hasExprError && !isNaN(evaluatedValue)) {
+            // Commit the result value to the text field
+            if (isInt)
+                root.text = Number(evaluatedValue).toFixed(0)
+            else
+                root.text = Number(evaluatedValue).toFixed(decimals)
+        }
     }
 
     onEditingFinished: {
-        console.log("[ExpressionTextField] onEditingFinished", root.text)
         updateExpression()
+        if (!hasExprError && !isNaN(evaluatedValue)) {
+            if (isInt)
+                root.text = Number(evaluatedValue).toFixed(0)
+            else
+                root.text = Number(evaluatedValue).toFixed(decimals)
+        }
     }
 
     onTextChanged: {
@@ -95,7 +97,6 @@ TextField {
     }
 
     Component.onCompleted: {
-        console.log("[ExpressionTextField] onCompleted", root.text)
         refreshStatus()
     }
 }

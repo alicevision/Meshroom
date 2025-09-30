@@ -1090,12 +1090,8 @@ Item {
             uigraph.stopNodeComputation(node)
         }
         
-        onReComputeRequest: function(node) {
-            // Only triggered if the node is already computed
-            // so we don't have to check if we should erase the data
-            if (node.canBeStopped) uigraph.stopNodeComputation(node)
+        onDeleteDataRequest: function(node) {
             uigraph.clearSelectedNodesData();
-            root.computeRequest([node])
         }
         
         onSubmitRequest: function(node) {

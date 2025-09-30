@@ -20,7 +20,7 @@ Item {
     // Signals
     signal computeRequest(var node)
     signal stopComputeRequest(var node)
-    signal reComputeRequest(var node)
+    signal deleteDataRequest(var node)
     signal submitRequest(var node)
     
     SystemPalette { id: activePalette }
@@ -41,7 +41,7 @@ Item {
     enum ButtonState {
         LAUNCHABLE,
         STOPPABLE,
-        RELAUNCHABLE,
+        DELETABLE,
         DISABLED
     }
 
@@ -110,7 +110,7 @@ Item {
         property string computeButtonIcon: {
             switch (computeButtonState) {
                 case NodeActions.ButtonState.STOPPABLE: return MaterialIcons.cancel_schedule_send
-                case NodeActions.ButtonState.RELAUNCHABLE: return MaterialIcons.autorenew
+                case NodeActions.ButtonState.DELETABLE: return MaterialIcons.delete_
                 default: return MaterialIcons.send
             }
         }
@@ -127,7 +127,7 @@ Item {
                 case "KILLED":
                     return NodeActions.ButtonState.LAUNCHABLE
                 case "SUCCESS":
-                    return NodeActions.ButtonState.RELAUNCHABLE
+                    return NodeActions.ButtonState.DELETABLE
             }
             return NodeActions.ButtonState.DISABLED
         }
@@ -213,8 +213,11 @@ Item {
                         if (!computeButton.enabled) return activePalette.button
                         switch (actionHeader.computeButtonState) {
                             case NodeActions.ButtonState.STOPPABLE:
-                                if (computeButton.hovered) return Colors.statusColors["STOPPED"]
-                                return Qt.darker(Colors.statusColors["STOPPED"], 1.3)
+                                if (computeButton.hovered) return Colors.orange
+                                return Qt.darker(Colors.orange, 1.3)
+                            case NodeActions.ButtonState.DELETABLE:
+                                if (computeButton.hovered) return Colors.red
+                                return Qt.darker(Colors.red, 1.3)
                             default: break
                         }
                         if (computeButton.hovered) return activePalette.highlight
@@ -233,8 +236,8 @@ Item {
                         case NodeActions.ButtonState.LAUNCHABLE: 
                             root.computeRequest(actionHeader.selectedNode)
                             break
-                        case NodeActions.ButtonState.RELAUNCHABLE: 
-                            root.reComputeRequest(actionHeader.selectedNode)
+                        case NodeActions.ButtonState.DELETABLE: 
+                            root.deleteDataRequest(actionHeader.selectedNode)
                             break
                         default: break
                     }

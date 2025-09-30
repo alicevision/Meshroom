@@ -1075,6 +1075,41 @@ Item {
         }
     }
 
+    NodeActions {
+        id: nodeActions
+        uigraph: root.uigraph
+        draggable: draggable
+        nodeRepeater: nodeRepeater
+        anchors.fill: parent
+        
+        onComputeRequest: function(node) {
+            root.computeRequest([node])
+        }
+        
+        onStopComputeRequest: function(node) {
+            uigraph.stopNodeComputation(node)
+        }
+        
+        onReComputeRequest: function(node) {
+            // Only triggered if the node is already computed
+            // so we don't have to check if we should erase the data
+            if (node.canBeStopped) uigraph.stopNodeComputation(node)
+            uigraph.clearSelectedNodesData();
+            root.computeRequest([node])
+        }
+        
+        onSubmitRequest: function(node) {
+            if (node.isComputed) uigraph.clearSelectedNodesData();
+            root.submitRequest([node])
+        }
+        
+        // TODO : If we want this, we should add the possibility to stop job on farm first
+        // onReSubmitRequest: function(node) {
+        //     uigraph.clearSelectedNodesData();
+        //     root.submitRequest([node])
+        // }
+    }
+    
     MessageDialog {
         id: errorDialog
 

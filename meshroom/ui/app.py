@@ -368,7 +368,7 @@ class MeshroomApp(QApplication):
     
     def showMessage(self, message, status=None, duration=5000):
         self._messageController.sendMessage(message, status, duration)
-
+    
     def _retrieveThumbnailPath(self, filepath: str) -> str:
         """
         Given the path of a project file, load this file and try to retrieve the path to its thumbnail, i.e. its

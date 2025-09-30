@@ -129,15 +129,15 @@ FloatingPane {
                 selectByMouse: true
                 onAccepted: {
                     if (!gainLabel.hasExprError) {
-                        if (gainLabel.evaluatedValue <= 0) {
-                            gainLabel.evaluatedValue = 0
-                            gainCtrl.value = gainLabel.evaluatedValue
+                        if (gainLabel.text <= 0) {
+                            gainLabel.text = 0
+                            gainCtrl.value = gainLabel.text
                         } else {
-                            gainCtrl.value = Math.pow(Number(gainLabel.evaluatedValue), 1.0 / slidersPowerValue)
+                            gainCtrl.value = Math.pow(Number(gainLabel.text), 1.0 / slidersPowerValue)
                         }
                     } else {
-                        gainLabel.evaluatedValue = 0
-                        gainCtrl.value = gainLabel.evaluatedValue
+                        // gainLabel.text = 0
+                        // gainCtrl.value = gainLabel.text
                     }
                 }
             }
@@ -180,6 +180,7 @@ FloatingPane {
                 Layout.preferredWidth: textMetrics_gainValue.width
                 selectByMouse: true
                 onAccepted: {
+                    console.log("[GammaTextField] onAccepted")
                     if (!gammaLabel.hasExprError) {
                         if (gammaLabel.evaluatedValue <= 0) {
                             gammaLabel.evaluatedValue = 0
@@ -188,8 +189,8 @@ FloatingPane {
                             gammaCtrl.value = Math.pow(Number(gammaLabel.evaluatedValue), 1.0 / slidersPowerValue)
                         }
                     } else {
-                        gainLabel.evaluatedValue = 0
-                        gainCtrl.value = gainLabel.evaluatedValue
+                        // gammaLabel.evaluatedValue = 0
+                        // gammaCtrl.value = gainLabel.evaluatedValue
                     }
                 }
             }

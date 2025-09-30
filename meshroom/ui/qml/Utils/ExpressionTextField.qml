@@ -41,15 +41,15 @@ TextField {
     }
 
     function getEvalExpression(_text) {
-        try {
-            var result = MathEvaluator.eval(_text)
+        var [_res, _err] = _reconstruction.evaluateMathExpression(_text)
+        if (_err == false) {
             if (isInt)
-                result = Math.round(result)
+                _res = Math.round(_res)
             else
-                result = result.toFixed(decimals)
-            return result
-        } catch (err) {
-            console.error("Error evaluating expression (", _text, "):", err)
+                _res = _res.toFixed(decimals)
+            return _res
+        } else {
+            console.error("Error evaluating expression (", _text, "):", _err)
             return NaN
         }
     }
@@ -63,24 +63,28 @@ TextField {
     }
 
     function updateExpression() {
+        var previousEvaluatedValue = evaluatedValue
         var result = getEvalExpression(root.text)
+        console.log("[ExpressionTextField] updateExpression", root.text, "->", result)
         if (!isNaN(result)) {
             evaluatedValue = result
             clearError()
-            return result
+            // return result
         } else {
-            evaluatedValue = NaN
+            evaluatedValue = previousEvaluatedValue
             raiseError()
-            return NaN
+            // return NaN
         }
     }
 
     // When user commits input, evaluate but do NOT overwrite text
     onAccepted: {
+        console.log("[ExpressionTextField] onAccepted", root.text)
         updateExpression()
     }
 
     onEditingFinished: {
+        console.log("[ExpressionTextField] onEditingFinished", root.text)
         updateExpression()
     }
 
@@ -91,6 +95,7 @@ TextField {
     }
 
     Component.onCompleted: {
+        console.log("[ExpressionTextField] onCompleted", root.text)
         refreshStatus()
     }
 }

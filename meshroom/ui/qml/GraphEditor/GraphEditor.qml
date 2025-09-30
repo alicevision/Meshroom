@@ -1087,7 +1087,11 @@ Item {
         }
         
         onStopComputeRequest: function(node) {
-            uigraph.stopNodeComputation(node)
+            if (node.canBeStopped()) {
+                uigraph.stopNodeComputation(node)
+            } else if (node.canBeCanceled()) {
+                uigraph.cancelNodeComputation(node)
+            }
         }
         
         onDeleteDataRequest: function(node) {

@@ -39,10 +39,10 @@ Item {
     }
 
     enum ButtonState {
-        LAUNCHABLE,
-        STOPPABLE,
-        DELETABLE,
-        DISABLED
+        DISABLED   = 0,
+        LAUNCHABLE = 1,
+        DELETABLE  = 2,
+        STOPPABLE  = 3
     }
 
     Rectangle {
@@ -105,6 +105,7 @@ Item {
         property bool nodeIsLocked: false
         property bool canComputeNode: false
         property bool canStopNode: false
+        property bool canRestartNode: false
         property bool canSubmitNode: false
         property bool nodeSubmitted: false
 
@@ -112,7 +113,6 @@ Item {
         property string computeButtonIcon: {
             switch (computeButtonState) {
                 case NodeActions.ButtonState.STOPPABLE: return MaterialIcons.cancel_schedule_send
-                case NodeActions.ButtonState.DELETABLE: return MaterialIcons.delete_
                 default: return MaterialIcons.send
             }
         }
@@ -121,10 +121,12 @@ Item {
         function getComputeButtonState(node) {
             if (actionHeader.canStopNode)
                 return NodeActions.ButtonState.STOPPABLE
-            if (!actionHeader.nodeIsLocked && node.globalStatus == "SUCCESS")
-                return NodeActions.ButtonState.DELETABLE
-            if (!actionHeader.nodeIsLocked && actionHeader.canComputeNode)
-                return NodeActions.ButtonState.LAUNCHABLE
+            if (!actionHeader.nodeIsLocked) {
+                if (node.globalStatus == "SUCCESS")
+                    return NodeActions.ButtonState.DELETABLE
+                if (actionHeader.canComputeNode)
+                    return NodeActions.ButtonState.LAUNCHABLE
+            } 
             return NodeActions.ButtonState.DISABLED
         }
 
@@ -139,18 +141,24 @@ Item {
         function isSubmittedExternally(node) {
             return node.globalExecMode == "EXTERN" && ["RUNNING", "SUBMITTED"].includes(node.globalStatus)
         }
+        
+        function isNodeRestartable(node) {
+            return actionHeader.computeButtonState == NodeActions.ButtonState.LAUNCHABLE && 
+                ["ERROR", "STOPPED", "KILLED"].includes(node.globalStatus)
+        }
 
         function updateProperties(node) {
             if (!node) return
             // Update properties values
             actionHeader.canComputeNode = uigraph.canComputeNode(node)
             actionHeader.canSubmitNode = uigraph.canSubmitNode(node)
-            actionHeader.canStopNode = node.canBeStopped()
+            actionHeader.canStopNode = node.canBeStopped() || node.canBeCanceled()
             actionHeader.nodeIsLocked = node.locked
             actionHeader.nodeSubmitted = isSubmittedExternally(node)
             // Update button states
             actionHeader.computeButtonState = getComputeButtonState(node)
             actionHeader.submitButtonState = getSubmitButtonState(node)
+            actionHeader.canRestartNode = isNodeRestartable(node)
         }
 
         // Set initial state & position
@@ -196,21 +204,14 @@ Item {
                 ToolTip.text: "Start/Stop/Restart Compute"
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
-                enabled: actionHeader.computeButtonState != NodeActions.ButtonState.DISABLED
+                visible: actionHeader.computeButtonState != NodeActions.ButtonState.DELETABLE
+                enabled: actionHeader.computeButtonState % 2 == 1  // Launchable & Stoppable
                 background: Rectangle {
                     color: {
                         if (!computeButton.enabled) return activePalette.button
-                        switch (actionHeader.computeButtonState) {
-                            case NodeActions.ButtonState.STOPPABLE:
-                                if (computeButton.hovered) return Colors.orange
-                                return Qt.darker(Colors.orange, 1.3)
-                            case NodeActions.ButtonState.DELETABLE:
-                                if (computeButton.hovered) return Colors.red
-                                return Qt.darker(Colors.red, 1.3)
-                            default: break
-                        }
-                        if (computeButton.hovered) return activePalette.highlight
-                        return activePalette.button
+                        if (actionHeader.computeButtonState == NodeActions.ButtonState.STOPPABLE)
+                            return computeButton.hovered ? Colors.orange : Qt.darker(Colors.orange, 1.3)
+                        return computeButton.hovered ? activePalette.highlight : activePalette.button
                     }
                     opacity: computeButton.hovered ? 1 : root._opacity
                     border.color: computeButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.3)
@@ -218,10 +219,6 @@ Item {
                     radius: 3
                 }
                 onClicked: {
-                    // The remaining issue with this design is that if we computed half the chunks
-                    // then the only option we have is to resume the compute
-                    // We don't have a restart from zero (delete + start) in this case
-                    // But this would require an additional button
                     switch (actionHeader.computeButtonState) {
                         case NodeActions.ButtonState.STOPPABLE: 
                             root.stopComputeRequest(actionHeader.selectedNode)
@@ -229,10 +226,30 @@ Item {
                         case NodeActions.ButtonState.LAUNCHABLE: 
                             root.computeRequest(actionHeader.selectedNode)
                             break
-                        case NodeActions.ButtonState.DELETABLE: 
-                            root.deleteDataRequest(actionHeader.selectedNode)
-                            break
                     }
+                }
+            }
+
+            // Clear node
+            MaterialToolButton {
+                id: restartButton
+                font.pointSize: 16
+                text: MaterialIcons.delete_
+                padding: 6
+                ToolTip.text: "Delete data"
+                ToolTip.visible: hovered
+                ToolTip.delay: 1000
+                visible: actionHeader.canRestartNode || actionHeader.computeButtonState == NodeActions.ButtonState.DELETABLE
+                enabled: visible
+                background: Rectangle {
+                    color: computeButton.hovered ? Colors.red : Qt.darker(Colors.red, 1.3)
+                    opacity: computeButton.hovered ? 1 : root._opacity
+                    border.color: computeButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.3)
+                    border.width: 1
+                    radius: 3
+                }
+                onClicked: {
+                    root.deleteDataRequest(actionHeader.selectedNode)
                 }
             }
 
@@ -249,11 +266,10 @@ Item {
                 enabled: actionHeader.submitButtonState != NodeActions.ButtonState.DISABLED
                 background: Rectangle {
                     color: {
+                        if (!submitButton.enabled) return activePalette.button
                         if (actionHeader.nodeSubmitted) 
                             return Qt.darker(Colors.statusColors["SUBMITTED"], 1.2)
-                        if (!submitButton.enabled) return activePalette.button
-                        if (submitButton.hovered) return activePalette.highlight
-                        return activePalette.button
+                        return submitButton.hovered ? activePalette.highlight : activePalette.button
                     }
                     opacity: submitButton.hovered ? 1 : root._opacity
                     border.color: submitButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.3)

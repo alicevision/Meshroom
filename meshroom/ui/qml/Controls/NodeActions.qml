@@ -9,8 +9,8 @@ Item {
     id: root
     
     // Settings
-    property real headerOffset: 10   // Distance above the node in screen pixels
-    property real _opacity: 0.9
+    readonly property real headerOffset: 10   // Distance above the node in screen pixels
+    readonly property real _opacity: 0.9
 
     // Objects passed from the graph editor
     property var uigraph: null
@@ -22,7 +22,6 @@ Item {
     signal stopComputeRequest(var node)
     signal reComputeRequest(var node)
     signal submitRequest(var node)
-    signal reSubmitRequest(var node)
     
     SystemPalette { id: activePalette }
 
@@ -32,15 +31,20 @@ Item {
     function nodeDelegate(node) {
         if (!nodeRepeater) 
             return null
-        
         for (var i = 0; i < nodeRepeater.count; ++i) {
             if (nodeRepeater.itemAt(i).node === node)
                 return nodeRepeater.itemAt(i)
         }
-        
         return null
     }
-    
+
+    enum ButtonState {
+        LAUNCHABLE,
+        STOPPABLE,
+        RELAUNCHABLE,
+        DISABLED
+    }
+
     Rectangle {
         id: actionHeader
 
@@ -53,19 +57,9 @@ Item {
         width: actionItemsRow.width
         height: actionItemsRow.height
 
-        // State properties 
-        property string currentExecMode: selectedNode ? selectedNode.globalExecMode : "NONE"
-        property string currentStatus: selectedNode ? selectedNode.globalStatus : "NONE"
-        property bool nodeCanBeStopped: selectedNode ? selectedNode.canBeStopped() : false
-        property bool nodeIsExternal: selectedNode ? selectedNode.isExternal : false
-        property bool nodeLocked: selectedNode ? selectedNode.locked : false
-
-        // Derived values
-        readonly property bool runningExternally: currentExecMode === "EXTERN"
-                                                  && ["SUBMITTED", "RUNNING"].includes(currentStatus)
-        readonly property bool stoppable: selectedNode && currentStatus === "RUNNING" && nodeCanBeStopped
-        readonly property bool launchable: selectedNode &&
-                                           (nodeCanBeStopped || ["NONE","STOPPED","KILLED","ERROR"].includes(currentStatus))
+        // 
+        // ===== Manage NodeActions position =====
+        // 
 
         // Prevents losing focus on the node when we click on buttons of the actionItems
         MouseArea {
@@ -80,11 +74,11 @@ Item {
         // Update position
         function updatePosition() {
             if (!selectedNodeDelegate || !draggable) return
-            
+
             // Calculate node position in screen coordinates
             const nodeScreenX = selectedNodeDelegate.x * draggable.scale + draggable.x
             const nodeScreenY = selectedNodeDelegate.y * draggable.scale + draggable.y
-            
+
             // Position header above the node (fixed offset in screen pixels)
             x = nodeScreenX + (selectedNodeDelegate.width * draggable.scale - width) / 2
             y = nodeScreenY - height - headerOffset
@@ -97,7 +91,7 @@ Item {
             function onYChanged()     { actionHeader.updatePosition() }
             function onScaleChanged() { actionHeader.updatePosition() }
         }
-        
+
         // Update position when nodes are moved
         Connections {
             target: actionHeader.selectedNodeDelegate
@@ -105,28 +99,96 @@ Item {
             function onYChanged() { actionHeader.updatePosition() }
             ignoreUnknownSignals: true
         }
+
+        // 
+        // ===== Manage buttons =====
+        // 
+
+        property bool nodeIsLocked: false
+        property bool submittedExternally: false
+        property int computeButtonState: NodeActions.ButtonState.LAUNCHABLE
+        property string computeButtonIcon: {
+            switch (computeButtonState) {
+                case NodeActions.ButtonState.STOPPABLE: return MaterialIcons.cancel_schedule_send
+                case NodeActions.ButtonState.RELAUNCHABLE: return MaterialIcons.autorenew
+                default: return MaterialIcons.send
+            }
+        }
+        property int submitButtonState: NodeActions.ButtonState.LAUNCHABLE
+
+        function getComputeButtonState(node) {
+            if (node.canBeStopped()) return NodeActions.ButtonState.STOPPABLE
+            if (node.canBeCanceled()) return NodeActions.ButtonState.STOPPABLE
+            if (actionHeader.nodeIsLocked) return NodeActions.ButtonState.DISABLED
+            switch (node.globalStatus) {
+                case "NONE":
+                case "ERROR":
+                case "STOPPED":
+                case "KILLED":
+                    return NodeActions.ButtonState.LAUNCHABLE
+                case "SUCCESS":
+                    return NodeActions.ButtonState.RELAUNCHABLE
+            }
+            return NodeActions.ButtonState.DISABLED
+        }
+
+        function getSubmitButtonState(node) {
+            if (actionHeader.nodeIsLocked || node.canBeStopped()) {
+                return NodeActions.ButtonState.DISABLED
+            }
+            switch (node.globalStatus) {
+                case "NONE":
+                case "ERROR":
+                case "STOPPED":
+                case "KILLED":
+                case "SUCCESS":
+                    return NodeActions.ButtonState.LAUNCHABLE
+                    return NodeActions.ButtonState.LAUNCHABLE
+                    break
+                // SUBMITTED / RUNNING / INPUT -> DISABLED
+            }
+            return NodeActions.ButtonState.DISABLED
+        }
         
-        // Set initial position
-        onSelectedNodeDelegateChanged: updatePosition()
+        function isSubmittedExternally(node) {
+            if (node.globalExecMode == "EXTERN" && node.globalStatus == "SUBMITTED")
+                return true
+            return false
+        }
+
+        function updateProperties(node) {
+            actionHeader.nodeIsLocked = node.locked
+            actionHeader.computeButtonState = getComputeButtonState(node)
+            actionHeader.submitButtonState = getSubmitButtonState(node)
+            actionHeader.submittedExternally = isSubmittedExternally(node)
+        }
+
+
+        // Set initial state & position
+        onSelectedNodeDelegateChanged: {
+            updatePosition()
+            if (actionHeader.selectedNode) {
+                actionHeader.updateProperties(actionHeader.selectedNode)
+            }
+        }
 
         // Listen to updates to status
         Connections {
             target: actionHeader.selectedNode
-            function onGlobalStatusChanged()   { actionHeader.currentStatus = target.globalStatus }
-            function onGlobalExecModeChanged() { actionHeader.currentExecMode = target.globalExecMode }
-            function onIsComputedChanged()     { actionHeader.nodeCanBeStopped = target.canBeStopped() }
-            function onLockedChanged()         { actionHeader.nodeLocked = target.locked }
+            function onGlobalStatusChanged() {
+                actionHeader.updateProperties(target)
+            }
+            function onLockedChanged() { 
+                actionHeader.nodeIsLocked = target.locked
+            }
             ignoreUnknownSignals: true
         }
 
-        // Also listen to uigraph for status updates
+        // Listen to updates from nodes that are not selected
         Connections {
             target: root.uigraph
-            function onComputationStatusChanged() { 
-                actionHeader.currentStatus = actionHeader.selectedNode ? actionHeader.selectedNode.globalStatus : "NONE"
-            }
-            function onNodeStatusUpdated() {
-                actionHeader.currentStatus = actionHeader.selectedNode ? actionHeader.selectedNode.globalStatus : "NONE"
+            function onComputingChanged() { 
+                actionHeader.updateProperties(actionHeader.selectedNode)
             }
             ignoreUnknownSignals: true
         }
@@ -135,27 +197,28 @@ Item {
             id: actionItemsRow
             anchors.centerIn: parent
             spacing: 2
-            
+
             // Compute button
             MaterialToolButton {
                 id: computeButton
                 font.pointSize: 16
-                text: actionHeader.stoppable ? MaterialIcons.cancel_schedule_send : MaterialIcons.send
+                text: actionHeader.computeButtonIcon
                 padding: 6
                 ToolTip.text: "Start/Stop Compute"
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
-                enabled: actionHeader.selectedNode && actionHeader.launchable
+                enabled: actionHeader.computeButtonState != NodeActions.ButtonState.DISABLED
                 background: Rectangle {
                     color: {
                         if (!computeButton.enabled) return activePalette.button
-                        if (actionHeader.currentStatus === "RUNNING") {
-                            if (computeButton.hovered) return Colors.statusColors["STOPPED"]
-                            return Qt.darker(Colors.statusColors["STOPPED"], 1.3)
-                        } else {
-                            if (computeButton.hovered) return activePalette.highlight
-                            return activePalette.button
+                        switch (actionHeader.computeButtonState) {
+                            case NodeActions.ButtonState.STOPPABLE:
+                                if (computeButton.hovered) return Colors.statusColors["STOPPED"]
+                                return Qt.darker(Colors.statusColors["STOPPED"], 1.3)
+                            default: break
                         }
+                        if (computeButton.hovered) return activePalette.highlight
+                        return activePalette.button
                     }
                     opacity: computeButton.hovered ? 1 : root._opacity
                     border.color: computeButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.3)
@@ -163,38 +226,17 @@ Item {
                     radius: 3
                 }
                 onClicked: {
-                    if (actionHeader.selectedNode && !actionHeader.nodeIsExternal && actionHeader.currentStatus === "RUNNING") {
-                        root.stopComputeRequest(actionHeader.selectedNode)
-                    } else {
-                        root.computeRequest(actionHeader.selectedNode)
-                    }
-                }
-            }
-            
-            // Re-compute button : stop local process and relaunch locally 
-            MaterialToolButton {
-                id: reComputeButton
-                font.pointSize: 16
-                text: MaterialIcons.autorenew
-                padding: 6
-                ToolTip.text: "Re-compute"
-                ToolTip.visible: hovered
-                ToolTip.delay: 1000
-                enabled: actionHeader.selectedNode && !actionHeader.runningExternally
-                background: Rectangle {
-                    color: {
-                        if (!reComputeButton.enabled) return activePalette.button
-                        if (reComputeButton.hovered) return activePalette.highlight
-                        return activePalette.button
-                    }
-                    opacity: reComputeButton.hovered ? 1 : root._opacity
-                    border.color: reComputeButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.3)
-                    border.width: 1
-                    radius: 3
-                }
-                onClicked: {
-                    if (actionHeader.selectedNode) {
-                        root.reComputeRequest(actionHeader.selectedNode)
+                    switch (actionHeader.computeButtonState) {
+                        case NodeActions.ButtonState.STOPPABLE: 
+                            root.stopComputeRequest(actionHeader.selectedNode)
+                            break
+                        case NodeActions.ButtonState.LAUNCHABLE: 
+                            root.computeRequest(actionHeader.selectedNode)
+                            break
+                        case NodeActions.ButtonState.RELAUNCHABLE: 
+                            root.reComputeRequest(actionHeader.selectedNode)
+                            break
+                        default: break
                     }
                 }
             }
@@ -209,11 +251,13 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
                 visible: root.uigraph ? root.uigraph.canSubmit : false
-                enabled: actionHeader.selectedNode ? !actionHeader.nodeLocked : false
+                enabled: actionHeader.submitButtonState != NodeActions.ButtonState.DISABLED
+                // enabled: actionHeader.selectedNode ? !actionHeader.nodeLocked : false
                 background: Rectangle {
                     color: {
+                        if (actionHeader.submittedExternally) 
+                            return Qt.darker(Colors.statusColors["SUBMITTED"], 1.2)
                         if (!submitButton.enabled) return activePalette.button
-                        if (actionHeader.runningExternally) return Colors.statusColors["SUBMITTED"]
                         if (submitButton.hovered) return activePalette.highlight
                         return activePalette.button
                     }
@@ -225,36 +269,6 @@ Item {
                 onClicked: {
                     if (actionHeader.selectedNode) {
                         root.submitRequest(actionHeader.selectedNode)
-                    }
-                }
-            }
-            
-            // Re-submit button : stop everything and relaunch on farm
-            // TODO : disabled for now because we can't stop jobs submitted on farm
-            MaterialToolButton {
-                id: reSubmitButton
-                font.pointSize: 16
-                text: MaterialIcons.double_arrow
-                padding: 6
-                ToolTip.text: "Re-submit on Render Farm"
-                ToolTip.visible: hovered
-                ToolTip.delay: 1000
-                visible: false  // root.uigraph ? root.uigraph.canSubmit : false
-                enabled: actionHeader.selectedNode !== null
-                background: Rectangle {
-                    color: {
-                        if (!actionHeader.selectedNode) return activePalette.button
-                        if (reSubmitButton.hovered) return activePalette.highlight
-                        return activePalette.button
-                    }
-                    opacity: reSubmitButton.hovered ? 1 : root._opacity
-                    border.color: reSubmitButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.3)
-                    border.width: 1
-                    radius: 3
-                }
-                onClicked: {
-                    if (actionHeader.selectedNode) {
-                        root.reSubmitRequest(actionHeader.selectedNode)
                     }
                 }
             }

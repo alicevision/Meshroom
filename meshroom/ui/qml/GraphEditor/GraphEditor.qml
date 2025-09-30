@@ -1102,12 +1102,6 @@ Item {
             if (node.isComputed) uigraph.clearSelectedNodesData();
             root.submitRequest([node])
         }
-        
-        // TODO : If we want this, we should add the possibility to stop job on farm first
-        // onReSubmitRequest: function(node) {
-        //     uigraph.clearSelectedNodesData();
-        //     root.submitRequest([node])
-        // }
     }
     
     MessageDialog {

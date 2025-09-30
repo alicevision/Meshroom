@@ -56,7 +56,14 @@ class MessageController(QObject):
     
     @Slot(result=str)
     def getMessagesAsString(self):
-        return json.dumps(self._getMessagesDict(fullDate=True), indent=4)
+        """ Return messages for clipboard copy 
+        .. note::
+           Could also do `json.dumps(self._getMessagesDict(fullDate=True), indent=4)`
+        """
+        messages = []
+        for msg in self._messages:
+            messages.append(f"{msg.dateStr(True)} [{msg.status.upper():<7}] {msg.msg}")
+        return "\n".join(messages)
     
     @Slot()
     def clearMessages(self):

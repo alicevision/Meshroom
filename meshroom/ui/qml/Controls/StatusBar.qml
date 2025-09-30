@@ -98,27 +98,12 @@ RowLayout {
         }
     }
 
-    function _showMessage(msg, status=undefined, duration=root.interval) {
+    function showMessage(msg, status=undefined, duration=root.interval) {
         statusBar.showMessage(msg, status, duration)
         // Add message to the message list
         _messageController.storeMessage(msg, status)
     }
     
-    function showMessage(msg, status=undefined, duration=root.interval) {
-        // Info
-        statusBar.showMessage("test info", "info", duration)
-        _messageController.storeMessage("test info", "info")
-        // Warning
-        statusBar.showMessage("test warning", "warning", duration)
-        _messageController.storeMessage("test warning", "warning")
-        // Error
-        statusBar.showMessage("test error", "error", duration)
-        _messageController.storeMessage("test error", "error")
-        // Ok
-        statusBar.showMessage("test ok", "ok", duration)
-        _messageController.storeMessage("test ok", "ok")
-    }
-
     Connections {
         target: _messageController
         function onMessage(message, color, duration) {

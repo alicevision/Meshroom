@@ -15,35 +15,25 @@ ApplicationWindow {
 
     SystemPalette { id: systemPalette }
 
-    function getColor(status, mode="unknown") {
-        var color = systemPalette.text
-        var alphaValue = 1.0
+    function getColor(status) {
         switch (status) {
-            case "ok": {
-                color = Colors.green
-                break
-            }
-            case "warning": {
-                color = Colors.orange
-                break
-            }
-            case "error": {
-                color = Colors.red
-                break
-            }
+            case "ok": return Colors.green
+            case "warning": return Colors.orange
+            case "error": return Colors.red
+            default: return systemPalette.text
         }
-        switch (mode) {
-            case "background": {
-                if (status == "info") alphaValue = 0.05
-                else alphaValue = 0.1
-                break
-            }
-            case "border": {
-                if (status == "info") alphaValue = 0.2
-                else alphaValue = 0.3
-                break
-            }
-        }
+    }
+
+    function getBackgroundColor(status) {
+        // var color = Qt.darker(getColor(status), 1.2)
+        var color = getColor(status)
+        var alphaValue = status == "info" ? 0.05 : 0.1
+        return Qt.rgba(color.r, color.g, color.b, alphaValue)
+    }
+
+    function getBorderColor(status) {
+        var color = getColor(status)
+        var alphaValue = status == "info" ? 0.2 : 0.3
         return Qt.rgba(color.r, color.g, color.b, alphaValue)
     }
 
@@ -61,7 +51,7 @@ ApplicationWindow {
         background: Rectangle {
             implicitWidth: root.width
             implicitHeight: 50
-            color: Qt.darker(systemPalette.base, 1.1)
+            color: Qt.darker(systemPalette.base, 1.2)
         }
         
         RowLayout {
@@ -122,8 +112,8 @@ ApplicationWindow {
                 delegate: Rectangle {
                     width: messageListView.width
                     height: messageLayout.implicitHeight + 16
-                    color: root.getColor(modelData.status, "background")
-                    border.color: root.getColor(modelData.status, "border")
+                    color: root.getBackgroundColor(modelData.status)
+                    border.color: root.getBorderColor(modelData.status)
                     border.width: 1
                     radius: 4
 

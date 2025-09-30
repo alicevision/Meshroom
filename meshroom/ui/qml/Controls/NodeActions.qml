@@ -74,11 +74,9 @@ Item {
         // Update position
         function updatePosition() {
             if (!selectedNodeDelegate || !draggable) return
-
             // Calculate node position in screen coordinates
             const nodeScreenX = selectedNodeDelegate.x * draggable.scale + draggable.x
             const nodeScreenY = selectedNodeDelegate.y * draggable.scale + draggable.y
-
             // Position header above the node (fixed offset in screen pixels)
             x = nodeScreenX + (selectedNodeDelegate.width * draggable.scale - width) / 2
             y = nodeScreenY - height - headerOffset
@@ -105,7 +103,11 @@ Item {
         // 
 
         property bool nodeIsLocked: false
-        property bool submittedExternally: false
+        property bool canComputeNode: false
+        property bool canStopNode: false
+        property bool canSubmitNode: false
+        property bool nodeSubmitted: false
+
         property int computeButtonState: NodeActions.ButtonState.LAUNCHABLE
         property string computeButtonIcon: {
             switch (computeButtonState) {
@@ -117,56 +119,39 @@ Item {
         property int submitButtonState: NodeActions.ButtonState.LAUNCHABLE
 
         function getComputeButtonState(node) {
-            if (!node.isComputableType || node.isCompatibilityNode)
-                return NodeActions.ButtonState.DISABLED
-            if (node.canBeStopped()) return NodeActions.ButtonState.STOPPABLE
-            if (node.canBeCanceled()) return NodeActions.ButtonState.STOPPABLE
-            if (actionHeader.nodeIsLocked) return NodeActions.ButtonState.DISABLED
-            switch (node.globalStatus) {
-                case "NONE":
-                case "ERROR":
-                case "STOPPED":
-                case "KILLED":
-                    return NodeActions.ButtonState.LAUNCHABLE
-                case "SUCCESS":
-                    return NodeActions.ButtonState.DELETABLE
-            }
+            if (actionHeader.canStopNode)
+                return NodeActions.ButtonState.STOPPABLE
+            if (!actionHeader.nodeIsLocked && node.globalStatus == "SUCCESS")
+                return NodeActions.ButtonState.DELETABLE
+            if (!actionHeader.nodeIsLocked && actionHeader.canComputeNode)
+                return NodeActions.ButtonState.LAUNCHABLE
             return NodeActions.ButtonState.DISABLED
         }
 
         function getSubmitButtonState(node) {
-            if (!node.isComputableType || node.isCompatibilityNode)
+            if (actionHeader.nodeIsLocked || actionHeader.canStopNode)
                 return NodeActions.ButtonState.DISABLED
-            if (actionHeader.nodeIsLocked || node.canBeStopped()) {
-                return NodeActions.ButtonState.DISABLED
-            }
-            switch (node.globalStatus) {
-                case "NONE":
-                case "ERROR":
-                case "STOPPED":
-                case "KILLED":
-                case "SUCCESS":
-                    return NodeActions.ButtonState.LAUNCHABLE
-                    return NodeActions.ButtonState.LAUNCHABLE
-                    break
-                // SUBMITTED / RUNNING / INPUT -> DISABLED
-            }
+            if (!actionHeader.nodeIsLocked && actionHeader.canSubmitNode)
+                return NodeActions.ButtonState.LAUNCHABLE
             return NodeActions.ButtonState.DISABLED
         }
         
         function isSubmittedExternally(node) {
-            if (node.globalExecMode == "EXTERN" && node.globalStatus == "SUBMITTED")
-                return true
-            return false
+            return node.globalExecMode == "EXTERN" && ["RUNNING", "SUBMITTED"].includes(node.globalStatus)
         }
 
         function updateProperties(node) {
+            if (!node) return
+            // Update properties values
+            actionHeader.canComputeNode = uigraph.canComputeNode(node)
+            actionHeader.canSubmitNode = uigraph.canSubmitNode(node)
+            actionHeader.canStopNode = node.canBeStopped()
             actionHeader.nodeIsLocked = node.locked
+            actionHeader.nodeSubmitted = isSubmittedExternally(node)
+            // Update button states
             actionHeader.computeButtonState = getComputeButtonState(node)
             actionHeader.submitButtonState = getSubmitButtonState(node)
-            actionHeader.submittedExternally = isSubmittedExternally(node)
         }
-
 
         // Set initial state & position
         onSelectedNodeDelegateChanged: {
@@ -208,7 +193,7 @@ Item {
                 font.pointSize: 16
                 text: actionHeader.computeButtonIcon
                 padding: 6
-                ToolTip.text: "Start/Stop Compute"
+                ToolTip.text: "Start/Stop/Restart Compute"
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
                 enabled: actionHeader.computeButtonState != NodeActions.ButtonState.DISABLED
@@ -233,6 +218,10 @@ Item {
                     radius: 3
                 }
                 onClicked: {
+                    // The remaining issue with this design is that if we computed half the chunks
+                    // then the only option we have is to resume the compute
+                    // We don't have a restart from zero (delete + start) in this case
+                    // But this would require an additional button
                     switch (actionHeader.computeButtonState) {
                         case NodeActions.ButtonState.STOPPABLE: 
                             root.stopComputeRequest(actionHeader.selectedNode)
@@ -243,7 +232,6 @@ Item {
                         case NodeActions.ButtonState.DELETABLE: 
                             root.deleteDataRequest(actionHeader.selectedNode)
                             break
-                        default: break
                     }
                 }
             }
@@ -259,10 +247,9 @@ Item {
                 ToolTip.delay: 1000
                 visible: root.uigraph ? root.uigraph.canSubmit : false
                 enabled: actionHeader.submitButtonState != NodeActions.ButtonState.DISABLED
-                // enabled: actionHeader.selectedNode ? !actionHeader.nodeLocked : false
                 background: Rectangle {
                     color: {
-                        if (actionHeader.submittedExternally) 
+                        if (actionHeader.nodeSubmitted) 
                             return Qt.darker(Colors.statusColors["SUBMITTED"], 1.2)
                         if (!submitButton.enabled) return activePalette.button
                         if (submitButton.hovered) return activePalette.highlight

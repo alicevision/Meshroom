@@ -55,7 +55,15 @@ class ShapeFile(BaseObject):
             if self._keyable:
                 return self._observations.get(self._viewId, None)
             return self._properties
-        
+
+        def _getNbObservations(self):
+            """ 
+            Return the shape number of observations.
+            """
+            if self._keyable:
+                return len(self._observations)
+            return 1
+    
         @Slot(str, result=bool)
         def hasObservation(self, key: str) -> bool:
             """
@@ -82,6 +90,8 @@ class ShapeFile(BaseObject):
         properties = Property(Variant, lambda self: self._properties, constant=True)
         # The shape current observation.
         observation = Property(Variant, _getObservation, notify=viewIdChanged)
+        # The number of observation defined.
+        nbObservations = Property(int, _getNbObservations, constant=True) 
         # Whether the shape is displayable.
         isVisible = Property(bool, _getVisible, _setVisible, notify=visibleChanged)
 

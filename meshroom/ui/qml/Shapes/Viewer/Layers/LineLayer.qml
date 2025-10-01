@@ -18,16 +18,38 @@ import "Utils" as LayerUtils
 BaseLayer {
     id: lineLayer
 
+    // Line center from handleA and handleB position
+    property point lineCenter: Qt.point((handleA.x + handleB.x) * 0.5, (handleA.y + handleB.y) * 0.5)
+    // Line angle from handleA and handleB position
+    property real lineAngle: Math.atan2(handleB.y - handleA.y, handleB.x - handleA.x)
+    // Line distance from handleA and handleB position
+    property real lineDistance: Math.max(1.0, Math.sqrt(Math.pow(handleA.x - handleB.x, 2) +
+                                                        Math.pow(handleA.y - handleB.y, 2)))
+
     // Line shape
     Shape {
         id: draggableLine
 
         // Line path
         ShapePath {
+            fillColor: "transparent"
             strokeColor: lineLayer.properties.strokeColor || lineLayer.properties.color || lineLayer.defaultColor
             strokeWidth: getScaledStrokeWidth()
+
+            // Line
             PathMove { x: handleA.x; y: handleA.y }
             PathLine { x: handleB.x; y: handleB.y }
+
+            // Orientation center arrow
+            PathMove {
+                x: lineCenter.x - lineDistance * 0.1 * Math.cos(lineAngle - Math.PI * 0.25)
+                y: lineCenter.y - lineDistance * 0.1 * Math.sin(lineAngle - Math.PI * 0.25)
+            }
+            PathLine { x: lineCenter.x; y: lineCenter.y }
+            PathLine { 
+                x: lineCenter.x - lineDistance * 0.1 * Math.cos(lineAngle + Math.PI * 0.25)
+                y: lineCenter.y - lineDistance * 0.1 * Math.sin(lineAngle + Math.PI * 0.25)
+            }
         }
 
         // Selection area
@@ -81,8 +103,8 @@ BaseLayer {
         // Handle for line center
         LayerUtils.Handle {
             id: handleCenter
-            x: (handleA.x + handleB.x) * 0.5
-            y: (handleA.y + handleB.y) * 0.5
+            x: lineCenter.x
+            y: lineCenter.y
             size: getScaledHandleSize()
             target: draggableLine
             cursorShape: Qt.SizeAllCursor

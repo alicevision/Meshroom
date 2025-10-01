@@ -57,6 +57,22 @@ BaseLayer {
                 }
             }
         }
+
+        // Point name
+        Text {
+            x: pointSize
+            y: pointSize
+            text: {
+                const lastDotIndex = pointLayer.name.lastIndexOf('.')
+                if(lastDotIndex < 0)
+                    return pointLayer.name
+                return pointLayer.name.substring(lastDotIndex + 1);
+            }
+            color: draggablePoint.color
+            wrapMode: Text.NoWrap 
+            font.pixelSize: getScaledFontSize()
+            visible: pointLayer.editable && scaleRatio > 0.1
+        }
     }
 }
 

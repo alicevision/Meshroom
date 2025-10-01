@@ -18,6 +18,7 @@ from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position, CompatibilityIssue
 from meshroom.core.taskManager import TaskManager
+from meshroom.core.evaluation import MathEvaluator
 
 from meshroom.ui import commands
 from meshroom.ui.graph import UIGraph
@@ -1165,6 +1166,21 @@ class Reconstruction(UIGraph):
             return
         self._currentViewPath = path
         self.currentViewPathChanged.emit()
+
+    @Slot(str, result="QVariantList")
+    def evaluateMathExpression(self, expr):
+        """ Evaluate a mathematical expression and return the result as a string 
+        Returns a list of 2 values :
+        - the result value
+        - a boolean that indicate if an error occured
+        """
+        mev = MathEvaluator()
+        try:
+            res = mev.evaluate(expr)
+            return [res, False]
+        except Exception as err:
+            self.parent().showMessage(f"Invalid field expression: {expr}", "error")
+            return [None, True]
 
     selectedViewIdChanged = Signal()
     selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)

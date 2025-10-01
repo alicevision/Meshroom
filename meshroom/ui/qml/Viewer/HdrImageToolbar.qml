@@ -112,8 +112,8 @@ FloatingPane {
                 ToolTip.text: "Reset Gain"
 
                 onClicked: {
-                    gainCtrl.value = gainDefaultValue
-                    gainLabel.reset(gainValue)
+                    gainLabel.text = gainDefaultValue
+                    gainCtrl.value = gainLabel.text
                 }
             }
             ExpressionTextField {
@@ -129,15 +129,12 @@ FloatingPane {
                 selectByMouse: true
                 onAccepted: {
                     if (!gainLabel.hasExprError) {
-                        if (gainLabel.evaluatedValue <= 0) {
+                        if (gainLabel.text <= 0) {
                             gainLabel.evaluatedValue = 0
                             gainCtrl.value = gainLabel.evaluatedValue
                         } else {
                             gainCtrl.value = Math.pow(Number(gainLabel.evaluatedValue), 1.0 / slidersPowerValue)
                         }
-                    } else {
-                        gainLabel.evaluatedValue = 0
-                        gainCtrl.value = gainLabel.evaluatedValue
                     }
                 }
             }
@@ -148,7 +145,9 @@ FloatingPane {
                 to: 2
                 value: gainDefaultValue
                 stepSize: 0.01
-                onMoved: gainLabel.reset(Math.pow(value, slidersPowerValue))
+                onMoved: {
+                    gainLabel.text = Math.pow(value, slidersPowerValue).toFixed(2)
+                }
             }
         }
 
@@ -164,8 +163,8 @@ FloatingPane {
                 ToolTip.text: "Reset Gamma"
 
                 onClicked: {
-                    gammaCtrl.value = gammaDefaultValue;
-                    gammaLabel.reset(gammaValue)
+                    gammaLabel.text = gammaDefaultValue
+                    gammaCtrl.value = gammaLabel.text;
                 }
             }
             ExpressionTextField {
@@ -187,9 +186,6 @@ FloatingPane {
                         } else {
                             gammaCtrl.value = Math.pow(Number(gammaLabel.evaluatedValue), 1.0 / slidersPowerValue)
                         }
-                    } else {
-                        gainLabel.evaluatedValue = 0
-                        gainCtrl.value = gainLabel.evaluatedValue
                     }
                 }
             }
@@ -200,7 +196,9 @@ FloatingPane {
                 to: 2
                 value: gammaDefaultValue
                 stepSize: 0.01
-                onMoved: gammaLabel.reset(Math.pow(value, slidersPowerValue))
+                onMoved: {
+                    gammaLabel.text = Math.pow(value, slidersPowerValue).toFixed(2)
+                }
             }
         }
 

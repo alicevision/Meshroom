@@ -80,6 +80,12 @@ class KeyValues(BaseObject):
         Return the list of pairs serialized.
         """
         return { str(pair.key): pair.value for pair in self._pairs }
+    
+    def getKeys(self) -> list:
+        """
+        Return the list of keys.
+        """
+        return [ str(pair.key) for pair in self._pairs ]
 
     def getJson(self) -> str:
         """

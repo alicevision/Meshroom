@@ -31,7 +31,8 @@ BaseLayer {
         TapHandler {
             acceptedButtons: Qt.LeftButton
             gesturePolicy: TapHandler.WithinBounds
-            grabPermissions: PointerHandler.CanTakeOverFromAnything 
+            grabPermissions: PointerHandler.CanTakeOverFromAnything
+            margin: pointSize
             onTapped: selectionRequested()
             enabled: pointLayer.editable && !pointLayer.selected
         }
@@ -39,7 +40,8 @@ BaseLayer {
         // Selection hover
         HoverHandler {
             cursorShape: pointLayer.selected ? Qt.SizeAllCursor : Qt.PointingHandCursor
-            grabPermissions: PointerHandler.CanTakeOverFromAnything 
+            grabPermissions: PointerHandler.CanTakeOverFromAnything
+            margin: pointSize
             enabled: pointLayer.editable
         }
 

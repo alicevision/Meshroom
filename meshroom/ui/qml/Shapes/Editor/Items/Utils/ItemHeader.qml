@@ -273,23 +273,21 @@ Pane {
         // Spacer
         Item { Layout.fillWidth: true }
 
-        // Shape 
+        // Right toolbar
         RowLayout {
             spacing: 0
 
-            // Shape create observation
+            // Shape not keyable, set/remove observation
             Loader {
-                active: isShape
+                active: isShape && isAttribute && !model.shapeKeyable
                 sourceComponent: MaterialToolButton {
                     font.pointSize: 11
                     padding: 2
-                    text: (!model.shapeKeyable || !isAttributeInitialized) ? MaterialIcons.edit : MaterialIcons.noise_control_off
-                    checkable: model.shapeKeyable
-                    checked: model.shapeKeyable ? hasShapeObservation : false
-                    visible: (model.shapeKeyable || (isAttributeEnabled && !isAttributeInitialized))
+                    text: isAttributeInitialized ? MaterialIcons.clear : MaterialIcons.edit
+                    checkable: false
                     enabled: isAttributeEnabled
                     onClicked: {
-                        if(model.shapeKeyable && hasShapeObservation)
+                        if(isAttributeInitialized)
                         {
                             // remove key
                             _reconstruction.removeObservation(model, _reconstruction.selectedViewId)
@@ -301,7 +299,88 @@ Pane {
                             _reconstruction.setObservation(model, _reconstruction.selectedViewId, ShapeViewerHelper.getDefaultObservation(model.type))
                             ShapeViewerHelper.selectedShapeName = model.fullName
                         }
+                    }
+                }
+            }
 
+            // Shape keyable, set/remove observation
+            Loader {
+                active: isShape && model.shapeKeyable
+                sourceComponent: RowLayout {
+                    spacing: 0
+
+                    function getViewPath(viewId) {
+                        for (var i = 0; i < _reconstruction.viewpoints.count; i++) 
+                        {
+                            var vp = _reconstruction.viewpoints.at(i)
+                            if (vp.childAttribute("viewId").value == viewId) 
+                                return vp.childAttribute("path").value
+                        }
+                        return undefined
+                    }
+
+                    function getPrevViewId(viewIds, currentViewId) {
+                        const currentViewPath = getViewPath(currentViewId)
+                        const prevIds = viewIds.filter(viewId => getViewPath(viewId) < currentViewPath)
+                        if (prevIds.length === 0) 
+                            return "-1";
+                        prevIds.sort((a, b) => getViewPath(b).localeCompare(getViewPath(a)))
+                        return prevIds[0]
+                    }
+
+                    function getNextViewId(viewIds, currentViewId) {
+                        const currentViewPath = getViewPath(currentViewId)
+                        const nextIds = viewIds.filter(viewId => getViewPath(viewId) > currentViewPath)
+                        if (nextIds.length === 0) 
+                            return "-1";
+                        nextIds.sort((a, b) => getViewPath(a).localeCompare(getViewPath(b)))
+                        return nextIds[0]
+                    }
+
+                    // Previous key
+                    MaterialToolButton {
+                        property string prevViewId: getPrevViewId(model.observationKeys, _reconstruction.selectedViewId)
+                        font.pointSize: 11
+                        padding: 2
+                        text: MaterialIcons.keyboard_arrow_left
+                        checkable: false
+                        enabled: prevViewId !== "-1"
+                        onClicked: { _reconstruction.selectedViewId = prevViewId }
+                    }
+
+                    // Current key
+                    MaterialToolButton {
+                        font.pointSize: 11
+                        padding: 2
+                        text: MaterialIcons.noise_control_off
+                        checkable: model.shapeKeyable
+                        checked: model.shapeKeyable ? hasShapeObservation : false
+                        enabled: isAttributeEnabled
+                        onClicked: {
+                            if(hasShapeObservation)
+                            {
+                                // remove key
+                                _reconstruction.removeObservation(model, _reconstruction.selectedViewId)
+                                ShapeViewerHelper.selectedShapeName = ""
+                            }
+                            else
+                            {
+                                // add key
+                                _reconstruction.setObservation(model, _reconstruction.selectedViewId, ShapeViewerHelper.getDefaultObservation(model.type))
+                                ShapeViewerHelper.selectedShapeName = model.fullName
+                            }
+                        }
+                    }
+
+                    // Next key
+                    MaterialToolButton {
+                        property string nextViewId: getNextViewId(model.observationKeys, _reconstruction.selectedViewId)
+                        font.pointSize: 11
+                        padding: 2
+                        text: MaterialIcons.keyboard_arrow_right
+                        checkable: false
+                        enabled: nextViewId !== "-1"
+                        onClicked: {  _reconstruction.selectedViewId = nextViewId }
                     }
                 }
             }

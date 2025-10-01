@@ -201,7 +201,7 @@ Pane {
                     height: materialMetrics.height
                 }
                 onClicked: shapeColorDialog.item.open()
-                ToolTip.text: "Shape color"
+                ToolTip.text: "Shape Color"
                 ToolTip.visible: hovered
                 ToolTip.delay: 800
             }
@@ -309,7 +309,7 @@ Pane {
                             ShapeViewerHelper.selectedShapeName = model.fullName
                         }
                     }
-                    ToolTip.text: isAttributeInitialized ? "Reset shape" : "Set shape"
+                    ToolTip.text: isAttributeInitialized ? "Reset Shape" : "Set Shape"
                     ToolTip.visible: hovered
                     ToolTip.delay: 800
                 }
@@ -358,7 +358,7 @@ Pane {
                         checkable: false
                         enabled: prevViewId !== "-1"
                         onClicked: { _reconstruction.selectedViewId = prevViewId }
-                        ToolTip.text: enabled ? "Previous key" : "No previous key"
+                        ToolTip.text: enabled ? "Previous Key" : "No Previous Key"
                         ToolTip.visible: hovered
                         ToolTip.delay: 800
                     }
@@ -399,7 +399,7 @@ Pane {
                         checkable: false
                         enabled: nextViewId !== "-1"
                         onClicked: {  _reconstruction.selectedViewId = nextViewId }
-                        ToolTip.text: enabled ? "Next key" : "No next key"
+                        ToolTip.text: enabled ? "Next Key" : "No Next Key"
                         ToolTip.visible: hovered
                         ToolTip.delay: 800
                     }
@@ -414,7 +414,7 @@ Pane {
                     padding: 2
                     text: MaterialIcons.control_point
                     onClicked: _reconstruction.appendAttribute(model, undefined)
-                    ToolTip.text: "Add element"
+                    ToolTip.text: "Add Element"
                     ToolTip.visible: hovered
                     ToolTip.delay: 800
                 }
@@ -430,7 +430,7 @@ Pane {
                     onClicked: {
                         _reconstruction.removeAttribute(model)
                     }
-                    ToolTip.text: "Remove element"
+                    ToolTip.text: "Remove Element"
                     ToolTip.visible: hovered
                     ToolTip.delay: 800
                 }

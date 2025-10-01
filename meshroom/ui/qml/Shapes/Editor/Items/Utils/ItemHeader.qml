@@ -158,6 +158,9 @@ Pane {
             opacity: model.isVisible ? 1.0 : 0.5
             enabled: true
             onClicked: { model.isVisible = !model.isVisible }
+            ToolTip.text: model.isVisible ? "Visible" : "Hidden"
+            ToolTip.visible: hovered
+            ToolTip.delay: 800
         }
 
         // Neasted spacer
@@ -181,6 +184,9 @@ Pane {
             }
             onClicked: { isExpanded = !isExpanded }
             enabled: true
+            ToolTip.text: isExpanded ? "Collapse" : "Expand"
+            ToolTip.visible: hovered
+            ToolTip.delay: 800
         }
 
         // Shape color
@@ -195,6 +201,9 @@ Pane {
                     height: materialMetrics.height
                 }
                 onClicked: shapeColorDialog.item.open()
+                ToolTip.text: "Shape color"
+                ToolTip.visible: hovered
+                ToolTip.delay: 800
             }
         }
 
@@ -300,6 +309,9 @@ Pane {
                             ShapeViewerHelper.selectedShapeName = model.fullName
                         }
                     }
+                    ToolTip.text: isAttributeInitialized ? "Reset shape" : "Set shape"
+                    ToolTip.visible: hovered
+                    ToolTip.delay: 800
                 }
             }
 
@@ -346,6 +358,9 @@ Pane {
                         checkable: false
                         enabled: prevViewId !== "-1"
                         onClicked: { _reconstruction.selectedViewId = prevViewId }
+                        ToolTip.text: enabled ? "Previous key" : "No previous key"
+                        ToolTip.visible: hovered
+                        ToolTip.delay: 800
                     }
 
                     // Current key
@@ -370,6 +385,9 @@ Pane {
                                 ShapeViewerHelper.selectedShapeName = model.fullName
                             }
                         }
+                        ToolTip.text: hasShapeObservation ? "Remove current key" : "Set current key"
+                        ToolTip.visible: hovered
+                        ToolTip.delay: 800
                     }
 
                     // Next key
@@ -381,6 +399,9 @@ Pane {
                         checkable: false
                         enabled: nextViewId !== "-1"
                         onClicked: {  _reconstruction.selectedViewId = nextViewId }
+                        ToolTip.text: enabled ? "Next key" : "No next key"
+                        ToolTip.visible: hovered
+                        ToolTip.delay: 800
                     }
                 }
             }
@@ -393,6 +414,9 @@ Pane {
                     padding: 2
                     text: MaterialIcons.control_point
                     onClicked: _reconstruction.appendAttribute(model, undefined)
+                    ToolTip.text: "Add element"
+                    ToolTip.visible: hovered
+                    ToolTip.delay: 800
                 }
             }
 
@@ -406,6 +430,9 @@ Pane {
                     onClicked: {
                         _reconstruction.removeAttribute(model)
                     }
+                    ToolTip.text: "Remove element"
+                    ToolTip.visible: hovered
+                    ToolTip.delay: 800
                 }
             }
 

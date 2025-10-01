@@ -1,7 +1,6 @@
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, Slot
 from meshroom.core.attribute import Attribute
-import json
-import os
+import json, os, re
 
 class ShapeFile(BaseObject):
     """
@@ -136,14 +135,41 @@ class ShapeFile(BaseObject):
         """
         Load shapes from the json file. 
         """
+        def convertNumericStrings(obj):
+            """
+            Helper function to convert numeric strings.
+            """
+            if isinstance(obj, dict):
+                return {k: convertNumericStrings(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convertNumericStrings(elem) for elem in obj]
+            elif isinstance(obj, str):
+                # Check for int or float
+                if re.fullmatch(r'-?\d+', obj):
+                    return int(obj)
+                elif re.fullmatch(r'-?\d+\.\d*', obj):
+                    return float(obj)
+            return obj
+        
         # Clear model
         self._shapes.clear()
         # Load from json file
         if os.path.exists(self._fileAttribute.value):
             try:
                 with open(self._fileAttribute.value, "r") as f:
+                    # Load json
                     loadedData = json.load(f)
-                    for itemData in loadedData:
+                    # Handle both formats: direct array or object with "shapes" key
+                    if isinstance(loadedData, dict) and "shapes" in loadedData:
+                        shapesArray = loadedData["shapes"]
+                    elif isinstance(loadedData, list):
+                        shapesArray = loadedData
+                    else:
+                        print("Invalid JSON format: expected array or object with 'shapes' key")
+                        self.fileChanged.emit()
+                        return
+                    # Build shapes from proper shapes array
+                    for itemData in convertNumericStrings(shapesArray):
                         name = itemData.get("name", "unknown")
                         type = itemData.get("type", "unknown")
                         properties = itemData.get("properties", {})

@@ -1173,7 +1173,7 @@ class UIGraph(QObject):
     @Slot(Node, result=bool)
     def canComputeNode(self, node: Node) -> bool:
         """ Check if the node can be computed """
-        if node.isCompatibilityNode or not node.isComputableType:
+        if node.isCompatibilityNode or not node.isComputableType or node.getLocked():
             return False
         if node.isComputed:
             return True
@@ -1184,7 +1184,7 @@ class UIGraph(QObject):
     @Slot(Node, result=bool)
     def canSubmitNode(self, node: Node) -> bool:
         """ Check if the node can be submitted """
-        if node.isCompatibilityNode or not node.isComputableType:
+        if node.isCompatibilityNode or not node.isComputableType or node.getLocked():
             return False
         if node.isComputed:
             return True

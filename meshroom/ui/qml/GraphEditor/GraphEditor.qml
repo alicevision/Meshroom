@@ -1099,7 +1099,6 @@ Item {
         }
         
         onSubmitRequest: function(node) {
-            if (node.isComputed) uigraph.clearSelectedNodesData();
             root.submitRequest([node])
         }
     }

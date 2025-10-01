@@ -125,19 +125,19 @@ Item {
         function getComputeButtonState(node) {
             if (actionHeader.canStopNode)
                 return NodeActions.ButtonState.STOPPABLE
-            if (!actionHeader.nodeIsLocked) {
-                if (node.globalStatus == "SUCCESS")
-                    return NodeActions.ButtonState.DELETABLE
-                if (actionHeader.canComputeNode)
-                    return NodeActions.ButtonState.LAUNCHABLE
-            } 
+            if (!actionHeader.nodeIsLocked && node.globalStatus == "SUCCESS")
+                return NodeActions.ButtonState.DELETABLE
+            if (actionHeader.canComputeNode)
+                return NodeActions.ButtonState.LAUNCHABLE
             return NodeActions.ButtonState.DISABLED
         }
 
         function getSubmitButtonState(node) {
             if (actionHeader.nodeIsLocked || actionHeader.canStopNode)
                 return NodeActions.ButtonState.DISABLED
-            if (!actionHeader.nodeIsLocked && actionHeader.canSubmitNode)
+            if (!actionHeader.nodeIsLocked && node.globalStatus == "SUCCESS")
+                return NodeActions.ButtonState.DISABLED
+            if (actionHeader.canSubmitNode)
                 return NodeActions.ButtonState.LAUNCHABLE
             return NodeActions.ButtonState.DISABLED
         }
@@ -240,7 +240,7 @@ Item {
 
             // Clear node
             MaterialToolButton {
-                id: restartButton
+                id: deleteDataButton
                 font.pointSize: 16
                 text: MaterialIcons.delete_
                 padding: 6

@@ -62,7 +62,6 @@ Item {
                     model: ShapeFilesHelper.nodeShapeFiles
                     delegate: ShapeEditorItem { 
                         model: object
-                        active: !object.isEmpty
                         width: ListView.view.width 
                     }
                 }

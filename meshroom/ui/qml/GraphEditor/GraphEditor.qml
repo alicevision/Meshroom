@@ -1075,6 +1075,34 @@ Item {
         }
     }
 
+    NodeActions {
+        id: nodeActions
+        uigraph: root.uigraph
+        draggable: draggable
+        nodeRepeater: nodeRepeater
+        anchors.fill: parent
+        
+        onComputeRequest: function(node) {
+            root.computeRequest([node])
+        }
+        
+        onStopComputeRequest: function(node) {
+            if (node.canBeStopped()) {
+                uigraph.stopNodeComputation(node)
+            } else if (node.canBeCanceled()) {
+                uigraph.cancelNodeComputation(node)
+            }
+        }
+        
+        onDeleteDataRequest: function(node) {
+            uigraph.clearSelectedNodesData();
+        }
+        
+        onSubmitRequest: function(node) {
+            root.submitRequest([node])
+        }
+    }
+    
     MessageDialog {
         id: errorDialog
 

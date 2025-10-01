@@ -1169,8 +1169,29 @@ class UIGraph(QObject):
             logging.warning("Content is not a valid graph data.")
             return []
         return result
-
-
+    
+    @Slot(Node, result=bool)
+    def canComputeNode(self, node: Node) -> bool:
+        """ Check if the node can be computed """
+        if node.isCompatibilityNode or not node.isComputableType or node.getLocked():
+            return False
+        if node.isComputed:
+            return True
+        if self._graph.canComputeTopologically(node) and self._graph.canSubmitOrCompute(node) % 2 == 1:
+            return True
+        return False
+    
+    @Slot(Node, result=bool)
+    def canSubmitNode(self, node: Node) -> bool:
+        """ Check if the node can be submitted """
+        if node.isCompatibilityNode or not node.isComputableType or node.getLocked():
+            return False
+        if node.isComputed:
+            return True
+        if self._graph.canComputeTopologically(node) and self._graph.canSubmitOrCompute(node)> 1:
+            return True
+        return False
+    
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)

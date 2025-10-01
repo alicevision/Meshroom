@@ -90,6 +90,8 @@ class ShapeFile(BaseObject):
         properties = Property(Variant, lambda self: self._properties, constant=True)
         # The shape current observation.
         observation = Property(Variant, _getObservation, notify=viewIdChanged)
+        # The shape list of observation keys.
+        observationKeys = Property(Variant, lambda self: [key for key in self._observations], constant=True)
         # The number of observation defined.
         nbObservations = Property(int, _getNbObservations, constant=True) 
         # Whether the shape is displayable.

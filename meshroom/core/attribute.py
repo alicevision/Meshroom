@@ -1111,7 +1111,6 @@ class ShapeAttribute(GroupAttribute):
             return len(firstAttribute.keyValues.pairs)
         return 1
 
-    @raiseIfLink
     def _getObservationKeys(self) -> list:
         """
         Return the shape attribute list of observation keys.

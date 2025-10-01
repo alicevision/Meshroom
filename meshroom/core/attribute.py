@@ -1110,7 +1110,20 @@ class ShapeAttribute(GroupAttribute):
                 return firstAttribute.nbObservations
             return len(firstAttribute.keyValues.pairs)
         return 1
-    
+
+    @raiseIfLink
+    def _getObservationKeys(self) -> list:
+        """
+        Return the shape attribute list of observation keys.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        if not self.shapeKeyable:
+            return []
+        firstAttribute = next(iter(self.value.values()))
+        if isinstance(firstAttribute, ShapeAttribute):
+            return firstAttribute.observationKeys
+        return firstAttribute.keyValues.getKeys()
+
     @Slot(str, result=bool)
     def hasObservation(self, key: str) -> bool:
         """
@@ -1192,6 +1205,8 @@ class ShapeAttribute(GroupAttribute):
     isVisible = Property(bool, _getVisible, _setVisible, notify=shapeChanged)
     # The shape color for display.
     shapeColor = Property(str, _getColor, _setColor, notify=shapeChanged)
+    # The shape list of observation keys.
+    observationKeys = Property(Variant, _getObservationKeys, notify=observationsChanged)
     # The number of observation defined.
     nbObservations = Property(int, _getNbObservations, notify=observationsChanged) 
     # Whether the shape attribute childs are keyable.

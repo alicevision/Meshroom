@@ -323,7 +323,7 @@ Pane {
                 sourceComponent: MaterialToolButton {
                     font.pointSize: 11
                     padding: 2
-                    text: MaterialIcons.clear
+                    text: MaterialIcons.remove_circle_outline
                     onClicked: {
                         _reconstruction.removeAttribute(model)
                     }

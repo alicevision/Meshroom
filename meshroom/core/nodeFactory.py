@@ -51,7 +51,6 @@ class _NodeCreator:
         self.internalInputs = self.nodeData.get("internalInputs", {})
         self.outputs = self.nodeData.get("outputs", {})
         self.version = self.nodeData.get("version", None)
-        self.internalFolder = self.nodeData.get("internalFolder")
         self.position = Position(*self.nodeData.get("position", []))
         self.uid = self.nodeData.get("uid", None)
         self.nodeDesc = None
@@ -202,8 +201,8 @@ class _NodeCreator:
             logging.warning(f"Compatibility issue in template: performing automatic upgrade on '{self.name}'")
             return node.upgrade()
 
-        # Backward compatibility: "internalFolder" was not serialized.
-        if not self.internalFolder:
+        # Backward compatibility: "uid" was not serialized.
+        if not self.uid:
             logging.warning(f"No serialized output data: performing automatic upgrade on '{self.name}'")
             return node.upgrade()
 

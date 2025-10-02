@@ -18,19 +18,18 @@ from .utils import registerNodeDesc, unregisterNodeDesc
 LOGGER = logging.getLogger("TestCompute")
 
 
-def executeChunks(node, tmpPath, size):
-    nodeCache = os.path.join(tmpPath, node.internalFolder)
-    os.makedirs(nodeCache)
+def executeChunks(node, size):
+    os.makedirs(node.internalFolder)
     logFiles = {}
     for chunkIndex in range(size):
         iteration = chunkIndex if size > 1 else -1
         logFileName = "log"
         if size > 1:
             logFileName = f"{chunkIndex}.log"
-        logFile = Path(nodeCache) / logFileName
+        logFile = Path(node.internalFolder) / logFileName
         logFiles[chunkIndex] = logFile
         logFile.touch()
-        node.prepareLogger(iteration) 
+        node.prepareLogger(iteration)
         node.preprocess()
         if size > 1:
             chunk = node.chunks[chunkIndex]
@@ -104,9 +103,9 @@ class TestNodeC(desc.BaseNode):
 
 
 class TestNodeLogger:
-    
+
     logPrefix = r"\[\d{2}:\d{2}:\d{2}\.\d{3}\]\[info\] > "
-    
+
     @classmethod
     def setup_class(cls):
         registerNodeDesc(TestNodeA)
@@ -118,13 +117,14 @@ class TestNodeLogger:
         unregisterNodeDesc(TestNodeA)
         unregisterNodeDesc(TestNodeB)
         unregisterNodeDesc(TestNodeC)
-    
+
     def test_processChunks(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = tmp_path
         # TestNodeA : multiple chunks
-        nodeA = graph.addNewNode(TestNodeA.__name__)
-        logFiles = executeChunks(nodeA, tmp_path, 2)
+        node = graph.addNewNode(TestNodeA.__name__)
+        # Compute
+        logFiles = executeChunks(node, 2)
         for chunkIndex, logFile in logFiles.items():
             with open(logFile, "r") as f:
                 content = f.read()
@@ -134,7 +134,7 @@ class TestNodeLogger:
                 assert len(reg.findall(content)) == 1
         # TestNodeA : single chunk
         nodeB = graph.addNewNode(TestNodeB.__name__)
-        logFiles = executeChunks(nodeB, tmp_path, 1)
+        logFiles = executeChunks(nodeB, 1)
         for chunkIndex, logFile in logFiles.items():
             with open(logFile, "r") as f:
                 content = f.read()
@@ -142,12 +142,13 @@ class TestNodeLogger:
                 assert len(reg.findall(content)) == 1
                 reg = re.compile(self.logPrefix + r"\(root logger\) 0/0")
                 assert len(reg.findall(content)) == 1
-    
+
     def test_process(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = tmp_path
         node = graph.addNewNode(TestNodeC.__name__)
-        logFiles = executeChunks(node, tmp_path, 1)
+        # Compute
+        logFiles = executeChunks(node, 1)
         for _, logFile in logFiles.items():
             with open(logFile, "r") as f:
                 content = f.read()

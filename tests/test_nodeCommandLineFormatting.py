@@ -138,52 +138,52 @@ class TestCommandLineFormatting:
 
         # Values are not retrieved as strings in the command line, so quotes around them are
         # not expected
-        assert node._cmdVars["imagesValue"] == \
+        assert node._expVars["imagesValue"] == \
             'single value with space {} {}'.format(inputImages[0],
                                                    inputImages[1])
 
     def test_formatting_strings(self):
         graph = Graph("")
         node = graph.addNewNode("NodeWithAttributesNeedingFormatting")
-        node._buildCmdVars()
+        node._buildExpVars()
 
         # Assert an empty File attribute generates empty quotes when requesting its value as
         # a string
         assert node.input.getValueStr() == '""'
-        assert node._cmdVars["inputValue"] == ""
+        assert node._expVars["inputValue"] == ""
 
         # Assert a Choice attribute with a non-empty default value is surrounded with quotes
         # when requested as a string
         assert node.method.getValueStr() == '"MethodC"'
-        assert node._cmdVars["methodValue"] == "MethodC"
+        assert node._expVars["methodValue"] == "MethodC"
 
         # Assert that the empty list is really empty (no quotes)
         assert node.images.getValueStr() == ""
-        assert node._cmdVars["imagesValue"] == "", "Empty list should become fully empty"
+        assert node._expVars["imagesValue"] == "", "Empty list should become fully empty"
 
         # Assert that the list with one empty value generates empty quotes
         node.images.extend("")
         assert node.images.getValueStr() == '""', \
             "A list with one empty string should generate empty quotes"
-        assert node._cmdVars["imagesValue"] == "", \
+        assert node._expVars["imagesValue"] == "", \
             "The value is always only the value, so empty here"
 
         # Assert that a list with 2 empty strings generates quotes
         node.images.extend("")
         assert node.images.getValueStr() == '"" ""', \
             "A list with 2 empty strings should generate quotes"
-        assert node._cmdVars["imagesValue"] == ' ', \
+        assert node._expVars["imagesValue"] == ' ', \
             "The value is always only the value, so 2 empty strings with the " \
             "space separator in the middle"
 
     def test_formatting_groups(self):
         graph = Graph("")
         node = graph.addNewNode("NodeWithAttributesNeedingFormatting")
-        node._buildCmdVars()
+        node._buildExpVars()
 
         assert node.firstGroup.getValueStr() == '"False:3"'
-        assert node._cmdVars["firstGroupValue"] == 'False:3', \
+        assert node._expVars["firstGroupValue"] == 'False:3', \
             "There should be no quotes here as the value is not formatted as a string"
 
         assert node.secondGroup.getValueStr() == '"False,second_value,3.0"'
-        assert node._cmdVars["secondGroupValue"] == 'False,second_value,3.0'
+        assert node._expVars["secondGroupValue"] == 'False,second_value,3.0'

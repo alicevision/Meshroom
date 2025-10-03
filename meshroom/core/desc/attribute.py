@@ -10,13 +10,16 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, semantic, group, enabled, invalidate=True,
-                 uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, advanced, semantic, group, enabled, 
+                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None, 
+                 validValue=True, errorMessage="", visible=True, exposed=False):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
         self._description = description
         self._value = value
+        self._keyable = keyable
+        self._keyType = keyType
         self._group = group
         self._advanced = advanced
         self._enabled = enabled
@@ -46,6 +49,15 @@ class Attribute(BaseObject):
         """
         raise NotImplementedError("Attribute.validateValue is an abstract function that should be "
                                   "implemented in the derived class.")
+    
+    def validateKeyValues(self, keyValues):
+        """ Return validated/conformed 'keyValues'.
+
+        Raises:
+            ValueError: if a value does not have the proper type
+        """
+        return isinstance(keyValues, dict) and \
+               all(isinstance(k, str) and self.validateValue(v) for k,v in keyValues.items())
 
     def checkValueTypes(self):
         """ Returns the attribute's name if the default value's type is invalid or if the range's type (when available)
@@ -65,7 +77,10 @@ class Attribute(BaseObject):
             strict: strict test for the match (for instance, regarding a group with some parameter changes)
         """
         try:
-            self.validateValue(value)
+            if self._keyable:
+                self.validateKeyValues(value)
+            else:
+                self.validateValue(value)
         except ValueError:
             return False
         return True
@@ -82,6 +97,14 @@ class Attribute(BaseObject):
     #   The default value of the attribute's descriptor is None, so it is not an input value,
     #   but an output value that is computed during the Node's process execution.
     isDynamicValue = Property(bool, lambda self: self._isDynamicValue, constant=True)
+    # keyable:
+    #   Whether the attribute can have a distinct value per key.
+    #   By default, atribute value is not keyable.
+    keyable = Property(bool, lambda self: self._keyable, constant=True)
+    # keyType:
+    #   The type of key corresponding to the attribute value.
+    #   This property only makes sense for keyable attributes.
+    keyType = Property(str, lambda self: self._keyType, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
     advanced = Property(bool, lambda self: self._advanced, constant=True)
     enabled = Property(Variant, lambda self: self._enabled, constant=True)
@@ -265,11 +288,13 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, group, advanced, semantic, enabled, invalidate=True,
-                 uidIgnoreValue=None, validValue=True, errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, group, advanced, semantic, enabled, 
+                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None, 
+                 validValue=True, errorMessage="", visible=True, exposed=False):
         super(Param, self).__init__(name=name, label=label, description=description, value=value,
-                                    group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                    semantic=semantic, uidIgnoreValue=uidIgnoreValue, validValue=validValue,
+                                    keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
+                                    enabled=enabled, invalidate=invalidate, semantic=semantic, 
+                                    uidIgnoreValue=uidIgnoreValue, validValue=validValue,
                                     errorMessage=errorMessage, visible=visible, exposed=exposed)
 
 
@@ -302,11 +327,13 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, keyable=False, keyType=None, 
+                 group="allParams", advanced=False, enabled=True, invalidate=True, 
+                 semantic="", visible=True, exposed=False):
         super(BoolParam, self).__init__(name=name, label=label, description=description, value=value,
-                                        group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                        semantic=semantic, visible=visible, exposed=exposed)
+                                        keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
+                                        enabled=enabled, invalidate=invalidate, semantic=semantic, 
+                                        visible=visible, exposed=exposed)
         self._valueType = bool
 
     def validateValue(self, value):
@@ -330,12 +357,14 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range=None, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None, 
+                 group="allParams", advanced=False, enabled=True, invalidate=True, semantic="", 
+                 validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
         super(IntParam, self).__init__(name=name, label=label, description=description, value=value,
-                                       group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                       semantic=semantic, validValue=validValue, errorMessage=errorMessage,
+                                       keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
+                                       enabled=enabled, invalidate=invalidate, semantic=semantic, 
+                                       validValue=validValue, errorMessage=errorMessage,
                                        visible=visible, exposed=exposed)
         self._valueType = int
 
@@ -360,12 +389,14 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range=None, group="allParams", advanced=False, enabled=True,
-                 invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
+    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None, 
+                 group="allParams", advanced=False, enabled=True, invalidate=True, semantic="", 
+                 validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value,
-                                         group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
-                                         semantic=semantic, validValue=validValue, errorMessage=errorMessage,
+                                         keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
+                                         enabled=enabled, invalidate=invalidate, semantic=semantic, 
+                                         validValue=validValue, errorMessage=errorMessage,
                                          visible=visible, exposed=exposed)
         self._valueType = float
 

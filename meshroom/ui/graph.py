@@ -963,6 +963,21 @@ class UIGraph(QObject):
                         self.removeEdge(edge)
             self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.getDefaultValue()))
 
+    @Slot(Attribute, str, "QVariant")
+    def addAttributeKeyValue(self, attribute, key, value):
+        """ Add the given (key, value) pair to the given keyable attribute. """
+        self.push(commands.AddAttributeKeyValueCommand(self._graph, attribute, key, value))
+
+    @Slot(Attribute, str)
+    def addAttributeKeyDefaultValue(self, attribute, key):
+        """ Add the given key with the default value to the given keyable attribute. """
+        self.push(commands.AddAttributeKeyValueCommand(self._graph, attribute, key, attribute.getDefaultValue()))
+
+    @Slot(Attribute, str)
+    def removeAttributeKey(self, attribute, key):
+        """ Remove the given key from the given keyable attribute. """
+        self.push(commands.RemoveAttributeKeyCommand(self._graph, attribute, key))
+
     @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):
         """ Upgrade a CompatibilityNode. """

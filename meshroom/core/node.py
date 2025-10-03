@@ -949,7 +949,7 @@ class BaseNode(BaseObject):
             # In particular, when loading a project file, the UIDs are updated first,
             # and the node status and the dynamic output values are not yet loaded,
             # so we should not read the attribute value.
-            if not dynamicOutputAttr and attr.value == attr.desc.uidIgnoreValue:
+            if not dynamicOutputAttr and not attr.keyable and attr.value == attr.desc.uidIgnoreValue:
                 continue  # For non-dynamic attributes, check if the value should be ignored
             uidAttributes.append((attr.name, attr.uid()))
         uidAttributes.sort()
@@ -1270,7 +1270,7 @@ class BaseNode(BaseObject):
             # And we do not want notifications during the graph processing.
             return
 
-        if attr.value is None:
+        if not attr.keyable and attr.value is None:
             # Discard dynamic values depending on the graph processing.
             return
 

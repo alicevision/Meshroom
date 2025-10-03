@@ -305,8 +305,72 @@ class SetAttributeCommand(GraphCommand):
             self.graph.attribute(self.attrName).value = self.oldValue
         else:
             self.graph.internalAttribute(self.attrName).value = self.oldValue
+    
+class AddAttributeKeyValueCommand(GraphCommand):
+    def __init__(self, graph, attribute, key, value, parent=None):
+        super().__init__(graph, parent)
+        self.attrName = attribute.fullName
+        self.keyable = attribute.keyable
+        self.key = key
+        self.value = value
+        self.oldValue = None
+        if attribute.keyable and attribute.keyValues.hasKey(key):
+             self.oldValue = attribute.keyValues.pairs.get(int(key)).value
+        self.setText(f"Add (key, value) for attribute '{attribute.fullName}' at key: '{key}'")
 
+    def redoImpl(self):
+        if not self.keyable or self.value == self.oldValue:
+            return False
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).keyValues.add(self.key, self.value)
+        else:
+            self.graph.internalAttribute(self.attrName).keyValues.add(self.key, self.value)
+        return True
 
+    def undoImpl(self):
+        if not self.keyable or self.value == self.oldValue:
+            return False    
+        if self.graph.attribute(self.attrName) is not None:
+            if self.oldValue is None:
+                self.graph.attribute(self.attrName).keyValues.remove(self.key)
+            else:
+                self.graph.attribute(self.attrName).keyValues.add(self.key, self.oldValue)
+        else:
+            if self.oldValue is None:
+                self.graph.internalAttribute(self.attrName).keyValues.remove(self.key)
+            else:
+                self.graph.internalAttribute(self.attrName).keyValues.add(self.key, self.oldValue)
+        return True
+
+class RemoveAttributeKeyCommand(GraphCommand):
+    def __init__(self, graph, attribute, key, parent=None):
+        super().__init__(graph, parent)
+        self.attrName = attribute.fullName
+        self.keyable = attribute.keyable
+        self.key = key
+        self.oldValue = None
+        if attribute.keyable and attribute.keyValues.hasKey(key):
+             self.oldValue = attribute.keyValues.pairs.get(int(key)).value
+        self.setText(f"Remove (key, value) for attribute '{attribute.fullName}' at key: '{key}'")
+
+    def redoImpl(self):
+        if not self.keyable or self.oldValue == None:
+            return False
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).keyValues.remove(self.key)
+        else:
+            self.graph.internalAttribute(self.attrName).keyValues.remove(self.key)
+        return True
+
+    def undoImpl(self):
+        if not self.keyable or self.oldValue == None:
+            return False    
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).keyValues.add(self.key, self.oldValue)
+        else:
+            self.graph.internalAttribute(self.attrName).keyValues.add(self.key, self.oldValue)
+        return True
+    
 class AddEdgeCommand(GraphCommand):
     def __init__(self, graph, src, dst, parent=None):
         super().__init__(graph, parent)

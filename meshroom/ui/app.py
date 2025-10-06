@@ -27,6 +27,7 @@ from meshroom.ui.components.scene3D import Scene3DHelper, Transformations3DHelpe
 from meshroom.ui.components.scriptEditor import ScriptEditorManager
 from meshroom.ui.components.thumbnail import ThumbnailCache
 from meshroom.ui.components.messaging import MessageController
+from meshroom.ui.components.shapes import ShapeFilesHelper, ShapeViewerHelper
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
@@ -282,6 +283,8 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("Transformations3DHelper", Transformations3DHelper(parent=self))
         self.engine.rootContext().setContextProperty("Clipboard", ClipboardHelper(parent=self))
         self.engine.rootContext().setContextProperty("ThumbnailCache", ThumbnailCache(parent=self))
+        self.engine.rootContext().setContextProperty("ShapeFilesHelper", ShapeFilesHelper(self.activeProject, parent=self))
+        self.engine.rootContext().setContextProperty("ShapeViewerHelper", ShapeViewerHelper(parent=self))
 
         # additional context properties
         self._messageController = MessageController(parent=self)

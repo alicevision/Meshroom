@@ -27,7 +27,7 @@ ListView {
     ScrollBar.vertical: MScrollBar { id: scrollBar }
 
     delegate: Loader {
-        active: (object.enabled || object.hasAnyOutputLinks) && (
+        active: !object.hasDisplayableShape && (object.enabled || object.hasAnyOutputLinks) && (
             !objectsHideable
             || ((!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)
             && (object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)

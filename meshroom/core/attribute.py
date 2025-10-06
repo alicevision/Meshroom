@@ -539,6 +539,8 @@ class Attribute(BaseObject):
     is2dDisplayable = Property(bool, _is2dDisplayable, constant=True)
     # Whether the attribute value is displayable in 3d.
     is3dDisplayable = Property(bool, _is3dDisplayable, constant=True)
+    # Whether the attribute is a shape or a shape list, managed by the ShapeEditor and ShapeViewer.
+    hasDisplayableShape = Property(bool, lambda self: False, constant=True)
     
     # Attribute link properties and signals
     inputLinksChanged = Signal()
@@ -999,3 +1001,261 @@ class GroupAttribute(Attribute):
     # Override value property
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value), notify=Attribute.valueChanged)
+
+
+class ShapeAttribute(GroupAttribute):
+    """
+    GroupAttribute subtype tailored for shape-specific handling.
+    """
+
+    def __init__(self, node, attributeDesc: desc.Shape, isOutput: bool,
+                 root=None, parent=None):
+        self._visible = True
+        self._color = "#2A82DA" # default shape color
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+
+    # Override
+    # Signal observationsChanged should be emitted.
+    def _setValue(self, exportedValue):
+        super()._setValue(exportedValue)
+        self.observationsChanged.emit()
+
+    # Override
+    # Signal observationsChanged should be emitted.
+    def resetToDefaultValue(self):
+        super().resetToDefaultValue()
+        self.observationsChanged.emit()
+
+    # Override
+    # Signal observationsChanged should be emitted.
+    def upgradeValue(self, exportedValue):
+        super().upgradeValue(exportedValue)
+        self.observationsChanged.emit()
+
+    # Override
+    # Fix missing link expression serialization.
+    # Should be remove if link expression serialization is added in GroupAttribute.
+    def getSerializedValue(self):
+        if self.isLink:
+            return self._getInputLink().asLinkExpr() 
+        return {key: attr.getSerializedValue() for key, attr in self._value.objects.items()}
+    
+    def getValueAsDict(self) -> dict:
+        """
+        Return the shape attribute value as dict.
+        For not keyable shape, this is the same as getSerializedValue().
+        For keyable shape, the dict is indexed by key.
+        """
+        from collections import defaultdict
+        outValue = defaultdict(dict)
+        if self.isLink:
+            return self._getInputLink().asLinkExpr() 
+        if not self.shapeKeyable:
+            return super().getSerializedValue()
+        for attribute in self.value:
+            if isinstance(attribute, ShapeAttribute):
+                attributeDict = attribute.getValueAsDict()
+                if attributeDict:
+                    for key, value in attributeDict.items():
+                        outValue[key][attribute.name] = value
+            else:
+                for pair in attribute.keyValues.pairs:
+                    outValue[str(pair.key)][attribute.name] = pair.value
+        return dict(outValue)
+    
+    def _getVisible(self) -> bool:
+        """ 
+        Return whether the shape attribute is visible for display.
+        """
+        return self._visible
+    
+    def _setVisible(self, visible:bool):
+        """ 
+        Set the shape attribute visibility for display.
+        """
+        self._visible = visible
+        self.shapeChanged.emit()
+
+    def _getColor(self) -> str:
+        """ 
+        Return the shape attribute color for display.
+        """
+        if self.isLink:
+            return self.inputLink.shapeColor
+        return self._color
+    
+    @raiseIfLink
+    def _setColor(self, color: str):
+        """ 
+        Set the shape attribute color for display.
+        """
+        self._color = color
+        self.shapeChanged.emit()
+
+    def _hasKeyableChilds(self) -> bool:
+        """
+        Whether all child attributes are keyable.
+        """
+        return all((isinstance(attribute, ShapeAttribute) and attribute.shapeKeyable) or
+                    attribute.keyable for attribute in self.value)
+
+    def _getNbObservations(self) -> int:
+        """
+        Return the shape attribute number of observations.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        if self.shapeKeyable:
+            firstAttribute = next(iter(self.value.values()))
+            if isinstance(firstAttribute, ShapeAttribute):
+                return firstAttribute.nbObservations
+            return len(firstAttribute.keyValues.pairs)
+        return 1
+
+    def _getObservationKeys(self) -> list:
+        """
+        Return the shape attribute list of observation keys.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        if not self.shapeKeyable:
+            return []
+        firstAttribute = next(iter(self.value.values()))
+        if isinstance(firstAttribute, ShapeAttribute):
+            return firstAttribute.observationKeys
+        return firstAttribute.keyValues.getKeys()
+
+    @Slot(str, result=bool)
+    def hasObservation(self, key: str) -> bool:
+        """
+        Whether the shape attribute has an observation for the given key.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        if not self.shapeKeyable:
+            return True
+        return all((isinstance(attribute, ShapeAttribute) and attribute.hasObservation(key)) or
+                   (not isinstance(attribute, ShapeAttribute) and attribute.keyValues.hasKey(key))
+                   for attribute in self.value)
+    
+    @raiseIfLink
+    def removeObservation(self, key: str):
+        """
+        Remove the shape attribute observation for the given key.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        for attribute in self.value:
+            if isinstance(attribute, ShapeAttribute):
+                attribute.removeObservation(key)
+            else:
+                if attribute.keyable:
+                    attribute.keyValues.remove(key)
+                else:
+                    attribute.resetToDefaultValue()
+        self.observationsChanged.emit()
+
+    @raiseIfLink
+    def setObservation(self, key: str, observation: Variant):
+        """
+        Set the shape attribute observation for the given key with the given observation.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        for attributeStr, value in observation.items():
+            attribute = self.childAttribute(attributeStr)
+            if attribute is None:
+                raise RuntimeError(f"Cannot set shape observation for attribute {self._getFullName()} \
+                                   observation is incorrect.")
+            if isinstance(attribute, ShapeAttribute):
+                attribute.setObservation(key, value)
+            else:
+                if attribute.keyable:
+                    attribute.keyValues.add(key, value)
+                else:
+                    attribute.value = value
+        self.observationsChanged.emit()
+
+    @Slot(str, result=Variant)
+    def getObservation(self, key: str) -> Variant:
+        """
+        Return the shape attribute observation for the given key.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        observation = {}
+        for attribute in self.value:
+            if isinstance(attribute, ShapeAttribute):
+                shapeObservation = attribute.getObservation(key)
+                if shapeObservation is None:
+                    return None
+                else :
+                    observation[attribute.name] = shapeObservation
+            else:
+                if attribute.keyable:
+                    if attribute.keyValues.hasKey(key):
+                        observation[attribute.name] = attribute.keyValues.getValueAtKeyOrDefault(key)
+                    else:
+                        return None
+                else:
+                    observation[attribute.name] = attribute.value
+        return observation
+    
+    # Properties and signals
+    # Emitted when a shape related property changed (color, visibility).
+    shapeChanged = Signal()
+    # Emitted when a shape observation changed.
+    observationsChanged = Signal()
+    # Whether the shape is displayable.
+    isVisible = Property(bool, _getVisible, _setVisible, notify=shapeChanged)
+    # The shape color for display.
+    shapeColor = Property(str, _getColor, _setColor, notify=shapeChanged)
+    # The shape list of observation keys.
+    observationKeys = Property(Variant, _getObservationKeys, notify=observationsChanged)
+    # The number of observation defined.
+    nbObservations = Property(int, _getNbObservations, notify=observationsChanged) 
+    # Whether the shape attribute childs are keyable.
+    shapeKeyable = Property(bool,_hasKeyableChilds, constant=True)
+    # Override hasDisplayableShape property.
+    hasDisplayableShape = Property(bool, lambda self: True, constant=True)
+    # Override value property.
+    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
+
+class ShapeListAttribute(ListAttribute):
+    """
+    ListAttribute subtype tailored for shape-specific handling.
+    """
+
+    def __init__(self, node, attributeDesc: desc.ShapeList, isOutput: bool,
+                 root=None, parent=None):
+        self._visible = True
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+
+    def getShapesAsDicts(self):
+        """
+        Return the shape list attribute value as dict.
+        """
+        return [shapeAttribute.getValueAsDict() for shapeAttribute in self.value]
+
+    def _getVisible(self) -> bool:
+        """ 
+        Return whether the shape list is visible for display.
+        """
+        if self.isLink:
+            return self.inputLink.isVisible
+        return self._visible
+    
+    def _setVisible(self, visible:bool):
+        """ 
+        Set the shape visibility for display.
+        """
+        if self.isLink:
+            self.inputLink.isVisible = visible
+        else:
+            self._visible = visible
+        for attribute in self.value:
+            if isinstance(attribute, ShapeAttribute):
+                attribute.isVisible = visible
+        self.shapeListChanged.emit()
+
+    # Properties and signals
+    # Emitted when a shape list related property changed.
+    shapeListChanged = Signal()
+    # Whether the shape list is displayable.
+    isVisible = Property(bool, _getVisible, _setVisible, notify=shapeListChanged)
+    # Override hasDisplayableShape property.
+    hasDisplayableShape = Property(bool, lambda self: True, constant=True)

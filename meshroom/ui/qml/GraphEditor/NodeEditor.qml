@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Controls 1.0
 import MaterialIcons 2.2
 import Utils 1.0
+import Shapes 1.0
 
 /**
  * NodeEditor allows to visualize and edit the parameters of a Node.
@@ -294,23 +295,44 @@ Panel {
 
                         currentIndex: tabBar.currentIndex
 
-                        AttributeEditor {
-                            id: inOutAttr
-                            objectsHideable: true
-                            Layout.fillHeight: true
-                            Layout.fillWidth: true
-                            model: root.node.attributes
-                            readOnly: root.readOnly || root.isCompatibilityNode
-                            onAttributeDoubleClicked: function(mouse, attribute) { root.attributeDoubleClicked(mouse, attribute) }
-                            onUpgradeRequest: root.upgradeRequest()
-                            onShowInViewer: function (attribute) {root.showAttributeInViewer(attribute)}
-                            filterText: searchBar.text
+                        // First tab
+                        MSplitView {
+                            orientation: Qt.Vertical
 
-                            onInAttributeClicked: function(srcItem, mouse, inAttributes) {
-                                root.inAttributeClicked(srcItem, mouse, inAttributes)
+                            // Node shape editor
+                            Loader {
+                                id: shapeEditorLoader
+                                active: _reconstruction ? 
+                                    (_reconstruction.selectedNode ? _reconstruction.selectedNode.hasDisplayableShape : false) : false
+                                sourceComponent: ShapeEditor {
+                                    model: root.node.attributes
+                                    filterText: searchBar.text
+                                }
+                                SplitView.preferredHeight: active ? 200 : 0
+                                SplitView.minimumHeight: active ? 100 : 0
+                                SplitView.maximumHeight: active ? 400 : 0
                             }
-                            onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
-                                root.outAttributeClicked(srcItem, mouse, outAttributes)
+
+                            // Node attribute editor
+                            AttributeEditor {
+                                id: inOutAttr
+                                objectsHideable: true
+                                Layout.fillHeight: true
+                                Layout.fillWidth: true
+                                SplitView.minimumHeight: 100
+                                model: root.node.attributes
+                                readOnly: root.readOnly || root.isCompatibilityNode
+                                onAttributeDoubleClicked: function(mouse, attribute) { root.attributeDoubleClicked(mouse, attribute) }
+                                onUpgradeRequest: root.upgradeRequest()
+                                onShowInViewer: function (attribute) {root.showAttributeInViewer(attribute)}
+                                filterText: searchBar.text
+
+                                onInAttributeClicked: function(srcItem, mouse, inAttributes) {
+                                    root.inAttributeClicked(srcItem, mouse, inAttributes)
+                                }
+                                onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
+                                    root.outAttributeClicked(srcItem, mouse, outAttributes)
+                                }
                             }
                         }
 

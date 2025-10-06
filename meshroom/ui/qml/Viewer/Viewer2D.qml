@@ -832,6 +832,32 @@ FocusScope {
                     }
                 }
 
+                // ShapeViewer: display shapes and texts from current node shape attributes and json files
+                // Note: use a Loader 
+                ExifOrientedViewer {
+                    anchors.centerIn: parent
+                    width: imgContainer.width
+                    height: imgContainer.height
+                    xOrigin: imgContainer.width * 0.5
+                    yOrigin: imgContainer.height * 0.5
+                    orientationTag: imgContainer.orientationTag
+                    active: _reconstruction ? (_reconstruction.selectedNode ? _reconstruction.selectedNode.hasDisplayableShape : false) : false
+
+                    onActiveChanged: {
+                        if (active) {
+                            setSource("../Shapes/Viewer/ShapeViewer.qml", {
+                                "containerWidth": Qt.binding(function() { return imgContainer.width }),
+                                "containerHeight": Qt.binding(function() { return imgContainer.height }),
+                                "containerScale": Qt.binding(function() { return imgContainer.scale })
+                            })
+                        } else {
+                            // forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                            setSource("", {})
+
+                        }
+                    }
+                }
+
                 // FisheyeCircleViewer: display fisheye circle
                 // Note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
                 ExifOrientedViewer {

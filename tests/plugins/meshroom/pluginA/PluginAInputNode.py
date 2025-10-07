@@ -1,14 +1,9 @@
 __version__ = "1.0"
-__license__ = "no-license"
 
 from meshroom.core import desc
 
 
-class PluginCNodeA(desc.Node):
-    """PluginCNodeA"""
-
-    author = "testAuthor"
-
+class PluginANodeA(desc.InputNode):
     inputs = [
         desc.File(
             name="input",

@@ -1048,8 +1048,6 @@ class ShapeAttribute(GroupAttribute):
         """
         from collections import defaultdict
         outValue = defaultdict(dict)
-        if self.isLink:
-            return self._getInputLink().asLinkExpr() 
         if not self.shapeKeyable:
             return super().getSerializedValue()
         for attribute in self.value:

@@ -11,7 +11,6 @@ TextField {
 
     property bool hasExprError: false
     property bool isInt: false
-    property int decimals: 2
 
     // Overlay for error state (red border on top of default background)
     Rectangle {

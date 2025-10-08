@@ -124,7 +124,6 @@ FloatingPane {
                 ToolTip.text: "Color Gain (in linear colorspace)"
 
                 text: gainValue
-                decimals: 2
                 Layout.preferredWidth: textMetrics_gainValue.width
                 selectByMouse: true
                 onAccepted: {
@@ -164,7 +163,7 @@ FloatingPane {
 
                 onClicked: {
                     gammaLabel.text = gammaDefaultValue
-                    gammaCtrl.value = gammaLabel.text;
+                    gammaCtrl.value = gammaLabel.text
                 }
             }
             ExpressionTextField {
@@ -175,7 +174,6 @@ FloatingPane {
                 ToolTip.text: "Apply Gamma (after Gain and in linear colorspace)"
 
                 text: gammaValue
-                decimals: 2
                 Layout.preferredWidth: textMetrics_gainValue.width
                 selectByMouse: true
                 onAccepted: {

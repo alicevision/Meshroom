@@ -6,12 +6,11 @@ TextField {
 
     // evaluated numeric value (NaN if invalid)
     // It helps keeping the connection that text has so that we don't loose ability to undo/reset
-    property bool textChanged: false
+    property bool exprTextChanged: false
     property real evaluatedValue: 0
 
     property bool hasExprError: false
     property bool isInt: false
-    property int decimals: 2
 
     // Overlay for error state (red border on top of default background)
     Rectangle {
@@ -36,8 +35,6 @@ TextField {
         if (_err == false) {
             if (isInt)
                 _res = Math.round(_res)
-            else
-                _res = _res.toFixed(decimals)
             return _res
         } else {
             console.error("Error: Expression", _text, "is invalid")
@@ -63,7 +60,7 @@ TextField {
             evaluatedValue = previousEvaluatedValue
             raiseError()
         }
-        textChanged = false
+        exprTextChanged = false
     }
 
     // onAccepted and onEditingFinished will break the bindings to text
@@ -72,7 +69,7 @@ TextField {
     // No need to restore the binding if the expression has an error because we don't break it
 
     onAccepted: {
-        if (textChanged)
+        if (exprTextChanged)
         {
             updateExpression()
             if (!hasExprError && !isNaN(evaluatedValue)) {
@@ -80,34 +77,34 @@ TextField {
                 if (isInt)
                     root.text = Number(evaluatedValue).toFixed(0)
                 else
-                    root.text = Number(evaluatedValue).toFixed(decimals)
+                    root.text = Number(evaluatedValue)
             }
         }
     }
 
     onEditingFinished: {
-        if (textChanged)
+        if (exprTextChanged)
         {
             updateExpression()
             if (!hasExprError && !isNaN(evaluatedValue)) {
                 if (isInt)
                     root.text = Number(evaluatedValue).toFixed(0)
                 else
-                    root.text = Number(evaluatedValue).toFixed(decimals)
+                    root.text = Number(evaluatedValue)
             }
         }
     }
 
     onTextChanged: {
-        if (!activeFocus) {
+        if (!activeFocus && exprTextChanged) {
             refreshStatus()
         } else {
-            textChanged = true
+            exprTextChanged = true
         }
     }
 
     Component.onDestruction: {
-        if (textChanged) {
+        if (exprTextChanged) {
             root.accepted()
         }
     }

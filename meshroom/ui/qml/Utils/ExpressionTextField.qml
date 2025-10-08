@@ -6,7 +6,7 @@ TextField {
 
     // evaluated numeric value (NaN if invalid)
     // It helps keeping the connection that text has so that we don't loose ability to undo/reset
-    property bool textChanged: false
+    property bool exprTextChanged: false
     property real evaluatedValue: 0
 
     property bool hasExprError: false
@@ -63,7 +63,7 @@ TextField {
             evaluatedValue = previousEvaluatedValue
             raiseError()
         }
-        textChanged = false
+        exprTextChanged = false
     }
 
     // onAccepted and onEditingFinished will break the bindings to text
@@ -72,7 +72,7 @@ TextField {
     // No need to restore the binding if the expression has an error because we don't break it
 
     onAccepted: {
-        if (textChanged)
+        if (exprTextChanged)
         {
             updateExpression()
             if (!hasExprError && !isNaN(evaluatedValue)) {
@@ -86,7 +86,7 @@ TextField {
     }
 
     onEditingFinished: {
-        if (textChanged)
+        if (exprTextChanged)
         {
             updateExpression()
             if (!hasExprError && !isNaN(evaluatedValue)) {
@@ -102,12 +102,12 @@ TextField {
         if (!activeFocus) {
             refreshStatus()
         } else {
-            textChanged = true
+            exprTextChanged = true
         }
     }
 
     Component.onDestruction: {
-        if (textChanged) {
+        if (exprTextChanged) {
             root.accepted()
         }
     }

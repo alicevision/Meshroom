@@ -1060,6 +1060,35 @@ class ShapeAttribute(GroupAttribute):
                 for pair in attribute.keyValues.pairs:
                     outValue[str(pair.key)][attribute.name] = pair.value
         return dict(outValue)
+
+    def getShapeAsDict(self) -> dict:
+        """
+        Return the shape attribute as dict with the shape file structure.
+        """
+        outDict = { 
+            "name" : self.rootName, 
+            "type" : self.type, 
+            "properties" : { "color": self._color } 
+        }
+
+        if not self.shapeKeyable:
+            # Not keyable shape, use properties.
+            outDict.get("properties").update(super().getSerializedValue())
+        else:
+            # Keyable shape, use observations.
+            from collections import defaultdict
+            outObservations = defaultdict(dict)
+            for attribute in self.value:
+                if isinstance(attribute, ShapeAttribute):
+                    attributeDict = attribute.getValueAsDict()
+                    if attributeDict:
+                        for key, value in attributeDict.items():
+                            outObservations[key][attribute.name] = value
+                else:
+                    for pair in attribute.keyValues.pairs:
+                        outObservations[str(pair.key)][attribute.name] = pair.value
+            outDict.update({ "observations" : dict(outObservations)})
+        return outDict
     
     def _getVisible(self) -> bool:
         """ 
@@ -1223,11 +1252,17 @@ class ShapeListAttribute(ListAttribute):
         self._visible = True
         super().__init__(node, attributeDesc, isOutput, root, parent)
 
-    def getShapesAsDicts(self):
+    def getValuesAsDicts(self):
         """
-        Return the shape list attribute value as dict.
+        Return the values of the children of the shape list attribute.
         """
         return [shapeAttribute.getValueAsDict() for shapeAttribute in self.value]
+
+    def getShapesAsDicts(self):
+        """
+        Return the children of the shape list attribute.
+        """
+        return [shapeAttribute.getShapeAsDict() for shapeAttribute in self.value]
 
     def _getVisible(self) -> bool:
         """ 

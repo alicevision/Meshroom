@@ -36,8 +36,6 @@ TextField {
         if (_err == false) {
             if (isInt)
                 _res = Math.round(_res)
-            else
-                _res = _res.toFixed(decimals)
             return _res
         } else {
             console.error("Error: Expression", _text, "is invalid")
@@ -80,7 +78,7 @@ TextField {
                 if (isInt)
                     root.text = Number(evaluatedValue).toFixed(0)
                 else
-                    root.text = Number(evaluatedValue).toFixed(decimals)
+                    root.text = Number(evaluatedValue)
             }
         }
     }
@@ -93,7 +91,7 @@ TextField {
                 if (isInt)
                     root.text = Number(evaluatedValue).toFixed(0)
                 else
-                    root.text = Number(evaluatedValue).toFixed(decimals)
+                    root.text = Number(evaluatedValue)
             }
         }
     }

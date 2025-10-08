@@ -171,22 +171,26 @@ Pane {
         }
 
         // Shape attributes dropdown
-        MaterialToolButton {
-            font.pointSize: 11
-            padding: 2
-            text: {
-                if(isExpanded) {
-                    return (isShape) ?  MaterialIcons.arrow_drop_down : MaterialIcons.keyboard_arrow_down
+        // For now, only for ShapeFile and ShapeListAttribute
+        Loader {
+            active: !isShape 
+            sourceComponent: MaterialToolButton {
+                font.pointSize: 11
+                padding: 2
+                text: {
+                    if(isExpanded) {
+                        return (isShape) ?  MaterialIcons.arrow_drop_down : MaterialIcons.keyboard_arrow_down
+                    }
+                    else {
+                        return (isShape) ?  MaterialIcons.arrow_right : MaterialIcons.keyboard_arrow_right
+                    }
                 }
-                else {
-                    return (isShape) ?  MaterialIcons.arrow_right : MaterialIcons.keyboard_arrow_right
-                }
+                onClicked: { isExpanded = !isExpanded }
+                enabled: true
+                ToolTip.text: isExpanded ? "Collapse" : "Expand"
+                ToolTip.visible: hovered
+                ToolTip.delay: 800
             }
-            onClicked: { isExpanded = !isExpanded }
-            enabled: true
-            ToolTip.text: isExpanded ? "Collapse" : "Expand"
-            ToolTip.visible: hovered
-            ToolTip.delay: 800
         }
 
         // Shape color

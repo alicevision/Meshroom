@@ -26,8 +26,12 @@ Item {
         ScrollView {
             anchors.fill: parent
 
-            // Disable horizontal scroll
+            // Disable horizontal scrolling
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+            // Ensure that vertical scrolling is always enabled when necessary
+            ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+            ScrollBar.vertical.visible: contentHeight > height
         
             ColumnLayout {
                 anchors.fill: parent
@@ -62,7 +66,7 @@ Item {
                     model: ShapeFilesHelper.nodeShapeFiles
                     delegate: ShapeEditorItem { 
                         model: object
-                        width: ListView.view.width 
+                        width: ListView.view.width
                     }
                 }
             }

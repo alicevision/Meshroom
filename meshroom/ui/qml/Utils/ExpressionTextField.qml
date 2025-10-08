@@ -99,7 +99,7 @@ TextField {
     }
 
     onTextChanged: {
-        if (!activeFocus) {
+        if (!activeFocus && exprTextChanged) {
             refreshStatus()
         } else {
             exprTextChanged = true

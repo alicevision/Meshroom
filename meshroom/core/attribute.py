@@ -1186,6 +1186,10 @@ class ShapeAttribute(GroupAttribute):
     # Connect geometry attribute valueChanged to emit geometryChanged signal.
     def _initValue(self):
         super()._initValue()
+        # Using Attribute.valueChanged for the userName, userColor, geometry properties results in a segmentation fault.
+        # As a workaround, we manually connect valueChanged to shapeChanged or geometryChanged.
+        self.value.get("userName").valueChanged.connect(self._onShapeChanged)
+        self.value.get("userColor").valueChanged.connect(self._onShapeChanged)
         self.geometry.valueChanged.connect(self._onGeometryChanged)
 
     # Override
@@ -1230,32 +1234,20 @@ class ShapeAttribute(GroupAttribute):
         """ 
         Return the shape attribute user name for display.
         """
-        if self.isLink:
-            return self.inputLink.value.get("userName").value
-        return self._value.get("userName").value
-    
-    @raiseIfLink
-    def _setUserName(self, color: str):
-        """ 
-        Set the shape attribute user name for display.
-        """
-        self._value.get("userName").value = color
-        self.shapeChanged.emit()
+        return self.value.get("userName").value
 
     def _getUserColor(self) -> str:
         """ 
         Return the shape attribute user color for display.
         """
-        if self.isLink:
-            return self.inputLink.value.get("userColor").value
-        return self._value.get("userColor").value
+        return self.value.get("userColor").value
     
-    @raiseIfLink
-    def _setUserColor(self, color: str):
-        """ 
-        Set the shape attribute user color for display.
+    @Slot()
+    def _onShapeChanged(self):
         """
-        self._value.get("userColor").value = color
+        Emit shapeChanged signal.
+        Used when shape userName or userColor value changed.
+        """
         self.shapeChanged.emit()
 
     @Slot()
@@ -1274,9 +1266,9 @@ class ShapeAttribute(GroupAttribute):
     # Whether the shape is displayable.
     isVisible = Property(bool, _getVisible, _setVisible, notify=shapeChanged)
     # The shape user name for display.
-    userName = Property(str, _getUserName, _setUserName, notify=shapeChanged)
+    userName = Property(str, _getUserName, notify=shapeChanged)
     # The shape user color for display.
-    userColor = Property(str, _getUserColor, _setUserColor, notify=shapeChanged)
+    userColor = Property(str, _getUserColor, notify=shapeChanged)
     # The shape geometry group attribute.
     geometry = Property(Variant, lambda self: self.value.get("geometry"), notify=geometryChanged)
     # Override hasDisplayableShape property.

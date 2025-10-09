@@ -11,10 +11,14 @@ from .attribute import (
     PushButtonParam,
     StringParam,
 )
+from .geometryAttribute import (
+    Geometry,
+    Size2d,
+    Vec2d,
+)
 from .shapeAttribute import (
     Shape,
     ShapeList,
-    Size2d,
     Point2d,
     Line2d,
     Rectangle,

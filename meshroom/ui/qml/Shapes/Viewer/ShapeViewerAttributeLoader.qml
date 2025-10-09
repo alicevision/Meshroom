@@ -15,8 +15,8 @@ Loader {
     property real scaleRatio: 1.0
 
     // Attribute should be shape or shape list
-    // Attribute should be visible and not default
-    active: attribute.hasDisplayableShape && attribute.isVisible && !attribute.isDefault
+    // Attribute should be visible
+    active: attribute.hasDisplayableShape && attribute.isVisible 
 
     // Source component
     sourceComponent: {
@@ -29,6 +29,7 @@ Loader {
     Component {
         id: shapeAttributeComponent
         ShapeViewerAttributeLayer {
+            active: !attribute.geometry.isDefault
             shapeAttribute: attribute
             scaleRatio: attributeLoader.scaleRatio
         }
@@ -40,7 +41,7 @@ Loader {
         Repeater {
             model: attribute.value
             delegate: ShapeViewerAttributeLayer {
-                active: object.isVisible && !object.isDefault
+                active: object.isVisible && !object.geometry.isDefault
                 shapeAttribute: object
                 isLinkChild: attribute.isLink
                 scaleRatio: attributeLoader.scaleRatio

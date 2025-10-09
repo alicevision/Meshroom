@@ -23,7 +23,6 @@ Column {
     ItemUtils.ItemHeader {
         id: itemHeader
         model: shapeData
-        hasShapeObservation: shapeData.hasObservation(_reconstruction.selectedViewId)
         isShape: true
         isAttribute: false
     }

@@ -43,11 +43,6 @@ Item {
         ShapeViewerHelper.selectedShapeName = name
     }
 
-    // Helper function to get scaled point size
-    function getScaledPointSize() {
-        return Math.max(0.5, (baseLayer.properties.size || 10.0) * baseLayer.scaleRatio)
-    }
-
     // Helper function to get scaled handle size
     function getScaledHandleSize() {
         return Math.max(0.5, 8.0 * scaleRatio)

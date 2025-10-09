@@ -262,7 +262,7 @@ Pane {
                         return model.rootName
                     return model.label
                 }
-                enabled: isAttribute && model.root && (model.root.type === "ShapeList")
+                enabled: isAttributeEnabled && model.root && (model.root.type === "ShapeList")
                 onEditingFinished: { 
                     model.userName = text
                     focus = false

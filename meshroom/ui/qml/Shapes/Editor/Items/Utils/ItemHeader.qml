@@ -217,7 +217,7 @@ Pane {
                 title: "Edit " + model.label + " color"
                 selectedColor: model.userColor
                 onAccepted: {
-                    model.userColor = selectedColor
+                    _reconstruction.setAttribute(model.childAttribute("userColor"), selectedColor.toString())
                     close()
                 }
                 onRejected: close()
@@ -264,7 +264,7 @@ Pane {
                 }
                 enabled: isAttributeEnabled && model.root && (model.root.type === "ShapeList")
                 onEditingFinished: { 
-                    model.userName = text
+                    _reconstruction.setAttribute(model.childAttribute("userName"), text)
                     focus = false
                 }
             }

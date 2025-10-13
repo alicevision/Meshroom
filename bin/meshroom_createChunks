@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+import argparse
+import logging
+import os
+import sys
+
+try:
+    import meshroom
+except Exception:
+    # If meshroom module is not in the PYTHONPATH, add our root using the relative path
+    import pathlib
+    meshroomRootFolder = pathlib.Path(__file__).parent.parent.resolve()
+    sys.path.append(meshroomRootFolder)
+    import meshroom
+meshroom.setupEnvironment()
+
+import meshroom.core
+import meshroom.core.graph
+from meshroom.core.submitter import jobManager
+from meshroom.core import submitters
+from meshroom.core.submitter import SubmitterOptionsEnum
+from meshroom.core.node import Status
+
+
+parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
+parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,
+                    help='Filepath to a graph file.')
+parser.add_argument('--node', metavar='NODE_NAME', type=str, required=True,
+                    help='Process the node. It will generate an error if the dependencies are not already computed.')
+parser.add_argument('--inCurrentEnv', help='Execute process in current env without creating a dedicated runtime environment.',
+                    action='store_true')
+parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
+                    action='store_true')
+parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
+                    action='store_true')
+parser.add_argument('--extern', help='Use this option when you compute externally after submission to a render farm from meshroom.',
+                    action='store_true')
+parser.add_argument('--cache', metavar='FOLDER', type=str,
+                    default=None,
+                    help='Override the cache folder')
+parser.add_argument('-v', '--verbose',
+                    help='Set the verbosity level for logging:\n'
+                            '  - fatal: Show only critical errors.\n'
+                            '  - error: Show errors only.\n'
+                            '  - warning: Show warnings and errors.\n'
+                            '  - info: Show standard informational messages.\n'
+                            '  - debug: Show detailed debug information.\n'
+                            '  - trace: Show all messages, including trace-level details.',
+                    default=os.environ.get('MESHROOM_VERBOSE', 'info'),
+                    choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'])
+
+args = parser.parse_args()
+
+# For extern computation, we want to focus on the node computation log.
+# So, we avoid polluting the log with general warning about plugins, versions of nodes in file, etc.
+logging.getLogger().setLevel(level=logging.INFO)
+
+meshroom.core.initPlugins()
+meshroom.core.initNodes()
+meshroom.core.initSubmitters()  # Required to spool child job
+
+graph = meshroom.core.graph.loadGraph(args.graphFile)
+if args.cache:
+    graph.cacheDir = args.cache
+graph.update()
+
+# Execute the node
+node = graph.findNode(args.node)
+submittedStatuses = [Status.RUNNING]
+
+
+# Find job
+submitter, job = None, None
+# It's required if we want to spool chunks on different machines
+jobInfos = node._nodestatus.jobInfos
+submitterName, jid = jobInfos.get("submitterName"), jobInfos.get("jid")
+for subName, sub in submitters.items():
+    if not sub._options.includes(SubmitterOptionsEnum.RETRIEVE):
+        continue
+    if submitterName == subName:
+        submitter = sub
+        job = jobManager.retreiveJob(sub, jid)
+        break
+
+if not (hasattr(node, '_chunksCreated') and node._chunksCreated):
+    # Create node chunks
+    # Once created we don't have to do it again even if we relaunch the job
+    node._createChunks()
+
+# Get chunks to process in the current process
+chunksToProcess = []
+if job:
+    if not job.submitterOptions.includes(SubmitterOptionsEnum.EDIT_TASKS):
+        chunksToProcess = node.chunks
+else:
+    # Cannot retrieve job -> execute process serially
+    chunksToProcess = node.chunks
+
+logging.info("[MeshroomCreateChunks] Chunks to process here :", chunksToProcess)
+
+# Identify if the current process 
+# is a running chunk or if we need to spool the chunk job
+# 
+
+# - create map from job/no des
+# - if we are on a task process
+# - do like before
+pass
+
+if not args.forceStatus and not args.forceCompute:
+    for chunk in chunksToProcess:
+        if chunk.status.status in submittedStatuses:
+            # Particular case for the local isolated, the node status is set to RUNNING by the submitter directly.
+            # We ensure that no other instance has started to compute, by checking that the sessionUid is empty.
+            if chunk.node.getMrNodeType() == meshroom.core.MrNodeType.NODE and not chunk.status.sessionUid and chunk.status.submitterSessionUid:
+                continue
+            logging.warning(
+                f"[MeshroomCreateChunks] Node is already submitted with status " \
+                f"\"{chunk.status.status.name}\". See file: \"{chunk.statusFile}\". " \
+                f"ExecMode: {chunk.status.execMode.name}, SessionUid: {chunk.status.sessionUid}, " \
+                f"submitterSessionUid: {chunk.status.submitterSessionUid}")
+            # sys.exit(-1)
+
+if chunksToProcess:
+    node.prepareLogger()
+    node.preprocess()
+    for chunk in chunksToProcess:
+        logging.info(f"[MeshroomCreateChunks] process chunk {chunk}")
+        chunk.process(args.forceCompute, args.inCurrentEnv)
+    node.postprocess()
+    node.restoreLogger()
+else:
+    logging.info(f"[MeshroomCreateChunks] -> create job to process chunks {node.chunks}")
+    job.addChunkTask(node, graphFile=args.graphFile, cache=args.cache, 
+                     forceStatus=args.forceStatus, forceCompute=args.forceCompute)
+
+# Restore the log level
+logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])

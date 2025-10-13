@@ -16,7 +16,7 @@ meshroom.setupEnvironment()
 
 import meshroom.core
 import meshroom.core.graph
-from meshroom.core.node import Status, ExecMode
+from meshroom.core.node import Status
 
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
@@ -83,6 +83,12 @@ if args.node:
         # If running as "extern", the task is supposed to have the status SUBMITTED.
         # If not running as "extern", the SUBMITTED status should generate a warning.
         submittedStatuses.append(Status.SUBMITTED)
+        
+    if not node._chunksCreated:
+        print(f"Error: Node {node} has been submitted before chunks have been created." \
+               "See file: \"{node.nodeStatusFile}\".")
+        sys.exit(-1)
+
     if not args.forceStatus and not args.forceCompute:
         if args.iteration != -1:
             chunks = [node.chunks[args.iteration]]

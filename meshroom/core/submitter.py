@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
 import logging
+import operator
+
 from enum import IntFlag, auto
 from typing import Optional
+from itertools import accumulate
+
 from meshroom.common import BaseObject, Property
+
 
 logger = logging.getLogger("Submitter")
 logger.setLevel(logging.INFO)
@@ -26,7 +31,8 @@ class SubmitterOptionsEnum(IntFlag):
             return option
         return 0
 
-SubmitterOptionsEnum.ALL = SubmitterOptionsEnum._all_bits_
+# SubmitterOptionsEnum.ALL = SubmitterOptionsEnum(SubmitterOptionsEnum._all_bits_)  # _all_bits_ -> py 3.11
+SubmitterOptionsEnum.ALL = list(accumulate(SubmitterOptionsEnum, operator.__ior__))[-1]
 
 
 class SubmitterOptions:
@@ -74,7 +80,7 @@ class BaseSubmittedJob:
             raise NotImplementedError("'interruptJob' method must be implemented in subclasses")
         else:
             raise RuntimeError(f"Submitter {self.__class__.__name__} cannot interrupt the job")
-    
+
     # TODO : interrupt for specific node/chunk
 
     def resumeJob(self):
@@ -82,7 +88,7 @@ class BaseSubmittedJob:
             raise NotImplementedError("'resumeJob' method must be implemented in subclasses")
         else:
             raise RuntimeError(f"Submitter {self.__class__.__name__} cannot resume the job")
-    
+
     # TODO : resume for specific node/chunk
 
     def restartErrorTasks(self):
@@ -100,12 +106,12 @@ class BaseSubmittedJob:
 
 class JobManager(BaseObject):
     """ Central manager for all jobs """
-    
+
     def __init__(self):
         super().__init__()
         self._jobs = {}  # jobId -> BaseSubmittedJob
         self._nodeToJob = {}  # node uid -> Job
-    
+
     def addJob(self, job: BaseSubmittedJob, nodes):
         jid = job.jid
         if jid not in self._jobs:
@@ -115,10 +121,10 @@ class JobManager(BaseObject):
             self._nodeToJob[nodeUid] = jid
             # Update the node status file to store the job ID
             node.setJobId(jid, job.submitterName)
-    
+
     def getJob(self, jobId: str) -> Optional[BaseSubmittedJob]:
         return self._jobs.get(jobId)
-    
+
     def removeJob(self, jobId: str):
         with self._lock:
             if jobId in self._jobs:
@@ -130,7 +136,7 @@ class JobManager(BaseObject):
         if jobId:
             return self.getJob(jobId)
         return None
-    
+
     def retreiveJob(self, submitter, jid) -> Optional[BaseSubmittedJob]:
         if not submitter._options.includes(SubmitterOptionsEnum.RETRIEVE):
             return None

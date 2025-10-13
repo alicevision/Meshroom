@@ -90,6 +90,9 @@ class BaseNode(object):
     documentation = ""
     category = "Other"
     plugin = None
+    # Licenses required to run the plugin
+    # Only used to select machines on the farm when the node is submitted
+    _licenses = []
 
     def __init__(self):
         super(BaseNode, self).__init__()

@@ -425,7 +425,10 @@ class UIGraph(QObject):
 
     def updateChunks(self):
         dfsNodes = self._graph.dfsOnFinish(None)[0]
-        chunks = self._graph.getChunks(dfsNodes)
+        chunks = []
+        for node in dfsNodes:
+            if hasattr(node, '_chunksCreated') and node._chunksCreated:
+                chunks.extend(node.getChunks())
         # Nothing has changed, return
         if self._sortedDFSChunks.objectList() == chunks:
             return
@@ -547,7 +550,7 @@ class UIGraph(QObject):
             return
         self._taskManager.requestBlockRestart()
         self._graph.stopExecution()
-        self._taskManager._thread.join()
+        self._taskManager._thread.wait()
 
     @Slot(Node)
     def stopNodeComputation(self, node):
@@ -557,7 +560,7 @@ class UIGraph(QObject):
 
         # Stop the node and wait Task Manager
         node.stopComputation()
-        self._taskManager._thread.join()
+        self._taskManager._thread.wait()
 
     @Slot(Node)
     def cancelNodeComputation(self, node):
@@ -588,6 +591,8 @@ class UIGraph(QObject):
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
         mrDefaultSubmitter = os.environ.get('MESHROOM_DEFAULT_SUBMITTER', '')
         chosenSubmitter = self.parent()._defaultSubmitterName or mrDefaultSubmitter
+        self.parent().showMessage(f"Submit job on farm through {chosenSubmitter}")
+        self.parent().showMessage(f"Nodes to submit : {nodes}")
         self._taskManager.submit(self._graph, chosenSubmitter, nodes, submitLabel=self.submitLabel)
 
     def updateGraphComputingStatus(self):

@@ -1,5 +1,7 @@
+import traceback
 import logging
 from threading import Thread
+from PySide6.QtCore import QThread, QEventLoop, QTimer
 from enum import Enum
 
 import meshroom
@@ -20,18 +22,50 @@ class State(Enum):
     ERROR = 4
 
 
-class TaskThread(Thread):
+class TaskThread(QThread):
     """
     A thread with a pile of nodes to compute
     """
     def __init__(self, manager):
-        Thread.__init__(self, target=self.run)
+        QThread.__init__(self)
         self._state = State.IDLE
         self._manager = manager
         self.forceCompute = False
+        # Connect to manager's chunk creation handler
+        self.createChunksSignal.connect(manager.createChunks)
 
     def isRunning(self):
         return self._state == State.RUNNING
+
+    def waitForChunkCreation(self, node):
+        if hasattr(node, "_chunksCreated") and node._chunksCreated:
+            return True
+
+        loop = QEventLoop()
+
+        # A timer is used to make sure we don't indefinitely block the taskManager
+        timer = QTimer()
+        timer.timeout.connect(loop.quit)
+        timer.setSingleShot(True)
+        timer.start(1*60*1000)  # 1 min timeout
+
+        # Connect to completion signal
+        def onChunksCreated(createdNode):
+            if createdNode == node:
+                loop.quit()
+
+        self._manager.chunksCreated.connect(onChunksCreated)
+
+        try:
+            # Start the event loop - will block until signal or timeout
+            loop.exec()
+            success = hasattr(node, "_chunksCreated") and node._chunksCreated
+            if not success:
+                logging.error(f"Timeout or failure creating chunks for {node.name}")
+            return success
+        finally:
+            self._manager.chunksCreated.disconnect(onChunksCreated)
+            timer.stop()
 
     def run(self):
         """ Consume compute tasks. """
@@ -45,6 +79,20 @@ class TaskThread(Thread):
             if node.isFinishedOrRunning() or node.isCompatibilityNode:
                 continue
 
+            # Request chunk creation if not already done
+            if not (hasattr(node, "_chunksCreated") and node._chunksCreated):
+                self.createChunksSignal.emit(node)
+                # Wait for chunk creation to complete
+                if not self.waitForChunkCreation(node):
+                    logging.error(f"Failed to create chunks for {node.name}, stopping the process")
+                    break
+
+            # if a node does not exist anymore, node.chunks becomes a PySide property
+            try:
+                multiChunks = len(node.chunks) > 1
+            except TypeError:
+                continue
+
             # if a node does not exist anymore, node.chunks becomes a PySide property
             try:
                 multiChunks = len(node.chunks) > 1
@@ -55,11 +103,14 @@ class TaskThread(Thread):
             for cId, chunk in enumerate(node.chunks):
                 if chunk.isFinishedOrRunning() or not self.isRunning():
                     continue
+                
+                _nodeName, _node, _nbNodes = node.nodeType, nId+1, len(self._manager._nodesToProcess)
 
                 if multiChunks:
-                    logging.info(f'[{nId+1}/{len(self._manager._nodesToProcess)}]({cId+1}/{len(node.chunks)}) {node.nodeType}')
+                    _chunk, _nbChunks = cId+1, len(node.chunks)
+                    logging.info(f"[{_node}/{_nbNodes}]({_chunk}/{_nbChunks}) {_nodeName}")
                 else:
-                    logging.info(f'[{nId+1}/{len(self._manager._nodesToProcess)}] {node.nodeType}')
+                    logging.info(f"[{_node}/{_nbNodes}] {_nodeName}")
                 try:
                     chunk.process(self.forceCompute)
                 except Exception as exc:
@@ -88,6 +139,9 @@ class TaskThread(Thread):
         else:
             self._manager._nodesToProcess = []
             self._state = State.DEAD
+    
+    # Signals and properties
+    createChunksSignal = Signal(BaseObject)
 
 
 class TaskManager(BaseObject):
@@ -106,7 +160,18 @@ class TaskManager(BaseObject):
         self._blockRestart = False
         self.restartRequested.connect(self.restart)
 
-    def requestBlockRestart(self):
+    @Slot(BaseObject)
+    def createChunks(self, node):
+        """ Create chunks on main process """
+        try:
+            if not (hasattr(node, '_chunksCreated') and node._chunksCreated):
+                node._createChunks()
+            self.chunksCreated.emit(node)
+        except Exception as e:
+            logging.error(f"Failed to create chunks for {node.name}: {e}")
+            self.chunksCreated.emit(node)  # Still emit to unblock waiting thread 
+
+    def requestBlockRestart(self):  
         """
         Block computing.
         Note: should only be used to completely stop computing.
@@ -135,7 +200,8 @@ class TaskManager(BaseObject):
         Note: this is done like this to avoid app freezing.
         """
         # Make sure to wait the end of the current thread
-        self._thread.join()
+        if self._thread.isRunning():
+            self._thread.wait()
 
         # Avoid restart if thread was globally stopped
         if self._blockRestart:
@@ -436,7 +502,7 @@ class TaskManager(BaseObject):
             if not allReady:
                 self.raiseDependenciesMessage("SUBMITTING")
         except Exception as exc:
-            logging.error(f"Error on submit: {exc}")
+            logging.error(f"Error on submit : {exc}\n{traceback.format_exc()}")
 
     def submitFromFile(self, graphFile, submitter, toNode=None, submitLabel="{projectName}"):
         """
@@ -460,4 +526,5 @@ class TaskManager(BaseObject):
         return out
 
     nodes = Property(BaseObject, lambda self: self._nodes, constant=True)
+    chunksCreated = Signal(BaseObject)
     restartRequested = Signal()

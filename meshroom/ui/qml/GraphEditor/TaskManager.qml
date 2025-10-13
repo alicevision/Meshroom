@@ -252,21 +252,23 @@ Item {
 
                     spacing: 3
 
-                    delegate: Label {
+                    delegate: Loader {
                         width: ListView.view.model ? (ListView.view.width / ListView.view.model.count) - 3 : 0
                         height: ListView.view.height
-                        anchors.verticalCenter: parent.verticalCenter
-                        background: Rectangle {
-                            color: Colors.getChunkColor(object, {"NONE": bgColor})
-                            radius: 3
-                            border.width: 2
-                            border.color: chunkList.node === uigraph.selectedNode ? Colors.sysPalette.text : Colors.getChunkColor(object, {"NONE": bgColor})
-                        }
-
-                        MouseArea {
+                        sourceComponent: Label {
                             anchors.fill: parent
-                            onPressed: {
-                                selectNode(chunkList.node)
+                            background: Rectangle {
+                                color: Colors.getChunkColor(object, {"NONE": bgColor})
+                                radius: 3
+                                border.width: 2
+                                border.color: chunkList.node === uigraph.selectedNode ? Colors.sysPalette.text : "transparent"
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onPressed: {
+                                    selectNode(chunkList.node)
+                                }
                             }
                         }
                     }

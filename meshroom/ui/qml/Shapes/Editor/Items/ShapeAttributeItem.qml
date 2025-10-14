@@ -46,19 +46,5 @@ Column {
         isAttribute: true
     }
 
-    // Expandable list
-    Loader {
-        active: itemHeader.isExpanded
-        width: parent.width
-        height: active ? (item ? item.implicitHeight || item.height : 0) : 0
-
-        sourceComponent: Pane {
-            background: Rectangle { color: "transparent" }
-            padding: 0
-            implicitWidth: parent.width
-            implicitHeight: 20 
-
-            //Shape attribute observation
-        }
-    }
+    // Perhaps add an expandable list for current observations later
 }

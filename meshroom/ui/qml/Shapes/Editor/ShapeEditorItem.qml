@@ -17,7 +17,7 @@ Loader {
 
     // Source component
     sourceComponent: {
-        switch(model.type) {
+        switch(itemLoader.model.type) {
             case "ShapeFile": return shapeFileComponent
             case "ShapeList": return shapeListAttributeComponent
             default:          return shapeAttributeComponent

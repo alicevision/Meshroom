@@ -1,7 +1,12 @@
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, Slot
 from meshroom.core.attribute import GroupAttribute, ListAttribute
+from shiboken6 import isValid
 from .shapeFile import ShapeFile
+
+# Filter runtime warning when closing Meshroom with active shape files
+import warnings
+warnings.filterwarnings("ignore", message=".*Failed to disconnect.*", category=RuntimeWarning)
 
 class ShapeFilesHelper(BaseObject):
     """
@@ -11,6 +16,7 @@ class ShapeFilesHelper(BaseObject):
     def __init__(self, activeProject:Reconstruction, parent=None):
         super().__init__(parent)
         self._activeProject = activeProject
+        self._currentNode = activeProject.selectedNode
         self._shapeFiles = ListModel()
         self._activeProject.selectedViewIdChanged.connect(self._onSelectedViewIdChanged)
         self._activeProject.selectedNodeChanged.connect(self._onSelectedNodeChanged)
@@ -29,6 +35,15 @@ class ShapeFilesHelper(BaseObject):
                                                   parent=self._shapeFiles))
 
     @Slot()
+    def _loadShapeFiles(self):
+        """Load/Reload active project selected node shape files."""
+        # clear shapeFiles model
+        self._shapeFiles.clear()
+        # load node shape files
+        self._loadShapeFilesFromAttributes(self._activeProject.selectedNode.attributes)
+        self.nodeShapeFilesChanged.emit()
+
+    @Slot()
     def _onSelectedViewIdChanged(self):
         """Callback when the active project selected view id changes."""
         for shapeFile in self._shapeFiles:
@@ -37,17 +52,31 @@ class ShapeFilesHelper(BaseObject):
     @Slot()
     def _onSelectedNodeChanged(self):
         """Callback when the active project selected node changes."""
-        # clear shapeFiles model
-        self._shapeFiles = ListModel()
-        # check current node
-        if self._activeProject.selectedNode is None:
+        # disconnect internalFolderChanged signal
+        if self._currentNode is not None:
+            try: 
+                self._currentNode.internalFolderChanged.disconnect(self._loadShapeFiles)
+            except RuntimeError:
+                # Signal was already disconnected or never connected
+                pass
+        # check selected node exists and selected node has displayable shape
+        if self._activeProject.selectedNode is None or not self._activeProject.selectedNode.hasDisplayableShape:
+            # clear shapeFiles model
+            if isValid(self._shapeFiles):
+                self._shapeFiles.clear()
+            # clear current node
+            self._currentNode = None
             return
-        # check current node has displayable shape
-        if not self._activeProject.selectedNode.hasDisplayableShape:
-            return
+        # update current node
+        self._currentNode = self._activeProject.selectedNode
+        # connect internalFolderChanged signal
+        try: 
+            self._currentNode.internalFolderChanged.connect(self._loadShapeFiles)
+        except RuntimeError:
+            # Signal was already disconnected or never connected
+            pass
         # load node shape files
-        self._loadShapeFilesFromAttributes(self._activeProject.selectedNode.attributes)
-        self.nodeShapeFilesChanged.emit()
+        self._loadShapeFiles()
 
     # Properties and signals
     nodeShapeFilesChanged = Signal()

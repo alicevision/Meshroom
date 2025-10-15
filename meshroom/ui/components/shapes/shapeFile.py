@@ -84,16 +84,16 @@ class ShapeFile(BaseObject):
         label = Property(str, lambda self: self._name, constant=True)
         # The shape type (Point2d, Line2d, Rectangle, Circle, etc.).
         type = Property(str, lambda self: self._type, constant=True)
-        # Whether the shape is keyabale (multiple observations).
-        shapeKeyable = Property(bool,lambda self: self._keyable, constant=True)
         # The shape properties (color, stroke, etc.).
         properties = Property(Variant, lambda self: self._properties, constant=True)
         # The shape current observation.
         observation = Property(Variant, _getObservation, notify=viewIdChanged)
+        # Whether the shape is keyabale (multiple observations).
+        observationKeyable = Property(bool,lambda self: self._keyable, constant=True)
         # The shape list of observation keys.
         observationKeys = Property(Variant, lambda self: [key for key in self._observations], constant=True)
         # The number of observation defined.
-        nbObservations = Property(int, _getNbObservations, constant=True) 
+        nbObservations = Property(int, _getNbObservations, constant=True)
         # Whether the shape is displayable.
         isVisible = Property(bool, _getVisible, _setVisible, notify=visibleChanged)
 

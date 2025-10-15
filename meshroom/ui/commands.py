@@ -377,27 +377,27 @@ class SetObservationCommand(GraphCommand):
         self.attrName = attribute.fullName
         self.key = key
         self.observation = observation.toVariant()
-        self.oldObservation = attribute.getObservation(key)
+        self.oldObservation = attribute.geometry.getObservation(key)
         self.setText(f"Set observation for shape attribute '{attribute.fullName}' at key: '{key}'")
 
     def redoImpl(self):
         if self.graph.attribute(self.attrName) is not None:
-            self.graph.attribute(self.attrName).setObservation(self.key, self.observation)
+            self.graph.attribute(self.attrName).geometry.setObservation(self.key, self.observation)
         else:
-            self.graph.internalAttribute(self.attrName).setObservation(self.key, self.observation)
+            self.graph.internalAttribute(self.attrName).geometry.setObservation(self.key, self.observation)
         return True
 
     def undoImpl(self):
         if self.graph.attribute(self.attrName) is not None:
             if self.oldObservation is None:
-                self.graph.attribute(self.attrName).removeObservation(self.key)
+                self.graph.attribute(self.attrName).geometry.removeObservation(self.key)
             else:
-                self.graph.attribute(self.attrName).setObservation(self.key, self.oldObservation)
+                self.graph.attribute(self.attrName).geometry.setObservation(self.key, self.oldObservation)
         else:
             if self.oldObservation is None:
-                self.graph.internalAttribute(self.attrName).removeObservation(self.key)
+                self.graph.internalAttribute(self.attrName).geometry.removeObservation(self.key)
             else:
-                self.graph.internalAttribute(self.attrName).setObservation(self.key, self.oldObservation)
+                self.graph.internalAttribute(self.attrName).geometry.setObservation(self.key, self.oldObservation)
         return True
 
 class RemoveObservationCommand(GraphCommand):
@@ -405,21 +405,21 @@ class RemoveObservationCommand(GraphCommand):
         super().__init__(graph, parent)
         self.attrName = attribute.fullName
         self.key = key
-        self.oldObservation = attribute.getObservation(key)
+        self.oldObservation = attribute.geometry.getObservation(key)
         self.setText(f"Remove observation for shape attribute '{attribute.fullName}' at key: '{key}'")
 
     def redoImpl(self):
         if self.graph.attribute(self.attrName) is not None:
-            self.graph.attribute(self.attrName).removeObservation(self.key)
+            self.graph.attribute(self.attrName).geometry.removeObservation(self.key)
         else:
-            self.graph.internalAttribute(self.attrName).removeObservation(self.key)
+            self.graph.internalAttribute(self.attrName).geometry.removeObservation(self.key)
         return True
 
     def undoImpl(self):
         if self.graph.attribute(self.attrName) is not None:
-            self.graph.attribute(self.attrName).setObservation(self.key, self.oldObservation)
+            self.graph.attribute(self.attrName).geometry.setObservation(self.key, self.oldObservation)
         else:
-            self.graph.internalAttribute(self.attrName).setObservation(self.key, self.oldObservation)
+            self.graph.internalAttribute(self.attrName).geometry.setObservation(self.key, self.oldObservation)
         return True
 
 class AddEdgeCommand(GraphCommand):

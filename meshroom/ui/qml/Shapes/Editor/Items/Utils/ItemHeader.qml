@@ -13,7 +13,6 @@ import Utils 1.0
 * @param model - the given model (provide by the current node or ShapeFilesHelper)
 * @param isShape - whether the model is a shape (ShapeAttribute or ShapeData)
 * @param isAttribute - whether the model is an attribute (ShapeAttribute or ShapeListAttribute)
-* @param hasShapeObservation - whether the model is a shape with a current observation
 * @param isNeasted - whether the header is neasted
 * @param isLinkChild - Whether the model is a child attribute of a linked attribute
 * @param isExpanded - whether the heder is expanded
@@ -27,7 +26,6 @@ Pane {
     property bool isShape: false
     property bool isAttribute: false
     property bool isLinkChild: false
-    property bool hasShapeObservation: false
 
     // Header properties
     property bool isNeasted: false
@@ -35,14 +33,14 @@ Pane {
 
     // Read-only properties
     readonly property bool isAttributeSelected: isAttribute ? (ShapeViewerHelper.selectedShapeName === model.fullName) : false
-    readonly property bool isAttributeInitialized: isAttribute ? !model.isDefault : false
+    readonly property bool isAttributeInitialized: isAttribute ? (isShape ? !model.geometry.isDefault : !model.isDefault) : false
     readonly property bool isAttributeEnabled: isAttribute ? (model.enabled && !model.isLink && !isLinkChild) : false
 
     // Padding
     topPadding: 2
     bottomPadding: 2
-    rightPadding: 5
-    leftPadding: 5
+    rightPadding: 6
+    leftPadding: 6
 
     // Background
     background: Rectangle { 
@@ -200,7 +198,7 @@ Pane {
                 enabled: isAttributeEnabled
                 contentItem: Rectangle {
                     anchors.centerIn: parent
-                    color: isAttribute ? model.shapeColor : model.properties.color || "black"
+                    color: isAttribute ? model.userColor : model.properties.color || "black"
                     width: materialMetrics.height
                     height: materialMetrics.height
                 }
@@ -217,9 +215,9 @@ Pane {
             active: isShape && isAttributeEnabled
             sourceComponent: ColorDialog {
                 title: "Edit " + model.label + " color"
-                selectedColor: model.shapeColor
+                selectedColor: model.userColor
                 onAccepted: {
-                    model.shapeColor = selectedColor
+                    _reconstruction.setAttribute(model.childAttribute("userColor"), selectedColor.toString())
                     close()
                 }
                 onRejected: close()
@@ -250,17 +248,24 @@ Pane {
             }
 
             // Shape name
-            Label {
-                text: model.label
+            TextField {
                 font.pointSize: 8
-            }
-
-            // Shape index 
-            Loader {
-                active: isAttribute && model.root && (model.root.type === "ShapeList")
-                sourceComponent: Label {
-                    text: "[" + index + "]"
-                    font.pointSize: 8
+                background: Rectangle { color: "transparent" }
+                palette.text: parent.palette.text
+                maximumLength: 40 
+                selectByMouse: true
+                persistentSelection: false
+                text: {
+                    if(isAttribute && isShape && model.userName)
+                        return model.userName
+                    if(isAttribute && model.root && (model.root.type === "ShapeList"))
+                        return model.rootName
+                    return model.label
+                }
+                enabled: isAttributeEnabled && model.root && (model.root.type === "ShapeList")
+                onEditingFinished: { 
+                    _reconstruction.setAttribute(model.childAttribute("userName"), text)
+                    focus = false
                 }
             }
 
@@ -275,9 +280,9 @@ Pane {
 
             // Shape number of observations
             Loader {
-                active: isShape && model.shapeKeyable
+                active: isShape && (isAttribute ? model.geometry.observationKeyable : model.observationKeyable)
                 sourceComponent: Label {
-                    text: "(" + model.nbObservations + ")"
+                    text: "(" + (isAttribute ? model.geometry.nbObservations : model.nbObservations) + ")"
                     font.pointSize: 8
                 }
             }
@@ -290,9 +295,9 @@ Pane {
         RowLayout {
             spacing: 0
 
-            // Shape not keyable, set/remove observation
+            // Static shape, set/remove observation
             Loader {
-                active: isShape && isAttribute && !model.shapeKeyable
+                active: isShape && isAttribute && !model.geometry.observationKeyable
                 sourceComponent: MaterialToolButton {
                     font.pointSize: 11
                     padding: 2
@@ -309,7 +314,8 @@ Pane {
                         else
                         {
                             // add key
-                            _reconstruction.setObservation(model, _reconstruction.selectedViewId, ShapeViewerHelper.getDefaultObservation(model.type))
+                            _reconstruction.setObservation(model, _reconstruction.selectedViewId, 
+                                                          ShapeViewerHelper.getDefaultObservation(model.type))
                             ShapeViewerHelper.selectedShapeName = model.fullName
                         }
                     }
@@ -321,9 +327,15 @@ Pane {
 
             // Shape keyable, set/remove observation
             Loader {
-                active: isShape && model.shapeKeyable
+                active: isShape && (isAttribute ? model.geometry.observationKeyable : model.observationKeyable)
                 sourceComponent: RowLayout {
                     spacing: 0
+                    property var keys: isAttribute ? model.geometry.observationKeys : model.observationKeys
+                    property bool hasCurrentKey: {
+                        if(isAttribute)
+                            return model.geometry.hasObservation(_reconstruction.selectedViewId)
+                        return model.hasObservation(_reconstruction.selectedViewId)
+                    }
 
                     function getViewPath(viewId) {
                         for (var i = 0; i < _reconstruction.viewpoints.count; i++) 
@@ -355,7 +367,7 @@ Pane {
 
                     // Previous key
                     MaterialToolButton {
-                        property string prevViewId: getPrevViewId(model.observationKeys, _reconstruction.selectedViewId)
+                        property string prevViewId: getPrevViewId(keys, _reconstruction.selectedViewId)
                         font.pointSize: 11
                         padding: 2
                         text: MaterialIcons.keyboard_arrow_left
@@ -372,11 +384,11 @@ Pane {
                         font.pointSize: 11
                         padding: 2
                         text: MaterialIcons.noise_control_off
-                        checkable: model.shapeKeyable
-                        checked: model.shapeKeyable ? hasShapeObservation : false
+                        checkable: true
+                        checked: hasCurrentKey
                         enabled: isAttributeEnabled
                         onClicked: {
-                            if(hasShapeObservation)
+                            if(hasCurrentKey)
                             {
                                 // remove key
                                 _reconstruction.removeObservation(model, _reconstruction.selectedViewId)
@@ -385,18 +397,19 @@ Pane {
                             else
                             {
                                 // add key
-                                _reconstruction.setObservation(model, _reconstruction.selectedViewId, ShapeViewerHelper.getDefaultObservation(model.type))
+                                _reconstruction.setObservation(model, _reconstruction.selectedViewId, 
+                                                               ShapeViewerHelper.getDefaultObservation(model.type))
                                 ShapeViewerHelper.selectedShapeName = model.fullName
                             }
                         }
-                        ToolTip.text: hasShapeObservation ? "Remove current key" : "Set current key"
+                        ToolTip.text: checked ? "Remove current key" : "Set current key"
                         ToolTip.visible: hovered
                         ToolTip.delay: 800
                     }
 
                     // Next key
                     MaterialToolButton {
-                        property string nextViewId: getNextViewId(model.observationKeys, _reconstruction.selectedViewId)
+                        property string nextViewId: getNextViewId(keys, _reconstruction.selectedViewId)
                         font.pointSize: 11
                         padding: 2
                         text: MaterialIcons.keyboard_arrow_right

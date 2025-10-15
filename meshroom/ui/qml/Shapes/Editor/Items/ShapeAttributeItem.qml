@@ -19,29 +19,11 @@ Column {
     property var shapeAttribute
     property alias isNeasted: itemHeader.isNeasted
     property alias isLinkChild: itemHeader.isLinkChild
-
-
-    function hasCurrentObservation() {
-        return shapeAttribute ? shapeAttribute.hasObservation(_reconstruction ? _reconstruction.selectedViewId : "-1") : false
-    }
-
-    // Reload hasObservation property
-    // When shape attribute observations changed (signal)
-    Connections {
-        target: shapeAttribute
-        function onObservationsChanged() { itemHeader.hasShapeObservation = hasCurrentObservation() }
-    }
-    // When reconstruction view id changed (signal)
-    Connections {
-        target: _reconstruction
-        function onSelectedViewIdChanged() { itemHeader.hasShapeObservation = hasCurrentObservation() }
-    }
     
     // Item Header
     ItemUtils.ItemHeader {
         id: itemHeader
         model: shapeAttribute
-        hasShapeObservation: hasCurrentObservation()
         isShape: true
         isAttribute: true
     }

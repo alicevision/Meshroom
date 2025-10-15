@@ -64,4 +64,14 @@ Rectangle {
         height: root.size
         color: "#ffffff"
     }
+
+    // Handle outline
+    Rectangle {
+        x: width * -0.5
+        y: height * -0.5
+        width: 1.5 * root.size
+        height: 1.5 * root.size
+        color: "#66666666"
+        z: -1
+    }
 }

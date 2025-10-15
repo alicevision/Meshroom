@@ -43,14 +43,9 @@ Item {
         ShapeViewerHelper.selectedShapeName = name
     }
 
-    // Helper function to get scaled point size
-    function getScaledPointSize() {
-        return Math.max(0.5, (baseLayer.properties.size || 10.0) * baseLayer.scaleRatio)
-    }
-
     // Helper function to get scaled handle size
     function getScaledHandleSize() {
-        return Math.max(1.0, 8.0 * scaleRatio)
+        return Math.max(0.5, 8.0 * scaleRatio)
     }
 
     // Helper function to get scaled stroke width
@@ -65,6 +60,6 @@ Item {
 
     // Helper function to get scaled font size
     function getScaledFontSize() {
-        return Math.max(4.0, (baseLayer.properties.fontSize || 10.0) * baseLayer.scaleRatio)
+        return Math.max(1.0, (baseLayer.properties.fontSize || 10.0) * baseLayer.scaleRatio)
     }
 }

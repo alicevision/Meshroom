@@ -22,7 +22,7 @@ Loader {
     // When attribute observations changed (signal)
     // For now, ShapeLayer should be re-build when observation changed
     Connections {
-        target: shapeAttribute
+        target: shapeAttribute.geometry
         function onObservationsChanged() {
             sourceComponent = null
             sourceComponent = shapeAttributeLayerComponent
@@ -37,8 +37,8 @@ Loader {
                 scaleRatio: shapeViewer.scaleRatio
                 name: shapeAttribute.fullName
                 type: shapeAttribute.type
-                properties: ({"color" : shapeAttribute.shapeColor})
-                observation: shapeAttribute.getObservation(_reconstruction ? _reconstruction.selectedViewId : "-1")
+                properties: ({"color" : shapeAttribute.userColor, "userName" : shapeAttribute.userName})
+                observation: shapeAttribute.geometry.getObservation(_reconstruction ? _reconstruction.selectedViewId : "-1")
                 editable: shapeAttribute.enabled && !shapeAttribute.isLink && !isLinkChild
             }
         }

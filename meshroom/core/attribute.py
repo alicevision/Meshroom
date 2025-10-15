@@ -1003,15 +1003,12 @@ class GroupAttribute(Attribute):
     isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value), notify=Attribute.valueChanged)
 
 
-class ShapeAttribute(GroupAttribute):
+class GeometryAttribute(GroupAttribute):
     """
-    GroupAttribute subtype tailored for shape-specific handling.
+    GroupAttribute subtype tailored for geometry-specific handling.
     """
 
-    def __init__(self, node, attributeDesc: desc.Shape, isOutput: bool,
-                 root=None, parent=None):
-        self._visible = True
-        self._color = "#2A82DA" # default shape color
+    def __init__(self, node, attributeDesc: desc.Geometry, isOutput: bool, root=None, parent=None):
         super().__init__(node, attributeDesc, isOutput, root, parent)
 
     # Override
@@ -1038,20 +1035,20 @@ class ShapeAttribute(GroupAttribute):
     def getSerializedValue(self):
         if self.isLink:
             return self._getInputLink().asLinkExpr() 
-        return {key: attr.getSerializedValue() for key, attr in self._value.objects.items()}
+        return super().getSerializedValue()
     
     def getValueAsDict(self) -> dict:
         """
-        Return the shape attribute value as dict.
-        For not keyable shape, this is the same as getSerializedValue().
-        For keyable shape, the dict is indexed by key.
+        Return the geometry attribute value as dict.
+        For not keyable geometry, this is the same as getSerializedValue().
+        For keyable geometry, the dict is indexed by key.
         """
         from collections import defaultdict
         outValue = defaultdict(dict)
-        if not self.shapeKeyable:
+        if not self.observationKeyable:
             return super().getSerializedValue()
         for attribute in self.value:
-            if isinstance(attribute, ShapeAttribute):
+            if isinstance(attribute, GeometryAttribute):
                 attributeDict = attribute.getValueAsDict()
                 if attributeDict:
                     for key, value in attributeDict.items():
@@ -1061,33 +1058,163 @@ class ShapeAttribute(GroupAttribute):
                     outValue[str(pair.key)][attribute.name] = pair.value
         return dict(outValue)
 
+    def _hasKeyableChilds(self) -> bool:
+        """
+        Whether all child attributes are keyable.
+        """
+        return all((isinstance(attribute, GeometryAttribute) and attribute.observationKeyable) or
+                    attribute.keyable for attribute in self.value)
+
+    def _getNbObservations(self) -> int:
+        """
+        Return the geometry attribute number of observations.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        if self.observationKeyable:
+            firstAttribute = next(iter(self.value.values()))
+            if isinstance(firstAttribute, GeometryAttribute):
+                return firstAttribute.nbObservations
+            return len(firstAttribute.keyValues.pairs)
+        return 1
+
+    def _getObservationKeys(self) -> list:
+        """
+        Return the geometry attribute list of observation keys.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        if not self.observationKeyable:
+            return []
+        firstAttribute = next(iter(self.value.values()))
+        if isinstance(firstAttribute, GeometryAttribute):
+            return firstAttribute.observationKeys
+        return firstAttribute.keyValues.getKeys()
+
+    @Slot(str, result=bool)
+    def hasObservation(self, key: str) -> bool:
+        """
+        Whether the geometry attribute has an observation for the given key.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        if not self.observationKeyable:
+            return True
+        return all((isinstance(attribute, GeometryAttribute) and attribute.hasObservation(key)) or
+                   (not isinstance(attribute, GeometryAttribute) and attribute.keyValues.hasKey(key))
+                   for attribute in self.value)
+    
+    @raiseIfLink
+    def removeObservation(self, key: str):
+        """
+        Remove the geometry attribute observation for the given key.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        for attribute in self.value:
+            if isinstance(attribute, GeometryAttribute):
+                attribute.removeObservation(key)
+            else:
+                if attribute.keyable:
+                    attribute.keyValues.remove(key)
+                else:
+                    attribute.resetToDefaultValue()
+        self.observationsChanged.emit()
+
+    @raiseIfLink
+    def setObservation(self, key: str, observation: Variant):
+        """
+        Set the geometry attribute observation for the given key with the given observation.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        for attributeStr, value in observation.items():
+            attribute = self.childAttribute(attributeStr)
+            if attribute is None:
+                raise RuntimeError(f"Cannot set geometry observation for attribute {self._getFullName()} \
+                                   observation is incorrect.")
+            if isinstance(attribute, GeometryAttribute):
+                attribute.setObservation(key, value)
+            else:
+                if attribute.keyable:
+                    attribute.keyValues.add(key, value)
+                else:
+                    attribute.value = value
+        self.observationsChanged.emit()
+
+    @Slot(str, result=Variant)
+    def getObservation(self, key: str) -> Variant:
+        """
+        Return the geometry attribute observation for the given key.
+        Note: Observation is a value defined across all child attributes for a specific key.
+        """
+        observation = {}
+        for attribute in self.value:
+            if isinstance(attribute, GeometryAttribute):
+                geoObservation = attribute.getObservation(key)
+                if geoObservation is None:
+                    return None
+                else :
+                    observation[attribute.name] = geoObservation
+            else:
+                if attribute.keyable:
+                    if attribute.keyValues.hasKey(key):
+                        observation[attribute.name] = attribute.keyValues.getValueAtKeyOrDefault(key)
+                    else:
+                        return None
+                else:
+                    observation[attribute.name] = attribute.value
+        return observation
+    
+    # Properties and signals
+    # Emitted when a geometry observation changed.
+    observationsChanged = Signal()
+    # Whether the geometry attribute childs are keyable.
+    observationKeyable = Property(bool,_hasKeyableChilds, constant=True)
+    # The list of geometry observation keys.
+    observationKeys = Property(Variant, _getObservationKeys, notify=observationsChanged)
+    # The number of geometry observation defined.
+    nbObservations = Property(int, _getNbObservations, notify=observationsChanged) 
+
+
+
+class ShapeAttribute(GroupAttribute):
+    """
+    GroupAttribute subtype tailored for shape-specific handling.
+    """
+
+    def __init__(self, node, attributeDesc: desc.Shape, isOutput: bool, root=None, parent=None):
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+        self._visible = True
+        
+    # Override
+    # Connect geometry attribute valueChanged to emit geometryChanged signal.
+    def _initValue(self):
+        super()._initValue()
+        # Using Attribute.valueChanged for the userName, userColor, geometry properties results in a segmentation fault.
+        # As a workaround, we manually connect valueChanged to shapeChanged or geometryChanged.
+        self.value.get("userName").valueChanged.connect(self._onShapeChanged)
+        self.value.get("userColor").valueChanged.connect(self._onShapeChanged)
+        self.geometry.valueChanged.connect(self._onGeometryChanged)
+
+    # Override
+    # Fix missing link expression serialization.
+    # Should be remove if link expression serialization is added in GroupAttribute.
+    def getSerializedValue(self):
+        if self.isLink:
+            return self._getInputLink().asLinkExpr() 
+        return super().getSerializedValue()
+
     def getShapeAsDict(self) -> dict:
         """
         Return the shape attribute as dict with the shape file structure.
         """
         outDict = { 
-            "name" : self.rootName, 
+            "name" : self.userName if self.userName else self.rootName, 
             "type" : self.type, 
-            "properties" : { "color": self._color } 
+            "properties" : { "color": self.userColor } 
         }
-
-        if not self.shapeKeyable:
-            # Not keyable shape, use properties.
-            outDict.get("properties").update(super().getSerializedValue())
+        if not self.geometry.observationKeyable:
+            # Not keyable geometry, use properties.
+            outDict.get("properties").update(self.geometry.getSerializedValue())
         else:
-            # Keyable shape, use observations.
-            from collections import defaultdict
-            outObservations = defaultdict(dict)
-            for attribute in self.value:
-                if isinstance(attribute, ShapeAttribute):
-                    attributeDict = attribute.getValueAsDict()
-                    if attributeDict:
-                        for key, value in attributeDict.items():
-                            outObservations[key][attribute.name] = value
-                else:
-                    for pair in attribute.keyValues.pairs:
-                        outObservations[str(pair.key)][attribute.name] = pair.value
-            outDict.update({ "observations" : dict(outObservations)})
+            # Keyable geometry, use observations.
+            outDict.update({ "observations" : self.geometry.getValueAsDict()})
         return outDict
     
     def _getVisible(self) -> bool:
@@ -1103,162 +1230,66 @@ class ShapeAttribute(GroupAttribute):
         self._visible = visible
         self.shapeChanged.emit()
 
-    def _getColor(self) -> str:
+    def _getUserName(self) -> str:
         """ 
-        Return the shape attribute color for display.
+        Return the shape attribute user name for display.
         """
-        if self.isLink:
-            return self.inputLink.shapeColor
-        return self._color
+        return self.value.get("userName").value
+
+    def _getUserColor(self) -> str:
+        """ 
+        Return the shape attribute user color for display.
+        """
+        return self.value.get("userColor").value
     
-    @raiseIfLink
-    def _setColor(self, color: str):
-        """ 
-        Set the shape attribute color for display.
+    @Slot()
+    def _onShapeChanged(self):
         """
-        self._color = color
+        Emit shapeChanged signal.
+        Used when shape userName or userColor value changed.
+        """
         self.shapeChanged.emit()
 
-    def _hasKeyableChilds(self) -> bool:
+    @Slot()
+    def _onGeometryChanged(self):
         """
-        Whether all child attributes are keyable.
+        Emit geometryChanged signal.
+        Used when geometry attribute value changed.
         """
-        return all((isinstance(attribute, ShapeAttribute) and attribute.shapeKeyable) or
-                    attribute.keyable for attribute in self.value)
+        self.geometryChanged.emit()
 
-    def _getNbObservations(self) -> int:
-        """
-        Return the shape attribute number of observations.
-        Note: Observation is a value defined across all child attributes for a specific key.
-        """
-        if self.shapeKeyable:
-            firstAttribute = next(iter(self.value.values()))
-            if isinstance(firstAttribute, ShapeAttribute):
-                return firstAttribute.nbObservations
-            return len(firstAttribute.keyValues.pairs)
-        return 1
-
-    def _getObservationKeys(self) -> list:
-        """
-        Return the shape attribute list of observation keys.
-        Note: Observation is a value defined across all child attributes for a specific key.
-        """
-        if not self.shapeKeyable:
-            return []
-        firstAttribute = next(iter(self.value.values()))
-        if isinstance(firstAttribute, ShapeAttribute):
-            return firstAttribute.observationKeys
-        return firstAttribute.keyValues.getKeys()
-
-    @Slot(str, result=bool)
-    def hasObservation(self, key: str) -> bool:
-        """
-        Whether the shape attribute has an observation for the given key.
-        Note: Observation is a value defined across all child attributes for a specific key.
-        """
-        if not self.shapeKeyable:
-            return True
-        return all((isinstance(attribute, ShapeAttribute) and attribute.hasObservation(key)) or
-                   (not isinstance(attribute, ShapeAttribute) and attribute.keyValues.hasKey(key))
-                   for attribute in self.value)
-    
-    @raiseIfLink
-    def removeObservation(self, key: str):
-        """
-        Remove the shape attribute observation for the given key.
-        Note: Observation is a value defined across all child attributes for a specific key.
-        """
-        for attribute in self.value:
-            if isinstance(attribute, ShapeAttribute):
-                attribute.removeObservation(key)
-            else:
-                if attribute.keyable:
-                    attribute.keyValues.remove(key)
-                else:
-                    attribute.resetToDefaultValue()
-        self.observationsChanged.emit()
-
-    @raiseIfLink
-    def setObservation(self, key: str, observation: Variant):
-        """
-        Set the shape attribute observation for the given key with the given observation.
-        Note: Observation is a value defined across all child attributes for a specific key.
-        """
-        for attributeStr, value in observation.items():
-            attribute = self.childAttribute(attributeStr)
-            if attribute is None:
-                raise RuntimeError(f"Cannot set shape observation for attribute {self._getFullName()} \
-                                   observation is incorrect.")
-            if isinstance(attribute, ShapeAttribute):
-                attribute.setObservation(key, value)
-            else:
-                if attribute.keyable:
-                    attribute.keyValues.add(key, value)
-                else:
-                    attribute.value = value
-        self.observationsChanged.emit()
-
-    @Slot(str, result=Variant)
-    def getObservation(self, key: str) -> Variant:
-        """
-        Return the shape attribute observation for the given key.
-        Note: Observation is a value defined across all child attributes for a specific key.
-        """
-        observation = {}
-        for attribute in self.value:
-            if isinstance(attribute, ShapeAttribute):
-                shapeObservation = attribute.getObservation(key)
-                if shapeObservation is None:
-                    return None
-                else :
-                    observation[attribute.name] = shapeObservation
-            else:
-                if attribute.keyable:
-                    if attribute.keyValues.hasKey(key):
-                        observation[attribute.name] = attribute.keyValues.getValueAtKeyOrDefault(key)
-                    else:
-                        return None
-                else:
-                    observation[attribute.name] = attribute.value
-        return observation
-    
     # Properties and signals
     # Emitted when a shape related property changed (color, visibility).
     shapeChanged = Signal()
     # Emitted when a shape observation changed.
-    observationsChanged = Signal()
+    geometryChanged = Signal()
     # Whether the shape is displayable.
     isVisible = Property(bool, _getVisible, _setVisible, notify=shapeChanged)
-    # The shape color for display.
-    shapeColor = Property(str, _getColor, _setColor, notify=shapeChanged)
-    # The shape list of observation keys.
-    observationKeys = Property(Variant, _getObservationKeys, notify=observationsChanged)
-    # The number of observation defined.
-    nbObservations = Property(int, _getNbObservations, notify=observationsChanged) 
-    # Whether the shape attribute childs are keyable.
-    shapeKeyable = Property(bool,_hasKeyableChilds, constant=True)
+    # The shape user name for display.
+    userName = Property(str, _getUserName, notify=shapeChanged)
+    # The shape user color for display.
+    userColor = Property(str, _getUserColor, notify=shapeChanged)
+    # The shape geometry group attribute.
+    geometry = Property(Variant, lambda self: self.value.get("geometry"), notify=geometryChanged)
     # Override hasDisplayableShape property.
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
-    # Override value property.
-    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
 
 class ShapeListAttribute(ListAttribute):
     """
     ListAttribute subtype tailored for shape-specific handling.
     """
 
-    def __init__(self, node, attributeDesc: desc.ShapeList, isOutput: bool,
-                 root=None, parent=None):
-        self._visible = True
+    def __init__(self, node, attributeDesc: desc.ShapeList, isOutput: bool, root=None, parent=None):
         super().__init__(node, attributeDesc, isOutput, root, parent)
+        self._visible = True
 
-    def getValuesAsDicts(self):
+    def getGeometriesAsDict(self):
         """
-        Return the values of the children of the shape list attribute.
+        Return the geometries values of the children of the shape list attribute.
         """
-        return [shapeAttribute.getValueAsDict() for shapeAttribute in self.value]
+        return [shapeAttribute.geometry.getValueAsDict() for shapeAttribute in self.value]
 
-    def getShapesAsDicts(self):
+    def getShapesAsDict(self):
         """
         Return the children of the shape list attribute.
         """

@@ -447,6 +447,8 @@ class TractorSubmitter(BaseSubmitter):
             self.environment['PROD'] = os.environ['PROD']
         if 'PROD_ROOT' in os.environ:
             self.environment['PROD_ROOT'] = os.environ['PROD_ROOT']
+        if 'PROD_MOUNT' in os.environ:
+            self.environment['PROD_MOUNT'] = os.environ['PROD_MOUNT']
 
     def createTask(self, meshroomFile, node):
         tags = self.DEFAULT_TAGS.copy()  # copy to not modify default tags

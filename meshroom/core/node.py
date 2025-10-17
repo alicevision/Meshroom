@@ -359,7 +359,7 @@ class NodeChunk(BaseObject):
             return f"{self.node.name}({self.index})"
         else:
             return self.node.name
-    
+
     @property
     def logManager(self):
         if self._logManager is None:
@@ -520,7 +520,7 @@ class NodeChunk(BaseObject):
         executionStatus = None
         self.statThread = stats.StatisticsThread(self)
         self.statThread.start()
-        
+
         try:
             self.node.nodeDesc.processChunk(self)
             # NOTE: this assumes saving the output attributes for each chunk
@@ -672,7 +672,7 @@ class BaseNode(BaseObject):
         self.packageName: str = ""
         self.packageVersion: str = ""
         self._internalFolder: str = ""
-        self._sourceCodeFolder: str = ""
+        self._sourceCodeFolder: str = self.nodeDesc.sourceCodeFolder if self.nodeDesc else ""
         self._internalFolderExp = "{cache}/{nodeType}/{uid}"
 
         # temporary unique name for this node
@@ -742,7 +742,7 @@ class BaseNode(BaseObject):
         if self.hasInternalAttribute("nodeDefaultLogLevel"):
             return self.internalAttribute("nodeDefaultLogLevel").value.strip()
         return "info"
-    
+
     def getColor(self):
         """
         Returns:
@@ -1831,7 +1831,6 @@ class Node(BaseNode):
 
         self.packageName = self.nodeDesc.packageName
         self.packageVersion = self.nodeDesc.packageVersion
-        self._sourceCodeFolder = self.nodeDesc.sourceCodeFolder
 
         for attrDesc in self.nodeDesc.inputs:
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),

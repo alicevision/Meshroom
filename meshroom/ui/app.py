@@ -3,6 +3,7 @@ import os
 import re
 import argparse
 import json
+from enum import Enum
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
@@ -32,6 +33,12 @@ from meshroom.ui.palette import PaletteManager
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
 from meshroom.ui import commands
+
+
+class FileStatus(Enum):
+    MISSING=0
+    EXISTS=1
+    ERROR=2  # If the file exists but have errors like missing nodes, file content corruption...
 
 
 class MessageHandler:
@@ -422,7 +429,8 @@ class MeshroomApp(QApplication):
             settings.setArrayIndex(i)
             path = settings.value("filepath")
             if path:
-                p = {"path": path, "thumbnail": self._retrieveThumbnailPath(path)}
+                fileStatus = FileStatus.EXISTS if os.path.isfile(path) else FileStatus.MISSING
+                p = {"path": path, "thumbnail": self._retrieveThumbnailPath(path), "status": fileStatus.value}
                 projects.append(p)
         settings.endArray()
         settings.endGroup()
@@ -443,6 +451,7 @@ class MeshroomApp(QApplication):
         for project in self._recentProjectFiles:
             path = project["path"]
             project["thumbnail"] = self._retrieveThumbnailPath(path)
+            project["status"] = os.path.isfile(path)
 
     @Slot(str)
     @Slot(QUrl)
@@ -479,7 +488,7 @@ class MeshroomApp(QApplication):
             del projects[idx]  # If so, delete its entry
 
         # Insert the newest entry at the top of the list
-        projects.insert(0, {"path": projectFileNorm, "thumbnail": ""})
+        projects.insert(0, {"path": projectFileNorm, "thumbnail": "", "status": FileStatus.EXISTS})
 
         # Only keep the first 40 projects
         maxNbProjects = 40

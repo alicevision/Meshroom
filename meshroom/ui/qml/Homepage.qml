@@ -284,7 +284,7 @@ Page {
                         // Request latest thumbnail paths
                         if (mainStack.currentItem instanceof Homepage)
                             MeshroomApp.updateRecentProjectFilesThumbnails()
-                        return [{"path": null, "thumbnail": null}].concat(MeshroomApp.recentProjectFiles)
+                        return [{"path": null, "thumbnail": null, "status": null}].concat(MeshroomApp.recentProjectFiles)
                     }
 
                     // Update grid item when corresponding thumbnail is computed
@@ -324,6 +324,10 @@ Page {
                             id: projectDelegate
                             height: gridView.cellHeight * 0.95 - project.height
                             width: gridView.cellWidth * 0.9
+
+                            // Handle case where the file is missing
+                            property bool fileExists: modelData["status"] != 0
+                            opacity: fileExists ? 1.0 : 0.3
 
                             ToolTip.visible: hovered
                             ToolTip.text: modelData["path"] ? modelData["path"] : "Open browser to select a project file"
@@ -372,6 +376,7 @@ Page {
                                 id: projectContextMenu
 
                                 MenuItem {
+                                    enabled: projectDelegate.fileExists
                                     text: "Open"
                                     onTriggered: {                                        
                                         if (_reconstruction.load(modelData["path"])) {

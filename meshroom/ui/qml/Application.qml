@@ -725,6 +725,8 @@ Page {
                         id: recentFilesMenuItems
                         model: MeshroomApp.recentProjectFiles
                         MenuItem {
+                            enabled: modelData["status"] != 0
+                            
                             onTriggered: ensureSaved(function() {
                                 openRecentMenu.dismiss()
                                 if (_reconstruction.load(modelData["path"])) {

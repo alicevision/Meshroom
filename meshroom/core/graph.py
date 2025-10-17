@@ -1773,7 +1773,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
 
     print("Nodes to execute: ", str([n.name for n in nodes]))
 
-    graph.save(setupProjectFile=False)
+    graph.save()
 
     for node in nodes:
         node.initStatusOnCompute(forceCompute)

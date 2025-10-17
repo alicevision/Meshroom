@@ -98,8 +98,7 @@ general_group.add_argument(
 
 general_group.add_argument(
     '-s', '--save', metavar='FILE', type=str, required=False,
-    help='Save the configured Meshroom graph to a project file. It will setup the cache folder '
-         'accordingly if not explicitly changed by --cache.')
+    help='Save the configured Meshroom graph to a project file. It will setup the cache folder accordingly. ')
 
 general_group.add_argument(
     '--submit', help='Submit on renderfarm instead of local computation.',
@@ -125,11 +124,6 @@ advanced_group.add_argument(
 advanced_group.add_argument(
     '--paramOverrides', metavar='NODETYPE:param=value NODEINSTANCE.param=value', type=str, default=None, nargs='*',
     help='Override specific parameters directly from the command line (by node type or by node names).')
-
-advanced_group.add_argument(
-    '--cache', metavar='FOLDER', type=str,
-    default=None,
-    help='Custom cache folder to write computation results.')
 
 advanced_group.add_argument(
     '--compute', metavar='<yes/no>', type=lambda x: bool(strtobool(x)), default=True, required=False,
@@ -286,11 +280,8 @@ with meshroom.core.graph.GraphModification(graph):
                 raise ValueError('Invalid param override: ' + str(p))
         print("\n")
 
-    # setup cache directory
-    graph.cacheDir = args.cache if args.cache else ""
-
 if args.save:
-    graph.save(args.save, setupProjectFile=not bool(args.cache))
+    graph.save(args.save)
     print(f'File successfully saved: "{args.save}"')
 
 # find end nodes (None will compute all graph)

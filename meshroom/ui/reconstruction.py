@@ -1051,6 +1051,7 @@ class Reconstruction(UIGraph):
         """ Set the current SfM node.
         This node will be used to retrieve sparse reconstruction result like camera poses.
         """
+        print("(setSfm) !!!")
         # disconnect from previous SfM node if any
         if self._sfm:
             self._sfm.chunks[0].statusChanged.disconnect(self.updateSfMResults)

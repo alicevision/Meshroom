@@ -9,13 +9,14 @@ ListView {
 
     SystemPalette { id: activePalette }
 
+    property string nodeStatus: "NONE"
     property color defaultColor: Qt.darker(activePalette.window, 1.1)
     property real chunkHeight: height
-    property bool modelIsBig: (3 * model.count >= width)
+    property int modelSize: model ? model.count : 0
+    property bool modelIsBig: (3 * modelSize >= width)
     property real chunkWidth: {
-        if (!model || model.count == 0)
-            return 0
-        return (width / model.count) - spacing
+        if (modelSize == 0) return 0
+        return (width / modelSize) - spacing
     }
 
     orientation: ListView.Horizontal
@@ -28,12 +29,28 @@ ListView {
         width: root.chunkWidth
         property var chunkColor: Colors.getChunkColor(object, { "NONE": root.defaultColor })
         color: {
-            if (!highlightChunks || model.count == 1)
+            if (!highlightChunks || modelSize == 1)
                 return chunkColor
             if (index % 2 == 0)
                 return Qt.lighter(chunkColor, 1.1)
             else
                 return Qt.darker(chunkColor, 1.1)
         }
+    }
+
+    onNodeStatusChanged: {
+        console.log("[NodeChunk] onNodeStatusChanged (", nodeStatus, ")")
+    }
+    
+    onModelChanged: {
+        console.log("[NodeChunk] onModelChanged (", modelSize, ") ->", model)
+    }
+
+    // Default rectangle shown when model is empty/undefined
+    Rectangle {
+        anchors.fill: parent
+        color: nodeStatus == "NONE" ? Colors.darkpurple : Colors.statusColors[nodeStatus]
+        enabled: modelSize == 0
+        visible: enabled
     }
 }

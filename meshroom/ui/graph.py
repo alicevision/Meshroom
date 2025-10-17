@@ -87,6 +87,7 @@ class FilesModTimePollerThread(QObject):
         Args:
             files: the list of files to monitor
         """
+        print(f"[FilesModTimePollerThread] set files : {files}")
         with self._mutex:
             self._files = files
 
@@ -168,7 +169,7 @@ class ChunksMonitor(QObject):
     @property
     def statusFiles(self):
         """ Get status file paths from the monitorable chunks. """
-        return [c.statusFile for c in self.monitorableChunks]
+        return [c.getStatusFile() for c in self.monitorableChunks]
 
     @property
     def watchedStatusFiles(self):
@@ -180,7 +181,7 @@ class ChunksMonitor(QObject):
         files = []
         chunks = []
         if self.filePollerRefresh is PollerRefreshStatus.AUTO_ENABLED.value:
-            return self.statusFiles, self.monitorableChunks
+            return self.getStatusFile(), self.monitorableChunks
         elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
             for c in self.monitorableChunks:
                 # Only chunks that are run externally or local_isolated should be monitored,
@@ -188,7 +189,7 @@ class ChunksMonitor(QObject):
                 # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
                 if (c.isExtern() and c._status.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or (
                     (c.node.getMrNodeType() == MrNodeType.NODE) and (c._status.status in (Status.SUBMITTED, Status.RUNNING))):
-                        files.append(c.statusFile)
+                        files.append(c.getStatusFile())
                         chunks.append(c)
         return files, chunks
 
@@ -203,6 +204,7 @@ class ChunksMonitor(QObject):
         newRecords = dict(zip(self.monitoredChunks, times))
         hasChangesAndSuccess = False
         for chunk, fileModTime in newRecords.items():
+            print(f"[ChunksMonitor] (compareFilesTimes) {chunk} ({chunk.node.label})")
             # update chunk status if last modification time has changed since previous record
             if fileModTime != chunk.statusFileLastModTime:
                 chunk.updateStatusFromCache()
@@ -424,15 +426,26 @@ class UIGraph(QObject):
         self.updateChunks()
 
     def updateChunks(self):
+        print("[UIGraph] (updateChunks)")
         dfsNodes = self._graph.dfsOnFinish(None)[0]
         chunks = []
         for node in dfsNodes:
+            print(f"[UIGraph] (updateChunks) node={node.label} ({node._chunksCreated})", end="")
             if hasattr(node, '_chunksCreated') and node._chunksCreated:
-                chunks.extend(node.getChunks())
-        # Nothing has changed, return
+                nodechunks = node.getChunks()
+                print(f" -> {[c for c in nodechunks]}")
+                chunks.extend(nodechunks)
+            else:
+                nodechunks = node.getChunks()
+                print(f" -> {[c for c in nodechunks]}")
+                chunks.extend(nodechunks)
         if self._sortedDFSChunks.objectList() == chunks:
+            # Nothing has changed, return
             return
         for chunk in self._sortedDFSChunks:
+            if chunk not in chunks:
+                # Chunk have been already deleted
+                continue
             chunk.statusChanged.disconnect(self.updateGraphComputingStatus)
             chunk.statusChanged.disconnect(self._chunksMonitor.onComputeStatusChanged)
         self._sortedDFSChunks.setObjectList(chunks)
@@ -586,6 +599,7 @@ class UIGraph(QObject):
         Notes:
             Default submitter is specified using the MESHROOM_DEFAULT_SUBMITTER environment variable.
         """
+        print("[UIGraph] (submit)", nodes)
         self.save()  # graph must be saved before being submitted
         self._undoStack.clear()  # the undo stack must be cleared
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
@@ -594,6 +608,7 @@ class UIGraph(QObject):
         self.parent().showMessage(f"Submit job on farm through {chosenSubmitter}")
         self.parent().showMessage(f"Nodes to submit : {nodes}")
         self._taskManager.submit(self._graph, chosenSubmitter, nodes, submitLabel=self.submitLabel)
+        print("[UIGraph] (submit) -> done")
 
     def updateGraphComputingStatus(self):
         # update graph computing status
@@ -884,6 +899,7 @@ class UIGraph(QObject):
     @Slot(list)
     def clearData(self, nodes: list[Node]):
         """ Clear data from 'nodes'. """
+        print("[UIGraph] (clearData)", nodes)
         for n in nodes:
             n.clearData()
 

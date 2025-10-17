@@ -1097,6 +1097,7 @@ class Graph(BaseObject):
              visited nodes and edges that are not already computed (node.status != SUCCESS).
              The order is defined by the visit and finishVertex event.
         """
+        print(f"[Graph] (dfsToProcess) startNodes={startNodes}")
         nodes = []
         edges = []
         visitor = Visitor(reverse=False, dependenciesOnly=True)
@@ -1107,6 +1108,10 @@ class Graph(BaseObject):
                 raise StopBranchVisit()
 
         def finishVertex(vertex, graph):
+            if not vertex.chunks:
+                # Chunks have not been initialized
+                nodes.append(vertex)
+                return
             chunksToProcess = []
             for chunk in vertex.chunks:
                 if chunk.status.status is not Status.SUCCESS:

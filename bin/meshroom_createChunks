@@ -72,7 +72,7 @@ submittedStatuses = [Status.RUNNING]
 # Find job
 submitter, job = None, None
 # It's required if we want to spool chunks on different machines
-jobInfos = node._nodestatus.jobInfos
+jobInfos = node._nodeStatus.jobInfos
 submitterName, jid = jobInfos.get("submitterName"), jobInfos.get("jid")
 for subName, sub in submitters.items():
     if not sub._options.includes(SubmitterOptionsEnum.RETRIEVE):
@@ -86,6 +86,10 @@ if not (hasattr(node, '_chunksCreated') and node._chunksCreated):
     # Create node chunks
     # Once created we don't have to do it again even if we relaunch the job
     node._createChunks()
+    # TODO
+    # Notify that the chunk is submitted
+    # for chunk in node._chunks:
+    #     chunk._status.initExternSubmit()
 
 # Get chunks to process in the current process
 chunksToProcess = []

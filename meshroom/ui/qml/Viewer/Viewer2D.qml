@@ -1204,7 +1204,11 @@ FocusScope {
                                         if (activeNode) {
                                             if (activeNode.nodeType == "FeatureExtraction" && isComputed) {
                                                 result.push(activeNode.attribute("output").value)
-                                            } else if (activeNode.hasAttribute("featuresFolders")) {
+                                            } 
+                                            else if (activeNode.nodeType == "RomaReducer" && isComputed) {
+                                                result.push(activeNode.attribute("featuresFolder").value)
+                                            }
+                                            else if (activeNode.hasAttribute("featuresFolders")) {
                                                 for (let i = 0; i < activeNode.attribute("featuresFolders").value.count; i++) {
                                                     let attr = activeNode.attribute("featuresFolders").value.at(i)
                                                     result.push(attr.value)

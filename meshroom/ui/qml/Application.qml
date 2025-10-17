@@ -729,8 +729,6 @@ Page {
                                 openRecentMenu.dismiss()
                                 if (_reconstruction.load(modelData["path"])) {
                                     MeshroomApp.addRecentProjectFile(modelData["path"])
-                                } else {
-                                    MeshroomApp.removeRecentProjectFile(modelData["path"])
                                 }
                             })
                             

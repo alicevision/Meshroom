@@ -1542,7 +1542,10 @@ class BaseNode(BaseObject):
 
     @property
     def globalExecMode(self):
-        return self._chunks.at(0).execModeName
+        if len(self._chunks):
+            return self._chunks.at(0).execModeName
+        else:
+            return ExecMode.NONE
 
     def getChunks(self) -> list[NodeChunk]:
         return self._chunks

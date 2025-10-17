@@ -111,8 +111,8 @@ class FilepathHelper(QObject):
     @Slot(str, QObject, result=str)
     def resolve(self, path, vp):
         # Resolve dynamic path that depends on viewpoint
+        from meshroom.core import fileUtils
 
-        replacements = {}
         if vp == None:
             replacements = FilepathHelper.getFilenamesFromFolder(FilepathHelper, FilepathHelper.dirname(FilepathHelper, path), FilepathHelper.extension(FilepathHelper, path))
             resolved = [path for i in range(len(replacements))]
@@ -120,25 +120,8 @@ class FilepathHelper(QObject):
                 for i in range(len(resolved)):
                     resolved[i] = resolved[i].replace("<FRAMEID>", replacements[i])
             return resolved
-        else:
 
-            vpPath = vp.childAttribute("path").value
-            filename = FilepathHelper.basename(FilepathHelper, vpPath)
-            replacements = {
-                "<VIEW_ID>": str(vp.childAttribute("viewId").value),
-                "<INTRINSIC_ID>": str(vp.childAttribute("intrinsicId").value),
-                "<POSE_ID>": str(vp.childAttribute("poseId").value),
-                "<PATH>": vpPath,
-                "<FILENAME>": filename,
-                "<FILESTEM>": FilepathHelper.removeExtension(FilepathHelper, filename),
-                "<EXTENSION>": FilepathHelper.extension(FilepathHelper, filename),
-            }
-
-        resolved = path
-        for key in replacements:
-            resolved = resolved.replace(key, replacements[key])
-
-        return resolved
+        return fileUtils.resolvePath(vp, path)
     
     @Slot(str, result="QVariantList")
     @Slot(str, str, result="QVariantList")

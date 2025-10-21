@@ -721,9 +721,6 @@ class NodeChunk(BaseObject):
         self.node.updateOutputAttr()
 
     def stopProcess(self):
-        if self.isExtern():
-            raise ValueError("Cannot stop process: node is computed externally (another instance of Meshroom)")
-
         # Ensure that we are up-to-date
         self.updateStatusFromCache()
 

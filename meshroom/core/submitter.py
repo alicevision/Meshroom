@@ -75,6 +75,12 @@ class BaseSubmittedJob:
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.jid}>"
 
+    def stopChunkTask(self, iteration):
+        if self.submitterOptions.includes(SubmitterOptionsEnum.INTERRUPT_JOB):
+            raise NotImplementedError("'stopChunkTask' method must be implemented in subclasses")
+        else:
+            raise RuntimeError(f"Submitter {self.__class__.__name__} cannot interrupt the job")
+
     def interruptJob(self):
         if self.submitterOptions.includes(SubmitterOptionsEnum.INTERRUPT_JOB):
             raise NotImplementedError("'interruptJob' method must be implemented in subclasses")
@@ -136,6 +142,11 @@ class JobManager(BaseObject):
             return None
         job = submitter.retrieveJob(jid)
         return job
+
+    def stopChunkTask(self, chunk):
+        print(f"[JobManager] (stopChunkTask) {chunk}")
+        job = self.getNodeJob(chunk.node)
+        job.stopChunkTask(chunk.range.iteration)
 
 
 # Global instance that manages submitted jobs

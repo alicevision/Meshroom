@@ -28,6 +28,7 @@ from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
 from meshroom.core.taskManager import TaskManager
+from meshroom.core.submitter import jobManager
 
 from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position
 from meshroom.core import submitters, MrNodeType
@@ -377,6 +378,7 @@ class UIGraph(QObject):
         self._sortedDFSChunks: QObjectListModel = QObjectListModel(parent=self)
         self._layout: GraphLayout = GraphLayout(self)
         self._selectedNode = None
+        self._selectedChunk = None
         self._nodeSelection: QItemSelectionModel = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
 
@@ -562,7 +564,7 @@ class UIGraph(QObject):
             return
         self._taskManager.requestBlockRestart()
         self._graph.stopExecution()
-        self._taskManager._thread.wait()
+        self._taskManager.join()
 
     @Slot(Node)
     def stopNodeComputation(self, node):
@@ -573,7 +575,7 @@ class UIGraph(QObject):
 
         # Stop the node and wait Task Manager
         node.stopComputation()
-        self._taskManager._thread.wait()
+        self._taskManager.join()
 
     @Slot(Node)
     def cancelNodeComputation(self, node):
@@ -609,13 +611,12 @@ class UIGraph(QObject):
         if self.isChunkComputingLocally(chunk):
             print(f"-> is local")
             chunk.stopProcess()
-            chunk.upgradeStatusTo(Status.STOPPED)
-            # TODO : remove the chunk from the thread process
-            self._taskManager._thread.wait()
+            # Remove the chunk from the thread process
+            self._taskManager._cancelledChunks.append(chunk)
         elif self.isChunkComputingExternally(chunk):
-            print("[UIGraph] (stopTask) Stop task is not implemented for ")
-            # TODO
-            pass
+            jobManager.stopChunkTask(chunk)
+            chunk.upgradeStatusTo(Status.STOPPED)
+            chunk.stopProcess()
 
     @Slot(NodeChunk)
     def pauseTask(self, chunk: NodeChunk):
@@ -1320,6 +1321,9 @@ class UIGraph(QObject):
     selectedNodeChanged = Signal()
     # Current main selected node
     selectedNode = makeProperty(QObject, "_selectedNode", selectedNodeChanged, resetOnDestroy=True)
+    # Current chunk selected (used to send signals from TaskManager to ChunksListView)
+    selectedChunkChanged = Signal()
+    selectedChunk = makeProperty(QObject, "_selectedChunk", selectedChunkChanged, resetOnDestroy=True)
 
     nodeSelection = makeProperty(QObject, "_nodeSelection")
 

@@ -5,11 +5,13 @@ import QtQuick.Layouts
 import Utils 1.0
 
 /**
- * ChunkListView
+ * ChunksListView
  */
 
 ColumnLayout {
     id: root
+
+    property var uigraph: null
     property variant chunks
     property int currentIndex: 0
     property variant currentChunk: (chunks && currentIndex >= 0) ? chunks.at(currentIndex) : undefined
@@ -89,5 +91,18 @@ ColumnLayout {
                 color: Colors.getChunkColor(parent.chunk)
             }
         }
+    }
+
+    Connections {
+        target: _reconstruction
+        function onSelectedChunkChanged() {
+            for (var i = 0; i < root.chunks.count; i++) {
+                if (_reconstruction.selectedChunk === root.chunks.at(i)) {
+                    root.currentIndex = i
+                    break;
+                }
+            }
+        }
+        ignoreUnknownSignals: true
     }
 }

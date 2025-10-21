@@ -98,6 +98,10 @@ class TaskThread(QThread):
             for cId, chunk in enumerate(node.chunks):
                 if chunk.isFinishedOrRunning() or not self.isRunning():
                     continue
+
+                if self._manager.isChunkCancelled(chunk):
+                    print(f"[TaskThread] Skip cancelled chunk {chunk}")
+                    continue
                 
                 _nodeName, _node, _nbNodes = node.nodeType, nId+1, len(self._manager._nodesToProcess)
 
@@ -148,12 +152,17 @@ class TaskManager(BaseObject):
         self._graph = None
         self._nodes = DictModel(keyAttrName='_name', parent=self)
         self._nodesToProcess = []
+        self._cancelledChunks = []
         self._nodesExtern = []
         # internal thread in which local tasks are executed
         self._thread = TaskThread(self)
 
         self._blockRestart = False
         self.restartRequested.connect(self.restart)
+
+    def join(self):
+        self._thread.wait()
+        self._cancelledChunks = []
 
     @Slot(BaseObject)
     def createChunks(self, node: Node):
@@ -167,6 +176,13 @@ class TaskManager(BaseObject):
         except Exception as e:
             logging.error(f"Failed to create chunks for {node.name}: {e}")
             self.chunksCreated.emit(node)  # Still emit to unblock waiting thread 
+
+    def isChunkCancelled(self, chunk):
+        for i, ch in enumerate(self._cancelledChunks):
+            if ch == chunk:
+                del self._cancelledChunks[i]
+                return True
+        return False
 
     def requestBlockRestart(self):  
         """
@@ -188,6 +204,7 @@ class TaskManager(BaseObject):
 
         self._blockRestart = False
         self._nodesToProcess = []
+        self._cancelledChunks = []
         self._thread._state = State.DEAD
 
     @Slot()
@@ -198,7 +215,7 @@ class TaskManager(BaseObject):
         """
         # Make sure to wait the end of the current thread
         if self._thread.isRunning():
-            self._thread.wait()
+            self.join()
 
         # Avoid restart if thread was globally stopped
         if self._blockRestart:

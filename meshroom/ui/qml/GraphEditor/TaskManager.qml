@@ -28,6 +28,11 @@ Item {
     function selectNode(node) {
         uigraph.selectedNode = node
     }
+
+    function selectChunk(chunk) {
+        root.selectedChunk = chunk
+        uigraph.selectedChunk = chunk
+    }
     
     TextMetrics {
         id: nbMetrics
@@ -234,8 +239,21 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
-                        onPressed: {
-                            selectNode(object)
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onPressed: (mouse) => {
+                            if (mouse.button === Qt.LeftButton) {
+                                selectNode(object)
+                            } else if (mouse.button === Qt.RightButton) {
+                                contextMenu.popup()
+                            }
+                        }
+                        Menu {
+                            id: contextMenu
+                            MenuItem {
+                                text: "Open Folder"
+                                height: visible ? implicitHeight : 0
+                                onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(object.internalFolder))
+                            }
                         }
                     }
                 }
@@ -306,10 +324,6 @@ Item {
                         model: object.chunks
                         property var node: object
 
-                        onModelChanged: {
-                            console.log("TaskManager model size :", chunkList.model.count)
-                        }
-
                         spacing: 3
 
                         delegate: Loader {
@@ -341,7 +355,7 @@ Item {
                                     anchors.fill: parent
                                     onPressed: {
                                         selectNode(chunkList.node)
-                                        selectedChunk = object
+                                        selectChunk(object)
                                     }
                                 }
                             }
@@ -363,7 +377,7 @@ Item {
                                 anchors.fill: parent
                                 onPressed: {
                                     selectNode(chunkList.node)
-                                    selectedChunk = null
+                                    selectChunk(null)
                                 }
                             }
                         }

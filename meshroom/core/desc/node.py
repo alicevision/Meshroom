@@ -5,6 +5,8 @@ import logging
 import shlex
 import shutil
 import sys
+import signal
+import subprocess
 
 import psutil
 
@@ -18,6 +20,29 @@ from .attribute import StringParam, ColorParam, ChoiceParam
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
+
+
+# Handle cleanup
+class ExitCleanup:
+    def __init__(self):
+        self._subprocesses = []
+        signal.signal(signal.SIGTERM, self.exit)
+    
+    def addSubprocess(self, process):
+        self._subprocesses.append(process)
+    
+    def exit(self, signum, frame):
+        for proc in self._subprocesses:
+            print(f"[ExitCleanup] (exit) kill subprocess {proc}")
+            try:
+                if proc.is_running():
+                    proc.terminate()
+                    proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+        raise RuntimeError("Process has been killed")
+
+exitCleanup = ExitCleanup()
 
 
 class MrNodeType(enum.Enum):
@@ -196,6 +221,7 @@ class BaseNode(object):
                     text=True,
                     **platformArgs,
                 )
+                exitCleanup.addSubprocess(chunk.subprocess)
 
                 if hasattr(chunk, "statThread"):
                     # We only have a statThread if the node is running in the current process
@@ -281,6 +307,8 @@ class Node(BaseNode):
 
         if len(chunk.node.getChunks()) > 1:
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
+        
+        print(f"(processChunkInEnvironment) meshroomComputeCmd={meshroomComputeCmd}")
 
         runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv
         cmdPrefix = chunk.node.nodeDesc.plugin.commandPrefix

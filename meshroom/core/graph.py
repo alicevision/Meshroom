@@ -1494,6 +1494,9 @@ class Graph(BaseObject):
             self.dirtyTopology = False
 
         self.updated.emit()
+    
+    def updateMonitoredFiles(self):
+        self.statusUpdated.emit()
 
     def markNodesDirty(self, fromNode):
         """
@@ -1623,6 +1626,7 @@ class Graph(BaseObject):
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
     updated = Signal()
+    statusUpdated = Signal()
     canComputeLeavesChanged = Signal()
     canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
 

@@ -8,6 +8,7 @@ from threading import Thread, Event, Lock
 from multiprocessing.pool import ThreadPool
 from typing import Optional, Union
 from collections.abc import Iterator
+from collections import OrderedDict
 
 from PySide6.QtCore import (
     Slot,
@@ -88,6 +89,7 @@ class FilesModTimePollerThread(QObject):
         Args:
             files: the list of files to monitor
         """
+        print(f"[FilesModTimePollerThread] (setFiles) {files}")
         with self._mutex:
             self._files = files
 
@@ -130,68 +132,59 @@ class FilesModTimePollerThread(QObject):
     filePollerRefreshReady = Signal()  # The refresh status has been updated and is ready to be used
 
 
-class ChunksMonitor(QObject):
+class NodeStatusMonitor(QObject):
     """
-    ChunksMonitor regularly check NodeChunks' status files for modification and trigger their update on change.
+    NodeStatusMonitor regularly check status files for modification and trigger their update on change.
 
     When working locally, status changes are reflected through the emission of 'statusChanged' signals.
     But when a graph is being computed externally - either via a Submitter or on another machine,
-    NodeChunks status files are modified by another instance, potentially outside this machine file system scope.
+    Status files are modified by another instance, potentially outside this machine file system scope.
     Same goes when status files are deleted/modified manually.
     Thus, for genericity, monitoring is based on regular polling and not file system watching.
     """
-    def __init__(self, chunks=(), parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.monitorableChunks = []
-        self.monitoredChunks = []
+        self.monitorableNodes = []
+        self.monitoredFiles = {}  # Dict {filepath: node}
         self._filesTimePoller = FilesModTimePollerThread(parent=self)
         self._filesTimePoller.timesAvailable.connect(self.compareFilesTimes)
         self._filesTimePoller.start()
-        self.setChunks(chunks)
-
+        self.setMonitored([])
         self.filePollerRefreshChanged.connect(self._filesTimePoller.onFilePollerRefreshChanged)
         self._filesTimePoller.filePollerRefreshReady.connect(self.onFilePollerRefreshUpdated)
 
-    def setChunks(self, chunks):
-        """
-        Set the lists of chunks that can be monitored and that are monitored.
-        When the file poller status is set to AUTO_ENABLED, the lists of monitorable and monitored chunks are identical.
-        """
-        self.monitorableChunks = chunks
-        files, monitoredChunks = self.watchedStatusFiles
-        self._filesTimePoller.setFiles(files)
-        self.monitoredChunks = monitoredChunks
+    def setWatchedFiles(self):
+        self.monitoredItems = self.getMonitoredFiles()
+        monitoredFiles = list([f for f in self.monitoredItems.keys()])
+        self._filesTimePoller.setFiles(monitoredFiles)
+
+    def setMonitored(self, nodes):
+        self.monitorableNodes = nodes
+        self.setWatchedFiles()
 
     def stop(self):
         """ Stop the status files monitoring. """
         self._filesTimePoller.stop()
 
-    @property
-    def statusFiles(self):
-        """ Get status file paths from the monitorable chunks. """
-        return [c.getStatusFile() for c in self.monitorableChunks]
-
-    @property
-    def watchedStatusFiles(self):
-        """
-        Get the status file paths from the currently monitored chunks.
-        Depending on the file poller status, the paths may either be those of all the current chunks, or those from the currently submitted/running chunks.
-        """
-
-        files = []
-        chunks = []
-        if self.filePollerRefresh is PollerRefreshStatus.AUTO_ENABLED.value:
-            return self.getStatusFile(), self.monitorableChunks
-        elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
-            for c in self.monitorableChunks:
+    def getMonitoredFiles(self):
+        monitoredItems = OrderedDict()
+        for node in self.monitorableNodes:
+            if node._chunksCreated:
+                fileItems = {c.getStatusFile(): ("chunk", c) for c in node._chunks}
+            else:
+                fileItems = {node.nodeStatusFile: ("node", node)}
+            if self.filePollerRefresh is PollerRefreshStatus.AUTO_ENABLED.value:
+                # Add everything
+                monitoredItems.update(fileItems)
+            elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
                 # Only chunks that are run externally or local_isolated should be monitored,
                 # when run locally, status changes are already notified.
                 # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
-                if (c.isExtern() and c._status.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or (
-                    (c.node.getMrNodeType() == MrNodeType.NODE) and (c._status.status in (Status.SUBMITTED, Status.RUNNING))):
-                        files.append(c.getStatusFile())
-                        chunks.append(c)
-        return files, chunks
+                for file, (_type, _item) in fileItems.items():
+                    if not _item.shouldMonitorChanges():
+                        continue
+                    monitoredItems[file] = (_type, _item)
+        return monitoredItems
 
     def compareFilesTimes(self, times):
         """
@@ -201,14 +194,27 @@ class ChunksMonitor(QObject):
         Args:
             times: the last modification times for currently monitored files.
         """
-        newRecords = dict(zip(self.monitoredChunks, times))
         hasChangesAndSuccess = False
-        for chunk, fileModTime in newRecords.items():
-            # update chunk status if last modification time has changed since previous record
-            if fileModTime != chunk.statusFileLastModTime:
-                chunk.updateStatusFromCache()
-                if chunk.status.status == Status.SUCCESS:
-                    hasChangesAndSuccess = True
+        newRecords = dict(zip(self.monitoredItems.items(), times))
+        for monitoredItem, fileModTime in newRecords.items():
+            _, (_type, _item) = monitoredItem
+            if _type == "chunk":
+                chunk = _item
+                # update chunk status if last modification time has changed since previous record
+                if fileModTime != chunk.statusFileLastModTime:
+                    chunk.updateStatusFromCache()
+                    if chunk.status.status == Status.SUCCESS:
+                        hasChangesAndSuccess = True
+            elif _type == "node":
+                node = _item
+                if fileModTime != node.nodeStatusFileLastModTime:
+                    node.updateStatusFromCache()
+                    # Check for success
+                    if node.getGlobalStatus() == Status.SUCCESS:
+                        hasChangesAndSuccess = True
+                    elif node._chunksCreated:
+                        # Chunks have been created -> set the watched files again
+                        self.setWatchedFiles()
         if hasChangesAndSuccess:
             chunk.node.loadOutputAttr()
 
@@ -220,9 +226,7 @@ class ChunksMonitor(QObject):
         In minimal auto-refresh mode, this includes only the chunks that are submitted or running.
         """
         if self.filePollerRefresh is not PollerRefreshStatus.DISABLED.value:
-            files, chunks = self.watchedStatusFiles
-            self._filesTimePoller.setFiles(files)
-            self.monitoredChunks = chunks
+            self.setWatchedFiles()
 
     def onComputeStatusChanged(self):
         """
@@ -230,9 +234,7 @@ class ChunksMonitor(QObject):
         file poller status is minimal auto-refresh.
         """
         if self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
-            files, chunks = self.watchedStatusFiles
-            self._filesTimePoller.setFiles(files)
-            self.monitoredChunks = chunks
+            self.setWatchedFiles()
 
     filePollerRefreshChanged = Signal(int)
     filePollerRefresh = Property(int, lambda self: self._filesTimePoller.filePollerRefresh, notify=filePollerRefreshChanged)
@@ -372,7 +374,7 @@ class UIGraph(QObject):
         self._graph: Graph = Graph('', self)
 
         self._modificationCount = 0
-        self._chunksMonitor: ChunksMonitor = ChunksMonitor(parent=self)
+        self._chunksMonitor: NodeStatusMonitor = NodeStatusMonitor(parent=self)
         self._computeThread: Thread = Thread()
         self._computingLocally = self._submitted = False
         self._sortedDFSChunks: QObjectListModel = QObjectListModel(parent=self)
@@ -400,6 +402,7 @@ class UIGraph(QObject):
             oldGraph.deleteLater()
 
         self._graph.updated.connect(self.onGraphUpdated)
+        self._graph.statusUpdated.connect(self.updateChunkMonitor)
         self._taskManager.update(self._graph)
 
         # update and connect chunks when the graph is set for the first time
@@ -426,18 +429,18 @@ class UIGraph(QObject):
         self.updateChunks()
 
     def updateChunks(self):
-        # print("[UIGraph] (updateChunks)")
+        print("[UIGraph] (updateChunks)")
         dfsNodes = self._graph.dfsOnFinish(None)[0]
         chunks = []
         for node in dfsNodes:
-            # print(f"[UIGraph] (updateChunks) node={node.label} ({node._chunksCreated})", end="")
+            print(f"[UIGraph] (updateChunks) node={node.label} ({node._chunksCreated})", end="")
             if hasattr(node, '_chunksCreated') and node._chunksCreated:
                 nodechunks = node.getChunks()
-                # print(f" -> {[c for c in nodechunks]}")
+                print(f" -> {[c for c in nodechunks]}")
                 chunks.extend(nodechunks)
             else:
                 nodechunks = node.getChunks()
-                # print(f" -> {[c for c in nodechunks]}")
+                print(f" -> {[c for c in nodechunks]}")
                 chunks.extend(nodechunks)
         if self._sortedDFSChunks.objectList() == chunks:
             # Nothing has changed, return
@@ -453,13 +456,19 @@ class UIGraph(QObject):
             chunk.statusChanged.connect(self.updateGraphComputingStatus)
             chunk.statusChanged.connect(self._chunksMonitor.onComputeStatusChanged)
         # provide ChunkMonitor with the update list of chunks
-        self.updateChunkMonitor(self._sortedDFSChunks)
+        self.updateChunkMonitor()
         # update graph computing status based on the new list of NodeChunks
         self.updateGraphComputingStatus()
 
-    def updateChunkMonitor(self, chunks):
+    def updateChunkMonitor(self):
         """ Update the list of chunks for status files monitoring. """
-        self._chunksMonitor.setChunks(chunks)
+        nodes = set()
+        for node in self._graph.dfsOnFinish(None)[0]:
+            if not node._chunksCreated:
+                nodes.add(node)
+        for chunk in self._sortedDFSChunks:
+            nodes.add(chunk.node)
+        self._chunksMonitor.setMonitored(list(nodes))
 
     def clear(self):
         if self._graph:
@@ -529,7 +538,7 @@ class UIGraph(QObject):
         self._undoStack.setClean()
         # saving file on disk impacts cache folder location
         # => force re-evaluation of monitored status files paths
-        self.updateChunkMonitor(self._sortedDFSChunks)
+        self.updateChunkMonitor()
 
     @Slot()
     def saveAsTemp(self):
@@ -607,6 +616,7 @@ class UIGraph(QObject):
     
     @Slot(NodeChunk)
     def stopTask(self, chunk: NodeChunk):
+        """ Stop the selected task """
         print(f"[UIGraph] (taskChunkStop) {chunk}", end="")
         if self.isChunkComputingLocally(chunk):
             print(f"-> is local")
@@ -620,15 +630,30 @@ class UIGraph(QObject):
 
     @Slot(NodeChunk)
     def pauseTask(self, chunk: NodeChunk):
-        print(f"[UIGraph] (taskChunkPause) {chunk}")
+        """ Pause the running job : cancel all scheduled tasks """
+        print(f"[UIGraph] (taskChunkPause) {chunk} (not implemented)")
+        if self.isChunkComputingLocally(chunk):
+            pass
+        elif self.isChunkComputingExternally(chunk):
+            pass
 
     @Slot(NodeChunk)
     def restartTask(self, chunk: NodeChunk):
-        print(f"[UIGraph] (taskChunkRestart) {chunk}")
+        """ Relaunch a stopped task """
+        print(f"[UIGraph] (taskChunkRestart) {chunk} (not implemented)")
+        if self.isChunkComputingLocally(chunk):
+            pass
+        elif self.isChunkComputingExternally(chunk):
+            pass
 
     @Slot(NodeChunk)
     def skipTask(self, chunk: NodeChunk):
-        print(f"[UIGraph] (taskChunkSkip) {chunk}")
+        """ Skip the task : the job will continue as if the task succeeded """
+        print(f"[UIGraph] (taskChunkSkip) {chunk} (not implemented)")
+        if self.isChunkComputingLocally(chunk):
+            pass
+        elif self.isChunkComputingExternally(chunk):
+            pass
 
     @Slot()
     @Slot(Node)

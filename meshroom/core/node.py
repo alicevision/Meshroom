@@ -50,6 +50,7 @@ class Status(Enum):
     STOPPED = 4
     KILLED = 5
     SUCCESS = 6
+    # SKIPPED = 7
     INPUT = 7  # Special status for input nodes
 
 
@@ -94,12 +95,6 @@ class NodeStatusData(BaseObject):
         self.nodeName = node.name
         self.setNodeType(node)
 
-    def initStartCompute(self):
-        pass  # TODO
-
-    def initIsolatedCompute(self):
-        pass  # TODO
-
     def initExternSubmit(self):
         """
         When submitting a node, we reset the status information to ensure that we do not keep
@@ -125,12 +120,10 @@ class NodeStatusData(BaseObject):
         self.status = Status.SUBMITTED
         self.execMode = ExecMode.LOCAL
 
-    def initEndCompute(self):
-        pass  # TODO
-
     def setComputationStatusToInheritChunks(self):
+        # TODO
         self.status: Status = Status.NONE
-    
+
     def setNodeType(self, node):
         """
         Set the node type and package information from the given node.
@@ -521,6 +514,15 @@ class NodeChunk(BaseObject):
 
     def getExecModeName(self):
         return self._status.execMode.name
+    
+    def shouldMonitorChanges(self):
+        """ Check whether we should monitor changes in minimal mode 
+        Only chunks that are run externally or local_isolated should be monitored,
+        when run locally, status changes are already notified.
+        Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
+        """
+        return (self.isExtern() and self._status.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or \
+               (self.node.getMrNodeType() == MrNodeType.NODE and self._status.status in (Status.SUBMITTED, Status.RUNNING))
 
     def updateStatusFromCache(self):
         """
@@ -838,6 +840,7 @@ class BaseNode(BaseObject):
         
         self._nodeStatus: NodeStatusData = NodeStatusData(self._name, nodeType, self.packageName,
                                                           self.packageVersion, self.getMrNodeType())
+        self.nodeStatusFileLastModTime = -1
 
         self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)
 
@@ -1343,6 +1346,15 @@ class BaseNode(BaseObject):
         interrupted, its execution mode will always be local, even if computations resume
         externally.
         """
+        if not self._chunksCreated:
+            if self._nodeStatus.execMode == ExecMode.EXTERN:
+                return True
+            # TODO : use sessionID
+            # elif self._nodeStatus.execMode == ExecMode.LOCAL:
+            #     if self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
+            #         return meshroom.core.sessionUid not in (self._nodeStatus.submitterSessionUid, self._nodeStatus.sessionUid)
+            #     return False
+            return False
         if len(self._chunks) == 0:
             return False
         return any(chunk.isExtern() for chunk in self._chunks)
@@ -1503,11 +1515,23 @@ class BaseNode(BaseObject):
     @property
     def nodeStatusFile(self):
         return os.path.join(self.graph.cacheDir, self.internalFolder, "nodeStatus")
+    
+    def shouldMonitorChanges(self):
+        """ Check whether we should monitor changes in minimal mode 
+        Only chunks that are run externally or local_isolated should be monitored,
+        when run locally, status changes are already notified.
+        Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
+        """
+        if self._chunksCreated:
+            # Only monitor when chunks are not created (in this case monitor chunk status files instead)
+            return False
+        return (self.isExtern() and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or \
+               (self.getMrNodeType() == MrNodeType.NODE and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING))
 
     def updateNodeStatusFromCache(self):
         """
         Update node status based on status file content/existence.
-        # TODO : integrate statusFileLastModTime ?
+        # TODO : integrate nodeStatusFileLastModTime ?
         Returns True if a change on the chunk setup has been detected
         """
         chunksRangeHasChanged = False
@@ -1516,8 +1540,10 @@ class BaseNode(BaseObject):
             self._nodeStatus.loadFromCache(self.nodeStatusFile)
             if self._nodeStatus.chunks != oldChunkSetup:
                 chunksRangeHasChanged = True
+            self.nodeStatusFileLastModTime = os.path.getmtime(self.nodeStatusFile)
         else:
             # No status file => reset status to Status.None
+            self.nodeStatusFileLastModTime = -1
             self._nodeStatus.reset()
         self._nodeStatus.setNodeType(self)
         return chunksRangeHasChanged

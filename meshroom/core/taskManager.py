@@ -476,7 +476,9 @@ class TaskManager(BaseObject):
                                f"Available submitters are: '{str(meshroom.core.submitters.keys())}'.")
 
         # Update task manager's lists
+        print("[TaskManager] (submit) updateNodes")
         self.updateNodes()
+        print("[TaskManager] (submit) graph.update")
         graph.update()
 
         # Check dependencies of toNodes
@@ -497,6 +499,13 @@ class TaskManager(BaseObject):
         self.checkCompatibilityNodes(graph, nodesToProcess, "SUBMITTING")  # name of the context is important for QML
         self.checkDuplicates(nodesToProcess, "SUBMITTING")  # name of the context is important for QML
 
+        # Update nodes status
+        for node in nodesToProcess:
+            node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
+            node.initStatusOnSubmit()
+        print("[TaskManager] (submit) graph.updateMonitoredFiles")
+        graph.updateMonitoredFiles()
+            
         flowEdges = graph.flowEdges(startNodes=toNodes)
         edgesToProcess = set(edgesToProcess).intersection(flowEdges)
 
@@ -505,11 +514,13 @@ class TaskManager(BaseObject):
 
         try:
             res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
-            for node in nodesToProcess:
-                node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
-                node.initStatusOnSubmit()  # update node status
+            if res:
                 if isinstance(res, BaseSubmittedJob):
                     jobManager.addJob(res, nodesToProcess)
+            else:
+                for node in nodesToProcess:
+                    # TODO : Notify the node that there was an issue on submit
+                    pass
             self._nodes.update(nodesToProcess)
             self._nodesExtern.extend(nodesToProcess)
 

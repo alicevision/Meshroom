@@ -29,6 +29,7 @@ class ExitCleanup:
         signal.signal(signal.SIGTERM, self.exit)
     
     def addSubprocess(self, process):
+        print(f"[ExitCleanup] (addSubprocess) register subprocess {process}")
         self._subprocesses.append(process)
     
     def exit(self, signum, frame):
@@ -40,7 +41,7 @@ class ExitCleanup:
                     proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 proc.kill()
-        raise RuntimeError("Process has been killed")
+        sys.exit(0)
 
 exitCleanup = ExitCleanup()
 

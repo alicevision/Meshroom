@@ -40,7 +40,6 @@ def renameWritingToFinalPath(writingFilepath: str, filepath: str) -> str:
                 pass
     os.rename(writingFilepath, filepath)
 
-
 class Status(Enum):
     """
     """
@@ -75,24 +74,20 @@ class NodeStatusData(BaseObject):
         self.nodeType: str = nodeType
         self.packageName: str = packageName
         self.packageVersion: str = packageVersion
-        self.mrNodeType: MrNodeType = mrNodeType
-        self.chunks: NodeChunkSetup = None
+        self.mrNodeType: str = mrNodeType
+        self.reset()
+
+    def reset(self):
+        self.resetChunkInfos()
         self.resetDynamicValues()
 
+    def resetChunkInfos(self):
+        self.chunks: NodeChunkSetup = None
+
     def resetDynamicValues(self):
-        self.statusInheritedFromChunks: bool = False
         self.status: Status = Status.NONE
         self.execMode: ExecMode = ExecMode.NONE
         self.jobInfos: dict = {}
-        # TODO : move all possible infos from ChunkStatusData to this place
-
-    def reset(self):
-        self.nodeName: str = ""
-        self.nodeType: str = ""
-        self.packageName: str = ""
-        self.packageVersion: str = ""
-        self.mrNodeType: str = MrNodeType.NONE
-        self.resetDynamicValues()
 
     def setNode(self, node):
         """ Set the node information from one node instance. """
@@ -113,6 +108,13 @@ class NodeStatusData(BaseObject):
         self.resetDynamicValues()
         self.status = Status.SUBMITTED
         self.execMode = ExecMode.EXTERN
+    
+    def setJob(self, jid, submitterName):
+        """ Set Job infos on the node so that """
+        self.jobInfos = {
+            "jid": str(jid),
+            "submitterName": str(submitterName),
+        }
 
     def initLocalSubmit(self):
         """
@@ -127,15 +129,8 @@ class NodeStatusData(BaseObject):
         pass  # TODO
 
     def setComputationStatusToInheritChunks(self):
-        self.statusInheritedFromChunks = True
         self.status: Status = Status.NONE
     
-    def setJob(self, jid, submitterName):
-        self.jobInfos = {
-            "jid": str(jid),
-            "submitterName": str(submitterName),
-        }
-
     def setNodeType(self, node):
         """
         Set the node type and package information from the given node.
@@ -149,38 +144,39 @@ class NodeStatusData(BaseObject):
     def toDict(self):
         keys = list(self.__slots__) or []
         d = {key:getattr(self, key) for key in keys}
-        chunks = [-1, -1, -1]
+        chunks = None
         if self.chunks:
             chunks = list(self.chunks)
         d["chunks"] = chunks
         return d
 
-    def fromDict(self, d):
+    def updateFromDict(self, d):
         self.reset()
         self.mrNodeType = d.pop("mrNodeType", MrNodeType.NONE)
         if not isinstance(self.mrNodeType, MrNodeType):
             self.mrNodeType = MrNodeType[self.mrNodeType]
-        self.chunks = NodeChunkSetup(*d.pop("chunks", [-1, -1, -1]))
+        if "chunks" in d:
+            chunks = d.pop("chunks")
+            if chunks:
+                self.chunks = NodeChunkSetup(*chunks)
         if "status" in d:
             statusName = d.pop("status")
             self.status: Status = Status[statusName]
         if "execMode" in d:
             execModeName = d.pop("execMode")
-            self.execMode = Status[execModeName]
+            self.execMode = ExecMode[execModeName]
         for _key, _value in d.items():
             if _key in self.__slots__:
                 setattr(self, _key, _value)
 
     def loadFromCache(self, statusFile):
-        print(f"[NodeStatusData](loadFromCache) {statusFile}")
         self.reset()
         try:
             with open(statusFile) as jsonFile:
                 statusData = json.load(jsonFile)
-            print(f"statusData :\n{statusData}")
-            self.fromDict(statusData)
+            self.updateFromDict(statusData)
         except Exception as e:
-            logging.warning(f"[NodeStatusData] (loadFromCache) {self.nodeName}: Error while loading status file {statusFile}: {e}")
+            logging.warning(f"(loadFromCache) {self.nodeName}: Error while loading status file {statusFile}: {e}")
             self.reset()
 
     @property 
@@ -530,7 +526,6 @@ class NodeChunk(BaseObject):
         """
         Update chunk status based on status file content/existence.
         """
-        print(f"updateStatusFromCache {self}")
         # TODO : If this is a placeholder chunk
         # Then we shouldn't do anything here
         
@@ -651,7 +646,6 @@ class NodeChunk(BaseObject):
         return self._status.status == Status.SUCCESS
 
     def process(self, forceCompute=False, inCurrentEnv=False):
-        print(f"[NodeChunk] (process) {self}")
         if not forceCompute and self._status.status == Status.SUCCESS:
             logging.info(f"Node chunk already computed: {self.name}")
             return
@@ -699,7 +693,6 @@ class NodeChunk(BaseObject):
             self.statThread.join()
             self.statistics = stats.Statistics()
             del runningProcesses[self.name]
-        print(f"[NodeChunk] (process) -> done")
 
 
     def _processInIsolatedEnvironment(self):
@@ -1520,9 +1513,6 @@ class BaseNode(BaseObject):
         # TODO : integrate statusFileLastModTime ?
         Returns True if a change on the chunk setup has been detected
         """
-        if self.label == "E":
-            chunksInfos = [f"<{hex(id(c._status))}, {c._status.status.name}>" for c in self._chunks]
-            print(f"[BaseNode] (updateNodeStatusFromCache) E ({self}) ({chunksInfos})")
         chunksRangeHasChanged = False
         if os.path.exists(self.nodeStatusFile):
             oldChunkSetup = self._nodeStatus.chunks
@@ -1539,7 +1529,6 @@ class BaseNode(BaseObject):
         """
         Update node status based on status file content/existence.
         """
-        print(f"updateStatusFromCache {self}")
         # Update nodeStatus from cache
         chunkChanged = self.updateNodeStatusFromCache()
         # Create chunks if we found info on them on the node cache
@@ -1571,13 +1560,11 @@ class BaseNode(BaseObject):
         renameWritingToFinalPath(statusFilepathWriting, statusFilepath)
 
     def setJobId(self, jid, submitterName):
-        print("[BaseNode] (setJobId)", self.label, "->", jid, f"({submitterName})")
         self._nodeStatus.setJob(jid, submitterName)
         self.saveNodeStatusFile()
 
     def initStatusOnSubmit(self, forceCompute=False):
         """ Prepare chunks status when the node is in a graph that was submitted """
-        print(f"[BaseNode] (initStatusOnSubmit) {self.label} ({self})")
         if not self._chunksCreated:
             self._nodeStatus.setNode(self)  # ???
             self._nodeStatus.initExternSubmit()
@@ -1591,7 +1578,6 @@ class BaseNode(BaseObject):
                 chunk.upgradeStatusFile()
 
     def beginSequence(self, forceCompute=False):
-        print(f"[BaseNode] (beginSequence) {self.label} ({self})")
         if not self._chunksCreated:
             self._nodeStatus.setNode(self)  # ???
             self._nodeStatus.initLocalSubmit()
@@ -1711,7 +1697,9 @@ class BaseNode(BaseObject):
 
     def stopComputation(self):
         """ Stop the computation of this node. """
+        print(f"[BaseNode] (stopComputation) {self}")
         for chunk in self._chunks.values():
+            print(f"[BaseNode] (stopComputation) stop chunk {chunk}")
             chunk.stopProcess()
 
     def getGlobalStatus(self):
@@ -1797,7 +1785,6 @@ class BaseNode(BaseObject):
         return self._locked
 
     def setLocked(self, lock):
-        print(f"(setLocked) {self.label} ({self}) -> {lock}")
         if self._locked == lock:
             return
         self._locked = lock
@@ -1806,7 +1793,6 @@ class BaseNode(BaseObject):
     @Slot()
     def updateDuplicatesStatusAndLocked(self):
         """ Update status of duplicate nodes without any latency and update locked. """
-        print(f"[BaseNode] (updateDuplicatesStatusAndLocked) {self}")
         if self.isMainNode():
             for node in self._duplicates:
                 node.updateStatusFromCache()
@@ -1814,9 +1800,7 @@ class BaseNode(BaseObject):
             self.updateLocked()
 
     def updateLocked(self):
-        print(f"(updateLocked) {self.label} ({self})")
         currentStatus = self.getGlobalStatus()
-        print(f"  currentStatus: {currentStatus}")
 
         lockedStatus = (Status.RUNNING, Status.SUBMITTED)
 
@@ -1840,7 +1824,6 @@ class BaseNode(BaseObject):
         if not self._locked and currentStatus == Status.SUCCESS:
             return
 
-        print(f"  a")
         if currentStatus == Status.SUCCESS:
             # At this moment, the node is necessarily locked because of previous if statement
             inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
@@ -1859,14 +1842,12 @@ class BaseNode(BaseObject):
                     node.setLocked(False)
             return
         elif currentStatus in lockedStatus and self.isMainNode():
-            print(f"  b")
             self.setLocked(True)
             inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
             for node in inputNodes:
                 node.setLocked(True)
             return
 
-        print(f"  c")
         self.setLocked(False)
 
     def updateDuplicates(self, nodesPerUid):
@@ -2168,15 +2149,13 @@ class Node(BaseNode):
         """
         if isinstance(self.nodeDesc, desc.InputNode):
             return
-        print("[Node] (_resetChunks)", self.label)
         # Disconnect signals
         for chunk in self._chunks:
-            print(f"[Node] (_resetChunks) -> remove {chunk}")
             chunk.statusChanged.disconnect(self.globalStatusChanged)
         # Empty list
         self._chunks.setObjectList([])
         # Clear cache
-
+        self._nodeStatus.resetChunkInfos()
         # Recreate list with reset values (1 chunk or the static size)
         if not self.isParallelized:
             self._chunksCreated = True
@@ -2188,8 +2167,6 @@ class Node(BaseNode):
             self._chunksCreated = False
             self.setSize(0)
         # Create chunks when possible 
-        print(f"[Node] (_resetChunks) <{self.label}|{self._uid[:5] + ('..' if len(self._uid) > 5 else '')}> ({self.size})", end="")
-        print(f" parallel={1 if self.isParallelized else 0} chunksCreated={1 if self._chunksCreated else 0}", end="")
         if self._chunksCreated and self.isParallelized:
             try:
                 ranges = self.nodeDesc.parallelization.getRanges(self)
@@ -2206,7 +2183,6 @@ class Node(BaseNode):
             self._chunks[0].statusChanged.connect(self.globalStatusChanged)
         else:
             self._chunks.setObjectList([])
-        print(f" -> ranges={[_c.range for _c in self._chunks]}")
         self.chunksCreatedChanged.emit()
         self.chunksChanged.emit()
         self.globalStatusChanged.emit()
@@ -2241,14 +2217,14 @@ class Node(BaseNode):
 
     def _createChunksFromCache(self):
         """Create chunks when a node cache exists"""
-        print("[Node] (_createChunksFromCache)", self.label, end="")
+        # print("[Node] (_createChunksFromCache)", self.label, end="")
         try:
             # Get size from cache
             size = self._nodeStatus.nbChunks
             self.setSize(size)
             ranges = self._nodeStatus.getChunkRanges()
             self.__createChunks(ranges)
-            print(" -> ranges =", [_c.range for _c in self._chunks])
+            # print(" -> ranges =", [_c.range for _c in self._chunks])
         except Exception as e:
             logging.error(f"Failed to create chunks for {self.name}")
             self._chunks.clear()

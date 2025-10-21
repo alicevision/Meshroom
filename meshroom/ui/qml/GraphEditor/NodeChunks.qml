@@ -38,14 +38,6 @@ ListView {
         }
     }
 
-    onNodeStatusChanged: {
-        console.log("[NodeChunk] onNodeStatusChanged (", nodeStatus, ")")
-    }
-    
-    onModelChanged: {
-        console.log("[NodeChunk] onModelChanged (", modelSize, ") ->", model)
-    }
-
     // Default rectangle shown when model is empty/undefined
     Rectangle {
         anchors.fill: parent

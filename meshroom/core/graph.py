@@ -1097,7 +1097,6 @@ class Graph(BaseObject):
              visited nodes and edges that are not already computed (node.status != SUCCESS).
              The order is defined by the visit and finishVertex event.
         """
-        print(f"[Graph] (dfsToProcess) startNodes={startNodes}")
         nodes = []
         edges = []
         visitor = Visitor(reverse=False, dependenciesOnly=True)

@@ -97,12 +97,6 @@ class BaseSubmittedJob:
         else:
             raise RuntimeError(f"Submitter {self.__class__.__name__} cannot restart the job")
 
-    def addChunkTask(self, node, **kwargs):
-        if self.submitterOptions.includes(SubmitterOptionsEnum.RESUME_JOB):
-            raise NotImplementedError("'addChunkTask' method must be implemented in subclasses")
-        else:
-            raise RuntimeError(f"Submitter {self.__class__.__name__} cannot edit the job")
-
 
 class JobManager(BaseObject):
     """ Central manager for all jobs """
@@ -169,10 +163,16 @@ class BaseSubmitter(BaseObject):
         """
         raise NotImplementedError("'createJob' method must be implemented in subclasses")
 
+    def createChunkTask(self, node, graphFile, **kwargs):
+        if self._options.includes(SubmitterOptionsEnum.RESUME_JOB):
+            raise NotImplementedError("'createChunkTask' method must be implemented in subclasses")
+        else:
+            raise RuntimeError(f"Submitter {self.name} cannot edit the job")
+
     def retrieveJob(self, jobId) -> BaseSubmittedJob:
         raise NotImplementedError("'retrieveJob' method must be implemented in subclasses")
 
-    def submit(self, nodes, edges, filepath, submitLabel="{projectName}"):
+    def submit(self, nodes, edges, filepath, submitLabel="{projectName}") -> BaseSubmittedJob:
         """ Submit the given graph
          Returns:
              bool: whether the submission succeeded
@@ -180,9 +180,7 @@ class BaseSubmitter(BaseObject):
         job = self.createJob(nodes, edges, filepath, submitLabel)
         if not job:
             # Failed to create the job
-            return False
-        if isinstance(job, BaseSubmittedJob):
-            jobManager.addJob(job, nodes)
-        return True
+            return None
+        return job
 
     name = Property(str, lambda self: self._name, constant=True)

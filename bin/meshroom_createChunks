@@ -1,9 +1,16 @@
 #!/usr/bin/env python
+
+"""
+This is a script used to wrap the process of processing a node on the farm
+It will handle chunk creation and create all the jobs for these chunks
+If the submitter cannot create chunks, then it will process the chunks serially
+in the current process
+"""
+
 import argparse
 import logging
 import os
 import sys
-
 try:
     import meshroom
 except Exception:
@@ -25,6 +32,9 @@ from meshroom.core.node import Status
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
 parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,
                     help='Filepath to a graph file.')
+
+parser.add_argument('--submitter', type=str, required=True,
+                    help='Name of the submitter used to create the job.')
 parser.add_argument('--node', metavar='NODE_NAME', type=str, required=True,
                     help='Process the node. It will generate an error if the dependencies are not already computed.')
 parser.add_argument('--inCurrentEnv', help='Execute process in current env without creating a dedicated runtime environment.',
@@ -70,46 +80,30 @@ submittedStatuses = [Status.RUNNING]
 
 
 # Find job
-submitter, job = None, None
+submitter = None
 # It's required if we want to spool chunks on different machines
-jobInfos = node._nodeStatus.jobInfos
-submitterName, jid = jobInfos.get("submitterName"), jobInfos.get("jid")
 for subName, sub in submitters.items():
-    if not sub._options.includes(SubmitterOptionsEnum.RETRIEVE):
-        continue
-    if submitterName == subName:
+    if args.submitter == subName:
         submitter = sub
-        job = jobManager.retreiveJob(sub, jid)
         break
 
 if not (hasattr(node, '_chunksCreated') and node._chunksCreated):
     # Create node chunks
     # Once created we don't have to do it again even if we relaunch the job
     node._createChunks()
-    # TODO
-    # Notify that the chunk is submitted
-    # for chunk in node._chunks:
-    #     chunk._status.initExternSubmit()
+    # Set the chunks statuses
+    node.initStatusOnSubmit()
 
 # Get chunks to process in the current process
 chunksToProcess = []
-if job:
-    if not job.submitterOptions.includes(SubmitterOptionsEnum.EDIT_TASKS):
+if submitter:
+    if not submitter._options.includes(SubmitterOptionsEnum.EDIT_TASKS):
         chunksToProcess = node.chunks
 else:
     # Cannot retrieve job -> execute process serially
     chunksToProcess = node.chunks
 
 logging.info("[MeshroomCreateChunks] Chunks to process here :", chunksToProcess)
-
-# Identify if the current process 
-# is a running chunk or if we need to spool the chunk job
-# 
-
-# - create map from job/no des
-# - if we are on a task process
-# - do like before
-pass
 
 if not args.forceStatus and not args.forceCompute:
     for chunk in chunksToProcess:
@@ -135,8 +129,8 @@ if chunksToProcess:
     node.restoreLogger()
 else:
     logging.info(f"[MeshroomCreateChunks] -> create job to process chunks {node.chunks}")
-    job.addChunkTask(node, graphFile=args.graphFile, cache=args.cache, 
-                     forceStatus=args.forceStatus, forceCompute=args.forceCompute)
+    submitter.createChunkTask(node, graphFile=args.graphFile, cache=args.cache, 
+                              forceStatus=args.forceStatus, forceCompute=args.forceCompute)
 
 # Restore the log level
 logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])

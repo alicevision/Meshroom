@@ -87,7 +87,6 @@ class FilesModTimePollerThread(QObject):
         Args:
             files: the list of files to monitor
         """
-        print(f"[FilesModTimePollerThread] set files : {files}")
         with self._mutex:
             self._files = files
 
@@ -204,7 +203,6 @@ class ChunksMonitor(QObject):
         newRecords = dict(zip(self.monitoredChunks, times))
         hasChangesAndSuccess = False
         for chunk, fileModTime in newRecords.items():
-            print(f"[ChunksMonitor] (compareFilesTimes) {chunk} ({chunk.node.label})")
             # update chunk status if last modification time has changed since previous record
             if fileModTime != chunk.statusFileLastModTime:
                 chunk.updateStatusFromCache()
@@ -426,18 +424,18 @@ class UIGraph(QObject):
         self.updateChunks()
 
     def updateChunks(self):
-        print("[UIGraph] (updateChunks)")
+        # print("[UIGraph] (updateChunks)")
         dfsNodes = self._graph.dfsOnFinish(None)[0]
         chunks = []
         for node in dfsNodes:
-            print(f"[UIGraph] (updateChunks) node={node.label} ({node._chunksCreated})", end="")
+            # print(f"[UIGraph] (updateChunks) node={node.label} ({node._chunksCreated})", end="")
             if hasattr(node, '_chunksCreated') and node._chunksCreated:
                 nodechunks = node.getChunks()
-                print(f" -> {[c for c in nodechunks]}")
+                # print(f" -> {[c for c in nodechunks]}")
                 chunks.extend(nodechunks)
             else:
                 nodechunks = node.getChunks()
-                print(f" -> {[c for c in nodechunks]}")
+                # print(f" -> {[c for c in nodechunks]}")
                 chunks.extend(nodechunks)
         if self._sortedDFSChunks.objectList() == chunks:
             # Nothing has changed, return
@@ -559,6 +557,7 @@ class UIGraph(QObject):
 
     @Slot()
     def stopExecution(self):
+        self.updateChunks()
         if not self.isComputingLocally():
             return
         self._taskManager.requestBlockRestart()
@@ -568,6 +567,7 @@ class UIGraph(QObject):
     @Slot(Node)
     def stopNodeComputation(self, node):
         """ Stop the computation of the node and update all the nodes depending on it. """
+        self.updateChunks()
         if not self.isComputingLocally():
             return
 
@@ -578,6 +578,7 @@ class UIGraph(QObject):
     @Slot(Node)
     def cancelNodeComputation(self, node):
         """ Cancel the computation of the node and all the nodes depending on it. """
+        self.updateChunks()
         if node.getGlobalStatus() == Status.SUBMITTED:
             # Status from SUBMITTED to NONE
             # Make sure to remove the nodes from the Task Manager list
@@ -587,6 +588,46 @@ class UIGraph(QObject):
             for n in node.getOutputNodes(recursive=True, dependenciesOnly=True):
                 n.clearSubmittedChunks()
                 self._taskManager.removeNode(n, displayList=True, processList=True)
+    
+    def isChunkComputingLocally(self, chunk):
+        # update graph computing status
+        computingLocally = chunk._status.execMode == ExecMode.LOCAL and \
+                           (sessionUid in (chunk._status.submitterSessionUid, chunk._status.sessionUid)) and \
+                           (chunk._status.status in (Status.RUNNING, Status.SUBMITTED))
+        return computingLocally
+    
+    def isChunkComputingExternally(self, chunk):
+        # Note: We do not check sessionUid for the submitted status,
+        #       as the source instance of the submit has no importance.
+        submitted = (chunk._status.execMode == ExecMode.EXTERN) and \
+                    chunk._status.status in (Status.RUNNING, Status.SUBMITTED)
+        return submitted
+    
+    @Slot(NodeChunk)
+    def stopTask(self, chunk: NodeChunk):
+        print(f"[UIGraph] (taskChunkStop) {chunk}", end="")
+        if self.isChunkComputingLocally(chunk):
+            print(f"-> is local")
+            chunk.stopProcess()
+            chunk.upgradeStatusTo(Status.STOPPED)
+            # TODO : remove the chunk from the thread process
+            self._taskManager._thread.wait()
+        elif self.isChunkComputingExternally(chunk):
+            print("[UIGraph] (stopTask) Stop task is not implemented for ")
+            # TODO
+            pass
+
+    @Slot(NodeChunk)
+    def pauseTask(self, chunk: NodeChunk):
+        print(f"[UIGraph] (taskChunkPause) {chunk}")
+
+    @Slot(NodeChunk)
+    def restartTask(self, chunk: NodeChunk):
+        print(f"[UIGraph] (taskChunkRestart) {chunk}")
+
+    @Slot(NodeChunk)
+    def skipTask(self, chunk: NodeChunk):
+        print(f"[UIGraph] (taskChunkSkip) {chunk}")
 
     @Slot()
     @Slot(Node)
@@ -599,7 +640,6 @@ class UIGraph(QObject):
         Notes:
             Default submitter is specified using the MESHROOM_DEFAULT_SUBMITTER environment variable.
         """
-        print("[UIGraph] (submit)", nodes)
         self.save()  # graph must be saved before being submitted
         self._undoStack.clear()  # the undo stack must be cleared
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
@@ -608,18 +648,33 @@ class UIGraph(QObject):
         self.parent().showMessage(f"Submit job on farm through {chosenSubmitter}")
         self.parent().showMessage(f"Nodes to submit : {nodes}")
         self._taskManager.submit(self._graph, chosenSubmitter, nodes, submitLabel=self.submitLabel)
-        print("[UIGraph] (submit) -> done")
 
     def updateGraphComputingStatus(self):
+        dfsNodes = self._graph.dfsOnFinish(None)[0]
+        # TODO : these functions should go on the node part
+        # We should do any([node.isRunning for node in dfsNodes])
+
         # update graph computing status
         computingLocally = any([
-                                ch.status.execMode == ExecMode.LOCAL and
-                                (sessionUid in (ch.status.submitterSessionUid, ch.status.sessionUid)) and (
-                                ch.status.status in (Status.RUNNING, Status.SUBMITTED))
+                                ch._status.execMode == ExecMode.LOCAL and
+                                (sessionUid in (ch._status.submitterSessionUid, ch._status.sessionUid)) and (
+                                ch._status.status in (Status.RUNNING, Status.SUBMITTED))
                                     for ch in self._sortedDFSChunks])
         # Note: We do not check sessionUid for the submitted status,
         #       as the source instance of the submit has no importance.
-        submitted = any([ch.status.execMode == ExecMode.EXTERN and ch.status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
+        submitted = any([ch._status.execMode == ExecMode.EXTERN and ch._status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
+        
+        # Handle nodes with uninitialized chunks
+        for node in dfsNodes:
+            if node._chunksCreated:
+                continue
+            if node._nodeStatus.status in (Status.RUNNING, Status.SUBMITTED):
+                # TODO : save session ID in node
+                if (node._nodeStatus.execMode == ExecMode.LOCAL):
+                    computingLocally = True
+                elif (node._nodeStatus.execMode == ExecMode.EXTERN):
+                    submitted = True
+
         if self._computingLocally != computingLocally or self._submitted != submitted:
             self._computingLocally = computingLocally
             self._submitted = submitted
@@ -899,7 +954,6 @@ class UIGraph(QObject):
     @Slot(list)
     def clearData(self, nodes: list[Node]):
         """ Clear data from 'nodes'. """
-        print("[UIGraph] (clearData)", nodes)
         for n in nodes:
             n.clearData()
 

@@ -8,6 +8,7 @@ import meshroom
 from meshroom.common import BaseObject, DictModel, Property, Signal, Slot
 from meshroom.core.node import Node, Status, Node
 from meshroom.core.graph import Graph
+from meshroom.core.submitter import jobManager, BaseSubmittedJob
 import meshroom.core.graph
 
 
@@ -38,7 +39,6 @@ class TaskThread(QThread):
         return self._state == State.RUNNING
 
     def waitForChunkCreation(self, node):
-        print("[TaskThread] (waitForChunkCreation)")
         
         if hasattr(node, "_chunksCreated") and node._chunksCreated:
             return True
@@ -72,13 +72,9 @@ class TaskThread(QThread):
     def run(self):
         """ Consume compute tasks. """
         self._state = State.RUNNING
-        
-        print("[TaskThread] (run)")
-
         stopAndRestart = False
 
         for nId, node in enumerate(self._manager._nodesToProcess):
-            print(f"[TaskThread] (run) nId={nId} node={node} ({node.label})")
 
             # Skip already finished/running nodes or nodes in compatibility mode
             if node.isFinishedOrRunning() or node.isCompatibilityNode:
@@ -86,7 +82,6 @@ class TaskThread(QThread):
 
             # Request chunk creation if not already done
             if not (hasattr(node, "_chunksCreated") and node._chunksCreated):
-                print(f"[TaskThread] (run) Emit createChunksSignal")
                 self.createChunksSignal.emit(node)
                 # Wait for chunk creation to complete
                 if not self.waitForChunkCreation(node):
@@ -101,7 +96,6 @@ class TaskThread(QThread):
 
             node.preprocess()
             for cId, chunk in enumerate(node.chunks):
-                print(f"[TaskThread] (run) cId={cId} chunk={chunk}")
                 if chunk.isFinishedOrRunning() or not self.isRunning():
                     continue
                 
@@ -164,7 +158,6 @@ class TaskManager(BaseObject):
     @Slot(BaseObject)
     def createChunks(self, node: Node):
         """ Create chunks on main process """
-        print("[TaskManager] (createChunks)")
         try:
             if not (hasattr(node, '_chunksCreated') and node._chunksCreated):
                 node._createChunks()
@@ -241,7 +234,6 @@ class TaskManager(BaseObject):
         :param forceCompute: force the computation despite nodes status.
         :param forceStatus: force the computation even if some nodes are submitted externally.
         """
-        print("[TaskManager] (compute)")
         
         self._graph = graph
 
@@ -295,8 +287,6 @@ class TaskManager(BaseObject):
 
         self._nodes.update(nodes)
         self._nodesToProcess.extend(nodes)
-        
-        print(f"[TaskManager] (compute) _nodesToProcess: {self._nodesToProcess}")
 
         if self._thread._state == State.IDLE:
             self._thread.start()
@@ -453,7 +443,6 @@ class TaskManager(BaseObject):
         :param toNodes:
         :return:
         """
-        print("[TaskManager] (submit)")
         # Ensure submitter is properly set
         sub = None
         if submitter:
@@ -471,7 +460,6 @@ class TaskManager(BaseObject):
 
         # Update task manager's lists
         self.updateNodes()
-        print("[TaskManager] (submit) graph update")
         graph.update()
 
         # Check dependencies of toNodes
@@ -498,13 +486,13 @@ class TaskManager(BaseObject):
         logging.info(f"Nodes to process: {nodesToProcess}")
         logging.info(f"Edges to process: {edgesToProcess}")
 
-        print("[TaskManager] (submit) submit")
         try:
             res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
-            if res:
-                for node in nodesToProcess:
-                    node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
-                    node.initStatusOnSubmit()  # update node status
+            for node in nodesToProcess:
+                node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
+                node.initStatusOnSubmit()  # update node status
+                if isinstance(res, BaseSubmittedJob):
+                    jobManager.addJob(res, nodesToProcess)
             self._nodes.update(nodesToProcess)
             self._nodesExtern.extend(nodesToProcess)
 

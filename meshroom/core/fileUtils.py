@@ -8,7 +8,7 @@ compiled_frameId = re.compile(r"(\D+)?(?P<FRAMEID>\d+$)")
 def getFileElements(inputFilePath: str):
 
     filename = os.path.basename(inputFilePath)
-    match = compiled_pattern.search(filename)
+    match = compiled_pattern.fullmatch(filename)
     frameId_str = match.group("FRAMEID_STR")
     
     fileElements = {}

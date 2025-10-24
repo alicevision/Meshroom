@@ -75,6 +75,9 @@ class TaskThread(QThread):
         stopAndRestart = False
 
         for nId, node in enumerate(self._manager._nodesToProcess):
+            if node not in self._manager._nodesToProcess:
+                # Node was removed from the processing list
+                continue
 
             # Skip already finished/running nodes or nodes in compatibility mode
             if node.isFinishedOrRunning() or node.isCompatibilityNode:
@@ -100,7 +103,6 @@ class TaskThread(QThread):
                     continue
 
                 if self._manager.isChunkCancelled(chunk):
-                    print(f"[TaskThread] Skip cancelled chunk {chunk}")
                     continue
                 
                 _nodeName, _node, _nbNodes = node.nodeType, nId+1, len(self._manager._nodesToProcess)
@@ -168,10 +170,10 @@ class TaskManager(BaseObject):
     def createChunks(self, node: Node):
         """ Create chunks on main process """
         try:
-            if not (hasattr(node, '_chunksCreated') and node._chunksCreated):
-                node._createChunks()
+            if not node._chunksCreated:
+                node.createChunks()
             # Prepare all chunks
-            node.beginSequence()
+            node.initStatusOnCompute()
             self.chunksCreated.emit(node)
         except Exception as e:
             logging.error(f"Failed to create chunks for {node.name}: {e}")
@@ -206,6 +208,22 @@ class TaskManager(BaseObject):
         self._nodesToProcess = []
         self._cancelledChunks = []
         self._thread._state = State.DEAD
+    
+    @Slot()
+    def pauseProcess(self):
+        if self._thread.isRunning():
+            self.join()
+        for node in self._nodesToProcess:
+            if node.getGlobalStatus() == Status.STOPPED:
+                # Remove node from the computing list
+                self.removeNode(node, displayList=False, processList=True)
+
+                # Remove output nodes from display and computing lists
+                outputNodes = node.getOutputNodes(recursive=True, dependenciesOnly=True)
+                for n in outputNodes:
+                    if n.getGlobalStatus() in (Status.ERROR, Status.SUBMITTED):
+                        n.upgradeStatusTo(Status.NONE)
+                        self.removeNode(n, displayList=True, processList=True)
 
     @Slot()
     def restart(self):
@@ -255,6 +273,7 @@ class TaskManager(BaseObject):
         self._graph = graph
 
         self.updateNodes()
+        self._cancelledChunks = []
 
         if forceCompute:
             nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
@@ -300,7 +319,7 @@ class TaskManager(BaseObject):
 
         for node in nodes:
             node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
-            node.beginSequence(forceCompute)
+            node.initStatusOnCompute(forceCompute)
 
         self._nodes.update(nodes)
         self._nodesToProcess.extend(nodes)
@@ -474,11 +493,11 @@ class TaskManager(BaseObject):
             raise RuntimeError(f"[SUBMITTING] Unknown Submitter:\n"
                                f"Unknown Submitter called '{submitter}'. "
                                f"Available submitters are: '{str(meshroom.core.submitters.keys())}'.")
+        
+        # TODO : If possible with the submitter (ATTACH_JOB)
 
         # Update task manager's lists
-        print("[TaskManager] (submit) updateNodes")
         self.updateNodes()
-        print("[TaskManager] (submit) graph.update")
         graph.update()
 
         # Check dependencies of toNodes
@@ -503,6 +522,7 @@ class TaskManager(BaseObject):
         for node in nodesToProcess:
             node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
             node.initStatusOnSubmit()
+
         print("[TaskManager] (submit) graph.updateMonitoredFiles")
         graph.updateMonitoredFiles()
             

@@ -23,6 +23,9 @@ Item {
     property color tableBorder: Colors.sysPalette.window
     property int borderWidth: 3
 
+    // Max wifth for some columns
+    readonly property int maxExecWidth: 200
+
     property var selectedChunk: null
 
     function selectNode(node) {
@@ -65,47 +68,153 @@ Item {
         ColumnLayout {
             Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             width: childrenRect.width
+            spacing: 8
 
             // TODO : enable/disable buttons depending on selectedChunk
             // TODO : Also handle case where uigraph.selectedNode and selectedNode.chunksCreated==false
 
-            MaterialToolButton {
-                ToolTip.text: "Stop task"
-                enabled: selectedChunk !== null
-                text: MaterialIcons.stop_circle
-                font.pointSize: 15
-                onClicked: {
-                    uigraph.stopTask(selectedChunk)
+            // Task toolbar
+            Rectangle {
+                Layout.preferredWidth: 40
+                Layout.preferredHeight: taskColumn.height + 8
+                color: "transparent"
+                border.color: Colors.darkpurple
+                border.width: 2
+                radius: 8
+
+                ColumnLayout {
+                    id: taskColumn
+                    anchors.centerIn: parent
+                    spacing: 2
+
+                    MaterialToolButton {
+                        ToolTip.text: "Stop task"
+                        Layout.alignment: Qt.AlignHCenter
+                        enabled: selectedChunk !== null || root.uigraph.selectedNode !== null
+                        text: MaterialIcons.stop_circle
+                        font.pointSize: 15
+                        onClicked: {
+                            if (selectedChunk !== null) {
+                                root.uigraph.stopTask(selectedChunk)
+                            } else {
+                                root.uigraph.stopNode(root.uigraph.selectedNode)
+                            }
+                        }
+                    }
+
+                    MaterialToolButton {
+                        ToolTip.text: "Restart task"
+                        Layout.alignment: Qt.AlignHCenter
+                        enabled: selectedChunk !== null
+                        text: MaterialIcons.replay_circle_filled
+                        font.pointSize: 15
+                        onClicked: {
+                            uigraph.restartTask(selectedChunk)
+                        }
+                    }
+
+                    MaterialToolButton {
+                        ToolTip.text: "Skip task"
+                        Layout.alignment: Qt.AlignHCenter
+                        enabled: selectedChunk !== null
+                        text: MaterialIcons.skip_next
+                        font.pointSize: 15
+                        onClicked: {
+                            uigraph.skipTask(selectedChunk)
+                        }
+                    }
+
+                    Item {
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 50
+                        
+                        Text {
+                            text: "TASK"
+                            anchors.centerIn: parent
+                            color: Colors.sysPalette.text
+                            font.pixelSize: 11
+                            font.bold: true
+                            rotation: -90
+                            transformOrigin: Item.Center
+                        }
+                    }
                 }
             }
+            
+            // Job toolbar
+            Rectangle {
+                // Layout.preferredWidth: childrenRect.width
+                // Layout.preferredHeight: childrenRect.height
+                Layout.preferredWidth: 40
+                Layout.preferredHeight: jobColumn.height + 8
+                color: "transparent"
+                border.color: Colors.darkpurple
+                border.width: 2
+                radius: 8
 
-            MaterialToolButton {
-                ToolTip.text: "Pause task"
-                enabled: selectedChunk !== null
-                text: MaterialIcons.pause_circle_filled
-                font.pointSize: 15
-                onClicked: {
-                    uigraph.pauseTask(selectedChunk)
-                }
-            }
+                ColumnLayout {
+                    id: jobColumn
+                    anchors.centerIn: parent
+                    spacing: 2
 
-            MaterialToolButton {
-                ToolTip.text: "Restart task"
-                enabled: selectedChunk !== null
-                text: MaterialIcons.play_circle_filled
-                font.pointSize: 15
-                onClicked: {
-                    uigraph.restartTask(selectedChunk)
-                }
-            }
+                    MaterialToolButton {
+                        ToolTip.text: "Pause job"
+                        Layout.alignment: Qt.AlignHCenter
+                        enabled: selectedChunk !== null
+                        text: MaterialIcons.pause_circle_filled
+                        font.pointSize: 15
+                        onClicked: {
+                            uigraph.pauseJob(uigraph.selectedNode)
+                        }
+                    }
 
-            MaterialToolButton {
-                ToolTip.text: "Skip task"
-                enabled: selectedChunk !== null
-                text: MaterialIcons.skip_next
-                font.pointSize: 15
-                onClicked: {
-                    uigraph.skipTask(selectedChunk)
+                    MaterialToolButton {
+                        ToolTip.text: "Resume job"
+                        Layout.alignment: Qt.AlignHCenter
+                        enabled: selectedChunk !== null
+                        text: MaterialIcons.play_circle_filled
+                        font.pointSize: 15
+                        onClicked: {
+                            uigraph.resumeJob(uigraph.selectedNode)
+                        }
+                    }
+
+                    MaterialToolButton {
+                        ToolTip.text: "Interrupt job"
+                        Layout.alignment: Qt.AlignHCenter
+                        enabled: selectedChunk !== null
+                        text: MaterialIcons.stop_circle
+                        font.pointSize: 15
+                        onClicked: {
+                            uigraph.interruptJob(uigraph.selectedNode)
+                        }
+                    }
+                    
+                    MaterialToolButton {
+                        ToolTip.text: "Restart all error tasks"
+                        Layout.alignment: Qt.AlignHCenter
+                        enabled: selectedChunk !== null
+                        text: MaterialIcons.replay_circle_filled  // MaterialIcons.restart_alt
+                        font.pointSize: 15
+                        onClicked: {
+                            uigraph.restartJobErrorTasks(uigraph.selectedNode)
+                        }
+                    }
+                    
+                    Item {
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 40
+                        
+                        Text {
+                            text: "JOB"
+                            anchors.centerIn: parent
+                            color: Colors.sysPalette.text
+                            font.pixelSize: 11
+                            font.bold: true
+                            rotation: -90
+                            transformOrigin: Item.Center
+                        }
+                    }
                 }
             }
         }
@@ -142,7 +251,7 @@ Item {
                 }
                 Label {
                     text: qsTr("Node")
-                    Layout.preferredWidth: 250
+                    Layout.preferredWidth: 200
                     Layout.preferredHeight: parent.height
                     horizontalAlignment: Label.AlignHCenter
                     verticalAlignment: Label.AlignVCenter
@@ -172,7 +281,7 @@ Item {
                 }
                 Label {
                     text: qsTr("Exec Mode")
-                    Layout.preferredWidth: execMetrics.width + 20
+                    Layout.preferredWidth: execMetrics.width + 60
                     Layout.preferredHeight: parent.height
                     horizontalAlignment: Label.AlignHCenter
                     verticalAlignment: Label.AlignVCenter
@@ -228,7 +337,8 @@ Item {
                 }
                 Label {
                     text: object.label
-                    Layout.preferredWidth: 250
+                    elide: Text.ElideRight
+                    Layout.preferredWidth: 200
                     Layout.preferredHeight: parent.height
                     horizontalAlignment: Label.AlignHCenter
                     verticalAlignment: Label.AlignVCenter
@@ -294,8 +404,9 @@ Item {
                     }
                 }
                 Label {
-                    text: object.globalExecMode
-                    Layout.preferredWidth: execMetrics.width + 20
+                    text: object.jobName
+                    elide: Text.ElideRight
+                    Layout.preferredWidth: execMetrics.width + 60
                     Layout.preferredHeight: parent.height
                     horizontalAlignment: Label.AlignHCenter
                     verticalAlignment: Label.AlignVCenter
@@ -367,7 +478,7 @@ Item {
                             visible: enabled
                             anchors.fill: parent
                             background: Rectangle {
-                                color: Colors.darkpurple  // TODO : Use Colors.statusColors[nodeStatus]
+                                color: chunkList.node.globalStatus == "NONE" ? Colors.darkpurple : Colors.statusColors[chunkList.node.globalStatus]
                                 radius: 3
                                 border.width: 2
                                 border.color: chunkList.node === uigraph.selectedNode ? Colors.sysPalette.text : "transparent"

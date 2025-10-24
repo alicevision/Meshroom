@@ -24,17 +24,21 @@ _MESHROOM_COMPUTE_DEPS = ["psutil"]
 
 # Handle cleanup
 class ExitCleanup:
+    """
+    Make sure we kill child subprocesses when the main process exits receive SIGTERM.
+    """
+
     def __init__(self):
         self._subprocesses = []
         signal.signal(signal.SIGTERM, self.exit)
-    
+
     def addSubprocess(self, process):
-        print(f"[ExitCleanup] (addSubprocess) register subprocess {process}")
+        logging.debug(f"[ExitCleanup] Register subprocess {process}")
         self._subprocesses.append(process)
-    
+
     def exit(self, signum, frame):
         for proc in self._subprocesses:
-            print(f"[ExitCleanup] (exit) kill subprocess {proc}")
+            logging.debug(f"[ExitCleanup] Kill subprocess {proc}")
             try:
                 if proc.is_running():
                     proc.terminate()
@@ -308,8 +312,6 @@ class Node(BaseNode):
 
         if len(chunk.node.getChunks()) > 1:
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
-        
-        print(f"(processChunkInEnvironment) meshroomComputeCmd={meshroomComputeCmd}")
 
         runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv
         cmdPrefix = chunk.node.nodeDesc.plugin.commandPrefix

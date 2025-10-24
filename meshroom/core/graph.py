@@ -21,6 +21,7 @@ from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSeriali
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
 from meshroom.core.mtyping import PathLike
+from meshroom.core.submitter import BaseSubmittedJob, jobManager
 
 # Replace default encoder to support Enums
 
@@ -1691,7 +1692,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
     graph.save()
 
     for node in nodes:
-        node.beginSequence(forceCompute)
+        node.initStatusOnCompute(forceCompute)
 
     for n, node in enumerate(nodes):
         try:
@@ -1742,11 +1743,18 @@ def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
         raise RuntimeError("Unknown Submitter: '{submitter}'. Available submitters are: '{allSubmitters}'.".format(
             submitter=submitter, allSubmitters=str(meshroom.core.submitters.keys())))
 
+    for node in nodesToProcess:
+        node.initStatusOnSubmit()
+
     try:
         res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
         if res:
+            if isinstance(res, BaseSubmittedJob):
+                jobManager.addJob(res, nodesToProcess)
+        else:
             for node in nodesToProcess:
-                node.initStatusOnSubmit()  # update node status
+                # TODO : Notify the node that there was an issue on submit
+                pass
     except Exception as exc:
         logging.error(f"Error on submit: {exc}")
 

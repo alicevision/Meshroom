@@ -29,7 +29,7 @@ from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
 from meshroom.core.taskManager import TaskManager
-from meshroom.core.submitter import jobManager
+from meshroom.core.submitter import jobManager, SubmitterOptionsEnum
 
 from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position
 from meshroom.core import submitters, MrNodeType
@@ -89,7 +89,7 @@ class FilesModTimePollerThread(QObject):
         Args:
             files: the list of files to monitor
         """
-        print(f"[FilesModTimePollerThread] (setFiles) {files}")
+        logging.debug(f"FilesModTimePollerThread: Watch files {files}")
         with self._mutex:
             self._files = files
 
@@ -429,19 +429,13 @@ class UIGraph(QObject):
         self.updateChunks()
 
     def updateChunks(self):
-        print("[UIGraph] (updateChunks)")
         dfsNodes = self._graph.dfsOnFinish(None)[0]
         chunks = []
         for node in dfsNodes:
-            print(f"[UIGraph] (updateChunks) node={node.label} ({node._chunksCreated})", end="")
-            if hasattr(node, '_chunksCreated') and node._chunksCreated:
+            if node._chunksCreated:
                 nodechunks = node.getChunks()
-                print(f" -> {[c for c in nodechunks]}")
                 chunks.extend(nodechunks)
             else:
-                nodechunks = node.getChunks()
-                print(f" -> {[c for c in nodechunks]}")
-                chunks.extend(nodechunks)
         if self._sortedDFSChunks.objectList() == chunks:
             # Nothing has changed, return
             return
@@ -603,56 +597,202 @@ class UIGraph(QObject):
     def isChunkComputingLocally(self, chunk):
         # update graph computing status
         computingLocally = chunk._status.execMode == ExecMode.LOCAL and \
-                           (sessionUid in (chunk._status.submitterSessionUid, chunk._status.sessionUid)) and \
+                           (sessionUid in (chunk.node._nodeStatus.submitterSessionUid, chunk._status.computeSessionUid)) and \
                            (chunk._status.status in (Status.RUNNING, Status.SUBMITTED))
         return computingLocally
     
     def isChunkComputingExternally(self, chunk):
-        # Note: We do not check sessionUid for the submitted status,
+        # Note: We do not check computeSessionUid for the submitted status,
         #       as the source instance of the submit has no importance.
-        submitted = (chunk._status.execMode == ExecMode.EXTERN) and \
-                    chunk._status.status in (Status.RUNNING, Status.SUBMITTED)
-        return submitted
+        return (chunk._status.execMode == ExecMode.EXTERN) and \
+                chunk._status.status in (Status.RUNNING, Status.SUBMITTED)
     
     @Slot(NodeChunk)
     def stopTask(self, chunk: NodeChunk):
         """ Stop the selected task """
-        print(f"[UIGraph] (taskChunkStop) {chunk}", end="")
-        if self.isChunkComputingLocally(chunk):
-            print(f"-> is local")
+        chunk.updateStatusFromCache()
+        if not chunk.isAlreadySubmitted():
+            return
+        node = chunk.node
+        job = jobManager.getNodeJob(node)
+        if job:
+            chunkIteration = chunk.range.iteration
+            try:
+                job.stopChunkTask(node, chunkIteration)
+            except Exception as e:
+                self.parent().showMessage(f"Failed to stop chunk {chunkIteration} of {node.label}", "error")
+                logging.warning(f"Error on stopTask :\n{e}")
+            else:
+                chunk.updateStatusFromCache()
+                chunk.upgradeStatusTo(Status.STOPPED)
+                self.parent().showMessage(f"Stopped chunk {chunkIteration} of {node.label}")
+        else:
             chunk.stopProcess()
-            # Remove the chunk from the thread process
             self._taskManager._cancelledChunks.append(chunk)
-        elif self.isChunkComputingExternally(chunk):
-            jobManager.stopChunkTask(chunk)
-            chunk.upgradeStatusTo(Status.STOPPED)
-            chunk.stopProcess()
+            for chunk in node._chunks:
+                if chunk._status.status == Status.SUBMITTED:
+                    chunk.stopProcess()
+                    self._taskManager._cancelledChunks.append(chunk)
+            for n in node.getOutputNodes(recursive=True, dependenciesOnly=True):
+                n.clearSubmittedChunks()
+                self._taskManager.removeNode(n, displayList=True, processList=True)
 
-    @Slot(NodeChunk)
-    def pauseTask(self, chunk: NodeChunk):
-        """ Pause the running job : cancel all scheduled tasks """
-        print(f"[UIGraph] (taskChunkPause) {chunk} (not implemented)")
-        if self.isChunkComputingLocally(chunk):
-            pass
-        elif self.isChunkComputingExternally(chunk):
-            pass
+    @Slot(Node)
+    def stopNode(self, node: Node):
+        """ Stop the selected task """
+        job = jobManager.getNodeJob(node)
+        if job:
+            try:
+                job.stopChunkTask(node, -1)
+            except Exception as e:
+                self.parent().showMessage(f"Failed to stop node {node.label}", "error")
+                logging.warning(f"Error on stopTask :\n{e}")
+            else:
+                node.updateNodeStatusFromCache()
+                node.upgradeStatusTo(Status.STOPPED)
+                self.parent().showMessage(f"Stopped node {node.label}")
+        else:
+            self.cancelNodeComputation(node)
+            node.stopComputation()
+            # self._taskManager.removeNode(node, processList=True)
 
     @Slot(NodeChunk)
     def restartTask(self, chunk: NodeChunk):
         """ Relaunch a stopped task """
-        print(f"[UIGraph] (taskChunkRestart) {chunk} (not implemented)")
-        if self.isChunkComputingLocally(chunk):
-            pass
-        elif self.isChunkComputingExternally(chunk):
-            pass
+        node = chunk.node
+        job = jobManager.getNodeJob(node)
+        if job:
+            chunkIteration = chunk.range.iteration
+            try:
+                chunk.updateStatusFromCache()
+                chunk.upgradeStatusTo(Status.SUBMITTED)
+                job.restartChunkTask(node, chunkIteration)
+            except Exception as e:
+                chunk.updateStatusFromCache()
+                chunk.upgradeStatusTo(Status.ERROR)
+                self.parent().showMessage(f"Failed to relaunch chunk {chunkIteration} of {node.label}", "error")
+                logging.warning(f"Error on restartTask :\n{e}")
+            else:
+                self.parent().showMessage(f"Relaunched chunk {chunkIteration} of {node.label}")
+        else:
+            # For this we would need to use a pool (with either chunks or nodes) 
+            # instead of the list of nodes that are processed serially
+            self.parent().showMessage(f"Chunks cannot be launched individually locally", "warning")
+            if self.canComputeNode(node):
+                self.execute([node])
 
     @Slot(NodeChunk)
     def skipTask(self, chunk: NodeChunk):
-        """ Skip the task : the job will continue as if the task succeeded """
-        print(f"[UIGraph] (taskChunkSkip) {chunk} (not implemented)")
-        if self.isChunkComputingLocally(chunk):
+        """ Skip the task : the job will continue as if the task succeeded
+        In local mode, the chunk status will be set to success
+        """
+        chunk.updateStatusFromCache()
+        chunk.upgradeStatusTo(Status.NONE)
+        node = chunk.node
+        chunkIteration = chunk.range.iteration
+        job = jobManager.getNodeJob(node)
+        if job:
+            try:
+                job.skipChunkTask(node, chunkIteration)
+            except Exception as e:
+                self.parent().showMessage(f"Failed to skip chunk {chunkIteration} of {node.label}", "error")
+                logging.warning(f"Error on skipTask :\n{e}")
+            else:
+                self.parent().showMessage(f"Skipped chunk {chunkIteration} of {node.label}")
+        else:
+            chunk.stopProcess()
+            chunk.upgradeStatusTo(Status.SUCCESS)
+            self._taskManager._cancelledChunks.append(chunk)
+            self.parent().showMessage(f"Skipped chunk {chunkIteration} of {node.label}")
+
+    @Slot(Node)
+    def pauseJob(self, node: Node):
+        """ Pause the running job : cancel all scheduled tasks.
+        Current task don't stop but future tasks won't be launched
+        """
+        job = jobManager.getNodeJob(node)
+        if job:
+            try:
+                job.pauseJob()
+            except Exception as e:
+                self.parent().showMessage(f"Paused node {node.label} on farm")
+                logging.warning(f"Error on pauseJob :\n{e}")
+            else:
+                for chunk in self._sortedDFSChunks:
+                    if jobManager.getNodeJob(chunk.node) == job:
+                        chunk.updateStatusFromCache()
+                        chunk.upgradeStatusTo(Status.NONE)
+                self.parent().showMessage(f"Failed to pause the job for node {node}", "error")
+        else:
+            self._taskManager.clear()
+            self.parent().showMessage(f"Cleared the task manager")
+
+    @Slot(Node)
+    def resumeJob(self, node: Node):
+        """ Resume the paused job
+        """
+        job = jobManager.getNodeJob(node)
+        if job:
+            # Node is submitted to farm
+            try:
+                job.resumeJob()
+            except Exception as e:
+                self.parent().showMessage(f"Failed to rsume node {node.label} on farm")
+                logging.warning(f"Error on resumeJob :\n{e}")
+            else:
+                for chunk in self._sortedDFSChunks:
+                    if jobManager.getNodeJob(chunk.node) == job:
+                        chunk.updateStatusFromCache()
+                        chunk.upgradeStatusTo(Status.SUBMITTED)
+                self.parent().showMessage(f"Resumed the job for node {node}", "error")
+        else:
+            # In this case user can just relaunch the node computation
+            # Could be implemented if we had a paused state on the task manager
+            # Where unprocessed nodes are retained
             pass
-        elif self.isChunkComputingExternally(chunk):
+
+    @Slot(Node)
+    def interruptJob(self, node: Node):
+        """ Interrupt the job that processes the node
+        """
+        job = jobManager.getNodeJob(node)
+        if job:
+            try:
+                job.interruptJob()
+            except Exception as e:
+                self.parent().showMessage(f"Failed to interrupt node {node.label} on farm", "error")
+                logging.warning(f"Error on interruptJob :\n{e}")
+            else:
+                for chunk in self._sortedDFSChunks:
+                    if jobManager.getNodeJob(chunk.node) == job:
+                        chunk.updateStatusFromCache()
+                        chunk.upgradeStatusTo(Status.SUBMITTED)
+                self.parent().showMessage(f"Interrupted the job for node {node}")
+        else:
+            self._taskManager.clear()
+            for chunk in node._chunks:
+                if chunk._status.status == Status.RUNNING and not chunk.isExtern():
+                    chunk.stopProcess()
+
+            self.parent().showMessage(f"Cleared the task manager")
+
+    @Slot(Node)
+    def restartJobErrorTasks(self, node: Node):
+        """ Restart all tasks in the job that have failed
+        """
+        job = jobManager.getNodeJob(node)
+        if job:
+            try:
+                job.restartErrorTasks()
+            except Exception as e:
+                self.parent().showMessage(f"Failed to restart error tasks for node {node.label} on farm", "error")
+                logging.warning(f"Error on restartJobErrorTasks :\n{e}")
+            else:
+                self.parent().showMessage(f"Restared error tasks for the node {node}")
+        else:
+            # In this case user can just relaunch the node computation
+            # Could be implemented if we had a paused state on the task manager
+            # Where error/failed nodes are retained
             pass
 
     @Slot()
@@ -682,11 +822,12 @@ class UIGraph(QObject):
 
         # update graph computing status
         computingLocally = any([
-                                ch._status.execMode == ExecMode.LOCAL and
-                                (sessionUid in (ch._status.submitterSessionUid, ch._status.sessionUid)) and (
-                                ch._status.status in (Status.RUNNING, Status.SUBMITTED))
-                                    for ch in self._sortedDFSChunks])
-        # Note: We do not check sessionUid for the submitted status,
+            ch._status.execMode == ExecMode.LOCAL and \
+            (sessionUid in (ch.node._nodeStatus.submitterSessionUid, ch._status.computeSessionUid)) and \
+            (ch._status.status in (Status.RUNNING, Status.SUBMITTED))
+            for ch in self._sortedDFSChunks
+        ])
+        # Note: We do not check computeSessionUid for the submitted status,
         #       as the source instance of the submit has no importance.
         submitted = any([ch._status.execMode == ExecMode.EXTERN and ch._status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
         
@@ -839,11 +980,6 @@ class UIGraph(QObject):
             for selectedNode in selectedNodes:
                 self.moveNode(selectedNode, Position(meanX, selectedNode.y))
 
-    @Slot()
-    def removeSelectedNodes(self):
-        """Remove selected nodes from the graph."""
-        self.removeNodes(list(self.iterSelectedNodes()))
-
     @Slot(list)
     def removeNodes(self, nodes: list[Node]):
         """
@@ -858,6 +994,11 @@ class UIGraph(QObject):
         with self.groupedGraphModification("Remove Nodes"):
             for node in nodes:
                 self.push(commands.RemoveNodeCommand(self._graph, node))
+
+    @Slot()
+    def removeSelectedNodes(self):
+        """Remove selected nodes from the graph."""
+        self.removeNodes(list(self.iterSelectedNodes()))
 
     @Slot(list)
     def removeNodesFrom(self, nodes: list[Node]):

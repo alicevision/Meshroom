@@ -97,10 +97,11 @@ if args.node:
         for chunk in chunks:
             if chunk.status.status in submittedStatuses:
                 # Particular case for the local isolated, the node status is set to RUNNING by the submitter directly.
-                # We ensure that no other instance has started to compute, by checking that the sessionUid is empty.
-                if chunk.node.getMrNodeType() == meshroom.core.MrNodeType.NODE and not chunk.status.sessionUid and chunk.status.submitterSessionUid:
+                # We ensure that no other instance has started to compute, by checking that the computeSessionUid is empty.
+                if chunk.node.getMrNodeType() == meshroom.core.MrNodeType.NODE and \
+                    not chunk.status.computeSessionUid and node._nodeStatus.submitterSessionUid:
                     continue
-                print(f'Warning: Node is already submitted with status "{chunk.status.status.name}". See file: "{chunk.statusFile}". ExecMode: {chunk.status.execMode.name}, SessionUid: {chunk.status.sessionUid}, submitterSessionUid: {chunk.status.submitterSessionUid}')
+                print(f'Warning: Node is already submitted with status "{chunk.status.status.name}". See file: "{chunk.statusFile}". ExecMode: {chunk.status.execMode.name}, computeSessionUid: {chunk.status.computeSessionUid}, submitterSessionUid: {node._nodeStatus.submitterSessionUid}')
                 # sys.exit(-1)
 
     if args.extern:

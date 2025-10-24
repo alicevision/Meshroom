@@ -78,6 +78,10 @@ graph.update()
 node = graph.findNode(args.node)
 submittedStatuses = [Status.RUNNING]
 
+if node._nodeStatus.status in (Status.STOPPED, Status.KILLED):
+    logging.error("Node status is STOPPED or KILLED.")
+    sys.exit(666)
+
 
 # Find job
 submitter = None
@@ -87,12 +91,17 @@ for subName, sub in submitters.items():
         submitter = sub
         break
 
-if not (hasattr(node, '_chunksCreated') and node._chunksCreated):
+if not node._chunksCreated:
     # Create node chunks
     # Once created we don't have to do it again even if we relaunch the job
-    node._createChunks()
+    node.createChunks()
     # Set the chunks statuses
-    node.initStatusOnSubmit()
+    for chunk in node._chunks:
+        if args.forceCompute or chunk._status.status != Status.SUCCESS:
+            hasChunkToLaunch = True
+            chunk._status.setNode(node)
+            chunk._status.initExternSubmit()
+            chunk.upgradeStatusFile()
 
 # Get chunks to process in the current process
 chunksToProcess = []
@@ -103,20 +112,21 @@ else:
     # Cannot retrieve job -> execute process serially
     chunksToProcess = node.chunks
 
-logging.info("[MeshroomCreateChunks] Chunks to process here :", chunksToProcess)
+logging.info(f"[MeshroomCreateChunks] Chunks to process here : {chunksToProcess}")
 
 if not args.forceStatus and not args.forceCompute:
     for chunk in chunksToProcess:
         if chunk.status.status in submittedStatuses:
             # Particular case for the local isolated, the node status is set to RUNNING by the submitter directly.
-            # We ensure that no other instance has started to compute, by checking that the sessionUid is empty.
-            if chunk.node.getMrNodeType() == meshroom.core.MrNodeType.NODE and not chunk.status.sessionUid and chunk.status.submitterSessionUid:
+            # We ensure that no other instance has started to compute, by checking that the sessicomputeSessionUidonUid is empty.
+            if chunk.node.getMrNodeType() == meshroom.core.MrNodeType.NODE and \
+                not chunk.status.computeSessionUid and node._nodeStatus.submitterSessionUid:
                 continue
             logging.warning(
                 f"[MeshroomCreateChunks] Node is already submitted with status " \
                 f"\"{chunk.status.status.name}\". See file: \"{chunk.statusFile}\". " \
-                f"ExecMode: {chunk.status.execMode.name}, SessionUid: {chunk.status.sessionUid}, " \
-                f"submitterSessionUid: {chunk.status.submitterSessionUid}")
+                f"ExecMode: {chunk.status.execMode.name}, computeSessionUid: {chunk.status.computeSessionUid}, " \
+                f"submitterSessionUid: {node._nodeStatus.submitterSessionUid}")
             # sys.exit(-1)
 
 if chunksToProcess:

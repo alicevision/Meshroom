@@ -19,6 +19,7 @@ class SubmitterOptionsEnum(IntFlag):
     INTERRUPT_JOB = auto()  # Can interrupt
     RESUME_JOB = auto()     # Can resume after interruption
     EDIT_TASKS = auto()     # Can edit tasks
+    ATTACH_JOB = auto()     # Can attach a job that will execute after another job
 
     @classmethod
     def get(cls, option):
@@ -75,27 +76,54 @@ class BaseSubmittedJob:
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.jid}>"
 
-    def stopChunkTask(self, iteration):
+    # Task actions
+    # For all methods if If iteration is -1 then it kills all the tasks for the given node
+
+    def stopChunkTask(self, node, iteration):
+        """ This will kill one task 
+        If iteration is -1 then it kills all the tasks for the given node
+        """
         if self.submitterOptions.includes(SubmitterOptionsEnum.INTERRUPT_JOB):
-            raise NotImplementedError("'stopChunkTask' method must be implemented in subclasses")
+            raise NotImplementedError(f"'stopChunkTask' method must be implemented in subclasses")
+        else:
+            raise RuntimeError(f"Submitter {self.__class__.__name__} cannot interrupt the job")
+
+    def skipChunkTask(self, node, iteration):
+        """ This will kill one task """
+        if self.submitterOptions.includes(SubmitterOptionsEnum.INTERRUPT_JOB):
+            raise NotImplementedError("'skipChunkTask' method must be implemented in subclasses")
+        else:
+            raise RuntimeError(f"Submitter {self.__class__.__name__} cannot interrupt the job")
+
+    def restartChunkTask(self, node, iteration):
+        """ This will kill one task """
+        if self.submitterOptions.includes(SubmitterOptionsEnum.RESUME_JOB):
+            raise NotImplementedError("'restartChunkTask' method must be implemented in subclasses")
+        else:
+            raise RuntimeError(f"Submitter {self.__class__.__name__} cannot interrupt the job")
+
+    # Job actions
+
+    def pauseJob(self):
+        """ This will pause the job : new tasks will not be processed """
+        if self.submitterOptions.includes(SubmitterOptionsEnum.INTERRUPT_JOB):
+            raise NotImplementedError("'pauseJob' method must be implemented in subclasses")
+        else:
+            raise RuntimeError(f"Submitter {self.__class__.__name__} cannot interrupt the job")
+
+    def resumeJob(self):
+        """ This will unpause the job """
+        if self.submitterOptions.includes(SubmitterOptionsEnum.RESUME_JOB):
+            raise NotImplementedError("'resumeJob' method must be implemented in subclasses")
         else:
             raise RuntimeError(f"Submitter {self.__class__.__name__} cannot interrupt the job")
 
     def interruptJob(self):
+        """ This will interrupt the job (and kill running tasks) """
         if self.submitterOptions.includes(SubmitterOptionsEnum.INTERRUPT_JOB):
             raise NotImplementedError("'interruptJob' method must be implemented in subclasses")
         else:
             raise RuntimeError(f"Submitter {self.__class__.__name__} cannot interrupt the job")
-
-    # TODO : interrupt for specific node/chunk
-
-    def resumeJob(self):
-        if self.submitterOptions.includes(SubmitterOptionsEnum.RESUME_JOB):
-            raise NotImplementedError("'resumeJob' method must be implemented in subclasses")
-        else:
-            raise RuntimeError(f"Submitter {self.__class__.__name__} cannot resume the job")
-
-    # TODO : resume for specific node/chunk
 
     def restartErrorTasks(self):
         if self.submitterOptions.includes(SubmitterOptionsEnum.RESUME_JOB):
@@ -137,16 +165,14 @@ class JobManager(BaseObject):
             return self.getJob(jobId)
         return None
 
+    def getAllNodesUIDForJob(self, job):
+        return [n for n, j in self._nodeToJob.items() if j == job.jid]
+
     def retreiveJob(self, submitter, jid) -> Optional[BaseSubmittedJob]:
         if not submitter._options.includes(SubmitterOptionsEnum.RETRIEVE):
             return None
         job = submitter.retrieveJob(jid)
         return job
-
-    def stopChunkTask(self, chunk):
-        print(f"[JobManager] (stopChunkTask) {chunk}")
-        job = self.getNodeJob(chunk.node)
-        job.stopChunkTask(chunk.range.iteration)
 
 
 # Global instance that manages submitted jobs

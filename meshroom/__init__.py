@@ -9,9 +9,9 @@ class VersionStatus(Enum):
     develop = 2
 
 
-__version__ = "2026.1.0"
+__version__ = "2025.1.1"
 # Always increase the minor version when switching from release to develop.
-__version_status__ = VersionStatus.develop
+__version_status__ = VersionStatus.release
 
 if __version_status__ is VersionStatus.develop:
     __version__ += "+" + __version_status__.name

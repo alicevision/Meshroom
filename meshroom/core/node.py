@@ -145,7 +145,6 @@ class NodeStatusData(BaseObject):
         self.mrNodeType = node.getMrNodeType()
 
     def toDict(self):
-        import traceback
         keys = list(self.__slots__) or []
         d = {key:getattr(self, key) for key in keys}
         for _k, _v in d.items():
@@ -155,7 +154,6 @@ class NodeStatusData(BaseObject):
         if self.chunks:
             chunks = list(self.chunks)
         d["chunks"] = chunks
-        traceback.print_stack()
         return d
 
     def fromDict(self, d):

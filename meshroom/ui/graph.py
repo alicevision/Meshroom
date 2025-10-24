@@ -435,7 +435,6 @@ class UIGraph(QObject):
             if node._chunksCreated:
                 nodechunks = node.getChunks()
                 chunks.extend(nodechunks)
-            else:
         if self._sortedDFSChunks.objectList() == chunks:
             # Nothing has changed, return
             return
@@ -625,6 +624,7 @@ class UIGraph(QObject):
             else:
                 chunk.updateStatusFromCache()
                 chunk.upgradeStatusTo(Status.STOPPED)
+                # TODO : Stop depending nodes ?
                 self.parent().showMessage(f"Stopped chunk {chunkIteration} of {node.label}")
         else:
             chunk.stopProcess()
@@ -650,6 +650,7 @@ class UIGraph(QObject):
             else:
                 node.updateNodeStatusFromCache()
                 node.upgradeStatusTo(Status.STOPPED)
+                # TODO : Stop depending nodes ?
                 self.parent().showMessage(f"Stopped node {node.label}")
         else:
             self.cancelNodeComputation(node)
@@ -687,7 +688,6 @@ class UIGraph(QObject):
         In local mode, the chunk status will be set to success
         """
         chunk.updateStatusFromCache()
-        chunk.upgradeStatusTo(Status.NONE)
         node = chunk.node
         chunkIteration = chunk.range.iteration
         job = jobManager.getNodeJob(node)
@@ -698,6 +698,7 @@ class UIGraph(QObject):
                 self.parent().showMessage(f"Failed to skip chunk {chunkIteration} of {node.label}", "error")
                 logging.warning(f"Error on skipTask :\n{e}")
             else:
+                chunk.upgradeStatusTo(Status.SUCCESS)
                 self.parent().showMessage(f"Skipped chunk {chunkIteration} of {node.label}")
         else:
             chunk.stopProcess()
@@ -766,7 +767,8 @@ class UIGraph(QObject):
                 for chunk in self._sortedDFSChunks:
                     if jobManager.getNodeJob(chunk.node) == job:
                         chunk.updateStatusFromCache()
-                        chunk.upgradeStatusTo(Status.SUBMITTED)
+                        chunk.upgradeStatusTo(Status.STOPPED)
+                # TODO : Also nodes without chunks ?
                 self.parent().showMessage(f"Interrupted the job for node {node}")
         else:
             self._taskManager.clear()
@@ -783,7 +785,15 @@ class UIGraph(QObject):
         job = jobManager.getNodeJob(node)
         if job:
             try:
+                # Fist update status of each chunk to submitted
+                for chunk in self._sortedDFSChunks:
+                    if chunk._status.status not in (Status.ERROR, Status.STOPPED, Status.KILLED):
+                        continue
+                    if jobManager.getNodeJob(chunk.node) == job:
+                        chunk.upgradeStatusTo(Status.SUBMITTED)
+                # TODO : Also nodes without chunks ?
                 job.restartErrorTasks()
+                job.resumeJob()
             except Exception as e:
                 self.parent().showMessage(f"Failed to restart error tasks for node {node.label} on farm", "error")
                 logging.warning(f"Error on restartJobErrorTasks :\n{e}")

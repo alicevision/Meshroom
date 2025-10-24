@@ -160,7 +160,7 @@ Item {
                     MaterialToolButton {
                         ToolTip.text: "Pause job"
                         Layout.alignment: Qt.AlignHCenter
-                        enabled: selectedChunk !== null
+                        enabled: root.uigraph.selectedNode !== null
                         text: MaterialIcons.pause_circle_filled
                         font.pointSize: 15
                         onClicked: {
@@ -171,7 +171,7 @@ Item {
                     MaterialToolButton {
                         ToolTip.text: "Resume job"
                         Layout.alignment: Qt.AlignHCenter
-                        enabled: selectedChunk !== null
+                        enabled: root.uigraph.selectedNode !== null
                         text: MaterialIcons.play_circle_filled
                         font.pointSize: 15
                         onClicked: {
@@ -182,7 +182,7 @@ Item {
                     MaterialToolButton {
                         ToolTip.text: "Interrupt job"
                         Layout.alignment: Qt.AlignHCenter
-                        enabled: selectedChunk !== null
+                        enabled: root.uigraph.selectedNode !== null
                         text: MaterialIcons.stop_circle
                         font.pointSize: 15
                         onClicked: {
@@ -193,7 +193,7 @@ Item {
                     MaterialToolButton {
                         ToolTip.text: "Restart all error tasks"
                         Layout.alignment: Qt.AlignHCenter
-                        enabled: selectedChunk !== null
+                        enabled: root.uigraph.selectedNode !== null
                         text: MaterialIcons.replay_circle_filled  // MaterialIcons.restart_alt
                         font.pointSize: 15
                         onClicked: {

@@ -398,7 +398,7 @@ FocusScope {
 
     Connections {
         target: displayedNode
-        function onOutputAttrEnabledChanged() {
+        function onOutputAttrChanged() {
             tryLoadNode(displayedNode)
         }
     }

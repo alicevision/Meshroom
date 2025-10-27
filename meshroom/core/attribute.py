@@ -181,6 +181,7 @@ class Attribute(BaseObject):
             # validity of the value and apply some conversion if needed
             convertedValue = self.validateValue(value)
             self._value = convertedValue
+            self.expressionApplied.emit()
         # Request graph update when input parameter value is set
         # and parent node belongs to a graph
         # Output attributes value are set internally during the update process,
@@ -352,10 +353,12 @@ class Attribute(BaseObject):
         """
         if self._desc.semantic == "3d":
             return True
+
         # If the attribute is a File attribute, it is an instance of str and can be iterated over
         hasSupportedExt = isinstance(self.value, str) and any(ext in self.value for ext in Attribute.VALID_3D_EXTENSIONS)
         if hasSupportedExt:
             return True
+
         return False
 
     def uid(self) -> str:
@@ -562,6 +565,8 @@ class Attribute(BaseObject):
     hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=inputLinksChanged)
     # Whether the attribute or any of its elements is linked by another attribute.
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
+
+    expressionApplied = Signal()
 
 
 def raiseIfLink(func):

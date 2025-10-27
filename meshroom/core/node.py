@@ -50,7 +50,6 @@ class Status(Enum):
     STOPPED = 4
     KILLED = 5
     SUCCESS = 6
-    # SKIPPED = 7
     INPUT = 7  # Special status for input nodes
 
 
@@ -2201,6 +2200,7 @@ class Node(BaseNode):
         # TODO : Maybe don't delete chunks if we will recreate them as before ?
         """
         if isinstance(self.nodeDesc, desc.InputNode):
+            self._chunksCreated = True
             return
         # Disconnect signals
         for chunk in self._chunks:
@@ -2209,8 +2209,10 @@ class Node(BaseNode):
         self._chunks.setObjectList([])
         # Recreate list with reset values (1 chunk or the static size)
         if not self.isParallelized:
-            self._chunksCreated = True
             self.setSize(1)
+            self._chunks.setObjectList([NodeChunk(self, desc.Range())])
+            self._chunks[0].statusChanged.connect(self.globalStatusChanged)
+            self._chunksCreated = True
         elif isinstance(self.nodeDesc.size, desc.computation.StaticNodeSize):
             self._chunksCreated = True
             self.setSize(self.nodeDesc.size.computeSize(self))

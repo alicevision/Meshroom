@@ -30,7 +30,8 @@ QtObject {
         "RUNNING": orange,
         "ERROR": red,
         "SUCCESS": green,
-        "STOPPED": pink
+        "STOPPED": pink,
+        "INPUT": "transparent"
     }
 
     readonly property var ghostColors: {

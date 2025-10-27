@@ -496,7 +496,7 @@ Item {
                 // Node Chunks
                 NodeChunks {
                     visible: node.isComputableType
-                    nodeStatus: node ? node.globalStatus : "NONE"
+                    targetNode: node
                     defaultColor: Colors.sysPalette.mid
                     implicitHeight: 3
                     width: parent.width

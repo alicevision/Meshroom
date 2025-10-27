@@ -9,7 +9,8 @@ ListView {
 
     SystemPalette { id: activePalette }
 
-    property string nodeStatus: "NONE"
+    property var targetNode: null
+
     property color defaultColor: Qt.darker(activePalette.window, 1.1)
     property real chunkHeight: height
     property int modelSize: model ? model.count : 0
@@ -38,10 +39,14 @@ ListView {
         }
     }
 
-    // Default rectangle shown when model is empty/undefined
+    // Default rectangle shown when model is empty/undefined (= no chunks)
     Rectangle {
         anchors.fill: parent
-        color: nodeStatus == "NONE" ? Colors.darkpurple : Colors.statusColors[nodeStatus]
+        color: root.targetNode !== null 
+            ? (root.targetNode.globalStatus === "NONE" 
+                ? Colors.darkpurple 
+                : Colors.statusColors[root.targetNode.globalStatus])
+            : "transparent"
         enabled: modelSize == 0
         visible: enabled
     }

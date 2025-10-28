@@ -284,9 +284,9 @@ Panel {
                     // The list of chunks
                     ChunksListView {
                         id: chunksLV
-                        enabled: root.node.chunksCreated
+                        enabled: root.node ? root.node.chunksCreated : false
+                        chunks: root.node ? root.node.chunks : null
                         visible: enabled && (tabBar.currentIndex >= 1 && tabBar.currentIndex <= 3)
-                        chunks: root.node.chunks
                         SplitView.preferredWidth: 55
                         SplitView.minimumWidth: 20
                     }

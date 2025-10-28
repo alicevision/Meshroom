@@ -94,10 +94,34 @@ class NodeStatusData(BaseObject):
         self.execMode: ExecMode = ExecMode.NONE
         self.jobInfos: dict = {}
 
+    def setNodeType(self, node):
+        """
+        Set the node type and package information from the given node.
+        We do not set the name in this method as it may vary if there are duplicates.
+        """
+        self.nodeType = node.nodeType
+        self.packageName = node.packageName
+        self.packageVersion = node.packageVersion
+        self.mrNodeType = node.getMrNodeType()
+
     def setNode(self, node):
         """ Set the node information from one node instance. """
         self.nodeName = node.name
         self.setNodeType(node)
+
+    def setJob(self, jid, submitterName):
+        """ Set Job infos on the node so that """
+        self.jobInfos = {
+            "jid": str(jid),
+            "submitterName": str(submitterName),
+        }
+
+    @property
+    def jobName(self):
+        if self.jobInfos:
+            return f"{self.jobInfos['submitterName']}<{self.jobInfos['jid']}>"
+        else:
+            return "UNKNOWN"
 
     def initExternSubmit(self):
         """
@@ -109,20 +133,6 @@ class NodeStatusData(BaseObject):
         self.status = Status.SUBMITTED
         self.execMode = ExecMode.EXTERN
 
-    def setJob(self, jid, submitterName):
-        """ Set Job infos on the node so that """
-        self.jobInfos = {
-            "jid": str(jid),
-            "submitterName": str(submitterName),
-        }
-    
-    @property
-    def jobName(self):
-        if self.jobInfos:
-            return f"{self.jobInfos['submitterName']}<{self.jobInfos['jid']}>"
-        else:
-            return "UNKNOWN"
-
     def initLocalSubmit(self):
         """
         When submitting a node, we reset the status information to ensure that we do not keep
@@ -132,16 +142,6 @@ class NodeStatusData(BaseObject):
         self.submitterSessionUid = meshroom.core.sessionUid
         self.status = Status.SUBMITTED
         self.execMode = ExecMode.LOCAL
-
-    def setNodeType(self, node):
-        """
-        Set the node type and package information from the given node.
-        We do not set the name in this method as it may vary if there are duplicates.
-        """
-        self.nodeType = node.nodeType
-        self.packageName = node.packageName
-        self.packageVersion = node.packageVersion
-        self.mrNodeType = node.getMrNodeType()
 
     def toDict(self):
         keys = list(self.__slots__) or []
@@ -1341,7 +1341,6 @@ class BaseNode(BaseObject):
         if not self._chunksCreated:
             if self._nodeStatus.execMode == ExecMode.EXTERN:
                 return True
-            # TODO : use sessionID
             elif self._nodeStatus.execMode == ExecMode.LOCAL and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
                 return meshroom.core.sessionUid != self._nodeStatus.submitterSessionUid
             return False
@@ -1614,6 +1613,7 @@ class BaseNode(BaseObject):
             hasChunkToLaunch = True
         for chunk in self._chunks:
             if forceCompute or (chunk._status.status not in (Status.RUNNING, Status.SUCCESS)):
+                hasChunkToLaunch = True
                 chunk._status.setNode(self)
                 chunk._status.initLocalSubmit()
                 chunk.upgradeStatusFile()
@@ -2037,6 +2037,9 @@ class BaseNode(BaseObject):
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
     nodeInfo = Property(Variant, getNodeInfo, constant=True)
+    nodeStatusChanged = Signal()
+    nodeStatus = Property(Variant, lambda self: self._nodeStatus, notify=nodeStatusChanged)
+    nodeStatusNodeName = Property(str, lambda self: self._nodeStatus.nodeName, notify=nodeStatusChanged)
     positionChanged = Signal()
     position = Property(Variant, position.fget, position.fset, notify=positionChanged)
     x = Property(float, lambda self: self._position.x, notify=positionChanged)

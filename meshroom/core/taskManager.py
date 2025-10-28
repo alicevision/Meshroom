@@ -522,6 +522,7 @@ class TaskManager(BaseObject):
         for node in nodesToProcess:
             node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
             node.initStatusOnSubmit()
+            jobManager.resetNodeJob(node)
 
         graph.updateMonitoredFiles()
             

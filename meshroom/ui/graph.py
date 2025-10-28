@@ -203,7 +203,7 @@ class NodeStatusMonitor(QObject):
                 # update chunk status if last modification time has changed since previous record
                 if fileModTime != chunk.statusFileLastModTime:
                     chunk.updateStatusFromCache()
-                    if chunk.status.status == Status.SUCCESS:
+                    if chunk._status.status == Status.SUCCESS:
                         hasChangesAndSuccess = True
             elif _type == "node":
                 node = _item
@@ -716,17 +716,14 @@ class UIGraph(QObject):
             try:
                 job.pauseJob()
             except Exception as e:
-                self.parent().showMessage(f"Paused node {node.label} on farm")
                 logging.warning(f"Error on pauseJob :\n{e}")
-            else:
-                for chunk in self._sortedDFSChunks:
-                    if jobManager.getNodeJob(chunk.node) == job:
-                        chunk.updateStatusFromCache()
-                        chunk.upgradeStatusTo(Status.NONE)
                 self.parent().showMessage(f"Failed to pause the job for node {node}", "error")
+            else:
+                self.parent().showMessage(f"Paused node {node.label} on farm")
+        elif not node.isExtern():
+            self.parent().showMessage(f"PauseJob is only available in local computation mode !", "warning")
         else:
-            self._taskManager.clear()
-            self.parent().showMessage(f"Cleared the task manager")
+            self.parent().showMessage(f"Cannot retrieve the job", "error")
 
     @Slot(Node)
     def resumeJob(self, node: Node):
@@ -741,11 +738,7 @@ class UIGraph(QObject):
                 self.parent().showMessage(f"Failed to rsume node {node.label} on farm")
                 logging.warning(f"Error on resumeJob :\n{e}")
             else:
-                for chunk in self._sortedDFSChunks:
-                    if jobManager.getNodeJob(chunk.node) == job:
-                        chunk.updateStatusFromCache()
-                        chunk.upgradeStatusTo(Status.SUBMITTED)
-                self.parent().showMessage(f"Resumed the job for node {node}", "error")
+                self.parent().showMessage(f"Resumed the job for node {node}")
         else:
             # In this case user can just relaunch the node computation
             # Could be implemented if we had a paused state on the task manager
@@ -766,17 +759,21 @@ class UIGraph(QObject):
             else:
                 for chunk in self._sortedDFSChunks:
                     if jobManager.getNodeJob(chunk.node) == job:
-                        chunk.updateStatusFromCache()
-                        chunk.upgradeStatusTo(Status.STOPPED)
-                # TODO : Also nodes without chunks ?
+                        if chunk._status.status in (Status.SUBMITTED, Status.RUNNING):
+                            chunk.updateStatusFromCache()
+                            chunk.upgradeStatusTo(Status.STOPPED)
+                for node in self._graph.dfsOnFinish(None)[0]:
+                    if not node._chunksCreated and node._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
+                        node.upgradeStatusTo(Status.STOPPED)
                 self.parent().showMessage(f"Interrupted the job for node {node}")
-        else:
+        elif not node.isExtern():
             self._taskManager.clear()
             for chunk in node._chunks:
                 if chunk._status.status == Status.RUNNING and not chunk.isExtern():
                     chunk.stopProcess()
-
             self.parent().showMessage(f"Cleared the task manager")
+        else:
+            self.parent().showMessage(f"Could not retrieve job for node {node}", "error")
 
     @Slot(Node)
     def restartJobErrorTasks(self, node: Node):
@@ -791,7 +788,9 @@ class UIGraph(QObject):
                         continue
                     if jobManager.getNodeJob(chunk.node) == job:
                         chunk.upgradeStatusTo(Status.SUBMITTED)
-                # TODO : Also nodes without chunks ?
+                for node in self._graph.dfsOnFinish(None)[0]:
+                    if not node._chunksCreated and node._nodeStatus.status in (Status.ERROR, Status.STOPPED, Status.KILLED):
+                        node.upgradeStatusTo(Status.SUBMITTED)
                 job.restartErrorTasks()
                 job.resumeJob()
             except Exception as e:

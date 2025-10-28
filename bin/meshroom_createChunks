@@ -23,7 +23,6 @@ meshroom.setupEnvironment()
 
 import meshroom.core
 import meshroom.core.graph
-from meshroom.core.submitter import jobManager
 from meshroom.core import submitters
 from meshroom.core.submitter import SubmitterOptionsEnum
 from meshroom.core.node import Status

@@ -150,6 +150,11 @@ class JobManager(BaseObject):
             # Update the node status file to store the job ID
             node.setJobId(jid, job.submitterName)
 
+    def resetNodeJob(self, node):
+        node._nodeStatus.jobInfos = {}
+        if node._uid in self._nodeToJob:
+            del self._nodeToJob[node._uid]
+
     def getJob(self, jobId: str) -> Optional[BaseSubmittedJob]:
         return self._jobs.get(jobId)
 

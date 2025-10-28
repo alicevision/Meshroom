@@ -88,6 +88,9 @@ if args.node:
         print(f"Error: Node {node} has been submitted before chunks have been created." \
                "See file: \"{node.nodeStatusFile}\".")
         sys.exit(-1)
+    
+    if node._isInputNode():
+        print(f"InputNode: No computation to do.")
 
     if not args.forceStatus and not args.forceCompute:
         if args.iteration != -1:

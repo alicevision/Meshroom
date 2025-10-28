@@ -45,7 +45,7 @@ ListView {
         color: root.targetNode !== null 
             ? (root.targetNode.globalStatus === "NONE" 
                 ? Colors.darkpurple 
-                : Colors.statusColors[root.targetNode.globalStatus])
+                : Colors.getNodeColor(root.targetNode, { "NONE": root.defaultColor }))
             : "transparent"
         enabled: modelSize == 0
         visible: enabled

@@ -15,6 +15,7 @@ import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
+from meshroom.core import submitters
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
@@ -1473,6 +1474,19 @@ class Graph(BaseObject):
         # Now, update each individual node
         for node in self.nodes:
             node.updateDuplicates(nodesPerUid)
+    
+    def updateJobManagerWithNode(self, node):
+        if node._uid in jobManager._nodeToJob.keys():
+            return
+        jobInfos = node._nodeStatus.jobInfos
+        if not jobInfos:
+            return
+        jid, subName = jobInfos.get("jid"), jobInfos.get("submitterName")
+        for _subName, sub in submitters.items():
+            if _subName == subName:
+                job = sub.retrieveJob(int(jid))
+                jobManager.addJob(job, [node])
+                break
 
     def update(self):
         if not self._updateEnabled:
@@ -1485,6 +1499,7 @@ class Graph(BaseObject):
             self.updateStatusFromCache()
         for node in self.nodes:
             node.dirty = False
+            self.updateJobManagerWithNode(node)
 
         self.updateNodesPerUid()
 
@@ -1745,6 +1760,7 @@ def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
 
     for node in nodesToProcess:
         node.initStatusOnSubmit()
+        jobManager.resetNodeJob(node)
 
     try:
         res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)

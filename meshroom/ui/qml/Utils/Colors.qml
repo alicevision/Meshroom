@@ -22,7 +22,7 @@ QtObject {
     readonly property color lime: "#CDDC39"
     readonly property color grey: "#555555"
     readonly property color lightgrey: "#999999"
-    readonly property color darkpurple: "#453663"
+    readonly property color darkpurple: "#5c4885"
 
     readonly property var statusColors: {
         "NONE": "transparent",
@@ -64,6 +64,22 @@ QtObject {
             return statusColors[chunk.statusName]
         }
         console.warn("Unknown status : " + chunk.status)
+        return "magenta"
+    }
+    
+    function getNodeColor(node, overrides) {
+        if (node === undefined)
+            return "transparent"
+        if (overrides && node.globalStatus in overrides) {
+            return overrides[node.globalStatus]
+        } else if (node.globalExecMode === "EXTERN" && node.globalStatus in statusColorsExternOverrides) {
+            return statusColorsExternOverrides[node.globalStatus]
+        } else if (node.name !== node.nodeStatusNodeName && node.globalStatus in ghostColors) {
+            return ghostColors[node.globalStatus]
+        } else if (node.globalStatus in statusColors) {
+            return statusColors[node.globalStatus]
+        }
+        console.warn("Unknown status : " + node.globalStatus)
         return "magenta"
     }
 

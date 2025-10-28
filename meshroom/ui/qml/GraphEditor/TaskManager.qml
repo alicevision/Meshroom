@@ -436,22 +436,17 @@ Item {
                         property var node: object
 
                         spacing: 3
-
+                        
                         delegate: Loader {
                             id: chunkDelegate
-                            width: ListView.view.model ? (ListView.view.width / ListView.view.model.count) - 3 : 0
-                            height: ListView.view.height
+                            // width: ListView.view.model 
+                            //     ? ListView.view.width / ListView.view.model.count - chunkList.spacing
+                            //     : 0
+                            width: ListView.view.model 
+                                ? (ListView.view.width - (ListView.view.model.count - 1) * chunkList.spacing) / ListView.view.model.count
+                                : 0
 
-                            function getChunkBorderColor() {
-                                if (chunkList.node === uigraph.selectedNode) {
-                                    if (root.selectedChunk == object)
-                                        return Colors.sysPalette.text
-                                    else
-                                        return Qt.darker(Colors.sysPalette.text, 1.3)
-                                } else {
-                                    return "transparent"
-                                }
-                            }
+                            height: ListView.view.height
 
                             sourceComponent: Label {
                                 anchors.fill: parent
@@ -459,7 +454,7 @@ Item {
                                     color: Colors.getChunkColor(object, {"NONE": bgColor})
                                     radius: 3
                                     border.width: 2
-                                    border.color: chunkDelegate.getChunkBorderColor()
+                                    border.color: (root.selectedChunk == object) ? Qt.darker(color, 1.3) : "transparent"
                                 }
 
                                 MouseArea {
@@ -478,10 +473,11 @@ Item {
                             visible: enabled
                             anchors.fill: parent
                             background: Rectangle {
-                                color: chunkList.node.globalStatus == "NONE" ? Colors.darkpurple : Colors.statusColors[chunkList.node.globalStatus]
+                                color: Colors.darkpurple
+                                // color: Colors.getNodeColor(chunkList.node, {"NONE": Colors.darkpurple})
                                 radius: 3
                                 border.width: 2
-                                border.color: chunkList.node === uigraph.selectedNode ? Colors.sysPalette.text : "transparent"
+                                border.color: (chunkList.node === uigraph.selectedNode) ? Qt.lighter(color, 1.3) : "transparent"
                             }
 
                             MouseArea {

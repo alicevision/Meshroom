@@ -103,7 +103,7 @@ def rezWrapCommand(cmd, useCurrentContext: bool = True, otherRezPkg: list[str] =
         if "REZ_BIN" in os.environ:
             rezBin = os.environ["REZ_BIN"]
         elif "REZ_PACKAGES_ROOT" in os.environ:
-            rezBin = os.path.join(os.environ["REZ_PACKAGES_ROOT"], "/bin/rez")
+            rezBin = os.path.join(os.environ["REZ_PACKAGES_ROOT"], "bin/rez")
         return f"{rezBin} env {packagesStr} -- {cmd}"
     return cmd
 

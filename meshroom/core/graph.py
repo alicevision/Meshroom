@@ -1665,6 +1665,11 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
 
     for n, node in enumerate(nodes):
         try:
+            # If the node is in compatibility mode, it cannot be computed
+            if node.isCompatibilityNode:
+                logging.warning(f"{node.name} is in Compatibility Mode and cannot be computed: {node.issueDetails}.")
+                continue
+
             node.preprocess()
             multiChunks = len(node.chunks) > 1
             for c, chunk in enumerate(node.chunks):

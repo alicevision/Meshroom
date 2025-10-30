@@ -1811,10 +1811,10 @@ class BaseNode(BaseObject):
     hasDuplicatesChanged = Signal()
     hasDuplicates = Property(bool, lambda self: self._hasDuplicates, notify=hasDuplicatesChanged)
 
-    outputAttrEnabledChanged = Signal()
-    hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
-    hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrEnabledChanged)
-    has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
+    outputAttrChanged = Signal()
+    hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrChanged)
+    hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrChanged)
+    has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrChanged)
     # Whether the node contains a ShapeAttribute, a ShapeListAttribute or a shape File.
     hasDisplayableShape = Property(bool, _hasDisplayableShape, constant=True)
 
@@ -1847,7 +1847,9 @@ class Node(BaseNode):
         # Declare events for specific output attributes
         for attr in self._attributes:
             if attr.isOutput and attr.desc.semantic == "image":
-                attr.enabledChanged.connect(self.outputAttrEnabledChanged)
+                attr.enabledChanged.connect(self.outputAttrChanged)
+            if attr.isOutput:
+                attr.expressionApplied.connect(self.outputAttrChanged)
 
         # List attributes per UID
         for attr in self._attributes:

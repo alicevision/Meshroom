@@ -1217,7 +1217,7 @@ Page {
                         workspaceView.viewIn2D(attribute, mouse)
                     }
 
-                    else if (attribute.is3D) {
+                    else if (attribute.is3dDisplayable) {
                             workspaceView.viewIn3D(attribute, mouse)
                     }
 

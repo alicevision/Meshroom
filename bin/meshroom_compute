@@ -70,9 +70,15 @@ if args.cache:
 graph.update()
 
 if args.node:
-    # Execute the node
     node = graph.findNode(args.node)
     submittedStatuses = [Status.RUNNING]
+
+    if node.isCompatibilityNode:
+        print(f'{node.name} is in Compatibility Mode and cannot be computed.')
+        print(f'Compatibility issue: {node.issueDetails}')
+        sys.exit(1)
+
+    # Execute the node
     if not args.extern:
         # If running as "extern", the task is supposed to have the status SUBMITTED.
         # If not running as "extern", the SUBMITTED status should generate a warning.
@@ -106,7 +112,7 @@ if args.node:
     node.restoreLogger()
 else:
     if args.iteration != -1:
-        print('Error: "--iteration" only make sense when used with "--node".')
+        print('Error: "--iteration" only makes sense when used with "--node".')
         sys.exit(-1)
     toNodes = None
     if args.toNode:

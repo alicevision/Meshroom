@@ -37,15 +37,13 @@ def registerNodeDesc(nodeDesc: desc.Node):
     name = nodeDesc.__name__
     if not pluginManager.isRegistered(name):
         pluginManager._nodePlugins[name] = NodePlugin(nodeDesc)
-        pluginManager._nodePlugins[name].status = NodePluginStatus.LOADED
 
 
 def unregisterNodeDesc(nodeDesc: desc.Node):
     name = nodeDesc.__name__
     if pluginManager.isRegistered(name):
-        plugin = pluginManager.getRegisteredNodePlugin(name)
-        plugin.status = NodePluginStatus.NOT_LOADED
         del pluginManager._nodePlugins[name]
+
 
 @contextmanager
 def registeredPlugins(folder: str):

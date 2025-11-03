@@ -101,3 +101,38 @@ class TestNodeVariables:
             assert n._expVars["uid"] == n._uid
             assert n.internalFolder
             assert n.internalFolder == n._expVars["nodeCacheFolder"]
+
+
+class TestInitNode:
+    plugin = None
+
+    @classmethod
+    def setup_class(cls):
+        folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
+        package = "pluginA"
+        cls.plugin = Plugin(package, folder)
+        nodes = loadClassesNodes(folder, package)
+        for node in nodes:
+            cls.plugin.addNodePlugin(node)
+        pluginManager.addPlugin(cls.plugin)
+
+    @classmethod
+    def teardown_class(cls):
+        for node in cls.plugin.nodes.values():
+            pluginManager.unregisterNode(node)
+        pluginManager.removePlugin(cls.plugin)
+        cls.plugin = None
+
+    def test_initNode(self):
+        g = Graph("")
+
+        node = g.addNewNode("PluginAInputInitNode")
+
+        # Check that the init node is correctly detected
+        initNodes = g.findInitNodes()
+        assert len(initNodes) == 1 and node in initNodes
+
+        # Check that the init node's initialize method has been set
+        inputs = ["/path/to/file", "/path/to/file/2"]
+        node.nodeDesc.initialize(node, inputs, None)
+        assert node.input.value == inputs[0]

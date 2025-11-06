@@ -77,18 +77,19 @@ graph.update()
 node = graph.findNode(args.node)
 submittedStatuses = [Status.RUNNING]
 
-if node._nodeStatus.status in (Status.STOPPED, Status.KILLED):
-    logging.error("Node status is STOPPED or KILLED.")
-    sys.exit(666)
-
-
-# Find job
+# Find submitter
 submitter = None
 # It's required if we want to spool chunks on different machines
 for subName, sub in submitters.items():
     if args.submitter == subName:
         submitter = sub
         break
+
+if node._nodeStatus.status in (Status.STOPPED, Status.KILLED):
+    logging.error("Node status is STOPPED or KILLED.")
+    if submitter:
+        submitter.killRunningJob()
+    sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)
 
 if not node._chunksCreated:
     # Create node chunks

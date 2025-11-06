@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import logging
 import operator
 
@@ -7,6 +8,7 @@ from enum import IntFlag, auto
 from typing import Optional
 from itertools import accumulate
 
+import meshroom
 from meshroom.common import BaseObject, Property
 
 
@@ -224,5 +226,16 @@ class BaseSubmitter(BaseObject):
             # Failed to create the job
             return None
         return job
+
+    @staticmethod
+    def killRunningJob():
+        """ Sometimes farms are automatically re-trying job once in case it was
+        killed by a user that don't want his machine to be used. Unfortunately this
+        means jobs will be launched twice even if they failed for a good reason.
+        This function can be used to make sure the current job will not restart
+        Note : the ERROR_NO_RETRY itself won't do anything. This function must be 
+        implemented on a case-by-case for each possible farm system
+        """
+        sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)
 
     name = Property(str, lambda self: self._name, constant=True)

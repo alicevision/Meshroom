@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 import logging
 import os
 import sys
@@ -73,6 +73,18 @@ logStringToPython = {
     'trace': logging.TRACE,
 }
 logging.getLogger().setLevel(logStringToPython[os.environ.get('MESHROOM_VERBOSE', 'warning')])
+
+
+class MeshroomExitStatus(IntEnum):
+    """ In case we want to catch some special case from the parent process
+    We could use 3-125 for custom exist codes :
+    https://tldp.org/LDP/abs/html/exitcodes.html
+    """
+    SUCCESS = 0
+    ERROR = 1
+    # In some farm tools jobs are automatically re-tried, 
+    # using ERROR_NO_RETRY will try to prevent that
+    ERROR_NO_RETRY = -999  # It's actually -999 % 256 => 25
 
 
 def setupEnvironment(backend=Backend.STANDALONE):

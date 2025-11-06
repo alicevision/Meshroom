@@ -3,6 +3,7 @@ import argparse
 import logging
 import os
 import sys
+from typing import NoReturn
 
 try:
     import meshroom
@@ -63,11 +64,27 @@ else:
 
 meshroom.core.initPlugins()
 meshroom.core.initNodes()
+meshroom.core.initSubmitters()
 
 graph = meshroom.core.graph.loadGraph(args.graphFile)
 if args.cache:
     graph.cacheDir = args.cache
 graph.update()
+
+
+def killRunningJob(node) -> NoReturn:
+    """ Kills current job and try to avoid job restarting """
+    jobInfos = node.nodeStatus.jobInfos
+    submitterName = jobInfos.get("submitterName")
+    if not submitterName:
+        sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)
+    from meshroom.core import submitters
+    for subName, sub in submitters.items():
+        if submitterName == subName:
+            sub.killRunningJob()
+            break
+    sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)
+
 
 if args.node:
     node = graph.findNode(args.node)
@@ -115,8 +132,14 @@ if args.node:
     node.preprocess()
     if args.iteration != -1:
         chunk = node.chunks[args.iteration]
+        if chunk._status.status == Status.STOPPED:
+            print(f"Chunk {chunk} : status is STOPPED")
+            killRunningJob(node)
         chunk.process(args.forceCompute, args.inCurrentEnv)
     else:
+        if node.nodeStatus.status == Status.STOPPED:
+            print(f"Node {node} : status is STOPPED")
+            killRunningJob(node)
         node.process(args.forceCompute, args.inCurrentEnv)
     node.postprocess()
     node.restoreLogger()

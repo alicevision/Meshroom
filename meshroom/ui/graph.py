@@ -761,16 +761,22 @@ class UIGraph(QObject):
                         if chunk._status.status in (Status.SUBMITTED, Status.RUNNING):
                             chunk.updateStatusFromCache()
                             chunk.upgradeStatusTo(Status.STOPPED)
-                for node in self._graph.dfsOnFinish(None)[0]:
-                    if not node._chunksCreated and node._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
-                        node.upgradeStatusTo(Status.STOPPED)
+                for _node in self._graph.dfsOnFinish(None)[0]:
+                    if jobManager.getNodeJob(_node) == job and not _node._chunksCreated and \
+                        _node._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
+                        _node.upgradeStatusTo(Status.STOPPED)
                 self.parent().showMessage(f"Interrupted the job for node {node}")
         elif not node.isExtern():
-            self._taskManager.clear()
-            for chunk in node._chunks:
-                if chunk._status.status == Status.RUNNING and not chunk.isExtern():
-                    chunk.stopProcess()
-            self.parent().showMessage(f"Cleared the task manager")
+            for chunk in self._sortedDFSChunks:
+                if not chunk.isExtern() and chunk._status.status in (Status.SUBMITTED, Status.RUNNING):
+                    chunk.updateStatusFromCache()
+                    chunk.upgradeStatusTo(Status.STOPPED)
+            for node in self._graph.dfsOnFinish(None)[0]:
+                if not node.isExtern() and not node._chunksCreated and \
+                    node._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
+                    node.upgradeStatusTo(Status.STOPPED)
+            self.stopExecution()
+            self.parent().showMessage(f"Stopped the local job process")
         else:
             self.parent().showMessage(f"Could not retrieve job for node {node}", "error")
 

@@ -8,7 +8,7 @@ class Level(IntEnum):
     NONE = 0
     NORMAL = 1
     INTENSIVE = 2
-    EXTREME = 2
+    EXTREME = 3
     SCRIPT=-1
 
 

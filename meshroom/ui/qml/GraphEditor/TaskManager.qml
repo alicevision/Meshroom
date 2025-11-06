@@ -88,7 +88,7 @@ Item {
                     spacing: 2
 
                     MaterialToolButton {
-                        ToolTip.text: "Stop task"
+                        ToolTip.text: "Stop Task"
                         Layout.alignment: Qt.AlignHCenter
                         enabled: selectedChunk !== null || root.uigraph.selectedNode !== null
                         text: MaterialIcons.stop_circle
@@ -103,7 +103,7 @@ Item {
                     }
 
                     MaterialToolButton {
-                        ToolTip.text: "Restart task"
+                        ToolTip.text: "Restart Task"
                         Layout.alignment: Qt.AlignHCenter
                         enabled: selectedChunk !== null
                         text: MaterialIcons.replay_circle_filled
@@ -114,7 +114,7 @@ Item {
                     }
 
                     MaterialToolButton {
-                        ToolTip.text: "Skip task"
+                        ToolTip.text: "Skip Task"
                         Layout.alignment: Qt.AlignHCenter
                         enabled: selectedChunk !== null
                         text: MaterialIcons.skip_next
@@ -143,8 +143,6 @@ Item {
             
             // Job toolbar
             Rectangle {
-                // Layout.preferredWidth: childrenRect.width
-                // Layout.preferredHeight: childrenRect.height
                 Layout.preferredWidth: 40
                 Layout.preferredHeight: jobColumn.height + 8
                 color: "transparent"
@@ -158,7 +156,7 @@ Item {
                     spacing: 2
 
                     MaterialToolButton {
-                        ToolTip.text: "Pause job"
+                        ToolTip.text: "Pause Job"
                         Layout.alignment: Qt.AlignHCenter
                         enabled: root.uigraph.selectedNode !== null
                         text: MaterialIcons.pause_circle_filled
@@ -169,7 +167,7 @@ Item {
                     }
 
                     MaterialToolButton {
-                        ToolTip.text: "Resume job"
+                        ToolTip.text: "Resume Job"
                         Layout.alignment: Qt.AlignHCenter
                         enabled: root.uigraph.selectedNode !== null
                         text: MaterialIcons.play_circle_filled
@@ -180,7 +178,7 @@ Item {
                     }
 
                     MaterialToolButton {
-                        ToolTip.text: "Interrupt job"
+                        ToolTip.text: "Interrupt Job"
                         Layout.alignment: Qt.AlignHCenter
                         enabled: root.uigraph.selectedNode !== null
                         text: MaterialIcons.stop_circle
@@ -191,10 +189,10 @@ Item {
                     }
                     
                     MaterialToolButton {
-                        ToolTip.text: "Restart all error tasks"
+                        ToolTip.text: "Restart All Error Tasks"
                         Layout.alignment: Qt.AlignHCenter
                         enabled: root.uigraph.selectedNode !== null
-                        text: MaterialIcons.replay_circle_filled  // MaterialIcons.restart_alt
+                        text: MaterialIcons.replay_circle_filled
                         font.pointSize: 15
                         onClicked: {
                             uigraph.restartJobErrorTasks(uigraph.selectedNode)
@@ -439,9 +437,6 @@ Item {
                         
                         delegate: Loader {
                             id: chunkDelegate
-                            // width: ListView.view.model 
-                            //     ? ListView.view.width / ListView.view.model.count - chunkList.spacing
-                            //     : 0
                             width: ListView.view.model 
                                 ? (ListView.view.width - (ListView.view.model.count - 1) * chunkList.spacing) / ListView.view.model.count
                                 : 0
@@ -473,8 +468,7 @@ Item {
                             visible: enabled
                             anchors.fill: parent
                             background: Rectangle {
-                                color: Colors.darkpurple
-                                // color: Colors.getNodeColor(chunkList.node, {"NONE": Colors.darkpurple})
+                                color: Colors.getNodeColor(chunkList.node, {"NONE": Colors.darkpurple})
                                 radius: 3
                                 border.width: 2
                                 border.color: (chunkList.node === uigraph.selectedNode) ? Qt.lighter(color, 1.3) : "transparent"

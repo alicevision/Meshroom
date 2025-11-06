@@ -620,7 +620,7 @@ class UIGraph(QObject):
                 job.stopChunkTask(node, chunkIteration)
             except Exception as e:
                 self.parent().showMessage(f"Failed to stop chunk {chunkIteration} of {node.label}", "error")
-                logging.warning(f"Error on stopTask :\n{e}")
+                logging.warning(f"Error on stopTask:\n{e}")
             else:
                 chunk.updateStatusFromCache()
                 chunk.upgradeStatusTo(Status.STOPPED)
@@ -646,7 +646,7 @@ class UIGraph(QObject):
                 job.stopChunkTask(node, -1)
             except Exception as e:
                 self.parent().showMessage(f"Failed to stop node {node.label}", "error")
-                logging.warning(f"Error on stopTask :\n{e}")
+                logging.warning(f"Error on stopTask:\n{e}")
             else:
                 node.updateNodeStatusFromCache()
                 node.upgradeStatusTo(Status.STOPPED)
@@ -655,7 +655,6 @@ class UIGraph(QObject):
         else:
             self.cancelNodeComputation(node)
             node.stopComputation()
-            # self._taskManager.removeNode(node, processList=True)
 
     @Slot(NodeChunk)
     def restartTask(self, chunk: NodeChunk):
@@ -672,7 +671,7 @@ class UIGraph(QObject):
                 chunk.updateStatusFromCache()
                 chunk.upgradeStatusTo(Status.ERROR)
                 self.parent().showMessage(f"Failed to relaunch chunk {chunkIteration} of {node.label}", "error")
-                logging.warning(f"Error on restartTask :\n{e}")
+                logging.warning(f"Error on restartTask:\n{e}")
             else:
                 self.parent().showMessage(f"Relaunched chunk {chunkIteration} of {node.label}")
         else:
@@ -696,7 +695,7 @@ class UIGraph(QObject):
                 job.skipChunkTask(node, chunkIteration)
             except Exception as e:
                 self.parent().showMessage(f"Failed to skip chunk {chunkIteration} of {node.label}", "error")
-                logging.warning(f"Error on skipTask :\n{e}")
+                logging.warning(f"Error on skipTask:\n{e}")
             else:
                 chunk.upgradeStatusTo(Status.SUCCESS)
                 self.parent().showMessage(f"Skipped chunk {chunkIteration} of {node.label}")
@@ -716,12 +715,12 @@ class UIGraph(QObject):
             try:
                 job.pauseJob()
             except Exception as e:
-                logging.warning(f"Error on pauseJob :\n{e}")
+                logging.warning(f"Error on pauseJob:\n{e}")
                 self.parent().showMessage(f"Failed to pause the job for node {node}", "error")
             else:
                 self.parent().showMessage(f"Paused node {node.label} on farm")
         elif not node.isExtern():
-            self.parent().showMessage(f"PauseJob is only available in local computation mode !", "warning")
+            self.parent().showMessage(f"PauseJob is only available in external computation mode!", "warning")
         else:
             self.parent().showMessage(f"Cannot retrieve the job", "error")
 
@@ -735,8 +734,8 @@ class UIGraph(QObject):
             try:
                 job.resumeJob()
             except Exception as e:
-                self.parent().showMessage(f"Failed to rsume node {node.label} on farm")
-                logging.warning(f"Error on resumeJob :\n{e}")
+                self.parent().showMessage(f"Failed to resume node {node.label} on farm")
+                logging.warning(f"Error on resumeJob:\n{e}")
             else:
                 self.parent().showMessage(f"Resumed the job for node {node}")
         else:
@@ -755,7 +754,7 @@ class UIGraph(QObject):
                 job.interruptJob()
             except Exception as e:
                 self.parent().showMessage(f"Failed to interrupt node {node.label} on farm", "error")
-                logging.warning(f"Error on interruptJob :\n{e}")
+                logging.warning(f"Error on interruptJob:\n{e}")
             else:
                 for chunk in self._sortedDFSChunks:
                     if jobManager.getNodeJob(chunk.node) == job:
@@ -795,9 +794,9 @@ class UIGraph(QObject):
                 job.resumeJob()
             except Exception as e:
                 self.parent().showMessage(f"Failed to restart error tasks for node {node.label} on farm", "error")
-                logging.warning(f"Error on restartJobErrorTasks :\n{e}")
+                logging.warning(f"Error on restartJobErrorTasks:\n{e}")
             else:
-                self.parent().showMessage(f"Restared error tasks for the node {node}")
+                self.parent().showMessage(f"Restarted error tasks for the node {node}")
         else:
             # In this case user can just relaunch the node computation
             # Could be implemented if we had a paused state on the task manager

@@ -126,7 +126,6 @@ if not args.forceStatus and not args.forceCompute:
                 f"\"{chunk.status.status.name}\". See file: \"{chunk.statusFile}\". " \
                 f"ExecMode: {chunk.status.execMode.name}, computeSessionUid: {chunk.status.computeSessionUid}, " \
                 f"submitterSessionUid: {node._nodeStatus.submitterSessionUid}")
-            # sys.exit(-1)
 
 if chunksToProcess:
     node.prepareLogger()

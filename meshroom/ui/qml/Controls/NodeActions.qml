@@ -210,13 +210,13 @@ Item {
                 ToolTip.delay: 1000
                 visible: actionHeader.computeButtonState != NodeActions.ButtonState.DELETABLE
                 enabled: actionHeader.computeButtonState % 2 == 1  // Launchable & Stoppable
+                // Icon color
+                textColor: (!enabled && actionHeader.nodeSubmitted) ? Colors.statusColors["SUBMITTED"] : (checked ? palette.highlight : palette.text)
+                // Background color
                 background: Rectangle {
                     color: {
-                        if (!computeButton.enabled) {
-                            if (actionHeader.nodeSubmitted) 
-                                return Qt.darker(Colors.statusColors["SUBMITTED"], 1.2)
+                        if (!computeButton.enabled)
                             return activePalette.button
-                        }
                         if (actionHeader.computeButtonState == NodeActions.ButtonState.STOPPABLE)
                             return computeButton.hovered ? Colors.orange : Qt.darker(Colors.orange, 1.3)
                         return computeButton.hovered ? activePalette.highlight : activePalette.button
@@ -272,13 +272,13 @@ Item {
                 ToolTip.delay: 1000
                 visible: root.uigraph ? root.uigraph.canSubmit : false
                 enabled: actionHeader.submitButtonState != NodeActions.ButtonState.DISABLED
+                // Icon color
+                textColor: (!enabled && actionHeader.nodeSubmitted) ? Colors.statusColors["SUBMITTED"] : (checked ? palette.highlight : palette.text)
+                // Background color
                 background: Rectangle {
                     color: {
-                        if (!submitButton.enabled) {
-                            if (actionHeader.nodeSubmitted) 
-                                return Qt.darker(Colors.statusColors["SUBMITTED"], 1.2)
+                        if (!submitButton.enabled)
                             return activePalette.button
-                        }
                         return submitButton.hovered ? activePalette.highlight : activePalette.button
                     }
                     opacity: submitButton.hovered ? 1 : root._opacity

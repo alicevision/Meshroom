@@ -14,9 +14,13 @@ ToolButton {
     font.pointSize: 13
     ToolTip.visible: ToolTip.text && hovered
     ToolTip.delay: 100
+    
+    property color textColor: checked ? palette.highlight : palette.text
+    
     Component.onCompleted:  {
-        contentItem.color = Qt.binding(function() { return checked ? palette.highlight : palette.text })
+        contentItem.color = Qt.binding(function() { return textColor })
     }
+    
     background: Rectangle {
         color: {
             if (enabled && (pressed || checked || hovered)) {

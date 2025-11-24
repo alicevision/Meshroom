@@ -99,7 +99,7 @@ FocusScope {
                 height: childrenRect.height
                 Layout.preferredWidth: width
                 spacing: 3
-                model: node.nodeInfos
+                model: node.nodeInfo
                 delegate: nodeInfoItem
             }
 

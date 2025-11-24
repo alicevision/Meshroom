@@ -11,7 +11,7 @@ except Exception:
 
 class QmlInstantEngine(QQmlApplicationEngine):
     """
-    QmlInstantEngine is an utility class helping developing QML applications.
+    QmlInstantEngine is a utility class helping to develop QML applications.
     It reloads itself whenever one of the watched source files is modified.
     As it consumes resources, make sure to disable file watching in production mode.
     """
@@ -19,7 +19,7 @@ class QmlInstantEngine(QQmlApplicationEngine):
     def __init__(self, sourceFile="", watching=True, verbose=False, parent=None):
         """
         watching -- Defines whether the watcher is active (default: True)
-        verbose -- if True, output log infos (default: False)
+        verbose -- if True, output log information (default: False)
         """
         super().__init__(parent)
 

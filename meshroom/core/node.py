@@ -2212,7 +2212,10 @@ class Node(BaseNode):
         self._chunks.setObjectList([])
         # Recreate list with reset values (1 chunk or the static size)
         if not self.isParallelized:
-            self.setSize(1)
+            if not self.nodeDesc.size:
+                self.setSize(1)
+            else:
+                self.setSize(self.nodeDesc.size.computeSize(self))
             self._chunks.setObjectList([NodeChunk(self, desc.Range())])
             self._chunks[0].statusChanged.connect(self.globalStatusChanged)
             self._chunksCreated = True

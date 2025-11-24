@@ -80,6 +80,9 @@ Item {
             // Position header above the node (fixed offset in screen pixels)
             x = nodeScreenX + (selectedNodeDelegate.width * draggable.scale - width) / 2
             y = nodeScreenY - height - headerOffset
+            if (x < 0) {
+                x = 0
+            }
             if (y < 0) {
                 y = 0
             }

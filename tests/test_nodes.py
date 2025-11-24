@@ -11,7 +11,7 @@ from meshroom.core.plugins import Plugin
 from .utils import registerNodeDesc
 
 
-class TestNodeInfos:
+class TestNodeInfo:
     plugin = None
 
     @classmethod
@@ -43,13 +43,13 @@ class TestNodeInfos:
 
         nodeDocumentation = node.getDocumentation()
         assert nodeDocumentation == "PluginCNodeA"
-        nodeInfos = {item["key"]: item["value"] for item in node.getNodeInfos()}
-        assert nodeInfos["module"] == "pluginC.PluginCNodeA"
+        nodeInfo = {item["key"]: item["value"] for item in node.getNodeInfo()}
+        assert nodeInfo["module"] == "pluginC.PluginCNodeA"
         pluginPath = os.path.join(self.folder, "pluginC", "PluginCNodeA.py")
-        assert nodeInfos["modulePath"] == Path(pluginPath).as_posix()  # modulePath seems to follow linux convention
-        assert nodeInfos["author"] == "testAuthor"
-        assert nodeInfos["license"] == "no-license"
-        assert nodeInfos["version"] == "1.0"
+        assert nodeInfo["modulePath"] == Path(pluginPath).as_posix()  # modulePath seems to follow Linux convention
+        assert nodeInfo["author"] == "testAuthor"
+        assert nodeInfo["license"] == "no-license"
+        assert nodeInfo["version"] == "1.0"
 
 
 class TestNodeVariables:

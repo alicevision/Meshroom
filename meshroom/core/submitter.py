@@ -82,7 +82,7 @@ class BaseSubmittedJob:
     # For all methods if If iteration is -1 then it kills all the tasks for the given node
 
     def stopChunkTask(self, node, iteration):
-        """ This will kill one task 
+        """ This will kill one task.
         If iteration is -1 then it kills all the tasks for the given node
         """
         if self.submitterOptions.includes(SubmitterOptionsEnum.INTERRUPT_JOB):
@@ -233,7 +233,7 @@ class BaseSubmitter(BaseObject):
         killed by a user that don't want his machine to be used. Unfortunately this
         means jobs will be launched twice even if they failed for a good reason.
         This function can be used to make sure the current job will not restart
-        Note : the ERROR_NO_RETRY itself won't do anything. This function must be 
+        Note : the ERROR_NO_RETRY itself won't do anything. This function must be
         implemented on a case-by-case for each possible farm system
         """
         sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)

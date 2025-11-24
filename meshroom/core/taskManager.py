@@ -41,8 +41,8 @@ class TaskThread(Thread):
 
         for nId, node in enumerate(self._manager._nodesToProcess):
 
-            # skip already finished/running nodes
-            if node.isFinishedOrRunning():
+            # Skip already finished/running nodes or nodes in compatibility mode
+            if node.isFinishedOrRunning() or node.isCompatibilityNode:
                 continue
 
             # if a node does not exist anymore, node.chunks becomes a PySide property

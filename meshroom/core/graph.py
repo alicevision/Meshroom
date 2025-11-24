@@ -1478,10 +1478,10 @@ class Graph(BaseObject):
     def updateJobManagerWithNode(self, node):
         if node._uid in jobManager._nodeToJob.keys():
             return
-        jobInfos = node._nodeStatus.jobInfos
-        if not jobInfos:
+        jobInfo = node._nodeStatus.jobInfo
+        if not jobInfo:
             return
-        jid, subName = jobInfos.get("jid"), jobInfos.get("submitterName")
+        jid, subName = jobInfo.get("jid"), jobInfo.get("submitterName")
         for _subName, sub in submitters.items():
             if _subName == subName:
                 job = sub.retrieveJob(int(jid))

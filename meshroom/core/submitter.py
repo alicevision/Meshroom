@@ -153,7 +153,7 @@ class JobManager(BaseObject):
             node.setJobId(jid, job.submitterName)
 
     def resetNodeJob(self, node):
-        node._nodeStatus.jobInfos = {}
+        node._nodeStatus.jobInfo = {}
         if node._uid in self._nodeToJob:
             del self._nodeToJob[node._uid]
 

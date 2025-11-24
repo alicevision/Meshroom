@@ -61,12 +61,12 @@ class ExecMode(Enum):
     EXTERN = auto()
 
 
-# Simple structure for storing chunk infos
+# Simple structure for storing chunk information
 NodeChunkSetup = namedtuple("NodeChunks", ["blockSize", "fullSize", "nbBlocks"])
 
 class NodeStatusData(BaseObject):
-    __slots__ = ("nodeName", "status", "execMode", "nodeType", "packageName", "packageVersion", 
-                 "mrNodeType", "submitterSessionUid", "chunks", "jobInfos")
+    __slots__ = ("nodeName", "status", "execMode", "nodeType", "packageName", "packageVersion",
+                 "mrNodeType", "submitterSessionUid", "chunks", "jobInfo")
 
     def __init__(self, nodeName='', nodeType='', packageName='', packageVersion='',
                  mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
@@ -83,16 +83,16 @@ class NodeStatusData(BaseObject):
         self.reset()
 
     def reset(self):
-        self.resetChunkInfos()
+        self.resetChunkInfo()
         self.resetDynamicValues()
 
-    def resetChunkInfos(self):
+    def resetChunkInfo(self):
         self.chunks: NodeChunkSetup = None
 
     def resetDynamicValues(self):
         self.status: Status = Status.NONE
         self.execMode: ExecMode = ExecMode.NONE
-        self.jobInfos: dict = {}
+        self.jobInfo: dict = {}
 
     def setNodeType(self, node):
         """
@@ -110,16 +110,16 @@ class NodeStatusData(BaseObject):
         self.setNodeType(node)
 
     def setJob(self, jid, submitterName):
-        """ Set Job infos on the node so that """
-        self.jobInfos = {
+        """ Set Job information on the node. """
+        self.jobInfo = {
             "jid": str(jid),
             "submitterName": str(submitterName),
         }
 
     @property
     def jobName(self):
-        if self.jobInfos:
-            return f"{self.jobInfos['submitterName']}<{self.jobInfos['jid']}>"
+        if self.jobInfo:
+            return f"{self.jobInfo['submitterName']}<{self.jobInfo['jid']}>"
         else:
             return "UNKNOWN"
 
@@ -2294,7 +2294,7 @@ class Node(BaseNode):
             self._chunksCreated = True
             self.chunksChanged.emit()
             return
-        # Grab current chunk infos
+        # Grab current chunk information
         logging.debug(f"Creating chunks for node: {self.name}")
         try:
             size = self.nodeDesc.size.computeSize(self)

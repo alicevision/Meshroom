@@ -74,8 +74,8 @@ graph.update()
 
 def killRunningJob(node) -> NoReturn:
     """ Kills current job and try to avoid job restarting """
-    jobInfos = node.nodeStatus.jobInfos
-    submitterName = jobInfos.get("submitterName")
+    jobInfo = node.nodeStatus.jobInfo
+    submitterName = jobInfo.get("submitterName")
     if not submitterName:
         sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)
     from meshroom.core import submitters

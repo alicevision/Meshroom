@@ -51,7 +51,7 @@ class MessageController(QObject):
         return messages
 
     def getMessages(self):
-        """ Get the messages with simple date infos.
+        """ Get the messages with simple date information.
         Reverse the list to make sure we see the most recent item on top
         """
         return self._getMessagesDict()[::-1]

@@ -787,32 +787,32 @@ class BaseNode(BaseObject):
         else:
             return self.nodeDesc.__doc__
     
-    def getNodeInfos(self):
+    def getNodeInfo(self):
         if not self.nodeDesc:
             return []
-        infos = OrderedDict([
+        info = OrderedDict([
             ("module", self.nodeDesc.__module__),
             ("modulePath", self.nodeDesc.plugin.path),
         ])
-        # > Infos from the plugin module
+        # > Info from the plugin module
         plugin_module = sys.modules.get(self.nodeDesc.__module__)
         if getattr(plugin_module, "__author__", None):
-            infos["author"] = plugin_module.__author__
+            info["author"] = plugin_module.__author__
         if getattr(plugin_module, "__license__", None):
-            infos["license"] = plugin_module.__license__
+            info["license"] = plugin_module.__license__
         if getattr(plugin_module, "__version__", None):
-            infos["version"] = plugin_module.__version__
+            info["version"] = plugin_module.__version__
         # > Overrides at the node-level
         if getattr(self.nodeDesc, "author", None):
-            infos["author"] = self.nodeDesc.author
+            info["author"] = self.nodeDesc.author
         if getattr(self.nodeDesc, "version", None):
-            infos["version"] = self.nodeDesc.version
-        # > Additional node infos stored in a __nodeInfo__ parameter
-        additionalNodeInfos = getattr(self.nodeDesc, "__nodeInfo__", None)
-        if additionalNodeInfos:
-            for key, value in additionalNodeInfos:
-                infos[key] = value
-        return [{"key": k, "value": v} for k, v in infos.items()]
+            info["version"] = self.nodeDesc.version
+        # > Additional node information stored in a __nodeInfo__ parameter
+        additionalNodeInfo = getattr(self.nodeDesc, "__nodeInfo__", None)
+        if additionalNodeInfo:
+            for key, value in additionalNodeInfo:
+                info[key] = value
+        return [{"key": k, "value": v} for k, v in info.items()]
     
     @property
     def packageFullName(self):
@@ -1767,7 +1767,7 @@ class BaseNode(BaseObject):
     defaultLabel = Property(str, getDefaultLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
-    nodeInfos = Property(Variant, getNodeInfos, constant=True)
+    nodeInfo = Property(Variant, getNodeInfo, constant=True)
     positionChanged = Signal()
     position = Property(Variant, position.fget, position.fset, notify=positionChanged)
     x = Property(float, lambda self: self._position.x, notify=positionChanged)

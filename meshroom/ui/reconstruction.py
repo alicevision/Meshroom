@@ -132,7 +132,7 @@ class ViewpointWrapper(QObject):
         try:
             if self._activeNode_ExportAnimatedCamera and self._activeNode_ExportAnimatedCamera.node:
                 self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_ExportAnimatedCamera.node.outputImages.value, self._viewpoint)
-                self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value            
+                self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value
             elif self._activeNode_PrepareDenseScene and self._activeNode_PrepareDenseScene.node:
                 self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_PrepareDenseScene.node.undistorted.value, self._viewpoint)
                 self._principalPointCorrected = False
@@ -939,11 +939,11 @@ class Reconstruction(UIGraph):
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
 
     displayedAttr2DChanged = Signal()
-    displayedAttr2D = makeProperty(QObject, "_displayedAttr2D", displayedAttr2DChanged)   
+    displayedAttr2D = makeProperty(QObject, "_displayedAttr2D", displayedAttr2DChanged)
 
-    displayedAttrs3DChanged = Signal()    
+    displayedAttrs3DChanged = Signal()
     displayedAttrs3D = Property(QObject, lambda self: self._displayedAttrs3D, notify=displayedAttrs3DChanged)
-    
+
     pluginsReloaded = Signal(list)
 
     @Slot(QObject)
@@ -1169,7 +1169,7 @@ class Reconstruction(UIGraph):
 
     @Slot(str, result="QVariantList")
     def evaluateMathExpression(self, expr):
-        """ Evaluate a mathematical expression and return the result as a string 
+        """ Evaluate a mathematical expression and return the result as a string
         Returns a list of 2 values :
         - the result value
         - a boolean that indicate if an error occured

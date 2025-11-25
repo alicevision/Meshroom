@@ -368,14 +368,14 @@ class MeshroomApp(QApplication):
     def reloadTemplateList(self):
         meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
-    
+
     @Slot()
     def forceUIUpdate(self):
         """ Force UI to process pending events
         Necessary when we want to update the UI while a trigger is still running (e.g. reloadPlugins)
         """
         self.processEvents()
-    
+
     def showMessage(self, message, status=None, duration=5000):
         self._messageController.sendMessage(message, status, duration)
 
@@ -725,7 +725,7 @@ class MeshroomApp(QApplication):
         if val != True and str(val).lower() in ("0", "false", "off"):
             return False
         return True
-    
+
     def _submittersList(self):
         """
         Get the list of available submitters
@@ -745,12 +745,12 @@ class MeshroomApp(QApplication):
                 "isDefault": isDefault
             })
         return submittersList
-    
+
     @Slot(str)
     def setDefaultSubmitter(self, name):
         logging.info(f"Submitter is now set to : {name}")
         self._defaultSubmitterName = name
-    
+
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)
 

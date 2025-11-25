@@ -305,7 +305,7 @@ class SetAttributeCommand(GraphCommand):
             self.graph.attribute(self.attrName).value = self.oldValue
         else:
             self.graph.internalAttribute(self.attrName).value = self.oldValue
-    
+
 class AddAttributeKeyValueCommand(GraphCommand):
     def __init__(self, graph, attribute, key, value, parent=None):
         super().__init__(graph, parent)
@@ -329,7 +329,7 @@ class AddAttributeKeyValueCommand(GraphCommand):
 
     def undoImpl(self):
         if not self.keyable or self.value == self.oldValue:
-            return False    
+            return False
         if self.graph.attribute(self.attrName) is not None:
             if self.oldValue is None:
                 self.graph.attribute(self.attrName).keyValues.remove(self.key)
@@ -364,7 +364,7 @@ class RemoveAttributeKeyCommand(GraphCommand):
 
     def undoImpl(self):
         if not self.keyable or self.oldValue == None:
-            return False    
+            return False
         if self.graph.attribute(self.attrName) is not None:
             self.graph.attribute(self.attrName).keyValues.add(self.key, self.oldValue)
         else:

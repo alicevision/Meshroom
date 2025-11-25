@@ -1105,7 +1105,7 @@ class GeometryAttribute(GroupAttribute):
         return all((isinstance(attribute, GeometryAttribute) and attribute.hasObservation(key)) or
                    (not isinstance(attribute, GeometryAttribute) and attribute.keyValues.hasKey(key))
                    for attribute in self.value)
-    
+
     @raiseIfLink
     def removeObservation(self, key: str):
         """

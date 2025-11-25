@@ -63,4 +63,3 @@ def resolvePath(input, outputTemplate: str) -> str:
     resolved = replacePatterns(outputTemplate, compiled_element, replacements)
 
     return resolved
-

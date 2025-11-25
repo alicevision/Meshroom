@@ -13,7 +13,7 @@ class Shape(GroupAttribute):
                         group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
             StringParam(name="userColor", label="User Color", description="User shape color.", value="#2a82da",
                         group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
-            Geometry(geometryGroupDesc, name="geometry", label="Geometry", description="Shape geometry.", 
+            Geometry(geometryGroupDesc, name="geometry", label="Geometry", description="Shape geometry.",
                      group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed)
         ]
         # GroupAttribute constructor
@@ -37,8 +37,8 @@ class ShapeList(ListAttribute):
     def __init__(self, shape: Shape, name, label, description, group="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # ListAttribute constructor
-        super(ShapeList, self).__init__(elementDesc=shape, name=name, label=label, description=description, 
-                                        group=group, advanced=advanced, semantic=semantic, 
+        super(ShapeList, self).__init__(elementDesc=shape, name=name, label=label, description=description,
+                                        group=group, advanced=advanced, semantic=semantic,
                                         enabled=enabled, visible=visible, exposed=exposed)
 
     def getInstanceType(self):
@@ -58,9 +58,9 @@ class Point2d(Shape):
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
         geometryGroupDesc = [
-            FloatParam(name="x", label="X", description="X coordinate.", value=-1.0, keyable=keyable, keyType=keyType, 
+            FloatParam(name="x", label="X", description="X coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
                        group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
-            FloatParam(name="y", label="Y", description="Y coordinate.", value=-1.0, keyable=keyable, keyType=keyType, 
+            FloatParam(name="y", label="Y", description="Y coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
                        group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed)
         ]
         # ShapeAttribute constructor
@@ -76,9 +76,9 @@ class Line2d(Shape):
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
         geometryGroupDesc = [
-            Vec2d(name="a", label="A", description="Line A point.", x=-1.0, y=-1.0, keyable=keyable, keyType=keyType, 
+            Vec2d(name="a", label="A", description="Line A point.", x=-1.0, y=-1.0, keyable=keyable, keyType=keyType,
                   group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
-            Vec2d(name="b", label="B", description="Line B point.", x=-1.0, y=-1.0, keyable=keyable, keyType=keyType, 
+            Vec2d(name="b", label="B", description="Line B point.", x=-1.0, y=-1.0, keyable=keyable, keyType=keyType,
                   group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed)
         ]
         # ShapeAttribute constructor
@@ -98,7 +98,7 @@ class Rectangle(Shape):
                   keyable=keyable, keyType=keyType, group=group, advanced=advanced,
                   enabled=enabled, visible=visible, exposed=exposed),
             Size2d(name="size", label="Size", description="Rectangle size.", width=-1.0, height=-1.0,
-                   keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
+                   keyable=keyable, keyType=keyType, group=group, advanced=advanced,
                    enabled=enabled, visible=visible, exposed=exposed)
         ]
         # ShapeAttribute constructor

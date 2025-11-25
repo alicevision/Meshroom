@@ -1745,9 +1745,8 @@ class BaseNode(BaseObject):
         Return True if at least one attribute is a File that can be loaded in the 3D Viewer,
         False otherwise.
         """
-        
         return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3dDisplayable), None) is not None
-    
+
     def _hasDisplayableShape(self):
         """
         Return True if at least one attribute is a ShapeAttribute, a ShapeListAttribute or a shape File.
@@ -1756,7 +1755,7 @@ class BaseNode(BaseObject):
         """
         return next((attr for attr in self._attributes if attr.hasDisplayableShape or
                      attr.desc.semantic == "shapeFile"), None) is not None
-    
+
 
     name = Property(str, getName, constant=True)
     defaultLabel = Property(str, getDefaultLabel, constant=True)

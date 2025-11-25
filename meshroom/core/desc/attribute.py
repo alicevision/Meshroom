@@ -10,8 +10,8 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, semantic, group, enabled, 
-                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None, 
+    def __init__(self, name, label, description, value, advanced, semantic, group, enabled,
+                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
                  validValue=True, errorMessage="", visible=True, exposed=False):
         super(Attribute, self).__init__()
         self._name = name
@@ -289,12 +289,12 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, group, advanced, semantic, enabled, 
-                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None, 
+    def __init__(self, name, label, description, value, group, advanced, semantic, enabled,
+                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
                  validValue=True, errorMessage="", visible=True, exposed=False):
         super(Param, self).__init__(name=name, label=label, description=description, value=value,
-                                    keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
-                                    enabled=enabled, invalidate=invalidate, semantic=semantic, 
+                                    keyable=keyable, keyType=keyType, group=group, advanced=advanced,
+                                    enabled=enabled, invalidate=invalidate, semantic=semantic,
                                     uidIgnoreValue=uidIgnoreValue, validValue=validValue,
                                     errorMessage=errorMessage, visible=visible, exposed=exposed)
 
@@ -328,12 +328,12 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, keyable=False, keyType=None, 
-                 group="allParams", advanced=False, enabled=True, invalidate=True, 
+    def __init__(self, name, label, description, value, keyable=False, keyType=None,
+                 group="allParams", advanced=False, enabled=True, invalidate=True,
                  semantic="", visible=True, exposed=False):
         super(BoolParam, self).__init__(name=name, label=label, description=description, value=value,
-                                        keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
-                                        enabled=enabled, invalidate=invalidate, semantic=semantic, 
+                                        keyable=keyable, keyType=keyType, group=group, advanced=advanced,
+                                        enabled=enabled, invalidate=invalidate, semantic=semantic,
                                         visible=visible, exposed=exposed)
         self._valueType = bool
 
@@ -358,13 +358,13 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None, 
-                 group="allParams", advanced=False, enabled=True, invalidate=True, semantic="", 
+    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None,
+                 group="allParams", advanced=False, enabled=True, invalidate=True, semantic="",
                  validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
         super(IntParam, self).__init__(name=name, label=label, description=description, value=value,
-                                       keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
-                                       enabled=enabled, invalidate=invalidate, semantic=semantic, 
+                                       keyable=keyable, keyType=keyType, group=group, advanced=advanced,
+                                       enabled=enabled, invalidate=invalidate, semantic=semantic,
                                        validValue=validValue, errorMessage=errorMessage,
                                        visible=visible, exposed=exposed)
         self._valueType = int
@@ -390,13 +390,13 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None, 
-                 group="allParams", advanced=False, enabled=True, invalidate=True, semantic="", 
+    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None,
+                 group="allParams", advanced=False, enabled=True, invalidate=True, semantic="",
                  validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value,
-                                         keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
-                                         enabled=enabled, invalidate=invalidate, semantic=semantic, 
+                                         keyable=keyable, keyType=keyType, group=group, advanced=advanced,
+                                         enabled=enabled, invalidate=invalidate, semantic=semantic,
                                          validValue=validValue, errorMessage=errorMessage,
                                          visible=visible, exposed=exposed)
         self._valueType = float
@@ -446,11 +446,11 @@ class ChoiceParam(Param):
 
     When using `exclusive=True`, the value is a single element of the list of possible values.
     When using `exclusive=False`, the value is a list of elements of the list of possible values.
-    
-    Despite this being the standard behavior, ChoiceParam also supports custom value: it is possible to set any value, 
+
+    Despite this being the standard behavior, ChoiceParam also supports custom value: it is possible to set any value,
     even outside list of possible values.
 
-    The list of possible values on a ChoiceParam instance can be overriden at runtime. 
+    The list of possible values on a ChoiceParam instance can be overriden at runtime.
     If those changes needs to be persisted, `saveValuesOverride` should be set to True.
     """
 
@@ -458,8 +458,8 @@ class ChoiceParam(Param):
     _OVERRIDE_SERIALIZATION_KEY_VALUE = "__ChoiceParam_value__"
     _OVERRIDE_SERIALIZATION_KEY_VALUES = "__ChoiceParam_values__"
 
-    def __init__(self, name: str, label: str, description: str, value, values, exclusive=True, saveValuesOverride=False, 
-                 group="allParams", joinChar=" ", advanced=False, enabled=True, invalidate=True, semantic="", 
+    def __init__(self, name: str, label: str, description: str, value, values, exclusive=True, saveValuesOverride=False,
+                 group="allParams", joinChar=" ", advanced=False, enabled=True, invalidate=True, semantic="",
                  validValue=True, errorMessage="",
                  visible=True, exposed=False):
 

@@ -32,16 +32,16 @@ class Size2d(Geometry):
         # Geometry group desciption
         groupDesc = [
             FloatParam(name="width", label="Width", description="Width size.", value=width, range=widthRange,
-                       keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
+                       keyable=keyable, keyType=keyType, group=group, advanced=advanced,
                        enabled=enabled, visible=visible, exposed=exposed),
             FloatParam(name="height", label="Height", description="Height size.", value=height, range=heightRange,
-                       keyable=keyable, keyType=keyType, group=group, advanced=advanced, 
+                       keyable=keyable, keyType=keyType, group=group, advanced=advanced,
                        enabled=enabled, visible=visible, exposed=exposed)
         ]
         # GeometryAttribute constructor
-        super(Size2d, self).__init__(groupDesc, name, label, description, group=None, advanced=advanced, 
+        super(Size2d, self).__init__(groupDesc, name, label, description, group=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
-        
+
 class Vec2d(Geometry):
     """
     Vec2d is a Geometry attribute that allows to specify a 2d vector.
@@ -59,5 +59,5 @@ class Vec2d(Geometry):
                        enabled=enabled, visible=visible, exposed=exposed)
         ]
         # GeometryAttribute constructor
-        super(Vec2d, self).__init__(groupDesc, name, label, description, group=None, advanced=advanced, 
+        super(Vec2d, self).__init__(groupDesc, name, label, description, group=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)

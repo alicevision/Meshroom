@@ -151,9 +151,9 @@ class DirTreeProcessEnv(ProcessEnv):
 class RezProcessEnv(ProcessEnv):
     """
     """
-    
+
     REZ_DELIMITER_PATTERN = re.compile(r"-|==|>=|>|<=|<")
-    
+
     def __init__(self, folder: str, configEnv: dict[str: str], uri: str = ""):
         if not uri:
             raise RuntimeError("Missing name of the Rez environment needs to be provided.")

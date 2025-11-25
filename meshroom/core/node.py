@@ -786,7 +786,7 @@ class BaseNode(BaseObject):
             return self.nodeDesc.documentation
         else:
             return self.nodeDesc.__doc__
-    
+
     def getNodeInfo(self):
         if not self.nodeDesc:
             return []
@@ -813,7 +813,7 @@ class BaseNode(BaseObject):
             for key, value in additionalNodeInfo:
                 info[key] = value
         return [{"key": k, "value": v} for k, v in info.items()]
-    
+
     @property
     def packageFullName(self):
         return '-'.join([self.packageName, self.packageVersion])
@@ -1206,7 +1206,7 @@ class BaseNode(BaseObject):
     @Slot()
     def clearSubmittedChunks(self):
         """
-        Reset all submitted chunks to Status.NONE. This method should be used to clear 
+        Reset all submitted chunks to Status.NONE. This method should be used to clear
         inconsistent status if a computation failed without informing the graph.
 
         Warnings:
@@ -2231,4 +2231,3 @@ class CompatibilityNode(BaseNode):
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)
     issueDetails = Property(str, issueDetails.fget, constant=True)
-

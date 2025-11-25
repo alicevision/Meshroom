@@ -111,8 +111,10 @@ class Visitor:
         pass
 
     def treeEdge(self, e, g):
-        """ Is invoked on each edge as it becomes a member of the edges that form the search tree.
-        If you wish to record predecessors, do so at this event point. """
+        """
+        Is invoked on each edge as it becomes a member of the edges that form the search tree.
+        If you wish to record predecessors, do so at this event point.
+        """
         pass
 
     def backEdge(self, e, g):
@@ -120,18 +122,25 @@ class Visitor:
         pass
 
     def forwardOrCrossEdge(self, e, g):
-        """ Is invoked on forward or cross edges in the graph.
-        In an undirected graph this method is never called."""
+        """
+        Is invoked on forward or cross edges in the graph.
+        In an undirected graph this method is never called.
+        """
         pass
 
     def finishEdge(self, e, g):
-        """ Is invoked on the non-tree edges in the graph
-        as well as on each tree edge after its target vertex is finished. """
+        """
+        Is invoked on the non-tree edges in the graph
+        as well as on each tree edge after its target vertex is finished.
+        """
         pass
 
     def finishVertex(self, u, g):
-        """ Is invoked on a vertex after all of its out edges have been added to the search tree and all of the
-        adjacent vertices have been discovered (but before their out-edges have been examined). """
+        """
+        Is invoked on a vertex after all of its out edges have been added to the search tree and
+        all of the adjacent vertices have been discovered (but before their out-edges have been
+        examined).
+        """
         pass
 
 
@@ -238,7 +247,7 @@ class Graph(BaseObject):
     def isLoading(self):
         """ Return True if the graph is currently being loaded. """
         return self._loading
-    
+
     @property
     def isSaving(self):
         """ Return True if the graph is currently being saved. """
@@ -372,7 +381,9 @@ class Graph(BaseObject):
         """
 
         def _serializedNodeUidMatchesComputedUid(nodeData: dict, node: BaseNode) -> bool:
-            """Returns whether the serialized UID matches the one computed in the `node` instance."""
+            """
+            Returns whether the serialized UID matches the one computed in the `node` instance.
+            """
             if isinstance(node, CompatibilityNode):
                 return True
             serializedUid = nodeData.get("uid", None)
@@ -664,14 +675,17 @@ class Graph(BaseObject):
         return node
 
     def _triggerNodeCreatedCallback(self, nodes: Iterable[Node]):
-        """Trigger the `onNodeCreated` node descriptor callback for each node instance in `nodes`."""
+        """
+        Trigger the `onNodeCreated` node descriptor callback for each node instance in `nodes`.
+        """
         with GraphModification(self):
             for node in nodes:
                 if node.nodeDesc:
                     node.nodeDesc.onNodeCreated(node)
 
     def _createUniqueNodeName(self, inputName: str, existingNames: Optional[set[str]] = None):
-        """Create a unique node name based on the input name.
+        """
+        Create a unique node name based on the input name.
 
         Args:
             inputName: The desired node name.
@@ -714,7 +728,8 @@ class Graph(BaseObject):
 
     @changeTopology
     def replaceNode(self, nodeName: str, newNode: BaseNode):
-        """Replace the node idenfitied by `nodeName` with `newNode`, while restoring compatible edges.
+        """
+        Replace the node idenfitied by `nodeName` with `newNode`, while restoring compatible edges.
 
         Args:
             nodeName: The name of the Node to replace.
@@ -724,10 +739,11 @@ class Graph(BaseObject):
             _, outEdges, outListAttributes = self.removeNode(nodeName)
             self.addNode(newNode, nodeName)
             self._restoreOutEdges(outEdges, outListAttributes)
-    
+
     def _restoreOutEdges(self, outEdges: dict[str, str], outListAttributes):
-        """Restore output edges that were removed during a call to "removeNode".
-        
+        """
+        Restore output edges that were removed during a call to "removeNode".
+
         Args:
             outEdges: a dictionary containing the outgoing edges removed by a call to "removeNode".
                 {dstAttr.fullName, srcAttr.fullName}
@@ -1522,14 +1538,16 @@ class Graph(BaseObject):
                     yield chunk
 
     def getChunksByStatus(self, status):
-        """ Return the list of NodeChunks with the given status """
+        """ Return the list of NodeChunks with the given status. """
         chunks = []
         for node in self.nodes:
             chunks += [chunk for chunk in node.chunks if chunk.status.status == status]
         return chunks
 
     def getChunks(self, nodes=None):
-        """ Returns the list of NodeChunks for the given list of nodes (for all nodes if nodes is None) """
+        """
+        Returns the list of NodeChunks for the given list of nodes (for all nodes if nodes is None).
+        """
         chunks = []
         for node in nodes or self.nodes:
             chunks += [chunk for chunk in node.chunks]

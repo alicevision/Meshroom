@@ -5,7 +5,7 @@ import ast, math
 
 class MathEvaluator:
     """ Evaluate math expressions
-    
+
     ..code::py
         # Example usage
         mev = MathEvaluator()

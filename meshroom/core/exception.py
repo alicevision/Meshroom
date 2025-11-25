@@ -14,7 +14,7 @@ class GraphException(MeshroomException):
 class GraphCompatibilityError(GraphException):
     """
     Raised when node compatibility issues occur when loading a graph.
-    
+
     Args:
         filepath: The path to the file that caused the error.
         issues: A dictionnary of node names and their respective compatibility issues.

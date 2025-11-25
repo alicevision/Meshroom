@@ -158,8 +158,8 @@ class ListAttribute(Attribute):
             value = ast.literal_eval(value)
 
         if not isinstance(value, (list, tuple)):
-            raise ValueError("ListAttribute only supports list/tuple input values "
-                             "(param:{}, value:{}, type:{})".format(self.name, value, type(value)))
+            raise ValueError(f"ListAttribute only supports list/tuple input values "
+                             f"(param: {self.name}, value: {value}, type: {type(value)})")
         return value
 
     def checkValueTypes(self):
@@ -214,20 +214,21 @@ class GroupAttribute(Attribute):
         if isinstance(value, dict):
             # invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
             # if invalidKeys:
-            #     raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
+            #     raise ValueError(f"Value contains key that does not match group description: "
+            #                      f"{invalidKeys}")
             if self._groupDesc and value.keys():
                 commonKeys = set(value.keys()).intersection([attr.name for attr in self._groupDesc])
                 if not commonKeys:
-                    raise ValueError(f"Value contains no key that matches with the group description "
-                                     f"(name={self.name}, values={value.keys()}, "
+                    raise ValueError(f"Value contains no key that matches with the group "
+                                     f"description (name={self.name}, values={value.keys()}, "
                                      f"desc={[attr.name for attr in self._groupDesc]})")
         elif isinstance(value, (list, tuple, set)):
             if len(value) != len(self._groupDesc):
-                raise ValueError("Value contains incoherent number of values: desc size: {}, value size: {}".
-                                 format(len(self._groupDesc), len(value)))
+                raise ValueError(f"Value contains incoherent number of values: "
+                                 f"desc size: {len(self._groupDesc)}, value size: {len(value)}")
         else:
-            raise ValueError("GroupAttribute only supports dict/list/tuple input values (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"GroupAttribute only supports dict/list/tuple input values "
+                             f"(param: {self.name}, value: {value}, type: {type(value)})")
 
         return value
 
@@ -312,8 +313,8 @@ class File(Attribute):
         if value is None:
             return value
         if not isinstance(value, str):
-            raise ValueError("File only supports string input  (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"File only supports string input (param: {self.name}, value: "
+                             f"{value}, type: {type(value)})")
         return os.path.normpath(value).replace("\\", "/") if value else ""
 
     def checkValueTypes(self):
@@ -345,8 +346,8 @@ class BoolParam(Param):
                 return bool(distutils.util.strtobool(value))
             return bool(value)
         except Exception:
-            raise ValueError("BoolParam only supports bool value (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"BoolParam only supports bool value (param: {self.name}, "
+                             f"value: {value}, type: {type(value)})")
 
     def checkValueTypes(self):
         if not isinstance(self.value, bool):
@@ -375,8 +376,8 @@ class IntParam(Param):
         try:
             return int(value)
         except Exception:
-            raise ValueError("IntParam only supports int value (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"IntParam only supports int value (param: {self.name}, value: "
+                             f"{value}, type: {type(value)})")
 
     def checkValueTypes(self):
         if not isinstance(self.value, int) or (self.range and not all([isinstance(r, int) for r in self.range])):
@@ -406,8 +407,8 @@ class FloatParam(Param):
         try:
             return float(value)
         except Exception:
-            raise ValueError("FloatParam only supports float value (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"FloatParam only supports float value (param: {self.name}, value: "
+                             f"{value}, type:{type(value)})")
 
     def checkValueTypes(self):
         if not isinstance(self.value, float) or (self.range and not all([isinstance(r, float) for r in self.range])):
@@ -506,8 +507,8 @@ class ChoiceParam(Param):
             value = value.split(',')
 
         if not isinstance(value, Iterable):
-            raise ValueError("Non-exclusive ChoiceParam value should be iterable (param: {}, value: {}, type: {}).".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"Non-exclusive ChoiceParam value should be iterable (param: "
+                             f"{self.name}, value: {value}, type: {type(value)}).")
 
         return [self.conformValue(v) for v in value]
 
@@ -550,8 +551,8 @@ class StringParam(Param):
         if value is None:
             return value
         if not isinstance(value, str):
-            raise ValueError("StringParam value should be a string (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"StringParam value should be a string (param: "
+                             f"{self.name}, value: {value}, type: {type(value)})")
         return value
 
     def checkValueTypes(self):
@@ -574,7 +575,8 @@ class ColorParam(Param):
         if value is None:
             return value
         if not isinstance(value, str) or len(value.split(" ")) > 1:
-            raise ValueError('ColorParam value should be a string containing either an SVG name or an hexadecimal '
-                             'color code (param: {}, value: {}, type: {})'.format(self.name, value, type(value)))
+            raise ValueError(f"ColorParam value should be a string containing either an SVG name "
+                             f"or an hexadecimal color code (param: {self.name}, value: {value}, "
+                             f"type: {type(value)})")
         return value
 

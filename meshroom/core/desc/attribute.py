@@ -49,7 +49,7 @@ class Attribute(BaseObject):
         """
         raise NotImplementedError("Attribute.validateValue is an abstract function that should be "
                                   "implemented in the derived class.")
-    
+
     def validateKeyValues(self, keyValues):
         """ Return validated/conformed 'keyValues'.
 
@@ -579,4 +579,3 @@ class ColorParam(Param):
                              f"or an hexadecimal color code (param: {self.name}, value: {value}, "
                              f"type: {type(value)})")
         return value
-

@@ -618,8 +618,8 @@ class ChoiceParam(Attribute):
         if isinstance(value, str):
             value = value.split(',')
         if not isinstance(value, Iterable):
-            raise ValueError("Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"Non exclusive ChoiceParam value should be iterable (param: {self.name}, "
+                             f"value: {value}, type: {type(value)})")
         return [self._conformValue(v) for v in value]
 
     def _conformValue(self, val):

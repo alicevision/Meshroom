@@ -1018,22 +1018,17 @@ class BaseNode(BaseObject):
                     except AttributeError:
                         # If we load an old scene, the lambda associated to the 'value' could try to
                         # access other params that could not exist yet
-                        logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.
-                                        format(nodeName=self.name, attrName=attr.name))
+                        logging.warning(f'Invalid lambda evaluation for "{self.name}.{attr.name}"')
                     if defaultValue is not None:
                         try:
                             attr.value = defaultValue.format(**self._expVars)
                             attr._invalidationValue = defaultValue.format(**expVarsNoCache)
-                        except KeyError as e:
-                            logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with '
-                                            'value "{defaultValue}".\nError: {err}'.
-                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
-                                            err=str(e)))
-                        except ValueError as e:
-                            logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value '
-                                            '"{defaultValue}".\nError: {err}'.
-                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
-                                            err=str(e)))
+                        except KeyError as err:
+                            logging.warning(f'Invalid expression with missing key on "{self.name}.{attr.name}" with '
+                                            f'value "{defaultValue}".\nError: {str(err)}')
+                        except ValueError as err:
+                            logging.warning(f'Invalid expression value on "{self.name}.{attr.name}" with value '
+                                            f'"{defaultValue}".\nError: {str(err)}')
 
             # xxValue is exposed without quotes to allow to compose expressions
             self._expVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
@@ -2140,9 +2135,8 @@ class CompatibilityNode(BaseNode):
         if self.issue == CompatibilityIssue.UnknownNodeType:
             return f"Unknown node type: '{self.nodeType}'."
         elif self.issue == CompatibilityIssue.VersionConflict:
-            return "Node version '{}' conflicts with current version '{}'.".format(
-                self.nodeDict["version"], nodeVersion(self.nodeDesc)
-            )
+            version = self.nodeDict["version"]
+            return f"Node version '{version}' conflicts with current version '{nodeVersion(self.nodeDesc)}'."
         elif self.issue == CompatibilityIssue.DescriptionConflict:
             return "Node attributes do not match node description."
         elif self.issue == CompatibilityIssue.UidConflict:
@@ -2218,8 +2212,7 @@ class CompatibilityNode(BaseNode):
             upgradedAttrValues = attrValues
 
         if not isinstance(upgradedAttrValues, dict):
-            logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".
-                          format(self.name))
+            logging.error(f"Error in the upgrade implementation of the node: {self.name}. The return type is incorrect.")
             upgradedAttrValues = attrValues
 
         node.upgradeAttributeValues(upgradedAttrValues)

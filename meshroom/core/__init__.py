@@ -114,8 +114,8 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                     if classType == desc.BaseNode:
                         nodePlugin = NodePlugin(p)
                         if nodePlugin.errors:
-                            errors.append("  * {}: The following parameters do not have valid " \
-                                          "default values/ranges: {}".format(pluginName, ", ".join(nodePlugin.errors)))
+                            errors.append(f"  * {pluginName}: The following parameters do not have valid "
+                                          f"default values/ranges: {', '.join(nodePlugin.errors)}")
                         classes.append(nodePlugin)
                     else:
                         classes.append(p)

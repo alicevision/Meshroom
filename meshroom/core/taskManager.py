@@ -57,12 +57,9 @@ class TaskThread(Thread):
                     continue
 
                 if multiChunks:
-                    logging.info('[{node}/{nbNodes}]({chunk}/{nbChunks}) {nodeName}'.format(
-                        node=nId+1, nbNodes=len(self._manager._nodesToProcess),
-                        chunk=cId+1, nbChunks=len(node.chunks), nodeName=node.nodeType))
+                    logging.info(f'[{nId+1}/{len(self._manager._nodesToProcess)}]({cId+1}/{len(node.chunks)}) {node.nodeType}')
                 else:
-                    logging.info('[{node}/{nbNodes}] {nodeName}'.format(
-                        node=nId+1, nbNodes=len(self._manager._nodesToProcess), nodeName=node.nodeType))
+                    logging.info(f'[{nId+1}/{len(self._manager._nodesToProcess)}] {node.nodeType}')
                 try:
                     chunk.process(self.forceCompute)
                 except Exception as e:
@@ -212,8 +209,8 @@ class TaskManager(BaseObject):
                 chunksName = [node.name for node in chunksInConflict]
                 # Warning: Syntax and terms are parsed on QML side to recognize the error
                 # Syntax : [Context] ErrorType: ErrorMessage
-                msg = '[COMPUTATION] Already Submitted:\nWARNING - Some nodes are already submitted with status: ' \
-                      '{}\nNodes: {}'.format(', '.join(chunksStatus), ', '.join(chunksName))
+                msg = f'[COMPUTATION] Already Submitted:\nWARNING - Some nodes are already submitted with status: ' \
+                      f'{", ".join(chunksStatus)}\nNodes: {", ".join(chunksName)}'
 
                 if forceStatus:
                     logging.warning(msg)
@@ -310,9 +307,9 @@ class TaskManager(BaseObject):
         if compatNodes:
             # Warning: Syntax and terms are parsed on QML side to recognize the error
             # Syntax : [Context] ErrorType: ErrorMessage
-            raise RuntimeError("[{}] Compatibility Issue:\n"
-                               "Cannot compute because of these incompatible nodes:\n"
-                               "{}".format(context, sorted(compatNodes)))
+            raise RuntimeError(f"[{context}] Compatibility Issue:\n"
+                               f"Cannot compute because of these incompatible nodes:\n"
+                               f"{sorted(compatNodes)}")
 
     def checkDuplicates(self, nodesToProcess, context):
         for node in nodesToProcess:
@@ -320,12 +317,11 @@ class TaskManager(BaseObject):
                 if duplicate in nodesToProcess:
                     # Warning: Syntax and terms are parsed on QML side to recognize the error
                     # Syntax : [Context] ErrorType: ErrorMessage
-                    raise RuntimeError("[{}] Duplicates Issue:\n"
-                                       "Cannot compute because there are some duplicate nodes to process:\n\n"
-                                       "First match: '{}' and '{}'\n\n"
-                                       "There can be other duplicate nodes in the list. "
-                                       "Please, check the graph and try again.".
-                                       format(context, node.nameToLabel(node.name), node.nameToLabel(duplicate.name)))
+                    raise RuntimeError(f"[{context}] Duplicates Issue:\n"
+                                       f"Cannot compute because there are some duplicate nodes to process:\n\n"
+                                       f"First match: '{node.nameToLabel(node.name)}' and '{node.nameToLabel(duplicate.name)}'\n\n"
+                                       f"There can be other duplicate nodes in the list. "
+                                       f"Please, check the graph and try again.")
 
     def checkNodesDependencies(self, graph, toNodes, context):
         """
@@ -364,16 +360,16 @@ class TaskManager(BaseObject):
     def raiseDependenciesMessage(self, context):
         # Warning: Syntax and terms are parsed on QML side to recognize the error
         # Syntax : [Context] ErrorType: ErrorMessage
-        raise RuntimeWarning("[{}] Unresolved dependencies:\n"
-                             "Some nodes cannot be computed in LOCAL/submitted in EXTERN because of "
-                             "unresolved dependencies.\n\n"
-                             "Nodes which are ready will be processed.".format(context))
+        raise RuntimeWarning(f"[{context}] Unresolved dependencies:\n"
+                             f"Some nodes cannot be computed in LOCAL/submitted in EXTERN because of "
+                             f"unresolved dependencies.\n\n"
+                             f"Nodes which are ready will be processed.")
 
     def raiseImpossibleProcess(self, context):
         # Warning: Syntax and terms are parsed on QML side to recognize the error
         # Syntax : [Context] ErrorType: ErrorMessage
-        raise RuntimeError("[{}] Impossible Process:\n"
-                           "There is no node able to be processed.".format(context))
+        raise RuntimeError(f"[{context}] Impossible Process:\n"
+                           f"There is no node able to be processed.")
 
     def submit(self, graph, submitter=None, toNodes=None, submitLabel="{projectName}"):
         """
@@ -395,11 +391,9 @@ class TaskManager(BaseObject):
         if sub is None:
             # Warning: Syntax and terms are parsed on QML side to recognize the error
             # Syntax : [Context] ErrorType: ErrorMessage
-            raise RuntimeError("[SUBMITTING] Unknown Submitter:\n"
-                               "Unknown Submitter called '{submitter}'. Available submitters are: '{allSubmitters}'.".format(
-                                submitter=submitter,
-                                allSubmitters=str(meshroom.core.submitters.keys())
-                                ))
+            raise RuntimeError(f"[SUBMITTING] Unknown Submitter:\n"
+                               f"Unknown Submitter called '{submitter}'. "
+                               f"Available submitters are: '{str(meshroom.core.submitters.keys())}'.")
 
         # Update task manager's lists
         self.updateNodes()

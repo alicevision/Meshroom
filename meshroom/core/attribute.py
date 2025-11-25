@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
 
+
 def attributeFactory(description: str, value, isOutput: bool, node, root=None, parent=None):
     """
     Create an Attribute based on description type.
@@ -75,9 +76,9 @@ class Attribute(BaseObject):
         self._isOutput: bool = isOutput
         self._enabled: bool = True
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
-        self._invalidationValue = "" # invalidation value for output attributes
+        self._invalidationValue = ""  # invalidation value for output attributes
         self._value = None
-        self._keyValues = None # list of pairs (key, value) for keyable attribute
+        self._keyValues = None  # list of pairs (key, value) for keyable attribute
         self._initValue()
 
     def _getFullName(self) -> str:
@@ -853,7 +854,6 @@ class ListAttribute(Attribute):
         return super()._hasAnyOutputLinks() or \
                any(attribute.hasAnyOutputLinks for attribute in self._value if hasattr(attribute, 'hasAnyOutputLinks'))
 
-
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, lambda self: len(self.value) == 0, notify=Attribute.valueChanged)
@@ -1154,7 +1154,7 @@ class GeometryAttribute(GroupAttribute):
                 geoObservation = attribute.getObservation(key)
                 if geoObservation is None:
                     return None
-                else :
+                else:
                     observation[attribute.name] = geoObservation
             else:
                 if attribute.keyable:
@@ -1170,12 +1170,11 @@ class GeometryAttribute(GroupAttribute):
     # Emitted when a geometry observation changed.
     observationsChanged = Signal()
     # Whether the geometry attribute childs are keyable.
-    observationKeyable = Property(bool,_hasKeyableChilds, constant=True)
+    observationKeyable = Property(bool, _hasKeyableChilds, constant=True)
     # The list of geometry observation keys.
     observationKeys = Property(Variant, _getObservationKeys, notify=observationsChanged)
     # The number of geometry observation defined.
     nbObservations = Property(int, _getNbObservations, notify=observationsChanged)
-
 
 
 class ShapeAttribute(GroupAttribute):
@@ -1211,16 +1210,16 @@ class ShapeAttribute(GroupAttribute):
         Return the shape attribute as dict with the shape file structure.
         """
         outDict = {
-            "name" : self.userName if self.userName else self.rootName,
-            "type" : self.type,
-            "properties" : { "color": self.userColor }
+            "name": self.userName if self.userName else self.rootName,
+            "type": self.type,
+            "properties": {"color": self.userColor}
         }
         if not self.geometry.observationKeyable:
             # Not keyable geometry, use properties.
             outDict.get("properties").update(self.geometry.getSerializedValue())
         else:
             # Keyable geometry, use observations.
-            outDict.update({ "observations" : self.geometry.getValueAsDict()})
+            outDict.update({"observations": self.geometry.getValueAsDict()})
         return outDict
 
     def _getVisible(self) -> bool:
@@ -1229,7 +1228,7 @@ class ShapeAttribute(GroupAttribute):
         """
         return self._visible
 
-    def _setVisible(self, visible:bool):
+    def _setVisible(self, visible: bool):
         """
         Set the shape attribute visibility for display.
         """
@@ -1280,6 +1279,7 @@ class ShapeAttribute(GroupAttribute):
     # Override hasDisplayableShape property.
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
 
+
 class ShapeListAttribute(ListAttribute):
     """
     ListAttribute subtype tailored for shape-specific handling.
@@ -1309,7 +1309,7 @@ class ShapeListAttribute(ListAttribute):
             return self.inputLink.isVisible
         return self._visible
 
-    def _setVisible(self, visible:bool):
+    def _setVisible(self, visible: bool):
         """
         Set the shape visibility for display.
         """

@@ -1,5 +1,6 @@
 from meshroom.core.desc import GroupAttribute, FloatParam
 
+
 class Geometry(GroupAttribute):
     """
     Base attribute for all Geometry attribute.
@@ -19,6 +20,7 @@ class Geometry(GroupAttribute):
         # Import within the method to prevent cyclic dependencies
         from meshroom.core.attribute import GeometryAttribute
         return GeometryAttribute
+
 
 class Size2d(Geometry):
     """

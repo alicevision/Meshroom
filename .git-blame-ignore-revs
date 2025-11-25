@@ -1,3 +1,19 @@
+# [tests] Linting: Remove trailing whitespaces
+5fe886b6b08fa19082dc0e1bf837fa34c2e2de2d
+# [core] Linting: Remove remaining trailing whitespaces
+a44537b65a7c53c89c16e71ae207f37fa6554832
+# Linting: Fix E203, E225, E231, E261, E302, E303 and W292 warnings
+1b5664c8cc54c55fae58a5be9bf63e9af2f5af95
+# [ui] Linting: Remove all trailing whitespaces
+18d7f609b1a5cd7c43f970770374b649019c1e73
+# [core] Linting: Fix import order
+aae05532b2409e3bd4c119646afc08656a916cb4
+# [core] Linting: Remove all trailing whitespaces
+81394d7def1fcbc08cbc2a8721bc1f0a86fe8cc6
+# [desc] Linting: Remove trailing whitespaces
+0a2ab8cab4f79191b0e7364416701ba561e75b6a
+# [desc] Linting: Fix order of the imported modules
+adf67e33533a75f5b280e0ee3fc0ece82307199e
 # [build] `setup.py`: Use double quotes everywhere
 571de38ef1a9e72e6c1d2a997b60de5bd3caa5bf
 # [bin] `meshroom_batch`: Minor clean-up in the file

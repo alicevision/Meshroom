@@ -61,7 +61,7 @@ class TestKeyableAttribute:
 
         # Check attribute pairs empty
         assert nodeA.keyableBool.isDefault
-        assert nodeA.keyableInt.isDefault 
+        assert nodeA.keyableInt.isDefault
         assert nodeA.keyableFloat.isDefault
 
         # Check attribute description value
@@ -182,7 +182,7 @@ class TestKeyableAttribute:
         assert nodeA.keyableFloat.keyValues.hasKey("2") == True
 
         # Check attributes values at key "0", should be default value
-        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0") == False 
+        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0") == False
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("0") == 1
         assert nodeA.keyableFloat.keyValues.getValueAtKeyOrDefault("0") == 1.1
 

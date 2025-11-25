@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from meshroom.common import BaseObject, Property
 import logging
+from meshroom.common import BaseObject, Property
 
 logger = logging.getLogger("Submitter")
 logger.setLevel(logging.INFO)

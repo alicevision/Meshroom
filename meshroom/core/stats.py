@@ -1,13 +1,13 @@
 from collections import defaultdict
+import os
+import platform
+import time
+import threading
+import xml.etree.ElementTree as ET
+
 import subprocess
 import logging
 import psutil
-import time
-import threading
-import platform
-import os
-
-import xml.etree.ElementTree as ET
 
 
 def bytes2human(n):

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
+import json
+
 from meshroom.core import pipelineTemplates, Version
 from meshroom.core.node import CompatibilityIssue, CompatibilityNode
 from meshroom.core.graphIO import GraphIO
 
 import meshroom
-
-import json
 
 def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
     """ Check whether there is a compatibility issue with the nodes saved in the template provided with "path". """

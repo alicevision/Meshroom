@@ -1,7 +1,8 @@
+import json
+from typing import Any
+
 from meshroom.common import BaseObject, Property, Variant, Signal, DictModel, Slot
 from meshroom.core import desc, hashValue
-from typing import Any
-import json
 
 class KeyValues(BaseObject):
     """

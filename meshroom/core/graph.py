@@ -4,8 +4,8 @@ import os
 import re
 from typing import Any, Optional
 from collections.abc import Iterable
-import weakref
 from collections import defaultdict, OrderedDict
+import weakref
 from contextlib import contextmanager
 from pathlib import Path
 

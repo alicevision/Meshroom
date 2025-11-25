@@ -63,7 +63,7 @@ class UndoStack(QUndoStack):
         # type: (UndoCommand) -> bool
         try:
             res = command.redoImpl()
-        except Exception as e:
+        except Exception:
             logging.error(f"Error while trying command '{command.text()}': \n{traceback.format_exc()}")
             res = False
         if res is not False:

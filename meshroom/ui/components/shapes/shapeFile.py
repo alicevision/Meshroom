@@ -189,10 +189,10 @@ class ShapeFile(BaseObject):
                         self._shapes.append(ShapeFile.ShapeData(name, type, properties, observations, self._shapes))
             except FileNotFoundError:
                 print("No shapes found to load.")
-            except json.JSONDecodeError as e:
-                print(f"Error decoding JSON: {e}")
-            except Exception as e:
-                print(f"Error loading shapes: {e}")
+            except json.JSONDecodeError as err:
+                print(f"Error decoding JSON: {err}")
+            except Exception as exc:
+                print(f"Error loading shapes: {exc}")
         self.fileChanged.emit()
 
     # Signals

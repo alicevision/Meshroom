@@ -106,8 +106,8 @@ class ViewpointWrapper(QObject):
             try:
                 # When the viewpoint attribute has already been deleted, metadata.value becomes a PySide property (whereas a string is expected)
                 self._metadata = json.loads(self._viewpoint.metadata.value) if isinstance(self._viewpoint.metadata.value, str) and self._viewpoint.metadata.value else None
-            except Exception as e:
-                logging.warning(f"Failed to parse Viewpoint metadata: '{e}', '{str(self._viewpoint.metadata.value)}'")
+            except Exception as exc:
+                logging.warning(f"Failed to parse Viewpoint metadata: '{exc}', '{str(self._viewpoint.metadata.value)}'")
                 self._metadata = {}
             if not self._metadata:
                 self._metadata = {}
@@ -142,7 +142,7 @@ class ViewpointWrapper(QObject):
             else:
                 self._undistortedImagePath = ''
                 self._principalPointCorrected = False
-        except Exception as e:
+        except Exception:
             self._undistortedImagePath = ''
             self._principalPointCorrected = False
             logging.warning("Failed to retrieve undistorted images path.")
@@ -832,8 +832,8 @@ class Reconstruction(UIGraph):
         """ Add the given list of images to the Reconstruction. """
         try:
             self.buildIntrinsics(cameraInit, images)
-        except Exception as e:
-            self.importImagesFailed.emit(str(e))
+        except Exception as exc:
+            self.importImagesFailed.emit(str(exc))
 
     @Slot()
     def onImportImagesFailed(self, msg):
@@ -878,8 +878,8 @@ class Reconstruction(UIGraph):
             self.setBuildingIntrinsics(True)
             # Retrieve the list of updated viewpoints and intrinsics
             views, intrinsics = cameraInitCopy.nodeDesc.buildIntrinsics(cameraInitCopy, additionalViews)
-        except Exception as e:
-            logging.error(f"Error while building intrinsics: {e}")
+        except Exception as exc:
+            logging.error(f"Error while building intrinsics: {exc}")
             raise
         finally:
             # Delete the duplicate

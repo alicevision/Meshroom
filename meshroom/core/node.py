@@ -397,8 +397,8 @@ class NodeChunk(BaseObject):
                 # logging.debug(f"updateStatusFromCache({self.node.name}): From status {self.status.status} to {statusData['status']}")
                 self._status.fromDict(statusData)
                 self.statusFileLastModTime = os.path.getmtime(statusFile)
-            except Exception as e:
-                logging.debug(f"updateStatusFromCache({self.node.name}): Error while loading status file {statusFile}: {e}")
+            except Exception as exc:
+                logging.debug(f"updateStatusFromCache({self.node.name}): Error while loading status file {statusFile}: {exc}")
                 self.statusFileLastModTime = -1
                 self._status.reset()
                 self._status.setNodeType(self.node)
@@ -704,11 +704,11 @@ class BaseNode(BaseObject):
         try:
             # Throws exception if not in prototype chain
             return object.__getattribute__(self, k)
-        except AttributeError as e:
+        except AttributeError as err:
             try:
                 return self.attribute(k)
             except KeyError:
-                raise e
+                raise err
 
     def getMrNodeType(self):
         # In compatibility mode, we may or may not have access to the nodeDesc and its information
@@ -1121,13 +1121,13 @@ class BaseNode(BaseObject):
         if self.internalFolder and os.path.exists(self.internalFolder):
             try:
                 shutil.rmtree(self.internalFolder)
-            except Exception as e:
+            except Exception as exc:
                 # We could get some "Device or resource busy" on .nfs file while removing the folder
                 # on Linux network.
                 # On Windows, some output files may be open for visualization and the removal will
                 # fail.
                 # In both cases, we can ignore it.
-                logging.warning(f"Failed to remove internal folder: '{self.internalFolder}'. Error: {e}.")
+                logging.warning(f"Failed to remove internal folder: '{self.internalFolder}'. Error: {exc}.")
             self.updateStatusFromCache()
 
     @Slot(result=str)
@@ -2207,8 +2207,8 @@ class CompatibilityNode(BaseNode):
         # Use upgrade method of the node description itself if available
         try:
             upgradedAttrValues = node.nodeDesc.upgradeAttributeValues(attrValues, self.version)
-        except Exception as e:
-            logging.error(f"Error in the upgrade implementation of the node: {self.name}.\n{repr(e)}")
+        except Exception as exc:
+            logging.error(f"Error in the upgrade implementation of the node: {self.name}.\n{repr(exc)}")
             upgradedAttrValues = attrValues
 
         if not isinstance(upgradedAttrValues, dict):

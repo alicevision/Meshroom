@@ -254,9 +254,9 @@ class Attribute(BaseObject):
         if callable(self._desc.value):
             try:
                 return self._desc.value(self)
-            except Exception as e:
+            except Exception as exc:
                 if not self.node.isCompatibilityNode:
-                    logging.warning(f"Failed to evaluate 'defaultValue' (node lambda) for attribute '{self.fullName}': {e}")
+                    logging.warning(f"Failed to evaluate 'defaultValue' (node lambda) for attribute '{self.fullName}': {exc}")
                 return None
         # keyable attribute default value
         if self.keyable:
@@ -332,9 +332,9 @@ class Attribute(BaseObject):
         if callable(self._desc.validValue):
             try:
                 return self._desc.validValue(self.node)
-            except Exception as e:
+            except Exception as exc:
                 if not self.node.isCompatibilityNode:
-                    logging.warning(f"Failed to evaluate 'isValid' (node lambda) for attribute '{self.fullName}': {e}")
+                    logging.warning(f"Failed to evaluate 'isValid' (node lambda) for attribute '{self.fullName}': {exc}")
                 return True
         return True
 
@@ -399,9 +399,9 @@ class Attribute(BaseObject):
         if callable(self._desc.enabled):
             try:
                 return self._desc.enabled(self.node)
-            except Exception as e:
+            except Exception as exc:
                 if not self.node.isCompatibilityNode:
-                    logging.warning(f"Failed to evaluate 'enabled' (node lambda) for attribute '{self.fullName}': {e}")
+                    logging.warning(f"Failed to evaluate 'enabled' (node lambda) for attribute '{self.fullName}': {exc}")
                 return True
         return self._desc.enabled
 

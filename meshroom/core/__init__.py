@@ -78,10 +78,10 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                 else package.__name__
             packageVersion = getattr(package, "__version__", None)
             packagePath = os.path.dirname(package.__file__)
-        except Exception as e:
-            tb = traceback.extract_tb(e.__traceback__)
+        except Exception as exc:
+            tb = traceback.extract_tb(exc.__traceback__)
             last_call = tb[-1]
-            logging.warning(f'  * Failed to load package "{packageName}" from folder "{resolvedFolder}" ({type(e).__name__}): {str(e)}\n'
+            logging.warning(f'  * Failed to load package "{packageName}" from folder "{resolvedFolder}" ({type(exc).__name__}): {str(exc)}\n'
                             # filename:lineNumber functionName
                             f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
                             # line of code with the error
@@ -119,13 +119,13 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                         classes.append(nodePlugin)
                     else:
                         classes.append(p)
-            except Exception as e:
+            except Exception as exc:
                 if classType == BaseSubmitter:
                     logging.warning(f" Could not load submitter {pluginName} from package '{package.__name__}'")
                 else:
-                    tb = traceback.extract_tb(e.__traceback__)
+                    tb = traceback.extract_tb(exc.__traceback__)
                     last_call = tb[-1]
-                    errors.append(f'  * {pluginName} ({type(e).__name__}): {e}\n'
+                    errors.append(f'  * {pluginName} ({type(exc).__name__}): {exc}\n'
                                 # filename:lineNumber functionName
                                 f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
                                 # line of code with the error

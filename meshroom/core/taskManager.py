@@ -62,12 +62,12 @@ class TaskThread(Thread):
                     logging.info(f'[{nId+1}/{len(self._manager._nodesToProcess)}] {node.nodeType}')
                 try:
                     chunk.process(self.forceCompute)
-                except Exception as e:
+                except Exception as exc:
                     if chunk.isStopped():
                         stopAndRestart = True
                         break
                     else:
-                        logging.error(f"Error on node computation: {e}.")
+                        logging.error(f"Error on node computation: {exc}.")
                         nodesToRemove, _ = self._manager._graph.dfsOnDiscover(startNodes=[node], reverse=True)
                         # remove following nodes from the task queue
                         for n in nodesToRemove[1:]:  # exclude current node
@@ -435,8 +435,8 @@ class TaskManager(BaseObject):
             # At the end because it raises a WarningError but should not stop processing
             if not allReady:
                 self.raiseDependenciesMessage("SUBMITTING")
-        except Exception as e:
-            logging.error(f"Error on submit : {e}")
+        except Exception as exc:
+            logging.error(f"Error on submit: {exc}")
 
     def submitFromFile(self, graphFile, submitter, toNode=None, submitLabel="{projectName}"):
         """

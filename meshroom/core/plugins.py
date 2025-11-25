@@ -679,8 +679,8 @@ class NodePluginManager(BaseObject):
             try:
                 self._nodePlugins[name] = nodePlugin
                 nodePlugin.status = NodePluginStatus.LOADED
-            except Exception as e:
-                logging.error(f"NodePlugin {name} could not be loaded: {e}")
+            except Exception as exc:
+                logging.error(f"NodePlugin {name} could not be loaded: {exc}")
                 nodePlugin.status = NodePluginStatus.LOADING_ERROR
 
     def unregisterNode(self, nodePlugin: NodePlugin):

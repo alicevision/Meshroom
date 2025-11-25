@@ -771,8 +771,8 @@ class Graph(BaseObject):
                     logging.warning(f"Failed to restore edge {srcName}{' (missing)' if srcAttr is None else ''} -> {dstName}{' (missing)' if dstAttr is None else ''}")
                     continue
                 self.addEdge(srcAttr, dstAttr)
-            except (KeyError, ValueError) as e:
-                logging.warning(f"Failed to restore edge {srcName} -> {dstName}: {e}")
+            except (KeyError, ValueError) as err:
+                logging.warning(f"Failed to restore edge {srcName} -> {dstName}: {err}")
 
     def upgradeAllNodes(self):
         """ Upgrade all upgradable CompatibilityNode instances in the graph. """
@@ -1699,8 +1699,8 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                     print(f'\n[{n + 1}/{len(nodes)}] {node.nodeType}')
                 chunk.process(forceCompute)
             node.postprocess()
-        except Exception as e:
-            logging.error(f"Error on node computation: {e}")
+        except Exception as exc:
+            logging.error(f"Error on node computation: {exc}")
             graph.clearSubmittedNodes()
             raise
 
@@ -1735,8 +1735,8 @@ def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
         if res:
             for node in nodesToProcess:
                 node.initStatusOnSubmit()  # update node status
-    except Exception as e:
-        logging.error(f"Error on submit : {e}")
+    except Exception as exc:
+        logging.error(f"Error on submit: {exc}")
 
 
 def submit(graphFile, submitter, toNode=None, submitLabel="{projectName}"):

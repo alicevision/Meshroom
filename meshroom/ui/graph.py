@@ -592,20 +592,20 @@ class UIGraph(QObject):
             for n in node.getOutputNodes(recursive=True, dependenciesOnly=True):
                 n.clearSubmittedChunks()
                 self._taskManager.removeNode(n, displayList=True, processList=True)
-    
+
     def isChunkComputingLocally(self, chunk):
         # update graph computing status
         computingLocally = chunk._status.execMode == ExecMode.LOCAL and \
                            (sessionUid in (chunk.node._nodeStatus.submitterSessionUid, chunk._status.computeSessionUid)) and \
                            (chunk._status.status in (Status.RUNNING, Status.SUBMITTED))
         return computingLocally
-    
+
     def isChunkComputingExternally(self, chunk):
         # Note: We do not check computeSessionUid for the submitted status,
         #       as the source instance of the submit has no importance.
         return (chunk._status.execMode == ExecMode.EXTERN) and \
                 chunk._status.status in (Status.RUNNING, Status.SUBMITTED)
-    
+
     @Slot(NodeChunk)
     def stopTask(self, chunk: NodeChunk):
         """ Stop the selected task """
@@ -675,7 +675,7 @@ class UIGraph(QObject):
             else:
                 self.parent().showMessage(f"Relaunched chunk {chunkIteration} of {node.label}")
         else:
-            # For this we would need to use a pool (with either chunks or nodes) 
+            # For this we would need to use a pool (with either chunks or nodes)
             # instead of the list of nodes that are processed serially
             self.parent().showMessage(f"Chunks cannot be launched individually locally", "warning")
             if self.canComputeNode(node):
@@ -851,9 +851,9 @@ class UIGraph(QObject):
                 continue
             if node._nodeStatus.status in (Status.RUNNING, Status.SUBMITTED):
                 # TODO : save session ID in node
-                if (node._nodeStatus.execMode == ExecMode.LOCAL):
+                if node._nodeStatus.execMode == ExecMode.LOCAL:
                     computingLocally = True
-                elif (node._nodeStatus.execMode == ExecMode.EXTERN):
+                elif node._nodeStatus.execMode == ExecMode.EXTERN:
                     submitted = True
 
         if self._computingLocally != computingLocally or self._submitted != submitted:

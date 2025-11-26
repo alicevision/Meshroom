@@ -39,7 +39,6 @@ class TaskThread(QThread):
         return self._state == State.RUNNING
 
     def waitForChunkCreation(self, node):
-        
         if hasattr(node, "_chunksCreated") and node._chunksCreated:
             return True
 
@@ -104,7 +103,7 @@ class TaskThread(QThread):
 
                 if self._manager.isChunkCancelled(chunk):
                     continue
-                
+
                 _nodeName, _node, _nbNodes = node.nodeType, nId+1, len(self._manager._nodesToProcess)
 
                 if multiChunks:
@@ -140,7 +139,7 @@ class TaskThread(QThread):
         else:
             self._manager._nodesToProcess = []
             self._state = State.DEAD
-    
+
     # Signals and properties
     createChunksSignal = Signal(BaseObject)
 
@@ -177,7 +176,7 @@ class TaskManager(BaseObject):
             self.chunksCreated.emit(node)
         except Exception as e:
             logging.error(f"Failed to create chunks for {node.name}: {e}")
-            self.chunksCreated.emit(node)  # Still emit to unblock waiting thread 
+            self.chunksCreated.emit(node)  # Still emit to unblock waiting thread
 
     def isChunkCancelled(self, chunk):
         for i, ch in enumerate(self._cancelledChunks):
@@ -186,7 +185,7 @@ class TaskManager(BaseObject):
                 return True
         return False
 
-    def requestBlockRestart(self):  
+    def requestBlockRestart(self):
         """
         Block computing.
         Note: should only be used to completely stop computing.
@@ -208,7 +207,7 @@ class TaskManager(BaseObject):
         self._nodesToProcess = []
         self._cancelledChunks = []
         self._thread._state = State.DEAD
-    
+
     @Slot()
     def pauseProcess(self):
         if self._thread.isRunning():
@@ -269,7 +268,7 @@ class TaskManager(BaseObject):
         :param forceCompute: force the computation despite nodes status.
         :param forceStatus: force the computation even if some nodes are submitted externally.
         """
-        
+
         self._graph = graph
 
         self.updateNodes()
@@ -493,7 +492,7 @@ class TaskManager(BaseObject):
             raise RuntimeError(f"[SUBMITTING] Unknown Submitter:\n"
                                f"Unknown Submitter called '{submitter}'. "
                                f"Available submitters are: '{str(meshroom.core.submitters.keys())}'.")
-        
+
         # TODO : If possible with the submitter (ATTACH_JOB)
 
         # Update task manager's lists
@@ -525,7 +524,7 @@ class TaskManager(BaseObject):
             jobManager.resetNodeJob(node)
 
         graph.updateMonitoredFiles()
-            
+
         flowEdges = graph.flowEdges(startNodes=toNodes)
         edgesToProcess = set(edgesToProcess).intersection(flowEdges)
 

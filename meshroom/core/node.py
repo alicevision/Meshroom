@@ -65,16 +65,15 @@ class ExecMode(Enum):
 NodeChunkSetup = namedtuple("NodeChunks", ["blockSize", "fullSize", "nbBlocks"])
 
 class NodeStatusData(BaseObject):
-    __slots__ = ("nodeName", "status", "execMode", "nodeType", "packageName", "packageVersion",
+    __slots__ = ("nodeName", "status", "execMode", "nodeType", "packageName",
                  "mrNodeType", "submitterSessionUid", "chunks", "jobInfo")
 
-    def __init__(self, nodeName='', nodeType='', packageName='', packageVersion='',
+    def __init__(self, nodeName='', nodeType='', packageName='',
                  mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
         super().__init__(parent)
         self.nodeName: str = nodeName
         self.nodeType: str = nodeType
         self.packageName: str = packageName
-        self.packageVersion: str = packageVersion
         self.mrNodeType: str = mrNodeType
 
         # Session UID where the node was submitted
@@ -101,7 +100,6 @@ class NodeStatusData(BaseObject):
         """
         self.nodeType = node.nodeType
         self.packageName = node.packageName
-        self.packageVersion = node.packageVersion
         self.mrNodeType = node.getMrNodeType()
 
     def setNode(self, node):
@@ -837,7 +835,7 @@ class BaseNode(BaseObject):
         self._hasDuplicates: bool = False
 
         self._nodeStatus: NodeStatusData = NodeStatusData(self._name, nodeType, self.packageName,
-                                                          self.packageVersion, self.getMrNodeType())
+                                                          self.getMrNodeType())
         self.nodeStatusFileLastModTime = -1
 
         self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)

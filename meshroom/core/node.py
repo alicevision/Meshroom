@@ -65,7 +65,7 @@ class ExecMode(Enum):
 NodeChunkSetup = namedtuple("NodeChunks", ["blockSize", "fullSize", "nbBlocks"])
 
 class NodeStatusData(BaseObject):
-    __slots__ = ("nodeName", "status", "execMode", "nodeType", "packageName",
+    __slots__ = ("nodeName", "nodeType", "status", "execMode", "packageName",
                  "mrNodeType", "submitterSessionUid", "chunks", "jobInfo")
 
     def __init__(self, nodeName='', nodeType='', packageName='',
@@ -212,17 +212,14 @@ class ChunkStatusData(BaseObject):
     dateTimeFormatting = '%Y-%m-%d %H:%M:%S.%f'
 
     __slots__ = (
-        "nodeName", "nodeType", "packageName", "mrNodeType", "computeSessionUid", "execMode",
-        "status", "commandLine", "startDateTime", "endDateTime", "elapsedTime", "hostname"
+        "nodeName", "mrNodeType", "computeSessionUid", "execMode", "status",
+        "commandLine", "startDateTime", "endDateTime", "elapsedTime", "hostname"
     )
 
-    def __init__(self, nodeName='', nodeType='', packageName='',
-                 mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
+    def __init__(self, nodeName='', mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
         super().__init__(parent)
 
         self.nodeName: str = nodeName
-        self.nodeType: str = nodeType
-        self.packageName: str = packageName
         self.mrNodeType = mrNodeType
 
         self.computeSessionUid: Optional[str] = None    # Session where computation is done
@@ -243,15 +240,6 @@ class ChunkStatusData(BaseObject):
     def setNode(self, node):
         """ Set the node information from one node instance. """
         self.nodeName = node.name
-        self.setNodeType(node)
-
-    def setNodeType(self, node):
-        """
-        Set the node type and package information from the given node.
-        We do not set the name in this method as it may vary if there are duplicates.
-        """
-        self.nodeType = node.nodeType
-        self.packageName = node.packageName
         self.mrNodeType = node.getMrNodeType()
 
     def merge(self, other):
@@ -261,8 +249,6 @@ class ChunkStatusData(BaseObject):
 
     def reset(self):
         self.nodeName: str = ""
-        self.nodeType: str = ""
-        self.packageName: str = ""
         self.mrNodeType: MrNodeType = MrNodeType.NONE
         self.execMode: ExecMode = ExecMode.NONE
         self.resetDynamicValues()
@@ -468,8 +454,7 @@ class NodeChunk(BaseObject):
         self.node = node
         self.range = range
         self._logManager = None
-        self._status: ChunkStatusData = ChunkStatusData(node.name, node.nodeType, node.packageName,
-                                                        node.getMrNodeType())
+        self._status: ChunkStatusData = ChunkStatusData(nodeName=node.name, mrNodeType=node.getMrNodeType())
         self.statistics: stats.Statistics = stats.Statistics()
         self.statusFileLastModTime = -1
         self.subprocess = None
@@ -531,7 +516,7 @@ class NodeChunk(BaseObject):
         if not os.path.exists(statusFile):
             self.statusFileLastModTime = -1
             self._status.reset()
-            self._status.setNodeType(self.node)
+            self._status.setNode(self.node)
         else:
             try:
                 with open(statusFile) as jsonFile:
@@ -543,7 +528,7 @@ class NodeChunk(BaseObject):
                 logging.debug(f"updateStatusFromCache({self.node.name}): Error while loading status file {statusFile}: {exc}")
                 self.statusFileLastModTime = -1
                 self._status.reset()
-                self._status.setNodeType(self.node)
+                self._status.setNode(self.node)
 
         if oldStatus != self._status.status:
             self.statusChanged.emit()

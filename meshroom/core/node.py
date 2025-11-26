@@ -67,14 +67,13 @@ class StatusData(BaseObject):
     """
     dateTimeFormatting = '%Y-%m-%d %H:%M:%S.%f'
 
-    def __init__(self, nodeName='', nodeType='', packageName='', packageVersion='',
+    def __init__(self, nodeName='', nodeType='', packageName='',
                  mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
         super().__init__(parent)
 
         self.nodeName: str = nodeName
         self.nodeType: str = nodeType
         self.packageName: str = packageName
-        self.packageVersion: str = packageVersion
         self.mrNodeType = mrNodeType
 
         self.sessionUid: Optional[str] = None
@@ -96,7 +95,6 @@ class StatusData(BaseObject):
         """
         self.nodeType = node.nodeType
         self.packageName = node.packageName
-        self.packageVersion = node.packageVersion
         self.mrNodeType = node.getMrNodeType()
 
     def merge(self, other):
@@ -108,16 +106,13 @@ class StatusData(BaseObject):
         self.nodeName: str = ""
         self.nodeType: str = ""
         self.packageName: str = ""
-        self.packageVersion: str = ""
         self.mrNodeType: MrNodeType = MrNodeType.NONE
         self.execMode: ExecMode = ExecMode.NONE
         self.resetDynamicValues()
 
     def resetDynamicValues(self):
         self.status: Status = Status.NONE
-        self.graph = ""
         self.commandLine: str = ""
-        self.env: str = ""
         self._startTime: Optional[datetime.datetime] = None
         self.startDateTime: str = ""
         self.endDateTime: str = ""
@@ -205,10 +200,7 @@ class StatusData(BaseObject):
         self.nodeName = d.get("nodeName", "")
         self.nodeType = d.get("nodeType", "")
         self.packageName = d.get("packageName", "")
-        self.packageVersion = d.get("packageVersion", "")
-        self.graph = d.get("graph", "")
         self.commandLine = d.get("commandLine", "")
-        self.env = d.get("env", "")
         self.startDateTime = d.get("startDateTime", "")
         self.endDateTime = d.get("endDateTime", "")
         self.elapsedTime = d.get("elapsedTime", 0)
@@ -342,7 +334,7 @@ class NodeChunk(BaseObject):
         self.range = range
         self._logManager = None
         self._status: StatusData = StatusData(node.name, node.nodeType, node.packageName,
-                                              node.packageVersion, node.getMrNodeType())
+                                              node.getMrNodeType())
         self.statistics: stats.Statistics = stats.Statistics()
         self.statusFileLastModTime = -1
         self.subprocess = None
@@ -670,7 +662,6 @@ class BaseNode(BaseObject):
             self.nodePlugin = meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType)
 
         self.packageName: str = ""
-        self.packageVersion: str = ""
         self._internalFolder: str = ""
         self._sourceCodeFolder: str = self.nodeDesc.sourceCodeFolder if self.nodeDesc else ""
         self._internalFolderExp = "{cache}/{nodeType}/{uid}"
@@ -813,10 +804,6 @@ class BaseNode(BaseObject):
             for key, value in additionalNodeInfo:
                 info[key] = value
         return [{"key": k, "value": v} for k, v in info.items()]
-
-    @property
-    def packageFullName(self):
-        return '-'.join([self.packageName, self.packageVersion])
 
     @Slot(str, result=Attribute)
     def attribute(self, name):
@@ -1824,7 +1811,6 @@ class Node(BaseNode):
             raise UnknownNodeTypeError(nodeType)
 
         self.packageName = self.nodeDesc.packageName
-        self.packageVersion = self.nodeDesc.packageVersion
 
         for attrDesc in self.nodeDesc.inputs:
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),

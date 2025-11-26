@@ -106,8 +106,8 @@ class ViewpointWrapper(QObject):
             try:
                 # When the viewpoint attribute has already been deleted, metadata.value becomes a PySide property (whereas a string is expected)
                 self._metadata = json.loads(self._viewpoint.metadata.value) if isinstance(self._viewpoint.metadata.value, str) and self._viewpoint.metadata.value else None
-            except Exception as e:
-                logging.warning(f"Failed to parse Viewpoint metadata: '{e}', '{str(self._viewpoint.metadata.value)}'")
+            except Exception as exc:
+                logging.warning(f"Failed to parse Viewpoint metadata: '{exc}', '{str(self._viewpoint.metadata.value)}'")
                 self._metadata = {}
             if not self._metadata:
                 self._metadata = {}
@@ -132,7 +132,7 @@ class ViewpointWrapper(QObject):
         try:
             if self._activeNode_ExportAnimatedCamera and self._activeNode_ExportAnimatedCamera.node:
                 self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_ExportAnimatedCamera.node.outputImages.value, self._viewpoint)
-                self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value            
+                self._principalPointCorrected = self._activeNode_ExportAnimatedCamera.node.correctPrincipalPoint.value
             elif self._activeNode_PrepareDenseScene and self._activeNode_PrepareDenseScene.node:
                 self._undistortedImagePath = FilepathHelper.resolve(FilepathHelper, self._activeNode_PrepareDenseScene.node.undistorted.value, self._viewpoint)
                 self._principalPointCorrected = False
@@ -142,7 +142,7 @@ class ViewpointWrapper(QObject):
             else:
                 self._undistortedImagePath = ''
                 self._principalPointCorrected = False
-        except Exception as e:
+        except Exception:
             self._undistortedImagePath = ''
             self._principalPointCorrected = False
             logging.warning("Failed to retrieve undistorted images path.")
@@ -832,8 +832,8 @@ class Reconstruction(UIGraph):
         """ Add the given list of images to the Reconstruction. """
         try:
             self.buildIntrinsics(cameraInit, images)
-        except Exception as e:
-            self.importImagesFailed.emit(str(e))
+        except Exception as exc:
+            self.importImagesFailed.emit(str(exc))
 
     @Slot()
     def onImportImagesFailed(self, msg):
@@ -878,8 +878,8 @@ class Reconstruction(UIGraph):
             self.setBuildingIntrinsics(True)
             # Retrieve the list of updated viewpoints and intrinsics
             views, intrinsics = cameraInitCopy.nodeDesc.buildIntrinsics(cameraInitCopy, additionalViews)
-        except Exception as e:
-            logging.error(f"Error while building intrinsics: {e}")
+        except Exception as exc:
+            logging.error(f"Error while building intrinsics: {exc}")
             raise
         finally:
             # Delete the duplicate
@@ -939,11 +939,11 @@ class Reconstruction(UIGraph):
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
 
     displayedAttr2DChanged = Signal()
-    displayedAttr2D = makeProperty(QObject, "_displayedAttr2D", displayedAttr2DChanged)   
+    displayedAttr2D = makeProperty(QObject, "_displayedAttr2D", displayedAttr2DChanged)
 
-    displayedAttrs3DChanged = Signal()    
+    displayedAttrs3DChanged = Signal()
     displayedAttrs3D = Property(QObject, lambda self: self._displayedAttrs3D, notify=displayedAttrs3DChanged)
-    
+
     pluginsReloaded = Signal(list)
 
     @Slot(QObject)
@@ -1169,7 +1169,7 @@ class Reconstruction(UIGraph):
 
     @Slot(str, result="QVariantList")
     def evaluateMathExpression(self, expr):
-        """ Evaluate a mathematical expression and return the result as a string 
+        """ Evaluate a mathematical expression and return the result as a string
         Returns a list of 2 values :
         - the result value
         - a boolean that indicate if an error occured

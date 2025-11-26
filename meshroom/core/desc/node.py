@@ -2,18 +2,18 @@ import enum
 from inspect import getfile
 from pathlib import Path
 import logging
-import os
-import psutil
 import shlex
 import shutil
 import sys
 
-from .computation import Level, StaticNodeSize
-from .attribute import StringParam, ColorParam, ChoiceParam
+import psutil
 
 import meshroom
 from meshroom.core import cgroup
 from meshroom.core.utils import VERBOSE_LEVEL
+
+from .computation import Level, StaticNodeSize
+from .attribute import StringParam, ColorParam, ChoiceParam
 
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
@@ -150,7 +150,7 @@ class BaseNode(object):
 
     def process(self, node):
         raise NotImplementedError(f'No process implementation on node: "{node.name}"')
-    
+
     def processChunk(self, chunk):
         if self.parallelization is None:
             self.process(chunk.node)

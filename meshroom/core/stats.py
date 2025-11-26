@@ -1,13 +1,13 @@
 from collections import defaultdict
+import os
+import platform
+import time
+import threading
+import xml.etree.ElementTree as ET
+
 import subprocess
 import logging
 import psutil
-import time
-import threading
-import platform
-import os
-
-import xml.etree.ElementTree as ET
 
 
 def bytes2human(n):
@@ -83,8 +83,8 @@ class ComputerStatistics:
             self._addKV('vramUsage', 0)
             self._addKV('ioCounters', psutil.disk_io_counters())
             self.updateGpu()
-        except Exception as e:
-            logging.debug(f'Failed to get statistics: "{e}".')
+        except Exception as exc:
+            logging.debug(f'Failed to get statistics: "{exc}".')
 
     def updateGpu(self):
         if not self.nvidia_smi:
@@ -98,39 +98,39 @@ class ComputerStatistics:
 
             try:
                 self.gpuName = gpuTree.find('product_name').text
-            except Exception as e:
-                logging.debug(f'Failed to get gpuName: "{e}".')
+            except Exception as exc:
+                logging.debug(f'Failed to get gpuName: "{exc}".')
                 pass
             try:
                 gpuMemoryUsed = gpuTree.find('fb_memory_usage').find('used').text.split(" ")[0]
                 self._addKV('gpuMemoryUsed', gpuMemoryUsed)
-            except Exception as e:
-                logging.debug(f'Failed to get gpuMemoryUsed: "{e}".')
+            except Exception as exc:
+                logging.debug(f'Failed to get gpuMemoryUsed: "{exc}".')
                 pass
             try:
                 self.gpuMemoryTotal = gpuTree.find('fb_memory_usage').find('total').text.split(" ")[0]
-            except Exception as e:
-                logging.debug(f'Failed to get gpuMemoryTotal: "{e}".')
+            except Exception as exc:
+                logging.debug(f'Failed to get gpuMemoryTotal: "{exc}".')
                 pass
             try:
                 gpuUsed = gpuTree.find('utilization').find('gpu_util').text.split(" ")[0]
                 self._addKV('gpuUsed', gpuUsed)
-            except Exception as e:
-                logging.debug(f'Failed to get gpuUsed: "{e}".')
+            except Exception as exc:
+                logging.debug(f'Failed to get gpuUsed: "{exc}".')
                 pass
             try:
                 gpuTemperature = gpuTree.find('temperature').find('gpu_temp').text.split(" ")[0]
                 self._addKV('gpuTemperature', gpuTemperature)
-            except Exception as e:
-                logging.debug(f'Failed to get gpuTemperature: "{e}".')
+            except Exception as exc:
+                logging.debug(f'Failed to get gpuTemperature: "{exc}".')
                 pass
-        except subprocess.TimeoutExpired as e:
-            logging.debug(f'Timeout when retrieving information from nvidia_smi: "{e}".')
+        except subprocess.TimeoutExpired as exp:
+            logging.debug(f'Timeout when retrieving information from nvidia_smi: "{exp}".')
             p.kill()
             outs, errs = p.communicate()
             return
-        except Exception as e:
-            logging.debug(f'Failed to get information from nvidia_smi: "{e}".')
+        except Exception as exc:
+            logging.debug(f'Failed to get information from nvidia_smi: "{exc}".')
             return
 
     def toDict(self):
@@ -269,16 +269,16 @@ class Statistics:
         self.times = []
         try:
             self.computer.fromDict(d.get('computer', {}))
-        except Exception as e:
-            logging.debug(f'Failed while loading statistics: computer: "{e}".')
+        except Exception as exc:
+            logging.debug(f'Failed while loading statistics: computer: "{exc}".')
         try:
             self.process.fromDict(d.get('process', {}))
-        except Exception as e:
-            logging.debug(f'Failed while loading statistics: process: "{e}".')
+        except Exception as exc:
+            logging.debug(f'Failed while loading statistics: process: "{exc}".')
         try:
             self.times = d.get('times', [])
-        except Exception as e:
-            logging.debug(f'Failed while loading statistics: times: "{e}".')
+        except Exception as exc:
+            logging.debug(f'Failed while loading statistics: times: "{exc}".')
 
 
 bytesPerGiga = 1024. * 1024. * 1024.

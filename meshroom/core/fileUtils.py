@@ -10,7 +10,7 @@ def getFileElements(inputFilePath: str):
     filename = os.path.basename(inputFilePath)
     match = compiled_pattern.fullmatch(filename)
     frameId_str = match.group("FRAMEID_STR")
-    
+
     fileElements = {}
     if match:
         fileElements = {
@@ -63,4 +63,3 @@ def resolvePath(input, outputTemplate: str) -> str:
     resolved = replacePatterns(outputTemplate, compiled_element, replacements)
 
     return resolved
-

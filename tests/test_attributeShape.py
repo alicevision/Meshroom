@@ -158,10 +158,10 @@ class TestShapeAttribute:
         graph = Graph("")
         node = graph.addNewNode(NodeWithShapeAttributes.__name__)
 
-        observationPoint = {"x" : 1, "y" : 1}
-        observationLine = {"a" : {"x" : 1, "y" : 1}, "b" : {"x" : 2, "y" : 2}}
-        observationRectangle = {"center" : {"x" : 10, "y" : 10}, "size" : {"width" : 20, "height" : 20}}
-        observationCircle = {"center" : {"x" : 10, "y" : 10}, "radius" : 20}
+        observationPoint = {"x": 1, "y": 1}
+        observationLine = {"a": {"x": 1, "y": 1}, "b": {"x": 2, "y": 2}}
+        observationRectangle = {"center": {"x": 10, "y": 10}, "size": {"width": 20, "height": 20}}
+        observationCircle = {"center": {"x": 10, "y": 10}, "radius": 20}
 
         # Check static shape has observation, should be true (default)
         assert node.point.geometry.hasObservation("0")
@@ -195,15 +195,15 @@ class TestShapeAttribute:
         assert node.circle.geometry.getObservation("0") == observationCircle
 
         # Update static shape observation
-        node.point.geometry.setObservation("0", {"x" : 2})
-        node.line.geometry.setObservation("0", {"a" : {"x" : 2, "y": 2}})
-        node.rectangle.geometry.setObservation("0", {"center" : {"x" : 20, "y" : 20}})
-        node.circle.geometry.setObservation("0", {"radius" : 40})
+        node.point.geometry.setObservation("0", {"x": 2})
+        node.line.geometry.setObservation("0", {"a": {"x": 2, "y": 2}})
+        node.rectangle.geometry.setObservation("0", {"center": {"x": 20, "y": 20}})
+        node.circle.geometry.setObservation("0", {"radius": 40})
 
         # Check static shape get observation, should be updated observation
         assert node.point.geometry.getObservation("0").get("x") == 2
-        assert node.line.geometry.getObservation("0").get("a") == {"x" : 2, "y": 2}
-        assert node.rectangle.geometry.getObservation("0").get("center") == {"x" : 20, "y" : 20}
+        assert node.line.geometry.getObservation("0").get("a") == {"x": 2, "y": 2}
+        assert node.rectangle.geometry.getObservation("0").get("center") == {"x": 20, "y": 20}
         assert node.circle.geometry.getObservation("0").get("radius") == 40
 
         # Reset static shape geometry
@@ -223,10 +223,10 @@ class TestShapeAttribute:
         graph = Graph("")
         node = graph.addNewNode(NodeWithShapeAttributes.__name__)
 
-        observationPoint = {"x" : 1, "y" : 1}
-        observationLine = {"a" : {"x" : 1, "y" : 1}, "b" : {"x" : 2, "y" : 2}}
-        observationRectangle = {"center" : {"x" : 10, "y" : 10}, "size" : {"width" : 20, "height" : 20}}
-        observationCircle = {"center" : {"x" : 10, "y" : 10}, "radius" : 20}
+        observationPoint = {"x": 1, "y": 1}
+        observationLine = {"a": {"x": 1, "y": 1}, "b": {"x": 2, "y": 2}}
+        observationRectangle = {"center": {"x": 10, "y": 10}, "size": {"width": 20, "height": 20}}
+        observationCircle = {"center": {"x": 10, "y": 10}, "radius": 20}
 
         # Check keyable shape has observation at key "0", should be false
         assert not node.keyablePoint.geometry.hasObservation("0")
@@ -281,15 +281,15 @@ class TestShapeAttribute:
         assert node.keyableCircle.geometry.getObservation("0") == observationCircle
 
         # Update keyable shape observation at key "1"
-        node.keyablePoint.geometry.setObservation("1", {"x" : 2})
-        node.keyableLine.geometry.setObservation("1", {"a" : {"x" : 2, "y": 2}})
-        node.keyableRectangle.geometry.setObservation("1", {"center" : {"x" : 20, "y" : 20}})
-        node.keyableCircle.geometry.setObservation("1", {"radius" : 40})
+        node.keyablePoint.geometry.setObservation("1", {"x": 2})
+        node.keyableLine.geometry.setObservation("1", {"a": {"x": 2, "y": 2}})
+        node.keyableRectangle.geometry.setObservation("1", {"center": {"x": 20, "y": 20}})
+        node.keyableCircle.geometry.setObservation("1", {"radius": 40})
 
         # Check keyable shape get observation at key "1", should be updated observation
         assert node.keyablePoint.geometry.getObservation("1").get("x") == 2
-        assert node.keyableLine.geometry.getObservation("1").get("a") == {"x" : 2, "y": 2}
-        assert node.keyableRectangle.geometry.getObservation("1").get("center") == {"x" : 20, "y" : 20}
+        assert node.keyableLine.geometry.getObservation("1").get("a") == {"x": 2, "y": 2}
+        assert node.keyableRectangle.geometry.getObservation("1").get("center") == {"x": 20, "y": 20}
         assert node.keyableCircle.geometry.getObservation("1").get("radius") == 40
 
         # Remove keyable shape observation at key "0"
@@ -326,8 +326,8 @@ class TestShapeAttribute:
         graph = Graph("")
         node = graph.addNewNode(NodeWithShapeAttributes.__name__)
 
-        pointValue = {"userName" : "testPoint", "userColor" : "#fff", "geometry" : {"x" : 1, "y" : 1}}
-        keyablePointValue = {"userName" : "testKeyablePoint", "userColor" : "#fff", "geometry" : {}}
+        pointValue = {"userName": "testPoint", "userColor": "#fff", "geometry": {"x": 1, "y": 1}}
+        keyablePointValue = {"userName": "testKeyablePoint", "userColor": "#fff", "geometry": {}}
 
         # Check visibility
         assert node.pointList.isVisible
@@ -368,7 +368,7 @@ class TestShapeAttribute:
         # Reset shape lists
         node.pointList.resetToDefaultValue()
         node.keyablePointList.resetToDefaultValue()
-        
+
         # Check number of shapes, should be 0 (no shape)
         assert len(node.pointList) == 0
         assert len(node.keyablePointList) == 0
@@ -379,8 +379,8 @@ class TestShapeAttribute:
         nodeA = graph.addNewNode(NodeWithShapeAttributes.__name__)
         nodeB = graph.addNewNode(NodeWithShapeAttributes.__name__)
 
-        pointGeometryValue = {"x" : 1, "y" : 1}
-        pointValue = {"userName" : "testPoint", "userColor" : "#fff", "geometry" : pointGeometryValue}
+        pointGeometryValue = {"x": 1, "y": 1}
+        pointValue = {"userName": "testPoint", "userColor": "#fff", "geometry": pointGeometryValue}
 
         # Add link:
         # nodeB.pointList is a link for nodeA.pointList
@@ -411,8 +411,8 @@ class TestShapeAttribute:
         assert nodeB.pointList.at(2).geometry.getValueAsDict() == pointGeometryValue
 
         # Update nodeA.point and nodeA.pointList[1] geometry
-        nodeA.point.geometry.setObservation("0", {"x" : 2})
-        nodeA.pointList.at(1).geometry.setObservation("0", {"x" : 2})
+        nodeA.point.geometry.setObservation("0", {"x": 2})
+        nodeA.pointList.at(1).geometry.setObservation("0", {"x": 2})
 
         # Check nodeB second shape geometry
         assert nodeB.point.geometry.getObservation("0").get("x") == 2
@@ -427,14 +427,14 @@ class TestShapeAttribute:
         graph = Graph("")
         node = graph.addNewNode(NodeWithShapeAttributes.__name__)
 
-        observationPoint = {"x" : 1, "y" : 1}
-        observationLine = {"a" : {"x" : 1, "y" : 1}, "b" : {"x" : 2, "y" : 2}}
-        observationRectangle = {"center" : {"x" : 10, "y" : 10}, "size" : {"width" : 20, "height" : 20}}
-        observationCircle = {"center" : {"x" : 10, "y" : 10}, "radius" : 20}
+        observationPoint = {"x": 1, "y": 1}
+        observationLine = {"a": {"x": 1, "y": 1}, "b": {"x": 2, "y": 2}}
+        observationRectangle = {"center": {"x": 10, "y": 10}, "size": {"width": 20, "height": 20}}
+        observationCircle = {"center": {"x": 10, "y": 10}, "radius": 20}
 
-        pointValue = {"userName" : "testPoint", "userColor" : "#fff", "geometry" : observationPoint}
-        keyablePointGeometryValue = {"x" : {"0" : observationPoint.get("x")}, "y" : {"0" : observationPoint.get("y")}}
-        keyablePointValue = {"userName" : "testKeyablePoint", "userColor" : "#fff", "geometry" : keyablePointGeometryValue}
+        pointValue = {"userName": "testPoint", "userColor": "#fff", "geometry": observationPoint}
+        keyablePointGeometryValue = {"x": {"0": observationPoint.get("x")}, "y": {"0": observationPoint.get("y")}}
+        keyablePointValue = {"userName": "testKeyablePoint", "userColor": "#fff", "geometry": keyablePointGeometryValue}
 
         # Check uninitialized shape attribute
         # Shape list attribute should be empty list
@@ -443,49 +443,49 @@ class TestShapeAttribute:
         assert node.pointList.getShapesAsDict() == []
         assert node.keyablePointList.getShapesAsDict() == []
         # Static shape attribute should be default
-        assert node.point.geometry.getValueAsDict() == {"x" : -1, "y" : -1}
-        assert node.line.geometry.getValueAsDict() == {"a" : {"x" : -1, "y" : -1}, "b" : {"x" : -1, "y" : -1}}
-        assert node.rectangle.geometry.getValueAsDict() == {"center" : {"x" : -1, "y" : -1}, "size" : {"width" : -1, "height" : -1}}
-        assert node.circle.geometry.getValueAsDict() == {"center" : {"x" : -1, "y" : -1}, "radius" : -1}
-        assert node.point.getShapeAsDict() == {"name" : node.point.rootName, 
-                                               "type" : node.point.type, 
-                                               "properties" : {"color" : node.point.userColor, "x" : -1, "y" : -1}}
-        assert node.line.getShapeAsDict() == {"name" : node.line.rootName, 
-                                              "type" : node.line.type, 
-                                              "properties" : {"color" : node.line.userColor, "a" : {"x" : -1, "y" : -1}, "b" : {"x" : -1, "y" : -1}}}
-        assert node.rectangle.getShapeAsDict() == {"name" : node.rectangle.rootName, 
-                                                   "type" : node.rectangle.type, 
-                                                   "properties" : {"color" : node.rectangle.userColor, "center" : {"x" : -1, "y" : -1}, "size" : {"width" : -1, "height" : -1}}}
-        assert node.circle.getShapeAsDict() == {"name" : node.circle.rootName, 
-                                                "type" : node.circle.type, 
-                                                "properties" : {"color" : node.circle.userColor, "center" : {"x" : -1, "y" : -1}, "radius" : -1}}
+        assert node.point.geometry.getValueAsDict() == {"x": -1, "y": -1}
+        assert node.line.geometry.getValueAsDict() == {"a": {"x": -1, "y": -1}, "b": {"x": -1, "y": -1}}
+        assert node.rectangle.geometry.getValueAsDict() == {"center": {"x": -1, "y": -1}, "size": {"width": -1, "height": -1}}
+        assert node.circle.geometry.getValueAsDict() == {"center": {"x": -1, "y": -1}, "radius": -1}
+        assert node.point.getShapeAsDict() == {"name": node.point.rootName,
+                                               "type": node.point.type,
+                                               "properties": {"color": node.point.userColor, "x": -1, "y": -1}}
+        assert node.line.getShapeAsDict() == {"name": node.line.rootName,
+                                              "type": node.line.type,
+                                              "properties": {"color": node.line.userColor, "a": {"x": -1, "y": -1}, "b": {"x": -1, "y": -1}}}
+        assert node.rectangle.getShapeAsDict() == {"name": node.rectangle.rootName,
+                                                   "type": node.rectangle.type,
+                                                   "properties": {"color": node.rectangle.userColor, "center": {"x": -1, "y": -1}, "size": {"width": -1, "height": -1}}}
+        assert node.circle.getShapeAsDict() == {"name": node.circle.rootName,
+                                                "type": node.circle.type,
+                                                "properties": {"color": node.circle.userColor, "center": {"x": -1, "y": -1}, "radius": -1}}
         # Keyable shape attribute should be empty dict
         assert node.keyablePoint.geometry.getValueAsDict() == {}
         assert node.keyableLine.geometry.getValueAsDict() == {}
         assert node.keyableRectangle.geometry.getValueAsDict() == {}
         assert node.keyableCircle.geometry.getValueAsDict() == {}
-        assert node.keyablePoint.getShapeAsDict() == {"name" : node.keyablePoint.rootName, 
-                                                      "type" : node.keyablePoint.type, 
-                                                      "properties" : {"color" : node.keyablePoint.userColor},
-                                                      "observations" : {}}
-        assert node.keyableLine.getShapeAsDict() == {"name" : node.keyableLine.rootName, 
-                                                     "type" : node.keyableLine.type, 
-                                                     "properties" : {"color" : node.keyableLine.userColor},
-                                                     "observations" : {}}
-        assert node.keyableRectangle.getShapeAsDict() == {"name" : node.keyableRectangle.rootName, 
-                                                          "type" : node.keyableRectangle.type, 
-                                                          "properties" : {"color" : node.keyableRectangle.userColor},
-                                                          "observations" : {}}
-        assert node.keyableCircle.getShapeAsDict() == {"name" : node.keyableCircle.rootName, 
-                                                       "type" : node.keyableCircle.type, 
-                                                       "properties" : {"color" : node.keyableCircle.userColor},
-                                                       "observations" : {}}
+        assert node.keyablePoint.getShapeAsDict() == {"name": node.keyablePoint.rootName,
+                                                      "type": node.keyablePoint.type,
+                                                      "properties": {"color": node.keyablePoint.userColor},
+                                                      "observations": {}}
+        assert node.keyableLine.getShapeAsDict() == {"name": node.keyableLine.rootName,
+                                                     "type": node.keyableLine.type,
+                                                     "properties": {"color": node.keyableLine.userColor},
+                                                     "observations": {}}
+        assert node.keyableRectangle.getShapeAsDict() == {"name": node.keyableRectangle.rootName,
+                                                          "type": node.keyableRectangle.type,
+                                                          "properties": {"color": node.keyableRectangle.userColor},
+                                                          "observations": {}}
+        assert node.keyableCircle.getShapeAsDict() == {"name": node.keyableCircle.rootName,
+                                                       "type": node.keyableCircle.type,
+                                                       "properties": {"color": node.keyableCircle.userColor},
+                                                       "observations": {}}
 
         # Add one shape with an observation
         node.pointList.append(pointValue)
         node.keyablePointList.append(keyablePointValue)
 
-        # Add one observation 
+        # Add one observation
         node.point.geometry.setObservation("0", observationPoint)
         node.keyablePoint.geometry.setObservation("0", observationPoint)
         node.line.geometry.setObservation("0", observationLine)
@@ -498,24 +498,24 @@ class TestShapeAttribute:
         # Check shape attribute
         # Shape list attribute should be empty dict
         assert node.pointList.getGeometriesAsDict() == [observationPoint]
-        assert node.keyablePointList.getGeometriesAsDict() == [{"0" : observationPoint}]
-        assert node.pointList.getShapesAsDict()[0].get("properties") == {"color" : pointValue.get("userColor")} | observationPoint
-        assert node.keyablePointList.getShapesAsDict()[0].get("observations") == {"0" : observationPoint}
+        assert node.keyablePointList.getGeometriesAsDict() == [{"0": observationPoint}]
+        assert node.pointList.getShapesAsDict()[0].get("properties") == {"color": pointValue.get("userColor")} | observationPoint
+        assert node.keyablePointList.getShapesAsDict()[0].get("observations") == {"0": observationPoint}
         # Not keyable shape attribute should be default
         assert node.point.geometry.getValueAsDict() == observationPoint
         assert node.line.geometry.getValueAsDict() == observationLine
         assert node.rectangle.geometry.getValueAsDict() == observationRectangle
         assert node.circle.geometry.getValueAsDict() == observationCircle
-        assert node.point.getShapeAsDict().get("properties") ==  {"color" : node.point.userColor} | observationPoint
-        assert node.line.getShapeAsDict().get("properties") == {"color" : node.line.userColor} | observationLine
-        assert node.rectangle.getShapeAsDict().get("properties") == {"color" : node.rectangle.userColor} | observationRectangle
-        assert node.circle.getShapeAsDict().get("properties") == {"color" : node.circle.userColor} | observationCircle
+        assert node.point.getShapeAsDict().get("properties") ==  {"color": node.point.userColor} | observationPoint
+        assert node.line.getShapeAsDict().get("properties") == {"color": node.line.userColor} | observationLine
+        assert node.rectangle.getShapeAsDict().get("properties") == {"color": node.rectangle.userColor} | observationRectangle
+        assert node.circle.getShapeAsDict().get("properties") == {"color": node.circle.userColor} | observationCircle
         # Keyable shape attribute should be empty dict
-        assert node.keyablePoint.geometry.getValueAsDict() == {"0" : observationPoint}
-        assert node.keyableLine.geometry.getValueAsDict() == {"0" : observationLine}
-        assert node.keyableRectangle.geometry.getValueAsDict() == {"0" : observationRectangle}
-        assert node.keyableCircle.geometry.getValueAsDict() == {"0" : observationCircle}
-        assert node.keyablePoint.getShapeAsDict().get("observations") == {"0" : observationPoint}
-        assert node.keyableLine.getShapeAsDict().get("observations") == {"0" : observationLine}
-        assert node.keyableRectangle.getShapeAsDict().get("observations") == {"0" : observationRectangle}
-        assert node.keyableCircle.getShapeAsDict().get("observations") == {"0" : observationCircle}
+        assert node.keyablePoint.geometry.getValueAsDict() == {"0": observationPoint}
+        assert node.keyableLine.geometry.getValueAsDict() == {"0": observationLine}
+        assert node.keyableRectangle.geometry.getValueAsDict() == {"0": observationRectangle}
+        assert node.keyableCircle.geometry.getValueAsDict() == {"0": observationCircle}
+        assert node.keyablePoint.getShapeAsDict().get("observations") == {"0": observationPoint}
+        assert node.keyableLine.getShapeAsDict().get("observations") == {"0": observationLine}
+        assert node.keyableRectangle.getShapeAsDict().get("observations") == {"0": observationRectangle}
+        assert node.keyableCircle.getShapeAsDict().get("observations") == {"0": observationCircle}

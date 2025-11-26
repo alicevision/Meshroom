@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
 
+
 def attributeFactory(description: str, value, isOutput: bool, node, root=None, parent=None):
     """
     Create an Attribute based on description type.
@@ -75,22 +76,22 @@ class Attribute(BaseObject):
         self._isOutput: bool = isOutput
         self._enabled: bool = True
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
-        self._invalidationValue = "" # invalidation value for output attributes
+        self._invalidationValue = ""  # invalidation value for output attributes
         self._value = None
-        self._keyValues = None # list of pairs (key, value) for keyable attribute
+        self._keyValues = None  # list of pairs (key, value) for keyable attribute
         self._initValue()
 
     def _getFullName(self) -> str:
-        """ 
+        """
         Get the attribute name following the path from the node to the attribute.
-        Return: nodeName.groupName.subGroupName.name 
+        Return: nodeName.groupName.subGroupName.name
         """
         return f'{self.node.name}.{self._getRootName()}'
 
     def _getRootName(self) -> str:
-        """ 
+        """
         Get the attribute name following the path from the root attribute.
-        Return: groupName.subGroupName.name 
+        Return: groupName.subGroupName.name
         """
         if isinstance(self.root, ListAttribute):
             return f'{self.root.rootName}[{self.root.index(self)}]'
@@ -99,8 +100,8 @@ class Attribute(BaseObject):
         return self._desc.name
 
     def asLinkExpr(self) -> str:
-        """ 
-        Return the link expression for this Attribute 
+        """
+        Return the link expression for this Attribute.
         """
         return "{" + self._getFullName() + "}"
 
@@ -158,7 +159,7 @@ class Attribute(BaseObject):
 
     def _setValue(self, value):
         """
-        Set the attribute value from a given value, a given function or a given attribute. 
+        Set the attribute value from a given value, a given function or a given attribute.
         """
         if self._value == value:
             return
@@ -254,9 +255,9 @@ class Attribute(BaseObject):
         if callable(self._desc.value):
             try:
                 return self._desc.value(self)
-            except Exception as e:
+            except Exception as exc:
                 if not self.node.isCompatibilityNode:
-                    logging.warning(f"Failed to evaluate 'defaultValue' (node lambda) for attribute '{self.fullName}': {e}")
+                    logging.warning(f"Failed to evaluate 'defaultValue' (node lambda) for attribute '{self.fullName}': {exc}")
                 return None
         # keyable attribute default value
         if self.keyable:
@@ -306,13 +307,13 @@ class Attribute(BaseObject):
         return str(self._getEvalValue())
 
     def validateValue(self, value):
-        """ 
-        Ensure value is compatible with the attribute description and convert value if needed. 
+        """
+        Ensure value is compatible with the attribute description and convert value if needed.
         """
         return self._desc.validateValue(value)
 
     def upgradeValue(self, exportedValue):
-        """ 
+        """
         Upgrade the attribute value within a compatibility node.
         """
         self._setValue(exportedValue)
@@ -322,7 +323,7 @@ class Attribute(BaseObject):
             return len(self._keyValues.pairs) == 0
         else:
             return self._getValue() == self.getDefaultValue()
-        
+
     def _isValid(self):
         """
         Check attribute description validValue:
@@ -332,15 +333,15 @@ class Attribute(BaseObject):
         if callable(self._desc.validValue):
             try:
                 return self._desc.validValue(self.node)
-            except Exception as e:
+            except Exception as exc:
                 if not self.node.isCompatibilityNode:
-                    logging.warning(f"Failed to evaluate 'isValid' (node lambda) for attribute '{self.fullName}': {e}")
+                    logging.warning(f"Failed to evaluate 'isValid' (node lambda) for attribute '{self.fullName}': {exc}")
                 return True
         return True
 
     def _is2dDisplayable(self) -> bool:
-        """ 
-        Return True if the current attribute is considered as a displayable 2d file 
+        """
+        Return True if the current attribute is considered as a displayable 2D file.
         """
         if not self._desc.semantic:
             return False
@@ -348,8 +349,8 @@ class Attribute(BaseObject):
                      if self._desc.semantic == imageSemantic), None) is not None
 
     def _is3dDisplayable(self) -> bool:
-        """ 
-        Return True if the current attribute is considered as a displayable 3d file 
+        """
+        Return True if the current attribute is considered as a displayable 3D file.
         """
         if self._desc.semantic == "3d":
             return True
@@ -399,9 +400,9 @@ class Attribute(BaseObject):
         if callable(self._desc.enabled):
             try:
                 return self._desc.enabled(self.node)
-            except Exception as e:
+            except Exception as exc:
                 if not self.node.isCompatibilityNode:
-                    logging.warning(f"Failed to evaluate 'enabled' (node lambda) for attribute '{self.fullName}': {e}")
+                    logging.warning(f"Failed to evaluate 'enabled' (node lambda) for attribute '{self.fullName}': {exc}")
                 return True
         return self._desc.enabled
 
@@ -412,14 +413,14 @@ class Attribute(BaseObject):
         self.enabledChanged.emit()
 
     def _isLink(self) -> bool:
-        """ 
-        Whether the attribute is a link to another attribute. 
+        """
+        Whether the attribute is a link to another attribute.
         """
         return self.node.graph and self.isInput and self.node.graph._edges and \
             self in self.node.graph._edges.keys()
 
     def _getInputLink(self, recursive=False) -> "Attribute":
-        """ 
+        """
         Return the direct upstream connected attribute.
         :param recursive: recursive call, return the root attribute
         """
@@ -431,7 +432,7 @@ class Attribute(BaseObject):
         return linkAttribute
 
     def _getOutputLinks(self) -> list["Attribute"]:
-        """ 
+        """
         Return the list of direct downstream connected attributes.
         """
         # Safety check to avoid evaluation errors
@@ -440,16 +441,16 @@ class Attribute(BaseObject):
         return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self]
 
     def _getAllInputLinks(self) -> list["Attribute"]:
-        """ 
+        """
         Return the list of upstream connected attributes for the attribute or any of its elements.
         """
         inputLink = self._getInputLink()
-        if inputLink is None: 
+        if inputLink is None:
             return []
         return [inputLink]
 
     def _getAllOutputLinks(self) -> list["Attribute"]:
-        """ 
+        """
         Return the list of downstream connected attributes for the attribute or any of its elements.
         """
         return self._getOutputLinks()
@@ -493,7 +494,7 @@ class Attribute(BaseObject):
     def matchText(self, text: str) -> bool:
         return self.label.lower().find(text.lower()) > -1
 
-    # Properties and signals 
+    # Properties and signals
 
     # The node that contains this attribute.
     node = Property(BaseObject, lambda self: self._node(), constant=True)
@@ -544,7 +545,7 @@ class Attribute(BaseObject):
     is3dDisplayable = Property(bool, _is3dDisplayable, constant=True)
     # Whether the attribute is a shape or a shape list, managed by the ShapeEditor and ShapeViewer.
     hasDisplayableShape = Property(bool, lambda self: False, constant=True)
-    
+
     # Attribute link properties and signals
     inputLinksChanged = Signal()
     outputLinksChanged = Signal()
@@ -570,7 +571,7 @@ class Attribute(BaseObject):
 
 
 def raiseIfLink(func):
-    """ 
+    """
     If Attribute instance is a link, raise a RuntimeError.
     """
     def wrapper(attr, *args, **kwargs):
@@ -618,12 +619,12 @@ class ChoiceParam(Attribute):
         if isinstance(value, str):
             value = value.split(',')
         if not isinstance(value, Iterable):
-            raise ValueError("Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})".
-                             format(self.name, value, type(value)))
+            raise ValueError(f"Non exclusive ChoiceParam value should be iterable (param: {self.name}, "
+                             f"value: {value}, type: {type(value)})")
         return [self._conformValue(v) for v in value]
 
     def _conformValue(self, val):
-        """ 
+        """
         Conform 'val' to the correct type and check for its validity
         """
         return self._desc.conformValue(val)
@@ -669,7 +670,7 @@ class ListAttribute(Attribute):
         return iter(self.value)
 
     def at(self, idx):
-        """ 
+        """
         Returns child attribute at index 'idx'.
         """
         # Implement 'at' rather than '__getitem__'
@@ -819,8 +820,8 @@ class ListAttribute(Attribute):
 
     # Override
     def _getAllInputLinks(self) -> list["Attribute"]:
-        """ 
-        Return the list of upstream connected attributes for the attribute or any of its elements."
+        """
+        Return the list of upstream connected attributes for the attribute or any of its elements.
         """
         # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
@@ -829,8 +830,8 @@ class ListAttribute(Attribute):
 
     # Override
     def _getAllOutputLinks(self) -> list["Attribute"]:
-        """ 
-        Return the list of downstream connected attributes for the attribute or any of its elements."
+        """
+        Return the list of downstream connected attributes for the attribute or any of its elements.
         """
         # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
@@ -852,7 +853,6 @@ class ListAttribute(Attribute):
         """
         return super()._hasAnyOutputLinks() or \
                any(attribute.hasAnyOutputLinks for attribute in self._value if hasattr(attribute, 'hasAnyOutputLinks'))
-
 
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
@@ -1039,9 +1039,9 @@ class GeometryAttribute(GroupAttribute):
     # Should be remove if link expression serialization is added in GroupAttribute.
     def getSerializedValue(self):
         if self.isLink:
-            return self._getInputLink().asLinkExpr() 
+            return self._getInputLink().asLinkExpr()
         return super().getSerializedValue()
-    
+
     def getValueAsDict(self) -> dict:
         """
         Return the geometry attribute value as dict.
@@ -1105,7 +1105,7 @@ class GeometryAttribute(GroupAttribute):
         return all((isinstance(attribute, GeometryAttribute) and attribute.hasObservation(key)) or
                    (not isinstance(attribute, GeometryAttribute) and attribute.keyValues.hasKey(key))
                    for attribute in self.value)
-    
+
     @raiseIfLink
     def removeObservation(self, key: str):
         """
@@ -1154,7 +1154,7 @@ class GeometryAttribute(GroupAttribute):
                 geoObservation = attribute.getObservation(key)
                 if geoObservation is None:
                     return None
-                else :
+                else:
                     observation[attribute.name] = geoObservation
             else:
                 if attribute.keyable:
@@ -1165,17 +1165,16 @@ class GeometryAttribute(GroupAttribute):
                 else:
                     observation[attribute.name] = attribute.value
         return observation
-    
+
     # Properties and signals
     # Emitted when a geometry observation changed.
     observationsChanged = Signal()
     # Whether the geometry attribute childs are keyable.
-    observationKeyable = Property(bool,_hasKeyableChilds, constant=True)
+    observationKeyable = Property(bool, _hasKeyableChilds, constant=True)
     # The list of geometry observation keys.
     observationKeys = Property(Variant, _getObservationKeys, notify=observationsChanged)
     # The number of geometry observation defined.
-    nbObservations = Property(int, _getNbObservations, notify=observationsChanged) 
-
+    nbObservations = Property(int, _getNbObservations, notify=observationsChanged)
 
 
 class ShapeAttribute(GroupAttribute):
@@ -1186,12 +1185,13 @@ class ShapeAttribute(GroupAttribute):
     def __init__(self, node, attributeDesc: desc.Shape, isOutput: bool, root=None, parent=None):
         super().__init__(node, attributeDesc, isOutput, root, parent)
         self._visible = True
-        
+
     # Override
     # Connect geometry attribute valueChanged to emit geometryChanged signal.
     def _initValue(self):
         super()._initValue()
-        # Using Attribute.valueChanged for the userName, userColor, geometry properties results in a segmentation fault.
+        # Using Attribute.valueChanged for the userName, userColor, geometry properties results
+        # in a segmentation fault.
         # As a workaround, we manually connect valueChanged to shapeChanged or geometryChanged.
         self.value.get("userName").valueChanged.connect(self._onShapeChanged)
         self.value.get("userColor").valueChanged.connect(self._onShapeChanged)
@@ -1202,51 +1202,51 @@ class ShapeAttribute(GroupAttribute):
     # Should be remove if link expression serialization is added in GroupAttribute.
     def getSerializedValue(self):
         if self.isLink:
-            return self._getInputLink().asLinkExpr() 
+            return self._getInputLink().asLinkExpr()
         return super().getSerializedValue()
 
     def getShapeAsDict(self) -> dict:
         """
         Return the shape attribute as dict with the shape file structure.
         """
-        outDict = { 
-            "name" : self.userName if self.userName else self.rootName, 
-            "type" : self.type, 
-            "properties" : { "color": self.userColor } 
+        outDict = {
+            "name": self.userName if self.userName else self.rootName,
+            "type": self.type,
+            "properties": {"color": self.userColor}
         }
         if not self.geometry.observationKeyable:
             # Not keyable geometry, use properties.
             outDict.get("properties").update(self.geometry.getSerializedValue())
         else:
             # Keyable geometry, use observations.
-            outDict.update({ "observations" : self.geometry.getValueAsDict()})
+            outDict.update({"observations": self.geometry.getValueAsDict()})
         return outDict
-    
+
     def _getVisible(self) -> bool:
-        """ 
+        """
         Return whether the shape attribute is visible for display.
         """
         return self._visible
-    
-    def _setVisible(self, visible:bool):
-        """ 
+
+    def _setVisible(self, visible: bool):
+        """
         Set the shape attribute visibility for display.
         """
         self._visible = visible
         self.shapeChanged.emit()
 
     def _getUserName(self) -> str:
-        """ 
+        """
         Return the shape attribute user name for display.
         """
         return self.value.get("userName").value
 
     def _getUserColor(self) -> str:
-        """ 
+        """
         Return the shape attribute user color for display.
         """
         return self.value.get("userColor").value
-    
+
     @Slot()
     def _onShapeChanged(self):
         """
@@ -1279,6 +1279,7 @@ class ShapeAttribute(GroupAttribute):
     # Override hasDisplayableShape property.
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
 
+
 class ShapeListAttribute(ListAttribute):
     """
     ListAttribute subtype tailored for shape-specific handling.
@@ -1301,15 +1302,15 @@ class ShapeListAttribute(ListAttribute):
         return [shapeAttribute.getShapeAsDict() for shapeAttribute in self.value]
 
     def _getVisible(self) -> bool:
-        """ 
+        """
         Return whether the shape list is visible for display.
         """
         if self.isLink:
             return self.inputLink.isVisible
         return self._visible
-    
-    def _setVisible(self, visible:bool):
-        """ 
+
+    def _setVisible(self, visible: bool):
+        """
         Set the shape visibility for display.
         """
         if self.isLink:

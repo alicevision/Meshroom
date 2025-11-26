@@ -1,7 +1,8 @@
+import json
+from typing import Any
+
 from meshroom.common import BaseObject, Property, Variant, Signal, DictModel, Slot
 from meshroom.core import desc, hashValue
-from typing import Any
-import json
 
 class KeyValues(BaseObject):
     """
@@ -9,7 +10,7 @@ class KeyValues(BaseObject):
     """
 
     class KeyValuePair(BaseObject):
-        """ 
+        """
         Pair of (key, value), this object cannot be modified.
         """
         def __init__(self, key: int, value: Any, parent=None):
@@ -33,18 +34,18 @@ class KeyValues(BaseObject):
         # TODO: Add interpolation. For now no interpolation.
 
     def reset(self):
-        """ 
+        """
         Clear the list of pairs.
         """
         self._pairs.clear()
         self.pairsChanged.emit()
 
     def resetFromDict(self, pairs: dict):
-        """ 
+        """
         Reset the list of pairs from a given dict.
         """
         self._pairs.clear()
-        for k,v in pairs.items():
+        for k, v in pairs.items():
             self._pairs.add(KeyValues.KeyValuePair(int(k), self._desc.validateValue(v), self))
         self.pairsChanged.emit()
 
@@ -80,7 +81,7 @@ class KeyValues(BaseObject):
         Return the list of pairs serialized.
         """
         return { str(pair.key): pair.value for pair in self._pairs }
-    
+
     def getKeys(self) -> list:
         """
         Return the list of keys.
@@ -95,7 +96,7 @@ class KeyValues(BaseObject):
 
     def uid(self) -> str:
         """
-        Compute the UID from the list of pairs. 
+        Compute the UID from the list of pairs.
         """
         uids = []
         for pair in sorted(self._pairs, key=lambda pair: pair.key):

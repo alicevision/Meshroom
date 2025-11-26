@@ -397,8 +397,8 @@ class NodeChunk(BaseObject):
                 # logging.debug(f"updateStatusFromCache({self.node.name}): From status {self.status.status} to {statusData['status']}")
                 self._status.fromDict(statusData)
                 self.statusFileLastModTime = os.path.getmtime(statusFile)
-            except Exception as e:
-                logging.debug(f"updateStatusFromCache({self.node.name}): Error while loading status file {statusFile}: {e}")
+            except Exception as exc:
+                logging.debug(f"updateStatusFromCache({self.node.name}): Error while loading status file {statusFile}: {exc}")
                 self.statusFileLastModTime = -1
                 self._status.reset()
                 self._status.setNodeType(self.node)
@@ -704,11 +704,11 @@ class BaseNode(BaseObject):
         try:
             # Throws exception if not in prototype chain
             return object.__getattribute__(self, k)
-        except AttributeError as e:
+        except AttributeError as err:
             try:
                 return self.attribute(k)
             except KeyError:
-                raise e
+                raise err
 
     def getMrNodeType(self):
         # In compatibility mode, we may or may not have access to the nodeDesc and its information
@@ -786,7 +786,7 @@ class BaseNode(BaseObject):
             return self.nodeDesc.documentation
         else:
             return self.nodeDesc.__doc__
-    
+
     def getNodeInfo(self):
         if not self.nodeDesc:
             return []
@@ -813,7 +813,7 @@ class BaseNode(BaseObject):
             for key, value in additionalNodeInfo:
                 info[key] = value
         return [{"key": k, "value": v} for k, v in info.items()]
-    
+
     @property
     def packageFullName(self):
         return '-'.join([self.packageName, self.packageVersion])
@@ -1018,22 +1018,17 @@ class BaseNode(BaseObject):
                     except AttributeError:
                         # If we load an old scene, the lambda associated to the 'value' could try to
                         # access other params that could not exist yet
-                        logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.
-                                        format(nodeName=self.name, attrName=attr.name))
+                        logging.warning(f'Invalid lambda evaluation for "{self.name}.{attr.name}"')
                     if defaultValue is not None:
                         try:
                             attr.value = defaultValue.format(**self._expVars)
                             attr._invalidationValue = defaultValue.format(**expVarsNoCache)
-                        except KeyError as e:
-                            logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with '
-                                            'value "{defaultValue}".\nError: {err}'.
-                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
-                                            err=str(e)))
-                        except ValueError as e:
-                            logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value '
-                                            '"{defaultValue}".\nError: {err}'.
-                                            format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue,
-                                            err=str(e)))
+                        except KeyError as err:
+                            logging.warning(f'Invalid expression with missing key on "{self.name}.{attr.name}" with '
+                                            f'value "{defaultValue}".\nError: {str(err)}')
+                        except ValueError as err:
+                            logging.warning(f'Invalid expression value on "{self.name}.{attr.name}" with value '
+                                            f'"{defaultValue}".\nError: {str(err)}')
 
             # xxValue is exposed without quotes to allow to compose expressions
             self._expVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
@@ -1126,13 +1121,13 @@ class BaseNode(BaseObject):
         if self.internalFolder and os.path.exists(self.internalFolder):
             try:
                 shutil.rmtree(self.internalFolder)
-            except Exception as e:
+            except Exception as exc:
                 # We could get some "Device or resource busy" on .nfs file while removing the folder
                 # on Linux network.
                 # On Windows, some output files may be open for visualization and the removal will
                 # fail.
                 # In both cases, we can ignore it.
-                logging.warning(f"Failed to remove internal folder: '{self.internalFolder}'. Error: {e}.")
+                logging.warning(f"Failed to remove internal folder: '{self.internalFolder}'. Error: {exc}.")
             self.updateStatusFromCache()
 
     @Slot(result=str)
@@ -1206,7 +1201,7 @@ class BaseNode(BaseObject):
     @Slot()
     def clearSubmittedChunks(self):
         """
-        Reset all submitted chunks to Status.NONE. This method should be used to clear 
+        Reset all submitted chunks to Status.NONE. This method should be used to clear
         inconsistent status if a computation failed without informing the graph.
 
         Warnings:
@@ -1750,9 +1745,8 @@ class BaseNode(BaseObject):
         Return True if at least one attribute is a File that can be loaded in the 3D Viewer,
         False otherwise.
         """
-        
         return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3dDisplayable), None) is not None
-    
+
     def _hasDisplayableShape(self):
         """
         Return True if at least one attribute is a ShapeAttribute, a ShapeListAttribute or a shape File.
@@ -1761,7 +1755,7 @@ class BaseNode(BaseObject):
         """
         return next((attr for attr in self._attributes if attr.hasDisplayableShape or
                      attr.desc.semantic == "shapeFile"), None) is not None
-    
+
 
     name = Property(str, getName, constant=True)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
@@ -2140,9 +2134,8 @@ class CompatibilityNode(BaseNode):
         if self.issue == CompatibilityIssue.UnknownNodeType:
             return f"Unknown node type: '{self.nodeType}'."
         elif self.issue == CompatibilityIssue.VersionConflict:
-            return "Node version '{}' conflicts with current version '{}'.".format(
-                self.nodeDict["version"], nodeVersion(self.nodeDesc)
-            )
+            version = self.nodeDict["version"]
+            return f"Node version '{version}' conflicts with current version '{nodeVersion(self.nodeDesc)}'."
         elif self.issue == CompatibilityIssue.DescriptionConflict:
             return "Node attributes do not match node description."
         elif self.issue == CompatibilityIssue.UidConflict:
@@ -2213,13 +2206,12 @@ class CompatibilityNode(BaseNode):
         # Use upgrade method of the node description itself if available
         try:
             upgradedAttrValues = node.nodeDesc.upgradeAttributeValues(attrValues, self.version)
-        except Exception as e:
-            logging.error(f"Error in the upgrade implementation of the node: {self.name}.\n{repr(e)}")
+        except Exception as exc:
+            logging.error(f"Error in the upgrade implementation of the node: {self.name}.\n{repr(exc)}")
             upgradedAttrValues = attrValues
 
         if not isinstance(upgradedAttrValues, dict):
-            logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".
-                          format(self.name))
+            logging.error(f"Error in the upgrade implementation of the node: {self.name}. The return type is incorrect.")
             upgradedAttrValues = attrValues
 
         node.upgradeAttributeValues(upgradedAttrValues)
@@ -2231,4 +2223,3 @@ class CompatibilityNode(BaseNode):
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)
     issueDetails = Property(str, issueDetails.fget, constant=True)
-

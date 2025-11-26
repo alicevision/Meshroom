@@ -711,10 +711,10 @@ class UIGraph(QObject):
         selectedNodes = self.getSelectedNodes()
         if len(selectedNodes) < 2:
             return
-        
+
         # Make sure the list is correctly ordered
         selectedNodes = sorted(selectedNodes, key=lambda node:node.x)
-        
+
         meanX, meanY = self.getMeanPosition()
         nodeWidth = self.layout.nodeWidth
         # Compute the first node X position
@@ -731,7 +731,7 @@ class UIGraph(QObject):
         selectedNodes = self.getSelectedNodes()
         if len(selectedNodes) < 2:
             return
-        
+
         meanX, _ = self.getMeanPosition()
         with self.groupedGraphModification("Align nodes vertically"):
             for selectedNode in selectedNodes:
@@ -822,7 +822,7 @@ class UIGraph(QObject):
             uniqueNodesToDuplicate = list(dict.fromkeys(nodesToDuplicate))
             duplicates = self.duplicateNodes(uniqueNodesToDuplicate)
         return duplicates
-    
+
     @Slot(Edge, result=bool)
     def canExpandForLoop(self, currentEdge):
         """ Check if the list attribute can be expanded by looking at all the edges connected to it. """
@@ -942,7 +942,7 @@ class UIGraph(QObject):
             self.removeEdge(edge)
             self.addEdge(newSrc, newDst)
         return self._graph.edge(newDst)
-    
+
     @Slot(Attribute, result=Edge)
     def getEdge(self, dst):
         return self._graph.edge(dst)
@@ -1099,7 +1099,7 @@ class UIGraph(QObject):
         self, indices: list[int], command=QItemSelectionModel.SelectionFlag.ClearAndSelect
     ):
         """Update selection with node at given `indices` using the specified `command`.
-        
+
         Args:
             indices: The list of indices to select.
             command: The selection command to use.
@@ -1172,7 +1172,7 @@ class UIGraph(QObject):
     @Slot(str, QPoint, result=list)
     def pasteNodes(self, serializedData: str, position: Optional[QPoint]=None) -> list[Node]:
         """
-        Import string-serialized graph content `serializedData` in the current graph, optionally at the given 
+        Import string-serialized graph content `serializedData` in the current graph, optionally at the given
         `position`.
         If the `serializedData` does not contain valid serialized graph data, nothing is done.
 
@@ -1202,7 +1202,7 @@ class UIGraph(QObject):
             logging.warning("Content is not a valid graph data.")
             return []
         return result
-    
+
     @Slot(Node, result=bool)
     def canComputeNode(self, node: Node) -> bool:
         """ Check if the node can be computed """
@@ -1213,7 +1213,7 @@ class UIGraph(QObject):
         if self._graph.canComputeTopologically(node) and self._graph.canSubmitOrCompute(node) % 2 == 1:
             return True
         return False
-    
+
     @Slot(Node, result=bool)
     def canSubmitNode(self, node: Node) -> bool:
         """ Check if the node can be submitted """
@@ -1224,7 +1224,7 @@ class UIGraph(QObject):
         if self._graph.canComputeTopologically(node) and self._graph.canSubmitOrCompute(node)> 1:
             return True
         return False
-    
+
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)

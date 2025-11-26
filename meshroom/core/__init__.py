@@ -76,7 +76,6 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
             package = importlib.import_module(packageName)
             packageName = package.packageName if hasattr(package, "packageName") \
                 else package.__name__
-            packageVersion = getattr(package, "__version__", None)
             packagePath = os.path.dirname(package.__file__)
         except Exception as exc:
             tb = traceback.extract_tb(exc.__traceback__)
@@ -109,7 +108,6 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
 
                 for p in plugins:
                     p.packageName = packageName
-                    p.packageVersion = packageVersion
                     p.packagePath = packagePath
                     if classType == desc.BaseNode:
                         nodePlugin = NodePlugin(p)

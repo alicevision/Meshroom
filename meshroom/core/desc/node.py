@@ -35,7 +35,6 @@ class BaseNode(object):
     gpu = Level.NONE
     ram = Level.NORMAL
     packageName = ""
-    packageVersion = ""
     internalInputs = [
         StringParam(
             name="invalidation",

@@ -112,9 +112,7 @@ class StatusData(BaseObject):
 
     def resetDynamicValues(self):
         self.status: Status = Status.NONE
-        self.graph = ""
         self.commandLine: str = ""
-        self.env: str = ""
         self._startTime: Optional[datetime.datetime] = None
         self.startDateTime: str = ""
         self.endDateTime: str = ""
@@ -202,9 +200,7 @@ class StatusData(BaseObject):
         self.nodeName = d.get("nodeName", "")
         self.nodeType = d.get("nodeType", "")
         self.packageName = d.get("packageName", "")
-        self.graph = d.get("graph", "")
         self.commandLine = d.get("commandLine", "")
-        self.env = d.get("env", "")
         self.startDateTime = d.get("startDateTime", "")
         self.endDateTime = d.get("endDateTime", "")
         self.elapsedTime = d.get("elapsedTime", 0)

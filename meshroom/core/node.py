@@ -1953,29 +1953,49 @@ class BaseNode(BaseObject):
 
     @Slot(result=bool)
     def canBeStopped(self) -> bool:
+        """
+        Return True if this node can be stopped, False otherwise. A node can be stopped if:
+        - it has the "RUNNING" status (it is currently being computed)
+        - it is executed locally and started from this Meshroom session OR it is executed externally on a render farm
+          (and is thus associated to a job name). A node that is executed externally but without an associated job is
+          likely a node that was started from another Meshroom instance, and thus cannot be stopped from this one.
+        """
         if not self.isComputableType:
             return False
         if self.isCompatibilityNode:
             return False
         # Only locked nodes running in local with the same
         # computeSessionUid as the Meshroom instance can be stopped
-        return (self.getGlobalStatus() == Status.RUNNING and
-                self.globalExecMode == ExecMode.LOCAL.name and
-                self.isMainNode() and
-                self.initFromThisSession())
+        return (self.getGlobalStatus() == Status.RUNNING and self.isMainNode() and
+                (
+                    (self.globalExecMode == ExecMode.LOCAL.name and self.initFromThisSession())
+                    or
+                    (self.globalExecMode == ExecMode.EXTERN.name and self._nodeStatus.jobName != "UNKNOWN")
+                )
+        )
 
     @Slot(result=bool)
     def canBeCanceled(self) -> bool:
+        """
+        Return True if this node can be canceled, False otherwise. A node can be canceled if:
+        - it has the "SUBMITTED" status (it is not running yet, but is expected to be in the near future)
+        - it is executed locally and started from this Meshroom session OR it is executed externally on a render farm
+          (and is thus associated to a job name). A node that is executed externally but without an associated job is
+          likely a node that was started from another Meshroom instance, and thus cannot be canceled from this one.
+        """
         if not self.isComputableType:
             return False
         if self.isCompatibilityNode:
             return False
         # Only locked nodes submitted in local with the same
         # computeSessionUid as the Meshroom instance can be canceled
-        return (self.getGlobalStatus() == Status.SUBMITTED and
-                self.globalExecMode == ExecMode.LOCAL.name and
-                self.isMainNode() and
-                self.initFromThisSession())
+        return (self.getGlobalStatus() == Status.SUBMITTED and self.isMainNode() and
+                (
+                    (self.globalExecMode == ExecMode.LOCAL.name and self.initFromThisSession())
+                    or
+                    (self.globalExecMode == ExecMode.EXTERN.name and self._nodeStatus.jobName != "UNKNOWN")
+                )
+        )
 
     def hasImageOutputAttribute(self) -> bool:
         """

@@ -65,8 +65,8 @@ class ExecMode(Enum):
 NodeChunkSetup = namedtuple("NodeChunks", ["blockSize", "fullSize", "nbBlocks"])
 
 class NodeStatusData(BaseObject):
-    __slots__ = ("nodeName", "nodeType", "status", "execMode", "packageName",
-                 "mrNodeType", "submitterSessionUid", "chunks", "jobInfo")
+    __slots__ = ("nodeName", "nodeType", "status", "execMode", "packageName", "mrNodeType",
+                 "submitterSessionUid", "chunksBlockSize", "chunksFullSize", "chunksNbBlocks", "jobInfo")
 
     def __init__(self, nodeName='', nodeType='', packageName='',
                  mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
@@ -143,24 +143,25 @@ class NodeStatusData(BaseObject):
 
     def toDict(self):
         keys = list(self.__slots__) or []
-        d = {key:getattr(self, key) for key in keys}
+        d = {key:getattr(self, key, "") for key in keys}
         for _k, _v in d.items():
             if isinstance(_v, Enum):
                 d[_k] = _v.name
-        chunks = None
         if self.chunks:
-            chunks = list(self.chunks)
-        d["chunks"] = chunks
+            d["chunksBlockSize"] = self.chunks.blockSize
+            d["chunksFullSize"] = self.chunks.fullSize
+            d["chunksNbBlocks"] = self.chunks.nbBlocks
         return d
 
     def fromDict(self, d):
         self.reset()
         if "mrNodeType" in d:
             self.mrNodeType = MrNodeType[d.pop("mrNodeType")]
-        if "chunks" in d:
-            chunks = d.pop("chunks")
-            if chunks:
-                self.chunks = NodeChunkSetup(*chunks)
+        if "chunksBlockSize" in d and "chunksFullSize" in d and "chunksNbBlocks" in d:
+            blockSize = int(d.pop("chunksBlockSize") or 0)
+            fullSize = int(d.pop("chunksFullSize") or 0)
+            nbBlocks = int(d.pop("chunksNbBlocks") or 0)
+            self.chunks = NodeChunkSetup(blockSize, fullSize, nbBlocks)
         if "status" in d:
             self.status: Status = Status[d.pop("status")]
         if "execMode" in d:

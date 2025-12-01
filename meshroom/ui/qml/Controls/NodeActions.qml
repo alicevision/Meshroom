@@ -23,6 +23,7 @@ Item {
     signal deleteDataRequest(var node)   // Delete node data
     signal submitRequest(var node)       // Start external computation (submission on farm)
     signal stopSubmitRequest(var node)   // Stop external computation (interrupt tasks on farm)
+    signal retrySubmitRequest(var node)  // Retry error tasks on farm
     
     SystemPalette { id: activePalette }
 
@@ -116,9 +117,10 @@ Item {
         property bool nodeIsLocked: false
         property bool canComputeNode: false
         property bool canStopNode: false
-        property bool canRestartNode: false
+        property bool canRestartNode: false  // Node can be restarted, locally or externally
         property bool canSubmitNode: false
         property bool nodeSubmitted: false
+        property bool canRetryNode: false    // Error tasks can be restarted for external node
 
         property int computeButtonState: NodeActions.ButtonState.LAUNCHABLE
         property string computeButtonIcon: {
@@ -177,6 +179,10 @@ Item {
                 ["ERROR", "STOPPED", "KILLED"].includes(node.globalStatus)
         }
 
+        function isNodeRetriable(node) {
+            return node.globalExecMode == "EXTERN" && ["ERROR", "STOPPED", "KILLED"].includes(node.globalStatus)
+        }
+
         function updateProperties(node) {
             if (!node) return
             // Update properties values
@@ -189,6 +195,7 @@ Item {
             actionHeader.computeButtonState = getComputeButtonState(node)
             actionHeader.submitButtonState = getSubmitButtonState(node)
             actionHeader.canRestartNode = isNodeRestartable(node)
+            actionHeader.canRetryNode = isNodeRetriable(node)
         }
 
         // Set initial state & position
@@ -327,6 +334,34 @@ Item {
                         default:
                             break
                     }
+                }
+            }
+
+            // Retry button (for farm submissions that have failed)
+            MaterialToolButton {
+                id: retryButton
+                font.pointSize: 16
+                text: MaterialIcons.cloud_sync
+                padding: 6
+                ToolTip.text: "Retry Submission On Render Farm"
+                ToolTip.visible: hovered
+                ToolTip.delay: 1000
+                visible: actionHeader.canRetryNode
+                enabled: visible
+
+                // Background color
+                background: Rectangle {
+                    color: {
+                        return retryButton.hovered ? activePalette.highlight : activePalette.button
+                    }
+                    opacity: retryButton.hovered ? 1 : root._opacity
+                    border.color: retryButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.3)
+                    border.width: 1
+                    radius: 3
+                }
+
+                onClicked: {
+                    root.retrySubmitRequest(actionHeader.selectedNode)
                 }
             }
         }

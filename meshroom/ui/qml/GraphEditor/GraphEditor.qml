@@ -1108,6 +1108,9 @@ Item {
             }
         }
 
+        onRetrySubmitRequest: function(node) {
+            uigraph.restartJobErrorTasks(node)
+        }
     }
     
     MessageDialog {

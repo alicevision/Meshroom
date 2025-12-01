@@ -1093,14 +1093,21 @@ Item {
                 uigraph.cancelNodeComputation(node)
             }
         }
-        
+
         onDeleteDataRequest: function(node) {
-            uigraph.clearSelectedNodesData();
+            uigraph.clearSelectedNodesData()
         }
         
         onSubmitRequest: function(node) {
             root.submitRequest([node])
         }
+
+        onStopSubmitRequest: function(node) {
+            if (node.canBeStopped() || node.canBeCanceled()) {
+                uigraph.stopNode(node)
+            }
+        }
+
     }
     
     MessageDialog {

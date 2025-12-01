@@ -43,9 +43,7 @@ ListView {
     Rectangle {
         anchors.fill: parent
         color: root.targetNode !== null 
-            ? (root.targetNode.globalStatus === "NONE" 
-                ? Colors.darkpurple 
-                : Colors.getNodeColor(root.targetNode, { "NONE": root.defaultColor }))
+            ? Colors.getNodeColor(root.targetNode, { "NONE": root.defaultColor })
             : "transparent"
         enabled: modelSize == 0
         visible: enabled

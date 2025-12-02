@@ -712,6 +712,13 @@ Item {
                         onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)
                     }
                     MenuItem {
+                        text: "Retry Error Tasks"
+                        enabled: nodeMenu.currentNode.globalExecMode == "EXTERN" && ["ERROR", "STOPPED", "KILLED"].includes(nodeMenu.currentNode.globalStatus)
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.restartJobErrorTasks(nodeMenu.currentNode)
+                    }
+                    MenuItem {
                         text: "Open Folder"
                         visible: nodeMenu.currentNode.isComputableType
                         height: visible ? implicitHeight : 0

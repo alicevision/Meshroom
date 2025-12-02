@@ -699,17 +699,31 @@ Item {
                     }
                     MenuItem {
                         text: "Stop Computation"
-                        enabled: nodeMenu.currentNode.canBeStopped()
+                        enabled: nodeMenu.currentNode.canBeStopped() && nodeMenu.currentNode.globalExecMode == "LOCAL"
                         visible: enabled
                         height: visible ? implicitHeight : 0
                         onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
                     }
                     MenuItem {
                         text: "Cancel Computation"
-                        enabled: nodeMenu.currentNode.canBeCanceled()
+                        enabled: nodeMenu.currentNode.canBeCanceled() && nodeMenu.currentNode.globalExecMode == "LOCAL"
                         visible: enabled
                         height: visible ? implicitHeight : 0
                         onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)
+                    }
+                    MenuItem {
+                        text: "Interrupt Job"
+                        enabled: nodeMenu.currentNode.canBeStopped() && nodeMenu.currentNode.globalExecMode == "EXTERN"
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.stopNode(nodeMenu.currentNode)
+                    }
+                    MenuItem {
+                        text: "Cancel Job"
+                        enabled: nodeMenu.currentNode.canBeCanceled() && nodeMenu.currentNode.globalExecMode == "EXTERN"
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.stopNode(nodeMenu.currentNode)
                     }
                     MenuItem {
                         text: "Retry Error Tasks"

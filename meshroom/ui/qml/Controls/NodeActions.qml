@@ -241,8 +241,8 @@ Item {
                 ToolTip.text: actionHeader.computeButtonTooltip
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
-                visible: actionHeader.computeButtonState != NodeActions.ButtonState.DELETABLE
-                enabled: actionHeader.computeButtonState % 2 == 1 && !actionHeader.nodeSubmitted // Launchable & Stoppable, local
+                visible: actionHeader.computeButtonState != NodeActions.ButtonState.DISABLED
+                enabled: visible && !actionHeader.nodeSubmitted // Launchable & Stoppable, local
                 // Icon color
                 textColor: checked ? palette.highlight : palette.text
                 // Background color
@@ -261,11 +261,17 @@ Item {
                 }
                 onClicked: {
                     switch (actionHeader.computeButtonState) {
-                        case NodeActions.ButtonState.STOPPABLE: 
+                        case NodeActions.ButtonState.STOPPABLE:
                             root.stopComputeRequest(actionHeader.selectedNode)
                             break
-                        case NodeActions.ButtonState.LAUNCHABLE: 
+                        case NodeActions.ButtonState.LAUNCHABLE:
                             root.computeRequest(actionHeader.selectedNode)
+                            break
+                        case NodeActions.ButtonState.DELETABLE:
+                            root.deleteDataRequest(actionHeader.selectedNode)
+                            root.computeRequest(actionHeader.selectedNode)
+                            break
+                        default:
                             break
                     }
                 }
@@ -303,8 +309,8 @@ Item {
                 ToolTip.text: actionHeader.submitButtonTooltip
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
-                visible: actionHeader.submitButtonState != NodeActions.ButtonState.DELETABLE
-                enabled: actionHeader.submitButtonState % 2 == 1 && (actionHeader.nodeSubmitted || !actionHeader.nodeIsLocked)  // Launchable & Stoppable, external
+                visible: actionHeader.submitButtonState != NodeActions.ButtonState.DISABLED
+                enabled: visible && (actionHeader.nodeSubmitted || !actionHeader.nodeIsLocked)  // Launchable & Stoppable, external
                 // Icon color
                 textColor: checked ? palette.highlight : palette.text
                 // Background color
@@ -330,6 +336,10 @@ Item {
                         case NodeActions.ButtonState.LAUNCHABLE:
                             root.submitRequest(actionHeader.selectedNode)
                             actionHeader.updateProperties(actionHeader.selectedNode)
+                            break
+                        case NodeActions.ButtonState.DELETABLE:
+                            root.deleteDataRequest(actionHeader.selectedNode)
+                            root.submitRequest(actionHeader.selectedNode)
                             break
                         default:
                             break

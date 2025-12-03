@@ -435,6 +435,8 @@ class UIGraph(QObject):
             if node._chunksCreated:
                 nodechunks = node.getChunks()
                 chunks.extend(nodechunks)
+            else:
+                chunks.extend(node.chunkPlaceholder)
         if self._sortedDFSChunks.objectList() == chunks:
             # Nothing has changed, return
             return

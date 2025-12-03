@@ -500,7 +500,14 @@ Item {
                     defaultColor: Colors.sysPalette.mid
                     implicitHeight: 3
                     width: parent.width
-                    model: node && node.chunksCreated ? node.chunks : undefined
+                    model: {
+                        if (node && node.chunksCreated)
+                            return node.chunks
+                        else if (node && !node.chunksCreated)
+                            return node.chunkPlaceholder
+
+                        return undefined
+                    }
 
                     Rectangle {
                         anchors.fill: parent

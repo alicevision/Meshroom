@@ -500,6 +500,7 @@ class Graph(BaseObject):
         node._name = uniqueName
         node.graph = self
         self._nodes.add(node)
+        node.chunksChanged.connect(self.updated)
 
     def addNode(self, node, uniqueName=None):
         """

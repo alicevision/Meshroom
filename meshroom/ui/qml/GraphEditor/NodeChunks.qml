@@ -38,14 +38,4 @@ ListView {
                 return Qt.darker(chunkColor, 1.1)
         }
     }
-
-    // Default rectangle shown when model is empty/undefined (= no chunks)
-    Rectangle {
-        anchors.fill: parent
-        color: root.targetNode !== null 
-            ? Colors.getNodeColor(root.targetNode, { "NONE": root.defaultColor })
-            : "transparent"
-        enabled: modelSize == 0
-        visible: enabled
-    }
 }

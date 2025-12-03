@@ -575,9 +575,9 @@ class NodeChunk(BaseObject):
         Upgrade node status file based on the current status.
         """
         self.saveStatusFile()
-        self.statusChanged.emit()
         # We want to make sure the nodeStatus is up to date too
         self.node.upgradeStatusFile()
+        self.statusChanged.emit()
 
     def upgradeStatusTo(self, newStatus, execMode=None):
         if newStatus.value < self._status.status.value:
@@ -807,6 +807,7 @@ class BaseNode(BaseObject):
         self.dirty: bool = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks: list[NodeChunk] = ListModel(parent=self)
         self._chunksCreated = False  # Only initialize chunks on compute
+        self._chunkPlaceholder: list[NodeChunk] = ListModel(parent=self)  # Placeholder chunk for nodes with dynamic ones
         self._uid: str = uid
         self._expVars: dict = {}
         self._size: int = 0
@@ -1372,6 +1373,11 @@ class BaseNode(BaseObject):
                 self._nodeStatus.execMode = execMode
             self._nodeStatus.status = newStatus
             self.upgradeStatusFile()
+            chunkPlaceholder = NodeChunk(self, desc.computation.Range())
+            chunkPlaceholder._status.execMode = self._nodeStatus.execMode
+            chunkPlaceholder._status.status = self._nodeStatus.status
+            self.chunkPlaceholder.setObjectList([chunkPlaceholder])
+            self.chunksChanged.emit()
         self.globalStatusChanged.emit()
 
     def updateStatisticsFromCache(self):
@@ -1539,9 +1545,7 @@ class BaseNode(BaseObject):
         return chunksRangeHasChanged
 
     def updateStatusFromCache(self):
-        """
-        Update node status based on status file content/existence.
-        """
+        """ Update node status based on status file content/existence. """
         # Update nodeStatus from cache
         chunkChanged = self.updateNodeStatusFromCache()
         # Create chunks if we found info on them on the node cache
@@ -1550,12 +1554,18 @@ class BaseNode(BaseObject):
             try:
                 self.createChunksFromCache()
             except Exception as e:
-                logging.warning(f"Could not create chunks from cache :{e}")
+                logging.warning(f"Could not create chunks from cache: {e}")
                 return
         s = self.globalStatus
         if self._chunksCreated:
             for chunk in self._chunks:
                 chunk.updateStatusFromCache()
+        else:
+            # Restore placeholder chunk if needed
+            chunkPlaceholder = NodeChunk(self, desc.computation.Range())
+            chunkPlaceholder._status.execMode = self._nodeStatus.execMode
+            chunkPlaceholder._status.status = self._nodeStatus.status
+            self._chunkPlaceholder.setObjectList([chunkPlaceholder])
         # logging.debug(f"updateStatusFromCache: {self.name}, status: {s} => {self.globalStatus}")
         self.updateOutputAttr()
 
@@ -1592,6 +1602,12 @@ class BaseNode(BaseObject):
             self._nodeStatus.initExternSubmit()
             self.upgradeStatusFile()
             self.globalStatusChanged.emit()
+            if self._nodeStatus.execMode == ExecMode.EXTERN and self._nodeStatus.status in (Status.RUNNING, Status.SUBMITTED):
+                chunkPlaceholder = NodeChunk(self, desc.computation.Range())
+                chunkPlaceholder._status.execMode = self._nodeStatus.execMode
+                chunkPlaceholder._status.status = self._nodeStatus.status
+                self._chunkPlaceholder.setObjectList([chunkPlaceholder])
+                self.chunksChanged.emit()
 
     def initStatusOnCompute(self, forceCompute=False):
         hasChunkToLaunch = False
@@ -1608,6 +1624,12 @@ class BaseNode(BaseObject):
             self._nodeStatus.initLocalSubmit()
             self.upgradeStatusFile()
             self.globalStatusChanged.emit()
+            if self._nodeStatus.execMode == ExecMode.LOCAL and self._nodeStatus.status in (Status.RUNNING, Status.SUBMITTED):
+                chunkPlaceholder = NodeChunk(self, desc.computation.Range())
+                chunkPlaceholder._status.execMode = self._nodeStatus.execMode
+                chunkPlaceholder._status.status = self._nodeStatus.status
+                self._chunkPlaceholder.setObjectList([chunkPlaceholder])
+                self.chunksChanged.emit()
 
     def processIteration(self, iteration):
         self._chunks[iteration].process()
@@ -2067,6 +2089,7 @@ class BaseNode(BaseObject):
     chunksCreated = Property(bool, lambda self: self._chunksCreated, notify=chunksCreatedChanged)
     chunksChanged = Signal()
     chunks = Property(Variant, getChunks, notify=chunksChanged)
+    chunkPlaceholder = Property(Variant, lambda self: self._chunkPlaceholder, notify=chunksChanged)
     nbParallelizationBlocks = Property(int, lambda self: len(self._chunks) if self._chunksCreated else 0, notify=chunksChanged)
     sizeChanged = Signal()
     size = Property(int, getSize, notify=sizeChanged)
@@ -2205,7 +2228,7 @@ class Node(BaseNode):
         }
 
     def _resetChunks(self):
-        """ Set chunks on the node
+        """ Set chunks on the node.
         # TODO : Maybe don't delete chunks if we will recreate them as before ?
         """
         if isinstance(self.nodeDesc, desc.InputNode):
@@ -2216,6 +2239,7 @@ class Node(BaseNode):
             chunk.statusChanged.disconnect(self.globalStatusChanged)
         # Empty list
         self._chunks.setObjectList([])
+        self._chunkPlaceholder.setObjectList([])
         # Recreate list with reset values (1 chunk or the static size)
         if not self.isParallelized:
             if not self.nodeDesc.size:
@@ -2243,7 +2267,8 @@ class Node(BaseNode):
         else:
             self._chunksCreated = False
             self.setSize(0)
-            self._chunks.setObjectList([])
+            self._chunkPlaceholder.setObjectList([NodeChunk(self, desc.computation.Range())])
+
         # Create chunks when possible
         self.chunksCreatedChanged.emit()
         self.chunksChanged.emit()
@@ -2279,7 +2304,7 @@ class Node(BaseNode):
         self.chunksCreatedChanged.emit()
 
     def createChunksFromCache(self):
-        """Create chunks when a node cache exists"""
+        """ Create chunks when a node cache exists. """
         try:
             # Get size from cache
             size = self._nodeStatus.nbChunks
@@ -2293,7 +2318,7 @@ class Node(BaseNode):
             raise e
 
     def createChunks(self):
-        """Create chunks when computation is about to start"""
+        """ Create chunks when computation is about to start. """
         if self._chunksCreated:
             return
         if isinstance(self.nodeDesc, desc.InputNode):

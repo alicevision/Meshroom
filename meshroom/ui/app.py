@@ -183,6 +183,14 @@ Additional Resources:
         action='store_true',
         help=argparse.SUPPRESS  # This hides the option from the help message
     )
+    project_group.add_argument(
+        '-o', '--output',
+        metavar='OUTPUT_FOLDER',
+        type=str,
+        required=False,
+        nargs='*',
+        help='Set the output folder for the CopyFiles nodes.'
+    )
 
     # Pipeline Options
     pipeline_group = parser.add_argument_group('Pipeline Options')
@@ -320,7 +328,16 @@ class MeshroomApp(QApplication):
                 self._activeProject.load(project)
                 self.addRecentProjectFile(project)
         elif getattr(args, "import", None) or args.importRecursive or args.save or args.pipeline:
-            self._activeProject.new()
+            if args.output:
+                # Initialize the template and keep the "CopyFiles" nodes
+                self._activeProject.newWithCopyOutputs()
+                # Use the provided output paths to initialize the "CopyFiles" nodes
+                copyNodes = self._activeProject.graph.nodesOfType("CopyFiles")
+                if len(copyNodes) > 0:
+                    for index, node in enumerate(copyNodes):
+                        node.output.value = args.output[index] if index < len(args.output) else args.output[0]
+            else:
+                self._activeProject.new()
 
         # import is a python keyword, so we have to access the attribute by a string
         if getattr(args, "import", None):

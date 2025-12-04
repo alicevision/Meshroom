@@ -457,17 +457,30 @@ class Reconstruction(UIGraph):
         self._graph.reloadNodePlugins(nodeTypes)
         self.parent().showMessage("Plugins reloaded!", "ok")
 
-    @Slot()
-    @Slot(str)
+    @Slot(result=bool)
+    @Slot(str, result=bool)
     def new(self, pipeline=None):
         """ Create a new pipeline. """
-        p = pipeline if pipeline != None else self._defaultPipeline
+        p = pipeline if pipeline is not None else self._defaultPipeline
         # Lower the input and the dictionary keys to make sure that all input types can be found:
         # - correct pipeline name but the case does not match (e.g. panoramaHDR instead of panoramaHdr)
         # - lowercase pipeline name given through the "New Pipeline" menu
         loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
         filepath = loweredPipelineTemplates.get(p.lower(), p)
         return self._loadWithErrorReport(self.initFromTemplate, filepath)
+
+    def _initFromTemplateWithCopyOutputs(self, filepath):
+        self.initFromTemplate(filepath, copyOutputs=True)
+
+    @Slot(result=bool)
+    @Slot(str, result=bool)
+    def newWithCopyOutputs(self, pipeline=None):
+        """ Create a new pipeline with all the "CopyFiles" nodes included if the provided template has any. """
+        p = pipeline if pipeline is not None else self._defaultPipeline
+        loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
+        filepath = loweredPipelineTemplates.get(p.lower(), p)
+        return self._loadWithErrorReport(self._initFromTemplateWithCopyOutputs, filepath)
+
 
     @Slot(str, result=bool)
     @Slot(QUrl, result=bool)

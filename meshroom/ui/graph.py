@@ -468,7 +468,8 @@ class UIGraph(QObject):
                 os.mkdir(g.cacheDir)
         self.setGraph(g)
 
-    @Slot(str, bool, result=bool)
+    @Slot(str)
+    @Slot(str, bool)
     def initFromTemplate(self, filepath, copyOutputs=False):
         graph = Graph("")
         if filepath:

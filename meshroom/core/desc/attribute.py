@@ -1,9 +1,8 @@
 import ast
-import distutils.util
 import os
 from collections.abc import Iterable
 
-from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList
+from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList, strtobool
 
 
 class Attribute(BaseObject):
@@ -342,8 +341,7 @@ class BoolParam(Param):
             return value
         try:
             if isinstance(value, str):
-                # use distutils.util.strtobool to handle (1/0, true/false, on/off, y/n)
-                return bool(distutils.util.strtobool(value))
+                return bool(strtobool(value))
             return bool(value)
         except Exception:
             raise ValueError(f"BoolParam only supports bool value (param: {self.name}, "

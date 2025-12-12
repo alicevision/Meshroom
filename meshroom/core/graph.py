@@ -1514,15 +1514,19 @@ class Graph(BaseObject):
                 chunk.stopProcess()
 
     @Slot()
-    def forceUnlockNodes(self):
+    @Slot(list)
+    def forceUnlockNodes(self, nodes=None):
         """ Force to unlock all the nodes. """
-        for node in self.nodes:
+        nodes = nodes if nodes else self.nodes
+        for node in nodes:
             node.setLocked(False)
 
     @Slot()
-    def clearSubmittedNodes(self):
+    @Slot(list)
+    def clearSubmittedNodes(self, nodes=None):
         """ Reset the status of already submitted nodes to Status.NONE """
-        for node in self.nodes:
+        nodes = nodes if nodes else self.nodes
+        for node in nodes:
             node.clearSubmittedChunks()
 
     def clearLocallySubmittedNodes(self):

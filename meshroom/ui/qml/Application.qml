@@ -1268,11 +1268,11 @@ Page {
                                 MenuItem {
                                     text: "Clear Pending Status"
                                     enabled: _reconstruction ? !_reconstruction.computingLocally : false
-                                    onTriggered: _reconstruction.graph.clearSubmittedNodes()
+                                    onTriggered: _reconstruction.graph.clearSubmittedNodes(_reconstruction.getSelectedNodes())
                                 }
                                 MenuItem {
                                     text: "Force Unlock Nodes"
-                                    onTriggered: _reconstruction.graph.forceUnlockNodes()
+                                    onTriggered: _reconstruction.graph.forceUnlockNodes(_reconstruction.getSelectedNodes())
                                 }
 
                                 Menu {

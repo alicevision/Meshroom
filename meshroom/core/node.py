@@ -516,8 +516,6 @@ class NodeChunk(BaseObject):
             self.node.saveOutputAttr()
             executionStatus = Status.SUCCESS
         except Exception:
-            # with open(self.logFile, "r") as fo:
-            #     print(f"logfile:<<<{fo.read()}>>>")
             self.updateStatusFromCache()  # check if the status has been updated by another process
             if self._status.status != Status.STOPPED:
                 executionStatus = Status.ERROR

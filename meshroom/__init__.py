@@ -40,7 +40,7 @@ from .common import init, Backend, strtobool
 # sys.frozen is initialized by cx_Freeze and identifies a release package
 isFrozen = getattr(sys, "frozen", False)
 
-useMultiChunks = strtobool(os.environ.get("MESHROOM_USE_MULTI_CHUNKS", "True"))
+useMultiChunks = bool(strtobool(os.environ.get("MESHROOM_USE_MULTI_CHUNKS", "True")))
 
 
 # Logging

@@ -158,7 +158,7 @@ class BaseNode(object):
 
     def executeChunkCommandLine(self, chunk, cmd, env=None):
         try:
-            with open(chunk.logFile, 'w') as logF:
+            with open(chunk.logFile, 'a') as logF:
                 chunk.status.commandLine = cmd
                 chunk.saveStatusFile()
                 cmdList = shlex.split(cmd)
@@ -190,6 +190,7 @@ class BaseNode(object):
                     stderr=logF,
                     cwd=chunk.node.internalFolder,
                     env=env,
+                    text=True,
                     **platformArgs,
                 )
 

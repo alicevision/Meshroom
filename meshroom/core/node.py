@@ -243,9 +243,13 @@ class LogManager:
             self.logger.addHandler(h)
         self.logger.setLevel(self._previousLevel)
 
-    def start(self, level):
-        # Clear log file
+    def clearLogFile(self):
         open(self.logFile, 'w').close()
+
+    def start(self, level):
+        # Make sure the log file exists
+        if not os.path.exists(self.logFile):
+            self.clearLogFile()
         self.configureLogger()
         self.logger.propagate = False
         self.logger.setLevel(self.textToLevel(level))
@@ -400,26 +404,18 @@ class NodeChunk(BaseObject):
 
     @property
     def statusFile(self):
-        if self.range.blockSize == 0:
-            return os.path.join(self.node.internalFolder, "status")
-        else:
-            return os.path.join(self.node.internalFolder,
-                                str(self.index) + ".status")
+        chunkIndex = self.index if self.range.blockSize else 0
+        return os.path.join(self.node.internalFolder, str(chunkIndex) + ".status")
 
     @property
     def statisticsFile(self):
-        if self.range.blockSize == 0:
-            return os.path.join(self.node.internalFolder, "statistics")
-        else:
-            return os.path.join(self.node.internalFolder, str(self.index) + ".statistics")
+        chunkIndex = self.index if self.range.blockSize else 0
+        return os.path.join(self.node.internalFolder, str(chunkIndex) + ".statistics")
 
     @property
     def logFile(self):
-        if self.range.blockSize == 0:
-            return os.path.join(self.node.internalFolder, "log")
-        else:
-            return os.path.join(self.node.internalFolder,
-                                str(self.index) + ".log")
+        chunkIndex = self.index if self.range.blockSize else 0
+        return os.path.join(self.node.internalFolder, str(chunkIndex) + ".log")
 
     def saveStatusFile(self):
         """
@@ -514,6 +510,7 @@ class NodeChunk(BaseObject):
         self.statThread.start()
 
         try:
+            logging.info(f"[Process chunk] Start processing...")
             self.node.nodeDesc.processChunk(self)
             # NOTE: this assumes saving the output attributes for each chunk
             self.node.saveOutputAttr()
@@ -533,7 +530,7 @@ class NodeChunk(BaseObject):
 
             if executionStatus:
                 self.upgradeStatusTo(executionStatus)
-            logging.info(f" - elapsed time: {self._status.elapsedTimeStr}")
+            logging.info(f"[Process chunk] elapsed time: {self._status.elapsedTimeStr}")
             # Ask and wait for the stats thread to stop
             self.statThread.stopRequest()
             self.statThread.join()
@@ -1378,14 +1375,13 @@ class BaseNode(BaseObject):
 
     def prepareLogger(self, iteration=-1):
         # Get file handler path
-        logFileName = "log"
-        if iteration != -1:
-            chunk = self.chunks[iteration]
-            logFileName = str(chunk.index) + ".log"
+        chunkIndex = self.chunks[iteration].index if iteration != -1 else 0
+        logFileName = f"{chunkIndex}.log"
         logFile = os.path.join(self.internalFolder, logFileName)
         # Setup logger
         rootLogger = logging.getLogger()
         self._logManager = LogManager(rootLogger, logFile)
+        self._logManager.clearLogFile()
         self._logManager.start(self.getNodeLogLevel())
 
     def restoreLogger(self):

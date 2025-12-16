@@ -23,9 +23,7 @@ def executeChunks(node, size):
     logFiles = {}
     for chunkIndex in range(size):
         iteration = chunkIndex if size > 1 else -1
-        logFileName = "log"
-        if size > 1:
-            logFileName = f"{chunkIndex}.log"
+        logFileName = f"{chunkIndex}.log"
         logFile = Path(node.internalFolder) / logFileName
         logFiles[chunkIndex] = logFile
         logFile.touch()

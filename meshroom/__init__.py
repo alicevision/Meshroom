@@ -1,4 +1,3 @@
-from distutils import util
 from enum import Enum
 import logging
 import os
@@ -36,12 +35,12 @@ if __version_status__ is VersionStatus.develop:
 
 
 # Internal imports after the definition of the version
-from .common import init, Backend
+from .common import init, Backend, strtobool
 
 # sys.frozen is initialized by cx_Freeze and identifies a release package
 isFrozen = getattr(sys, "frozen", False)
 
-useMultiChunks = util.strtobool(os.environ.get("MESHROOM_USE_MULTI_CHUNKS", "True"))
+useMultiChunks = bool(strtobool(os.environ.get("MESHROOM_USE_MULTI_CHUNKS", "True")))
 
 
 # Logging

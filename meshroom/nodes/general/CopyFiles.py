@@ -3,7 +3,6 @@ __version__ = "1.3"
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
 
-import distutils.dir_util as du
 import shutil
 import glob
 import os
@@ -82,7 +81,7 @@ This node allows to copy files into a specific folder.
                 # If the input is a directory, copy the directory's content
                 if os.path.isdir(iFile):
                     chunk.logger.info(f"CopyFiles directory {iFile} into {oFile}.")
-                    du.copy_tree(iFile, oFile)
+                    shutil.copytree(iFile, oFile)
                 else:
                     chunk.logger.info(f"CopyFiles file {iFile} into {oFile}.")
                     shutil.copyfile(iFile, oFile)

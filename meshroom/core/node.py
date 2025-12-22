@@ -404,16 +404,25 @@ class NodeChunk(BaseObject):
 
     @property
     def statusFile(self):
+        # Retro-compatibility: ensure we do not lose files computed when single chunks were not prefixed
+        if os.path.exists(os.path.join(self.node.internalFolder, "status")):
+            return os.path.join(self.node.internalFolder, "status")
         chunkIndex = self.index if self.range.blockSize else 0
         return os.path.join(self.node.internalFolder, str(chunkIndex) + ".status")
 
     @property
     def statisticsFile(self):
+        # Retro-compatibility: ensure we do not lose files computed when single chunks were not prefixed
+        if os.path.exists(os.path.join(self.node.internalFolder, "statistics")):
+            return os.path.join(self.node.internalFolder, "statistics")
         chunkIndex = self.index if self.range.blockSize else 0
         return os.path.join(self.node.internalFolder, str(chunkIndex) + ".statistics")
 
     @property
     def logFile(self):
+        # Retro-compatibility: ensure we do not lose files computed when single chunks were not prefixed
+        if os.path.exists(os.path.join(self.node.internalFolder, "log")):
+            return os.path.join(self.node.internalFolder, "log")
         chunkIndex = self.index if self.range.blockSize else 0
         return os.path.join(self.node.internalFolder, str(chunkIndex) + ".log")
 

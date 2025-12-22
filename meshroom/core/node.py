@@ -402,35 +402,30 @@ class NodeChunk(BaseObject):
         if oldStatus != self.status.status:
             self.statusChanged.emit()
 
-    @property
-    def statusFile(self):
+    def _getFile(self, fileType: str):
+        """
+        Return the path for the requested type of file.
+        It is expected to be prefixed by the chunk number, but for compatibility purposes, it may not be.
+        """
         chunkIndex = self.index if self.range.blockSize else 0
         # Retro-compatibility: ensure we do not lose files computed when single chunks were not prefixed
         # If both the prefixed and not prefixed files exist, the prefixed one should be returned
-        if os.path.exists(os.path.join(self.node.internalFolder, "status")):
-            if not os.path.exists(os.path.join(self.node.internalFolder, str(chunkIndex) + ".status")):
-                return os.path.join(self.node.internalFolder, "status")
-        return os.path.join(self.node.internalFolder, str(chunkIndex) + ".status")
+        if os.path.exists(os.path.join(self.node.internalFolder, fileType)):
+            if not os.path.exists(os.path.join(self.node.internalFolder, str(chunkIndex) + "." + fileType)):
+                return os.path.join(self.node.internalFolder, fileType)
+        return os.path.join(self.node.internalFolder, str(chunkIndex) + "." + fileType)
+
+    @property
+    def statusFile(self):
+        return self._getFile("status")
 
     @property
     def statisticsFile(self):
-        chunkIndex = self.index if self.range.blockSize else 0
-        # Retro-compatibility: ensure we do not lose files computed when single chunks were not prefixed
-        # If both the prefixed and not prefixed files exist, the prefixed one should be returned
-        if os.path.exists(os.path.join(self.node.internalFolder, "statistics")):
-            if not os.path.exists(os.path.join(self.node.internalFolder, str(chunkIndex) + ".statistics")):
-                return os.path.join(self.node.internalFolder, "statistics")
-        return os.path.join(self.node.internalFolder, str(chunkIndex) + ".statistics")
+        return self._getFile("statistics")
 
     @property
     def logFile(self):
-        chunkIndex = self.index if self.range.blockSize else 0
-        # Retro-compatibility: ensure we do not lose files computed when single chunks were not prefixed
-        # If both the prefixed and prefixed files exist, the prefixed one should be returned
-        if os.path.exists(os.path.join(self.node.internalFolder, "log")):
-            if not os.path.exists(os.path.join(self.node.internalFolder, str(chunkIndex) + ".log")):
-                return os.path.join(self.node.internalFolder, "log")
-        return os.path.join(self.node.internalFolder, str(chunkIndex) + ".log")
+        return self._getFile("log")
 
     def saveStatusFile(self):
         """

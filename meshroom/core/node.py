@@ -185,6 +185,11 @@ class NodeStatusData(BaseObject):
         nbBlocks = self.chunks.nbBlocks if self.chunks else -1
         return nbBlocks
 
+    @property
+    def fullSize(self):
+        fullSize = self.chunks.fullSize if self.chunks else -1
+        return fullSize
+
     def getChunkRanges(self):
         if not self.chunks:
             return []
@@ -2282,7 +2287,7 @@ class Node(BaseNode):
                     for c in self._chunks:
                         c.statusChanged.connect(self.globalStatusChanged)
                     logging.debug(f"Created {len(self._chunks)} chunks for node: {self.name}")
-                else: 
+                else:
                     for chunk, range in zip(self._chunks, ranges):
                         chunk.range = range
             except RuntimeError:
@@ -2307,7 +2312,7 @@ class Node(BaseNode):
         """ Create chunks when a node cache exists. """
         try:
             # Get size from cache
-            size = self._nodeStatus.nbChunks
+            size = self._nodeStatus.fullSize
             self.setSize(size)
             ranges = self._nodeStatus.getChunkRanges()
             self.__createChunks(ranges)

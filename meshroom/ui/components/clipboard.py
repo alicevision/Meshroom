@@ -1,5 +1,5 @@
 from PySide6.QtCore import Slot, QObject
-from PySide6.QtGui import QClipboard
+from PySide6.QtGui import QGuiApplication
 
 
 class ClipboardHelper(QObject):
@@ -9,7 +9,7 @@ class ClipboardHelper(QObject):
 
     def __init__(self, parent=None):
         super(ClipboardHelper, self).__init__(parent)
-        self._clipboard = QClipboard(parent=self)
+        self._clipboard = QGuiApplication.clipboard()
 
     def __del__(self):
         # Workaround to avoid the "QXcbClipboard: Unable to receive an event from the clipboard manager

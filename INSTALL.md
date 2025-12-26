@@ -48,8 +48,8 @@ To use Meshroom nodal system without any visualization option, you can rely on a
 
 #### Python environment
 
-* Windows: Python 3 (>=3.9)
-* Linux: Python 3 (>=3.9)
+* Windows: Python 3 (==3.9)
+* Linux: Python 3 (==3.9)
 
 To install all the requirements for runtime, development and packaging, simply run:
 ```bash

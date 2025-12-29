@@ -1942,25 +1942,6 @@ class BaseNode(BaseObject):
             self._hasDuplicates = bool(len(newList))
             self.hasDuplicatesChanged.emit()
 
-    def statusInThisSession(self) -> bool:
-        """ Check if chunks of the node are being computed in the current session
-        TODO: Not used -> depreciate ?
-        """
-        if not self._chunks:
-            return False
-        for chunk in self._chunks:
-            if chunk._status.computeSessionUid != meshroom.core.sessionUid:
-                return False
-        return True
-
-    def submitterStatusInThisSession(self) -> bool:
-        """ Check if the node is submitted by the current session
-        TODO: Not used -> depreciate ?
-        """
-        if self._nodeStatus.submitterSessionUid == meshroom.core.sessionUid:
-            return True
-        return False
-
     def initFromThisSession(self) -> bool:
         """ Check if the node was submitted from the current session """
         if not self._chunksCreated or not self._chunks:

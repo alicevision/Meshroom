@@ -194,8 +194,8 @@ class NodeStatusMonitor(QObject):
         Args:
             times: the last modification times for currently monitored files.
         """
-        hasChangesAndSuccess = False
         newRecords = dict(zip(self.monitoredItems.items(), times))
+        nodesToUpdate = set()
         for monitoredItem, fileModTime in newRecords.items():
             _, (_type, _item) = monitoredItem
             if _type == "chunk":
@@ -204,19 +204,19 @@ class NodeStatusMonitor(QObject):
                 if fileModTime != chunk.statusFileLastModTime:
                     chunk.updateStatusFromCache()
                     if chunk._status.status == Status.SUCCESS:
-                        hasChangesAndSuccess = True
+                        nodesToUpdate.add(chunk.node)
             elif _type == "node":
                 node = _item
                 if fileModTime != node.nodeStatusFileLastModTime:
                     node.updateStatusFromCache()
                     # Check for success
                     if node.getGlobalStatus() == Status.SUCCESS:
-                        hasChangesAndSuccess = True
+                        nodesToUpdate.add(node)
                     elif node._chunksCreated:
                         # Chunks have been created -> set the watched files again
                         self.setWatchedFiles()
-        if hasChangesAndSuccess:
-            chunk.node.loadOutputAttr()
+        for node in nodesToUpdate:
+            node.loadOutputAttr()
 
     def onFilePollerRefreshUpdated(self):
         """
@@ -316,6 +316,8 @@ class GraphLayout(QObject):
         """
         if nodes is None:
             nodes = self.graph.nodes.values()
+        if not nodes:
+            return [0, 0, 0, 0]
         first = nodes[0]
         bbox = [first.x, first.y, first.x, first.y]
         for n in nodes:

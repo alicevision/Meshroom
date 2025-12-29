@@ -1957,6 +1957,9 @@ class BaseNode(BaseObject):
         """ Check if the node is submitted by the current session
         TODO: Not used -> depreciate ?
         """
+        if self._nodeStatus.submitterSessionUid == meshroom.core.sessionUid:
+            return True
+        return False
 
     def initFromThisSession(self) -> bool:
         """ Check if the node was submitted from the current session """

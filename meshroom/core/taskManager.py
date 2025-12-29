@@ -6,7 +6,7 @@ from enum import Enum
 
 import meshroom
 from meshroom.common import BaseObject, DictModel, Property, Signal, Slot
-from meshroom.core.node import Node, Status, Node
+from meshroom.core.node import Node, Status
 from meshroom.core.graph import Graph
 from meshroom.core.submitter import jobManager, BaseSubmittedJob
 import meshroom.core.graph

@@ -5,11 +5,11 @@ from .attribute import ListAttribute, IntParam
 
 
 class Level(IntEnum):
+    SCRIPT=-1
     NONE = 0
     NORMAL = 1
     INTENSIVE = 2
     EXTREME = 3
-    SCRIPT=-1
 
 
 class Range:

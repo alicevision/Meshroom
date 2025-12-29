@@ -23,7 +23,7 @@ Item {
     property color tableBorder: Colors.sysPalette.window
     property int borderWidth: 3
 
-    // Max wifth for some columns
+    // Max width for some columns
     readonly property int maxExecWidth: 200
 
     property var selectedChunk: null

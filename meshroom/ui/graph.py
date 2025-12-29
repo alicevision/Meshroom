@@ -29,7 +29,7 @@ from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
 from meshroom.core.taskManager import TaskManager
-from meshroom.core.submitter import jobManager, SubmitterOptionsEnum
+from meshroom.core.submitter import jobManager
 
 from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position
 from meshroom.core import submitters, MrNodeType

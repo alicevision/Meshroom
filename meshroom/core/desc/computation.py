@@ -1,13 +1,15 @@
 import math
-from enum import Enum
+from enum import IntEnum
 
 from .attribute import ListAttribute, IntParam
 
 
-class Level(Enum):
+class Level(IntEnum):
+    SCRIPT=-1
     NONE = 0
     NORMAL = 1
     INTENSIVE = 2
+    EXTREME = 3
 
 
 class Range:
@@ -45,6 +47,9 @@ class Range:
             "rangeFullSize": self.fullSize,
             "rangeBlocksCount": self.nbBlocks
             }
+
+    def __repr__(self):
+        return f"<Range {self.iteration}({self.blockSize})/{self.nbBlocks}({self.fullSize})>"
 
 
 class Parallelization:

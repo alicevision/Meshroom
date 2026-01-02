@@ -1044,7 +1044,8 @@ class Reconstruction(UIGraph):
             # disconnection step in 'setSfm' (at this point, 'self._sfm' underlying object
             # has been destroyed and can't be evaluated anymore)
             self._sfm.destroyed.connect(self._unsetSfm)
-            self._sfm.chunks[0].statusChanged.connect(self.updateSfMResults)
+            if len(self._sfm._chunks) > 0:
+                self._sfm.chunks[0].statusChanged.connect(self.updateSfMResults)
         self.sfmChanged.emit()
 
     def setSfm(self, node):

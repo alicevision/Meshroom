@@ -1040,9 +1040,9 @@ Page {
                 font.pointSize: 18
 
                 visible: _reconstruction ? _reconstruction.canSubmit : false
-                text: MaterialIcons.rocket_launch
+                text: !(_reconstruction.computingExternally) ? MaterialIcons.rocket_launch : MaterialIcons.paragliding
 
-                ToolTip.text: "Submit on Render Farm"
+                ToolTip.text: !(_reconstruction.computingExternally) ? "Submit on Render Farm" : "Interrupt Job"
                 ToolTip.visible: hovered
 
                 background: Rectangle {
@@ -1050,7 +1050,7 @@ Page {
                     border.color: Qt.darker(activePalette.window, 1.15)
                 }
 
-                onClicked: computeManager.submit(null)
+                onClicked: !(_reconstruction.computingExternally) ? computeManager.submit(null) : _reconstruction.stopExecution()
             }
         }
 

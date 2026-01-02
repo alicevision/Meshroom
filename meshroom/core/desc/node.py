@@ -5,6 +5,8 @@ import logging
 import shlex
 import shutil
 import sys
+import signal
+import subprocess
 
 import psutil
 
@@ -18,6 +20,34 @@ from .attribute import StringParam, ColorParam, ChoiceParam
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
+
+
+# Handle cleanup
+class ExitCleanup:
+    """
+    Make sure we kill child subprocesses when the main process exits receive SIGTERM.
+    """
+
+    def __init__(self):
+        self._subprocesses = []
+        signal.signal(signal.SIGTERM, self.exit)
+
+    def addSubprocess(self, process):
+        logging.debug(f"[ExitCleanup] Register subprocess {process}")
+        self._subprocesses.append(process)
+
+    def exit(self, signum, frame):
+        for proc in self._subprocesses:
+            logging.debug(f"[ExitCleanup] Kill subprocess {proc}")
+            try:
+                if proc.is_running():
+                    proc.terminate()
+                    proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+        sys.exit(0)
+
+exitCleanup = ExitCleanup()
 
 
 class MrNodeType(enum.Enum):
@@ -90,6 +120,9 @@ class BaseNode(object):
     documentation = ""
     category = "Other"
     plugin = None
+    # Licenses required to run the plugin
+    # Only used to select machines on the farm when the node is submitted
+    _licenses = []
 
     def __init__(self):
         super(BaseNode, self).__init__()
@@ -158,7 +191,7 @@ class BaseNode(object):
 
     def executeChunkCommandLine(self, chunk, cmd, env=None):
         try:
-            with open(chunk.logFile, 'a') as logF:
+            with open(chunk.getLogFile(), 'a') as logF:
                 chunk.status.commandLine = cmd
                 chunk.saveStatusFile()
                 cmdList = shlex.split(cmd)
@@ -167,7 +200,7 @@ class BaseNode(object):
 
                 print(f"Starting Process for '{chunk.node.name}'")
                 print(f" - commandLine: {cmd}")
-                print(f" - logFile: {chunk.logFile}")
+                print(f" - logFile: {chunk.getLogFile()}")
                 if prog:
                     cmdList[0] = Path(prog).as_posix()
                     print(f" - command full path: {cmdList[0]}")
@@ -193,6 +226,7 @@ class BaseNode(object):
                     text=True,
                     **platformArgs,
                 )
+                exitCleanup.addSubprocess(chunk.subprocess)
 
                 if hasattr(chunk, "statThread"):
                     # We only have a statThread if the node is running in the current process
@@ -213,7 +247,7 @@ class BaseNode(object):
                         pass
 
             if chunk.subprocess.returncode != 0:
-                with open(chunk.logFile, "r") as logF:
+                with open(chunk.getLogFile(), "r") as logF:
                     logContent = "".join(logF.readlines())
                 raise RuntimeError(f'Error on node "{chunk.name}":\nLog:\n{logContent}')
         finally:

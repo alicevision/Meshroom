@@ -18,10 +18,12 @@ Item {
     property var nodeRepeater: null  // Reference to nodeRepeater to find delegates
 
     // Signals
-    signal computeRequest(var node)
-    signal stopComputeRequest(var node)
-    signal deleteDataRequest(var node)
-    signal submitRequest(var node)
+    signal computeRequest(var node)      // Start local computation
+    signal stopComputeRequest(var node)  // Stop local computation
+    signal deleteDataRequest(var node)   // Delete node data
+    signal submitRequest(var node)       // Start external computation (submission on farm)
+    signal stopSubmitRequest(var node)   // Stop external computation (interrupt tasks on farm)
+    signal retrySubmitRequest(var node)  // Retry error tasks on farm
     
     SystemPalette { id: activePalette }
 
@@ -115,9 +117,10 @@ Item {
         property bool nodeIsLocked: false
         property bool canComputeNode: false
         property bool canStopNode: false
-        property bool canRestartNode: false
+        property bool canRestartNode: false  // Node can be restarted, locally or externally
         property bool canSubmitNode: false
         property bool nodeSubmitted: false
+        property bool canRetryNode: false    // Error tasks can be restarted for external node
 
         property int computeButtonState: NodeActions.ButtonState.LAUNCHABLE
         property string computeButtonIcon: {
@@ -126,7 +129,26 @@ Item {
                 default: return MaterialIcons.send
             }
         }
+        property string computeButtonTooltip: {
+            switch (computeButtonState) {
+                case NodeActions.ButtonState.STOPPABLE: return "Stop Compute"
+                default: return "Start Compute"
+            }
+        }
+
         property int submitButtonState: NodeActions.ButtonState.LAUNCHABLE
+        property string submitButtonIcon: {
+            switch (submitButtonState) {
+                case NodeActions.ButtonState.STOPPABLE: return MaterialIcons.paragliding
+                default: return MaterialIcons.rocket_launch
+            }
+        }
+        property string submitButtonTooltip: {
+            switch (submitButtonState) {
+                case NodeActions.ButtonState.STOPPABLE: return "Interrupt Job on Render Farm"
+                default: return "Submit on Render Farm"
+            }
+        }
 
         function getComputeButtonState(node) {
             if (actionHeader.canStopNode)
@@ -139,10 +161,10 @@ Item {
         }
 
         function getSubmitButtonState(node) {
-            if (actionHeader.nodeIsLocked || actionHeader.canStopNode)
-                return NodeActions.ButtonState.DISABLED
+            if (actionHeader.canStopNode)
+                return NodeActions.ButtonState.STOPPABLE
             if (!actionHeader.nodeIsLocked && node.globalStatus == "SUCCESS")
-                return NodeActions.ButtonState.DISABLED
+                return NodeActions.ButtonState.DELETABLE
             if (actionHeader.canSubmitNode)
                 return NodeActions.ButtonState.LAUNCHABLE
             return NodeActions.ButtonState.DISABLED
@@ -157,6 +179,10 @@ Item {
                 ["ERROR", "STOPPED", "KILLED"].includes(node.globalStatus)
         }
 
+        function isNodeRetriable(node) {
+            return node.globalExecMode == "EXTERN" && ["ERROR", "STOPPED", "KILLED"].includes(node.globalStatus)
+        }
+
         function updateProperties(node) {
             if (!node) return
             // Update properties values
@@ -169,6 +195,7 @@ Item {
             actionHeader.computeButtonState = getComputeButtonState(node)
             actionHeader.submitButtonState = getSubmitButtonState(node)
             actionHeader.canRestartNode = isNodeRestartable(node)
+            actionHeader.canRetryNode = isNodeRetriable(node)
         }
 
         // Set initial state & position
@@ -211,13 +238,13 @@ Item {
                 font.pointSize: 16
                 text: actionHeader.computeButtonIcon
                 padding: 6
-                ToolTip.text: "Start/Stop/Restart Compute"
+                ToolTip.text: actionHeader.computeButtonTooltip
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
-                visible: actionHeader.computeButtonState != NodeActions.ButtonState.DELETABLE
-                enabled: actionHeader.computeButtonState % 2 == 1  // Launchable & Stoppable
+                visible: actionHeader.computeButtonState != NodeActions.ButtonState.DISABLED
+                enabled: visible && !actionHeader.nodeSubmitted // Launchable & Stoppable, local
                 // Icon color
-                textColor: (!enabled && actionHeader.nodeSubmitted) ? Colors.statusColors["SUBMITTED"] : (checked ? palette.highlight : palette.text)
+                textColor: checked ? palette.highlight : palette.text
                 // Background color
                 background: Rectangle {
                     color: {
@@ -234,11 +261,17 @@ Item {
                 }
                 onClicked: {
                     switch (actionHeader.computeButtonState) {
-                        case NodeActions.ButtonState.STOPPABLE: 
+                        case NodeActions.ButtonState.STOPPABLE:
                             root.stopComputeRequest(actionHeader.selectedNode)
                             break
-                        case NodeActions.ButtonState.LAUNCHABLE: 
+                        case NodeActions.ButtonState.LAUNCHABLE:
                             root.computeRequest(actionHeader.selectedNode)
+                            break
+                        case NodeActions.ButtonState.DELETABLE:
+                            root.deleteDataRequest(actionHeader.selectedNode)
+                            root.computeRequest(actionHeader.selectedNode)
+                            break
+                        default:
                             break
                     }
                 }
@@ -250,7 +283,7 @@ Item {
                 font.pointSize: 16
                 text: MaterialIcons.delete_
                 padding: 6
-                ToolTip.text: "Delete data"
+                ToolTip.text: "Delete Data"
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
                 visible: actionHeader.canRestartNode || actionHeader.computeButtonState == NodeActions.ButtonState.DELETABLE
@@ -271,20 +304,23 @@ Item {
             MaterialToolButton {
                 id: submitButton
                 font.pointSize: 16
-                text: MaterialIcons.rocket_launch
+                text: actionHeader.submitButtonIcon
                 padding: 6
-                ToolTip.text: "Submit on Render Farm"
+                ToolTip.text: actionHeader.submitButtonTooltip
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
-                visible: root.uigraph ? root.uigraph.canSubmit : false
-                enabled: actionHeader.submitButtonState != NodeActions.ButtonState.DISABLED
+                visible: actionHeader.submitButtonState != NodeActions.ButtonState.DISABLED
+                enabled: visible && (actionHeader.nodeSubmitted || !actionHeader.nodeIsLocked)  // Launchable & Stoppable, external
                 // Icon color
-                textColor: (!enabled && actionHeader.nodeSubmitted) ? Colors.statusColors["SUBMITTED"] : (checked ? palette.highlight : palette.text)
+                textColor: checked ? palette.highlight : palette.text
                 // Background color
                 background: Rectangle {
                     color: {
                         if (!submitButton.enabled)
                             return activePalette.button
+
+                        if (actionHeader.submitButtonState == NodeActions.ButtonState.STOPPABLE)
+                            return submitButton.hovered ? Colors.orange : Qt.darker(Colors.orange, 1.3)
                         return submitButton.hovered ? activePalette.highlight : activePalette.button
                     }
                     opacity: submitButton.hovered ? 1 : root._opacity
@@ -293,9 +329,49 @@ Item {
                     radius: 3
                 }
                 onClicked: {
-                    if (actionHeader.selectedNode) {
-                        root.submitRequest(actionHeader.selectedNode)
+                    switch (actionHeader.submitButtonState) {
+                        case NodeActions.ButtonState.STOPPABLE:
+                            root.stopSubmitRequest(actionHeader.selectedNode)
+                            break
+                        case NodeActions.ButtonState.LAUNCHABLE:
+                            root.submitRequest(actionHeader.selectedNode)
+                            actionHeader.updateProperties(actionHeader.selectedNode)
+                            break
+                        case NodeActions.ButtonState.DELETABLE:
+                            root.deleteDataRequest(actionHeader.selectedNode)
+                            root.submitRequest(actionHeader.selectedNode)
+                            break
+                        default:
+                            break
                     }
+                }
+            }
+
+            // Retry button (for farm submissions that have failed)
+            MaterialToolButton {
+                id: retryButton
+                font.pointSize: 16
+                text: MaterialIcons.cloud_sync
+                padding: 6
+                ToolTip.text: "Retry Submission On Render Farm"
+                ToolTip.visible: hovered
+                ToolTip.delay: 1000
+                visible: actionHeader.canRetryNode
+                enabled: visible
+
+                // Background color
+                background: Rectangle {
+                    color: {
+                        return retryButton.hovered ? activePalette.highlight : activePalette.button
+                    }
+                    opacity: retryButton.hovered ? 1 : root._opacity
+                    border.color: retryButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.3)
+                    border.width: 1
+                    radius: 3
+                }
+
+                onClicked: {
+                    root.retrySubmitRequest(actionHeader.selectedNode)
                 }
             }
         }

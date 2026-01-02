@@ -15,12 +15,14 @@ import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
+from meshroom.core import submitters
 from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, StopGraphVisit, StopBranchVisit
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory
 from meshroom.core.mtyping import PathLike
+from meshroom.core.submitter import BaseSubmittedJob, jobManager
 
 # Replace default encoder to support Enums
 
@@ -498,6 +500,7 @@ class Graph(BaseObject):
         node._name = uniqueName
         node.graph = self
         self._nodes.add(node)
+        node.chunksChanged.connect(self.updated)
 
     def addNode(self, node, uniqueName=None):
         """
@@ -1107,6 +1110,10 @@ class Graph(BaseObject):
                 raise StopBranchVisit()
 
         def finishVertex(vertex, graph):
+            if not vertex.chunks:
+                # Chunks have not been initialized
+                nodes.append(vertex)
+                return
             chunksToProcess = []
             for chunk in vertex.chunks:
                 if chunk.status.status is not Status.SUCCESS:
@@ -1468,6 +1475,19 @@ class Graph(BaseObject):
         # Now, update each individual node
         for node in self.nodes:
             node.updateDuplicates(nodesPerUid)
+    
+    def updateJobManagerWithNode(self, node):
+        if node._uid in jobManager._nodeToJob.keys():
+            return
+        jobInfo = node._nodeStatus.jobInfo
+        if not jobInfo:
+            return
+        jid, subName = jobInfo.get("jid"), jobInfo.get("submitterName")
+        for _subName, sub in submitters.items():
+            if _subName == subName:
+                job = sub.retrieveJob(int(jid))
+                jobManager.addJob(job, [node])
+                break
 
     def update(self):
         if not self._updateEnabled:
@@ -1480,6 +1500,7 @@ class Graph(BaseObject):
             self.updateStatusFromCache()
         for node in self.nodes:
             node.dirty = False
+            self.updateJobManagerWithNode(node)
 
         self.updateNodesPerUid()
 
@@ -1490,6 +1511,9 @@ class Graph(BaseObject):
             self.dirtyTopology = False
 
         self.updated.emit()
+    
+    def updateMonitoredFiles(self):
+        self.statusUpdated.emit()
 
     def markNodesDirty(self, fromNode):
         """
@@ -1619,6 +1643,7 @@ class Graph(BaseObject):
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
     updated = Signal()
+    statusUpdated = Signal()
     canComputeLeavesChanged = Signal()
     canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
 
@@ -1683,7 +1708,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
     graph.save()
 
     for node in nodes:
-        node.beginSequence(forceCompute)
+        node.initStatusOnCompute(forceCompute)
 
     for n, node in enumerate(nodes):
         try:
@@ -1734,11 +1759,19 @@ def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
         raise RuntimeError("Unknown Submitter: '{submitter}'. Available submitters are: '{allSubmitters}'.".format(
             submitter=submitter, allSubmitters=str(meshroom.core.submitters.keys())))
 
+    for node in nodesToProcess:
+        node.initStatusOnSubmit()
+        jobManager.resetNodeJob(node)
+
     try:
         res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
         if res:
+            if isinstance(res, BaseSubmittedJob):
+                jobManager.addJob(res, nodesToProcess)
+        else:
             for node in nodesToProcess:
-                node.initStatusOnSubmit()  # update node status
+                # TODO : Notify the node that there was an issue on submit
+                pass
     except Exception as exc:
         logging.error(f"Error on submit: {exc}")
 

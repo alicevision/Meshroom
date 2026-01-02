@@ -699,17 +699,38 @@ Item {
                     }
                     MenuItem {
                         text: "Stop Computation"
-                        enabled: nodeMenu.currentNode.canBeStopped()
+                        enabled: nodeMenu.currentNode.canBeStopped() && nodeMenu.currentNode.globalExecMode == "LOCAL"
                         visible: enabled
                         height: visible ? implicitHeight : 0
                         onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
                     }
                     MenuItem {
                         text: "Cancel Computation"
-                        enabled: nodeMenu.currentNode.canBeCanceled()
+                        enabled: nodeMenu.currentNode.canBeCanceled() && nodeMenu.currentNode.globalExecMode == "LOCAL"
                         visible: enabled
                         height: visible ? implicitHeight : 0
                         onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)
+                    }
+                    MenuItem {
+                        text: "Interrupt Job"
+                        enabled: nodeMenu.currentNode.canBeStopped() && nodeMenu.currentNode.globalExecMode == "EXTERN"
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.stopNode(nodeMenu.currentNode)
+                    }
+                    MenuItem {
+                        text: "Cancel Job"
+                        enabled: nodeMenu.currentNode.canBeCanceled() && nodeMenu.currentNode.globalExecMode == "EXTERN"
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.stopNode(nodeMenu.currentNode)
+                    }
+                    MenuItem {
+                        text: "Retry Error Tasks"
+                        enabled: nodeMenu.currentNode.globalExecMode == "EXTERN" && ["ERROR", "STOPPED", "KILLED"].includes(nodeMenu.currentNode.globalStatus)
+                        visible: enabled
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.restartJobErrorTasks(nodeMenu.currentNode)
                     }
                     MenuItem {
                         text: "Open Folder"
@@ -1093,13 +1114,23 @@ Item {
                 uigraph.cancelNodeComputation(node)
             }
         }
-        
+
         onDeleteDataRequest: function(node) {
-            uigraph.clearSelectedNodesData();
+            uigraph.clearSelectedNodesData()
         }
         
         onSubmitRequest: function(node) {
             root.submitRequest([node])
+        }
+
+        onStopSubmitRequest: function(node) {
+            if (node.canBeStopped() || node.canBeCanceled()) {
+                uigraph.stopNode(node)
+            }
+        }
+
+        onRetrySubmitRequest: function(node) {
+            uigraph.restartJobErrorTasks(node)
         }
     }
     

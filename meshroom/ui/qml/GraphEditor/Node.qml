@@ -496,10 +496,18 @@ Item {
                 // Node Chunks
                 NodeChunks {
                     visible: node.isComputableType
+                    targetNode: node
                     defaultColor: Colors.sysPalette.mid
                     implicitHeight: 3
                     width: parent.width
-                    model: node ? node.chunks : undefined
+                    model: {
+                        if (node && node.chunksCreated)
+                            return node.chunks
+                        else if (node && !node.chunksCreated)
+                            return node.chunkPlaceholder
+
+                        return undefined
+                    }
 
                     Rectangle {
                         anchors.fill: parent

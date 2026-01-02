@@ -31,7 +31,7 @@ def renameWritingToFinalPath(writingFilepath: str, filepath: str) -> str:
     if platform.system() == 'Windows':
         # On Windows, attempting to remove a file that is in use causes an exception to be raised.
         # So we may need multiple trials, if someone is reading it at the same time.
-        for i in range(20):
+        for _ in range(20):
             try:
                 os.remove(filepath)
                 # If remove is successful, we can stop the iterations
@@ -39,7 +39,6 @@ def renameWritingToFinalPath(writingFilepath: str, filepath: str) -> str:
             except OSError:
                 pass
     os.rename(writingFilepath, filepath)
-
 
 class Status(Enum):
     """
@@ -62,31 +61,37 @@ class ExecMode(Enum):
     EXTERN = auto()
 
 
-class StatusData(BaseObject):
-    """
-    """
-    dateTimeFormatting = '%Y-%m-%d %H:%M:%S.%f'
+# Simple structure for storing chunk information
+NodeChunkSetup = namedtuple("NodeChunks", ["blockSize", "fullSize", "nbBlocks"])
+
+class NodeStatusData(BaseObject):
+    __slots__ = ("nodeName", "nodeType", "status", "execMode", "packageName", "mrNodeType",
+                 "submitterSessionUid", "chunksBlockSize", "chunksFullSize", "chunksNbBlocks", "jobInfo")
 
     def __init__(self, nodeName='', nodeType='', packageName='',
                  mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
         super().__init__(parent)
-
         self.nodeName: str = nodeName
         self.nodeType: str = nodeType
         self.packageName: str = packageName
-        self.mrNodeType = mrNodeType
+        self.mrNodeType: str = mrNodeType
 
-        self.sessionUid: Optional[str] = None
+        # Session UID where the node was submitted
         self.submitterSessionUid: Optional[str] = None
 
-        self.execMode: ExecMode = ExecMode.NONE
+        self.reset()
 
+    def reset(self):
+        self.resetChunkInfo()
         self.resetDynamicValues()
 
-    def setNode(self, node):
-        """ Set the node information from one node instance. """
-        self.nodeName = node.name
-        self.setNodeType(node)
+    def resetChunkInfo(self):
+        self.chunks: NodeChunkSetup = None
+
+    def resetDynamicValues(self):
+        self.status: Status = Status.NONE
+        self.execMode: ExecMode = ExecMode.NONE
+        self.jobInfo: dict = {}
 
     def setNodeType(self, node):
         """
@@ -97,17 +102,136 @@ class StatusData(BaseObject):
         self.packageName = node.packageName
         self.mrNodeType = node.getMrNodeType()
 
-    def merge(self, other):
-        self.startDateTime = min(self.startDateTime, other.startDateTime)
-        self.endDateTime = max(self.endDateTime, other.endDateTime)
-        self.elapsedTime += other.elapsedTime
+    def setNode(self, node):
+        """ Set the node information from one node instance. """
+        self.nodeName = node.name
+        self.setNodeType(node)
 
-    def reset(self):
-        self.nodeName: str = ""
-        self.nodeType: str = ""
-        self.packageName: str = ""
-        self.mrNodeType: MrNodeType = MrNodeType.NONE
+    def setJob(self, jid, submitterName):
+        """ Set Job information on the node. """
+        self.jobInfo = {
+            "jid": str(jid),
+            "submitterName": str(submitterName),
+        }
+
+    @property
+    def jobName(self):
+        if self.jobInfo:
+            return f"{self.jobInfo['submitterName']}<{self.jobInfo['jid']}>"
+        else:
+            return "UNKNOWN"
+
+    def initExternSubmit(self):
+        """
+        When submitting a node, we reset the status information to ensure that we do not keep
+        outdated information.
+        """
+        self.resetDynamicValues()
+        self.submitterSessionUid = meshroom.core.sessionUid
+        self.status = Status.SUBMITTED
+        self.execMode = ExecMode.EXTERN
+
+    def initLocalSubmit(self):
+        """
+        When submitting a node, we reset the status information to ensure that we do not keep
+        outdated information.
+        """
+        self.resetDynamicValues()
+        self.submitterSessionUid = meshroom.core.sessionUid
+        self.status = Status.SUBMITTED
+        self.execMode = ExecMode.LOCAL
+
+    def toDict(self):
+        keys = list(self.__slots__) or []
+        d = {key:getattr(self, key, 0) for key in keys}
+        for _k, _v in d.items():
+            if isinstance(_v, Enum):
+                d[_k] = _v.name
+        if self.chunks:
+            d["chunksBlockSize"] = self.chunks.blockSize
+            d["chunksFullSize"] = self.chunks.fullSize
+            d["chunksNbBlocks"] = self.chunks.nbBlocks
+        return d
+
+    def fromDict(self, d):
+        self.reset()
+        if "mrNodeType" in d:
+            self.mrNodeType = MrNodeType[d.pop("mrNodeType")]
+        if "chunksBlockSize" in d and "chunksFullSize" in d and "chunksNbBlocks" in d:
+            blockSize = int(d.pop("chunksBlockSize") or 0)
+            fullSize = int(d.pop("chunksFullSize") or 0)
+            nbBlocks = int(d.pop("chunksNbBlocks") or 0)
+            self.chunks = NodeChunkSetup(blockSize, fullSize, nbBlocks)
+        if "status" in d:
+            self.status: Status = Status[d.pop("status")]
+        if "execMode" in d:
+            self.execMode = ExecMode[d.pop("execMode")]
+        for _key, _value in d.items():
+            if _key in self.__slots__:
+                setattr(self, _key, _value)
+
+    def loadFromCache(self, statusFile):
+        self.reset()
+        try:
+            with open(statusFile) as jsonFile:
+                statusData = json.load(jsonFile)
+            self.fromDict(statusData)
+        except Exception as e:
+            logging.warning(f"(loadFromCache) {self.nodeName}: Error while loading status file {statusFile}: {e}")
+            self.reset()
+
+    @property
+    def nbChunks(self):
+        nbBlocks = self.chunks.nbBlocks if self.chunks else -1
+        return nbBlocks
+
+    @property
+    def fullSize(self):
+        fullSize = self.chunks.fullSize if self.chunks else -1
+        return fullSize
+
+    def getChunkRanges(self):
+        if not self.chunks:
+            return []
+        ranges = []
+        for i in range(self.chunks.nbBlocks):
+            ranges.append(desc.Range(
+                iteration=i,
+                blockSize=self.chunks.blockSize,
+                fullSize=self.chunks.fullSize,
+                nbBlocks=self.chunks.nbBlocks
+            ))
+        return ranges
+
+    def setChunks(self, chunks):
+        blockSize, fullSize, nbBlocks = 1, 1, 1
+        for c in chunks:
+            r = c.range
+            blockSize, fullSize, nbBlocks = r.blockSize, r.fullSize, r.nbBlocks
+            break
+        self.chunks = NodeChunkSetup(blockSize, fullSize, nbBlocks)
+
+
+class ChunkStatusData(BaseObject):
+    """
+    """
+    dateTimeFormatting = '%Y-%m-%d %H:%M:%S.%f'
+
+    __slots__ = (
+        "nodeName", "mrNodeType", "computeSessionUid", "execMode", "status",
+        "commandLine", "startDateTime", "endDateTime", "elapsedTime", "hostname"
+    )
+
+    def __init__(self, nodeName='', mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
+        super().__init__(parent)
+
+        self.nodeName: str = nodeName
+        self.mrNodeType = mrNodeType
+
+        self.computeSessionUid: Optional[str] = None    # Session where computation is done
+
         self.execMode: ExecMode = ExecMode.NONE
+
         self.resetDynamicValues()
 
     def resetDynamicValues(self):
@@ -119,9 +243,25 @@ class StatusData(BaseObject):
         self.elapsedTime: float = 0.0
         self.hostname: str = ""
 
+    def setNode(self, node):
+        """ Set the node information from one node instance. """
+        self.nodeName = node.name
+        self.mrNodeType = node.getMrNodeType()
+
+    def merge(self, other):
+        self.startDateTime = min(self.startDateTime, other.startDateTime)
+        self.endDateTime = max(self.endDateTime, other.endDateTime)
+        self.elapsedTime += other.elapsedTime
+
+    def reset(self):
+        self.nodeName: str = ""
+        self.mrNodeType: MrNodeType = MrNodeType.NONE
+        self.execMode: ExecMode = ExecMode.NONE
+        self.resetDynamicValues()
+
     def initStartCompute(self):
         import platform
-        self.sessionUid = meshroom.core.sessionUid
+        self.computeSessionUid = meshroom.core.sessionUid
         self.hostname = platform.node()
         self._startTime = time.time()
         self.startDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
@@ -139,8 +279,7 @@ class StatusData(BaseObject):
         self.resetDynamicValues()
         self.initStartCompute()
         assert self.mrNodeType == MrNodeType.NODE
-        self.sessionUid = None
-        self.submitterSessionUid = meshroom.core.sessionUid
+        self.computeSessionUid = None
 
     def initExternSubmit(self):
         """
@@ -148,8 +287,7 @@ class StatusData(BaseObject):
         outdated information.
         """
         self.resetDynamicValues()
-        self.sessionUid = None
-        self.submitterSessionUid = meshroom.core.sessionUid
+        self.computeSessionUid = None
         self.status = Status.SUBMITTED
         self.execMode = ExecMode.EXTERN
 
@@ -159,13 +297,12 @@ class StatusData(BaseObject):
         outdated information.
         """
         self.resetDynamicValues()
-        self.sessionUid = None
-        self.submitterSessionUid = meshroom.core.sessionUid
+        self.computeSessionUid = None
         self.status = Status.SUBMITTED
         self.execMode = ExecMode.LOCAL
 
     def initEndCompute(self):
-        self.sessionUid = meshroom.core.sessionUid
+        self.computeSessionUid = meshroom.core.sessionUid
         self.endDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
         if self._startTime != None:
             self.elapsedTime = time.time() - self._startTime
@@ -175,38 +312,24 @@ class StatusData(BaseObject):
         return str(datetime.timedelta(seconds=self.elapsedTime))
 
     def toDict(self):
-        d = self.__dict__.copy()
-        d["elapsedTimeStr"] = self.elapsedTimeStr
-
-        # Skip some attributes (some are from BaseObject)
-        d.pop("destroyed", None)
-        d.pop("objectNameChanged", None)
-        d.pop("_parent", None)
-        d.pop("_startTime", None)
-
+        keys = list(self.__slots__) or []
+        d = {key:getattr(self, key) for key in keys}
+        for _k, _v in d.items():
+            if isinstance(_v, Enum):
+                d[_k] = _v.name
         return d
 
     def fromDict(self, d):
-        self.status = d.get("status", Status.NONE)
-        if not isinstance(self.status, Status):
-            self.status = Status[self.status]
-        self.execMode = d.get("execMode", ExecMode.NONE)
-        if not isinstance(self.execMode, ExecMode):
-            self.execMode = ExecMode[self.execMode]
-        self.mrNodeType = d.get("mrNodeType", MrNodeType.NONE)
-        if not isinstance(self.mrNodeType, MrNodeType):
-            self.mrNodeType = MrNodeType[self.mrNodeType]
-
-        self.nodeName = d.get("nodeName", "")
-        self.nodeType = d.get("nodeType", "")
-        self.packageName = d.get("packageName", "")
-        self.commandLine = d.get("commandLine", "")
-        self.startDateTime = d.get("startDateTime", "")
-        self.endDateTime = d.get("endDateTime", "")
-        self.elapsedTime = d.get("elapsedTime", 0)
-        self.hostname = d.get("hostname", "")
-        self.sessionUid = d.get("sessionUid", "")
-        self.submitterSessionUid = d.get("submitterSessionUid", "")
+        self.reset()
+        if "status" in d:
+            self.status: Status = Status[d.pop("status")]
+        if "execMode" in d:
+            self.execMode = ExecMode[d.pop("execMode")]
+        if "mrNodeType" in d:
+            self.mrNodeType = MrNodeType[d.pop("mrNodeType")]
+        for _key, _value in d.items():
+            if _key in self.__slots__:
+                setattr(self, _key, _value)
 
 
 class LogManager:
@@ -337,13 +460,15 @@ class NodeChunk(BaseObject):
         self.node = node
         self.range = range
         self._logManager = None
-        self._status: StatusData = StatusData(node.name, node.nodeType, node.packageName,
-                                              node.getMrNodeType())
+        self._status: ChunkStatusData = ChunkStatusData(nodeName=node.name, mrNodeType=node.getMrNodeType())
         self.statistics: stats.Statistics = stats.Statistics()
         self.statusFileLastModTime = -1
         self.subprocess = None
         # Notify update in filepaths when node's internal folder changes
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
+
+    def __repr__(self):
+        return f"<NodeChunk {hex(id(self))}>"
 
     @property
     def index(self):
@@ -360,46 +485,58 @@ class NodeChunk(BaseObject):
     def logManager(self):
         if self._logManager is None:
             logger = logging.getLogger(self.node.getName())
-            self._logManager = LogManager(logger, self.logFile)
+            self._logManager = LogManager(logger, self.getLogFile())
         return self._logManager
 
-    @property
-    def statusName(self):
+    def getStatusName(self):
         return self._status.status.name
 
     @property
     def logger(self):
         return self.logManager.logger
 
-    @property
-    def execModeName(self):
+    def getExecModeName(self):
         return self._status.execMode.name
+
+    def shouldMonitorChanges(self):
+        """
+        Check whether we should monitor changes in minimal mode.
+        Only chunks that are run externally or local_isolated should be monitored,
+        when run locally, status changes are already notified.
+        Chunks with an ERROR status may be re-submitted externally and should thus still be
+        monitored.
+        """
+        return (self.isExtern() and self._status.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or \
+               (self.node.getMrNodeType() == MrNodeType.NODE and self._status.status in (Status.SUBMITTED, Status.RUNNING))
 
     def updateStatusFromCache(self):
         """
-        Update node status based on status file content/existence.
+        Update chunk status based on status file content/existence.
         """
-        statusFile = self.statusFile
+        # TODO : If this is a placeholder chunk
+        # Then we shouldn't do anything here
+
+        statusFile = self.getStatusFile()
         oldStatus = self._status.status
         # No status file => reset status to Status.None
         if not os.path.exists(statusFile):
             self.statusFileLastModTime = -1
             self._status.reset()
-            self._status.setNodeType(self.node)
+            self._status.setNode(self.node)
         else:
             try:
                 with open(statusFile) as jsonFile:
                     statusData = json.load(jsonFile)
-                # logging.debug(f"updateStatusFromCache({self.node.name}): From status {self.status.status} to {statusData['status']}")
+                # logging.debug(f"updateStatusFromCache({self.node.name}): From status {self._status.status} to {statusData['status']}")
                 self._status.fromDict(statusData)
                 self.statusFileLastModTime = os.path.getmtime(statusFile)
             except Exception as exc:
                 logging.debug(f"updateStatusFromCache({self.node.name}): Error while loading status file {statusFile}: {exc}")
                 self.statusFileLastModTime = -1
                 self._status.reset()
-                self._status.setNodeType(self.node)
+                self._status.setNode(self.node)
 
-        if oldStatus != self.status.status:
+        if oldStatus != self._status.status:
             self.statusChanged.emit()
 
     def _getFile(self, fileType: str):
@@ -415,16 +552,13 @@ class NodeChunk(BaseObject):
                 return os.path.join(self.node.internalFolder, fileType)
         return os.path.join(self.node.internalFolder, str(chunkIndex) + "." + fileType)
 
-    @property
-    def statusFile(self):
+    def getStatusFile(self):
         return self._getFile("status")
 
-    @property
-    def statisticsFile(self):
+    def getStatisticsFile(self):
         return self._getFile("statistics")
 
-    @property
-    def logFile(self):
+    def getLogFile(self):
         return self._getFile("log")
 
     def saveStatusFile(self):
@@ -432,7 +566,7 @@ class NodeChunk(BaseObject):
         Write node status on disk.
         """
         data = self._status.toDict()
-        statusFilepath = self.statusFile
+        statusFilepath = self.getStatusFile()
         folder = os.path.dirname(statusFilepath)
         os.makedirs(folder, exist_ok=True)
 
@@ -446,6 +580,8 @@ class NodeChunk(BaseObject):
         Upgrade node status file based on the current status.
         """
         self.saveStatusFile()
+        # We want to make sure the nodeStatus is up to date too
+        self.node.upgradeStatusFile()
         self.statusChanged.emit()
 
     def upgradeStatusTo(self, newStatus, execMode=None):
@@ -461,7 +597,7 @@ class NodeChunk(BaseObject):
         """
         """
         oldTimes = self.statistics.times
-        statisticsFile = self.statisticsFile
+        statisticsFile = self.getStatisticsFile()
         if not os.path.exists(statisticsFile):
             return
         with open(statisticsFile) as jsonFile:
@@ -472,7 +608,7 @@ class NodeChunk(BaseObject):
 
     def saveStatistics(self):
         data = self.statistics.toDict()
-        statisticsFilepath = self.statisticsFile
+        statisticsFilepath = self.getStatisticsFile()
         folder = os.path.dirname(statisticsFilepath)
         os.makedirs(folder, exist_ok=True)
         statisticsFilepathWriting = getWritingFilepath(statisticsFilepath)
@@ -574,9 +710,6 @@ class NodeChunk(BaseObject):
         self.node.updateOutputAttr()
 
     def stopProcess(self):
-        if self.isExtern():
-            raise ValueError("Cannot stop process: node is computed externally (another instance of Meshroom)")
-
         # Ensure that we are up-to-date
         self.updateStatusFromCache()
 
@@ -611,20 +744,20 @@ class NodeChunk(BaseObject):
             return True
         elif self._status.execMode == ExecMode.LOCAL:
             if self._status.status in (Status.SUBMITTED, Status.RUNNING):
-                return meshroom.core.sessionUid not in (self._status.submitterSessionUid, self._status.sessionUid)
+                return meshroom.core.sessionUid not in (self.node._nodeStatus.submitterSessionUid, self._status.computeSessionUid)
             return False
         return False
 
     statusChanged = Signal()
     status = Property(Variant, lambda self: self._status, notify=statusChanged)
-    statusName = Property(str, statusName.fget, notify=statusChanged)
-    execModeName = Property(str, execModeName.fget, notify=statusChanged)
+    statusName = Property(str, getStatusName, notify=statusChanged)
+    execModeName = Property(str, getExecModeName, notify=statusChanged)
     statisticsChanged = Signal()
 
     nodeFolderChanged = Signal()
-    statusFile = Property(str, statusFile.fget, notify=nodeFolderChanged)
-    logFile = Property(str, logFile.fget, notify=nodeFolderChanged)
-    statisticsFile = Property(str, statisticsFile.fget, notify=nodeFolderChanged)
+    statusFile = Property(str, getStatusFile, notify=nodeFolderChanged)
+    logFile = Property(str, getLogFile, notify=nodeFolderChanged)
+    statisticsFile = Property(str, getStatisticsFile, notify=nodeFolderChanged)
 
     nodeName = Property(str, lambda self: self.node.name, constant=True)
     statusNodeName = Property(str, lambda self: self._status.nodeName, notify=statusChanged)
@@ -677,7 +810,9 @@ class BaseNode(BaseObject):
         self._name: str = f"_{nodeType}_{uuid.uuid1()}"
         self.graph = None
         self.dirty: bool = True  # whether this node's outputs must be re-evaluated on next Graph update
-        self._chunks = ListModel(parent=self)
+        self._chunks: list[NodeChunk] = ListModel(parent=self)
+        self._chunksCreated = False  # Only initialize chunks on compute
+        self._chunkPlaceholder: list[NodeChunk] = ListModel(parent=self)  # Placeholder chunk for nodes with dynamic ones
         self._uid: str = uid
         self._expVars: dict = {}
         self._size: int = 0
@@ -690,6 +825,10 @@ class BaseNode(BaseObject):
         self._locked: bool = False
         self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
         self._hasDuplicates: bool = False
+
+        self._nodeStatus: NodeStatusData = NodeStatusData(self._name, nodeType, self.packageName,
+                                                          self.getMrNodeType())
+        self.nodeStatusFileLastModTime = -1
 
         self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)
 
@@ -1083,13 +1222,11 @@ class BaseNode(BaseObject):
     def isParallelized(self):
         return bool(self.nodeDesc.parallelization) if meshroom.useMultiChunks else False
 
-    @property
-    def nbParallelizationBlocks(self):
-        return len(self._chunks)
-
     def hasStatus(self, status: Status):
-        if not self._chunks:
-            return status == Status.INPUT
+        if not self._chunks or not self._chunksCreated:
+            if self.isInputNode:
+                return status == Status.INPUT
+            return status == Status.NONE
         for chunk in self._chunks:
             if chunk.status.status != status:
                 return False
@@ -1112,6 +1249,10 @@ class BaseNode(BaseObject):
         """ Delete this Node internal folder.
         Status will be reset to Status.NONE
         """
+        # Clear cache
+        self._nodeStatus.reset()
+        # Reset chunks
+        self._resetChunks()
         if self.internalFolder and os.path.exists(self.internalFolder):
             try:
                 shutil.rmtree(self.internalFolder)
@@ -1132,16 +1273,16 @@ class BaseNode(BaseObject):
         return min(dateTime) if len(dateTime) != 0 else ""
 
     def isAlreadySubmitted(self):
-        for chunk in self._chunks:
-            if chunk.isAlreadySubmitted():
-                return True
-        return False
+        if self._chunksCreated:
+            return any(c.isAlreadySubmitted() for c in self._chunks)
+        else:
+            return self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING)
 
     def isAlreadySubmittedOrFinished(self):
-        for chunk in self._chunks:
-            if not chunk.isAlreadySubmittedOrFinished():
-                return False
-        return True
+        if self._chunksCreated:
+            return all(c.isAlreadySubmittedOrFinished() for c in self._chunks)
+        else:
+            return self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS)
 
     @Slot(result=bool)
     def isSubmittedOrRunning(self):
@@ -1149,6 +1290,8 @@ class BaseNode(BaseObject):
         Return True if all chunks are at least submitted and there is one running chunk,
         False otherwise.
         """
+        if not self._chunksCreated:
+            return False
         if not self.isAlreadySubmittedOrFinished():
             return False
         for chunk in self._chunks:
@@ -1167,15 +1310,14 @@ class BaseNode(BaseObject):
         Return True if all chunks of this Node is either finished or running, False
         otherwise.
         """
+        if not self._chunks:
+            return False
         return all(chunk.isFinishedOrRunning() for chunk in self._chunks)
 
     @Slot(result=bool)
     def isPartiallyFinished(self):
         """ Return True is at least one chunk of this Node is finished, False otherwise. """
         return any(chunk.isFinished() for chunk in self._chunks)
-
-    def alreadySubmittedChunks(self):
-        return [ch for ch in self._chunks if ch.isAlreadySubmitted()]
 
     def isExtern(self):
         """
@@ -1188,7 +1330,11 @@ class BaseNode(BaseObject):
         interrupted, its execution mode will always be local, even if computations resume
         externally.
         """
-        if len(self._chunks) == 0:
+        if not self._chunksCreated:
+            if self._nodeStatus.execMode == ExecMode.EXTERN:
+                return True
+            elif self._nodeStatus.execMode == ExecMode.LOCAL and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
+                return meshroom.core.sessionUid != self._nodeStatus.submitterSessionUid
             return False
         return any(chunk.isExtern() for chunk in self._chunks)
 
@@ -1202,26 +1348,54 @@ class BaseNode(BaseObject):
             This must be used with caution. This could lead to inconsistent node status
             if the graph is still being computed.
         """
-        for chunk in self._chunks:
-            if chunk.isAlreadySubmitted():
-                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+        if self._chunksCreated:
+            for chunk in self._chunks:
+                if chunk.isAlreadySubmitted():
+                    chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+        else:
+            if self.isAlreadySubmitted():
+                self.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+        self.globalStatusChanged.emit()
 
     def clearLocallySubmittedChunks(self):
         """ Reset all locally submitted chunks to Status.NONE. """
-        for chunk in self._chunks:
-            if chunk.isAlreadySubmitted() and not chunk.isExtern():
-                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+        if self._chunksCreated:
+            for chunk in self._chunks:
+                if chunk.isAlreadySubmitted() and not chunk.isExtern():
+                    chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+        else:
+            if self.isAlreadySubmitted() and not self.isExtern():
+                self.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+        self.globalStatusChanged.emit()
 
-    def upgradeStatusTo(self, newStatus):
+    def upgradeStatusTo(self, newStatus, execMode=None):
         """ Upgrade node to the given status and save it on disk. """
-        for chunk in self._chunks:
-            chunk.upgradeStatusTo(newStatus)
+        if self._chunksCreated:
+            for chunk in self._chunks:
+                chunk.upgradeStatusTo(newStatus)
+        else:
+            if execMode is not None:
+                self._nodeStatus.execMode = execMode
+            self._nodeStatus.status = newStatus
+            self.upgradeStatusFile()
+            chunkPlaceholder = NodeChunk(self, desc.computation.Range())
+            chunkPlaceholder._status.execMode = self._nodeStatus.execMode
+            chunkPlaceholder._status.status = self._nodeStatus.status
+            self.chunkPlaceholder.setObjectList([chunkPlaceholder])
+            self.chunksChanged.emit()
+        self.globalStatusChanged.emit()
 
     def updateStatisticsFromCache(self):
         for chunk in self._chunks:
             chunk.updateStatisticsFromCache()
 
-    def _updateChunks(self):
+    def _resetChunks(self):
+        pass
+
+    def createChunksFromCache(self):
+        pass
+
+    def _createChunks(self):
         pass
 
     def _updateNodeSize(self):
@@ -1308,10 +1482,11 @@ class BaseNode(BaseObject):
         for attr in self._attributes:
             attr.updateInternals()
 
+        # Reset chunks splitting
+        self._resetChunks()
+
         self._updateNodeSize()
 
-        # Update chunks splitting
-        self._updateChunks()
         # Retrieve current internal folder (if possible)
         try:
             folder = self.internalFolder
@@ -1339,30 +1514,128 @@ class BaseNode(BaseObject):
     def sourceCodeFolder(self):
         return self._sourceCodeFolder
 
-    def updateStatusFromCache(self):
+    @property
+    def nodeStatusFile(self):
+        return os.path.join(self.graph.cacheDir, self.internalFolder, "nodeStatus")
+
+    def shouldMonitorChanges(self):
+        """ Check whether we should monitor changes in minimal mode.
+        Only chunks that are run externally or local_isolated should be monitored,
+        when run locally, status changes are already notified.
+        Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
+        """
+        if self._chunksCreated:
+            # Only monitor when chunks are not created (in this case monitor chunk status files instead)
+            return False
+        return (self.isExtern() and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or \
+               (self.getMrNodeType() == MrNodeType.NODE and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING))
+
+    def updateNodeStatusFromCache(self):
         """
         Update node status based on status file content/existence.
+        # TODO : integrate nodeStatusFileLastModTime ?
+        Returns True if a change on the chunk setup has been detected
         """
+        chunksRangeHasChanged = False
+        if os.path.exists(self.nodeStatusFile):
+            oldChunkSetup = self._nodeStatus.chunks
+            self._nodeStatus.loadFromCache(self.nodeStatusFile)
+            if self._nodeStatus.chunks != oldChunkSetup:
+                chunksRangeHasChanged = True
+            self.nodeStatusFileLastModTime = os.path.getmtime(self.nodeStatusFile)
+        else:
+            # No status file => reset status to Status.None
+            self.nodeStatusFileLastModTime = -1
+            self._nodeStatus.reset()
+        self._nodeStatus.setNodeType(self)
+        return chunksRangeHasChanged
+
+    def updateStatusFromCache(self):
+        """ Update node status based on status file content/existence. """
+        # Update nodeStatus from cache
+        chunkChanged = self.updateNodeStatusFromCache()
+        # Create chunks if we found info on them on the node cache
+        if chunkChanged and self._nodeStatus.nbChunks > 0:
+            # Update number of chunks
+            try:
+                self.createChunksFromCache()
+            except Exception as e:
+                logging.warning(f"Could not create chunks from cache: {e}")
+                return
         s = self.globalStatus
-        for chunk in self._chunks:
-            chunk.updateStatusFromCache()
-        # logging.warning(f"updateStatusFromCache: {self.name}, status: {s} => {self.globalStatus}")
+        if self._chunksCreated:
+            for chunk in self._chunks:
+                chunk.updateStatusFromCache()
+        else:
+            # Restore placeholder chunk if needed
+            chunkPlaceholder = NodeChunk(self, desc.computation.Range())
+            chunkPlaceholder._status.execMode = self._nodeStatus.execMode
+            chunkPlaceholder._status.status = self._nodeStatus.status
+            self._chunkPlaceholder.setObjectList([chunkPlaceholder])
+        # logging.debug(f"updateStatusFromCache: {self.name}, status: {s} => {self.globalStatus}")
         self.updateOutputAttr()
+
+    def upgradeStatusFile(self):
+        """ Write node status on disk. """
+        # Make sure the node has the globalStatus before saving it
+        self._nodeStatus.status = self.getGlobalStatus()
+        data = self._nodeStatus.toDict()
+        statusFilepath = self.nodeStatusFile
+        folder = os.path.dirname(statusFilepath)
+        os.makedirs(folder, exist_ok=True)
+        statusFilepathWriting = getWritingFilepath(statusFilepath)
+        with open(statusFilepathWriting, 'w') as jsonFile:
+            json.dump(data, jsonFile, indent=4)
+        renameWritingToFinalPath(statusFilepathWriting, statusFilepath)
+
+    def setJobId(self, jid, submitterName):
+        self._nodeStatus.setJob(jid, submitterName)
+        self.upgradeStatusFile()
 
     def initStatusOnSubmit(self, forceCompute=False):
         """ Prepare chunks status when the node is in a graph that was submitted """
+        hasChunkToLaunch = False
+        if not self._chunksCreated:
+            hasChunkToLaunch = True
         for chunk in self._chunks:
-            if forceCompute or chunk.status.status != Status.SUCCESS:
+            if forceCompute or chunk._status.status != Status.SUCCESS:
+                hasChunkToLaunch = True
                 chunk._status.setNode(self)
                 chunk._status.initExternSubmit()
                 chunk.upgradeStatusFile()
+        if hasChunkToLaunch:
+            self._nodeStatus.setNode(self)
+            self._nodeStatus.initExternSubmit()
+            self.upgradeStatusFile()
+            self.globalStatusChanged.emit()
+            if self._nodeStatus.execMode == ExecMode.EXTERN and self._nodeStatus.status in (Status.RUNNING, Status.SUBMITTED):
+                chunkPlaceholder = NodeChunk(self, desc.computation.Range())
+                chunkPlaceholder._status.execMode = self._nodeStatus.execMode
+                chunkPlaceholder._status.status = self._nodeStatus.status
+                self._chunkPlaceholder.setObjectList([chunkPlaceholder])
+                self.chunksChanged.emit()
 
-    def beginSequence(self, forceCompute=False):
+    def initStatusOnCompute(self, forceCompute=False):
+        hasChunkToLaunch = False
+        if not self._chunksCreated:
+            hasChunkToLaunch = True
         for chunk in self._chunks:
-            if forceCompute or (chunk.status.status not in (Status.RUNNING, Status.SUCCESS)):
+            if forceCompute or (chunk._status.status not in (Status.RUNNING, Status.SUCCESS)):
+                hasChunkToLaunch = True
                 chunk._status.setNode(self)
                 chunk._status.initLocalSubmit()
                 chunk.upgradeStatusFile()
+        if hasChunkToLaunch:
+            self._nodeStatus.setNode(self)
+            self._nodeStatus.initLocalSubmit()
+            self.upgradeStatusFile()
+            self.globalStatusChanged.emit()
+            if self._nodeStatus.execMode == ExecMode.LOCAL and self._nodeStatus.status in (Status.RUNNING, Status.SUBMITTED):
+                chunkPlaceholder = NodeChunk(self, desc.computation.Range())
+                chunkPlaceholder._status.execMode = self._nodeStatus.execMode
+                chunkPlaceholder._status.status = self._nodeStatus.status
+                self._chunkPlaceholder.setObjectList([chunkPlaceholder])
+                self.chunksChanged.emit()
 
     def processIteration(self, iteration):
         self._chunks[iteration].process()
@@ -1471,8 +1744,15 @@ class BaseNode(BaseObject):
 
     def stopComputation(self):
         """ Stop the computation of this node. """
-        for chunk in self._chunks.values():
-            chunk.stopProcess()
+        if self._chunks:
+            for chunk in self._chunks.values():
+                chunk.stopProcess()
+        else:
+            # Ensure that we are up-to-date
+            self.updateNodeStatusFromCache()
+            # The only status possible here is submitted
+            if self._nodeStatus.status is Status.SUBMITTED:
+                self.upgradeStatusTo(Status.NONE)
 
     def getGlobalStatus(self):
         """
@@ -1483,12 +1763,15 @@ class BaseNode(BaseObject):
         """
         if isinstance(self.nodeDesc, desc.InputNode):
             return Status.INPUT
+        if not self._chunksCreated:
+            # Get status from nodeStatus
+            return self._nodeStatus.status
         if not self._chunks:
             return Status.NONE
         if len( self._chunks) == 1:
-            return self._chunks[0].status.status
+            return self._chunks[0]._status.status
 
-        chunksStatus = [chunk.status.status for chunk in self._chunks]
+        chunksStatus = [chunk._status.status for chunk in self._chunks]
 
         anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
                  Status.RUNNING, Status.SUBMITTED)
@@ -1503,18 +1786,18 @@ class BaseNode(BaseObject):
 
         return Status.NONE
 
-    @Slot(result=StatusData)
+    @Slot(result=ChunkStatusData)
     def getFusedStatus(self):
         if not self._chunks:
-            return StatusData()
-        fusedStatus = StatusData()
-        fusedStatus.fromDict(self._chunks[0].status.toDict())
+            return ChunkStatusData()
+        fusedStatus = ChunkStatusData()
+        fusedStatus.fromDict(self._chunks[0]._status.toDict())
         for chunk in self._chunks[1:]:
-            fusedStatus.merge(chunk.status)
+            fusedStatus.merge(chunk._status)
         fusedStatus.status = self.getGlobalStatus()
         return fusedStatus
 
-    @Slot(result=StatusData)
+    @Slot(result=ChunkStatusData)
     def getRecursiveFusedStatus(self):
         fusedStatus = self.getFusedStatus()
         nodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
@@ -1530,10 +1813,21 @@ class BaseNode(BaseObject):
 
     @property
     def globalExecMode(self):
+        if not self._chunksCreated:
+            return self._nodeStatus.execMode.name
         if len(self._chunks):
-            return self._chunks.at(0).execModeName
+            return self._chunks.at(0).getExecModeName()
         else:
             return ExecMode.NONE
+
+    def _getJobName(self):
+        execMode = self._nodeStatus.execMode
+        if execMode == ExecMode.LOCAL:
+            return "LOCAL"
+        elif execMode == ExecMode.EXTERN:
+            return self._nodeStatus.jobName
+        else:
+            return "NONE"
 
     def getChunks(self) -> list[NodeChunk]:
         return self._chunks
@@ -1649,27 +1943,13 @@ class BaseNode(BaseObject):
             self._hasDuplicates = bool(len(newList))
             self.hasDuplicatesChanged.emit()
 
-    def statusInThisSession(self) -> bool:
-        if not self._chunks:
-            return False
-        for chunk in self._chunks:
-            if chunk.status.sessionUid != meshroom.core.sessionUid:
-                return False
-        return True
-
-    def submitterStatusInThisSession(self) -> bool:
-        if not self._chunks:
-            return False
-        for chunk in self._chunks:
-            if chunk.status.submitterSessionUid != meshroom.core.sessionUid:
-                return False
-        return True
-
     def initFromThisSession(self) -> bool:
-        if len(self._chunks) == 0:
-            return False
+        """ Check if the node was submitted from the current session """
+        if not self._chunksCreated or not self._chunks:
+            return meshroom.core.sessionUid == self._nodeStatus.submitterSessionUid
         for chunk in self._chunks:
-            if meshroom.core.sessionUid not in (chunk.status.sessionUid, chunk.status.submitterSessionUid):
+            # Technically the check on chunk._status.computeSessionUid is useless
+            if meshroom.core.sessionUid not in (chunk._status.computeSessionUid, self._nodeStatus.submitterSessionUid):
                 return False
         return True
 
@@ -1685,29 +1965,49 @@ class BaseNode(BaseObject):
 
     @Slot(result=bool)
     def canBeStopped(self) -> bool:
+        """
+        Return True if this node can be stopped, False otherwise. A node can be stopped if:
+        - it has the "RUNNING" status (it is currently being computed)
+        - it is executed locally and started from this Meshroom session OR it is executed externally on a render farm
+          (and is thus associated to a job name). A node that is executed externally but without an associated job is
+          likely a node that was started from another Meshroom instance, and thus cannot be stopped from this one.
+        """
         if not self.isComputableType:
             return False
         if self.isCompatibilityNode:
             return False
         # Only locked nodes running in local with the same
-        # sessionUid as the Meshroom instance can be stopped
-        return (self.getGlobalStatus() == Status.RUNNING and
-                self.globalExecMode == ExecMode.LOCAL.name and
-                self.isMainNode() and
-                self.initFromThisSession())
+        # computeSessionUid as the Meshroom instance can be stopped
+        return (self.getGlobalStatus() == Status.RUNNING and self.isMainNode() and
+                (
+                    (self.globalExecMode == ExecMode.LOCAL.name and self.initFromThisSession())
+                    or
+                    (self.globalExecMode == ExecMode.EXTERN.name and self._nodeStatus.jobName != "UNKNOWN")
+                )
+        )
 
     @Slot(result=bool)
     def canBeCanceled(self) -> bool:
+        """
+        Return True if this node can be canceled, False otherwise. A node can be canceled if:
+        - it has the "SUBMITTED" status (it is not running yet, but is expected to be in the near future)
+        - it is executed locally and started from this Meshroom session OR it is executed externally on a render farm
+          (and is thus associated to a job name). A node that is executed externally but without an associated job is
+          likely a node that was started from another Meshroom instance, and thus cannot be canceled from this one.
+        """
         if not self.isComputableType:
             return False
         if self.isCompatibilityNode:
             return False
         # Only locked nodes submitted in local with the same
-        # sessionUid as the Meshroom instance can be canceled
-        return (self.getGlobalStatus() == Status.SUBMITTED and
-                self.globalExecMode == ExecMode.LOCAL.name and
-                self.isMainNode() and
-                self.initFromThisSession())
+        # computeSessionUid as the Meshroom instance can be canceled
+        return (self.getGlobalStatus() == Status.SUBMITTED and self.isMainNode() and
+                (
+                    (self.globalExecMode == ExecMode.LOCAL.name and self.initFromThisSession())
+                    or
+                    (self.globalExecMode == ExecMode.EXTERN.name and self._nodeStatus.jobName != "UNKNOWN")
+                )
+        )
 
     def hasImageOutputAttribute(self) -> bool:
         """
@@ -1755,6 +2055,9 @@ class BaseNode(BaseObject):
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
     nodeInfo = Property(Variant, getNodeInfo, constant=True)
+    nodeStatusChanged = Signal()
+    nodeStatus = Property(Variant, lambda self: self._nodeStatus, notify=nodeStatusChanged)
+    nodeStatusNodeName = Property(str, lambda self: self._nodeStatus.nodeName, notify=nodeStatusChanged)
     positionChanged = Signal()
     position = Property(Variant, position.fget, position.fset, notify=positionChanged)
     x = Property(float, lambda self: self._position.x, notify=positionChanged)
@@ -1772,13 +2075,17 @@ class BaseNode(BaseObject):
     depthChanged = Signal()
     depth = Property(int, depth.fget, notify=depthChanged)
     minDepth = Property(int, minDepth.fget, notify=depthChanged)
+    chunksCreatedChanged = Signal()
+    chunksCreated = Property(bool, lambda self: self._chunksCreated, notify=chunksCreatedChanged)
     chunksChanged = Signal()
     chunks = Property(Variant, getChunks, notify=chunksChanged)
+    chunkPlaceholder = Property(Variant, lambda self: self._chunkPlaceholder, notify=chunksChanged)
+    nbParallelizationBlocks = Property(int, lambda self: len(self._chunks) if self._chunksCreated else 0, notify=chunksChanged)
     sizeChanged = Signal()
     size = Property(int, getSize, notify=sizeChanged)
     globalStatusChanged = Signal()
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
-    fusedStatus = Property(StatusData, getFusedStatus, notify=globalStatusChanged)
+    fusedStatus = Property(ChunkStatusData, getFusedStatus, notify=globalStatusChanged)
     elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
     recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime,
                                     notify=globalStatusChanged)
@@ -1787,6 +2094,7 @@ class BaseNode(BaseObject):
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
 
     globalExecMode = Property(str, globalExecMode.fget, notify=globalStatusChanged)
+    jobName = Property(str, lambda self: self._getJobName(), notify=globalStatusChanged)
     isExternal = Property(bool, isExtern, notify=globalStatusChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
     isComputableType = Property(bool, _isComputableType, notify=globalStatusChanged)
@@ -1909,17 +2217,59 @@ class Node(BaseNode):
             'outputs': outputs,
         }
 
-    def _updateChunks(self):
-        """ Update Node's computation task splitting into NodeChunks based on its description """
+    def _resetChunks(self):
+        """ Set chunks on the node.
+        # TODO : Maybe don't delete chunks if we will recreate them as before ?
+        """
         if isinstance(self.nodeDesc, desc.InputNode):
+            self._chunksCreated = True
             return
-        if self.isParallelized:
+        # Disconnect signals
+        for chunk in self._chunks:
+            chunk.statusChanged.disconnect(self.globalStatusChanged)
+        # Empty list
+        self._chunks.setObjectList([])
+        self._chunkPlaceholder.setObjectList([])
+        # Recreate list with reset values (1 chunk or the static size)
+        if not self.isParallelized:
+            self.setSize(self.nodeDesc.size.computeSize(self))
+            self._chunks.setObjectList([NodeChunk(self, desc.Range())])
+            self._chunks[0].statusChanged.connect(self.globalStatusChanged)
+            self._chunksCreated = True
+        elif isinstance(self.nodeDesc.size, desc.computation.StaticNodeSize):
+            self.setSize(self.nodeDesc.size.computeSize(self))
+            self._chunks.setObjectList([NodeChunk(self, desc.Range())])
+            self._chunks[0].statusChanged.connect(self.globalStatusChanged)
+            self._chunksCreated = True
             try:
                 ranges = self.nodeDesc.parallelization.getRanges(self)
+                self._chunks.setObjectList([NodeChunk(self, range) for range in ranges])
+                for c in self._chunks:
+                    c.statusChanged.connect(self.globalStatusChanged)
+                logging.debug(f"Created {len(self._chunks)} chunks for node: {self.name}")
+            except RuntimeError:
+                # TODO: set node internal status to error
+                logging.warning(f"Invalid Parallelization on node {self._name}")
+                self._chunks.clear()
+                self._chunksCreated = False
+        else:
+            self._chunksCreated = False
+            self.setSize(0)
+            self._chunkPlaceholder.setObjectList([NodeChunk(self, desc.computation.Range())])
+
+        # Create chunks when possible
+        self.chunksCreatedChanged.emit()
+        self.chunksChanged.emit()
+        self.globalStatusChanged.emit()
+
+    def __createChunks(self, ranges):
+        if self.isParallelized:
+            try:
                 if len(ranges) != len(self._chunks):
                     self._chunks.setObjectList([NodeChunk(self, range) for range in ranges])
                     for c in self._chunks:
                         c.statusChanged.connect(self.globalStatusChanged)
+                    logging.debug(f"Created {len(self._chunks)} chunks for node: {self.name}")
                 else:
                     for chunk, range in zip(self._chunks, ranges):
                         chunk.range = range
@@ -1933,6 +2283,51 @@ class Node(BaseNode):
                 self._chunks[0].statusChanged.connect(self.globalStatusChanged)
             else:
                 self._chunks[0].range = desc.Range()
+        self._chunksCreated = True
+        # Update node status
+        # TODO: update all chunks status?
+        # TODO: update node status?
+        # Emit signals for UI updates
+        self.chunksChanged.emit()
+        self.chunksCreatedChanged.emit()
+
+    def createChunksFromCache(self):
+        """ Create chunks when a node cache exists. """
+        try:
+            # Get size from cache
+            size = self._nodeStatus.fullSize
+            self.setSize(size)
+            ranges = self._nodeStatus.getChunkRanges()
+            self.__createChunks(ranges)
+        except Exception as e:
+            logging.error(f"Failed to create chunks for {self.name}")
+            self._chunks.clear()
+            self._chunksCreated = False
+            raise e
+
+    def createChunks(self):
+        """ Create chunks when computation is about to start. """
+        if self._chunksCreated:
+            return
+        if isinstance(self.nodeDesc, desc.InputNode):
+            self._chunksCreated = True
+            self.chunksChanged.emit()
+            return
+        # Grab current chunk information
+        logging.debug(f"Creating chunks for node: {self.name}")
+        try:
+            size = self.nodeDesc.size.computeSize(self)
+            self.setSize(size)
+            ranges = self.nodeDesc.parallelization.getRanges(self)
+            self.__createChunks(ranges)
+        except Exception as e:
+            logging.error(f"Failed to create chunks for {self.name}: {e}")
+            self._chunks.clear()
+            self._chunksCreated = False
+            raise e
+        # Update status
+        self._nodeStatus.setChunks(self._chunks)
+        self.upgradeStatusFile()
 
 
 class CompatibilityIssue(Enum):

@@ -119,7 +119,7 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                         classes.append(p)
             except Exception as exc:
                 if classType == BaseSubmitter:
-                    logging.warning(f" Could not load submitter {pluginName} from package '{package.__name__}'")
+                    logging.warning(f" Could not load submitter {pluginName} from package '{package.__name__}'\n{exc}")
                 else:
                     tb = traceback.extract_tb(exc.__traceback__)
                     last_call = tb[-1]

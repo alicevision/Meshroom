@@ -143,7 +143,7 @@ class NodeStatusData(BaseObject):
 
     def toDict(self):
         keys = list(self.__slots__) or []
-        d = {key:getattr(self, key, "") for key in keys}
+        d = {key:getattr(self, key, 0) for key in keys}
         for _k, _v in d.items():
             if isinstance(_v, Enum):
                 d[_k] = _v.name
@@ -1482,10 +1482,11 @@ class BaseNode(BaseObject):
         for attr in self._attributes:
             attr.updateInternals()
 
-        self._updateNodeSize()
-
         # Reset chunks splitting
         self._resetChunks()
+
+        self._updateNodeSize()
+
         # Retrieve current internal folder (if possible)
         try:
             folder = self.internalFolder
@@ -2231,18 +2232,15 @@ class Node(BaseNode):
         self._chunkPlaceholder.setObjectList([])
         # Recreate list with reset values (1 chunk or the static size)
         if not self.isParallelized:
-            if not self.nodeDesc.size:
-                self.setSize(1)
-            else:
-                self.setSize(self.nodeDesc.size.computeSize(self))
+            self.setSize(self.nodeDesc.size.computeSize(self))
             self._chunks.setObjectList([NodeChunk(self, desc.Range())])
             self._chunks[0].statusChanged.connect(self.globalStatusChanged)
             self._chunksCreated = True
         elif isinstance(self.nodeDesc.size, desc.computation.StaticNodeSize):
-            self._chunksCreated = True
             self.setSize(self.nodeDesc.size.computeSize(self))
             self._chunks.setObjectList([NodeChunk(self, desc.Range())])
             self._chunks[0].statusChanged.connect(self.globalStatusChanged)
+            self._chunksCreated = True
             try:
                 ranges = self.nodeDesc.parallelization.getRanges(self)
                 self._chunks.setObjectList([NodeChunk(self, range) for range in ranges])
@@ -2253,6 +2251,7 @@ class Node(BaseNode):
                 # TODO: set node internal status to error
                 logging.warning(f"Invalid Parallelization on node {self._name}")
                 self._chunks.clear()
+                self._chunksCreated = False
         else:
             self._chunksCreated = False
             self.setSize(0)
@@ -2286,8 +2285,8 @@ class Node(BaseNode):
                 self._chunks[0].range = desc.Range()
         self._chunksCreated = True
         # Update node status
-        # TODO : update all chunks status ?
-        # TODO : update node status ?
+        # TODO: update all chunks status?
+        # TODO: update node status?
         # Emit signals for UI updates
         self.chunksChanged.emit()
         self.chunksCreatedChanged.emit()

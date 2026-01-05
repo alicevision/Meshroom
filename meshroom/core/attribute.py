@@ -987,6 +987,10 @@ class GroupAttribute(Attribute):
         self._value.reset(subAttributes)
 
     # Override
+    def _getValue(self):
+        return self._value
+
+    # Override
     def _setValue(self, exportedValue):
         if self._handleLinkValue(exportedValue):
             return
@@ -1169,7 +1173,7 @@ class GroupAttribute(Attribute):
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
     # Override value property
-    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
+    value = Property(Variant, _getValue, _setValue, notify=Attribute.valueChanged)
     # Override flatStaticChildren property
     flatStaticChildren = Property(Variant, _getFlatStaticChildren, constant=True)
     isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value),

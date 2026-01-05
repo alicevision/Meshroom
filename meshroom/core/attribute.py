@@ -455,7 +455,7 @@ class Attribute(BaseObject):
         return bool(self.node.graph and self.isInput and self.node.graph._edges and self in self.node.graph._edges.keys())
 
     def _getInputLink(self, recursive=False) -> Attribute:
-        """ 
+        """
         Return the direct upstream connected attribute.
         :param recursive: recursive call, return the root attribute
         """
@@ -529,7 +529,7 @@ class Attribute(BaseObject):
         """
         return self.baseType == connectingAttribute.baseType
 
-    def connectTo(self, dstAttribute: Attribute) -> Optional[Edge]:
+    def connectTo(self, dstAttribute: Attribute) -> Optional[list[Edge]]:
         """
         Connect this Attribute to "dstAttribute".
 
@@ -545,7 +545,7 @@ class Attribute(BaseObject):
         if isinstance(dstAttribute.root, Attribute):
             dstAttribute.root.disconnectEdge()
 
-        return graph.addEdge(self, dstAttribute)
+        return [graph.addEdge(self, dstAttribute)]
 
     def disconnectEdge(self):
         """
@@ -1127,7 +1127,7 @@ class GroupAttribute(Attribute):
         return True
 
     # Override
-    def connectTo(self, dstAttribute: GroupAttribute) -> Optional[Edge]:
+    def connectTo(self, dstAttribute: GroupAttribute) -> Optional[list[Edge]]:
         """
         Connect this GroupAttribute to "dstAttribute". The nested attributes in the group
         are automatically connected.
@@ -1136,13 +1136,16 @@ class GroupAttribute(Attribute):
             dstAttribute: the destination Attribute
 
         Returns:
-            The connecting Edge object if the connection was successful, None otherwise.
+            The connecting Edge objects if the connection was successful, None otherwise.
         """
         nestedDstAttributes = list(dstAttribute.value)
 
+        connectedEdges = []
+
         for index, nestedAttribute in enumerate(list(self.value)):
-            nestedAttribute.connectTo(nestedDstAttributes[index])
-        return super().connectTo(dstAttribute)
+            connectedEdges += nestedAttribute.connectTo(nestedDstAttributes[index])
+        connectedEdges += super().connectTo(dstAttribute)
+        return connectedEdges
 
     @Slot(str, result=Attribute)
     def childAttribute(self, key: str) -> Attribute:

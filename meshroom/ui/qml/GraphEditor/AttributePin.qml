@@ -77,13 +77,27 @@ RowLayout {
             radius: root.isList ? 0 : width / 2
             Layout.alignment: Qt.AlignVCenter
 
-            border.color: Colors.sysPalette.mid
+            border.color: {
+                if (innerInputAnchor.hasConnectedChildren)
+                    return Colors.sysPalette.text
+                return Colors.sysPalette.mid
+            }
             color: Colors.sysPalette.base
 
             Rectangle {
                 id: innerInputAnchor
                 property bool linkEnabled: true
-                visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 ||
+                property bool hasConnectedChildren: {
+                    if (!root.isGroup || root.isConnected || !attribute)
+                        return false
+                    for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
+                        if (attribute.flatStaticChildren[i].hasAnyInputLinks) {
+                            return true
+                        }
+                    }
+                    return false
+                }
+                visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || hasConnectedChildren ||
                         (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
                 radius: root.isList ? 0 : 2
                 anchors.fill: parent
@@ -91,6 +105,8 @@ RowLayout {
                 color: {
                     if (inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop))
                         return Colors.sysPalette.highlight
+                    if (hasConnectedChildren)
+                        return Colors.sysPalette.mid
                     return Colors.sysPalette.text
                 }
             }
@@ -298,13 +314,27 @@ RowLayout {
 
         Layout.alignment: Qt.AlignVCenter
 
-        border.color: Colors.sysPalette.mid
+        border.color: {
+            if (innerOutputAnchor.hasConnectedChildren)
+                return Colors.sysPalette.text
+            return Colors.sysPalette.mid
+        }
         color: Colors.sysPalette.base
 
         Rectangle {
             id: innerOutputAnchor
             property bool linkEnabled: true
-            visible: (root.attribute.hasAnyOutputLinks && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
+            property bool hasConnectedChildren: {
+                if (!root.isGroup || root.isConnected)
+                    return false
+                for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
+                    if (attribute.flatStaticChildren[i].hasAnyOutputLinks) {
+                        return true
+                    }
+                }
+                return false
+            }
+            visible: (root.attribute.hasAnyOutputLinks && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag || hasConnectedChildren
             radius: root.isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
@@ -312,6 +342,8 @@ RowLayout {
                 if (modelData.enabled && (outputConnectMA.containsMouse || outputConnectMA.drag.active ||
                                          (outputDropArea.containsDrag && outputDropArea.acceptableDrop)))
                     return Colors.sysPalette.highlight
+                if (hasConnectedChildren)
+                    return Colors.sysPalette.mid
                 return Colors.sysPalette.text
             }
         }

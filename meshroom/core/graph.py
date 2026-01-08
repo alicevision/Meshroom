@@ -913,30 +913,33 @@ class Graph(BaseObject):
         if not srcAttr.node.graph == dstAttr.node.graph == self:
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    "Attributes do not belong to this graph.")
-        if dstAttr in self.edges.keys():
-            self.removeEdge(dstAttr)
 
         if not dstAttr.validateIncomingConnection(srcAttr):
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    f"Attributes are not compatible (src base type: {srcAttr.baseType}; dst base type: {dstAttr.baseType}).")
+
+        deletedEdge = []
+        if dstAttr in self.edges.keys():
+            deletedEdge = self.removeEdge(dstAttr)
         edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.inputLinksChanged.emit()
         srcAttr.outputLinksChanged.emit()
-        return edge
+        return [edge.src, edge.dst], deletedEdge
 
     @changeTopology
     def removeEdge(self, dstAttr: Attribute):
         if not self.edges.get(dstAttr):
-            return
+            return None
 
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.inputLinksChanged.emit()
         edge.src.outputLinksChanged.emit()
+        return [edge.src, dstAttr]
 
     def getDepth(self, node, minimal=False):
         """ Return node's depth in this Graph.

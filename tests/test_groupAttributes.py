@@ -279,3 +279,26 @@ class TestGroupAttributes:
             nestedPosition.xyz.test.y.inputLink.asLinkExpr() == nestedColor.rgb.test.g.asLinkExpr()
         assert nestedPosition.xyz.test.z.isLink and \
             nestedPosition.xyz.test.z.inputLink.asLinkExpr() == r.asLinkExpr() == nestedColor.rgb.r.asLinkExpr()
+
+
+    def test_connectGroupSubAttributesByValue(self):
+        """
+        Check that sub-attributes are connected by value and not by reference. When connected to another sub-attribute
+        through a group connection, a given sub-attribute should have an address that differs from the incoming sub-attribute.
+        """
+        graph = Graph()
+        groupA = graph.addNewNode("GroupAttributes")
+        groupB = graph.addNewNode("GroupAttributes")
+
+        groupA.firstGroup.firstGroupIntA.value = 1234
+        assert groupA.firstGroup.firstGroupIntA.value != groupB.firstGroup.firstGroupIntA.value
+
+        # Connect the groups
+        groupA.firstGroup.connectTo(groupB.firstGroup)
+
+        subAttributeA = groupA.firstGroup.firstGroupIntA
+        subAttributeB = groupB.firstGroup.firstGroupIntA
+        assert subAttributeA != subAttributeB
+        assert subAttributeB.isLink
+        assert subAttributeA.fullName != subAttributeB.fullName
+        assert groupA.firstGroup.firstGroupIntA.value == groupB.firstGroup.firstGroupIntA.value == 1234

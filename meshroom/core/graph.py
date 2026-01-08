@@ -927,11 +927,6 @@ class Graph(BaseObject):
         srcAttr.outputLinksChanged.emit()
         return edge
 
-    def addEdges(self, *edges):
-        with GraphModification(self):
-            for edge in edges:
-                self.addEdge(*edge)
-
     @changeTopology
     def removeEdge(self, dstAttr: Attribute):
         if not self.edges.get(dstAttr):

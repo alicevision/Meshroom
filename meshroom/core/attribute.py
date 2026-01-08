@@ -537,26 +537,40 @@ class Attribute(BaseObject):
             dstAttribute: the destination Attribute
 
         Returns:
-            The connecting Edge object if the connection was successful, None otherwise.
+            The connecting Edge object in a list and a list of all the Edge objects that were deleted during the creation.
         """
         if not (graph := self.node.graph):
             return None
 
+        deletedEdges = []
         if isinstance(dstAttribute.root, Attribute):
-            dstAttribute.root.disconnectEdge()
+            deletedEdges = dstAttribute.root.disconnectEdge()
 
-        return [graph.addEdge(self, dstAttribute)]
+        connectedEdge, deletedEdge = graph.addEdge(self, dstAttribute)
+        if deletedEdge:
+            deletedEdges.append(deletedEdge)
+
+        return [connectedEdge], deletedEdges
 
     def disconnectEdge(self):
         """
+        Disconnect and remove the edge connected to this Attribute.
+
+        Returns:
+            A list of all the Edge objects that were deleted during the disconnection.
         """
         if not (graph := self.node.graph):
-            return
+            return []
 
-        graph.removeEdge(self)
+        deletedEdges = []
+        edge = graph.removeEdge(self)
+        if edge:
+            deletedEdges.append(edge)
 
         if isinstance(self.root, Attribute):
-            self.root.disconnectEdge()
+            deletedEdges += self.root.disconnectEdge()
+
+        return deletedEdges
 
     # Slots
 
@@ -1140,16 +1154,23 @@ class GroupAttribute(Attribute):
             dstAttribute: the destination Attribute
 
         Returns:
-            The connecting Edge objects if the connection was successful, None otherwise.
+            The connecting Edge object in a list and a list of all the Edge objects that were deleted during the creation.
         """
         nestedDstAttributes = list(dstAttribute.value)
-
         connectedEdges = []
+        deletedEdges = []
 
         for index, nestedAttribute in enumerate(list(self.value)):
-            connectedEdges += nestedAttribute.connectTo(nestedDstAttributes[index])
-        connectedEdges += super().connectTo(dstAttribute)
-        return connectedEdges
+            # If the attributes are already connected, do not connect them again
+            if not nestedDstAttributes[index] in nestedAttribute.outputLinks:
+                connected, deleted = nestedAttribute.connectTo(nestedDstAttributes[index])
+                connectedEdges += connected
+                deletedEdges += deleted
+        connected, deleted = super().connectTo(dstAttribute)
+        connectedEdges += connected
+        deletedEdges += deleted
+
+        return connectedEdges, deletedEdges
 
     @Slot(str, result=Attribute)
     def childAttribute(self, key: str) -> Attribute:

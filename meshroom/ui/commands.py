@@ -429,14 +429,15 @@ class AddEdgeCommand(GraphCommand):
         self.srcAttr = src.fullName
         self.dstAttr = dst.fullName
         self.createdEdges = []  # List of all the edges that have been created at once
+        self.deletedEdges = []  # List of all the edges that have been deleted to create the new edge(s)
         self.setText(f"Connect '{self.srcAttr}' -> '{self.dstAttr}'")
 
         if not dst.validateIncomingConnection(src):
             raise InvalidEdgeError(src.fullName, dst.fullName, "Attributes are not compatible.")
 
-    def redoImpl(self):
+    def redoImpl(self) -> bool:
         try:
-            self.createdEdges = self.graph.attribute(self.srcAttr).connectTo(self.graph.attribute(self.dstAttr))
+            self.createdEdges, self.deletedEdges = self.graph.attribute(self.srcAttr).connectTo(self.graph.attribute(self.dstAttr))
         except CyclicDependencyError:
             self.graph.removeEdge(self.graph.attribute(self.dstAttr))
             return False
@@ -444,7 +445,10 @@ class AddEdgeCommand(GraphCommand):
 
     def undoImpl(self) -> bool:
         for edge in self.createdEdges:
-            edge.dst.disconnectEdge()
+            edge[1].disconnectEdge()
+        for edge in self.deletedEdges:
+            edge[0].connectTo(edge[1])
+        return True
 
 
 class RemoveEdgeCommand(GraphCommand):
@@ -452,14 +456,17 @@ class RemoveEdgeCommand(GraphCommand):
         super().__init__(graph, parent)
         self.srcAttr = edge.src.fullName
         self.dstAttr = edge.dst.fullName
+        self.deletedEdges = []  # List of all the edges that have been deleted
         self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
 
-    def redoImpl(self):
-        self.graph.attribute(self.dstAttr).disconnectEdge()
+    def redoImpl(self) -> bool:
+        self.deletedEdges = self.graph.attribute(self.dstAttr).disconnectEdge()
         return True
 
-    def undoImpl(self):
-        self.graph.attribute(self.srcAttr).connectTo(self.graph.attribute(self.dstAttr))
+    def undoImpl(self) -> bool:
+        for edge in self.deletedEdges:
+            edge[0].connectTo(edge[1])
+        return True
 
 
 class ListAttributeAppendCommand(GraphCommand):

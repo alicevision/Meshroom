@@ -529,7 +529,7 @@ class Attribute(BaseObject):
         """
         return self.baseType == connectingAttribute.baseType
 
-    def connectTo(self, dstAttribute: Attribute) -> Optional[list[Edge]]:
+    def connectTo(self, dstAttribute: Attribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
         """
         Connect this Attribute to "dstAttribute".
 
@@ -537,10 +537,12 @@ class Attribute(BaseObject):
             dstAttribute: the destination Attribute
 
         Returns:
-            The connecting Edge object in a list and a list of all the Edge objects that were deleted during the creation.
+            A tuple containing:
+                - a list containing pairs of the source and destination Attributes (as lists) for every created edge
+                - a list containing pairs of the source and destination Attributes (as lists) for every deleted edge
         """
         if not (graph := self.node.graph):
-            return None
+            return [], []
 
         deletedEdges = []
         if isinstance(dstAttribute.root, Attribute):
@@ -1131,6 +1133,16 @@ class GroupAttribute(Attribute):
 
     def _hasMatchingStructure(self, otherAttribute: Attribute) -> bool:
         """
+        Check whether this GroupAttribute and another Attribute have matching structures.
+
+        Attributes have matching structures if they have the same number of children and if, at each position,
+        both Attributes have the same base type.
+
+        Args:
+            otherAttribute: the other Attribute to compare structure with
+
+        Returns:
+            True if both Attributes have the same structure, False otherwise
         """
         flatAttrs = self.flatStaticChildren
         otherFlatAttrs = otherAttribute.flatStaticChildren
@@ -1145,7 +1157,7 @@ class GroupAttribute(Attribute):
         return True
 
     # Override
-    def connectTo(self, dstAttribute: GroupAttribute) -> Optional[list[Edge]]:
+    def connectTo(self, dstAttribute: GroupAttribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
         """
         Connect this GroupAttribute to "dstAttribute". The nested attributes in the group
         are automatically connected.
@@ -1154,7 +1166,9 @@ class GroupAttribute(Attribute):
             dstAttribute: the destination Attribute
 
         Returns:
-            The connecting Edge object in a list and a list of all the Edge objects that were deleted during the creation.
+            A tuple containing:
+                - a list containing pairs of the source and destination Attributes (as lists) for every created edge
+                - a list containing pairs of the source and destination Attributes (as lists) for every deleted edge
         """
         nestedDstAttributes = list(dstAttribute.value)
         connectedEdges = []

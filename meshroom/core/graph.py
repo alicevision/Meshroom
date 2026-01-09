@@ -909,7 +909,7 @@ class Graph(BaseObject):
         return set(self._nodes) - nodesWithInputLink
 
     @changeTopology
-    def addEdge(self, srcAttr: Attribute, dstAttr: Attribute) -> Edge:
+    def addEdge(self, srcAttr: Attribute, dstAttr: Attribute) -> tuple[list[Attribute], list[Attribute]]:
         if not srcAttr.node.graph == dstAttr.node.graph == self:
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    "Attributes do not belong to this graph.")

@@ -711,7 +711,7 @@ Item {
                                             inputs.parentPinsUpdated()
                                         }
 
-                                        readOnly: Boolean(root.readOnly || object.isReadOnly)
+                                        readOnly: Boolean(root.readOnly || modelData.isReadOnly)
                                         Component.onCompleted: attributePinCreated(attribute, inPin)
                                         Component.onDestruction: attributePinDeleted(attribute, inPin)
 

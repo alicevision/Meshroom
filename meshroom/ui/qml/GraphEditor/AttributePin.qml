@@ -339,8 +339,8 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: 2
             color: {
-                if (modelData.enabled && (outputConnectMA.containsMouse || outputConnectMA.drag.active ||
-                                         (outputDropArea.containsDrag && outputDropArea.acceptableDrop)))
+                if (root.attribute.enabled && (outputConnectMA.containsMouse || outputConnectMA.drag.active ||
+                                               (outputDropArea.containsDrag && outputDropArea.acceptableDrop)))
                     return Colors.sysPalette.highlight
                 if (hasConnectedChildren)
                     return Colors.sysPalette.mid

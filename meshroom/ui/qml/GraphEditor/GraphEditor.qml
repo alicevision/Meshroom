@@ -498,8 +498,8 @@ Item {
                         let groupAttributeDelegate = null
                         let groupAttribute = attribute
 
-                        while (groupAttribute && !groupAttributeDelegate ||
-                               (groupAttributeDelegate && !groupAttributeDelegate.visible && groupAttribute && groupAttribute.root)) {
+                        while (groupAttribute && (!groupAttributeDelegate ||
+                               (groupAttributeDelegate && !groupAttributeDelegate.visible && groupAttribute && groupAttribute.root))) {
                             groupAttribute = groupAttribute ? groupAttribute.root : null
 
                             if (groupAttribute) {

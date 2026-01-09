@@ -3,7 +3,6 @@
 
 import os
 import tempfile
-import math
 
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode
@@ -144,7 +143,7 @@ class TestGroupAttributes:
         acceptedConnection = nestedPosition.xyz.validateIncomingConnection(nestedColor.rgb)
 
         # Then
-        assert acceptedConnection == True
+        assert acceptedConnection
 
 
     def test_groupAttributesWithDifferentStructures(self):
@@ -160,7 +159,7 @@ class TestGroupAttributes:
         acceptedConnection = nestedPosition.xyz.validateIncomingConnection(nestedTest.xyz)
 
         # Then
-        assert acceptedConnection == False
+        assert not acceptedConnection
 
 
     def test_connectGroupsWithSubAttributes(self):
@@ -210,6 +209,8 @@ class TestGroupAttributes:
 
         # Reload the graph
         graph = loadGraph(graphFile)
+        nestedPosition = graph.node("NestedPosition_1")
+        nestedColor = graph.node("NestedColor_1")
 
         assert nestedPosition.xyz.isLink and \
             nestedPosition.xyz.inputLink.asLinkExpr() == nestedColor.rgb.asLinkExpr()

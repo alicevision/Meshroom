@@ -106,7 +106,7 @@ class GroupAttributes(desc.Node):
         desc.IntParam(
             name="exposedInt",
             label="Exposed Integer",
-            description="Integer at the rool level, exposed.",
+            description="Integer at the root level, exposed.",
             value=1000,
             exposed=True,
         ),

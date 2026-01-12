@@ -13,7 +13,7 @@ parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
                     help='Process the node with its dependencies.')
 parser.add_argument('--submitter',
                     type=str,
-                    default='SimpleFarm',
+                    default='Tractor',
                     help='Execute job with a specific submitter.')
 parser.add_argument("--submitLabel",
                     type=str,

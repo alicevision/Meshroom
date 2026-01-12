@@ -156,7 +156,7 @@ advanced_group.add_argument(
 advanced_group.add_argument(
     '--submitter',
     type=str,
-    default='SimpleFarm',
+    default='Tractor',
     help='Execute job with a specific submitter.')
 
 args = parser.parse_args()

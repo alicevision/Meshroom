@@ -1694,16 +1694,16 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
         if chunksInConflict:
             chunksStatus = {chunk.status.status.name for chunk in chunksInConflict}
             chunksName = [node.name for node in chunksInConflict]
-            msg = 'WARNING: Some nodes are already submitted with status: {}\nNodes: {}'.format(
-                  ', '.join(chunksStatus),
-                  ', '.join(chunksName)
+            msg = "WARNING: Some nodes are already submitted with status: {}\nNodes: {}".format(
+                  ", ".join(chunksStatus),
+                  ", ".join(chunksName)
                   )
             if forceStatus:
                 print(msg)
             else:
                 raise RuntimeError(msg)
 
-    print('Nodes to execute: ', str([n.name for n in nodes]))
+    print("Nodes to execute: ", str([n.name for n in nodes]))
 
     graph.save()
 
@@ -1718,6 +1718,8 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                 continue
 
             node.preprocess()
+            if not node._chunksCreated:
+                node.createChunks()
             multiChunks = len(node.chunks) > 1
             for c, chunk in enumerate(node.chunks):
                 if multiChunks:

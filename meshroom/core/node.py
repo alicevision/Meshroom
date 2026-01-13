@@ -860,10 +860,10 @@ class BaseNode(BaseObject):
     def getDefaultLabel(self):
         return self.nameToLabel(self._name)
 
-    def getLabel(self):
+    def getLabel(self) -> str:
         """
         Returns:
-            str: the user-provided label if it exists, the high-level label of this node otherwise
+            The user-provided label if it exists, the high-level label of this node otherwise
         """
         if self.hasInternalAttribute("label"):
             label = self.internalAttribute("label").value.strip()
@@ -871,41 +871,69 @@ class BaseNode(BaseObject):
                 return label
         return self.getDefaultLabel()
 
-    def getNodeLogLevel(self):
+    def getNodeLogLevel(self) -> str:
         """
         Returns:
-            str: the user-provided log level used for logging on process launched by this node
+            The user-provided log level used for logging on process launched by this node
         """
         if self.hasInternalAttribute("nodeDefaultLogLevel"):
             return self.internalAttribute("nodeDefaultLogLevel").value.strip()
         return "info"
 
-    def getColor(self):
+    def getColor(self) -> str:
         """
         Returns:
-            str: the user-provided custom color of the node if it exists, empty string otherwise
+            The user-provided custom color of the node if it exists, empty string otherwise
         """
         if self.hasInternalAttribute("color"):
             return self.internalAttribute("color").value.strip()
         return ""
 
-    def getInvalidationMessage(self):
+    def getInvalidationMessage(self) -> str:
         """
         Returns:
-            str: the invalidation message on the node if it exists, empty string otherwise
+            The invalidation message on the node if it exists, empty string otherwise
         """
         if self.hasInternalAttribute("invalidation"):
             return self.internalAttribute("invalidation").value
         return ""
 
-    def getComment(self):
+    def getComment(self) -> str:
         """
         Returns:
-            str: the comments on the node if they exist, empty string otherwise
+            The comments on the node if they exist, empty string otherwise
         """
         if self.hasInternalAttribute("comment"):
             return self.internalAttribute("comment").value
         return ""
+
+    def getFontSize(self) -> int:
+        """
+        Returns:
+            The font size from the node if it exists, 0 otherwise.
+        """
+        if self.hasInternalAttribute("fontSize"):
+            return self.internalAttribute("fontSize").value
+        return 0
+
+    def getNodeWidth(self) -> int:
+        """
+        Returns:
+            The width of the node if it has a user-set width, 0 otherwise.
+        """
+        if self.hasInternalAttribute("nodeWidth"):
+            return self.internalAttribute("nodeWidth").value
+        return 0
+
+    def getNodeHeight(self) -> int:
+        """
+        Returns:
+            The height of the node if it has a user-set height, 0 otherwise.
+        """
+        if self.hasInternalAttribute("nodeHeight"):
+            return self.internalAttribute("nodeHeight").value
+        return 0
+
 
     @Slot(str, result=str)
     def nameToLabel(self, name):
@@ -1811,6 +1839,9 @@ class BaseNode(BaseObject):
     def _isInputNode(self):
         return isinstance(self.nodeDesc, desc.InputNode)
 
+    def _isBackdropNode(self) -> bool:
+        return False
+
     @property
     def globalExecMode(self):
         if not self._chunksCreated:
@@ -2070,6 +2101,9 @@ class BaseNode(BaseObject):
     color = Property(str, getColor, notify=internalAttributesChanged)
     invalidation = Property(str, getInvalidationMessage, notify=internalAttributesChanged)
     comment = Property(str, getComment, notify=internalAttributesChanged)
+    fontSize = Property(int, getFontSize, notify=internalAttributesChanged)
+    nodeWidth = Property(int, getNodeWidth, notify=internalAttributesChanged)
+    nodeHeight = Property(int, getNodeHeight, notify=internalAttributesChanged)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     valuesFile = Property(str, valuesFile.fget, notify=internalFolderChanged)
@@ -2090,9 +2124,9 @@ class BaseNode(BaseObject):
     elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
     recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime,
                                     notify=globalStatusChanged)
-    # isCompatibilityNode: need lambda to evaluate the virtual function
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
+    isBackdropNode = Property(bool, lambda self: self._isBackdropNode(), constant=True)
 
     globalExecMode = Property(str, globalExecMode.fget, notify=globalStatusChanged)
     jobName = Property(str, lambda self: self._getJobName(), notify=globalStatusChanged)

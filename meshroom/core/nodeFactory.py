@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 import meshroom.core
 from meshroom.core import Version, desc
-from meshroom.core.node import CompatibilityIssue, CompatibilityNode, Node, Position
+from meshroom.core.node import CompatibilityIssue, CompatibilityNode, BackdropNode, Node, Position
 
 
 def nodeFactory(
@@ -28,6 +28,14 @@ def nodeFactory(
         The created Node instance.
     """
     return _NodeCreator(nodeData, name, inTemplate, expectedUid).create()
+
+
+def getNodeConstructor(nodeType: str, position: Optional[Position]=None, **kwargs) -> Union[BackdropNode, Node]:
+    constructors = {
+        "Backdrop": BackdropNode,
+    }
+    constructor = constructors.get(nodeType, Node)
+    return constructor(nodeType, position=position, **kwargs)
 
 
 class _NodeCreator:

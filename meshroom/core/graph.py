@@ -20,7 +20,7 @@ from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
-from meshroom.core.nodeFactory import nodeFactory
+from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
 from meshroom.core.submitter import BaseSubmittedJob, jobManager
 
@@ -693,7 +693,7 @@ class Graph(BaseObject):
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 
-        node = self.addNode(Node(nodeType, position=position, **kwargs), uniqueName=name)
+        node = self.addNode(getNodeConstructor(nodeType, position=position, **kwargs), uniqueName=name)
         node.updateInternals()
         self._triggerNodeCreatedCallback([node])
         return node

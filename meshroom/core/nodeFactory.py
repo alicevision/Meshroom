@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 import meshroom.core
 from meshroom.core import Version, desc
-from meshroom.core.node import CompatibilityIssue, CompatibilityNode, BackdropNode, Node, Position
+from meshroom.core.node import BackdropNode, CompatibilityIssue, CompatibilityNode, Node, Position
 
 
 def nodeFactory(
@@ -12,7 +12,7 @@ def nodeFactory(
     name: Optional[str] = None,
     inTemplate: bool = False,
     expectedUid: Optional[str] = None,
-) -> Union[Node, CompatibilityNode]:
+) -> Union[Node, BackdropNode, CompatibilityNode]:
     """
     Create a node instance by deserializing the given node data.
     If the serialized data matches the corresponding node type description, a Node instance is created.
@@ -65,7 +65,7 @@ class _NodeCreator:
         if meshroom.core.pluginManager.isRegistered(self.nodeType):
             self.nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin(self.nodeType).nodeDescriptor
 
-    def create(self) -> Union[Node, CompatibilityNode]:
+    def create(self) -> Union[Node, BackdropNode, CompatibilityNode]:
         compatibilityIssue = self._checkCompatibilityIssues()
         if compatibilityIssue:
             node = self._createCompatibilityNode(compatibilityIssue)
@@ -179,12 +179,12 @@ class _NodeCreator:
             for attrName, value in attributesDict.items()
         )
 
-    def _createNode(self) -> Node:
+    def _createNode(self) -> Union[BackdropNode, Node]:
         logging.info(f"Creating node '{self.name}'")
         # TODO: user inputs/outputs may conflicts with internal names (like logLevel, position, uid)
         # The line below can cause UI issues but at least prevent crashes
         internalInputs = {k: v for k, v in self.internalInputs.items() if k not in self.inputs.keys()}
-        return Node(
+        return getNodeConstructor(
             self.nodeType,
             position=self.position,
             uid=self.uid,

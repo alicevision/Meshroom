@@ -1271,7 +1271,7 @@ class BaseNode(BaseObject):
         """
         # Ambiguous case for NONE, which could be used for compatibility nodes if we don't have
         # any information about the node descriptor.
-        return self.getMrNodeType() != MrNodeType.INPUT
+        return self.getMrNodeType() != MrNodeType.INPUT and self.getMrNodeType() != MrNodeType.BACKDROP
 
     def clearData(self):
         """ Delete this Node internal folder.

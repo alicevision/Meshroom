@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import annotations
+
 import copy
 import os
 import re
@@ -10,7 +12,9 @@ from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, hashValue
 from meshroom.core.keyValues import KeyValues
-from typing import TYPE_CHECKING
+from meshroom.core.exception import InvalidEdgeError
+
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
@@ -75,10 +79,13 @@ class Attribute(BaseObject):
         self._desc: desc.Attribute = attributeDesc
         self._isOutput: bool = isOutput
         self._enabled: bool = True
+        self._depth: int = root.depth + 1 if root is not None else 0
+        self._exposed: bool = root.exposed if root is not None else attributeDesc.exposed
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
         self._invalidationValue = ""  # invalidation value for output attributes
         self._value = None
         self._keyValues = None  # list of pairs (key, value) for keyable attribute
+        self._linkExpression: Optional[str] = None
         self._initValue()
 
     def _getFullName(self) -> str:
@@ -163,11 +170,10 @@ class Attribute(BaseObject):
         """
         if self._value == value:
             return
-        if isinstance(value, Attribute) or Attribute.isLinkExpression(value):
-            # if we set a link to another attribute
-            self._value = value
+        if self._handleLinkValue(value):
             if self.keyable:
                 self._keyValues.reset()
+            return
         elif self.keyable and isinstance(value, dict):
             # keyable attribute initialize from a dict
             self.keyValues.resetFromDict(value)
@@ -206,37 +212,67 @@ class Attribute(BaseObject):
             return self._getInputLink().keyValues
         return self._keyValues
 
+    def _handleLinkValue(self, value) -> bool:
+        """
+        Handle the assignment of a link if `value` is a serialized link expression
+        or an in-memory Attribute reference.
+
+        Returns:
+            True if the value has been handled as a link, False otherwise.
+        """
+        isAttribute = isinstance(value, Attribute)
+        isLinkExpression = Attribute.isLinkExpression(value)
+
+        if not isAttribute and not isLinkExpression:
+            return False
+
+        if isAttribute:
+            self._linkExpression = value.asLinkExpr()
+            # If the value is a direct reference to an attribute, it can directly
+            # be converted to an edge as the source attribute already exists in
+            # memory.
+            self._applyExpr()
+        elif isLinkExpression:
+            self._linkExpression = value
+        return True
+
     def _applyExpr(self):
         """
         For string parameters with an expression (when loaded from file),
         this function convert the expression into a real edge in the graph
         and clear the string value.
         """
-        v = self._value
-        g = self.node.graph
-        if not g:
+        if not self.isInput or not self._linkExpression:
             return
-        if isinstance(v, Attribute):
-            g.addEdge(v, self)
-            self.resetToDefaultValue()
-        elif self.isInput and Attribute.isLinkExpression(v):
-            # value is a link to another attribute
-            link = v[1:-1]
-            linkNodeName, linkAttrName = "", ""
-            try:
-                linkNodeName, linkAttrName = link.split('.')
-            except ValueError as err:
-                logging.warning('Retrieve Connected Attribute from Expression failed.')
-                logging.warning(f'Expression: "{link}"\nError: "{err}".')
-            try:
-                node = g.node(linkNodeName)
-                if not node:
-                    raise KeyError(f"Node '{linkNodeName}' not found")
-                g.addEdge(node.attribute(linkAttrName), self)
-            except KeyError as err:
-                logging.warning('Connect Attribute from Expression failed.')
-                logging.warning(f'Expression: "{v}"\nError: "{err}".')
-            self.resetToDefaultValue()
+
+        if not (graph := self.node.graph):
+            return
+
+        link = self._linkExpression[1:-1]
+        linkNodeName, linkAttrName = "", ""
+
+        try:
+            linkNodeName, linkAttrName = link.split(".", 1)
+        except ValueError as err:
+            logging.warning('Retrieve Connected Attribute from Expression failed.')
+            logging.warning(f'Expression: "{link}"\nError: "{err}".')
+
+        try:
+            node = graph.node(linkNodeName)
+            if node is None:
+                raise InvalidEdgeError(self.fullName, link, "Source node does not exist.")
+            attr = node.attribute(linkAttrName)
+            if attr is None:
+                raise InvalidEdgeError(self.fullName, link, "Source attribute does not exist.")
+            attr.connectTo(self)
+        except InvalidEdgeError as err:
+            logging.warning(err)
+        except Exception as err:
+            logging.warning("An unexpected error happened during edge creation.")
+            logging.warning(f"Expression '{self._linkExpression}': {err}.")
+
+        self._linkExpression = None
+        self.resetToDefaultValue()
 
     def resetToDefaultValue(self):
         """
@@ -416,10 +452,9 @@ class Attribute(BaseObject):
         """
         Whether the attribute is a link to another attribute.
         """
-        return self.node.graph and self.isInput and self.node.graph._edges and \
-            self in self.node.graph._edges.keys()
+        return bool(self.node.graph and self.isInput and self.node.graph._edges and self in self.node.graph._edges.keys())
 
-    def _getInputLink(self, recursive=False) -> "Attribute":
+    def _getInputLink(self, recursive=False) -> Attribute:
         """
         Return the direct upstream connected attribute.
         :param recursive: recursive call, return the root attribute
@@ -431,7 +466,7 @@ class Attribute(BaseObject):
             return linkAttribute._getInputLink(recursive)
         return linkAttribute
 
-    def _getOutputLinks(self) -> list["Attribute"]:
+    def _getOutputLinks(self) -> list[Attribute]:
         """
         Return the list of direct downstream connected attributes.
         """
@@ -440,7 +475,7 @@ class Attribute(BaseObject):
             return []
         return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self]
 
-    def _getAllInputLinks(self) -> list["Attribute"]:
+    def _getAllInputLinks(self) -> list[Attribute]:
         """
         Return the list of upstream connected attributes for the attribute or any of its elements.
         """
@@ -449,7 +484,7 @@ class Attribute(BaseObject):
             return []
         return [inputLink]
 
-    def _getAllOutputLinks(self) -> list["Attribute"]:
+    def _getAllOutputLinks(self) -> list[Attribute]:
         """
         Return the list of downstream connected attributes for the attribute or any of its elements.
         """
@@ -473,6 +508,72 @@ class Attribute(BaseObject):
             return False
         return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
+    def _getFlatStaticChildren(self) -> list[Attribute]:
+        """
+        Return a list of all the attributes that refer to this Attribute as their parent through the
+        "root" property. If no such attribute exist, return an empty list.
+        The depth difference is not taken into account in the list, which is thus always flat.
+        """
+        return []
+
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        """
+        Validation of the connection of "connectingAttribute" on this Attribute.
+        This method can be overridden.
+
+        Args:
+            connectingAttribute: the Attribute attempting to connect to this one.
+
+        Returns:
+            True if the connection is valid, False otherwise.
+        """
+        return self.baseType == connectingAttribute.baseType
+
+    def connectTo(self, dstAttribute: Attribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
+        """
+        Connect this Attribute to "dstAttribute".
+
+        Args:
+            dstAttribute: the destination Attribute
+
+        Returns:
+            A tuple containing:
+                - a list containing pairs of the source and destination Attributes (as lists) for every created edge
+                - a list containing pairs of the source and destination Attributes (as lists) for every deleted edge
+        """
+        if not (graph := self.node.graph):
+            return [], []
+
+        deletedEdges = []
+        if isinstance(dstAttribute.root, Attribute):
+            deletedEdges = dstAttribute.root.disconnectEdge()
+
+        connectedEdge, deletedEdge = graph.addEdge(self, dstAttribute)
+        if deletedEdge:
+            deletedEdges.append(deletedEdge)
+
+        return [connectedEdge], deletedEdges
+
+    def disconnectEdge(self):
+        """
+        Disconnect and remove the edge connected to this Attribute.
+
+        Returns:
+            A list of all the Edge objects that were deleted during the disconnection.
+        """
+        if not (graph := self.node.graph):
+            return []
+
+        deletedEdges = []
+        edge = graph.removeEdge(self)
+        if edge:
+            deletedEdges.append(edge)
+
+        if isinstance(self.root, Attribute):
+            deletedEdges += self.root.disconnectEdge()
+
+        return deletedEdges
+
     # Slots
 
     @Slot()
@@ -493,6 +594,14 @@ class Attribute(BaseObject):
     @Slot(str, result=bool)
     def matchText(self, text: str) -> bool:
         return self.label.lower().find(text.lower()) > -1
+
+    @Slot(BaseObject, result=bool)
+    def validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        """
+        Return True if this Attribute can receive a connection from
+        "connectingAttribute", False otherwise.
+        """
+        return self._validateIncomingConnection(connectingAttribute)
 
     # Properties and signals
 
@@ -525,6 +634,11 @@ class Attribute(BaseObject):
     # Whether this attribute is enabled.
     enabledChanged = Signal()
     enabled = Property(bool, _getEnabled, _setEnabled, notify=enabledChanged)
+    # Depth level of this attribute.
+    depth = Property(int, lambda self: self._depth, constant=True)
+    # Whether the attribute is exposed (if it has a parent, the parent's value
+    # takes precedence over the description's).
+    exposed = Property(bool, lambda self: self._exposed, constant=True)
 
     # Attribute value properties and signals
     valueChanged = Signal()
@@ -566,6 +680,8 @@ class Attribute(BaseObject):
     hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=inputLinksChanged)
     # Whether the attribute or any of its elements is linked by another attribute.
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
+    # The list of attributes that refer to this one as their parent.
+    flatStaticChildren = Property(Variant, _getFlatStaticChildren, constant=True)
 
     expressionApplied = Signal()
 
@@ -725,9 +841,8 @@ class ListAttribute(Attribute):
     def _setValue(self, value):
         if self.node.graph:
             self.remove(0, len(self))
-        # Link to another attribute
-        if isinstance(value, ListAttribute) or Attribute.isLinkExpression(value):
-            self._value = value
+        if self._handleLinkValue(value):
+            return
         # New value
         else:
             # During initialization self._value may not be set
@@ -739,9 +854,7 @@ class ListAttribute(Attribute):
 
     # Override
     def _applyExpr(self):
-        if not self.node.graph:
-            return
-        if isinstance(self._value, ListAttribute) or Attribute.isLinkExpression(self._value):
+        if self._linkExpression:
             super()._applyExpr()
         else:
             for value in self._value:
@@ -783,11 +896,9 @@ class ListAttribute(Attribute):
 
     # Override
     def upgradeValue(self, exportedValues):
+        if self._handleLinkValue(exportedValues):
+            return
         if not isinstance(exportedValues, list):
-            if isinstance(exportedValues, ListAttribute) or \
-               Attribute.isLinkExpression(exportedValues):
-                self._setValue(exportedValues)
-                return
             raise RuntimeError("ListAttribute.upgradeValue: the given value is of type " +
                                str(type(exportedValues)) + " but a 'list' is expected.")
         attrs = []
@@ -819,7 +930,7 @@ class ListAttribute(Attribute):
             attr.updateInternals()
 
     # Override
-    def _getAllInputLinks(self) -> list["Attribute"]:
+    def _getAllInputLinks(self) -> list[Attribute]:
         """
         Return the list of upstream connected attributes for the attribute or any of its elements.
         """
@@ -829,7 +940,7 @@ class ListAttribute(Attribute):
         return [edge.src for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
 
     # Override
-    def _getAllOutputLinks(self) -> list["Attribute"]:
+    def _getAllOutputLinks(self) -> list[Attribute]:
         """
         Return the list of downstream connected attributes for the attribute or any of its elements.
         """
@@ -892,7 +1003,14 @@ class GroupAttribute(Attribute):
         self._value.reset(subAttributes)
 
     # Override
+    def _getValue(self):
+        return self._value
+
+    # Override
     def _setValue(self, exportedValue):
+        if self._handleLinkValue(exportedValue):
+            return
+
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
@@ -908,8 +1026,11 @@ class GroupAttribute(Attribute):
 
     # Override
     def _applyExpr(self):
-        for value in self._value:
-            value._applyExpr()
+        if self._linkExpression:
+            super()._applyExpr()
+        else:
+            for value in self._value:
+                value._applyExpr()
 
     # Override
     def resetToDefaultValue(self):
@@ -922,6 +1043,8 @@ class GroupAttribute(Attribute):
 
     # Override
     def getSerializedValue(self):
+        if self.inputLink:
+            return self.inputLink.asLinkExpr()
         return {key: attr.getSerializedValue() for key, attr in self._value.objects.items()}
 
     # Override
@@ -954,6 +1077,9 @@ class GroupAttribute(Attribute):
 
     # Override
     def upgradeValue(self, exportedValue):
+        if self._handleLinkValue(exportedValue):
+            return
+
         value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
@@ -970,8 +1096,11 @@ class GroupAttribute(Attribute):
 
     # Override
     def uid(self):
+        if self.isLink:
+            return super().uid()
+
         uids = []
-        for k, v in self._value.items():
+        for _, v in self._value.items():
             if v.enabled and v.invalidate:
                 uids.append(v.uid())
         return hashValue(uids)
@@ -981,6 +1110,81 @@ class GroupAttribute(Attribute):
         super().updateInternals()
         for attr in self._value:
             attr.updateInternals()
+
+    # Override
+    def _getFlatStaticChildren(self) -> list[Attribute]:
+        attributes = []
+
+        # Iterate over the values and add the flat children of every child (if they exist)
+        for attribute in self.value:
+            attributes.append(attribute)
+            attributes += attribute.flatStaticChildren
+
+        return attributes
+
+    # Override
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        valid = super()._validateIncomingConnection(connectingAttribute)
+
+        if not valid:  # Attributes are not of the same base type
+            return False
+
+        return self._hasMatchingStructure(connectingAttribute)
+
+    def _hasMatchingStructure(self, otherAttribute: Attribute) -> bool:
+        """
+        Check whether this GroupAttribute and another Attribute have matching structures.
+
+        Attributes have matching structures if they have the same number of children and if, at each position,
+        both Attributes have the same base type.
+
+        Args:
+            otherAttribute: the other Attribute to compare structure with
+
+        Returns:
+            True if both Attributes have the same structure, False otherwise
+        """
+        flatAttrs = self.flatStaticChildren
+        otherFlatAttrs = otherAttribute.flatStaticChildren
+
+        if len(flatAttrs) != len(otherFlatAttrs):
+            return False
+
+        for index, attribute in enumerate(flatAttrs):
+            if attribute.baseType != otherFlatAttrs[index].baseType:
+                return False
+
+        return True
+
+    # Override
+    def connectTo(self, dstAttribute: GroupAttribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
+        """
+        Connect this GroupAttribute to "dstAttribute". The nested attributes in the group
+        are automatically connected.
+
+        Args:
+            dstAttribute: the destination Attribute
+
+        Returns:
+            A tuple containing:
+                - a list containing pairs of the source and destination Attributes (as lists) for every created edge
+                - a list containing pairs of the source and destination Attributes (as lists) for every deleted edge
+        """
+        nestedDstAttributes = list(dstAttribute.value)
+        connectedEdges = []
+        deletedEdges = []
+
+        for index, nestedAttribute in enumerate(list(self.value)):
+            # If the attributes are already connected, do not connect them again
+            if not nestedDstAttributes[index] in nestedAttribute.outputLinks:
+                connected, deleted = nestedAttribute.connectTo(nestedDstAttributes[index])
+                connectedEdges += connected
+                deletedEdges += deleted
+        connected, deleted = super().connectTo(dstAttribute)
+        connectedEdges += connected
+        deletedEdges += deleted
+
+        return connectedEdges, deletedEdges
 
     @Slot(str, result=Attribute)
     def childAttribute(self, key: str) -> Attribute:
@@ -1004,8 +1208,11 @@ class GroupAttribute(Attribute):
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
     # Override value property
-    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
-    isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value), notify=Attribute.valueChanged)
+    value = Property(Variant, _getValue, _setValue, notify=Attribute.valueChanged)
+    # Override flatStaticChildren property
+    flatStaticChildren = Property(Variant, _getFlatStaticChildren, constant=True)
+    isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value),
+                         notify=Attribute.valueChanged)
 
 
 class GeometryAttribute(GroupAttribute):

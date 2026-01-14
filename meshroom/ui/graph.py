@@ -1088,7 +1088,8 @@ class UIGraph(QObject):
     def canExpandForLoop(self, currentEdge):
         """ Check if the list attribute can be expanded by looking at all the edges connected to it. """
         listAttribute = currentEdge.src.root
-        if not listAttribute:
+        # Check that the parent is indeed a ListAttribute (it could be a GroupAttribute, for example)
+        if not listAttribute or not isinstance(listAttribute, ListAttribute):
             return False
         srcIndex = listAttribute.index(currentEdge.src)
         allSrc = [e.src for e in self._graph.edges.values()]
@@ -1171,11 +1172,11 @@ class UIGraph(QObject):
 
     @Slot(Edge)
     def removeEdge(self, edge):
-        if isinstance(edge.dst.root, ListAttribute):
-            with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.fullName}"):
+        with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.fullName}"):
+            if isinstance(edge.dst.root, ListAttribute):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
                 self.removeAttribute(edge.dst)
-        else:
+                return
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
     @Slot(list)

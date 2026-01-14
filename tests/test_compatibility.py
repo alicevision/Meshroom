@@ -596,7 +596,7 @@ class TestUidConflict:
             nodeB = graph.addNewNode(UidTestingNodeV2.__name__)
 
             nodeB.param.append("")
-            graph.addEdge(nodeA.output, nodeB.param.at(0))
+            nodeA.output.connectTo(nodeB.param.at(0))
 
             graph.save()
             replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
@@ -617,8 +617,8 @@ class TestUidConflict:
 
             # Double-connect nodeA.output to nodeB, on both a single attribute and a list attribute
             nodeB.param.append("")
-            graph.addEdge(nodeA.output, nodeB.param.at(0))
-            graph.addEdge(nodeA.output, nodeB.input)
+            nodeA.output.connectTo(nodeB.param.at(0))
+            nodeA.output.connectTo(nodeB.input)
 
             graph.save()
             replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
@@ -647,7 +647,7 @@ class TestUidConflict:
             nodeA = graph.addNewNode(UidTestingNodeV2.__name__)
             nodeB = graph.addNewNode(UidTestingNodeV1.__name__)
 
-            graph.addEdge(nodeA.output, nodeB.input)
+            nodeA.output.connectTo(nodeB.input)
 
             graph.save()
             replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
@@ -663,7 +663,7 @@ class TestUidConflict:
             nodeB = graph.addNewNode(UidTestingNodeV3.__name__)
 
             nodeB.param.append("")
-            graph.addEdge(nodeA.output, nodeB.param.at(0))
+            nodeA.output.connectTo(nodeB.param.at(0))
 
             graph.save()
             replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)

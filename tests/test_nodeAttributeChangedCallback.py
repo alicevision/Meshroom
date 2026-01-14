@@ -87,7 +87,7 @@ class TestAttributeCallbackTriggerInGraph:
         assert nodeA.affectedInput.value == nodeB.affectedInput.value == 0
 
         nodeA.input.value = 1
-        graph.addEdge(nodeA.input, nodeB.input)
+        nodeA.input.connectTo(nodeB.input)
 
         assert nodeA.affectedInput.value == nodeB.affectedInput.value == 2
 
@@ -98,7 +98,7 @@ class TestAttributeCallbackTriggerInGraph:
 
         assert nodeA.affectedInput.value == nodeB.affectedInput.value == 0
 
-        graph.addEdge(nodeA.input, nodeB.input)
+        nodeA.input.connectTo(nodeB.input)
         nodeA.input.value = 1
 
         assert nodeA.affectedInput.value == 2
@@ -112,7 +112,7 @@ class TestAttributeCallbackTriggerInGraph:
         assert nodeA.affectedInput.value == 0
         assert nodeB.affectedInput.value == 0
 
-        graph.addEdge(nodeA.input, nodeB.input)
+        nodeA.input.connectTo(nodeB.input)
 
         assert nodeA.affectedInput.value == 0
         assert nodeB.affectedInput.value == 2
@@ -124,11 +124,9 @@ class TestAttributeCallbackTriggerInGraph:
         nodeC = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
         nodeD = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
-        graph.addEdges(
-            (nodeA.affectedInput, nodeB.input),
-            (nodeB.affectedInput, nodeC.input),
-            (nodeC.affectedInput, nodeD.input),
-        )
+        nodeA.affectedInput.connectTo(nodeB.input)
+        nodeB.affectedInput.connectTo(nodeC.input)
+        nodeC.affectedInput.connectTo(nodeD.input)
 
         nodeA.input.value = 5
 
@@ -142,7 +140,7 @@ class TestAttributeCallbackTriggerInGraph:
         nodeA = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
-        graph.addEdge(nodeA.input, nodeB.input)
+        nodeA.input.connectTo(nodeB.input)
         nodeA.input.value = 5
         assert nodeB.affectedInput.value == 10
 
@@ -171,7 +169,7 @@ class TestAttributeCallbackTriggerInGraph:
         nodeA = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
-        graph.addEdge(nodeA.input, nodeB.input)
+        nodeA.input.connectTo(nodeB.input)
         nodeA.input.value = 5
         assert nodeB.affectedInput.value == nodeB.input.value * 2
 
@@ -263,7 +261,7 @@ class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
         nodeA.listInput.append(0)
         attr = nodeA.listInput.at(0)
 
-        graph.addEdge(attr, nodeB.input)
+        attr.connectTo(nodeB.input)
 
         attr.value = 10
 
@@ -275,7 +273,7 @@ class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
         nodeA = graph.addNewNode(NodeWithCompoundAttributes.__name__)
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
-        graph.addEdge(nodeA.groupInput.int, nodeB.input)
+        nodeA.groupInput.int.connectTo(nodeB.input)
 
         nodeA.groupInput.int.value = 10
 
@@ -291,7 +289,7 @@ class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
 
         attr = nodeA.listOfGroupsInput.at(0)
 
-        graph.addEdge(attr.int, nodeB.input)
+        attr.int.connectTo(nodeB.input)
 
         attr.int.value = 10
 
@@ -307,7 +305,7 @@ class TestAttributeCallbackBehaviorWithUpstreamCompoundAttributes:
 
         attr = nodeA.groupWithListInput.subList.at(0)
 
-        graph.addEdge(attr, nodeB.input)
+        attr.connectTo(nodeB.input)
 
         attr.value = 10
 
@@ -366,7 +364,7 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
         nodeA.input.value = 10
-        graph.addEdge(nodeA.output, nodeB.input)
+        nodeA.output.connectTo(nodeB.input)
 
         assert nodeB.affectedInput.value == 0
 
@@ -380,7 +378,7 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         nodeA.input.value = 10
         executeGraph(graph)
 
-        graph.addEdge(nodeA.output, nodeB.input)
+        nodeA.output.connectTo(nodeB.input)
         assert nodeA.output.value == nodeB.input.value == 20
         assert nodeB.affectedInput.value == 40
 
@@ -391,7 +389,7 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         nodeA = graph.addNewNode(NodeWithDynamicOutputValue.__name__)
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
-        graph.addEdge(nodeA.output, nodeB.input)
+        nodeA.output.connectTo(nodeB.input)
         nodeA.input.value = 10
         executeGraph(graph)
 
@@ -408,7 +406,7 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         nodeA.input.value = 10
         executeGraph(graph)
 
-        graph.addEdge(nodeA.output, nodeB.input)
+        nodeA.output.connectTo(nodeB.input)
 
         expectedPreClearValue = nodeA.input.value * 2 * 2
         assert nodeB.affectedInput.value == expectedPreClearValue
@@ -425,7 +423,7 @@ class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
         nodeA.input.value = 10
-        graph.addEdge(nodeA.output, nodeB.input)
+        nodeA.output.connectTo(nodeB.input)
         executeGraph(graph)
 
         assert nodeA.output.value == nodeB.input.value == 20
@@ -453,7 +451,7 @@ class TestAttributeCallbackBehaviorOnGraphImport:
         nodeA = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
         nodeB = graph.addNewNode(NodeWithAttributeChangedCallback.__name__)
 
-        graph.addEdge(nodeA.affectedInput, nodeB.input)
+        nodeA.affectedInput.connectTo(nodeB.input)
 
         nodeA.input.value = 5
         nodeB.affectedInput.value = 2

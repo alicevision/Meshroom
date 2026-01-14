@@ -6,6 +6,7 @@ from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
+from meshroom.core.exception import CyclicDependencyError,InvalidEdgeError
 from meshroom.core.graph import Graph, GraphModification
 from meshroom.core.node import Position, CompatibilityIssue
 from meshroom.core.nodeFactory import nodeFactory
@@ -427,17 +428,27 @@ class AddEdgeCommand(GraphCommand):
         super().__init__(graph, parent)
         self.srcAttr = src.fullName
         self.dstAttr = dst.fullName
-        self.setText(f"Connect '{self.srcAttr}'->'{self.dstAttr}'")
+        self.createdEdges = []  # List of all the edges that have been created at once
+        self.deletedEdges = []  # List of all the edges that have been deleted to create the new edge(s)
+        self.setText(f"Connect '{self.srcAttr}' -> '{self.dstAttr}'")
 
-        if src.baseType != dst.baseType:
-            raise ValueError(f"Attribute types are not compatible and cannot be connected: '{self.srcAttr}'({src.baseType})->'{self.dstAttr}'({dst.baseType})")
+        if not dst.validateIncomingConnection(src):
+            raise InvalidEdgeError(src.fullName, dst.fullName, "Attributes are not compatible.")
 
-    def redoImpl(self):
-        self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))
+    def redoImpl(self) -> bool:
+        try:
+            self.createdEdges, self.deletedEdges = self.graph.attribute(self.srcAttr).connectTo(self.graph.attribute(self.dstAttr))
+        except CyclicDependencyError:
+            self.graph.removeEdge(self.graph.attribute(self.dstAttr))
+            return False
         return True
 
-    def undoImpl(self):
-        self.graph.removeEdge(self.graph.attribute(self.dstAttr))
+    def undoImpl(self) -> bool:
+        for edge in self.createdEdges:
+            edge[1].disconnectEdge()
+        for edge in self.deletedEdges:
+            edge[0].connectTo(edge[1])
+        return True
 
 
 class RemoveEdgeCommand(GraphCommand):
@@ -445,15 +456,17 @@ class RemoveEdgeCommand(GraphCommand):
         super().__init__(graph, parent)
         self.srcAttr = edge.src.fullName
         self.dstAttr = edge.dst.fullName
-        self.setText(f"Disconnect '{self.srcAttr}'->'{self.dstAttr}'")
+        self.deletedEdges = []  # List of all the edges that have been deleted
+        self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
 
-    def redoImpl(self):
-        self.graph.removeEdge(self.graph.attribute(self.dstAttr))
+    def redoImpl(self) -> bool:
+        self.deletedEdges = self.graph.attribute(self.dstAttr).disconnectEdge()
         return True
 
-    def undoImpl(self):
-        self.graph.addEdge(self.graph.attribute(self.srcAttr),
-                           self.graph.attribute(self.dstAttr))
+    def undoImpl(self) -> bool:
+        for edge in self.deletedEdges:
+            edge[0].connectTo(edge[1])
+        return True
 
 
 class ListAttributeAppendCommand(GraphCommand):

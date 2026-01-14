@@ -14,27 +14,27 @@ import Meshroom.Helpers
 Item {
     id: root
 
-    /// The underlying Node object
+    // The underlying Node object
     property variant node
 
-    /// Mouse related states
+    // Mouse related states
     property bool mainSelected: false
     property bool selected: false
     property bool hovered: false
 
-    // The Item instantiating the delegates.
+    // The item instantiating the delegates
     property Item modelInstantiator: undefined
 
     readonly property bool isBackdrop: true
-    // Node Children for the Backdrop
+    // Node children for the Backdrop
     property var children: []
     property var childrenIndices: []
 
     property bool dragging: mouseArea.drag.active
     property bool resizing: leftDragger.drag.active || topDragger.drag.active
-    /// Combined x and y
+    // Combined x and y
     property point position: Qt.point(x, y)
-    /// Styling
+    // Styling
     property color shadowColor: "#cc000000"
     readonly property color defaultColor: node.color === "" ? "#fffb85" : node.color
     property color baseColor: defaultColor
@@ -60,12 +60,12 @@ Item {
     // Already connected attribute with another edge in DropArea
     signal edgeAboutToBeRemoved(var input)
 
-    /// Emitted when child attribute pins are created
+    // Emitted when child attribute pins are created
     signal attributePinCreated(var attribute, var pin)
-    /// Emitted when child attribute pins are deleted
+    // Emitted when child attribute pins are deleted
     signal attributePinDeleted(var attribute, var pin)
 
-    // use node name as object name to simplify debugging
+    // Use node name as object name to simplify debugging
     objectName: node ? node.name : ""
 
     // initialize position with node coordinates
@@ -75,8 +75,8 @@ Item {
     // The backdrop node always needs to be at the back
     z: -1
 
-    width: root.node ? root.node.nodeWidth : 300;
-    height: root.node ? root.node.nodeHeight : 200;
+    width: root.node ? root.node.nodeWidth : 300
+    height: root.node ? root.node.nodeHeight : 200
 
     implicitHeight: childrenRect.height
 
@@ -84,15 +84,15 @@ Item {
 
     Connections {
         target: root.node
-        // update x,y when node position changes
+
         function onPositionChanged() {
             root.x = root.node.x
             root.y = root.node.y
         }
 
         function onInternalAttributesChanged() {
-            root.width = root.node.nodeWidth;
-            root.height = root.node.nodeHeight;
+            root.width = root.node.nodeWidth
+            root.height = root.node.nodeHeight
         }
     }
 
@@ -105,49 +105,43 @@ Item {
     }
 
     onPressed: {
-        updateChildren();
+        updateChildren()
     }
 
     function updateChildren() {
-        let indices = [];
-        let nodes = [];
-        const backdropRect = Qt.rect(root.node.x, root.node.y, root.node.nodeWidth, root.node.nodeHeight);
+        let indices = []
+        let nodes = []
+        const backdropRect = Qt.rect(root.node.x, root.node.y, root.node.nodeWidth, root.node.nodeHeight)
 
         for (var i = 0; i < modelInstantiator.count; ++i) {
-            const delegate = modelInstantiator.itemAt(i).item;
+            const delegate = modelInstantiator.itemAt(i).item
             if (delegate === this)
                 continue
 
             const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height);
             if (Geom2D.rectRectFullIntersect(backdropRect, delegateRect)) {
-                indices.push(i);
-                nodes.push(delegate);
+                indices.push(i)
+                nodes.push(delegate)
             }
         }
-        childrenIndices = indices;
-        children = nodes;
+        childrenIndices = indices
+        children = nodes
     }
 
     function getChildrenNodes(refresh = false) {
-        /**
-         * Returns the current nodes which are a part of the Backdrop.
-         */
-        // Update the children if required
+        // Returns the current nodes which are a part of the Backdrop
         if (refresh) {
-            updateChildren();
+            updateChildren()
         }
-        return children;
+        return children
     }
 
     function getChildrenIndices(refresh = false) {
-        /**
-         * Returns the current nodes' indices which are a part of the Backdrop.
-         */
-        // Update the children if required
+        // Returns the current nodes' indices which are a part of the Backdrop
         if (refresh) {
-            updateChildren();
+            updateChildren()
         }
-        return childrenIndices;
+        return childrenIndices
     }
 
     // Main Layout
@@ -174,10 +168,8 @@ Item {
 
         cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
-        /// Backdrop Resize Controls ???
-        ///
-        /// Resize Right Side
-        ///
+        // --- Backdrop Resize Controls
+        // Resize: right side
         Rectangle {
             width: 4
             height: nodeContent.height
@@ -199,25 +191,22 @@ Item {
                 onMouseXChanged: {
                     if (drag.active) {
                         // Update the area width
-                        root.width = root.width + mouseX;
+                        root.width = root.width + mouseX
 
                         // Ensure we have a minimum width always
                         if (root.width < root.minimumWidth) {
-                            root.width = root.minimumWidth;
+                            root.width = root.minimumWidth
                         }
                     }
                 }
 
                 onReleased: {
-                    // emit the width and height
                     root.resized(root.width, nodeContent.height);
                 }
             }
         }
 
-        ///
-        /// Resize Left Side
-        ///
+        // Resize: left size
         Rectangle {
             width: 4
             height: nodeContent.height
@@ -248,22 +237,19 @@ Item {
                         if (w > root.minimumWidth) {
                             // Update the node's x position and the width
                             root.x = root.x + mouseX
-                            root.width = w;
+                            root.width = w
                         }
                     }
                 }
 
                 onReleased: {
-                    // emit the node width and height along with the root position
                     // Dragging from the left moves the node as well
-                    root.resizedAndMoved(root.width, root.height, Qt.point(root.x, root.y));
+                    root.resizedAndMoved(root.width, root.height, Qt.point(root.x, root.y))
                 }
             }
         }
 
-        ///
-        /// Resize Bottom
-        ///
+        // Resize: bottom
         Rectangle {
             width: mouseArea.width
             height: 4
@@ -284,25 +270,22 @@ Item {
                 onMouseYChanged: {
                     if (drag.active) {
                         // Update the height
-                        root.height = root.height + mouseY;
+                        root.height = root.height + mouseY
 
                         // Ensure a minimum height
                         if (root.height < root.minumumHeight) {
-                            root.height = root.minumumHeight;
+                            root.height = root.minumumHeight
                         }
                     }
                 }
 
                 onReleased: {
-                    // emit the width and height for it to be updated
-                    root.resized(mouseArea.width, root.height);
+                    root.resized(mouseArea.width, root.height)
                 }
             }
         }
 
-        ///
-        /// Resize Top
-        ///
+        // Resize: top
         Rectangle {
             width: mouseArea.width
             height: 4
@@ -322,19 +305,18 @@ Item {
 
                 onMouseYChanged: {
                     if (drag.active) {
-                        let h = root.height - mouseY;
+                        let h = root.height - mouseY
 
                         // Ensure a minimum height
                         if (h > root.minumumHeight) {
                             // Update the node's y position and the height
-                            root.y = root.y + mouseY;
-                            root.height = h;
+                            root.y = root.y + mouseY
+                            root.height = h
                         }
                     }
                 }
 
                 onReleased: {
-                    // emit the node width and height along with the root position
                     // Dragging from the top moves the node as well
                     root.resizedAndMoved(root.width, root.height, Qt.point(root.x, root.y));
                 }

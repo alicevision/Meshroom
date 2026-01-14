@@ -938,70 +938,69 @@ Item {
                             onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
 
                             onShaked: {
-                                uigraph.disconnectSelectedNodes();
+                                uigraph.disconnectSelectedNodes()
                             }
 
                             onPressed: function(mouse) {
-                                nodeRepeater.updateSelectionOnClick = true;
-                                nodeRepeater.ongoingDrag = true;
+                                nodeRepeater.updateSelectionOnClick = true
+                                nodeRepeater.ongoingDrag = true
 
-                                let selectionMode = ItemSelectionModel.NoUpdate;
+                                let selectionMode = ItemSelectionModel.NoUpdate
 
-                                if(!selected) {
-                                    selectionMode = ItemSelectionModel.ClearAndSelect;
+                                if (!selected) {
+                                    selectionMode = ItemSelectionModel.ClearAndSelect
                                 }
 
                                 if (mouse.button === Qt.LeftButton) {
-                                    if(mouse.modifiers & Qt.ShiftModifier) {
-                                        selectionMode = ItemSelectionModel.Select;
+                                    if (mouse.modifiers & Qt.ShiftModifier) {
+                                        selectionMode = ItemSelectionModel.Select
                                     }
-                                    if(mouse.modifiers & Qt.ControlModifier) {
-                                        selectionMode = ItemSelectionModel.Toggle;
+                                    if (mouse.modifiers & Qt.ControlModifier) {
+                                        selectionMode = ItemSelectionModel.Toggle
                                     }
-                                    if(mouse.modifiers & Qt.AltModifier) {
-                                        let selectFollowingMode = ItemSelectionModel.ClearAndSelect;
-                                        if(mouse.modifiers & Qt.ShiftModifier) {
-                                            selectFollowingMode = ItemSelectionModel.Select;
+                                    if (mouse.modifiers & Qt.AltModifier) {
+                                        let selectFollowingMode = ItemSelectionModel.ClearAndSelect
+                                        if (mouse.modifiers & Qt.ShiftModifier) {
+                                            selectFollowingMode = ItemSelectionModel.Select
                                         }
-                                        uigraph.selectFollowing(node, selectFollowingMode);
+                                        uigraph.selectFollowing(node, selectFollowingMode)
                                         // Indicate selection has been dealt with by setting conservative Select mode.
-                                        selectionMode = ItemSelectionModel.Select;
+                                        selectionMode = ItemSelectionModel.Select
                                     }
                                 }
                                 else if (mouse.button === Qt.RightButton) {
-                                    if(selected) {
+                                    if (selected) {
                                         // Keep the full selection when right-clicking on an already selected node.
-                                        nodeRepeater.updateSelectionOnClick = false;
+                                        nodeRepeater.updateSelectionOnClick = false
                                     }
                                 }
 
-                                if(selectionMode != ItemSelectionModel.NoUpdate) {
-                                    nodeRepeater.updateSelectionOnClick = false;
-                                    uigraph.selectNodeByIndex(index, selectionMode);
+                                if (selectionMode != ItemSelectionModel.NoUpdate) {
+                                    nodeRepeater.updateSelectionOnClick = false
+                                    uigraph.selectNodeByIndex(index, selectionMode)
                                 }
 
                                 // If the node is selected after this, make it the active selected node.
-                                if(selected) {
+                                if (selected) {
                                     uigraph.selectedNode = node;
                                 }
 
                                 // Open the node context menu once selection has been updated.
-                                if(mouse.button == Qt.RightButton) {
+                                if (mouse.button == Qt.RightButton) {
                                     nodeMenuLoader.load(node)
                                 }
-
                             }
 
                             onReleased: function(mouse, wasDragged) {
-                                nodeRepeater.ongoingDrag = false;
+                                nodeRepeater.ongoingDrag = false
                             }
 
                             // Only called when the node has not been dragged.
                             onClicked: function(mouse) {
-                                if(!nodeRepeater.updateSelectionOnClick) {
-                                    return;
+                                if (!nodeRepeater.updateSelectionOnClick) {
+                                    return
                                 }
-                                uigraph.selectNodeByIndex(index);
+                                uigraph.selectNodeByIndex(index)
                             }
 
                             onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }

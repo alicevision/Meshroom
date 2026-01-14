@@ -577,9 +577,10 @@ Panel {
             visible: root.node !== null
 
             property bool isComputableType: root.node !== null && root.node.isComputableType
+            property bool isBackdropNode: root.node !== null && root.node.isBackdropNode
 
             // The indices of the tab bar which can be shown for incomputable nodes
-            readonly property var nonComputableTabIndices: [0, 4, 5];
+            readonly property var nonComputableTabIndices: [0, 4, 5]
 
             Layout.fillWidth: true
             width: childrenRect.width
@@ -587,6 +588,18 @@ Panel {
             currentIndex: 0
             TabButton {
                 text: "Attributes"
+                visible: !tabBar.isBackdropNode
+                width: {
+                    if (!visible)
+                        return 0
+                    else {
+                        if (tabBar.isComputableType)
+                            return tabBar.width / tabBar.count
+                        else {
+                            return tabBar.width / tabBar.nonComputableTabIndices.length
+                        }
+                    }
+                }
                 padding: 4
                 leftPadding: 8
                 rightPadding: leftPadding
@@ -628,7 +641,12 @@ Panel {
                 // If we have a node selected and the node is not Computable
                 // Reset the currentIndex to 0, if the current index is not allowed for an incomputable node
                 if ((root.node && !root.node.isComputableType) && (nonComputableTabIndices.indexOf(tabBar.currentIndex) === -1)) {
-                    tabBar.currentIndex = 0;
+                    if (root.node.isBackdropNode) {
+                        // Backdrop nodes can only show the Documentation & Notes tabs
+                        tabBar.currentIndex = 4 // Notes tab
+                    } else {
+                        tabBar.currentIndex = 0
+                    }
                 }
             }
         }

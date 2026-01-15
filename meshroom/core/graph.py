@@ -121,7 +121,7 @@ class Visitor:
 
     def backEdge(self, e, g):
         """ Is invoked on the back edges in the graph. """
-        raise CyclicDependencyError("A cyclic dependency exists on the current graph.")
+        pass
 
     def forwardOrCrossEdge(self, e, g):
         """

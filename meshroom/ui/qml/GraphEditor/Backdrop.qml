@@ -413,11 +413,14 @@ Item {
 
                     // Show only when we have a comment
                     visible: node.comment
+                    width: parent.width
 
                     Text {
                         text: node.comment
                         padding: 4
                         font.pointSize: node.fontSize
+                        width: parent.width
+                        wrapMode: Text.Wrap
                     }
                 }
             }

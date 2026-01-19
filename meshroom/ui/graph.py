@@ -548,6 +548,11 @@ class UIGraph(QObject):
         self._undoStack.setClean()
 
     @Slot()
+    def saveAsNewVersion(self):
+        self._graph.saveAsNewVersion()
+        self._undoStack.setClean()
+
+    @Slot()
     def updateLockedUndoStack(self):
         if self.isComputingLocally():
             self._undoStack.lockAtThisIndex()

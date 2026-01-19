@@ -775,6 +775,16 @@ Page {
                         saveFileDialog.open()
                     }
                 }
+                Action {
+                    id: saveNewVersionAction
+                    text: "Save New Version"
+                    shortcut: "Ctrl+Alt+S"
+                    enabled: _reconstruction && _reconstruction.graph && _reconstruction.graph.filepath
+                    onTriggered: {
+                        _reconstruction.saveAsNewVersion()
+                        MeshroomApp.addRecentProjectFile(_reconstruction.graph.filepath)
+                    }
+                }
                 MenuSeparator { }
                 Action {
                     id: importImagesAction

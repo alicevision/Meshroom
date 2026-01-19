@@ -22,6 +22,8 @@ SelectionBox {
         const mappedSelectionRect = mapToItem(container, selectionRect)
         for (var i = 0; i < modelInstantiator.count; ++i) {
             const delegate = modelInstantiator.getItemAt(i)
+            if (!delegate)
+                continue
             const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height)
             if (Geom2D.rectRectIntersect(mappedSelectionRect, delegateRect)) {
                 selectedIndices.push(i)
@@ -29,7 +31,9 @@ SelectionBox {
                 if (delegate.isBackdropNode) {
                     let children = delegate.getChildrenIndices(true)
                     for (var child = 0; child < children.length; ++child) {
-                        selectedIndices.push(children[child])
+                        if (selectedIndices.indexOf(children[child]) === -1) {
+                            selectedIndices.push(children[child])
+                        }
                     }
                 }
             }

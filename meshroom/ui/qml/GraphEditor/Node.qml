@@ -19,7 +19,6 @@ Item {
     property bool readOnly: node.locked
     /// Whether the node is in compatibility mode
     readonly property bool isCompatibilityNode: node ? node.hasOwnProperty("compatibilityIssue") : false
-    readonly property bool isBackdropNode: node ? node.isBackdropNode : false
     /// Mouse related states
     property bool mainSelected: false
     property bool selected: false

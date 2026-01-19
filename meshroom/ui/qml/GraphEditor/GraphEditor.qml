@@ -1173,7 +1173,7 @@ Item {
 
                                 uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
                                     if (idx != index) {
-                                        const delegate = nodeRepeater.itemAt(idx.row).item
+                                        const delegate = nodeRepeater.getItemAt(idx.row)
                                         delegate.x = delegate.node.x + offset.x
                                         delegate.y = delegate.node.y + offset.y
                                     }

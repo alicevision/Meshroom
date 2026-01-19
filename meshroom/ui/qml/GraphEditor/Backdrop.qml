@@ -25,7 +25,6 @@ Item {
     // The item instantiating the delegates
     property Item modelInstantiator: undefined
 
-    readonly property bool isBackdrop: true
     // Node children for the Backdrop
     property var children: []
     property var childrenIndices: []
@@ -40,7 +39,7 @@ Item {
     property color baseColor: defaultColor
 
     readonly property int minimumWidth: 200
-    readonly property int minumumHeight: 200
+    readonly property int minimumHeight: 200
 
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
 
@@ -97,7 +96,7 @@ Item {
     }
 
     // When the node is selected, update the children for it
-    // For node to consider another ndoe, it needs to be fully inside the backdrop area
+    // For node to consider another node, it needs to be fully inside the backdrop area
     onSelectedChanged: {
         if (selected) {
             updateChildren()
@@ -114,11 +113,11 @@ Item {
         const backdropRect = Qt.rect(root.node.x, root.node.y, root.node.nodeWidth, root.node.nodeHeight)
 
         for (var i = 0; i < modelInstantiator.count; ++i) {
-            const delegate = modelInstantiator.itemAt(i).item
-            if (delegate === this)
+            const delegate = modelInstantiator.getItemAt(i)
+            if (!delegate || delegate === this)
                 continue
 
-            const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height);
+            const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height)
             if (Geom2D.rectRectFullIntersect(backdropRect, delegateRect)) {
                 indices.push(i)
                 nodes.push(delegate)
@@ -147,8 +146,8 @@ Item {
     // Main Layout
     MouseArea {
         id: mouseArea
-        width: root.width;
-        height: root.height;
+        width: root.width
+        height: root.height
         drag.target: root
         // Small drag threshold to avoid moving the node by mistake
         drag.threshold: 2
@@ -201,12 +200,12 @@ Item {
                 }
 
                 onReleased: {
-                    root.resized(root.width, nodeContent.height);
+                    root.resized(root.width, nodeContent.height)
                 }
             }
         }
 
-        // Resize: left size
+        // Resize: left side
         Rectangle {
             width: 4
             height: nodeContent.height
@@ -273,8 +272,8 @@ Item {
                         root.height = root.height + mouseY
 
                         // Ensure a minimum height
-                        if (root.height < root.minumumHeight) {
-                            root.height = root.minumumHeight
+                        if (root.height < root.minimumHeight) {
+                            root.height = root.minimumHeight
                         }
                     }
                 }
@@ -308,7 +307,7 @@ Item {
                         let h = root.height - mouseY
 
                         // Ensure a minimum height
-                        if (h > root.minumumHeight) {
+                        if (h > root.minimumHeight) {
                             // Update the node's y position and the height
                             root.y = root.y + mouseY
                             root.height = h
@@ -318,7 +317,7 @@ Item {
 
                 onReleased: {
                     // Dragging from the top moves the node as well
-                    root.resizedAndMoved(root.width, root.height, Qt.point(root.x, root.y));
+                    root.resizedAndMoved(root.width, root.height, Qt.point(root.x, root.y))
                 }
             }
         }

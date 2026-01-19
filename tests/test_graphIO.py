@@ -1,5 +1,7 @@
 import json
+import os
 from textwrap import dedent
+from pathlib import Path
 
 from meshroom.core import desc
 from meshroom.core.graph import Graph
@@ -41,6 +43,10 @@ class NodeWithListAttributes(desc.Node):
             ],
         ),
     ]
+
+
+def assertPathsAreEqual(pathA, pathB):
+    return Path(pathA).resolve().as_posix() == Path(pathB).resolve().as_posix()
 
 
 def compareGraphsContent(graphA: Graph, graphB: Graph) -> bool:
@@ -212,6 +218,44 @@ class TestImportGraphContent:
         assert len(nodes) == 1
         assert len(otherGraph.compatibilityNodes) == 1
         assert otherGraph.node(node.name).issue is CompatibilityIssue.VersionConflict
+
+
+class TestGraphSave:
+    def test_generateNextPath(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        root = os.path.dirname(graph._filepath)
+        # Files with no version number (e.g., "scene.mg" -> "scene1.mg")
+        graph._filepath = os.path.join(root, "scene.mg")
+        assertPathsAreEqual(graph._generateNextPath(), os.path.join(root, "scene1.mg"))
+        # Files with existing version numbers (e.g., "scene1.mg" -> "scene2.mg")
+        graph._filepath = os.path.join(root, "scene_1.mg")
+        assertPathsAreEqual(graph._generateNextPath(), os.path.join(root, "scene_2.mg"))
+        # Edge cases like filenames that are purely numeric (e.g., "123.mg")
+        # Also test that the padding is kept ("001" -> "002" and not "2")
+        graph._filepath = os.path.join(root, "0123.mg")
+        assertPathsAreEqual(graph._generateNextPath(), os.path.join(root, "0124.mg"))
+        graph._filepath = os.path.join(root, "scene_001.mg")
+        assertPathsAreEqual(graph._generateNextPath(), os.path.join(root, "scene_002.mg"))
+        # Files where the next version already exists (e.g., "scene1.mg" when "scene2.mg" exists -> "scene3.mg")
+        graph._filepath = os.path.join(root, "scene1.mg")
+        open(os.path.join(root, "scene2.mg"), 'a').close()
+        assertPathsAreEqual(graph._generateNextPath(), os.path.join(root, "scene3.mg"))
+
+    def test_saveAsNewVersion(self, tmp_path):
+        graph = Graph("")
+        with registeredNodeTypes([SimpleNode]):
+            # Create scene
+            nodeA = graph.addNewNode(SimpleNode.__name__)
+            scenePath = os.path.join(tmp_path, "scene.mg")
+            graph._filepath = scenePath
+            graph.save()
+            assert os.path.exists(scenePath)
+            # Modify scene
+            nodeB = graph.addNewNode(SimpleNode.__name__)
+            nodeA.output.connectTo(nodeB.input)
+            graph.saveAsNewVersion()
+            newScenePath = os.path.join(tmp_path, "scene1.mg")
+            assert os.path.exists(newScenePath)
 
 
 class TestGraphPartialSerialization:

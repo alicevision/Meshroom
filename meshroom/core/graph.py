@@ -1386,18 +1386,25 @@ class Graph(BaseObject):
         Generate the filename for the next version
         - scene.mg -> scene1.mg
         - scene1.mg -> scene2.mg
+        - scene_001.mg -> scene_002.mg (preserves zero-padding)
         - scene1.mg and scene2.mg exists -> scene3.mg
         """
         path = Path(self._filepath)
         stem, ext = path.stem, path.suffix
+        # Match name and version number at the end
         versionMatch = re.match(r'^(.+?)(\d+)$', stem)
         if versionMatch:
-            namePart, version = versionMatch.group(1), int(versionMatch.group(2)) + 1
+            stemBase, versionStr = versionMatch.group(1), versionMatch.group(2)
+            version = int(versionStr) + 1
+            # Preserve zero-padding from original
+            padding = len(versionStr)
         else:
-            namePart, version = stem, 1
+            stemBase, version, padding = stem, 1, 1
+        # Find an available name
         while True:
-            newStem = f"{namePart}{version}"
-            pathCandidate = path.parent / f"{newStem}{ext}"
+            # Format version number with appropriate padding
+            versionStr = str(version).zfill(padding)
+            pathCandidate = path.parent / f"{stemBase}{versionStr}{ext}"
             if not pathCandidate.exists():
                 return str(pathCandidate)
             version += 1

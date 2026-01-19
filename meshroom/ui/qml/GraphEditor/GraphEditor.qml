@@ -1081,6 +1081,77 @@ Item {
                             // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
                             selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
 
+                            onPressed: function(mouse) {
+                                nodeRepeater.updateSelectionOnClick = true
+                                nodeRepeater.ongoingDrag = true
+
+                                let selectionMode = ItemSelectionModel.NoUpdate
+
+                                if (!selected) {
+                                    selectionMode = ItemSelectionModel.ClearAndSelect
+                                }
+
+                                if (mouse.button === Qt.LeftButton) {
+                                    if (mouse.modifiers & Qt.ShiftModifier) {
+                                        selectionMode = ItemSelectionModel.Select
+                                    }
+                                    if (mouse.modifiers & Qt.ControlModifier) {
+                                        selectionMode = ItemSelectionModel.Toggle
+                                    }
+                                    if (mouse.modifiers & Qt.AltModifier) {
+                                        let selectFollowingMode = ItemSelectionModel.ClearAndSelect
+                                        if (mouse.modifiers & Qt.ShiftModifier) {
+                                            selectFollowingMode = ItemSelectionModel.Select
+                                        }
+                                        uigraph.selectFollowing(node, selectFollowingMode)
+                                        // Indicate selection has been dealt with by setting conservative Select mode.
+                                        selectionMode = ItemSelectionModel.Select
+                                    }
+                                } else if (mouse.button === Qt.RightButton) {
+                                    if (selected) {
+                                        // Keep the full selection when right-clicking on an already selected node.
+                                        nodeRepeater.updateSelectionOnClick = false
+                                    }
+                                }
+
+                                if (selectionMode != ItemSelectionModel.NoUpdate) {
+                                    nodeRepeater.updateSelectionOnClick = false
+                                    uigraph.selectNodeByIndex(index, selectionMode)
+                                }
+
+                                // If the node is selected after this, make it the active selected node.
+                                if (selected) {
+                                    uigraph.selectedNode = node
+                                }
+
+                                if (!(mouse.modifiers & Qt.AltModifier)) {
+                                    uigraph.selectNodesByIndices(childrenIndices, ItemSelectionModel.Select)
+                                }
+
+                                // Open the node context menu once selection has been updated.
+                                if (mouse.button == Qt.RightButton) {
+                                    nodeMenuLoader.load(node)
+                                }
+                            }
+
+                            onReleased: function(mouse, wasDragged) {
+                                nodeRepeater.ongoingDrag = false
+                            }
+
+                            // Only called when the node has not been dragged.
+                            onClicked: function(mouse) {
+                                if (!nodeRepeater.updateSelectionOnClick) {
+                                    return
+                                }
+                                uigraph.selectNodeByIndex(index)
+
+                                if (!(mouse.modifiers & Qt.AltModifier)) {
+                                    uigraph.selectNodesByIndices(childrenIndices, ItemSelectionModel.Select)
+                                }
+                            }
+
+                            onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }
+
                             onResized: function(width, height) {
                                 uigraph.resizeNode(node, width, height)
                             }
@@ -1088,6 +1159,41 @@ Item {
                                 uigraph.resizeAndMoveNode(node, width, height, position)
                             }
 
+                            onEntered: uigraph.hoveredNode = node
+                            onExited: uigraph.hoveredNode = null
+
+                            // Interactive dragging: move the visual delegates
+                            onPositionChanged: {
+                                if (!selected || !dragging) {
+                                    return
+                                }
+
+                                // Compute offset between the delegate and the stored node position.
+                                const offset = Qt.point(x - node.x, y - node.y)
+
+                                uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+                                    if (idx != index) {
+                                        const delegate = nodeRepeater.itemAt(idx.row).item;
+                                        delegate.x = delegate.node.x + offset.x
+                                        delegate.y = delegate.node.y + offset.y
+                                    }
+                                })
+                            }
+
+                            // After drag: apply the final offset to all selected nodes
+                            onMoved: function(position) {
+                                const offset = Qt.point(position.x - node.x, position.y - node.y)
+                                uigraph.moveSelectedNodesBy(offset)
+                            }
+
+                            Behavior on x {
+                                enabled: !nodeRepeater.ongoingDrag && !resizing && !uigraph.animationsDisabled
+                                NumberAnimation { duration: 100 }
+                            }
+                            Behavior on y {
+                                enabled: !nodeRepeater.ongoingDrag && !resizing && !uigraph.animationsDisabled
+                                NumberAnimation { duration: 100 }
+                            }
                         }
                     }
 

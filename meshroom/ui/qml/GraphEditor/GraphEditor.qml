@@ -1074,10 +1074,28 @@ Item {
                             id: backdropDelegate
                             node: object
                             modelInstantiator: nodeRepeater
+
+                            mainSelected: uigraph.selectedNode === node
+                            hovered: uigraph.hoveredNode === node
+
+                            // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
+                            selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
+
+                            onResized: function(width, height) {
+                                uigraph.resizeNode(node, width, height)
+                            }
+                            onResizedAndMoved: function(width, height, position) {
+                                uigraph.resizeAndMoveNode(node, width, height, position)
+                            }
+
                         }
                     }
 
                     sourceComponent: object.isBackdropNode ? backdropComponent : nodeComponent
+
+                    onLoaded: {
+                        nodeLoader.z = nodeLoader.item.z
+                    }
                 }
             }
         }

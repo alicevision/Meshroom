@@ -82,18 +82,18 @@ Item {
 
     /// Paste content of clipboard to graph editor and create new node if valid
     function pasteNodes() {
-        let finalPosition = undefined;
+        let finalPosition = undefined
         if (mouseArea.containsMouse) {
-            finalPosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY);
+            finalPosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
         } else {
-            finalPosition = getCenterPosition();
+            finalPosition = getCenterPosition()
         }
 
-        const copiedContent = Clipboard.getText();
-        const nodes = uigraph.pasteNodes(copiedContent, finalPosition);
+        const copiedContent = Clipboard.getText()
+        const nodes = uigraph.pasteNodes(copiedContent, finalPosition)
         if (nodes.length > 0) {
-            uigraph.selectedNode = nodes[0];
-            uigraph.selectNodes(nodes);
+            uigraph.selectedNode = nodes[0]
+            uigraph.selectNodes(nodes)
         }
     }
 
@@ -147,7 +147,7 @@ Item {
         id: mouseArea
         anchors.fill: parent
         property double factor: 1.15
-        property bool removingEdges: false;
+        property bool removingEdges: false
         // Activate multisampling for edges antialiasing
         layer.enabled: true
         layer.samples: 8
@@ -176,22 +176,22 @@ Item {
                 uigraph.clearNodeSelection()
             }
             if (mouse.button == Qt.LeftButton && (mouse.modifiers == Qt.NoModifier || mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))) {
-                nodeSelectionBox.startSelection(mouse);
+                nodeSelectionBox.startSelection(mouse)
             }
             if (mouse.button == Qt.MiddleButton || (mouse.button == Qt.LeftButton && mouse.modifiers & Qt.AltModifier)) {
                 drag.target = draggable // start drag
             }
             if (mouse.button == Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier) && (mouse.modifiers & Qt.AltModifier)) {
-                edgeSelectionLine.startSelection(mouse);
-                removingEdges = true;
+                edgeSelectionLine.startSelection(mouse)
+                removingEdges = true
             }
         }
 
         onReleased: {
-            removingEdges = false;
+            removingEdges = false
             edgeSelectionLine.endSelection()
-            nodeSelectionBox.endSelection();
-            drag.target = null;
+            nodeSelectionBox.endSelection()
+            drag.target = null
             root.forceActiveFocus()
             workspaceClicked()
         }
@@ -222,8 +222,8 @@ Item {
                 // If it is not a pipeline to import, then it must be a node
                 if (!importPipeline(nodeType)) {
                     // Add node via the proper command in uigraph
-                    var node = uigraph.addNewNode(nodeType, spawnPosition);
-                    uigraph.selectedNode = node;
+                    var node = uigraph.addNewNode(nodeType, spawnPosition)
+                    uigraph.selectedNode = node
                     uigraph.selectNodes([node])
                 }
                 close()
@@ -243,9 +243,9 @@ Item {
             function parseCategories() {
                 // Organize nodes based on their category
                 // {"category1": ["node1", "node2"], "category2": ["node3", "node4"]}
-                let categories = {};
+                let categories = {}
                 for (const [name, data] of Object.entries(root.nodeTypesModel)) {
-                    let category = data["category"];
+                    let category = data["category"]
                     if (categories[category] === undefined) {
                         categories[category] = []
                     }
@@ -288,7 +288,7 @@ Item {
                     // even if this delegate took the activeFocus due to mouse hovering
                     Keys.forwardTo: [searchBar.textField]
                     Keys.onPressed: function(event) {
-                        event.accepted = false;
+                        event.accepted = false
                         switch (event.key) {
                             case Qt.Key_Return:
                             case Qt.Key_Enter:
@@ -306,7 +306,7 @@ Item {
                         }
                     }
                     // Set the priority ordering of the keys to be Item's own Key Handling > ForwardTo
-                    Keys.priority: Keys.AfterItem;
+                    Keys.priority: Keys.AfterItem
                     // Create node on mouse click
                     onClicked: newNodeMenu.createNode(modelData)
 
@@ -569,25 +569,25 @@ Item {
                 sourceComponent: nodeMenuComponent
 
                 function load(node) {
-                    currentNode = node;
+                    currentNode = node
                 }
 
                 function unload() {
-                    currentNode = null;
+                    currentNode = null
                 }
 
                 function showDataDeletionDialog(deleteFollowing: bool, callback) {
-                    uigraph.forceNodesStatusUpdate();
+                    uigraph.forceNodesStatusUpdate()
                     const dialog = deleteDataDialog.createObject(
                         root,
                         {
                             "node": currentNode,
                             "deleteFollowing": deleteFollowing
                         }
-                    );
-                    dialog.open();
+                    )
+                    dialog.open()
                     if(callback)
-                        dialog.dataDeleted.connect(callback);
+                        dialog.dataDeleted.connect(callback)
                 }
             }
 
@@ -600,53 +600,53 @@ Item {
 
                     // Cache computatibility/submitability status of each selected node.
                     readonly property var nodeSubmitOrComputeStatus: {
-                        var collectedStatus = ({});
+                        var collectedStatus = ({})
                         uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
-                            const node = uigraph.graph.nodes.at(idx.row);
-                            collectedStatus[node] = uigraph.graph.canSubmitOrCompute(node);
-                        });
-                        return collectedStatus;
+                            const node = uigraph.graph.nodes.at(idx.row)
+                            collectedStatus[node] = uigraph.graph.canSubmitOrCompute(node)
+                        })
+                        return collectedStatus
                     }
 
                     readonly property bool isSelectionFullyComputed: {
                         return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                            const node = uigraph.graph.nodes.at(idx.row);
-                            return node.isComputed;
-                        });
+                            const node = uigraph.graph.nodes.at(idx.row)
+                            return node.isComputed
+                        })
                     }
 
                     // Selection contains only compatibility nodes
                     readonly property bool isSelectionFullyCompatibility: {
                         return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                            const node = uigraph.graph.nodes.at(idx.row);
-                            return node.isCompatibilityNode;
-                        });
+                            const node = uigraph.graph.nodes.at(idx.row)
+                            return node.isCompatibilityNode
+                        })
                     }
 
                     // Selection contains at least one computable node type
                     readonly property bool selectionContainsComputableNodeType: {
                         return uigraph.nodeSelection.selectedIndexes.some(function(idx) {
-                            const node = uigraph.graph.nodes.at(idx.row);
-                            return node.isComputableType;
-                        });
+                            const node = uigraph.graph.nodes.at(idx.row)
+                            return node.isComputableType
+                        })
                     }
 
                     readonly property bool canSelectionBeComputed: {
                         if(!selectionContainsComputableNodeType)
-                            return false;
+                            return false
                         if(isSelectionFullyCompatibility)
-                            return false;
+                            return false
                         if(isSelectionFullyComputed)
-                            return true;
+                            return true
                         var b = uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                            const node = uigraph.graph.nodes.at(idx.row);
+                            const node = uigraph.graph.nodes.at(idx.row)
                             return (
                                 node.isComputed ||
                                 (uigraph.graph.canComputeTopologically(node) &&
                                 // canCompute if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
                                 nodeSubmitOrComputeStatus[node] % 2 == 1)
-                            );
-                        });
+                            )
+                        })
                         return b
                     }
 
@@ -654,20 +654,20 @@ Item {
 
                     readonly property bool canSelectionBeSubmitted: {
                         if(!selectionContainsComputableNodeType)
-                            return false;
+                            return false
                         if(isSelectionFullyCompatibility)
-                            return false;
+                            return false
                         if(isSelectionFullyComputed)
-                            return true;
+                            return true
                         return uigraph.nodeSelection.selectedIndexes.every(function(idx) {
-                            const node = uigraph.graph.nodes.at(idx.row);
+                            const node = uigraph.graph.nodes.at(idx.row)
                             return (
                                 node.isComputed ||
                                 (uigraph.graph.canComputeTopologically(node) &&
                                  // canSubmit if canSubmitOrCompute == 2(can submit) or 3(can compute & submit)
                                  nodeSubmitOrComputeStatus[node] > 1)
                             )
-                        });
+                        })
                     }
 
                     width: 220
@@ -687,11 +687,11 @@ Item {
                                 nodeMenuLoader.showDataDeletionDialog(
                                     false, 
                                     function(request, uigraph) {
-                                        request(uigraph.getSelectedNodes());
+                                        request(uigraph.getSelectedNodes())
                                     }.bind(null, computeRequest, uigraph)
-                                );
+                                )
                             } else {
-                                computeRequest(uigraph.getSelectedNodes());
+                                computeRequest(uigraph.getSelectedNodes())
                             }
                         }
                     }
@@ -708,11 +708,11 @@ Item {
                                 nodeMenuLoader.showDataDeletionDialog(
                                     false, 
                                     function(request, uigraph) {
-                                        request(uigraph.getSelectedNodes());
+                                        request(uigraph.getSelectedNodes())
                                     }.bind(null, submitRequest, uigraph)
-                                );
+                                )
                             } else {
-                                submitRequest(uigraph.getSelectedNodes());
+                                submitRequest(uigraph.getSelectedNodes())
                             }
                         }
                     }
@@ -788,11 +788,11 @@ Item {
                         }
                     }
                     MenuItem {
-                        text: "Disconnect Node(s)";
-                        enabled: true;
-                        ToolTip.text: "Disconnect all edges from the selected Node(s)";
-                        ToolTip.visible: hovered;
-                        onTriggered: uigraph.disconnectSelectedNodes();
+                        text: "Disconnect Node(s)"
+                        enabled: true
+                        ToolTip.text: "Disconnect all edges from the selected Node(s)"
+                        ToolTip.visible: hovered
+                        onTriggered: uigraph.disconnectSelectedNodes()
                     }
                     MenuItem {
                         text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
@@ -863,8 +863,8 @@ Item {
                             height: parent.height
                             text: MaterialIcons.fast_forward
                             onClicked: {
-                                nodeMenuLoader.showDataDeletionDialog(true);
-                                nodeMenu.close();
+                                nodeMenuLoader.showDataDeletionDialog(true)
+                                nodeMenu.close()
                             }
                         }
 
@@ -891,10 +891,10 @@ Item {
 
                     onAccepted: {
                         if (deleteFollowing)
-                            uigraph.clearDataFrom(uigraph.getSelectedNodes());
+                            uigraph.clearDataFrom(uigraph.getSelectedNodes())
                         else
-                            uigraph.clearSelectedNodesData();
-                        dataDeleted();
+                            uigraph.clearSelectedNodesData()
+                        dataDeleted()
                     }
                     onClosed: destroy()
                 }
@@ -982,7 +982,7 @@ Item {
 
                                 // If the node is selected after this, make it the active selected node.
                                 if (selected) {
-                                    uigraph.selectedNode = node;
+                                    uigraph.selectedNode = node
                                 }
 
                                 // Open the node context menu once selection has been updated.
@@ -1010,10 +1010,10 @@ Item {
 
                             onEdgeAboutToBeRemoved: function(input) {
                                 /*
-                                * Sometimes the signals are not in the right order because of weird Qt/QML update order
-                                * (next DropArea entered signal before previous DropArea exited signal) so edgeAboutToBeRemoved
-                                * must be set to undefined before it can be set to another attribute object.
-                                */
+                                 * Sometimes the signals are not in the right order because of weird Qt/QML update order
+                                 * (next DropArea entered signal before previous DropArea exited signal) so edgeAboutToBeRemoved
+                                 * must be set to undefined before it can be set to another attribute object.
+                                 */
                                 if (input === undefined) {
                                     if (nodeRepeater.temporaryEdgeAboutToBeRemoved === undefined) {
                                         root.edgeAboutToBeRemoved = input
@@ -1032,29 +1032,29 @@ Item {
 
                             // Interactive dragging: move the visual delegates
                             onPositionChanged: {
-                                if(!selected || !dragging) {
-                                    return;
+                                if (!selected || !dragging) {
+                                    return
                                 }
 
                                 // Check for shake on the node
-                                checkForShake();
+                                checkForShake()
 
                                 // Compute offset between the delegate and the stored node position.
-                                const offset = Qt.point(x - node.x, y - node.y);
+                                const offset = Qt.point(x - node.x, y - node.y)
 
                                 uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
                                     if (idx != index) {
-                                        const delegate = nodeRepeater.getItemAt(idx.row);
-                                        delegate.x = delegate.node.x + offset.x;
-                                        delegate.y = delegate.node.y + offset.y;
+                                        const delegate = nodeRepeater.getItemAt(idx.row)
+                                        delegate.x = delegate.node.x + offset.x
+                                        delegate.y = delegate.node.y + offset.y
                                     }
-                                });
+                                })
                             }
 
                             // After drag: apply the final offset to all selected nodes
                             onMoved: function(position) {
-                                const offset = Qt.point(position.x - node.x, position.y - node.y);
-                                uigraph.moveSelectedNodesBy(offset);
+                                const offset = Qt.point(position.x - node.x, position.y - node.y)
+                                uigraph.moveSelectedNodesBy(offset)
                             }
 
                             Behavior on x {
@@ -1173,7 +1173,7 @@ Item {
 
                                 uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
                                     if (idx != index) {
-                                        const delegate = nodeRepeater.itemAt(idx.row).item;
+                                        const delegate = nodeRepeater.itemAt(idx.row).item
                                         delegate.x = delegate.node.x + offset.x
                                         delegate.y = delegate.node.y + offset.y
                                     }
@@ -1212,13 +1212,13 @@ Item {
             modelInstantiator: nodeRepeater
             container: draggable
             onDelegateSelectionEnded: function(selectedIndices, modifiers) {
-                let selectionMode = ItemSelectionModel.ClearAndSelect;
+                let selectionMode = ItemSelectionModel.ClearAndSelect
                 if(modifiers & Qt.ShiftModifier) {
-                    selectionMode = ItemSelectionModel.Select;
+                    selectionMode = ItemSelectionModel.Select
                 } else if(modifiers & Qt.ControlModifier) {
-                    selectionMode = ItemSelectionModel.Deselect;
+                    selectionMode = ItemSelectionModel.Deselect
                 }
-                uigraph.selectNodesByIndices(selectedIndices, selectionMode);
+                uigraph.selectNodesByIndices(selectedIndices, selectionMode)
             }
         }
 
@@ -1228,7 +1228,7 @@ Item {
             modelInstantiator: edgesRepeater
             container: draggable
             onDelegateSelectionEnded: function(selectedIndices, modifiers) {
-                uigraph.deleteEdgesByIndices(selectedIndices);
+                uigraph.deleteEdgesByIndices(selectedIndices)
             }
         }
 

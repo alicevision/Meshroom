@@ -476,7 +476,12 @@ class NodePlugin(BaseObject):
                          f"at {self.path} has not been modified since the last load.")
             return False
 
-        updated = importlib.reload(sys.modules.get(self.nodeDescriptor.__module__))
+        try:
+            updated = importlib.reload(sys.modules.get(self.nodeDescriptor.__module__))
+        except Exception as exc:
+            logging.error(f"[Reload] {self.nodeDescriptor.__name__}: {exc} ({type(exc).__name__})")
+            self.status = NodePluginStatus.DESC_ERROR
+            return False
         descriptor = getattr(updated, self.nodeDescriptor.__name__)
 
         if not descriptor:

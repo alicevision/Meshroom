@@ -19,6 +19,7 @@ from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position, CompatibilityIssue
 from meshroom.core.taskManager import TaskManager
 from meshroom.core.evaluation import MathEvaluator
+from meshroom.core.plugins import NodePluginStatus
 
 from meshroom.ui import commands
 from meshroom.ui.graph import UIGraph
@@ -445,17 +446,25 @@ class Reconstruction(UIGraph):
         The nodes in the graph will be updated to match the changes in the description, if
         there was any.
         """
-        nodeTypes: list[str] = []
+        reloadedNodes: list[str] = []
+        errorNodes: list[str] = []
         for plugin in meshroom.core.pluginManager.getPlugins().values():
             for node in plugin.nodes.values():
                 if node.reload():
-                    nodeTypes.append(node.nodeDescriptor.__name__)
-        self.pluginsReloaded.emit(nodeTypes)
+                    reloadedNodes.append(node.nodeDescriptor.__name__)
+                else:
+                    if node.status == NodePluginStatus.DESC_ERROR or node.status == NodePluginStatus.ERROR:
+                        errorNodes.append(node.nodeDescriptor.__name__)
+
+        self.pluginsReloaded.emit(reloadedNodes, errorNodes)
 
     @Slot(list)
-    def _onPluginsReloaded(self, nodeTypes: list):
-        self._graph.reloadNodePlugins(nodeTypes)
-        self.parent().showMessage("Plugins reloaded!", "ok")
+    def _onPluginsReloaded(self, reloadedNodes: list, errorNodes: list):
+        self._graph.reloadNodePlugins(reloadedNodes)
+        if len(errorNodes) > 0:
+            self.parent().showMessage(f"Some plugins failed to reload: {', '.join(errorNodes)}", "error")
+        else:
+            self.parent().showMessage("Plugins reloaded!", "ok")
 
     @Slot(result=bool)
     @Slot(str, result=bool)
@@ -957,7 +966,7 @@ class Reconstruction(UIGraph):
     displayedAttrs3DChanged = Signal()
     displayedAttrs3D = Property(QObject, lambda self: self._displayedAttrs3D, notify=displayedAttrs3DChanged)
 
-    pluginsReloaded = Signal(list)
+    pluginsReloaded = Signal(list, list)
 
     @Slot(QObject)
     def setActiveNode(self, node, categories=True, inputs=True):

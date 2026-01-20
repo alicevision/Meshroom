@@ -158,7 +158,7 @@ class TestPluginWithInvalidNodes:
         assert name == "sharedTemplate"
         assert plugin.templates[name] == os.path.join(str(plugin.path), "sharedTemplate.mg")
 
-    def test_reloadNodePlugin(self):
+    def test_reloadNodePluginInvalidDescrpition(self):
         plugin = pluginManager.getPlugin("pluginB")
         assert plugin == self.plugin
         node = plugin.nodes["PluginBNodeB"]
@@ -216,6 +216,39 @@ class TestPluginWithInvalidNodes:
         pluginManager.unregisterNode(node)
         assert node.status == NodePluginStatus.DESC_ERROR  # Not NOT_LOADED
         assert not pluginManager.isRegistered(nodeName)
+
+    def test_reloadNodePluginSyntaxError(self):
+        plugin = pluginManager.getPlugin("pluginB")
+        assert plugin == self.plugin
+        node = plugin.nodes["PluginBNodeA"]
+        nodeName = node.nodeDescriptor.__name__
+
+        # Check that the node has been registered
+        assert node.status == NodePluginStatus.LOADED
+        assert pluginManager.isRegistered(nodeName)
+
+        # Introduce a syntax error in the description
+        originalFileContent = None
+        with open(node.path, "r") as f:
+            originalFileContent = f.read()
+
+        replaceFileContent = originalFileContent.replace('name="input",', 'name="input"')
+        with open(node.path, "w") as f:
+            f.write(replaceFileContent)
+
+        # Reload the node and assert it is invalid but still registered
+        node.reload()
+        assert node.status == NodePluginStatus.DESC_ERROR
+        assert pluginManager.isRegistered(nodeName)
+
+        # Restore the node file to its original state (with a description error)
+        with open(node.path, "w") as f:
+            f.write(originalFileContent)
+
+        # Assert the status is correct and the node is still registered
+        node.reload()
+        assert node.status == NodePluginStatus.NOT_LOADED
+        assert pluginManager.isRegistered(nodeName)
 
 
 class TestPluginsConfiguration:

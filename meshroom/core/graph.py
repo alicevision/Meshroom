@@ -1380,6 +1380,47 @@ class Graph(BaseObject):
             self._save(filepath=filepath, setupProjectFile=setupProjectFile, template=template)
         finally:
             self._saving = False
+    
+    def _generateNextPath(self):
+        """
+        Generate the filename for the next version
+        - scene.mg -> scene1.mg
+        - scene1.mg -> scene2.mg
+        - scene_001.mg -> scene_002.mg (preserves zero-padding)
+        - scene1.mg and scene2.mg exists -> scene3.mg
+        """
+        path = Path(self._filepath)
+        stem, ext = path.stem, path.suffix
+        # Match name and version number at the end
+        versionMatch = re.match(r'^(.+?)(\d+)$', stem)
+        if versionMatch:
+            stemBase, versionStr = versionMatch.group(1), versionMatch.group(2)
+            version = int(versionStr) + 1
+            # Preserve zero-padding from original
+            padding = len(versionStr)
+        else:
+            stemBase, version, padding = stem, 1, 1
+        # Find an available name
+        while True:
+            # Format version number with appropriate padding
+            versionStr = str(version).zfill(padding)
+            pathCandidate = path.parent / f"{stemBase}{versionStr}{ext}"
+            if not pathCandidate.exists():
+                return str(pathCandidate)
+            version += 1
+
+    def saveAsNewVersion(self):
+        """
+        Increase the version of the file and save
+        """
+        # Generate the new version path
+        path = self._generateNextPath()
+        # Update the saving flag indicating that the current graph is being saved
+        self._saving = True
+        try:
+            self._save(filepath=path)
+        finally:
+            self._saving = False
 
     def _save(self, filepath=None, setupProjectFile=True, template=False):
         path = filepath or self._filepath

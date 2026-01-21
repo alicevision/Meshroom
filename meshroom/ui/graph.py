@@ -2,6 +2,7 @@
 from collections.abc import Iterable
 import logging
 import os
+import re
 import json
 from enum import Enum
 from threading import Thread, Event, Lock
@@ -941,6 +942,11 @@ class UIGraph(QObject):
 
     @Slot(Node, str, result=str)
     def renameNode(self, node, newName):
+        newName = "_".join(newName.split("_")[:-1]) if "_" in newName else newName
+        # Eliminate all characters except digits and letters
+        newName = re.sub(r"[^0-9a-zA-Z]", "", newName)
+        if not newName:
+            return ""
         return self.push(commands.RenameNodeCommand(self._graph, node, newName))
 
     def moveNode(self, node: Node, position: Position):

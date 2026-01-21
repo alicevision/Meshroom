@@ -85,8 +85,13 @@ Panel {
     function validateNodeNameChange(name) {
         if (root.node && name.trim() !== "") {
             const newNodeName = _reconstruction.renameNode(_reconstruction.selectedNode, name.trim())
-            root.displayNodeName = newNodeName
-            root.validatedNodeName = newNodeName
+            if (newNodeName == "") {
+                root.displayNodeName = root.nodeName
+                root.validatedNodeName = root.nodeName
+            } else {
+                root.displayNodeName = newNodeName
+                root.validatedNodeName = newNodeName
+            }
         }
     }
     function cancelNodeNameChange() {
@@ -110,6 +115,7 @@ Panel {
                 id: nodeNameField
                 visible: root.node !== null
                 text: root.displayNodeName
+                validator: RegularExpressionValidator { regularExpression: /^[0-9A-Za-z]+$/ }
                 font.bold: true
                 readOnly: true
                 selectByMouse: false
@@ -123,6 +129,10 @@ Panel {
                     border.color: nodeNameField.readOnly ? "transparent" : root.palette.highlight
                     border.width: 1
                     radius: 2
+                }
+
+                function refreshText() {
+                    nodeNameField.text = Qt.binding(function() { return root.displayNodeName })
                 }
 
                 MouseArea {
@@ -141,6 +151,7 @@ Panel {
                 Keys.onReturnPressed: {
                     if (!readOnly) {
                         root.validateNodeNameChange(text)
+                        nodeNameField.refreshText()
                         readOnly = true
                         selectByMouse = false
                     }
@@ -149,6 +160,7 @@ Panel {
                 Keys.onEnterPressed: {
                     if (!readOnly) {
                         root.validateNodeNameChange(text)
+                        nodeNameField.refreshText()
                         readOnly = true
                         selectByMouse = false
                     }
@@ -157,6 +169,7 @@ Panel {
                 Keys.onEscapePressed: {
                     if (!readOnly) {
                         root.cancelNodeNameChange()
+                        nodeNameField.refreshText()
                         readOnly = true
                         selectByMouse = false
                     }
@@ -166,8 +179,21 @@ Panel {
                     if (!activeFocus && !readOnly) {
                         // Focus lost without pressing Enter - discard changes
                         root.cancelNodeNameChange()
+                        nodeNameField.refreshText()
                         readOnly = true
                         selectByMouse = false
+                    }
+                }
+
+                Connections {
+                    target: _reconstruction
+                    function onSelectedNodeChanged() {
+                        if (!activeFocus && !readOnly) {
+                            root.cancelNodeNameChange()
+                            nodeNameField.refreshText()
+                            nodeNameField.readOnly = true
+                            nodeNameField.selectByMouse = false
+                        }
                     }
                 }
             }

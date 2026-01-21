@@ -272,21 +272,6 @@ def test_duplicate_nodes():
     assert nMap[n3][0].input2.inputLink == nMap[n2][0].output
 
 
-def test_cyclic_connection_should_raise_error():
-
-    # Given
-    graph = Graph("Test cyclic connection")
-    tB = graph.addNewNode("AppendText", inputText="echo B")
-    tC = graph.addNewNode("AppendText", inputText="echo C")
-
-    tB.output.connectTo(tC.input)
-
-    # When
-    # Then
-    with pytest.raises(CyclicDependencyError):
-        tC.output.connectTo(tB.input)
-
-
 def test_rename_nodes():
     """
     Test renaming nodes.

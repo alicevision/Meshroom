@@ -1,5 +1,3 @@
-// NodeEditor.qml
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -172,12 +170,9 @@ Panel {
                 }
             }
 
-            // Show default label in parentheses if different
-            // TODO : instead, show node type
+            // Show node type if the node name does not start with "nodeType_"
             Label {
-                // text: root.node && root.node.label !== root.node.defaultLabel ? "(" + root.node.defaultLabel + ")" : ""
                 text: "(" + root.displayNodeType + ")"
-                // visible: root.node !== null && root.node.label !== root.node.defaultLabel
                 visible: root.displayNodeType !== ""
                 topPadding: 4
                 bottomPadding: 4

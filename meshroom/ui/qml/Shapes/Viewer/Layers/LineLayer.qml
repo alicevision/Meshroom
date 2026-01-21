@@ -73,7 +73,7 @@ BaseLayer {
             cursorShape: Qt.SizeAllCursor
             visible: lineLayer.editable && lineLayer.selected
             onMoved: {
-                _reconstruction.setObservationFromName(lineLayer.name, _reconstruction.selectedViewId, {
+                _currentScene.setObservationFromName(lineLayer.name, _currentScene.selectedViewId, {
                     a: {
                         x: handleA.x + draggableLine.x,
                         y: handleA.y + draggableLine.y
@@ -91,7 +91,7 @@ BaseLayer {
             cursorShape: Qt.SizeAllCursor
             visible: lineLayer.editable && lineLayer.selected
             onMoved: {
-                _reconstruction.setObservationFromName(lineLayer.name, _reconstruction.selectedViewId, { 
+                _currentScene.setObservationFromName(lineLayer.name, _currentScene.selectedViewId, { 
                     b: {
                         x: handleB.x + draggableLine.x,
                         y: handleB.y + draggableLine.y
@@ -110,7 +110,7 @@ BaseLayer {
             cursorShape: Qt.SizeAllCursor
             visible: lineLayer.editable && lineLayer.selected
             onMoved: {
-                _reconstruction.setObservationFromName(lineLayer.name, _reconstruction.selectedViewId, { 
+                _currentScene.setObservationFromName(lineLayer.name, _currentScene.selectedViewId, { 
                     a: {
                         x: handleA.x + draggableLine.x,
                         y: handleA.y + draggableLine.y

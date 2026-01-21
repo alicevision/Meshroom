@@ -76,7 +76,7 @@ BaseLayer {
             cursorShape: Qt.SizeAllCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
             onMoved: {
-                _reconstruction.setObservationFromName(rectangleLayer.name, _reconstruction.selectedViewId, { 
+                _currentScene.setObservationFromName(rectangleLayer.name, _currentScene.selectedViewId, { 
                     center: {
                         x: handleCenter.x + draggableRectangle.x,
                         y: handleCenter.y + draggableRectangle.y,
@@ -95,7 +95,7 @@ BaseLayer {
             cursorShape: Qt.SizeHorCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
             onMoved: {
-                _reconstruction.setObservationFromName(rectangleLayer.name, _reconstruction.selectedViewId, { 
+                _currentScene.setObservationFromName(rectangleLayer.name, _currentScene.selectedViewId, { 
                     size: {
                         width: rectangleWidth,
                         height: rectangleHeight 
@@ -114,7 +114,7 @@ BaseLayer {
             cursorShape: Qt.SizeVerCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
             onMoved: {
-                _reconstruction.setObservationFromName(rectangleLayer.name, _reconstruction.selectedViewId, { 
+                _currentScene.setObservationFromName(rectangleLayer.name, _currentScene.selectedViewId, { 
                     size: {
                         width: rectangleWidth,
                         height: rectangleHeight 

@@ -80,7 +80,7 @@ BaseLayer {
             cursorShape: Qt.SizeAllCursor
             visible: circleLayer.editable && circleLayer.selected
             onMoved: {
-                _reconstruction.setObservationFromName(circleLayer.name, _reconstruction.selectedViewId, { 
+                _currentScene.setObservationFromName(circleLayer.name, _currentScene.selectedViewId, { 
                     center: {
                         x: handleCenter.x + draggableShape.x, 
                         y: handleCenter.y + draggableShape.y 
@@ -98,7 +98,7 @@ BaseLayer {
             cursorShape: Qt.SizeBDiagCursor
             visible: circleLayer.editable && circleLayer.selected
             onMoved: {
-                _reconstruction.setObservationFromName(circleLayer.name, _reconstruction.selectedViewId, { 
+                _currentScene.setObservationFromName(circleLayer.name, _currentScene.selectedViewId, { 
                     radius: circleRadius 
                 })
             }

@@ -303,8 +303,8 @@ Panel {
                             // Node shape editor
                             Loader {
                                 id: shapeEditorLoader
-                                active: _reconstruction ? 
-                                    (_reconstruction.selectedNode ? _reconstruction.selectedNode.hasDisplayableShape : false) : false
+                                active: _currentScene ? 
+                                    (_currentScene.selectedNode ? _currentScene.selectedNode.hasDisplayableShape : false) : false
                                 sourceComponent: ShapeEditor {
                                     model: root.node.attributes
                                     filterText: searchBar.text

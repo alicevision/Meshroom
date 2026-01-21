@@ -27,7 +27,7 @@ FocusScope {
     property alias useLensDistortionViewer: displayLensDistortionViewer.checked
     property alias usePanoramaViewer: displayPanoramaViewer.checked
 
-    property var activeNodeFisheye: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
+    property var activeNodeFisheye: _currentScene ? _currentScene.activeNodes.get("PanoramaInit").node : null
     property bool cropFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
     property bool enable8bitViewer: enable8bitViewerAction.checked
     property bool enableSequencePlayer: enableSequencePlayerAction.checked
@@ -46,9 +46,9 @@ FocusScope {
         id: m
         property variant viewpointMetadata: {
             // Metadata from viewpoint attribute
-            // Read from the reconstruction object
-            if (_reconstruction) {
-                let vp = getViewpoint(_reconstruction.selectedViewId)
+            // Read from the scene object
+            if (_currentScene) {
+                let vp = getViewpoint(_currentScene.selectedViewId)
                 if (vp) {
                     return JSON.parse(vp.childAttribute("metadata").value)
                 }
@@ -220,8 +220,8 @@ FocusScope {
     function getViewpoint(viewId) {
         // Get viewpoint from cameraInit with matching id
         // This requires to loop over all viewpoints
-        for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
-            var vp = _reconstruction.viewpoints.at(i)
+        for (var i = 0; i < _currentScene.viewpoints.count; i++) {
+            var vp = _currentScene.viewpoints.at(i)
             if (vp.childAttribute("viewId").value == viewId) {
                 return vp
             }
@@ -236,28 +236,28 @@ FocusScope {
             return sourceExternal
         }
 
-        if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
+        if (_currentScene && (!displayedNode || outputAttribute.name == "gallery")) {
             // Entry point for getting the image file from the gallery
-            let vp = getViewpoint(_reconstruction.pickedViewId)
+            let vp = getViewpoint(_currentScene.pickedViewId)
             let path = vp ? vp.childAttribute("path").value : ""
-            _reconstruction.currentViewPath = path
+            _currentScene.currentViewPath = path
             return Filepath.stringToUrl(path)
         }
 
-        if (_reconstruction && displayedNode && displayedNode.hasSequenceOutput && displayedAttr &&
+        if (_currentScene && displayedNode && displayedNode.hasSequenceOutput && displayedAttr &&
             (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence")) {
             // Entry point for getting the image file from a sequence defined by an output attribute
             var path = sequence[currentFrame - frameRange.min]
-            _reconstruction.currentViewPath = path
+            _currentScene.currentViewPath = path
             return Filepath.stringToUrl(path)
         }
 
-        if (_reconstruction) {
+        if (_currentScene) {
             // Entry point for getting the image file from an output attribute and associated to the current viewpoint
-            let vp = getViewpoint(_reconstruction.pickedViewId)
+            let vp = getViewpoint(_currentScene.pickedViewId)
             let path = displayedAttr ? displayedAttr.value : ""
             let resolved = vp ? Filepath.resolve(path, vp) : path
-            _reconstruction.currentViewPath = resolved
+            _currentScene.currentViewPath = resolved
             return Filepath.stringToUrl(resolved)
         }
 
@@ -311,8 +311,8 @@ FocusScope {
             }
         } else {
             let objs = []
-            for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
-                objs.push(_reconstruction.viewpoints.at(i))
+            for (let i = 0; i < _currentScene.viewpoints.count; i++) {
+                objs.push(_currentScene.viewpoints.at(i))
             }
             objs.sort((a, b) => { return a.childAttribute("path").value < b.childAttribute("path").value ? -1 : 1; })
             
@@ -332,11 +332,11 @@ FocusScope {
             return []
         }
 
-        if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
+        if (_currentScene && (!displayedNode || outputAttribute.name == "gallery")) {
             return buildOrderedSequence("<PATH>")
         }
 
-        if (_reconstruction) {
+        if (_currentScene) {
             return buildOrderedSequence(displayedAttrValue)
         }
 
@@ -384,11 +384,11 @@ FocusScope {
     }
 
     onDisplayedAttrChanged: {
-        _reconstruction.displayedAttr2D = displayedAttr
+        _currentScene.displayedAttr2D = displayedAttr
     }
 
     Connections {
-        target: _reconstruction
+        target: _currentScene
         function onSelectedViewIdChanged() {
             root.source = getImageFile()
             if (useExternal)
@@ -585,12 +585,12 @@ FocusScope {
                                 "viewerTypeString": Qt.binding(function() { return displayLensDistortionViewer.checked ? "distortion" : "hdr" }),
                                 "surface.msfmData": Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
                                 "canBeHovered": false,
-                                "idView": Qt.binding(function() { return ((root.displayedNode && !root.displayedNode.hasSequenceOutput && _reconstruction) ? _reconstruction.selectedViewId : -1) }),
+                                "idView": Qt.binding(function() { return ((root.displayedNode && !root.displayedNode.hasSequenceOutput && _currentScene) ? _currentScene.selectedViewId : -1) }),
                                 "cropFisheye": false,
-                                "sequence": Qt.binding(function() { return ((root.enableSequencePlayer && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
+                                "sequence": Qt.binding(function() { return ((root.enableSequencePlayer && (_currentScene || (root.displayedNode && root.displayedNode.hasSequenceOutput))) ? getSequence() : []) }),
                                 "resizeRatio": Qt.binding(function() { return floatImageViewerLoader.resizeRatio }),
                                 "useSequence": Qt.binding(function() { 
-                                    return (root.enableSequencePlayer && !useExternal && (_reconstruction || (root.displayedNode && root.displayedNode.hasSequenceOutput && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence"))))
+                                    return (root.enableSequencePlayer && !useExternal && (_currentScene || (root.displayedNode && root.displayedNode.hasSequenceOutput && (displayedAttr.desc.semantic === "imageList" || displayedAttr.desc.semantic === "sequence"))))
                                 }),
                                 "fetchingSequence": Qt.binding(function() { return sequencePlayer.loading }),
                                 "memoryLimit": Qt.binding(function() { return sequencePlayer.settings_SequencePlayer.maxCacheMemory }),
@@ -607,7 +607,7 @@ FocusScope {
                 Loader {
                     id: panoramaViewerLoader
                     active: root.aliceVisionPluginAvailable && root.usePanoramaViewer &&
-                            _reconstruction.activeNodes.get('sfm').node
+                            _currentScene.activeNodes.get('sfm').node
                     visible: (panoramaViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
 
@@ -642,8 +642,8 @@ FocusScope {
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
 
-                    property var selectedNode: _reconstruction ? _reconstruction.selectedNode : null
-                    property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
+                    property var selectedNode: _currentScene ? _currentScene.selectedNode : null
+                    property var vp: _currentScene ? getViewpoint(_currentScene.selectedViewId) : null
                     property url sourcePath: getAlbedoFile()
                     property url normalPath: getNormalFile()
                     property bool fittedOnce: false
@@ -806,7 +806,7 @@ FocusScope {
                 ExifOrientedViewer {
                     id: featuresViewerLoader
                     active: displayFeatures.checked && !useExternal
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("featureProvider").node : null
+                    property var activeNode: _currentScene ? _currentScene.activeNodes.get("featureProvider").node : null
                     width: imgContainer.width
                     height: imgContainer.height
                     anchors.centerIn: parent
@@ -819,7 +819,7 @@ FocusScope {
                             // Instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             setSource("FeaturesViewer.qml", {
                                 "model": Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : "" }),
-                                "currentViewId": Qt.binding(function() { return _reconstruction.selectedViewId }),
+                                "currentViewId": Qt.binding(function() { return _currentScene.selectedViewId }),
                                 "features": Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null }),
                                 "tracks": Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null }),
                                 "sfmData": Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null }),
@@ -841,7 +841,7 @@ FocusScope {
                     xOrigin: imgContainer.width * 0.5
                     yOrigin: imgContainer.height * 0.5
                     orientationTag: imgContainer.orientationTag
-                    active: _reconstruction ? (_reconstruction.selectedNode ? _reconstruction.selectedNode.hasDisplayableShape : false) : false
+                    active: _currentScene ? (_currentScene.selectedNode ? _currentScene.selectedNode.hasDisplayableShape : false) : false
 
                     onActiveChanged: {
                         if (active) {
@@ -865,7 +865,7 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
+                    property var activeNode: _currentScene ? _currentScene.activeNodes.get("PanoramaInit").node : null
                     active: displayFisheyeCircleLoader.checked && activeNode
 
                     sourceComponent: CircleGizmo {
@@ -876,7 +876,7 @@ FocusScope {
                         readOnly: useAuto
                         visible: (!useAuto) || activeNode.isComputed
                         property real userFisheyeRadius: activeNode.attribute("fisheyeRadius").value
-                        property variant fisheyeAutoParams: _reconstruction.getAutoFisheyeCircle(activeNode)
+                        property variant fisheyeAutoParams: _currentScene.getAutoFisheyeCircle(activeNode)
 
                         circleX: useAuto ? fisheyeAutoParams.x : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
                         circleY: useAuto ? fisheyeAutoParams.y : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
@@ -886,7 +886,7 @@ FocusScope {
                         circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))
                         onMoved: function(xoffset, yoffset) {
                             if (!useAuto) {
-                                _reconstruction.setAttribute(
+                                _currentScene.setAttribute(
                                     activeNode.attribute("fisheyeCenterOffset"),
                                     JSON.stringify([xoffset, yoffset])
                                 )
@@ -894,7 +894,7 @@ FocusScope {
                         }
                         onIncrementRadius: function(radiusOffset) {
                             if (!useAuto) {
-                                _reconstruction.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
+                                _currentScene.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
                             }
                         }
                     }
@@ -902,7 +902,7 @@ FocusScope {
 
                 // LightingCalibration: display circle
                 ExifOrientedViewer {
-                    property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node 
+                    property var activeNode: _currentScene.activeNodes.get("SphereDetection").node 
     
                     anchors.centerIn: parent
                     orientationTag: imgContainer.orientationTag
@@ -913,7 +913,7 @@ FocusScope {
                     sourceComponent: CircleGizmo {
                         property var jsonFolder: activeNode.attribute("output").value
                         property var json: null
-                        property var currentViewId: _reconstruction.selectedViewId
+                        property var currentViewId: _currentScene.selectedViewId
                         property var nodeCircleX: activeNode.attribute("sphereCenter.x").value
                         property var nodeCircleY: activeNode.attribute("sphereCenter.y").value
                         property var nodeCircleRadius: activeNode.attribute("sphereRadius").value
@@ -977,12 +977,12 @@ FocusScope {
                         }
 
                         onMoved: {
-                            _reconstruction.setAttribute(activeNode.attribute("sphereCenter"),
+                            _currentScene.setAttribute(activeNode.attribute("sphereCenter"),
                                                          JSON.stringify([xoffset, yoffset]))
                         }
 
                         onIncrementRadius: {
-                            _reconstruction.setAttribute(activeNode.attribute("sphereRadius"),
+                            _currentScene.setAttribute(activeNode.attribute("sphereRadius"),
                                                          activeNode.attribute("sphereRadius").value + radiusOffset)
                         }
                     }
@@ -996,7 +996,7 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ColorCheckerDetection").node : null
+                    property var activeNode: _currentScene ? _currentScene.activeNodes.get("ColorCheckerDetection").node : null
                     active: (displayColorCheckerViewerLoader.checked && activeNode)
 
                     sourceComponent: ColorCheckerViewer {
@@ -1005,7 +1005,7 @@ FocusScope {
 
                         visible: activeNode.isComputed && json !== undefined && imgContainer.image.imageStatus === Image.Ready
                         source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
-                        viewpoint: _reconstruction.selectedViewpoint
+                        viewpoint: _currentScene.selectedViewpoint
                         zoom: imgContainer.scale
 
                         updatePane: function() {
@@ -1186,7 +1186,7 @@ FocusScope {
                             if (!root.aliceVisionPluginAvailable) {
                                 return null
                             }
-                            return _reconstruction ? _reconstruction.activeNodes.get("featureProvider").node : null
+                            return _currentScene ? _currentScene.activeNodes.get("featureProvider").node : null
                         }
                         property bool isComputed: activeNode && activeNode.isComputed
                         active: isUsed && isComputed
@@ -1218,10 +1218,10 @@ FocusScope {
                                         return result
                                     }),
                                     "viewIds": Qt.binding(function() {
-                                        if (_reconstruction) {
+                                        if (_currentScene) {
                                             let result = [];
-                                            for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
-                                                let vp = _reconstruction.viewpoints.at(i)
+                                            for (let i = 0; i < _currentScene.viewpoints.count; i++) {
+                                                let vp = _currentScene.viewpoints.at(i)
                                                 result.push(vp.childAttribute("viewId").value)
                                             }
                                             return result
@@ -1249,12 +1249,12 @@ FocusScope {
                             if (displayLensDistortionViewer.checked) {
                                 nodeType = "sfmData"
                             }
-                            var sfmNode = _reconstruction ? _reconstruction.activeNodes.get(nodeType).node : null
+                            var sfmNode = _currentScene ? _currentScene.activeNodes.get(nodeType).node : null
                             if (sfmNode === null) {
                                 return null
                             }
                             if (displayPanoramaViewer.checked) {
-                                sfmNode = _reconstruction.activeNodes.get('SfMTransform').node
+                                sfmNode = _currentScene.activeNodes.get('SfMTransform').node
                                 var previousNode = sfmNode.attribute("input").inputRootLink.node
                                 return previousNode
                             }
@@ -1294,15 +1294,15 @@ FocusScope {
                                 return null
                             }
 
-                            if (_reconstruction)
+                            if (_currentScene)
                             {
                                 //Try first to use tracks
-                                if (_reconstruction.activeNodes.get("trackProvider").node)
+                                if (_currentScene.activeNodes.get("trackProvider").node)
                                 {
-                                    return _reconstruction.activeNodes.get("trackProvider").node
+                                    return _currentScene.activeNodes.get("trackProvider").node
                                 }
 
-                                return _reconstruction.activeNodes.get("matchProvider").node
+                                return _currentScene.activeNodes.get("matchProvider").node
                             }
 
                             return null
@@ -1363,7 +1363,7 @@ FocusScope {
                             if (active) {
                                 setSource("SfmStatsView.qml", {
                                     "msfmData": Qt.binding(function() { return msfmDataLoader.item }),
-                                    "viewId": Qt.binding(function() { return _reconstruction.selectedViewId }),
+                                    "viewId": Qt.binding(function() { return _currentScene.selectedViewId }),
                                 })
                             } else {
                                 setSource("", {})
@@ -1417,12 +1417,12 @@ FocusScope {
                         id: ldrHdrCalibrationGraph
                         anchors.fill: parent
 
-                        property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("LdrToHdrCalibration").node : null
+                        property var activeNode: _currentScene ? _currentScene.activeNodes.get("LdrToHdrCalibration").node : null
                         property var isEnabled: displayLdrHdrCalibrationGraph.checked && activeNode && activeNode.isComputed
                         active: isEnabled
 
                         property var path: activeNode && activeNode.hasAttribute("response") ? activeNode.attribute("response").value : ""
-                        property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
+                        property var vp: _currentScene ? getViewpoint(_currentScene.selectedViewId) : null
 
                         sourceComponent: CameraResponseGraph {
                             responsePath: Filepath.resolve(path, vp)
@@ -1519,7 +1519,7 @@ FocusScope {
                             id: displayLensDistortionViewer
                             property int numberChanges: 0
                             property bool previousChecked: false
-                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get("sfmData").node : null
+                            property var activeNode: root.aliceVisionPluginAvailable && _currentScene ? _currentScene.activeNodes.get("sfmData").node : null
                             property bool isComputed: {
                                 if (!activeNode)
                                     return false
@@ -1570,7 +1570,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayPanoramaViewer
-                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get("SfMTransform").node : null
+                            property var activeNode: root.aliceVisionPluginAvailable && _currentScene ? _currentScene.activeNodes.get("SfMTransform").node : null
                             property bool isComputed: {
                                 if (!activeNode)
                                     return false
@@ -1627,7 +1627,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayFisheyeCircleLoader
-                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
+                            property var activeNode: _currentScene ? _currentScene.activeNodes.get("PanoramaInit").node : null
                             ToolTip.text: "Display Fisheye Circle: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.vignette
                             font.pointSize: 11
@@ -1640,7 +1640,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayLightingCircleLoader
-                            property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node
+                            property var activeNode: _currentScene.activeNodes.get("SphereDetection").node
                             ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.location_searching
                             font.pointSize: 11
@@ -1653,7 +1653,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayPhongLighting
-                            property var activeNode: _reconstruction.activeNodes.get('PhotometricStereo').node
+                            property var activeNode: _currentScene.activeNodes.get('PhotometricStereo').node
                             ToolTip.text: "Display Phong Lighting: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.light_mode
                             font.pointSize: 11
@@ -1665,13 +1665,13 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayColorCheckerViewerLoader
-                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ColorCheckerDetection").node : null
+                            property var activeNode: _currentScene ? _currentScene.activeNodes.get("ColorCheckerDetection").node : null
                             ToolTip.text: "Display Color Checker: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.view_comfy
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true
-                            enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId !== -1
+                            enabled: activeNode && activeNode.isComputed && _currentScene.selectedViewId !== -1
                             checked: false
                             visible: activeNode
                             onEnabledChanged: {
@@ -1689,7 +1689,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayLdrHdrCalibrationGraph
-                            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("LdrToHdrCalibration").node : null
+                            property var activeNode: _currentScene ? _currentScene.activeNodes.get("LdrToHdrCalibration").node : null
                             property bool isComputed: activeNode && activeNode.isComputed
                             ToolTip.text: "Display Camera Response Function: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.timeline
@@ -1747,7 +1747,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displayImageOutputIn3D
-                            enabled: root.aliceVisionPluginAvailable && _reconstruction && displayedNode && Filepath.basename(root.source).includes("depth")
+                            enabled: root.aliceVisionPluginAvailable && _currentScene && displayedNode && Filepath.basename(root.source).includes("depth")
                             ToolTip.text: "View Depth Map in 3D"
                             text: MaterialIcons.input
                             font.pointSize: 11
@@ -1756,14 +1756,14 @@ FocusScope {
                             onClicked: {
                                 root.viewIn3D(
                                     root.source,
-                                    displayedNode.name + ":" + outputAttribute.name + " " + String(_reconstruction.selectedViewId)
+                                    displayedNode.name + ":" + outputAttribute.name + " " + String(_currentScene.selectedViewId)
                                 )
                             }
                         }
 
                         MaterialToolButton {
                             id: displaySfmStatsView
-                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get("sfm").node : null
+                            property var activeNode: root.aliceVisionPluginAvailable && _currentScene ? _currentScene.activeNodes.get("sfm").node : null
                             property bool isComputed: activeNode && activeNode.isComputed
 
                             font.family: MaterialIcons.fontFamily
@@ -1777,7 +1777,7 @@ FocusScope {
                             smooth: false
                             flat: true
                             checkable: enabled
-                            enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId >= 0
+                            enabled: activeNode && activeNode.isComputed && _currentScene.selectedViewId >= 0
                             onCheckedChanged: {
                                 if (checked == true) {
                                     displaySfmDataGlobalStats.checked = false
@@ -1789,7 +1789,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displaySfmDataGlobalStats
-                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get("sfm").node : null
+                            property var activeNode: root.aliceVisionPluginAvailable && _currentScene ? _currentScene.activeNodes.get("sfm").node : null
                             property bool isComputed: activeNode && activeNode.isComputed
 
                             font.family: MaterialIcons.fontFamily
@@ -1845,7 +1845,7 @@ FocusScope {
                     sortedViewIds: {
                         return (root.enableSequencePlayer && (root.displayedNode && root.displayedNode.hasSequenceOutput)) ?
                                     root.sequence :
-                                    (_reconstruction && _reconstruction.viewpoints.count > 0) ? buildOrderedSequence("<VIEW_ID>") : []
+                                    (_currentScene && _currentScene.viewpoints.count > 0) ? buildOrderedSequence("<VIEW_ID>") : []
                     }
                     viewer: floatImageViewerLoader.status === Loader.Ready ? floatImageViewerLoader.item : null
                     visible: root.enableSequencePlayer

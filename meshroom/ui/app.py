@@ -30,7 +30,7 @@ from meshroom.ui.components.thumbnail import ThumbnailCache
 from meshroom.ui.components.messaging import MessageController
 from meshroom.ui.components.shapes import ShapeFilesHelper, ShapeViewerHelper
 from meshroom.ui.palette import PaletteManager
-from meshroom.ui.reconstruction import Reconstruction
+from meshroom.ui.scene import Scene
 from meshroom.ui.utils import QmlInstantEngine
 from meshroom.ui import commands
 
@@ -281,13 +281,13 @@ class MeshroomApp(QApplication):
         # expose available node types that can be instantiated
         self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getRegisteredNodePlugins()[n].nodeDescriptor.category} for n in sorted(pluginManager.getRegisteredNodePlugins().keys())})
 
-        # instantiate Reconstruction object
+        # instantiate the 3D Scene object
         self._undoStack = commands.UndoStack(self)
         self._defaultSubmitterName = os.environ.get('MESHROOM_DEFAULT_SUBMITTER', '')
         self._taskManager = TaskManager(self)
-        self._activeProject = Reconstruction(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
+        self._activeProject = Scene(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
         self._activeProject.setSubmitLabel(args.submitLabel)
-        self.engine.rootContext().setContextProperty("_reconstruction", self._activeProject)
+        self.engine.rootContext().setContextProperty("_currentScene", self._activeProject)
 
         # those helpers should be available from QML Utils module as singletons, but:
         #  - qmlRegisterUncreatableType is not yet available in PySide2

@@ -23,7 +23,7 @@ Panel {
     readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
-    readonly property int centerViewId: (_reconstruction && _reconstruction.sfmTransform) ? parseInt(_reconstruction.sfmTransform.attribute("transformation").value) : 0
+    readonly property int centerViewId: (_currentScene && _currentScene.sfmTransform) ? parseInt(_currentScene.sfmTransform.attribute("transformation").value) : 0
     readonly property alias galleryGrid: grid
 
     property int defaultCellSize: 160
@@ -41,7 +41,7 @@ Panel {
     implicitWidth: (root.defaultCellSize + 2) * 2
 
     Connections {
-        target: _reconstruction
+        target: _currentScene
 
         function onCameraInitChanged() {
             nodesCB.currentIndex = root.cameraInitIndex
@@ -50,10 +50,10 @@ Panel {
 
     QtObject {
         id: m
-        property variant currentCameraInit: _reconstruction && _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
+        property variant currentCameraInit: _currentScene && _currentScene.tempCameraInit ? _currentScene.tempCameraInit : root.cameraInit
         property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property variant intrinsics: currentCameraInit ? currentCameraInit.attribute('intrinsics').value : undefined
-        property bool readOnly: ((_reconstruction && currentCameraInit) ? currentCameraInit.locked : root.readOnly) || displayHDR.checked
+        property bool readOnly: ((_currentScene && currentCameraInit) ? currentCameraInit.locked : root.readOnly) || displayHDR.checked
 
         onViewpointsChanged: {
             ThumbnailCache.clearRequests()
@@ -71,7 +71,7 @@ Panel {
     }
 
     function changeCurrentIndex(newIndex) {
-        _reconstruction.cameraInitIndex = newIndex
+        _currentScene.cameraInitIndex = newIndex
     }
 
     function populate_model() {
@@ -164,8 +164,8 @@ Panel {
     SensorDBDialog {
         id: sensorDBDialog
         sensorDatabase: cameraInit ? Filepath.stringToUrl(cameraInit.attribute("sensorDatabase").evalValue) : ""
-        readOnly: _reconstruction ? _reconstruction.computing : false
-        onUpdateIntrinsicsRequest: _reconstruction.rebuildIntrinsics(cameraInit)
+        readOnly: _currentScene ? _currentScene.computing : false
+        onUpdateIntrinsicsRequest: _currentScene.rebuildIntrinsics(cameraInit)
     }
 
     ColumnLayout {
@@ -194,9 +194,9 @@ Panel {
 
             // Update grid current item when selected view changes
             Connections {
-                target: _reconstruction
+                target: _currentScene
                 function onSelectedViewIdChanged() {
-                    if (_reconstruction.selectedViewId > -1) {
+                    if (_currentScene.selectedViewId > -1) {
                         grid.updateCurrentIndexFromSelectionViewId()
                     }
                 }
@@ -206,7 +206,7 @@ Panel {
             }
 
             function updateCurrentIndexFromSelectionViewId() {
-                var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
+                var idx = grid.model.find(_currentScene.selectedViewId, "viewId")
                 if (idx >= 0 && grid.currentIndex !== idx) {
                     grid.currentIndex = idx
                 }
@@ -216,8 +216,8 @@ Panel {
                     // If tempCameraInit is set and the first image in the GridView is selected, there has been a change of the CameraInit group and the viewId might be the same
                     // Forcing the index to -1 before re-setting it will always cause a refresh on the Viewer2D's side, even if the viewId has not changed
                     if (tempCameraInit !== null && grid.currentIndex == 0)
-                        _reconstruction.selectedViewId = -1
-                    _reconstruction.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
+                        _currentScene.selectedViewId = -1
+                    _currentScene.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
                 }
             }
 
@@ -268,7 +268,7 @@ Panel {
                         cmd = roleNameAndCmd[1]
                     }
                     if (cmd == "isReconstructed")
-                        return _reconstruction.isReconstructed(item.model.object);
+                        return _currentScene.isReconstructed(item.model.object);
 
                     var value = item.model.object.childAttribute(roleName).value;
                     if (cmd == "basename")
@@ -308,8 +308,8 @@ Panel {
                     }
 
                     function removeAllImages() {
-                        _reconstruction.removeAllImages()
-                        _reconstruction.selectedViewId = "-1"
+                        _currentScene.removeAllImages()
+                        _currentScene.selectedViewId = "-1"
                     }
 
                     onRemoveRequest: sendRemoveRequest()
@@ -332,11 +332,11 @@ Panel {
                         spacing: 2
 
                         property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
-                        property bool inViews: valid && _reconstruction && _reconstruction.sfmReport && _reconstruction.isInViews(object)
+                        property bool inViews: valid && _currentScene && _currentScene.sfmReport && _currentScene.isInViews(object)
 
                         // Camera Initialization indicator
                         IntrinsicsIndicator {
-                            intrinsic: parent.valid && _reconstruction ? _reconstruction.getIntrinsic(object) : null
+                            intrinsic: parent.valid && _currentScene ? _currentScene.getIntrinsic(object) : null
                             metadata: imageDelegate.metadata
                         }
 
@@ -371,7 +371,7 @@ Panel {
                             active: parent.inViews
                             visible: active
                             sourceComponent: ImageBadge {
-                                property bool reconstructed: _reconstruction.sfmReport && _reconstruction.isReconstructed(model.object)
+                                property bool reconstructed: _currentScene.sfmReport && _currentScene.isReconstructed(model.object)
                                 text: reconstructed ? MaterialIcons.videocam : MaterialIcons.videocam_off
                                 color: reconstructed ? Colors.green : Colors.red
                                 ToolTip.text: "<b>Camera: " + (reconstructed ? "" : "Not ") + "Reconstructed</b>"
@@ -386,10 +386,10 @@ Panel {
             Keys.onPressed: function(event) {
                 if (event.modifiers & Qt.AltModifier) {
                     if (event.key === Qt.Key_Right) {
-                        _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
+                        _currentScene.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
                         event.accepted = true
                     } else if (event.key === Qt.Key_Left) {
-                        _reconstruction.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
+                        _currentScene.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
                         event.accepted = true
                     }
                 } else {
@@ -452,7 +452,7 @@ Panel {
                 keys: ["text/uri-list"]
                 onEntered: function(drag) {
                     nbDraggedFiles = drag.urls.length
-                    filesByType = _reconstruction.getFilesByTypeFromDrop(drag.urls)
+                    filesByType = _currentScene.getFilesByTypeFromDrop(drag.urls)
                     nbMeshroomScenes = filesByType["meshroomScenes"].length
                 }
                 onDropped: function(drop) {
@@ -706,10 +706,10 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Estimated Cameras"
             iconText: MaterialIcons.videocam
-            label: _reconstruction && _reconstruction.nbCameras ? _reconstruction.nbCameras.toString() : "-"
+            label: _currentScene && _currentScene.nbCameras ? _currentScene.nbCameras.toString() : "-"
             padding: 3
 
-            enabled: _reconstruction ? _reconstruction.cameraInit && _reconstruction.nbCameras : false
+            enabled: _currentScene ? _currentScene.cameraInit && _currentScene.nbCameras : false
             checkable: true
             checked: false
 
@@ -739,10 +739,10 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Non Estimated Cameras"
             iconText: MaterialIcons.videocam_off
-            label: _reconstruction && _reconstruction.nbCameras ? ((m.viewpoints ? m.viewpoints.count : 0) - _reconstruction.nbCameras.toString()).toString() : "-"
+            label: _currentScene && _currentScene.nbCameras ? ((m.viewpoints ? m.viewpoints.count : 0) - _currentScene.nbCameras.toString()).toString() : "-"
             padding: 3
 
-            enabled: _reconstruction ? _reconstruction.cameraInit && _reconstruction.nbCameras : false
+            enabled: _currentScene ? _currentScene.cameraInit && _currentScene.nbCameras : false
             checkable: true
             checked: false
 
@@ -771,7 +771,7 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Number of intrinsics"
             iconText: MaterialIcons.camera
-            label: _reconstruction ? (m.intrinsics ? m.intrinsics.count : 0) : "0"
+            label: _currentScene ? (m.intrinsics ? m.intrinsics.count : 0) : "0"
             padding: 3
 
             enabled: m.intrinsics ? m.intrinsics.count > 0 : false
@@ -805,7 +805,7 @@ Panel {
         MaterialToolLabelButton {
             id: displayHDR
             Layout.minimumWidth: childrenRect.width
-            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("LdrToHdrMerge").node : null
+            property var activeNode: _currentScene ? _currentScene.activeNodes.get("LdrToHdrMerge").node : null
             ToolTip.text: "Visualize HDR images: " + (activeNode ? activeNode.label : "No Node")
             iconText: MaterialIcons.filter
             label: activeNode ? activeNode.attribute("nbBrackets").value : ""
@@ -836,10 +836,10 @@ Panel {
             function open() {
                 if (imageProcessing.checked)
                     imageProcessing.checked = false
-                _reconstruction.setupTempCameraInit(activeNode, "outSfMData")
+                _currentScene.setupTempCameraInit(activeNode, "outSfMData")
             }
             function close() {
-                _reconstruction.clearTempCameraInit()
+                _currentScene.clearTempCameraInit()
             }
         }
 
@@ -847,7 +847,7 @@ Panel {
             id: imageProcessing
             Layout.minimumWidth: childrenRect.width
 
-            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ImageProcessing").node : null
+            property var activeNode: _currentScene ? _currentScene.activeNodes.get("ImageProcessing").node : null
             font.pointSize: 15
             padding: 0
             ToolTip.text: "Preprocessed Images: " + (activeNode ? activeNode.label : "No Node")
@@ -879,10 +879,10 @@ Panel {
             function open() {
                 if (displayHDR.checked)
                     displayHDR.checked = false
-                _reconstruction.setupTempCameraInit(activeNode, "outSfMData")
+                _currentScene.setupTempCameraInit(activeNode, "outSfMData")
             }
             function close() {
-                _reconstruction.clearTempCameraInit()
+                _currentScene.clearTempCameraInit()
             }
         }
 

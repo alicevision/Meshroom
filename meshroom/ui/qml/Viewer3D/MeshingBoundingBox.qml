@@ -30,28 +30,28 @@ Entity {
 
             switch (type) {
                 case TransformGizmo.Type.TRANSLATION: {
-                    _reconstruction.setAttribute(
+                    _currentScene.setAttribute(
                         root.currentMeshingNode.attribute("boundingBox.bboxTranslation"),
                         JSON.stringify([translation.x, -translation.y, -translation.z])
                     )
                     break
                 }
                 case TransformGizmo.Type.ROTATION: {
-                    _reconstruction.setAttribute(
+                    _currentScene.setAttribute(
                         root.currentMeshingNode.attribute("boundingBox.bboxRotation"),
                         JSON.stringify([rotation_gl.x, rotation_gl.y, rotation_gl.z])
                     )
                     break
                 }
                 case TransformGizmo.Type.SCALE: {
-                    _reconstruction.setAttribute(
+                    _currentScene.setAttribute(
                         root.currentMeshingNode.attribute("boundingBox.bboxScale"),
                         JSON.stringify([scale.x, scale.y, scale.z])
                     )
                     break
                 }
                 case TransformGizmo.Type.ALL: {
-                    _reconstruction.setAttribute(
+                    _currentScene.setAttribute(
                         root.currentMeshingNode.attribute("boundingBox"),
                         JSON.stringify([
                             [translation.x, -translation.y, -translation.z],

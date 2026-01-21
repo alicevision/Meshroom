@@ -31,7 +31,7 @@ TextField {
     }
 
     function getEvalExpression(_text) {
-        var [_res, _err] = _reconstruction.evaluateMathExpression(_text)
+        var [_res, _err] = _currentScene.evaluateMathExpression(_text)
         if (_err == false) {
             if (isInt)
                 _res = Math.round(_res)

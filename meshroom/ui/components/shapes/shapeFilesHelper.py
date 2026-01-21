@@ -1,4 +1,4 @@
-from meshroom.ui.reconstruction import Reconstruction
+from meshroom.ui.scene import Scene
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, Slot
 from meshroom.core.attribute import GroupAttribute, ListAttribute
 from shiboken6 import isValid
@@ -13,7 +13,7 @@ class ShapeFilesHelper(BaseObject):
     Manages active project selected node shape files.
     """
 
-    def __init__(self, activeProject:Reconstruction, parent=None):
+    def __init__(self, activeProject:Scene, parent=None):
         super().__init__(parent)
         self._activeProject = activeProject
         self._currentNode = activeProject.selectedNode

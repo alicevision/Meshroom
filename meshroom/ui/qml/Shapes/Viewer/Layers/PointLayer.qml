@@ -60,7 +60,7 @@ BaseLayer {
             cursorShape: Qt.SizeAllCursor
             visible: pointLayer.editable && pointLayer.selected
             onMoved: {
-                _reconstruction.setObservationFromName(pointLayer.name, _reconstruction.selectedViewId, { 
+                _currentScene.setObservationFromName(pointLayer.name, _currentScene.selectedViewId, { 
                     x: handleCenter.x + draggableShape.x, 
                     y: handleCenter.y + draggableShape.y
                 })

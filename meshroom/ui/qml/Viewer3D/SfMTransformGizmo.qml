@@ -31,14 +31,14 @@ Entity {
         transformGizmo.onGizmoChanged: {
             switch (type) {
                 case TransformGizmo.Type.TRANSLATION: {
-                    _reconstruction.setAttribute(
+                    _currentScene.setAttribute(
                         root.currentSfMTransformNode.attribute("manualTransform.manualTranslation"),
                         JSON.stringify([translation.x, translation.y, translation.z])
                     )
                     break
                 }
                 case TransformGizmo.Type.ROTATION: {
-                    _reconstruction.setAttribute(
+                    _currentScene.setAttribute(
                         root.currentSfMTransformNode.attribute("manualTransform.manualRotation"),
                         JSON.stringify([rotation.x, rotation.y, rotation.z])
                     )
@@ -46,14 +46,14 @@ Entity {
                 }
                 case TransformGizmo.Type.SCALE: {
                     // Only one scale is needed since the scale is uniform
-                    _reconstruction.setAttribute(
+                    _currentScene.setAttribute(
                         root.currentSfMTransformNode.attribute("manualTransform.manualScale"),
                         scale.x
                     )
                     break
                 }
                 case TransformGizmo.Type.ALL: {
-                    _reconstruction.setAttribute(
+                    _currentScene.setAttribute(
                         root.currentSfMTransformNode.attribute("manualTransform"),
                         JSON.stringify([
                             [translation.x, translation.y, translation.z],

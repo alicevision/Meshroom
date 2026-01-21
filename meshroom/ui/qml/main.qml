@@ -18,8 +18,8 @@ ApplicationWindow {
     property bool isClosing: false
 
     title: {
-        var t = (_reconstruction && _reconstruction.graph && _reconstruction.graph.filepath) ? _reconstruction.graph.filepath : "Untitled"
-        if (_reconstruction && !_reconstruction.undoStack.clean)
+        var t = (_currentScene && _currentScene.graph && _currentScene.graph.filepath) ? _currentScene.graph.filepath : "Untitled"
+        if (_currentScene && !_currentScene.undoStack.clean)
             t += "*"
         t += " - " + Qt.application.name + " " + Qt.application.version
         return t
@@ -97,9 +97,9 @@ ApplicationWindow {
                 currentItem.imagesFolder = Filepath.stringToUrl(Filepath.dirname(currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source))
             }
 
-            if (_reconstruction.graph && _reconstruction.graph.filepath) {
+            if (_currentScene.graph && _currentScene.graph.filepath) {
                 // If the opened project has been saved, the dialog will open in the same folder
-                folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                folder = Filepath.stringToUrl(Filepath.dirname(_currentScene.graph.filepath))
             } else {
                 // If the currently opened project has not been saved, the dialog will open in the same
                 // folder as the most recent project if it exists; otherwise, it will not be set
@@ -129,7 +129,7 @@ ApplicationWindow {
             if (mainStack.currentItem instanceof Homepage) {
                 mainStack.push("Application.qml")
             }
-            if (_reconstruction.load(currentFile)) {
+            if (_currentScene.load(currentFile)) {
                 MeshroomApp.addRecentProjectFile(currentFile.toString())
             }
         }
@@ -138,7 +138,7 @@ ApplicationWindow {
     // Check if document has been saved
     function ensureSaved(callback)
     {
-        var saved = _reconstruction.undoStack.clean
+        var saved = _currentScene.undoStack.clean
         if (!saved) {  // If current document is modified, open "unsaved dialog"
             mainStack.currentItem.unsavedDialog.prompt(callback)
         } else {  // Otherwise, directly call the callback
@@ -150,7 +150,7 @@ ApplicationWindow {
     // Check and return whether no local computation is in progress
     function ensureNotComputing()
     {
-        if (_reconstruction.computingLocally) {
+        if (_currentScene.computingLocally) {
             // Open a warning dialog to ask for computation to be stopped
             mainStack.currentItem.computingAtExitDialog.open()
             return false
@@ -170,7 +170,7 @@ ApplicationWindow {
         anchors.fill: parent
 
         Component.onCompleted: {
-            if (_reconstruction.active) {
+            if (_currentScene.active) {
                 mainStack.push("Application.qml")
             } else {
                 mainStack.push("Homepage.qml")

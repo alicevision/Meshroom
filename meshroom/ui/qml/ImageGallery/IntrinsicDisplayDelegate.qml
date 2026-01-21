@@ -75,13 +75,13 @@ RowLayout {
             selectionColor: palette.text
             selectedTextColor: Qt.darker(palette.window, 1.1)
 
-            onEditingFinished: _reconstruction.setAttribute(attribute, text)
+            onEditingFinished: _currentScene.setAttribute(attribute, text)
             onAccepted: {
-                _reconstruction.setAttribute(attribute, text)
+                _currentScene.setAttribute(attribute, text)
             }
             Component.onDestruction: {
                 if (activeFocus)
-                    _reconstruction.setAttribute(attribute, text)
+                    _currentScene.setAttribute(attribute, text)
             }
         }
     }
@@ -108,13 +108,13 @@ RowLayout {
 
             validator: intValidator
 
-            onEditingFinished: _reconstruction.setAttribute(attribute, Number(text))
+            onEditingFinished: _currentScene.setAttribute(attribute, Number(text))
             onAccepted: {
-                _reconstruction.setAttribute(attribute, Number(text))
+                _currentScene.setAttribute(attribute, Number(text))
             }
             Component.onDestruction: {
                 if (activeFocus)
-                    _reconstruction.setAttribute(attribute, Number(text))
+                    _currentScene.setAttribute(attribute, Number(text))
             }
         }
     }
@@ -135,7 +135,7 @@ RowLayout {
             bottomInset: 7
 
             Component.onCompleted: currentIndex = find(attribute.value)
-            onActivated: _reconstruction.setAttribute(attribute, currentText)
+            onActivated: _currentScene.setAttribute(attribute, currentText)
 
             Connections {
                 target: attribute
@@ -150,7 +150,7 @@ RowLayout {
             checked: attribute ? attribute.value : false
             padding: 12
             enabled: !readOnly
-            onToggled: _reconstruction.setAttribute(attribute, !attribute.value)
+            onToggled: _currentScene.setAttribute(attribute, !attribute.value)
         }
     }
 
@@ -196,13 +196,13 @@ RowLayout {
 
             validator: doubleValidator
 
-            onEditingFinished: _reconstruction.setAttribute(attribute, Number(text))
+            onEditingFinished: _currentScene.setAttribute(attribute, Number(text))
             onAccepted: {
-                _reconstruction.setAttribute(attribute, Number(text))
+                _currentScene.setAttribute(attribute, Number(text))
             }
             Component.onDestruction: {
                 if (activeFocus)
-                    _reconstruction.setAttribute(attribute, Number(text))
+                    _currentScene.setAttribute(attribute, Number(text))
             }
         }
     }

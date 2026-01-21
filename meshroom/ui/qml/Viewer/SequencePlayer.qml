@@ -36,16 +36,16 @@ FloatingPane {
         property int maxCacheMemory: viewer && viewer.ramInfo != undefined ? viewer.ramInfo.x / 4 : 0
     }
 
-    function updateReconstructionView() {
+    function updateSceneView() {
         if (isOutputSequence)
             return
-        if (_reconstruction && m.frame >= frameRange.min && m.frame < frameRange.max + 1) {
+        if (_currentScene && m.frame >= frameRange.min && m.frame < frameRange.max + 1) {
             if (!m.playing && !frameSlider.pressed) {
-                _reconstruction.selectedViewId = sortedViewIds[m.frame]
+                _currentScene.selectedViewId = sortedViewIds[m.frame]
             } else {
-                _reconstruction.pickedViewId = sortedViewIds[m.frame]
+                _currentScene.pickedViewId = sortedViewIds[m.frame]
                 if (m.sync3DSelected) {
-                    _reconstruction.updateSelectedViewpoint(_reconstruction.pickedViewId)
+                    _currentScene.updateSelectedViewpoint(_currentScene.pickedViewId)
                 }
             }
         }
@@ -76,12 +76,12 @@ FloatingPane {
         property real fps: 24
 
         onFrameChanged: {
-            updateReconstructionView()
+            updateSceneView()
         }
 
         onPlayingChanged: {
             if (!playing) {
-                updateReconstructionView()
+                updateSceneView()
             } else if (playing && (frame + 1 >= frameRange.max + 1)) {
                 frame = frameRange.min
             }
@@ -92,10 +92,10 @@ FloatingPane {
     // Update the frame property
     // when the selected view ID is changed externally
     Connections {
-        target: _reconstruction
+        target: _currentScene
         function onSelectedViewIdChanged() {
             for (let idx = 0; idx < sortedViewIds.length; idx++) {
-                if (_reconstruction.selectedViewId === sortedViewIds[idx] && (m.frame != idx)) {
+                if (_currentScene.selectedViewId === sortedViewIds[idx] && (m.frame != idx)) {
                     m.frame = idx
                 }
             }
@@ -206,7 +206,7 @@ FloatingPane {
 
             onPressedChanged: {
                 if (!pressed) {
-                    updateReconstructionView()
+                    updateSceneView()
                 }
             }
 

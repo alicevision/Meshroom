@@ -151,7 +151,7 @@ RowLayout {
 
                 onDropped: function(drop) {
                     root.edgeAboutToBeRemoved(undefined)
-                    _reconstruction.addEdge(drag.source.attribute, inputDragTarget.attribute)
+                    _currentScene.addEdge(drag.source.attribute, inputDragTarget.attribute)
                 }
             }
 
@@ -384,7 +384,7 @@ RowLayout {
 
             onDropped: function(drop) {
                 root.edgeAboutToBeRemoved(undefined)
-                _reconstruction.addEdge(outputDragTarget.attribute, drag.source.attribute)
+                _currentScene.addEdge(outputDragTarget.attribute, drag.source.attribute)
             }
         }
 

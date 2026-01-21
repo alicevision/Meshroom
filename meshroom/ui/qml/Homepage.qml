@@ -264,7 +264,7 @@ Page {
                             function onClicked() {
                                 // Open pipeline
                                 mainStack.push("Application.qml")
-                                _reconstruction.new(modelData["path"])
+                                _currentScene.new(modelData["path"])
                             }
                         }
                     }
@@ -363,7 +363,7 @@ Page {
                                     else {
                                         // Open project
                                         mainStack.push("Application.qml")
-                                        if (_reconstruction.load(modelData["path"])) {
+                                        if (_currentScene.load(modelData["path"])) {
                                             MeshroomApp.addRecentProjectFile(modelData["path"])
                                         }
                                     }
@@ -379,7 +379,7 @@ Page {
                                     enabled: projectDelegate.fileExists
                                     text: "Open"
                                     onTriggered: {                                        
-                                        if (_reconstruction.load(modelData["path"])) {
+                                        if (_currentScene.load(modelData["path"])) {
                                             mainStack.push("Application.qml")
                                             MeshroomApp.addRecentProjectFile(modelData["path"])
                                         }

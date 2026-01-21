@@ -20,11 +20,11 @@ Page {
     property alias unsavedDialog: unsavedDialog
     property alias workspaceView: workspaceView
 
-    readonly property var scenefile: _reconstruction ? _reconstruction.graph.filepath : "";
+    readonly property var scenefile: _currentScene ? _currentScene.graph.filepath : "";
 
     onScenefileChanged: {
         // Check if we're not currently saving and emit the currentProjectChanged signal
-        if (! _reconstruction.graph.isSaving) {
+        if (! _currentScene.graph.isSaving) {
             // Refresh the NodeEditor
             nodeEditor.refresh();
         }
@@ -147,7 +147,7 @@ Page {
             }
 
             // Only save a valid file
-            _reconstruction.saveAs(currentFile)
+            _currentScene.saveAs(currentFile)
             MeshroomApp.addRecentProjectFile(currentFile.toString())
             closed(Platform.Dialog.Accepted)
             fireCallback(Platform.Dialog.Accepted)
@@ -190,7 +190,7 @@ Page {
             }
 
             // Only save a valid template
-            _reconstruction.saveAsTemplate(currentFile)
+            _currentScene.saveAsTemplate(currentFile)
             closed(Platform.Dialog.Accepted)
             MeshroomApp.reloadTemplateList()
         }
@@ -203,7 +203,7 @@ Page {
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
             // Open the template as a regular file
-            if (_reconstruction.load(currentFile)) {
+            if (_currentScene.load(currentFile)) {
                 MeshroomApp.addRecentProjectFile(currentFile.toString())
             }
         }
@@ -215,7 +215,7 @@ Page {
         fileMode: Platform.FileDialog.OpenFiles
         nameFilters: []
         onAccepted: {
-            _reconstruction.importImagesUrls(currentFiles)
+            _currentScene.importImagesUrls(currentFiles)
             imagesFolder = Filepath.dirname(currentFiles[0])
             MeshroomApp.addRecentImportedImagesFolder(imagesFolder)
         }
@@ -235,19 +235,19 @@ Page {
         id: computeManager
 
         // Evaluate if graph computation can be submitted externally
-        property bool canSubmit: _reconstruction ?
-                                 _reconstruction.canSubmit                 // current setup allows to compute externally
-                                 && _reconstruction.graph.filepath :       // graph is saved on disk
+        property bool canSubmit: _currentScene ?
+                                 _currentScene.canSubmit                 // current setup allows to compute externally
+                                 && _currentScene.graph.filepath :       // graph is saved on disk
                                  false
 
         function compute(nodes, force) {
-            if (!force && !_reconstruction.graph.filepath) {
+            if (!force && !_currentScene.graph.filepath) {
                 unsavedComputeDialog.selectedNodes = nodes;
                 unsavedComputeDialog.open();
             }
             else {
                 try {
-                    _reconstruction.execute(nodes)
+                    _currentScene.execute(nodes)
                 }
                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
@@ -262,7 +262,7 @@ Page {
                 unsavedSubmitDialog.open()
             } else {
                 try {
-                    _reconstruction.submit(nodes)
+                    _currentScene.submit(nodes)
                 }
                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
@@ -327,8 +327,8 @@ Page {
                 switch (errorType) {
                     case "Already Submitted": {
                         close()
-                        _reconstruction.graph.clearSubmittedNodes()
-                        _reconstruction.execute(currentNode)
+                        _currentScene.graph.clearSubmittedNodes()
+                        _currentScene.execute(currentNode)
                         break
                     }
                     case "Compatibility Issue": {
@@ -364,7 +364,7 @@ Page {
             }
 
             onDiscarded: {
-                _reconstruction.saveAsTemp()
+                _currentScene.saveAsTemp()
                 close()
                 computeManager.compute(selectedNodes, true)
             }
@@ -413,13 +413,13 @@ Page {
                     text: "Reload File"
 
                     onClicked: {
-                        _reconstruction.load(_reconstruction.graph.filepath)
+                        _currentScene.load(_currentScene.graph.filepath)
                         fileModifiedDialog.close()
                     }
                 }
             }
 
-            onAccepted: _reconstruction.save()
+            onAccepted: _currentScene.save()
             onDiscarded: close()
         }
     }
@@ -430,12 +430,12 @@ Page {
 
         property var _callback: undefined
 
-        title: (_reconstruction ? Filepath.basename(_reconstruction.graph.filepath) : "") || "Unsaved Project"
+        title: (_currentScene ? Filepath.basename(_currentScene.graph.filepath) : "") || "Unsaved Project"
         preset: "Info"
         canCopy: false
-        text: _reconstruction && _reconstruction.graph.filepath ? "Current project has unsaved modifications."
+        text: _currentScene && _currentScene.graph.filepath ? "Current project has unsaved modifications."
                                              : "Current project has not been saved."
-        helperText: _reconstruction && _reconstruction.graph.filepath ? "Would you like to save those changes?"
+        helperText: _currentScene && _currentScene.graph.filepath ? "Would you like to save those changes?"
                                                    : "Would you like to save this project?"
 
         standardButtons: Dialog.Save | Dialog.Cancel | Dialog.Discard
@@ -451,7 +451,7 @@ Page {
 
         onAccepted: {
             // Save current file
-            if (saveAction.enabled && _reconstruction.graph.filepath) {
+            if (saveAction.enabled && _currentScene.graph.filepath) {
                 saveAction.trigger()
                 fireCallback()
             }
@@ -496,7 +496,7 @@ Page {
         // is busy building intrinsics while importing images
         id: buildingIntrinsicsDialog
         modal: true
-        visible: _reconstruction ? _reconstruction.buildingIntrinsics : false
+        visible: _currentScene ? _currentScene.buildingIntrinsics : false
         closePolicy: Popup.NoAutoClose
         title: "Initializing Cameras"
         icon.text: MaterialIcons.camera
@@ -521,7 +521,7 @@ Page {
 
     CompatibilityManager {
         id: compatibilityManager
-        uigraph: _reconstruction
+        uigraph: _currentScene
     }
 
 
@@ -531,8 +531,8 @@ Page {
         property string tooltip: "Remove all the images from the current CameraInit group"
         text: "Remove All Images"
         onTriggered: {
-            _reconstruction.removeAllImages()
-            _reconstruction.selectedViewId = "-1"
+            _currentScene.removeAllImages()
+            _currentScene.selectedViewId = "-1"
         }
     }
 
@@ -541,8 +541,8 @@ Page {
         property string tooltip: "Remove all the images from all the CameraInit groups"
         text: "Remove Images From All CameraInit Nodes"
         onTriggered: {
-            _reconstruction.removeImagesFromAllGroups()
-            _reconstruction.selectedViewId = "-1"
+            _currentScene.removeImagesFromAllGroups()
+            _currentScene.selectedViewId = "-1"
         }
     }
 
@@ -553,28 +553,28 @@ Page {
         shortcut: "Ctrl+Shift+R"
         onTriggered: {
             statusBar.showMessage("Reloading plugins...")
-            _reconstruction.reloadPlugins()  // This will handle the message to show that it finished properly
+            _currentScene.reloadPlugins()  // This will handle the message to show that it finished properly
         }
     }
 
     Action {
         id: undoAction
 
-        property string tooltip: 'Undo "' + (_reconstruction ? _reconstruction.undoStack.undoText : "Unknown") + '"'
+        property string tooltip: 'Undo "' + (_currentScene ? _currentScene.undoStack.undoText : "Unknown") + '"'
         text: "Undo"
         shortcut: "Ctrl+Z"
-        enabled: _reconstruction ? _reconstruction.undoStack.canUndo && _reconstruction.undoStack.isUndoableIndex : false
-        onTriggered: _reconstruction.undoStack.undo()
+        enabled: _currentScene ? _currentScene.undoStack.canUndo && _currentScene.undoStack.isUndoableIndex : false
+        onTriggered: _currentScene.undoStack.undo()
     }
 
     Action {
         id: redoAction
 
-        property string tooltip: 'Redo "' + (_reconstruction ? _reconstruction.undoStack.redoText : "Unknown") + '"'
+        property string tooltip: 'Redo "' + (_currentScene ? _currentScene.undoStack.redoText : "Unknown") + '"'
         text: "Redo"
         shortcut: "Ctrl+Shift+Z"
-        enabled: _reconstruction ? _reconstruction.undoStack.canRedo && !_reconstruction.undoStack.lockedRedo : false
-        onTriggered: _reconstruction.undoStack.redo()
+        enabled: _currentScene ? _currentScene.undoStack.canRedo && !_currentScene.undoStack.lockedRedo : false
+        onTriggered: _currentScene.undoStack.redo()
     }
 
     Action {
@@ -582,7 +582,7 @@ Page {
 
         property string tooltip: "Cut Selected Node(s)"
         text: "Cut Node(s)"
-        enabled: _reconstruction ? _reconstruction.nodeSelection.hasSelection : false
+        enabled: _currentScene ? _currentScene.nodeSelection.hasSelection : false
         onTriggered: {
             graphEditor.copyNodes()
             graphEditor.uigraph.removeSelectedNodes()
@@ -594,7 +594,7 @@ Page {
 
         property string tooltip: "Copy Selected Node(s)" 
         text: "Copy Node(s)"
-        enabled: _reconstruction ? _reconstruction.nodeSelection.hasSelection : false
+        enabled: _currentScene ? _currentScene.nodeSelection.hasSelection : false
         onTriggered: graphEditor.copyNodes()
     }
 
@@ -636,7 +636,7 @@ Page {
                 if (!ensureNotComputing())
                     return
                 ensureSaved(function() {
-                    _reconstruction.clear()
+                    _currentScene.clear()
                     if (mainStack.depth == 1)
                         mainStack.replace("Homepage.qml")
                     else
@@ -653,7 +653,7 @@ Page {
                     text: "New"
                     shortcut: "Ctrl+N"
                     onTriggered: ensureSaved(function() {
-                        _reconstruction.new()
+                        _currentScene.new()
                     })
                 }
                 Menu {
@@ -675,7 +675,7 @@ Page {
                         model: MeshroomApp.pipelineTemplateFiles
                         MenuItem {
                             onTriggered: ensureSaved(function() {
-                                _reconstruction.new(modelData["key"])
+                                _currentScene.new(modelData["key"])
                             })
 
                             text: fileTextMetrics.elidedText
@@ -729,7 +729,7 @@ Page {
                             
                             onTriggered: ensureSaved(function() {
                                 openRecentMenu.dismiss()
-                                if (_reconstruction.load(modelData["path"])) {
+                                if (_currentScene.load(modelData["path"])) {
                                     MeshroomApp.addRecentProjectFile(modelData["path"])
                                 }
                             })
@@ -749,17 +749,17 @@ Page {
                     id: saveAction
                     text: "Save"
                     shortcut: "Ctrl+S"
-                    enabled: _reconstruction ? (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean : false
+                    enabled: _currentScene ? (_currentScene.graph && !_currentScene.graph.filepath) || !_currentScene.undoStack.clean : false
                     onTriggered: {
-                        if (_reconstruction.graph.filepath) {
+                        if (_currentScene.graph.filepath) {
                             // Get current time date
-                            var date = _reconstruction.graph.getFileDateVersionFromPath(_reconstruction.graph.filepath)
+                            var date = _currentScene.graph.getFileDateVersionFromPath(_currentScene.graph.filepath)
 
                             // Check if the file has been modified by another instance
-                            if (_reconstruction.graph.fileDateVersion !== date) {
+                            if (_currentScene.graph.fileDateVersion !== date) {
                                 fileModifiedDialog.open()
                             } else
-                                _reconstruction.save()
+                                _currentScene.save()
                         } else {
                             initFileDialogFolder(saveFileDialog)
                             saveFileDialog.open()
@@ -973,18 +973,18 @@ Page {
                 Action {
                     text: "Compute All Nodes"
                     onTriggered: computeManager.compute(null)
-                    enabled: _reconstruction ? !_reconstruction.computingLocally : false
+                    enabled: _currentScene ? !_currentScene.computingLocally : false
                 }
                 Action {
                     text: "Submit All Nodes"
                     onTriggered: computeManager.submit(null)
-                    enabled: _reconstruction ? _reconstruction.canSubmit : false
+                    enabled: _currentScene ? _currentScene.canSubmit : false
                 }
                 MenuSeparator {}
                 Action {
                     text: "Stop Computation"
-                    onTriggered: _reconstruction.stopExecution()
-                    enabled: _reconstruction ? _reconstruction.computingLocally : false
+                    onTriggered: _currentScene.stopExecution()
+                    enabled: _currentScene ? _currentScene.computingLocally : false
                 }
                 MenuSeparator {}
                 Menu {
@@ -1031,9 +1031,9 @@ Page {
 
                 font.pointSize: 18
 
-                text: !(_reconstruction.computingLocally) ? MaterialIcons.send : MaterialIcons.cancel_schedule_send
+                text: !(_currentScene.computingLocally) ? MaterialIcons.send : MaterialIcons.cancel_schedule_send
 
-                ToolTip.text: !(_reconstruction.computingLocally) ? "Compute" : "Stop Computing"
+                ToolTip.text: !(_currentScene.computingLocally) ? "Compute" : "Stop Computing"
                 ToolTip.visible: hovered
 
                 background: Rectangle {
@@ -1041,7 +1041,7 @@ Page {
                     border.color: Qt.darker(activePalette.window, 1.15)
                 }
 
-                onClicked: !(_reconstruction.computingLocally) ? computeManager.compute(null) : _reconstruction.stopExecution()
+                onClicked: !(_currentScene.computingLocally) ? computeManager.compute(null) : _currentScene.stopExecution()
             }
 
             MaterialToolButton {
@@ -1049,10 +1049,10 @@ Page {
 
                 font.pointSize: 18
 
-                visible: _reconstruction ? _reconstruction.canSubmit : false
-                text: !(_reconstruction.computingExternally) ? MaterialIcons.rocket_launch : MaterialIcons.paragliding
+                visible: _currentScene ? _currentScene.canSubmit : false
+                text: !(_currentScene.computingExternally) ? MaterialIcons.rocket_launch : MaterialIcons.paragliding
 
-                ToolTip.text: !(_reconstruction.computingExternally) ? "Submit on Render Farm" : "Interrupt Job"
+                ToolTip.text: !(_currentScene.computingExternally) ? "Submit on Render Farm" : "Interrupt Job"
                 ToolTip.visible: hovered
 
                 background: Rectangle {
@@ -1060,7 +1060,7 @@ Page {
                     border.color: Qt.darker(activePalette.window, 1.15)
                 }
 
-                onClicked: !(_reconstruction.computingExternally) ? computeManager.submit(null) : _reconstruction.stopExecution()
+                onClicked: !(_currentScene.computingExternally) ? computeManager.submit(null) : _currentScene.stopExecution()
             }
         }
 
@@ -1104,13 +1104,13 @@ Page {
                 font.pointSize: 8
                 text: MaterialIcons.folder_open
                 ToolTip.text: "Open Cache Folder"
-                onClicked: Qt.openUrlExternally(Filepath.stringToUrl(_reconstruction.graph.cacheDir))
+                onClicked: Qt.openUrlExternally(Filepath.stringToUrl(_currentScene.graph.cacheDir))
             }
 
             TextField {
                 readOnly: true
                 selectByMouse: true
-                text: _reconstruction ? _reconstruction.graph.cacheDir : "Unknown"
+                text: _currentScene ? _currentScene.graph.cacheDir : "Unknown"
                 color: Qt.darker(palette.text, 1.2)
                 background: Item {}
             }
@@ -1128,7 +1128,7 @@ Page {
     }
 
     Connections {
-        target: _reconstruction
+        target: _currentScene
 
         // Bind messages to DialogsFactory
         function createDialog(func, message) {
@@ -1161,7 +1161,7 @@ Page {
             id: chunksListView
             height: 6
             Layout.fillWidth: true
-            model: _reconstruction ? _reconstruction.sortedDFSChunks : null
+            model: _currentScene ? _currentScene.sortedDFSChunks : null
             highlightChunks: false
         }
 
@@ -1180,8 +1180,8 @@ Page {
                 SplitView.fillHeight: true
                 SplitView.preferredHeight: 300
                 SplitView.minimumHeight: 80
-                reconstruction: _reconstruction
-                readOnly: _reconstruction ? _reconstruction.computing : false
+                currentScene: _currentScene
+                readOnly: _currentScene ? _currentScene.computing : false
 
                 function viewNode(node, mouse) {
                     // 2D viewer
@@ -1258,7 +1258,7 @@ Page {
                             padding: 2
                             onClicked: {
                                 updatingStatus = true
-                                _reconstruction.forceNodesStatusUpdate()
+                                _currentScene.forceNodesStatusUpdate()
                                 updatingStatus = false
                             }
                             property bool updatingStatus: false
@@ -1277,12 +1277,12 @@ Page {
                                 x: -width + parent.width
                                 MenuItem {
                                     text: "Clear Pending Status"
-                                    enabled: _reconstruction ? !_reconstruction.computingLocally : false
-                                    onTriggered: _reconstruction.graph.clearSubmittedNodes(_reconstruction.getSelectedNodes())
+                                    enabled: _currentScene ? !_currentScene.computingLocally : false
+                                    onTriggered: _currentScene.graph.clearSubmittedNodes(_currentScene.getSelectedNodes())
                                 }
                                 MenuItem {
                                     text: "Force Unlock Nodes"
-                                    onTriggered: _reconstruction.graph.forceUnlockNodes(_reconstruction.getSelectedNodes())
+                                    onTriggered: _currentScene.graph.forceUnlockNodes(_currentScene.getSelectedNodes())
                                 }
 
                                 Menu {
@@ -1292,13 +1292,13 @@ Page {
                                         id: autoLayoutMinimum
                                         text: "Minimum"
                                         checkable: true
-                                        checked: _reconstruction.layout.depthMode === 0
+                                        checked: _currentScene.layout.depthMode === 0
                                         ToolTip.text: "Sets the Auto Layout Depth Mode to use Node's Minimum depth"
                                         ToolTip.visible: hovered
                                         ToolTip.delay: 200
                                         onToggled: {
                                             if (checked) {
-                                                _reconstruction.layout.depthMode = 0;
+                                                _currentScene.layout.depthMode = 0;
                                                 autoLayoutMaximum.checked = false;
                                             }
                                             // Prevents cases where the user unchecks the currently checked option
@@ -1309,13 +1309,13 @@ Page {
                                         id: autoLayoutMaximum
                                         text: "Maximum"
                                         checkable: true
-                                        checked: _reconstruction.layout.depthMode === 1
+                                        checked: _currentScene.layout.depthMode === 1
                                         ToolTip.text: "Sets the Auto Layout Depth Mode to use Node's Maximum depth"
                                         ToolTip.visible: hovered
                                         ToolTip.delay: 200
                                         onToggled: {
                                             if (checked) {
-                                                _reconstruction.layout.depthMode = 1;
+                                                _currentScene.layout.depthMode = 1;
                                                 autoLayoutMinimum.checked = false;
                                             }
                                             // Prevents cases where the user unchecks the currently checked option
@@ -1331,7 +1331,7 @@ Page {
                                     id: enableAutoRefresh
                                     text: "Enable Auto-Refresh"
                                     checkable: true
-                                    checked: _reconstruction.filePollerRefresh === 0
+                                    checked: _currentScene.filePollerRefresh === 0
                                     ToolTip.text: "Check every file's status periodically"
                                     ToolTip.visible: hovered
                                     ToolTip.delay: 200
@@ -1339,7 +1339,7 @@ Page {
                                         if (checked) {
                                             disableAutoRefresh.checked = false
                                             minimalAutoRefresh.checked = false
-                                            _reconstruction.filePollerRefreshChanged(0)
+                                            _currentScene.filePollerRefreshChanged(0)
                                         }
                                         // Prevents cases where the user unchecks the currently checked option
                                         enableAutoRefresh.checked = true
@@ -1349,7 +1349,7 @@ Page {
                                     id: disableAutoRefresh
                                     text: "Disable Auto-Refresh"
                                     checkable: true
-                                    checked: _reconstruction.filePollerRefresh === 1
+                                    checked: _currentScene.filePollerRefresh === 1
                                     ToolTip.text: "No file status will be checked"
                                     ToolTip.visible: hovered
                                     ToolTip.delay: 200
@@ -1357,7 +1357,7 @@ Page {
                                         if (checked) {
                                             enableAutoRefresh.checked = false
                                             minimalAutoRefresh.checked = false
-                                            _reconstruction.filePollerRefreshChanged(1)
+                                            _currentScene.filePollerRefreshChanged(1)
                                         }
                                         // Prevents cases where the user unchecks the currently checked option
                                         disableAutoRefresh.checked = true
@@ -1367,7 +1367,7 @@ Page {
                                     id: minimalAutoRefresh
                                     text: "Enable Minimal Auto-Refresh"
                                     checkable: true
-                                    checked: _reconstruction.filePollerRefresh === 2
+                                    checked: _currentScene.filePollerRefresh === 2
                                     ToolTip.text: "Check the file status of submitted or running chunks periodically"
                                     ToolTip.visible: hovered
                                     ToolTip.delay: 200
@@ -1375,7 +1375,7 @@ Page {
                                         if (checked) {
                                             disableAutoRefresh.checked = false
                                             enableAutoRefresh.checked = false
-                                            _reconstruction.filePollerRefreshChanged(2)
+                                            _currentScene.filePollerRefreshChanged(2)
                                         }
                                         // Prevents cases where the user unchecks the currently checked option
                                         minimalAutoRefresh.checked = true
@@ -1392,31 +1392,31 @@ Page {
 
                         visible: graphEditorPanel.currentTab === 0
 
-                        uigraph: _reconstruction
+                        uigraph: _currentScene
                         nodeTypesModel: _nodeTypes
 
                         onNodeDoubleClicked: function(mouse, node) {
-                            _reconstruction.setActiveNode(node);
+                            _currentScene.setActiveNode(node);
                             workspaceView.viewNode(node, mouse);
                         }
                         onComputeRequest: function(nodes) {
-                            _reconstruction.forceNodesStatusUpdate();
+                            _currentScene.forceNodesStatusUpdate();
                             computeManager.compute(nodes)
                         }
                         onSubmitRequest: function(nodes) {
-                            _reconstruction.forceNodesStatusUpdate();
+                            _currentScene.forceNodesStatusUpdate();
                             computeManager.submit(nodes)
                         }
                         onFilesDropped: function(drop, mousePosition) {
-                            var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
+                            var filesByType = _currentScene.getFilesByTypeFromDrop(drop.urls)
                             if (filesByType["meshroomScenes"].length == 1) {
                                 ensureSaved(function() {
-                                    if (_reconstruction.handleFilesUrl(filesByType, null, mousePosition)) {
+                                    if (_currentScene.handleFilesUrl(filesByType, null, mousePosition)) {
                                         MeshroomApp.addRecentProjectFile(filesByType["meshroomScenes"][0])
                                     }
                                 })
                             } else {
-                                _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
+                                _currentScene.handleFilesUrl(filesByType, null, mousePosition)
                             }
                         }
                     }
@@ -1427,8 +1427,8 @@ Page {
 
                         visible: graphEditorPanel.currentTab === 1
 
-                        uigraph: _reconstruction
-                        taskManager: _reconstruction ? _reconstruction.taskManager : null
+                        uigraph: _currentScene
+                        taskManager: _currentScene ? _currentScene.taskManager : null
                     }
 
                     ScriptEditor {
@@ -1445,16 +1445,16 @@ Page {
                     SplitView.preferredWidth: 500
                     SplitView.minimumWidth: 350
 
-                    node: _reconstruction ? _reconstruction.selectedNode : null
-                    property bool computing: _reconstruction ? _reconstruction.computing : false       
+                    node: _currentScene ? _currentScene.selectedNode : null
+                    property bool computing: _currentScene ? _currentScene.computing : false       
                     property var currentAttributes: []
 
                     // Make NodeEditor readOnly when computing
                     readOnly: node ? node.locked : false
 
                     onUpgradeRequest: {
-                        var n = _reconstruction.upgradeNode(node)
-                        _reconstruction.selectedNode = n
+                        var n = _currentScene.upgradeNode(node)
+                        _currentScene.selectedNode = n
                     }                   
 
                     onInAttributeClicked: function(srcItem, mouse, inAttributes) {                        
@@ -1500,7 +1500,7 @@ Page {
                         const nodes = attributes.map( attr => attr.node)
 
                         if (attributes.length == 1) {
-                            _reconstruction.selectedNode = attributes[0].node
+                            _currentScene.selectedNode = attributes[0].node
                         }
                         graphEditor.uigraph.selectNodes(nodes)
                     } 

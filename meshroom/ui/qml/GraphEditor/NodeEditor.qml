@@ -27,18 +27,18 @@ Panel {
     property string displayNodeType: ""
 
     function updateNodeNameDisplay() {
-        if (_reconstruction.selectedNode) {
-            const nodeName = _reconstruction.selectedNode.name
+        if (_currentScene.selectedNode) {
+            const nodeName = _currentScene.selectedNode.name
             root.displayNodeName = nodeName
             root.validatedNodeName = nodeName
             // Set the display node type only if it is not contained in the node name
-            const nodeType = _reconstruction.selectedNode.nodeType
+            const nodeType = _currentScene.selectedNode.nodeType
             root.displayNodeType = nodeName.startsWith(nodeType + "_") ? "" : nodeType
         }
     }
 
     Connections {
-        target: _reconstruction
+        target: _currentScene
         function onSelectedNodeChanged() {
             updateNodeNameDisplay()
         }
@@ -84,7 +84,7 @@ Panel {
     // Function to validate and apply node name change
     function validateNodeNameChange(name) {
         if (root.node && name.trim() !== "") {
-            const newNodeName = _reconstruction.renameNode(_reconstruction.selectedNode, name.trim())
+            const newNodeName = _currentScene.renameNode(_currentScene.selectedNode, name.trim())
             if (newNodeName === "") {
                 root.displayNodeName = root.nodeName
                 root.validatedNodeName = root.nodeName
@@ -188,7 +188,7 @@ Panel {
                 }
 
                 Connections {
-                    target: _reconstruction
+                    target: _currentScene
                     function onSelectedNodeChanged() {
                         if (!activeFocus && !readOnly) {
                             root.cancelNodeNameChange()
@@ -203,7 +203,7 @@ Panel {
             // Show node type if the node name does not start with "nodeType_"
             Label {
                 text: "(" + root.displayNodeType + ")"
-                visible: root.displayNodeType !== "" && _reconstruction.selectedNode
+                visible: root.displayNodeType !== "" && _currentScene.selectedNode
                 topPadding: 4
                 bottomPadding: 4
             }

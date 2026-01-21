@@ -22,31 +22,7 @@ Panel {
     property string nodeStartDateTime: ""
 
     property variant nodeName: node !== null ? node.name : undefined
-    property string displayNodeName: node !== null ? node.name : ""
-    property string validatedNodeName: displayNodeName
-    property string displayNodeType: ""
-
-    function updateNodeNameDisplay() {
-        if (_currentScene.selectedNode) {
-            const nodeName = _currentScene.selectedNode.name
-            root.displayNodeName = nodeName
-            root.validatedNodeName = nodeName
-            // Set the display node type only if it is not contained in the node name
-            const nodeType = _currentScene.selectedNode.nodeType
-            root.displayNodeType = nodeName.startsWith(nodeType + "_") ? "" : nodeType
-        }
-    }
-
-    Connections {
-        target: _currentScene
-        function onSelectedNodeChanged() {
-            updateNodeNameDisplay()
-        }
-    }
-
-    onNodeNameChanged: {
-        updateNodeNameDisplay()
-    }
+    property string displayNodeType: node.name.startsWith(node.nodeType + "_") ? "" : node.nodeType
 
     signal attributeDoubleClicked(var mouse, var attribute)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
@@ -81,27 +57,9 @@ Panel {
         tabBar.currentIndex = 0;
     }
 
-    // Function to validate and apply node name change
-    function validateNodeNameChange(name) {
-        if (root.node && name.trim() !== "") {
-            const newNodeName = _currentScene.renameNode(_currentScene.selectedNode, name.trim())
-            if (newNodeName === "") {
-                root.displayNodeName = root.nodeName
-                root.validatedNodeName = root.nodeName
-            } else {
-                root.displayNodeName = newNodeName
-                root.validatedNodeName = newNodeName
-            }
-        }
-    }
-    function cancelNodeNameChange() {
-        // HACK: Set to an empty string to force the text to be set to the previous value.
-        root.displayNodeName = ""
-        root.displayNodeName = root.validatedNodeName
-    }
-
     // Add custom title component for editing
     titleComponent: Component {
+
         RowLayout {
             spacing: 4
 
@@ -111,11 +69,12 @@ Panel {
                 bottomPadding: 4
                 rightPadding: 0
             }
-
             TextField {
+                property variant labelEditionValue: null
+
                 id: nodeNameField
                 visible: root.node !== null
-                text: root.displayNodeName
+                text: labelEditionValue ? labelEditionValue : node.label
                 // For some reason the validator doesn't always work
                 validator: RegularExpressionValidator { regularExpression: /^[0-9A-Za-z]+$/ }
                 font.bold: true
@@ -133,10 +92,6 @@ Panel {
                     radius: 2
                 }
 
-                function refreshText() {
-                    nodeNameField.text = Qt.binding(function() { return root.displayNodeName })
-                }
-
                 MouseArea {
                     anchors.fill: parent
                     enabled: nodeNameField.readOnly
@@ -150,60 +105,43 @@ Panel {
                     }
                 }
 
-                Keys.onReturnPressed: {
-                    if (!readOnly) {
-                        root.validateNodeNameChange(text)
-                        nodeNameField.refreshText()
-                        readOnly = true
-                        selectByMouse = false
-                    }
-                }
+                onAccepted: {
 
-                Keys.onEnterPressed: {
-                    if (!readOnly) {
-                        root.validateNodeNameChange(text)
-                        nodeNameField.refreshText()
-                        readOnly = true
-                        selectByMouse = false
-                    }
-                }
+                    if (readOnly || !node) { return }
 
-                Keys.onEscapePressed: {
-                    if (!readOnly) {
-                        root.cancelNodeNameChange()
-                        nodeNameField.refreshText()
-                        readOnly = true
-                        selectByMouse = false
-                    }
+                    const nodeLabel = _currentScene.renameNode(node, text)
+                    resetTextField()
+                    forceActiveFocus(Qt.OtherFocusReason)
                 }
 
                 onActiveFocusChanged: {
-                    if (!activeFocus && !readOnly) {
-                        // Focus lost without pressing Enter - discard changes
-                        root.cancelNodeNameChange()
-                        nodeNameField.refreshText()
-                        readOnly = true
-                        selectByMouse = false
+                    if(activeFocus) {
+                        labelEditionValue = node.label
+                    } else {
+                        resetTextField()
                     }
                 }
 
-                Connections {
-                    target: _currentScene
-                    function onSelectedNodeChanged() {
-                        if (!activeFocus && !readOnly) {
-                            root.cancelNodeNameChange()
-                            nodeNameField.refreshText()
-                            nodeNameField.readOnly = true
-                            nodeNameField.selectByMouse = false
-                        }
-                    }
+                onVisibleChanged: {
+                    resetTextField()
                 }
+
+                Keys.onEscapePressed: {
+                    resetTextField()
+                }
+
+                function resetTextField() {
+                    readOnly = true
+                    selectByMouse = false
+                    labelEditionValue = null
+                }
+
             }
 
             // Show node type if the node name does not start with "nodeType_"
             Label {
-                text: "(" + root.displayNodeType + ")"
-                visible: root.displayNodeType !== "" && _currentScene.selectedNode
+                text: `(${displayNodeType})`
+                visible: root.displayNodeType !== ""
                 topPadding: 4
                 bottomPadding: 4
             }

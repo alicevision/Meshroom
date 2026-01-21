@@ -38,7 +38,7 @@ Loader {
                 name: shapeAttribute.fullName
                 type: shapeAttribute.type
                 properties: ({"color" : shapeAttribute.userColor, "userName" : shapeAttribute.userName})
-                observation: shapeAttribute.geometry.getObservation(_reconstruction ? _reconstruction.selectedViewId : "-1")
+                observation: shapeAttribute.geometry.getObservation(_currentScene ? _currentScene.selectedViewId : "-1")
                 editable: shapeAttribute.enabled && !shapeAttribute.isLink && !isLinkChild
             }
         }

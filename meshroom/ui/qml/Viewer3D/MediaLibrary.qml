@@ -390,7 +390,7 @@ Entity {
             // We only update the actually displayed attributes if the media.source is an attribute. 
             // A string mean that a file has been dropped on the viewer3D
             if (object.modelSource &&object.modelSource.hasOwnProperty("desc")) {
-                _reconstruction.displayedAttrs3D.append(object.modelSource)
+                _currentScene.displayedAttrs3D.append(object.modelSource)
             }
 
         }
@@ -403,7 +403,7 @@ Entity {
                 // We only update the actually displayed attributes if the media.source is an attribute. 
                 // A string mean that a file has been dropped on the viewer3D
                 if(object.modelSource && object.modelSource.hasOwnProperty("desc")) {
-                    _reconstruction.displayedAttrs3D.remove(object.modelSource)
+                    _currentScene.displayedAttrs3D.remove(object.modelSource)
                 }
                                       
         }

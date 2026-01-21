@@ -22,12 +22,12 @@ SfmDataEntity {
     signal cameraSelected(var viewId)
 
     Connections {
-        target: _reconstruction
+        target: _currentScene
         function onSelectedViewIdChanged() {
-            root.cameraSelected(_reconstruction.selectedViewId)
+            root.cameraSelected(_currentScene.selectedViewId)
         }
         function onSelectedViewpointChanged() {
-            root.cameraSelected(_reconstruction.pickedViewId)
+            root.cameraSelected(_currentScene.pickedViewId)
         }
     }
 
@@ -104,8 +104,8 @@ SfmDataEntity {
                 },
                 PhongMaterial{
                     id: mat
-                    ambient: _reconstruction && (viewId === _reconstruction.selectedViewId ||
-                                                 (viewId === _reconstruction.pickedViewId && syncPickedViewId)) ?
+                    ambient: _currentScene && (viewId === _currentScene.selectedViewId ||
+                                                 (viewId === _currentScene.pickedViewId && syncPickedViewId)) ?
                                  activePalette.highlight : customColor  // "#CCC"
                 }
             ]
@@ -143,7 +143,7 @@ SfmDataEntity {
                         const delta = Qt.point(Math.abs(pos.x - pick.position.x), Math.abs(pos.y - pick.position.y))
                         // Only trigger picking when mouse has not moved between press and release
                         if (delta.x + delta.y < 4) {
-                            _reconstruction.selectedViewId = camSelector.viewId
+                            _currentScene.selectedViewId = camSelector.viewId
                         }
                     }
                 }

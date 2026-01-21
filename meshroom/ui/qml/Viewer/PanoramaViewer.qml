@@ -66,7 +66,7 @@ AliceVision.PanoramaViewer {
     property double pitch: 0;
     property double roll: 0;
 
-    property var activeNode: _reconstruction.activeNodes.get('SfMTransform').node
+    property var activeNode: _currentScene.activeNodes.get('SfMTransform').node
 
     // Yaw and Pitch in Degrees from SfMTransform node sliders
     property double yawNode: activeNode ? activeNode.attribute("manualTransform.manualRotation.y").value : 0
@@ -169,14 +169,14 @@ AliceVision.PanoramaViewer {
                             }               
                         }
 
-                        _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.x"), Math.round(root.pitch))
-                        _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.y"), Math.round(root.yaw))
-                        _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.z"), Math.round(root.roll))
+                        _currentScene.setAttribute(activeNode.attribute("manualTransform.manualRotation.x"), Math.round(root.pitch))
+                        _currentScene.setAttribute(activeNode.attribute("manualTransform.manualRotation.y"), Math.round(root.yaw))
+                        _currentScene.setAttribute(activeNode.attribute("manualTransform.manualRotation.z"), Math.round(root.roll))
                     }
                 }
 
                 onPressed: function(mouse) {
-                    _reconstruction.beginModification("Panorama Manual Rotation")
+                    _currentScene.beginModification("Panorama Manual Rotation")
                     isRotating = true
                     lastX = mouse.x
                     lastY = mouse.y
@@ -190,14 +190,14 @@ AliceVision.PanoramaViewer {
                 }
 
                 onReleased: function(mouse) {
-                    _reconstruction.endModification()
+                    _currentScene.endModification()
                     isRotating = false
                     lastX = 0
                     lastY = 0
 
                     // Select the image in the image gallery if clicked
                     if (xStart == mouse.x && yStart == mouse.y && idSelected != -1) {
-                        _reconstruction.selectedViewId = idSelected
+                        _currentScene.selectedViewId = idSelected
                     }
                 }
             }

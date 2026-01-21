@@ -87,24 +87,24 @@ Item {
             }
             MenuItem {
                 text: "Define As Center Image"
-                property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("SfMTransform").node : null
-                enabled: !root.readOnly && _viewpoint.viewId != -1 && _reconstruction && activeNode
-                onClicked: _reconstruction.setAttribute(activeNode.attribute("transformation"), _viewpoint.viewId.toString())
+                property var activeNode: _currentScene ? _currentScene.activeNodes.get("SfMTransform").node : null
+                enabled: !root.readOnly && _viewpoint.viewId != -1 && _currentScene && activeNode
+                onClicked: _currentScene.setAttribute(activeNode.attribute("transformation"), _viewpoint.viewId.toString())
             }
             Menu {
                 id: sfmSetPairMenu
                 title: "SfM: Define Initial Pair"
-                property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("StructureFromMotion").node : null
-                enabled: !root.readOnly && _viewpoint.viewId != -1 && _reconstruction && activeNode
+                property var activeNode: _currentScene ? _currentScene.activeNodes.get("StructureFromMotion").node : null
+                enabled: !root.readOnly && _viewpoint.viewId != -1 && _currentScene && activeNode
 
                 MenuItem {
                     text: "A"
-                    onClicked: _reconstruction.setAttribute(sfmSetPairMenu.activeNode.attribute("initialPairA"), _viewpoint.viewId.toString())
+                    onClicked: _currentScene.setAttribute(sfmSetPairMenu.activeNode.attribute("initialPairA"), _viewpoint.viewId.toString())
                 }
 
                 MenuItem {
                     text: "B"
-                    onClicked: _reconstruction.setAttribute(sfmSetPairMenu.activeNode.attribute("initialPairB"), _viewpoint.viewId.toString())
+                    onClicked: _currentScene.setAttribute(sfmSetPairMenu.activeNode.attribute("initialPairB"), _viewpoint.viewId.toString())
                 }
             }
         }

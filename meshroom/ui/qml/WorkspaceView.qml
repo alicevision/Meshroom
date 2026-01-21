@@ -11,14 +11,14 @@ import Viewer3D 1.0
 /**
  * WorkspaceView is an aggregation of Meshroom's main modules.
  *
- * It contains an ImageGallery, a 2D and a 3D viewer to manipulate and visualize reconstruction data.
+ * It contains an ImageGallery, a 2D and a 3D viewer to manipulate and visualize scene data.
  */
 
 Item {
     id: root
 
-    property variant reconstruction: _reconstruction
-    readonly property variant cameraInits: _reconstruction ? _reconstruction.cameraInits : null
+    property variant currentScene: _currentScene
+    readonly property variant cameraInits: _currentScene ? _currentScene.cameraInits : null
     property bool readOnly: false
     property alias panel3dViewer: panel3dViewerLoader.item
     readonly property Viewer2D viewer2D: viewer2D
@@ -35,7 +35,7 @@ Item {
     }
 
     Connections {
-        target: reconstruction
+        target: currentScene
         function onGraphChanged() {
             if (panel3dViewerLoader.active) {
                 panel3dViewerLoader.item.viewer3D.clear()
@@ -46,9 +46,9 @@ Item {
     }
     Component.onCompleted: viewSfM()
 
-    // Load reconstruction's current SfM file
+    // Load the current scene's SfM file
     function viewSfM() {
-        var activeNode = _reconstruction.activeNodes ? _reconstruction.activeNodes.get('sfm').node : null
+        var activeNode = _currentScene.activeNodes ? _currentScene.activeNodes.get('sfm').node : null
         if (!activeNode)
             return
         if (panel3dViewerLoader.active) {
@@ -76,21 +76,21 @@ Item {
                 SplitView.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
-                cameraInit: reconstruction ? reconstruction.cameraInit : null
-                tempCameraInit: reconstruction ? reconstruction.tempCameraInit : null
-                cameraInitIndex: reconstruction ? reconstruction.cameraInitIndex : -1
-                onRemoveImageRequest: function(attribute) { reconstruction.removeImage(attribute) }
-                onAllViewpointsCleared: reconstruction.selectedViewId = "-1"
+                cameraInit: currentScene ? currentScene.cameraInit : null
+                tempCameraInit: currentScene ? currentScene.tempCameraInit : null
+                cameraInitIndex: currentScene ? currentScene.cameraInitIndex : -1
+                onRemoveImageRequest: function(attribute) { currentScene.removeImage(attribute) }
+                onAllViewpointsCleared: currentScene.selectedViewId = "-1"
                 galleryGrid.currentIndex: 0
                 onFilesDropped: function(drop) {
                     if (drop["meshroomScenes"].length == 1) {
                         ensureSaved(function() {
-                            if (reconstruction.handleFilesUrl(drop, cameraInit)) {
+                            if (currentScene.handleFilesUrl(drop, cameraInit)) {
                                 MeshroomApp.addRecentProjectFile(drop["meshroomScenes"][0])
                             }
                         })
                     } else {
-                        reconstruction.handleFilesUrl(drop, cameraInit)
+                        currentScene.handleFilesUrl(drop, cameraInit)
                     }
                 }
             }
@@ -243,8 +243,8 @@ Item {
 
                         mediaLibrary: c_viewer3D.library
                         camera: c_viewer3D.mainCamera
-                        uigraph: reconstruction
-                        onNodeActivated: _reconstruction.setActiveNode(node)
+                        uigraph: currentScene
+                        onNodeActivated: _currentScene.setActiveNode(node)
                     }
                 }
             }

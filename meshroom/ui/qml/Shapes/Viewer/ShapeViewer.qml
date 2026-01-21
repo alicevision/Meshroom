@@ -12,7 +12,7 @@ Item {
     id: shapeViewer
 
     // Current node
-    property var node: _reconstruction ? _reconstruction.selectedNode : null
+    property var node: _currentScene ? _currentScene.selectedNode : null
 
     // Container dimensions and scale
     property real containerWidth: 0.0

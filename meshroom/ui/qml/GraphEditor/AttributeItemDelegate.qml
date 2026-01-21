@@ -24,7 +24,7 @@ RowLayout {
     property int labelWidth               // Shortcut to set the fixed size of the Label
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink &&   
-                                     !readOnly && !(attribute.keyable && _reconstruction.selectedViewId === "-1")
+                                     !readOnly && !(attribute.keyable && _currentScene.selectedViewId === "-1")
 
     signal doubleClicked(var mouse, var attr)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
@@ -144,7 +144,7 @@ RowLayout {
                             text: "Reset To Default Value"
                             enabled: root.editable && !attribute.isDefault
                             onTriggered: {
-                                _reconstruction.resetAttribute(attribute)
+                                _currentScene.resetAttribute(attribute)
                                 updateAttributeLabel()
                             }
                         }
@@ -160,7 +160,7 @@ RowLayout {
                             text: "Paste"
                             enabled: Clipboard.getText() != "" && !attribute.keyable && root.editable
                             onTriggered: {
-                                _reconstruction.setAttribute(attribute, Clipboard.getText())
+                                _currentScene.setAttribute(attribute, Clipboard.getText())
                             }
                         }
 
@@ -210,7 +210,7 @@ RowLayout {
 
             MaterialLabel {
                 property bool isDisplayable: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable)
-                property bool isDisplayed: attribute === _reconstruction.displayedAttr2D || _reconstruction.displayedAttrs3D.count && _reconstruction.displayedAttrs3D.contains(attribute)
+                property bool isDisplayed: attribute === _currentScene.displayedAttr2D || _currentScene.displayedAttrs3D.count && _currentScene.displayedAttrs3D.contains(attribute)
                 text: isDisplayed ? MaterialIcons.visibility : MaterialIcons.visibility_off
                 enabled: isDisplayed
                 visible: isDisplayable
@@ -262,16 +262,16 @@ RowLayout {
             case "FloatParam":
                 // We don't set a number because we want to keep the invalid expression
                 if(attribute.keyable)
-                    _reconstruction.addAttributeKeyValue(root.attribute, _reconstruction.selectedViewId, Number(value))
+                    _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, Number(value))
                 else
-                    _reconstruction.setAttribute(root.attribute, Number(value))
+                    _currentScene.setAttribute(root.attribute, Number(value))
                 updateAttributeLabel()
                 break
             case "File":
-                _reconstruction.setAttribute(root.attribute, value)
+                _currentScene.setAttribute(root.attribute, value)
                 break
             default:
-                _reconstruction.setAttribute(root.attribute, value.trim())
+                _currentScene.setAttribute(root.attribute, value.trim())
                 updateAttributeLabel()
                 break
         }
@@ -517,11 +517,11 @@ RowLayout {
                     onClicked: {
                         if (checked) {
                             if (colorText.text == "")
-                                _reconstruction.setAttribute(attribute, "#0000FF")
+                                _currentScene.setAttribute(attribute, "#0000FF")
                             else
-                                _reconstruction.setAttribute(attribute, colorText.text)
+                                _currentScene.setAttribute(attribute, colorText.text)
                         } else {
-                            _reconstruction.setAttribute(attribute, "")
+                            _currentScene.setAttribute(attribute, "")
                         }
                     }
                 }
@@ -583,7 +583,7 @@ RowLayout {
                 enabled: root.editable
 
                 onEditingFinished: (value) => {
-                    _reconstruction.setAttribute(root.attribute, value)
+                    _currentScene.setAttribute(root.attribute, value)
                 }
             }
         }
@@ -603,7 +603,7 @@ RowLayout {
                     } else {
                         currentValue.push(value);
                     }
-                    _reconstruction.setAttribute(attribute, currentValue);
+                    _currentScene.setAttribute(attribute, currentValue);
                 }
             }
         }
@@ -618,7 +618,7 @@ RowLayout {
                     enabled: root.editable
                     // Cast value to string to avoid intrusive scientific notations on numbers
                     property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : 
-                                                        attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_reconstruction.selectedViewId) : 
+                                                        attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId) : 
                                                         attribute.value)
                     text: displayValue
                     selectByMouse: true
@@ -667,7 +667,7 @@ RowLayout {
                         readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
                         readonly property real formattedValue: value.toFixed(stepDecimalCount)
                         enabled: root.editable
-                        value: attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_reconstruction.selectedViewId) : attribute.value
+                        value: attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId) : attribute.value
                         from: attribute.desc.range[0]
                         to: attribute.desc.range[1]
                         stepSize: attribute.desc.range[2]
@@ -676,9 +676,9 @@ RowLayout {
                         onPressedChanged: {
                             if (!pressed) {
                                 if(attribute.keyable)
-                                    _reconstruction.addAttributeKeyValue(attribute, _reconstruction.selectedViewId, formattedValue)
+                                    _currentScene.addAttributeKeyValue(attribute, _currentScene.selectedViewId, formattedValue)
                                 else
-                                    _reconstruction.setAttribute(attribute, formattedValue)
+                                    _currentScene.setAttribute(attribute, formattedValue)
                                 updateAttributeLabel()
                             }
                         }
@@ -692,16 +692,16 @@ RowLayout {
             Row {
                 CheckBox {
                     enabled: root.editable
-                    checked: attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_reconstruction.selectedViewId) : attribute.value
+                    checked: attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId) : attribute.value
                     onToggled: {
                         if(attribute.keyable) 
                         {
-                            const value = attribute.keyValues.getValueAtKeyOrDefault(_reconstruction.selectedViewId)
-                            _reconstruction.addAttributeKeyValue(attribute, _reconstruction.selectedViewId, !value)
+                            const value = attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
+                            _currentScene.addAttributeKeyValue(attribute, _currentScene.selectedViewId, !value)
                         }
                         else 
                         {
-                            _reconstruction.setAttribute(attribute, !attribute.value)
+                            _currentScene.setAttribute(attribute, !attribute.value)
                         }
                     }
                 }
@@ -731,7 +731,7 @@ RowLayout {
                         font.pointSize: 11
                         padding: 2
                         enabled: root.editable
-                        onClicked: _reconstruction.appendAttribute(attribute, undefined)
+                        onClicked: _currentScene.appendAttribute(attribute, undefined)
                     }
                 }
                 ListView {
@@ -779,7 +779,7 @@ RowLayout {
                                 padding: 2
                                 ToolTip.text: "Remove Element"
                                 ToolTip.visible: hovered
-                                onClicked: _reconstruction.removeAttribute(item.childAttrib)
+                                onClicked: _currentScene.removeAttribute(item.childAttrib)
                             }
                         }
                     }
@@ -860,7 +860,7 @@ RowLayout {
                     snapMode: Slider.SnapAlways
                     onPressedChanged: {
                         if (!pressed)
-                            _reconstruction.setAttribute(attribute, formattedValue)
+                            _currentScene.setAttribute(attribute, formattedValue)
                     }
 
                     background: ShaderEffect {
@@ -882,13 +882,13 @@ RowLayout {
             padding: 6
             text: MaterialIcons.circle
             checkable: true
-            checked: attribute.keyable && attribute.keyValues.hasKey(_reconstruction.selectedViewId)
+            checked: attribute.keyable && attribute.keyValues.hasKey(_currentScene.selectedViewId)
             enabled: root.editable
             onClicked: {
-                if (attribute.keyValues.hasKey(_reconstruction.selectedViewId))
-                    _reconstruction.removeAttributeKey(attribute, _reconstruction.selectedViewId)
+                if (attribute.keyValues.hasKey(_currentScene.selectedViewId))
+                    _currentScene.removeAttributeKey(attribute, _currentScene.selectedViewId)
                 else
-                    _reconstruction.addAttributeKeyDefaultValue(attribute, _reconstruction.selectedViewId)
+                    _currentScene.addAttributeKeyDefaultValue(attribute, _currentScene.selectedViewId)
             }
         }
     }

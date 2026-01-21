@@ -43,7 +43,7 @@ class Message(QObject):
 
 class ViewpointWrapper(QObject):
     """
-    ViewpointWrapper is a high-level object that wraps an input image in the context of a Reconstruction.
+    ViewpointWrapper is a high-level object that wraps an input image in the context of a Scene.
     It exposes the attributes of the image and its corresponding camera when reconstructed.
     """
 
@@ -54,17 +54,17 @@ class ViewpointWrapper(QObject):
     principalPointCorrectedChanged = Signal()
     uvCenterOffsetChanged = Signal()
 
-    def __init__(self, viewpointAttribute, reconstruction):
+    def __init__(self, viewpointAttribute, scene):
         """
         Viewpoint constructor
 
         Args:
             viewpointAttribute (GroupAttribute): viewpoint attribute
-            reconstruction (Reconstruction): owner reconstruction of this Viewpoint
+            scene (Scene): owner scene of this Viewpoint
         """
-        super().__init__(parent=reconstruction)
+        super().__init__(parent=scene)
         self._viewpoint = viewpointAttribute
-        self._reconstruction = reconstruction
+        self._scene = scene
 
         # CameraInit
         self._initialIntrinsics = None
@@ -75,9 +75,9 @@ class ViewpointWrapper(QObject):
         self._reconstructed = False
         # PrepareDenseScene
         self._undistortedImagePath = ''
-        self._activeNode_PrepareDenseScene = self._reconstruction.activeNodes.get("PrepareDenseScene")
-        self._activeNode_ExportAnimatedCamera = self._reconstruction.activeNodes.get("ExportAnimatedCamera")
-        self._activeNode_ExportImages = self._reconstruction.activeNodes.get("ExportImages")
+        self._activeNode_PrepareDenseScene = self._scene.activeNodes.get("PrepareDenseScene")
+        self._activeNode_ExportAnimatedCamera = self._scene.activeNodes.get("ExportAnimatedCamera")
+        self._activeNode_ExportImages = self._scene.activeNodes.get("ExportImages")
         self._principalPointCorrected = False
         self.principalPointCorrectedChanged.connect(self.uvCenterOffsetChanged)
         self.sfmParamsChanged.connect(self.uvCenterOffsetChanged)
@@ -87,9 +87,9 @@ class ViewpointWrapper(QObject):
         self._updateSfMParams()
         self._updateUndistortedImageParams()
 
-        # trigger internal members updates when reconstruction members changes
-        self._reconstruction.cameraInitChanged.connect(self._updateInitialParams)
-        self._reconstruction.sfmReportChanged.connect(self._updateSfMParams)
+        # trigger internal members updates when scene members changes
+        self._scene.cameraInitChanged.connect(self._updateInitialParams)
+        self._scene.sfmReportChanged.connect(self._updateSfMParams)
         if self._activeNode_PrepareDenseScene:
             self._activeNode_PrepareDenseScene.nodeChanged.connect(self._updateUndistortedImageParams)
         if self._activeNode_ExportAnimatedCamera:
@@ -99,11 +99,11 @@ class ViewpointWrapper(QObject):
 
     def _updateInitialParams(self):
         """ Update internal members depending on CameraInit. """
-        if not self._reconstruction.cameraInit:
+        if not self._scene.cameraInit:
             self._initialIntrinsics = None
             self._metadata = {}
         else:
-            self._initialIntrinsics = self._reconstruction.getIntrinsic(self._viewpoint)
+            self._initialIntrinsics = self._scene.getIntrinsic(self._viewpoint)
             try:
                 # When the viewpoint attribute has already been deleted, metadata.value becomes a PySide property (whereas a string is expected)
                 self._metadata = json.loads(self._viewpoint.metadata.value) if isinstance(self._viewpoint.metadata.value, str) and self._viewpoint.metadata.value else None
@@ -116,14 +116,14 @@ class ViewpointWrapper(QObject):
 
     def _updateSfMParams(self):
         """ Update internal members depending on StructureFromMotion. """
-        if not self._reconstruction.sfm:
+        if not self._scene.sfm:
             self._T = None
             self._R = None
             self._solvedIntrinsics = {}
             self._reconstructed = False
         else:
-            self._solvedIntrinsics = self._reconstruction.getSolvedIntrinsics(self._viewpoint)
-            self._R, self._T = self._reconstruction.getPoseRT(self._viewpoint)
+            self._solvedIntrinsics = self._scene.getSolvedIntrinsics(self._viewpoint)
+            self._R, self._T = self._scene.getPoseRT(self._viewpoint)
             self._reconstructed = self._R is not None
         self.sfmParamsChanged.emit()
 
@@ -316,9 +316,9 @@ class ActiveNode(QObject):
     node = makeProperty(QObject, "_node", nodeChanged, resetOnDestroy=True)
 
 
-class Reconstruction(UIGraph):
+class Scene(UIGraph):
     """
-    Specialization of a UIGraph designed to manage a 3D reconstruction.
+    Specialization of a UIGraph designed to manage a Meshroom scene
     """
     activeNodeCategories = {
         # All nodes generating a sfm scene (3D reconstruction or panorama)
@@ -676,18 +676,18 @@ class Reconstruction(UIGraph):
 
     @Slot(result="QVariantList")
     def allImagePaths(self):
-        """ Get all image paths in the reconstruction. """
+        """ Get all image paths in the scene. """
         return [vp.path.value for node in self._cameraInits for vp in node.viewpoints.value]
 
     def allViewIds(self):
-        """ Get all view Ids involved in the reconstruction. """
+        """ Get all view Ids involved in the scene. """
         return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints.value]
 
     @Slot("QVariantMap", result=bool)
     @Slot("QVariantMap", Node, result=bool)
     @Slot("QVariantMap", Node, "QPoint", result=bool)
     def handleFilesUrl(self, filesByType, cameraInit=None, position=None):
-        """ Handle drop events aiming to add images to the Reconstruction.
+        """ Handle drop events aiming to add images to the scene.
         This method allows to reduce process time by doing it on Python side.
 
         Args:
@@ -851,7 +851,7 @@ class Reconstruction(UIGraph):
         self.importImagesFromFolder(paths)
 
     def importImagesSync(self, images, cameraInit):
-        """ Add the given list of images to the Reconstruction. """
+        """ Add the given list of images to the scene. """
         try:
             self.buildIntrinsics(cameraInit, images)
         except Exception as exc:
@@ -1059,7 +1059,7 @@ class Reconstruction(UIGraph):
 
     def setSfm(self, node):
         """ Set the current SfM node.
-        This node will be used to retrieve sparse reconstruction result like camera poses.
+        This node will be used to retrieve sparse 3D reconstruction result like camera poses.
         """
         # disconnect from previous SfM node if any
         if self._sfm:
@@ -1123,7 +1123,7 @@ class Reconstruction(UIGraph):
 
     def _setSelectedViewpoint(self, viewpointAttribute):
         if self._selectedViewpoint:
-            # Reconstruction has ownership of Viewpoint object - destroy it when not needed anymore
+            # Scene has ownership of Viewpoint object - destroy it when not needed anymore
             self._selectedViewpoint.deleteLater()
         self._selectedViewpoint = ViewpointWrapper(viewpointAttribute, self) if viewpointAttribute else None
         self.selectedViewpointChanged.emit()
@@ -1227,7 +1227,7 @@ class Reconstruction(UIGraph):
     currentViewPathChanged = Signal()
     currentViewPath = Property(str, lambda self: self._currentViewPath, setCurrentViewPath, notify=currentViewPathChanged)
 
-    # Whether the Reconstruction object has been set ("new" has been called) or not ("new" has never
+    # Whether the Scene object has been set ("new" has been called) or not ("new" has never
     # been called or "clear" has been called)
     activeChanged = Signal()
     active = Property(bool, lambda self: self._active, setActive, notify=activeChanged)

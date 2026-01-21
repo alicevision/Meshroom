@@ -139,7 +139,7 @@ FloatingPane {
                     // Synchronization
                     MaterialToolButton {
                         id: syncViewpointCamera
-                        enabled: _reconstruction && mediaLibrary.count > 0 ? _reconstruction.sfmReport : false
+                        enabled: _currentScene && mediaLibrary.count > 0 ? _currentScene.sfmReport : false
                         text: MaterialIcons.linked_camera
                         ToolTip.text: "View Through The Active Camera"
                         checkable: true

@@ -34,7 +34,7 @@ AliceVision.FloatImageViewer {
 
     onStatusChanged: {
         if (viewerTypeString === "panorama") {
-            var activeNode = _reconstruction.activeNodes.get('SfMTransform').node
+            var activeNode = _currentScene.activeNodes.get('SfMTransform').node
         }
         root.surface.setIdView(idView);
     }

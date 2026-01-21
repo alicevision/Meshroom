@@ -94,10 +94,10 @@ ColumnLayout {
     }
 
     Connections {
-        target: _reconstruction
+        target: _currentScene
         function onSelectedChunkChanged() {
             for (var i = 0; i < root.chunks.count; i++) {
-                if (_reconstruction.selectedChunk === root.chunks.at(i)) {
+                if (_currentScene.selectedChunk === root.chunks.at(i)) {
                     root.currentIndex = i
                     break;
                 }

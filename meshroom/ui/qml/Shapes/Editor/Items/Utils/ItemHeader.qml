@@ -87,7 +87,7 @@ Pane {
             text: "Reset"
             enabled: isAttributeEnabled && isAttributeInitialized
             onTriggered: {
-                _reconstruction.resetAttribute(model)
+                _currentScene.resetAttribute(model)
                 ShapeViewerHelper.selectedShapeName = ""
                 isExpanded = false
             }
@@ -217,7 +217,7 @@ Pane {
                 title: "Edit " + model.label + " color"
                 selectedColor: model.userColor
                 onAccepted: {
-                    _reconstruction.setAttribute(model.childAttribute("userColor"), selectedColor.toString())
+                    _currentScene.setAttribute(model.childAttribute("userColor"), selectedColor.toString())
                     close()
                 }
                 onRejected: close()
@@ -264,7 +264,7 @@ Pane {
                 }
                 enabled: isAttributeEnabled && model.root && (model.root.type === "ShapeList")
                 onEditingFinished: { 
-                    _reconstruction.setAttribute(model.childAttribute("userName"), text)
+                    _currentScene.setAttribute(model.childAttribute("userName"), text)
                     focus = false
                 }
             }
@@ -308,13 +308,13 @@ Pane {
                         if(isAttributeInitialized)
                         {
                             // remove key
-                            _reconstruction.removeObservation(model, _reconstruction.selectedViewId)
+                            _currentScene.removeObservation(model, _currentScene.selectedViewId)
                             ShapeViewerHelper.selectedShapeName = ""
                         }
                         else
                         {
                             // add key
-                            _reconstruction.setObservation(model, _reconstruction.selectedViewId, 
+                            _currentScene.setObservation(model, _currentScene.selectedViewId, 
                                                           ShapeViewerHelper.getDefaultObservation(model.type))
                             ShapeViewerHelper.selectedShapeName = model.fullName
                         }
@@ -333,14 +333,14 @@ Pane {
                     property var keys: isAttribute ? model.geometry.observationKeys : model.observationKeys
                     property bool hasCurrentKey: {
                         if(isAttribute)
-                            return model.geometry.hasObservation(_reconstruction.selectedViewId)
-                        return model.hasObservation(_reconstruction.selectedViewId)
+                            return model.geometry.hasObservation(_currentScene.selectedViewId)
+                        return model.hasObservation(_currentScene.selectedViewId)
                     }
 
                     function getViewPath(viewId) {
-                        for (var i = 0; i < _reconstruction.viewpoints.count; i++) 
+                        for (var i = 0; i < _currentScene.viewpoints.count; i++) 
                         {
-                            var vp = _reconstruction.viewpoints.at(i)
+                            var vp = _currentScene.viewpoints.at(i)
                             if (vp.childAttribute("viewId").value == viewId) 
                                 return vp.childAttribute("path").value
                         }
@@ -367,13 +367,13 @@ Pane {
 
                     // Previous key
                     MaterialToolButton {
-                        property string prevViewId: getPrevViewId(keys, _reconstruction.selectedViewId)
+                        property string prevViewId: getPrevViewId(keys, _currentScene.selectedViewId)
                         font.pointSize: 11
                         padding: 2
                         text: MaterialIcons.keyboard_arrow_left
                         checkable: false
                         enabled: prevViewId !== "-1"
-                        onClicked: { _reconstruction.selectedViewId = prevViewId }
+                        onClicked: { _currentScene.selectedViewId = prevViewId }
                         ToolTip.text: enabled ? "Previous Key" : "No Previous Key"
                         ToolTip.visible: hovered
                         ToolTip.delay: 800
@@ -391,13 +391,13 @@ Pane {
                             if(hasCurrentKey)
                             {
                                 // remove key
-                                _reconstruction.removeObservation(model, _reconstruction.selectedViewId)
+                                _currentScene.removeObservation(model, _currentScene.selectedViewId)
                                 ShapeViewerHelper.selectedShapeName = ""
                             }
                             else
                             {
                                 // add key
-                                _reconstruction.setObservation(model, _reconstruction.selectedViewId, 
+                                _currentScene.setObservation(model, _currentScene.selectedViewId, 
                                                                ShapeViewerHelper.getDefaultObservation(model.type))
                                 ShapeViewerHelper.selectedShapeName = model.fullName
                             }
@@ -409,13 +409,13 @@ Pane {
 
                     // Next key
                     MaterialToolButton {
-                        property string nextViewId: getNextViewId(keys, _reconstruction.selectedViewId)
+                        property string nextViewId: getNextViewId(keys, _currentScene.selectedViewId)
                         font.pointSize: 11
                         padding: 2
                         text: MaterialIcons.keyboard_arrow_right
                         checkable: false
                         enabled: nextViewId !== "-1"
-                        onClicked: {  _reconstruction.selectedViewId = nextViewId }
+                        onClicked: {  _currentScene.selectedViewId = nextViewId }
                         ToolTip.text: enabled ? "Next Key" : "No Next Key"
                         ToolTip.visible: hovered
                         ToolTip.delay: 800
@@ -430,7 +430,7 @@ Pane {
                     font.pointSize: 11
                     padding: 2
                     text: MaterialIcons.control_point
-                    onClicked: _reconstruction.appendAttribute(model, undefined)
+                    onClicked: _currentScene.appendAttribute(model, undefined)
                     ToolTip.text: "Add Element"
                     ToolTip.visible: hovered
                     ToolTip.delay: 800
@@ -445,7 +445,7 @@ Pane {
                     padding: 2
                     text: MaterialIcons.remove_circle_outline
                     onClicked: {
-                        _reconstruction.removeAttribute(model)
+                        _currentScene.removeAttribute(model)
                     }
                     ToolTip.text: "Remove Element"
                     ToolTip.visible: hovered

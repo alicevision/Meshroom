@@ -23,7 +23,7 @@ FocusScope {
     readonly property vector3d defaultCamUpVector: Qt.vector3d(-0.358979, 0.861550, 0.358979) // should be accurate, consistent with camera view center
     readonly property vector3d defaultCamViewCenter: Qt.vector3d(0.0, 0.0, 0.0)
 
-    readonly property var viewpoint: _reconstruction ? _reconstruction.selectedViewpoint : null
+    readonly property var viewpoint: _currentScene ? _currentScene.selectedViewpoint : null
     readonly property bool doSyncViewpointCamera: Viewer3DSettings.syncViewpointCamera && (viewpoint && viewpoint.isReconstructed)
 
     // Functions

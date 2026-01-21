@@ -77,7 +77,7 @@ Repeater {
         matchColor: Colors.orange
         landmarkColor: Colors.red
         describerType: modelData
-        currentViewId: syncFeaturesSelected ? _reconstruction.pickedViewId : root.currentViewId
+        currentViewId: syncFeaturesSelected ? _currentScene.pickedViewId : root.currentViewId
         enableTimeWindow: root.enableTimeWindow
         timeWindow: root.timeWindow
         mfeatures: root.features

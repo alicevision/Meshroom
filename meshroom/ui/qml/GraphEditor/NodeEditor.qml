@@ -85,7 +85,7 @@ Panel {
     function validateNodeNameChange(name) {
         if (root.node && name.trim() !== "") {
             const newNodeName = _reconstruction.renameNode(_reconstruction.selectedNode, name.trim())
-            if (newNodeName == "") {
+            if (newNodeName === "") {
                 root.displayNodeName = root.nodeName
                 root.validatedNodeName = root.nodeName
             } else {
@@ -95,6 +95,7 @@ Panel {
         }
     }
     function cancelNodeNameChange() {
+        // HACK: Set to an empty string to force the text to be set to the previous value.
         root.displayNodeName = ""
         root.displayNodeName = root.validatedNodeName
     }
@@ -201,7 +202,7 @@ Panel {
             // Show node type if the node name does not start with "nodeType_"
             Label {
                 text: "(" + root.displayNodeType + ")"
-                visible: root.displayNodeType !== ""
+                visible: root.displayNodeType !== "" && _reconstruction.selectedNode
                 topPadding: 4
                 bottomPadding: 4
             }

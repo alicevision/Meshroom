@@ -514,6 +514,12 @@ class Graph(BaseObject):
         return node
 
     def renameNode(self, node: Node, newName: str):
+        """ Rename a node in the Node Graph
+
+        Args:
+            node (Node): Node to rename.
+            newName (str): New name of the node. Must be unique in the graph.
+        """
         self._nodes.rename(node._name, newName)
         # Finally rename
         node._name = newName   

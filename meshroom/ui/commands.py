@@ -154,15 +154,20 @@ class AddNodeCommand(GraphCommand):
 
 class RenameNodeCommand(GraphCommand):
     def __init__(self, graph, node, name, parent=None):
+        """ Command to rename a node. The new name should not be used yet.
+        """
         super().__init__(graph, parent)
         self.node = node
         self.oldName = node._name
         self.name = name
 
     def redoImpl(self):
-        newName = self.graph._createUniqueNodeName(self.name, [n._name for n in self.graph._nodes])
+        newName = self.name
+        usedNames = {n._name for n in self.graph._nodes}
+        if newName in usedNames:
+            newName = self.graph._createUniqueNodeName(self.name, usedNames)
         self.setText(f"Rename Node {self.oldName} to {newName}")
-        self.graph.renameNode(self.node, newName)
+        self.graph.renameNode(self.node, self.name)
         return newName
 
     def undoImpl(self):

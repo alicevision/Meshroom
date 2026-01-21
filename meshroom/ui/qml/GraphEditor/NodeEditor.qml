@@ -34,7 +34,7 @@ Panel {
             // Set the display node type only if it is not contained in the node name
             const nodeType = _reconstruction.selectedNode.nodeType
             root.displayNodeType = nodeName.startsWith(nodeType + "_") ? "" : nodeType
-        } 
+        }
     }
 
     Connections {
@@ -116,6 +116,7 @@ Panel {
                 id: nodeNameField
                 visible: root.node !== null
                 text: root.displayNodeName
+                // For some reason the validator doesn't always work
                 validator: RegularExpressionValidator { regularExpression: /^[0-9A-Za-z]+$/ }
                 font.bold: true
                 readOnly: true

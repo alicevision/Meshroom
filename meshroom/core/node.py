@@ -913,7 +913,7 @@ class BaseNode(BaseObject):
         Returns:
             str: the high-level label from the technical node name
         """
-        t, idx = name.split("_") if "_" in name else (name, "1")
+        t, idx = name.rsplit("_", 1) if "_" in name else (name, "1")
         return f"{t}{idx if int(idx) > 1 else ''}"
 
     def getDocumentation(self):

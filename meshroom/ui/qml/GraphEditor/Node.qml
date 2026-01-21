@@ -90,7 +90,7 @@ Item {
             root.y = root.node.y
         }
         function onNameChanged() {
-            // Make sure when the node name changes the node label is updated
+            // HACK: Make sure when the node name changes the node label is updated
             root.nodeLabel = ""
             // Restore binding to root.node.label
             root.nodeLabel = Qt.binding(function() { return root.node.label; })

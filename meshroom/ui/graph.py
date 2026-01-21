@@ -944,13 +944,11 @@ class UIGraph(QObject):
     def renameNode(self, node: Node, newName: str):
         """ Triggers the node renaming.
         
-        The name we send here doesn't need to be unique here because we will ensure this later in 
-        the RenameNodeCommand. In this function the last `_N` index is removed, then all special characters
-        (everything except letters and numbers) are removed. Then a `_N` index will be added to
-        ensure the node name unicity.
+        In this function the last `_N` index is removed, then all special characters
+        (everything except letters and numbers) are removed. 
+        The name uniqueness will be ensured later by adding a suffix (e.g. `_1`, `_2`, ...)
         
-        As we remove all special characters, only one underscore is allowed in the node name. 
-        Label can be used if multiple underscores are needed.
+        Labels can be used to have special characters in the displayed name.
 
         Args:
             node (Node): Node to rename.

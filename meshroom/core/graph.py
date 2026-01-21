@@ -519,10 +519,13 @@ class Graph(BaseObject):
 
         Args:
             node (Node): Node to rename.
-            newName (str): New name of the node. Must be unique in the graph.
+            newName (str): New name of the node.
         """
         # Handle empty string
         if not newName:
+            return
+        if node.getLocked():
+            logging.warning(f"Cannot rename node {node} because of the locked status")
             return
         usedNames = {n._name for n in self._nodes if n != node}
         # Make sure we rename to an available name
@@ -531,7 +534,7 @@ class Graph(BaseObject):
         # Rename in the dict model
         self._nodes.rename(node._name, newName)
         # Finally rename the node name property and notify Qt
-        node._name = newName   
+        node._name = newName
         node.nodeNameChanged.emit()
 
     def copyNode(self, srcNode: Node, withEdges: bool=False):

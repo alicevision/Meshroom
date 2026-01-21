@@ -779,10 +779,10 @@ Page {
                     id: saveNewVersionAction
                     text: "Save New Version"
                     shortcut: "Ctrl+Alt+S"
-                    enabled: _reconstruction && _reconstruction.graph && _reconstruction.graph.filepath
+                    enabled: _currentScene && _currentScene.graph && _currentScene.graph.filepath
                     onTriggered: {
-                        _reconstruction.saveAsNewVersion()
-                        MeshroomApp.addRecentProjectFile(_reconstruction.graph.filepath)
+                        _currentScene.saveAsNewVersion()
+                        MeshroomApp.addRecentProjectFile(_currentScene.graph.filepath)
                     }
                 }
                 MenuSeparator { }

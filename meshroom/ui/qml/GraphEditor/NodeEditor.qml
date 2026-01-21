@@ -129,10 +129,12 @@ Panel {
                     anchors.fill: parent
                     enabled: nodeNameField.readOnly
                     onDoubleClicked: {
-                        nodeNameField.readOnly = false
-                        nodeNameField.selectByMouse = true
-                        nodeNameField.forceActiveFocus()
-                        nodeNameField.selectAll()
+                        if (root.node && !root.node.locked) {
+                            nodeNameField.readOnly = false
+                            nodeNameField.selectByMouse = true
+                            nodeNameField.forceActiveFocus()
+                            nodeNameField.selectAll()
+                        }
                     }
                 }
 

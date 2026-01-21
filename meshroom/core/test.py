@@ -19,16 +19,19 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
     try:
         graphData = fileData.get(GraphIO.Keys.Graph, fileData)
         if not isinstance(graphData, dict):
+            print(f"File '{path}' does not contain a valid graph.")
             return False
 
         header = fileData.get(GraphIO.Keys.Header, {})
         if not header.get("template", False):
+            print(f"File '{path}' is not a valid template.")
             return False
         nodesVersions = header.get(GraphIO.Keys.NodesVersions, {})
 
         for _, nodeData in graphData.items():
             nodeType = nodeData["nodeType"]
             if not meshroom.core.pluginManager.isRegistered(nodeType):
+                print(f"'{nodeType}' in '{path}' is an unknown type.")
                 return False
 
             nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin(nodeType).nodeDescriptor
@@ -53,7 +56,7 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
                         break
 
             if compatibilityIssue is not None:
-                print(f"{compatibilityIssue} in {path} for node {nodeType}")
+                print(f"{compatibilityIssue} in '{path}' for node '{nodeType}'.")
                 return False
 
         return True

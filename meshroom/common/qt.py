@@ -167,6 +167,13 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self._objects[i] = obj
         self.dataChanged.emit(self.index(i), self.index(i), [])
 
+    def rename(self, oldKey, newKey):
+        obj = self._objectByKey[oldKey]
+        index = self.indexOf(obj)
+        self._objectByKey[newKey] = obj
+        del self._objectByKey[oldKey]
+        self.dataChanged.emit(self.index(index), self.index(index), [])
+
     def move(self, fromIndex, toIndex):
         """ Moves the item at index position from to index position to
         and notifies any views.

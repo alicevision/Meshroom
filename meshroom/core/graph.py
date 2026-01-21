@@ -485,9 +485,6 @@ class Graph(BaseObject):
             self.update()
             self._updateRequested = False
 
-    def _getUniqueName(self, namePrefix):
-        return 
-
     @changeTopology
     def _addNode(self, node, uniqueName):
         """
@@ -515,6 +512,12 @@ class Graph(BaseObject):
         with GraphModification(self):
             node._applyExpr()
         return node
+
+    def renameNode(self, node: Node, newName: str):
+        self._nodes.rename(node._name, newName)
+        # Finally rename
+        node._name = newName   
+        node.nodeNameChanged.emit()
 
     def copyNode(self, srcNode: Node, withEdges: bool=False):
         """

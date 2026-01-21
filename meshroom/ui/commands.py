@@ -162,13 +162,11 @@ class RenameNodeCommand(GraphCommand):
     def redoImpl(self):
         newName = self.graph._createUniqueNodeName(self.name, [n._name for n in self.graph._nodes])
         self.setText(f"Rename Node {self.oldName} to {newName}")
-        self.node._name = newName
-        self.node.nodeNameChanged.emit()
+        self.graph.renameNode(self.node, newName)
         return newName
 
     def undoImpl(self):
-        self.node._name = self.oldName
-        self.node.nodeNameChanged.emit()
+        self.graph.renameNode(self.node, self.oldName)
 
 
 class RemoveNodeCommand(GraphCommand):

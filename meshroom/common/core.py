@@ -50,6 +50,11 @@ class CoreDictModel:
         assert key is not None
         assert key not in self._objects
         self._objects[key] = obj
+    
+    def rename(self, oldKey, newKey):
+        obj = self._objects[oldKey]
+        self._objects[newKey] = obj
+        del self._objects[oldKey]
 
     def pop(self, key):
         assert key in self._objects

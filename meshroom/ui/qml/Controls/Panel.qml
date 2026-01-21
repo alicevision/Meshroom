@@ -16,6 +16,7 @@ Page {
     id: root
 
     property alias headerBar: headerLayout.data
+    property Component titleComponent: null  // Allow custom component for title
     property alias footerContent: footerLayout.data
     property alias icon: iconPlaceHolder.data
     property alias loading: loadingIndicator.running
@@ -62,12 +63,22 @@ Page {
             }
 
             // Title
-            Label {
-                text: root.title
-                elide: Text.ElideRight
-                topPadding: m.vPadding
-                bottomPadding: m.vPadding
+            // Either we load the custom root.titleComponent or we just put the root.title
+            Loader {
+                id: titleLoader
+                sourceComponent: root.titleComponent !== null ? root.titleComponent : defaultTitleComponent
+                Layout.fillWidth: false
             }
+            Component {
+                id: defaultTitleComponent
+                Label {
+                    text: root.title
+                    elide: Text.ElideRight
+                    topPadding: m.vPadding
+                    bottomPadding: m.vPadding
+                }
+            }
+
             Item {
                 width: 10
             }

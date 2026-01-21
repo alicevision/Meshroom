@@ -1,3 +1,5 @@
+// NodeEditor.qml
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -20,6 +22,33 @@ Panel {
     property bool readOnly: false
     property bool isCompatibilityNode: node && node.compatibilityIssue !== undefined
     property string nodeStartDateTime: ""
+
+    property variant nodeName: node !== null ? node.name : undefined
+    property string displayNodeName: node !== null ? node.name : ""
+    property string validatedNodeName: displayNodeName
+    property string displayNodeType: ""
+
+    function updateNodeNameDisplay() {
+        if (_reconstruction.selectedNode) {
+            const nodeName = _reconstruction.selectedNode.name
+            root.displayNodeName = nodeName
+            root.validatedNodeName = nodeName
+            // Set the display node type only if it is not contained in the node name
+            const nodeType = _reconstruction.selectedNode.nodeType
+            root.displayNodeType = nodeName.startsWith(nodeType + "_") ? "" : nodeType
+        } 
+    }
+
+    Connections {
+        target: _reconstruction
+        function onSelectedNodeChanged() {
+            updateNodeNameDisplay()
+        }
+    }
+
+    onNodeNameChanged: {
+        updateNodeNameDisplay()
+    }
 
     signal attributeDoubleClicked(var mouse, var attribute)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
@@ -52,6 +81,108 @@ Panel {
          */
         // Reset tab bar's current index
         tabBar.currentIndex = 0;
+    }
+
+    // Function to validate and apply node name change
+    function validateNodeNameChange(name) {
+        if (root.node && name.trim() !== "") {
+            const newNodeName = _reconstruction.renameNode(_reconstruction.selectedNode, name.trim())
+            root.displayNodeName = newNodeName
+            root.validatedNodeName = newNodeName
+        }
+    }
+    function cancelNodeNameChange() {
+        root.displayNodeName = ""
+        root.displayNodeName = root.validatedNodeName
+    }
+
+    // Add custom title component for editing
+    titleComponent: Component {
+        RowLayout {
+            spacing: 4
+
+            Label {
+                text: root.node === null ? "NodeEditor" : "Node -"
+                topPadding: 4
+                bottomPadding: 4
+                rightPadding: 0
+            }
+
+            TextField {
+                id: nodeNameField
+                visible: root.node !== null
+                text: root.displayNodeName
+                font.bold: true
+                readOnly: true
+                selectByMouse: false
+                verticalAlignment: Text.AlignVCenter
+                topPadding: 4
+                bottomPadding: 4
+                leftPadding: 0
+
+                background: Rectangle {
+                    color: nodeNameField.readOnly ? "transparent" : root.palette.base
+                    border.color: nodeNameField.readOnly ? "transparent" : root.palette.highlight
+                    border.width: 1
+                    radius: 2
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: nodeNameField.readOnly
+                    onDoubleClicked: {
+                        nodeNameField.readOnly = false
+                        nodeNameField.selectByMouse = true
+                        nodeNameField.forceActiveFocus()
+                        nodeNameField.selectAll()
+                    }
+                }
+
+                Keys.onReturnPressed: {
+                    if (!readOnly) {
+                        root.validateNodeNameChange(text)
+                        readOnly = true
+                        selectByMouse = false
+                    }
+                }
+
+                Keys.onEnterPressed: {
+                    if (!readOnly) {
+                        root.validateNodeNameChange(text)
+                        readOnly = true
+                        selectByMouse = false
+                    }
+                }
+
+                Keys.onEscapePressed: {
+                    if (!readOnly) {
+                        root.cancelNodeNameChange()
+                        readOnly = true
+                        selectByMouse = false
+                    }
+                }
+
+                onActiveFocusChanged: {
+                    if (!activeFocus && !readOnly) {
+                        // Focus lost without pressing Enter - discard changes
+                        root.cancelNodeNameChange()
+                        readOnly = true
+                        selectByMouse = false
+                    }
+                }
+            }
+
+            // Show default label in parentheses if different
+            // TODO : instead, show node type
+            Label {
+                // text: root.node && root.node.label !== root.node.defaultLabel ? "(" + root.node.defaultLabel + ")" : ""
+                text: "(" + root.displayNodeType + ")"
+                // visible: root.node !== null && root.node.label !== root.node.defaultLabel
+                visible: root.displayNodeType !== ""
+                topPadding: 4
+                bottomPadding: 4
+            }
+        }
     }
 
     headerBar: RowLayout {

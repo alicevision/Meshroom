@@ -2050,7 +2050,8 @@ class BaseNode(BaseObject):
                      attr.desc.semantic == "shapeFile"), None) is not None
 
 
-    name = Property(str, getName, constant=True)
+    nodeNameChanged = Signal()
+    name = Property(str, getName, notify=nodeNameChanged)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)

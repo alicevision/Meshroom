@@ -485,6 +485,9 @@ class Graph(BaseObject):
             self.update()
             self._updateRequested = False
 
+    def _getUniqueName(self, namePrefix):
+        return 
+
     @changeTopology
     def _addNode(self, node, uniqueName):
         """

@@ -939,6 +939,10 @@ class UIGraph(QObject):
             position = Position(position.x(), position.y())
         return self.push(commands.AddNodeCommand(self._graph, nodeType, position=position, **kwargs))
 
+    @Slot(Node, str, result=str)
+    def renameNode(self, node, newName):
+        return self.push(commands.RenameNodeCommand(self._graph, node, newName))
+
     def moveNode(self, node: Node, position: Position):
         """
         Move `node` to the given `position`.

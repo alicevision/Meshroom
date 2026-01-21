@@ -514,14 +514,23 @@ class Graph(BaseObject):
         return node
 
     def renameNode(self, node: Node, newName: str):
-        """ Rename a node in the Node Graph
+        """ Rename a node in the Node Graph.
+        If the proposed name is already assigned to a node then it will create a unique name
 
         Args:
             node (Node): Node to rename.
             newName (str): New name of the node. Must be unique in the graph.
         """
+        # Handle empty string
+        if not newName:
+            return
+        usedNames = {n._name for n in self._nodes if n != node}
+        # Make sure we rename to an available name
+        if newName in usedNames:
+            newName = self._createUniqueNodeName(newName, usedNames)
+        # Rename in the dict model
         self._nodes.rename(node._name, newName)
-        # Finally rename
+        # Finally rename the node name property and notify Qt
         node._name = newName   
         node.nodeNameChanged.emit()
 

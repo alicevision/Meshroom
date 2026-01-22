@@ -234,11 +234,27 @@ class Statistics:
     """
     fileVersion = 2.0
 
-    def __init__(self):
+    def __init__(self, maxPoints=100):
         self.computer = ComputerStatistics()
         self.process = ProcStatistics()
         self.times = []
-        self.interval = 10  # refresh interval in seconds
+        self.interval = 1  # refresh interval in seconds
+        self.maxPoints = maxPoints  # maximum number of points to keep
+
+    def _filterDataPoints(self, keepEveryN):
+        """
+        Filter data points to keep every Nth point.
+        """
+        # Filter times
+        self.times = self.times[::keepEveryN]
+
+        # Filter computer curves
+        for key in self.computer.curves:
+            self.computer.curves[key] = self.computer.curves[key][::keepEveryN]
+
+        # Filter process curves
+        for key in self.process.curves:
+            self.process.curves[key] = self.process.curves[key][::keepEveryN]
 
     def update(self, proc):
         '''
@@ -249,6 +265,17 @@ class Statistics:
         self.times.append(time.time())
         self.computer.update()
         self.process.update(proc)
+
+        # Check if we exceeded max points and need to adjust interval
+        if len(self.times) > self.maxPoints:
+            # Calculate new interval (double it)
+            newInterval = self.interval * 2
+            # Filter existing data to keep every other point
+            self._filterDataPoints(2)
+            # Update interval
+            self.interval = newInterval
+            logging.debug(f'Statistics: Increased interval to {self.interval}s to maintain max {self.maxPoints} points')
+
         return True
 
     def toDict(self):
@@ -257,8 +284,9 @@ class Statistics:
             'computer': self.computer.toDict(),
             'process': self.process.toDict(),
             'times': self.times,
-            'interval': self.interval
-            }
+            'interval': self.interval,
+            'maxPoints': self.maxPoints,
+        }
 
     def fromDict(self, d):
         version = d.get('fileVersion', 0.0)
@@ -267,6 +295,8 @@ class Statistics:
         self.computer = ComputerStatistics()
         self.process = ProcStatistics()
         self.times = []
+        self.interval = d.get('interval', 1)
+        self.maxPoints = d.get('maxPoints', 100)
         try:
             self.computer.fromDict(d.get('computer', {}))
         except Exception as exc:

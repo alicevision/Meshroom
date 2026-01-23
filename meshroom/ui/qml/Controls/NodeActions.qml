@@ -106,6 +106,14 @@ Item {
             function onScaleChanged() { Qt.callLater(actionHeader.updatePosition) }
         }
 
+        // Update position when nodes are moved
+        Connections {
+            target: actionHeader.selectedNodeDelegate
+            function onXChanged() { actionHeader.updatePosition() }
+            function onYChanged() { actionHeader.updatePosition() }
+            ignoreUnknownSignals: true
+        }
+
         // 
         // ===== Manage buttons =====
         // 

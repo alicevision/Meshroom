@@ -1135,7 +1135,20 @@ Item {
         }
 
         onDeleteDataRequest: function(node) {
-            uigraph.clearSelectedNodesData()
+            if (nodeActionsSettings.confirmBeforeDelete) {
+                uigraph.forceNodesStatusUpdate();
+                const dialog = deleteDataDialog.createObject(
+                    root,
+                    {
+                        "node": node,
+                        "deleteFollowing": false
+                    }
+                );
+                dialog.open(); 
+            }
+            else {
+                uigraph.clearSelectedNodesData()
+            }
         }
         
         onSubmitRequest: function(node) {

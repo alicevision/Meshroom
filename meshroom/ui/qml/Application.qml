@@ -38,6 +38,12 @@ Page {
         property alias showViewer3D: viewer3DVisibilityCB.checked
         property alias showImageGallery: imageGalleryVisibilityCB.checked
     }
+    
+    Settings {
+        id: nodeActionsSettings
+        category: "NodeActions"
+        property alias confirmBeforeDelete: nodeActionsConfirmDelete.checked
+    }
 
 
     property url imagesFolder: {
@@ -871,6 +877,27 @@ Page {
                             text: reloadPluginsAction.tooltip
                             x: advancedMenu.implicitWidth
                             y: 0
+                        }
+                    }
+
+                    MenuSeparator { }
+
+                    Menu {
+                        id: nodeActionsSettingsMenu
+                        title: "NodeActions Settings"
+                        implicitWidth: 250
+                        
+                        MenuItem {
+                            id: nodeActionsConfirmDelete
+                            checkable: true
+                            checked: false
+                            text: "Confirm Before Deleting Data"
+                            ToolTip {
+                                visible: parent.hovered
+                                text: "Show a confirmation popup before deleting the node data"
+                                x: nodeActionsSettingsMenu.width
+                                y: 0
+                            }
                         }
                     }
                 }

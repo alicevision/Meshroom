@@ -20,7 +20,7 @@ ColumnLayout {
         // When the list changes, ensure the current index is in the new range
         if (!chunks)
             currentIndex = -1
-        else if (chunks && currentIndex >= chunks.count)
+        else if (currentIndex >= chunks.count)
             currentIndex = chunks.count-1
     }
 

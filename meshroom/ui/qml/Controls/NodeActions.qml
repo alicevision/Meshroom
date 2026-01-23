@@ -73,15 +73,7 @@ Item {
             hoverEnabled: false
         }
 
-        // Update position
-        function updatePosition() {
-            if (!selectedNodeDelegate || !draggable) return
-            // Calculate node position in screen coordinates
-            const nodeScreenX = selectedNodeDelegate.x * draggable.scale + draggable.x
-            const nodeScreenY = selectedNodeDelegate.y * draggable.scale + draggable.y
-            // Position header above the node (fixed offset in screen pixels)
-            x = nodeScreenX + (selectedNodeDelegate.width * draggable.scale - width) / 2
-            y = nodeScreenY - height - headerOffset
+        function keepNodeActionOnWindow() {
             if (x < 0) {
                 x = 0
             }
@@ -90,12 +82,33 @@ Item {
             }
         }
 
+        // Update position
+        function updatePosition() {
+            if (width == 0 && height == 0) {  
+                actionItemsRow.visible = true  
+                return  
+            } else if (width == 0 || height == 0) {  
+                actionItemsRow.visible = false  
+                return  
+            }  
+            actionItemsRow.visible = true  
+
+            if (!selectedNodeDelegate || !draggable) return
+            // Calculate node position in screen coordinates
+            const nodeScreenX = selectedNodeDelegate.x * draggable.scale + draggable.x
+            const nodeScreenY = selectedNodeDelegate.y * draggable.scale + draggable.y
+            // Position header above the node (fixed offset in screen pixels)
+            x = nodeScreenX + (selectedNodeDelegate.width * draggable.scale - width) / 2
+            y = nodeScreenY - height - headerOffset
+            // keepNodeActionOnWindow()
+        }
+
         onHeightChanged: {
-            Qt.callLater(actionHeader.updatePosition)
+            actionHeader.updatePosition()
         }
 
         onWidthChanged: {
-            Qt.callLater(actionHeader.updatePosition)
+            actionHeader.updatePosition()
         }
 
         // Update position when the user moves on the graph

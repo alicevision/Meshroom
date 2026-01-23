@@ -21,6 +21,33 @@ Panel {
     property bool isCompatibilityNode: node && node.compatibilityIssue !== undefined
     property string nodeStartDateTime: ""
 
+    property variant nodeName: node !== null ? node.name : undefined
+    property string displayNodeName: node !== null ? node.name : ""
+    property string validatedNodeName: displayNodeName
+    property string displayNodeType: ""
+
+    function updateNodeNameDisplay() {
+        if (_currentScene.selectedNode) {
+            const nodeName = _currentScene.selectedNode.name
+            root.displayNodeName = nodeName
+            root.validatedNodeName = nodeName
+            // Set the display node type only if it is not contained in the node name
+            const nodeType = _currentScene.selectedNode.nodeType
+            root.displayNodeType = nodeName.startsWith(nodeType + "_") ? "" : nodeType
+        }
+    }
+
+    Connections {
+        target: _currentScene
+        function onSelectedNodeChanged() {
+            updateNodeNameDisplay()
+        }
+    }
+
+    onNodeNameChanged: {
+        updateNodeNameDisplay()
+    }
+
     signal attributeDoubleClicked(var mouse, var attribute)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
@@ -52,6 +79,135 @@ Panel {
          */
         // Reset tab bar's current index
         tabBar.currentIndex = 0;
+    }
+
+    // Function to validate and apply node name change
+    function validateNodeNameChange(name) {
+        if (root.node && name.trim() !== "") {
+            const newNodeName = _currentScene.renameNode(_currentScene.selectedNode, name.trim())
+            if (newNodeName === "") {
+                root.displayNodeName = root.nodeName
+                root.validatedNodeName = root.nodeName
+            } else {
+                root.displayNodeName = newNodeName
+                root.validatedNodeName = newNodeName
+            }
+        }
+    }
+    function cancelNodeNameChange() {
+        // HACK: Set to an empty string to force the text to be set to the previous value.
+        root.displayNodeName = ""
+        root.displayNodeName = root.validatedNodeName
+    }
+
+    // Add custom title component for editing
+    titleComponent: Component {
+        RowLayout {
+            spacing: 4
+
+            Label {
+                text: root.node === null ? "NodeEditor" : "Node -"
+                topPadding: 4
+                bottomPadding: 4
+                rightPadding: 0
+            }
+
+            TextField {
+                id: nodeNameField
+                visible: root.node !== null
+                text: root.displayNodeName
+                // For some reason the validator doesn't always work
+                validator: RegularExpressionValidator { regularExpression: /^[0-9A-Za-z]+$/ }
+                font.bold: true
+                readOnly: true
+                selectByMouse: false
+                verticalAlignment: Text.AlignVCenter
+                topPadding: 4
+                bottomPadding: 4
+                leftPadding: 0
+
+                background: Rectangle {
+                    color: nodeNameField.readOnly ? "transparent" : root.palette.base
+                    border.color: nodeNameField.readOnly ? "transparent" : root.palette.highlight
+                    border.width: 1
+                    radius: 2
+                }
+
+                function refreshText() {
+                    nodeNameField.text = Qt.binding(function() { return root.displayNodeName })
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: nodeNameField.readOnly
+                    onDoubleClicked: {
+                        if (root.node && !root.node.locked) {
+                            nodeNameField.readOnly = false
+                            nodeNameField.selectByMouse = true
+                            nodeNameField.forceActiveFocus()
+                            nodeNameField.selectAll()
+                        }
+                    }
+                }
+
+                Keys.onReturnPressed: {
+                    if (!readOnly) {
+                        root.validateNodeNameChange(text)
+                        nodeNameField.refreshText()
+                        readOnly = true
+                        selectByMouse = false
+                    }
+                }
+
+                Keys.onEnterPressed: {
+                    if (!readOnly) {
+                        root.validateNodeNameChange(text)
+                        nodeNameField.refreshText()
+                        readOnly = true
+                        selectByMouse = false
+                    }
+                }
+
+                Keys.onEscapePressed: {
+                    if (!readOnly) {
+                        root.cancelNodeNameChange()
+                        nodeNameField.refreshText()
+                        readOnly = true
+                        selectByMouse = false
+                    }
+                }
+
+                onActiveFocusChanged: {
+                    if (!activeFocus && !readOnly) {
+                        // Focus lost without pressing Enter - discard changes
+                        root.cancelNodeNameChange()
+                        nodeNameField.refreshText()
+                        readOnly = true
+                        selectByMouse = false
+                    }
+                }
+
+                Connections {
+                    target: _currentScene
+                    function onSelectedNodeChanged() {
+                        if (!activeFocus && !readOnly) {
+                            root.cancelNodeNameChange()
+                            nodeNameField.refreshText()
+                            nodeNameField.readOnly = true
+                            nodeNameField.selectByMouse = false
+                        }
+                    }
+                }
+            }
+
+            // Show node type if the node name does not start with "nodeType_"
+            Label {
+                text: "(" + root.displayNodeType + ")"
+                visible: root.displayNodeType !== "" && _currentScene.selectedNode
+                topPadding: 4
+                bottomPadding: 4
+            }
+        }
     }
 
     headerBar: RowLayout {

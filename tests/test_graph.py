@@ -270,3 +270,32 @@ def test_duplicate_nodes():
     assert nMap[n2][0].input.inputLink == nMap[n1][0].output
     assert nMap[n3][0].input.inputLink == nMap[n1][0].output
     assert nMap[n3][0].input2.inputLink == nMap[n2][0].output
+
+
+def test_rename_nodes():
+    """
+    Test renaming nodes.
+    """
+
+    graph = Graph("")
+    ls0 = graph.addNewNode("Ls")
+    ls1 = graph.addNewNode("Ls")
+    ls2 = graph.addNewNode("Ls")
+
+    # Test with empty string
+    assert ls0.name == "Ls_1"
+    graph.renameNode(ls0, "")
+    assert ls0.name == "Ls_1"
+
+    # Rename
+    graph.renameNode(ls0, "nodels")
+    assert ls0.name == "nodels"
+    graph.renameNode(ls1, "nodels")
+    assert ls1.name == "nodels_1"
+    graph.renameNode(ls2, "nodels")
+    assert ls2.name == "nodels_2"
+    
+    # Check we cannot rename in locked mode
+    ls0.setLocked(True)
+    graph.renameNode(ls0, "lockedLs")
+    assert ls0.name == "nodels"

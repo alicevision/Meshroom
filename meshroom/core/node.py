@@ -913,7 +913,7 @@ class BaseNode(BaseObject):
         Returns:
             str: the high-level label from the technical node name
         """
-        t, idx = name.split("_")
+        t, idx = name.rsplit("_", 1) if "_" in name else (name, "1")
         return f"{t}{idx if int(idx) > 1 else ''}"
 
     def getDocumentation(self):
@@ -2050,7 +2050,8 @@ class BaseNode(BaseObject):
                      attr.desc.semantic == "shapeFile"), None) is not None
 
 
-    name = Property(str, getName, constant=True)
+    nodeNameChanged = Signal()
+    name = Property(str, getName, notify=nodeNameChanged)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)

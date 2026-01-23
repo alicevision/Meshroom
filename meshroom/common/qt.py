@@ -167,6 +167,24 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self._objects[i] = obj
         self.dataChanged.emit(self.index(i), self.index(i), [])
 
+    def rename(self, oldKey: str, newKey: str):
+        """ Rename an element in the model
+
+        Args:
+            oldKey (str): Previous key name of the element to replace.
+            newKey (str): New key name to insert in the model.
+
+        Raises:
+            KeyError: if the new name is already used.
+        """
+        if newKey in self._objectByKey.keys():
+            raise KeyError(f"Key {newKey} is already in use in {self}")
+        obj = self._objectByKey[oldKey]
+        index = self.indexOf(obj)
+        self._objectByKey[newKey] = obj
+        del self._objectByKey[oldKey]
+        self.dataChanged.emit(self.index(index), self.index(index), [])
+
     def move(self, fromIndex, toIndex):
         """ Moves the item at index position from to index position to
         and notifies any views.

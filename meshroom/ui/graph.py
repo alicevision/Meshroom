@@ -2,6 +2,7 @@
 from collections.abc import Iterable
 import logging
 import os
+import re
 import json
 from enum import Enum
 from threading import Thread, Event, Lock
@@ -938,6 +939,32 @@ class UIGraph(QObject):
         if isinstance(position, QPoint):
             position = Position(position.x(), position.y())
         return self.push(commands.AddNodeCommand(self._graph, nodeType, position=position, **kwargs))
+
+    @Slot(Node, str, result=str)
+    def renameNode(self, node: Node, newName: str):
+        """ Triggers the node renaming.
+        
+        In this function the last `_N` index is removed, then all special characters
+        (everything except letters and numbers) are removed. 
+        The name uniqueness will be ensured later by adding a suffix (e.g. `_1`, `_2`, ...)
+        
+        Labels can be used to have special characters in the displayed name.
+
+        Args:
+            node (Node): Node to rename.
+            newName (str): New name to set.
+
+        Returns:
+            str: The final name of the node.
+        """
+        newName = "_".join(newName.split("_")[:-1]) if "_" in newName else newName
+        # Eliminate all characters except digits and letters
+        newName = re.sub(r"[^0-9a-zA-Z]", "", newName)
+        # Create unique name
+        uniqueName = self._graph._createUniqueNodeName(newName, {n._name for n in self._graph._nodes if n != node})
+        if not newName or uniqueName == node._name:
+            return ""
+        return self.push(commands.RenameNodeCommand(self._graph, node, uniqueName))
 
     def moveNode(self, node: Node, position: Position):
         """

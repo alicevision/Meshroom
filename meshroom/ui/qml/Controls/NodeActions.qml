@@ -90,24 +90,20 @@ Item {
             }
         }
 
+        onHeightChanged: {
+            Qt.callLater(actionHeader.updatePosition)
+        }
+
         onWidthChanged: {
-            updatePosition()
+            Qt.callLater(actionHeader.updatePosition)
         }
 
         // Update position when the user moves on the graph
         Connections {
             target: root.draggable
-            function onXChanged()     { actionHeader.updatePosition() }
-            function onYChanged()     { actionHeader.updatePosition() }
-            function onScaleChanged() { actionHeader.updatePosition() }
-        }
-
-        // Update position when nodes are moved
-        Connections {
-            target: actionHeader.selectedNodeDelegate
-            function onXChanged() { actionHeader.updatePosition() }
-            function onYChanged() { actionHeader.updatePosition() }
-            ignoreUnknownSignals: true
+            function onXChanged()     { Qt.callLater(actionHeader.updatePosition) }
+            function onYChanged()     { Qt.callLater(actionHeader.updatePosition) }
+            function onScaleChanged() { Qt.callLater(actionHeader.updatePosition) }
         }
 
         // 

@@ -18,7 +18,9 @@ ColumnLayout {
 
     onChunksChanged: {
         // When the list changes, ensure the current index is in the new range
-        if (currentIndex >= chunks.count)
+        if (!chunks)
+            currentIndex = -1
+        else if (chunks && currentIndex >= chunks.count)
             currentIndex = chunks.count-1
     }
 

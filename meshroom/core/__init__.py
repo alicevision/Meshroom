@@ -425,14 +425,9 @@ def initSubmitters():
           are unique : so we cannot name them "submitters" because it's already taken
           by the submitters package inside meshroom
     """
-    # Load meshroom default submitters
-    # Use directly loadSubmitters because we don't want any folder except submitters to be registered
-    subs = loadSubmitters(meshroomFolder, "submitters")
-    for sub in subs:
-        registerSubmitter(sub())
-    # Load additional submitters
-    additionalPaths = EnvVar.getList(EnvVar.MESHROOM_SUBMITTERS_PATH)
-    for folder in additionalPaths:
+    # Load submitters
+    submitterPaths = EnvVar.getList(EnvVar.MESHROOM_SUBMITTERS_PATH)
+    for folder in submitterPaths:
         subs = loadAllSubmitters(folder)
         for sub in subs:
             registerSubmitter(sub())

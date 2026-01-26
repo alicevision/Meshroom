@@ -10,21 +10,27 @@ from pathlib import Path
 import subprocess
 from collections import defaultdict
 
-from localFarm import LocalFarmEngine
+from localfarm.localFarm import LocalFarmEngine
 
 
 class FarmLauncher:
     def __init__(self, root=None):
         self.root = Path(root or Path.home() / ".local_farm")
+        self.root.mkdir(parents=True, exist_ok=True)
         self.pidFile = self.root / "farm.pid"
         self.logFile = self.root / "backend.log"
 
     def clean(self):
         """Clean farm backend files"""
+        print("Clean farm files...")
         if self.logFile.exists():
             self.logFile.unlink()
         if (self.root / "jobs").exists():
             shutil.rmtree(str((self.root / "jobs")))
+        if not self.is_running():
+            self.pidFile.unlink(missing_ok=True)
+            (self.root / "backend.port").unlink(missing_ok=True)
+        print("Done.")
 
     def start(self):
         """Start the farm backend"""
@@ -34,12 +40,13 @@ class FarmLauncher:
         self.clean()
 
         print("Starting farm backend...")
+        print(f"Farm root is: {self.root}")
         # Get path to backend script
         backendScript = Path(__file__).parent / "localFarmBackend.py"
         # Start backend as daemon
         with open(self.logFile, 'a') as log:
             subprocess.Popen(
-                [sys.executable, str(backendScript), str(self.root)],
+                [sys.executable, str(backendScript), "--root", str(self.root)],
                 stdout=log,
                 stderr=log,
                 # stderr=subprocess.PIPE,
@@ -89,6 +96,19 @@ class FarmLauncher:
         self.stop()
         time.sleep(1)
         self.start()
+    
+    def getJobsInfos(self):
+        if self.is_running():
+            # Try to get job list
+            try:
+                engine = LocalFarmEngine(root=self.root)
+                jobs = engine.list_jobs()
+                return jobs
+            except Exception as e:
+                raise ValueError(f"Could not fetch jobs: {e}")
+        else:
+            print("Farm backend is not running")
+            return []
 
     def status(self, allInfos=False):
         """Show status of the farm backend"""
@@ -98,11 +118,11 @@ class FarmLauncher:
             
             # Try to get job list
             try:
-                client = LocalFarmEngine(root=self.root)
-                response = client.list_jobs()
-                jobs = response.get('jobs', {})
+                engine = LocalFarmEngine(root=self.root)
+                jobs = engine.list_jobs()
                 print(f"Active jobs: {len(jobs)}")
-                for jid, job in jobs.items():
+                for job in jobs:
+                    jid = job.get("jid")
                     taskByStatus = defaultdict(set)
                     for task in job['tasks']:
                         status = task.get("status", "UNKNOWN")
@@ -120,7 +140,6 @@ class FarmLauncher:
     def is_running(self):
         """Check if backend is running"""
         pid = self.getFarmPid()
-        print(f"Check if {pid} is running")
         if pid is None:
             return False
         try:
@@ -141,6 +160,8 @@ class FarmLauncher:
 
 def main(root, command):
     launcher = FarmLauncher(root=root)
+    if command == 'clean':
+        return launcher.clean()
     if command == 'start':
         return launcher.start()
     elif command == 'stop':
@@ -155,7 +176,14 @@ def main(root, command):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Local Farm Launcher')
-    parser.add_argument('root', help='Farm directory path')
-    parser.add_argument('command', choices=['start', 'stop', 'restart', 'status', 'fullInfos'], help='Command to execute')
+    parser.add_argument('command', 
+                        choices=['clean', 'start', 'stop', 'restart', 'status', 'fullInfos'], 
+                        help='Command to execute')
+    parser.add_argument('--root', required=False, help='Farm directory path')
     args = parser.parse_args()
-    main(args.root, args.command)
+
+    root = args.root
+    if not root:
+        root = os.getenv("MR_LOCAL_FARM_PATH", os.path.join(os.path.expanduser("~"), ".local_farm"))
+
+    main(root, args.command)

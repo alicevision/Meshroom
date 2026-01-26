@@ -4,14 +4,16 @@
 Local Farm : A simple local job runner
 """
 
+from __future__ import annotations  # For forward references in type hints
+
 import logging
 import json
 import socket
 import logging
 import uuid
-from collections import defaultdict, deque
+from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Generator
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,6 +32,7 @@ class LocalFarmEngine:
 
     def connect(self):
         """Connect to the backend"""
+        print("Connect to farm located at", self.root)
         if self.tcpPortFile.exists():
             try:
                 port = int(self.tcpPortFile.read_text())
@@ -68,7 +71,7 @@ class LocalFarmEngine:
         finally:
             sock.close()
 
-    def submit_job(self, job):
+    def submit_job(self, job: Job):
         """ Submit the job to the farm """
         # Create the job
         createdJob = self._call("create_job", name=job.name)
@@ -83,7 +86,8 @@ class LocalFarmEngine:
                     raise RuntimeError(f"Parent task {parentTask.name} not created yet")
                 deps.append(tasksCreated[parentTask])
             createdTask = self._call("create_task", 
-                jid=jid, name=task.name, command=task.command, metadata=task.metadata, dependencies=deps)
+                jid=jid, name=task.name, command=task.command, 
+                metadata=task.metadata, dependencies=deps, env=task.env)
             tasksCreated[task] = createdTask["tid"]
         # Submit the job
         self._call("submit_job", jid=jid)
@@ -91,14 +95,14 @@ class LocalFarmEngine:
 
     def create_additional_task(self, jid, tid, task):
         """ Create new task in an existing job """
-        metadata = {}
         createdTask = self._call("expand_task", 
-            jid=jid, name=task.name, command=task.command, metadata=task.metadata, parentTid=tid)
+            jid=jid, name=task.name, command=task.command, 
+            metadata=task.metadata, parentTid=tid, env=task.env)
         return {"tid": createdTask["tid"]}
 
     def get_job_infos(self, jid):
         """Get job status"""
-        return self._call("get_job_status", jid=jid)
+        return self._call("get_job_infos", jid=jid)["result"]
 
     def pause_job(self, jid):
         """Pause a job"""
@@ -132,9 +136,19 @@ class LocalFarmEngine:
         """Restart a task"""
         return self._call("restart_task", jid=jid, tid=tid)
 
-    def list_jobs(self):
+    def list_jobs(self) -> list:
         """List all jobs"""
-        return self._call("list_jobs")
+        return self._call("list_jobs")["jobs"]
+
+    def get_job_status(self, jid: int) -> dict:
+        for job in self.list_jobs():
+            if job["jid"] == jid:
+                return job
+        return {}
+    
+    def get_job_errors(self, jid: int) -> str:
+        """ Get job error logs """
+        return self._call("get_job_errors", jid=jid)["result"]
 
     def ping(self):
         """Check if backend is alive"""
@@ -146,12 +160,13 @@ class LocalFarmEngine:
 
 
 class Task:
-    def __init__(self, name, command, metadata):
+    def __init__(self, name, command, metadata=None, env=None):
         self.uid = str(uuid.uuid1())
         self.name = name
         self.command = command
-        self.metadata = metadata
-    
+        self.metadata = metadata or {}
+        self.env = env or {}
+
     def __repr__(self):
         return f"<Task {self.name}|{self.uid}>"
 
@@ -165,13 +180,17 @@ class Job:
         self.tasks: Dict[str, Task] = {}
         self.dependencies: Dict[str: List[str]] = defaultdict(set)
         self.reverseDependencies: Dict[str: List[str]] = defaultdict(set)
+        self._engine: LocalFarmEngine = None
+    
+    def setEngine(self, engine: LocalFarmEngine):
+        self._engine = engine
 
     def addTask(self, task):
         if task.name in self.tasks:
             raise ValueError(f"Task {task} already exists in job")
         self.tasks[task.uid] = task
 
-    def addTaskDependency(self, task, dependsOn):
+    def addTaskDependency(self, task: Task, dependsOn: Task):
         if task.uid not in self.tasks:
             raise ValueError(f"Task {task} not found in job")
         if dependsOn.uid not in self.tasks:
@@ -217,7 +236,7 @@ class Job:
                 return True
         return False
 
-    def tasksDFS(self) -> List[Task]:
+    def tasksDFS(self) -> Generator[Task]:
         """
         Return tasks in topological order (dependencies before dependents).
         Tasks closer to roots appear first.
@@ -243,21 +262,22 @@ class Job:
             for task in tasks:
                 yield task
 
-    def submit(self, farmPath):
-        farm = LocalFarmEngine(farmPath)
-        result = farm.submit_job(self)
-        return result
+    def submit(self, engine: LocalFarmEngine = None):
+        engine = engine or self._engine
+        if engine:
+            result = engine.submit_job(self)
+            return result
+        else:
+            raise ValueError("No LocalFarmEngine set for this job")
 
 
 def test():
-    """
-        _ B - D - F - G - H _
-       /         /     \     \
-    A -         /       - I -- J
-       \       /
-        - C - E - K - L - M
-                   \_____/
-    """
+    #     _ B - D - F - G - H _
+    #    /         /     \     \
+    # A -         /       - I -- J
+    #    \       /
+    #     - C - E - K - L - M
+    #                \_____/
     job = Job("job")
     for node in ["F", "B", "K", "J", "A", "M", "L", "E", "C", "D", "G", "H", "I"]:
         job.addTask(Task(node, ""))

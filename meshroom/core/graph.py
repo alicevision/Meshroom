@@ -1549,9 +1549,13 @@ class Graph(BaseObject):
         jid, subName = jobInfo.get("jid"), jobInfo.get("submitterName")
         for _subName, sub in submitters.items():
             if _subName == subName:
-                job = sub.retrieveJob(int(jid))
-                jobManager.addJob(job, [node])
-                break
+                try:
+                    job = sub.retrieveJob(int(jid))
+                    jobManager.addJob(job, [node])
+                    break
+                except Exception as e:
+                    logging.warning(f"Failed to retrieve job {jid} from submitter {subName} : {e}")
+                    break
 
     def update(self):
         if not self._updateEnabled:

@@ -88,6 +88,7 @@ def killRunningJob(node) -> NoReturn:
 
 if args.node:
     node = graph.findNode(args.node)
+    node.updateStatusFromCache()
     submittedStatuses = [Status.RUNNING]
 
     if node.isCompatibilityNode:
@@ -103,7 +104,7 @@ if args.node:
 
     if not node._chunksCreated:
         print(f"Error: Node {node} has been submitted before chunks have been created." \
-               "See file: \"{node.nodeStatusFile}\".")
+              f"See file: \"{node.nodeStatusFile}\".")
         sys.exit(-1)
 
     if node._isInputNode():

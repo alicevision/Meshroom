@@ -23,7 +23,7 @@ from enum import Enum
 import threading
 from socketserver import BaseRequestHandler, ThreadingTCPServer
 
-FARM_MAX_PARALLEL_TASKS = 2
+FARM_MAX_PARALLEL_TASKS = 10
 MAX_BYTES_REQUEST = 4096  # 8192 / 65536 if needed
 
 PathLike = Union[str, Path]
@@ -48,14 +48,15 @@ class Status(Enum):
 
 
 class Task:
-    def __init__(self, jid: str, tid: str, label: str, command: str, metadata: dict, jobDir: PathLike):
+    def __init__(self, jid: str, tid: str, label: str, command: str, metadata: dict, jobDir: PathLike, env: dict = None):
         self.jid: str = jid
         self.tid: str = tid
         self.parentTids = []  # Tasks that must be completed before this one
         self.childTids = []   # Task that depend on this one
         self.label: str = label
         self.command: str = command
-        self.metadata: dict = metadata
+        self.metadata: dict = metadata or {}
+        self.env: dict = env or {}
         self.taskDir: Path = Path(jobDir) / "tasks"
         self.taskDir.mkdir(parents=True, exist_ok=True)
         self.status: Status = Status.NONE
@@ -73,6 +74,7 @@ class Task:
             "label": self.label,
             "command": self.command,
             "metadata": self.metadata,
+            "env": self.env,
             "status": self.status.name,
             "created_at": self.created_at.isoformat(),
             "started_at": self.started_at.isoformat() if self.started_at else None,
@@ -108,6 +110,14 @@ class Job:
             "tasks": [t.to_dict() for t in self.tasks],
             "maxParallel": self.maxParallel
         }
+
+    @property
+    def errorLogs(self):
+        errorLog = ""
+        for task in self.tasks:
+            if task.status in (Status.ERROR, Status.STOPPED, Status.KILLED):
+                errorLog += f"Task {task.tid} failed :\n{task.logFile.read_text()}\n"
+        return errorLog
 
     @property
     def rootTasks(self):
@@ -300,14 +310,7 @@ class LocalFarmEngine:
                     # Check if process finished
                     returncode = task.process.poll()
                     if returncode is not None:
-                        task.finished_at = datetime.now()
-                        task.return_code = returncode
-                        if returncode == 0:
-                            task.status = Status.SUCCESS
-                            logger.info(f"Task {task.tid} completed")
-                        else:
-                            task.status = Status.ERROR
-                            logger.error(f"Task {task.tid} failed with code {returncode}")
+                        self.finishTask(task, returncode)
 
             # Check if job is complete
             if any(t.status in [Status.ERROR, Status.STOPPED, Status.KILLED] for t in job.tasks):
@@ -342,20 +345,51 @@ class LocalFarmEngine:
         task.status = Status.RUNNING
         task.started_at = datetime.now()
         # Create log file
+        additional_env = {
+            "LOCALFARM_CURRENT_JID": str(task.jid),
+            "LOCALFARM_CURRENT_TID": str(task.tid),
+            "MR_LOCAL_FARM_PATH": str(self.root)
+        }
+        additional_env.update(task.env)
+        process_env = os.environ.copy()
+        process_env.update(additional_env)
         try:
+
             with open(task.logFile, "w") as log:
+                log.write(f"# ========== Starting task {task.tid} at {task.started_at.isoformat()}" \
+                          f" (command=\"{task.command}\") ==========\n")
+                log.write(f"# process_env:\n")
+                for _k, _v in process_env.items():
+                    log.write(f"# - {str(_k)}={str(_v)}\n")
+                # log.write(f"# Additional env variables:\n")
+                # for _k, _v in additional_env.items():
+                #     log.write(f"# - {str(_k)}={str(_v)}\n")
+                log.write(f"\n")
                 task.process = subprocess.Popen(
                     task.command,
                     # shlex.split(task.command),
                     stdout=log,
                     stderr=log,
                     cwd=task.taskDir,
+                    env=process_env,
                     shell=True
                 )
         except Exception as e:
             logger.error(f"Failed to start task {task.tid}: {e}")
             task.status = "error"
             task.finished_at = datetime.now()
+    
+    def finishTask(self, task: Task, returncode: int):
+        task.finished_at = datetime.now()
+        task.return_code = returncode
+        if returncode == 0:
+            task.status = Status.SUCCESS
+            logger.info(f"Task {task.tid} completed")
+        else:
+            task.status = Status.ERROR
+            logger.error(f"Task {task.tid} failed with code {returncode}")
+        with open(task.logFile, "a") as log:
+            log.write(f"\n# ========== Task {task.tid} finished at {task.finished_at.isoformat()} with status {task.status} ==========\n")
 
     def cleanup(self):
         logger.info("Cleaning up...")
@@ -393,7 +427,7 @@ class LocalFarmEngine:
             logger.info(f"Created job {jid}")
             return {"success": True, "jid": jid}
 
-    def create_task(self, jid, name, command, metadata, dependencies):
+    def create_task(self, jid, name, command, metadata, dependencies, env=None):
         """Add a task to a job"""
         with self.lock:
             if jid not in self.jobs:
@@ -401,7 +435,7 @@ class LocalFarmEngine:
             job = self.jobs[jid]
             job.lastJid += 1
             tid = job.lastJid
-            task = Task(jid, tid, name, command, metadata, job.jobDir)
+            task = Task(jid, tid, name, command, metadata, job.jobDir, env=env)
             job.tasks.append(task)
             for parentTid in dependencies:
                 parentTask = next((t for t in job.tasks if t.tid == parentTid), None)
@@ -412,14 +446,15 @@ class LocalFarmEngine:
             logger.info(f"Added task {tid} to job {jid}")
             return {"success": True, "tid": tid}
     
-    def expand_task(self, jid, name, command, metadata, parentTid):
+    def expand_task(self, jid, name, command, metadata, parentTid, env=None):
         with self.lock:
             if jid not in self.jobs:
+                logger.info(f"Available jobs: {list(self.jobs.keys())}")
                 return {"success": False, "error": "Job not found"}
             job = self.jobs[jid]
             job.lastJid += 1
             tid = job.lastJid
-            task = Task(jid, tid, name, command, metadata, job.jobDir)
+            task = Task(jid, tid, name, command, metadata, job.jobDir, env=env)
             task.status = Status.SUBMITTED
             job.tasks.append(task)
             parentTask = next((t for t in job.tasks if t.tid == parentTid), None)
@@ -456,8 +491,15 @@ class LocalFarmEngine:
             if jid not in self.jobs:
                 return {'success': False, "error": "Job not found"}
             job = self.jobs[jid]
-            logger.info(f"Job infos : {job.to_dict()}")
             return {"success": True, "result": job.to_dict()}
+
+    def get_job_errors(self, jid):
+        """Get job error logs"""
+        with self.lock:
+            if jid not in self.jobs:
+                return {'success': False, "error": "Job not found"}
+            job = self.jobs[jid]
+            return {"success": True, "result": job.errorLogs}
 
     def pause_job(self, jid):
         """Pause a job"""
@@ -538,7 +580,7 @@ class LocalFarmEngine:
         with self.lock:
             return {
                 "success": True,
-                "jobs": {jid: job.to_dict() for jid, job in self.jobs.items()}
+                "jobs": [job.to_dict() for job in self.jobs.values()]
             }
 
 
@@ -609,6 +651,9 @@ def main(root):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
-    parser.add_argument('farm_root', type=str, help='Root path for the farm.')
+    parser.add_argument('--root', type=str, required=False, help='Root path for the farm.')
     args = parser.parse_args()
-    main(args.farm_root)
+    root = args.root
+    if not root:
+        root = os.getenv("MR_LOCAL_FARM_PATH", os.path.join(os.path.expanduser("~"), ".local_farm"))
+    main(root)

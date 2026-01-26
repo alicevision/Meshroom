@@ -50,3 +50,4 @@ ignore:
   - "docs/"
   - "scripts/"
   - "bin/"
+  - "localFarm/"  # For now ignore localFarm as it has no coverage yet

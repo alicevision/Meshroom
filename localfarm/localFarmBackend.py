@@ -359,11 +359,9 @@ class LocalFarmEngine:
                 log.write(f"# ========== Starting task {task.tid} at {task.started_at.isoformat()}" \
                           f" (command=\"{task.command}\") ==========\n")
                 log.write(f"# process_env:\n")
-                for _k, _v in process_env.items():
+                log.write(f"# Additional env variables:\n")
+                for _k, _v in additional_env.items():
                     log.write(f"# - {str(_k)}={str(_v)}\n")
-                # log.write(f"# Additional env variables:\n")
-                # for _k, _v in additional_env.items():
-                #     log.write(f"# - {str(_k)}={str(_v)}\n")
                 log.write(f"\n")
                 task.process = subprocess.Popen(
                     task.command,

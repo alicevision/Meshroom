@@ -9,7 +9,6 @@ from __future__ import annotations  # For forward references in type hints
 import logging
 import json
 import socket
-import logging
 import uuid
 from collections import defaultdict
 from pathlib import Path
@@ -24,14 +23,14 @@ logger.setLevel(logging.INFO)
 
 
 class LocalFarmEngine:
-    """ Client to communicate with the farm backend """
-    
+    """ Client to communicate with the farm backend. """
+
     def __init__(self, root):
         self.root = Path(root)
         self.tcpPortFile = self.root / "backend.port"
 
     def connect(self):
-        """Connect to the backend"""
+        """ Connect to the backend. """
         print("Connect to farm located at", self.root)
         if self.tcpPortFile.exists():
             try:
@@ -45,7 +44,7 @@ class LocalFarmEngine:
         raise ConnectionError("Farm backend not found")
 
     def _call(self, method, **params):
-        """Make an query to the backend"""
+        """ Make an query to the backend. """
         request = {
             "method": method,
             "params": params
@@ -72,7 +71,7 @@ class LocalFarmEngine:
             sock.close()
 
     def submit_job(self, job: Job):
-        """ Submit the job to the farm """
+        """ Submit the job to the farm. """
         # Create the job
         createdJob = self._call("create_job", name=job.name)
         jid = createdJob["jid"]
@@ -85,8 +84,8 @@ class LocalFarmEngine:
                 if parentTask not in tasksCreated:
                     raise RuntimeError(f"Parent task {parentTask.name} not created yet")
                 deps.append(tasksCreated[parentTask])
-            createdTask = self._call("create_task", 
-                jid=jid, name=task.name, command=task.command, 
+            createdTask = self._call("create_task",
+                jid=jid, name=task.name, command=task.command,
                 metadata=task.metadata, dependencies=deps, env=task.env)
             tasksCreated[task] = createdTask["tid"]
         # Submit the job
@@ -94,50 +93,50 @@ class LocalFarmEngine:
         return {"jid": jid}
 
     def create_additional_task(self, jid, tid, task):
-        """ Create new task in an existing job """
-        createdTask = self._call("expand_task", 
-            jid=jid, name=task.name, command=task.command, 
+        """ Create new task in an existing job. """
+        createdTask = self._call("expand_task",
+            jid=jid, name=task.name, command=task.command,
             metadata=task.metadata, parentTid=tid, env=task.env)
         return {"tid": createdTask["tid"]}
 
-    def get_job_infos(self, jid):
-        """Get job status"""
-        return self._call("get_job_infos", jid=jid)["result"]
+    def get_job_info(self, jid):
+        """ Get job status. """
+        return self._call("get_job_info", jid=jid)["result"]
 
     def pause_job(self, jid):
-        """Pause a job"""
+        """ Pause a job. """
         return self._call("pause_job", jid=jid)
 
     def unpause_job(self, jid):
-        """Resume a job"""
+        """ Resume a job. """
         return self._call("unpause_job", jid=jid)
 
     def interrupt_job(self, jid):
-        """Interrupt a job"""
+        """ Interrupt a job. """
         return self._call("interrupt_job", jid=jid)
 
     def restart_job(self, jid):
-        """Restart a job"""
+        """ Restart a job. """
         return self._call("restart_job", jid=jid)
 
     def restart_error_tasks(self, jid):
-        """Restart error tasks"""
+        """ Restart error tasks. """
         return self._call("restart_error_tasks", jid=jid)
 
     def stop_task(self, jid, tid):
-        """Stop a specific task"""
+        """ Stop a specific task. """
         return self._call("stop_task", jid=jid, tid=tid)
-    
+
     def skip_task(self, jid, tid):
-        """Stop a specific task"""
+        """ Stop a specific task. """
         return self._call("skip_task", jid=jid, tid=tid)
 
     def restart_task(self, jid, tid):
-        """Restart a task"""
+        """ Restart a task. """
         return self._call("restart_task", jid=jid, tid=tid)
 
     def list_jobs(self) -> list:
-        """List all jobs"""
+        """ List all jobs. """
         return self._call("list_jobs")["jobs"]
 
     def get_job_status(self, jid: int) -> dict:
@@ -145,17 +144,17 @@ class LocalFarmEngine:
             if job["jid"] == jid:
                 return job
         return {}
-    
+
     def get_job_errors(self, jid: int) -> str:
-        """ Get job error logs """
+        """ Get job error logs. """
         return self._call("get_job_errors", jid=jid)["result"]
 
     def ping(self):
-        """Check if backend is alive"""
+        """ Check if backend is alive. """
         try:
             self.connect().close()
             return True
-        except:
+        except Exception:
             return False
 
 
@@ -181,7 +180,7 @@ class Job:
         self.dependencies: Dict[str: List[str]] = defaultdict(set)
         self.reverseDependencies: Dict[str: List[str]] = defaultdict(set)
         self._engine: LocalFarmEngine = None
-    
+
     def setEngine(self, engine: LocalFarmEngine):
         self._engine = engine
 
@@ -214,7 +213,7 @@ class Job:
         return roots
 
     def hasCycle(self) -> bool:
-        """ Check there are no cycles in the task graph """
+        """ Check there are no cycles in the task graph. """
         def exploreTask(taskUid, taskParents=None):
             taskParents = taskParents or set()
             if taskUid in taskParents:
@@ -281,7 +280,7 @@ def test():
     job = Job("job")
     for node in ["F", "B", "K", "J", "A", "M", "L", "E", "C", "D", "G", "H", "I"]:
         job.addTask(Task(node, ""))
-    
+
     def addTaskDependencies(taskName, parentTaskName):
         task = next(t for t in job.tasks.values() if t.name == taskName)
         parentTask = next(t for t in job.tasks.values() if t.name == parentTaskName)

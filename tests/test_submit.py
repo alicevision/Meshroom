@@ -105,6 +105,7 @@ class TestNodeSubmit:
 
     @classmethod
     def setup_class(cls):
+        # meshroom.core.initSubmitters()
         submitters = loadSubmitters(meshroomFolder, "submitters")
         for submitter in submitters:
             registerSubmitter(submitter())
@@ -122,7 +123,7 @@ class TestNodeSubmit:
         for node in cls.plugin.nodes.values():
             pluginManager.unregisterNode(node)
         cls.plugin = None
-    
+
     def setupNode(self, graph, name):
         plugin = pluginManager.getPlugin("pluginSubmitter")
         node = plugin.nodes[name]

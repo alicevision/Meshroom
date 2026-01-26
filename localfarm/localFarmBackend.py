@@ -17,7 +17,7 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-from typing import Optional, Union, Dict, List
+from typing import Union, Dict, List
 from enum import Enum
 # For the tcp server
 import threading
@@ -126,7 +126,7 @@ class Job:
     def addTaskDependency(self, parentTask: Task, childTask: Task):
         parentTask.childTids.append(childTask.tid)
         childTask.parentTids.append(parentTask.tid)
-    
+
     def canStartTask(self, task: Task):
         for parentTid in task.parentTids:
             parentTask = next((t for t in self.tasks if t.tid == parentTid), None)
@@ -251,7 +251,7 @@ class LocalFarmEngine:
         self.maxParallel: int = maxParallel
 
     def start(self):
-        """Start the server"""
+        """ Start the server. """
         logger.info(f"Starting the server...")
         # Start the server to listen to queries
         self.running = True
@@ -290,7 +290,7 @@ class LocalFarmEngine:
                 logger.error(f"Error in task processor: {e}", exc_info=True)
 
     def processJobs(self):
-        """Process all active jobs"""
+        """ Process all active jobs. """
         runningTasks = defaultdict(list)
         tasksToStart = defaultdict(list)
         for job in self.jobs.values():
@@ -340,7 +340,7 @@ class LocalFarmEngine:
                 self.startTask(task)
 
     def startTask(self, task: Task):
-        """Start a task process"""
+        """ Start a task process. """
         logger.info(f"Starting task {task.tid}: {task.command}")
         task.status = Status.RUNNING
         task.started_at = datetime.now()
@@ -356,7 +356,7 @@ class LocalFarmEngine:
         try:
 
             with open(task.logFile, "w") as log:
-                log.write(f"# ========== Starting task {task.tid} at {task.started_at.isoformat()}" \
+                log.write(f"# ========== Starting task {task.tid} at {task.started_at.isoformat()}"
                           f" (command=\"{task.command}\") ==========\n")
                 log.write(f"# process_env:\n")
                 log.write(f"# Additional env variables:\n")
@@ -376,7 +376,7 @@ class LocalFarmEngine:
             logger.error(f"Failed to start task {task.tid}: {e}")
             task.status = "error"
             task.finished_at = datetime.now()
-    
+
     def finishTask(self, task: Task, returncode: int):
         task.finished_at = datetime.now()
         task.return_code = returncode
@@ -410,9 +410,9 @@ class LocalFarmEngine:
     # ======================
 
     # Author
-    
+
     def create_job(self, name):
-        """Create a new job"""
+        """ Create a new job. """
         with self.lock:
             # Generate new jid
             self.lastJid += 1
@@ -426,7 +426,7 @@ class LocalFarmEngine:
             return {"success": True, "jid": jid}
 
     def create_task(self, jid, name, command, metadata, dependencies, env=None):
-        """Add a task to a job"""
+        """ Add a task to a job. """
         with self.lock:
             if jid not in self.jobs:
                 return {"success": False, "error": "Job not found"}
@@ -443,7 +443,7 @@ class LocalFarmEngine:
                     logger.warning(f"Task {tid} : Cannot add dependency to {parentTid}, task not found in job {jid}")
             logger.info(f"Added task {tid} to job {jid}")
             return {"success": True, "tid": tid}
-    
+
     def expand_task(self, jid, name, command, metadata, parentTid, env=None):
         with self.lock:
             if jid not in self.jobs:
@@ -468,7 +468,7 @@ class LocalFarmEngine:
             return {"success": True, "tid": tid}
 
     def submit_job(self, jid):
-        """Create a new job"""
+        """ Create a new job. """
         with self.lock:
             if jid not in self.jobs:
                 return {'success': False, "error": "Job not found"}
@@ -480,11 +480,11 @@ class LocalFarmEngine:
                 return {"success": False, "error": str(err)}
             logger.info(f"Submitted job {jid}")
             return {"success": True, "jid": jid}
-    
+
     # Query
 
-    def get_job_infos(self, jid):
-        """Get job status"""
+    def get_job_info(self, jid):
+        """ Get job status. """
         with self.lock:
             if jid not in self.jobs:
                 return {'success': False, "error": "Job not found"}
@@ -492,7 +492,7 @@ class LocalFarmEngine:
             return {"success": True, "result": job.to_dict()}
 
     def get_job_errors(self, jid):
-        """Get job error logs"""
+        """ Get job error logs. """
         with self.lock:
             if jid not in self.jobs:
                 return {'success': False, "error": "Job not found"}
@@ -500,7 +500,7 @@ class LocalFarmEngine:
             return {"success": True, "result": job.errorLogs}
 
     def pause_job(self, jid):
-        """Pause a job"""
+        """ Pause a job. """
         with self.lock:
             if jid not in self.jobs:
                 return {"success": False, "error": "Job not found"}
@@ -509,7 +509,7 @@ class LocalFarmEngine:
             return {"success": True}
 
     def unpause_job(self, jid):
-        """Resume a job"""
+        """ Resume a job. """
         with self.lock:
             if jid not in self.jobs:
                 return {"success": False, "error": "Job not found"}
@@ -517,7 +517,7 @@ class LocalFarmEngine:
             return {"success": True}
 
     def interrupt_job(self, jid):
-        """Interrupt a job and kill running tasks"""
+        """ Interrupt a job and kill running tasks. """
         with self.lock:
             if jid not in self.jobs:
                 return {"success": False, "error": "Job not found"}
@@ -525,7 +525,7 @@ class LocalFarmEngine:
             return {"success": True}
 
     def restart_job(self, jid):
-        """Restarts a job and kill running tasks"""
+        """ Restarts a job and kill running tasks. """
         with self.lock:
             if jid not in self.jobs:
                 return {"success": False, "error": "Job not found"}
@@ -533,7 +533,7 @@ class LocalFarmEngine:
             return {"success": True}
 
     def restart_error_tasks(self, jid):
-        """Restarts all error tasks in the job"""
+        """ Restarts all error tasks in the job. """
         with self.lock:
             if jid not in self.jobs:
                 return {"success": False, "error": "Job not found"}
@@ -541,7 +541,7 @@ class LocalFarmEngine:
             return {"success": True}
 
     def stop_task(self, jid, tid):
-        """Stop a specific task"""
+        """ Stop a specific task. """
         with self.lock:
             if jid not in self.jobs:
                 return {"success": False, "error": "Job not found"}
@@ -552,7 +552,7 @@ class LocalFarmEngine:
                 return {"success": False, "error": "Task not found"}
 
     def skip_task(self, jid, tid):
-        """Stop a specific task"""
+        """ Stop a specific task. """
         with self.lock:
             if jid not in self.jobs:
                 return {"success": False, "error": "Job not found"}
@@ -563,7 +563,7 @@ class LocalFarmEngine:
                 return {"success": False, "error": "Task not found"}
 
     def restart_task(self, jid, tid):
-        """Restart a task"""
+        """ Restart a task. """
         with self.lock:
             if jid not in self.jobs:
                 return {"success": False, "error": "Job not found"}
@@ -574,7 +574,7 @@ class LocalFarmEngine:
                 return {"success": False, "error": "Task not found"}
 
     def list_jobs(self):
-        """List all jobs"""
+        """ List all jobs. """
         with self.lock:
             return {
                 "success": True,
@@ -583,18 +583,18 @@ class LocalFarmEngine:
 
 
 class LocalFarmRequestHandler(BaseRequestHandler):
-    """Handle requests"""
-    
+    """ Handle requests. """
+
     def __init__(self, backend, *args, **kwargs):
         self.backend = backend
         super().__init__(*args, **kwargs)
-    
+
     @property
     def pid(self):
         return self.server.server_address[1]
 
     def handle(self):
-        """Handle incoming request"""
+        """ Handle incoming request. """
         try:
             # Read request
             data = b""
@@ -636,13 +636,13 @@ def main(root):
     os.setsid()
     if os.fork() > 0:
         sys.exit(0)
-    
+
     # Redirect standard file descriptors
     sys.stdout.flush()
     sys.stderr.flush()
     with open(os.devnull, 'r') as devnull:
         os.dup2(devnull.fileno(), sys.stdin.fileno())
-    
+
     backend = LocalFarmEngine(root=root)
     backend.start()
 

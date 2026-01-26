@@ -16,7 +16,7 @@ class TestLocalFarm:
     def prepare(self):
         self.launcher.clean()
         self.launcher.start()
-    
+
     def createTask(self, job: Job, i: int, sleepTime=2, dependencies: List[Task] = None):
         dependencies = dependencies or []
         task = Task(f"Task {i}", f"echo 'Hello from Task {i}' && sleep {sleepTime}")
@@ -31,11 +31,11 @@ class TestLocalFarm:
             self.engine.create_additional_task(jid, tid, task)
 
     def getTasksByStatus(self, jid: int):
-        jobInfos = self.engine.get_job_status(jid)
-        if not jobInfos:
+        jobInfo = self.engine.get_job_status(jid)
+        if not jobInfo:
             return {}
         taskByStatus = defaultdict(set)
-        for task in jobInfos.get("tasks", []):
+        for task in jobInfo.get("tasks", []):
             status = task.get("status", "UNKNOWN")
             taskByStatus[status].add(task.get("tid"))
         return dict(taskByStatus)

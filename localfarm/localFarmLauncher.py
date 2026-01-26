@@ -21,7 +21,7 @@ class FarmLauncher:
         self.logFile = self.root / "backend.log"
 
     def clean(self):
-        """Clean farm backend files"""
+        """ Clean farm backend files. """
         print("Clean farm files...")
         if self.logFile.exists():
             self.logFile.unlink()
@@ -33,7 +33,7 @@ class FarmLauncher:
         print("Done.")
 
     def start(self):
-        """Start the farm backend"""
+        """ Start the farm backend. """
         if self.is_running():
             print("Farm backend is already running")
             return
@@ -60,33 +60,33 @@ class FarmLauncher:
                 print(f"Farm backend started (PID: {self.getFarmPid()})")
                 print(f"Logs: {self.logFile}")
                 return
-        
+
         print("Failed to start farm backend")
         sys.exit(1)
 
     def stop(self):
-        """Stop the farm backend"""
+        """ Stop the farm backend. """
         if not self.is_running():
             print("Farm backend is not running")
             return
-        
+
         pid = self.getFarmPid()
         print(f"Stopping farm backend (PID: {pid})...")
-        
+
         try:
             os.kill(pid, signal.SIGTERM)
-            
+
             # Wait for it to stop
             for _ in range(10):
                 time.sleep(0.5)
                 if not self.is_running():
                     print("Farm backend stopped")
                     return
-            
+
             # Force kill if still running
             print("Force killing farm backend...")
             os.kill(pid, signal.SIGKILL)
-            
+
         except ProcessLookupError:
             print("Backend process not found")
             self.pidFile.unlink(missing_ok=True)
@@ -96,8 +96,8 @@ class FarmLauncher:
         self.stop()
         time.sleep(1)
         self.start()
-    
-    def getJobsInfos(self):
+
+    def getJobsInfo(self):
         if self.is_running():
             # Try to get job list
             try:
@@ -110,12 +110,12 @@ class FarmLauncher:
             print("Farm backend is not running")
             return []
 
-    def status(self, allInfos=False):
-        """Show status of the farm backend"""
+    def status(self, allInfo=False):
+        """ Show status of the farm backend. """
         if self.is_running():
             pid = self.getFarmPid()
             print(f"Farm backend is running (PID: {pid})")
-            
+
             # Try to get job list
             try:
                 engine = LocalFarmEngine(root=self.root)
@@ -128,7 +128,7 @@ class FarmLauncher:
                         status = task.get("status", "UNKNOWN")
                         taskByStatus[status].add(task.get("tid"))
                     print(f"  - {jid}: {job['status']} ({len(job['tasks'])} tasks) -> {dict(taskByStatus)}")
-                    if allInfos:
+                    if allInfo:
                         for task in job['tasks']:
                             print(f"      * Task {task['tid']}: {task}")
                     print("")
@@ -136,9 +136,9 @@ class FarmLauncher:
                 print(f"Could not get job list: {e}")
         else:
             print("Farm backend is not running")
-    
+
     def is_running(self):
-        """Check if backend is running"""
+        """ Check if backend is running. """
         pid = self.getFarmPid()
         if pid is None:
             return False
@@ -149,12 +149,12 @@ class FarmLauncher:
             return False
 
     def getFarmPid(self):
-        """Get PID of running backend"""
+        """ Get PID of running backend. """
         if not self.pidFile.exists():
             return None
         try:
             return int(self.pidFile.read_text())
-        except:
+        except Exception:
             return None
 
 
@@ -170,14 +170,14 @@ def main(root, command):
         return launcher.restart()
     elif command == 'status':
         return launcher.status()
-    elif command == 'fullInfos':
-        return launcher.status(allInfos=True)
+    elif command == 'fullInfo':
+        return launcher.status(allInfo=True)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Local Farm Launcher')
-    parser.add_argument('command', 
-                        choices=['clean', 'start', 'stop', 'restart', 'status', 'fullInfos'], 
+    parser.add_argument('command',
+                        choices=['clean', 'start', 'stop', 'restart', 'status', 'fullInfo'],
                         help='Command to execute')
     parser.add_argument('--root', required=False, help='Farm directory path')
     args = parser.parse_args()

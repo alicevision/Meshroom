@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 import logging
-import shutil
 from pathlib import Path
 from typing import List, Dict
 from meshroom.core.submitter import BaseSubmitter, SubmitterOptions, BaseSubmittedJob, SubmitterOptionsEnum
@@ -27,7 +26,6 @@ Chunk = namedtuple("chunk", ["iteration", "start", "end"])
 CreatedTask = namedtuple("task", ["task", "chunkParams"])
 
 
-
 def wrapMeshroomBin(_bin):
     if shutil.which(_bin):
         # The alias exists so use it directly
@@ -37,7 +35,7 @@ def wrapMeshroomBin(_bin):
 
 
 def getResolvedVersionsDict():
-    """ Get a dict {packageName: version} corresponding to the current context """
+    """ Get a dict {packageName: version} corresponding to the current context. """
     resolvedPackages = os.environ.get('REZ_RESOLVE', '').split()
     resolvedVersions = {}
     for r in resolvedPackages:
@@ -52,12 +50,12 @@ def getResolvedVersionsDict():
 
 
 def getRequestPackages(packagesDelimiter="=="):
-    """ 
-    Get list of packages required for the job
-    Depends on env var and current rez context
+    """
+    Get list of packages required for the job.
+    Depends on env var and current rez context.
 
     By default we use the "==" delimiter to make sure we have the same version
-    in the job that the one we have in the env where meshroom is launched
+    in the job that the one we have in the env where Meshroom is launched.
     """
     reqPackages = set()
     if 'REZ_REQUEST' in os.environ:
@@ -69,7 +67,7 @@ def getRequestPackages(packagesDelimiter="=="):
                 continue
             v = REZ_DELIMITER_PATTERN.split(p)
             usedPackages.add(v[0])
-        # Add requested packages to the reqPackages set 
+        # Add requested packages to the reqPackages set
         resolvedVersions = getResolvedVersionsDict()
         for p in usedPackages:
             reqPackages.add(packagesDelimiter.join([p, resolvedVersions[p]]))
@@ -80,7 +78,7 @@ def getRequestPackages(packagesDelimiter="=="):
 
 
 def rezWrapCommand(cmd, useCurrentContext=False, useRequestedContext=True, otherRezPkg: list[str] = None):
-    """ Wrap command to be runned using rez
+    """ Wrap command to be runned using rez.
     :param cmd: command to run
     :type cmd: bool
     :param useCurrentContext: use current rez context to retrieve a list of rez packages
@@ -114,7 +112,7 @@ def rezWrapCommand(cmd, useCurrentContext=False, useRequestedContext=True, other
 
 
 class LocalFarmJob(BaseSubmittedJob):
-    """Interface to manipulate the job via Meshroom"""
+    """ Interface to manipulate the job via Meshroom. """
 
     def __init__(self, jid, submitter, farmPath=None):
         super().__init__(jid, submitter)
@@ -125,21 +123,21 @@ class LocalFarmJob(BaseSubmittedJob):
         self.farmPath = farmPath or DEFAULT_FARM_PATH
         self._engine = LocalFarmEngine(self.farmPath)
 
-    def __getJobInfos(self):
-        """ Find job """
-        self.__localJob = self._engine.get_job_infos(self.jid)
+    def __getJobInfo(self):
+        """ Find job. """
+        self.__localJob = self._engine.get_job_info(self.jid)
         self.__localJobTasks = {t.get("tid"): t for t in self.__localJob["tasks"]}
 
     @property
     def localfarmJob(self):
         if not self.__localJob:
-            self.__getJobInfos()
+            self.__getJobInfo()
         return self.__localJob
 
     @property
     def localfarmTasks(self):
         if not self.__localJobTasks:
-            self.__getJobInfos()
+            self.__getJobInfo()
         return self.__localJobTasks
 
     def __getChunkTasks(self, nodeUid, iteration):
@@ -154,19 +152,19 @@ class LocalFarmJob(BaseSubmittedJob):
     # Task actions
 
     def stopChunkTask(self, node, iteration):
-        """ This will kill one task """
+        """ This will kill one task. """
         tasks = self.__getChunkTasks(node._uid, iteration)
         for task in tasks:
             self._engine.stop_task(self.jid, task["tid"])
 
     def skipChunkTask(self, node, iteration):
-        """ This will kill one task """
+        """ This will skip one task. """
         tasks = self.__getChunkTasks(node._uid, iteration)
         for task in tasks:
             self._engine.skip_task(self.jid, task["tid"])
 
     def restartChunkTask(self, node, iteration):
-        """ This will kill one task """
+        """ This will restart one task. """
         tasks = self.__getChunkTasks(node._uid, iteration)
         for task in tasks:
             self._engine.restart_task(self.jid, task["tid"])
@@ -174,38 +172,36 @@ class LocalFarmJob(BaseSubmittedJob):
     # Job actions
 
     def getJobErrors(self):
-        """ Check for error in the job """
+        """ Check for error in the job. """
         return self._engine.get_job_errors(self.jid)
 
     def pauseJob(self):
-        """ This will pause the job : new tasks will not be processed """
+        """ This will pause the job: new tasks will not be processed. """
         self._engine.pause_job(self.jid)
 
     def resumeJob(self):
-        """ This will unpause the job """
+        """ This will unpause the job. """
         self._engine.unpause_job(self.jid)
 
     def interruptJob(self):
-        """ This will interrupt the job (and kill running tasks) """
+        """ This will interrupt the job (and kill running tasks). """
         self._engine.interrupt_job(self.jid)
 
     def restartJob(self):
-        """ Restarts the whole job """
+        """ Restart the whole job. """
         self._engine.restart_job(self.jid)
-    
+
     def restartErrorTasks(self):
-        """ Restart all error tasks on the job """
+        """ Restart all error tasks on the job. """
         self._engine.restart_error_tasks(self.jid)
 
 
 class LocalFarmSubmitter(BaseSubmitter):
-    """
-    Meshroom submitter to localfarm
-    """
+    """ Meshroom submitter to localfarm. """
 
     _name = "LocalFarm"
     _options = SubmitterOptions(SubmitterOptionsEnum.ALL)
-    
+
     dryRun = False
     environment = {}
 
@@ -214,20 +210,20 @@ class LocalFarmSubmitter(BaseSubmitter):
         self.farmPath = DEFAULT_FARM_PATH
         self.reqPackages = getRequestPackages()
         self.jobEnv = {}
-    
+
     def setFarmPath(self, path: str):
         self.farmPath = path
-    
+
     def setJobEnv(self, env: dict):
         self.jobEnv = env
 
     def retrieveJob(self, jid) -> LocalFarmJob:
         job = LocalFarmJob(jid, self, farmPath=self.farmPath)
         return job
-    
+
     @staticmethod
     def getChunks(chunkParams) -> list[Chunk]:
-        """ Get list of chunks """
+        """ Get list of chunks. """
         it = None
         ignoreIterations = chunkParams.get("ignoreIterations", [])
         if chunkParams:
@@ -238,7 +234,7 @@ class LocalFarmSubmitter(BaseSubmitter):
                 slices = [frameRange[i:i + size] for i in range(0, len(frameRange), size)]
                 it = [Chunk(i, item[0], item[-1]) for i, item in enumerate(slices) if i not in ignoreIterations]
         return it
-    
+
     @staticmethod
     def getExpandWrappedCmd(cmdArgs, rezPackages):
         # Wrap with create_chunks
@@ -247,7 +243,7 @@ class LocalFarmSubmitter(BaseSubmitter):
         # Wrap with rez
         cmd = rezWrapCommand(cmd, otherRezPkg=rezPackages)
         return cmd
-    
+
     def __createChunkTasks(self, job: Job, parentTask: Task, children: List[Task], chunkParams: dict) -> Task:
         cmdArgs = chunkParams.get("chunkCmdArgs")
         chunks = self.getChunks(chunkParams)
@@ -293,21 +289,20 @@ class LocalFarmSubmitter(BaseSubmitter):
             cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages)
             task = Task(name=node.name, command=cmd, metadata=metadata, env=self.jobEnv)
             task = CreatedTask(task, None)
-        
-        print("Created task : ", task)
+
+        print("Created task: ", task)
 
         return task
-    
+
     def buildDependencies(self, job: Job, nodeUidToTask: Dict[str, CreatedTask], edges):
-        """ Gather and create dependencies
-        First we get all parents and all children for each task
-        Then for each task :
+        """ Gather and create dependencies.
+        First we get all parents and all children for each task.
+        Then for each task:
         - we add the dependency to their parent and children
         - if the task is a chunked task (which means multi iteration tasks) the we create the
           chunk tasks and add dependencies from chunk tasks to children tasks
 
-        # TODO : there's a lot of confusion between nodes and tasks here
-        # I wrote bad code I'm sorry, I'll do better when I get more sleep
+        # TODO: there's a lot of confusion between nodes and tasks here
         """
         # Gather dependencies
         tasksParentsUids = defaultdict(set)
@@ -358,12 +353,12 @@ class LocalFarmSubmitter(BaseSubmitter):
 
     def createChunkTask(self, node, graphFile, **kwargs):
         """
-        Dynamically create chunk tasks for the given node (executed by meshroom_createChunks)
+        Dynamically create chunk tasks for the given node (executed by meshroom_createChunks).
         """
-        # Retrieve current job/task infos
+        # Retrieve current job/task info
         currentJid, currentTid = int(os.getenv("LOCALFARM_CURRENT_JID")), int(os.getenv("LOCALFARM_CURRENT_TID"))
         # Make sure we inherit current MESHROOM_PLUGINS_PATH for submission
-        # TODO : later we can immplement a proper env inheriting system like what we have in tractor
+        # TODO: later we can immplement a proper env inheriting system like what we have in tractor
         taskEnv = {
             "MESHROOM_PLUGINS_PATH": os.environ.get("MESHROOM_PLUGINS_PATH", "")
         }
@@ -371,7 +366,7 @@ class LocalFarmSubmitter(BaseSubmitter):
             taskEnv.update(self.jobEnv)
         # Get engine
         engine = LocalFarmEngine(self.farmPath)
-        # Get chunk infos
+        # Get chunk info
         cmdArgs = f"--node {node.name} \"{graphFile}\" --extern"
         _, _, nbBlocks = node.nodeDesc.parallelization.getSizes(node)
         if nbBlocks <= 0:

@@ -11,7 +11,7 @@ from sys import platform
 from .utils import registerNodeDesc
 
 import meshroom
-from meshroom.core import pluginManager, loadClassesNodes
+from meshroom.core import pluginManager, loadClassesNodes, loadSubmitters, registerSubmitter, meshroomFolder
 from meshroom.core.graph import Graph
 from meshroom.core.plugins import Plugin
 from meshroom.core.node import Node, Status
@@ -105,7 +105,9 @@ class TestNodeSubmit:
 
     @classmethod
     def setup_class(cls):
-        meshroom.core.initSubmitters()
+        submitters = loadSubmitters(meshroomFolder, "submitters")
+        for submitter in submitters:
+            registerSubmitter(submitter())
 
         cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginSubmitter"

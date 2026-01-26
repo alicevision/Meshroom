@@ -6,22 +6,22 @@ This test aims to replicate toe process on node submission
 
 import os
 import time
+from sys import platform
 
-from .utils import registerNodeDesc, unregisterNodeDesc
+from .utils import registerNodeDesc
 
 import meshroom
+from meshroom.core import pluginManager, loadClassesNodes
 from meshroom.core.graph import Graph
+from meshroom.core.plugins import Plugin
 from meshroom.core.node import Node, Status
 from meshroom.core.submitter import jobManager
 from meshroom.submitters.localFarmSubmitter import LocalFarmSubmitter, LocalFarmJob
 
 from localfarm.localFarmLauncher import FarmLauncher
 
-from meshroom.core import pluginManager, loadClassesNodes
-from meshroom.core.graph import Graph
-from meshroom.core.plugins import Plugin
 
-from .utils import registerNodeDesc
+IS_LINUX = (platform == "linux" or platform == "linux2")
 
 
 def get_submitter() -> LocalFarmSubmitter:
@@ -101,8 +101,7 @@ def processSubmit(node: Node, graph, tmp_path):
 
 
 class TestNodeSubmit:
-
-    logPrefix = r"\[\d{2}:\d{2}:\d{2}\.\d{3}\]\[info\] > "
+    __test__ = IS_LINUX
 
     @classmethod
     def setup_class(cls):

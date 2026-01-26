@@ -12,7 +12,6 @@ class PluginSubmitterA(desc.BaseNode):
     """
     Test process no parallelization
     """
-    __test__ = False
     parallelization = None
     
     inputs = [
@@ -43,7 +42,6 @@ class PluginSubmitterB(PluginSubmitterA):
     """
     Test process with parallelization adn static node size
     """
-    __test__ = False
     size = desc.StaticNodeSize(2)
     parallelization = desc.Parallelization(blockSize=1)
 
@@ -52,6 +50,5 @@ class PluginSubmitterC(PluginSubmitterA):
     """
     Test process with parallelization and dynamic node size
     """
-    __test__ = False
     size = desc.DynamicNodeSize("input")
     parallelization = desc.Parallelization(blockSize=1)

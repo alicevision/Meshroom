@@ -137,7 +137,7 @@ if chunksToProcess:
     node.postprocess()
     node.restoreLogger()
 else:
-    logging.info(f"[MeshroomCreateChunks] -> create job to process chunks {node.chunks}")
+    logging.info(f"[MeshroomCreateChunks] -> create job to process chunks {[c for c in node.chunks]}")
     submitter.createChunkTask(node, graphFile=args.graphFile, cache=args.cache, 
                               forceStatus=args.forceStatus, forceCompute=args.forceCompute)
 

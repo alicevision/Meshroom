@@ -50,4 +50,5 @@ ignore:
   - "docs/"
   - "scripts/"
   - "bin/"
-  - "localFarm/"  # For now ignore localFarm as it has no coverage yet
+  - "localfarm/"  # For now ignore localfarm as it has no coverage yet
+  - "meshroom/submitters/"

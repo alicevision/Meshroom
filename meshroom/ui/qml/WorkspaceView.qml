@@ -81,7 +81,6 @@ Item {
                 cameraInitIndex: currentScene ? currentScene.cameraInitIndex : -1
                 onRemoveImageRequest: function(attribute) { currentScene.removeImage(attribute) }
                 onAllViewpointsCleared: currentScene.selectedViewId = "-1"
-                galleryGrid.currentIndex: 0
                 onFilesDropped: function(drop) {
                     if (drop["meshroomScenes"].length == 1) {
                         ensureSaved(function() {

@@ -20,14 +20,23 @@ Panel {
     property variant cameraInit
     property int cameraInitIndex
     property variant tempCameraInit
-    readonly property alias currentItem: grid.currentItem
-    readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
-    readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
+
+    readonly property var currentItem: layoutLoader.item ? layoutLoader.item.currentItem : null
+    readonly property string currentItemSource: currentItem ? currentItem.source : ""
+    readonly property var currentItemMetadata: currentItem ? currentItem.metadata : undefined
     readonly property int centerViewId: (_currentScene && _currentScene.sfmTransform) ? parseInt(_currentScene.sfmTransform.attribute("transformation").value) : 0
-    readonly property alias galleryGrid: grid
+    readonly property var galleryGrid: layoutLoader.item  // This now references the loaded view (grid or list)
 
     property int defaultCellSize: 160
     property bool readOnly: false
+
+    enum LayoutModes {
+        Thumbnail=0,
+        List=1
+    }
+
+    property int displayMode: ImageGallery.LayoutModes.Thumbnail
+    property string nextDisplayModeName: "List"
 
     property var filesByType: ({})
     property int nbMeshroomScenes: 0
@@ -123,12 +132,31 @@ Panel {
         populate_model()
     }
 
+    function toggleDisplayMode() {
+        if (displayMode === ImageGallery.LayoutModes.Thumbnail) {
+            displayMode = ImageGallery.LayoutModes.List
+            nextDisplayModeName = "Thumbnail"
+        } else {
+            displayMode = ImageGallery.LayoutModes.Thumbnail
+            nextDisplayModeName = "List"
+        }
+    }
+
     headerBar: RowLayout {
         SearchBar {
             id: searchBar
             toggle: true  // Enable toggling the actual text field by the search button
             Layout.minimumWidth: searchBar.width
             maxWidth: 150
+        }
+
+        MaterialToolButton {
+            text: root.displayMode == ImageGallery.LayoutModes.Thumbnail ? MaterialIcons.view_list : MaterialIcons.view_module
+            font.pointSize: 11
+            padding: 2
+            ToolTip.text: "Switch the layout to " + nextDisplayModeName
+            ToolTip.visible: hovered
+            onClicked: root.toggleDisplayMode()
         }
 
         MaterialToolButton {
@@ -168,346 +196,229 @@ Panel {
         onUpdateIntrinsicsRequest: _currentScene.rebuildIntrinsics(cameraInit)
     }
 
+    SortFilterDelegateModel {
+        id: sortedModel
+        model: m.viewpoints
+        sortRole: "path.basename"
+        filters: displayViewIdsAction.checked ? filtersWithViewIds : filtersBasic
+        property var filtersBasic: [
+            {role: "path", value: searchBar.text},
+            {role: "viewId.isReconstructed", value: reconstructionFilter}
+        ]
+        property var filtersWithViewIds:  [
+            [
+                {role: "path", value: searchBar.text}, 
+                {role: "viewId.asString", value: searchBar.text}
+            ], 
+            {role: "viewId.isReconstructed", value: reconstructionFilter}
+        ]
+        property var reconstructionFilter: undefined
+
+        // Override modelData to return basename of viewpoint's path for sorting
+        function modelData(item, roleName_) {
+            var roleNameAndCmd = roleName_.split(".")
+            var roleName = roleName_
+            var cmd = ""
+            if (roleNameAndCmd.length >= 2) {
+                roleName = roleNameAndCmd[0]
+                cmd = roleNameAndCmd[1]
+            }
+            if (cmd == "isReconstructed")
+                return _reconstruction.isReconstructed(item.model.object);
+
+            var value = item.model.object.childAttribute(roleName).value;
+            if (cmd == "basename")
+                return Filepath.basename(value);
+            if (cmd == "asString") 
+                return value.toString();
+
+            return value
+        }
+
+        property int selectedIndex: -1
+
+        delegate: ImageDelegate {
+            id: imageDelegate
+
+            layoutMode: root.displayMode
+            viewpoint: object.value
+            cellID: DelegateModel.filteredIndex
+            width: layoutMode === ImageGallery.LayoutModes.Thumbnail ? 
+                (layoutLoader.item ? layoutLoader.item.cellWidth : 160) : 
+                (layoutLoader.item ? layoutLoader.item.width : 400)
+            height: {
+                if (layoutMode === ImageGallery.LayoutModes.Thumbnail) {
+                    return layoutLoader.item ? layoutLoader.item.cellHeight : 160
+                } else {
+                    return thumbnailSizeSlider.value / 2
+                }
+            }
+
+            readOnly: m.readOnly
+            displayViewId: displayViewIdsAction.checked
+            visible: !intrinsicsFilterButton.checked
+            
+            parentModel: sortedModel
+
+            onPressed: {
+                if (layoutLoader.item) {
+                    layoutLoader.item.currentIndex = DelegateModel.filteredIndex
+                    sortedModel.selectedIndex = DelegateModel.filteredIndex
+                }
+            }
+
+            function sendRemoveRequest() {
+                if (readOnly)
+                    return
+
+                root.removeImageRequest(object)
+                
+                // If the last image has been removed, make sure the viewpoints and intrinsics are reset
+                if (m.viewpoints.count === 0)
+                    root.allViewpointsCleared()
+            }
+
+            function removeAllImages() {
+                _reconstruction.removeAllImages()
+                _reconstruction.selectedViewId = "-1"
+            }
+
+            onRemoveRequest: sendRemoveRequest()
+            Keys.onPressed: function(event) {
+                if (event.key === Qt.Key_Delete && event.modifiers === Qt.ShiftModifier) {
+                    removeAllImages()
+                } else if (event.key === Qt.Key_Delete) {
+                    sendRemoveRequest()
+                }
+            }
+            onRemoveAllImagesRequest: {
+                removeAllImages()
+            }
+
+            RowLayout {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: 2
+                spacing: 2
+
+                property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
+                property bool inViews: valid && _reconstruction && _reconstruction.sfmReport && _reconstruction.isInViews(object)
+
+                // Camera Initialization indicator
+                IntrinsicsIndicator {
+                    intrinsic: parent.valid && _reconstruction ? _reconstruction.getIntrinsic(object) : null
+                    metadata: imageDelegate.metadata
+                }
+
+                // Rig indicator
+                Loader {
+                    id: rigIndicator
+                    property int rigId: parent.valid ? object.childAttribute("rigId").value : -1
+                    active: rigId >= 0
+                    sourceComponent: ImageBadge {
+                        property int rigSubPoseId: model.object.childAttribute("subPoseId").value
+                        text: MaterialIcons.link
+                        ToolTip.text: "<b>Rig: Initialized</b><br>" +
+                                        "Rig ID: " + rigIndicator.rigId + " <br>" +
+                                        "SubPose: " + rigSubPoseId
+                    }
+                }
+
+                // Center of SfMTransform
+                Loader {
+                    id: sfmTransformIndicator
+                    active: viewpoint && (viewpoint.get("viewId").value === centerViewId)
+                    sourceComponent: ImageBadge {
+                        text: MaterialIcons.gamepad
+                        ToolTip.text: "Camera used to define the center of the scene."
+                    }
+                }
+
+                Item { Layout.fillWidth: true }
+
+                // Reconstruction status indicator
+                Loader {
+                    active: parent.inViews
+                    visible: active
+                    sourceComponent: ImageBadge {
+                        property bool reconstructed: _reconstruction.sfmReport && _reconstruction.isReconstructed(model.object)
+                        text: reconstructed ? MaterialIcons.videocam : MaterialIcons.videocam_off
+                        color: reconstructed ? Colors.green : Colors.red
+                        ToolTip.text: "<b>Camera: " + (reconstructed ? "" : "Not ") + "Reconstructed</b>"
+                    }
+                }
+            }
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 4
 
-        GridView {
-            id: grid
-
+        Loader {
+            id: layoutLoader
             Layout.fillWidth: true
             Layout.fillHeight: true
-
             visible: !intrinsicsFilterButton.checked
+            
+            sourceComponent: root.displayMode === ImageGallery.LayoutModes.Thumbnail ? gridViewComponent : listViewComponent
+            
+            onLoaded: {
+                if (item) {
+                    // Pass necessary properties to the loaded component
+                    item.m = m
+                    item.root = root
+                    item.searchBar = searchBar
+                    item.displayViewIdsAction = displayViewIdsAction
+                    item.intrinsicsFilterButton = intrinsicsFilterButton
+                    item.tempCameraInit = tempCameraInit
+                    item.centerViewId = Qt.binding(function() { return root.centerViewId })
+                    item.errorDialog = errorDialog
+                    item.sortedModel = sortedModel
+                    item.thumbnailSizeSlider = thumbnailSizeSlider
 
-            ScrollBar.vertical: MScrollBar {
-                active : !intrinsicsFilterButton.checked
-            }
-
-            focus: true
-            clip: true
-            cellWidth: thumbnailSizeSlider.value
-            cellHeight: cellWidth
-            highlightFollowsCurrentItem: true
-            keyNavigationEnabled: true
-            property bool updateSelectedViewFromGrid: true
-
-            // Update grid current item when selected view changes
-            Connections {
-                target: _currentScene
-                function onSelectedViewIdChanged() {
-                    if (_currentScene.selectedViewId > -1) {
-                        grid.updateCurrentIndexFromSelectionViewId()
-                    }
+                    // Connect signals
+                    item.removeImageRequest.connect(root.removeImageRequest)
+                    item.allViewpointsCleared.connect(root.allViewpointsCleared)
+                    
+                    // Restore currentIndex (before connecting signals to avoid unwanted selection change)
+                    item.currentIndex = sortedModel.selectedIndex
+                    
+                    // Don't scroll yet because we must make sure the layout is loaded first
+                    scrollTimer.restart()
                 }
             }
-            function makeCurrentItemVisible() {
-                grid.positionViewAtIndex(grid.currentIndex, GridView.Visible)
-            }
+        }
 
-            function updateCurrentIndexFromSelectionViewId() {
-                var idx = grid.model.find(_currentScene.selectedViewId, "viewId")
-                if (idx >= 0 && grid.currentIndex !== idx) {
-                    grid.currentIndex = idx
-                }
-            }
-            onCurrentItemChanged: {
-                if (grid.updateSelectedViewFromGrid && grid.currentItem) {
-                    // If tempCameraInit is set and the first image in the GridView is selected, there has been a change of the CameraInit group and the viewId might be the same
-                    // Forcing the index to -1 before re-setting it will always cause a refresh on the Viewer2D's side, even if the viewId has not changed
-                    if (tempCameraInit !== null && grid.currentIndex == 0)
-                        _currentScene.selectedViewId = -1
-                    _currentScene.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
-                }
-            }
-
-            // Update grid item when corresponding thumbnail is computed
-            Connections {
-                target: ThumbnailCache
-                function onThumbnailCreated(imgSource, callerID) {
-                    let item = grid.itemAtIndex(callerID);  // "item" is an ImageDelegate
-                    if (item && item.source === imgSource) {
-                        item.updateThumbnail()
-                        return
-                    }
-                    // Fallback in case the ImageDelegate cellID changed
-                    for (let idx = 0; idx < grid.count; idx++) {
-                        item = grid.itemAtIndex(idx)
-                        if (item && item.source === imgSource) {
-                            item.updateThumbnail()
+        Timer {
+            id: scrollTimer
+            interval: 50  // Small delay to ensure layout is complete
+            repeat: false
+            onTriggered: {
+                if (layoutLoader.item && _currentScene.selectedViewId > -1) {
+                    layoutLoader.item.updateCurrentIndexFromSelectionViewId()
+                    // Use another short delay for the actual scroll
+                    Qt.callLater(function() {
+                        if (layoutLoader.item && layoutLoader.item.currentIndex >= 0) {
+                            layoutLoader.item.makeCurrentItemVisible()
                         }
-                    }
+                    })
                 }
             }
-
-            model: SortFilterDelegateModel {
-                id: sortedModel
-                model: m.viewpoints
-                sortRole: "path.basename"
-                filters: displayViewIdsAction.checked ? filtersWithViewIds : filtersBasic
-                property var filtersBasic: [
-                    {role: "path", value: searchBar.text},
-                    {role: "viewId.isReconstructed", value: reconstructionFilter}
-                ]
-                property var filtersWithViewIds:  [
-                    [
-                        {role: "path", value: searchBar.text}, 
-                        {role: "viewId.asString", value: searchBar.text}
-                    ], 
-                    {role: "viewId.isReconstructed", value: reconstructionFilter}
-                ]
-                property var reconstructionFilter: undefined
-
-                // Override modelData to return basename of viewpoint's path for sorting
-                function modelData(item, roleName_) {
-                    var roleNameAndCmd = roleName_.split(".")
-                    var roleName = roleName_
-                    var cmd = ""
-                    if (roleNameAndCmd.length >= 2) {
-                        roleName = roleNameAndCmd[0]
-                        cmd = roleNameAndCmd[1]
-                    }
-                    if (cmd == "isReconstructed")
-                        return _currentScene.isReconstructed(item.model.object);
-
-                    var value = item.model.object.childAttribute(roleName).value;
-                    if (cmd == "basename")
-                        return Filepath.basename(value);
-                    if (cmd == "asString") 
-                        return value.toString();
-
-                    return value
-                }
-
-                delegate: ImageDelegate {
-                    id: imageDelegate
-
-                    viewpoint: object.value
-                    cellID: DelegateModel.filteredIndex
-                    width: grid.cellWidth
-                    height: grid.cellHeight
-                    readOnly: m.readOnly
-                    displayViewId: displayViewIdsAction.checked
-                    visible: !intrinsicsFilterButton.checked
-
-                    isCurrentItem: GridView.isCurrentItem
-
-                    onPressed: {
-                        grid.currentIndex = DelegateModel.filteredIndex
-                    }
-
-                    function sendRemoveRequest() {
-                        if (readOnly)
-                            return
-
-                        removeImageRequest(object)
-                        
-                        // If the last image has been removed, make sure the viewpoints and intrinsics are reset
-                        if (m.viewpoints.count === 0)
-                            allViewpointsCleared()
-                    }
-
-                    function removeAllImages() {
-                        _currentScene.removeAllImages()
-                        _currentScene.selectedViewId = "-1"
-                    }
-
-                    onRemoveRequest: sendRemoveRequest()
-                    Keys.onPressed: function(event) {
-                        if (event.key === Qt.Key_Delete && event.modifiers === Qt.ShiftModifier) {
-                            removeAllImages()
-                        } else if (event.key === Qt.Key_Delete) {
-                            sendRemoveRequest()
-                        }
-                    }
-                    onRemoveAllImagesRequest: {
-                        removeAllImages()
-                    }
-
-                    RowLayout {
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.margins: 2
-                        spacing: 2
-
-                        property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
-                        property bool inViews: valid && _currentScene && _currentScene.sfmReport && _currentScene.isInViews(object)
-
-                        // Camera Initialization indicator
-                        IntrinsicsIndicator {
-                            intrinsic: parent.valid && _currentScene ? _currentScene.getIntrinsic(object) : null
-                            metadata: imageDelegate.metadata
-                        }
-
-                        // Rig indicator
-                        Loader {
-                            id: rigIndicator
-                            property int rigId: parent.valid ? object.childAttribute("rigId").value : -1
-                            active: rigId >= 0
-                            sourceComponent: ImageBadge {
-                                property int rigSubPoseId: model.object.childAttribute("subPoseId").value
-                                text: MaterialIcons.link
-                                ToolTip.text: "<b>Rig: Initialized</b><br>" +
-                                              "Rig ID: " + rigIndicator.rigId + " <br>" +
-                                              "SubPose: " + rigSubPoseId
-                            }
-                        }
-
-                        // Center of SfMTransform
-                        Loader {
-                            id: sfmTransformIndicator
-                            active: viewpoint && (viewpoint.get("viewId").value === centerViewId)
-                            sourceComponent: ImageBadge {
-                                text: MaterialIcons.gamepad
-                                ToolTip.text: "Camera used to define the center of the scene."
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        // Reconstruction status indicator
-                        Loader {
-                            active: parent.inViews
-                            visible: active
-                            sourceComponent: ImageBadge {
-                                property bool reconstructed: _currentScene.sfmReport && _currentScene.isReconstructed(model.object)
-                                text: reconstructed ? MaterialIcons.videocam : MaterialIcons.videocam_off
-                                color: reconstructed ? Colors.green : Colors.red
-                                ToolTip.text: "<b>Camera: " + (reconstructed ? "" : "Not ") + "Reconstructed</b>"
-                            }
-                        }
-                    }
-                }
+        }
+        
+        Component {
+            id: gridViewComponent
+            ImageGridView {
+                id: gridView
             }
+        }
 
-            // Keyboard shortcut to change current image group
-            Keys.priority: Keys.BeforeItem
-            Keys.onPressed: function(event) {
-                if (event.modifiers & Qt.AltModifier) {
-                    if (event.key === Qt.Key_Right) {
-                        _currentScene.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Left) {
-                        _currentScene.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
-                        event.accepted = true
-                    }
-                } else {
-                    if (event.key === Qt.Key_Right) {
-                        grid.moveCurrentIndexRight()
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Left) {
-                        grid.moveCurrentIndexLeft()
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Up) {
-                        grid.moveCurrentIndexUp()
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Down) {
-                        grid.moveCurrentIndexDown()
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Tab) {
-                        searchBar.forceActiveFocus()
-                        event.accepted = true
-                    }
-                }
-            }
-
-            // Explanatory placeholder when no image has been added yet
-            Column {
-                id: dropImagePlaceholder
-                anchors.centerIn: parent
-                visible: (m.viewpoints ? m.viewpoints.count === 0 : true) && !intrinsicsFilterButton.checked
-                spacing: 4
-                Label {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: MaterialIcons.photo_library
-                    font.pointSize: 24
-                    font.family: MaterialIcons.fontFamily
-                }
-                Label {
-                    text: "Drop Image Files / Folders"
-                }
-            }
-            // Placeholder when the filtered images list is empty
-            Column {
-                id: noImageImagePlaceholder
-                anchors.centerIn: parent
-                visible: (m.viewpoints ? m.viewpoints.count !== 0 : false) && !dropImagePlaceholder.visible && grid.model.count === 0 && !intrinsicsFilterButton.checked
-                spacing: 4
-                Label {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: MaterialIcons.filter_none
-                    font.pointSize: 24
-                    font.family: MaterialIcons.fontFamily
-                }
-                Label {
-                    text: "No images in this filtered view"
-                }
-            }
-
-            DropArea {
-                id: dropArea
-                anchors.fill: parent
-                enabled: !m.readOnly && !intrinsicsFilterButton.checked
-                keys: ["text/uri-list"]
-                onEntered: function(drag) {
-                    nbDraggedFiles = drag.urls.length
-                    filesByType = _currentScene.getFilesByTypeFromDrop(drag.urls)
-                    nbMeshroomScenes = filesByType["meshroomScenes"].length
-                }
-                onDropped: function(drop) {
-                    if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
-                        root.filesDropped(filesByType)
-                    } else {
-                        errorDialog.open()
-                    }
-                }
-
-                // Background opacifier
-                Rectangle {
-                    visible: dropArea.containsDrag
-                    anchors.fill: parent
-                    color: root.palette.window
-                    opacity: 0.8
-                }
-
-                Label {
-                    id: addArea
-                    anchors.fill: parent
-                    visible: dropArea.containsDrag
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: {
-                        if (nbMeshroomScenes != nbDraggedFiles && nbMeshroomScenes != 0) {
-                            return "Cannot Add Projects And Images Together"
-                        }
-
-                        if (nbMeshroomScenes == 1 && nbMeshroomScenes == nbDraggedFiles) {
-                            return "Load Project"
-                        } else if (nbMeshroomScenes == nbDraggedFiles) {
-                            return "Only One Project"
-                        } else {
-                            return "Add Images"
-                        }
-                    }
-                    font.bold: true
-                    background: Rectangle {
-                        color: dropArea.containsDrag ? parent.palette.highlight : parent.palette.window
-                        opacity: 0.8
-                        border.color: parent.palette.highlight
-                    }
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onPressed: function(mouse) {
-                    if (mouse.button == Qt.LeftButton)
-                        grid.forceActiveFocus()
-                    mouse.accepted = false
-                }
+        Component {
+            id: listViewComponent
+            ImageListView {
+                id: listView
             }
         }
 
@@ -585,12 +496,11 @@ Panel {
 
             //CODE FOR HEADERS
             //UNCOMMENT WHEN COMPATIBLE WITH THE RIGHT QT VERSION
-
-//                HorizontalHeaderView {
-//                    id: horizontalHeader
-//                    syncView: tableView
-//                    anchors.left: tableView.left
-//                }
+            // HorizontalHeaderView {
+            //     id: horizontalHeader
+            //     syncView: tableView
+            //     anchors.left: tableView.left
+            // }
         }
 
         RowLayout {
@@ -680,7 +590,7 @@ Panel {
         MaterialToolLabelButton {
             id : inputImagesFilterButton
             Layout.minimumWidth: childrenRect.width
-            ToolTip.text: grid.model.count + " Input Images"
+            ToolTip.text: (layoutLoader.item && layoutLoader.item.model ? layoutLoader.item.model.count : 0) + " Input Images"
             iconText: MaterialIcons.image
             label: (m.viewpoints ? m.viewpoints.count : 0)
             padding: 3

@@ -220,7 +220,7 @@ Panel {
                 cmd = roleNameAndCmd[1]
             }
             if (cmd === "isReconstructed")
-                return _reconstruction.isReconstructed(item.model.object);
+                return _currentScene.isReconstructed(item.model.object);
 
             var value = item.model.object.childAttribute(roleName).value;
             if (cmd === "basename")
@@ -267,8 +267,8 @@ Panel {
             }
 
             function removeAllImages() {
-                _reconstruction.removeAllImages()
-                _reconstruction.selectedViewId = "-1"
+                _currentScene.removeAllImages()
+                _currentScene.selectedViewId = "-1"
             }
 
             onRemoveRequest: sendRemoveRequest()
@@ -291,11 +291,11 @@ Panel {
                 spacing: 2
 
                 property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
-                property bool inViews: valid && _reconstruction && _reconstruction.sfmReport && _reconstruction.isInViews(object)
+                property bool inViews: valid && _currentScene && _currentScene.sfmReport && _currentScene.isInViews(object)
 
                 // Camera Initialization indicator
                 IntrinsicsIndicator {
-                    intrinsic: parent.valid && _reconstruction ? _reconstruction.getIntrinsic(object) : null
+                    intrinsic: parent.valid && _currentScene ? _currentScene.getIntrinsic(object) : null
                     metadata: imageDelegate.metadata
                 }
 
@@ -330,7 +330,7 @@ Panel {
                     active: parent.inViews
                     visible: active
                     sourceComponent: ImageBadge {
-                        property bool reconstructed: _reconstruction.sfmReport && _reconstruction.isReconstructed(model.object)
+                        property bool reconstructed: _currentScene.sfmReport && _currentScene.isReconstructed(model.object)
                         text: reconstructed ? MaterialIcons.videocam : MaterialIcons.videocam_off
                         color: reconstructed ? Colors.green : Colors.red
                         ToolTip.text: "<b>Camera: " + (reconstructed ? "" : "Not ") + "Reconstructed</b>"

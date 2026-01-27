@@ -40,9 +40,9 @@ GridView {
 
     // Update grid current item when selected view changes
     Connections {
-        target: _reconstruction
+        target: _currentScene
         function onSelectedViewIdChanged() {
-            if (_reconstruction.selectedViewId > -1) {
+            if (_currentScene.selectedViewId > -1) {
                 root.updateCurrentIndexFromSelectionViewId()
             }
         }
@@ -54,7 +54,7 @@ GridView {
 
     function updateCurrentIndexFromSelectionViewId() {
         if (!sortedModel) return
-        var idx = sortedModel.find(_reconstruction.selectedViewId, "viewId")
+        var idx = sortedModel.find(_currentScene.selectedViewId, "viewId")
         if (idx >= 0 && root.currentIndex !== idx) {
             root.currentIndex = idx
         }
@@ -63,8 +63,8 @@ GridView {
     onCurrentItemChanged: {
         if (root.currentItem) {
             if (tempCameraInit !== null && root.currentIndex == 0)
-                _reconstruction.selectedViewId = -1
-            _reconstruction.selectedViewId = root.currentItem.viewpoint.get("viewId").value
+                _currentScene.selectedViewId = -1
+            _currentScene.selectedViewId = root.currentItem.viewpoint.get("viewId").value
         }
     }
 
@@ -93,10 +93,10 @@ GridView {
     Keys.onPressed: function(event) {
         if (event.modifiers & Qt.AltModifier) {
             if (event.key === Qt.Key_Right && gallery && gallery.cameraInits) {
-                _reconstruction.cameraInitIndex = Math.min(gallery.cameraInits.count - 1, gallery.cameraInitIndex + 1)
+                _currentScene.cameraInitIndex = Math.min(gallery.cameraInits.count - 1, gallery.cameraInitIndex + 1)
                 event.accepted = true
             } else if (event.key === Qt.Key_Left) {
-                _reconstruction.cameraInitIndex = Math.max(0, gallery.cameraInitIndex - 1)
+                _currentScene.cameraInitIndex = Math.max(0, gallery.cameraInitIndex - 1)
                 event.accepted = true
             }
         } else {
@@ -166,7 +166,7 @@ GridView {
         
         onEntered: function(drag) {
             nbDraggedFiles = drag.urls.length
-            filesByType = _reconstruction.getFilesByTypeFromDrop(drag.urls)
+            filesByType = _currentScene.getFilesByTypeFromDrop(drag.urls)
             nbMeshroomScenes = filesByType["meshroomScenes"].length
         }
         onDropped: function(drop) {

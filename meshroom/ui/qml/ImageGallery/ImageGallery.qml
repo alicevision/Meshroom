@@ -356,10 +356,8 @@ Panel {
                     item.m = m
                     item.gallery = root
                     item.searchBar = searchBar
-                    item.displayViewIdsAction = displayViewIdsAction
                     item.intrinsicsFilterButton = intrinsicsFilterButton
                     item.tempCameraInit = tempCameraInit
-                    item.centerViewId = Qt.binding(function() { return root.centerViewId })
                     item.errorDialog = errorDialog
                     item.sortedModel = sortedModel
                     item.thumbnailSizeSlider = thumbnailSizeSlider
@@ -377,9 +375,10 @@ Panel {
             }
         }
 
+        // Add a timer with a small delay so that we scroll after loading the layout
         Timer {
             id: scrollTimer
-            interval: 50  // Small delay to ensure layout is complete
+            interval: 25
             repeat: false
             onTriggered: {
                 if (layoutLoader.item && _currentScene.selectedViewId > -1) {

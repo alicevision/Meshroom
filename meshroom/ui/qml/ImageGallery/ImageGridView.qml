@@ -16,10 +16,8 @@ GridView {
     property var gallery: null
     property var searchBar: null
     property var thumbnailSizeSlider: null
-    property var displayViewIdsAction: null
     property var intrinsicsFilterButton: null
     property var tempCameraInit: null
-    property int centerViewId: 0
     property var errorDialog: null
     property var sortedModel: null
     

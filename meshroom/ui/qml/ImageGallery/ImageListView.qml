@@ -1,5 +1,3 @@
-// ImageListView.qml
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -11,11 +9,11 @@ import MaterialIcons 2.2
 import Utils 1.0
 
 ListView {
-    id: listView
+    id: root
 
-    // Exposed properties from parent - with default values
+    // Exposed properties from ImageGallery
     property var m: null
-    property var root: null
+    property var gallery: null
     property var searchBar: null
     property var thumbnailSizeSlider: null
     property var displayViewIdsAction: null
@@ -24,7 +22,10 @@ ListView {
     property int centerViewId: 0
     property var errorDialog: null
     property var sortedModel: null
-    
+
+    property real cellWidth: 400
+    property real cellHeight: thumbnailSizeSlider.value / 2
+
     // Signals
     signal removeImageRequest(var attribute)
     signal allViewpointsCleared()
@@ -38,35 +39,34 @@ ListView {
     spacing: 2
     highlightFollowsCurrentItem: true
     keyNavigationEnabled: true
-    property bool updateSelectedViewFromList: true
 
     // Update list current item when selected view changes
     Connections {
         target: _reconstruction
         function onSelectedViewIdChanged() {
             if (_reconstruction.selectedViewId > -1) {
-                listView.updateCurrentIndexFromSelectionViewId()
+                root.updateCurrentIndexFromSelectionViewId()
             }
         }
     }
     
     function makeCurrentItemVisible() {
-        listView.positionViewAtIndex(listView.currentIndex, ListView.Visible)
+        root.positionViewAtIndex(root.currentIndex, ListView.Visible)
     }
 
     function updateCurrentIndexFromSelectionViewId() {
         if (!sortedModel) return
         var idx = sortedModel.find(_reconstruction.selectedViewId, "viewId")
-        if (idx >= 0 && listView.currentIndex !== idx) {
-            listView.currentIndex = idx
+        if (idx >= 0 && root.currentIndex !== idx) {
+            root.currentIndex = idx
         }
     }
     
     onCurrentItemChanged: {
-        if (listView.updateSelectedViewFromList && listView.currentItem) {
-            if (tempCameraInit !== null && listView.currentIndex == 0)
+        if (root.currentItem) {
+            if (tempCameraInit !== null && root.currentIndex == 0)
                 _reconstruction.selectedViewId = -1
-            _reconstruction.selectedViewId = listView.currentItem.viewpoint.get("viewId").value
+            _reconstruction.selectedViewId = root.currentItem.viewpoint.get("viewId").value
         }
     }
 
@@ -74,13 +74,13 @@ ListView {
     Connections {
         target: ThumbnailCache
         function onThumbnailCreated(imgSource, callerID) {
-            let item = listView.itemAtIndex(callerID);
+            let item = root.itemAtIndex(callerID);
             if (item && item.source === imgSource) {
                 item.updateThumbnail()
                 return
             }
-            for (let idx = 0; idx < listView.count; idx++) {
-                item = listView.itemAtIndex(idx)
+            for (let idx = 0; idx < root.count; idx++) {
+                item = root.itemAtIndex(idx)
                 if (item && item.source === imgSource) {
                     item.updateThumbnail()
                 }
@@ -94,19 +94,19 @@ ListView {
     Keys.priority: Keys.BeforeItem
     Keys.onPressed: function(event) {
         if (event.modifiers & Qt.AltModifier) {
-            if (event.key === Qt.Key_Right && root && root.cameraInits) {
-                _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
+            if (event.key === Qt.Key_Right && gallery && gallery.cameraInits) {
+                _reconstruction.cameraInitIndex = Math.min(gallery.cameraInits.count - 1, gallery.cameraInitIndex + 1)
                 event.accepted = true
             } else if (event.key === Qt.Key_Left) {
-                _reconstruction.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
+                _reconstruction.cameraInitIndex = Math.max(0, gallery.cameraInitIndex - 1)
                 event.accepted = true
             }
         } else {
             if (event.key === Qt.Key_Down) {
-                listView.incrementCurrentIndex()
+                root.incrementCurrentIndex()
                 event.accepted = true
             } else if (event.key === Qt.Key_Up) {
-                listView.decrementCurrentIndex()
+                root.decrementCurrentIndex()
                 event.accepted = true
             } else if (event.key === Qt.Key_Tab) {
                 if (searchBar)
@@ -137,7 +137,7 @@ ListView {
     Column {
         id: noImageImagePlaceholder
         anchors.centerIn: parent
-        visible: (m && m.viewpoints ? m.viewpoints.count !== 0 : false) && !dropImagePlaceholder.visible && listView.count === 0 && (!intrinsicsFilterButton || !intrinsicsFilterButton.checked)
+        visible: (m && m.viewpoints ? m.viewpoints.count !== 0 : false) && !dropImagePlaceholder.visible && root.count === 0 && (!intrinsicsFilterButton || !intrinsicsFilterButton.checked)
         spacing: 4
         Label {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -167,8 +167,8 @@ ListView {
         }
         onDropped: function(drop) {
             if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
-                if (root)
-                    root.filesDropped(filesByType)
+                if (gallery)
+                    gallery.filesDropped(filesByType)
             } else {
                 if (errorDialog)
                     errorDialog.open()
@@ -179,7 +179,7 @@ ListView {
         Rectangle {
             visible: dropArea.containsDrag
             anchors.fill: parent
-            color: root ? root.palette.window : palette.window
+            color: gallery ? gallery.palette.window : palette.window
             opacity: 0.8
         }
 
@@ -215,7 +215,7 @@ ListView {
         anchors.fill: parent
         onPressed: function(mouse) {
             if (mouse.button == Qt.LeftButton)
-                listView.forceActiveFocus()
+                root.forceActiveFocus()
             mouse.accepted = false
         }
     }

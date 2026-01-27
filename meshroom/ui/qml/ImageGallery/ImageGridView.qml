@@ -1,5 +1,3 @@
-// ImageGridView.qml
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -11,11 +9,11 @@ import MaterialIcons 2.2
 import Utils 1.0
 
 GridView {
-    id: grid
+    id: root
 
-    // Exposed properties from parent - with default values
+    // Exposed properties from ImageGallery
     property var m: null
-    property var root: null
+    property var gallery: null
     property var searchBar: null
     property var thumbnailSizeSlider: null
     property var displayViewIdsAction: null
@@ -39,35 +37,34 @@ GridView {
     cellHeight: cellWidth
     highlightFollowsCurrentItem: true
     keyNavigationEnabled: true
-    property bool updateSelectedViewFromGrid: true
 
     // Update grid current item when selected view changes
     Connections {
         target: _reconstruction
         function onSelectedViewIdChanged() {
             if (_reconstruction.selectedViewId > -1) {
-                grid.updateCurrentIndexFromSelectionViewId()
+                root.updateCurrentIndexFromSelectionViewId()
             }
         }
     }
     
     function makeCurrentItemVisible() {
-        grid.positionViewAtIndex(grid.currentIndex, GridView.Visible)
+        root.positionViewAtIndex(root.currentIndex, GridView.Visible)
     }
 
     function updateCurrentIndexFromSelectionViewId() {
         if (!sortedModel) return
         var idx = sortedModel.find(_reconstruction.selectedViewId, "viewId")
-        if (idx >= 0 && grid.currentIndex !== idx) {
-            grid.currentIndex = idx
+        if (idx >= 0 && root.currentIndex !== idx) {
+            root.currentIndex = idx
         }
     }
     
     onCurrentItemChanged: {
-        if (grid.updateSelectedViewFromGrid && grid.currentItem) {
-            if (tempCameraInit !== null && grid.currentIndex == 0)
+        if (root.currentItem) {
+            if (tempCameraInit !== null && root.currentIndex == 0)
                 _reconstruction.selectedViewId = -1
-            _reconstruction.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
+            _reconstruction.selectedViewId = root.currentItem.viewpoint.get("viewId").value
         }
     }
 
@@ -75,13 +72,13 @@ GridView {
     Connections {
         target: ThumbnailCache
         function onThumbnailCreated(imgSource, callerID) {
-            let item = grid.itemAtIndex(callerID);
+            let item = root.itemAtIndex(callerID);
             if (item && item.source === imgSource) {
                 item.updateThumbnail()
                 return
             }
-            for (let idx = 0; idx < grid.count; idx++) {
-                item = grid.itemAtIndex(idx)
+            for (let idx = 0; idx < root.count; idx++) {
+                item = root.itemAtIndex(idx)
                 if (item && item.source === imgSource) {
                     item.updateThumbnail()
                 }
@@ -95,25 +92,25 @@ GridView {
     Keys.priority: Keys.BeforeItem
     Keys.onPressed: function(event) {
         if (event.modifiers & Qt.AltModifier) {
-            if (event.key === Qt.Key_Right && root && root.cameraInits) {
-                _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
+            if (event.key === Qt.Key_Right && gallery && gallery.cameraInits) {
+                _reconstruction.cameraInitIndex = Math.min(gallery.cameraInits.count - 1, gallery.cameraInitIndex + 1)
                 event.accepted = true
             } else if (event.key === Qt.Key_Left) {
-                _reconstruction.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
+                _reconstruction.cameraInitIndex = Math.max(0, gallery.cameraInitIndex - 1)
                 event.accepted = true
             }
         } else {
             if (event.key === Qt.Key_Right) {
-                grid.moveCurrentIndexRight()
+                root.moveCurrentIndexRight()
                 event.accepted = true
             } else if (event.key === Qt.Key_Left) {
-                grid.moveCurrentIndexLeft()
+                root.moveCurrentIndexLeft()
                 event.accepted = true
             } else if (event.key === Qt.Key_Up) {
-                grid.moveCurrentIndexUp()
+                root.moveCurrentIndexUp()
                 event.accepted = true
             } else if (event.key === Qt.Key_Down) {
-                grid.moveCurrentIndexDown()
+                root.moveCurrentIndexDown()
                 event.accepted = true
             } else if (event.key === Qt.Key_Tab) {
                 if (searchBar)
@@ -144,7 +141,7 @@ GridView {
     Column {
         id: noImageImagePlaceholder
         anchors.centerIn: parent
-        visible: (m && m.viewpoints ? m.viewpoints.count !== 0 : false) && !dropImagePlaceholder.visible && grid.count === 0 && (!intrinsicsFilterButton || !intrinsicsFilterButton.checked)
+        visible: (m && m.viewpoints ? m.viewpoints.count !== 0 : false) && !dropImagePlaceholder.visible && root.count === 0 && (!intrinsicsFilterButton || !intrinsicsFilterButton.checked)
         spacing: 4
         Label {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -173,9 +170,9 @@ GridView {
             nbMeshroomScenes = filesByType["meshroomScenes"].length
         }
         onDropped: function(drop) {
-            if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
-                if (root)
-                    root.filesDropped(filesByType)
+            if (nbMeshroomScenes === nbDraggedFiles || nbMeshroomScenes === 0) {
+                if (gallery)
+                    gallery.filesDropped(filesByType)
             } else {
                 if (errorDialog)
                     errorDialog.open()
@@ -186,7 +183,7 @@ GridView {
         Rectangle {
             visible: dropArea.containsDrag
             anchors.fill: parent
-            color: root ? root.palette.window : palette.window
+            color: gallery ? gallery.palette.window : palette.window
             opacity: 0.8
         }
 
@@ -222,7 +219,7 @@ GridView {
         anchors.fill: parent
         onPressed: function(mouse) {
             if (mouse.button == Qt.LeftButton)
-                grid.forceActiveFocus()
+                root.forceActiveFocus()
             mouse.accepted = false
         }
     }

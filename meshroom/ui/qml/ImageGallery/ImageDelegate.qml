@@ -20,7 +20,7 @@ Item {
     property int layoutMode: 0  // 0: grid, 1: list
 
     property variant parentModel
-    property int selectedIndex: parentModel.selectedIndex
+    property int selectedIndex: parentModel ? parentModel.selectedIndex : -1
     property bool isCurrentItem: cellID >= 0 && cellID === selectedIndex
 
     signal pressed(var mouse)
@@ -125,20 +125,6 @@ Item {
         }
 
         Component {
-            id: thumbnailItem
-            Image {
-                id: thumbnail
-                anchors.fill: parent
-                anchors.margins: 4
-                asynchronous: true
-                autoTransform: true
-                fillMode: Image.PreserveAspectFit
-                smooth: false
-                cache: false
-            }
-        }
-
-        Component {
             id: gridDelegate
             ColumnLayout {
                 anchors.fill: parent
@@ -212,39 +198,26 @@ Item {
                 Rectangle {
                     color: Qt.darker(list_imageLabel.palette.base, 1.15)
                     Layout.fillHeight: true
-                    Layout.preferredWidth: 24 + list_thumbnail.width + 4
+                    Layout.preferredWidth: 100
                     
                     border.color: isCurrentItem ? list_imageLabel.palette.highlight : Qt.darker(list_imageLabel.palette.highlight)
                     border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
 
-                    RowLayout {
+                    Image {
+                        id: list_thumbnail
                         anchors.fill: parent
                         anchors.margins: 4
-                        spacing: 4
-                        
-                        BusyIndicator {
-                            id: list_busyIndicator
-                            Layout.preferredWidth: childrenRect.width
-                            Layout.preferredHeight: childrenRect.height
-                            running: list_thumbnail.status != Image.Ready
-                        }
-
-                        Item {
-                            Layout.fillWidth: true
-                        }
-                        
-                        Image {
-                            id: list_thumbnail
-                            Layout.preferredWidth: 100
-                            Layout.fillHeight: true
-                            source: root.thumbnailSource
-                            asynchronous: true
-                            autoTransform: true
-                            fillMode: Image.PreserveAspectFit
-                            smooth: false
-                            cache: false
-                            onStatusChanged: root.thumbnailStatus = status
-                        }
+                        source: root.thumbnailSource
+                        asynchronous: true
+                        autoTransform: true
+                        fillMode: Image.PreserveAspectFit
+                        smooth: false
+                        cache: false
+                        onStatusChanged: root.thumbnailStatus = status
+                    }
+                    BusyIndicator {
+                        anchors.centerIn: parent
+                        running: list_thumbnail.status != Image.Ready
                     }
                 }
 

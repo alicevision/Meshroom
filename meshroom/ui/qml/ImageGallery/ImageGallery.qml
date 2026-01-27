@@ -31,12 +31,13 @@ Panel {
     property bool readOnly: false
 
     enum LayoutModes {
-        Thumbnail=0,
+        Grid=0,
         List=1
     }
 
-    property int displayMode: ImageGallery.LayoutModes.Thumbnail
-    property string nextDisplayModeName: "List"
+    property int displayMode: ImageGallery.LayoutModes.Grid
+    property int defaultCellWidth: displayMode === ImageGallery.LayoutModes.Grid ? 160 : 400
+    property int defaultCellHeight: displayMode === ImageGallery.LayoutModes.Grid ? 160 : thumbnailSizeSlider.value / 2
 
     property var filesByType: ({})
     property int nbMeshroomScenes: 0
@@ -133,13 +134,8 @@ Panel {
     }
 
     function toggleDisplayMode() {
-        if (displayMode === ImageGallery.LayoutModes.Thumbnail) {
-            displayMode = ImageGallery.LayoutModes.List
-            nextDisplayModeName = "Thumbnail"
-        } else {
-            displayMode = ImageGallery.LayoutModes.Thumbnail
-            nextDisplayModeName = "List"
-        }
+        displayMode = displayMode === ImageGallery.LayoutModes.Grid ? 
+            ImageGallery.LayoutModes.List : ImageGallery.LayoutModes.Grid
     }
 
     headerBar: RowLayout {
@@ -151,10 +147,10 @@ Panel {
         }
 
         MaterialToolButton {
-            text: root.displayMode == ImageGallery.LayoutModes.Thumbnail ? MaterialIcons.view_list : MaterialIcons.view_module
+            text: root.displayMode === ImageGallery.LayoutModes.Grid ? MaterialIcons.view_list : MaterialIcons.view_module
             font.pointSize: 11
             padding: 2
-            ToolTip.text: "Switch the layout to " + nextDisplayModeName
+            ToolTip.text: "Switch the layout to " + root.displayMode === ImageGallery.LayoutModes.Grid ? "List" : "Grid"
             ToolTip.visible: hovered
             onClicked: root.toggleDisplayMode()
         }
@@ -223,13 +219,13 @@ Panel {
                 roleName = roleNameAndCmd[0]
                 cmd = roleNameAndCmd[1]
             }
-            if (cmd == "isReconstructed")
+            if (cmd === "isReconstructed")
                 return _reconstruction.isReconstructed(item.model.object);
 
             var value = item.model.object.childAttribute(roleName).value;
-            if (cmd == "basename")
+            if (cmd === "basename")
                 return Filepath.basename(value);
-            if (cmd == "asString") 
+            if (cmd === "asString") 
                 return value.toString();
 
             return value
@@ -243,16 +239,8 @@ Panel {
             layoutMode: root.displayMode
             viewpoint: object.value
             cellID: DelegateModel.filteredIndex
-            width: layoutMode === ImageGallery.LayoutModes.Thumbnail ? 
-                (layoutLoader.item ? layoutLoader.item.cellWidth : 160) : 
-                (layoutLoader.item ? layoutLoader.item.width : 400)
-            height: {
-                if (layoutMode === ImageGallery.LayoutModes.Thumbnail) {
-                    return layoutLoader.item ? layoutLoader.item.cellHeight : 160
-                } else {
-                    return thumbnailSizeSlider.value / 2
-                }
-            }
+            width: layoutLoader.item ? layoutLoader.item.cellWidth : root.defaultCellWidth
+            height: layoutLoader.item ? layoutLoader.item.cellHeight : root.defaultCellHeight
 
             readOnly: m.readOnly
             displayViewId: displayViewIdsAction.checked
@@ -362,13 +350,13 @@ Panel {
             Layout.fillHeight: true
             visible: !intrinsicsFilterButton.checked
             
-            sourceComponent: root.displayMode === ImageGallery.LayoutModes.Thumbnail ? gridViewComponent : listViewComponent
+            sourceComponent: root.displayMode === ImageGallery.LayoutModes.Grid ? gridViewComponent : listViewComponent
             
             onLoaded: {
                 if (item) {
                     // Pass necessary properties to the loaded component
                     item.m = m
-                    item.root = root
+                    item.gallery = root
                     item.searchBar = searchBar
                     item.displayViewIdsAction = displayViewIdsAction
                     item.intrinsicsFilterButton = intrinsicsFilterButton

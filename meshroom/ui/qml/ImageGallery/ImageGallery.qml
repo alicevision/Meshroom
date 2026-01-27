@@ -36,8 +36,6 @@ Panel {
     }
 
     property int displayMode: ImageGallery.LayoutModes.Grid
-    property int defaultCellWidth: displayMode === ImageGallery.LayoutModes.Grid ? 160 : 400
-    property int defaultCellHeight: displayMode === ImageGallery.LayoutModes.Grid ? 160 : thumbnailSizeSlider.value / 2
 
     property var filesByType: ({})
     property int nbMeshroomScenes: 0
@@ -239,8 +237,8 @@ Panel {
             layoutMode: root.displayMode
             viewpoint: object.value
             cellID: DelegateModel.filteredIndex
-            width: layoutLoader.item ? layoutLoader.item.cellWidth : root.defaultCellWidth
-            height: layoutLoader.item ? layoutLoader.item.cellHeight : root.defaultCellHeight
+            width: layoutLoader.item ? (displayMode === ImageGallery.LayoutModes.List ? layoutLoader.item.width : layoutLoader.item.cellWidth) : 0
+            height: layoutLoader.item ? layoutLoader.item.cellHeight : 0
 
             readOnly: m.readOnly
             displayViewId: displayViewIdsAction.checked

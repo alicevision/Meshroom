@@ -23,7 +23,6 @@ ListView {
     property var errorDialog: null
     property var sortedModel: null
 
-    property real cellWidth: 400
     property real cellHeight: thumbnailSizeSlider.value / 2
 
     // Signals

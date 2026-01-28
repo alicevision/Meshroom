@@ -2,6 +2,9 @@ module ImageGallery
 
 ImageGallery 1.0 ImageGallery.qml
 ImageDelegate 1.0 ImageDelegate.qml
+ImageGridView 1.0 ImageGridView.qml
+ImageListView 1.0 ImageListView.qml
+
 ImageIntrinsicDelegate 1.0 ImageIntrinsicDelegate.qml
 ImageIntrinsicViewer 1.0 ImageIntrinsicViewer.qml
 IntrinsicDisplayDelegate 1.0 IntrinsicDisplayDelegate.qml

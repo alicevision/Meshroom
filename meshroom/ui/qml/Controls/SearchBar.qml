@@ -31,6 +31,7 @@ FocusScope {
     Keys.forwardTo: [field]
 
     function forceActiveFocus() {
+        root.isVisible = true
         field.forceActiveFocus()
     }
 
@@ -46,7 +47,7 @@ FocusScope {
             text: MaterialIcons.search
 
             onClicked: {
-                isVisible = !root.isVisible
+                root.isVisible = !root.isVisible
                 // Set Focus on the Text Field
                 field.focus = field.visible
             }
@@ -73,6 +74,9 @@ FocusScope {
                 if ((event.key == Qt.Key_Return || event.key == Qt.Key_Enter)) {
                     event.accepted = true
                     root.accepted()
+                } else if (event.key == Qt.Key_Escape) {
+                    root.isVisible = false
+                    field.focus = false
                 }
             }
 

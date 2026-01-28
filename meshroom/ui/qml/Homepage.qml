@@ -271,7 +271,7 @@ Page {
                 }
 
                 GridView {
-                    id: gridView
+                    id: homepageGridView
                     visible: tabPanel.currentTab === 1
                     anchors.fill: parent
                     anchors.topMargin: cellHeight * 0.1
@@ -309,21 +309,21 @@ Page {
                     delegate: Column {
                         id: projectContent
 
-                        width: gridView.cellWidth
-                        height: gridView.cellHeight
+                        width: homepageGridView.cellWidth
+                        height: homepageGridView.cellHeight
 
                         property var source: modelData["thumbnail"] ? Filepath.stringToUrl(modelData["thumbnail"]) : ""
 
                         function updateThumbnail() {
-                            thumbnail.source = ThumbnailCache.thumbnail(source, gridView.currentIndex)
+                            thumbnail.source = ThumbnailCache.thumbnail(source, homepageGridView.currentIndex)
                         }
 
                         onSourceChanged: updateThumbnail()
 
                         Button {
                             id: projectDelegate
-                            height: gridView.cellHeight * 0.95 - project.height
-                            width: gridView.cellWidth * 0.9
+                            height: homepageGridView.cellHeight * 0.95 - project.height
+                            width: homepageGridView.cellWidth * 0.9
 
                             // Handle case where the file is missing
                             property bool fileExists: modelData["status"] != 0
@@ -408,7 +408,7 @@ Page {
 
                             BusyIndicator {
                                 anchors.centerIn: parent
-                                running: gridView.visible && modelData["thumbnail"] && thumbnail.status != Image.Ready
+                                running: homepageGridView.visible && modelData["thumbnail"] && thumbnail.status != Image.Ready
                                 visible: running
                             }
 

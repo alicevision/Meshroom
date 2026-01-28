@@ -387,7 +387,7 @@ Page {
                                 }
 
                                 MenuItem {
-                                    text: "Copy path"
+                                    text: "Copy Path"
                                     onTriggered: {                                        
                                         Clipboard.clear()
                                         Clipboard.setText(modelData["path"])

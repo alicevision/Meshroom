@@ -387,6 +387,14 @@ Page {
                                 }
 
                                 MenuItem {
+                                    text: "Copy Path"
+                                    onTriggered: {                                        
+                                        Clipboard.clear()
+                                        Clipboard.setText(modelData["path"])
+                                    }
+                                }
+
+                                MenuItem {
                                     text: "Delete"
                                     onTriggered: {
                                         MeshroomApp.removeRecentProjectFile(modelData["path"])

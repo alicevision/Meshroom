@@ -565,6 +565,7 @@ class UIGraph(QObject):
     @Slot(list)
     def execute(self, nodes: Optional[Union[list[Node], Node]] = None):
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
+        nodes = [n for n in nodes if n.isComputableType]
         self.save()  # always save the graph before computing
         self._taskManager.compute(self._graph, nodes)
         self.updateLockedUndoStack()  # explicitly call the update while it is already computing

@@ -529,8 +529,10 @@ Window {
 
                         highlighted: fileListView.currentIndex == -1 ? isCurrentItemSelected() : ListView.isCurrentItem
 
+
                         // Enable drag for folders
-                        Drag.active: model.fileIsDir && dragArea.drag.active
+                        property bool isDragging: false
+                        Drag.active: isDragging
                         Drag.dragType: Drag.Automatic
                         Drag.supportedActions: Qt.CopyAction
                         Drag.mimeData: { "text/uri-list": model.fileURL.toString() }
@@ -574,10 +576,19 @@ Window {
                         }
                         
                         MouseArea {
-                            id: dragArea
                             anchors.fill: parent
                             drag.target: model.fileIsDir ? parent : null
-                            
+
+                            onPressed: {
+                                if (model.fileIsDir) {
+                                    parent.isDragging = true
+                                }
+                            }
+
+                            onReleased: {
+                                parent.isDragging = false
+                            }
+
                             onClicked: {
                                 fileListView.currentIndex = model.index
                                 if (model.fileIsDir) {
@@ -619,7 +630,9 @@ Window {
 
                 function selectedPathExists() {
                     return Filepath.exists(getSelectedPath())
-                } 
+                }
+
+                property color fileExistsColor: _PaletteManager.isDarkPalette() ? Qt.darker(Colors.red, 2) : Qt.lighter(Colors.red, 1.5)
                 
                 RowLayout {
                     anchors.fill: parent
@@ -629,7 +642,7 @@ Window {
                     Rectangle {
                         Layout.fillWidth: true
                         height: filenameField.implicitHeight
-                        color: selectionBar.selectedPathExists() ? Qt.darker(Colors.red, 2): root.activePalette.base
+                        color: selectionBar.selectedPathExists() ? selectionBar.fileExistsColor : root.activePalette.base
                         border.color: filenameField.activeFocus ? root.activePalette.accent : Qt.darker(root.activePalette.base, 1.4)
                         border.width: 1
                         radius: 5

@@ -474,20 +474,20 @@ Item {
                 }
 
                 // Node Comments Text which is visible on the backdrop
-                Rectangle {
+                Text {
+                    visible: node.comment
+                    text: node.comment
+                    font.pointSize: node.fontSize
+
                     y: header.height
 
-                    // Show only when we have a comment
-                    visible: node.comment
-                    width: parent.width
+                    padding: 4
 
-                    Text {
-                        text: node.comment
-                        padding: 4
-                        font.pointSize: node.fontSize
-                        width: parent.width
-                        wrapMode: Text.Wrap
-                    }
+                    width: parent.width
+                    height: nodeContent.height - header.height
+
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideRight
                 }
             }
         }

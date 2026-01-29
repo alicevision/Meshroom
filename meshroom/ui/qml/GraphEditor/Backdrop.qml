@@ -185,7 +185,10 @@ Item {
                 cursorShape: Qt.SizeHorCursor
                 anchors.fill: parent
 
-                drag { target: parent; axis: Drag.XAxis }
+                drag {
+                    target: parent
+                    axis: Drag.XAxis
+                }
 
                 onMouseXChanged: {
                     if (drag.active) {
@@ -222,7 +225,10 @@ Item {
                 cursorShape: Qt.SizeHorCursor
                 anchors.fill: parent
 
-                drag { target: parent; axis: Drag.XAxis }
+                drag {
+                    target: parent
+                    axis: Drag.XAxis
+                }
 
                 onMouseXChanged: {
                     if (drag.active) {
@@ -264,7 +270,10 @@ Item {
                 cursorShape: Qt.SizeVerCursor
                 anchors.fill: parent
 
-                drag{ target: parent; axis: Drag.YAxis }
+                drag {
+                    target: parent
+                    axis: Drag.YAxis
+                }
 
                 onMouseYChanged: {
                     if (drag.active) {
@@ -288,7 +297,7 @@ Item {
         Rectangle {
             width: mouseArea.width
             height: 4
-            
+
             color: baseColor
             opacity: 0
 
@@ -300,7 +309,10 @@ Item {
                 cursorShape: Qt.SizeVerCursor
                 anchors.fill: parent
 
-                drag{ target: parent; axis: Drag.YAxis }
+                drag {
+                    target: parent
+                    axis: Drag.YAxis
+                }
 
                 onMouseYChanged: {
                     if (drag.active) {
@@ -328,16 +340,16 @@ Item {
             anchors.margins: -border.width
             visible: root.mainSelected || root.hovered || root.selected
             border.width: {
-                if(root.mainSelected)
+                if (root.mainSelected)
                     return 3
-                if(root.selected)
+                if (root.selected)
                     return 2.5
                 return 2
             }
             border.color: {
-                if(root.mainSelected)
+                if (root.mainSelected)
                     return activePalette.highlight
-                if(root.selected)
+                if (root.selected)
                     return Qt.darker(activePalette.highlight, 1.2)
                 return Qt.lighter(activePalette.base, 3)
             }
@@ -404,7 +416,10 @@ Item {
                 }
 
                 // Vertical Spacer
-                Item { width: parent.width; height: 2 }
+                Item {
+                    width: parent.width
+                    height: 2
+                }
 
                 // Node Comments Text which is visible on the backdrop
                 Rectangle {

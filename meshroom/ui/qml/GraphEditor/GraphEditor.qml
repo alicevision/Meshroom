@@ -53,8 +53,8 @@ Item {
     /// Get node delegate for the given node object
     function nodeDelegate(node) {
         for(var i = 0; i < nodeRepeater.count; ++i) {
-            if (nodeRepeater.itemAt(i).node === node)
-                return nodeRepeater.itemAt(i)
+            if (nodeRepeater.getItemAt(i).node === node)
+                return nodeRepeater.getItemAt(i)
         }
         return undefined
     }
@@ -867,7 +867,6 @@ Item {
                                 nodeMenu.close()
                             }
                         }
-
                     }
                 }
             }
@@ -1291,7 +1290,7 @@ Item {
                         "deleteFollowing": false
                     }
                 );
-                dialog.open(); 
+                dialog.open()
             }
             else {
                 uigraph.clearSelectedNodesData()
@@ -1459,13 +1458,13 @@ Item {
 
             function nextItem() {
                 // Compute bounding box
-                var node = nodeRepeater.itemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
+                var node = nodeRepeater.getItemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
                 var bbox = Qt.rect(node.x, node.y, node.width, node.height)
                 // Rescale to fit the bounding box in the view, zoom is limited to prevent huge text
                 draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height),maxZoom)
                 // Recenter
-                draggable.x = bbox.x*draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
-                draggable.y = bbox.y*draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
+                draggable.x = bbox.x * draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
+                draggable.y = bbox.y * draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
             }
         }
     }
@@ -1503,13 +1502,13 @@ Item {
          * Maximum x,y postion of the selected nodes.
          */
         var firstIdx = uigraph.nodeSelection.selectedIndexes[0]
-        const first = nodeRepeater.itemAt(firstIdx.row)
+        const first = nodeRepeater.getItemAt(firstIdx.row)
         // Bounding box of the first selected item
         var bbox = Qt.rect(first.x, first.y, first.x + first.width, first.y + first.height)
         // Iterate over the remaining items in the selection
         uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
             if(idx != firstIdx) {
-                const item = nodeRepeater.itemAt(idx.row)
+                const item = nodeRepeater.getItemAt(idx.row)
                 bbox.x = Math.min(bbox.x, item.x)
                 bbox.y = Math.min(bbox.y, item.y)
                 bbox.width = Math.max(bbox.width, item.x + item.width)

@@ -6,6 +6,8 @@ import QtQuick.Dialogs
 
 import Qt.labs.platform as Platform
 
+import Dialogs 1.0
+
 ApplicationWindow {
     id: _window
 
@@ -118,19 +120,26 @@ ApplicationWindow {
             }
         }
 
-        dialog.folder = folder
+        dialog.currentFolder = folder
     }
 
-    Platform.FileDialog {
+    MrFileDialog {
         id: openFileDialog
-        title: "Open File"
-        nameFilters: ["Meshroom Graphs (*.mg)"]
+        saveMode: false
+        nameFilters: ["*.mg"]
+        property string fileToSave: ""
+
+        onFileSelected: (path) => {
+            fileToSave = path.toString().replace("file://", "")
+            // Do something with the file path
+        }
+        
         onAccepted: {
             if (mainStack.currentItem instanceof Homepage) {
                 mainStack.push("Application.qml")
             }
-            if (_currentScene.load(currentFile)) {
-                MeshroomApp.addRecentProjectFile(currentFile.toString())
+            if (_currentScene.load(selectedFile)) {
+                MeshroomApp.addRecentProjectFile(selectedFile.toString())
             }
         }
     }

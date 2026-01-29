@@ -184,8 +184,9 @@ class PartialGraphSerializer(GraphSerializer):
 
         # Override input attributes with custom serialization logic, to handle attributes
         # connected to nodes that are not in the list of nodes to serialize.
-        for attributeName in nodeData["inputs"]:
-            nodeData["inputs"][attributeName] = self._serializeAttribute(node.attribute(attributeName))
+        if nodeData.get("inputs", None):
+            for attributeName in nodeData["inputs"]:
+                nodeData["inputs"][attributeName] = self._serializeAttribute(node.attribute(attributeName))
 
         # Clear UID for non-compatibility nodes, as the custom attribute serialization
         # can be impacting the UID by removing connections to missing nodes.

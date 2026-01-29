@@ -34,7 +34,7 @@ Item {
     // Combined x and y
     property point position: Qt.point(x, y)
     // Styling
-    property color shadowColor: "#cc000000"
+    property color shadowColor: "#000000"
     readonly property color defaultColor: node.color === "" ? "#fffb85" : node.color
     property color baseColor: defaultColor
 
@@ -168,6 +168,58 @@ Item {
         cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
         // --- Backdrop Resize Controls
+        // Resize: diagonal bottom-right
+        Rectangle {
+            width: 8
+            height: 8
+
+            color: baseColor
+            opacity: 0
+
+            anchors.horizontalCenter: parent.right
+            anchors.verticalCenter: parent.bottom
+
+            MouseArea {
+                id: diagonalDragger
+
+                cursorShape: Qt.SizeFDiagCursor
+                anchors.fill: parent
+
+                drag {
+                    target: parent
+                    axis: Drag.XAndYAxis
+                }
+
+                onMouseXChanged: {
+                    if (drag.active) {
+                        // Update the area width
+                        root.width = root.width + mouseX
+
+                        // Ensure we have a minimum width always
+                        if (root.width < root.minimumWidth) {
+                            root.width = root.minimumWidth
+                        }
+                    }
+                }
+
+                onMouseYChanged: {
+                    if (drag.active) {
+                        // Update the height
+                        root.height = root.height + mouseY
+
+                        // Ensure a minimum height
+                        if (root.height < root.minimumHeight) {
+                            root.height = root.minimumHeight
+                        }
+                    }
+                }
+
+                onReleased: {
+                    root.resized(root.width, root.height)
+                }
+            }
+        }
+
         // Resize: right side
         Rectangle {
             width: 4

@@ -1095,7 +1095,7 @@ Item {
                                         selectionMode = ItemSelectionModel.Select
                                     }
                                     if (mouse.modifiers & Qt.ControlModifier) {
-                                        selectionMode = ItemSelectionModel.Toggle
+                                        selectionMode = ItemSelectionModel.Clear
                                     }
                                     if (mouse.modifiers & Qt.AltModifier) {
                                         let selectFollowingMode = ItemSelectionModel.ClearAndSelect

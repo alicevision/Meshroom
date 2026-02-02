@@ -119,6 +119,14 @@ class InternalAttributesFactory:
             description="Size of the font used to display the comments.",
             value=12,
             range=(6, 100, 1),
+            invalidate=False,
+        ),
+        ColorParam(
+            name="fontColor",
+            label="Font Color",
+            description="Color of the font used to display the comments (SVG name or hexadecimal code).",
+            value="",
+            invalidate=False,
         ),
         IntParam(
             name="nodeWidth",
@@ -126,6 +134,7 @@ class InternalAttributesFactory:
             description="Width of the node in the graph editor.",
             value=600,
             range=None,
+            invalidate=False,
             enabled=False,  # Hidden
         ),
         IntParam(
@@ -134,6 +143,7 @@ class InternalAttributesFactory:
             description="Height of the node in the graph editor.",
             value=400,
             range=None,
+            invalidate=False,
             enabled=False,  # Hidden
         ),
     ]

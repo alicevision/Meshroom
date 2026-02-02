@@ -916,6 +916,15 @@ class BaseNode(BaseObject):
             return self.internalAttribute("fontSize").value
         return 0
 
+    def getFontColor(self) -> str:
+        """
+        Returns:
+            The color of the font from the node if it exists, empty string otherwise.
+        """
+        if self.hasInternalAttribute("fontColor"):
+            return self.internalAttribute("fontColor").value.strip()
+        return ""
+
     def getNodeWidth(self) -> int:
         """
         Returns:
@@ -2102,6 +2111,7 @@ class BaseNode(BaseObject):
     invalidation = Property(str, getInvalidationMessage, notify=internalAttributesChanged)
     comment = Property(str, getComment, notify=internalAttributesChanged)
     fontSize = Property(int, getFontSize, notify=internalAttributesChanged)
+    fontColor = Property(str, getFontColor, notify=internalAttributesChanged)
     nodeWidth = Property(int, getNodeWidth, notify=internalAttributesChanged)
     nodeHeight = Property(int, getNodeHeight, notify=internalAttributesChanged)
     internalFolderChanged = Signal()

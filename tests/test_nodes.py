@@ -3,9 +3,10 @@
 
 import os
 from pathlib import Path
+import tempfile
 
-from meshroom.core import pluginManager, loadClassesNodes
-from meshroom.core.graph import Graph
+from meshroom.core import pluginManager, loadClassesNodes, initNodes
+from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.plugins import Plugin
 
 from .utils import registerNodeDesc
@@ -136,3 +137,117 @@ class TestInitNode:
         inputs = ["/path/to/file", "/path/to/file/2"]
         node.nodeDesc.initialize(node, inputs, None)
         assert node.input.value == inputs[0]
+
+
+class TestBackdropNode:
+    loadedPlugins = pluginManager.getPlugins()
+
+    @classmethod
+    def setup_class(cls):
+        initNodes()
+
+    @classmethod
+    def teardown_class(cls):
+        for plugin in pluginManager.getPlugins():
+            if plugin not in cls.loadedPlugins:
+                for node in plugin.nodes.values():
+                    pluginManager.unregisterNode(node)
+                pluginManager.removePlugin(plugin)
+
+    def test_backdropNode(self):
+        """ Test that a backdrop node can be added to a graph with its expected default values. """
+        g = Graph("Default Backdrop node")
+        backdrop = g.addNewNode("Backdrop")
+
+        # Check that the default values for backdrop are as expected
+        assert backdrop is not None
+        assert backdrop.nodeWidth == 600
+        assert backdrop.nodeHeight == 400
+        assert backdrop.fontSize == 12
+        assert backdrop.color == ""
+        assert backdrop.comment == ""
+
+        # Add a non-backdrop node and check that its default values are not backdrop's ones
+        node = g.addNewNode("CopyFiles")
+        assert node is not None
+        assert node.nodeWidth == 0
+        assert node.nodeHeight == 0
+        assert node.fontSize == 0
+        assert node.color == ""
+        assert node.comment == ""
+
+    def test_backdropNode_customAttributes(self):
+        """ Test that a backdrop node's attributes can be correctly updated. """
+        g = Graph("Backdrop node with custom values")
+        backdrop = g.addNewNode("Backdrop")
+
+        # Set custom values for backdrop and assert the properties are correctly updated
+        width = backdrop.internalAttribute("nodeWidth")
+        width.value = 400
+        assert backdrop.nodeWidth == 400
+
+        height = backdrop.internalAttribute("nodeHeight")
+        height.value = 200
+        assert backdrop.nodeHeight == 200
+
+        fontSize = backdrop.internalAttribute("fontSize")
+        fontSize.value = 10
+        assert backdrop.fontSize == 10
+
+        color = backdrop.internalAttribute("color")
+        color.value = "#FF0000"
+        assert backdrop.color == "#FF0000"
+
+        comment = backdrop.internalAttribute("comment")
+        comment.value = "hello world"
+        assert backdrop.comment == "hello world"
+
+    def test_backdropNode_defaultSerialization(self):
+        """ Test that a backdrop node with default values is correctly serialized and deserialized. """
+        g = Graph("Backdrop node default serialization")
+        backdrop = g.addNewNode("Backdrop")
+
+        # Save the graph in a file
+        graphFile = os.path.join(tempfile.mkdtemp(), "test_backdrop_serialization.mg")
+        g.save(graphFile)
+
+        # Reload the graph and check the values for the backdrop node are the default ones
+        g = loadGraph(graphFile)
+        backdrop = g.node("Backdrop_1")
+        assert backdrop is not None
+        assert backdrop.nodeWidth == 600
+        assert backdrop.nodeHeight == 400
+        assert backdrop.fontSize == 12
+        assert backdrop.color == ""
+        assert backdrop.comment == ""
+
+    def test_backdropNode_customSerialization(self):
+        """ Test that a backdrop node with custom values is correctly serialized and deserialized. """
+        g = Graph("Backdrop node custom serialization")
+        backdrop = g.addNewNode("Backdrop")
+
+        # Set custom values for backdrop
+        width = backdrop.internalAttribute("nodeWidth")
+        width.value = 400
+        height = backdrop.internalAttribute("nodeHeight")
+        height.value = 200
+        fontSize = backdrop.internalAttribute("fontSize")
+        fontSize.value = 10
+        color = backdrop.internalAttribute("color")
+        color.value = "#FF0000"
+        comment = backdrop.internalAttribute("comment")
+        comment.value = "hello world"
+
+        # Save the graph in a file
+        graphFile = os.path.join(tempfile.mkdtemp(), "test_backdrop_serialization.mg")
+        g.save(graphFile)
+
+        # Reload the graph and check the values for the backdrop node are the default ones
+        g = loadGraph(graphFile)
+        backdrop = g.node("Backdrop_1")
+        assert backdrop is not None
+        assert backdrop.nodeWidth == 400
+        assert backdrop.nodeHeight == 200
+        assert backdrop.fontSize == 10
+        assert backdrop.color == "#FF0000"
+        assert backdrop.comment == "hello world"

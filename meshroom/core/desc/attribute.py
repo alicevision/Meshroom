@@ -1,9 +1,15 @@
 import ast
 import os
 from collections.abc import Iterable
+from enum import auto, Enum
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList, strtobool
 
+class ValueTypeErrors(Enum):
+    NONE = auto()  # No error
+    TYPE = auto()  # Invalid type
+    RANGE = auto()  # Invalid range
+    DYNAMIC_OUTPUT = auto()  # Dynamic output not supported
 
 class Attribute(BaseObject):
     """
@@ -240,14 +246,14 @@ class GroupAttribute(Attribute):
         """
         invalidParams = []
         for attr in self.groupDesc:
-            name = attr.checkValueTypes()
+            name, error = attr.checkValueTypes()
             if name:
                 invalidParams.append(name)
         if invalidParams:
             # In group "group", if parameters "x" and "y" (with "y" in nested group "subgroup") are invalid, the
             # returned string will be: "group:x, group:subgroup:y"
-            return self.name + ":" + str(", " + self.name + ":").join(invalidParams)
-        return ""
+            return self.name + ":" + str(", " + self.name + ":").join(invalidParams), error
+        return "", ValueTypeErrors.NONE
 
     def matchDescription(self, value, strict=True):
         """
@@ -320,8 +326,8 @@ class File(Attribute):
         # Some File values are functions generating a string: check whether the value is a string or if it
         # is a function (but there is no way to check that the function's output is indeed a string)
         if not isinstance(self.value, str) and not callable(self.value):
-            return self.name
-        return ""
+            return self.name, ValueTypeErrors.TYPE
+        return "", ValueTypeErrors.NONE
 
 
 class BoolParam(Param):
@@ -349,8 +355,8 @@ class BoolParam(Param):
 
     def checkValueTypes(self):
         if not isinstance(self.value, bool):
-            return self.name
-        return ""
+            return self.name, ValueTypeErrors.TYPE
+        return "", ValueTypeErrors.NONE
 
 
 class IntParam(Param):
@@ -378,9 +384,11 @@ class IntParam(Param):
                              f"{value}, type: {type(value)})")
 
     def checkValueTypes(self):
-        if not isinstance(self.value, int) or (self.range and not all([isinstance(r, int) for r in self.range])):
-            return self.name
-        return ""
+        if not isinstance(self.value, int):
+            return self.name, ValueTypeErrors.TYPE
+        if (self.range and not all([isinstance(r, int) for r in self.range])):
+            return self.name, ValueTypeErrors.RANGE
+        return "", ValueTypeErrors.NONE
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
@@ -409,9 +417,11 @@ class FloatParam(Param):
                              f"{value}, type:{type(value)})")
 
     def checkValueTypes(self):
-        if not isinstance(self.value, float) or (self.range and not all([isinstance(r, float) for r in self.range])):
-            return self.name
-        return ""
+        if not isinstance(self.value, float):
+            return self.name, ValueTypeErrors.TYPE
+        if (self.range and not all([isinstance(r, float) for r in self.range])):
+            return self.name, ValueTypeErrors.RANGE
+        return "", ValueTypeErrors.NONE
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
@@ -435,7 +445,7 @@ class PushButtonParam(Param):
         return value
 
     def checkValueTypes(self):
-        pass
+        return "", ValueTypeErrors.NONE
 
 
 class ChoiceParam(Param):
@@ -513,20 +523,20 @@ class ChoiceParam(Param):
     def checkValueTypes(self):
         # Check that the values have been provided as a list
         if not isinstance(self._values, list):
-            return self.name
+            return self.name, ValueTypeErrors.TYPE
 
         # If the choices are not exclusive, check that 'value' is a list, and check that it does not contain values that
         # are not available
         elif not self.exclusive and (not isinstance(self._value, list) or
                                      not all(val in self._values for val in self._value)):
-            return self.name
+            return self.name, ValueTypeErrors.RANGE
 
         # If the choices are exclusive, the value should NOT be a list but it can contain any value that is not in the
         # list of possible ones
         elif self.exclusive and isinstance(self._value, list):
-            return self.name
+            return self.name, ValueTypeErrors.TYPE
 
-        return ""
+        return "", ValueTypeErrors.NONE
 
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
@@ -555,8 +565,8 @@ class StringParam(Param):
 
     def checkValueTypes(self):
         if not isinstance(self.value, str):
-            return self.name
-        return ""
+            return self.name, ValueTypeErrors.TYPE
+        return "", ValueTypeErrors.NONE
 
 
 class ColorParam(Param):

@@ -14,10 +14,11 @@ from pathlib import Path
 
 from meshroom.common import BaseObject
 from meshroom.core import desc
+from meshroom.core.desc.attribute import ValueTypeErrors
 from meshroom.core.desc.node import _MESHROOM_ROOT, _MESHROOM_COMPUTE_DEPS
 
 
-def validateNodeDesc(nodeDesc: desc.Node) -> list:
+def validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors]]:
     """
     Check that the node has a valid description before being loaded. For the description
     to be valid, the default value of every parameter needs to correspond to the type
@@ -37,16 +38,16 @@ def validateNodeDesc(nodeDesc: desc.Node) -> list:
     errors = []
 
     for param in nodeDesc.inputs:
-        err = param.checkValueTypes()
-        if err:
-            errors.append(err)
+        errMsg, errType = param.checkValueTypes()
+        if errMsg:
+            errors.append((errMsg, errType))
 
     for param in nodeDesc.outputs:
         if param.value is None:
             continue
-        err = param.checkValueTypes()
-        if err:
-            errors.append(err)
+        errMsg, errType = param.checkValueTypes()
+        if errMsg:
+            errors.append((errMsg, errType))
 
     return errors
 
@@ -437,15 +438,15 @@ class NodePlugin(BaseObject):
                    modified
     """
 
-    def __init__(self, nodeDesc: desc.Node, plugin: Plugin = None):
+    def __init__(self, nodeDesc: desc.BaseNode, plugin: Plugin = None):
         super().__init__()
         self.plugin: Plugin = plugin
         self.path: str = Path(getfile(nodeDesc)).resolve().as_posix()
-        self.nodeDescriptor: desc.Node = nodeDesc
+        self.nodeDescriptor: desc.BaseNode = nodeDesc
         self.nodeDescriptor.plugin = self
 
         self.status: NodePluginStatus = NodePluginStatus.NOT_LOADED
-        self.errors: list[str] = validateNodeDesc(nodeDesc)
+        self.errors: list[tuple[str, ValueTypeErrors]] = validateNodeDesc(nodeDesc)
 
         if self.errors:
             self.status = NodePluginStatus.DESC_ERROR

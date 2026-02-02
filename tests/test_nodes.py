@@ -164,6 +164,7 @@ class TestBackdropNode:
         assert backdrop.nodeWidth == 600
         assert backdrop.nodeHeight == 400
         assert backdrop.fontSize == 12
+        assert backdrop.fontColor == ""
         assert backdrop.color == ""
         assert backdrop.comment == ""
 
@@ -173,6 +174,7 @@ class TestBackdropNode:
         assert node.nodeWidth == 0
         assert node.nodeHeight == 0
         assert node.fontSize == 0
+        assert node.fontColor == ""
         assert node.color == ""
         assert node.comment == ""
 
@@ -193,6 +195,10 @@ class TestBackdropNode:
         fontSize = backdrop.internalAttribute("fontSize")
         fontSize.value = 10
         assert backdrop.fontSize == 10
+
+        fontColor = backdrop.internalAttribute("fontColor")
+        fontColor.value = "#00FF00"
+        assert backdrop.fontColor == "#00FF00"
 
         color = backdrop.internalAttribute("color")
         color.value = "#FF0000"
@@ -218,6 +224,7 @@ class TestBackdropNode:
         assert backdrop.nodeWidth == 600
         assert backdrop.nodeHeight == 400
         assert backdrop.fontSize == 12
+        assert backdrop.fontColor == ""
         assert backdrop.color == ""
         assert backdrop.comment == ""
 
@@ -233,6 +240,8 @@ class TestBackdropNode:
         height.value = 200
         fontSize = backdrop.internalAttribute("fontSize")
         fontSize.value = 10
+        fontColor = backdrop.internalAttribute("fontColor")
+        fontColor.value = "#00FF00"
         color = backdrop.internalAttribute("color")
         color.value = "#FF0000"
         comment = backdrop.internalAttribute("comment")
@@ -249,5 +258,6 @@ class TestBackdropNode:
         assert backdrop.nodeWidth == 400
         assert backdrop.nodeHeight == 200
         assert backdrop.fontSize == 10
+        assert backdrop.fontColor == "#00FF00"
         assert backdrop.color == "#FF0000"
         assert backdrop.comment == "hello world"

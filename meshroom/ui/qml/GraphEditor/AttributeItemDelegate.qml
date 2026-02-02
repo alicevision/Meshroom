@@ -511,16 +511,22 @@ RowLayout {
                 CheckBox {
                     id: colorCheckbox
                     Layout.alignment: Qt.AlignLeft
-                    checked: node && node.color === "" ? false : true
+                    checked: attribute.value === "" ? false : true
                     checkable: root.editable
                     text: "Custom Color"
+                    property string previousColor: ""
                     onClicked: {
                         if (checked) {
-                            if (colorText.text == "")
-                                _currentScene.setAttribute(attribute, "#0000FF")
+                            if (colorText.text == "") {
+                                if (previousColor != "")
+                                    _currentScene.setAttribute(attribute, previousColor)
+                                else
+                                    _currentScene.setAttribute(attribute, "#0000FF")
+                            }
                             else
                                 _currentScene.setAttribute(attribute, colorText.text)
                         } else {
+                            previousColor = attribute.value
                             _currentScene.setAttribute(attribute, "")
                         }
                     }

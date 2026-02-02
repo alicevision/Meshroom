@@ -478,6 +478,7 @@ Item {
                     visible: node.comment
                     text: node.comment
                     font.pointSize: node.fontSize
+                    color: node.fontColor === "" ? "#000000" : node.fontColor
 
                     y: header.height
 

@@ -30,10 +30,10 @@ def validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors
     "group", is invalid, then it will be added to the list as "group:x".
 
     Args:
-        nodeDesc: description of the node.
+        nodeDesc: Description of the node.
 
     Returns:
-        errors: the list of invalid parameters if there are any, empty list otherwise
+        errors: The list of invalid parameters if there are any, empty list otherwise.
     """
     errors = []
 
@@ -52,6 +52,26 @@ def validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors
             errors.append((errMsg, errType))
 
     return errors
+
+def formatNodeDescriptionErrorMessage(error: tuple[str, ValueTypeErrors]) -> str:
+    """
+    Format a node description error message from a tuple containing the error message (name of the attribute) and type.
+
+    Args:
+        error: Tuple containing the name of the parameter that was rejected, and the type of the error.
+
+    Returns:
+        str: Formatted error message.
+    """
+    errMsg, errType = error
+
+    if errType == ValueTypeErrors.TYPE:
+        return f"'value': Invalid type for parameter '{errMsg}'."
+    if errType == ValueTypeErrors.RANGE:
+        return f"'range': Invalid range value for parameter '{errMsg}'."
+    if errType == ValueTypeErrors.DYNAMIC_OUTPUT:
+        return f"'value': Unsupported dynamic output for parameter '{errMsg}'."
+    return f"Unknown error for parameter '{errMsg}'."
 
 
 class ProcessEnvType(Enum):

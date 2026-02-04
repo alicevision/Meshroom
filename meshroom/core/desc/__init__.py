@@ -10,6 +10,7 @@ from .attribute import (
     ListAttribute,
     PushButtonParam,
     StringParam,
+    ValueTypeErrors,
 )
 from .geometryAttribute import (
     Geometry,

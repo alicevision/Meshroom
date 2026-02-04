@@ -18,7 +18,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, processEnvFactory
+from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, processEnvFactory, formatNodeDescriptionErrorMessage
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -112,8 +112,10 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                     if classType == desc.BaseNode:
                         nodePlugin = NodePlugin(p)
                         if nodePlugin.errors:
-                            errors.append(f"  * {pluginName}: The following parameters do not have valid "
-                                          f"default values/ranges: {', '.join(nodePlugin.errors)}")
+                            explicitErrors = []
+                            for err in nodePlugin.errors:
+                                explicitErrors.append(f"\n\t - {formatNodeDescriptionErrorMessage(err)}")
+                            errors.append(f"  * {pluginName}: The following parameters have issues: {''.join(explicitErrors)}")
                         classes.append(nodePlugin)
                     else:
                         classes.append(p)

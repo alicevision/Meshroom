@@ -14,10 +14,11 @@ from pathlib import Path
 
 from meshroom.common import BaseObject
 from meshroom.core import desc
+from meshroom.core.desc.attribute import ValueTypeErrors
 from meshroom.core.desc.node import _MESHROOM_ROOT, _MESHROOM_COMPUTE_DEPS
 
 
-def validateNodeDesc(nodeDesc: desc.Node) -> list:
+def validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors]]:
     """
     Check that the node has a valid description before being loaded. For the description
     to be valid, the default value of every parameter needs to correspond to the type
@@ -29,26 +30,48 @@ def validateNodeDesc(nodeDesc: desc.Node) -> list:
     "group", is invalid, then it will be added to the list as "group:x".
 
     Args:
-        nodeDesc: description of the node.
+        nodeDesc: Description of the node.
 
     Returns:
-        errors: the list of invalid parameters if there are any, empty list otherwise
+        errors: The list of invalid parameters if there are any, empty list otherwise.
     """
     errors = []
 
     for param in nodeDesc.inputs:
-        err = param.checkValueTypes()
-        if err:
-            errors.append(err)
+        errMsg, errType = param.checkValueTypes()
+        if errMsg:
+            errors.append((errMsg, errType))
 
     for param in nodeDesc.outputs:
         if param.value is None:
+            if issubclass(nodeDesc, desc.InputNode):
+                errors.append((f"{param.name}", ValueTypeErrors.DYNAMIC_OUTPUT))
             continue
-        err = param.checkValueTypes()
-        if err:
-            errors.append(err)
+        errMsg, errType = param.checkValueTypes()
+        if errMsg:
+            errors.append((errMsg, errType))
 
     return errors
+
+def formatNodeDescriptionErrorMessage(error: tuple[str, ValueTypeErrors]) -> str:
+    """
+    Format a node description error message from a tuple containing the error message (name of the attribute) and type.
+
+    Args:
+        error: Tuple containing the name of the parameter that was rejected, and the type of the error.
+
+    Returns:
+        str: Formatted error message.
+    """
+    errMsg, errType = error
+
+    if errType == ValueTypeErrors.TYPE:
+        return f"'value': Invalid type for parameter '{errMsg}'."
+    if errType == ValueTypeErrors.RANGE:
+        return f"'range': Invalid range value for parameter '{errMsg}'."
+    if errType == ValueTypeErrors.DYNAMIC_OUTPUT:
+        return f"'value': Unsupported dynamic output for parameter '{errMsg}'."
+    return f"Unknown error for parameter '{errMsg}'."
 
 
 class ProcessEnvType(Enum):
@@ -437,15 +460,15 @@ class NodePlugin(BaseObject):
                    modified
     """
 
-    def __init__(self, nodeDesc: desc.Node, plugin: Plugin = None):
+    def __init__(self, nodeDesc: desc.BaseNode, plugin: Plugin = None):
         super().__init__()
         self.plugin: Plugin = plugin
         self.path: str = Path(getfile(nodeDesc)).resolve().as_posix()
-        self.nodeDescriptor: desc.Node = nodeDesc
+        self.nodeDescriptor: desc.BaseNode = nodeDesc
         self.nodeDescriptor.plugin = self
 
         self.status: NodePluginStatus = NodePluginStatus.NOT_LOADED
-        self.errors: list[str] = validateNodeDesc(nodeDesc)
+        self.errors: list[tuple[str, ValueTypeErrors]] = validateNodeDesc(nodeDesc)
 
         if self.errors:
             self.status = NodePluginStatus.DESC_ERROR

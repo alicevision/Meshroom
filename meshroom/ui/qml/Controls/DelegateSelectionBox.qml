@@ -19,14 +19,25 @@ SelectionBox {
 
     onSelectionEnded: function(selectionRect, modifiers) {
         let selectedIndices = [];
-        const mappedSelectionRect = mapToItem(container, selectionRect);
+        const mappedSelectionRect = mapToItem(container, selectionRect)
         for (var i = 0; i < modelInstantiator.count; ++i) {
-            const delegate = modelInstantiator.itemAt(i);
-            const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height);
+            const delegate = modelInstantiator.getItemAt(i)
+            if (!delegate)
+                continue
+            const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height)
             if (Geom2D.rectRectIntersect(mappedSelectionRect, delegateRect)) {
-                selectedIndices.push(i);
+                selectedIndices.push(i)
+
+                if (delegate.isBackdropNode) {
+                    let children = delegate.getChildrenIndices(true)
+                    for (var child = 0; child < children.length; ++child) {
+                        if (selectedIndices.indexOf(children[child]) === -1) {
+                            selectedIndices.push(children[child])
+                        }
+                    }
+                }
             }
         }
-        delegateSelectionEnded(selectedIndices, modifiers);
+        delegateSelectionEnded(selectedIndices, modifiers)
     }
 }

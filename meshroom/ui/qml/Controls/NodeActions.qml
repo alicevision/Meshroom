@@ -34,8 +34,8 @@ Item {
         if (!nodeRepeater) 
             return null
         for (var i = 0; i < nodeRepeater.count; ++i) {
-            if (nodeRepeater.itemAt(i).node === node)
-                return nodeRepeater.itemAt(i)
+            if (nodeRepeater.getItemAt(i).node === node)
+                return nodeRepeater.getItemAt(i)
         }
         return null
     }

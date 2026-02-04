@@ -32,7 +32,7 @@ from meshroom.core.graphIO import GraphIO
 from meshroom.core.taskManager import TaskManager
 from meshroom.core.submitter import jobManager
 
-from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position
+from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, BackdropNode, Position
 from meshroom.core import submitters, MrNodeType
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
@@ -565,6 +565,7 @@ class UIGraph(QObject):
     @Slot(list)
     def execute(self, nodes: Optional[Union[list[Node], Node]] = None):
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
+        nodes = [n for n in nodes if n.isComputableType]
         self.save()  # always save the graph before computing
         self._taskManager.compute(self._graph, nodes)
         self.updateLockedUndoStack()  # explicitly call the update while it is already computing
@@ -975,6 +976,40 @@ class UIGraph(QObject):
             position: The target position.
         """
         self.push(commands.MoveNodeCommand(self._graph, node, position))
+
+    @Slot(BackdropNode, int, int)
+    def resizeNode(self, node, width, height):
+        """ Resize `node` to the given `width` and `height`.
+
+        Args:
+            node: The node to resize.
+            width: The target width.
+            height: The target height.
+        """
+        with self.groupedGraphModification("Resize Node"):
+            if node.hasInternalAttribute("nodeWidth"):
+                self.setAttribute(node.internalAttribute("nodeWidth"), width)
+            if node.hasInternalAttribute("nodeHeight"):
+                self.setAttribute(node.internalAttribute("nodeHeight"), height)
+
+    @Slot(BackdropNode, int, int, QPoint)
+    def resizeAndMoveNode(self, node, width, height, position=None):
+        """ Resize `node` to the given `width` and `height`, and move it to the given `position`.
+
+        Args:
+            node: The node to resize and move.
+            width: The target width.
+            height: The target height.
+            position: The target position.
+        """
+        with self.groupedGraphModification("Resize and Move Node"):
+            if node.hasInternalAttribute("nodeWidth"):
+                self.setAttribute(node.internalAttribute("nodeWidth"), width)
+            if node.hasInternalAttribute("nodeHeight"):
+                self.setAttribute(node.internalAttribute("nodeHeight"), height)
+
+            if position:
+                self.moveNode(node, Position(position.x(), position.y()))
 
     @Slot(QPoint)
     def moveSelectedNodesBy(self, offset: QPoint):

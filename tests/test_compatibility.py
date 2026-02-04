@@ -361,11 +361,12 @@ def test_upgradeAllNodes():
     os.remove(graphFile)
 
     # Both nodes are CompatibilityNodes
-    assert len(g.compatibilityNodes) == 4
+    assert len(g.compatibilityNodes) == 3
     assert g.node(n1Name).canUpgrade      # description conflict
     assert not g.node(n2Name).canUpgrade  # unknown type
-    assert g.node(n3Name).canUpgrade      # description conflict
     assert not g.node(n4Name).canUpgrade  # unknown type
+    # Input node with a description conflict and no invalidating attribute: the upgrade can be done automatically
+    assert not g.node(n3Name).isCompatibilityNode
 
     # Upgrade all upgradable nodes
     g.upgradeAllNodes()

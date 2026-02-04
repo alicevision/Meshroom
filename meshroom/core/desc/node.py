@@ -15,7 +15,7 @@ from meshroom.core import cgroup
 from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
-from .attribute import StringParam, ColorParam, ChoiceParam
+from .attribute import Attribute, ChoiceParam, ColorParam, IntParam, StringParam
 
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
@@ -56,29 +56,11 @@ class MrNodeType(enum.Enum):
     NODE = enum.auto()
     COMMANDLINE = enum.auto()
     INPUT = enum.auto()
+    BACKDROP = enum.auto()
 
 
-class BaseNode(object):
-    """
-    """
-    cpu = Level.NORMAL
-    gpu = Level.NONE
-    ram = Level.NORMAL
-    packageName = ""
-    internalInputs = [
-        StringParam(
-            name="invalidation",
-            label="Invalidation Message",
-            description="A message that will invalidate the node's output folder.\n"
-                        "This is useful for development, we can invalidate the output of the node "
-                        "when we modify the code.\n"
-                        "It is displayed in bold font in the invalidation/comment messages "
-                        "tooltip.",
-            value="",
-            semantic="multiline",
-            advanced=True,
-            uidIgnoreValue="",  # If the invalidation string is empty, it does not participate to the node's UID
-        ),
+class InternalAttributesFactory:
+    BASIC = [
         StringParam(
             name="comment",
             label="Comments",
@@ -113,6 +95,84 @@ class BaseNode(object):
             invalidate=False,
         )
     ]
+
+    INVALIDATION = [
+        StringParam(
+            name="invalidation",
+            label="Invalidation Message",
+            description="A message that will invalidate the node's output folder.\n"
+                        "This is useful for development, we can invalidate the output of the node "
+                        "when we modify the code.\n"
+                        "It is displayed in bold font in the invalidation/comment messages "
+                        "tooltip.",
+            value="",
+            semantic="multiline",
+            advanced=True,
+            uidIgnoreValue="",  # If the invalidation string is empty, it does not participate to the node's UID
+        ),
+    ]
+
+    RESIZABLE = [
+        IntParam(
+            name="fontSize",
+            label="Font Size",
+            description="Size of the font used to display the comments.",
+            value=12,
+            range=(6, 100, 1),
+            invalidate=False,
+        ),
+        ColorParam(
+            name="fontColor",
+            label="Font Color",
+            description="Color of the font used to display the comments (SVG name or hexadecimal code).",
+            value="",
+            invalidate=False,
+        ),
+        IntParam(
+            name="nodeWidth",
+            label="Node Width",
+            description="Width of the node in the graph editor.",
+            value=600,
+            range=None,
+            invalidate=False,
+            enabled=False,  # Hidden
+        ),
+        IntParam(
+            name="nodeHeight",
+            label="Node Height",
+            description="Height of the node in the graph editor.",
+            value=400,
+            range=None,
+            invalidate=False,
+            enabled=False,  # Hidden
+        ),
+    ]
+
+    @classmethod
+    def getInternalAttributes(cls, mrNodeType: MrNodeType) -> list[Attribute]:
+        paramMap = {
+            MrNodeType.NONE: cls.BASIC,
+            MrNodeType.BASENODE: cls.INVALIDATION + cls.BASIC,
+            MrNodeType.NODE: cls.INVALIDATION + cls.BASIC,
+            MrNodeType.COMMANDLINE: cls.INVALIDATION + cls.BASIC,
+            MrNodeType.INPUT: cls.BASIC,
+            MrNodeType.BACKDROP: cls.BASIC + cls.RESIZABLE,
+        }
+
+        return paramMap.get(mrNodeType)
+
+
+class BaseNode(object):
+    """
+    """
+    cpu = Level.NORMAL
+    gpu = Level.NONE
+    ram = Level.NORMAL
+    packageName = ""
+    _mrNodeType: MrNodeType = MrNodeType.BASENODE
+
+    internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+
     inputs = []
     outputs = []
     size = StaticNodeSize(1)
@@ -130,7 +190,7 @@ class BaseNode(object):
         self.sourceCodeFolder = Path(getfile(self.__class__)).parent.resolve().as_posix()
 
     def getMrNodeType(self):
-        return MrNodeType.BASENODE
+        return self._mrNodeType
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
         return attrValues
@@ -286,24 +346,50 @@ class InputNode(BaseNode):
     """
     Node that does not need to be processed, it is just a placeholder for inputs.
     """
+    _mrNodeType: MrNodeType = MrNodeType.INPUT
+    internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+
     def __init__(self):
         super(InputNode, self).__init__()
 
     def getMrNodeType(self):
-        return MrNodeType.INPUT
+        return self._mrNodeType
 
     def processChunk(self, chunk):
+        pass
+
+    def process(self, node):
+        pass
+
+class BackdropNode(BaseNode):
+    """
+    Node that does not need to be processed, it is just a placeholder for grouping other nodes.
+    """
+    _mrNodeType: MrNodeType = MrNodeType.BACKDROP
+    internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+
+    def __init__(self):
+        super(BackdropNode, self).__init__()
+
+    def getMrNodeType(self):
+        return self._mrNodeType
+
+    def processChunk(self, chunk):
+        pass
+
+    def process(self, node):
         pass
 
 
 class Node(BaseNode):
     pythonExecutable = "python"
+    _mrNodeType: MrNodeType = MrNodeType.NODE
 
     def __init__(self):
         super(Node, self).__init__()
 
     def getMrNodeType(self):
-        return MrNodeType.NODE
+        return self._mrNodeType
 
     def processChunkInEnvironment(self, chunk):
         meshroomComputeCmd = f"{chunk.node.nodeDesc.pythonExecutable} {_MESHROOM_COMPUTE}" + \
@@ -326,12 +412,13 @@ class CommandLineNode(BaseNode):
     commandLine = ""  # need to be defined on the node
     parallelization = None
     commandLineRange = ""
+    _mrNodeType: MrNodeType = MrNodeType.COMMANDLINE
 
     def __init__(self):
         super(CommandLineNode, self).__init__()
 
     def getMrNodeType(self):
-        return MrNodeType.COMMANDLINE
+        return self._mrNodeType
 
     def buildCommandLine(self, chunk) -> str:
         cmdLineVars = chunk.node.createCmdLineVars()

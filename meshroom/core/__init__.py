@@ -344,7 +344,7 @@ def loadAllNodes(folder) -> list[Plugin]:
                     plugin.addNodePlugin(node)
                 nodesStr = ', '.join([node.nodeDescriptor.__name__ for node in nodePlugins])
                 logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
-                plugins.append(plugin)
+            plugins.append(plugin)
     return plugins
 
 

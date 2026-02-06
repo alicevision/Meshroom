@@ -2379,6 +2379,8 @@ class BackdropNode(BaseNode):
     def __init__(self, nodeType: str, position=None, parent=None, uid=None, **kwargs):
         super().__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
 
+        self._chunksCreated = True
+
         if not self.nodeDesc:
             raise UnknownNodeTypeError(nodeType)
 

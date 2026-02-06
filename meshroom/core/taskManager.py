@@ -283,6 +283,7 @@ class TaskManager(BaseObject):
             if not toNodes:
                 toNodes = graph.getLeafNodes(dependenciesOnly=True)
             toNodes = list(toNodes)
+            toNodes = [node for node in toNodes if not node.isBackdropNode]
             allReady = self.checkNodesDependencies(graph, toNodes, "COMPUTATION")
 
             # At this point, toNodes is a list
@@ -425,7 +426,7 @@ class TaskManager(BaseObject):
     def checkNodesDependencies(self, graph, toNodes, context):
         """
         Check dependencies of nodes to process.
-        Update toNodes with computable/submitable nodes only.
+        Update toNodes with computable/submittable nodes only.
 
         Returns:
             bool: True if all the nodes can be processed. False otherwise.
@@ -503,6 +504,7 @@ class TaskManager(BaseObject):
         if not toNodes:
             toNodes = graph.getLeafNodes(dependenciesOnly=True)
         toNodes = list(toNodes)
+        toNodes = [node for node in toNodes if not node.isBackdropNode]
         allReady = self.checkNodesDependencies(graph, toNodes, "SUBMITTING")
 
         # At this point, toNodes is a list

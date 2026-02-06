@@ -291,14 +291,14 @@ Page {
                     Connections {
                         target: ThumbnailCache
                         function onThumbnailCreated(imgSource, callerID) {
-                            let item = gridView.itemAtIndex(callerID);  // item is an Image
+                            let item = homepageGridView.itemAtIndex(callerID);  // item is an Image
                             if (item && item.source === imgSource) {
                                 item.updateThumbnail()
                                 return
                             }
                             // fallback in case the Image cellID changed
-                            for (let idx = 0; idx < gridView.count; idx++) {
-                                item = gridView.itemAtIndex(idx)
+                            for (let idx = 0; idx < homepageGridView.count; idx++) {
+                                item = homepageGridView.itemAtIndex(idx)
                                 if (item && item.source === imgSource) {
                                     item.updateThumbnail()
                                 }

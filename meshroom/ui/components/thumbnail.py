@@ -195,7 +195,8 @@ class ThumbnailCache(QObject):
 
     @staticmethod
     def checkThumbnail(path):
-        """Check if a thumbnail already exists on disk, and if so update its last modification time.
+        """
+        Check if a thumbnail already exists on disk, and if so update its last modification time.
 
         Args:
             path (str): filepath to the thumbnail
@@ -211,7 +212,8 @@ class ThumbnailCache(QObject):
 
     @Slot(QUrl, int, result=QUrl)
     def thumbnail(self, imgSource, callerID):
-        """Retrieve the filepath of the thumbnail corresponding to a given image.
+        """
+        Retrieve the filepath of the thumbnail corresponding to a given image.
 
         If the thumbnail does not exist on disk, it will be created asynchronously.
         When this is done, the thumbnailCreated signal is emitted.
@@ -248,7 +250,8 @@ class ThumbnailCache(QObject):
         return None
 
     def createThumbnail(self, imgSource, callerID):
-        """Load an image, resize it to thumbnail dimensions and save the result in the cache directory.
+        """
+        Load an image, resize it to thumbnail dimensions and save the result in the cache directory.
 
         Args:
             imgSource (QUrl): location of the input image
@@ -291,7 +294,8 @@ class ThumbnailCache(QObject):
         return path
 
     def handleRequestsAsync(self):
-        """Process thumbnail creation requests in LIFO order.
+        """
+        Process thumbnail creation requests in LIFO order.
 
         Note: this operation waits for the cleaning process to finish before starting,
         in order to avoid synchronization issues.
@@ -311,7 +315,8 @@ class ThumbnailCache(QObject):
 
     @Slot()
     def clearRequests(self):
-        """Clear all pending thumbnail creation requests.
+        """
+        Clear all pending thumbnail creation requests.
 
         Requests already under treatment by a worker thread will still be completed.
         """

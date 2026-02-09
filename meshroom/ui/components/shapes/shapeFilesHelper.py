@@ -40,7 +40,8 @@ class ShapeFilesHelper(BaseObject):
         # clear shapeFiles model
         self._shapeFiles.clear()
         # load node shape files
-        self._loadShapeFilesFromAttributes(self._activeProject.selectedNode.attributes)
+        if self._activeProject.selectedNode:
+            self._loadShapeFilesFromAttributes(self._activeProject.selectedNode.attributes)
         self.nodeShapeFilesChanged.emit()
 
     @Slot()

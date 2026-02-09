@@ -25,14 +25,14 @@ class ThumbnailCache(QObject):
 
     This class also takes care of cleaning the thumbnail directory,
     i.e. scanning this directory and removing thumbnails that have not been used for too long.
-    This operation also ensures that the number of thumbnails on disk does not exceed a certain limit, 
+    This operation also ensures that the number of thumbnails on disk does not exceed a certain limit,
     by removing thumbnails if necessary (from least recently used to most recently used).
     Since this operation is done at application startup, it is also performed asynchronously.
 
-    The default time limit is 90 days, 
+    The default time limit is 90 days,
     and can be overriden with the MESHROOM_THUMBNAIL_TIME_LIMIT environment variable.
 
-    The default maximum number of thumbnails on disk is 100000, 
+    The default maximum number of thumbnails on disk is 100000,
     and can be overriden with the MESHROOM_MAX_THUMBNAILS_ON_DISK.
 
     The main use case for thumbnails in Meshroom is in the ImageGallery.

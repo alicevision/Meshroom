@@ -855,7 +855,7 @@ class UIGraph(QObject):
         # Note: We do not check computeSessionUid for the submitted status,
         #       as the source instance of the submit has no importance.
         submitted = any([ch._status.execMode == ExecMode.EXTERN and ch._status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
-        
+
         # Handle nodes with uninitialized chunks
         for node in dfsNodes:
             if node._chunksCreated:
@@ -944,11 +944,11 @@ class UIGraph(QObject):
     @Slot(Node, str, result=str)
     def renameNode(self, node: Node, newName: str):
         """ Triggers the node renaming.
-        
+
         In this function the last `_N` index is removed, then all special characters
-        (everything except letters and numbers) are removed. 
+        (everything except letters and numbers) are removed.
         The name uniqueness will be ensured later by adding a suffix (e.g. `_1`, `_2`, ...)
-        
+
         Labels can be used to have special characters in the displayed name.
 
         Args:

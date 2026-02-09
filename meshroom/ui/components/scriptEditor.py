@@ -44,13 +44,13 @@ class ScriptEditorManager(QObject):
         settings = QSettings()
         settings.beginGroup(self._GROUP)
         return settings.value(self._KEY)
-    
+
     def _hasPreviousScript(self):
         """ Returns whether there is a previous script available.
         """
         # If the current index is greater than the first
         return self._index > 0
-    
+
     def _hasNextScript(self):
         """ Returns whethere there is a new script available to load.
         """
@@ -135,7 +135,7 @@ class ScriptEditorManager(QObject):
         settings.beginGroup(self._GROUP)
         settings.setValue(self._KEY, script)
         settings.sync()
-    
+
     scriptIndexChanged = Signal()
 
     hasPreviousScript = Property(bool, _hasPreviousScript, notify=scriptIndexChanged)

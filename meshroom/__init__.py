@@ -82,8 +82,7 @@ class MeshroomExitStatus(IntEnum):
     """
     SUCCESS = 0
     ERROR = 1
-    # In some farm tools jobs are automatically re-tried, 
-    # using ERROR_NO_RETRY will try to prevent that
+    # In some farm tools jobs are automatically re-tried, using ERROR_NO_RETRY will try to prevent that
     ERROR_NO_RETRY = -999  # It's actually -999 % 256 => 25
 
 

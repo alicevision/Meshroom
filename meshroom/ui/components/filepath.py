@@ -122,7 +122,7 @@ class FilepathHelper(QObject):
             return resolved
 
         return fileUtils.resolvePath(vp, path)
-    
+
     @Slot(str, result="QVariantList")
     @Slot(str, str, result="QVariantList")
     def getFilenamesFromFolder(self, folderPath: str, extension: str = None):

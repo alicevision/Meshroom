@@ -276,7 +276,7 @@ class LocalFarmSubmitter(BaseSubmitter):
                 if c._status.status == Status.SUCCESS:
                     iterationsToIgnore.append(c.range.iteration)
             chunkParams = {
-                "start": 0, "end": nbBlocks - 1, "step": 1, 
+                "start": 0, "end": nbBlocks - 1, "step": 1,
                 "ignoreIterations": iterationsToIgnore,
                 "chunkCmdArgs": cmdArgs
             }

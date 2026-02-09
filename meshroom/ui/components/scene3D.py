@@ -113,7 +113,6 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector3D, QVector3D, result=QQuaternion)
     def rotationBetweenAandB(self, A, B):
-
         A = A/A.length()
         B = B/B.length()
 
@@ -133,7 +132,6 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector3D, QVector2D, QVector2D, result=QVector3D)
     def updatePanorama(self, euler, ptStart, ptEnd):
-
         delta = 1e-3
 
         #Get initial rotation
@@ -145,7 +143,6 @@ class Transformations3DHelper(QObject):
         vEnd = self.fromEquirectangular(QVector3D(ptEnd))
 
         qAdd = QQuaternion.rotationTo(vStart, vEnd)
-
 
         #Get the 3D point on unit sphere which would correspond to the no rotation +X
         vCurrent = qAdd.rotatedVector(vStartdY)
@@ -173,7 +170,6 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector3D, QVector2D, QVector2D, result=QVector3D)
     def updatePanoramaInPlane(self, euler, ptStart, ptEnd):
-
         delta = 1e-3
 
         #Get initial rotation
@@ -354,7 +350,7 @@ class Transformations3DHelper(QObject):
         U = M * quaternion * M
 
         return U.toEulerAngles()
-    
+
     @Slot(QVector3D, QVector3D, float, float, result=QVector3D)
     def getRotatedCameraViewVector(self, camereViewVector, cameraUpVector, pitch, yaw):
         """ Compute the rotated camera view vector with given pitch and yaw (in degrees).
@@ -370,7 +366,7 @@ class Transformations3DHelper(QObject):
         yawRot = QQuaternion.fromAxisAndAngle(cameraUpVector, yaw)
         pitchRot = QQuaternion.fromAxisAndAngle(cameraSideVector, pitch)
         return (yawRot * pitchRot).rotatedVector(camereViewVector)
-    
+
     @Slot(QVector3D, QMatrix4x4, Qt3DRender.QCamera, QSize, result=float)
     def computeScaleUnitFromModelMatrix(self, axis, modelMat, camera, windowSize):
         """ Compute the length of the screen projected vector axis unit transformed by the model matrix.

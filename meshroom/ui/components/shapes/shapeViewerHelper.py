@@ -19,13 +19,13 @@ class ShapeViewerHelper(BaseObject):
 
     def _getContainerWidth(self) -> float:
         return self._containerWidth
-    
+
     def _getContainerHeight(self) -> float:
         return self._containerHeight
-    
+
     def _getContainerScale(self) -> float:
         return self._containerScale
-    
+
     def _setSelectedShapeName(self, shapeName:str):
         self._selectedShapeName = shapeName
         self.selectedShapeNameChanged.emit()
@@ -42,13 +42,13 @@ class ShapeViewerHelper(BaseObject):
         self._containerScale = scale
         self.containerScaleChanged.emit()
 
-    @Slot(str, result=Variant) 
+    @Slot(str, result=Variant)
     def getDefaultObservation(self, shapeType: str) -> Variant:
-        """ 
+        """
         Helper function to create a shape default observation.
         """
         match shapeType:
-            case "Point2d":   
+            case "Point2d":
                 return { "x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5}
             case "Line2d":
                 return { "a": { "x": self._containerWidth * 0.4, "y": self._containerHeight * 0.4},
@@ -56,7 +56,7 @@ class ShapeViewerHelper(BaseObject):
             case "Circle":
                 return { "center": {"x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5},
                          "radius": self._containerWidth * 0.1}
-            case "Rectangle": 
+            case "Rectangle":
                 return { "center": { "x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5},
                          "size": { "width": self._containerWidth * 0.2, "height": self._containerHeight * 0.2}}
         return None

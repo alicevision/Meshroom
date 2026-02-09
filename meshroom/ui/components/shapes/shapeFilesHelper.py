@@ -30,7 +30,7 @@ class ShapeFilesHelper(BaseObject):
             if isinstance(attribute, (ListAttribute, GroupAttribute)):
                 self._loadShapeFilesFromAttributes(attribute.value)
             elif attribute.type == "File" and attribute.desc.semantic == "shapeFile":
-                self._shapeFiles.append(ShapeFile(fileAttribute=attribute, 
+                self._shapeFiles.append(ShapeFile(fileAttribute=attribute,
                                                   viewId=self._activeProject.selectedViewId,
                                                   parent=self._shapeFiles))
 
@@ -54,7 +54,7 @@ class ShapeFilesHelper(BaseObject):
         """Callback when the active project selected node changes."""
         # disconnect internalFolderChanged signal
         if self._currentNode is not None:
-            try: 
+            try:
                 self._currentNode.internalFolderChanged.disconnect(self._loadShapeFiles)
             except RuntimeError:
                 # Signal was already disconnected or never connected
@@ -70,7 +70,7 @@ class ShapeFilesHelper(BaseObject):
         # update current node
         self._currentNode = self._activeProject.selectedNode
         # connect internalFolderChanged signal
-        try: 
+        try:
             self._currentNode.internalFolderChanged.connect(self._loadShapeFiles)
         except RuntimeError:
             # Signal was already disconnected or never connected

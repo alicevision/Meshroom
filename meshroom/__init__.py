@@ -184,6 +184,10 @@ def setupEnvironment(backend=Backend.STANDALONE):
             logging.debug(f"Add to {key}: {value}")
             addToEnvPath(key, value, 0)
 
+        libDir = os.path.join(rootDir, "lib")
+        if not libDir in os.environ.get("PYTHONPATH"):
+            addToEnvPath("PYTHONPATH", libDir, 0)
+
         # Add all available plugins
         if os.path.exists(pluginsDir):
             subfolders = [f.path for f in os.scandir(pluginsDir) if f.is_dir()]

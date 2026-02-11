@@ -2275,6 +2275,10 @@ class Node(BaseNode):
         # Empty list
         self._chunks.setObjectList([])
         self._chunkPlaceholder.setObjectList([])
+        # Reset node status to ensure getGlobalStatus() returns NONE during the reset.
+        # This prevents updateLocked() from using a stale status (e.g. SUCCESS or SUBMITTED)
+        # which could cause the node to be incorrectly locked.
+        self._nodeStatus.status = Status.NONE
         # Recreate list with reset values (1 chunk or the static size)
         if not self.isParallelized:
             self.setSize(self.nodeDesc.size.computeSize(self))

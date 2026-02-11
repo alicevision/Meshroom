@@ -152,6 +152,8 @@ class Attribute(BaseObject):
                 # support of relative variables (when self.node._expVars was not used to evaluate
                 # expressions in the attribute)
                 return substituted
+            except (ValueError):
+                return ""
         return self.value
 
     def _getValue(self):

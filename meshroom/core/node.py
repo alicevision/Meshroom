@@ -1798,14 +1798,14 @@ class BaseNode(BaseObject):
         Returns:
             Status: the node global status
         """
-        if isinstance(self.nodeDesc, desc.InputNode):
+        if self.isInputNode:
             return Status.INPUT
         if not self._chunksCreated:
             # Get status from nodeStatus
             return self._nodeStatus.status
         if not self._chunks:
             return Status.NONE
-        if len( self._chunks) == 1:
+        if len(self._chunks) == 1:
             return self._chunks[0]._status.status
 
         chunksStatus = [chunk._status.status for chunk in self._chunks]
@@ -2266,7 +2266,7 @@ class Node(BaseNode):
         """ Set chunks on the node.
         # TODO : Maybe don't delete chunks if we will recreate them as before ?
         """
-        if isinstance(self.nodeDesc, desc.InputNode):
+        if self.isInputNode:
             self._chunksCreated = True
             return
         # Disconnect signals
@@ -2354,7 +2354,7 @@ class Node(BaseNode):
         """ Create chunks when computation is about to start. """
         if self._chunksCreated:
             return
-        if isinstance(self.nodeDesc, desc.InputNode):
+        if self.isInputNode:
             self._chunksCreated = True
             self.chunksChanged.emit()
             return
@@ -2378,6 +2378,8 @@ class Node(BaseNode):
 class BackdropNode(BaseNode):
     def __init__(self, nodeType: str, position=None, parent=None, uid=None, **kwargs):
         super().__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
+
+        self._chunksCreated = True
 
         if not self.nodeDesc:
             raise UnknownNodeTypeError(nodeType)

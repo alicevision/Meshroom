@@ -107,8 +107,9 @@ if args.node:
               f"See file: \"{node.nodeStatusFile}\".")
         sys.exit(-1)
 
-    if node._isInputNode():
+    if node.isInputNode:
         print(f"InputNode: No computation to do.")
+        sys.exit(0)
 
     if not args.forceStatus and not args.forceCompute:
         if args.iteration != -1:
@@ -134,12 +135,12 @@ if args.node:
     if args.iteration != -1:
         chunk = node.chunks[args.iteration]
         if chunk._status.status == Status.STOPPED:
-            print(f"Chunk {chunk} : status is STOPPED")
+            print(f"Chunk {chunk}: status is STOPPED")
             killRunningJob(node)
         chunk.process(args.forceCompute, args.inCurrentEnv)
     else:
         if node.nodeStatus.status == Status.STOPPED:
-            print(f"Node {node} : status is STOPPED")
+            print(f"Node {node}: status is STOPPED")
             killRunningJob(node)
         node.process(args.forceCompute, args.inCurrentEnv)
     node.postprocess()

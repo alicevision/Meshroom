@@ -34,12 +34,12 @@ class Scene3DHelper(QObject):
 
     @Slot(Qt3DCore.QEntity, result=int)
     def vertexCount(self, entity):
-        """ Return vertex count based on children QGeometryRenderer 'vertexCount'."""
+        """ Return vertex count based on children QGeometryRenderer 'vertexCount'. """
         return sum([renderer.vertexCount() for renderer in entity.findChildren(Qt3DRender.QGeometryRenderer)])
 
     @Slot(Qt3DCore.QEntity, result=int)
     def faceCount(self, entity):
-        """ Returns face count based on children QGeometry buffers size."""
+        """ Returns face count based on children QGeometry buffers size. """
         count = 0
         for geo in entity.findChildren(Qt3DCore.QGeometry):
             count += sum([attr.count() for attr in geo.attributes() if attr.name() == "vertexPosition"])
@@ -113,7 +113,6 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector3D, QVector3D, result=QQuaternion)
     def rotationBetweenAandB(self, A, B):
-
         A = A/A.length()
         B = B/B.length()
 
@@ -133,31 +132,29 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector3D, QVector2D, QVector2D, result=QVector3D)
     def updatePanorama(self, euler, ptStart, ptEnd):
-
         delta = 1e-3
 
-        #Get initial rotation
+        # Get initial rotation
         qStart = QQuaternion.fromEulerAngles(euler.y(), euler.x(), euler.z())
 
-        #Convert input to points on unit sphere
+        # Convert input to points on unit sphere
         vStart = self.fromEquirectangular(QVector3D(ptStart))
         vStartdY = self.fromEquirectangular(QVector3D(ptStart.x(), ptStart.y() + delta, 0))
         vEnd = self.fromEquirectangular(QVector3D(ptEnd))
 
         qAdd = QQuaternion.rotationTo(vStart, vEnd)
 
-
-        #Get the 3D point on unit sphere which would correspond to the no rotation +X
+        # Get the 3D point on unit sphere which would correspond to the no rotation +X
         vCurrent = qAdd.rotatedVector(vStartdY)
         vIdeal = self.fromEquirectangular(QVector3D(ptEnd.x(), ptEnd.y() + delta, 0))
 
-        #project on rotation plane
+        # Project on rotation plane
         lambdaEnd = 1 / QVector3D.dotProduct(vEnd, vCurrent)
         lambdaIdeal = 1 / QVector3D.dotProduct(vEnd, vIdeal)
         vPlaneCurrent = lambdaEnd * vCurrent
         vPlaneIdeal = lambdaIdeal * vIdeal
 
-        #Get the directions
+        # Get the directions
         rotStart = (vPlaneCurrent - vEnd).normalized()
         rotEnd = (vPlaneIdeal - vEnd).normalized()
 
@@ -173,26 +170,25 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector3D, QVector2D, QVector2D, result=QVector3D)
     def updatePanoramaInPlane(self, euler, ptStart, ptEnd):
-
         delta = 1e-3
 
-        #Get initial rotation
+        # Get initial rotation
         qStart = QQuaternion.fromEulerAngles(euler.y(), euler.x(), euler.z())
 
-        #Convert input to points on unit sphere
+        # Convert input to points on unit sphere
         vStart = self.fromEquirectangular(QVector3D(ptStart))
         vEnd = self.fromEquirectangular(QVector3D(ptEnd))
 
-        #Get the 3D point on unit sphere which would correspond to the no rotation +X
+        # Get the 3D point on unit sphere which would correspond to the no rotation +X
         vIdeal = self.fromEquirectangular(QVector3D(ptStart.x(), ptStart.y() + delta, 0))
 
-        #project on rotation plane
+        # Project on rotation plane
         lambdaEnd = 1 / QVector3D.dotProduct(vStart, vEnd)
         lambdaIdeal = 1 / QVector3D.dotProduct(vStart, vIdeal)
         vPlaneEnd = lambdaEnd * vEnd
         vPlaneIdeal = lambdaIdeal * vIdeal
 
-        #Get the directions
+        # Get the directions
         rotStart = (vPlaneEnd - vStart).normalized()
         rotEnd = (vPlaneIdeal - vStart).normalized()
 
@@ -208,13 +204,14 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector4D, Qt3DRender.QCamera, QSize, result=QVector2D)
     def pointFromWorldToScreen(self, point, camera, windowSize):
-        """ Compute the Screen point corresponding to a World Point.
-            Args:
-                point (QVector4D): point in world coordinates
-                camera (QCamera): camera viewing the scene
-                windowSize (QSize): size of the Scene3D window
-            Returns:
-                QVector2D: point in screen coordinates
+        """
+        Compute the Screen point corresponding to a World Point.
+        Args:
+            point (QVector4D): point in world coordinates
+            camera (QCamera): camera viewing the scene
+            windowSize (QSize): size of the Scene3D window
+        Returns:
+            QVector2D: point in screen coordinates
         """
         # Transform the point from World Coord to Normalized Device Coord
         viewMatrix = camera.transform().matrix().inverted()
@@ -234,13 +231,14 @@ class Transformations3DHelper(QObject):
 
     @Slot(Qt3DCore.QTransform, QMatrix4x4, QMatrix4x4, QMatrix4x4, QVector3D)
     def relativeLocalTranslate(self, transformQtInstance, initialPosMat, initialRotMat, initialScaleMat, translateVec):
-        """ Translate the QTransform in its local space relatively to an initial state.
-            Args:
-                transformQtInstance (QTransform): reference to the Transform to modify
-                initialPosMat (QMatrix4x4): initial position matrix
-                initialRotMat (QMatrix4x4): initial rotation matrix
-                initialScaleMat (QMatrix4x4): initial scale matrix
-                translateVec (QVector3D): vector used for the local translation
+        """
+        Translate the QTransform in its local space relatively to an initial state.
+        Args:
+            transformQtInstance (QTransform): reference to the Transform to modify
+            initialPosMat (QMatrix4x4): initial position matrix
+            initialRotMat (QMatrix4x4): initial rotation matrix
+            initialScaleMat (QMatrix4x4): initial scale matrix
+            translateVec (QVector3D): vector used for the local translation
         """
         # Compute the translation transformation matrix
         translationMat = QMatrix4x4()
@@ -252,14 +250,15 @@ class Transformations3DHelper(QObject):
 
     @Slot(Qt3DCore.QTransform, QMatrix4x4, QQuaternion, QMatrix4x4, QVector3D, int)
     def relativeLocalRotate(self, transformQtInstance, initialPosMat, initialRotQuat, initialScaleMat, axis, degree):
-        """ Rotate the QTransform in its local space relatively to an initial state.
-            Args:
-                transformQtInstance (QTransform): reference to the Transform to modify
-                initialPosMat (QMatrix4x4): initial position matrix
-                initialRotQuat (QQuaternion): initial rotation quaternion
-                initialScaleMat (QMatrix4x4): initial scale matrix
-                axis (QVector3D): axis to rotate around
-                degree (int): angle of rotation in degree
+        """
+        Rotate the QTransform in its local space relatively to an initial state.
+        Args:
+            transformQtInstance (QTransform): reference to the Transform to modify
+            initialPosMat (QMatrix4x4): initial position matrix
+            initialRotQuat (QQuaternion): initial rotation quaternion
+            initialScaleMat (QMatrix4x4): initial scale matrix
+            axis (QVector3D): axis to rotate around
+            degree (int): angle of rotation in degree
         """
         # Compute the transformation quaternion from axis and angle in degrees
         transformQuat = QQuaternion.fromAxisAndAngle(axis, degree)
@@ -301,11 +300,12 @@ class Transformations3DHelper(QObject):
 
     @Slot(QMatrix4x4, result="QVariant")
     def modelMatrixToMatrices(self, modelMat):
-        """ Decompose a model matrix into individual matrices.
-            Args:
-                modelMat (QMatrix4x4): model matrix to decompose
-            Returns:
-                QVariant: object containing position, rotation and scale matrices + rotation quaternion
+        """
+        Decompose a model matrix into individual matrices.
+        Args:
+            modelMat (QMatrix4x4): model matrix to decompose
+        Returns:
+            QVariant: object containing position, rotation and scale matrices + rotation quaternion
         """
         decomposition = self.decomposeModelMatrix(modelMat)
 
@@ -321,13 +321,14 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector3D, QVector3D, QVector3D, result=QMatrix4x4)
     def computeModelMatrixWithEuler(self, translation, rotation, scale):
-        """ Compute a model matrix from three Vector3D.
-            Args:
-                translation (QVector3D): position in space (x, y, z)
-                rotation (QVector3D): Euler angles in degrees (x, y, z)
-                scale (QVector3D): scale of the object (x, y, z)
-            Returns:
-                QMatrix4x4: corresponding model matrix
+        """
+        Compute a model matrix from three Vector3D.
+        Args:
+            translation (QVector3D): position in space (x, y, z)
+            rotation (QVector3D): Euler angles in degrees (x, y, z)
+            scale (QVector3D): scale of the object (x, y, z)
+        Returns:
+            QMatrix4x4: corresponding model matrix
         """
         posMat = QMatrix4x4()
         posMat.translate(translation)
@@ -344,8 +345,8 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector3D, result=QVector3D)
     def convertRotationFromCV2GL(self, rotation):
-        """ Convert rotation (euler angles) from Computer Vision
-            to Computer Graphics coordinate system (like opengl).
+        """
+        Convert rotation (euler angles) from Computer Vision to Computer Graphics coordinate system (like OpenGL).
         """
         M = QQuaternion.fromAxisAndAngle(QVector3D(1, 0, 0), 180.0)
 
@@ -354,33 +355,35 @@ class Transformations3DHelper(QObject):
         U = M * quaternion * M
 
         return U.toEulerAngles()
-    
+
     @Slot(QVector3D, QVector3D, float, float, result=QVector3D)
     def getRotatedCameraViewVector(self, camereViewVector, cameraUpVector, pitch, yaw):
-        """ Compute the rotated camera view vector with given pitch and yaw (in degrees).
-            Args:
-                camereViewVector (QVector3D): Camera view vector, the displacement from the camera position to its target
-                cameraUpVector (QVector3D): Camera up vector, the direction the top of the camera is facing
-                pitch (float): Rotation pitch (in degrees)
-                yaw (float): Rotation yaw (in degrees)
-            Returns:
-                QVector3D: rotated camera view vector
+        """
+        Compute the rotated camera view vector with given pitch and yaw (in degrees).
+        Args:
+            camereViewVector (QVector3D): Camera view vector, the displacement from the camera position to its target
+            cameraUpVector (QVector3D): Camera up vector, the direction the top of the camera is facing
+            pitch (float): Rotation pitch (in degrees)
+            yaw (float): Rotation yaw (in degrees)
+        Returns:
+            QVector3D: rotated camera view vector
         """
         cameraSideVector = QVector3D.crossProduct(camereViewVector, cameraUpVector)
         yawRot = QQuaternion.fromAxisAndAngle(cameraUpVector, yaw)
         pitchRot = QQuaternion.fromAxisAndAngle(cameraSideVector, pitch)
         return (yawRot * pitchRot).rotatedVector(camereViewVector)
-    
+
     @Slot(QVector3D, QMatrix4x4, Qt3DRender.QCamera, QSize, result=float)
     def computeScaleUnitFromModelMatrix(self, axis, modelMat, camera, windowSize):
-        """ Compute the length of the screen projected vector axis unit transformed by the model matrix.
-            Args:
-                axis (QVector3D): chosen axis ((1,0,0) or (0,1,0) or (0,0,1))
-                modelMat (QMatrix4x4): model matrix used for the transformation
-                camera (QCamera): camera viewing the scene
-                windowSize (QSize): size of the window in pixels
-            Returns:
-                float: length (in pixels)
+        """
+        Compute the length of the screen projected vector axis unit transformed by the model matrix.
+        Args:
+            axis (QVector3D): chosen axis ((1,0,0) or (0,1,0) or (0,0,1))
+            modelMat (QMatrix4x4): model matrix used for the transformation
+            camera (QCamera): camera viewing the scene
+            windowSize (QSize): size of the window in pixels
+        Returns:
+            float: length (in pixels)
         """
         decomposition = self.decomposeModelMatrix(modelMat)
 
@@ -411,11 +414,12 @@ class Transformations3DHelper(QObject):
         return newMat
 
     def decomposeModelMatrix(self, modelMat):
-        """ Decompose a model matrix into individual component.
-            Args:
-                modelMat (QMatrix4x4): model matrix to decompose
-            Returns:
-                QVariant: object containing translation and scale vectors + rotation quaternion
+        """
+        Decompose a model matrix into individual component.
+        Args:
+            modelMat (QMatrix4x4): model matrix to decompose
+        Returns:
+            QVariant: object containing translation and scale vectors + rotation quaternion
         """
         translation = modelMat.column(3).toVector3D()
         quaternion = QQuaternion.fromDirection(modelMat.column(2).toVector3D(), modelMat.column(1).toVector3D())

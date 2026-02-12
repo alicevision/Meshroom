@@ -1,3 +1,7 @@
+# Linting: Harmonize docstrings and comments
+039e0620ad05d673a2ef9aa501e9a509219671c9
+# Linting: Remove all trailing whitespaces
+2c2b067f072856f2579c644b5f7858da0275be3c
 # [core] attribute: Apply linting
 b8c173ddd490dc3bf28b193697d675e44616c6f5
 # Linting: Remove trailing whitespaces

@@ -25,14 +25,14 @@ class ThumbnailCache(QObject):
 
     This class also takes care of cleaning the thumbnail directory,
     i.e. scanning this directory and removing thumbnails that have not been used for too long.
-    This operation also ensures that the number of thumbnails on disk does not exceed a certain limit, 
+    This operation also ensures that the number of thumbnails on disk does not exceed a certain limit,
     by removing thumbnails if necessary (from least recently used to most recently used).
     Since this operation is done at application startup, it is also performed asynchronously.
 
-    The default time limit is 90 days, 
+    The default time limit is 90 days,
     and can be overriden with the MESHROOM_THUMBNAIL_TIME_LIMIT environment variable.
 
-    The default maximum number of thumbnails on disk is 100000, 
+    The default maximum number of thumbnails on disk is 100000,
     and can be overriden with the MESHROOM_MAX_THUMBNAILS_ON_DISK.
 
     The main use case for thumbnails in Meshroom is in the ImageGallery.
@@ -195,7 +195,8 @@ class ThumbnailCache(QObject):
 
     @staticmethod
     def checkThumbnail(path):
-        """Check if a thumbnail already exists on disk, and if so update its last modification time.
+        """
+        Check if a thumbnail already exists on disk, and if so update its last modification time.
 
         Args:
             path (str): filepath to the thumbnail
@@ -211,7 +212,8 @@ class ThumbnailCache(QObject):
 
     @Slot(QUrl, int, result=QUrl)
     def thumbnail(self, imgSource, callerID):
-        """Retrieve the filepath of the thumbnail corresponding to a given image.
+        """
+        Retrieve the filepath of the thumbnail corresponding to a given image.
 
         If the thumbnail does not exist on disk, it will be created asynchronously.
         When this is done, the thumbnailCreated signal is emitted.
@@ -248,7 +250,8 @@ class ThumbnailCache(QObject):
         return None
 
     def createThumbnail(self, imgSource, callerID):
-        """Load an image, resize it to thumbnail dimensions and save the result in the cache directory.
+        """
+        Load an image, resize it to thumbnail dimensions and save the result in the cache directory.
 
         Args:
             imgSource (QUrl): location of the input image
@@ -291,7 +294,8 @@ class ThumbnailCache(QObject):
         return path
 
     def handleRequestsAsync(self):
-        """Process thumbnail creation requests in LIFO order.
+        """
+        Process thumbnail creation requests in LIFO order.
 
         Note: this operation waits for the cleaning process to finish before starting,
         in order to avoid synchronization issues.
@@ -311,7 +315,8 @@ class ThumbnailCache(QObject):
 
     @Slot()
     def clearRequests(self):
-        """Clear all pending thumbnail creation requests.
+        """
+        Clear all pending thumbnail creation requests.
 
         Requests already under treatment by a worker thread will still be completed.
         """

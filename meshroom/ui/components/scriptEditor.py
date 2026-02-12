@@ -11,8 +11,7 @@ from PySide6.QtCore import Property, QObject, Slot, Signal, QSettings
 
 
 class ScriptEditorManager(QObject):
-    """ Manages the script editor history and logs.
-    """
+    """ Manages the script editor history and logs. """
 
     _GROUP = "ScriptEditor"
     _KEY = "script"
@@ -27,8 +26,7 @@ class ScriptEditorManager(QObject):
 
     # Protected
     def _defaultScript(self):
-        """ Returns the default script for the script editor.
-        """
+        """ Returns the default script for the script editor. """
         lines = (
             "from meshroom.ui import uiInstance\n",
             "graph = uiInstance.activeProject.graph",
@@ -39,21 +37,19 @@ class ScriptEditorManager(QObject):
         return "\n".join(lines)
 
     def _lastScript(self):
-        """ Returns the last script from the user settings.
-        """
+        """ Returns the last script from the user settings. """
         settings = QSettings()
         settings.beginGroup(self._GROUP)
         return settings.value(self._KEY)
-    
+
     def _hasPreviousScript(self):
         """ Returns whether there is a previous script available.
         """
         # If the current index is greater than the first
         return self._index > 0
-    
+
     def _hasNextScript(self):
-        """ Returns whethere there is a new script available to load.
-        """
+        """ Returns whethere there is a new script available to load. """
         # If the current index is lower than the available indexes
         return self._index < (len(self._history) - 1)
 
@@ -98,8 +94,10 @@ class ScriptEditorManager(QObject):
 
     @Slot(result=str)
     def getNextScript(self):
-        """ Get the next entry in the history of executed scripts and update the index adequately.
-            If there is no next entry, return an empty string. """
+        """
+        Get the next entry in the history of executed scripts and update the index adequately.
+        If there is no next entry, return an empty string.
+        """
         if self._index + 1 < len(self._history) and len(self._history) > 0:
             self._index = self._index + 1
             self.scriptIndexChanged.emit()
@@ -108,8 +106,10 @@ class ScriptEditorManager(QObject):
 
     @Slot(result=str)
     def getPreviousScript(self):
-        """ Get the previous entry in the history of executed scripts and update the index adequately.
-            If there is no previous entry, return an empty string. """
+        """
+        Get the previous entry in the history of executed scripts and update the index adequately.
+        If there is no previous entry, return an empty string.
+        """
         if self._index - 1 >= 0 and self._index - 1 < len(self._history):
             self._index = self._index - 1
             self.scriptIndexChanged.emit()
@@ -120,13 +120,13 @@ class ScriptEditorManager(QObject):
 
     @Slot(result=str)
     def loadLastScript(self):
-        """ Returns the last executed script from the prefs.
-        """
+        """ Returns the last executed script from the prefs. """
         return self._lastScript() or self._defaultScript()
 
     @Slot(str)
     def saveScript(self, script):
-        """ Returns the last executed script from the prefs.
+        """
+        Returns the last executed script from the prefs.
 
         Args:
             script (str): The script to save.
@@ -135,7 +135,7 @@ class ScriptEditorManager(QObject):
         settings.beginGroup(self._GROUP)
         settings.setValue(self._KEY, script)
         settings.sync()
-    
+
     scriptIndexChanged = Signal()
 
     hasPreviousScript = Property(bool, _hasPreviousScript, notify=scriptIndexChanged)
@@ -165,8 +165,7 @@ class CharFormat(QtGui.QTextCharFormat):
 
 
 class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
-    """Syntax highlighter for the Python language.
-    """
+    """ Syntax highlighter for the Python language. """
 
     # Syntax styles that can be shared by all languages
     STYLES = {
@@ -208,7 +207,8 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
     braces = (r"\{", r"\}", r"\(", r"\)", r"\[", r"\]")
 
     def __init__(self, parent=None):
-        """ Constructor.
+        """
+        Constructor.
 
         Keyword Args:
             parent (QObject): The QObject parent from the QML side.
@@ -223,8 +223,7 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
 
     # Private
     def __rules(self):
-        """ Formatting rules.
-        """
+        """ Formatting rules. """
         # Set of rules accordind to which the highlight should occur
         rules = []
 
@@ -262,7 +261,8 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
         return rules
 
     def highlightBlock(self, text):
-        """ Applies syntax highlighting to the given block of text.
+        """
+        Applies syntax highlighting to the given block of text.
 
         Args:
             text (str): The text to highlight.
@@ -283,12 +283,12 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
                 index = match.capturedStart()
 
     def textDoc(self):
-        """ Returns the document being highlighted.
-        """
+        """ Returns the document being highlighted. """
         return self._document
 
     def setTextDocument(self, document):
-        """ Sets the document on the Highlighter.
+        """
+        Sets the document on the Highlighter.
 
         Args:
             document (QtQuick.QQuickTextDocument): The document from the QML engine.

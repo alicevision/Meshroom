@@ -69,7 +69,8 @@ class FilesModTimePollerThread(QObject):
         self._threadPool.join()
 
     def start(self, files=None):
-        """ Start polling thread.
+        """
+        Start polling thread.
 
         Args:
             files: the list of files to monitor
@@ -85,7 +86,8 @@ class FilesModTimePollerThread(QObject):
         self._thread.start()
 
     def setFiles(self, files):
-        """ Set the list of files to monitor
+        """
+        Set the list of files to monitor.
 
         Args:
             files: the list of files to monitor
@@ -287,7 +289,7 @@ class GraphLayout(QObject):
         maxDepth = max([getDepth(n) for n in self.graph.nodes.values()])
         grid = [[] for _ in range(maxDepth + 1)]
 
-        # retrieve reference depth from start node
+        # Retrieve reference depth from start node
         zeroDepth = getDepth(self.graph.nodes.at(fromIndex)) if fromIndex > 0 else 0
         for i in range(fromIndex, toIndex + 1):
             n = self.graph.nodes.at(i)
@@ -365,7 +367,8 @@ class GraphLayout(QObject):
 
 
 class UIGraph(QObject):
-    """ High level wrapper over core.Graph, with additional features dedicated to UI integration.
+    """
+    High level wrapper over core.Graph, with additional features dedicated to UI integration.
 
     UIGraph exposes undoable methods on its graph and computation in a separate thread.
     It also provides a monitoring of all its computation units (NodeChunks).
@@ -408,19 +411,19 @@ class UIGraph(QObject):
         self._graph.statusUpdated.connect(self.updateChunkMonitor)
         self._taskManager.update(self._graph)
 
-        # update and connect chunks when the graph is set for the first time
+        # Update and connect chunks when the graph is set for the first time
         self.updateChunks()
 
-        # perform auto-layout if graph does not provide nodes positions
+        # Perform auto-layout if graph does not provide nodes positions
         if GraphIO.Features.NodesPositions not in self._graph.fileFeatures:
             self._layout.reset()
-            # clear undo-stack after layout
+            # Clear undo-stack after layout
             self._undoStack.clear()
         else:
             bbox = self._layout.positionBoundingBox()
             if bbox[2] == 0 and bbox[3] == 0:
                 self._layout.reset()
-                # clear undo-stack after layout
+                # Clear undo-stack after layout
                 self._undoStack.clear()
 
         self._nodeSelection.setModel(self._graph.nodes)
@@ -604,7 +607,7 @@ class UIGraph(QObject):
                 self._taskManager.removeNode(n, displayList=True, processList=True)
 
     def isChunkComputingLocally(self, chunk):
-        # update graph computing status
+        # Update graph computing status
         computingLocally = chunk._status.execMode == ExecMode.LOCAL and \
                            (sessionUid in (chunk.node._nodeStatus.submitterSessionUid, chunk._status.computeSessionUid)) and \
                            (chunk._status.status in (Status.RUNNING, Status.SUBMITTED))
@@ -618,7 +621,7 @@ class UIGraph(QObject):
 
     @Slot(NodeChunk)
     def stopTask(self, chunk: NodeChunk):
-        """ Stop the selected task """
+        """ Stop the selected task. """
         chunk.updateStatusFromCache()
         if not chunk.isAlreadySubmitted():
             return
@@ -634,7 +637,7 @@ class UIGraph(QObject):
             else:
                 chunk.updateStatusFromCache()
                 chunk.upgradeStatusTo(Status.STOPPED)
-                # TODO : Stop depending nodes ?
+                # TODO: Stop depending nodes?
                 self.parent().showMessage(f"Stopped chunk {chunkIteration} of {node.label}")
         else:
             chunk.stopProcess()
@@ -649,7 +652,7 @@ class UIGraph(QObject):
 
     @Slot(Node)
     def stopNode(self, node: Node):
-        """ Stop the selected task """
+        """ Stop the selected task. """
         job = jobManager.getNodeJob(node)
         if job:
             try:
@@ -668,7 +671,7 @@ class UIGraph(QObject):
 
     @Slot(NodeChunk)
     def restartTask(self, chunk: NodeChunk):
-        """ Relaunch a stopped task """
+        """ Relaunch a stopped task. """
         node = chunk.node
         job = jobManager.getNodeJob(node)
         if job:
@@ -693,8 +696,9 @@ class UIGraph(QObject):
 
     @Slot(NodeChunk)
     def skipTask(self, chunk: NodeChunk):
-        """ Skip the task : the job will continue as if the task succeeded
-        In local mode, the chunk status will be set to success
+        """
+        Skip the task: the job will continue as if the task succeeded.
+        In local mode, the chunk status will be set to success.
         """
         chunk.updateStatusFromCache()
         node = chunk.node
@@ -717,8 +721,9 @@ class UIGraph(QObject):
 
     @Slot(Node)
     def pauseJob(self, node: Node):
-        """ Pause the running job : cancel all scheduled tasks.
-        Current task don't stop but future tasks won't be launched
+        """
+        Pause the running job : cancel all scheduled tasks.
+        Current task is not stopped but future tasks will not be launched.
         """
         job = jobManager.getNodeJob(node)
         if job:
@@ -736,8 +741,7 @@ class UIGraph(QObject):
 
     @Slot(Node)
     def resumeJob(self, node: Node):
-        """ Resume the paused job
-        """
+        """ Resume the paused job. """
         job = jobManager.getNodeJob(node)
         if job:
             # Node is submitted to farm
@@ -756,8 +760,7 @@ class UIGraph(QObject):
 
     @Slot(Node)
     def interruptJob(self, node: Node):
-        """ Interrupt the job that processes the node
-        """
+        """ Interrupt the job that processes the node. """
         job = jobManager.getNodeJob(node)
         if job:
             try:
@@ -792,8 +795,7 @@ class UIGraph(QObject):
 
     @Slot(Node)
     def restartJobErrorTasks(self, node: Node):
-        """ Restart all tasks in the job that have failed
-        """
+        """ Restart all tasks in the job that have failed. """
         job = jobManager.getNodeJob(node)
         if job:
             try:
@@ -823,7 +825,8 @@ class UIGraph(QObject):
     @Slot(Node)
     @Slot(list)
     def submit(self, nodes: Optional[Union[list[Node], Node]] = None):
-        """ Submit the graph to the default Submitter.
+        """
+        Submit the graph to the default Submitter.
         If a node is specified, submit this node and its uncomputed predecessors.
         Otherwise, submit the whole
 
@@ -854,7 +857,7 @@ class UIGraph(QObject):
         # Note: We do not check computeSessionUid for the submitted status,
         #       as the source instance of the submit has no importance.
         submitted = any([ch._status.execMode == ExecMode.EXTERN and ch._status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
-        
+
         # Handle nodes with uninitialized chunks
         for node in dfsNodes:
             if node._chunksCreated:
@@ -890,7 +893,8 @@ class UIGraph(QObject):
         return self._computingLocally
 
     def push(self, command):
-        """ Try and push the given command to the undo stack.
+        """
+        Try and push the given command to the undo stack.
 
         Args:
             command (commands.UndoCommand): the command to push
@@ -898,7 +902,8 @@ class UIGraph(QObject):
         return self._undoStack.tryAndPush(command)
 
     def groupedGraphModification(self, title, disableUpdates=True):
-        """ Get a GroupedGraphModification for this Graph.
+        """
+        Get a GroupedGraphModification for this Graph.
 
         Args:
             title (str): the title of the macro command
@@ -911,8 +916,11 @@ class UIGraph(QObject):
 
     @Slot(str)
     def beginModification(self, name):
-        """ Begin a Graph modification. Calls to beginModification and endModification may be nested, but
-        every call to beginModification must have a matching call to endModification. """
+        """
+        Begin a Graph modification.
+        Calls to beginModification and endModification may be nested, but
+        every call to beginModification must have a matching call to endModification.
+        """
         self._modificationCount += 1
         self._undoStack.beginMacro(name)
 
@@ -943,11 +951,11 @@ class UIGraph(QObject):
     @Slot(Node, str, result=str)
     def renameNode(self, node: Node, newName: str):
         """ Triggers the node renaming.
-        
+
         In this function the last `_N` index is removed, then all special characters
-        (everything except letters and numbers) are removed. 
+        (everything except letters and numbers) are removed.
         The name uniqueness will be ensured later by adding a suffix (e.g. `_1`, `_2`, ...)
-        
+
         Labels can be used to have special characters in the displayed name.
 
         Args:
@@ -978,7 +986,8 @@ class UIGraph(QObject):
 
     @Slot(BackdropNode, int, int)
     def resizeNode(self, node, width, height):
-        """ Resize `node` to the given `width` and `height`.
+        """
+        Resize `node` to the given `width` and `height`.
 
         Args:
             node: The node to resize.
@@ -993,7 +1002,8 @@ class UIGraph(QObject):
 
     @Slot(BackdropNode, int, int, QPoint)
     def resizeAndMoveNode(self, node, width, height, position=None):
-        """ Resize `node` to the given `width` and `height`, and move it to the given `position`.
+        """
+        Resize `node` to the given `width` and `height`, and move it to the given `position`.
 
         Args:
             node: The node to resize and move.
@@ -1012,7 +1022,7 @@ class UIGraph(QObject):
 
     @Slot(QPoint)
     def moveSelectedNodesBy(self, offset: QPoint):
-        """Move all the selected nodes by the given `offset`."""
+        """ Move all the selected nodes by the given `offset`. """
 
         with self.groupedGraphModification("Move Selected Nodes"):
             for node in self.iterSelectedNodes():
@@ -1020,7 +1030,7 @@ class UIGraph(QObject):
                 self.moveNode(node, position)
 
     def getMeanPosition(self):
-        """ Get the average Position of selected nodes """
+        """ Get the average Position of selected nodes. """
         # Not great, would be better if Position was a non-tuple class
         selectedNodes = self.getSelectedNodes()
         sum_pose = [0, 0]
@@ -1033,7 +1043,7 @@ class UIGraph(QObject):
 
     @Slot()
     def alignHorizontally(self):
-        """ All nodes are moved horizontally to the same position, on an average position of selected nodes """
+        """ All nodes are moved horizontally to the same position, on an average position of selected nodes. """
         nodePadding = 50
         selectedNodes = self.getSelectedNodes()
         if len(selectedNodes) < 2:
@@ -1054,7 +1064,7 @@ class UIGraph(QObject):
 
     @Slot()
     def alignVertically(self):
-        """ All nodes are moved vertically to the same position, on an average position of selected nodes """
+        """ All nodes are moved vertically to the same position, on an average position of selected nodes. """
         selectedNodes = self.getSelectedNodes()
         if len(selectedNodes) < 2:
             return
@@ -1081,7 +1091,7 @@ class UIGraph(QObject):
 
     @Slot()
     def removeSelectedNodes(self):
-        """Remove selected nodes from the graph."""
+        """ Remove selected nodes from the graph. """
         self.removeNodes(list(self.iterSelectedNodes()))
 
     @Slot(list)
@@ -1094,10 +1104,9 @@ class UIGraph(QObject):
         """
         with self.groupedGraphModification("Remove Nodes From Selected Nodes"):
             nodesToRemove, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
-            # filter out nodes that will be removed more than once
+            # Filter out nodes that will be removed more than once
             uniqueNodesToRemove = list(dict.fromkeys(nodesToRemove))
-            # Perform nodes removal from leaves to start node so that edges
-            # can be re-created in correct order on redo.
+            # Perform nodes removal from leaves to start node so that edges can be re-created in correct order on redo
             self.removeNodes(list(reversed(uniqueNodesToRemove)))
 
     @Slot(list, result=list)
@@ -1112,18 +1121,18 @@ class UIGraph(QObject):
             The list of duplicated nodes.
         """
         nPositions = [(n.x, n.y) for n in self._graph.nodes]
-        # enable updates between duplication and layout to get correct depths during layout
+        # Enable updates between duplication and layout to get correct depths during layout
         with self.groupedGraphModification("Duplicate Selected Nodes", disableUpdates=False):
-            # disable graph updates during duplication
+            # Disable graph updates during duplication
             with self.groupedGraphModification("Node duplication", disableUpdates=True):
                 duplicates = self.push(commands.DuplicateNodesCommand(self._graph, nodes))
-            # move nodes below the bounding box formed by the duplicated node(s)
+            # Move nodes below the bounding box formed by the duplicated node(s)
             bbox = self._layout.boundingBox(nodes)
 
             for n in duplicates:
                 yPos = n.y + self.layout.gridSpacing + bbox[3]
                 if (n.x, yPos) in nPositions:
-                    # make sure the node will not be moved on top of another node
+                    # Make sure the node will not be moved on top of another node
                     while (n.x, yPos) in nPositions:
                         yPos = yPos + self.layout.gridSpacing + self.layout.nodeHeight
                     self.moveNode(n, Position(n.x, yPos))
@@ -1145,7 +1154,7 @@ class UIGraph(QObject):
         """
         with self.groupedGraphModification("Duplicate Nodes From Selected Nodes"):
             nodesToDuplicate, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
-            # filter out nodes that will be duplicated more than once
+            # Filter out nodes that will be duplicated more than once
             uniqueNodesToDuplicate = list(dict.fromkeys(nodesToDuplicate))
             duplicates = self.duplicateNodes(uniqueNodesToDuplicate)
         return duplicates
@@ -1200,7 +1209,7 @@ class UIGraph(QObject):
 
     @Slot()
     def clearSelectedNodesData(self):
-        """Clear data from all selected nodes."""
+        """ Clear data from all selected nodes. """
         self.clearData(self.iterSelectedNodes())
 
     @Slot(list)
@@ -1281,7 +1290,7 @@ class UIGraph(QObject):
 
     @Slot(Attribute)
     def resetAttribute(self, attribute):
-        """ Reset 'attribute' to its default value """
+        """ Reset 'attribute' to its default value. """
         with self.groupedGraphModification(f"Reset Attribute '{attribute.name}'"):
             # if the attribute is a ListAttribute, remove all edges
             if isinstance(attribute, ListAttribute):
@@ -1363,8 +1372,8 @@ class UIGraph(QObject):
         if image is None:
             return
         with self.groupedGraphModification("Remove Image"):
-            # look if the viewpoint's intrinsic is used by another viewpoint
-            # if not, remove it
+            # Look if the viewpoint's intrinsic is used by another viewpoint
+            # If not, remove it
             intrinsicId = image.intrinsicId.value
 
             intrinsicUsed = False
@@ -1374,7 +1383,7 @@ class UIGraph(QObject):
                     break
 
             if not intrinsicUsed:
-                #find the intrinsic and remove it
+                # Find the intrinsic and remove it
                 for intrinsic in self.cameraInit.attribute("intrinsics"):
                     if intrinsic.getSerializedValue()["intrinsicId"] == intrinsicId:
                         self.removeAttribute(intrinsic)
@@ -1396,14 +1405,14 @@ class UIGraph(QObject):
     @Slot(list)
     @Slot(list, int)
     def selectNodes(self, nodes, command=QItemSelectionModel.SelectionFlag.ClearAndSelect):
-        """Update selection with `nodes` using the specified `command`."""
+        """ Update selection with `nodes` using the specified `command`. """
         indices = [self._graph._nodes.indexOf(node) for node in nodes]
         self.selectNodesByIndices(indices, command)
 
     @Slot(Node)
     @Slot(Node, int)
     def selectFollowing(self, node: Node, command=QItemSelectionModel.SelectionFlag.ClearAndSelect):
-        """Select all the nodes that depend on `node`."""
+        """ Select all the nodes that depend on `node`. """
         self.selectNodes(
             self._graph.dfsOnDiscover(startNodes=[node], reverse=True, dependenciesOnly=True)[0], command
         )
@@ -1412,7 +1421,7 @@ class UIGraph(QObject):
     @Slot(int)
     @Slot(int, int)
     def selectNodeByIndex(self, index: int, command=QItemSelectionModel.SelectionFlag.ClearAndSelect):
-        """Update selection with node at the given `index` using the specified `command`."""
+        """ Update selection with node at the given `index` using the specified `command`. """
         if isinstance(command, int):
             command = QItemSelectionModel.SelectionFlag(command)
 
@@ -1426,7 +1435,8 @@ class UIGraph(QObject):
     def selectNodesByIndices(
         self, indices: list[int], command=QItemSelectionModel.SelectionFlag.ClearAndSelect
     ):
-        """Update selection with node at given `indices` using the specified `command`.
+        """
+        Update selection with node at given `indices` using the specified `command`.
 
         Args:
             indices: The list of indices to select.
@@ -1447,23 +1457,23 @@ class UIGraph(QObject):
             self.selectedNode = None
 
     def iterSelectedNodes(self) -> Iterator[Node]:
-        """Iterate over the currently selected nodes."""
+        """ Iterate over the currently selected nodes. """
         for idx in self._nodeSelection.selectedRows():
             yield self._graph.nodes.at(idx.row())
 
     @Slot(result=list)
     def getSelectedNodes(self) -> list[Node]:
-        """Return the list of selected Node instances."""
+        """ Return the list of selected Node instances. """
         return list(self.iterSelectedNodes())
 
     @Slot(Node, result=bool)
     def isSelected(self, node: Node) -> bool:
-        """Whether `node` is part of the current selection."""
+        """ Whether `node` is part of the current selection. """
         return self._nodeSelection.isRowSelected(self._graph.nodes.indexOf(node))
 
     @Slot()
     def clearNodeSelection(self):
-        """Clear all node selection."""
+        """ Clear all node selection. """
         self.selectedNode = None
         self._nodeSelection.clear()
 
@@ -1473,7 +1483,8 @@ class UIGraph(QObject):
 
     @Slot(str)
     def setSelectedNodesColor(self, color: str):
-        """ Sets the Provided color on the selected Nodes.
+        """
+        Sets the Provided color on the selected Nodes.
 
         Args:
             color (str): Hex code of the color to be set on the nodes.
@@ -1533,7 +1544,7 @@ class UIGraph(QObject):
 
     @Slot(Node, result=bool)
     def canComputeNode(self, node: Node) -> bool:
-        """ Check if the node can be computed """
+        """ Check if the node can be computed. """
         if node.isCompatibilityNode or not node.isComputableType or node.getLocked():
             return False
         if node.isComputed:
@@ -1544,7 +1555,7 @@ class UIGraph(QObject):
 
     @Slot(Node, result=bool)
     def canSubmitNode(self, node: Node) -> bool:
-        """ Check if the node can be submitted """
+        """ Check if the node can be submitted. """
         if node.isCompatibilityNode or not node.isComputableType or node.getLocked():
             return False
         if node.isComputed:

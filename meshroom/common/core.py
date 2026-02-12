@@ -50,7 +50,7 @@ class CoreDictModel:
         assert key is not None
         assert key not in self._objects
         self._objects[key] = obj
-    
+
     def rename(self, oldKey: str, newKey: str):
         """ Rename an element in the dict model
 

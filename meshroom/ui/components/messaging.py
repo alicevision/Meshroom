@@ -19,7 +19,7 @@ class Message:
 
 class MessageController(QObject):
     """
-    Handles messages sent from the Python side to the StatusBar component
+    Handles messages sent from the Python side to the StatusBar component.
     """
 
     message = Signal(str, str, int)
@@ -30,17 +30,17 @@ class MessageController(QObject):
         self._messages = []
 
     def sendMessage(self, msg, status, duration):
-        """ Sends a message that will be displayed on the status bar """
+        """ Sends a message that will be displayed on the status bar. """
         self.message.emit(msg, status, duration)
 
     @Slot(str, str)
     def storeMessage(self, msg, status):
-        """ Adds a new message in the stack """
+        """ Adds a new message in the stack. """
         self._messages.append(Message(msg, status or "info"))
         self.messagesChanged.emit()  # Notify QML that messages have changed
 
     def _getMessagesDict(self, fullDate=False):
-        """ Get a dict with all stored messages """
+        """ Get a dict with all stored messages. """
         messages = []
         for msg in self._messages:
             messages.append({
@@ -51,14 +51,16 @@ class MessageController(QObject):
         return messages
 
     def getMessages(self):
-        """ Get the messages with simple date information.
+        """
+        Get the messages with simple date information.
         Reverse the list to make sure we see the most recent item on top
         """
         return self._getMessagesDict()[::-1]
 
     @Slot(result=str)
     def getMessagesAsString(self):
-        """ Return messages for clipboard copy 
+        """
+        Return messages for clipboard copy.
         .. note::
            Could also do `json.dumps(self._getMessagesDict(fullDate=True), indent=4)`
         """
@@ -69,7 +71,7 @@ class MessageController(QObject):
 
     @Slot()
     def clearMessages(self):
-        """ Clear all stored messages """
+        """ Clear all stored messages. """
         self._messages.clear()
         self.messagesChanged.emit()
 

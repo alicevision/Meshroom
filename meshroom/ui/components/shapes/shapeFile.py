@@ -4,7 +4,7 @@ import json, os, re
 
 class ShapeFile(BaseObject):
     """
-    List of shapes provided by a json file attribute. 
+    List of shapes provided by a json file attribute.
     """
 
     class ShapeData(BaseObject):
@@ -23,11 +23,11 @@ class ShapeFile(BaseObject):
             self._properties = properties
             # Shape observations {viewId: observation{x, y, radius, etc.}}
             self._observations = observations
-            # Shape keyabale 
+            # Shape keyabale
             self._keyable = len(observations) > 0
             # Shape visible
             self._visible = True
-        
+
         def _getVisible(self) -> bool:
             """
             Return whether the shape is visible for display.
@@ -35,21 +35,21 @@ class ShapeFile(BaseObject):
             return self._visible
 
         def _setVisible(self, visible:bool):
-            """ 
+            """
             Set the shape visibility for display.
             """
             self._visible = visible
             self.visibleChanged.emit()
 
         def setViewId(self, viewId: str):
-            """ 
+            """
             Set the shape current view id.
             """
             self._viewId = viewId
             self.viewIdChanged.emit()
 
         def _getObservation(self):
-            """ 
+            """
             Get the shape current observation.
             """
             if self._keyable:
@@ -57,13 +57,13 @@ class ShapeFile(BaseObject):
             return self._properties
 
         def _getNbObservations(self):
-            """ 
+            """
             Return the shape number of observations.
             """
             if self._keyable:
                 return len(self._observations)
             return 1
-    
+
         @Slot(str, result=bool)
         def hasObservation(self, key: str) -> bool:
             """
@@ -113,7 +113,7 @@ class ShapeFile(BaseObject):
         self.setViewId(viewId)
         # Connect file attribute value
         fileAttribute.valueChanged.connect(self._loadShapesFromJsonFile)
-        
+
     def _getVisible(self) -> bool:
         """
         Return whether the shape file is visible for display.
@@ -121,7 +121,7 @@ class ShapeFile(BaseObject):
         return self._visible
 
     def _setVisible(self, visible:bool):
-        """ 
+        """
         Set the shape file visibility for display.
         """
         self._visible = visible
@@ -145,7 +145,7 @@ class ShapeFile(BaseObject):
     @Slot()
     def _loadShapesFromJsonFile(self):
         """
-        Load shapes from the json file. 
+        Load shapes from the json file.
         """
         def convertNumericStrings(obj):
             """
@@ -162,7 +162,7 @@ class ShapeFile(BaseObject):
                 elif re.fullmatch(r'-?\d+\.\d*', obj):
                     return float(obj)
             return obj
-        
+
         # Clear model
         self._shapes.clear()
         # Load from json file

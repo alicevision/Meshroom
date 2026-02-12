@@ -26,6 +26,7 @@ class TestPluginWithValidNodesOnly:
     def teardown_class(cls):
         for node in cls.plugin.nodes.values():
             pluginManager.unregisterNode(node)
+        pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
     def test_loadedPlugin(self):
@@ -133,6 +134,7 @@ class TestPluginWithInvalidNodes:
     def teardown_class(cls):
         for node in cls.plugin.nodes.values():
             pluginManager.unregisterNode(node)
+        pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
     def test_loadedPlugin(self):

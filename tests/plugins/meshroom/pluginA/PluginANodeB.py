@@ -1,5 +1,7 @@
 __version__ = "1.0"
 
+import time
+
 from meshroom.core import desc
 
 
@@ -27,3 +29,6 @@ class PluginANodeB(desc.Node):
             value="",
         ),
     ]
+
+    def process(self, node):
+        time.sleep(3)  # Simulates a long process

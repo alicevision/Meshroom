@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import zipimport
 
@@ -14,7 +15,7 @@ if DIR_NAME not in paths:
 
     os.environ["ALICEVISION_LIBPATH"] = os.pathsep.join(paths)
     os.environ["PYTHONPATH"] = os.path.join(DIR_NAME, "aliceVision", "lib", "python") + os.pathsep + os.path.join(DIR_NAME, "aliceVision", "lib", "python3.11", "site-packages")
-    os.execv(sys.executable, sys.argv)
+    sys.exit(subprocess.call([sys.executable] + sys.argv[1:]))
 
 sys.frozen = True
 sys.path = sys.path[:5]

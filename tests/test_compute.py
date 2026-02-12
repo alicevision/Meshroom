@@ -11,8 +11,10 @@ import re
 from pathlib import Path
 import logging
 
-from meshroom.core.graph import Graph
-from meshroom.core import desc
+from meshroom.core.graph import Graph, loadGraph
+from meshroom.core import desc, pluginManager, loadClassesNodes
+from meshroom.core.node import Status
+from meshroom.core.plugins import Plugin
 from .utils import registerNodeDesc, unregisterNodeDesc
 
 LOGGER = logging.getLogger("TestCompute")
@@ -101,6 +103,10 @@ class TestNodeC(desc.BaseNode):
 
 
 class TestNodeLogger:
+    """
+    Test that the logger is correctly set up during the different stages of the compute and that logs are correctly
+    written in the log file.
+    """
 
     logPrefix = r"\[\d{2}:\d{2}:\d{2}\.\d{3}\]\[info\] > "
 
@@ -152,3 +158,258 @@ class TestNodeLogger:
                 content = f.read()
                 reg = re.compile(self.logPrefix + "TestNodeC_1")
                 assert len(reg.findall(content)) == 1
+
+
+class TestLockUpdates:
+    """
+    Tests for node locking behaviour during status transitions. Nodes should be properly locked when they undergo
+    computation statuses and unlocked when their status is reset (through parameter changes, for example).
+    """
+    plugin = None
+
+    @classmethod
+    def setup_class(cls):
+        folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
+        package = "pluginA"
+        cls.plugin = Plugin(package, folder)
+        nodes = loadClassesNodes(folder, package)
+        for node in nodes:
+            cls.plugin.addNodePlugin(node)
+        pluginManager.addPlugin(cls.plugin)
+
+    @classmethod
+    def teardown_class(cls):
+        for node in cls.plugin.nodes.values():
+            pluginManager.unregisterNode(node)
+        pluginManager.removePlugin(cls.plugin)
+        cls.plugin = None
+
+    @staticmethod
+    def checkNodeStatusAndLock(node, expectedStatus, expectedLock):
+        assert node.globalStatus == expectedStatus.name
+        assert node.locked == expectedLock
+
+    def test_lockDuringComputation(self, graphSavedOnDisk):
+        """
+        Test that a node is properly locked during the execution of its "process()" method and unlocked once the process
+        is finished. Both the global status and the lock status should be updated throughout the process.
+        """
+        import threading
+        import time
+
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode("PluginANodeA")
+        graph.save()
+
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+
+        # PluginANodeA will sleep 3 seconds in its "process", so we can check the status and lock during the process execution
+        thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
+        thread.start()
+
+        time.sleep(0.5)  # Wait for the process to start and update the status
+        self.checkNodeStatusAndLock(node, Status.RUNNING, True)
+
+        # Wait for the process to finish and update the status
+        thread.join()
+
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+
+    def test_lockResetOnParameterChange(self, graphSavedOnDisk):
+        """
+        Test that a node's lock is properly reset when its status is reset,
+        for example through parameter changes.
+        """
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode("PluginANodeA")
+        graph.save()
+
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+        node.process(inCurrentEnv=True)
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+
+        # Change a parameter to reset the status and check that the lock is also reset
+        node.input.value = "path"
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+
+    def test_lockResetOnDuplicatedParameterChange(self, graphSavedOnDisk):
+        """
+        Test that when a node is duplicated while running, the duplicate node is independent from the original one
+        and that changing a parameter on the duplicate node resets its status and lock without impacting the original
+        node's status and lock.
+        """
+        import threading
+        import time
+
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode("PluginANodeA")
+        graph.save()
+
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+
+        thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
+        thread.start()
+
+        time.sleep(0.5)
+        self.checkNodeStatusAndLock(node, Status.RUNNING, True)
+
+        # Duplicate the running & locked node
+        duplicate = graph.duplicateNodes([node])
+
+        # "duplicate" is an ordered_dict with the original node as key and a list of duplicates as value.
+        # We know there is only one duplicate in this test.
+        assert len(duplicate) == 1
+        duplicate = list(duplicate.values())[0][0]
+
+        # Check the duplicate node is valid
+        assert duplicate is not None
+        assert duplicate.nodeType == node.nodeType
+        assert duplicate.name != node.name
+
+        # Check the status of the duplicate node is RUNNING but that it is not locked:
+        # it has not been computed and should be independent from the original node
+        self.checkNodeStatusAndLock(duplicate, Status.RUNNING, False)
+
+        # Change a parameter to reset the duplicatenode's status and check that the lock is also reset
+        duplicate.input.value = "path"
+        self.checkNodeStatusAndLock(duplicate, Status.NONE, False)
+        self.checkNodeStatusAndLock(node, Status.RUNNING, True)
+
+        thread.join()
+
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+        self.checkNodeStatusAndLock(duplicate, Status.NONE, False)
+
+    def test_noLockResetOnGraphLoad(self, graphSavedOnDisk):
+        """
+        Test that when a graph is loaded while a node is running, the node's status and lock are not reset and that
+        the node is still locked. """
+        import threading
+        import time
+
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode("PluginANodeA")
+        graph.save()
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+
+        thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
+        thread.start()
+        time.sleep(0.5)
+        self.checkNodeStatusAndLock(node, Status.RUNNING, True)
+
+        # Load the graph while the node is running and check that the node's status and lock are not reset
+        loadedGraph = loadGraph(graph.filepath)
+        loadedNode = loadedGraph.node(node.name)
+        self.checkNodeStatusAndLock(loadedNode, Status.RUNNING, True)
+
+        thread.join()
+        # Make sure the status is up-to-date
+        loadedNode.updateStatusFromCache()
+        self.checkNodeStatusAndLock(loadedNode, Status.SUCCESS, False)
+
+    def test_noDownstreamNodeLockDuringComputation(self, graphSavedOnDisk):
+        """
+        Test that when a node is running, its downstream nodes are not locked, and their status is not updated.
+        """
+        import threading
+        import time
+
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode("PluginANodeA")
+        downstreamNode = graph.addNewNode("PluginANodeB")
+        node.output.connectTo(downstreamNode.input)
+        graph.save()
+
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+        thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
+        thread.start()
+
+        time.sleep(0.5)
+        self.checkNodeStatusAndLock(node, Status.RUNNING, True)
+        self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+        thread.join()
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+    def test_upstreamLockDuringComputation(self, graphSavedOnDisk):
+        """
+        Test that when a node is running, its upstream nodes are locked and their status remains unchanged.
+        """
+        import threading
+        import time
+
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode("PluginANodeA")
+        downstreamNode = graph.addNewNode("PluginANodeB")
+        node.output.connectTo(downstreamNode.input)
+        graph.save()
+
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+        node.process(inCurrentEnv=True)
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+        thread = threading.Thread(target=downstreamNode.process, kwargs={"inCurrentEnv": True})
+        thread.start()
+        time.sleep(0.5)
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, True)
+        self.checkNodeStatusAndLock(downstreamNode, Status.RUNNING, True)
+
+        thread.join()
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.SUCCESS, False)
+
+    def test_noDownstreamLockAfterParameterChange(self, graphSavedOnDisk):
+        """
+        Test that when a computed node's parameter is updated, the downstream node's status and lock are
+        updated accordingly.
+        """
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode("PluginANodeA")
+        downstreamNode = graph.addNewNode("PluginANodeB")
+        node.output.connectTo(downstreamNode.input)
+        graph.save()
+
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+        node.process(inCurrentEnv=True)
+        downstreamNode.process(inCurrentEnv=True)
+
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.SUCCESS, False)
+
+        # Change a parameter on the upstream node and check that the downstream node's status is reset but not locked
+        node.input.value = "path"
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+    def test_noUpstreamLockAfterParameterChange(self, graphSavedOnDisk):
+        """
+        Test that when a computed node's parameter is updated, the upstream node's status and lock are not
+        impacted.
+        """
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode("PluginANodeA")
+        downstreamNode = graph.addNewNode("PluginANodeB")
+        node.output.connectTo(downstreamNode.input)
+        graph.save()
+
+        self.checkNodeStatusAndLock(node, Status.NONE, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+        node.process(inCurrentEnv=True)
+        downstreamNode.process(inCurrentEnv=True)
+
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.SUCCESS, False)
+
+        # Disconnect the downstream node and check that the upstream node's status is not reset and that it is not locked
+        downstreamNode.input.disconnectEdge()
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+        self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)

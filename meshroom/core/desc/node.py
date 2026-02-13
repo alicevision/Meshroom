@@ -12,6 +12,7 @@ import signal
 import subprocess
 from collections import OrderedDict
 from typing import Any, ClassVar, Mapping, Optional, Sequence, TYPE_CHECKING
+
 import psutil
 
 from meshroom import _MESHROOM_ROOT
@@ -27,7 +28,10 @@ if TYPE_CHECKING:
     from meshroom.core.attribute import Attribute as CoreAttribute
     from meshroom.core.node import Node as CoreNode
 
-_MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
+if getattr(sys, "frozen", False):
+    _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT).parent / "meshroom_compute").as_posix()
+else:
+    _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
 
 
@@ -578,7 +582,8 @@ class Node(BaseNode):
         return self._mrNodeType
 
     def processChunkInEnvironment(self, chunk):
-        meshroomComputeCmd = f"{chunk.node.nodeDesc.pythonExecutable} {_MESHROOM_COMPUTE}" + \
+        exe = "" if getattr(sys, "frozen", False) else f"{chunk.node.nodeDesc.pythonExecutable} "
+        meshroomComputeCmd = f"{exe}{_MESHROOM_COMPUTE}" + \
                              f" \"{chunk.node.graph.filepath}\" --node {chunk.node.name}" + \
                               " --extern --inCurrentEnv"
         if chunk.isPreprocess:

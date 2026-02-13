@@ -1788,22 +1788,35 @@ class BaseNode(BaseObject):
     def loadOutputAttr(self):
         """ Load output attributes with dynamic values from a values.json file.
         """
+
+        # This does not apply to non dynamic output
         if not self.nodeDesc.hasDynamicOutputAttribute:
             return
+        
+        # Check existence of values.json file
         valuesFile = self.valuesFile
         if not os.path.exists(valuesFile):
             logging.warning(f"No output attr file: {valuesFile}")
             return
 
-        # logging.warning("load output attr: {}, value: {}".format(self.name, valuesFile))
+        # Open json file and parse
         with open(valuesFile) as jsonFile:
             data = json.load(jsonFile)
 
-        # logging.warning(data)
+        # loop over all output attributes in the node description
         for output in self.nodeDesc.outputs:
+            # Only consider dynamic values
             if output.isDynamicValue:
                 if self.hasAttribute(output.name) and output.name in data:
-                    self.attribute(output.name).value = data[output.name]
+                    attr = self.attribute(output.name)
+
+                    # Use _populateFromDynamicValue for compatible classes
+                    # (E.g. for ListAttributes) to properly
+                    # create QObject children on the main thread
+                    if hasattr(attr, '_populateFromDynamicValue'):
+                        attr._populateFromDynamicValue(data[output.name])
+                    else:
+                        attr.value = data[output.name]
                 else:
                     if not self.hasAttribute(output.name):
                         logging.warning(f"loadOutputAttr: Missing dynamic output attribute. Node={self.name}, "
@@ -1821,7 +1834,8 @@ class BaseNode(BaseObject):
         for output in self.nodeDesc.outputs:
             if output.isDynamicValue:
                 if self.hasAttribute(output.name):
-                    data[output.name] = self.attribute(output.name).value
+                    # Store the primitive value and not the value itself
+                    data[output.name] = self.attribute(output.name).getPrimitiveValue()
                 else:
                     logging.warning(f"saveOutputAttr: Missing dynamic output attribute: {self.name}.{output.name}")
 

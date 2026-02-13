@@ -42,7 +42,7 @@ class NodeWithAttributesNeedingFormatting(desc.Node):
             label="First Group",
             description="Group with boolean and integer parameters.",
             joinChar=":",
-            groupDesc=[
+            items=[
                 desc.BoolParam(
                     name="enableFirstGroup",
                     label="Enable",
@@ -64,7 +64,7 @@ class NodeWithAttributesNeedingFormatting(desc.Node):
             label="Second Group",
             description="Group with boolean, choice and float parameters.",
             joinChar=",",
-            groupDesc=[
+            items=[
                 desc.BoolParam(
                     name="enableSecondGroup",
                     label="Enable",

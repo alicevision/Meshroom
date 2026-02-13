@@ -32,7 +32,7 @@ SampleGroupV2 = [
     desc.ListAttribute(
         name="b",
         elementDesc=desc.GroupAttribute(name="p", label="",
-                                        description="", groupDesc=SampleGroupV1),
+                                        description="", items=SampleGroupV1),
         label="b",
         description="",
     )
@@ -46,7 +46,7 @@ SampleGroupV3 = [
     desc.ListAttribute(
         name="b",
         elementDesc=desc.GroupAttribute(name="p", label="",
-                                        description="", groupDesc=SampleGroupV1),
+                                        description="", items=SampleGroupV1),
         label="b",
         description="",
     )
@@ -101,7 +101,7 @@ class SampleNodeV4(desc.Node):
         desc.File(name="in", label="Input", description="", value=""),
         desc.ListAttribute(name="paramA", label="ParamA",
                            elementDesc=desc.GroupAttribute(
-                               groupDesc=SampleGroupV1, name="gA", label="gA", description=""),
+                               items=SampleGroupV1, name="gA", label="gA", description=""),
                            description="")
     ]
     outputs = [
@@ -118,7 +118,7 @@ class SampleNodeV5(desc.Node):
         desc.File(name="in", label="Input", description="", value=""),
         desc.ListAttribute(name="paramA", label="ParamA",
                            elementDesc=desc.GroupAttribute(
-                               groupDesc=SampleGroupV2, name="gA", label="gA", description=""),
+                               items=SampleGroupV2, name="gA", label="gA", description=""),
                            description="")
     ]
     outputs = [
@@ -135,7 +135,7 @@ class SampleNodeV6(desc.Node):
         desc.File(name="in", label="Input", description="", value=""),
         desc.ListAttribute(name="paramA", label="ParamA",
                            elementDesc=desc.GroupAttribute(
-                               groupDesc=SampleGroupV3, name="gA", label="gA", description=""),
+                               items=SampleGroupV3, name="gA", label="gA", description=""),
                            description="")
     ]
     outputs = [
@@ -309,7 +309,7 @@ def test_description_conflict():
 
             assert isinstance(groupAttribute, desc.GroupAttribute)
             # Check that Compatibility node respect SampleGroupV1 description
-            for elt in groupAttribute.groupDesc:
+            for elt in groupAttribute.items:
                 assert isinstance(elt,
                                   next(a for a in SampleGroupV1 if a.name == elt.name).__class__)
 

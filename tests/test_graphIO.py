@@ -32,7 +32,7 @@ class NodeWithListAttributes(desc.Node):
             name="group",
             label="Group",
             description="",
-            groupDesc=[
+            items=[
                 desc.ListAttribute(
                     name="listInput",
                     label="List Input",

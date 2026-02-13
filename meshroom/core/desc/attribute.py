@@ -186,12 +186,12 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group="allParams", advanced=False, semantic="",
+    def __init__(self, items, name, label, description, group="allParams", advanced=False, semantic="",
                  enabled=True, joinChar=" ", brackets=None, visible=True, exposed=False):
         """
-        :param groupDesc: the description of the Attributes composing this group
+        :param items: the description of the Attributes composing this group
         """
-        self._groupDesc = groupDesc
+        self._items = items
         self._joinChar = joinChar
         self._brackets = brackets
         super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={},
@@ -217,20 +217,20 @@ class GroupAttribute(Attribute):
             value = ast.literal_eval(value)
 
         if isinstance(value, dict):
-            # invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
+            # invalidKeys = set(value.keys()).difference([attr.name for attr in self._items])
             # if invalidKeys:
             #     raise ValueError(f"Value contains key that does not match group description: "
             #                      f"{invalidKeys}")
-            if self._groupDesc and value.keys():
-                commonKeys = set(value.keys()).intersection([attr.name for attr in self._groupDesc])
+            if self._items and value.keys():
+                commonKeys = set(value.keys()).intersection([attr.name for attr in self._items])
                 if not commonKeys:
                     raise ValueError(f"Value contains no key that matches with the group "
                                      f"description (name={self.name}, values={value.keys()}, "
-                                     f"desc={[attr.name for attr in self._groupDesc]})")
+                                     f"desc={[attr.name for attr in self._items]})")
         elif isinstance(value, (list, tuple, set)):
-            if len(value) != len(self._groupDesc):
+            if len(value) != len(self._items):
                 raise ValueError(f"Value contains incoherent number of values: "
-                                 f"desc size: {len(self._groupDesc)}, value size: {len(value)}")
+                                 f"desc size: {len(self._items)}, value size: {len(value)}")
         else:
             raise ValueError(f"GroupAttribute only supports dict/list/tuple input values "
                              f"(param: {self.name}, value: {value}, type: {type(value)})")
@@ -245,7 +245,7 @@ class GroupAttribute(Attribute):
         the group with invalid types.
         """
         invalidParams = []
-        for attr in self.groupDesc:
+        for attr in self.items:
             name, error = attr.checkValueTypes()
             if name:
                 invalidParams.append(name)
@@ -266,7 +266,7 @@ class GroupAttribute(Attribute):
         """
         if not super(GroupAttribute, self).matchDescription(value):
             return False
-        attrMap = {attr.name: attr for attr in self._groupDesc}
+        attrMap = {attr.name: attr for attr in self._items}
 
         matchCount = 0
         for k, v in value.items():
@@ -275,17 +275,17 @@ class GroupAttribute(Attribute):
                 matchCount += 1
 
         if strict:
-            return matchCount == len(value.items()) == len(self._groupDesc)
+            return matchCount == len(value.items()) == len(self._items)
 
         return matchCount > 0
 
     def retrieveChildrenInvalidations(self):
         allInvalidations = []
-        for desc in self._groupDesc:
+        for desc in self._items:
             allInvalidations.append(desc.invalidate)
         return allInvalidations
 
-    groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
+    items = Property(Variant, lambda self: self._items, constant=True)
     invalidate = Property(Variant, retrieveChildrenInvalidations, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
     brackets = Property(str, lambda self: self._brackets, constant=True)

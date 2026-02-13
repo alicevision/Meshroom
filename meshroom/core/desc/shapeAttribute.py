@@ -5,19 +5,19 @@ class Shape(GroupAttribute):
     Base attribute for all Shape attribute.
     Countains several attributes (inherit from GroupAttribute).
     """
-    def __init__(self, geometryGroupDesc, name, label, description, group="allParams", advanced=False, semantic="",
+    def __init__(self, geometryItems, name, label, description, group="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Shape group desciption
-        groupDesc = [
+        items = [
             StringParam(name="userName", label="User Name", description="User shape name.", value="",
                         group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
             StringParam(name="userColor", label="User Color", description="User shape color.", value="#2a82da",
                         group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
-            Geometry(geometryGroupDesc, name="geometry", label="Geometry", description="Shape geometry.",
+            Geometry(geometryItems, name="geometry", label="Geometry", description="Shape geometry.",
                      group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed)
         ]
         # GroupAttribute constructor
-        super(Shape, self).__init__(groupDesc=groupDesc, name=name, label=label, description=description,
+        super(Shape, self).__init__(items=items, name=name, label=label, description=description,
                                     group=group, advanced=advanced, semantic=semantic,
                                     enabled=enabled, visible=visible, exposed=exposed)
 
@@ -57,14 +57,14 @@ class Point2d(Shape):
                  group="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
-        geometryGroupDesc = [
+        geometryItems = [
             FloatParam(name="x", label="X", description="X coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
                        group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
             FloatParam(name="y", label="Y", description="Y coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
                        group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed)
         ]
         # ShapeAttribute constructor
-        super(Point2d, self).__init__(geometryGroupDesc, name, label, description, group=None, advanced=advanced,
+        super(Point2d, self).__init__(geometryItems, name, label, description, group=None, advanced=advanced,
                                       semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
 
 class Line2d(Shape):
@@ -75,14 +75,14 @@ class Line2d(Shape):
                  group="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
-        geometryGroupDesc = [
+        geometryItems = [
             Vec2d(name="a", label="A", description="Line A point.", x=-1.0, y=-1.0, keyable=keyable, keyType=keyType,
                   group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
             Vec2d(name="b", label="B", description="Line B point.", x=-1.0, y=-1.0, keyable=keyable, keyType=keyType,
                   group=group, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed)
         ]
         # ShapeAttribute constructor
-        super(Line2d, self).__init__(geometryGroupDesc, name, label, description, group=None, advanced=advanced,
+        super(Line2d, self).__init__(geometryItems, name, label, description, group=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
 
 class Rectangle(Shape):
@@ -93,7 +93,7 @@ class Rectangle(Shape):
                  group="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
-        geometryGroupDesc = [
+        geometryItems = [
             Vec2d(name="center", label="Center", description="Rectangle center.", x=-1.0, y=-1.0,
                   keyable=keyable, keyType=keyType, group=group, advanced=advanced,
                   enabled=enabled, visible=visible, exposed=exposed),
@@ -102,7 +102,7 @@ class Rectangle(Shape):
                    enabled=enabled, visible=visible, exposed=exposed)
         ]
         # ShapeAttribute constructor
-        super(Rectangle, self).__init__(geometryGroupDesc, name, label, description, group=None, advanced=advanced,
+        super(Rectangle, self).__init__(geometryItems, name, label, description, group=None, advanced=advanced,
                                         semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
 
 class Circle(Shape):
@@ -113,7 +113,7 @@ class Circle(Shape):
                  group="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
-        geometryGroupDesc = [
+        geometryItems = [
             Vec2d(name="center", label="Center", description="Circle center.", x=-1.0, y=-1.0,
                   keyable=keyable, keyType=keyType, group=group, advanced=advanced,
                   enabled=enabled, visible=visible, exposed=exposed),
@@ -122,5 +122,5 @@ class Circle(Shape):
                        enabled=enabled, visible=visible, exposed=exposed)
         ]
         # ShapeAttribute constructor
-        super(Circle, self).__init__(geometryGroupDesc, name, label, description, group=None, advanced=advanced,
+        super(Circle, self).__init__(geometryItems, name, label, description, group=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)

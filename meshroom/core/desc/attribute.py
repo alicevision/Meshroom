@@ -184,6 +184,8 @@ class ListAttribute(Attribute):
                  advanced=False, semantic="", enabled=True, joinChar=" ", visible=True, exposed=False):
         """
         :param elementDesc: the Attribute description of elements to store in that list
+        :param value: default value. Use None to declare a dynamic output ListAttribute
+                      whose content is set during processChunk.
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar

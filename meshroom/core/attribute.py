@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import os
 import re
+import threading
 import weakref
 import logging
 import inspect
@@ -185,7 +186,16 @@ class Attribute(BaseObject):
             raise RuntimeError(f"Cannot get value of {self._getFullName()}, the attribute is keyable.")
         if self.isLink:
             return self._getInputLink().value
+        self._resolveValue()
         return self._value
+
+    def _resolveValue(self):
+        """
+        Hook for subclasses to resolve pending values before returning _value.
+        Called by _getValue before returning self._value.
+        Default implementation is a no-op.
+        """
+        pass
 
     def _setValue(self, value):
         """
@@ -816,6 +826,9 @@ class ChoiceParam(Attribute):
 
 class ListAttribute(Attribute):
 
+    # Sentinel to distinguish 'no pending dynamic value' from 'pending reset to empty'
+    _NO_PENDING_VALUE = object()
+
     def __init__(self, node, attributeDesc: desc.ListAttribute, isOutput: bool,
                  root=None, parent=None):
         super().__init__(node, attributeDesc, isOutput, root, parent)
@@ -857,13 +870,14 @@ class ListAttribute(Attribute):
         self._value.insert(index, attrs)
         self.valueChanged.emit()
         self._applyExpr()
-        self.requestGraphUpdate()
+        if self.isInput:
+            self.requestGraphUpdate()
 
     @raiseIfLink
     def remove(self, index, count=1):
         if self._value is None:
             return
-        if self.node.graph:
+        if self.node.graph and self.isInput:
             from meshroom.core.graph import GraphModification
             with GraphModification(self.node.graph):
                 # remove potential links
@@ -873,15 +887,41 @@ class ListAttribute(Attribute):
                         # delete edge if the attribute is linked
                         self.node.graph.removeEdge(attr)
         self._value.removeAt(index, count)
-        self.requestGraphUpdate()
+        if self.isInput:
+            self.requestGraphUpdate()
         self.valueChanged.emit()
 
     # Override
     def _initValue(self):
+        self._dynamicValueLock = threading.Lock()
+        self._dynamicValue = ListAttribute._NO_PENDING_VALUE
         self.resetToDefaultValue()
 
     # Override
     def _setValue(self, value):
+        if self.isOutput:
+            # For output attributes (set during processChunk in a worker thread,
+            # or during loadOutputAttr in the TaskThread), store raw values without
+            # creating QObject children to avoid cross-thread parenting issues.
+            # The raw values are:
+            # - serialized by saveOutputAttr via getPrimitiveValue
+            # - materialized into QObjects lazily by _getValue on the main thread
+            with self._dynamicValueLock:
+                if value is None:
+                    self._dynamicValue = None  # pending reset
+                else:
+                    self._dynamicValue = self._desc.validateValue(value)
+            return
+
+        # Input attribute path: handle None
+        if value is None:
+            if self.node.graph and self._value is not None and len(self._value) > 0:
+                self.remove(0, len(self))
+            if self._value is None:
+                self._value = ListModel(parent=self)
+            self.valueChanged.emit()
+            return
+
         if self.node.graph:
             self.remove(0, len(self))
         if self._handleLinkValue(value):
@@ -893,7 +933,8 @@ class ListAttribute(Attribute):
                 self._value = ListModel(parent=self)
             newValue = self._desc.validateValue(value)
             self.extend(newValue)
-        self.requestGraphUpdate()
+        if self.isInput:
+            self.requestGraphUpdate()
 
     # Override
     def _applyExpr(self):
@@ -902,6 +943,20 @@ class ListAttribute(Attribute):
         else:
             for value in self._value:
                 value._applyExpr()
+
+    def _populateFromDynamicValue(self, value):
+        """Store raw dynamic values for lazy materialization.
+
+        Does NOT create QObject children — safe to call from any thread.
+        The actual ListModel population happens lazily in _getValue()
+        when the main thread (e.g. QML) reads the value.
+        """
+        with self._dynamicValueLock:
+            if value is None:
+                self._dynamicValue = None  # pending reset
+            else:
+                self._dynamicValue = self._desc.validateValue(value)
+        self.valueChanged.emit()
 
     # Override
     def resetToDefaultValue(self):
@@ -918,8 +973,57 @@ class ListAttribute(Attribute):
             return self._getInputLink().asLinkExpr()
         return [attr.getSerializedValue() for attr in self._value]
 
+    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
+
+    # Override
+    def _resolveValue(self):
+        """
+        Lazily materialize QObject children from pending raw dynamic values.
+        Called by Attribute._getValue (base) before returning self._value.
+        This hook dispatches via normal Python MRO, bypassing PySide Property
+        getter dispatch limitations.
+        Must only create QObjects on the main thread to avoid cross-thread issues.
+        """
+        if self._dynamicValue is not ListAttribute._NO_PENDING_VALUE:
+            if threading.current_thread() is threading.main_thread():
+                self._materializeDynamicValue()
+
+    def _materializeDynamicValue(self):
+        """
+        Create QObject children in the ListModel from pending raw dynamic values.
+        Must only be called on the main thread.
+        """
+
+        # Thread proof reading of dynamic value
+        with self._dynamicValueLock:
+            pendingValue = self._dynamicValue
+            self._dynamicValue = ListAttribute._NO_PENDING_VALUE
+
+        # Create an empty list if the value is None
+        if self._value is None:
+            self._value = ListModel(parent=self)
+        elif len(self._value) > 0:
+            # Erase all items before reassigning
+            self._value.removeAt(0, len(self._value))
+        
+        # Effectively create the objects from the raw data
+        if pendingValue:
+            attrs = [attributeFactory(self._desc.elementDesc, v, self.isOutput, self.node, self)
+                     for v in pendingValue]
+            self._value.insert(0, attrs)
+        
+        self.valueChanged.emit()
+
     # Override
     def getPrimitiveValue(self, exportDefault=True):
+        # If there is a pending dynamic value (set or reset), return it directly
+        # without touching the ListModel (which may be on a different thread).
+        with self._dynamicValueLock:
+            if self._dynamicValue is not ListAttribute._NO_PENDING_VALUE:
+                if self._dynamicValue is None:
+                    return []
+                return list(self._dynamicValue)
+        
         if exportDefault:
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value]
         return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value

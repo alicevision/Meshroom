@@ -130,12 +130,11 @@ RowLayout {
                         || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
                         || !validIncomingConnection                              // Connection is not allowed
                         || drag.source.nodeItem === inputDragTarget.nodeItem     // Connection between attributes of the same node
-                        || drag.source.isList && childrenRepeater.count          // Source/target are lists but target already has children
                         || drag.source.connectorType === "input"                 // Refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
                     ) {
                         // Refuse attributes connection
                         drag.accepted = false
-                    } else if (inputDragTarget.attribute.isLink) {  // Already connected attribute
+                    } else if (inputDragTarget.attribute.isLink && !(drag.source.isList && root.isList)) {  // Already connected attribute (not list-to-list, which is additive)
                         root.edgeAboutToBeRemoved(inputDragTarget.attribute)
                     }
                     inputDropArea.acceptableDrop = drag.accepted
@@ -367,12 +366,11 @@ RowLayout {
                     || !validIncomingConnection                             // Connection is not allowed
                     || drag.source.nodeItem === outputDragTarget.nodeItem   // Connection between attributes of the same node
                     || (!drag.source.isList && outputDragTarget.isList)     // Connection between a list and a simple attribute
-                    || (drag.source.isList && childrenRepeater.count)       // Source/target are lists but target already has children
                     || drag.source.connectorType === "output"               // Refuse to connect an output pin on another one
                    ) {
                     // Refuse attributes connection
                     drag.accepted = false
-                } else if (drag.source.attribute.isLink) {  // Already connected attribute
+                } else if (drag.source.attribute.isLink && !(drag.source.isList && root.isList)) {  // Already connected attribute (not list-to-list, which is additive)
                     root.edgeAboutToBeRemoved(drag.source.attribute)
                 }
                 outputDropArea.acceptableDrop = drag.accepted

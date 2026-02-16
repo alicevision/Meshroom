@@ -1231,11 +1231,19 @@ class UIGraph(QObject):
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
+            # Source is a list, Destination is not a list
+            # Connect first attribute of the list to the destination
             self._addEdge(src.at(0), dst)
         elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
+            # Source is not a list, Destination is a list
+            # Append the source to the destination's list attributes
             with self.groupedGraphModification(f"Insert and Add Edge on {dst.fullName}"):
                 self.appendAttribute(dst)
                 self._addEdge(src, dst.at(-1))
+        elif isinstance(src, ListAttribute) and isinstance(dst, ListAttribute):
+            # Both Source and Destination attributes are listAttributes
+            with self.groupedGraphModification(f"Insert and Add Edges on {dst.fullName}"):
+                self.push(commands.AddListEdgesCommand(self._graph, src, dst))
         else:
             self._addEdge(src, dst)
 

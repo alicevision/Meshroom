@@ -487,6 +487,42 @@ class RemoveEdgeCommand(GraphCommand):
         return True
 
 
+class AddListEdgesCommand(GraphCommand):
+    """
+    Command to connect two ListAttributes by decomposing them into individual
+    element-level edges. Handles the case where the destination already has
+    a list-level link (decomposes it first).
+    """
+    def __init__(self, graph, src, dst, parent=None):
+        super().__init__(graph, parent)
+        self.srcAttr = src.fullName
+        self.dstAttr = dst.fullName
+        self.createdEdges = []  # List of all edges created
+        self.deletedEdges = []  # List of all edges deleted
+        self.initialDstLen = len(dst)  # Length of dst before any modification
+        self.setText(f"Connect Lists '{self.srcAttr}' -> '{self.dstAttr}'")
+
+    def redoImpl(self) -> bool:
+        srcAttr = self.graph.attribute(self.srcAttr)
+        dstAttr = self.graph.attribute(self.dstAttr)
+        self.createdEdges, self.deletedEdges = self.graph.addListEdges(srcAttr, dstAttr)
+        return True
+
+    def undoImpl(self) -> bool:
+        dstAttr = self.graph.attribute(self.dstAttr)
+        # Disconnect all created edges
+        for edge in self.createdEdges:
+            edge[1].disconnectEdge()
+        # Remove all appended elements (restore dst to its initial length)
+        currentLen = len(dstAttr)
+        if currentLen > self.initialDstLen:
+            dstAttr.remove(self.initialDstLen, currentLen - self.initialDstLen)
+        # Restore all deleted edges
+        for edge in self.deletedEdges:
+            edge[0].connectTo(edge[1])
+        return True
+
+
 class ListAttributeAppendCommand(GraphCommand):
     def __init__(self, graph, listAttribute, value, parent=None):
         super().__init__(graph, parent)

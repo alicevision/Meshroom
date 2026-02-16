@@ -954,6 +954,73 @@ class Graph(BaseObject):
         return [edge.src, edge.dst], deletedEdge
 
     @changeTopology
+    def addListEdges(self, srcAttr: Attribute, dstAttr: Attribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
+        """
+        Connect srcAttr to dstAttr, handling ListAttribute specifics:
+          - List -> Scalar: connect first element of the source list to the destination.
+          - Scalar -> List: append an element to the destination list, then connect.
+          - List -> List: if the destination is already linked (as a "view"), decompose the
+            existing link into individual element links, then append and connect each element
+            of the source list individually.
+          - Scalar -> Scalar: delegate to addEdge directly.
+
+        Args:
+            srcAttr: the source Attribute
+            dstAttr: the destination Attribute
+
+        Returns:
+            A tuple containing:
+                - a list of [src, dst] pairs for every created edge
+                - a list of [src, dst] pairs for every deleted edge
+        """
+        createdEdges = []
+        deletedEdges = []
+
+        if isinstance(srcAttr, ListAttribute) and not isinstance(dstAttr, ListAttribute):
+            # List -> Scalar: connect first element of src to dst
+            connected, deleted = srcAttr.at(0).connectTo(dstAttr)
+            createdEdges += connected
+            deletedEdges += deleted
+
+        elif isinstance(dstAttr, ListAttribute) and not isinstance(srcAttr, ListAttribute):
+            # Scalar -> List: append a new element to dst and connect src to it
+            with GraphModification(self):
+                dstAttr.append("")
+                connected, deleted = srcAttr.connectTo(dstAttr.at(-1))
+                createdEdges += connected
+                deletedEdges += deleted
+
+        elif isinstance(srcAttr, ListAttribute) and isinstance(dstAttr, ListAttribute):
+            # List -> List
+            with GraphModification(self):
+                if dstAttr.isLink:
+                    # Destination is a "view" on another ListAttribute.
+                    # Decompose the existing link into individual element links.
+                    existingEdge = self.edge(dstAttr)
+                    existingSrc = existingEdge.src  # the previously connected ListAttribute
+                    deleted = dstAttr.disconnectEdge()
+                    deletedEdges += deleted
+                    for j in range(len(existingSrc)):
+                        dstAttr.append("")
+                        connected, deleted = existingSrc.at(j).connectTo(dstAttr.at(-1))
+                        createdEdges += connected
+                        deletedEdges += deleted
+
+                # Append and connect each element of src individually
+                for i in range(len(srcAttr)):
+                    dstAttr.append("")
+                    connected, deleted = srcAttr.at(i).connectTo(dstAttr.at(-1))
+                    createdEdges += connected
+                    deletedEdges += deleted
+        else:
+            # Scalar -> Scalar
+            connected, deleted = srcAttr.connectTo(dstAttr)
+            createdEdges += connected
+            deletedEdges += deleted
+
+        return createdEdges, deletedEdges
+
+    @changeTopology
     def removeEdge(self, dstAttr: Attribute):
         if not self.edges.get(dstAttr):
             return None

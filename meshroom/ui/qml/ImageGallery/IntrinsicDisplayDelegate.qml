@@ -12,7 +12,7 @@ RowLayout {
     property int columnIndex: model.column
     property bool readOnly: false
     property string toolTipText: {
-        if (!attribute || Object.keys(attribute).length === 0)
+        if (!attribute || attribute.label === undefined)
             return ""
         return attribute.label
     }

@@ -1601,9 +1601,12 @@ class Graph(BaseObject):
 
     def stopExecution(self):
         """ Request graph execution to be stopped by terminating running chunks"""
-        for chunk in self.iterChunksByStatus(Status.RUNNING):
-            if not chunk.isExtern():
-                chunk.stopProcess()
+        for node in self.nodes:
+            if node.canBeStopped():
+                for chunk in node.chunks:
+                    chunk.stopProcess()
+            elif node.canBeCanceled():
+                node.clearSubmittedChunks()
 
     @Slot()
     @Slot(list)
@@ -1625,13 +1628,6 @@ class Graph(BaseObject):
         """ Reset the status of already locally submitted nodes to Status.NONE """
         for node in self.nodes:
             node.clearLocallySubmittedChunks()
-
-    def iterChunksByStatus(self, status):
-        """ Iterate over NodeChunks with the given status """
-        for node in self.nodes:
-            for chunk in node.chunks:
-                if chunk.status.status == status:
-                    yield chunk
 
     def getChunksByStatus(self, status):
         """ Return the list of NodeChunks with the given status. """

@@ -3,7 +3,7 @@
 from meshroom.core.graph import Graph
 from meshroom.core import desc
 
-from .utils import registerNodeDesc
+from .utils import registerNodeDesc, unregisterNodeDesc
 
 
 class SampleNode(desc.Node):
@@ -19,10 +19,8 @@ class SampleNode(desc.Node):
     ]
 
 
-registerNodeDesc(SampleNode)  # register standalone NodePlugin
-
-
 def test_output_invalidation():
+    registerNodeDesc(SampleNode)  # Register standalone NodePlugin
     graph = Graph("")
     n1 = graph.addNewNode("SampleNode", input="/tmp")
     n2 = graph.addNewNode("SampleNode")
@@ -48,12 +46,13 @@ def test_output_invalidation():
     n1.input.value = "/a/path"
     assert n2.input.uid() != n2inputUid      # => UID has changed
     assert n2.input.uid() == n3.input.uid()  # => UIDs on both node are still equal
-
+    unregisterNodeDesc(SampleNode)
 
 def test_inputLinkInvalidation():
     """
     Input links should not change the invalidation.
     """
+    registerNodeDesc(SampleNode)  # Register standalone NodePlugin
     graph = Graph("")
     n1 = graph.addNewNode("SampleNode")
     n2 = graph.addNewNode("SampleNode")
@@ -61,3 +60,4 @@ def test_inputLinkInvalidation():
     n1.input.connectTo(n2.input)
     assert n1.input.uid() == n2.input.uid()
     assert n1.output.value == n2.output.value
+    unregisterNodeDesc(SampleNode)

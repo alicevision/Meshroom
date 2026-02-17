@@ -9,7 +9,7 @@ from meshroom.core import pluginManager, loadClassesNodes, initNodes
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.plugins import Plugin
 
-from .utils import registerNodeDesc
+from .utils import registerNodeDesc, unregisterNodeDesc
 
 
 class TestNodeInfo:
@@ -29,6 +29,7 @@ class TestNodeInfo:
     def teardown_class(cls):
         for node in cls.plugin.nodes.values():
             pluginManager.unregisterNode(node)
+        pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
     def test_loadedPlugin(self):
@@ -51,6 +52,7 @@ class TestNodeInfo:
         assert nodeInfo["author"] == "testAuthor"
         assert nodeInfo["license"] == "no-license"
         assert nodeInfo["version"] == "1.0"
+        unregisterNodeDesc(nodeType)
 
 
 class TestNodeVariables:

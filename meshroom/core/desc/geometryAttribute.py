@@ -6,10 +6,10 @@ class Geometry(GroupAttribute):
     Base attribute for all Geometry attribute.
     Countains several attributes (inherit from GroupAttribute).
     """
-    def __init__(self, groupDesc, name, label, description, group="allParams", advanced=False, semantic="",
+    def __init__(self, items, name, label, description, group="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # GroupAttribute constructor
-        super(Geometry, self).__init__(groupDesc=groupDesc, name=name, label=label, description=description,
+        super(Geometry, self).__init__(items=items, name=name, label=label, description=description,
                                        group=group, advanced=advanced, semantic=semantic,
                                        enabled=enabled, visible=visible, exposed=exposed)
 
@@ -30,7 +30,7 @@ class Size2d(Geometry):
                  keyable=False, keyType=None, group="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
-        groupDesc = [
+        items = [
             FloatParam(name="width", label="Width", description="Width size.", value=width, range=widthRange,
                        keyable=keyable, keyType=keyType, group=group, advanced=advanced,
                        enabled=enabled, visible=visible, exposed=exposed),
@@ -39,7 +39,7 @@ class Size2d(Geometry):
                        enabled=enabled, visible=visible, exposed=exposed)
         ]
         # GeometryAttribute constructor
-        super(Size2d, self).__init__(groupDesc, name, label, description, group=None, advanced=advanced,
+        super(Size2d, self).__init__(items, name, label, description, group=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
 
 class Vec2d(Geometry):
@@ -50,7 +50,7 @@ class Vec2d(Geometry):
                  keyable=False, keyType=None, group="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
-        groupDesc = [
+        items = [
             FloatParam(name="x", label="X", description="X coordinate.", value=x, range=xRange,
                        keyable=keyable, keyType=keyType, group=group, advanced=advanced,
                        enabled=enabled, visible=visible, exposed=exposed),
@@ -59,5 +59,5 @@ class Vec2d(Geometry):
                        enabled=enabled, visible=visible, exposed=exposed)
         ]
         # GeometryAttribute constructor
-        super(Vec2d, self).__init__(groupDesc, name, label, description, group=None, advanced=advanced,
+        super(Vec2d, self).__init__(items, name, label, description, group=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)

@@ -202,7 +202,7 @@ class NodeWithCompoundAttributes(desc.BaseNode):
             name="groupInput",
             label="Group Input",
             description="GroupAttribute with a single 'IntParam' element.",
-            groupDesc=[
+            items=[
                 desc.IntParam(
                     name="int", label="Int", description="", value=0, range=None
                 )
@@ -216,7 +216,7 @@ class NodeWithCompoundAttributes(desc.BaseNode):
                 name="subGroup",
                 label="SubGroup",
                 description="",
-                groupDesc=[
+                items=[
                     desc.IntParam(
                         name="int", label="Int", description="", value=0, range=None
                     )
@@ -227,7 +227,7 @@ class NodeWithCompoundAttributes(desc.BaseNode):
             name="groupWithListInput",
             label="Group with List",
             description="GroupAttribute with a single 'ListAttribute of IntParam' element.",
-            groupDesc=[
+            items=[
                 desc.ListAttribute(
                     name="subList",
                     label="SubList",

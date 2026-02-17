@@ -2526,11 +2526,11 @@ class CompatibilityNode(BaseNode):
                 eltDesc = CompatibilityNode.attributeDescFromValue("element", elt, isOutput)
                 attrDesc = desc.ListAttribute(elementDesc=eltDesc, **params)
             elif isinstance(value, dict):
-                groupDesc = []
+                items = []
                 for key, value in value.items():
                     eltDesc = CompatibilityNode.attributeDescFromValue(key, value, isOutput)
-                    groupDesc.append(eltDesc)
-                attrDesc = desc.GroupAttribute(groupDesc=groupDesc, **params)
+                    items.append(eltDesc)
+                attrDesc = desc.GroupAttribute(items=items, **params)
             # Override empty default value with
             attrDesc._value = value
             return attrDesc
@@ -2567,7 +2567,7 @@ class CompatibilityNode(BaseNode):
         # individually so that links can correctly be evaluated.
         if isinstance(attrDesc, desc.GroupAttribute):
             for k, v in value.items():
-                if CompatibilityNode.attributeDescFromName(attrDesc.groupDesc,
+                if CompatibilityNode.attributeDescFromName(attrDesc.items,
                                                            k, v, strict=True) is None:
                     return None
             return attrDesc

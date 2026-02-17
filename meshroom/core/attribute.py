@@ -998,7 +998,7 @@ class GroupAttribute(Attribute):
     def _initValue(self):
         self._value = DictModel(keyAttrName='name', parent=self)
         subAttributes = []
-        for subAttrDesc in self._desc.groupDesc:
+        for subAttrDesc in self._desc.items:
             childAttr = attributeFactory(subAttrDesc, None, self.isOutput, self.node, self)
             subAttributes.append(childAttr)
             childAttr.valueChanged.connect(self.valueChanged)
@@ -1019,9 +1019,9 @@ class GroupAttribute(Attribute):
             for key, v in value.items():
                 self._value.get(key).value = v
         elif isinstance(value, (list, tuple)):
-            if len(self._desc._groupDesc) != len(value):
+            if len(self._desc._items) != len(value):
                 raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
-            for attrDesc, v in zip(self._desc._groupDesc, value):
+            for attrDesc, v in zip(self._desc._items, value):
                 self._value.get(attrDesc.name).value = v
         else:
             raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
@@ -1036,7 +1036,7 @@ class GroupAttribute(Attribute):
 
     # Override
     def resetToDefaultValue(self):
-        for attrDesc in self._desc._groupDesc:
+        for attrDesc in self._desc._items:
             self._value.get(attrDesc.name).resetToDefaultValue()
 
     # Override
@@ -1071,7 +1071,7 @@ class GroupAttribute(Attribute):
         spaceSep = self._desc.joinChar == ' '
         # sort values based on child attributes group description order
         sortedSubValues = [self._value.get(attr.name).getValueStr(withQuotes=spaceSep)
-                           for attr in self._desc.groupDesc]
+                           for attr in self._desc.items]
         s = self._desc.joinChar.join(sortedSubValues)
         if withQuotes and not spaceSep:
             return f'"{strBegin}{s}{strEnd}"'
@@ -1089,9 +1089,9 @@ class GroupAttribute(Attribute):
                 if key in self._value.keys():
                     self._value.get(key).upgradeValue(v)
         elif isinstance(value, (list, tuple)):
-            if len(self._desc._groupDesc) != len(value):
+            if len(self._desc._items) != len(value):
                 raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
-            for attrDesc, v in zip(self._desc._groupDesc, value):
+            for attrDesc, v in zip(self._desc._items, value):
                 self._value.get(attrDesc.name).upgradeValue(v)
         else:
             raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")

@@ -1068,7 +1068,7 @@ Page {
                     border.color: Qt.darker(activePalette.window, 1.15)
                 }
 
-                onClicked: !(_currentScene.computingLocally) ? computeManager.compute(null) : _currentScene.stopExecution()
+                onClicked: _currentScene.computingLocally ? _currentScene.stopExecution() : computeManager.compute(null)
             }
 
             MaterialToolButton {
@@ -1087,7 +1087,7 @@ Page {
                     border.color: Qt.darker(activePalette.window, 1.15)
                 }
 
-                onClicked: !(_currentScene.computingExternally) ? computeManager.submit(null) : _currentScene.stopExecution()
+                onClicked: _currentScene.computingExternally ? _currentScene.stopExecution() : computeManager.submit(null)
             }
         }
 

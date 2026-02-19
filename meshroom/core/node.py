@@ -1522,8 +1522,6 @@ class BaseNode(BaseObject):
         # Reset chunks splitting
         self._resetChunks()
 
-        self._updateNodeSize()
-
         # Retrieve current internal folder (if possible)
         try:
             folder = self.internalFolder

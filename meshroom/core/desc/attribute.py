@@ -1,9 +1,29 @@
 import ast
 import os
+import re
 from collections.abc import Iterable
 from enum import auto, Enum
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList, strtobool
+
+
+def _labelFromName(name):
+    """Convert a camelCase or snake_case attribute name to a 'Title Case' label.
+
+    Examples:
+        >>> _labelFromName('myAttributeName')
+        'My Attribute Name'
+        >>> _labelFromName('my_attribute_name')
+        'My Attribute Name'
+        >>> _labelFromName('input')
+        'Input'
+    """
+    # Insert space before uppercase letter following a lowercase letter or digit (camelCase)
+    s = re.sub(r'([a-z\d])([A-Z])', r'\1 \2', name)
+    # Replace underscores with spaces (snake_case)
+    s = s.replace('_', ' ')
+    # Capitalize each word
+    return ' '.join(word.capitalize() for word in s.split())
 
 class ValueTypeErrors(Enum):
     NONE = auto()  # No error
@@ -20,8 +40,8 @@ class Attribute(BaseObject):
                  validValue=True, errorMessage="", visible=True, exposed=False):
         super(Attribute, self).__init__()
         self._name = name
-        self._label = label
-        self._description = description
+        self._label = label if label is not None else _labelFromName(name)
+        self._description = description if description is not None else ""
         self._value = value
         self._keyable = keyable
         self._keyType = keyType
@@ -134,7 +154,7 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, name, label, description, group="allParams", advanced=False, semantic="",
+    def __init__(self, elementDesc, name, label=None, description=None, group="allParams", advanced=False, semantic="",
                  enabled=True, joinChar=" ", visible=True, exposed=False):
         """
         :param elementDesc: the Attribute description of elements to store in that list
@@ -186,7 +206,7 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, items, name, label, description, group="allParams", advanced=False, semantic="",
+    def __init__(self, items, name, label=None, description=None, group="allParams", advanced=False, semantic="",
                  enabled=True, joinChar=" ", brackets=None, visible=True, exposed=False):
         """
         :param items: the description of the Attributes composing this group
@@ -294,8 +314,8 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, group, advanced, semantic, enabled,
-                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
+    def __init__(self, name, label=None, description=None, value=None, group="allParams", advanced=False, semantic="",
+                 enabled=True, keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
                  validValue=True, errorMessage="", visible=True, exposed=False):
         super(Param, self).__init__(name=name, label=label, description=description, value=value,
                                     keyable=keyable, keyType=keyType, group=group, advanced=advanced,
@@ -307,7 +327,7 @@ class Param(Attribute):
 class File(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, group="allParams", advanced=False, invalidate=True,
+    def __init__(self, name, label=None, description=None, value="", group="allParams", advanced=False, invalidate=True,
                  semantic="", enabled=True, visible=True, exposed=True):
         super(File, self).__init__(name=name, label=label, description=description, value=value, group=group,
                                    advanced=advanced, enabled=enabled, invalidate=invalidate, semantic=semantic,
@@ -333,7 +353,7 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, keyable=False, keyType=None,
+    def __init__(self, name, label=None, description=None, value=False, keyable=False, keyType=None,
                  group="allParams", advanced=False, enabled=True, invalidate=True,
                  semantic="", visible=True, exposed=False):
         super(BoolParam, self).__init__(name=name, label=label, description=description, value=value,
@@ -362,7 +382,7 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None,
+    def __init__(self, name, label=None, description=None, value=0, range=None, keyable=False, keyType=None,
                  group="allParams", advanced=False, enabled=True, invalidate=True, semantic="",
                  validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
@@ -396,7 +416,7 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None,
+    def __init__(self, name, label=None, description=None, value=0.0, range=None, keyable=False, keyType=None,
                  group="allParams", advanced=False, enabled=True, invalidate=True, semantic="",
                  validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
@@ -429,7 +449,7 @@ class FloatParam(Param):
 class PushButtonParam(Param):
     """
     """
-    def __init__(self, name, label, description, group="allParams", advanced=False, enabled=True,
+    def __init__(self, name, label=None, description=None, group="allParams", advanced=False, enabled=True,
                  invalidate=True, semantic="", visible=True, exposed=False):
         super(PushButtonParam, self).__init__(name=name, label=label, description=description, value=None,
                                               group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,
@@ -466,7 +486,7 @@ class ChoiceParam(Param):
     _OVERRIDE_SERIALIZATION_KEY_VALUE = "__ChoiceParam_value__"
     _OVERRIDE_SERIALIZATION_KEY_VALUES = "__ChoiceParam_values__"
 
-    def __init__(self, name: str, label: str, description: str, value, values, exclusive=True, saveValuesOverride=False,
+    def __init__(self, name, label=None, description=None, value=None, values=None, exclusive=True, saveValuesOverride=False,
                  group="allParams", joinChar=" ", advanced=False, enabled=True, invalidate=True, semantic="",
                  validValue=True, errorMessage="",
                  visible=True, exposed=False):
@@ -546,7 +566,7 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
+    def __init__(self, name, label=None, description=None, value="", group="allParams", advanced=False, enabled=True,
                  invalidate=True, semantic="", uidIgnoreValue=None, validValue=True, errorMessage="", visible=True,
                  exposed=False):
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value,
@@ -572,7 +592,7 @@ class StringParam(Param):
 class ColorParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, group="allParams", advanced=False, enabled=True,
+    def __init__(self, name, label=None, description=None, value="", group="allParams", advanced=False, enabled=True,
                  invalidate=True, semantic="", visible=True, exposed=False):
         super(ColorParam, self).__init__(name=name, label=label, description=description, value=value,
                                          group=group, advanced=advanced, enabled=enabled, invalidate=invalidate,

@@ -1,4 +1,5 @@
 from meshroom.core.graph import Graph
+from meshroom.core.desc.attribute import _labelFromName, StringParam, IntParam, FloatParam, BoolParam, File, ListAttribute, GroupAttribute
 import pytest
 
 import logging
@@ -101,3 +102,43 @@ def test_attribute_is2D_file_semantic(givenSemantic, expected):
 
     # Then
     assert n0.input.is2dDisplayable == expected
+
+
+@pytest.mark.parametrize("name,expected_label", [
+    ("myAttributeName", "My Attribute Name"),
+    ("my_attribute_name", "My Attribute Name"),
+    ("input", "Input"),
+    ("outputMesh", "Output Mesh"),
+    ("nbPoints", "Nb Points"),
+    ("imageWidth", "Image Width"),
+])
+def test_label_from_name(name, expected_label):
+    """Check that _labelFromName converts camelCase/snake_case names to title case labels."""
+    assert _labelFromName(name) == expected_label
+
+
+def test_attribute_label_auto_generated_when_not_provided():
+    """Check that label is auto-generated from name when not explicitly provided."""
+    attr = StringParam(name="myAttributeName", value="")
+    assert attr.label == "My Attribute Name"
+
+    attr = IntParam(name="nb_points", value=0)
+    assert attr.label == "Nb Points"
+
+
+def test_attribute_label_uses_explicit_value_when_provided():
+    """Check that an explicitly provided label is used as-is."""
+    attr = StringParam(name="myAttributeName", label="Custom Label", value="")
+    assert attr.label == "Custom Label"
+
+
+def test_attribute_description_defaults_to_empty_string_when_not_provided():
+    """Check that description defaults to empty string when not explicitly provided."""
+    attr = StringParam(name="myAttribute", value="")
+    assert attr.description == ""
+
+
+def test_attribute_description_uses_explicit_value_when_provided():
+    """Check that an explicitly provided description is used as-is."""
+    attr = StringParam(name="myAttribute", description="My description.", value="")
+    assert attr.description == "My description."

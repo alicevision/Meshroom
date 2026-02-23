@@ -31,8 +31,8 @@ GridView {
 
     focus: true
     clip: true
-    cellWidth: thumbnailSizeSlider ? thumbnailSizeSlider.value : 160
-    cellHeight: cellWidth
+    cellWidth: thumbnailSizeSlider && thumbnailSizeSlider.value > 0 ? thumbnailSizeSlider.value : 160
+    cellHeight: thumbnailSizeSlider && thumbnailSizeSlider.value > 0 ? thumbnailSizeSlider.value : 30
     highlightFollowsCurrentItem: true
     keyNavigationEnabled: true
 

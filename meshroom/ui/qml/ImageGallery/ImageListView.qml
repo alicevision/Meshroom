@@ -21,7 +21,7 @@ ListView {
     property var errorDialog: null
     property var sortedModel: null
 
-    property real cellHeight: thumbnailSizeSlider.value / 2
+    property real cellHeight: thumbnailSizeSlider && thumbnailSizeSlider.value > 0 ? thumbnailSizeSlider.value / 2 : 24
 
     // Signals
     signal removeImageRequest(var attribute)

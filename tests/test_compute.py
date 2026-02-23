@@ -413,3 +413,26 @@ class TestLockUpdates:
         downstreamNode.input.disconnectEdge()
         self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
         self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+    def test_storageSizeKBAfterComputation(self, graphSavedOnDisk):
+        """
+        Test that the storageSizeKB field is populated in the node status after computation.
+        """
+        import json
+
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode("PluginANodeA")
+        graph.save()
+
+        assert node._nodeStatus.storageSizeKB == 0.0
+
+        node.process(inCurrentEnv=True)
+        self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
+
+        # The storageSizeKB should be greater than 0 after computation (status files were written)
+        assert node._nodeStatus.storageSizeKB > 0.0
+
+        # The storageSizeKB should also be persisted in the node status file
+        with open(node.nodeStatusFile) as f:
+            data = json.load(f)
+        assert data.get("storageSizeKB", 0.0) > 0.0

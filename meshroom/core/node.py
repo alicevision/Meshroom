@@ -66,7 +66,8 @@ NodeChunkSetup = namedtuple("NodeChunks", ["blockSize", "fullSize", "nbBlocks"])
 
 class NodeStatusData(BaseObject):
     __slots__ = ("nodeName", "nodeType", "status", "execMode", "packageName", "mrNodeType",
-                 "submitterSessionUid", "chunksBlockSize", "chunksFullSize", "chunksNbBlocks", "jobInfo")
+                 "submitterSessionUid", "chunksBlockSize", "chunksFullSize", "chunksNbBlocks", "jobInfo",
+                 "storageSizeKB")
 
     def __init__(self, nodeName='', nodeType='', packageName='',
                  mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
@@ -92,6 +93,7 @@ class NodeStatusData(BaseObject):
         self.status: Status = Status.NONE
         self.execMode: ExecMode = ExecMode.NONE
         self.jobInfo: dict = {}
+        self.storageSizeKB: float = 0.0
 
     def setNodeType(self, node):
         """
@@ -1614,6 +1616,9 @@ class BaseNode(BaseObject):
         """ Write node status on disk. """
         # Make sure the node has the globalStatus before saving it
         self._nodeStatus.status = self.getGlobalStatus()
+        # At the end of computation, compute the storage size of the node's cache folder
+        if self._nodeStatus.status in (Status.SUCCESS, Status.ERROR, Status.STOPPED, Status.KILLED):
+            self._nodeStatus.storageSizeKB = self._computeCacheFolderSize()
         data = self._nodeStatus.toDict()
         statusFilepath = self.nodeStatusFile
         folder = os.path.dirname(statusFilepath)
@@ -1622,6 +1627,20 @@ class BaseNode(BaseObject):
         with open(statusFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
         renameWritingToFinalPath(statusFilepathWriting, statusFilepath)
+
+    def _computeCacheFolderSize(self):
+        """ Compute the total size of all files in the node's internal cache folder in KB. """
+        totalSizeBytes = 0
+        folder = self.internalFolder
+        if folder and os.path.exists(folder):
+            for dirpath, dirnames, filenames in os.walk(folder):
+                for filename in filenames:
+                    filepath = os.path.join(dirpath, filename)
+                    try:
+                        totalSizeBytes += os.path.getsize(filepath)
+                    except OSError:
+                        logging.warning(f"Could not get size of file: {filepath}")
+        return totalSizeBytes / 1024.0
 
     def setJobId(self, jid, submitterName):
         self._nodeStatus.setJob(jid, submitterName)

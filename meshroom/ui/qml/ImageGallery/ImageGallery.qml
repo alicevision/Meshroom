@@ -242,7 +242,7 @@ Panel {
 
             readOnly: m.readOnly
             displayViewId: displayViewIdsAction.checked
-            displayThumbnail: thumbnailSizeSlider.value > 0
+            displayThumbnail: thumbnailSizeSlider.value > thumbnailSizeSlider.from
             visible: !intrinsicsFilterButton.checked
             
             parentModel: sortedModel
@@ -800,7 +800,7 @@ Panel {
         }
         Slider {
             id: thumbnailSizeSlider
-            from: 0
+            from: 70
             value: defaultCellSize
             to: 250
             implicitWidth: 70

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import MaterialIcons 2.2
 import Utils 1.0
 
 /**
@@ -164,6 +165,19 @@ Item {
                     }
                 }
 
+                // Placeholder icon shown when thumbnails are disabled
+                Label {
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    visible: !root.displayThumbnail
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: MaterialIcons.image
+                    font.family: MaterialIcons.fontFamily
+                    font.pointSize: 16
+                    color: palette.mid
+                }
+
                 // Image basename
                 Label {
                     id: grid_imageLabel
@@ -229,6 +243,18 @@ Item {
                         anchors.centerIn: parent
                         running: list_thumbnail.status != Image.Ready
                     }
+                }
+
+                // Placeholder icon shown when thumbnails are disabled
+                Label {
+                    Layout.fillHeight: true
+                    visible: !root.displayThumbnail
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: MaterialIcons.image
+                    font.family: MaterialIcons.fontFamily
+                    font.pointSize: 14
+                    color: palette.mid
                 }
 
                 ColumnLayout {

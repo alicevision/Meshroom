@@ -36,6 +36,7 @@ ListView {
     spacing: 2
     highlightFollowsCurrentItem: true
     keyNavigationEnabled: true
+    highlightMoveDuration: 0
 
     // Update list current item when selected view changes
     Connections {

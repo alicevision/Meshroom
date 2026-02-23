@@ -35,6 +35,7 @@ GridView {
     cellHeight: cellWidth
     highlightFollowsCurrentItem: true
     keyNavigationEnabled: true
+    highlightMoveDuration: 0
 
     // Update grid current item when selected view changes
     Connections {

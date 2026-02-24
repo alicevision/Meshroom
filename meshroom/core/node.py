@@ -678,6 +678,11 @@ class NodeChunk(BaseObject):
 
             if executionStatus:
                 self.upgradeStatusTo(executionStatus)
+            # After the chunk status is finalized, compute and persist the storage size
+            # if the node has reached a terminal state
+            if self.node.getGlobalStatus() in (Status.SUCCESS, Status.ERROR, Status.STOPPED, Status.KILLED):
+                self.node._nodeStatus.storageSizeKB = self.node._computeCacheFolderSize()
+                self.node.upgradeStatusFile()
             logging.info(f"[Process chunk] elapsed time: {self._status.elapsedTimeStr}")
             # Ask and wait for the stats thread to stop
             self.statThread.stopRequest()
@@ -1616,9 +1621,6 @@ class BaseNode(BaseObject):
         """ Write node status on disk. """
         # Make sure the node has the globalStatus before saving it
         self._nodeStatus.status = self.getGlobalStatus()
-        # At the end of computation, compute the storage size of the node's cache folder
-        if self._nodeStatus.status in (Status.SUCCESS, Status.ERROR, Status.STOPPED, Status.KILLED):
-            self._nodeStatus.storageSizeKB = self._computeCacheFolderSize()
         data = self._nodeStatus.toDict()
         statusFilepath = self.nodeStatusFile
         folder = os.path.dirname(statusFilepath)

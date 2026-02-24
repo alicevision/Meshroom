@@ -93,7 +93,7 @@ class NodeStatusData(BaseObject):
         self.status: Status = Status.NONE
         self.execMode: ExecMode = ExecMode.NONE
         self.jobInfo: dict = {}
-        self.storageSizeKB: float = 0.0
+        self.storageSizeKB: int = 0
 
     def setNodeType(self, node):
         """
@@ -1642,7 +1642,7 @@ class BaseNode(BaseObject):
                         totalSizeBytes += os.path.getsize(filepath)
                     except OSError:
                         logging.warning(f"Could not get size of file: {filepath}")
-        return totalSizeBytes / 1024.0
+        return totalSizeBytes // 1024
 
     def setJobId(self, jid, submitterName):
         self._nodeStatus.setJob(jid, submitterName)

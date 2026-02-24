@@ -1155,6 +1155,7 @@ class BaseNode(BaseObject):
         self._expVars = {
             "uid": self._uid,
             "nodeCacheFolder": self._internalFolder,
+            "node": self,
         }
 
         # Evaluate input params

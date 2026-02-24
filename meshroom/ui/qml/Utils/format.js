@@ -102,3 +102,17 @@ function GB2SizeStr(GB) {
     }
     return sizeStr
 }
+
+function KB2SizeStr(KB) {
+    // Convert KB to a human-readable size string
+    // e.g. 1.5G, 45M, 234K
+    var MB = KB / 1024
+    var GB = MB / 1024
+    if (GB >= 1) {
+        return parseFloat(GB.toFixed(1)) + "G"
+    } else if (MB >= 1) {
+        return parseFloat(MB.toFixed(1)) + "M"
+    } else {
+        return Math.round(KB) + "K"
+    }
+}

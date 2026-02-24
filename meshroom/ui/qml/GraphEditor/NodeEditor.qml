@@ -270,6 +270,15 @@ Panel {
             }
         }
 
+        Label {
+            id: storageSizeInfo
+            color: node && node.isComputableType ? Colors.statusColors[node.globalStatus] : palette.text
+            padding: 2
+            font.italic: true
+            visible: node !== null && node.isComputableType && node.storageSizeKB > 0
+            text: node !== null ? Format.KB2SizeStr(node.storageSizeKB) : ""
+        }
+
         SearchBar {
             id: searchBar
             toggle: true  // Enable toggling the actual text field by the search button

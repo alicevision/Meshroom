@@ -683,6 +683,7 @@ class NodeChunk(BaseObject):
             if self.node.getGlobalStatus() in (Status.SUCCESS, Status.ERROR, Status.STOPPED, Status.KILLED):
                 self.node._nodeStatus.storageSizeKB = self.node._computeCacheFolderSize()
                 self.node.upgradeStatusFile()
+                self.node.nodeStatusChanged.emit()
             logging.info(f"[Process chunk] elapsed time: {self._status.elapsedTimeStr}")
             # Ask and wait for the stats thread to stop
             self.statThread.stopRequest()
@@ -2153,6 +2154,7 @@ class BaseNode(BaseObject):
     elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
     recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime,
                                     notify=globalStatusChanged)
+    storageSizeKB = Property(int, lambda self: self._nodeStatus.storageSizeKB, notify=nodeStatusChanged)
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
     isBackdropNode = Property(bool, lambda self: self._isBackdropNode(), constant=True)

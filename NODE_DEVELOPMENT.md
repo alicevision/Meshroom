@@ -1,5 +1,6 @@
 # Meshroom Node Development
 
+
 ## Node Creation
 
 This guide shows how to implement three common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, and non-computational `InputNode`.
@@ -109,6 +110,7 @@ class MyInputNode(desc.InputNode, desc.InitNode):
             node.file.value = inputs[0]
 ```
 
+
 ## Attribute Types Available in Meshroom Nodes
 
 Meshroom provides several attribute types you can use in a node’s `inputs` and `outputs`. They are defined in `meshroom.core.desc` and organized into basic parameters, compound containers, geometry helpers, and shape annotations.
@@ -215,8 +217,57 @@ Used for UI overlays/annotations; they support `keyable` per-view values:
 | `Circle` | Circle with center and radius. | `Circle(name="c", ...)` |
 | `ShapeList` | List of a single shape type (`shape`). | `ShapeList(name="pts", shape=Point2d(...))` |
 
+## Parallelizing a Node
 
-# Installation
+Meshroom enables node parallelization by splitting work into independent chunks that can be distributed on multiple workstations on compute farm. Configure parallelization by setting `size` and `parallelization` properties on your node descriptor.
+
+### Configuration
+
+#### Size Strategies
+- **StaticNodeSize**: Fixed number of tasks
+- **DynamicNodeSize**: Size based on an input attribute (list length or linked node size)
+- **MultiDynamicNodeSize**: Sum of sizes from multiple input attributes
+
+#### Parallelization Settings
+Set `parallelization` to control chunk division:
+- `blockSize`: Items per chunk
+- `staticNbBlocks`: Fixed number of chunks (alternative to blockSize)
+
+### Implementation Examples
+
+#### CommandLineNode with Static Parallelization
+```python
+class MyParallelCmd(desc.CommandLineNode):
+    commandLine = "mytool --input {inputValue} --output {outputValue}"
+    commandLineRange = "--range {rangeStart} {rangeEnd}"  # Specific way to precise the range to compute on the command line
+    
+    size = desc.StaticNodeSize(100)  # 100 items total
+    parallelization = desc.Parallelization(blockSize=10)  # 10 chunks of 10 items
+```
+
+#### Node with Dynamic Size
+```python
+class MyParallelNode(desc.Node):
+    size = desc.DynamicNodeSize("inputList")  # Size matches list length
+    parallelization = desc.Parallelization(blockSize=3)  # Create a chunk every 3 elements in the list
+    
+    def processChunk(self, chunk):
+        # Process chunk.range.iteration
+        pass
+```
+
+### Range and Chunk Behavior
+
+Each chunk receives a `Range` object with:
+- `iteration`: Chunk index
+- `start`/`end`: Item indices for this chunk
+- `blockSize`: Items per chunk
+- `nbBlocks`: Total chunks
+
+For `CommandLineNode`, range placeholders are automatically injected into `commandLineRange` when `node.isParallelized` and `node.size > 1`.
+
+
+## Installation
 
 See [INSTALL_PLUGINS.md](./INSTALL_PLUGINS.md)
 

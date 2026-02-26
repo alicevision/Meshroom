@@ -189,7 +189,7 @@ Convenient groups for 2D geometry, built from `GroupAttribute` and `FloatParam`:
 | `Vec2d` | `x`, `y` (float) | `Vec2d(name="vec", ..., x=0.0, y=1.0)` |
 
 
-### Special Properties
+### Attribute Properties
 
 - **Name**: Used to access attributes from script.
 - **Label**: Label used for the display in the Node Editor.

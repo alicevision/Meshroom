@@ -64,8 +64,6 @@ from meshroom.core import desc
 
 class MyCmdNode(desc.CommandLineNode):
     commandLine = "mytool --input {inputValue} --output {outputValue}"
-    # Optional: range arguments for parallelized nodes
-    commandLineRange = "--range {rangeStart} {rangeEnd}"
 
     inputs = [
         desc.File(name="input", label="Input", description="", value=""),

@@ -215,6 +215,35 @@ Used for UI overlays/annotations; they support `keyable` per-view values:
 | `Circle` | Circle with center and radius. | `Circle(name="c", ...)` |
 | `ShapeList` | List of a single shape type (`shape`). | `ShapeList(name="pts", shape=Point2d(...))` |
 
+
+## Node Descriptor Properties
+
+| Property | Type | Description | Default |
+|----------|------|-------------|---------|
+| Class documentation | str | Detailed description of the node's purpose | "" |
+| `category` | str | Organizational category in the node library | "Other" |
+| `cpu` | Level | CPU resource requirement level | Level.NORMAL |
+| `ram` | Level | Memory resource requirement level | Level.NORMAL |
+| `gpu` | Level | GPU resource requirement level | Level.NONE |
+| `size` | Size object | Parallelization size configuration | StaticNodeSize(1) |
+| `parallelization` | Parallelization | Chunk division settings | None |
+
+### Example: Basic Node with Properties
+
+```python
+class SampleNode(desc.Node):
+    """This is the Node documentation that will be available in the Node Editor."""
+
+    category = "Custom Node Category"  # Used in the UI to group nodes in the menu
+    size = desc.DynamicNodeSize("inputFiles")  # Size used to define the number of chunks for parallelization
+
+    # Resource levels (`cpu`, `gpu`, `ram`) are used for farm scheduling on suitable hardware
+    cpu = Level.NORMAL  # Need standard amount of CPU
+    ram = Level.HIGH  # Requires large amount of RAM
+    gpu = Level.NONE  # Do not need GPU
+```
+
+
 ## Parallelizing a Node
 
 Meshroom enables node parallelization by splitting work into independent chunks that can be distributed on multiple workstations on compute farm. Configure parallelization by setting `size` and `parallelization` properties on your node descriptor.

@@ -4,7 +4,7 @@
 
 This guide shows how to implement three common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, and non-computational `InputNode`.
 
-### 1. Node (Python-based)
+### 1. Node (Pure Python)
 
 Use `desc.Node` when your logic runs in Python.
 Implement `process(self, node)` to produce outputs.
@@ -33,7 +33,7 @@ In this example, the path of the output file is an expression that will always b
 
 #### Example: Compute values
 
-```
+```python
 class AddInt(desc.Node):
     category = "Custom"
     inputs = [
@@ -135,6 +135,50 @@ Meshroom provides several attribute types you can use in a node’s `inputs` and
 
 Both inherit from `Attribute` and support nesting (lists of groups, groups with lists).
 
+#### Example: Parameter Types
+
+```python
+from meshroom.core import desc
+
+class ParameterTypesSample(desc.Node):
+    category = "Custom"
+    inputs = [
+        desc.BoolParam(name="boolParam", label="Boolean", description="", value=False),
+        desc.IntParam(name="intParam", label="Integer", description="", value=10, range=(0, 100, 1)),
+        desc.FloatParam(name="floatParam", label="Float", description="", value=3.14, range=(0.0, 10.0, 0.1)),
+        desc.StringParam(name="stringParam", label="String", description="", value="default"),
+        desc.File(name="fileParam", label="File", description="", value=""),
+        desc.ChoiceParam(name="choiceParam", label="Choice", description="", value="opt1", values=["opt1", "opt2", "opt3"], exclusive=True),
+        desc.ColorParam(name="colorParam", label="Color", description="", value=[1.0, 0.0, 0.0, 1.0]),
+        desc.PushButtonParam(name="buttonParam", label="Button", description=""),
+        desc.ListAttribute(
+            name="fileList",
+            label="File List",
+            description="",
+            elementDesc=desc.File(name="file", label="File", description="", value=""),
+            joinChar=" "
+        ),
+        desc.GroupAttribute(
+            name="inputGroup",
+            label="Input Group",
+            description="Group with bool, int, string and file",
+            items=[
+                desc.BoolParam(name="groupBool", label="Boolean", description="", value=True),
+                desc.IntParam(name="groupInt", label="Integer", description="", value=42, range=(0, 100, 1)),
+                desc.StringParam(name="groupString", label="String", description="", value="groupValue"),
+                desc.File(name="groupFile", label="File", description="", value="")
+            ]
+        )
+    ]
+    outputs = [
+        desc.File(name="outputFile", label="Output File", description="", value="{nodeCacheFolder}/output.txt")
+    ]
+
+    def process(self, node):
+        with open(node.outputFile.value, "w") as f:
+            f.write(f"{node.boolParam.value},{node.intParam.value},{node.floatParam.value},{node.stringParam.value},{node.fileParam.value},{node.choiceParam.value},{node.colorParam.value},{len(node.fileList.value)},{node.inputGroup.groupBool.value},{node.inputGroup.groupInt.value},{node.inputGroup.groupString.value},{node.inputGroup.groupFile.value}\n")
+```
+
 ### Geometry Helpers
 
 Convenient groups for 2D geometry, built from `GroupAttribute` and `FloatParam`:
@@ -153,7 +197,7 @@ Convenient groups for 2D geometry, built from `GroupAttribute` and `FloatParam`:
 - **Range constraints**: `IntParam` and `FloatParam` accept `range=(min, max, step)` to bound values.
 - **Enabled**: Parameters can be enabled or disabled dynamically (using a lamda).
 - **Advanced**: Parameters can be declared as advanced parameters, so they are hidden by default but could be activated in the UI for experts or developpers.
-- **Exposed** in the GraphEditor: Files are exposed in the nodal view by default, other type are hidden by default, but it can be defined per attribute.
+- **Exposed** in the GraphEditor: Files are exposed in the nodal view by default, other type are hidden by default, but it can be customized per attribute.
 - **Dynamic outputs**: Set `value=None` in an output attribute to mark it as dynamically computed.
 - **Keyable attributes**: Enable per-key values (e.g., per-view) with `keyable=True` and `keyType`. Supported on basic params and shapes.
 - **JoinChar**: Controls string serialization for `ListAttribute` and `GroupAttribute` when used in command lines.

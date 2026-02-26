@@ -54,7 +54,7 @@ In this example, the output param value will ve valid in Meshroom only at the en
 
 ### 2. CommandLineNode (external executable)
 
-Use `desc.CommandLineNode` to wrap an external binary. Define a `commandLine` template with `{variable}` placeholders. Meshroom expands it via `buildCommandLine(chunk)` and executes the result [3](#0-2) .
+Use `desc.CommandLineNode` to wrap an external binary. Define a `commandLine` template with `{variable}` placeholders. Meshroom expands it via `buildCommandLine(chunk)` and executes the result.
 
 #### Example
 

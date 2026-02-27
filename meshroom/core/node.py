@@ -2259,9 +2259,6 @@ class Node(BaseNode):
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
             'outputs': outputs,
         }
-        
-    def updateNodeSize(self):
-        self.setSize(self.nodeDesc.size.computeSize(self))
 
     def _resetChunks(self):
         """ Set chunks on the node.
@@ -2282,12 +2279,12 @@ class Node(BaseNode):
         self._nodeStatus.status = Status.NONE
         # Recreate list with reset values (1 chunk or the static size)
         if not self.isParallelized:
-            self.setSize(self.nodeDesc.size.computeSize(self))
+            self._updateNodeSize()
             self._chunks.setObjectList([NodeChunk(self, desc.Range())])
             self._chunks[0].statusChanged.connect(self.globalStatusChanged)
             self._chunksCreated = True
         elif isinstance(self.nodeDesc.size, desc.computation.StaticNodeSize):
-            self.setSize(self.nodeDesc.size.computeSize(self))
+            self._updateNodeSize()
             self._chunks.setObjectList([NodeChunk(self, desc.Range())])
             self._chunks[0].statusChanged.connect(self.globalStatusChanged)
             self._chunksCreated = True

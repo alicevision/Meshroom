@@ -494,7 +494,7 @@ class TestSizeUpdate:
         # B
         self.checkNodeSizeAndStatus(nodeB, 0, 1, Status.NONE)
         nodeB.createChunks()
-        nodeB.updateNodeSize()
+        nodeB._updateNodeSize()
         nodeB.process(inCurrentEnv=True)
         self.checkNodeSizeAndStatus(nodeB, 2, 1, Status.SUCCESS)
         # C

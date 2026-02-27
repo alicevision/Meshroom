@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import MaterialIcons 2.2
 import Utils 1.0
 
 /**
@@ -17,6 +18,7 @@ Item {
     property alias metadata: _viewpoint.metadata
     property bool readOnly: false
     property bool displayViewId: false
+    property bool displayThumbnail: true
     property int layoutMode: 0  // 0: grid, 1: list
 
     property variant parentModel
@@ -45,10 +47,17 @@ Item {
     // Update thumbnail location
     // Can be called from the GridView when a new thumbnail has been written on disk
     function updateThumbnail() {
+        if (!displayThumbnail) return
         root.thumbnailSource = ThumbnailCache.thumbnail(root.source, root.cellID)
     }
     onSourceChanged: {
         updateThumbnail()
+    }
+    onDisplayThumbnailChanged: {
+        if (displayThumbnail)
+            updateThumbnail()
+        else
+            root.thumbnailSource = ""
     }
 
     // Send a new request after 5 seconds if thumbnail is not loaded
@@ -135,6 +144,7 @@ Item {
                     color: Qt.darker(grid_imageLabel.palette.base, 1.15)
                     Layout.fillHeight: true
                     Layout.fillWidth: true
+                    visible: root.displayThumbnail
                     border.color: isCurrentItem ? grid_imageLabel.palette.highlight : Qt.darker(grid_imageLabel.palette.highlight)
                     border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
                     Image {
@@ -153,6 +163,19 @@ Item {
                         anchors.centerIn: parent
                         running: grid_thumbnail.status != Image.Ready
                     }
+                }
+
+                // Placeholder icon shown when thumbnails are disabled
+                Label {
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    visible: !root.displayThumbnail
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: MaterialIcons.image
+                    font.family: MaterialIcons.fontFamily
+                    font.pointSize: 16
+                    color: palette.mid
                 }
 
                 // Image basename
@@ -199,6 +222,7 @@ Item {
                     color: Qt.darker(list_imageLabel.palette.base, 1.15)
                     Layout.fillHeight: true
                     Layout.preferredWidth: 100
+                    visible: root.displayThumbnail
                     
                     border.color: isCurrentItem ? list_imageLabel.palette.highlight : Qt.darker(list_imageLabel.palette.highlight)
                     border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
@@ -219,6 +243,18 @@ Item {
                         anchors.centerIn: parent
                         running: list_thumbnail.status != Image.Ready
                     }
+                }
+
+                // Placeholder icon shown when thumbnails are disabled
+                Label {
+                    Layout.fillHeight: true
+                    visible: !root.displayThumbnail
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: MaterialIcons.image
+                    font.family: MaterialIcons.fontFamily
+                    font.pointSize: 14
+                    color: palette.mid
                 }
 
                 ColumnLayout {

@@ -242,6 +242,7 @@ Panel {
 
             readOnly: m.readOnly
             displayViewId: displayViewIdsAction.checked
+            displayThumbnail: thumbnailSizeSlider.value > thumbnailSizeSlider.from
             visible: !intrinsicsFilterButton.checked
             
             parentModel: sortedModel

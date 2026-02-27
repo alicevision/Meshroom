@@ -21,7 +21,7 @@ ListView {
     property var errorDialog: null
     property var sortedModel: null
 
-    property real cellHeight: thumbnailSizeSlider.value / 2
+    property real cellHeight: thumbnailSizeSlider ? thumbnailSizeSlider.value / 2 : 80
 
     // Signals
     signal removeImageRequest(var attribute)
@@ -36,6 +36,7 @@ ListView {
     spacing: 2
     highlightFollowsCurrentItem: true
     keyNavigationEnabled: true
+    highlightMoveDuration: 0
 
     // Update list current item when selected view changes
     Connections {

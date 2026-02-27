@@ -39,7 +39,7 @@ class TaskThread(QThread):
         return self._state == State.RUNNING
 
     def waitForChunkCreation(self, node):
-        if hasattr(node, "_chunksCreated") and node._chunksCreated:
+        if node._chunksCreated:
             return True
 
         loop = QEventLoop()
@@ -60,10 +60,10 @@ class TaskThread(QThread):
         try:
             # Start the event loop - will block until signal or timeout
             loop.exec()
-            success = hasattr(node, "_chunksCreated") and node._chunksCreated
-            if not success:
+            if not node._chunksCreated:
                 logging.error(f"Timeout or failure creating chunks for {node.name}")
-            return success
+                return False
+            return True
         finally:
             self._manager.chunksCreated.disconnect(onChunksCreated)
             timer.stop()
@@ -83,12 +83,14 @@ class TaskThread(QThread):
                 continue
 
             # Request chunk creation if not already done
-            if not (hasattr(node, "_chunksCreated") and node._chunksCreated):
+            if not node._chunksCreated:
                 self.createChunksSignal.emit(node)
                 # Wait for chunk creation to complete
                 if not self.waitForChunkCreation(node):
                     logging.error(f"Failed to create chunks for {node.name}, stopping the process")
                     break
+            else:
+                node._updateNodeSize()
 
             # if a node does not exist anymore, node.chunks becomes a PySide property
             try:

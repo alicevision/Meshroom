@@ -2259,6 +2259,9 @@ class Node(BaseNode):
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
             'outputs': outputs,
         }
+        
+    def updateNodeSize(self):
+        self.setSize(self.nodeDesc.size.computeSize(self))
 
     def _resetChunks(self):
         """ Set chunks on the node.

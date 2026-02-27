@@ -89,6 +89,8 @@ class TaskThread(QThread):
                 if not self.waitForChunkCreation(node):
                     logging.error(f"Failed to create chunks for {node.name}, stopping the process")
                     break
+            else:
+                node.updateNodeSize()
 
             # if a node does not exist anymore, node.chunks becomes a PySide property
             try:

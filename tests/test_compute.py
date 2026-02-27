@@ -413,3 +413,92 @@ class TestLockUpdates:
         downstreamNode.input.disconnectEdge()
         self.checkNodeStatusAndLock(node, Status.SUCCESS, False)
         self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
+
+
+class TestNode_SizeA(desc.BaseNode):
+    __test__ = False
+    size = desc.DynamicNodeSize("nbChunks")
+    parallelization = desc.Parallelization(blockSize=1)
+    inputs = [
+        desc.IntParam(
+            name="nbChunks",
+            label="nbChunks",
+            description="number of chunks",
+            value=2,
+        ),
+        desc.File(
+            name="nodeInput",
+            label="Node Input",
+            description="",
+            value="",
+        ),
+    ]
+    outputs = [
+        desc.File(
+            name='output',
+            label='Output',
+            description='Output',
+            value=os.path.join("{nodeCacheFolder}"),
+            group='',
+        ),
+    ]
+    def processChunk(self, chunk):
+        pass
+
+class TestNode_SizeB(TestNode_SizeA):
+    """ Inherit the linked node size but not parallelized """
+    size = desc.DynamicNodeSize("nodeInput")
+    parallelization = False
+
+class TestNode_SizeC(TestNode_SizeA):
+    """ Inherit the linked node size and parallelized """
+    size = desc.DynamicNodeSize("nodeInput")
+    parallelization = desc.Parallelization(blockSize=1)
+
+
+class TestSizeUpdate:
+    plugin = None
+
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(TestNode_SizeA)
+        registerNodeDesc(TestNode_SizeB)
+        registerNodeDesc(TestNode_SizeC)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(TestNode_SizeA)
+        unregisterNodeDesc(TestNode_SizeB)
+        unregisterNodeDesc(TestNode_SizeC)
+    
+    @staticmethod
+    def checkNodeSizeAndStatus(node, nodeSize, nbChunks, status):
+        assert node.size == nodeSize
+        assert len(node._chunks) == nbChunks
+        assert node.globalStatus == status.name
+
+    def test_correctSizeUpdate(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        nodeA = graph.addNewNode("TestNode_SizeA")
+        nodeB = graph.addNewNode("TestNode_SizeB")
+        nodeA.output.connectTo(nodeB.nodeInput)
+        nodeC = graph.addNewNode("TestNode_SizeC")
+        nodeB.output.connectTo(nodeC.nodeInput)
+        graph.save()
+        
+        # A
+        self.checkNodeSizeAndStatus(nodeA, 0, 0, Status.NONE)
+        nodeA.createChunks()
+        nodeA.process(inCurrentEnv=True)
+        self.checkNodeSizeAndStatus(nodeA, 2, 2, Status.SUCCESS)
+        # B
+        self.checkNodeSizeAndStatus(nodeB, 0, 1, Status.NONE)
+        nodeB.createChunks()
+        nodeB.updateNodeSize()
+        nodeB.process(inCurrentEnv=True)
+        self.checkNodeSizeAndStatus(nodeB, 2, 1, Status.SUCCESS)
+        # C
+        self.checkNodeSizeAndStatus(nodeC, 0, 0, Status.NONE)
+        nodeC.createChunks()
+        nodeC.process(inCurrentEnv=True)
+        self.checkNodeSizeAndStatus(nodeC, 2, 2, Status.SUCCESS)

@@ -30,7 +30,7 @@ Item {
     property var childrenIndices: []
 
     property bool ctrlHeld: false
-    property bool dragging: mouseArea.drag.active
+    property bool dragging: headerMouseArea.drag.active
     property bool resizing: leftDragger.drag.active || topDragger.drag.active
     // Combined x and y
     property point position: Qt.point(x, y)
@@ -149,24 +149,12 @@ Item {
         id: mouseArea
         width: root.width
         height: root.height
-        drag.target: ctrlHeld ? undefined : root
-        // Small drag threshold to avoid moving the node by mistake
-        drag.threshold: 2
+        acceptedButtons: Qt.NoButton
         hoverEnabled: true
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onPressed: (mouse) => root.pressed(mouse)
-        onReleased: (mouse) => root.released(mouse)
-        onClicked: (mouse) => root.clicked(mouse)
-        onDoubleClicked: (mouse) => root.doubleClicked(mouse)
         onEntered: root.entered()
         onExited: root.exited()
-        drag.onActiveChanged: {
-            if (!drag.active) {
-                root.moved(Qt.point(root.x, root.y))
-            }
-        }
 
-        cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
+        cursorShape: Qt.ArrowCursor
 
         // --- Backdrop Resize Controls
         // Resize: diagonal bottom-right
@@ -465,6 +453,30 @@ Item {
                             elide: Text.ElideMiddle
                             font.pointSize: 8
                         }
+                    }
+
+                    // Header-only MouseArea: handles drag, click, and selection.
+                    // Only the titlebar allows moving the backdrop to preserve standard
+                    // rectangle selection behavior on the backdrop body.
+                    MouseArea {
+                        id: headerMouseArea
+                        anchors.fill: parent
+                        drag.target: ctrlHeld ? undefined : root
+                        // Small drag threshold to avoid moving the node by mistake
+                        drag.threshold: 2
+                        hoverEnabled: true
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onPressed: (mouse) => root.pressed(mouse)
+                        onReleased: (mouse) => root.released(mouse)
+                        onClicked: (mouse) => root.clicked(mouse)
+                        onDoubleClicked: (mouse) => root.doubleClicked(mouse)
+                        drag.onActiveChanged: {
+                            if (!drag.active) {
+                                root.moved(Qt.point(root.x, root.y))
+                            }
+                        }
+
+                        cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                     }
                 }
 

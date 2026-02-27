@@ -29,6 +29,7 @@ Item {
     property var children: []
     property var childrenIndices: []
 
+    property bool ctrlHeld: false
     property bool dragging: mouseArea.drag.active
     property bool resizing: leftDragger.drag.active || topDragger.drag.active
     // Combined x and y
@@ -148,7 +149,7 @@ Item {
         id: mouseArea
         width: root.width
         height: root.height
-        drag.target: root
+        drag.target: ctrlHeld ? undefined : root
         // Small drag threshold to avoid moving the node by mistake
         drag.threshold: 2
         hoverEnabled: true

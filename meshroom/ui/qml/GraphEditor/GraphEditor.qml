@@ -1084,6 +1084,8 @@ Item {
                                 nodeRepeater.updateSelectionOnClick = true
                                 nodeRepeater.ongoingDrag = true
 
+                                ctrlHeld = (mouse.modifiers & Qt.ControlModifier) !== 0
+
                                 let selectionMode = ItemSelectionModel.NoUpdate
 
                                 if (!selected) {
@@ -1134,6 +1136,7 @@ Item {
                             }
 
                             onReleased: function(mouse, wasDragged) {
+                                ctrlHeld = false
                                 nodeRepeater.ongoingDrag = false
                             }
 

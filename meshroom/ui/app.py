@@ -279,7 +279,14 @@ class MeshroomApp(QApplication):
         self.engine.addImportPath(qmlDir)
 
         # expose available node types that can be instantiated
-        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getRegisteredNodePlugins()[n].nodeDescriptor.category} for n in sorted(pluginManager.getRegisteredNodePlugins().keys())})
+        def _nodeTypeInfo(nodePlugin):
+            desc = nodePlugin.nodeDescriptor
+            documentation = getattr(desc, 'documentation', '') or getattr(desc, '__doc__', '') or ''
+            return {
+                "category": desc.category,
+                "documentation": documentation.strip() if documentation else '',
+            }
+        self.engine.rootContext().setContextProperty("_nodeTypes", {n: _nodeTypeInfo(pluginManager.getRegisteredNodePlugins()[n]) for n in sorted(pluginManager.getRegisteredNodePlugins().keys())})
 
         # instantiate the 3D Scene object
         self._undoStack = commands.UndoStack(self)

@@ -2,6 +2,7 @@ module GraphEditor
 
 GraphEditor 1.0 GraphEditor.qml
 NodeEditor 1.0 NodeEditor.qml
+NodeTypeBrowser 1.0 NodeTypeBrowser.qml
 Node 1.0 Node.qml
 NodeChunks 1.0 NodeChunks.qml
 Edge 1.0 Edge.qml

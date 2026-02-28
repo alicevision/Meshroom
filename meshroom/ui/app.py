@@ -769,11 +769,16 @@ class MeshroomApp(QApplication):
         Get the list of menu actions contributed by all loaded plugins.
         Model provides:
             label: the text to display in the menu item
-            action: the URL to open when the menu item is triggered
             tooltip: an optional tooltip for the menu item
+            actionId: the unique identifier for the action
             pluginName: the name of the plugin providing this action
         """
         return pluginManager.getAllMenuActions()
+
+    @Slot(str)
+    def executePluginMenuAction(self, actionId):
+        """Execute the plugin menu action identified by 'actionId'."""
+        pluginManager.executeMenuAction(actionId)
 
     @Slot(str)
     def setDefaultSubmitter(self, name):

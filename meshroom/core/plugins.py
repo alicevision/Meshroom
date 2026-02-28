@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import sys
+import uuid
 
 from enum import Enum
 from inspect import getfile
@@ -302,7 +303,6 @@ class Plugin(BaseObject):
         self._processEnv: ProcessEnv = ProcessEnv(path, self._configEnv)
 
         self.loadTemplates()
-        self.loadMenuActions()
         self.loadConfig()
 
     @property
@@ -392,37 +392,27 @@ class Plugin(BaseObject):
             if file.endswith(".mg"):
                 self._templates[os.path.splitext(file)[0]] = os.path.join(self.path, file)
 
-    def loadMenuActions(self):
+    def addMenuAction(self, label: str, function: callable, tooltip: str = ""):
         """
-        Load the menu actions defined in the plugin's 'menu.json' file if it exists.
-        Whenever this method is called, the list of menu actions for the plugin is cleared,
-        before being filled again.
-        Each entry in the file is expected to be a dictionary with the following keys:
-            - 'label' (str, required): the text to display in the menu item.
-            - 'action' (str, optional): the URL to open when the menu item is triggered.
-            - 'tooltip' (str, optional): a tooltip for the menu item.
+        Register a menu action with a Python callable for this plugin.
+
+        Args:
+            label: the text to display in the menu item.
+            function: the Python callable to invoke when the menu item is triggered.
+            tooltip: an optional tooltip for the menu item.
         """
-        self._menuActions.clear()
-        try:
-            with open(os.path.join(self.path, "menu.json")) as menuFile:
-                content = json.load(menuFile)
-                for entry in content:
-                    label = entry.get("label", None)
-                    if not label or not label.strip():
-                        logging.warning(f"Skipping menu entry without 'label' in plugin {self.name}: {entry}.")
-                        continue
-                    action = {
-                        "label": label,
-                        "action": entry.get("action", ""),
-                        "tooltip": entry.get("tooltip", ""),
-                    }
-                    self._menuActions.append(action)
-        except FileNotFoundError:
-            logging.debug(f"No menu file 'menu.json' was found for {self.name}.")
-        except json.JSONDecodeError as err:
-            logging.error(f"Malformed JSON in the menu file for {self.name}: {err}")
-        except IOError as err:
-            logging.error(f"Error while accessing the menu file for {self.name}: {err}")
+        if not label or not label.strip():
+            logging.warning(f"Skipping menu action without label in plugin {self.name}.")
+            return
+        if not callable(function):
+            logging.warning(f"Skipping menu action '{label}' in plugin {self.name}: 'function' is not callable.")
+            return
+        self._menuActions.append({
+            "label": label,
+            "function": function,
+            "tooltip": tooltip,
+            "actionId": str(uuid.uuid4()),
+        })
 
     def loadConfig(self):
         """
@@ -771,14 +761,34 @@ class NodePluginManager(BaseObject):
         Return a list of all menu actions from all loaded plugins.
         Each entry in the list is a dictionary with the following keys:
             - 'label' (str): the text to display in the menu item.
-            - 'action' (str): the URL to open when the menu item is triggered.
             - 'tooltip' (str): a tooltip for the menu item.
+            - 'actionId' (str): a unique identifier for the action.
             - 'pluginName' (str): the name of the plugin providing this action.
         """
         actions = []
         for plugin in self._plugins.values():
             for menuAction in plugin.menuActions:
-                entry = dict(menuAction)
-                entry["pluginName"] = plugin.name
-                actions.append(entry)
+                actions.append({
+                    "label": menuAction["label"],
+                    "tooltip": menuAction["tooltip"],
+                    "actionId": menuAction["actionId"],
+                    "pluginName": plugin.name,
+                })
         return actions
+
+    def executeMenuAction(self, actionId: str):
+        """
+        Execute the menu action identified by 'actionId'.
+
+        Args:
+            actionId: the unique identifier of the menu action to execute.
+        """
+        for plugin in self._plugins.values():
+            for menuAction in plugin.menuActions:
+                if menuAction["actionId"] == actionId:
+                    try:
+                        menuAction["function"]()
+                    except Exception as exc:
+                        logging.error(f"Error executing menu action '{menuAction['label']}': {exc}")
+                    return
+        logging.warning(f"No menu action found with ID: {actionId}")

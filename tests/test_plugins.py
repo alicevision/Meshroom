@@ -48,15 +48,6 @@ class TestPluginWithValidNodesOnly:
         assert name == "sharedTemplate"
         assert plugin.templates[name] == os.path.join(str(plugin.path), "sharedTemplate.mg")
 
-        # Assert the menu actions have been loaded
-        assert len(plugin.menuActions) == 2
-        assert plugin.menuActions[0]["label"] == "Plugin Documentation"
-        assert plugin.menuActions[0]["action"] == "https://example.com/docs"
-        assert plugin.menuActions[0]["tooltip"] == "Open plugin documentation"
-        assert plugin.menuActions[1]["label"] == "Report Issue"
-        assert plugin.menuActions[1]["action"] == "https://example.com/issues"
-        assert plugin.menuActions[1]["tooltip"] == ""
-
     def test_unloadPlugin(self):
         plugin = pluginManager.getPlugin("pluginA")
         assert plugin == self.plugin
@@ -381,10 +372,10 @@ class TestPluginsConfiguration:
 
 
 class TestPluginMenuActions:
-    """Test the loading and aggregation of plugin menu actions."""
+    """Test the registration and execution of plugin menu actions."""
 
-    def test_menuActionsLoaded(self):
-        """Check that menu actions are loaded from the plugin's menu.json file."""
+    def test_menuActionsRegistered(self):
+        """Check that menu actions registered via registerMenuAction are loaded for the plugin."""
         folder = os.path.join(os.path.dirname(__file__), "plugins")
         with registeredPlugins(folder):
             plugin = pluginManager.getPlugin("pluginA")
@@ -394,41 +385,66 @@ class TestPluginMenuActions:
             assert len(actions) == 2
 
             assert actions[0]["label"] == "Plugin Documentation"
-            assert actions[0]["action"] == "https://example.com/docs"
             assert actions[0]["tooltip"] == "Open plugin documentation"
+            assert callable(actions[0]["function"])
+            assert "actionId" in actions[0]
 
             assert actions[1]["label"] == "Report Issue"
-            assert actions[1]["action"] == "https://example.com/issues"
             assert actions[1]["tooltip"] == ""
+            assert callable(actions[1]["function"])
+            assert "actionId" in actions[1]
 
     def test_getAllMenuActionsAggregation(self):
         """Check that getAllMenuActions aggregates actions from all plugins."""
         folder = os.path.join(os.path.dirname(__file__), "plugins")
         with registeredPlugins(folder):
             allActions = pluginManager.getAllMenuActions()
-            # pluginA has a menu.json with 2 actions; pluginB has no menu.json
+            # pluginA has 2 registered actions; pluginB has none
             pluginAActions = [a for a in allActions if a["pluginName"] == "pluginA"]
             assert len(pluginAActions) == 2
-            assert all("label" in a and "action" in a and "tooltip" in a for a in pluginAActions)
+            assert all("label" in a and "actionId" in a and "tooltip" in a for a in pluginAActions)
             assert all(a["pluginName"] == "pluginA" for a in pluginAActions)
+            # The function callable must not be exposed through getAllMenuActions
+            assert all("function" not in a for a in pluginAActions)
 
-    def test_menuActionsReloaded(self):
-        """Check that loadMenuActions clears and reloads actions from menu.json."""
+    def test_executeMenuAction(self):
+        """Check that executeMenuAction calls the registered function."""
         folder = os.path.join(os.path.dirname(__file__), "plugins")
         with registeredPlugins(folder):
             plugin = pluginManager.getPlugin("pluginA")
             assert plugin
 
-            # Initial state: 2 menu actions
-            assert len(plugin.menuActions) == 2
+            called = []
 
-            # Reload - should produce same results
-            plugin.loadMenuActions()
-            assert len(plugin.menuActions) == 2
+            def my_action():
+                called.append(True)
 
-    def test_noMenuActionsForPluginWithoutMenuJson(self):
-        """Check that a plugin without a menu.json has no menu actions."""
+            plugin.addMenuAction("Test Action", my_action)
+            action = next(a for a in plugin.menuActions if a["label"] == "Test Action")
+            pluginManager.executeMenuAction(action["actionId"])
+            assert called == [True]
+
+    def test_noMenuActionsForNewPlugin(self):
+        """Check that a freshly created plugin has no menu actions."""
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
             plugin_no_menu = Plugin("noMenuPlugin", tmpdir)
             assert plugin_no_menu.menuActions == []
+
+    def test_addMenuActionSkipsEmptyLabel(self):
+        """Check that addMenuAction skips entries without a valid label."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin = Plugin("testPlugin", tmpdir)
+            plugin.addMenuAction("", lambda: None)
+            plugin.addMenuAction("   ", lambda: None)
+            assert plugin.menuActions == []
+
+    def test_addMenuActionSkipsNonCallableFunction(self):
+        """Check that addMenuAction skips entries where function is not callable."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin = Plugin("testPlugin", tmpdir)
+            plugin.addMenuAction("My Action", "not_a_function")
+            plugin.addMenuAction("My Action", 42)
+            assert plugin.menuActions == []

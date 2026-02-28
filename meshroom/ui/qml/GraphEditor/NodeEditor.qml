@@ -275,7 +275,7 @@ Panel {
             toggle: true  // Enable toggling the actual text field by the search button
             Layout.minimumWidth: searchBar.width
             maxWidth: 150
-            enabled: tabBar.currentIndex === 0 || tabBar.currentIndex === 5
+            enabled: tabBar.currentIndex === 0 || tabBar.currentIndex === 6
         }
 
         MaterialToolButton {
@@ -540,6 +540,19 @@ Panel {
                             }
                         }
 
+                        Loader {
+                            active: (tabBar.currentIndex === 4)
+                            Layout.fillHeight: true
+                            Layout.fillWidth: true
+                            sourceComponent: NodeFileBrowser {
+                                id: nodeFileBrowser
+
+                                Layout.fillHeight: true
+                                Layout.fillWidth: true
+                                node: root.node
+                            }
+                        }
+
                         NodeDocumentation {
                             id: nodeDocumentation
 
@@ -580,7 +593,7 @@ Panel {
             property bool isBackdropNode: root.node !== null && root.node.isBackdropNode
 
             // The indices of the tab bar which can be shown for incomputable nodes
-            readonly property var nonComputableTabIndices: [0, 4, 5]
+            readonly property var nonComputableTabIndices: [0, 5, 6]
 
             Layout.fillWidth: true
             width: childrenRect.width
@@ -626,6 +639,13 @@ Panel {
                 rightPadding: leftPadding
             }
             TabButton {
+                visible: tabBar.isComputableType
+                width: !visible ? 0 : tabBar.width / tabBar.count
+                text: "Files"
+                leftPadding: 8
+                rightPadding: leftPadding
+            }
+            TabButton {
                 text: "Documentation"
                 leftPadding: 8
                 rightPadding: leftPadding
@@ -643,7 +663,7 @@ Panel {
                 if ((root.node && !root.node.isComputableType) && (nonComputableTabIndices.indexOf(tabBar.currentIndex) === -1)) {
                     if (root.node.isBackdropNode) {
                         // Backdrop nodes can only show the Documentation & Notes tabs
-                        tabBar.currentIndex = 4 // Notes tab
+                        tabBar.currentIndex = 5 // Documentation tab
                     } else {
                         tabBar.currentIndex = 0
                     }

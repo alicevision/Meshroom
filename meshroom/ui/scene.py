@@ -449,6 +449,7 @@ class Scene(UIGraph):
         reloadedNodes: list[str] = []
         errorNodes: list[str] = []
         for plugin in meshroom.core.pluginManager.getPlugins().values():
+            plugin.loadMenuActions()
             for node in plugin.nodes.values():
                 if node.reload():
                     reloadedNodes.append(node.nodeDescriptor.__name__)
@@ -461,6 +462,7 @@ class Scene(UIGraph):
     @Slot(list)
     def _onPluginsReloaded(self, reloadedNodes: list, errorNodes: list):
         self._graph.reloadNodePlugins(reloadedNodes)
+        self.parent().pluginMenuActionsChanged.emit()
         if len(errorNodes) > 0:
             self.parent().showMessage(f"Some plugins failed to reload: {', '.join(errorNodes)}", "error")
         else:

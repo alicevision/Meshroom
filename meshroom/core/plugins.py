@@ -296,11 +296,13 @@ class Plugin(BaseObject):
 
         self._nodePlugins: dict[str: NodePlugin] = {}
         self._templates: dict[str: str] = {}
+        self._menuActions: list[dict] = []
         self._configEnv: dict[str: str] = {}
         self._configFullEnv: dict[str: str] = {}
         self._processEnv: ProcessEnv = ProcessEnv(path, self._configEnv)
 
         self.loadTemplates()
+        self.loadMenuActions()
         self.loadConfig()
 
     @property
@@ -325,6 +327,11 @@ class Plugin(BaseObject):
     def templates(self):
         """ Return the list of templates associated to the plugin. """
         return self._templates
+
+    @property
+    def menuActions(self):
+        """ Return the list of menu actions associated to the plugin. """
+        return self._menuActions
 
     @property
     def processEnv(self):
@@ -384,6 +391,38 @@ class Plugin(BaseObject):
         for file in os.listdir(self.path):
             if file.endswith(".mg"):
                 self._templates[os.path.splitext(file)[0]] = os.path.join(self.path, file)
+
+    def loadMenuActions(self):
+        """
+        Load the menu actions defined in the plugin's 'menu.json' file if it exists.
+        Whenever this method is called, the list of menu actions for the plugin is cleared,
+        before being filled again.
+        Each entry in the file is expected to be a dictionary with the following keys:
+            - 'label' (str, required): the text to display in the menu item.
+            - 'action' (str, optional): the URL to open when the menu item is triggered.
+            - 'tooltip' (str, optional): a tooltip for the menu item.
+        """
+        self._menuActions.clear()
+        try:
+            with open(os.path.join(self.path, "menu.json")) as menuFile:
+                content = json.load(menuFile)
+                for entry in content:
+                    label = entry.get("label", None)
+                    if not label or not label.strip():
+                        logging.warning(f"Skipping menu entry without 'label' in plugin {self.name}: {entry}.")
+                        continue
+                    action = {
+                        "label": label,
+                        "action": entry.get("action", ""),
+                        "tooltip": entry.get("tooltip", ""),
+                    }
+                    self._menuActions.append(action)
+        except FileNotFoundError:
+            logging.debug(f"No menu file 'menu.json' was found for {self.name}.")
+        except json.JSONDecodeError as err:
+            logging.error(f"Malformed JSON in the menu file for {self.name}: {err}")
+        except IOError as err:
+            logging.error(f"Error while accessing the menu file for {self.name}: {err}")
 
     def loadConfig(self):
         """
@@ -726,3 +765,20 @@ class NodePluginManager(BaseObject):
             else:
                 nodePlugin.status = NodePluginStatus.NOT_LOADED
             del self._nodePlugins[name]
+
+    def getAllMenuActions(self) -> list[dict]:
+        """
+        Return a list of all menu actions from all loaded plugins.
+        Each entry in the list is a dictionary with the following keys:
+            - 'label' (str): the text to display in the menu item.
+            - 'action' (str): the URL to open when the menu item is triggered.
+            - 'tooltip' (str): a tooltip for the menu item.
+            - 'pluginName' (str): the name of the plugin providing this action.
+        """
+        actions = []
+        for plugin in self._plugins.values():
+            for menuAction in plugin.menuActions:
+                entry = dict(menuAction)
+                entry["pluginName"] = plugin.name
+                actions.append(entry)
+        return actions

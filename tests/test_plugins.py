@@ -48,6 +48,15 @@ class TestPluginWithValidNodesOnly:
         assert name == "sharedTemplate"
         assert plugin.templates[name] == os.path.join(str(plugin.path), "sharedTemplate.mg")
 
+        # Assert the menu actions have been loaded
+        assert len(plugin.menuActions) == 2
+        assert plugin.menuActions[0]["label"] == "Plugin Documentation"
+        assert plugin.menuActions[0]["action"] == "https://example.com/docs"
+        assert plugin.menuActions[0]["tooltip"] == "Open plugin documentation"
+        assert plugin.menuActions[1]["label"] == "Report Issue"
+        assert plugin.menuActions[1]["action"] == "https://example.com/issues"
+        assert plugin.menuActions[1]["tooltip"] == ""
+
     def test_unloadPlugin(self):
         plugin = pluginManager.getPlugin("pluginA")
         assert plugin == self.plugin
@@ -369,3 +378,57 @@ class TestPluginsConfiguration:
 
             assert config[self.CONFIG_STRING[0]] != self.CONFIG_STRING[2]
             assert configFullEnv[self.CONFIG_STRING[0]] == self.CONFIG_STRING[2]
+
+
+class TestPluginMenuActions:
+    """Test the loading and aggregation of plugin menu actions."""
+
+    def test_menuActionsLoaded(self):
+        """Check that menu actions are loaded from the plugin's menu.json file."""
+        folder = os.path.join(os.path.dirname(__file__), "plugins")
+        with registeredPlugins(folder):
+            plugin = pluginManager.getPlugin("pluginA")
+            assert plugin
+
+            actions = plugin.menuActions
+            assert len(actions) == 2
+
+            assert actions[0]["label"] == "Plugin Documentation"
+            assert actions[0]["action"] == "https://example.com/docs"
+            assert actions[0]["tooltip"] == "Open plugin documentation"
+
+            assert actions[1]["label"] == "Report Issue"
+            assert actions[1]["action"] == "https://example.com/issues"
+            assert actions[1]["tooltip"] == ""
+
+    def test_getAllMenuActionsAggregation(self):
+        """Check that getAllMenuActions aggregates actions from all plugins."""
+        folder = os.path.join(os.path.dirname(__file__), "plugins")
+        with registeredPlugins(folder):
+            allActions = pluginManager.getAllMenuActions()
+            # pluginA has a menu.json with 2 actions; pluginB has no menu.json
+            pluginAActions = [a for a in allActions if a["pluginName"] == "pluginA"]
+            assert len(pluginAActions) == 2
+            assert all("label" in a and "action" in a and "tooltip" in a for a in pluginAActions)
+            assert all(a["pluginName"] == "pluginA" for a in pluginAActions)
+
+    def test_menuActionsReloaded(self):
+        """Check that loadMenuActions clears and reloads actions from menu.json."""
+        folder = os.path.join(os.path.dirname(__file__), "plugins")
+        with registeredPlugins(folder):
+            plugin = pluginManager.getPlugin("pluginA")
+            assert plugin
+
+            # Initial state: 2 menu actions
+            assert len(plugin.menuActions) == 2
+
+            # Reload - should produce same results
+            plugin.loadMenuActions()
+            assert len(plugin.menuActions) == 2
+
+    def test_noMenuActionsForPluginWithoutMenuJson(self):
+        """Check that a plugin without a menu.json has no menu actions."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin_no_menu = Plugin("noMenuPlugin", tmpdir)
+            assert plugin_no_menu.menuActions == []

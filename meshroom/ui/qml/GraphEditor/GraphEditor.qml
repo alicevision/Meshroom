@@ -1569,7 +1569,8 @@ Item {
             text: MaterialIcons.category
             ToolTip.text: "Node Types"
             checked: nodeTypeBrowser.visible
-            checkable: true
+            Accessible.name: "Toggle Node Types Browser"
+            Accessible.role: Accessible.Button
             onClicked: nodeTypeBrowser.visible = !nodeTypeBrowser.visible
         }
     }

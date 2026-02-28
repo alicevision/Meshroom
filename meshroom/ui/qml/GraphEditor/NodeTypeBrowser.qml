@@ -178,6 +178,9 @@ Panel {
                         onDoubleClicked: {
                             root.nodeTypeDoubleClicked(modelData)
                         }
+
+                        Keys.onReturnPressed: root.nodeTypeDoubleClicked(modelData)
+                        Keys.onEnterPressed: root.nodeTypeDoubleClicked(modelData)
                     }
                 }
             }

@@ -1361,7 +1361,7 @@ Item {
                     var backdrop
                     if (selectedNodes.length > 0) {
                         // Calculate bounding box of selected nodes
-                        var padding = uigraph.layout.gridSpacing
+                        var padding = uigraph.layout.gridSpacing * 0.5
                         var minX = Number.MAX_VALUE
                         var minY = Number.MAX_VALUE
                         var maxX = -Number.MAX_VALUE
@@ -1376,7 +1376,7 @@ Item {
                             maxY = Math.max(maxY, n.y + nh)
                         }
                         var bboxX = minX - padding
-                        var bboxY = minY - padding
+                        var bboxY = minY - 2 * padding  // minus padding and title bar height
                         var bboxW = Math.round(maxX - minX + 2 * padding)
                         var bboxH = Math.round(maxY - minY + 2 * padding)
                         backdrop = uigraph.addBackdropNode(Qt.point(bboxX, bboxY), bboxW, bboxH)

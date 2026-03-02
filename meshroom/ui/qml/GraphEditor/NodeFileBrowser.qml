@@ -25,6 +25,20 @@ FocusScope {
         root.currentFolder = root.rootFolderUrl
     }
 
+    // Height of a normal (non-hidden) delegate item
+    readonly property int itemHeight: 24
+
+    /**
+     * Returns true if the given file name is a Meshroom-internal file that should be hidden,
+     * i.e. nodeStatus, chunk log/statistics/status files (e.g. 0.log, 0.statistics, 0.status).
+     */
+    function isInternalFile(name) {
+        return name === "nodeStatus"
+            || name.endsWith(".log")
+            || name.endsWith(".statistics")
+            || name.endsWith(".status")
+    }
+
     SystemPalette { id: activePalette }
 
     FolderListModel {
@@ -101,18 +115,20 @@ FocusScope {
 
             ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-            // Placeholder when folder is empty or does not exist
+            // Placeholder when folder is empty, does not exist, or contains only internal files
             Label {
                 anchors.centerIn: parent
-                visible: folderModel.count === 0 && root.node !== null
+                visible: root.node !== null && fileListView.contentHeight === 0
                 color: Qt.lighter(activePalette.mid, 1.2)
-                text: "No files found"
+                text: "No output files found"
             }
 
             delegate: ItemDelegate {
                 id: delegateItem
                 width: fileListView.width
-                height: 24
+                // Hide Meshroom-internal files by collapsing their height
+                height: root.isInternalFile(fileName) ? 0 : root.itemHeight
+                visible: height > 0
                 padding: 0
                 leftPadding: 6
 

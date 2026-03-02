@@ -1,5 +1,5 @@
 import enum
-from inspect import getfile
+from inspect import getfile, getattr_static
 from pathlib import Path
 import logging
 import shlex
@@ -430,7 +430,15 @@ class CommandLineNode(BaseNode):
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = " " + self.commandLineRange.format(**chunk.range.toDict()) + " " + cmdSuffix
 
-        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._expVars, **chunk.node._staticExpVars, **cmdLineVars) + cmdSuffix
+        # In the case of a lambda, we want a single "node" argument and not the node descriptor "self".
+        # Therefore, we use getattr_static to retrieve the raw lambda instead of a bound method, which
+        # would impose "self" as the first argument if we accessed "self.commandLine".
+        commandLineValue = getattr_static(self, 'commandLine')
+        if callable(commandLineValue):
+            cmd = commandLineValue(chunk.node)
+        else:
+            cmd = commandLineValue.format(**chunk.node._expVars, **chunk.node._staticExpVars, **cmdLineVars)
+        return cmdPrefix + cmd + cmdSuffix
 
     def processChunk(self, chunk):
         cmd = self.buildCommandLine(chunk)

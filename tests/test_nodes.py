@@ -98,12 +98,16 @@ class TestNodeVariables:
             assert n._expVars["uid"] == n._uid
             assert n.internalFolder
             assert n.internalFolder == n._expVars["nodeCacheFolder"]
+            assert "node" in n._expVars
+            assert n._expVars["node"] is n
 
             self.plugin.nodes[nodeName].reload()
 
             assert n._expVars["uid"] == n._uid
             assert n.internalFolder
             assert n.internalFolder == n._expVars["nodeCacheFolder"]
+            assert "node" in n._expVars
+            assert n._expVars["node"] is n
 
 
 class TestInitNode:

@@ -1352,6 +1352,41 @@ Item {
                 ToolTip.text: "Auto-Layout"
                 onClicked: uigraph.layout.reset()
             }
+            // Add Backdrop
+            MaterialToolButton {
+                text: MaterialIcons.sticky_note_2
+                ToolTip.text: "Add Backdrop"
+                onClicked: {
+                    var selectedNodes = uigraph.getSelectedNodes()
+                    var backdrop
+                    if (selectedNodes.length > 0) {
+                        // Calculate bounding box of selected nodes
+                        var padding = uigraph.layout.gridSpacing * 0.5
+                        var minX = Number.MAX_VALUE
+                        var minY = Number.MAX_VALUE
+                        var maxX = -Number.MAX_VALUE
+                        var maxY = -Number.MAX_VALUE
+                        for (var i = 0; i < selectedNodes.length; i++) {
+                            var n = selectedNodes[i]
+                            var nw = n.nodeWidth > 0 ? n.nodeWidth : uigraph.layout.nodeWidth
+                            var nh = n.nodeHeight > 0 ? n.nodeHeight : uigraph.layout.nodeHeight
+                            minX = Math.min(minX, n.x)
+                            minY = Math.min(minY, n.y)
+                            maxX = Math.max(maxX, n.x + nw)
+                            maxY = Math.max(maxY, n.y + nh)
+                        }
+                        var bboxX = minX - padding
+                        var bboxY = minY - 2 * padding  // minus padding and title bar height
+                        var bboxW = Math.round(maxX - minX + 2 * padding)
+                        var bboxH = Math.round(maxY - minY + 2 * padding)
+                        backdrop = uigraph.addBackdropNode(Qt.point(bboxX, bboxY), bboxW, bboxH)
+                    } else {
+                        backdrop = uigraph.addNewNode("Backdrop", getCenterPosition())
+                    }
+                    uigraph.selectedNode = backdrop
+                    uigraph.selectNodes([backdrop])
+                }
+            }
 
             // Separator
             Rectangle {

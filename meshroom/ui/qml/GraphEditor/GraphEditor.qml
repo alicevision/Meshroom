@@ -1556,6 +1556,7 @@ Item {
             var node = uigraph.addNewNode(nodeType, position)
             uigraph.selectedNode = node
             uigraph.selectNodes([node])
+            nodeTypeBrowser.visible = false
         }
     }
 

@@ -29,12 +29,30 @@ Panel {
 
     SystemPalette { id: activePalette }
 
-    /// Compute a sorted list of categories from the node types model
+    /// Lower-cased search filter text
+    readonly property string filterText: searchField.text.toLowerCase()
+
+    /// Returns true if the given node name matches the current filter
+    function nodeMatchesFilter(name) {
+        if (filterText === "")
+            return true
+        if (name.toLowerCase().indexOf(filterText) >= 0)
+            return true
+        var info = nodeTypesModel ? nodeTypesModel[name] : null
+        if (info && info["documentation"] &&
+                info["documentation"].toLowerCase().indexOf(filterText) >= 0)
+            return true
+        return false
+    }
+
+    /// Compute a sorted list of categories that have at least one matching node
     function getCategories() {
         if (!nodeTypesModel)
             return []
         var cats = {}
         for (var name in nodeTypesModel) {
+            if (!nodeMatchesFilter(name))
+                continue
             var cat = nodeTypesModel[name]["category"]
             if (!cats[cat])
                 cats[cat] = true
@@ -42,215 +60,270 @@ Panel {
         return Object.keys(cats).sort()
     }
 
-    /// Get sorted node names for a given category
+    /// Get sorted, filtered node names for a given category
     function getNodesForCategory(category) {
         if (!nodeTypesModel)
             return []
         var nodes = []
         for (var name in nodeTypesModel) {
-            if (nodeTypesModel[name]["category"] === category)
+            if (nodeTypesModel[name]["category"] === category && nodeMatchesFilter(name))
                 nodes.push(name)
         }
         return nodes.sort()
     }
 
-    MSplitView {
+    /// Select the first available category and its first node
+    function selectFirstCategory() {
+        var cats = getCategories()
+        if (cats.length === 0) {
+            categoryList.currentIndex = -1
+            nodeList.currentIndex = -1
+            root.selectedNodeName = ""
+            return
+        }
+        categoryList.currentIndex = 0
+        Qt.callLater(function() {
+            if (nodeList.count > 0) {
+                nodeList.currentIndex = 0
+                root.selectedNodeName = nodeList.model[0]
+            } else {
+                nodeList.currentIndex = -1
+                root.selectedNodeName = ""
+            }
+        })
+    }
+
+    onVisibleChanged: {
+        if (visible)
+            selectFirstCategory()
+    }
+
+    ColumnLayout {
         anchors.fill: parent
+        spacing: 0
 
-        // Left column: categories
-        Rectangle {
-            SplitView.preferredWidth: 120
-            SplitView.minimumWidth: 60
-            color: Qt.darker(activePalette.window, 1.05)
-
-            ColumnLayout {
-                anchors.fill: parent
-                spacing: 0
-
-                Label {
-                    text: "Categories"
-                    font.bold: true
-                    padding: 6
-                    Layout.fillWidth: true
-                    background: Rectangle { color: Qt.darker(activePalette.window, 1.15) }
-                }
-
-                ListView {
-                    id: categoryList
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    model: root.getCategories()
-                    currentIndex: -1
-
-                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
-
-                    delegate: ItemDelegate {
-                        width: categoryList.width
-                        height: 28
-                        highlighted: categoryList.currentIndex === index
-                        padding: 6
-
-                        contentItem: Label {
-                            text: modelData
-                            elide: Text.ElideRight
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
-                        background: Rectangle {
-                            color: parent.highlighted
-                                   ? activePalette.highlight
-                                   : (parent.hovered ? Qt.darker(activePalette.window, 1.2) : "transparent")
-                        }
-
-                        onClicked: {
-                            categoryList.currentIndex = index
-                            nodeList.currentIndex = -1
-                            root.selectedNodeName = ""
-                        }
-                    }
-                }
-            }
+        // Search bar
+        TextField {
+            id: searchField
+            Layout.fillWidth: true
+            placeholderText: "Search nodes..."
+            leftPadding: 8
+            onTextChanged: searchDebounce.restart()
         }
 
-        // Middle column: nodes in selected category
-        Rectangle {
-            SplitView.preferredWidth: 140
-            SplitView.minimumWidth: 60
-            color: activePalette.window
-
-            ColumnLayout {
-                anchors.fill: parent
-                spacing: 0
-
-                Label {
-                    text: "Nodes"
-                    font.bold: true
-                    padding: 6
-                    Layout.fillWidth: true
-                    background: Rectangle { color: Qt.darker(activePalette.window, 1.15) }
-                }
-
-                ListView {
-                    id: nodeList
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    currentIndex: -1
-
-                    model: categoryList.currentIndex >= 0
-                           ? root.getNodesForCategory(root.getCategories()[categoryList.currentIndex])
-                           : []
-
-                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
-
-                    delegate: ItemDelegate {
-                        width: nodeList.width
-                        height: 28
-                        highlighted: nodeList.currentIndex === index
-                        padding: 6
-
-                        contentItem: Label {
-                            text: modelData
-                            elide: Text.ElideRight
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
-                        background: Rectangle {
-                            color: parent.highlighted
-                                   ? activePalette.highlight
-                                   : (parent.hovered ? Qt.darker(activePalette.window, 1.2) : "transparent")
-                        }
-
-                        onClicked: {
-                            nodeList.currentIndex = index
-                            root.selectedNodeName = modelData
-                        }
-
-                        onDoubleClicked: {
-                            root.nodeTypeDoubleClicked(modelData)
-                        }
-
-                        Keys.onReturnPressed: root.nodeTypeDoubleClicked(modelData)
-                        Keys.onEnterPressed: root.nodeTypeDoubleClicked(modelData)
-                    }
-                }
-            }
+        // Debounce timer: avoids re-filtering on every keystroke
+        Timer {
+            id: searchDebounce
+            interval: 150
+            onTriggered: root.selectFirstCategory()
         }
 
-        // Right column: node documentation
-        Rectangle {
-            SplitView.fillWidth: true
-            SplitView.minimumWidth: 100
-            color: activePalette.window
+        MSplitView {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-            ColumnLayout {
-                anchors.fill: parent
-                spacing: 0
+            // Left column: categories
+            Rectangle {
+                SplitView.preferredWidth: 120
+                SplitView.minimumWidth: 60
+                color: Qt.darker(activePalette.window, 1.05)
 
-                Label {
-                    text: "Documentation"
-                    font.bold: true
-                    padding: 6
-                    Layout.fillWidth: true
-                    background: Rectangle { color: Qt.darker(activePalette.window, 1.15) }
-                }
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
 
-                ScrollView {
-                    id: docScrollView
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    ScrollBar.vertical.policy: ScrollBar.AlwaysOn
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                    contentWidth: availableWidth
+                    Label {
+                        text: "Categories"
+                        font.bold: true
+                        padding: 6
+                        Layout.fillWidth: true
+                        background: Rectangle { color: Qt.darker(activePalette.window, 1.15) }
+                    }
 
-                    ColumnLayout {
-                        width: docScrollView.availableWidth
-                        spacing: 4
+                    ListView {
+                        id: categoryList
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        model: root.getCategories()
+                        currentIndex: -1
 
-                        // Node name heading
-                        Label {
-                            visible: root.selectedNodeName !== ""
-                            text: root.selectedNodeName
-                            font.bold: true
-                            font.pointSize: 11
-                            padding: 8
-                            bottomPadding: 4
-                            Layout.fillWidth: true
-                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        }
+                        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-                        // Documentation text
-                        TextEdit {
-                            visible: root.selectedNodeName !== ""
-                            padding: 8
-                            topPadding: 4
-                            Layout.fillWidth: true
-                            width: docScrollView.availableWidth
-                            textFormat: TextEdit.MarkdownText
-                            selectByMouse: true
-                            selectionColor: activePalette.highlight
-                            color: activePalette.text
-                            readOnly: true
-                            wrapMode: TextEdit.Wrap
+                        delegate: ItemDelegate {
+                            width: categoryList.width
+                            height: 28
+                            highlighted: categoryList.currentIndex === index
+                            padding: 6
 
-                            text: {
-                                if (!root.selectedNodeName || !root.nodeTypesModel)
-                                    return ""
-                                var info = root.nodeTypesModel[root.selectedNodeName]
-                                return info ? (info["documentation"] || "") : ""
+                            contentItem: Label {
+                                text: modelData
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                color: parent.highlighted
+                                       ? activePalette.highlight
+                                       : (parent.hovered ? Qt.darker(activePalette.window, 1.2) : "transparent")
+                            }
+
+                            onClicked: {
+                                categoryList.currentIndex = index
+                                Qt.callLater(function() {
+                                    if (nodeList.count > 0) {
+                                        nodeList.currentIndex = 0
+                                        root.selectedNodeName = nodeList.model[0]
+                                    } else {
+                                        nodeList.currentIndex = -1
+                                        root.selectedNodeName = ""
+                                    }
+                                })
                             }
                         }
+                    }
+                }
+            }
 
-                        // Placeholder when nothing is selected
-                        Label {
-                            visible: root.selectedNodeName === ""
-                            text: "Select a node to view its documentation."
-                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                            padding: 12
-                            opacity: 0.6
-                            Layout.fillWidth: true
+            // Middle column: nodes in selected category
+            Rectangle {
+                SplitView.preferredWidth: 140
+                SplitView.minimumWidth: 60
+                color: activePalette.window
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+
+                    Label {
+                        text: "Nodes"
+                        font.bold: true
+                        padding: 6
+                        Layout.fillWidth: true
+                        background: Rectangle { color: Qt.darker(activePalette.window, 1.15) }
+                    }
+
+                    ListView {
+                        id: nodeList
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        currentIndex: -1
+
+                        model: categoryList.currentIndex >= 0
+                               ? root.getNodesForCategory(root.getCategories()[categoryList.currentIndex])
+                               : []
+
+                        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                        delegate: ItemDelegate {
+                            width: nodeList.width
+                            height: 28
+                            highlighted: nodeList.currentIndex === index
+                            padding: 6
+
+                            contentItem: Label {
+                                text: modelData
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                color: parent.highlighted
+                                       ? activePalette.highlight
+                                       : (parent.hovered ? Qt.darker(activePalette.window, 1.2) : "transparent")
+                            }
+
+                            onClicked: {
+                                nodeList.currentIndex = index
+                                root.selectedNodeName = modelData
+                            }
+
+                            onDoubleClicked: {
+                                root.nodeTypeDoubleClicked(modelData)
+                            }
+
+                            Keys.onReturnPressed: root.nodeTypeDoubleClicked(modelData)
+                            Keys.onEnterPressed: root.nodeTypeDoubleClicked(modelData)
+                        }
+                    }
+                }
+            }
+
+            // Right column: node documentation
+            Rectangle {
+                SplitView.fillWidth: true
+                SplitView.minimumWidth: 100
+                color: activePalette.window
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+
+                    Label {
+                        text: "Documentation"
+                        font.bold: true
+                        padding: 6
+                        Layout.fillWidth: true
+                        background: Rectangle { color: Qt.darker(activePalette.window, 1.15) }
+                    }
+
+                    ScrollView {
+                        id: docScrollView
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                        contentWidth: availableWidth
+
+                        ColumnLayout {
+                            width: docScrollView.availableWidth
+                            spacing: 4
+
+                            // Node name heading
+                            Label {
+                                visible: root.selectedNodeName !== ""
+                                text: root.selectedNodeName
+                                font.bold: true
+                                font.pointSize: 11
+                                padding: 8
+                                bottomPadding: 4
+                                Layout.fillWidth: true
+                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                            }
+
+                            // Documentation text
+                            TextEdit {
+                                visible: root.selectedNodeName !== ""
+                                padding: 8
+                                topPadding: 4
+                                Layout.fillWidth: true
+                                width: docScrollView.availableWidth
+                                textFormat: TextEdit.MarkdownText
+                                selectByMouse: true
+                                selectionColor: activePalette.highlight
+                                color: activePalette.text
+                                readOnly: true
+                                wrapMode: TextEdit.Wrap
+
+                                text: {
+                                    if (!root.selectedNodeName || !root.nodeTypesModel)
+                                        return ""
+                                    var info = root.nodeTypesModel[root.selectedNodeName]
+                                    return info ? (info["documentation"] || "") : ""
+                                }
+                            }
+
+                            // Placeholder when nothing is selected
+                            Label {
+                                visible: root.selectedNodeName === ""
+                                text: "Select a node to view its documentation."
+                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                padding: 12
+                                opacity: 0.6
+                                Layout.fillWidth: true
+                            }
                         }
                     }
                 }

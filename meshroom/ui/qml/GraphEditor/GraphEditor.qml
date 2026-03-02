@@ -1379,8 +1379,7 @@ Item {
                         var bboxY = minY - padding
                         var bboxW = Math.round(maxX - minX + 2 * padding)
                         var bboxH = Math.round(maxY - minY + 2 * padding)
-                        backdrop = uigraph.addNewNode("Backdrop", Qt.point(bboxX, bboxY))
-                        uigraph.resizeNode(backdrop, bboxW, bboxH)
+                        backdrop = uigraph.addBackdropNode(Qt.point(bboxX, bboxY), bboxW, bboxH)
                     } else {
                         backdrop = uigraph.addNewNode("Backdrop", getCenterPosition())
                     }

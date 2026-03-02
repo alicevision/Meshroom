@@ -1020,6 +1020,27 @@ class UIGraph(QObject):
             if position:
                 self.moveNode(node, Position(position.x(), position.y()))
 
+    @Slot(QPoint, int, int, result=QObject)
+    def addBackdropNode(self, position, width, height):
+        """[Undoable]
+        Create a new Backdrop Node at the given position with the given dimensions as a single undo entry.
+
+        Args:
+            position (QPoint): the position of the backdrop node.
+            width (int): the width of the backdrop node.
+            height (int): the height of the backdrop node.
+
+        Returns:
+            BackdropNode: the created node.
+        """
+        with self.groupedGraphModification("Add Backdrop"):
+            node = self.addNewNode("Backdrop", position)
+            if node.hasInternalAttribute("nodeWidth"):
+                self.setAttribute(node.internalAttribute("nodeWidth"), width)
+            if node.hasInternalAttribute("nodeHeight"):
+                self.setAttribute(node.internalAttribute("nodeHeight"), height)
+        return node
+
     @Slot(QPoint)
     def moveSelectedNodesBy(self, offset: QPoint):
         """ Move all the selected nodes by the given `offset`. """

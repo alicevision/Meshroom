@@ -54,14 +54,13 @@ Panel {
         return nodes.sort()
     }
 
-    RowLayout {
+    MSplitView {
         anchors.fill: parent
-        spacing: 0
 
         // Left column: categories
         Rectangle {
-            Layout.preferredWidth: 130
-            Layout.fillHeight: true
+            SplitView.preferredWidth: 120
+            SplitView.minimumWidth: 60
             color: Qt.darker(activePalette.window, 1.05)
 
             ColumnLayout {
@@ -114,17 +113,10 @@ Panel {
             }
         }
 
-        // Divider
-        Rectangle {
-            width: 1
-            Layout.fillHeight: true
-            color: Qt.darker(activePalette.window, 1.3)
-        }
-
         // Middle column: nodes in selected category
         Rectangle {
-            Layout.preferredWidth: 160
-            Layout.fillHeight: true
+            SplitView.preferredWidth: 140
+            SplitView.minimumWidth: 60
             color: activePalette.window
 
             ColumnLayout {
@@ -186,17 +178,10 @@ Panel {
             }
         }
 
-        // Divider
-        Rectangle {
-            width: 1
-            Layout.fillHeight: true
-            color: Qt.darker(activePalette.window, 1.3)
-        }
-
         // Right column: node documentation
         Rectangle {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            SplitView.fillWidth: true
+            SplitView.minimumWidth: 100
             color: activePalette.window
 
             ColumnLayout {
@@ -212,14 +197,16 @@ Panel {
                 }
 
                 ScrollView {
+                    id: docScrollView
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
                     ScrollBar.vertical.policy: ScrollBar.AlwaysOn
                     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                    contentWidth: availableWidth
 
                     ColumnLayout {
-                        width: parent.width
+                        width: docScrollView.availableWidth
                         spacing: 4
 
                         // Node name heading
@@ -240,7 +227,7 @@ Panel {
                             padding: 8
                             topPadding: 4
                             Layout.fillWidth: true
-                            width: parent.width
+                            width: docScrollView.availableWidth
                             textFormat: TextEdit.MarkdownText
                             selectByMouse: true
                             selectionColor: activePalette.highlight

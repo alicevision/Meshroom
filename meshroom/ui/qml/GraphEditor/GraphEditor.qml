@@ -1547,7 +1547,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        width: 500
+        width: browserWidthProxy.x
         visible: false
         nodeTypesModel: root.nodeTypesModel
 
@@ -1557,6 +1557,28 @@ Item {
             uigraph.selectedNode = node
             uigraph.selectNodes([node])
         }
+    }
+
+    // Invisible proxy item whose x-coordinate defines the NodeTypeBrowser width (default: 500)
+    Item {
+        id: browserWidthProxy
+        x: 500
+        visible: false
+    }
+
+    // Drag handle on the right edge of the NodeTypeBrowser to resize it
+    MouseArea {
+        id: browserResizeHandle
+        anchors.top: nodeTypeBrowser.top
+        anchors.bottom: nodeTypeBrowser.bottom
+        anchors.left: nodeTypeBrowser.right
+        width: 5
+        visible: nodeTypeBrowser.visible
+        cursorShape: Qt.SizeHorCursor
+        drag.target: browserWidthProxy
+        drag.axis: Drag.XAxis
+        drag.minimumX: 300
+        drag.maximumX: root.width - 100
     }
 
     // Button to toggle node type browser panel (top-left)

@@ -27,6 +27,7 @@ FocusScope {
 
     // Height of a normal (non-hidden) delegate item
     readonly property int itemHeight: 24
+    readonly property bool isValidFolder: Filepath.exists(root.currentFolder)
 
     /**
      * Returns true if the given file name is a Meshroom-internal file that should be hidden,
@@ -109,7 +110,9 @@ FocusScope {
             Layout.fillHeight: true
             clip: true
             focus: true
-            model: folderModel
+            // When the folder does not exist, the FolderModel has a fallback to a default folder.
+            // We disable the model to avoid this problematic behavior.
+            model: isValidFolder ? folderModel : null
             keyNavigationEnabled: true
             highlightFollowsCurrentItem: true
 
@@ -120,7 +123,7 @@ FocusScope {
                 anchors.centerIn: parent
                 visible: root.node !== null && fileListView.contentHeight === 0
                 color: Qt.lighter(activePalette.mid, 1.2)
-                text: "No output files found"
+                text: isValidFolder ? "Empty folder" : "Folder does not exist"
             }
 
             delegate: ItemDelegate {

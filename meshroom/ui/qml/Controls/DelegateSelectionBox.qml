@@ -24,7 +24,10 @@ SelectionBox {
             const delegate = modelInstantiator.getItemAt(i)
             if (!delegate)
                 continue
-            const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height)
+            // For backdrop nodes, only select when the selection rect intersects the titlebar.
+            const delegateRect = delegate.isBackdropNode
+                ? Qt.rect(delegate.x, delegate.y, delegate.width, delegate.headerHeight)
+                : Qt.rect(delegate.x, delegate.y, delegate.width, delegate.height)
             if (Geom2D.rectRectIntersect(mappedSelectionRect, delegateRect)) {
                 selectedIndices.push(i)
 

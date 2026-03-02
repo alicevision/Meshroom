@@ -42,6 +42,11 @@ Item {
     readonly property int minimumWidth: 200
     readonly property int minimumHeight: 200
 
+    // Identifies this delegate as a backdrop node (used e.g. for selection rect intersection tests)
+    readonly property bool isBackdropNode: true
+    // Height of the titlebar, used for selection rect computation
+    readonly property real headerHeight: header.height
+
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
 
     // Mouse interaction related signals

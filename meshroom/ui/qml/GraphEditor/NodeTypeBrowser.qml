@@ -49,7 +49,7 @@ Panel {
     Timer {
         id: searchDebounce
         interval: 150
-        onTriggered: root.selectFirstCategory()
+        onTriggered: root.applyFilter()
     }
 
     /// Returns plain text with occurrences of searchTerm wrapped in a blue <font> tag.
@@ -136,6 +136,34 @@ Panel {
                 root.selectedNodeName = ""
             }
         })
+    }
+
+    /// Called when the search filter changes.
+    /// Tries to keep the current selection visible; only falls back to the
+    /// first category/node when the selected node is filtered out.
+    function applyFilter() {
+        var cats = getCategories()
+        if (cats.length === 0) {
+            categoryList.currentIndex = -1
+            nodeList.currentIndex = -1
+            root.selectedNodeName = ""
+            return
+        }
+        // Keep the current selection if it still passes the filter
+        if (root.selectedNodeName !== "" && nodeMatchesFilter(root.selectedNodeName)) {
+            var currentCategory = nodeTypesModel[root.selectedNodeName]["category"]
+            var catIdx = cats.indexOf(currentCategory)
+            if (catIdx >= 0) {
+                categoryList.currentIndex = catIdx
+                Qt.callLater(function() {
+                    var nodes = getNodesForCategory(currentCategory)
+                    nodeList.currentIndex = nodes.indexOf(root.selectedNodeName)
+                })
+                return
+            }
+        }
+        // Current selection was filtered out – fall back to first category/node
+        selectFirstCategory()
     }
 
     onVisibleChanged: {

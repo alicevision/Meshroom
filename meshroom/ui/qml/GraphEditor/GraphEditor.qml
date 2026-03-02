@@ -1352,6 +1352,16 @@ Item {
                 ToolTip.text: "Auto-Layout"
                 onClicked: uigraph.layout.reset()
             }
+            // Add Backdrop
+            MaterialToolButton {
+                text: MaterialIcons.sticky_note_2
+                ToolTip.text: "Add Backdrop"
+                onClicked: {
+                    var backdrop = uigraph.addNewNode("Backdrop", getCenterPosition())
+                    uigraph.selectedNode = backdrop
+                    uigraph.selectNodes([backdrop])
+                }
+            }
 
             // Separator
             Rectangle {

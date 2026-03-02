@@ -561,19 +561,23 @@ class NodePlugin(BaseObject):
     @property
     def commandPrefix(self) -> str:
         """ Return the command prefix for the NodePlugin's execution. """
+        if not self.processEnv:
+            return ""
         return self.processEnv.getCommandPrefix()
 
     @property
     def commandSuffix(self) -> str:
         """ Return the command suffix for the NodePlugin's execution. """
+        if not self.processEnv:
+            return ""
         return self.processEnv.getCommandSuffix()
 
     @property
     def configFullEnv(self) -> dict[str: str]:
         """ Return the plugin's full environment dictionary. """
-        if self.plugin:
-            return self.plugin.configFullEnv
-        return {}
+        if not self.plugin:
+            return {}
+        return self.plugin.configFullEnv
 
 class NodePluginManager(BaseObject):
     """

@@ -192,6 +192,33 @@ class BaseNode(object):
     def getMrNodeType(self):
         return self._mrNodeType
 
+    @classmethod
+    def resolvedCpu(cls, node):
+        """ Return the resolved CPU level for the given node instance.
+
+        If `cpu` is a callable, it is called with the node instance as parameter.
+        Otherwise, the static value is returned.
+        """
+        return cls.cpu(node) if callable(cls.cpu) else cls.cpu
+
+    @classmethod
+    def resolvedGpu(cls, node):
+        """ Return the resolved GPU level for the given node instance.
+
+        If `gpu` is a callable, it is called with the node instance as parameter.
+        Otherwise, the static value is returned.
+        """
+        return cls.gpu(node) if callable(cls.gpu) else cls.gpu
+
+    @classmethod
+    def resolvedRam(cls, node):
+        """ Return the resolved RAM level for the given node instance.
+
+        If `ram` is a callable, it is called with the node instance as parameter.
+        Otherwise, the static value is returned.
+        """
+        return cls.ram(node) if callable(cls.ram) else cls.ram
+
     def upgradeAttributeValues(self, attrValues, fromVersion):
         return attrValues
 

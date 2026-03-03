@@ -222,9 +222,9 @@ Used for UI overlays/annotations; they support `keyable` per-view values:
 |----------|------|-------------|---------|
 | Class documentation | str | Detailed description of the node's purpose | "" |
 | `category` | str | Organizational category in the node library | "Other" |
-| `cpu` | Level | CPU resource requirement level | Level.NORMAL |
-| `ram` | Level | Memory resource requirement level | Level.NORMAL |
-| `gpu` | Level | GPU resource requirement level | Level.NONE |
+| `cpu` | Level or callable | CPU resource requirement level | Level.NORMAL |
+| `ram` | Level or callable | Memory resource requirement level | Level.NORMAL |
+| `gpu` | Level or callable | GPU resource requirement level | Level.NONE |
 | `size` | Size object | Parallelization size configuration | StaticNodeSize(1) |
 | `parallelization` | Parallelization | Chunk division settings | None |
 
@@ -242,6 +242,18 @@ class SampleNode(desc.Node):
     ram = Level.HIGH  # Requires large amount of RAM
     gpu = Level.NONE  # Do not need GPU
 ```
+
+Resource levels can also be set as callables receiving a node instance, allowing them to be
+determined dynamically based on the node's input parameters:
+
+```python
+class SampleNode(desc.Node):
+    # Dynamically require a GPU based on an input parameter
+    gpu = lambda node: Level.INTENSIVE if node.attribute("useGpu").value else Level.NONE
+```
+
+The resolved value for a node instance is accessible via the `cpu`, `gpu`, and `ram` properties
+on the node object (e.g. `node.cpu`, `node.gpu`, `node.ram`).
 
 
 ## Parallelizing a Node

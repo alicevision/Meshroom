@@ -1260,6 +1260,30 @@ class BaseNode(BaseObject):
     def isParallelized(self):
         return bool(self.nodeDesc.parallelization) if meshroom.useMultiChunks else False
 
+    @property
+    def cpu(self):
+        """ Return the resolved CPU level for this node, by evaluating the descriptor's `cpu`
+        attribute with this node instance if it is callable. """
+        if self.nodeDesc is None:
+            return None
+        return self.nodeDesc.resolvedCpu(self)
+
+    @property
+    def gpu(self):
+        """ Return the resolved GPU level for this node, by evaluating the descriptor's `gpu`
+        attribute with this node instance if it is callable. """
+        if self.nodeDesc is None:
+            return None
+        return self.nodeDesc.resolvedGpu(self)
+
+    @property
+    def ram(self):
+        """ Return the resolved RAM level for this node, by evaluating the descriptor's `ram`
+        attribute with this node instance if it is callable. """
+        if self.nodeDesc is None:
+            return None
+        return self.nodeDesc.resolvedRam(self)
+
     def hasStatus(self, status: Status):
         if not self._chunks or not self._chunksCreated:
             if self.isInputNode:

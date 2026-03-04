@@ -6,7 +6,6 @@ from pathlib import Path
 import tempfile
 
 from meshroom.core import desc, pluginManager, loadClassesNodes, initNodes
-from meshroom.core.desc.computation import Level
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.plugins import Plugin
 
@@ -278,9 +277,9 @@ class TestResourceLevels:
         """ Test that static Level values are returned as-is. """
 
         class StaticLevelNode(desc.Node):
-            cpu = Level.INTENSIVE
-            gpu = Level.NONE
-            ram = Level.EXTREME
+            cpu = desc.Level.INTENSIVE
+            gpu = desc.Level.NONE
+            ram = desc.Level.EXTREME
 
             inputs = []
             outputs = []
@@ -289,17 +288,17 @@ class TestResourceLevels:
             g = Graph("")
             node = g.addNewNode("StaticLevelNode")
 
-            assert node.cpu == Level.INTENSIVE
-            assert node.gpu == Level.NONE
-            assert node.ram == Level.EXTREME
+            assert node.cpu == desc.Level.INTENSIVE
+            assert node.gpu == desc.Level.NONE
+            assert node.ram == desc.Level.EXTREME
 
     def test_callableResourceLevels(self):
         """ Test that callable cpu/gpu/ram values are called with the node instance. """
 
         class CallableLevelNode(desc.Node):
-            cpu = lambda node: Level.INTENSIVE if node.attribute("useMoreCpu").value else Level.NORMAL
-            gpu = lambda node: Level.NORMAL if node.attribute("useGpu").value else Level.NONE
-            ram = lambda node: Level.EXTREME if node.attribute("useMuchRam").value else Level.NORMAL
+            cpu = lambda node: desc.Level.INTENSIVE if node.attribute("useMoreCpu").value else desc.Level.NORMAL
+            gpu = lambda node: desc.Level.NORMAL if node.attribute("useGpu").value else desc.Level.NONE
+            ram = lambda node: desc.Level.EXTREME if node.attribute("useMuchRam").value else desc.Level.NORMAL
 
             inputs = [
                 desc.BoolParam(name="useMoreCpu", label="", description="", value=False, invalidate=False),
@@ -313,27 +312,27 @@ class TestResourceLevels:
             node = g.addNewNode("CallableLevelNode")
 
             # Default values: all False
-            assert node.cpu == Level.NORMAL
-            assert node.gpu == Level.NONE
-            assert node.ram == Level.NORMAL
+            assert node.cpu == desc.Level.NORMAL
+            assert node.gpu == desc.Level.NONE
+            assert node.ram == desc.Level.NORMAL
 
             # Change attribute values
             node.attribute("useMoreCpu").value = True
-            assert node.cpu == Level.INTENSIVE
+            assert node.cpu == desc.Level.INTENSIVE
 
             node.attribute("useGpu").value = True
-            assert node.gpu == Level.NORMAL
+            assert node.gpu == desc.Level.NORMAL
 
             node.attribute("useMuchRam").value = True
-            assert node.ram == Level.EXTREME
+            assert node.ram == desc.Level.EXTREME
 
     def test_mixedResourceLevels(self):
         """ Test a node mixing static and callable resource level attributes. """
 
         class MixedLevelNode(desc.Node):
-            cpu = Level.NORMAL  # static
-            gpu = lambda node: Level.INTENSIVE if node.attribute("useGpu").value else Level.NONE  # callable
-            ram = Level.EXTREME  # static
+            cpu = desc.Level.NORMAL  # static
+            gpu = lambda node: desc.Level.INTENSIVE if node.attribute("useGpu").value else desc.Level.NONE  # callable
+            ram = desc.Level.EXTREME  # static
 
             inputs = [
                 desc.BoolParam(name="useGpu", label="", description="", value=False, invalidate=False),
@@ -344,9 +343,9 @@ class TestResourceLevels:
             g = Graph("")
             node = g.addNewNode("MixedLevelNode")
 
-            assert node.cpu == Level.NORMAL
-            assert node.gpu == Level.NONE
-            assert node.ram == Level.EXTREME
+            assert node.cpu == desc.Level.NORMAL
+            assert node.gpu == desc.Level.NONE
+            assert node.ram == desc.Level.EXTREME
 
             node.attribute("useGpu").value = True
-            assert node.gpu == Level.INTENSIVE
+            assert node.gpu == desc.Level.INTENSIVE

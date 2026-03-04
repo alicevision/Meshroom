@@ -249,7 +249,7 @@ determined dynamically based on the node's input parameters:
 ```python
 class SampleNode(desc.Node):
     # Dynamically require a GPU based on an input parameter
-    gpu = lambda node: Level.INTENSIVE if node.attribute("useGpu").value else Level.NONE
+    gpu = lambda node: desc.Level.INTENSIVE if node.attribute("useGpu").value else desc.Level.NONE
 ```
 
 The resolved value for a node instance is accessible via the `cpu`, `gpu`, and `ram` properties

@@ -5,11 +5,12 @@ import os
 from pathlib import Path
 import tempfile
 
-from meshroom.core import pluginManager, loadClassesNodes, initNodes
+from meshroom.core import desc, pluginManager, loadClassesNodes, initNodes
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.plugins import Plugin
 
-from .utils import registerNodeDesc, unregisterNodeDesc
+
+from .utils import registerNodeDesc, unregisterNodeDesc, registeredNodeTypes
 
 
 class TestNodeInfo:
@@ -267,3 +268,84 @@ class TestBackdropNode:
         assert backdrop.fontColor == "#00FF00"
         assert backdrop.color == "#FF0000"
         assert backdrop.comment == "hello world"
+
+
+class TestResourceLevels:
+    """ Test that cpu, gpu, and ram descriptor attributes support both static Level values and callables. """
+
+    def test_staticResourceLevels(self):
+        """ Test that static Level values are returned as-is. """
+
+        class StaticLevelNode(desc.Node):
+            cpu = desc.Level.INTENSIVE
+            gpu = desc.Level.NONE
+            ram = desc.Level.EXTREME
+
+            inputs = []
+            outputs = []
+
+        with registeredNodeTypes([StaticLevelNode]):
+            g = Graph("")
+            node = g.addNewNode("StaticLevelNode")
+
+            assert node.cpu == desc.Level.INTENSIVE
+            assert node.gpu == desc.Level.NONE
+            assert node.ram == desc.Level.EXTREME
+
+    def test_callableResourceLevels(self):
+        """ Test that callable cpu/gpu/ram values are called with the node instance. """
+
+        class CallableLevelNode(desc.Node):
+            cpu = lambda node: desc.Level.INTENSIVE if node.attribute("useMoreCpu").value else desc.Level.NORMAL
+            gpu = lambda node: desc.Level.NORMAL if node.attribute("useGpu").value else desc.Level.NONE
+            ram = lambda node: desc.Level.EXTREME if node.attribute("useMuchRam").value else desc.Level.NORMAL
+
+            inputs = [
+                desc.BoolParam(name="useMoreCpu", label="", description="", value=False, invalidate=False),
+                desc.BoolParam(name="useGpu", label="", description="", value=False, invalidate=False),
+                desc.BoolParam(name="useMuchRam", label="", description="", value=False, invalidate=False),
+            ]
+            outputs = []
+
+        with registeredNodeTypes([CallableLevelNode]):
+            g = Graph("")
+            node = g.addNewNode("CallableLevelNode")
+
+            # Default values: all False
+            assert node.cpu == desc.Level.NORMAL
+            assert node.gpu == desc.Level.NONE
+            assert node.ram == desc.Level.NORMAL
+
+            # Change attribute values
+            node.attribute("useMoreCpu").value = True
+            assert node.cpu == desc.Level.INTENSIVE
+
+            node.attribute("useGpu").value = True
+            assert node.gpu == desc.Level.NORMAL
+
+            node.attribute("useMuchRam").value = True
+            assert node.ram == desc.Level.EXTREME
+
+    def test_mixedResourceLevels(self):
+        """ Test a node mixing static and callable resource level attributes. """
+
+        class MixedLevelNode(desc.Node):
+            cpu = desc.Level.NORMAL  # static
+            gpu = lambda node: desc.Level.INTENSIVE if node.attribute("useGpu").value else desc.Level.NONE  # callable
+            ram = desc.Level.EXTREME  # static
+
+            inputs = [
+                desc.BoolParam(name="useGpu", label="", description="", value=False, invalidate=False),
+            ]
+            outputs = []
+
+        with registeredNodeTypes([MixedLevelNode]):
+            g = Graph("")
+            node = g.addNewNode("MixedLevelNode")
+
+            assert node.cpu == desc.Level.NORMAL
+            assert node.gpu == desc.Level.NONE
+            assert node.ram == desc.Level.EXTREME
+
+            node.attribute("useGpu").value = True
+            assert node.gpu == desc.Level.INTENSIVE

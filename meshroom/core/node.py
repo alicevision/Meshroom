@@ -1478,8 +1478,9 @@ class BaseNode(BaseObject):
         # This condition is for backward compatibility
         # with external size classes which may use computeSize instead of __call__
         if isinstance(self.nodeDesc.size, object) and hasattr(self.nodeDesc.size, 'computeSize'):
-            return self.nodeDesc.size.computeSize(self)    
-        
+            logging.warning(f"The plugin '{self.nodeType}' should use a callable instead of the deprecated method 'computeSize'.")
+            return self.nodeDesc.size.computeSize(self)
+
         raise ValueError(f"{self.name} size attribute is invalid")
 
     def _updateNodeSize(self):

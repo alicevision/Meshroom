@@ -2,7 +2,8 @@
 import argparse
 import os
 import sys
-from pprint import pprint
+import pprint
+import logging
 
 import meshroom
 meshroom.setupEnvironment()
@@ -16,14 +17,27 @@ parser.add_argument('--node', metavar='NODE_NAME', type=str,
                     help='Process the node alone.')
 parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
                     help='Process the node and all previous nodes needed.')
-parser.add_argument("--verbose", help="Print full status information",
-                    action="store_true")
+parser.add_argument('-v', '--verbose',
+                    help='Set the verbosity level for logging:\n'
+                            '  - fatal: Show only critical errors.\n'
+                            '  - error: Show errors only.\n'
+                            '  - warning: Show warnings and errors.\n'
+                            '  - info: Show standard informational messages.\n'
+                            '  - debug: Show detailed debug information.\n'
+                            '  - trace: Show all messages, including trace-level details.',
+                    default=os.environ.get('MESHROOM_VERBOSE', 'info'),
+                    choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'])
 
 args = parser.parse_args()
 
 if not os.path.exists(args.graphFile):
     print(f'ERROR: No graph file "{args.node}".')
     sys.exit(-1)
+
+logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
+meshroom.core.initPlugins()
+meshroom.core.initNodes()
+
 
 graph = meshroom.core.graph.loadGraph(args.graphFile)
 
@@ -32,13 +46,12 @@ graph.update()
 if args.node:
     node = graph.node(args.node)
     if node is None:
-        print(f'ERROR: node "{args.node}" does not exist in file "{args.graphFile}".')
+        logging.error(f'Node "{args.node}" does not exist in file "{args.graphFile}".')
         sys.exit(-1)
     for chunk in node.chunks:
         print(f'{chunk.name}: {chunk.status.status.name}')
-    if args.verbose:
-        print('statusFile: ', node.statusFile)
-        pprint(node.status.toDict())
+    logging.debug(f'nodeStatusFile: {node.nodeStatusFile}')
+    logging.debug(pprint.pformat(node.nodeStatus.toDict()))
 else:
     startNodes = None
     if args.toNode:
@@ -46,6 +59,5 @@ else:
     nodes, edges = graph.dfsOnFinish(startNodes=startNodes)
     for node in nodes:
         for chunk in node.chunks:
-            print(f'{chunk.name}: {chunk.status.status.name}')
-    if args.verbose:
-        pprint([n.status.toDict() for n in nodes])
+            print(f'{chunk.name}: {chunk.nodeStatus.status.name}')
+    logging.debug(pprint.pformat([n.status.toDict() for n in nodes]))

@@ -93,7 +93,7 @@ class DynamicNodeSize(object):
     def __init__(self, param):
         self._param = param
 
-    def computeSize(self, node):
+    def __call__(self, node):
         param = node.attribute(self._param)
         # Link: use linked node's size
         if param.isLink:
@@ -120,7 +120,7 @@ class MultiDynamicNodeSize(object):
         assert isinstance(params, (list, tuple))
         self._params = params
 
-    def computeSize(self, node):
+    def __call__(self, node):
         size = 0
         for param in self._params:
             param = node.attribute(param)
@@ -140,5 +140,5 @@ class StaticNodeSize(object):
     def __init__(self, size):
         self._size = size
 
-    def computeSize(self, node):
+    def __call__(self, node):
         return self._size

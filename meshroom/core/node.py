@@ -1460,8 +1460,30 @@ class BaseNode(BaseObject):
     def _createChunks(self):
         pass
 
+    def evaluateSize(self):
+        """
+        Evaluate the node size.
+        The variable could be:
+            - a callable
+            - an integer
+            - an object with a computeSize method (legacy)
+        """
+
+        if callable(self.nodeDesc.size):
+            return self.nodeDesc.size(self)
+
+        if isinstance(self.nodeDesc.size, int):
+            return self.nodeDesc.size
+
+        # This condition is for backward compatibility
+        # with external size classes which may use computeSize instead of __call__
+        if isinstance(self.nodeDesc.size, object) and hasattr(self.nodeDesc.size, 'computeSize'):
+            return self.nodeDesc.size.computeSize(self)    
+        
+        raise ValueError(f"{self.name} size attribute is invalid")
+
     def _updateNodeSize(self):
-        self.setSize(self.nodeDesc.size.computeSize(self))
+        self.setSize(self.evaluateSize())
 
     def _getAttributeChangedCallback(self, attr: Attribute) -> Optional[Callable]:
         """ Get the node descriptor-defined value changed callback associated to `attr` if any. """
@@ -2387,7 +2409,7 @@ class Node(BaseNode):
         # Grab current chunk information
         logging.debug(f"Creating chunks for node: {self.name}")
         try:
-            size = self.nodeDesc.size.computeSize(self)
+            size = self.evaluateSize()
             self.setSize(size)
             ranges = self.nodeDesc.parallelization.getRanges(self)
             self.__createChunks(ranges)

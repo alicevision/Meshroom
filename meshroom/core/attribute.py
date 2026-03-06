@@ -6,6 +6,7 @@ import os
 import re
 import weakref
 import logging
+import inspect
 
 from collections.abc import Iterable, Sequence
 from string import Template
@@ -123,6 +124,25 @@ class Attribute(BaseObject):
         if self.node:
             self.node.updateInternalAttributes()
 
+    def executeValue(self, value):
+        """
+        Assume value is a callable
+        Analyze value signature to detect if we want to use node or attr as parameter.
+        This method may be removed when all the legacy code is transformed.
+
+        Args:
+            value (Callable): the callable to execute
+
+        Return the result value of the callable
+        """
+        # The new behavior is to provide the node to the callable.
+        # For compatibility with the old behavior providing the attribute, we check if the attribute is named "attr" and provide the attribute.
+        params = inspect.signature(value).parameters
+        if len(params) == 1 and list(params)[0] == "attr":
+            return value(self)
+        
+        return value(self.node)
+
     def _initValue(self):
         """
         Initialize the attribute value.
@@ -184,7 +204,7 @@ class Attribute(BaseObject):
             raise RuntimeError(f"Cannot set value of {self._getFullName()}, the attribute is keyable.")
         elif callable(value):
             # evaluate the function
-            self._value = value(self)
+            self._value = self.executeValue(value)
         else:
             # if we set a new value, we use the attribute descriptor validator to check the
             # validity of the value and apply some conversion if needed
@@ -292,7 +312,7 @@ class Attribute(BaseObject):
         """
         if callable(self._desc.value):
             try:
-                return self._desc.value(self)
+                return self.executeValue(self._desc.value)
             except Exception as exc:
                 if not self.node.isCompatibilityNode:
                     logging.warning(f"Failed to evaluate 'defaultValue' (node lambda) for attribute '{self.fullName}': {exc}")

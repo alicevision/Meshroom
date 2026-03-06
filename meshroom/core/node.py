@@ -1212,8 +1212,8 @@ class BaseNode(BaseObject):
         """
         def _buildAttributeCmdLineVars(cmdLineVars, name, attr):
             if attr.enabled:
-                group = attr.desc.group(attr.node) \
-                        if callable(attr.desc.group) else attr.desc.group
+                group = attr.desc.commandLineGroup(attr.node) \
+                        if callable(attr.desc.commandLineGroup) else attr.desc.commandLineGroup
                 if group:
                     # If there is a valid command line "group"
                     v = attr.getValueStr(withQuotes=True)
@@ -1243,7 +1243,7 @@ class BaseNode(BaseObject):
         for name, attr in self._attributes.objects.items():
             if attr.isInput:
                 continue  # skip inputs
-            if not attr.desc.group:
+            if not attr.desc.commandLineGroup:
                 continue  # skip attributes without group
 
             v = attr.getValueStr(withQuotes=True)
@@ -1251,8 +1251,8 @@ class BaseNode(BaseObject):
             if not v:
                 continue  # skip empty strings
 
-            cmdLineVars[attr.desc.group] = \
-                cmdLineVars.get(attr.desc.group, '') + f' --{name} {v}'
+            cmdLineVars[attr.desc.commandLineGroup] = \
+                cmdLineVars.get(attr.desc.commandLineGroup, '') + f' --{name} {v}'
 
         return cmdLineVars
 

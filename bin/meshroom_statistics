@@ -2,10 +2,11 @@
 import argparse
 import os
 import sys
-from pprint import pprint
+import logging
 from collections import defaultdict
 from collections.abc import Iterable
 
+import meshroom
 from meshroom.core import graph as pg
 
 
@@ -39,14 +40,26 @@ parser.add_argument('--graph', metavar='NODE_NAME', type=str,
                     help='Process the node and all previous nodes needed.')
 parser.add_argument('--exportHtml', metavar='FILE', type=str,
                     help='Filepath to the output html file.')
-parser.add_argument("--verbose", help="Print full status information",
-                    action="store_true")
+parser.add_argument('-v', '--verbose',
+                    help='Set the verbosity level for logging:\n'
+                            '  - fatal: Show only critical errors.\n'
+                            '  - error: Show errors only.\n'
+                            '  - warning: Show warnings and errors.\n'
+                            '  - info: Show standard informational messages.\n'
+                            '  - debug: Show detailed debug information.\n'
+                            '  - trace: Show all messages, including trace-level details.',
+                    default=os.environ.get('MESHROOM_VERBOSE', 'info'),
+                    choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'])
 
 args = parser.parse_args()
 
 if not os.path.exists(args.graphFile):
     print(f'ERROR: No graph file "{args.graphFile}".')
     sys.exit(-1)
+
+logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
+meshroom.core.initPlugins()
+meshroom.core.initNodes()
 
 graph = pg.loadGraph(args.graphFile)
 

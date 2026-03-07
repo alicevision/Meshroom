@@ -277,6 +277,10 @@ class MeshroomApp(QApplication):
             qInstallMessageHandler(MessageHandler.handler)
 
         self.engine.addImportPath(qmlDir)
+        # Add PySide6's bundled QML modules path (Qt3D, QtQuick.Scene3D, etc.)
+        pyside6QmlPath = os.path.join(os.path.dirname(QtCore.__file__), "Qt", "qml")
+        if os.path.isdir(pyside6QmlPath):
+            self.engine.addImportPath(pyside6QmlPath)
 
         # expose available node types that can be instantiated
         self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getRegisteredNodePlugins()[n].nodeDescriptor.category} for n in sorted(pluginManager.getRegisteredNodePlugins().keys())})

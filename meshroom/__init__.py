@@ -171,9 +171,14 @@ def setupEnvironment(backend=Backend.STANDALONE):
 
         env = {
             "PATH": aliceVisionBinDir,
-            "QT_PLUGIN_PATH": [qtPluginsDir],
-            "QML2_IMPORT_PATH": [os.path.join(qtPluginsDir, "qml")]
         }
+
+        # Only add Qt plugin/QML paths if the directories actually exist
+        if os.path.isdir(qtPluginsDir):
+            env["QT_PLUGIN_PATH"] = [qtPluginsDir]
+            qmlImportDir = os.path.join(qtPluginsDir, "qml")
+            if os.path.isdir(qmlImportDir):
+                env["QML2_IMPORT_PATH"] = [qmlImportDir]
 
         for key, value in env.items():
             logging.debug(f"Add to {key}: {value}")
@@ -207,11 +212,16 @@ def setupEnvironment(backend=Backend.STANDALONE):
     addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))
     if sys.platform == "win32":
         addToEnvPath("PATH", os.environ.get("ALICEVISION_LIBPATH", ""))
-    else:
+    elif sys.platform != "darwin":
         addToEnvPath("LD_LIBRARY_PATH", os.environ.get("ALICEVISION_LIBPATH", ""))
+    # macOS: AliceVision libraries are resolved through the rpaths embedded in the
+    # bundle, so no dynamic-linker environment variable needs to be set here.
 
 
 os.environ["QML_XHR_ALLOW_FILE_READ"] = '1'
 os.environ["QML_XHR_ALLOW_FILE_WRITE"] = '1'
 os.environ["PYSEQ_STRICT_PAD"] = '1'
-os.environ["QSG_RHI_BACKEND"] = "opengl"
+if sys.platform == "darwin":
+    os.environ.setdefault("QSG_RHI_BACKEND", "metal")
+else:
+    os.environ["QSG_RHI_BACKEND"] = "opengl"

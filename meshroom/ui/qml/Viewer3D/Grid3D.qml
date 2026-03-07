@@ -46,13 +46,37 @@ Entity {
                         }
                     }
                 }
+                Attribute {
+                    id: gridNormal
+                    attributeType: Attribute.VertexAttribute
+                    vertexBaseType: Attribute.Float
+                    vertexSize: 3
+                    count: gridPosition.count
+                    name: defaultNormalAttributeName
+                    buffer: Buffer {
+                        data: {
+                            var f32 = new Float32Array(gridPosition.count * 3)
+                            for (var i = 0; i < gridPosition.count; i++) {
+                                f32[3 * i] = 0.0
+                                f32[3 * i + 1] = 1.0
+                                f32[3 * i + 2] = 0.0
+                            }
+                            return f32
+                        }
+                    }
+                }
                 boundingVolumePositionAttribute: gridPosition
             }
         },
+        // Neutralized Phong: diffuse/specular zeroed so the equation collapses
+        // to just `ambient`, giving an unlit-looking constant color. This way
+        // the (0,1,0) placeholder normals in the geometry above never affect
+        // the final shading, while we stay on the PhongMaterial code path that
+        // Metal RHI vertex-descriptor validation is happy with.
         PhongMaterial {
             ambient: "#FFF"
-            diffuse: "#222"
-            specular: diffuse
+            diffuse: "#000"
+            specular: "#000"
             shininess: 0
         }
     ]

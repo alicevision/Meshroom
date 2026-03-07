@@ -38,10 +38,18 @@ Entity {
     Entity {
         components: [edges, orangeMaterial]
 
+        // Neutralized Phong: diffuse/specular zeroed so the equation collapses
+        // to just `ambient`, giving an unlit-looking constant color. This way
+        // the (0,1,0) placeholder normals in the geometry below never affect
+        // the final shading, while we stay on the PhongMaterial code path that
+        // Metal RHI vertex-descriptor validation is happy with.
         PhongMaterial {
             id: orangeMaterial
             property color base: "#f49b2b"
             ambient: base
+            diffuse: "#000"
+            specular: "#000"
+            shininess: 0
         }
 
         GeometryRenderer {
@@ -82,6 +90,24 @@ Entity {
                             -1.0, 1.0, -1.0,
                             1.0, 1.0, -1.0
                             ])
+                    }
+                }
+                Attribute {
+                    attributeType: Attribute.VertexAttribute
+                    vertexBaseType: Attribute.Float
+                    vertexSize: 3
+                    count: 24
+                    name: defaultNormalAttributeName
+                    buffer: Buffer {
+                        data: {
+                            var f32 = new Float32Array(24 * 3)
+                            for (var i = 0; i < 24; i++) {
+                                f32[3 * i] = 0.0
+                                f32[3 * i + 1] = 1.0
+                                f32[3 * i + 2] = 0.0
+                            }
+                            return f32
+                        }
                     }
                 }
                 boundingVolumePositionAttribute: boundingBoxPosition

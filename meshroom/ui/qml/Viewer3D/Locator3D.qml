@@ -35,6 +35,23 @@ Entity {
                     vertexBaseType: Attribute.Float
                     vertexSize: 3
                     count: 6
+                    name: defaultNormalAttributeName
+                    buffer: Buffer {
+                        data: new Float32Array([
+                            0.0, 1.0, 0.0,
+                            0.0, 1.0, 0.0,
+                            0.0, 1.0, 0.0,
+                            0.0, 1.0, 0.0,
+                            0.0, 1.0, 0.0,
+                            0.0, 1.0, 0.0
+                            ])
+                    }
+                }
+                Attribute {
+                    attributeType: Attribute.VertexAttribute
+                    vertexBaseType: Attribute.Float
+                    vertexSize: 3
+                    count: 6
                     name: defaultColorAttributeName
                     buffer: Buffer {
                         data: new Float32Array([

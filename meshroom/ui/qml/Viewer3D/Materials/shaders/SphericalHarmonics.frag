@@ -1,6 +1,6 @@
 #version 450 core
 
-layout(location = 0) in vec3 normal;
+layout(location = 0) in vec3 worldPos;
 layout(location = 0) out vec4 fragColor;
 
 layout(std140, binding = 0) uniform qt3d_render_view_uniforms {
@@ -47,18 +47,19 @@ vec3 resolveSH_Opt(vec3 premulCoefficients[9], vec3 dir)
     result += premulCoefficients[5] * (dir.x * dir.z);
     result += premulCoefficients[6] * (dir.y * dir.z);
     result += premulCoefficients[7] * (dirSq.x - dirSq.y);
-    result += premulCoefficients[8] * (3 * dirSq.z - 1);
+    result += premulCoefficients[8] * (3.0 * dirSq.z - 1.0);
     return result;
 }
 
 void main()
 {
-    if(displayNormals) {
-        // Display normals mode
+    // Compute flat face normal from screen-space position derivatives
+    vec3 normal = normalize(cross(dFdx(worldPos), dFdy(worldPos)));
+
+    if (displayNormals) {
         fragColor = vec4(normal, 1.0);
     }
     else {
-        // Calculate the color from spherical harmonics coeffs
         fragColor = vec4(resolveSH_Opt(shCoeffs, normal), 1.0);
     }
 }

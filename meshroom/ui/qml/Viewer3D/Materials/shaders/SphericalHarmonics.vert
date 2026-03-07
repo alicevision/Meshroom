@@ -1,9 +1,8 @@
 #version 450 core
 
 layout(location = 0) in vec3 vertexPosition;
-layout(location = 1) in vec3 vertexNormal;
 
-layout(location = 0) out vec3 normal;
+layout(location = 0) out vec3 worldPos;
 
 layout(std140, binding = 0) uniform qt3d_render_view_uniforms {
     mat4 viewMatrix;
@@ -35,6 +34,6 @@ layout(std140, binding = 1) uniform qt3d_command_uniforms {
 
 void main()
 {
-    normal = vertexNormal;
+    worldPos = (modelMatrix * vec4(vertexPosition, 1.0)).xyz;
     gl_Position = mvp * vec4(vertexPosition, 1.0);
 }

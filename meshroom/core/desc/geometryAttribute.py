@@ -6,11 +6,11 @@ class Geometry(GroupAttribute):
     Base attribute for all Geometry attribute.
     Countains several attributes (inherit from GroupAttribute).
     """
-    def __init__(self, items, name, label, description, group="allParams", advanced=False, semantic="",
+    def __init__(self, items, name, label, description, commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # GroupAttribute constructor
         super(Geometry, self).__init__(items=items, name=name, label=label, description=description,
-                                       group=group, advanced=advanced, semantic=semantic,
+                                       commandLineGroup=commandLineGroup, advanced=advanced, semantic=semantic,
                                        enabled=enabled, visible=visible, exposed=exposed)
 
     def getInstanceType(self):
@@ -27,19 +27,19 @@ class Size2d(Geometry):
     Size2d is a Geometry attribute that allows to specify a 2d size.
     """
     def __init__(self, name, label, description, width, height, widthRange=None, heightRange=None,
-                 keyable=False, keyType=None, group="allParams", advanced=False, semantic="",
+                 keyable=False, keyType=None, commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
         items = [
             FloatParam(name="width", label="Width", description="Width size.", value=width, range=widthRange,
-                       keyable=keyable, keyType=keyType, group=group, advanced=advanced,
+                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
                        enabled=enabled, visible=visible, exposed=exposed),
             FloatParam(name="height", label="Height", description="Height size.", value=height, range=heightRange,
-                       keyable=keyable, keyType=keyType, group=group, advanced=advanced,
+                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
                        enabled=enabled, visible=visible, exposed=exposed)
         ]
         # GeometryAttribute constructor
-        super(Size2d, self).__init__(items, name, label, description, group=None, advanced=advanced,
+        super(Size2d, self).__init__(items, name, label, description, commandLineGroup=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
 
 class Vec2d(Geometry):
@@ -47,17 +47,17 @@ class Vec2d(Geometry):
     Vec2d is a Geometry attribute that allows to specify a 2d vector.
     """
     def __init__(self, name, label, description, x, y, xRange=None, yRange=None,
-                 keyable=False, keyType=None, group="allParams", advanced=False, semantic="",
+                 keyable=False, keyType=None, commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
         items = [
             FloatParam(name="x", label="X", description="X coordinate.", value=x, range=xRange,
-                       keyable=keyable, keyType=keyType, group=group, advanced=advanced,
+                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
                        enabled=enabled, visible=visible, exposed=exposed),
             FloatParam(name="y", label="Y", description="Y coordinate.", value=y, range=yRange,
-                       keyable=keyable, keyType=keyType, group=group, advanced=advanced,
+                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
                        enabled=enabled, visible=visible, exposed=exposed)
         ]
         # GeometryAttribute constructor
-        super(Vec2d, self).__init__(items, name, label, description, group=None, advanced=advanced,
+        super(Vec2d, self).__init__(items, name, label, description, commandLineGroup=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)

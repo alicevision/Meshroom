@@ -369,6 +369,7 @@ FocusScope {
             names.push("gallery")
 
         outputAttribute.names = names
+        outputAttribute.lastOutputName = names.find(n => n !== "gallery") || ""
     }
 
     onDisplayedAttrValueChanged: {
@@ -1723,6 +1724,7 @@ FocusScope {
 
                             property var names: ["gallery"]
                             property string name: names[currentIndex]
+                            property string lastOutputName: ""
 
                             model: names.map(n => (n === "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label)
                             enabled: count > 1
@@ -1733,6 +1735,8 @@ FocusScope {
                             Layout.preferredWidth: model.reduce((acc, label) => Math.max(acc, fontMetrics.boundingRect(label).width), 0) + 3.0 * Qt.application.font.pixelSize
 
                             onNameChanged: {
+                                if (name !== "gallery")
+                                    lastOutputName = name
                                 root.source = getImageFile()
                                 root.sequence = getSequence()
                             }
@@ -1919,6 +1923,20 @@ FocusScope {
         shortcut: "I"
         onTriggered: {
             metadataCB.checked = !metadataCB.checked
+        }
+    }
+
+    // Actions switch Source
+    Action {
+        id: switchSourceAction
+
+        shortcut: "S"
+        onTriggered: {
+            if (outputAttribute.name === "gallery") {
+                outputAttribute.setName(outputAttribute.lastOutputName)
+            } else {
+                outputAttribute.setName("gallery")
+            }
         }
     }
 }

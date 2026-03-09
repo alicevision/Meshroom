@@ -91,7 +91,7 @@ class InternalAttributesFactory:
             name="color",
             label="Color",
             description="Custom color for the node (SVG name or hexadecimal code).",
-            value="",
+            value=lambda node: getattr(node.nodeDesc, "color", ""),
             invalidate=False,
         )
     ]
@@ -169,6 +169,7 @@ class BaseNode(object):
     gpu = Level.NONE
     ram = Level.NORMAL
     packageName = ""
+    color = ""
     _mrNodeType: MrNodeType = MrNodeType.BASENODE
 
     internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)

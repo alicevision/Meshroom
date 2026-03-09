@@ -349,3 +349,71 @@ class TestResourceLevels:
 
             node.attribute("useGpu").value = True
             assert node.gpu == desc.Level.INTENSIVE
+
+
+class TestNodeColor:
+    """ Test that the color descriptor attribute can be defined on a node class and overridden. """
+
+    def test_defaultColor(self):
+        """ Test that the default color for a node with no color defined is empty string. """
+
+        class NoColorNode(desc.Node):
+            inputs = []
+            outputs = []
+
+        with registeredNodeTypes([NoColorNode]):
+            g = Graph("")
+            node = g.addNewNode("NoColorNode")
+
+            assert node.color == ""
+
+    def test_descriptorColor(self):
+        """ Test that a node class with a color defined returns that color when no instance color is set. """
+
+        class ColoredNode(desc.Node):
+            color = "#FF0000"
+            inputs = []
+            outputs = []
+
+        with registeredNodeTypes([ColoredNode]):
+            g = Graph("")
+            node = g.addNewNode("ColoredNode")
+
+            # The node has no instance-specific color, so it should return the descriptor color
+            assert node.color == "#FF0000"
+
+    def test_instanceColorOverridesDescriptorColor(self):
+        """ Test that an instance-specific color overrides the descriptor color. """
+
+        class ColoredNode2(desc.Node):
+            color = "#FF0000"
+            inputs = []
+            outputs = []
+
+        with registeredNodeTypes([ColoredNode2]):
+            g = Graph("")
+            node = g.addNewNode("ColoredNode2")
+
+            # Override with instance color
+            node.internalAttribute("color").value = "#00FF00"
+            assert node.color == "#00FF00"
+
+    def test_resetToDefaultRestoresDescriptorColor(self):
+        """ Test that resetting the color attribute to its default restores the descriptor color. """
+
+        class ColoredNode3(desc.Node):
+            color = "#FF0000"
+            inputs = []
+            outputs = []
+
+        with registeredNodeTypes([ColoredNode3]):
+            g = Graph("")
+            node = g.addNewNode("ColoredNode3")
+
+            # Set an instance color
+            node.internalAttribute("color").value = "#00FF00"
+            assert node.color == "#00FF00"
+
+            # Resetting to default should restore the descriptor color
+            node.internalAttribute("color").resetToDefaultValue()
+            assert node.color == "#FF0000"

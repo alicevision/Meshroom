@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import MaterialIcons 2.2
 import Utils 1.0
+import DataObjects 1.0
 
 /**
  * Text file viewer with auto-reload feature.
@@ -101,12 +102,12 @@ Item {
 
                 property string text
 
-                ListModel {
+                LogLinesModel {
                     id: logLinesModel
                 }
 
                 onTextChanged: {
-                    updateLogLinesModel(logLinesModel, text);
+                    logLinesModel.setText(text);
                 }
 
                 model: logLinesModel
@@ -194,7 +195,15 @@ Item {
                     width: textView.width
                     spacing: 6
 
-                    property var logLine: textView.model.get(index) ? textView.model.get(index) : {"line": "", "duration": -1}
+                    property var logLine: {
+                        var entry = textView.model.get(index)
+                        if (entry)
+                        {
+                            return entry
+                        }
+                        
+                        return { "line": "", "duration": -1, "time": "00:00:00", "level": LogLevelEnum.INFO }
+                    }
 
                     Item {
                         Layout.minimumWidth: childrenRect.width
@@ -224,8 +233,8 @@ Item {
                             anchors.fill: parent
                         }
                         enabled: logLine.duration > 0
-                        ToolTip.text: "Elapsed time: " + Format.sec2timeStr(logLine.duration)
-                        ToolTip.visible: mouseArea.containsMouse
+                        ToolTip.text: "Elapsed time: " + Format.sec2timeStr(logLine.duration) + "\nTime: " + (logLine.duration >= 0 ? logLine.time : "Unknown")
+                        ToolTip.visible: mouseArea.containsMouse && logLine.duration >= 0
                     }
 
                     Loader {
@@ -283,17 +292,22 @@ Item {
 
                                 color: {
                                     // Color line according to log level
-                                    if (text.indexOf("[trace]") >= 0)
+                                    switch (logLine.level)
+                                    {
+                                    case LogLevelEnum.TRACE:
                                         return Qt.darker(palette.text, 2)
-                                    if (text.indexOf("[debug]") >= 0)
+                                    case LogLevelEnum.DEBUG:
                                         return Qt.darker(palette.text, 1.5)
-                                    if (text.indexOf("[warning]") >= 0)
+                                    case LogLevelEnum.WARNING:
                                         return Colors.orange
-                                    else if (text.indexOf("[error]") >= 0)
+                                    case LogLevelEnum.ERROR:
                                         return Colors.red
-                                    else if (text.indexOf("[fatal]") >= 0 || text.indexOf("[critical]") >= 0)
+                                    case LogLevelEnum.FATAL:
+                                    case LogLevelEnum.CRITICAL:
                                         return Colors.firebrick
-                                    return palette.text
+                                    default:
+                                        return palette.text
+                                    }
                                 }
                             }
                         }
@@ -363,42 +377,5 @@ Item {
             }
         }
         xhr.send()
-    }
-
-    // Parse log-line to see if it contains a time indicator
-    // and if yes then turn it into a time value (in seconds)
-    function getLogLineTime(line) {
-        const regex = /[0-9]{2}:[0-9]{2}:[0-9]{2}/
-        const found = line.match(regex)
-        if (found && found.length > 0) {
-            let hh = parseInt(found[0].substring(0, 2))
-            let mm = parseInt(found[0].substring(3, 5))
-            let ss = parseInt(found[0].substring(6, 8))
-            let time = ss + 60 * mm + 3600 * hh;
-            if (!isNaN(time)) {
-                return time
-            }
-        }
-        return -1
-    }
-
-    // Update a log-lines ListModel from a log-text by filling it with elements containing: 
-    // - a log-line (string)
-    // - the elapsed time since the last log-line containing a time value and this one (if it also contains a time value)
-    function updateLogLinesModel(llm, text) {
-        llm.clear()
-        const lines = text.split('\n')
-        const times = lines.map(line => getLogLineTime(line))
-        let prev_idx = -1
-        for (let i = 0; i < lines.length; i++) {
-            let delta = -1
-            if (times[i] >= 0) {
-                if (prev_idx >= 0) {
-                    delta = times[i]-times[prev_idx]
-                }
-                prev_idx = i
-            }
-            llm.append({"line": lines[i], "duration": delta})
-        }
     }
 }

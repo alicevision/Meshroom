@@ -2304,7 +2304,6 @@ class Node(BaseNode):
         self._nodeStatus.status = Status.NONE
         # Recreate list with reset values (1 chunk or the static size)
         if not self.isParallelized:
-            self._updateNodeSize()
             self._chunks.setObjectList([NodeChunk(self, desc.Range())])
             self._chunks[0].statusChanged.connect(self.globalStatusChanged)
             self._chunksCreated = True

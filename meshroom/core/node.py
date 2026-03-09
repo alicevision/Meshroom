@@ -883,7 +883,8 @@ class BaseNode(BaseObject):
     def getColor(self) -> str:
         """
         Returns:
-            The user-provided custom color of the node if it exists, empty string otherwise
+            The node's color: the user-provided custom color if set, otherwise the descriptor's
+            default color (nodeDesc.color), or empty string if neither is defined.
         """
         if self.hasInternalAttribute("color"):
             return self.internalAttribute("color").value.strip()

@@ -120,6 +120,9 @@ FocusScope {
         if (event.key === Qt.Key_F) {
             root.fit()
             event.accepted = true
+        } else if (event.key === Qt.Key_1) {
+            root.zoomPixelSize()
+            event.accepted = true
         }
     }
 
@@ -187,6 +190,13 @@ FocusScope {
         imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale
 
         return true
+    }
+
+    function zoomPixelSize() {
+        // Set zoom to 100% for 1:1 pixel mapping to match image pixels to screen pixels
+        imgContainer.scale = 1
+        imgContainer.x = Math.max((imgLayout.width - imgContainer.width * imgContainer.scale) * 0.5, 0)
+        imgContainer.y = Math.max((imgLayout.height - imgContainer.height * imgContainer.scale) * 0.5, 0)
     }
 
     function tryLoadNode(node) {
@@ -413,9 +423,7 @@ FocusScope {
         MenuItem {
             text: "Zoom 100%"
             onTriggered: {
-                imgContainer.scale = 1
-                imgContainer.x = Math.max((imgLayout.width - imgContainer.width * imgContainer.scale) * 0.5, 0)
-                imgContainer.y = Math.max((imgLayout.height - imgContainer.height * imgContainer.scale) * 0.5, 0)
+                zoomPixelSize()
             }
         }
     }

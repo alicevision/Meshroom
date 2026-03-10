@@ -10,7 +10,7 @@ class GroupAttributes(desc.Node):
             name="firstGroup",
             label="First Group",
             description="Group at the root level.",
-            group=None,
+            commandLineGroup=None,
             exposed=True,
             items=[
                 desc.IntParam(
@@ -51,7 +51,7 @@ class GroupAttributes(desc.Node):
                     name="nestedGroup",
                     label="Nested Group",
                     description="A group within a group.",
-                    group=None,
+                    commandLineGroup=None,
                     exposed=True,
                     items=[
                         desc.FloatParam(
@@ -75,7 +75,7 @@ class GroupAttributes(desc.Node):
                         label="Listed Group",
                         description="Group in a list within a group.",
                         joinChar=":",
-                        group=None,
+                        commandLineGroup=None,
                         items=[
                             desc.IntParam(
                                 name="listedGroupInt",
@@ -120,7 +120,7 @@ class GroupAttributes(desc.Node):
             name="inputGroup",
             label="Input Group",
             description="A group set as an input.",
-            group=None,
+            commandLineGroup=None,
             items=[
                 desc.BoolParam(
                     name="inputBool",
@@ -137,7 +137,7 @@ class GroupAttributes(desc.Node):
             name="outputGroup",
             label="Output Group",
             description="A group set as an output.",
-            group=None,
+            commandLineGroup=None,
             exposed=True,
             items=[
                 desc.BoolParam(

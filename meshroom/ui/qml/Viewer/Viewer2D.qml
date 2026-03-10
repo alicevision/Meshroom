@@ -120,6 +120,9 @@ FocusScope {
         if (event.key === Qt.Key_F) {
             root.fit()
             event.accepted = true
+        } else if (event.key === Qt.Key_1) {
+            root.zoomPixelSize()
+            event.accepted = true
         }
     }
 
@@ -187,6 +190,13 @@ FocusScope {
         imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale
 
         return true
+    }
+
+    function zoomPixelSize() {
+        // Set zoom to 100% for 1:1 pixel mapping to match image pixels to screen pixels
+        imgContainer.scale = 1
+        imgContainer.x = Math.max((imgLayout.width - imgContainer.width * imgContainer.scale) * 0.5, 0)
+        imgContainer.y = Math.max((imgLayout.height - imgContainer.height * imgContainer.scale) * 0.5, 0)
     }
 
     function tryLoadNode(node) {
@@ -369,6 +379,7 @@ FocusScope {
             names.push("gallery")
 
         outputAttribute.names = names
+        outputAttribute.lastOutputName = names.find(n => n !== "gallery") || ""
     }
 
     onDisplayedAttrValueChanged: {
@@ -412,9 +423,7 @@ FocusScope {
         MenuItem {
             text: "Zoom 100%"
             onTriggered: {
-                imgContainer.scale = 1
-                imgContainer.x = Math.max((imgLayout.width - imgContainer.width * imgContainer.scale) * 0.5, 0)
-                imgContainer.y = Math.max((imgLayout.height - imgContainer.height * imgContainer.scale) * 0.5, 0)
+                zoomPixelSize()
             }
         }
     }
@@ -1723,6 +1732,7 @@ FocusScope {
 
                             property var names: ["gallery"]
                             property string name: names[currentIndex]
+                            property string lastOutputName: ""
 
                             model: names.map(n => (n === "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label)
                             enabled: count > 1
@@ -1733,6 +1743,8 @@ FocusScope {
                             Layout.preferredWidth: model.reduce((acc, label) => Math.max(acc, fontMetrics.boundingRect(label).width), 0) + 3.0 * Qt.application.font.pixelSize
 
                             onNameChanged: {
+                                if (name !== "gallery")
+                                    lastOutputName = name
                                 root.source = getImageFile()
                                 root.sequence = getSequence()
                             }
@@ -1919,6 +1931,20 @@ FocusScope {
         shortcut: "I"
         onTriggered: {
             metadataCB.checked = !metadataCB.checked
+        }
+    }
+
+    // Actions switch Source
+    Action {
+        id: switchSourceAction
+
+        shortcut: "S"
+        onTriggered: {
+            if (outputAttribute.name === "gallery") {
+                outputAttribute.setName(outputAttribute.lastOutputName)
+            } else {
+                outputAttribute.setName("gallery")
+            }
         }
     }
 }

@@ -185,11 +185,13 @@ RowLayout {
                         }
 
                         MenuItem { 
-                            visible: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable)
+                            visible: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable || attribute.isTextDisplayable)
                             height: visible ? implicitHeight : 0
                             text: {
                                 if (attribute.is2dDisplayable)
                                     return "Show in 2D Viewer"
+                                if (attribute.isTextDisplayable)
+                                    return "Show in Text Viewer"
                                 return "Show in 3D Viewer"
                             }
                             onClicked: root.showInViewer(attribute)
@@ -209,12 +211,18 @@ RowLayout {
             }
 
             MaterialLabel {
-                property bool isDisplayable: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable)
+                property bool isDisplayable: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable || attribute.isTextDisplayable)
                 property bool isDisplayed: attribute === _currentScene.displayedAttr2D || _currentScene.displayedAttrs3D.count && _currentScene.displayedAttrs3D.contains(attribute)
                 text: isDisplayed ? MaterialIcons.visibility : MaterialIcons.visibility_off
                 enabled: isDisplayed
                 visible: isDisplayable
-                ToolTip.text: `This attribute is displayable in the ${attribute.is2dDisplayable ? "2D" : "3D"} viewer.`
+                ToolTip.text: {
+                    if (attribute.is2dDisplayable)
+                        return "This attribute is displayable in the 2D viewer."
+                    if (attribute.isTextDisplayable)
+                        return "This attribute is displayable in the Text viewer."
+                    return "This attribute is displayable in the 3D viewer."
+                }
 
                 padding: 4
                 font.pointSize: 8

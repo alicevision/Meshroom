@@ -54,6 +54,7 @@ class Attribute(BaseObject):
     LINK_EXPRESSION_REGEX = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
     VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
     VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".abc", ".ply"]
+    VALID_TEXT_EXTENSIONS = [".txt", ".json", ".log", ".csv", ".md"]
 
     @staticmethod
     def isLinkExpression(value) -> bool:
@@ -420,6 +421,20 @@ class Attribute(BaseObject):
 
         return False
 
+    def _isTextDisplayable(self) -> bool:
+        """
+        Return True if the current attribute is considered as a displayable text file.
+        """
+        if self._desc.semantic == "textFile":
+            return True
+
+        # If the attribute is a File attribute, it is an instance of str and can be iterated over
+        hasSupportedExt = isinstance(self.value, str) and any(self.value.endswith(ext) for ext in Attribute.VALID_TEXT_EXTENSIONS)
+        if hasSupportedExt:
+            return True
+
+        return False
+
     def uid(self) -> str:
         """
         Compute the UID for the attribute.
@@ -679,6 +694,8 @@ class Attribute(BaseObject):
     is2dDisplayable = Property(bool, _is2dDisplayable, constant=True)
     # Whether the attribute value is displayable in 3d.
     is3dDisplayable = Property(bool, _is3dDisplayable, constant=True)
+    # Whether the attribute value is displayable as text.
+    isTextDisplayable = Property(bool, _isTextDisplayable, constant=True)
     # Whether the attribute is a shape or a shape list, managed by the ShapeEditor and ShapeViewer.
     hasDisplayableShape = Property(bool, lambda self: False, constant=True)
 

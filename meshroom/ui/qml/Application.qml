@@ -37,6 +37,7 @@ Page {
         property alias showImageViewer: imageViewerVisibilityCB.checked
         property alias showViewer3D: viewer3DVisibilityCB.checked
         property alias showImageGallery: imageGalleryVisibilityCB.checked
+        property alias showTextViewer: textViewerVisibilityCB.checked
     }
     
     Settings {
@@ -986,6 +987,12 @@ Page {
                     checkable: true
                     checked: true
                 }
+                MenuItem {
+                    id: textViewerVisibilityCB
+                    text: "Text Viewer"
+                    checkable: true
+                    checked: false
+                }
                 MenuSeparator {}
                 Action {
                     text: "Fullscreen"
@@ -1233,6 +1240,11 @@ Page {
                     workspaceView.viewer2D.setAttributeName(attribute.name)
                 }
 
+                function viewInText(attribute) {
+                    settingsUILayout.showTextViewer = true
+                    workspaceView.viewerText.source = Filepath.stringToUrl(attribute.value)
+                }
+
                 function viewIn3D(attribute, mouse) {
 
                     if (!panel3dViewer || (!attribute.node.has3DOutput && !attribute.node.hasAttribute("useBoundingBox"))) {
@@ -1256,6 +1268,10 @@ Page {
 
                     else if (attribute.is3dDisplayable) {
                             workspaceView.viewIn3D(attribute, mouse)
+                    }
+
+                    else if (attribute.isTextDisplayable) {
+                        workspaceView.viewInText(attribute)
                     }
 
                 }

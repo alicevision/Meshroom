@@ -23,9 +23,10 @@ Item {
     property alias panel3dViewer: panel3dViewerLoader.item
     readonly property Viewer2D viewer2D: viewer2D
     readonly property alias imageGallery: imageGallery
+    readonly property TextViewer viewerText: textViewer
 
     // Use settings instead of visible property as property changes are not propagated
-    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D
+    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D || settingsUILayout.showTextViewer
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
@@ -177,6 +178,27 @@ Item {
                     z: -1
                     anchors.fill: parent
                     color: Qt.darker(activePalette.base, 1.1)
+                }
+            }
+        }
+
+        Panel {
+            id: textViewerPanel
+            title: "Text Viewer"
+            visible: settingsUILayout.showTextViewer
+            implicitWidth: Math.round(parent.width * 0.35)
+            SplitView.minimumWidth: 50
+
+            TextViewer {
+                id: textViewer
+                anchors.fill: parent
+
+                DropArea {
+                    anchors.fill: parent
+                    keys: ["text/uri-list"]
+                    onDropped: function(drop) {
+                        textViewer.source = drop.urls[0]
+                    }
                 }
             }
         }

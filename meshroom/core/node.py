@@ -2539,7 +2539,7 @@ class CompatibilityNode(BaseNode):
             "name": attrName, "label": attrName,
             "description": "Incompatible parameter",
             "value": value, "invalidate": False,
-            "group": "incompatible"
+            "commandLineGroup": "incompatible"
         }
         if isinstance(value, bool):
             return desc.BoolParam(**params)

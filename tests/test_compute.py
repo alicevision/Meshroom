@@ -439,7 +439,7 @@ class TestNode_SizeA(desc.BaseNode):
             label='Output',
             description='Output',
             value=os.path.join("{nodeCacheFolder}"),
-            group='',
+            commandLineGroup='',
         ),
     ]
     def processChunk(self, chunk):

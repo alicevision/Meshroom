@@ -24,9 +24,10 @@ Item {
     readonly property Viewer2D viewer2D: viewer2D
     readonly property alias imageGallery: imageGallery
     readonly property TextViewer viewerText: textViewer
+    property alias mediaViewerTabIndex: mediaViewerPanel.currentTab
 
     // Use settings instead of visible property as property changes are not propagated
-    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D || settingsUILayout.showTextViewer
+    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
@@ -96,23 +97,40 @@ Item {
             }
         }
 
-        Panel {
-            id: imageViewer
-            title: "Image Viewer"
+        TabPanel {
+            id: mediaViewerPanel
             visible: settingsUILayout.showImageViewer
             implicitWidth: Math.round(parent.width * 0.35)
             SplitView.fillWidth: true
             SplitView.minimumWidth: 50
-            loading: viewer2D.loadingModules.length > 0
-            loadingText: loading ? "Loading " + viewer2D.loadingModules : ""
+
+            tabs: ["Image Viewer", "Text Viewer"]
 
             headerBar: RowLayout {
+                spacing: 4
+
+                // Loading indicator for image viewer
+                BusyIndicator {
+                    id: mediaViewerLoadingIndicator
+                    padding: 0
+                    implicitWidth: 12
+                    implicitHeight: 12
+                    running: mediaViewerPanel.currentTab === 0 && viewer2D.loadingModules.length > 0
+                    visible: running
+                }
+                Label {
+                    visible: mediaViewerLoadingIndicator.visible
+                    text: "Loading " + viewer2D.loadingModules
+                    font.italic: true
+                }
+
                 MaterialToolButton {
                     text: MaterialIcons.more_vert
                     font.pointSize: 11
                     padding: 2
                     checkable: true
                     checked: imageViewerMenu.visible
+                    visible: mediaViewerPanel.currentTab === 0
                     onClicked: imageViewerMenu.open()
                     Menu {
                         id: imageViewerMenu
@@ -165,6 +183,8 @@ Item {
                 id: viewer2D
                 anchors.fill: parent
 
+                visible: mediaViewerPanel.currentTab === 0
+
                 viewIn3D: root.load3DMedia
 
                 DropArea {
@@ -180,18 +200,12 @@ Item {
                     color: Qt.darker(activePalette.base, 1.1)
                 }
             }
-        }
-
-        Panel {
-            id: textViewerPanel
-            title: "Text Viewer"
-            visible: settingsUILayout.showTextViewer
-            implicitWidth: Math.round(parent.width * 0.35)
-            SplitView.minimumWidth: 50
 
             TextViewer {
                 id: textViewer
                 anchors.fill: parent
+
+                visible: mediaViewerPanel.currentTab === 1
 
                 DropArea {
                     anchors.fill: parent

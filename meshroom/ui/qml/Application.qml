@@ -37,7 +37,6 @@ Page {
         property alias showImageViewer: imageViewerVisibilityCB.checked
         property alias showViewer3D: viewer3DVisibilityCB.checked
         property alias showImageGallery: imageGalleryVisibilityCB.checked
-        property alias showTextViewer: textViewerVisibilityCB.checked
     }
     
     Settings {
@@ -987,12 +986,6 @@ Page {
                     checkable: true
                     checked: true
                 }
-                MenuItem {
-                    id: textViewerVisibilityCB
-                    text: "Text Viewer"
-                    checkable: true
-                    checked: false
-                }
                 MenuSeparator {}
                 Action {
                     text: "Fullscreen"
@@ -1236,12 +1229,14 @@ Page {
                 }
 
                 function viewIn2D(attribute, mouse) {
+                    workspaceView.mediaViewerTabIndex = 0
                     workspaceView.viewer2D.tryLoadNode(attribute.node)
                     workspaceView.viewer2D.setAttributeName(attribute.name)
                 }
 
                 function viewInText(attribute) {
-                    settingsUILayout.showTextViewer = true
+                    settingsUILayout.showImageViewer = true
+                    workspaceView.mediaViewerTabIndex = 1
                     workspaceView.viewerText.source = Filepath.stringToUrl(attribute.value)
                 }
 

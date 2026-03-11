@@ -517,7 +517,7 @@ Item {
 
                             MaterialLabel {
                                 id: nodeImageOutput
-                                visible: (node.hasImageOutput || node.has3DOutput || node.hasSequenceOutput)
+                                visible: (node.hasImageOutput || node.has3DOutput || node.hasSequenceOutput || node.hasTextOutput)
                                 text: MaterialIcons.visibility
                                 padding: 2
                                 font.pointSize: 7
@@ -533,6 +533,8 @@ Item {
                                             return nodeImageOutput.displayable ? "Double-click on this node to load its outputs in the Image Viewer." : "This node has image outputs."
                                         else if (node.has3DOutput && !node.hasImageOutput && !node.hasSequenceOutput)
                                             return nodeImageOutput.displayable ? "Double-click on this node to load its outputs in the 3D Viewer." : "This node has 3D outputs."
+                                        else if (node.hasTextOutput && !node.hasImageOutput && !node.hasSequenceOutput && !node.has3DOutput)
+                                            return nodeImageOutput.displayable ? "Double-click on this node to load its outputs in the Text Viewer." : "This node has text outputs."
                                         else  // Handle case where a node might have both 2D and 3D outputs
                                             return nodeImageOutput.displayable ? "Double-click on this node to load its outputs in the Image or 3D Viewer." : "This node has image and 3D outputs."
                                     }

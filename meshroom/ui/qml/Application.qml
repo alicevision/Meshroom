@@ -1233,6 +1233,17 @@ Page {
                             }
                                 
                         }
+
+                    // Text viewer - open the first text output when the node has only text outputs
+                    if (node.hasTextOutput && !node.hasImageOutput && !node.hasSequenceOutput && !node.has3DOutput) {
+                        for (var j = 0; j < node.attributes.count; j++) {
+                            var textAttr = node.attributes.at(j)
+                            if (textAttr.isOutput && textAttr.isTextDisplayable) {
+                                workspaceView.viewInText(textAttr)
+                                break
+                            }
+                        }
+                    }
                 }
 
                 function viewIn2D(attribute, mouse) {

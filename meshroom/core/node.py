@@ -2127,6 +2127,13 @@ class BaseNode(BaseObject):
         """
         return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3dDisplayable), None) is not None
 
+    def hasTextOutputAttribute(self) -> bool:
+        """
+        Return True if at least one attribute is a text file that can be loaded in the Text Viewer,
+        False otherwise.
+        """
+        return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.isTextDisplayable), None) is not None
+
     def _hasDisplayableShape(self):
         """
         Return True if at least one attribute is a ShapeAttribute, a ShapeListAttribute or a shape File.
@@ -2202,6 +2209,7 @@ class BaseNode(BaseObject):
     hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrChanged)
     hasSequenceOutput = Property(bool, hasSequenceOutputAttribute, notify=outputAttrChanged)
     has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrChanged)
+    hasTextOutput = Property(bool, hasTextOutputAttribute, notify=outputAttrChanged)
     # Whether the node contains a ShapeAttribute, a ShapeListAttribute or a shape File.
     hasDisplayableShape = Property(bool, _hasDisplayableShape, constant=True)
 

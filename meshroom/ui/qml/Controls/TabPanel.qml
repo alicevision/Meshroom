@@ -10,6 +10,7 @@ Page {
 
     property var tabs: []
     property int currentTab: 0
+    onCurrentTabChanged: if (mainTabBar.currentIndex !== currentTab) mainTabBar.currentIndex = currentTab
 
     clip: true
 

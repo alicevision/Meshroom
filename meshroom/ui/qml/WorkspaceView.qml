@@ -26,8 +26,11 @@ Item {
     readonly property TextViewer viewerText: textViewer
     property alias mediaViewerTabIndex: mediaViewerPanel.currentTab
 
+    // Text Viewer occupies index 1 when Image Viewer is also visible, else index 0
+    readonly property int _textViewerTabIndex: settingsUILayout.showImageViewer ? 1 : 0
+
     // Use settings instead of visible property as property changes are not propagated
-    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D
+    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D || settingsUILayout.showTextViewer
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
@@ -99,12 +102,17 @@ Item {
 
         TabPanel {
             id: mediaViewerPanel
-            visible: settingsUILayout.showImageViewer
+            visible: settingsUILayout.showImageViewer || settingsUILayout.showTextViewer
             implicitWidth: Math.round(parent.width * 0.35)
             SplitView.fillWidth: true
             SplitView.minimumWidth: 50
 
-            tabs: ["Image Viewer", "Text Viewer"]
+            tabs: {
+                var t = []
+                if (settingsUILayout.showImageViewer) t.push("Image Viewer")
+                if (settingsUILayout.showTextViewer) t.push("Text Viewer")
+                return t
+            }
 
             headerBar: RowLayout {
                 spacing: 4
@@ -115,7 +123,7 @@ Item {
                     padding: 0
                     implicitWidth: 12
                     implicitHeight: 12
-                    running: mediaViewerPanel.currentTab === 0 && viewer2D.loadingModules.length > 0
+                    running: settingsUILayout.showImageViewer && mediaViewerPanel.currentTab === 0 && viewer2D.loadingModules.length > 0
                     visible: running
                 }
                 Label {
@@ -130,7 +138,7 @@ Item {
                     padding: 2
                     checkable: true
                     checked: imageViewerMenu.visible
-                    visible: mediaViewerPanel.currentTab === 0
+                    visible: settingsUILayout.showImageViewer && mediaViewerPanel.currentTab === 0
                     onClicked: imageViewerMenu.open()
                     Menu {
                         id: imageViewerMenu
@@ -183,7 +191,7 @@ Item {
                 id: viewer2D
                 anchors.fill: parent
 
-                visible: mediaViewerPanel.currentTab === 0
+                visible: settingsUILayout.showImageViewer && mediaViewerPanel.currentTab === 0
 
                 viewIn3D: root.load3DMedia
 
@@ -205,7 +213,7 @@ Item {
                 id: textViewer
                 anchors.fill: parent
 
-                visible: mediaViewerPanel.currentTab === 1
+                visible: settingsUILayout.showTextViewer && mediaViewerPanel.currentTab === root._textViewerTabIndex
 
                 DropArea {
                     anchors.fill: parent

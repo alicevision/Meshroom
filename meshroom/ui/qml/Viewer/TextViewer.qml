@@ -16,34 +16,6 @@ FocusScope {
     clip: true
 
     property url source: ""
-    property string fileContent: ""
-    property bool loading: false
-
-    // Load the content of the file at the given URL
-    function load(url) {
-        if (!url || url.toString() === "") {
-            fileContent = ""
-            return
-        }
-        root.loading = true
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", url, true)
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                root.fileContent = xhr.responseText
-                root.loading = false
-            }
-        }
-        xhr.send()
-    }
-
-    onSourceChanged: {
-        if (source.toString() !== "") {
-            load(source)
-        } else {
-            fileContent = ""
-        }
-    }
 
     Rectangle {
         anchors.fill: parent
@@ -82,14 +54,6 @@ FocusScope {
                         filePathTextField.deselect()
                     }
                 }
-
-                MaterialToolButton {
-                    text: MaterialIcons.open_in_new
-                    ToolTip.text: "Open File Externally"
-                    font.pointSize: 10
-                    padding: 4
-                    onClicked: Qt.openUrlExternally(root.source)
-                }
             }
 
             Rectangle {
@@ -99,43 +63,11 @@ FocusScope {
                 visible: filePathBar.visible
             }
 
-            // Text area
-            Item {
+            // Text content area
+            TextFileViewer {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-
-                // Loading indicator
-                BusyIndicator {
-                    anchors.centerIn: parent
-                    running: root.loading
-                    visible: running
-                }
-
-                // Placeholder when no file is loaded
-                Label {
-                    anchors.centerIn: parent
-                    visible: !root.loading && root.source.toString() === ""
-                    text: "No file loaded"
-                    color: Qt.darker(palette.text, 1.5)
-                }
-
-                ScrollView {
-                    anchors.fill: parent
-                    visible: !root.loading && root.source.toString() !== ""
-                    contentWidth: availableWidth
-
-                    TextArea {
-                        id: textArea
-                        text: root.fileContent
-                        readOnly: true
-                        wrapMode: TextArea.Wrap
-                        font.family: "monospace"
-                        font.pointSize: 9
-                        selectByMouse: true
-                        background: Item {}
-                        padding: 8
-                    }
-                }
+                source: root.source
             }
         }
     }

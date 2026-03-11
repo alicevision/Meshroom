@@ -22,8 +22,19 @@ Item {
     property int autoReloadInterval: 2000
     /// Whether the source is currently being loaded
     property bool loading: false
+    /// Whether a large file warning is being displayed (file > 500 MB)
+    property bool largeFileWarning: false
+    /// File size in MB when a large file warning is displayed
+    property real largeFileSizeMB: 0
+    /// Human-readable file size string for the large file warning
+    readonly property string largeFileSizeStr: Format.GB2SizeStr(largeFileSizeMB / 1024)
+    /// Whether the user confirmed loading the current large source file
+    property bool confirmLargeLoad: false
 
-    onSourceChanged: loadSource()
+    onSourceChanged: {
+        confirmLargeLoad = false
+        loadSource()
+    }
     onAutoReloadChanged: loadSource()
     onVisibleChanged: if (visible) loadSource()
 
@@ -342,6 +353,43 @@ Item {
                 implicitWidth: 16
                 implicitHeight: 16
             }
+
+            // Large file warning overlay
+            ColumnLayout {
+                visible: root.largeFileWarning
+                anchors.centerIn: parent
+                spacing: 8
+
+                Label {
+                    Layout.alignment: Qt.AlignHCenter
+                    font.family: MaterialIcons.fontFamily
+                    font.pointSize: 24
+                    text: MaterialIcons.warning
+                    color: Colors.orange
+                }
+                Label {
+                    Layout.alignment: Qt.AlignHCenter
+                    font.bold: true
+                    text: "File size exceeds 500 MB"
+                }
+                Label {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: "File size: " + root.largeFileSizeStr
+                }
+                Label {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: "Loading this file may take a while and freeze the interface."
+                }
+                Button {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: "Load File (" + root.largeFileSizeStr + ")"
+                    onClicked: {
+                        root.confirmLargeLoad = true
+                        root.largeFileWarning = false
+                        root._performLoad()
+                    }
+                }
+            }
         }
     }
 
@@ -360,6 +408,23 @@ Item {
         if (!visible)
             return
 
+        // Check file size before loading (unless user already confirmed for this source)
+        if (!confirmLargeLoad) {
+            var fSizeMB = Filepath.fileSizeMB(root.source)
+            if (fSizeMB > 500) {
+                textView.setText("")
+                largeFileSizeMB = fSizeMB
+                largeFileWarning = true
+                return
+            }
+        }
+
+        largeFileWarning = false
+        _performLoad()
+    }
+
+    // Internal function that performs the actual XHR file load, bypassing the size check
+    function _performLoad() {
         loading = true
         var xhr = new XMLHttpRequest
 

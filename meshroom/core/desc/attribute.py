@@ -1,5 +1,6 @@
 import ast
 import os
+import re
 from collections.abc import Iterable
 from enum import auto, Enum
 
@@ -21,13 +22,25 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, semantic, commandLineGroup, enabled,
+    @staticmethod
+    def _generateLabel(name):
+        """Generate a human-readable label from an attribute name."""
+        
+        # Replace underscores with spaces
+        label = name.replace('_', ' ')
+        # Insert space before capital letters (for camelCase)
+        label = re.sub(r'([a-z])([A-Z])', r'\1 \2', label)
+        # Capitalize each word
+        label = ' '.join(word.capitalize() for word in label.split())
+        return label
+
+    def __init__(self, name, label=None, description=None, value=None, advanced=False, semantic="", commandLineGroup="allParams", enabled=True,
                  keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
                  validValue=True, errorMessage="", visible=True, exposed=False):
         super(Attribute, self).__init__()
         self._name = name
-        self._label = label
-        self._description = description
+        self._label = label if label is not None else self._generateLabel(name)
+        self._description = description if description is not None else ""
         self._value = value
         self._keyable = keyable
         self._keyType = keyType
@@ -141,7 +154,7 @@ class Attribute(BaseObject):
 class ListAttribute(Attribute):
     """ A list of Attributes """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, elementDesc, name, label, description, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, elementDesc, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, semantic="", enabled=True, joinChar=" ", visible=True, exposed=False):
         """
         :param elementDesc: the Attribute description of elements to store in that list
@@ -196,7 +209,7 @@ class ListAttribute(Attribute):
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, items, name, label, description, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, items, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, semantic="",  enabled=True, joinChar=" ", brackets=None, visible=True,
                  exposed=False):
         """
@@ -307,7 +320,7 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, commandLineGroup, advanced, semantic, enabled,
+    def __init__(self, name, label=None, description=None, value=None, commandLineGroup="allParams", advanced=False, semantic="", enabled=True,
                  keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
                  validValue=True, errorMessage="", visible=True, exposed=False):
         super(Param, self).__init__(name=name, label=label, description=description, value=value,
@@ -321,7 +334,7 @@ class File(Attribute):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, name, label=None, description=None, value="", group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, invalidate=True, semantic="", enabled=True, visible=True, exposed=True):
         
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
@@ -351,7 +364,7 @@ class BoolParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, keyable=False, keyType=None,
+    def __init__(self, name, label=None, description=None, value=False, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, 
                  enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
         
@@ -384,7 +397,7 @@ class IntParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None,
+    def __init__(self, name, label=None, description=None, value=0, range=None, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True, 
                  invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
@@ -422,7 +435,7 @@ class FloatParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None,
+    def __init__(self, name, label=None, description=None, value=0.0, range=None, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True, 
                  invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
@@ -458,7 +471,7 @@ class PushButtonParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
         
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
@@ -500,7 +513,7 @@ class ChoiceParam(Param):
     _OVERRIDE_SERIALIZATION_KEY_VALUES = "__ChoiceParam_values__"
 
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name: str, label: str, description: str, value, values, exclusive=True, saveValuesOverride=False,
+    def __init__(self, name: str, label=None, description=None, value=None, values=None, exclusive=True, saveValuesOverride=False,
                  group="allParams", commandLineGroup=_setParamSentinel, joinChar=" ", advanced=False, enabled=True, 
                  invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
 
@@ -510,6 +523,24 @@ class ChoiceParam(Param):
                                           commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, 
                                           invalidate=invalidate, semantic=semantic, validValue=validValue, 
                                           errorMessage=errorMessage, visible=visible, exposed=exposed)
+        
+        if values is None:
+            raise ValueError(f"ChoiceParam '{name}' requires 'values' parameter to be set, cannot be None")
+        
+        if not isinstance(values, list):
+            raise ValueError(f"ChoiceParam '{name}' requires 'values' to be a list, got {type(values).__name__}")
+        
+        if not values:
+            # Empty values list - need a valid value to infer type
+            if exclusive:
+                if value is None:
+                    raise ValueError(f"ChoiceParam '{name}' has empty 'values' list and exclusive=True, "
+                                   f"'value' cannot be None (needed for type inference)")
+            else:
+                if value is None or (isinstance(value, list) and not value):
+                    raise ValueError(f"ChoiceParam '{name}' has empty 'values' list and exclusive=False, "
+                                   f"'value' must be a non-empty list (needed for type inference)")
+        
         self._values = values
         self._saveValuesOverride = saveValuesOverride
         self._exclusive = exclusive
@@ -582,7 +613,7 @@ class StringParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, name, label=None, description=None, value="", group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, enabled=True, invalidate=True, semantic="", uidIgnoreValue=None, validValue=True, 
                  errorMessage="", visible=True, exposed=False):
 
@@ -613,7 +644,7 @@ class ColorParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, name, label=None, description=None, value="#ffffff", group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
         
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group

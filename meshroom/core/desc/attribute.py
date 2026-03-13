@@ -7,12 +7,42 @@ from enum import auto, Enum
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList, strtobool, deprecated
 
 
-def convertToLabel(name):
-    """Convert a camelCase or snake_case attribute name into a human-readable 'Camel Case' label."""
-    camelCaseToLabel = re.sub(r'()([A-Z][a-z]*?)', r'\1 \2', name)
-    snakeToLabel = ' '.join(word.capitalize() for word in camelCaseToLabel.split('_'))
-    snakeToLabel = ' '.join(word.capitalize() for word in snakeToLabel.split(' '))
-    return snakeToLabel
+# Pre-compile regexes for better performance on repeated calls
+_ACRONYM_RE = re.compile(r'([A-Z]+)([A-Z][a-z])')
+_CAMEL_CASE_RE = re.compile(r'([a-z\d])([A-Z])')
+_SPLIT_RE = re.compile(r'[_\s]+')
+
+def convertToLabel(name: str) -> str:
+    """Convert a camelCase or snake_case attribute name into a human-readable label.
+    
+    Examples:
+        >>> convertToLabel('camelCase')
+        'Camel Case'
+        >>> convertToLabel('snake_case')
+        'Snake Case'
+        >>> convertToLabel('myURLParser')
+        'My URL Parser'
+        >>> convertToLabel('mixed_caseExample')
+        'Mixed Case Example'
+        >>> convertToLabel('')
+        ''
+    """
+    if not name:
+        return ''
+    
+    # Handle consecutive uppercase letters (e.g. 'URL', 'HTTP')
+    name = _ACRONYM_RE.sub(r'\1 \2', name)
+    # Insert space between camelCase boundaries
+    name = _CAMEL_CASE_RE.sub(r'\1 \2', name)
+    # Split on underscores or spaces
+    words = _SPLIT_RE.split(name)
+    
+    # Preserve uppercase acronyms, capitalize others
+    return ' '.join(
+        word if word.isupper() else word.capitalize()
+        for word in words
+        if word
+    )
 
 class ValueTypeErrors(Enum):
     NONE = auto()  # No error

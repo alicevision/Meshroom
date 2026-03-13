@@ -6,7 +6,7 @@ class Geometry(GroupAttribute):
     Base attribute for all Geometry attribute.
     Countains several attributes (inherit from GroupAttribute).
     """
-    def __init__(self, items, name, label, description, commandLineGroup="allParams", advanced=False, semantic="",
+    def __init__(self, items, name, label=None, description=None, commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # GroupAttribute constructor
         super(Geometry, self).__init__(items=items, name=name, label=label, description=description,
@@ -26,7 +26,7 @@ class Size2d(Geometry):
     """
     Size2d is a Geometry attribute that allows to specify a 2d size.
     """
-    def __init__(self, name, label, description, width, height, widthRange=None, heightRange=None,
+    def __init__(self, name, label=None, description=None, width=None, height=None, widthRange=None, heightRange=None,
                  keyable=False, keyType=None, commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption
@@ -46,7 +46,7 @@ class Vec2d(Geometry):
     """
     Vec2d is a Geometry attribute that allows to specify a 2d vector.
     """
-    def __init__(self, name, label, description, x, y, xRange=None, yRange=None,
+    def __init__(self, name, label=None, description=None, x=None, y=None, xRange=None, yRange=None,
                  keyable=False, keyType=None, commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
         # Geometry group desciption

@@ -347,8 +347,7 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label=None, description=None, value=None, commandLineGroup="allParams",
-                 advanced=False, semantic="", enabled=True,
+    def __init__(self, name, label, description, value, commandLineGroup, advanced, semantic, enabled,
                  keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
                  validValue=True, errorMessage="", visible=True, exposed=False):
         super(Param, self).__init__(name=name, label=label, description=description, value=value,

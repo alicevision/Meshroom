@@ -36,6 +36,9 @@ RowLayout {
     signal pressed(var mouse)
     signal edgeAboutToBeRemoved(var input)
     signal clicked()
+    /// Emitted when the user pans with the middle mouse button while dragging an edge.
+    /// dx and dy are delta values in screen pixel coordinates.
+    signal panRequested(real dx, real dy)
 
     objectName: attribute ? attribute.name + "." : ""
     layoutDirection: Qt.LeftToRight
@@ -184,6 +187,8 @@ RowLayout {
                 enabled: !root.readOnly
                 anchors.fill: parent
                 hoverEnabled: root.visible
+                // Also accept middle button to handle graph panning without releasing the edge drag
+                acceptedButtons: Qt.LeftButton | Qt.MiddleButton
 
                 // Use the same negative margins as DropArea to ease pin selection
                 anchors.margins: inputDropArea.anchors.margins
@@ -194,8 +199,13 @@ RowLayout {
                 property bool isPressed: false  // The mouse has been pressed but not released yet
                 property double initialX: 0.0
                 property double initialY: 0.0
+                property point lastPanPos: Qt.point(0, 0)  // Last global position for middle-button panning
 
                 onPressed: function(mouse) {
+                    if (mouse.button === Qt.MiddleButton) {
+                        lastPanPos = mapToGlobal(mouse.x, mouse.y)
+                        return
+                    }
                     root.pressed(mouse)
                     isPressed = true
                     initialX = mouse.x
@@ -203,6 +213,9 @@ RowLayout {
                 }
 
                 onReleased: function(mouse) {
+                    if (mouse.button === Qt.MiddleButton) {
+                        return
+                    }
                     if (mouse.button === Qt.LeftButton) {
                         inputDragTarget.Drag.drop()
                     } else {
@@ -223,6 +236,12 @@ RowLayout {
                 }
 
                 onPositionChanged: function(mouse) {
+                    if (pressedButtons & Qt.MiddleButton) {
+                        var globalPos = mapToGlobal(mouse.x, mouse.y)
+                        root.panRequested(globalPos.x - lastPanPos.x, globalPos.y - lastPanPos.y)
+                        lastPanPos = globalPos
+                        return
+                    }
                     // If there has been a significant move (5px along the -X or -Y axis) while the
                     // mouse is being pressed, then we can consider being in the dragging state
                     if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
@@ -431,13 +450,20 @@ RowLayout {
             anchors.rightMargin: outputDropArea.anchors.rightMargin
 
             hoverEnabled: root.visible
+            // Also accept middle button to handle graph panning without releasing the edge drag
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
 
             property bool dragTriggered: false  // An edge is being dragged from the output connector
             property bool isPressed: false   // The mouse has been pressed but not released yet
             property double initialX: 0.0
             property double initialY: 0.0
+            property point lastPanPos: Qt.point(0, 0)  // Last global position for middle-button panning
 
             onPressed: function(mouse) {
+                if (mouse.button === Qt.MiddleButton) {
+                    lastPanPos = mapToGlobal(mouse.x, mouse.y)
+                    return
+                }
                 root.pressed(mouse)
                 isPressed = true
                 initialX = mouse.x
@@ -445,6 +471,9 @@ RowLayout {
             }
 
             onReleased: function(mouse) {
+                if (mouse.button === Qt.MiddleButton) {
+                    return
+                }
                 if (mouse.button === Qt.LeftButton) {
                     outputDragTarget.Drag.drop()
                 } else {
@@ -465,6 +494,12 @@ RowLayout {
             }
 
             onPositionChanged: function(mouse) {
+                if (pressedButtons & Qt.MiddleButton) {
+                    var globalPos = mapToGlobal(mouse.x, mouse.y)
+                    root.panRequested(globalPos.x - lastPanPos.x, globalPos.y - lastPanPos.y)
+                    lastPanPos = globalPos
+                    return
+                }
                 // If there's been a significant move (5px along the -X or -Y axis) while the mouse is being
                 // pressed, then we can consider being in the dragging state.
                 if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {

@@ -202,8 +202,18 @@ RowLayout {
                     initialY = mouse.y
                 }
 
-                onReleased: {
-                    inputDragTarget.Drag.drop()
+                onReleased: function(mouse) {
+                    if (mouse.button === Qt.LeftButton) {
+                        inputDragTarget.Drag.drop()
+                    } else {
+                        inputDragTarget.Drag.cancel()
+                    }
+                    isPressed = false
+                    dragTriggered = false
+                }
+
+                onCanceled: {
+                    inputDragTarget.Drag.cancel()
                     isPressed = false
                     dragTriggered = false
                 }
@@ -435,7 +445,17 @@ RowLayout {
             }
 
             onReleased: function(mouse) {
-                outputDragTarget.Drag.drop()
+                if (mouse.button === Qt.LeftButton) {
+                    outputDragTarget.Drag.drop()
+                } else {
+                    outputDragTarget.Drag.cancel()
+                }
+                isPressed = false
+                dragTriggered = false
+            }
+
+            onCanceled: {
+                outputDragTarget.Drag.cancel()
                 isPressed = false
                 dragTriggered = false
             }

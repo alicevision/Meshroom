@@ -3,6 +3,7 @@ import sys
 import atexit
 import copy
 import datetime
+import inspect
 import json
 import logging
 import os
@@ -1471,6 +1472,18 @@ class BaseNode(BaseObject):
         """
 
         if callable(self.nodeDesc.size):
+            # When size is a plain function/lambda defined in the class body, accessing it via
+            # an instance (self.nodeDesc.size) binds it as a method. If the underlying function
+            # only takes one parameter (new-style: `lambda node: ...`), we need to call the
+            # unbound function directly. Two-parameter lambdas (legacy: `lambda self, node: ...`)
+            # remain supported via the bound method call below.
+            underlying = getattr(self.nodeDesc.size, '__func__', None)
+            if underlying is not None:
+                try:
+                    if len(inspect.signature(underlying).parameters) == 1:
+                        return underlying(self)
+                except (ValueError, TypeError):
+                    pass
             return self.nodeDesc.size(self)
 
         if isinstance(self.nodeDesc.size, int):

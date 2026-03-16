@@ -417,3 +417,68 @@ class TestNodeColor:
             # Resetting to default should restore the descriptor color
             node.internalAttribute("color").resetToDefaultValue()
             assert node.color == "#FF0000"
+
+
+class TestNodeSizeLambda:
+    """Tests for the node size evaluation with single-argument lambda (`lambda node: ...`)."""
+
+    def test_size_lambda_single_arg(self):
+        """size defined as `lambda node: ...` should be evaluated with the node instance."""
+
+        class NodeWithLambdaSize(desc.Node):
+            inputs = [
+                desc.IntParam(
+                    name="sizeInput",
+                    label="Size Input",
+                    description="Defines the node size.",
+                    value=5,
+                    range=(0, 100, 1),
+                ),
+            ]
+            outputs = []
+            size = lambda node: node.sizeInput.value
+
+        with registeredNodeTypes([NodeWithLambdaSize]):
+            g = Graph("")
+            node = g.addNewNode("NodeWithLambdaSize")
+
+            assert node.evaluateSize() == 5
+
+            node.sizeInput.value = 10
+            assert node.evaluateSize() == 10
+
+    def test_size_lambda_two_args_legacy(self):
+        """size defined as `lambda self, node: ...` (legacy form) should still work."""
+
+        class NodeWithLegacyLambdaSize(desc.Node):
+            inputs = [
+                desc.IntParam(
+                    name="sizeInput",
+                    label="Size Input",
+                    description="Defines the node size.",
+                    value=3,
+                    range=(0, 100, 1),
+                ),
+            ]
+            outputs = []
+            size = lambda self, node: node.sizeInput.value
+
+        with registeredNodeTypes([NodeWithLegacyLambdaSize]):
+            g = Graph("")
+            node = g.addNewNode("NodeWithLegacyLambdaSize")
+
+            assert node.evaluateSize() == 3
+
+    def test_size_static_node_size(self):
+        """size defined as StaticNodeSize should still be evaluated correctly."""
+
+        class NodeWithStaticSize(desc.Node):
+            inputs = []
+            outputs = []
+            size = desc.StaticNodeSize(7)
+
+        with registeredNodeTypes([NodeWithStaticSize]):
+            g = Graph("")
+            node = g.addNewNode("NodeWithStaticSize")
+
+            assert node.evaluateSize() == 7

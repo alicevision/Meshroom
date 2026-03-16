@@ -266,6 +266,7 @@ Meshroom enables node parallelization by splitting work into independent chunks 
 - **StaticNodeSize**: Fixed number of tasks
 - **DynamicNodeSize**: Size based on an input attribute (list length or linked node size)
 - **MultiDynamicNodeSize**: Sum of sizes from multiple input attributes
+- **callable**: A callable (e.g. a lambda) receiving the node instance: `lambda node: node.sizeInput.value`
 
 #### Parallelization Settings
 Set `parallelization` to control chunk division:

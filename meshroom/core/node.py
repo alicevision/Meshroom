@@ -1463,26 +1463,9 @@ class BaseNode(BaseObject):
 
     def evaluateSize(self):
         """
-        Evaluate the node size.
-        The variable could be:
-            - a callable
-            - an integer
-            - an object with a computeSize method (legacy)
+        Evaluate the node size by delegating to the descriptor's resolvedSize classmethod.
         """
-
-        if callable(self.nodeDesc.size):
-            return self.nodeDesc.size(self)
-
-        if isinstance(self.nodeDesc.size, int):
-            return self.nodeDesc.size
-
-        # This condition is for backward compatibility
-        # with external size classes which may use computeSize instead of __call__
-        if isinstance(self.nodeDesc.size, object) and hasattr(self.nodeDesc.size, 'computeSize'):
-            logging.warning(f"The plugin '{self.nodeType}' should use a callable instead of the deprecated method 'computeSize'.")
-            return self.nodeDesc.size.computeSize(self)
-
-        raise ValueError(f"{self.name} size attribute is invalid")
+        return self.nodeDesc.resolvedSize(self)
 
     def _updateNodeSize(self):
         self.setSize(self.evaluateSize())

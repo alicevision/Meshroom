@@ -417,3 +417,128 @@ class TestNodeColor:
             # Resetting to default should restore the descriptor color
             node.internalAttribute("color").resetToDefaultValue()
             assert node.color == "#FF0000"
+
+
+class TestNodeSizeLambda:
+    """Tests for the node size evaluation with single-argument lambda (`lambda node: ...`)."""
+
+    def test_size_lambda_single_arg(self):
+        """size defined as `lambda node: ...` should be evaluated with the node instance."""
+
+        class NodeWithLambdaSize(desc.Node):
+            inputs = [
+                desc.IntParam(
+                    name="sizeInput",
+                    label="Size Input",
+                    description="Defines the node size.",
+                    value=5,
+                    range=(0, 100, 1),
+                ),
+            ]
+            outputs = []
+            size = lambda node: node.sizeInput.value
+
+        with registeredNodeTypes([NodeWithLambdaSize]):
+            g = Graph("")
+            node = g.addNewNode("NodeWithLambdaSize")
+
+            assert node.evaluateSize() == 5
+
+            node.sizeInput.value = 10
+            assert node.evaluateSize() == 10
+
+    def test_size_static_node_size(self):
+        """size defined as StaticNodeSize should still be evaluated correctly."""
+
+        class NodeWithStaticSize(desc.Node):
+            inputs = []
+            outputs = []
+            size = desc.StaticNodeSize(7)
+
+        with registeredNodeTypes([NodeWithStaticSize]):
+            g = Graph("")
+            node = g.addNewNode("NodeWithStaticSize")
+
+            assert node.evaluateSize() == 7
+
+    def test_size_dynamic_node_size(self):
+        """size defined as DynamicNodeSize should return the value of the referenced IntParam."""
+
+        class NodeWithDynamicSize(desc.Node):
+            inputs = [
+                desc.IntParam(
+                    name="count",
+                    label="Count",
+                    description="Number of items.",
+                    value=4,
+                    range=(0, 100, 1),
+                ),
+            ]
+            outputs = []
+            size = desc.DynamicNodeSize("count")
+
+        with registeredNodeTypes([NodeWithDynamicSize]):
+            g = Graph("")
+            node = g.addNewNode("NodeWithDynamicSize")
+
+            assert node.evaluateSize() == 4
+
+            node.count.value = 12
+            assert node.evaluateSize() == 12
+
+    def test_size_custom_function(self):
+        """size defined as a named function should be called with the node instance."""
+
+        def customSizeFunction(node):
+            return node.itemCount.value * 2
+
+        class NodeWithCustomFunctionSize(desc.Node):
+            inputs = [
+                desc.IntParam(
+                    name="itemCount",
+                    label="Item Count",
+                    description="Number of items.",
+                    value=3,
+                    range=(0, 100, 1),
+                ),
+            ]
+            outputs = []
+            size = customSizeFunction
+
+        with registeredNodeTypes([NodeWithCustomFunctionSize]):
+            g = Graph("")
+            node = g.addNewNode("NodeWithCustomFunctionSize")
+
+            assert node.evaluateSize() == 6
+
+            node.itemCount.value = 5
+            assert node.evaluateSize() == 10
+
+    def test_size_custom_callable_class(self):
+        """size defined as an instance of a class with __call__ should be called with the node instance."""
+
+        class CustomSizeComputer:
+            def __call__(self, node):
+                return node.itemCount.value + 1
+
+        class NodeWithCustomCallableSize(desc.Node):
+            inputs = [
+                desc.IntParam(
+                    name="itemCount",
+                    label="Item Count",
+                    description="Number of items.",
+                    value=7,
+                    range=(0, 100, 1),
+                ),
+            ]
+            outputs = []
+            size = CustomSizeComputer()
+
+        with registeredNodeTypes([NodeWithCustomCallableSize]):
+            g = Graph("")
+            node = g.addNewNode("NodeWithCustomCallableSize")
+
+            assert node.evaluateSize() == 8
+
+            node.itemCount.value = 9
+            assert node.evaluateSize() == 10

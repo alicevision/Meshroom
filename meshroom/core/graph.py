@@ -321,7 +321,9 @@ class Graph(BaseObject):
 
             # Create graph edges by resolving attributes expressions
             self._applyExpr()
-            
+
+        self._resolveAllDynamicValues()
+
         # Templates are specific: they contain only the minimal amount of 
         # serialized data to describe the graph structure.
         # They are not meant to be computed: therefore, we can early return here,
@@ -334,6 +336,17 @@ class Graph(BaseObject):
         # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
         # that were computed.
         self._evaluateUidConflicts(graphContent)
+
+    def _resolveAllDynamicValues(self):
+        """
+        After the full graph is loaded and all edges are wired, walk nodes 
+        in topological order and resolve dynamic output attribute values.
+        """
+        nodes, _ = self.dfsOnFinish()
+        # dfsOnFinish returns leaf-to-root order; reverse for root-to-leaf
+        for node in reversed(nodes):
+            node.updateInternals()
+            node.updateOutputAttr()
 
     def _normalizeGraphContent(self, graphData: dict, fileVersion: Version) -> dict:
         graphContent = graphData.get(GraphIO.Keys.Graph, graphData)

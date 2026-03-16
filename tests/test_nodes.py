@@ -447,28 +447,6 @@ class TestNodeSizeLambda:
             node.sizeInput.value = 10
             assert node.evaluateSize() == 10
 
-    def test_size_lambda_two_args_legacy(self):
-        """size defined as `lambda self, node: ...` (legacy form) should still work."""
-
-        class NodeWithLegacyLambdaSize(desc.Node):
-            inputs = [
-                desc.IntParam(
-                    name="sizeInput",
-                    label="Size Input",
-                    description="Defines the node size.",
-                    value=3,
-                    range=(0, 100, 1),
-                ),
-            ]
-            outputs = []
-            size = lambda self, node: node.sizeInput.value
-
-        with registeredNodeTypes([NodeWithLegacyLambdaSize]):
-            g = Graph("")
-            node = g.addNewNode("NodeWithLegacyLambdaSize")
-
-            assert node.evaluateSize() == 3
-
     def test_size_static_node_size(self):
         """size defined as StaticNodeSize should still be evaluated correctly."""
 

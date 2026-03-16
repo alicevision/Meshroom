@@ -3,7 +3,6 @@ import sys
 import atexit
 import copy
 import datetime
-import inspect
 import json
 import logging
 import os
@@ -1464,38 +1463,9 @@ class BaseNode(BaseObject):
 
     def evaluateSize(self):
         """
-        Evaluate the node size.
-        The variable could be:
-            - a callable
-            - an integer
-            - an object with a computeSize method (legacy)
+        Evaluate the node size by delegating to the descriptor's resolvedSize classmethod.
         """
-
-        if callable(self.nodeDesc.size):
-            # When size is a plain function/lambda defined in the class body, accessing it via
-            # an instance (self.nodeDesc.size) binds it as a method. If the underlying function
-            # only takes one parameter (new-style: `lambda node: ...`), we need to call the
-            # unbound function directly. Two-parameter lambdas (legacy: `lambda self, node: ...`)
-            # remain supported via the bound method call below.
-            underlying = getattr(self.nodeDesc.size, '__func__', None)
-            if underlying is not None:
-                try:
-                    if len(inspect.signature(underlying).parameters) == 1:
-                        return underlying(self)
-                except (ValueError, TypeError):
-                    pass
-            return self.nodeDesc.size(self)
-
-        if isinstance(self.nodeDesc.size, int):
-            return self.nodeDesc.size
-
-        # This condition is for backward compatibility
-        # with external size classes which may use computeSize instead of __call__
-        if isinstance(self.nodeDesc.size, object) and hasattr(self.nodeDesc.size, 'computeSize'):
-            logging.warning(f"The plugin '{self.nodeType}' should use a callable instead of the deprecated method 'computeSize'.")
-            return self.nodeDesc.size.computeSize(self)
-
-        raise ValueError(f"{self.name} size attribute is invalid")
+        return self.nodeDesc.resolvedSize(self)
 
     def _updateNodeSize(self):
         self.setSize(self.evaluateSize())

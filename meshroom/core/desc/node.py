@@ -220,6 +220,24 @@ class BaseNode(object):
         """
         return cls.ram(node) if callable(cls.ram) else cls.ram
 
+    @classmethod
+    def resolvedSize(cls, node):
+        """ Return the resolved size for the given node instance.
+
+        If `size` is a callable, it is called with the node instance as parameter.
+        If `size` is an integer, it is returned as-is.
+        Objects with a `computeSize` method are supported for backward compatibility.
+        """
+        if callable(cls.size):
+            return cls.size(node)
+        if isinstance(cls.size, int):
+            return cls.size
+        # Backward compatibility with external size classes using computeSize instead of __call__
+        if hasattr(cls.size, 'computeSize'):
+            logging.warning(f"The plugin '{node.nodeType}' should use a callable instead of the deprecated method 'computeSize'.")
+            return cls.size.computeSize(node)
+        raise ValueError(f"{node.name} size attribute is invalid")
+
     def upgradeAttributeValues(self, attrValues, fromVersion):
         return attrValues
 

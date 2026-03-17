@@ -60,8 +60,7 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label=None, description=None, value=None, advanced=False, semantic="",
-                 commandLineGroup="allParams", enabled=True,
+    def __init__(self, name, label, description, value, advanced, semantic, commandLineGroup, enabled,
                  keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None,
                  validValue=True, errorMessage="", visible=True, exposed=False):
         super(Attribute, self).__init__()

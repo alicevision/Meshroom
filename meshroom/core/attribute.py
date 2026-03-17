@@ -320,7 +320,7 @@ class Attribute(BaseObject):
         # keyable attribute default value
         if self.keyable:
             return {}
-        # If the description value is None and this is an input attribute with a known value type,
+        # If the node's desc value is None and this is an input attribute with a known value type,
         # return the type's default value instead of None
         if self._desc.value is None and not self._isOutput and self._desc._valueType is not None:
             return self._desc._valueType()

@@ -66,6 +66,9 @@ Item {
     // Already connected attribute with another edge in DropArea
     signal edgeAboutToBeRemoved(var input)
 
+    /// Emitted when an attribute pin requests graph panning during edge drag (middle mouse button).
+    signal panRequested(real dx, real dy)
+
     /// Emitted when child attribute pins are created
     signal attributePinCreated(var attribute, var pin)
     /// Emitted when child attribute pins are deleted
@@ -661,6 +664,8 @@ Item {
                                             root.edgeAboutToBeRemoved(input)
                                         }
 
+                                        onPanRequested: function(dx, dy) { root.panRequested(dx, dy) }
+
                                         Component.onCompleted: attributePinCreated(attribute, outPin)
                                         onChildPinCreated: attributePinCreated(childAttribute, outPin)
                                         Component.onDestruction: attributePinDeleted(attribute, outPin)
@@ -738,6 +743,8 @@ Item {
                                         onEdgeAboutToBeRemoved: function(input) {
                                             root.edgeAboutToBeRemoved(input)
                                         }
+
+                                        onPanRequested: function(dx, dy) { root.panRequested(dx, dy) }
 
                                         onChildPinCreated: function(childAttribute, inPin) { attributePinCreated(childAttribute, inPin) }
                                         onChildPinDeleted: function(childAttribute, inPin) { attributePinDeleted(childAttribute, inPin) }
@@ -848,6 +855,8 @@ Item {
                                             onEdgeAboutToBeRemoved: function(input) {
                                                 root.edgeAboutToBeRemoved(input)
                                             }
+
+                                            onPanRequested: function(dx, dy) { root.panRequested(dx, dy) }
 
                                             onChildPinCreated: function(childAttribute, inParamsPin) { attributePinCreated(childAttribute, inParamsPin) }
                                             onChildPinDeleted: function(childAttribute, inParamsPin) { attributePinDeleted(childAttribute, inParamsPin) }

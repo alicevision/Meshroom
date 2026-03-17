@@ -1029,6 +1029,12 @@ Item {
                                 }
                             }
 
+                            onPanRequested: function(dx, dy) {
+                                draggable.x += dx
+                                draggable.y += dy
+                                workspaceMoved()
+                            }
+
                             // Interactive dragging: move the visual delegates
                             onPositionChanged: {
                                 if (!selected || !dragging) {

@@ -142,6 +142,7 @@ if args.node:
         if node.nodeStatus.status == Status.STOPPED:
             print(f"Node {node}: status is STOPPED")
             killRunningJob(node)
+        node.createChunks()
         node.process(args.forceCompute, args.inCurrentEnv)
     node.postprocess()
     node.restoreLogger()

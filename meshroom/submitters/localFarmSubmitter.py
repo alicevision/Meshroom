@@ -302,7 +302,7 @@ class LocalFarmSubmitter(BaseSubmitter):
         - if the task is a chunked task (which means multi iteration tasks) the we create the
           chunk tasks and add dependencies from chunk tasks to children tasks
 
-        # TODO: there's a lot of confusion between nodes and tasks here
+        # TODO: there is a lot of confusion between nodes and tasks here
         """
         # Gather dependencies
         tasksParentsUids = defaultdict(set)

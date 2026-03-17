@@ -74,7 +74,7 @@ class ScriptEditorManager(QObject):
 
         # Strip out additional part
         if exception:
-            # We know that we're executing the above statement and that caused the exception
+            # We know that we are executing the above statement and that caused the exception
             # What we want to show to the user is just the part that happened while executing the script
             # So just split with the last part and show it to the user
             result = result.split("self._locals)", 1)[-1]

@@ -23,7 +23,7 @@ Page {
     readonly property var scenefile: _currentScene ? _currentScene.graph.filepath : "";
 
     onScenefileChanged: {
-        // Check if we're not currently saving and emit the currentProjectChanged signal
+        // Check if we are not currently saving and emit the currentProjectChanged signal
         if (! _currentScene.graph.isSaving) {
             // Refresh the NodeEditor
             nodeEditor.refresh();
@@ -1038,7 +1038,7 @@ Page {
                 Action {
                     text: "About Meshroom"
                     onTriggered: aboutDialog.open()
-                    // Should be StandardKey.HelpContents, but for some reason it's not stable
+                    // Should be StandardKey.HelpContents, but for some reason it is not stable
                     // (may cause crash, requires pressing F1 twice after closing the popup)
                     shortcut: "F1"
                 }

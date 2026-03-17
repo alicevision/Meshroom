@@ -202,7 +202,7 @@ def test_unknown_node_type():
     # Check if internal folder
     assert n.internalFolder == internalFolder
 
-    # Upgrade can't be perform on unknown node types
+    # Upgrade cannot be performed on unknown node types
     assert not n.canUpgrade
     with pytest.raises(NodeUpgradeError):
         g.upgradeNode(nodeName)

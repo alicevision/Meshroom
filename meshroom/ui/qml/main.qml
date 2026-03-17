@@ -93,7 +93,7 @@ ApplicationWindow {
         } else {
 
             if (currentItem.imagesFolder.toString() === "" && currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {
-                // Set the initial folder for the "import images" dialog if it hasn't been set already
+                // Set the initial folder for the "import images" dialog if it has not been set already
                 currentItem.imagesFolder = Filepath.stringToUrl(Filepath.dirname(currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source))
             }
 
@@ -108,7 +108,7 @@ ApplicationWindow {
                 }
             }
 
-            // If the dialog that's being opened is the "import images" dialog, use the "imagesFolder" property
+            // If the dialog that is being opened is the "import images" dialog, use the "imagesFolder" property
             // which contains the last folder used to import images rather than the folder in which
             // projects have been saved
 

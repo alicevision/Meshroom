@@ -230,10 +230,10 @@ class BaseSubmitter(BaseObject):
     @staticmethod
     def killRunningJob():
         """ Sometimes farms are automatically re-trying job once in case it was
-        killed by a user that don't want his machine to be used. Unfortunately this
+        killed by a user who does not want their machine to be used. Unfortunately this
         means jobs will be launched twice even if they failed for a good reason.
         This function can be used to make sure the current job will not restart
-        Note : the ERROR_NO_RETRY itself won't do anything. This function must be
+        Note : the ERROR_NO_RETRY itself will not do anything. This function must be
         implemented on a case-by-case for each possible farm system
         """
         sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)

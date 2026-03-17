@@ -1051,7 +1051,7 @@ class Scene(UIGraph):
         if self._sfm:
             # when destroyed, directly use '_setSfm' to bypass
             # disconnection step in 'setSfm' (at this point, 'self._sfm' underlying object
-            # has been destroyed and can't be evaluated anymore)
+            # has been destroyed and cannot be evaluated anymore)
             self._sfm.destroyed.connect(self._unsetSfm)
             if len(self._sfm._chunks) > 0:
                 self._sfm.chunks[0].statusChanged.connect(self.updateSfMResults)

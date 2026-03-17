@@ -151,7 +151,7 @@ Item {
             return;
         }
 
-        // This indicates that the shake was either reset or we're starting from scratch
+        // This indicates that the shake was either reset or we are starting from scratch
         if (root.shakeCounter === 0 && !shakeDetectionTimer.running) {
             shakeDetectionTimer.start();
         }
@@ -179,8 +179,8 @@ Item {
         const currentDirectionX = deltaX > 0 ? 1 : -1;
         const currentDirectionY = deltaY > 0 ? 1 : -1;
 
-        // Check if we're in the opposite direction of what was the previous direction of the Node
-        // If yes then we're propagating as a shake effect
+        // Check if we are in the opposite direction of what was the previous direction of the Node
+        // If yes then we are propagating as a shake effect
         if (currentDirectionX != root.directionX || currentDirectionY != root.directionY) {
             // One shake cycle is complete, increment the counter
             root.shakeCounter++;
@@ -501,8 +501,8 @@ Item {
                                     implicitWidth: 400 // Forces word-wrap for long comments but the tooltip will be bigger than needed for short comments
                                     delay: 300
 
-                                    // Relative position for the tooltip to ensure we won't get stuck in a case where it starts appearing over the mouse's
-                                    // position because it's a bit long and cutting off the hovering of the mouse area (which leads to the tooltip beginning
+                                    // Relative position for the tooltip to ensure we will not get stuck in a case where it starts appearing over the mouse's
+                                    // position because it is a bit long and cutting off the hovering of the mouse area (which leads to the tooltip beginning
                                     // to appear and immediately disappearing, over and over again)
                                     x: implicitWidth / 2.5
                                 }
@@ -539,8 +539,8 @@ Item {
                                     implicitWidth: 500
                                     delay: 300
 
-                                    // Relative position for the tooltip to ensure we won't get stuck in a case where it starts appearing over the mouse's
-                                    // position because it's a bit long and cutting off the hovering of the mouse area (which leads to the tooltip beginning
+                                    // Relative position for the tooltip to ensure we will not get stuck in a case where it starts appearing over the mouse's
+                                    // position because it is a bit long and cutting off the hovering of the mouse area (which leads to the tooltip beginning
                                     // to appear and immediately disappearing, over and over again)
                                     x: implicitWidth / 2.5
                                 }

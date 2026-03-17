@@ -445,7 +445,7 @@ RowLayout {
             }
 
             onPositionChanged: function(mouse) {
-                // If there's been a significant move (5px along the -X or -Y axis) while the mouse is being
+                // If there has been a significant move (5px along the -X or -Y axis) while the mouse is being
                 // pressed, then we can consider being in the dragging state.
                 if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
                     dragTriggered = true

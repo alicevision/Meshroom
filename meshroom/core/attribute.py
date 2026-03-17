@@ -40,7 +40,7 @@ def attributeFactory(description: str, value, isOutput: bool, node, root=None, p
     else:
         attr.resetToDefaultValue()
     # Only connect slot that reacts to value change once initial value has been set.
-    # NOTE: This should be handled by the Node class, but we're currently limited by our core
+    # NOTE: This should be handled by the Node class, but we are currently limited by our core
     #       signal implementation that does not support emitting parameters.
     #       And using a lambda here to send the attribute as a parameter causes
     #       performance issues when using the pyside backend.
@@ -214,7 +214,7 @@ class Attribute(BaseObject):
         # Request graph update when input parameter value is set
         # and parent node belongs to a graph
         # Output attributes value are set internally during the update process,
-        # which is why we don't trigger any update in this case
+        # which is why we do not trigger any update in this case
         # TODO: update only the nodes impacted by this change
         # TODO: only update the graph if this attribute participates to a UID
         if self.isInput:

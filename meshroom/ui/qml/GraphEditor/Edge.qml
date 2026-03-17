@@ -52,7 +52,7 @@ Item {
 
     Shape {
         anchors.fill: parent
-        // Cause rendering artifacts when enabled (and don't support hot reload really well)
+        // Cause rendering artifacts when enabled (and do not support hot reload really well)
         vendorExtensionsEnabled: false
         opacity: 0.7
 

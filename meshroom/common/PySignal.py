@@ -72,8 +72,8 @@ class Signal:
                 for obj, method in slot.items():
                     method(obj, *args, **kwargs)
             elif isinstance(slot, weakref.ref):
-                # If it's a weakref, call the ref to get the instance and then call the func
-                # Don't wrap in try/except so we don't risk masking exceptions from the actual func call
+                # If it is a weakref, call the ref to get the instance and then call the func
+                # Do not wrap in try/except so we do not risk masking exceptions from the actual func call
                 tested_slot = slot()
                 if tested_slot is not None:
                     tested_slot(*args, **kwargs)
@@ -89,18 +89,18 @@ class Signal:
             raise ValueError(f"Connection to non-callable '{slot.__class__.__name__}' object failed")
 
         if isinstance(slot, (partial, Signal)) or '<' in slot.__name__:
-            # If it's a partial, a Signal or a lambda. The '<' check is the only py2 and py3 compatible way I could find
+            # If it is a partial, a Signal or a lambda. The '<' check is the only py2 and py3 compatible way I could find
             if slot not in self._slots:
                 self._slots.append(slot)
         elif inspect.ismethod(slot):
-            # Check if it's an instance method and store it with the instance as the key
+            # Check if it is an instance method and store it with the instance as the key
             slotSelf = slot.__self__
             slotDict = weakref.WeakKeyDictionary()
             slotDict[slotSelf] = slot.__func__
             if slotDict not in self._slots:
                 self._slots.append(slotDict)
         else:
-            # If it's just a function then just store it as a weakref.
+            # If it is just a function then just store it as a weakref.
             newSlotRef = weakref.ref(slot)
             if newSlotRef not in self._slots:
                 self._slots.append(newSlotRef)
@@ -113,7 +113,7 @@ class Signal:
             return
 
         if inspect.ismethod(slot):
-            # If it's a method, then find it by its instance
+            # If it is a method, then find it by its instance
             slotSelf = slot.__self__
             for s in self._slots:
                 if (isinstance(s, weakref.WeakKeyDictionary) and
@@ -122,7 +122,7 @@ class Signal:
                     self._slots.remove(s)
                     break
         elif isinstance(slot, (partial, Signal)) or '<' in slot.__name__:
-            # If it's a partial, a Signal or lambda, try to remove directly
+            # If it is a partial, a Signal or lambda, try to remove directly
             try:
                 self._slots.remove(slot)
             except ValueError:

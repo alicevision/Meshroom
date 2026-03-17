@@ -248,7 +248,7 @@ Entity {
                     if (model.visible)
                         model.requested = true
                     // Only cancel loading request if media is not valid
-                    // (a media won't be unloaded if already loaded, only hidden)
+                    // (a media will not be unloaded if already loaded, only hidden)
                     else if (!model.valid)
                         model.requested = false
                 }

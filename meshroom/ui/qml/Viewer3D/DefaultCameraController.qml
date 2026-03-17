@@ -92,10 +92,10 @@ Entity {
                 mouseHandler.hasMoved = true
                 d = root.camera.viewCenter.minus(root.camera.position).length()  // Distance between camera position and center position
                 var zoomPower = 0.2
-                var tz = axisMX.value * root.translateSpeed * zoomPower  // Translation to apply depending on user action (mouse move), bigger absolute value means we'll zoom/dezoom more
+                var tz = axisMX.value * root.translateSpeed * zoomPower  // Translation to apply depending on user action (mouse move), bigger absolute value means we will zoom/dezoom more
                 var tzThreshold = 0.001
 
-                // We forbid too big zoom, as it means the distance between camera and center would be too low and we'll have no translation after (due to float representation)
+                // We forbid too big zoom, as it means the distance between camera and center would be too low and we will have no translation after (due to float representation)
                 if (tz >= 0.9 * d)
                     return
 
@@ -113,10 +113,10 @@ Entity {
             var d = root.camera.viewCenter.minus(root.camera.position).length()  // Distance between camera position and center position
             var zoomPower = 0.2
             var angleStep = 120
-            var tz = (wheel.angleDelta.y / angleStep) * d * zoomPower  // Translation to apply depending on user action (mouse wheel), bigger absolute value means we'll zoom/dezoom more
+            var tz = (wheel.angleDelta.y / angleStep) * d * zoomPower  // Translation to apply depending on user action (mouse wheel), bigger absolute value means we will zoom/dezoom more
             var tzThreshold = 0.001
 
-            // We forbid too big zoom, as it means the distance between camera and center would be too low and we'll have no translation after (due to float representation)
+            // We forbid too big zoom, as it means the distance between camera and center would be too low and we will have no translation after (due to float representation)
             if (tz >= 0.9 * d) {
                 return
             }
@@ -135,7 +135,7 @@ Entity {
         sourceDevice: keyboardSourceDevice
         property bool _pressed
 
-        // When focus is lost while pressing a key, the corresponding action stays active, even when it's released.
+        // When focus is lost while pressing a key, the corresponding action stays active, even when it is released.
         // Handle this issue manually by keeping an additional _pressed state
         // which is cleared when focus changes (used for 'pickingActive' property).
         onFocusChanged: function(focus) {

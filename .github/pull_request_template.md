@@ -3,7 +3,7 @@
  - I have read the [contribution guidelines](../CONTRIBUTING.md).
  - I have updated the documentation, if applicable.
  - I have ensured that the change is tested somewhere.
- - I have followed the prevailing code style (for history readability and limit conflicts for maintainance).
+ - I have followed the prevailing code style (for history readability and limit conflicts for maintenance).
 
 -->
 ## Description

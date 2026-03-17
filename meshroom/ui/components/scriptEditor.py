@@ -49,7 +49,7 @@ class ScriptEditorManager(QObject):
         return self._index > 0
 
     def _hasNextScript(self):
-        """ Returns whethere there is a new script available to load. """
+        """ Returns whether there is a new script available to load. """
         # If the current index is lower than the available indexes
         return self._index < (len(self._history) - 1)
 
@@ -57,7 +57,7 @@ class ScriptEditorManager(QObject):
     @Slot(str, result=str)
     def process(self, script):
         """ Execute the provided input script, capture the output from the standard output, and return it. """
-        # Saves the state if an exception has occured
+        # Saves the state if an exception has occurred
         exception = False
 
         stdout = StringIO()

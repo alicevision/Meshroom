@@ -1195,7 +1195,7 @@ class Scene(UIGraph):
         """ Evaluate a mathematical expression and return the result as a string
         Returns a list of 2 values :
         - the result value
-        - a boolean that indicate if an error occured
+        - a boolean that indicates whether an error occurred
         """
         mev = MathEvaluator()
         try:

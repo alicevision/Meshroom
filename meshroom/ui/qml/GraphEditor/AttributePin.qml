@@ -179,7 +179,7 @@ RowLayout {
                 id: inputConnectMA
                 drag.target: root.attribute.isReadOnly ? undefined : inputDragTarget
                 drag.threshold: 0
-                // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
+                // Move the edge's tip straight to the current mouse position instead of waiting after the drag operation has started
                 drag.smoothed: false
                 enabled: !root.readOnly
                 anchors.fill: parent
@@ -412,7 +412,7 @@ RowLayout {
             id: outputConnectMA
             drag.target: outputDragTarget
             drag.threshold: 0
-            // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
+            // Move the edge's tip straight to the current mouse position instead of waiting after the drag operation has started
             drag.smoothed: false
             anchors.fill: parent
             // Use the same negative margins as DropArea to ease pin selection

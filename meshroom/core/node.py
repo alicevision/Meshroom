@@ -2113,7 +2113,7 @@ class BaseNode(BaseObject):
     def _hasDisplayableShape(self):
         """
         Return True if at least one attribute is a ShapeAttribute, a ShapeListAttribute or a shape File.
-        Note: These attributes can be loaded in the the ShapeViewer / ShapeEditor.
+        Note: These attributes can be loaded in the ShapeViewer / ShapeEditor.
         False otherwise.
         """
         return next((attr for attr in self._attributes if attr.hasDisplayableShape or

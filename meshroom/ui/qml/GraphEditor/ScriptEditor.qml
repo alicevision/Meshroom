@@ -34,7 +34,7 @@ Item {
 
     function replace(text, string, replacement) {
         /**
-         * Replaces all occurences of the string in the text
+         * Replaces all occurrences of the string in the text
          * @param text - overall text
          * @param string - the string to be replaced in the text
          * @param replacement - the replacement of the string

@@ -1222,9 +1222,9 @@ class UIGraph(QObject):
             for i in reversed(range(len(listAttribute))):
                 if i == srcIndex:
                     continue
-                occurence = allSrc.index(listAttribute.at(i)) if listAttribute.at(i) in allSrc else -1
-                if occurence != -1:
-                    self.removeNodesFrom([self.graph.edges.at(occurence).dst.node])
+                occurrence = allSrc.index(listAttribute.at(i)) if listAttribute.at(i) in allSrc else -1
+                if occurrence != -1:
+                    self.removeNodesFrom([self.graph.edges.at(occurrence).dst.node])
                     # update the edges from allSrc
                     allSrc = [e.src for e in self._graph.edges.values()]
 

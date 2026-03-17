@@ -346,7 +346,7 @@ Based on [AliceVision 3.3.0](https://github.com/alicevision/AliceVision/tree/v3.
 - [ui] app: Correctly evaluate env vars that enable/disable components [PR](https://github.com/alicevision/Meshroom/pull/2772)
 - Fix for QFontDatabase crash on exit [PR](https://github.com/alicevision/Meshroom/pull/2776)
 - [ui] Add project to recent projects when dropping a file [PR](https://github.com/alicevision/Meshroom/pull/2483)
-- [ui] fix: Overlay image doesn't work on pipeline "Photogrametry experimental"  [PR](https://github.com/alicevision/Meshroom/pull/2780)
+- [ui] fix: Overlay image does not work on pipeline "Photogrametry experimental"  [PR](https://github.com/alicevision/Meshroom/pull/2780)
 - [core] Parallelization: the cmdline suffix should be at the end [PR](https://github.com/alicevision/Meshroom/pull/2794)
 
 ### CI, Documentation and Build

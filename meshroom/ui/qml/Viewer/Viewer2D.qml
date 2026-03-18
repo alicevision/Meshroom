@@ -42,6 +42,11 @@ FocusScope {
     property int previousHeight: -1
     property int previousOrientationTag: 1
 
+    // State for double-click zoom toggle
+    property real previousZoomScale: -1.0
+    property real previousZoomX: 0.0
+    property real previousZoomY: 0.0
+
     QtObject {
         id: m
         property variant viewpointMetadata: {
@@ -146,6 +151,22 @@ FocusScope {
                 menu.y = mouse.y
                 menu.mousePos = Qt.point(mouse.x, mouse.y)
                 menu.open()
+            }
+        }
+
+        onDoubleClicked: function(mouse) {
+            if (Math.abs(imgContainer.scale - 1.0) > 0.001) {
+                // Not at 100%: save current state and zoom to 100% keeping cursor position
+                root.previousZoomScale = imgContainer.scale
+                root.previousZoomX = imgContainer.x
+                root.previousZoomY = imgContainer.y
+                zoomPixelSize(mouse.x, mouse.y)
+            } else if (root.previousZoomScale > 0) {
+                // Already at 100%: restore previous zoom state
+                imgContainer.scale = root.previousZoomScale
+                imgContainer.x = root.previousZoomX
+                imgContainer.y = root.previousZoomY
+                root.previousZoomScale = -1.0
             }
         }
 

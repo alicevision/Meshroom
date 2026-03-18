@@ -144,6 +144,7 @@ FocusScope {
                 var menu = contextMenu.createObject(root)
                 menu.x = mouse.x
                 menu.y = mouse.y
+                menu.mousePos = Qt.point(mouse.x, mouse.y)
                 menu.open()
             }
         }
@@ -192,11 +193,17 @@ FocusScope {
         return true
     }
 
-    function zoomPixelSize() {
-        // Set zoom to 100% for 1:1 pixel mapping to match image pixels to screen pixels
-        imgContainer.scale = 1
-        imgContainer.x = Math.max((imgLayout.width - imgContainer.width * imgContainer.scale) * 0.5, 0)
-        imgContainer.y = Math.max((imgLayout.height - imgContainer.height * imgContainer.scale) * 0.5, 0)
+    function zoomPixelSize(mouseX, mouseY) {
+        var newScale = 1.0
+        if (mouseX !== undefined && mouseY !== undefined) {
+            var point = mapToItem(imgContainer, mouseX, mouseY)
+            imgContainer.x += (imgContainer.scale - newScale) * point.x
+            imgContainer.y += (imgContainer.scale - newScale) * point.y
+        } else {
+            imgContainer.x = Math.max((imgLayout.width - imgContainer.width * newScale) * 0.5, 0)
+            imgContainer.y = Math.max((imgLayout.height - imgContainer.height * newScale) * 0.5, 0)
+        }
+        imgContainer.scale = newScale
     }
 
     function tryLoadNode(node) {
@@ -416,6 +423,7 @@ FocusScope {
 
     // context menu
     property Component contextMenu: Menu {
+        property point mousePos: Qt.point(0, 0)
         MenuItem {
             text: "Fit"
             onTriggered: fit()
@@ -423,7 +431,7 @@ FocusScope {
         MenuItem {
             text: "Zoom 100%"
             onTriggered: {
-                zoomPixelSize()
+                zoomPixelSize(mousePos.x, mousePos.y)
             }
         }
     }
@@ -1489,6 +1497,7 @@ FocusScope {
                                         var point = mapToItem(root, mouse.x, mouse.y)
                                         menu.x = point.x
                                         menu.y = point.y
+                                        menu.mousePos = Qt.point(point.x, point.y)
                                         menu.open()
                                     }
                                 }

@@ -317,7 +317,7 @@ class BaseNode(object):
                     from subprocess import CREATE_NEW_PROCESS_GROUP
                     platformArgs = {"creationflags": CREATE_NEW_PROCESS_GROUP}
                     # Note: DETACHED_PROCESS means fully detached process.
-                    # We don't want a fully detached process to ensure that if Meshroom is killed,
+                    # We do not want a fully detached process to ensure that if Meshroom is killed,
                     # the subprocesses are killed too.
                 else:
                     platformArgs = {"start_new_session": True}

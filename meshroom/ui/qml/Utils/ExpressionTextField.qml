@@ -5,7 +5,7 @@ TextField {
     id: root
 
     // evaluated numeric value (NaN if invalid)
-    // It helps keeping the connection that text has so that we don't loose ability to undo/reset
+    // It helps keeping the connection that text has so that we do not lose ability to undo/reset
     property bool exprTextChanged: false
     property real evaluatedValue: 0
 
@@ -66,7 +66,7 @@ TextField {
     // onAccepted and onEditingFinished will break the bindings to text
     // so if used on fields that needs to be driven by sliders or other qml element,
     // the binding needs to be restored
-    // No need to restore the binding if the expression has an error because we don't break it
+    // No need to restore the binding if the expression has an error because we do not break it
 
     onAccepted: {
         if (exprTextChanged)

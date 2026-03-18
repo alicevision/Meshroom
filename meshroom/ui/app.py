@@ -72,7 +72,7 @@ class MessageHandler:
         """ Message handler remapping Qt logs to Python logging system. """
 
         if not cls.outputQmlWarnings:
-            # If MESHROOM_OUTPUT_QML_WARNINGS is not set and an error in qml files happen we're
+            # If MESHROOM_OUTPUT_QML_WARNINGS is not set and an error in qml files happen we are
             # left without any output except "QQmlApplicationEngine failed to load component".
             # This is extremely hard to debug to someone who does not know about
             # MESHROOM_OUTPUT_QML_WARNINGS beforehand because by default Qml will output errors to

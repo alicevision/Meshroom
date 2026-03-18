@@ -260,7 +260,7 @@ RowLayout {
         switch (attribute.type) {
             case "IntParam":
             case "FloatParam":
-                // We don't set a number because we want to keep the invalid expression
+                // We do not set a number because we want to keep the invalid expression
                 if(attribute.keyable)
                     _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, Number(value))
                 else

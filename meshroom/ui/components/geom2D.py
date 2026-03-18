@@ -12,7 +12,7 @@ class Geom2D(QObject):
         """ Check if two rectangles intersect fully. i.e. rect1 fully holds rect2 inside it."""
         intersected = rect1.intersected(rect2)
 
-        # They don't intersect at all
+        # They do not intersect at all
         if not intersected:
             return False
 

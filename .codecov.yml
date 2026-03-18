@@ -44,7 +44,7 @@ coverage:
   round: down
   range: "70...95"
 
-# Ignore certain files/directories that shouldn't affect coverage
+# Ignore certain files/directories that should not affect coverage
 ignore:
   - "setup.py"
   - "docs/"

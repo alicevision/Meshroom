@@ -49,7 +49,7 @@ Flow {
     }
 
     Repeater {
-        // ChartView series can't be accessed directly as a model.
+        // ChartView series cannot be accessed directly as a model.
         // Use an intermediate ListModel populated with those series.
         model: ListModel {
             id: seriesModel

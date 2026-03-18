@@ -398,7 +398,7 @@ class UIGraph(QObject):
         """ Set the internal graph. """
         if self._graph:
             self.stopExecution()
-            # Clear all the locally submitted nodes at once before the graph gets changed, as it won't receive further updates
+            # Clear all the locally submitted nodes at once before the graph gets changed, as it will not receive further updates
             if self._computingLocally:
                 self._graph.clearLocallySubmittedNodes()
             self.clear()
@@ -1222,9 +1222,9 @@ class UIGraph(QObject):
             for i in reversed(range(len(listAttribute))):
                 if i == srcIndex:
                     continue
-                occurence = allSrc.index(listAttribute.at(i)) if listAttribute.at(i) in allSrc else -1
-                if occurence != -1:
-                    self.removeNodesFrom([self.graph.edges.at(occurence).dst.node])
+                occurrence = allSrc.index(listAttribute.at(i)) if listAttribute.at(i) in allSrc else -1
+                if occurrence != -1:
+                    self.removeNodesFrom([self.graph.edges.at(occurrence).dst.node])
                     # update the edges from allSrc
                     allSrc = [e.src for e in self._graph.edges.values()]
 

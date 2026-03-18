@@ -44,7 +44,7 @@ class TaskThread(QThread):
 
         loop = QEventLoop()
 
-        # A timer is used to make sure we don't indefinitely block the taskManager
+        # A timer is used to make sure we do not indefinitely block the taskManager
         timer = QTimer()
         timer.timeout.connect(loop.quit)
         timer.setSingleShot(True)
@@ -338,7 +338,7 @@ class TaskManager(BaseObject):
 
     def onNodeDestroyed(self, obj, name):
         """
-        Remove node from the taskmanager when it's destroyed in the graph
+        Remove node from the taskmanager when it is destroyed in the graph
         :param obj:
         :param name:
         :return:

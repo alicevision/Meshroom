@@ -86,7 +86,7 @@ class TestGroupAttributes:
         assert isinstance(inputGroup, GroupAttribute)
         assert len(inputGroup.flatStaticChildren) == GROUPATTRIBUTES_FIRSTGROUP_NB_CHILDREN
 
-        # Add an element to a list within the group and check the number of children hasn't changed
+        # Add an element to a list within the group and check the number of children has not changed
         groupedList = node.attribute("firstGroup.singleGroupedList")
         groupedList.insert(0, 30)
         assert len(groupedList.flatStaticChildren) == 0  # Not a Group, elements are not counted as children

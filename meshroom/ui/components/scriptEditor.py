@@ -49,7 +49,7 @@ class ScriptEditorManager(QObject):
         return self._index > 0
 
     def _hasNextScript(self):
-        """ Returns whethere there is a new script available to load. """
+        """ Returns whether there is a new script available to load. """
         # If the current index is lower than the available indexes
         return self._index < (len(self._history) - 1)
 
@@ -57,7 +57,7 @@ class ScriptEditorManager(QObject):
     @Slot(str, result=str)
     def process(self, script):
         """ Execute the provided input script, capture the output from the standard output, and return it. """
-        # Saves the state if an exception has occured
+        # Saves the state if an exception has occurred
         exception = False
 
         stdout = StringIO()
@@ -74,7 +74,7 @@ class ScriptEditorManager(QObject):
 
         # Strip out additional part
         if exception:
-            # We know that we're executing the above statement and that caused the exception
+            # We know that we are executing the above statement and that caused the exception
             # What we want to show to the user is just the part that happened while executing the script
             # So just split with the last part and show it to the user
             result = result.split("self._locals)", 1)[-1]

@@ -116,7 +116,7 @@ Panel {
                 id: nodeNameField
                 visible: root.node !== null
                 text: root.displayNodeName
-                // For some reason the validator doesn't always work
+                // For some reason the validator does not always work
                 validator: RegularExpressionValidator { regularExpression: /^[0-9A-Za-z]+$/ }
                 font.bold: true
                 readOnly: true

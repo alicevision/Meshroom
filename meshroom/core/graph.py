@@ -1160,7 +1160,7 @@ class Graph(BaseObject):
         """
         Return the computability of a node based on itself and its dependency chain.
         It is a static result as it depends on the graph topology.
-        Computation can't happen for:
+        Computation cannot happen for:
          - CompatibilityNodes
          - nodes having a non-computed CompatibilityNode in its dependency chain
 

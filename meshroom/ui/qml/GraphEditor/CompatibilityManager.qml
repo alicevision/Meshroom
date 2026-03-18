@@ -130,7 +130,7 @@ MessageDialog {
         Label {
             id: questionLabel
             text: upgradableCount ? "Upgrade all possible nodes to current version?"
-                                  : "Those nodes can't be upgraded, remove them manually if needed."
+                                  : "Those nodes cannot be upgraded, remove them manually if needed."
         }
     }
 

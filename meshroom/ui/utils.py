@@ -102,7 +102,7 @@ class QmlInstantEngine(QQmlApplicationEngine):
 
         # Make sure the file exists
         if not os.path.isfile(filename):
-            raise ValueError(f"addFile: file {filename} doesn't exist.")
+            raise ValueError(f"addFile: file {filename} does not exist.")
 
         # Return if the file is already in our internal list
         if filename in self._watchedFiles:

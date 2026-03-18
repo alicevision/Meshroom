@@ -424,7 +424,7 @@ def initNodes():
 def initSubmitters():
     """ Detect and register submitter plugins
     Note: Make sure the package name (folder inside the additionalPaths folders)
-          are unique : so we cannot name them "submitters" because it's already taken
+          are unique : so we cannot name them "submitters" because it is already taken
           by the submitters package inside meshroom
     """
     # Load submitters

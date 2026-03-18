@@ -269,7 +269,7 @@ class ChunkStatusData(BaseObject):
         self.status = Status.RUNNING
         # Note: We do not modify the "execMode" here, as it is set in the init*Submit methods.
         #       When we compute (from renderfarm or isolated environment),
-        #       we don't want to modify the execMode set from the submit.
+        #       we do not want to modify the execMode set from the submit.
 
     def initIsolatedCompute(self):
         """
@@ -514,7 +514,7 @@ class NodeChunk(BaseObject):
         Update chunk status based on status file content/existence.
         """
         # TODO : If this is a placeholder chunk
-        # Then we shouldn't do anything here
+        # Then we should not do anything here
 
         statusFile = self.getStatusFile()
         oldStatus = self._status.status
@@ -1304,7 +1304,7 @@ class BaseNode(BaseObject):
         """ Return True if this node type is computable, False otherwise.
         A computable node type can be in a context that does not allow computation.
         """
-        # Ambiguous case for NONE, which could be used for compatibility nodes if we don't have
+        # Ambiguous case for NONE, which could be used for compatibility nodes if we do not have
         # any information about the node descriptor.
         return self.getMrNodeType() != MrNodeType.INPUT and self.getMrNodeType() != MrNodeType.BACKDROP
 
@@ -2113,7 +2113,7 @@ class BaseNode(BaseObject):
     def _hasDisplayableShape(self):
         """
         Return True if at least one attribute is a ShapeAttribute, a ShapeListAttribute or a shape File.
-        Note: These attributes can be loaded in the the ShapeViewer / ShapeEditor.
+        Note: These attributes can be loaded in the ShapeViewer / ShapeEditor.
         False otherwise.
         """
         return next((attr for attr in self._attributes if attr.hasDisplayableShape or
@@ -2294,7 +2294,7 @@ class Node(BaseNode):
 
     def _resetChunks(self):
         """ Set chunks on the node.
-        # TODO : Maybe don't delete chunks if we will recreate them as before ?
+        # TODO : Maybe do not delete chunks if we will recreate them as before ?
         """
         if self.isInputNode:
             self._chunksCreated = True

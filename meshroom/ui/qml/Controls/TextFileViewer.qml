@@ -365,7 +365,7 @@ Item {
 
         xhr.open("GET", root.source)
         xhr.onreadystatechange = function() {
-            // - can't rely on 'Last-Modified' header response to verify
+            // - cannot rely on 'Last-Modified' header response to verify
             //   that file has changed on disk (not always up-to-date)
             // - instead, let QML engine evaluate whether 'text' property value has changed
             if (xhr.readyState === XMLHttpRequest.DONE) {

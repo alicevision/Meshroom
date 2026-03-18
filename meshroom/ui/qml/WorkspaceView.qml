@@ -23,9 +23,14 @@ Item {
     property alias panel3dViewer: panel3dViewerLoader.item
     readonly property Viewer2D viewer2D: viewer2D
     readonly property alias imageGallery: imageGallery
+    readonly property TextViewer viewerText: textViewer
+    property alias mediaViewerTabIndex: mediaViewerPanel.currentTab
+
+    // Text Viewer occupies index 1 when Image Viewer is also visible, else index 0
+    readonly property int _textViewerTabIndex: settingsUILayout.showImageViewer ? 1 : 0
 
     // Use settings instead of visible property as property changes are not propagated
-    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D
+    visible: settingsUILayout.showImageGallery || settingsUILayout.showImageViewer || settingsUILayout.showViewer3D || settingsUILayout.showTextViewer
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
@@ -95,23 +100,45 @@ Item {
             }
         }
 
-        Panel {
-            id: imageViewer
-            title: "Image Viewer"
-            visible: settingsUILayout.showImageViewer
+        TabPanel {
+            id: mediaViewerPanel
+            visible: settingsUILayout.showImageViewer || settingsUILayout.showTextViewer
             implicitWidth: Math.round(parent.width * 0.35)
             SplitView.fillWidth: true
             SplitView.minimumWidth: 50
-            loading: viewer2D.loadingModules.length > 0
-            loadingText: loading ? "Loading " + viewer2D.loadingModules : ""
+
+            tabs: {
+                var t = []
+                if (settingsUILayout.showImageViewer) t.push("Image Viewer")
+                if (settingsUILayout.showTextViewer) t.push("Text Viewer")
+                return t
+            }
 
             headerBar: RowLayout {
+                spacing: 4
+
+                // Loading indicator for image viewer
+                BusyIndicator {
+                    id: mediaViewerLoadingIndicator
+                    padding: 0
+                    implicitWidth: 12
+                    implicitHeight: 12
+                    running: settingsUILayout.showImageViewer && mediaViewerPanel.currentTab === 0 && viewer2D.loadingModules.length > 0
+                    visible: running
+                }
+                Label {
+                    visible: mediaViewerLoadingIndicator.visible
+                    text: "Loading " + viewer2D.loadingModules
+                    font.italic: true
+                }
+
                 MaterialToolButton {
                     text: MaterialIcons.more_vert
                     font.pointSize: 11
                     padding: 2
                     checkable: true
                     checked: imageViewerMenu.visible
+                    visible: settingsUILayout.showImageViewer && mediaViewerPanel.currentTab === 0
                     onClicked: imageViewerMenu.open()
                     Menu {
                         id: imageViewerMenu
@@ -164,6 +191,8 @@ Item {
                 id: viewer2D
                 anchors.fill: parent
 
+                visible: settingsUILayout.showImageViewer && mediaViewerPanel.currentTab === 0
+
                 viewIn3D: root.load3DMedia
 
                 DropArea {
@@ -177,6 +206,21 @@ Item {
                     z: -1
                     anchors.fill: parent
                     color: Qt.darker(activePalette.base, 1.1)
+                }
+            }
+
+            TextViewer {
+                id: textViewer
+                anchors.fill: parent
+
+                visible: settingsUILayout.showTextViewer && mediaViewerPanel.currentTab === root._textViewerTabIndex
+
+                DropArea {
+                    anchors.fill: parent
+                    keys: ["text/uri-list"]
+                    onDropped: function(drop) {
+                        textViewer.source = drop.urls[0]
+                    }
                 }
             }
         }

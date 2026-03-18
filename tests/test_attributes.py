@@ -10,6 +10,9 @@ invalid3DExtensionFiles = [(f'test.{ext}', False) for ext in ('', 'exe', 'jpg', 
 valid2DSemantics= [(semantic, True) for semantic in ('image', 'imageList', 'sequence')]
 invalid2DSemantics = [(semantic, False) for semantic in ('3d', '', 'multiline', 'color/hue')]
 
+validTextExtensionFiles = [(f'test{ext}', True) for ext in ('.txt', '.json', '.log', '.csv', '.md')]
+invalidTextExtensionFiles = [(f'test{ext}', False) for ext in ('', '.exe', '.jpg', '.obj', '.py')]
+
 
 def test_attribute_retrieve_linked_input_and_output_attributes():
     """
@@ -101,3 +104,41 @@ def test_attribute_is2D_file_semantic(givenSemantic, expected):
 
     # Then
     assert n0.input.is2dDisplayable == expected
+
+
+@pytest.mark.parametrize("givenFile,expected", validTextExtensionFiles + invalidTextExtensionFiles)
+def test_attribute_isText_file_extensions(givenFile, expected):
+    """
+    Check what makes an attribute a valid text file
+    """
+
+    g = Graph('')
+    n0 = g.addNewNode('Ls', input='')
+
+    # Given
+    assert not n0.input.isTextDisplayable
+
+    # When
+    n0.input.value = givenFile
+
+    # Then
+    assert n0.input.isTextDisplayable == expected
+
+
+def test_attribute_isText_by_description_semantic():
+    """
+    Check that an attribute with semantic 'textFile' is considered a text file
+    """
+
+    # Given
+    g = Graph('')
+    n0 = g.addNewNode('Ls', input='')
+
+    # The input attribute has an empty default value, so it is not text displayable
+    assert not n0.input.isTextDisplayable
+
+    # When
+    n0.input.desc._semantic = "textFile"
+
+    # Then
+    assert n0.input.isTextDisplayable

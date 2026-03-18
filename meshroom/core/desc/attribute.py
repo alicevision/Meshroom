@@ -1,9 +1,48 @@
 import ast
 import os
+import re
 from collections.abc import Iterable
 from enum import auto, Enum
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList, strtobool, deprecated
+
+
+# Pre-compile regexes for better performance on repeated calls
+_ACRONYM_RE = re.compile(r'([A-Z]+)([A-Z][a-z])')
+_CAMEL_CASE_RE = re.compile(r'([a-z\d])([A-Z])')
+_SPLIT_RE = re.compile(r'[_\s]+')
+
+def convertToLabel(name: str) -> str:
+    """Convert a camelCase or snake_case attribute name into a human-readable label.
+    
+    Examples:
+        >>> convertToLabel('camelCase')
+        'Camel Case'
+        >>> convertToLabel('snake_case')
+        'Snake Case'
+        >>> convertToLabel('myURLParser')
+        'My URL Parser'
+        >>> convertToLabel('mixed_caseExample')
+        'Mixed Case Example'
+        >>> convertToLabel('')
+        ''
+    """
+    if not name:
+        return ''
+    
+    # Handle consecutive uppercase letters (e.g. 'URL', 'HTTP')
+    name = _ACRONYM_RE.sub(r'\1 \2', name)
+    # Insert space between camelCase boundaries
+    name = _CAMEL_CASE_RE.sub(r'\1 \2', name)
+    # Split on underscores or spaces
+    words = _SPLIT_RE.split(name)
+    
+    # Preserve uppercase acronyms, capitalize others
+    return ' '.join(
+        word if word.isupper() else word.capitalize()
+        for word in words
+        if word
+    )
 
 class ValueTypeErrors(Enum):
     NONE = auto()  # No error
@@ -26,8 +65,8 @@ class Attribute(BaseObject):
                  validValue=True, errorMessage="", visible=True, exposed=False):
         super(Attribute, self).__init__()
         self._name = name
-        self._label = label
-        self._description = description
+        self._label = convertToLabel(name) if label is None else label
+        self._description = "" if description is None else description
         self._value = value
         self._keyable = keyable
         self._keyType = keyType
@@ -141,7 +180,7 @@ class Attribute(BaseObject):
 class ListAttribute(Attribute):
     """ A list of Attributes """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, elementDesc, name, label, description, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, elementDesc, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, semantic="", enabled=True, joinChar=" ", visible=True, exposed=False):
         """
         :param elementDesc: the Attribute description of elements to store in that list
@@ -196,7 +235,7 @@ class ListAttribute(Attribute):
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, items, name, label, description, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, items, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, semantic="",  enabled=True, joinChar=" ", brackets=None, visible=True,
                  exposed=False):
         """
@@ -321,7 +360,7 @@ class File(Attribute):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, name, label=None, description=None, value=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, invalidate=True, semantic="", enabled=True, visible=True, exposed=True):
         
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
@@ -340,6 +379,8 @@ class File(Attribute):
         return os.path.normpath(value).replace("\\", "/") if value else ""
 
     def checkValueTypes(self):
+        if self.value is None:
+            return "", ValueTypeErrors.NONE
         # Some File values are functions generating a string: check whether the value is a string or if it
         # is a function (but there is no way to check that the function's output is indeed a string)
         if not isinstance(self.value, str) and not callable(self.value):
@@ -351,7 +392,7 @@ class BoolParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, keyable=False, keyType=None,
+    def __init__(self, name, label=None, description=None, value=None, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, 
                  enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
         
@@ -375,6 +416,8 @@ class BoolParam(Param):
                              f"value: {value}, type: {type(value)})")
 
     def checkValueTypes(self):
+        if self.value is None:
+            return "", ValueTypeErrors.NONE
         if not isinstance(self.value, bool):
             return self.name, ValueTypeErrors.TYPE
         return "", ValueTypeErrors.NONE
@@ -384,7 +427,7 @@ class IntParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None,
+    def __init__(self, name, label=None, description=None, value=None, range=None, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True, 
                  invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
@@ -409,6 +452,8 @@ class IntParam(Param):
                              f"{value}, type: {type(value)})")
 
     def checkValueTypes(self):
+        if self.value is None:
+            return "", ValueTypeErrors.NONE
         if not isinstance(self.value, int):
             return self.name, ValueTypeErrors.TYPE
         if (self.range and not all([isinstance(r, int) for r in self.range])):
@@ -422,7 +467,7 @@ class FloatParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, range=None, keyable=False, keyType=None,
+    def __init__(self, name, label=None, description=None, value=None, range=None, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True, 
                  invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
         self._range = range
@@ -445,6 +490,8 @@ class FloatParam(Param):
                              f"{value}, type:{type(value)})")
 
     def checkValueTypes(self):
+        if self.value is None:
+            return "", ValueTypeErrors.NONE
         if not isinstance(self.value, float):
             return self.name, ValueTypeErrors.TYPE
         if (self.range and not all([isinstance(r, float) for r in self.range])):
@@ -458,7 +505,7 @@ class PushButtonParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
         
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
@@ -500,7 +547,7 @@ class ChoiceParam(Param):
     _OVERRIDE_SERIALIZATION_KEY_VALUES = "__ChoiceParam_values__"
 
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name: str, label: str, description: str, value, values, exclusive=True, saveValuesOverride=False,
+    def __init__(self, name: str, label=None, description=None, value=None, values=None, exclusive=True, saveValuesOverride=False,
                  group="allParams", commandLineGroup=_setParamSentinel, joinChar=" ", advanced=False, enabled=True, 
                  invalidate=True, semantic="", validValue=True, errorMessage="", visible=True, exposed=False):
 
@@ -510,14 +557,14 @@ class ChoiceParam(Param):
                                           commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, 
                                           invalidate=invalidate, semantic=semantic, validValue=validValue, 
                                           errorMessage=errorMessage, visible=visible, exposed=exposed)
-        self._values = values
+        self._values = values if values is not None else []
         self._saveValuesOverride = saveValuesOverride
         self._exclusive = exclusive
         self._joinChar = joinChar
         if self._values:
             # Look at the type of the first element of the possible values
             self._valueType = type(self._values[0])
-        elif not exclusive:
+        elif not exclusive and self._value is not None:
             # Possible values may be defined later, so use the value to define the type.
             # if non exclusive, it is a list
             self._valueType = type(self._value[0])
@@ -560,6 +607,10 @@ class ChoiceParam(Param):
         if not isinstance(self._values, list):
             return self.name, ValueTypeErrors.TYPE
 
+        # None value is valid (dynamic default)
+        if self._value is None:
+            return "", ValueTypeErrors.NONE
+
         # If the choices are not exclusive, check that 'value' is a list, and check that it does not contain values that
         # are not available
         elif not self.exclusive and (not isinstance(self._value, list) or
@@ -582,7 +633,7 @@ class StringParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, name, label=None, description=None, value=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, enabled=True, invalidate=True, semantic="", uidIgnoreValue=None, validValue=True, 
                  errorMessage="", visible=True, exposed=False):
 
@@ -604,6 +655,8 @@ class StringParam(Param):
         return value
 
     def checkValueTypes(self):
+        if self.value is None:
+            return "", ValueTypeErrors.NONE
         if not isinstance(self.value, str):
             return self.name, ValueTypeErrors.TYPE
         return "", ValueTypeErrors.NONE
@@ -613,7 +666,7 @@ class ColorParam(Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label, description, value, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, name, label=None, description=None, value=None, group="allParams", commandLineGroup=_setParamSentinel, 
                  advanced=False, enabled=True, invalidate=True, semantic="", visible=True, exposed=False):
         
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
@@ -631,3 +684,10 @@ class ColorParam(Param):
                              f"or an hexadecimal color code (param: {self.name}, value: {value}, "
                              f"type: {type(value)})")
         return value
+
+    def checkValueTypes(self):
+        if self.value is None:
+            return "", ValueTypeErrors.NONE
+        if not isinstance(self.value, str):
+            return self.name, ValueTypeErrors.TYPE
+        return "", ValueTypeErrors.NONE

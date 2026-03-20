@@ -126,12 +126,16 @@ FloatingPane {
                 text: "R"
                 font.pointSize: 7
                 padding: 2
-                checkable: true
+                checkable: false
                 checked: true
                 onCheckedChanged: waveCanvas.requestPaint()
                 TapHandler {
                     acceptedModifiers: Qt.ControlModifier
                     onTapped: root.soloChannel(rBtn)
+                }
+                TapHandler {
+                    acceptedModifiers: Qt.NoModifier
+                    onTapped: rBtn.checked = !rBtn.checked
                 }
             }
             ToolButton {
@@ -139,12 +143,16 @@ FloatingPane {
                 text: "G"
                 font.pointSize: 7
                 padding: 2
-                checkable: true
+                checkable: false
                 checked: true
                 onCheckedChanged: waveCanvas.requestPaint()
                 TapHandler {
                     acceptedModifiers: Qt.ControlModifier
                     onTapped: root.soloChannel(gBtn)
+                }
+                TapHandler {
+                    acceptedModifiers: Qt.NoModifier
+                    onTapped: gBtn.checked = !gBtn.checked
                 }
             }
             ToolButton {
@@ -152,12 +160,16 @@ FloatingPane {
                 text: "B"
                 font.pointSize: 7
                 padding: 2
-                checkable: true
+                checkable: false
                 checked: true
                 onCheckedChanged: waveCanvas.requestPaint()
                 TapHandler {
                     acceptedModifiers: Qt.ControlModifier
                     onTapped: root.soloChannel(bBtn)
+                }
+                TapHandler {
+                    acceptedModifiers: Qt.NoModifier
+                    onTapped: bBtn.checked = !bBtn.checked
                 }
             }
             ToolButton {
@@ -165,12 +177,16 @@ FloatingPane {
                 text: "L"
                 font.pointSize: 7
                 padding: 2
-                checkable: true
+                checkable: false
                 checked: false
                 onCheckedChanged: waveCanvas.requestPaint()
                 TapHandler {
                     acceptedModifiers: Qt.ControlModifier
                     onTapped: root.soloChannel(lBtn)
+                }
+                TapHandler {
+                    acceptedModifiers: Qt.NoModifier
+                    onTapped: lBtn.checked = !lBtn.checked
                 }
             }
         }

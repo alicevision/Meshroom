@@ -272,13 +272,26 @@ class ThumbnailCache(QObject):
         reader.setFileName(imgPath)
         reader.setAutoTransform(True)
 
+        # Request a pre-scaled read to avoid loading the full large image into memory.
+        # For formats that support it (e.g. JPEG), this dramatically reduces both decode
+        # time and memory usage by only computing the pixels needed for the thumbnail.
+        # The rotation due to auto-transform is applied after the read, so the raw size
+        # can be used here: a 90/270-degree rotation swaps the dimensions during the read,
+        # preserving the correct aspect ratio for the thumbnail.
+        size = reader.size()
+        if size.isValid():
+            scaledSize = size.scaled(ThumbnailCache.thumbnailSize, Qt.KeepAspectRatio)
+            reader.setScaledSize(scaledSize)
+
         # Read image and check for potential errors
         img = reader.read()
         if img.isNull():
             logging.error(f'[ThumbnailCache] Error when reading image: {reader.errorString()}')
             return ""
 
-        # Scale image while preserving aspect ratio
+        # Scale image while preserving aspect ratio.
+        # This is a no-op for formats where setScaledSize was effective, and a fallback
+        # for formats that do not support pre-scaled reading.
         thumbnail = img.scaled(ThumbnailCache.thumbnailSize,
                                aspectMode=Qt.KeepAspectRatio,
                                mode=Qt.SmoothTransformation)

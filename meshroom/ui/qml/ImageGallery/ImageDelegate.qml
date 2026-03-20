@@ -60,16 +60,25 @@ Item {
             root.thumbnailSource = ""
     }
 
-    // Send a new request after 5 seconds if thumbnail is not loaded
-    // This is meant to avoid deadlocks in case there is a synchronization problem
+    // Send a new request after 5 seconds if thumbnail is not loaded.
+    // This is meant to avoid deadlocks in case there is a synchronization problem,
+    // e.g. when a large image takes a long time to decode and the signal-based update
+    // is missed or delayed. The timer restarts itself until the thumbnail is loaded.
     Timer {
+        id: retryTimer
         interval: 5000
         running: true
         onTriggered: {
-            if (root.thumbnailStatus == Image.Null) {
+            if (root.thumbnailStatus !== Image.Ready) {
                 updateThumbnail()
+                restart()
             }
         }
+    }
+
+    onThumbnailStatusChanged: {
+        if (thumbnailStatus === Image.Ready)
+            retryTimer.stop()
     }
 
     MouseArea {

@@ -1873,8 +1873,7 @@ FocusScope {
                             smooth: false
                             flat: true
                             checkable: true
-                            enabled: floatImageViewerLoader.item !== null &&
-                                     floatImageViewerLoader.item.imageStatus === Image.Ready
+                            enabled: floatImageViewerLoader.item !== null
                             onEnabledChanged: {
                                 if (!enabled)
                                     checked = false

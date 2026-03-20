@@ -1,7 +1,6 @@
 from meshroom.common.qt import QObjectListModel
 
 from PySide6.QtCore import QObject, Slot, Signal, Property
-from PySide6 import QtCharts
 
 import csv
 import os
@@ -111,15 +110,6 @@ class CsvColumn(QObject):
         if not self._content:
             return ""
         return self._content[-1]
-
-    @Slot(QtCharts.QXYSeries)
-    def fillChartSerie(self, serie):
-        """Fill XYSerie used for displaying QML Chart."""
-        if not serie:
-            return
-        serie.clear()
-        for index, value in enumerate(self._content):
-            serie.append(float(index), float(value))
 
     title = Property(str, lambda self: self._title, constant=True)
     content = Property("QStringList", lambda self: self._content, constant=True)

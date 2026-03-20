@@ -1216,6 +1216,17 @@ FocusScope {
                         floatImageViewer: floatImageViewerLoader.item
                     }
 
+                    // Vector Scope overlay Pane
+                    VectorScopeView {
+                        id: vectorScopeView
+                        anchors {
+                            bottom: parent.bottom
+                            right: parent.right
+                        }
+                        visible: displayVectorScope.checked
+                        floatImageViewer: floatImageViewerLoader.item
+                    }
+
                     ColorCheckerPane {
                         id: colorCheckerPane
                         width: 250
@@ -1572,6 +1583,27 @@ FocusScope {
                             text: MaterialIcons.bar_chart
 
                             ToolTip.text: "Image Histogram"
+                            ToolTip.visible: hovered
+
+                            font.pointSize: 14
+                            padding: 2
+                            smooth: false
+                            flat: true
+                            checkable: true
+                            enabled: floatImageViewerLoader.item !== null
+                            onEnabledChanged: {
+                                if (!enabled)
+                                    checked = false
+                            }
+                        }
+
+                        MaterialToolButton {
+                            id: displayVectorScope
+
+                            font.family: MaterialIcons.fontFamily
+                            text: MaterialIcons.tonality
+
+                            ToolTip.text: "Vector Scope"
                             ToolTip.visible: hovered
 
                             font.pointSize: 14

@@ -405,6 +405,13 @@ Item {
 ***       GPU UI        ***
 **************************/
 
+            LineChartLegend {
+                id: gpuLegend
+                Layout.fillWidth: true
+                Layout.leftMargin: 25
+                chartView: gpuChart
+            }
+
             LineChart {
                 id: gpuChart
 

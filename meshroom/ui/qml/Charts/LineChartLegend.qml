@@ -96,9 +96,11 @@ Flow {
                 onClicked: function(mouse) {
                     if (!chartView) return
                     if (mouse.modifiers & Qt.ControlModifier) {
+                        // Capture index before setAllSeriesVisible triggers a model rebuild
+                        var idx = model.seriesIndex
                         // Solo: hide everything except the clicked series
                         chartView.setAllSeriesVisible(false)
-                        chartView.setSeriesVisible(model.seriesIndex, true)
+                        chartView.setSeriesVisible(idx, true)
                     } else {
                         var cur = chartView.series(model.seriesIndex)
                         if (cur) chartView.setSeriesVisible(model.seriesIndex, !cur.visible)

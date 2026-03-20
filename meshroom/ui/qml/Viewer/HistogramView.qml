@@ -109,6 +109,15 @@ FloatingPane {
         }
     }
 
+    // Activate solo mode for a channel button: turn it on and all others off.
+    // Ctrl+click on any R/G/B/L button triggers this.
+    function soloChannel(btn) {
+        rBtn.checked = (btn === rBtn)
+        gBtn.checked = (btn === gBtn)
+        bBtn.checked = (btn === bBtn)
+        lBtn.checked = (btn === lBtn)
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 2
@@ -134,6 +143,10 @@ FloatingPane {
                 checkable: true
                 checked: true
                 onCheckedChanged: histCanvas.requestPaint()
+                TapHandler {
+                    acceptedModifiers: Qt.ControlModifier
+                    onTapped: root.soloChannel(rBtn)
+                }
             }
             ToolButton {
                 id: gBtn
@@ -143,6 +156,10 @@ FloatingPane {
                 checkable: true
                 checked: true
                 onCheckedChanged: histCanvas.requestPaint()
+                TapHandler {
+                    acceptedModifiers: Qt.ControlModifier
+                    onTapped: root.soloChannel(gBtn)
+                }
             }
             ToolButton {
                 id: bBtn
@@ -152,6 +169,10 @@ FloatingPane {
                 checkable: true
                 checked: true
                 onCheckedChanged: histCanvas.requestPaint()
+                TapHandler {
+                    acceptedModifiers: Qt.ControlModifier
+                    onTapped: root.soloChannel(bBtn)
+                }
             }
             ToolButton {
                 id: lBtn
@@ -161,6 +182,10 @@ FloatingPane {
                 checkable: true
                 checked: false
                 onCheckedChanged: histCanvas.requestPaint()
+                TapHandler {
+                    acceptedModifiers: Qt.ControlModifier
+                    onTapped: root.soloChannel(lBtn)
+                }
             }
             ToolButton {
                 id: logBtn

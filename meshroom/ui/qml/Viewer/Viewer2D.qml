@@ -1536,6 +1536,27 @@ FocusScope {
                         }
 
                         MaterialToolButton {
+                            id: displayHistogram
+
+                            font.family: MaterialIcons.fontFamily
+                            text: MaterialIcons.bar_chart
+
+                            ToolTip.text: "Image Histogram"
+                            ToolTip.visible: hovered
+
+                            font.pointSize: 14
+                            padding: 2
+                            smooth: false
+                            flat: true
+                            checkable: true
+                            enabled: floatImageViewerLoader.item !== null
+                            onEnabledChanged: {
+                                if (!enabled)
+                                    checked = false
+                            }
+                        }
+
+                        MaterialToolButton {
                             id: displayLensDistortionViewer
                             property int numberChanges: 0
                             property bool previousChecked: false
@@ -1856,27 +1877,6 @@ FocusScope {
                                     displaySfmStatsView.checked = false
                                     displayColorCheckerViewerLoader.checked = false
                                 }
-                            }
-                        }
-
-                        MaterialToolButton {
-                            id: displayHistogram
-
-                            font.family: MaterialIcons.fontFamily
-                            text: MaterialIcons.bar_chart
-
-                            ToolTip.text: "Image Histogram"
-                            ToolTip.visible: hovered
-
-                            font.pointSize: 14
-                            padding: 2
-                            smooth: false
-                            flat: true
-                            checkable: true
-                            enabled: floatImageViewerLoader.item !== null
-                            onEnabledChanged: {
-                                if (!enabled)
-                                    checked = false
                             }
                         }
                     }

@@ -102,8 +102,8 @@ if args.node:
         # If not running as "extern", the SUBMITTED status should generate a warning.
         submittedStatuses.append(Status.SUBMITTED)
 
-    if not node._chunksCreated:
-        print(f"Error: Node {node} has been submitted before chunks have been created." \
+    if args.iteration >= 0 and not node._chunksCreated:
+        print(f"Error: Computing chunk {args.iteration} of node {node} before chunks have been created. " \
               f"See file: \"{node.nodeStatusFile}\".")
         sys.exit(-1)
 
@@ -142,6 +142,7 @@ if args.node:
         if node.nodeStatus.status == Status.STOPPED:
             print(f"Node {node}: status is STOPPED")
             killRunningJob(node)
+        node.createChunks()
         node.process(args.forceCompute, args.inCurrentEnv)
     node.postprocess()
     node.restoreLogger()

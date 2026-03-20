@@ -42,6 +42,7 @@ Panel {
     property int nbDraggedFiles: 0
 
     signal removeImageRequest(var attribute)
+    signal removeSelectedImagesRequest(var objects)
     signal allViewpointsCleared()
     signal filesDropped(var drop)
 
@@ -53,6 +54,7 @@ Panel {
 
         function onCameraInitChanged() {
             nodesCB.currentIndex = root.cameraInitIndex
+            sortedModel.selectedIndices = []
         }
     }
 
@@ -230,6 +232,32 @@ Panel {
         }
 
         property int selectedIndex: -1
+        property var selectedIndices: []
+
+        function toggleIndex(idx) {
+            var newArr = selectedIndices.slice()
+            var pos = newArr.indexOf(idx)
+            if (pos >= 0) {
+                newArr.splice(pos, 1)
+            } else {
+                newArr.push(idx)
+            }
+            selectedIndices = newArr
+        }
+
+        function selectRange(from, to) {
+            var newArr = []
+            var start = Math.min(from, to)
+            var end = Math.max(from, to)
+            for (var i = start; i <= end; i++) {
+                newArr.push(i)
+            }
+            selectedIndices = newArr
+        }
+
+        function clearMultiSelection() {
+            selectedIndices = []
+        }
 
         delegate: ImageDelegate {
             id: imageDelegate
@@ -247,10 +275,25 @@ Panel {
             
             parentModel: sortedModel
 
-            onPressed: {
+            onPressed: function(mouse) {
+                if (mouse.button !== Qt.LeftButton)
+                    return
                 if (layoutLoader.item) {
-                    layoutLoader.item.currentIndex = DelegateModel.filteredIndex
-                    sortedModel.selectedIndex = DelegateModel.filteredIndex
+                    var idx = DelegateModel.filteredIndex
+                    if (mouse.modifiers & Qt.ShiftModifier && sortedModel.selectedIndex >= 0) {
+                        // Range select from last selectedIndex to clicked item
+                        sortedModel.selectRange(sortedModel.selectedIndex, idx)
+                    } else if (mouse.modifiers & Qt.ControlModifier) {
+                        // Toggle this item's selection
+                        sortedModel.toggleIndex(idx)
+                    } else {
+                        // Normal click: clear multi-selection, select only this item
+                        sortedModel.selectedIndices = [idx]
+                    }
+                    // Update selectedIndex before currentIndex to prevent onCurrentItemChanged
+                    // from incorrectly resetting the multi-selection
+                    sortedModel.selectedIndex = idx
+                    layoutLoader.item.currentIndex = idx
                 }
             }
 
@@ -265,17 +308,43 @@ Panel {
                     root.allViewpointsCleared()
             }
 
+            function sendRemoveSelectedRequest() {
+                if (readOnly)
+                    return
+
+                var objects = []
+                for (var i = 0; i < sortedModel.selectedIndices.length; i++) {
+                    var obj = sortedModel.getObjectAt(sortedModel.selectedIndices[i])
+                    if (obj)
+                        objects.push(obj)
+                }
+                if (objects.length > 0)
+                    root.removeSelectedImagesRequest(objects)
+                else
+                    root.removeImageRequest(object)
+
+                sortedModel.selectedIndices = []
+                sortedModel.selectedIndex = -1
+
+                if (m.viewpoints.count === 0)
+                    root.allViewpointsCleared()
+            }
+
             function removeAllImages() {
                 _currentScene.removeAllImages()
                 _currentScene.selectedViewId = "-1"
             }
 
             onRemoveRequest: sendRemoveRequest()
+            onRemoveSelectedRequest: sendRemoveSelectedRequest()
             Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Delete && event.modifiers === Qt.ShiftModifier) {
                     removeAllImages()
                 } else if (event.key === Qt.Key_Delete) {
-                    sendRemoveRequest()
+                    if (sortedModel.selectedIndices.length > 1)
+                        sendRemoveSelectedRequest()
+                    else
+                        sendRemoveRequest()
                 }
             }
             onRemoveAllImagesRequest: {

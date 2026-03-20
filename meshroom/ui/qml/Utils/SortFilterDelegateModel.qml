@@ -74,6 +74,14 @@ DelegateModel {
         return -1
     }
 
+    /// Get the model.object for the item at 'filteredIndex'
+    function getObjectAt(filteredIndex) {
+        if (filteredIndex >= 0 && filteredIndex < filteredItems.count) {
+            return filteredItems.get(filteredIndex).model.object
+        }
+        return null
+    }
+
     /**
      * Return whether 'value' respects 'filter' condition
      *

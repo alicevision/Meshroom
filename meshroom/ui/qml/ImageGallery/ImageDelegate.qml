@@ -24,10 +24,13 @@ Item {
     property variant parentModel
     property int selectedIndex: parentModel ? parentModel.selectedIndex : -1
     property bool isCurrentItem: cellID >= 0 && cellID === selectedIndex
+    property var selectedIndices: parentModel ? parentModel.selectedIndices : []
+    property bool isInMultiSelection: cellID >= 0 && selectedIndices.indexOf(cellID) >= 0
 
     signal pressed(var mouse)
     signal removeRequest()
     signal removeAllImagesRequest()
+    signal removeSelectedRequest()
 
     default property alias children: imageMA.children
 
@@ -107,6 +110,11 @@ Item {
                 onClicked: removeRequest()
             }
             MenuItem {
+                text: "Remove Selected Images (" + (root.selectedIndices.length > 0 ? root.selectedIndices.length : 1) + ")"
+                enabled: !root.readOnly && root.selectedIndices.length > 1
+                onClicked: removeSelectedRequest()
+            }
+            MenuItem {
                 text: "Remove All Images"
                 enabled: !root.readOnly
                 onClicked: removeAllImagesRequest()
@@ -155,7 +163,7 @@ Item {
                     Layout.fillWidth: true
                     visible: root.displayThumbnail
                     border.color: isCurrentItem ? grid_imageLabel.palette.highlight : Qt.darker(grid_imageLabel.palette.highlight)
-                    border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
+                    border.width: imageMA.containsMouse || root.isCurrentItem || root.isInMultiSelection ? 2 : 0
                     Image {
                         id: grid_thumbnail
                         anchors.fill: parent
@@ -206,7 +214,7 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                     text: Filepath.basename(root.source)
                     background: Rectangle {
-                        color: root.isCurrentItem ? parent.palette.highlight : "transparent"
+                        color: root.isCurrentItem ? parent.palette.highlight : (root.isInMultiSelection ? Qt.alpha(parent.palette.highlight, 0.5) : "transparent")
                     }
                 }
 
@@ -243,7 +251,7 @@ Item {
                     visible: root.displayThumbnail
                     
                     border.color: isCurrentItem ? list_imageLabel.palette.highlight : Qt.darker(list_imageLabel.palette.highlight)
-                    border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
+                    border.width: imageMA.containsMouse || root.isCurrentItem || root.isInMultiSelection ? 2 : 0
 
                     Image {
                         id: list_thumbnail
@@ -301,7 +309,7 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         text: Filepath.basename(root.source)
                         background: Rectangle {
-                            color: root.isCurrentItem ? parent.palette.highlight : "transparent"
+                            color: root.isCurrentItem ? parent.palette.highlight : (root.isInMultiSelection ? Qt.alpha(parent.palette.highlight, 0.5) : "transparent")
                         }
                     }
 

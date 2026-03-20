@@ -260,9 +260,12 @@ Item {
             // ---- Color helpers ----------------------------------------------
 
             var tc = root.textColor
-            var tcCSS      = "rgba(" + Math.round(tc.r*255) + "," + Math.round(tc.g*255) + "," + Math.round(tc.b*255) + "," + Math.min(tc.a, 1) + ")"
-            var gridCSS    = "rgba(" + Math.round(tc.r*255) + "," + Math.round(tc.g*255) + "," + Math.round(tc.b*255) + ",0.15)"
-            var axisCSS    = "rgba(" + Math.round(tc.r*255) + "," + Math.round(tc.g*255) + "," + Math.round(tc.b*255) + ",0.5)"
+            function tcToCSS(alpha) {
+                return "rgba(" + Math.round(tc.r*255) + "," + Math.round(tc.g*255) + "," + Math.round(tc.b*255) + "," + alpha + ")"
+            }
+            var tcCSS   = tcToCSS(Math.min(tc.a, 1))
+            var gridCSS = tcToCSS(0.15)
+            var axisCSS = tcToCSS(0.5)
 
             // ---- Coordinate mapping -----------------------------------------
 

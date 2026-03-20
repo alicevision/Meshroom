@@ -179,7 +179,7 @@ Item {
         var avgDisplayLength = Math.min(maxDisplayLength, categories[0].length)
         var avgStep = categories[0].length / avgDisplayLength
         var average = []
-        for (var l = 0; l < avgDisplayLength; l++) {
+        for (var avgIdx = 0; avgIdx < avgDisplayLength; avgIdx++) {
             average.push(0)
         }
 

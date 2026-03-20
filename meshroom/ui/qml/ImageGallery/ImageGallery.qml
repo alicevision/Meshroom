@@ -54,7 +54,7 @@ Panel {
 
         function onCameraInitChanged() {
             nodesCB.currentIndex = root.cameraInitIndex
-            sortedModel.selectedIndices = []
+            sortedModel.clearMultiSelection()
         }
     }
 
@@ -257,6 +257,7 @@ Panel {
 
         function clearMultiSelection() {
             selectedIndices = []
+            selectedIndex = -1
         }
 
         delegate: ImageDelegate {
@@ -318,16 +319,12 @@ Panel {
                     if (obj)
                         objects.push(obj)
                 }
-                if (objects.length > 0)
+                if (objects.length > 0) {
                     root.removeSelectedImagesRequest(objects)
-                else
-                    root.removeImageRequest(object)
-
-                sortedModel.selectedIndices = []
-                sortedModel.selectedIndex = -1
-
-                if (m.viewpoints.count === 0)
-                    root.allViewpointsCleared()
+                    sortedModel.clearMultiSelection()
+                    if (m.viewpoints.count === 0)
+                        root.allViewpointsCleared()
+                }
             }
 
             function removeAllImages() {

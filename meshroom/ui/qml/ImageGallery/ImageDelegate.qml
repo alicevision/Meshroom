@@ -110,7 +110,7 @@ Item {
                 onClicked: removeRequest()
             }
             MenuItem {
-                text: "Remove Selected Images (" + (root.selectedIndices.length > 0 ? root.selectedIndices.length : 1) + ")"
+                text: "Remove Selected Images (" + root.selectedIndices.length + ")"
                 enabled: !root.readOnly && root.selectedIndices.length > 1
                 onClicked: removeSelectedRequest()
             }

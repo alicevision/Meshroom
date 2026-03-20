@@ -1176,6 +1176,17 @@ FocusScope {
                         }
                     }
 
+                    // Histogram overlay Pane
+                    HistogramView {
+                        id: histogramView
+                        anchors {
+                            bottom: parent.bottom
+                            left: parent.left
+                        }
+                        visible: displayHistogram.checked
+                        floatImageViewer: floatImageViewerLoader.item
+                    }
+
                     ColorCheckerPane {
                         id: colorCheckerPane
                         width: 250
@@ -1845,6 +1856,28 @@ FocusScope {
                                     displaySfmStatsView.checked = false
                                     displayColorCheckerViewerLoader.checked = false
                                 }
+                            }
+                        }
+
+                        MaterialToolButton {
+                            id: displayHistogram
+
+                            font.family: MaterialIcons.fontFamily
+                            text: MaterialIcons.bar_chart
+
+                            ToolTip.text: "Image Histogram"
+                            ToolTip.visible: hovered
+
+                            font.pointSize: 14
+                            padding: 2
+                            smooth: false
+                            flat: true
+                            checkable: true
+                            enabled: floatImageViewerLoader.item !== null &&
+                                     floatImageViewerLoader.item.imageStatus === Image.Ready
+                            onEnabledChanged: {
+                                if (!enabled)
+                                    checked = false
                             }
                         }
                     }

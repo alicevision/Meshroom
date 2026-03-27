@@ -34,6 +34,7 @@ Item {
     // Internal properties to hold thumbnail source & loading status
     property url thumbnailSource: ""
     property int thumbnailStatus: Image.Null
+    property int retryCount: 0
 
     // Retrieve viewpoints inner data
     QtObject {
@@ -51,24 +52,32 @@ Item {
         root.thumbnailSource = ThumbnailCache.thumbnail(root.source, root.cellID)
     }
     onSourceChanged: {
+        root.retryCount = 0
         updateThumbnail()
     }
     onDisplayThumbnailChanged: {
-        if (displayThumbnail)
+        if (displayThumbnail) {
+            root.retryCount = 0
             updateThumbnail()
-        else
+        } else {
             root.thumbnailSource = ""
+        }
     }
 
-    // Send a new request after 5 seconds if thumbnail is not loaded
-    // This is meant to avoid deadlocks in case there is a synchronization problem
+    // Periodically retry loading the thumbnail until it is available or max retries is reached.
+    // This acts as a safety net in case the thumbnailCreated signal emitted from the background
+    // thread is not properly delivered to QML.
     Timer {
-        interval: 5000
-        running: true
+        id: retryTimer
+        interval: 2000
+        repeat: true
+        running: root.displayThumbnail
+                 && root.thumbnailStatus !== Image.Ready
+                 && root.thumbnailStatus !== Image.Error
+                 && root.retryCount < 15
         onTriggered: {
-            if (root.thumbnailStatus == Image.Null) {
-                updateThumbnail()
-            }
+            root.retryCount++
+            updateThumbnail()
         }
     }
 

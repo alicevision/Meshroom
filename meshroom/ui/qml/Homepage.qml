@@ -313,12 +313,38 @@ Page {
                         height: homepageGridView.cellHeight
 
                         property var source: modelData["thumbnail"] ? Filepath.stringToUrl(modelData["thumbnail"]) : ""
+                        property int retryCount: 0
+                        property bool thumbnailBusy: false
 
                         function updateThumbnail() {
-                            thumbnail.source = ThumbnailCache.thumbnail(source, homepageGridView.currentIndex)
+                            thumbnail.source = ThumbnailCache.thumbnail(source, index)
                         }
 
-                        onSourceChanged: updateThumbnail()
+                        onSourceChanged: {
+                            retryCount = 0
+                            thumbnailBusy = (source != "")
+                            updateThumbnail()
+                        }
+
+                        // Periodically retry loading the thumbnail until it is available or max retries is reached.
+                        Timer {
+                            id: retryTimer
+                            interval: 2000
+                            repeat: true
+                            running: homepageGridView.visible
+                                     && projectContent.source != ""
+                                     && thumbnail.status !== Image.Ready
+                                     && thumbnail.status !== Image.Error
+                                     && projectContent.retryCount < 15
+                            onTriggered: {
+                                projectContent.retryCount++
+                                if (projectContent.retryCount >= 15) {
+                                    projectContent.thumbnailBusy = false
+                                } else {
+                                    projectContent.updateThumbnail()
+                                }
+                            }
+                        }
 
                         Button {
                             id: projectDelegate
@@ -412,12 +438,18 @@ Page {
 
                                 width: projectDelegate.width
                                 height: projectDelegate.height
+
+                                onStatusChanged: {
+                                    if (status === Image.Ready || status === Image.Error) {
+                                        projectContent.thumbnailBusy = false
+                                    }
+                                }
                             }
 
                             BusyIndicator {
                                 anchors.centerIn: parent
-                                running: homepageGridView.visible && modelData["thumbnail"] && thumbnail.status != Image.Ready
-                                visible: running
+                                running: homepageGridView.visible && projectContent.thumbnailBusy
+                                visible: homepageGridView.visible && projectContent.thumbnailBusy
                             }
 
                         }

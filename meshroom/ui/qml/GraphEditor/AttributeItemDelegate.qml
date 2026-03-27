@@ -724,77 +724,93 @@ RowLayout {
 
         Component {
             id: listAttributeComponent
-            ColumnLayout {
-                id: listAttributeLayout
-                width: parent.width
-                property bool expanded: false
-                RowLayout {
-                    spacing: 4
-                    ToolButton {
-                        text: listAttributeLayout.expanded  ? MaterialIcons.keyboard_arrow_down : MaterialIcons.keyboard_arrow_right
-                        font.family: MaterialIcons.fontFamily
-                        onClicked: listAttributeLayout.expanded = !listAttributeLayout.expanded
+            Item {
+                implicitHeight: listAttributeLayout.implicitHeight
+                implicitWidth: listAttributeLayout.implicitWidth
+
+                ColumnLayout {
+                    id: listAttributeLayout
+                    width: parent.width
+                    property bool expanded: false
+                    RowLayout {
+                        spacing: 4
+                        ToolButton {
+                            text: listAttributeLayout.expanded  ? MaterialIcons.keyboard_arrow_down : MaterialIcons.keyboard_arrow_right
+                            font.family: MaterialIcons.fontFamily
+                            onClicked: listAttributeLayout.expanded = !listAttributeLayout.expanded
+                        }
+                        Label {
+                            Layout.alignment: Qt.AlignVCenter
+                            text: attribute.value.count + " elements"
+                        }
+                        ToolButton {
+                            text: MaterialIcons.add_circle_outline
+                            font.family: MaterialIcons.fontFamily
+                            font.pointSize: 11
+                            padding: 2
+                            enabled: root.editable
+                            onClicked: _currentScene.appendAttribute(attribute, undefined)
+                        }
                     }
-                    Label {
-                        Layout.alignment: Qt.AlignVCenter
-                        text: attribute.value.count + " elements"
-                    }
-                    ToolButton {
-                        text: MaterialIcons.add_circle_outline
-                        font.family: MaterialIcons.fontFamily
-                        font.pointSize: 11
-                        padding: 2
-                        enabled: root.editable
-                        onClicked: _currentScene.appendAttribute(attribute, undefined)
+                    ListView {
+                        id: lv
+                        model: listAttributeLayout.expanded ? attribute.value : undefined
+                        visible: model !== undefined && count > 0
+                        implicitHeight: Math.min(contentHeight, 300)
+                        Layout.fillWidth: true
+                        Layout.margins: 4
+                        clip: true
+                        spacing: 4
+
+                        ScrollBar.vertical: MScrollBar { id: sb }
+
+                        delegate: Loader {
+                            active: !objectsHideable
+                                || ((object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
+                                && (object.hasAnyInputLinks && GraphEditorSettings.showLinkAttributes || !object.hasAnyInputLinks && GraphEditorSettings.showNotLinkAttributes))
+                            visible: active
+                            sourceComponent: RowLayout {
+                                id: item
+                                property var childAttrib: object
+                                layoutDirection: Qt.RightToLeft
+                                width: lv.width - sb.width
+                                Component.onCompleted: {
+                                    var cpt = Qt.createComponent("AttributeItemDelegate.qml")
+                                    var obj = cpt.createObject(item,
+                                                            {
+                                                                'attribute': Qt.binding(function() { return item.childAttrib }),
+                                                                'readOnly': Qt.binding(function() { return !root.editable })
+                                                            })
+                                    obj.Layout.fillWidth = true
+                                    obj.label.text = index
+                                    obj.label.horizontalAlignment = Text.AlignHCenter
+                                    obj.label.verticalAlignment = Text.AlignVCenter
+                                    obj.doubleClicked.connect(function(attr) { root.doubleClicked(attr) })
+                                    obj.inAttributeClicked.connect(function(srcItem, mouse, inAttributes) { root.inAttributeClicked(srcItem, mouse, inAttributes) })
+                                    obj.outAttributeClicked.connect(function(srcItem, mouse, outAttributes) { root.outAttributeClicked(srcItem, mouse, outAttributes) })
+                                }
+                                ToolButton {
+                                    enabled: root.editable
+                                    text: MaterialIcons.remove_circle_outline
+                                    font.family: MaterialIcons.fontFamily
+                                    font.pointSize: 11
+                                    padding: 2
+                                    ToolTip.text: "Remove Element"
+                                    ToolTip.visible: hovered
+                                    onClicked: _currentScene.removeAttribute(item.childAttrib)
+                                }
+                            }
+                        }
                     }
                 }
-                ListView {
-                    id: lv
-                    model: listAttributeLayout.expanded ? attribute.value : undefined
-                    visible: model !== undefined && count > 0
-                    implicitHeight: Math.min(contentHeight, 300)
-                    Layout.fillWidth: true
-                    Layout.margins: 4
-                    clip: true
-                    spacing: 4
 
-                    ScrollBar.vertical: MScrollBar { id: sb }
-
-                    delegate: Loader {
-                        active: !objectsHideable
-                            || ((object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
-                            && (object.hasAnyInputLinks && GraphEditorSettings.showLinkAttributes || !object.hasAnyInputLinks && GraphEditorSettings.showNotLinkAttributes))
-                        visible: active
-                        sourceComponent: RowLayout {
-                            id: item
-                            property var childAttrib: object
-                            layoutDirection: Qt.RightToLeft
-                            width: lv.width - sb.width
-                            Component.onCompleted: {
-                                var cpt = Qt.createComponent("AttributeItemDelegate.qml")
-                                var obj = cpt.createObject(item,
-                                                        {
-                                                            'attribute': Qt.binding(function() { return item.childAttrib }),
-                                                            'readOnly': Qt.binding(function() { return !root.editable })
-                                                        })
-                                obj.Layout.fillWidth = true
-                                obj.label.text = index
-                                obj.label.horizontalAlignment = Text.AlignHCenter
-                                obj.label.verticalAlignment = Text.AlignVCenter
-                                obj.doubleClicked.connect(function(attr) { root.doubleClicked(attr) })
-                                obj.inAttributeClicked.connect(function(srcItem, mouse, inAttributes) { root.inAttributeClicked(srcItem, mouse, inAttributes) })
-                                obj.outAttributeClicked.connect(function(srcItem, mouse, outAttributes) { root.outAttributeClicked(srcItem, mouse, outAttributes) })
-                            }
-                            ToolButton {
-                                enabled: root.editable
-                                text: MaterialIcons.remove_circle_outline
-                                font.family: MaterialIcons.fontFamily
-                                font.pointSize: 11
-                                padding: 2
-                                ToolTip.text: "Remove Element"
-                                ToolTip.visible: hovered
-                                onClicked: _currentScene.removeAttribute(item.childAttrib)
-                            }
+                DropArea {
+                    anchors.fill: parent
+                    enabled: root.editable && attribute.baseType === "File"
+                    onDropped: function(drop) {
+                        if (drop.hasUrls) {
+                            for (var i = 0; i < drop.urls.length; ++i)
+                                _currentScene.appendAttribute(attribute, Filepath.urlToString(drop.urls[i]))
                         }
                     }
                 }

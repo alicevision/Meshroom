@@ -170,7 +170,10 @@ Item {
                     }
                     BusyIndicator {
                         anchors.centerIn: parent
-                        running: grid_thumbnail.status != Image.Ready
+                        running: grid_thumbnail.status === Image.Loading
+                                 || (grid_thumbnail.status === Image.Null
+                                     && root.thumbnailSource == ""
+                                     && retryTimer.running)
                     }
                 }
 
@@ -250,7 +253,10 @@ Item {
                     }
                     BusyIndicator {
                         anchors.centerIn: parent
-                        running: list_thumbnail.status != Image.Ready
+                        running: list_thumbnail.status === Image.Loading
+                                 || (list_thumbnail.status === Image.Null
+                                     && root.thumbnailSource == ""
+                                     && retryTimer.running)
                     }
                 }
 

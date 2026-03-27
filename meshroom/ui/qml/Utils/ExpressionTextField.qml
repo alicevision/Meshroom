@@ -108,4 +108,82 @@ TextField {
             root.accepted()
         }
     }
+
+    // Increment or decrement the digit immediately to the right of the cursor.
+    // The step size is determined by the cursor position relative to the decimal point:
+    // - For a cursor before the decimal, the step is the place value of the digit to the right
+    //   (e.g. cursor between hundreds and tens → step 10).
+    // - For a cursor at or after the decimal, the step is the next decimal place value
+    //   (e.g. cursor after one decimal digit → step 0.01).
+    // If there is no digit to the right (cursor at end), a new decimal digit is appended.
+    function incrementAtCursor(direction) {
+        var pos = cursorPosition
+        var t = text
+
+        // Find the decimal point position, or use end-of-string as a conceptual decimal position.
+        var decimalPos = t.indexOf(".")
+        if (decimalPos === -1)
+            decimalPos = t.length
+
+        // Compute the exponent that determines the step size.
+        var exp
+        if (pos <= decimalPos)
+            exp = decimalPos - pos - 1
+        else
+            exp = -(pos - decimalPos)
+
+        // Integer fields never go below a step of 1.
+        if (isInt)
+            exp = Math.max(0, exp)
+
+        var step = Math.pow(10, exp)
+
+        // Only operate on text that parses as a plain number.
+        var value = parseFloat(t)
+        if (isNaN(value))
+            return
+
+        var newValue = value + direction * step
+
+        // Determine how many decimal places to show in the result.
+        var decimals
+        if (isInt) {
+            decimals = 0
+        } else {
+            var currentDecimals = (decimalPos < t.length) ? (t.length - decimalPos - 1) : 0
+            var stepDecimals = Math.max(0, -exp)
+            decimals = Math.max(currentDecimals, stepDecimals)
+        }
+
+        var newText = newValue.toFixed(decimals)
+
+        // Compute the cursor position in the new text so it remains right before
+        // the digit that was just modified or added.
+        var newDecimalPos = newText.indexOf(".")
+        if (newDecimalPos === -1)
+            newDecimalPos = newText.length
+
+        var newCursor
+        if (exp >= 0)
+            newCursor = newDecimalPos - exp - 1
+        else
+            newCursor = newDecimalPos + (-exp)
+
+        newCursor = Math.max(0, Math.min(newText.length, newCursor))
+
+        root.text = newText
+        root.cursorPosition = newCursor
+        exprTextChanged = true
+        updateExpression()
+    }
+
+    Keys.onUpPressed: {
+        incrementAtCursor(1)
+        event.accepted = true
+    }
+
+    Keys.onDownPressed: {
+        incrementAtCursor(-1)
+        event.accepted = true
+    }
 }

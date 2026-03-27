@@ -249,6 +249,15 @@ class ThumbnailCache(QObject):
 
         return None
 
+    @staticmethod
+    def _createEmptyThumbnail(path: str):
+        """ Create an empty thumbnail file on disk. """
+        try:
+            with open(path, 'a') as f:
+                os.utime(path, None)
+        except Exception as exc:
+            logging.error(f'[ThumbnailCache] Failed to create empty thumbnail at {path}: {exc}')
+
     def createThumbnail(self, imgSource, callerID):
         """
         Load an image, resize it to thumbnail dimensions and save the result in the cache directory.
@@ -276,18 +285,21 @@ class ThumbnailCache(QObject):
         img = reader.read()
         if img.isNull():
             logging.error(f'[ThumbnailCache] Error when reading image: {reader.errorString()}')
-            return ""
+            logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')
+            ThumbnailCache._createEmptyThumbnail(path)
+        else:
+            # Scale image while preserving aspect ratio
+            thumbnail = img.scaled(ThumbnailCache.thumbnailSize,
+                                aspectMode=Qt.KeepAspectRatio,
+                                mode=Qt.SmoothTransformation)
 
-        # Scale image while preserving aspect ratio
-        thumbnail = img.scaled(ThumbnailCache.thumbnailSize,
-                               aspectMode=Qt.KeepAspectRatio,
-                               mode=Qt.SmoothTransformation)
-
-        # Write thumbnail to disk and check for potential errors
-        writer = QImageWriter(path)
-        success = writer.write(thumbnail)
-        if not success:
-            logging.error(f'[ThumbnailCache] Error when writing thumbnail: {writer.errorString()}')
+            # Write thumbnail to disk and check for potential errors
+            writer = QImageWriter(path)
+            success = writer.write(thumbnail)
+            if not success:
+                logging.error(f'[ThumbnailCache] Error when writing thumbnail: {writer.errorString()}')
+                logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')
+                ThumbnailCache._createEmptyThumbnail(path)
 
         # Notify listeners
         self.thumbnailCreated.emit(imgSource, callerID)

@@ -1231,8 +1231,8 @@ FocusScope {
                     WaveformView {
                         id: waveformView
                         anchors {
-                            bottom: parent.bottom
-                            horizontalCenter: parent.horizontalCenter
+                            top: parent.top
+                            left: parent.left
                         }
                         visible: displayWaveform.checked
                         floatImageViewer: floatImageViewerLoader.item

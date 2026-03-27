@@ -1633,7 +1633,7 @@ FocusScope {
                             id: displayWaveform
 
                             font.family: MaterialIcons.fontFamily
-                            text: MaterialIcons.show_chart
+                            text: MaterialIcons.waves
 
                             ToolTip.text: "Waveform"
                             ToolTip.visible: hovered

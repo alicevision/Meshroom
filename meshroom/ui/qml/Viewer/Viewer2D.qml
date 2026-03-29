@@ -1228,14 +1228,16 @@ FocusScope {
                     }
 
                     // Waveform overlay Pane
-                    WaveformView {
-                        id: waveformView
+                    Loader {
+                        id: waveformLoader
+                        active: displayWaveform.checked
                         anchors {
                             top: parent.top
                             left: parent.left
                         }
-                        visible: displayWaveform.checked
-                        floatImageViewer: floatImageViewerLoader.item
+                        sourceComponent: WaveformView {
+                            floatImageViewer: floatImageViewerLoader.item
+                        }
                     }
 
                     ColorCheckerPane {

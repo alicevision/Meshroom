@@ -175,6 +175,12 @@ Item {
                                      && root.thumbnailSource == ""
                                      && retryTimer.running)
                     }
+                    MaterialLabel {
+                        anchors.centerIn: parent
+                        visible: grid_thumbnail.status === Image.Error
+                        text: MaterialIcons.image_not_supported
+                        font.pointSize: 20
+                    }
                 }
 
                 // Placeholder icon shown when thumbnails are disabled
@@ -257,6 +263,12 @@ Item {
                                  || (list_thumbnail.status === Image.Null
                                      && root.thumbnailSource == ""
                                      && retryTimer.running)
+                    }
+                    MaterialLabel {
+                        anchors.centerIn: parent
+                        visible: list_thumbnail.status === Image.Error
+                        text: MaterialIcons.image_not_supported
+                        font.pointSize: 20
                     }
                 }
 

@@ -1,7 +1,7 @@
 import traceback
 import logging
 from threading import Thread
-from PySide6.QtCore import QThread, QEventLoop, QTimer
+from PySide6.QtCore import Qt, QThread, QEventLoop, QTimer
 from enum import Enum
 
 import meshroom
@@ -33,7 +33,7 @@ class TaskThread(QThread):
         self._manager = manager
         self.forceCompute = False
         # Connect to manager's chunk creation handler
-        self.createChunksSignal.connect(manager.createChunks)
+        self.createChunksSignal.connect(manager.createChunks, Qt.QueuedConnection)
 
     def isRunning(self):
         return self._state == State.RUNNING

@@ -361,8 +361,25 @@ Page {
                             font.family: MaterialIcons.fontFamily
                             font.pointSize: 24
 
-                            text: modelData["path"] ? (modelData["thumbnail"] ? "" : MaterialIcons.description) : MaterialIcons.folder_open
-                            
+                            text: {
+                                if (modelData["path"]) {
+                                    // The thumbnail exists but is empty, which means there was an error when generating it (e.g. missing file, unsupported format, etc.)
+                                    if (modelData["thumbnail"] && thumbnail.status === Image.Error) {
+                                        return MaterialIcons.image_not_supported
+                                    }
+                                    // The thumbnail exists and is valid, no need to display an icon
+                                    else if (modelData["thumbnail"]) {
+                                        return ""
+                                    }
+                                    // There is no image in the file, so no thumbnail to display
+                                    else {
+                                        return MaterialIcons.description
+                                    }
+                                }
+                                // Item with no path is the "Open Project" button
+                                return MaterialIcons.folder_open
+                            }
+
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -378,7 +395,6 @@ Page {
                                         projectContextMenu.y = mouse.y
                                         projectContextMenu.open()
                                         return
-                                        
                                     }
                                         
                                     if (!modelData["path"]) {
@@ -393,9 +409,7 @@ Page {
                                             MeshroomApp.addRecentProjectFile(modelData["path"])
                                         }
                                     }
-                                    
                                 }
-
                             }
 
                             Menu {
@@ -451,7 +465,6 @@ Page {
                                 running: homepageGridView.visible && projectContent.thumbnailBusy
                                 visible: homepageGridView.visible && projectContent.thumbnailBusy
                             }
-
                         }
                         Label {
                             id: project

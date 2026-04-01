@@ -367,6 +367,8 @@ class Scene(UIGraph):
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
 
         self.cameraInitChanged.connect(self.onCameraInitChanged)
+        self.cameraInitChanged.connect(self._rebuildViewpointsMap)
+        self.tempCameraInitChanged.connect(self._rebuildViewpointsMap)
 
         self._tempCameraInit = None
 
@@ -380,6 +382,9 @@ class Scene(UIGraph):
         self._selectedViewId = None
         self._selectedViewpoint = None
         self._pickedViewId = None
+
+        self._viewpointsMap = {}  # viewId (str) -> viewpoint attribute, for O(1) access
+        self._viewpointsListRef = None  # the currently connected viewpoints list model
 
         self._currentViewPath = ""
 
@@ -434,6 +439,33 @@ class Scene(UIGraph):
         # Update active nodes when CameraInit changes
         nodes = self._graph.dfsOnDiscover(startNodes=[self._cameraInit], reverse=True)[0]
         self.setActiveNodes(nodes)
+
+    def _rebuildViewpointsMap(self):
+        """ Rebuild the internal viewId -> viewpoint attribute map for O(1) access by viewId. """
+        # Disconnect from the previous viewpoints list model's countChanged signal
+        if self._viewpointsListRef is not None:
+            try:
+                self._viewpointsListRef.countChanged.disconnect(self._rebuildViewpointsMap)
+            except RuntimeError:
+                # The underlying Qt object may have already been destroyed; safe to ignore.
+                pass
+            self._viewpointsListRef = None
+
+        # Determine the currently active viewpoints model
+        if self._tempCameraInit:
+            viewpointsModel = self._tempCameraInit.viewpoints.value
+        elif self._cameraInit:
+            viewpointsModel = self._cameraInit.viewpoints.value
+        else:
+            viewpointsModel = None
+
+        if viewpointsModel is not None:
+            self._viewpointsMap = {str(v.viewId.value): v for v in viewpointsModel}
+            # Stay up-to-date when images are added or removed
+            self._viewpointsListRef = viewpointsModel
+            viewpointsModel.countChanged.connect(self._rebuildViewpointsMap)
+        else:
+            self._viewpointsMap = {}
 
     @Slot()
     def reloadPlugins(self):
@@ -566,10 +598,8 @@ class Scene(UIGraph):
 
     @Slot(str, result=QObject)
     def getViewpoint(self, viewId):
-        """ Return the viewpoint attribute whose viewId matches 'viewId', or None if not found. """
-        if self.viewpoints:
-            return next((v for v in self.viewpoints if str(v.viewId.value) == viewId), None)
-        return None
+        """ Return the viewpoint attribute for the given viewId, or None if not found. """
+        return self._viewpointsMap.get(viewId, None)
 
     def updateCameraInits(self):
         cameraInits = self._graph.nodesOfType("CameraInit", sortedByIndex=True)

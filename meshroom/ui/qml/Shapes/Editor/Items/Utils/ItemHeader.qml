@@ -337,36 +337,9 @@ Pane {
                         return model.hasObservation(_currentScene.selectedViewId)
                     }
 
-                    // Map from viewId to file path, rebuilt whenever the viewpoints model changes.
-                    // Allows O(1) lookups instead of O(n) linear scans.
-                    property var viewPathsMap: ({})
-
-                    Component.onCompleted: buildViewPathsMap()
-
-                    Connections {
-                        target: _currentScene
-                        function onCameraInitChanged() { buildViewPathsMap() }
-                    }
-
-                    Connections {
-                        target: _currentScene ? _currentScene.viewpoints : null
-                        function onCountChanged() { buildViewPathsMap() }
-                    }
-
-                    function buildViewPathsMap() {
-                        var map = {}
-                        if (_currentScene && _currentScene.viewpoints) {
-                            for (var i = 0; i < _currentScene.viewpoints.count; i++) {
-                                var vp = _currentScene.viewpoints.at(i)
-                                map[vp.childAttribute("viewId").value] = vp.childAttribute("path").value
-                            }
-                        }
-                        viewPathsMap = map
-                    }
-
                     function getViewPath(viewId) {
-                        // O(1) lookup using the pre-built viewPathsMap
-                        return viewPathsMap[viewId]
+                        var vp = _currentScene ? _currentScene.getViewpoint(viewId) : null
+                        return vp ? vp.childAttribute("path").value : undefined
                     }
 
                     function getPrevViewId(viewIds, currentViewId) {

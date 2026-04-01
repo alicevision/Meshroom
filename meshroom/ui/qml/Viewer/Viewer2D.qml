@@ -92,7 +92,6 @@ FocusScope {
             console.warn("Missing plugin qtAliceVision.")
             displayHDR.checked = false
         }
-        buildViewpointsMap()
     }
 
     property string loadingModules: {
@@ -256,24 +255,8 @@ FocusScope {
         displayedNode = null
     }
 
-    // Map from viewId to viewpoint, rebuilt whenever the viewpoints model changes.
-    // Allows O(1) lookups instead of O(n) linear scans.
-    property var viewpointsMap: ({})
-
-    function buildViewpointsMap() {
-        var map = {}
-        if (_currentScene && _currentScene.viewpoints) {
-            for (var i = 0; i < _currentScene.viewpoints.count; i++) {
-                var vp = _currentScene.viewpoints.at(i)
-                map[vp.childAttribute("viewId").value] = vp
-            }
-        }
-        viewpointsMap = map
-    }
-
     function getViewpoint(viewId) {
-        // O(1) lookup using the pre-built viewpointsMap
-        return viewpointsMap[viewId]
+        return _currentScene ? _currentScene.getViewpoint(viewId) : null
     }
 
     function getImageFile() {
@@ -441,13 +424,6 @@ FocusScope {
             if (useExternal)
                 useExternal = false
         }
-        function onCameraInitChanged() { buildViewpointsMap() }
-    }
-
-    // Rebuild the lookup map when images are added or removed
-    Connections {
-        target: _currentScene ? _currentScene.viewpoints : null
-        function onCountChanged() { buildViewpointsMap() }
     }
 
     Connections {

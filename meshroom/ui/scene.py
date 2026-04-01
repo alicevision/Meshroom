@@ -564,6 +564,13 @@ class Scene(UIGraph):
         else:
             return QObjectListModel(parent=self)
 
+    @Slot(str, result=QObject)
+    def getViewpoint(self, viewId):
+        """ Return the viewpoint attribute whose viewId matches 'viewId', or None if not found. """
+        if self.viewpoints:
+            return next((v for v in self.viewpoints if str(v.viewId.value) == viewId), None)
+        return None
+
     def updateCameraInits(self):
         cameraInits = self._graph.nodesOfType("CameraInit", sortedByIndex=True)
         if set(self._cameraInits.objectList()) == set(cameraInits):
@@ -1115,10 +1122,7 @@ class Scene(UIGraph):
             return
         self._selectedViewId = viewId
         self.setPickedViewId(viewId)
-        vp = None
-        if self.viewpoints:
-            vp = next((v for v in self.viewpoints if str(v.viewId.value) == self._selectedViewId), None)
-        self._setSelectedViewpoint(vp)
+        self._setSelectedViewpoint(self.getViewpoint(viewId))
         self.selectedViewIdChanged.emit()
 
     def _setSelectedViewpoint(self, viewpointAttribute):
@@ -1137,10 +1141,7 @@ class Scene(UIGraph):
     @Slot(str)
     def updateSelectedViewpoint(self, viewId):
         """ Update the currently set viewpoint if the provided view ID corresponds to one. """
-        vp = None
-        if self.viewpoints:
-            vp = next((v for v in self.viewpoints if str(v.viewId.value) == viewId), None)
-        self._setSelectedViewpoint(vp)
+        self._setSelectedViewpoint(self.getViewpoint(viewId))
 
     def reconstructedCamerasCount(self):
         """ Get the number of reconstructed cameras in the current context. """

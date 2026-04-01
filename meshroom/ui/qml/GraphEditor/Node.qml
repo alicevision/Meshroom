@@ -877,4 +877,25 @@ Item {
             }
         }
     }
+
+    // File drop area for InitNodes: accept drag & dropped files and forward them to initialize()
+    DropArea {
+        id: initNodeDropArea
+        anchors.fill: mouseArea
+        enabled: node && node.isInitNode && !root.readOnly
+        keys: ["text/uri-list"]
+
+        onDropped: function(drop) {
+            _currentScene.initializeNode(node, drop.urls)
+        }
+
+        // Highlight overlay shown when files are dragged over this InitNode
+        Rectangle {
+            anchors.fill: parent
+            visible: initNodeDropArea.containsDrag
+            color: Colors.sysPalette.highlight
+            opacity: 0.35
+            radius: background.radius
+        }
+    }
 }

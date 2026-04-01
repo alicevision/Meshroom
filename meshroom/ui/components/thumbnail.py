@@ -1,10 +1,8 @@
 from meshroom.common import Signal
 
-from PySide6.QtCore import QObject, Slot, QSize, QUrl, Qt, QStandardPaths
-from PySide6.QtGui import QImage
+from PySide6.QtCore import QObject, Slot, QSize, QUrl, QStandardPaths
 
 from pyalicevision import image as avImage
-import numpy as np
 import os
 from pathlib import Path
 import stat
@@ -297,41 +295,31 @@ class ThumbnailCache(QObject):
             self.thumbnailCreated.emit(imgSource, callerID)
             return path
 
-        if image.width() == 0 or image.height() == 0:
+        # Compute thumbnail dimensions preserving aspect ratio
+        w, h = image.width(), image.height()
+
+        if w == 0 or h == 0:
             logging.error(f'[ThumbnailCache] Error when reading image: null image')
             logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')
             ThumbnailCache._createEmptyThumbnail(path)
             self.thumbnailCreated.emit(imgSource, callerID)
             return path
 
-        # Convert numpy array to QImage for high-quality aspect-ratio-preserving scaling.
-        # Image_RGBColor always produces a uint8 (H, W, 3) RGB array.
-        arr = np.ascontiguousarray(image.getNumpyArray())  # (H, W, 3) uint8 RGB
-        h, w = arr.shape[:2]
-        # Use .copy() so the QImage owns its data and is independent of arr's lifetime.
-        qimg = QImage(arr.data, w, h, arr.strides[0], QImage.Format_RGB888).copy()
+        maxW, maxH = ThumbnailCache.thumbnailSize.width(), ThumbnailCache.thumbnailSize.height()
+        scale = min(maxW / w, maxH / h)
+        newW = max(1, round(w * scale))
+        newH = max(1, round(h * scale))
 
-        # Scale image while preserving aspect ratio
-        qimg = qimg.scaled(ThumbnailCache.thumbnailSize,
-                           aspectMode=Qt.KeepAspectRatio,
-                           mode=Qt.SmoothTransformation)
-
-        # Convert scaled QImage back to numpy array.
-        # bytesPerLine may include row-padding, so strip it before reshaping to (H, W, 3).
-        qimg = qimg.convertToFormat(QImage.Format_RGB888)
-        bytes_per_line = qimg.bytesPerLine()
-        arr_scaled = np.frombuffer(qimg.bits(), dtype=np.uint8, count=qimg.sizeInBytes())
-        arr_scaled = arr_scaled.reshape(qimg.height(), bytes_per_line)[:, :qimg.width() * 3].reshape(
-            qimg.height(), qimg.width(), 3).copy()
+        # Downscale image using pyalicevision (uses OpenImageIO high-quality resampling)
+        thumbnail = avImage.Image_RGBColor()
+        avImage.resizeImage(newW, newH, image, thumbnail)
 
         # Write thumbnail with pyalicevision
-        outImage = avImage.Image_RGBColor()
-        outImage.fromNumpyArray(arr_scaled)
         writeOptions = avImage.ImageWriteOptions()
         # Data is already in sRGB; skip any color-space conversion during write.
         writeOptions.toColorSpace(avImage.EImageColorSpace_NO_CONVERSION)
         try:
-            avImage.writeImage(path, outImage, writeOptions, avImage.oiioParams().get())
+            avImage.writeImage(path, thumbnail, writeOptions, avImage.oiioParams().get())
         except Exception as exc:
             logging.error(f'[ThumbnailCache] Error when writing thumbnail: {exc}')
             logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')

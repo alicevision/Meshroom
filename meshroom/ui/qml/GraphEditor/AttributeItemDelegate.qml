@@ -807,8 +807,14 @@ RowLayout {
                 DropArea {
                     anchors.fill: parent
                     enabled: root.editable && attribute.baseType === "File"
+                    onEntered: function(drag) {
+                        // Only intercept multi-file drops; single-file drops are handled by
+                        // child DropAreas on individual list elements so their value is set.
+                        if (drag.urls.length <= 1)
+                            drag.accepted = false
+                    }
                     onDropped: function(drop) {
-                        if (drop.hasUrls) {
+                        if (drop.hasUrls && drop.urls.length > 1) {
                             for (var i = 0; i < drop.urls.length; ++i)
                                 _currentScene.appendAttribute(attribute, Filepath.urlToString(drop.urls[i]))
                         }

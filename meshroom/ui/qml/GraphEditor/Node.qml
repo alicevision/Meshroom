@@ -878,24 +878,15 @@ Item {
         }
     }
 
-    // File drop area for InitNodes: accept drag & dropped files and forward them to initialize()
-    DropArea {
-        id: initNodeDropArea
+    /// Set to true by the GraphEditor's DropArea when files are dragged over this InitNode
+    property bool initNodeDragHover: false
+
+    // Highlight overlay shown when files are dragged over this InitNode
+    Rectangle {
         anchors.fill: mouseArea
-        enabled: node && node.isInitNode && !root.readOnly
-        keys: ["text/uri-list"]
-
-        onDropped: function(drop) {
-            _currentScene.initializeNode(node, drop.urls)
-        }
-
-        // Highlight overlay shown when files are dragged over this InitNode
-        Rectangle {
-            anchors.fill: parent
-            visible: initNodeDropArea.containsDrag
-            color: Colors.sysPalette.highlight
-            opacity: 0.35
-            radius: background.radius
-        }
+        visible: root.node && root.node.isInitNode && root.initNodeDragHover
+        color: Colors.sysPalette.highlight
+        opacity: 0.35
+        radius: background.radius
     }
 }

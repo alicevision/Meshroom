@@ -59,6 +59,20 @@ Item {
         return undefined
     }
 
+    /// Get the InitNode delegate at the given position in 'draggable' coordinates, or null
+    function initNodeDelegateAt(draggableX, draggableY) {
+        for (var i = 0; i < nodeRepeater.count; ++i) {
+            var delegate = nodeRepeater.getItemAt(i)
+            if (delegate && delegate.node && delegate.node.isInitNode && !delegate.readOnly) {
+                if (draggableX >= delegate.x && draggableX <= delegate.x + delegate.width &&
+                    draggableY >= delegate.y && draggableY <= delegate.y + delegate.height) {
+                    return delegate
+                }
+            }
+        }
+        return null
+    }
+
     /// Duplicate a node and optionally all the following ones
     function duplicateNode(duplicateFollowingNodes) {
         var nodes
@@ -1238,6 +1252,10 @@ Item {
             id: dropArea
             anchors.fill: parent
             keys: ["text/uri-list"]
+
+            /// The InitNode delegate currently being hovered during a file drag, if any
+            property var hoveredInitNodeDelegate: null
+
             onEntered: function(drag) {
                 nbMeshroomScenes = 0
                 nbDraggedFiles = drag.urls.length
@@ -1247,9 +1265,50 @@ Item {
                         nbMeshroomScenes++
                     }
                 })
+
+                // Check if the drag enters directly over an InitNode
+                var draggablePos = mapToItem(draggable, drag.x, drag.y)
+                hoveredInitNodeDelegate = initNodeDelegateAt(draggablePos.x, draggablePos.y)
+                if (hoveredInitNodeDelegate) {
+                    hoveredInitNodeDelegate.initNodeDragHover = true
+                }
+            }
+
+            onPositionChanged: function(drag) {
+                // Update which InitNode (if any) the drag is currently over
+                var draggablePos = mapToItem(draggable, drag.x, drag.y)
+                var newDelegate = initNodeDelegateAt(draggablePos.x, draggablePos.y)
+                if (newDelegate !== hoveredInitNodeDelegate) {
+                    if (hoveredInitNodeDelegate) {
+                        hoveredInitNodeDelegate.initNodeDragHover = false
+                    }
+                    hoveredInitNodeDelegate = newDelegate
+                    if (hoveredInitNodeDelegate) {
+                        hoveredInitNodeDelegate.initNodeDragHover = true
+                    }
+                }
+            }
+
+            onExited: {
+                if (hoveredInitNodeDelegate) {
+                    hoveredInitNodeDelegate.initNodeDragHover = false
+                    hoveredInitNodeDelegate = null
+                }
             }
 
             onDropped: function(drop) {
+                // Clear visual feedback
+                if (hoveredInitNodeDelegate) {
+                    hoveredInitNodeDelegate.initNodeDragHover = false
+                }
+
+                // If dropped on an InitNode, forward the files to its initialize() method
+                if (hoveredInitNodeDelegate) {
+                    _currentScene.initializeNode(hoveredInitNodeDelegate.node, drop.urls)
+                    hoveredInitNodeDelegate = null
+                    return
+                }
+
                 if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
                     // Retrieve mouse position and convert coordinate system
                     // from pixel values to graph reference system

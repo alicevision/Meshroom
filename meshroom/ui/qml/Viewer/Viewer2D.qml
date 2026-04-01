@@ -1227,6 +1227,19 @@ FocusScope {
                         floatImageViewer: floatImageViewerLoader.item
                     }
 
+                    // Waveform overlay Pane
+                    Loader {
+                        id: waveformLoader
+                        active: displayWaveform.checked
+                        anchors {
+                            top: parent.top
+                            left: parent.left
+                        }
+                        sourceComponent: WaveformView {
+                            floatImageViewer: floatImageViewerLoader.item
+                        }
+                    }
+
                     ColorCheckerPane {
                         id: colorCheckerPane
                         width: 250
@@ -1604,6 +1617,27 @@ FocusScope {
                             text: MaterialIcons.tonality
 
                             ToolTip.text: "Vector Scope"
+                            ToolTip.visible: hovered
+
+                            font.pointSize: 14
+                            padding: 2
+                            smooth: false
+                            flat: true
+                            checkable: true
+                            enabled: floatImageViewerLoader.item !== null
+                            onEnabledChanged: {
+                                if (!enabled)
+                                    checked = false
+                            }
+                        }
+
+                        MaterialToolButton {
+                            id: displayWaveform
+
+                            font.family: MaterialIcons.fontFamily
+                            text: MaterialIcons.waves
+
+                            ToolTip.text: "Waveform"
                             ToolTip.visible: hovered
 
                             font.pointSize: 14

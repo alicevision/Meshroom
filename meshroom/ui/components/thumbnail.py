@@ -14,7 +14,8 @@ from multiprocessing.pool import ThreadPool
 
 
 class ThumbnailCache(QObject):
-    """ThumbnailCache provides an abstraction for the thumbnail cache on disk, available in QML.
+    """
+    ThumbnailCache provides an abstraction for the thumbnail cache on disk, available in QML.
 
     For a given image file, it ensures the corresponding thumbnail exists (by creating it if necessary)
     and gives access to it.
@@ -40,16 +41,16 @@ class ThumbnailCache(QObject):
 
     # Thumbnail cache directory
     # Cannot be initialized here as it depends on the organization and application names
-    thumbnailDir = ''
+    thumbnailDir: str = ''
 
     # Thumbnail dimensions limit (the actual dimensions of a thumbnail will depend on the aspect ratio)
-    thumbnailSize = QSize(256, 256)
+    thumbnailSize: QSize = QSize(256, 256)
 
     # Time limit for thumbnail storage on disk, expressed in days
-    storageTimeLimit = 90
+    storageTimeLimit: int = 90
 
     # Maximum number of thumbnails in the cache directory
-    maxThumbnailsOnDisk = 100000
+    maxThumbnailsOnDisk: int = 100000
 
     # Signal to notify listeners that a thumbnail was created and written on disk
     # This signal has two argument:
@@ -68,7 +69,7 @@ class ThumbnailCache(QObject):
 
     @staticmethod
     def initialize():
-        """Initialize static fields in cache class and cache directory on disk."""
+        """ Initialize static fields in cache class and cache directory on disk. """
         # Thumbnail directory: default or user specified
         dir = os.getenv('MESHROOM_THUMBNAIL_DIR')
         if dir is not None:
@@ -101,7 +102,8 @@ class ThumbnailCache(QObject):
 
     @staticmethod
     def clean():
-        """Scan the thumbnail directory and:
+        """
+        Scan the thumbnail directory and:
         1. remove all thumbnails that have not been used for more than storageTimeLimit days
         2. ensure that the number of thumbnails on disk does not exceed maxThumbnailsOnDisk.
         """
@@ -164,26 +166,28 @@ class ThumbnailCache(QObject):
                     logging.error(f'[ThumbnailCache] Tried to remove {path} but this file does not exist')
 
     @staticmethod
-    def thumbnailPath(imgPath):
-        """Use SHA1 hashing to associate a unique thumbnail to an image.
+    def thumbnailPath(imgPath: str) -> str:
+        """
+        Use SHA1 hashing to associate a unique thumbnail to an image.
 
         Args:
-            imgPath (str): filepath to the input image
+            imgPath: filepath to the input image
 
         Returns:
-            str: filepath to the corresponding thumbnail
+            The filepath to the corresponding thumbnail
         """
         digest = hashlib.sha1(imgPath.encode('utf-8')).hexdigest()
         path = os.path.join(ThumbnailCache.thumbnailDir, f'{digest}.jpg')
         return path
 
     @staticmethod
-    def removeOutdated(imgPath, path):
-        """Remove thumbnail if its corresponding image has been modified after thumbnail creation.
+    def removeOutdated(imgPath: str, path: str):
+        """
+        Remove thumbnail if its corresponding image has been modified after thumbnail creation.
 
         Args:
-            imgPath (str): filepath to the input image
-            path (str): filepath to the corresponding thumbnail
+            imgPath: filepath to the input image
+            path: filepath to the corresponding thumbnail
         """
         try:
             if os.path.getmtime(imgPath) > os.path.getmtime(path):
@@ -194,15 +198,15 @@ class ThumbnailCache(QObject):
             return
 
     @staticmethod
-    def checkThumbnail(path):
+    def checkThumbnail(path: str) -> bool:
         """
         Check if a thumbnail already exists on disk, and if so update its last modification time.
 
         Args:
-            path (str): filepath to the thumbnail
+            path: filepath to the thumbnail
 
         Returns:
-            (bool): whether the thumbnail exists on disk or not
+            Whether the thumbnail exists on disk or not
         """
         if os.path.exists(path):
             # Update last modification time
@@ -211,7 +215,7 @@ class ThumbnailCache(QObject):
         return False
 
     @Slot(QUrl, int, result=QUrl)
-    def thumbnail(self, imgSource, callerID):
+    def thumbnail(self, imgSource: QUrl, callerID: int) -> QUrl | None:
         """
         Retrieve the filepath of the thumbnail corresponding to a given image.
 
@@ -219,11 +223,11 @@ class ThumbnailCache(QObject):
         When this is done, the thumbnailCreated signal is emitted.
 
         Args:
-            imgSource (QUrl): location of the input image
-            callerID (int): identifier for the object that requested the thumbnail
+            imgSource: location of the input image
+            callerID: identifier for the object that requested the thumbnail
 
         Returns:
-            QUrl: location of the corresponding thumbnail if it exists, otherwise None
+            The location of the corresponding thumbnail if it exists, otherwise None
         """
         if not imgSource.isValid():
             return None
@@ -249,13 +253,25 @@ class ThumbnailCache(QObject):
 
         return None
 
-    def createThumbnail(self, imgSource, callerID):
+    @staticmethod
+    def _createEmptyThumbnail(path: str):
+        """ Create an empty thumbnail file on disk. """
+        try:
+            with open(path, 'a') as f:
+                os.utime(path, None)
+        except Exception as exc:
+            logging.error(f'[ThumbnailCache] Failed to create empty thumbnail at {path}: {exc}')
+
+    def createThumbnail(self, imgSource: QUrl, callerID: int) -> str:
         """
         Load an image, resize it to thumbnail dimensions and save the result in the cache directory.
 
         Args:
-            imgSource (QUrl): location of the input image
-            callerID (int): identifier for the object that requested the thumbnail
+            imgSource: location of the input image
+            callerID: identifier for the object that requested the thumbnail
+
+        Returns:
+            The filepath of the created thumbnail, which may be an empty file if an error happened during the process
         """
         imgPath = imgSource.toLocalFile()
         path = ThumbnailCache.thumbnailPath(imgPath)
@@ -276,18 +292,21 @@ class ThumbnailCache(QObject):
         img = reader.read()
         if img.isNull():
             logging.error(f'[ThumbnailCache] Error when reading image: {reader.errorString()}')
-            return ""
+            logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')
+            ThumbnailCache._createEmptyThumbnail(path)
+        else:
+            # Scale image while preserving aspect ratio
+            thumbnail = img.scaled(ThumbnailCache.thumbnailSize,
+                                aspectMode=Qt.KeepAspectRatio,
+                                mode=Qt.SmoothTransformation)
 
-        # Scale image while preserving aspect ratio
-        thumbnail = img.scaled(ThumbnailCache.thumbnailSize,
-                               aspectMode=Qt.KeepAspectRatio,
-                               mode=Qt.SmoothTransformation)
-
-        # Write thumbnail to disk and check for potential errors
-        writer = QImageWriter(path)
-        success = writer.write(thumbnail)
-        if not success:
-            logging.error(f'[ThumbnailCache] Error when writing thumbnail: {writer.errorString()}')
+            # Write thumbnail to disk and check for potential errors
+            writer = QImageWriter(path)
+            success = writer.write(thumbnail)
+            if not success:
+                logging.error(f'[ThumbnailCache] Error when writing thumbnail: {writer.errorString()}')
+                logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')
+                ThumbnailCache._createEmptyThumbnail(path)
 
         # Notify listeners
         self.thumbnailCreated.emit(imgSource, callerID)

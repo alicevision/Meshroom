@@ -137,7 +137,7 @@ FloatingPane {
                     }
                 }
             }
-            Slider {
+            ThinSlider {
                 id: gainCtrl
                 Layout.fillWidth: true
                 from: 0.01
@@ -187,7 +187,7 @@ FloatingPane {
                     }
                 }
             }
-            Slider {
+            ThinSlider {
                 id: gammaCtrl
                 Layout.fillWidth: true
                 from: 0.01

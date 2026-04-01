@@ -54,8 +54,11 @@ GridView {
     function updateCurrentIndexFromSelectionViewId() {
         if (!sortedModel) return
         var idx = sortedModel.find(_currentScene.selectedViewId, "viewId")
-        if (idx >= 0 && root.currentIndex !== idx) {
-            root.currentIndex = idx
+        if (idx >= 0) {
+            if (root.currentIndex !== idx) {
+                root.currentIndex = idx
+            }
+            sortedModel.selectedIndex = idx
         }
     }
     

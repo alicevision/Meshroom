@@ -3,6 +3,7 @@ from collections.abc import Iterable
 import logging
 import os
 import re
+import stat
 import json
 from enum import Enum
 from threading import Thread, Event, Lock
@@ -490,8 +491,10 @@ class UIGraph(QObject):
         g = Graph("")
         if filepath:
             g.load(filepath)
-            if not os.path.exists(g.cacheDir):
-                os.mkdir(g.cacheDir)
+            cacheDir = g.cacheDir
+            if not os.path.exists(cacheDir):
+                os.mkdir(cacheDir)
+                os.chmod(cacheDir, os.stat(cacheDir).st_mode | stat.S_ISGID)  # Add setgid on folder
         self.setGraph(g)
 
     @Slot(str)

@@ -6,6 +6,7 @@ import datetime
 import json
 import logging
 import os
+import stat
 import platform
 import re
 import shutil
@@ -569,6 +570,7 @@ class NodeChunk(BaseObject):
         statusFilepath = self.getStatusFile()
         folder = os.path.dirname(statusFilepath)
         os.makedirs(folder, exist_ok=True)
+        os.chmod(folder, os.stat(folder).st_mode | stat.S_ISGID)  # Add setgid on folder
 
         statusFilepathWriting = getWritingFilepath(statusFilepath)
         with open(statusFilepathWriting, 'w') as jsonFile:
@@ -611,6 +613,7 @@ class NodeChunk(BaseObject):
         statisticsFilepath = self.getStatisticsFile()
         folder = os.path.dirname(statisticsFilepath)
         os.makedirs(folder, exist_ok=True)
+        os.chmod(folder, os.stat(folder).st_mode | stat.S_ISGID)  # Add setgid on folder
         statisticsFilepathWriting = getWritingFilepath(statisticsFilepath)
         with open(statisticsFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
@@ -1650,6 +1653,7 @@ class BaseNode(BaseObject):
         statusFilepath = self.nodeStatusFile
         folder = os.path.dirname(statusFilepath)
         os.makedirs(folder, exist_ok=True)
+        os.chmod(folder, os.stat(folder).st_mode | stat.S_ISGID)  # Add setgid on folder
         statusFilepathWriting = getWritingFilepath(statusFilepath)
         with open(statusFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)

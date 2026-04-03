@@ -1671,6 +1671,12 @@ class BaseNode(BaseObject):
         hasChunkToLaunch = False
         if not self._chunksCreated:
             hasChunkToLaunch = True
+            # Clear any stale chunk info from nodeStatus so that:
+            # 1. The nodeStatus file written below does NOT contain chunk setup keys.
+            # 2. When `meshroom_createChunks` runs on the farm, its call to
+            #    `updateStatusFromCache()` will NOT recreate chunks from stale cache,
+            #    allowing `node.createChunks()` to evaluate fresh chunk parameters.
+            self._nodeStatus.resetChunkInfo()
         for chunk in self._chunks:
             if forceCompute or chunk._status.status != Status.SUCCESS:
                 hasChunkToLaunch = True
@@ -1693,6 +1699,9 @@ class BaseNode(BaseObject):
         hasChunkToLaunch = False
         if not self._chunksCreated:
             hasChunkToLaunch = True
+            # Same rationale as initStatusOnSubmit: clear stale chunk info
+            # so that the nodeStatus file does not contain outdated chunk setup.
+            self._nodeStatus.resetChunkInfo()
         for chunk in self._chunks:
             if forceCompute or (chunk._status.status not in (Status.RUNNING, Status.SUCCESS)):
                 hasChunkToLaunch = True

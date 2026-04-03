@@ -259,7 +259,7 @@ with meshroom.core.graph.GraphModification(graph):
 
         for n in copyNodes:  # Set the remaining CopyPath nodes with the global path
             n.output.value = globalCopyPath
-    else:
+    elif args.submit or args.compute:
         print(f'No output set, results will be available in the cache folder: "{graph.cacheDir}"')
 
     if args.overrides:

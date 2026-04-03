@@ -177,11 +177,11 @@ with meshroom.core.graph.GraphModification(graph):
         graph.initFromTemplate(args.pipeline, copyOutputs=True if args.output else False)
 
     # Set invalidation string
-    if invalidationString:=args.setInvalidationString:
+    if args.setInvalidationString:
         nodes, _ = graph.dfsOnFinish()
         for node in nodes:
             if node.isComputableType:
-                node.setInternalAttributeValues({"invalidation": invalidationString})
+                node.setInternalAttributeValues({"invalidation": args.setInvalidationString})
 
     if args.input:
         # get init nodes

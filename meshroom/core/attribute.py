@@ -878,7 +878,7 @@ class ListAttribute(Attribute):
                         self.node.graph.removeEdge(attr)
         self._value.removeAt(index, count)
         self.requestGraphUpdate()
-        self.valueChanged.emit()
+        self.node._onAttributeChanged(self)
 
     # Override
     def _initValue(self):

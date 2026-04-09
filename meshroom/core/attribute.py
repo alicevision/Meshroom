@@ -358,7 +358,11 @@ class Attribute(BaseObject):
         # ChoiceParam with multiple values should be combined
         if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
             # Ensure value is a list as expected
-            assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
+            try:
+                assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
+            except AssertionError as e:
+                logging.error(f"Attribute {self._getFullName()} value contains an error ({self.value}, {type(self.value)})")
+                raise e
             v = self._desc.joinChar.join(self._getEvalValue())
             if withQuotes and v:
                 return f'"{v}"'

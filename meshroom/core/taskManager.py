@@ -1,8 +1,15 @@
+import os
 import traceback
 import logging
 from threading import Thread
 from PySide6.QtCore import QThread, QEventLoop, QTimer
 from enum import Enum
+from meshroom.common import strtobool
+
+DEBUGGING = False
+if strtobool(os.environ.get("DEBUGGING", "0")):
+    DEBUGGING = True
+    import debugpy
 
 import meshroom
 from meshroom.common import BaseObject, DictModel, Property, Signal, Slot
@@ -70,6 +77,9 @@ class TaskThread(QThread):
 
     def run(self):
         """ Consume compute tasks. """
+        if DEBUGGING:
+            debugpy.debug_this_thread()
+
         self._state = State.RUNNING
         stopAndRestart = False
 

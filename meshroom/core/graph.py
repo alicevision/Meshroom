@@ -1127,12 +1127,15 @@ class Graph(BaseObject):
         edges = []
         visitor = Visitor(reverse=False, dependenciesOnly=True)
 
-        def discoverVertex(vertex, graph):
+        def discoverVertex(vertex: BaseNode, graph: Graph):
             if vertex.hasStatus(Status.SUCCESS):
                 # stop branch visit if discovering a node already computed
                 raise StopBranchVisit()
+            # Exclude non computable nodes
+            if not vertex.isComputableType:
+                raise StopBranchVisit()
 
-        def finishVertex(vertex, graph):
+        def finishVertex(vertex: BaseNode, graph: Graph):
             if not vertex.chunks:
                 # Chunks have not been initialized
                 nodes.append(vertex)
@@ -1144,7 +1147,7 @@ class Graph(BaseObject):
             if chunksToProcess:
                 nodes.append(vertex)  # We could collect specific chunks
 
-        def finishEdge(edge, graph):
+        def finishEdge(edge, graph: Graph):
             if edge[0].isComputed or edge[1].isComputed:
                 return
             edges.append(edge)
@@ -1803,7 +1806,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
         node.endSequence()
 
 
-def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
+def submitGraph(graph: Graph, submitter, toNodes=None, submitLabel="{projectName}"):
     nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
     flowEdges = graph.flowEdges(startNodes=toNodes)
     edgesToProcess = set(edgesToProcess).intersection(flowEdges)

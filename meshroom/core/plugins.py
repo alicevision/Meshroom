@@ -706,14 +706,27 @@ class NodePluginManager(BaseObject):
             nodePlugin: the node plugin to register.
         """
         name = nodePlugin.nodeDescriptor.__name__
-        if not self.isRegistered(name) and nodePlugin.status not in (NodePluginStatus.DESC_ERROR,
-                                                                     NodePluginStatus.ERROR):
-            try:
-                self._nodePlugins[name] = nodePlugin
-                nodePlugin.status = NodePluginStatus.LOADED
-            except Exception as exc:
-                logging.error(f"NodePlugin {name} could not be loaded: {exc}")
-                nodePlugin.status = NodePluginStatus.LOADING_ERROR
+        if self.isRegistered(name):
+            existingPlugin: NodePlugin = self._nodePlugins[name]
+            logging.warning(
+                f"Could not register node {name} ({nodePlugin.path}) "
+                f"because another node is already registered with this name ({existingPlugin.path})"
+            )
+            return
+        if nodePlugin.status in (NodePluginStatus.DESC_ERROR,
+                                 NodePluginStatus.ERROR):
+            logging.warning(
+                f"Could not register node {name} ({nodePlugin.path}) "
+                f"because the node is in error ({nodePlugin.status})."
+            )
+            return
+
+        try:
+            self._nodePlugins[name] = nodePlugin
+            nodePlugin.status = NodePluginStatus.LOADED
+        except Exception as exc:
+            logging.error(f"NodePlugin {name} could not be loaded: {exc}")
+            nodePlugin.status = NodePluginStatus.LOADING_ERROR
 
     def unregisterNode(self, nodePlugin: NodePlugin):
         """

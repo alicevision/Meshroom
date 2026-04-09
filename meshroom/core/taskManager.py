@@ -4,9 +4,10 @@ import logging
 from threading import Thread
 from PySide6.QtCore import QThread, QEventLoop, QTimer
 from enum import Enum
+from meshroom.common import strtobool
 
 DEBUGGING = False
-if os.environ.get("DEBUGGING", 0) == "1":
+if strtobool(os.environ.get("DEBUGGING", "0")):
     DEBUGGING = True
     import debugpy
 

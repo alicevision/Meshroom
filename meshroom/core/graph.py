@@ -1809,6 +1809,8 @@ def submitGraph(graph: Graph, submitter, toNodes=None, submitLabel="{projectName
     edgesToProcess = set(edgesToProcess).intersection(flowEdges)
 
     # Filter nodes to only keep computable ones
+    # For now we decide not to update the edges list because it will not have an impact
+    # on the submit process
     nodesToProcess = [n for n in nodesToProcess if n.isComputableType]
 
     if not nodesToProcess:

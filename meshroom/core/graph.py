@@ -1131,9 +1131,6 @@ class Graph(BaseObject):
             if vertex.hasStatus(Status.SUCCESS):
                 # stop branch visit if discovering a node already computed
                 raise StopBranchVisit()
-            # Exclude non computable nodes
-            if not vertex.isComputableType:
-                raise StopBranchVisit()
 
         def finishVertex(vertex: BaseNode, graph: Graph):
             if not vertex.chunks:
@@ -1810,6 +1807,11 @@ def submitGraph(graph: Graph, submitter, toNodes=None, submitLabel="{projectName
     nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
     flowEdges = graph.flowEdges(startNodes=toNodes)
     edgesToProcess = set(edgesToProcess).intersection(flowEdges)
+
+    # Filter nodes to only keep computable ones
+    # For now we decide not to update the edges list because it will not have an impact
+    # on the submit process
+    nodesToProcess = [n for n in nodesToProcess if n.isComputableType]
 
     if not nodesToProcess:
         logging.warning('Nothing to compute')

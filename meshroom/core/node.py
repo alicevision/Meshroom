@@ -1658,6 +1658,11 @@ class BaseNode(BaseObject):
         """ Write node status on disk. """
         # Make sure the node has the globalStatus before saving it
         self._nodeStatus.status = self.getGlobalStatus()
+        # Ensure chunk info is always in sync with the actual chunks before writing,
+        # as _nodeStatus.chunks can be cleared by _resetChunks/loadFromCache and may not
+        # have been restored (e.g. after createChunksFromCache which does not call setChunks).
+        if self._chunksCreated and self._chunks:
+            self._nodeStatus.setChunks(self._chunks)
         data = self._nodeStatus.toDict()
         statusFilepath = self.nodeStatusFile
         folder = os.path.dirname(statusFilepath)

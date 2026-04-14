@@ -1628,8 +1628,13 @@ class BaseNode(BaseObject):
         """ Update node status based on status file content/existence. """
         # Update nodeStatus from cache
         chunkChanged = self.updateNodeStatusFromCache()
-        # Create chunks if we found info on them on the node cache
-        if chunkChanged and self._nodeStatus.nbChunks > 0:
+        # Create chunks from cache if:
+        #  - The chunk setup has changed (normal case: nodeStatus was reloaded with new data), OR
+        #  - Chunks have not been created yet (recovery: a previous load cycle may have loaded
+        #    the nodeStatus without triggering createChunksFromCache, e.g. due to a silent error
+        #    in loadFromCache or an extra graph.update() that didn't reset the node's chunk info).
+        # In both cases, the nodeStatus must contain valid chunk information (nbChunks > 0).
+        if (chunkChanged or not self._chunksCreated) and self._nodeStatus.nbChunks > 0:
             # Update number of chunks
             try:
                 self.createChunksFromCache()

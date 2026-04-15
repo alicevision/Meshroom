@@ -9,10 +9,26 @@ import Controls 1.0
 Page {
     id: root
 
+    property bool isLoading: false
+
+    // Schedule an action to run after the current frame has been rendered and
+    // displayed, so that visual feedback (highlight, spinner) is visible before
+    // the UI thread is blocked by a heavy synchronous operation.
+    // Uses _window (the ApplicationWindow id from main.qml) since root.window
+    // is not reliably available for Page items inside a StackView.
+    function executeAfterFrameRendered(action) {
+        function onFrame() {
+            _window.frameSwapped.disconnect(onFrame)
+            action()
+        }
+        _window.frameSwapped.connect(onFrame)
+    }
+
     onVisibleChanged: {
         logo.playing = false
         if (visible) {
             logo.playing = true
+            isLoading = false
         }
     }
 
@@ -262,9 +278,12 @@ Page {
                         Connections {
                             target: pipelineDelegate
                             function onClicked() {
-                                // Open pipeline
-                                mainStack.push("Application.qml")
-                                _currentScene.new(modelData["path"])
+                                root.isLoading = true
+                                let path = modelData["path"]
+                                root.executeAfterFrameRendered(function() {
+                                    mainStack.push("Application.qml")
+                                    _currentScene.new(path)
+                                })
                             }
                         }
                     }
@@ -387,6 +406,8 @@ Page {
 
                                 onClicked: function(mouse) {
 
+                                    if (root.isLoading) return
+
                                     if (mouse.button === Qt.RightButton) {
 
                                         if (!modelData["path"]) { return }
@@ -403,11 +424,16 @@ Page {
                                     } 
                                     
                                     else {
-                                        // Open project
-                                        mainStack.push("Application.qml")
-                                        if (_currentScene.load(modelData["path"])) {
-                                            MeshroomApp.addRecentProjectFile(modelData["path"])
-                                        }
+                                        root.isLoading = true
+                                        let path = modelData["path"]
+                                        root.executeAfterFrameRendered(function() {
+                                            mainStack.push("Application.qml")
+                                            if (_currentScene.load(path)) {
+                                                MeshroomApp.addRecentProjectFile(path)
+                                            } else {
+                                                root.isLoading = false
+                                            }
+                                        })
                                     }
                                 }
                             }
@@ -416,13 +442,19 @@ Page {
                                 id: projectContextMenu
 
                                 MenuItem {
-                                    enabled: projectDelegate.fileExists
+                                    enabled: projectDelegate.fileExists && !root.isLoading
                                     text: "Open"
-                                    onTriggered: {                                        
-                                        if (_currentScene.load(modelData["path"])) {
+                                    onTriggered: {
+                                        root.isLoading = true
+                                        let path = modelData["path"]
+                                        root.executeAfterFrameRendered(function() {
                                             mainStack.push("Application.qml")
-                                            MeshroomApp.addRecentProjectFile(modelData["path"])
-                                        }
+                                            if (_currentScene.load(path)) {
+                                                MeshroomApp.addRecentProjectFile(path)
+                                            } else {
+                                                root.isLoading = false
+                                            }
+                                        })
                                     }
                                 }
 

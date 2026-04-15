@@ -103,9 +103,29 @@ if args.node:
         submittedStatuses.append(Status.SUBMITTED)
 
     if args.iteration >= 0 and not node._chunksCreated:
-        print(f"Error: Computing chunk {args.iteration} of node {node} before chunks have been created. " \
-              f"See file: \"{node.nodeStatusFile}\".")
-        sys.exit(-1)
+        # On a render farm, the nodeStatus file written by meshroom_createChunks may not be
+        # immediately visible on this blade due to NFS propagation delays.
+        # Wait for the file to appear and retry loading before giving up.
+        import time
+        retryInterval = 2    # seconds between retries
+        maxRetryTime = 10    # total seconds before giving up
+        elapsed = 0
+        while not node._chunksCreated and elapsed < maxRetryTime:
+            logging.warning(
+                f"Chunks not created from cache for node {node.name} "
+                f"(nodeStatusFile: \"{node.nodeStatusFile}\"). "
+                f"Retrying in {retryInterval}s ({elapsed}/{maxRetryTime}s elapsed)..."
+            )
+            time.sleep(retryInterval)
+            elapsed += retryInterval
+            node.updateStatusFromCache()
+
+        if not node._chunksCreated:
+            logging.error(
+                f"Computing chunk {args.iteration} of node {node} but chunks have not been "
+                f"created after waiting {maxRetryTime}s. See file: \"{node.nodeStatusFile}\"."
+            )
+            sys.exit(-1)
 
     if node.isInputNode:
         print(f"InputNode: No computation to do.")

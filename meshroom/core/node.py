@@ -147,10 +147,16 @@ class NodeStatusData(BaseObject):
         for _k, _v in d.items():
             if isinstance(_v, Enum):
                 d[_k] = _v.name
-        if self.chunks:
+        if self.chunks and self.chunks.nbBlocks > 0:
             d["chunksBlockSize"] = self.chunks.blockSize
             d["chunksFullSize"] = self.chunks.fullSize
             d["chunksNbBlocks"] = self.chunks.nbBlocks
+        else:
+            # Ensure we do not write chunk keys with zero/invalid values,
+            # as they would create a poisoned NodeChunkSetup(0,0,0) on reload
+            d.pop("chunksBlockSize", None)
+            d.pop("chunksFullSize", None)
+            d.pop("chunksNbBlocks", None)
         return d
 
     def fromDict(self, d):
@@ -161,7 +167,8 @@ class NodeStatusData(BaseObject):
             blockSize = int(d.pop("chunksBlockSize") or 0)
             fullSize = int(d.pop("chunksFullSize") or 0)
             nbBlocks = int(d.pop("chunksNbBlocks") or 0)
-            self.chunks = NodeChunkSetup(blockSize, fullSize, nbBlocks)
+            if nbBlocks > 0:
+                self.chunks = NodeChunkSetup(blockSize, fullSize, nbBlocks)
         if "status" in d:
             self.status: Status = Status[d.pop("status")]
         if "execMode" in d:
@@ -1621,8 +1628,13 @@ class BaseNode(BaseObject):
         """ Update node status based on status file content/existence. """
         # Update nodeStatus from cache
         chunkChanged = self.updateNodeStatusFromCache()
-        # Create chunks if we found info on them on the node cache
-        if chunkChanged and self._nodeStatus.nbChunks > 0:
+        # Create chunks from cache if:
+        #  - The chunk setup has changed (normal case: nodeStatus was reloaded with new data), OR
+        #  - Chunks have not been created yet (recovery: a previous load cycle may have loaded
+        #    the nodeStatus without triggering createChunksFromCache, e.g. due to a silent error
+        #    in loadFromCache or an extra graph.update() that didn't reset the node's chunk info).
+        # In both cases, the nodeStatus must contain valid chunk information (nbChunks > 0).
+        if (chunkChanged or not self._chunksCreated) and self._nodeStatus.nbChunks > 0:
             # Update number of chunks
             try:
                 self.createChunksFromCache()
@@ -1646,6 +1658,11 @@ class BaseNode(BaseObject):
         """ Write node status on disk. """
         # Make sure the node has the globalStatus before saving it
         self._nodeStatus.status = self.getGlobalStatus()
+        # Ensure chunk info is always in sync with the actual chunks before writing,
+        # as _nodeStatus.chunks can be cleared by _resetChunks/loadFromCache and may not
+        # have been restored (e.g. after createChunksFromCache which does not call setChunks).
+        if self._chunksCreated and self._chunks:
+            self._nodeStatus.setChunks(self._chunks)
         data = self._nodeStatus.toDict()
         statusFilepath = self.nodeStatusFile
         folder = os.path.dirname(statusFilepath)
@@ -1664,6 +1681,12 @@ class BaseNode(BaseObject):
         hasChunkToLaunch = False
         if not self._chunksCreated:
             hasChunkToLaunch = True
+            # Clear any stale chunk info from nodeStatus so that:
+            # 1. The nodeStatus file written below does NOT contain chunk setup keys.
+            # 2. When `meshroom_createChunks` runs on the farm, its call to
+            #    `updateStatusFromCache()` will NOT recreate chunks from stale cache,
+            #    allowing `node.createChunks()` to evaluate fresh chunk parameters.
+            self._nodeStatus.resetChunkInfo()
         for chunk in self._chunks:
             if forceCompute or chunk._status.status != Status.SUCCESS:
                 hasChunkToLaunch = True
@@ -1686,6 +1709,9 @@ class BaseNode(BaseObject):
         hasChunkToLaunch = False
         if not self._chunksCreated:
             hasChunkToLaunch = True
+            # Same rationale as initStatusOnSubmit: clear stale chunk info
+            # so that the nodeStatus file does not contain outdated chunk setup.
+            self._nodeStatus.resetChunkInfo()
         for chunk in self._chunks:
             if forceCompute or (chunk._status.status not in (Status.RUNNING, Status.SUCCESS)):
                 hasChunkToLaunch = True
@@ -2317,6 +2343,12 @@ class Node(BaseNode):
         # This prevents updateLocked() from using a stale status (e.g. SUCCESS or SUBMITTED)
         # which could cause the node to be incorrectly locked.
         self._nodeStatus.status = Status.NONE
+        # Clear stale chunk setup from nodeStatus so that updateStatusFromCache()
+        # correctly detects when chunks need to be recreated from cache.
+        # Without this, the stale _nodeStatus.chunks value would match the
+        # freshly loaded value, causing chunkChanged to be False and skipping
+        # createChunksFromCache() — leaving _chunksCreated = False.
+        self._nodeStatus.resetChunkInfo()
         # Recreate list with reset values (1 chunk or the static size)
         if not self.isParallelized:
             self._chunks.setObjectList([NodeChunk(self, desc.Range())])

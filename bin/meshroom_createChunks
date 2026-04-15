@@ -95,6 +95,8 @@ if not node._chunksCreated:
     # Create node chunks
     # Once created we don't have to do it again even if we relaunch the job
     node.createChunks()
+    if not node._chunksCreated:
+        logging.error(f"Failed to create chunks for node {node.name}.")
     # Set the chunks statuses
     for chunk in node._chunks:
         if args.forceCompute or chunk._status.status != Status.SUCCESS:
@@ -102,6 +104,10 @@ if not node._chunksCreated:
             chunk._status.setNode(node)
             chunk._status.initExternSubmit()
             chunk.upgradeStatusFile()
+        else:
+            if not args.forceCompute:
+                logging.warning(f"Chunk {chunk} status is {chunk._status.status}.")
+                logging.warning(f"The status file has not been updated for this chunk.")
 
 # Get chunks to process in the current process
 chunksToProcess = []

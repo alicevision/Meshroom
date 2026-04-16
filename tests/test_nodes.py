@@ -269,6 +269,38 @@ class TestBackdropNode:
         assert backdrop.color == "#FF0000"
         assert backdrop.comment == "hello world"
 
+    def test_backdropNode_templateSerialization(self):
+        """ Test that a graph with a backdrop node can be saved as a template. """
+        g = Graph("Backdrop node template serialization")
+        backdrop = g.addNewNode("Backdrop")
+
+        # Save the graph as a template
+        templateFile = os.path.join(tempfile.mkdtemp(), "test_backdrop_template.mg")
+        g.save(templateFile, template=True)
+
+        # Reload the graph and check both nodes are present
+        g = loadGraph(templateFile)
+        assert g.node("Backdrop_1") is not None
+
+    def test_backdropNode_templateSerialization_customAttributes(self):
+        """ Test that a backdrop node with custom values is correctly saved as a template. """
+        g = Graph("Backdrop node template custom serialization")
+        backdrop = g.addNewNode("Backdrop")
+
+        # Set custom values
+        backdrop.internalAttribute("nodeWidth").value = 400
+        backdrop.internalAttribute("comment").value = "Template backdrop"
+
+        templateFile = os.path.join(tempfile.mkdtemp(), "test_backdrop_template_custom.mg")
+        g.save(templateFile, template=True)
+
+        # Reload and verify custom values are preserved
+        g = loadGraph(templateFile)
+        backdrop = g.node("Backdrop_1")
+        assert backdrop is not None
+        assert backdrop.nodeWidth == 400
+        assert backdrop.comment == "Template backdrop"
+
 
 class TestResourceLevels:
     """ Test that cpu, gpu, and ram descriptor attributes support both static Level values and callables. """

@@ -1,5 +1,6 @@
 __version__ = "1.0"
 
+from pathlib import Path
 import logging
 import os
 
@@ -46,3 +47,39 @@ This node is an input node that receives a File.
 
         else:
             raise RuntimeError("No file or directory has been set for 'inputFile'.")
+
+
+class InputString(desc.InputNode, desc.InitNode):
+    """
+    This node is an input node that receives a String.
+    """
+
+    size = desc.StaticNodeSize(0)
+    category = "Other"
+
+    inputs = [
+        desc.StringParam(
+            name="string",
+            label="Input String",
+            description="A string.",
+            value="",
+        )
+    ]
+
+
+class InputInt(desc.InputNode, desc.InitNode):
+    """
+    This node is an input node that receives a String.
+    """
+
+    category = "Other"
+
+    outputs = [
+        desc.IntParam(
+            name="integer",
+            label="Input Integer",
+            description="An integer.",
+            value=0,
+        )
+    ]
+

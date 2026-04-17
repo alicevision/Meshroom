@@ -11,8 +11,8 @@ import meshroom
 from meshroom.core import desc
 
 
-_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
-_MESHROOM_BATCH = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch").as_posix()
+_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent
+_MESHROOM_BATCH = Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch"
 PYTHON_EXE = "python"
 
 
@@ -201,26 +201,22 @@ class GenerateMeshroomScene(desc.Node):
             logging.info(f"Creating parent folder : {sceneRoot}")
             sceneRoot.mkdir(parents=True, exist_ok=True)
 
-        # Build command
-        command = f"{PYTHON_EXE} {_MESHROOM_BATCH}"
-        command += f" -p {templateScene}"
+        command = [PYTHON_EXE, str(_MESHROOM_BATCH), "-p", templateScene]
+        command += ["-p", templateScene]
         if inputOverrides:
-            command += f" --input {' '.join(inputOverrides)}"
-        command += f" --save {str(sceneDestination)}"
-        # Add overrides
+            command += ["--input"] + inputOverrides
+        command += ["--save", str(sceneDestination)]
         if paramOverrides:
-            command += f" --paramOverrides {' '.join(paramOverrides)}"
-        command += " --compute no"
-
-        if invalidationString:=node.setInvalidationString.value:
-            command += " --setInvalidationString " + invalidationString
-
+            command += ["--paramOverrides"] + paramOverrides
+        command += ["--compute", "no"]
+        if invalidationString := node.setInvalidationString.value:
+            command += ["--setInvalidationString", invalidationString]
+        
         # Launch subprocess
         logging.info(f"{'='*10} Command {'='*10}")
-        logging.info(f"{command}")
-
+        logging.info(f"{shlex.join(command)}")
         logging.info(f"{'='*10} Subprocess output {'='*10}")
-        out = subprocess.call(shlex.split(command))
+        out = subprocess.call(command)    
         if out:
             raise RuntimeError(f"Node {node} failed")
 

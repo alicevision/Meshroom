@@ -607,6 +607,10 @@ class TestGenerateMgScene:
         assert(c.get("status") == "SUCCESS")
         return True
 
+    @staticmethod
+    def comparePaths(pathA, pathB):
+        assert(Path(pathA) == Path(pathB))
+
     def test_generatemgscene(self):
         """ Test the GenerateMeshroomScene & MeshroomSceneParameter nodes
 
@@ -673,5 +677,4 @@ class TestGenerateMgScene:
         assert(generatedSceneGraph["A_1"]["inputs"]["string"] == "test")
         assert(generatedSceneGraph["B_1"]["inputs"]["integer"] == 42)
         assert(generatedSceneGraph["C_1"]["inputs"]["integer"] == 42)
-        viewpoints = generatedSceneGraph["ImagesNode_1"]["inputs"]["viewpoints"]
-        assert(len(viewpoints) == nbImages)
+        self.comparePaths(generatedSceneGraph["InputImages_1"]["inputs"]["inputFile"], images)

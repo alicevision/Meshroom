@@ -8,8 +8,8 @@ import meshroom
 from meshroom.core import desc
 
 
-_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
-_MESHROOM_BATCH = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch").as_posix()
+_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent
+_MESHROOM_BATCH = Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch"
 PYTHON_EXE = "python"
 
 
@@ -19,7 +19,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
     """
 
     category = "Utils"
-    commandLine = f"{PYTHON_EXE} {_MESHROOM_BATCH}" + " -p {node.scene.value} --save {node.scene.value}"
+    commandLine = f"{PYTHON_EXE} {str(_MESHROOM_BATCH)}" + " -p {node.scene.value} --save {node.scene.value}"
     
     def __getSubmitters():
         from meshroom.core import submitters

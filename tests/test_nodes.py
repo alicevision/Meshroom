@@ -581,7 +581,7 @@ class TestGenerateMgScene:
         graph.addNewNode("InputString", "A_1", position=Position(0, 0))
         graph.addNewNode("InputInt", "B_1", Position(200, 0))
         graph.addNewNode("InputInt", "C_1", Position(400, 0))
-        graph.addNewNode("CameraInit", "ImagesNode_1", Position(600, 0))
+        graph.addNewNode("InputFile", "InputImages_1", Position(600, 0))
         graphFile = tmpdir / "test_template_generatemgscene.mg"
         graph.save(graphFile)
         return graphFile
@@ -629,10 +629,10 @@ class TestGenerateMgScene:
         graph = Graph("Test GenerateMeshroomScene")
         # - Inputs Overrides
         nodeA = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 0))
-        nodeA.nodeName.value = "ImagesNode_1"
+        nodeA.nodeName.value = "InputImages_1"
         nodeA.paramValue.value = str(images)
         nodeB = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 100))
-        nodeB.nodeName.value = "CameraInit_1"
+        nodeB.nodeName.value = "InputFile_1"
         # - Param Overrides
         nodeC = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 200))
         nodeC.nodeName.value = "A_1"

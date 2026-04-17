@@ -272,14 +272,23 @@ Page {
                         padding: 10
                         width: pipelinesListView.width
                         enabled: !root.isLoading || index === pipelinesListView.loadingIndex
-
-                        contentItem: Label {
-                            id: pipeline
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                            text: modelData["name"]
-                        }
                         opacity: (!root.isLoading || index === pipelinesListView.loadingIndex) ? 1.0 : 0.4
+
+                        contentItem: RowLayout {
+                            Label {
+                                id: pipeline
+                                Layout.fillWidth: true
+                                horizontalAlignment: Text.AlignLeft
+                                verticalAlignment: Text.AlignVCenter
+                                text: modelData["name"]
+                            }
+                            BusyIndicator {
+                                Layout.preferredWidth: 24
+                                Layout.preferredHeight: 24
+                                running: index === pipelinesListView.loadingIndex && root.isLoading
+                                visible: running
+                            }
+                        }
 
                         Connections {
                             target: pipelineDelegate
@@ -508,8 +517,8 @@ Page {
 
                             BusyIndicator {
                                 anchors.centerIn: parent
-                                running: homepageGridView.visible && projectContent.thumbnailBusy
-                                visible: homepageGridView.visible && projectContent.thumbnailBusy
+                                running: (homepageGridView.visible && projectContent.thumbnailBusy) || (root.isLoading && index === homepageGridView.loadingIndex)
+                                visible: running
                             }
                         }
                         Label {

@@ -63,6 +63,7 @@ class InputString(desc.InputNode, desc.InitNode):
             label="Input String",
             description="A string.",
             value="",
+            exposed=True
         )
     ]
 
@@ -74,12 +75,13 @@ class InputInt(desc.InputNode, desc.InitNode):
 
     category = "Other"
 
-    outputs = [
+    inputs = [
         desc.IntParam(
             name="integer",
             label="Input Integer",
             description="An integer.",
             value=0,
+            exposed=True
         )
     ]
 

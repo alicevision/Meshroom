@@ -617,8 +617,8 @@ class TestGenerateMgScene:
         We test as much features as possible :
         - MeshroomSceneParameter :
             - node_instance(default) and node_type modes
-            - with and without paramName
-            - empty paramValue
+            - with and without attrName
+            - empty attrValue
         - GenerateMeshroomScene :
             - override inputs (CameraInit)
             - override other node parameters
@@ -634,22 +634,22 @@ class TestGenerateMgScene:
         # - Inputs Overrides
         nodeA = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 0))
         nodeA.nodeName.value = "InputImages_1"
-        nodeA.paramValue.value = str(images)
+        nodeA.attrValue.value = str(images)
         nodeB = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 100))
         nodeB.nodeName.value = "InputFile_1"
         # - Param Overrides
         nodeC = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 200))
         nodeC.nodeName.value = "A_1"
-        nodeC.paramName.value = "string"
-        nodeC.paramValue.value = "test"
+        nodeC.attrName.value = "string"
+        nodeC.attrValue.value = "test"
         nodeD = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 300))
         nodeD.nodeName.value = "A_2"
-        nodeD.paramName.value = "string"
-        nodeD.paramValue.value = ""
+        nodeD.attrName.value = "string"
+        nodeD.attrValue.value = ""
         nodeE = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 400))
         nodeE.nodeName.value = "InputInt"
-        nodeE.paramName.value = "integer"
-        nodeE.paramValue.value = "42"
+        nodeE.attrName.value = "integer"
+        nodeE.attrValue.value = "42"
         nodeE.mode.value = "node_type"
         # - GenerateMeshroomScene Node
         testNode = graph.addNewNode("GenerateMeshroomScene", position=Position(200, 150))

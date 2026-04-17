@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "1.1"
+__version__ = "1.0"
 
 import shlex
 import logging
@@ -13,85 +13,6 @@ from meshroom.core import desc
 
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent
 _MESHROOM_BATCH = Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch"
-PYTHON_EXE = "python"
-
-
-
-class MeshroomSceneParameter(desc.Node):
-    """ Build a parameter/input override.
-
-There are 2 modes of overrides :
-- **node_instance** mode (`NODEINSTANCE.param=value`) : only one node instance is overriden
-- **node_type** mode (`NODETYPE:param=value`) : all nodes of the type are overrided
-    """
-
-    category = "Utils"
-
-    inputs = [
-        desc.StringParam(
-            name="nodeName",
-            label="Node",
-            description="Node instance name or node type.",
-            value="",
-            exposed=True,
-        ),
-        desc.StringParam(
-            name="paramName",
-            label="Parameter",
-            description="Parameter name",
-            value="",
-            exposed=True,
-        ),
-        desc.StringParam(
-            name="paramValue",
-            label="Value",
-            description="",
-            value="",
-            exposed=True,
-        ),
-        desc.ChoiceParam(
-            name="mode",
-            label="Mode",
-            description=(
-                "Override modes :\n"
-                "- node_instance: Override the node instance\n"
-                "- node_type: Override all nodes having this type"
-            ),
-            value="node_instance",
-            values=["node_instance", "node_type"],
-        ),
-    ]
-
-    outputs = [
-        desc.StringParam(
-            name="output",
-            label="Output",
-            description="Overriding string.",
-            value=None,
-        )
-    ]
-
-    def process(self, node):
-        nodeName = node.nodeName.value
-        paramName = node.paramName.value
-        paramValue = node.paramValue.value
-        mode = node.mode.value
-        
-        if not all([nodeName, paramValue]):
-            node.output.value = ""
-            return
-
-        if mode == "node_instance":
-            delimiter = "."
-        elif mode == "node_type":
-            delimiter = ":"
-        else:
-            raise ValueError(f"Mode {mode} is not recognized")
-
-        if paramName:
-            node.output.value = f"{nodeName}{delimiter}{paramName}={paramValue}"
-        else:
-            node.output.value = f"{nodeName}={paramValue}"
 
 
 class GenerateMeshroomScene(desc.Node):
@@ -177,7 +98,7 @@ class GenerateMeshroomScene(desc.Node):
     def process(self, node):
         templateScene = node.templatePath.getValueStr(withQuotes=False)
         if not templateScene or not Path(templateScene).exists():
-            raise ValueError(f"{node} Invalid template scene : {templateScene}")
+            raise ValueError(f"{node} Invalid template scene: {templateScene}")
         inputOverrides = self.get_overrides(node.inputOverrides)
         paramOverrides = self.get_overrides(node.paramOverrides)
         sceneDestination = str(node.sceneDestination.getValueStr(withQuotes=False))
@@ -186,22 +107,22 @@ class GenerateMeshroomScene(desc.Node):
         else:
             sceneDestination = Path(node.internalFolder) / "scene.mg"
 
-        logging.info(f"- Using template scene : {templateScene}")
-        logging.info(f"- Scene destination : {sceneDestination}")
+        logging.info(f"- Using template scene: {templateScene}")
+        logging.info(f"- Scene destination: {sceneDestination}")
 
         if inputOverrides or paramOverrides:
             logging.info(f"{'='*10} Scene overrides {'='*10}")
             for item in inputOverrides:
-                logging.info(f"- Override input : {item}")
+                logging.info(f"- Override input: {item}")
             for item in paramOverrides:
-                logging.info(f"- Override parameter : {item}")
+                logging.info(f"- Override parameter: {item}")
 
         sceneRoot = sceneDestination.parent
         if not sceneRoot.exists():
-            logging.info(f"Creating parent folder : {sceneRoot}")
+            logging.info(f"Creating parent folder: {sceneRoot}")
             sceneRoot.mkdir(parents=True, exist_ok=True)
 
-        command = [PYTHON_EXE, str(_MESHROOM_BATCH), "-p", templateScene]
+        command = [self.pythonExecutable, str(_MESHROOM_BATCH), "-p", templateScene]
         command += ["-p", templateScene]
         if inputOverrides:
             command += ["--input"] + inputOverrides

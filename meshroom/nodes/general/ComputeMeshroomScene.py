@@ -10,7 +10,6 @@ from meshroom.core import desc
 
 _MESHROOM_ROOT = Path(meshroom.__file__).parent.parent
 _MESHROOM_BATCH = Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch"
-PYTHON_EXE = "python"
 
 
 class ComputeMeshroomScene(desc.CommandLineNode):
@@ -19,7 +18,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
     """
 
     category = "Utils"
-    commandLine = f"{PYTHON_EXE} {str(_MESHROOM_BATCH)}" + " -p {node.scene.value} --save {node.scene.value}"
+    commandLine = "{node.nodeDesc.pythonExecutable} " + str(_MESHROOM_BATCH) + " -p {node.scene.value} --save {node.scene.value}"
     
     def __getSubmitters():
         from meshroom.core import submitters
@@ -51,7 +50,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
         desc.File(
             name="scene",
             label="Scene",
-            description="Meshroom scene",
+            description="Meshroom scene.",
             value="",
         ),
         desc.BoolParam(
@@ -66,7 +65,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
         desc.BoolParam(
             name="submit",
             label="Submit",
-            description="Set True to submit, False to compute locally",
+            description="Set True to submit, False to compute locally.",
             value=False,
             enabled=len(SUBMITTERS)>0
         ),
@@ -82,9 +81,9 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             name="submitLabel",
             label="Submit Label",
             description=(
-                "The label that will be set at the submitted job name.\n"
-                "An empty string will set a default string : '[Meshroom] {projectName}'.\n"
-                "You can put the following strings under brackets and they will be replaced :\n"
+                "The label that will be set for the submitted job name.\n"
+                "An empty string will set a default string: '[Meshroom] {projectName}'.\n"
+                "The following strings between brackets can be used as they will be automatically replaced:\n"
                 "- projectName: the name of the scene file"
             ),
             value="",

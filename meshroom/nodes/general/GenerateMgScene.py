@@ -2,7 +2,6 @@
 
 __version__ = "1.1"
 
-import shutil
 import shlex
 import logging
 import subprocess
@@ -78,19 +77,22 @@ There are 2 modes of overrides :
         paramValue = node.paramValue.value
         mode = node.mode.value
         
-        if not all((nodeName, paramName, paramValue)):
-            node.output = ""
+        if not all([nodeName, paramValue]):
+            node.output.value = ""
             return
 
         delimiter = ":"
-        if mode == "instance":
+        if mode == "node_instance":
             delimiter = "."
-        elif mode == "type":
+        elif mode == "node_type":
             delimiter = ":"
         else:
             raise ValueError(f"Mode {mode} is not recognized")
 
-        node.output = f"{nodeName}{delimiter}{paramName}={paramValue}"
+        if paramName:
+            node.output.value = f"{nodeName}{delimiter}{paramName}={paramValue}"
+        else:
+            node.output.value = f"{nodeName}={paramValue}"
 
 
 class GenerateMeshroomScene(desc.Node):
@@ -174,28 +176,32 @@ class GenerateMeshroomScene(desc.Node):
         return overrides
 
     def process(self, node):
-        templateScene = node.templatePath.getValueStr()
+        templateScene = node.templatePath.getValueStr(withQuotes=False)
+        if not templateScene or not Path(templateScene).exists():
+            raise ValueError(f"{node} Invalid template scene : {templateScene}")
         inputOverrides = self.get_overrides(node.inputOverrides)
         paramOverrides = self.get_overrides(node.paramOverrides)
-        sceneDestination = node.sceneDestination.getValueStr()
-        if node.sceneDestination.getValueStr():
+        sceneDestination = str(node.sceneDestination.getValueStr(withQuotes=False))
+        if sceneDestination:
             sceneDestination = Path(sceneDestination)
         else:
-            sceneDestination = Path(node.internalFolder.value) / "scene.mg"
-        
-        logging.info(f"Using template scene : {templateScene}")
-        if paramOverrides:
-            logging.info("=== Scene overrides ===")
-        for item in inputOverrides:
-            logging.info(f"- Override input : {item}")
-        for item in paramOverrides:
-            logging.info(f"- Override parameter : {item}")
-        
+            sceneDestination = Path(node.internalFolder) / "scene.mg"
+
+        logging.info(f"- Using template scene : {templateScene}")
+        logging.info(f"- Scene destination : {sceneDestination}")
+
+        if inputOverrides or paramOverrides:
+            logging.info(f"{'='*10} Scene overrides {'='*10}")
+            for item in inputOverrides:
+                logging.info(f"- Override input : {item}")
+            for item in paramOverrides:
+                logging.info(f"- Override parameter : {item}")
+
         sceneRoot = sceneDestination.parent
         if not sceneRoot.exists():
             logging.info(f"Creating parent folder : {sceneRoot}")
             sceneRoot.mkdir(parents=True, exist_ok=True)
-        
+
         # Build command
         command  = f"{PYTHON_EXE} {_MESHROOM_BATCH}"
         command += f" -p {templateScene}"
@@ -203,17 +209,21 @@ class GenerateMeshroomScene(desc.Node):
             command += f" --input {' '.join(inputOverrides)}"
         command += f" --save {str(sceneDestination)}"
         # Add overrides
-        overrides = [f"{k}='{v}'" for k, v in paramOverrides.items()]
-        if overrides:
-            command += f" --paramOverrides {' '.join(overrides)}"
+        if paramOverrides:
+            command += f" --paramOverrides {' '.join(paramOverrides)}"
         command += " --compute no"
-        
+
         if invalidationString:=node.setInvalidationString.value:
             command += " --setInvalidationString " + invalidationString
 
         # Launch subprocess
-        logging.info(f"Executing command {command}")
-        subprocess.call(shlex.split(command))
-        
+        logging.info(f"{'='*10} Command {'='*10}")
+        logging.info(f"{command}")
+
+        logging.info(f"{'='*10} Subprocess output {'='*10}")
+        out = subprocess.call(shlex.split(command))
+        if out:
+            raise RuntimeError(f"Node {node} failed")
+
         # Set output value
         node.meshroomScene.value = str(sceneDestination)

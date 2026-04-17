@@ -29,6 +29,8 @@ Page {
         if (visible) {
             logo.playing = true
             isLoading = false
+            homepageGridView.loadingIndex = -1
+            pipelinesListView.loadingIndex = -1
         }
     }
 
@@ -258,6 +260,8 @@ Page {
                     id: pipelinesListView
                     visible: tabPanel.currentTab === 0
 
+                    property int loadingIndex: -1
+
                     anchors.fill: parent
                     anchors.margins: 10
 
@@ -267,6 +271,7 @@ Page {
                         id: pipelineDelegate
                         padding: 10
                         width: pipelinesListView.width
+                        enabled: !root.isLoading || index === pipelinesListView.loadingIndex
 
                         contentItem: Label {
                             id: pipeline
@@ -279,6 +284,7 @@ Page {
                             target: pipelineDelegate
                             function onClicked() {
                                 root.isLoading = true
+                                pipelinesListView.loadingIndex = index
                                 let path = modelData["path"]
                                 root.executeAfterFrameRendered(function() {
                                     mainStack.push("Application.qml")
@@ -294,6 +300,8 @@ Page {
                     visible: tabPanel.currentTab === 1
                     anchors.fill: parent
                     anchors.topMargin: cellHeight * 0.1
+
+                    property int loadingIndex: -1
 
                     cellWidth: 195
                     cellHeight: cellWidth
@@ -425,6 +433,7 @@ Page {
                                     
                                     else {
                                         root.isLoading = true
+                                        homepageGridView.loadingIndex = index
                                         let path = modelData["path"]
                                         root.executeAfterFrameRendered(function() {
                                             mainStack.push("Application.qml")
@@ -432,6 +441,7 @@ Page {
                                                 MeshroomApp.addRecentProjectFile(path)
                                             } else {
                                                 root.isLoading = false
+                                                homepageGridView.loadingIndex = -1
                                             }
                                         })
                                     }
@@ -446,6 +456,7 @@ Page {
                                     text: "Open"
                                     onTriggered: {
                                         root.isLoading = true
+                                        homepageGridView.loadingIndex = index
                                         let path = modelData["path"]
                                         root.executeAfterFrameRendered(function() {
                                             mainStack.push("Application.qml")
@@ -453,6 +464,7 @@ Page {
                                                 MeshroomApp.addRecentProjectFile(path)
                                             } else {
                                                 root.isLoading = false
+                                                homepageGridView.loadingIndex = -1
                                             }
                                         })
                                     }

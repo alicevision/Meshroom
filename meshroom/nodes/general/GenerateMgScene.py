@@ -134,7 +134,7 @@ class GenerateMeshroomScene(desc.Node):
         ),
         desc.ListAttribute(
             name="paramOverrides",
-            label="Parameters overrides",
+            label="Parameter overrides",
             description="Overrides for the nodes in the Meshroom scene to create.",
             exposed=True,
             commandLineGroup="",
@@ -203,7 +203,7 @@ class GenerateMeshroomScene(desc.Node):
             sceneRoot.mkdir(parents=True, exist_ok=True)
 
         # Build command
-        command  = f"{PYTHON_EXE} {_MESHROOM_BATCH}"
+        command = f"{PYTHON_EXE} {_MESHROOM_BATCH}"
         command += f" -p {templateScene}"
         if inputOverrides:
             command += f" --input {' '.join(inputOverrides)}"

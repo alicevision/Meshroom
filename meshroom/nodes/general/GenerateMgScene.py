@@ -17,6 +17,82 @@ _MESHROOM_BATCH = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch").as_posix()
 PYTHON_EXE = "python"
 
 
+
+class MeshroomSceneParameter(desc.Node):
+    """ Build a parameter/input override.
+
+There are 2 modes of overrides :
+- **node_instance** mode (`NODEINSTANCE.param=value`) : only one node instance is overriden
+- **node_type** mode (`NODETYPE:param=value`) : all nodes of the type are overrided
+    """
+
+    category = "Utils"
+
+    inputs = [
+        desc.StringParam(
+            name="nodeName",
+            label="Node",
+            description="Node instance name or node type.",
+            value="",
+            exposed=True,
+        ),
+        desc.StringParam(
+            name="paramName",
+            label="Parameter",
+            description="Parameter name",
+            value="",
+            exposed=True,
+        ),
+        desc.StringParam(
+            name="paramValue",
+            label="Value",
+            description="",
+            value="",
+            exposed=True,
+        ),
+        desc.ChoiceParam(
+            name="mode",
+            label="Mode",
+            description=(
+                "Override modes :\n"
+                "- node_instance: Override the node instance\n"
+                "- node_type: Override all nodes having this type"
+            ),
+            value="node_instance",
+            values=["node_instance", "node_type"],
+        ),
+    ]
+
+    outputs = [
+        desc.StringParam(
+            name="output",
+            label="Output",
+            description="Overriding string.",
+            value=None,
+        )
+    ]
+
+    def process(self, node):
+        nodeName = node.nodeName.value
+        paramName = node.paramName.value
+        paramValue = node.paramValue.value
+        mode = node.mode.value
+        
+        if not all((nodeName, paramName, paramValue)):
+            node.output = ""
+            return
+
+        delimiter = ":"
+        if mode == "instance":
+            delimiter = "."
+        elif mode == "type":
+            delimiter = ":"
+        else:
+            raise ValueError(f"Mode {mode} is not recognized")
+
+        node.output = f"{nodeName}{delimiter}{paramName}={paramValue}"
+
+
 class GenerateMeshroomScene(desc.Node):
     """
     Generate a Meshroom camera tracking project and launch its computation.

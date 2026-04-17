@@ -119,3 +119,32 @@ class ReadEnvVar(desc.InputNode):
             node.varvalue.value = ""
 
 
+class GetParentFolder(desc.Node):
+    """ Get the parent folder """
+    
+    category = "Other"
+
+    inputs = [
+        desc.File(
+            name="file",
+            label="File",
+            description="File or Folder.",
+            exposed=True,
+            value=""
+        ),
+    ]
+
+    outputs = [
+        desc.File(
+            name="folder",
+            label="Folder",
+            description="Parent folder.",
+            value=None,
+        )
+    ]
+
+    def process(self, node):
+        if path:=node.file.value and Path(path).exists():
+            node.folder.value = str(Path(path).parent)
+        else:
+            node.folder.value = ""

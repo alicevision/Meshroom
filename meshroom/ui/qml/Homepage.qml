@@ -290,6 +290,15 @@ Page {
                             }
                         }
 
+                        // Highlight overlay shown when this pipeline is being loaded
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.color: palette.highlight
+                            border.width: 2
+                            visible: root.isLoading && index === pipelinesListView.loadingIndex
+                        }
+
                         Connections {
                             target: pipelineDelegate
                             function onClicked() {
@@ -519,6 +528,15 @@ Page {
                                 anchors.centerIn: parent
                                 running: (homepageGridView.visible && projectContent.thumbnailBusy) || (root.isLoading && index === homepageGridView.loadingIndex)
                                 visible: running
+                            }
+
+                            // Highlight overlay shown when this project is being loaded
+                            Rectangle {
+                                anchors.fill: parent
+                                color: "transparent"
+                                border.color: palette.highlight
+                                border.width: 2
+                                visible: root.isLoading && index === homepageGridView.loadingIndex
                             }
                         }
                         Label {

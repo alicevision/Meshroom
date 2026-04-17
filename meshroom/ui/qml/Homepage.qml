@@ -279,6 +279,7 @@ Page {
                             verticalAlignment: Text.AlignVCenter
                             text: modelData["name"]
                         }
+                        opacity: (!root.isLoading || index === pipelinesListView.loadingIndex) ? 1.0 : 0.4
 
                         Connections {
                             target: pipelineDelegate
@@ -338,6 +339,7 @@ Page {
 
                         width: homepageGridView.cellWidth
                         height: homepageGridView.cellHeight
+                        opacity: (!root.isLoading || index === homepageGridView.loadingIndex) ? 1.0 : 0.4
 
                         property var source: modelData["thumbnail"] ? Filepath.stringToUrl(modelData["thumbnail"]) : ""
                         property int retryCount: 0

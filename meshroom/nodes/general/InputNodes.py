@@ -146,7 +146,10 @@ class GetParentFolder(desc.Node):
     ]
 
     def process(self, node):
-        if path:=node.file.value and Path(path).exists():
-            node.folder.value = str(Path(path).parent)
-        else:
-            node.folder.value = ""
+        path = node.file.value
+        if path:
+            path = Path(path)
+            if path.exists():
+                node.folder.value = str(Path(path).parent)
+                return
+        node.folder.value = ""

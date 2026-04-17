@@ -81,7 +81,6 @@ There are 2 modes of overrides :
             node.output.value = ""
             return
 
-        delimiter = ":"
         if mode == "node_instance":
             delimiter = "."
         elif mode == "node_type":

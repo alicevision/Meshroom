@@ -4,11 +4,6 @@ __version__ = "1.0"
 
 from pathlib import Path
 
-import shutil
-import shlex
-import logging
-import subprocess
-
 import meshroom
 from meshroom.core import desc
 
@@ -29,7 +24,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
     def __getSubmitters():
         from meshroom.core import submitters
         submitterNames = []
-        for subName, sub in submitters.items():
+        for subName, _ in submitters.items():
             submitterNames.append(subName)
         return submitterNames
     

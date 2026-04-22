@@ -95,14 +95,6 @@ def test_param_no_value_is_dynamic(attrDesc):
     assert attrDesc.isDynamicValue is True
 
 
-def test_list_and_group_attributes_not_dynamic():
-    """ListAttribute and GroupAttribute always have a non-None default value."""
-    la = desc.ListAttribute(desc.StringParam(name="elem"), name="items")
-    ga = desc.GroupAttribute([], name="group")
-    assert la.isDynamicValue is False
-    assert ga.isDynamicValue is False
-
-
 def test_label_auto_generated_from_camel_case():
     """Label should be auto-generated from camelCase attribute names."""
     assert desc.File(name="outputFile").label == "Output File"

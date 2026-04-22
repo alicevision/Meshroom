@@ -181,15 +181,17 @@ class ListAttribute(Attribute):
     """ A list of Attributes """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, elementDesc, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
-                 advanced=False, semantic="", enabled=True, joinChar=" ", visible=True, exposed=False):
+                 advanced=False, semantic="", enabled=True, joinChar=" ", visible=True, exposed=False, value=None):
         """
         :param elementDesc: the Attribute description of elements to store in that list
+        :param value: default value. Use None to declare a dynamic output ListAttribute
+                      whose content is set during processChunk.
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
         
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[],
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=value,
                                             invalidate=False, commandLineGroup=commandLineGroup, advanced=advanced, semantic=semantic,
                                             enabled=enabled, visible=visible, exposed=exposed)
 

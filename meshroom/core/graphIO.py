@@ -135,12 +135,8 @@ class TemplateGraphSerializer(GraphSerializer):
         # For now, implemented as a post-process to update the default serialization.
         nodeData = super().serializeNode(node)
 
-        inputKeys = list(nodeData["inputs"].keys())
-
-        internalInputKeys = []
-        internalInputs = nodeData.get("internalInputs", None)
-        if internalInputs:
-            internalInputKeys = list(internalInputs.keys())
+        inputKeys = list(nodeData.get("inputs", {}).keys())
+        internalInputKeys = list(nodeData.get("internalInputs", {}).keys())
 
         for attrName in inputKeys:
             attribute = node.attribute(attrName)
@@ -158,9 +154,9 @@ class TemplateGraphSerializer(GraphSerializer):
         if len(nodeData["internalInputs"]) == 0:
             del nodeData["internalInputs"]
 
-        del nodeData["outputs"]
-        del nodeData["uid"]
-        del nodeData["parallelization"]
+        nodeData.pop("outputs", None)
+        nodeData.pop("uid", None)
+        nodeData.pop("parallelization", None)
 
         return nodeData
 

@@ -408,3 +408,43 @@ class TestImportGraphContentFromMinimalGraphData:
             }
             """)
             graph._deserialize(json.loads(sampleGraphContent))
+
+
+class TestTemplateSerialization:
+
+    def test_templateSerializationStripsOutputsUidAndParallelization(self):
+        """Test that template serialization removes outputs, uid, and parallelization."""
+        with registeredNodeTypes([SimpleNode]):
+            graph = Graph("")
+            graph.addNewNode("SimpleNode")
+
+            data = graph.serialize(asTemplate=True)
+            nodeData = data["graph"]["SimpleNode_1"]
+
+            assert "outputs" not in nodeData
+            assert "uid" not in nodeData
+            assert "parallelization" not in nodeData
+
+    def test_templateSerializationStripsDefaultInputs(self):
+        """Test that default-valued inputs are stripped from template serialization."""
+        with registeredNodeTypes([SimpleNode]):
+            graph = Graph("")
+            graph.addNewNode("SimpleNode")
+
+            data = graph.serialize(asTemplate=True)
+            nodeData = data["graph"]["SimpleNode_1"]
+
+            # All inputs are at default, so inputs should be empty or absent
+            assert nodeData.get("inputs", {}) == {}
+
+    def test_templateSerializationPreservesNonDefaultInputs(self):
+        """Test that non-default attribute values are preserved in template serialization."""
+        with registeredNodeTypes([SimpleNode]):
+            graph = Graph("")
+            node = graph.addNewNode("SimpleNode")
+            node.attribute("input").value = "/some/path"
+
+            data = graph.serialize(asTemplate=True)
+            nodeData = data["graph"]["SimpleNode_1"]
+
+            assert nodeData["inputs"]["input"] == "/some/path"

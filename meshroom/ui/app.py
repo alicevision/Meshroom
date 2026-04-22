@@ -250,9 +250,9 @@ class MeshroomApp(QApplication):
         # - clean cache directory and make sure it exists on disk
         ThumbnailCache.initialize()
 
+        meshroom.core.initSubmitters()
         meshroom.core.initPlugins()
         meshroom.core.initNodes()
-        meshroom.core.initSubmitters()
 
         # Initialize the list of recent project files
         self._recentProjectFiles = self._getRecentProjectFilesFromSettings()

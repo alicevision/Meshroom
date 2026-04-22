@@ -2,15 +2,20 @@
 # coding:utf-8
 
 import os
+import shutil
+import json
 from pathlib import Path
 import tempfile
 
 from meshroom.core import desc, pluginManager, loadClassesNodes, initNodes
+from meshroom.core.node import Position
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.plugins import Plugin
 
-
 from .utils import registerNodeDesc, unregisterNodeDesc, registeredNodeTypes
+
+
+TEST_RESOURCES = Path(__file__).parent / "resources"
 
 
 class TestNodeInfo:
@@ -542,3 +547,134 @@ class TestNodeSizeLambda:
 
             node.itemCount.value = 9
             assert node.evaluateSize() == 10
+
+
+class TestGenerateMgScene:
+    loadedPlugins = pluginManager.getPlugins()
+
+    @classmethod
+    def setup_class(cls):
+        initNodes()
+
+    @classmethod
+    def teardown_class(cls):
+        for plugin in pluginManager.getPlugins():
+            if plugin not in cls.loadedPlugins:
+                for node in plugin.nodes.values():
+                    pluginManager.unregisterNode(node)
+                pluginManager.removePlugin(plugin)
+
+    @staticmethod
+    def generate_img_folder(tmpdir: Path, nbImages: int):
+        """ Create an image folder from an empty image """
+        img_ref = str(TEST_RESOURCES / "empty.jpg")
+        img_folder = tmpdir / "images"
+        img_folder.mkdir()
+        for i in range(nbImages):
+            shutil.copy(img_ref, img_folder / f"{i:03d}.jpg")
+        return img_folder
+
+    @staticmethod
+    def create_template(tmpdir: Path):
+        """ Create the template scene for the test """
+        graph = Graph("Test template")
+        graph.addNewNode("InputString", "A_1", position=Position(0, 0))
+        graph.addNewNode("InputInt", "B_1", Position(200, 0))
+        graph.addNewNode("InputInt", "C_1", Position(400, 0))
+        graph.addNewNode("InputFile", "InputImages_1", Position(600, 0))
+        graphFile = tmpdir / "test_template_generatemgscene.mg"
+        graph.save(graphFile)
+        return graphFile
+    
+    @staticmethod
+    def processNode(node):
+        """ Process a non-parallelized node and check that it succeed """
+        cache = Path(node.internalFolder)
+        cache.mkdir(parents=True)
+        # Process
+        logFile = cache / f"0.log"
+        logFile.touch()
+        node.prepareLogger(-1)
+        node.preprocess()
+        node.process(True, True)
+        node.postprocess()
+        node.restoreLogger()
+        # Check output
+        nodeStatusFile = cache / "nodeStatus"
+        assert(nodeStatusFile.exists())
+        with open(str(nodeStatusFile), "r") as f:
+            c = json.load(f)
+        assert(c.get("status") == "SUCCESS")
+        return True
+
+    @staticmethod
+    def comparePaths(pathA, pathB):
+        assert(Path(pathA) == Path(pathB))
+
+    def test_generatemgscene(self):
+        """ Test the GenerateMeshroomScene & MeshroomSceneParameter nodes
+
+        We test as much features as possible :
+        - MeshroomSceneParameter :
+            - node_instance(default) and node_type modes
+            - with and without attrName
+            - empty attrValue
+        - GenerateMeshroomScene :
+            - override inputs (CameraInit)
+            - override other node parameters
+            - an empty override item for both
+            - override parameter with node instance and node type modes
+        """
+        nbImages = 2
+        tmpdir = Path(tempfile.mkdtemp())
+        images = self.generate_img_folder(tmpdir, nbImages)
+        template = self.create_template(tmpdir)
+        # Create graph
+        graph = Graph("Test GenerateMeshroomScene")
+        # - Inputs Overrides
+        nodeA = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 0))
+        nodeA.nodeName.value = "InputImages_1"
+        nodeA.attrValue.value = str(images)
+        nodeB = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 100))
+        nodeB.nodeName.value = "InputFile_1"
+        # - Param Overrides
+        nodeC = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 200))
+        nodeC.nodeName.value = "A_1"
+        nodeC.attrName.value = "string"
+        nodeC.attrValue.value = "test"
+        nodeD = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 300))
+        nodeD.nodeName.value = "A_2"
+        nodeD.attrName.value = "string"
+        nodeD.attrValue.value = ""
+        nodeE = graph.addNewNode("MeshroomSceneParameter", position=Position(0, 400))
+        nodeE.nodeName.value = "InputInt"
+        nodeE.attrName.value = "integer"
+        nodeE.attrValue.value = "42"
+        nodeE.mode.value = "node_type"
+        # - GenerateMeshroomScene Node
+        testNode = graph.addNewNode("GenerateMeshroomScene", position=Position(200, 150))
+        testNode.templatePath.value = str(template)
+        # - Connections
+        testNode.inputOverrides.extend(["0", "1"])
+        for i, upstreamNode in enumerate([nodeA, nodeB]):
+            upstreamNode.output.connectTo(testNode.inputOverrides.at(i))
+        testNode.paramOverrides.extend(["0", "1", "2"])
+        for i, upstreamNode in enumerate([nodeC, nodeD, nodeE]):
+            upstreamNode.output.connectTo(testNode.paramOverrides.at(i))
+        # Save graph
+        graphFile = tmpdir / "test_scene_generatemgscene.mg"
+        graph.save(graphFile)
+        # Execute graph
+        for node in [nodeA, nodeB, nodeC, nodeD, nodeE]:
+            self.processNode(node)
+        self.processNode(testNode)
+        # Check output scene
+        scene = Path(testNode.internalFolder) / "scene.mg"
+        assert(scene.exists())
+        with open(str(scene), "r") as f:
+            c = json.load(f)
+        generatedSceneGraph = c["graph"]
+        assert(generatedSceneGraph["A_1"]["inputs"]["string"] == "test")
+        assert(generatedSceneGraph["B_1"]["inputs"]["integer"] == 42)
+        assert(generatedSceneGraph["C_1"]["inputs"]["integer"] == 42)
+        self.comparePaths(generatedSceneGraph["InputImages_1"]["inputs"]["inputFile"], images)

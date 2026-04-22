@@ -4,7 +4,7 @@ import pytest
 import logging
 logger = logging.getLogger('test')
 
-valid3DExtensionFiles = [(f'test.{ext}', True) for ext in ('obj', 'stl', 'fbx', 'gltf', 'abc', 'ply')]
+valid3DExtensionFiles = [(f'test.{ext}', True) for ext in ('obj', 'stl', 'fbx', 'gltf', 'abc', 'ply', 'usda', 'usdc')]
 invalid3DExtensionFiles = [(f'test.{ext}', False) for ext in ('', 'exe', 'jpg', 'png', 'py')]
 
 valid2DSemantics= [(semantic, True) for semantic in ('image', 'imageList', 'sequence')]

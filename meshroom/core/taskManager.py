@@ -2,7 +2,7 @@ import os
 import traceback
 import logging
 from threading import Thread
-from PySide6.QtCore import Qt, QThread, QEventLoop, QTimer
+from PySide6.QtCore import Qt, QMetaObject, QThread, QEventLoop, QTimer
 from enum import Enum
 from meshroom.common import strtobool
 
@@ -139,7 +139,9 @@ class TaskThread(QThread):
                             except ValueError:
                                 # Node already removed (for instance a global clear of _nodesToProcess)
                                 pass
-                            n.clearSubmittedChunks()
+                            # clearSubmittedChunks may create NodeChunk QObjects; those must be
+                            # created on the main thread so QML can safely connect to them.
+                            QMetaObject.invokeMethod(n, "clearSubmittedChunks", Qt.QueuedConnection)
             node.postprocess()
 
             if stopAndRestart:

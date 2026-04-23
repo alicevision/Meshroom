@@ -9,10 +9,11 @@ def getFileElements(inputFilePath: str):
 
     filename = os.path.basename(inputFilePath)
     match = compiled_pattern.fullmatch(filename)
-    frameId_str = match.group("FRAMEID_STR")
+    frameId_str = None
 
     fileElements = {}
     if match:
+        frameId_str = match.group("FRAMEID_STR")
         fileElements = {
             "<PATH>": inputFilePath,
             "<FILENAME>": filename,
@@ -20,6 +21,7 @@ def getFileElements(inputFilePath: str):
             "<FILESTEM_PREFIX>": match.group("FILESTEM_PREFIX"),
             "<EXTENSION>": match.group("EXTENSION"),
         }
+
     if frameId_str is not None:
         fileElements["<FRAMEID_STR>"] = frameId_str
         fileElements["<FILESTEM>"] += frameId_str

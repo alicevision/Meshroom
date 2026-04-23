@@ -12,6 +12,7 @@ from collections.abc import Iterator
 from collections import OrderedDict
 
 from PySide6.QtCore import (
+    Qt,
     Slot,
     QJsonValue,
     QObject,
@@ -150,7 +151,7 @@ class NodeStatusMonitor(QObject):
         self.monitorableNodes = []
         self.monitoredFiles = {}  # Dict {filepath: node}
         self._filesTimePoller = FilesModTimePollerThread(parent=self)
-        self._filesTimePoller.timesAvailable.connect(self.compareFilesTimes)
+        self._filesTimePoller.timesAvailable.connect(self.compareFilesTimes, Qt.QueuedConnection)
         self._filesTimePoller.start()
         self.setMonitored([])
         self.filePollerRefreshChanged.connect(self._filesTimePoller.onFilePollerRefreshChanged)

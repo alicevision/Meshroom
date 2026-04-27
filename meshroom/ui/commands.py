@@ -533,6 +533,10 @@ class ListAttributeRemoveCommand(GraphCommand):
 
 
 class RemoveImagesCommand(GraphCommand):
+    """
+    Remove all the images from one or several CameraInit nodes as a single operation.
+    Both the viewpoints and intrinsics lists are reset to their default values.
+    """
     def __init__(self, graph, cameraInitNodes, parent=None):
         super().__init__(graph, parent)
         self.cameraInits = cameraInitNodes
@@ -558,6 +562,43 @@ class RemoveImagesCommand(GraphCommand):
             with GraphModification(self.graph):
                 self.graph.node(cameraInit).viewpoints.value = self.viewpoints[cameraInit]
                 self.graph.node(cameraInit).intrinsics.value = self.intrinsics[cameraInit]
+
+
+class RemoveSelectedImagesCommand(GraphCommand):
+    """
+    Remove a specific subset of images (viewpoints and their orphaned intrinsics) from a single
+    CameraInit node as a single operation.
+    """
+    def __init__(self, graph, cameraInitNode, imagesToRemove, parent=None):
+        super().__init__(graph, parent)
+        self.cameraInitNode = cameraInitNode
+
+        # Save current state of viewpoints and intrinsics
+        self.oldViewpoints = cameraInitNode.attribute("viewpoints").getSerializedValue()
+        self.oldIntrinsics = cameraInitNode.attribute("intrinsics").getSerializedValue()
+
+        # Build a set of viewIds to remove based on the provided images list and then the new viewpoints list
+        removeViewIds = {image.viewId.value for image in imagesToRemove}
+        self.newViewpoints = [vp for vp in self.oldViewpoints if vp.get("viewId") not in removeViewIds]
+
+        # Compute set of intrinsicIds that are still referenced by the remaining viewpoints and then
+        # the new intrinsics list
+        keptIntrinsicIds = {vp.get("intrinsicId") for vp in self.newViewpoints}
+        self.newIntrinsics = [intr for intr in self.oldIntrinsics if intr.get("intrinsicId") in keptIntrinsicIds]
+
+        self.title = f"Remove {len(removeViewIds)} Image{'(s)' if len(removeViewIds) > 1 else ''}"
+        self.setText(self.title)
+
+    def redoImpl(self):
+        with GraphModification(self.graph):
+            self.cameraInitNode.viewpoints.value = self.newViewpoints
+            self.cameraInitNode.intrinsics.value = self.newIntrinsics
+        return True
+
+    def undoImpl(self):
+        with GraphModification(self.graph):
+            self.cameraInitNode.viewpoints.value = self.oldViewpoints
+            self.cameraInitNode.intrinsics.value = self.oldIntrinsics
 
 
 class MoveNodeCommand(GraphCommand):

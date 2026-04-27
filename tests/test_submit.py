@@ -76,6 +76,7 @@ def processSubmit(node: Node, graph, tmp_path):
     try:
         print(f"submit {node}")
         submitter = get_submitter()
+        submitter.disabled_rez = True
         submitter.setFarmPath(tmp_path)
         submitter.setJobEnv(getJobEnv())
         nodesToProcess, edgesToProcess = [node], []

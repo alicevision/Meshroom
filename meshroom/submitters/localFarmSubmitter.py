@@ -204,6 +204,7 @@ class LocalFarmSubmitter(BaseSubmitter):
 
     dryRun = False
     environment = {}
+    disabled_rez = False
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -235,13 +236,13 @@ class LocalFarmSubmitter(BaseSubmitter):
                 it = [Chunk(i, item[0], item[-1]) for i, item in enumerate(slices) if i not in ignoreIterations]
         return it
 
-    @staticmethod
-    def getExpandWrappedCmd(cmdArgs, rezPackages):
+    def getExpandWrappedCmd(self, cmdArgs, rezPackages):
         # Wrap with create_chunks
         cmdBin = wrapMeshroomBin("meshroom_createChunks")
         cmd = f"{cmdBin} --submitter LocalFarm {cmdArgs}"
         # Wrap with rez
-        cmd = rezWrapCommand(cmd, otherRezPkg=rezPackages)
+        if not self.disabled_rez:
+            cmd = rezWrapCommand(cmd, otherRezPkg=rezPackages)
         return cmd
 
     def __createChunkTasks(self, job: Job, parentTask: Task, children: List[Task], chunkParams: dict) -> Task:
@@ -253,7 +254,8 @@ class LocalFarmSubmitter(BaseSubmitter):
             meta["iteration"] = c.iteration
             cmdBin = wrapMeshroomBin("meshroom_compute")
             cmd = f"{cmdBin} {cmdArgs} --iteration {c.iteration}"
-            cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages)
+            if not self.disabled_rez:
+                cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages)
             chunkTask = Task(name=name, command=cmd, metadata=meta, env=self.jobEnv)
             job.addTask(chunkTask)
             for child in children:
@@ -286,7 +288,8 @@ class LocalFarmSubmitter(BaseSubmitter):
         else:
             cmdBin = wrapMeshroomBin("meshroom_compute")
             cmd = f"{cmdBin} {cmdArgs} --iteration 0"
-            cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages)
+            if not self.disabled_rez:
+                cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages)
             task = Task(name=node.name, command=cmd, metadata=metadata, env=self.jobEnv)
             task = CreatedTask(task, None)
 

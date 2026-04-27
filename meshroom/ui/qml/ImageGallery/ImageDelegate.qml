@@ -28,9 +28,8 @@ Item {
     property bool isInMultiSelection: cellID >= 0 && selectedIndices.indexOf(cellID) >= 0
 
     signal pressed(var mouse)
-    signal removeRequest()
-    signal removeAllImagesRequest()
     signal removeSelectedRequest()
+    signal removeAllImagesRequest()
 
     default property alias children: imageMA.children
 
@@ -105,13 +104,8 @@ Item {
                 }
             }
             MenuItem {
-                text: "Remove"
-                enabled: !root.readOnly
-                onClicked: removeRequest()
-            }
-            MenuItem {
-                text: "Remove Selected Images (" + root.selectedIndices.length + ")"
-                enabled: !root.readOnly && root.selectedIndices.length > 1
+                text: "Remove Selected Image" + (root.selectedIndices.length > 1 ? "s " : " ") + "(" + root.selectedIndices.length + ")"
+                enabled: !root.readOnly && root.selectedIndices.length > 0
                 onClicked: removeSelectedRequest()
             }
             MenuItem {

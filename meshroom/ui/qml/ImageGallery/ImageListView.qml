@@ -24,7 +24,6 @@ ListView {
     property real cellHeight: thumbnailSizeSlider ? thumbnailSizeSlider.value / 2 : 80
 
     // Signals
-    signal removeImageRequest(var attribute)
     signal allViewpointsCleared()
 
     ScrollBar.vertical: MScrollBar {

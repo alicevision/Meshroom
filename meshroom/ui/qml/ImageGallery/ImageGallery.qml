@@ -41,7 +41,6 @@ Panel {
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
 
-    signal removeImageRequest(var attribute)
     signal removeSelectedImagesRequest(var objects)
     signal allViewpointsCleared()
     signal filesDropped(var drop)
@@ -298,17 +297,6 @@ Panel {
                 }
             }
 
-            function sendRemoveRequest() {
-                if (readOnly)
-                    return
-
-                root.removeImageRequest(object)
-                
-                // If the last image has been removed, make sure the viewpoints and intrinsics are reset
-                if (m.viewpoints.count === 0)
-                    root.allViewpointsCleared()
-            }
-
             function sendRemoveSelectedRequest() {
                 if (readOnly)
                     return
@@ -322,9 +310,11 @@ Panel {
                 if (objects.length > 0) {
                     root.removeSelectedImagesRequest(objects)
                     sortedModel.clearMultiSelection()
-                    if (m.viewpoints.count === 0)
-                        root.allViewpointsCleared()
                 }
+
+                // If the last image has been removed, make sure the viewpoints and intrinsics are reset
+                if (m.viewpoints.count === 0)
+                    root.allViewpointsCleared()
             }
 
             function removeAllImages() {
@@ -332,16 +322,12 @@ Panel {
                 _currentScene.selectedViewId = "-1"
             }
 
-            onRemoveRequest: sendRemoveRequest()
             onRemoveSelectedRequest: sendRemoveSelectedRequest()
             Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Delete && event.modifiers === Qt.ShiftModifier) {
                     removeAllImages()
                 } else if (event.key === Qt.Key_Delete) {
-                    if (sortedModel.selectedIndices.length > 1)
-                        sendRemoveSelectedRequest()
-                    else
-                        sendRemoveRequest()
+                    sendRemoveSelectedRequest()
                 }
             }
             onRemoveAllImagesRequest: {
@@ -430,7 +416,6 @@ Panel {
                     item.thumbnailSizeSlider = thumbnailSizeSlider
 
                     // Connect signals
-                    item.removeImageRequest.connect(root.removeImageRequest)
                     item.allViewpointsCleared.connect(root.allViewpointsCleared)
                     
                     // Restore currentIndex (before connecting signals to avoid unwanted selection change)

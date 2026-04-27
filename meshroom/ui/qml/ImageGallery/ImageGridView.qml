@@ -22,7 +22,6 @@ GridView {
     property var sortedModel: null
     
     // Signals
-    signal removeImageRequest(var attribute)
     signal allViewpointsCleared()
 
     ScrollBar.vertical: MScrollBar {

@@ -53,7 +53,7 @@ Panel {
 
         function onCameraInitChanged() {
             nodesCB.currentIndex = root.cameraInitIndex
-            sortedModel.clearMultiSelection()
+            sortedModel.clearMultiSelection(false)
         }
     }
 
@@ -254,9 +254,19 @@ Panel {
             selectedIndices = newArr
         }
 
-        function clearMultiSelection() {
-            selectedIndices = []
-            selectedIndex = -1
+        function clearMultiSelection(keepPosition) {
+            if (keepPosition) {
+                // Pick the lowest selected index as the landing position; after removal
+                // the next surviving item slides up to that slot.
+                // Clamp to the last remaining item in case the selection was at the tail.
+                var sortedSel = selectedIndices.slice().sort(function(a, b){ return a - b })
+                var remainingCount = count - selectedIndices.length
+                selectedIndex = Math.min(sortedSel[0], remainingCount - 1)
+                selectedIndices = [selectedIndex]
+            } else {
+                selectedIndex = -1
+                selectedIndices = []
+            }
         }
 
         delegate: ImageDelegate {
@@ -305,6 +315,7 @@ Panel {
                 // cases where "sortedModel" is unresolvable because the delegate has been destroyed before
                 // the line accessing "sortedModel" is reached
                 var model = sortedModel
+                var view = root.galleryGrid
 
                 // If all the images are selected, we can just remove all of them at once
                 if (model.selectedIndices.length === m.viewpoints.count) {
@@ -320,7 +331,16 @@ Panel {
                 }
                 if (objects.length > 0) {
                     root.removeSelectedImagesRequest(objects)
-                    model.clearMultiSelection()
+                    model.clearMultiSelection(true)
+
+                    // Restore a sensible position once the model has finished updating
+                    var targetIndex = model.selectedIndex
+                    Qt.callLater(function() {
+                        if (targetIndex >= 0 && view) {
+                            view.currentIndex = targetIndex
+                            view.makeCurrentItemVisible()
+                        }
+                    })
                 }
 
                 // If the last image has been removed, make sure the viewpoints and intrinsics are reset

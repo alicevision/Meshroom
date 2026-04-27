@@ -301,25 +301,30 @@ Panel {
                 if (readOnly)
                     return
 
+                // Capture delegate-scope references immediately: this prevents falling into
+                // cases where "sortedModel" is unresolvable because the delegate has been destroyed before
+                // the line accessing "sortedModel" is reached
+                var model = sortedModel
+
                 // If all the images are selected, we can just remove all of them at once
-                if (sortedModel.selectedIndices.length === m.viewpoints.count) {
+                if (model.selectedIndices.length === m.viewpoints.count) {
                     removeAllImages()
                     return
                 }
 
                 var objects = []
-                for (var i = 0; i < sortedModel.selectedIndices.length; i++) {
-                    var obj = sortedModel.getObjectAt(sortedModel.selectedIndices[i])
+                for (var i = 0; i < model.selectedIndices.length; i++) {
+                    var obj = model.getObjectAt(model.selectedIndices[i])
                     if (obj)
                         objects.push(obj)
                 }
                 if (objects.length > 0) {
                     root.removeSelectedImagesRequest(objects)
-                    sortedModel.clearMultiSelection()
+                    model.clearMultiSelection()
                 }
 
                 // If the last image has been removed, make sure the viewpoints and intrinsics are reset
-                if (m.viewpoints.count === 0)
+                if (m.viewpoints !== undefined && m.viewpoints.count === 0)
                     root.allViewpointsCleared()
             }
 

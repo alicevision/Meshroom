@@ -301,6 +301,12 @@ Panel {
                 if (readOnly)
                     return
 
+                // If all the images are selected, we can just remove all of them at once
+                if (sortedModel.selectedIndices.length === m.viewpoints.count) {
+                    removeAllImages()
+                    return
+                }
+
                 var objects = []
                 for (var i = 0; i < sortedModel.selectedIndices.length; i++) {
                     var obj = sortedModel.getObjectAt(sortedModel.selectedIndices[i])

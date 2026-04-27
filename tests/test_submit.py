@@ -102,9 +102,16 @@ def processSubmit(node: Node, graph, tmp_path):
 
 class TestNodeSubmit:
     __test__ = IS_LINUX
-
+    __env__ = {}
+    
     @classmethod
     def setup_class(cls):
+        cls.__env__ = {}
+        for var in ["REZ_REQUEST", "REZ_RESOLVE", "REZ_USED_REQUEST", "REZ_MESHROOM_VERSION"]:
+            if var in os.environ:
+                cls.__env__[var] = os.environ[var]
+                del os.environ[var]
+
         # meshroom.core.initSubmitters()
         submitters = loadSubmitters(meshroomFolder, "submitters")
         for submitter in submitters:
@@ -120,6 +127,9 @@ class TestNodeSubmit:
 
     @classmethod
     def teardown_class(cls):
+        for var, value in cls.__env__.items():
+            os.environ[var] = value
+
         for node in cls.plugin.nodes.values():
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)

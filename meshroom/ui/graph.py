@@ -1413,6 +1413,13 @@ class UIGraph(QObject):
             # After every check we finally remove the attribute
             self.removeAttribute(image)
 
+    @Slot(list)
+    def removeImages(self, images: list):
+        """ Remove a list of images as a single operation. """
+        if not images:
+            return
+        self.push(commands.RemoveSelectedImagesCommand(self._graph, self.cameraInit, images))
+
     @Slot()
     def removeAllImages(self):
         with self.groupedGraphModification("Remove All Images"):

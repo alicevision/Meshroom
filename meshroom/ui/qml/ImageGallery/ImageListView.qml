@@ -24,7 +24,6 @@ ListView {
     property real cellHeight: thumbnailSizeSlider ? thumbnailSizeSlider.value / 2 : 80
 
     // Signals
-    signal removeImageRequest(var attribute)
     signal allViewpointsCleared()
 
     ScrollBar.vertical: MScrollBar {
@@ -68,6 +67,12 @@ ListView {
             if (tempCameraInit !== null && root.currentIndex == 0)
                 _currentScene.selectedViewId = -1
             _currentScene.selectedViewId = root.currentItem.viewpoint.get("viewId").value
+            if (sortedModel && sortedModel.selectedIndex !== root.currentIndex) {
+                sortedModel.selectedIndex = root.currentIndex
+                sortedModel.selectedIndices = [root.currentIndex]
+            }
+        } else {
+            _currentScene.selectedViewId = "-1"
         }
     }
 
@@ -112,6 +117,10 @@ ListView {
             } else if (event.key === Qt.Key_Tab) {
                 if (searchBar)
                     searchBar.forceActiveFocus()
+                event.accepted = true
+            } else if (event.key === Qt.Key_Escape) {
+                if (sortedModel)
+                    sortedModel.selectedIndices = [sortedModel.selectedIndex]
                 event.accepted = true
             }
         }

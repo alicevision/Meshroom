@@ -41,7 +41,7 @@ Panel {
     property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
 
-    signal removeImageRequest(var attribute)
+    signal removeSelectedImagesRequest(var objects)
     signal allViewpointsCleared()
     signal filesDropped(var drop)
 
@@ -53,6 +53,7 @@ Panel {
 
         function onCameraInitChanged() {
             nodesCB.currentIndex = root.cameraInitIndex
+            sortedModel.clearMultiSelection(false)
         }
     }
 
@@ -230,6 +231,43 @@ Panel {
         }
 
         property int selectedIndex: -1
+        property var selectedIndices: []
+
+        function toggleIndex(idx) {
+            var newArr = selectedIndices.slice()
+            var pos = newArr.indexOf(idx)
+            if (pos >= 0) {
+                newArr.splice(pos, 1)
+            } else {
+                newArr.push(idx)
+            }
+            selectedIndices = newArr
+        }
+
+        function selectRange(from, to) {
+            var newArr = []
+            var start = Math.min(from, to)
+            var end = Math.max(from, to)
+            for (var i = start; i <= end; i++) {
+                newArr.push(i)
+            }
+            selectedIndices = newArr
+        }
+
+        function clearMultiSelection(keepPosition) {
+            if (keepPosition) {
+                // Pick the lowest selected index as the landing position; after removal
+                // the next surviving item slides up to that slot.
+                // Clamp to the last remaining item in case the selection was at the tail.
+                var sortedSel = selectedIndices.slice().sort(function(a, b){ return a - b })
+                var remainingCount = count - selectedIndices.length
+                selectedIndex = Math.min(sortedSel[0], remainingCount - 1)
+                selectedIndices = [selectedIndex]
+            } else {
+                selectedIndex = -1
+                selectedIndices = []
+            }
+        }
 
         delegate: ImageDelegate {
             id: imageDelegate
@@ -247,21 +285,93 @@ Panel {
             
             parentModel: sortedModel
 
-            onPressed: {
+            onPressed: function(mouse) {
+                if (mouse.button !== Qt.LeftButton)
+                    return
                 if (layoutLoader.item) {
-                    layoutLoader.item.currentIndex = DelegateModel.filteredIndex
-                    sortedModel.selectedIndex = DelegateModel.filteredIndex
+                    var idx = DelegateModel.filteredIndex
+                    if (mouse.modifiers & Qt.ShiftModifier && sortedModel.selectedIndex >= 0) {
+                        // Range select from last selectedIndex to clicked item
+                        sortedModel.selectRange(sortedModel.selectedIndex, idx)
+                    } else if (mouse.modifiers & Qt.ControlModifier) {
+                        // Toggle this item's selection
+                        sortedModel.toggleIndex(idx)
+                        // If the item is being removed from the selection, then we should return
+                        // before setting the current index: this prevents highlighting the item which is being
+                        // removed, as it could be confusing for the user
+                        if (sortedModel.selectedIndices.indexOf(idx) < 0) {
+                            if (sortedModel.selectedIndices.length === 0) {
+                                // Last item deselected: clear the viewer entirely
+                                sortedModel.selectedIndex = -1
+                                layoutLoader.item.currentIndex = -1
+                                _currentScene.selectedViewId = "-1"
+                            } else if (idx === sortedModel.selectedIndex) {
+                                // The currently viewed item was deselected: move to the
+                                // closest remaining selected item.
+                                var remaining = sortedModel.selectedIndices
+                                var next = remaining[0]
+                                var minDist = Math.abs(remaining[0] - idx)
+                                for (var r = 1; r < remaining.length; r++) {
+                                    var dist = Math.abs(remaining[r] - idx)
+                                    if (dist < minDist) {
+                                        minDist = dist
+                                        next = remaining[r]
+                                    }
+                                }
+                                sortedModel.selectedIndex = next
+                                layoutLoader.item.currentIndex = next
+                            }
+                            return
+                        }
+                    } else {
+                        // Normal click: clear multi-selection, select only this item
+                        sortedModel.selectedIndices = [idx]
+                    }
+                    // Update selectedIndex before currentIndex to prevent onCurrentItemChanged
+                    // from incorrectly resetting the multi-selection
+                    sortedModel.selectedIndex = idx
+                    layoutLoader.item.currentIndex = idx
                 }
             }
 
-            function sendRemoveRequest() {
+            function sendRemoveSelectedRequest() {
                 if (readOnly)
                     return
 
-                root.removeImageRequest(object)
-                
+                // Capture delegate-scope references immediately: this prevents falling into
+                // cases where "sortedModel" is unresolvable because the delegate has been destroyed before
+                // the line accessing "sortedModel" is reached
+                var model = sortedModel
+                var view = root.galleryGrid
+
+                // If all the images are selected, we can just remove all of them at once
+                if (model.selectedIndices.length === m.viewpoints.count) {
+                    removeAllImages()
+                    return
+                }
+
+                var objects = []
+                for (var i = 0; i < model.selectedIndices.length; i++) {
+                    var obj = model.getObjectAt(model.selectedIndices[i])
+                    if (obj)
+                        objects.push(obj)
+                }
+                if (objects.length > 0) {
+                    root.removeSelectedImagesRequest(objects)
+                    model.clearMultiSelection(true)
+
+                    // Restore a sensible position once the model has finished updating
+                    var targetIndex = model.selectedIndex
+                    Qt.callLater(function() {
+                        if (targetIndex >= 0 && view) {
+                            view.currentIndex = targetIndex
+                            view.makeCurrentItemVisible()
+                        }
+                    })
+                }
+
                 // If the last image has been removed, make sure the viewpoints and intrinsics are reset
-                if (m.viewpoints.count === 0)
+                if (m.viewpoints !== undefined && m.viewpoints.count === 0)
                     root.allViewpointsCleared()
             }
 
@@ -270,12 +380,12 @@ Panel {
                 _currentScene.selectedViewId = "-1"
             }
 
-            onRemoveRequest: sendRemoveRequest()
+            onRemoveSelectedRequest: sendRemoveSelectedRequest()
             Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Delete && event.modifiers === Qt.ShiftModifier) {
                     removeAllImages()
                 } else if (event.key === Qt.Key_Delete) {
-                    sendRemoveRequest()
+                    sendRemoveSelectedRequest()
                 }
             }
             onRemoveAllImagesRequest: {
@@ -364,7 +474,6 @@ Panel {
                     item.thumbnailSizeSlider = thumbnailSizeSlider
 
                     // Connect signals
-                    item.removeImageRequest.connect(root.removeImageRequest)
                     item.allViewpointsCleared.connect(root.allViewpointsCleared)
                     
                     // Restore currentIndex (before connecting signals to avoid unwanted selection change)

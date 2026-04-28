@@ -296,6 +296,33 @@ Panel {
                     } else if (mouse.modifiers & Qt.ControlModifier) {
                         // Toggle this item's selection
                         sortedModel.toggleIndex(idx)
+                        // If the item is being removed from the selection, then we should return
+                        // before setting the current index: this prevents highlighting the item which is being
+                        // removed, as it could be confusing for the user
+                        if (sortedModel.selectedIndices.indexOf(idx) < 0) {
+                            if (sortedModel.selectedIndices.length === 0) {
+                                // Last item deselected: clear the viewer entirely
+                                sortedModel.selectedIndex = -1
+                                layoutLoader.item.currentIndex = -1
+                                _currentScene.selectedViewId = "-1"
+                            } else if (idx === sortedModel.selectedIndex) {
+                                // The currently viewed item was deselected: move to the
+                                // closest remaining selected item.
+                                var remaining = sortedModel.selectedIndices
+                                var next = remaining[0]
+                                var minDist = Math.abs(remaining[0] - idx)
+                                for (var r = 1; r < remaining.length; r++) {
+                                    var dist = Math.abs(remaining[r] - idx)
+                                    if (dist < minDist) {
+                                        minDist = dist
+                                        next = remaining[r]
+                                    }
+                                }
+                                sortedModel.selectedIndex = next
+                                layoutLoader.item.currentIndex = next
+                            }
+                            return
+                        }
                     } else {
                         // Normal click: clear multi-selection, select only this item
                         sortedModel.selectedIndices = [idx]

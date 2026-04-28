@@ -71,6 +71,8 @@ ListView {
                 sortedModel.selectedIndex = root.currentIndex
                 sortedModel.selectedIndices = [root.currentIndex]
             }
+        } else {
+            _currentScene.selectedViewId = "-1"
         }
     }
 

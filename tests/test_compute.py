@@ -8,6 +8,8 @@ TODO : We could directly test by launching the executable (`desc.node._MESHROOM_
 
 import os
 import re
+import shlex
+from types import SimpleNamespace
 from pathlib import Path
 import logging
 
@@ -158,6 +160,33 @@ class TestNodeLogger:
                 content = f.read()
                 reg = re.compile(self.logPrefix + "TestNodeC_1")
                 assert len(reg.findall(content)) == 1
+
+    def test_processChunkInEnvironment_quotesGraphFilepathWithSpaces(self, tmp_path):
+        graphFilepath = Path(tmp_path, "project with spaces", "scene with spaces.mg")
+        graphFilepath.parent.mkdir()
+
+        nodeDesc = desc.Node()
+        executed = {}
+
+        def executeChunkCommandLine(chunk, cmd, env=None):
+            executed["cmd"] = cmd
+            executed["env"] = env
+
+        nodeDesc.executeChunkCommandLine = executeChunkCommandLine
+        plugin = SimpleNamespace(runtimeEnv=None, commandPrefix="", commandSuffix="")
+        node = SimpleNamespace(
+            name="TestNode_1",
+            graph=SimpleNamespace(filepath=graphFilepath.as_posix()),
+            nodeDesc=SimpleNamespace(pythonExecutable="python", plugin=plugin),
+            getChunks=lambda: [object(), object()],
+        )
+        chunk = SimpleNamespace(node=node, range=SimpleNamespace(iteration=1))
+
+        nodeDesc.processChunkInEnvironment(chunk)
+
+        assert f'"{graphFilepath.as_posix()}"' in executed["cmd"]
+        assert shlex.split(executed["cmd"])[2] == graphFilepath.as_posix()
+        assert "--iteration 1" in executed["cmd"]
 
 
 class TestLockUpdates:

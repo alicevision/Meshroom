@@ -9,10 +9,41 @@ import Controls 1.0
 Page {
     id: root
 
+    property bool isLoading: false
+
+    // Schedule an action to run after the current frame has been rendered and
+    // displayed, so that visual feedback (highlight, spinner) is visible before
+    // the UI thread is blocked by a heavy synchronous operation.
+    // Uses _window (the ApplicationWindow id from main.qml) since root.window
+    // is not reliably available for Page items inside a StackView.
+    function executeAfterFrameRendered(action, params = undefined) {
+        function onFrame() {
+            _window.frameSwapped.disconnect(onFrame)
+            if (params === undefined)
+                action()
+            else
+                action(params)
+        }
+        _window.frameSwapped.connect(onFrame)
+    }
+
+    function openProject(path) {
+        mainStack.push("Application.qml")
+        if (_currentScene.load(path)) {
+            MeshroomApp.addRecentProjectFile(path)
+        } else {
+            root.isLoading = false
+            homepageGridView.loadingIndex = -1
+        }
+    }
+
     onVisibleChanged: {
         logo.playing = false
         if (visible) {
             logo.playing = true
+            isLoading = false
+            homepageGridView.loadingIndex = -1
+            pipelinesListView.loadingIndex = -1
         }
     }
 
@@ -242,6 +273,8 @@ Page {
                     id: pipelinesListView
                     visible: tabPanel.currentTab === 0
 
+                    property int loadingIndex: -1
+
                     anchors.fill: parent
                     anchors.margins: 10
 
@@ -251,20 +284,44 @@ Page {
                         id: pipelineDelegate
                         padding: 10
                         width: pipelinesListView.width
+                        enabled: !root.isLoading || index === pipelinesListView.loadingIndex
+                        opacity: (!root.isLoading || index === pipelinesListView.loadingIndex) ? 1.0 : 0.4
 
-                        contentItem: Label {
-                            id: pipeline
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                            text: modelData["name"]
+                        contentItem: RowLayout {
+                            Label {
+                                id: pipeline
+                                Layout.fillWidth: true
+                                horizontalAlignment: Text.AlignLeft
+                                verticalAlignment: Text.AlignVCenter
+                                text: modelData["name"]
+                            }
+                            BusyIndicator {
+                                Layout.preferredWidth: 24
+                                Layout.preferredHeight: 24
+                                running: index === pipelinesListView.loadingIndex && root.isLoading
+                                visible: running
+                            }
+                        }
+
+                        // Highlight overlay shown when this pipeline is being loaded
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.color: palette.highlight
+                            border.width: 2
+                            visible: root.isLoading && index === pipelinesListView.loadingIndex
                         }
 
                         Connections {
                             target: pipelineDelegate
                             function onClicked() {
-                                // Open pipeline
-                                mainStack.push("Application.qml")
-                                _currentScene.new(modelData["path"])
+                                root.isLoading = true
+                                pipelinesListView.loadingIndex = index
+                                let path = modelData["path"]
+                                root.executeAfterFrameRendered(function() {
+                                    mainStack.push("Application.qml")
+                                    _currentScene.new(path)
+                                })
                             }
                         }
                     }
@@ -275,6 +332,8 @@ Page {
                     visible: tabPanel.currentTab === 1
                     anchors.fill: parent
                     anchors.topMargin: cellHeight * 0.1
+
+                    property int loadingIndex: -1
 
                     cellWidth: 195
                     cellHeight: cellWidth
@@ -311,6 +370,7 @@ Page {
 
                         width: homepageGridView.cellWidth
                         height: homepageGridView.cellHeight
+                        opacity: (!root.isLoading || index === homepageGridView.loadingIndex) ? 1.0 : 0.4
 
                         property var source: modelData["thumbnail"] ? Filepath.stringToUrl(modelData["thumbnail"]) : ""
                         property int retryCount: 0
@@ -387,6 +447,8 @@ Page {
 
                                 onClicked: function(mouse) {
 
+                                    if (root.isLoading) return
+
                                     if (mouse.button === Qt.RightButton) {
 
                                         if (!modelData["path"]) { return }
@@ -403,11 +465,10 @@ Page {
                                     } 
                                     
                                     else {
-                                        // Open project
-                                        mainStack.push("Application.qml")
-                                        if (_currentScene.load(modelData["path"])) {
-                                            MeshroomApp.addRecentProjectFile(modelData["path"])
-                                        }
+                                        root.isLoading = true
+                                        homepageGridView.loadingIndex = index
+                                        let path = modelData["path"]
+                                        root.executeAfterFrameRendered(openProject, path)
                                     }
                                 }
                             }
@@ -416,13 +477,13 @@ Page {
                                 id: projectContextMenu
 
                                 MenuItem {
-                                    enabled: projectDelegate.fileExists
+                                    enabled: projectDelegate.fileExists && !root.isLoading
                                     text: "Open"
-                                    onTriggered: {                                        
-                                        if (_currentScene.load(modelData["path"])) {
-                                            mainStack.push("Application.qml")
-                                            MeshroomApp.addRecentProjectFile(modelData["path"])
-                                        }
+                                    onTriggered: {
+                                        root.isLoading = true
+                                        homepageGridView.loadingIndex = index
+                                        let path = modelData["path"]
+                                        root.executeAfterFrameRendered(openProject, path)
                                     }
                                 }
 
@@ -462,8 +523,17 @@ Page {
 
                             BusyIndicator {
                                 anchors.centerIn: parent
-                                running: homepageGridView.visible && projectContent.thumbnailBusy
-                                visible: homepageGridView.visible && projectContent.thumbnailBusy
+                                running: (homepageGridView.visible && projectContent.thumbnailBusy) || (root.isLoading && index === homepageGridView.loadingIndex)
+                                visible: running
+                            }
+
+                            // Highlight overlay shown when this project is being loaded
+                            Rectangle {
+                                anchors.fill: parent
+                                color: "transparent"
+                                border.color: palette.highlight
+                                border.width: 2
+                                visible: root.isLoading && index === homepageGridView.loadingIndex
                             }
                         }
                         Label {

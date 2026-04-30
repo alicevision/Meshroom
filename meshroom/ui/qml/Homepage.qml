@@ -16,10 +16,13 @@ Page {
     // the UI thread is blocked by a heavy synchronous operation.
     // Uses _window (the ApplicationWindow id from main.qml) since root.window
     // is not reliably available for Page items inside a StackView.
-    function executeAfterFrameRendered(action) {
+    function executeAfterFrameRendered(action, params = undefined) {
         function onFrame() {
             _window.frameSwapped.disconnect(onFrame)
-            action()
+            if (params === undefined)
+                action()
+            else
+                action(params)
         }
         _window.frameSwapped.connect(onFrame)
     }

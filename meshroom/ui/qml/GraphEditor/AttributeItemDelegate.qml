@@ -844,6 +844,7 @@ RowLayout {
                             id: labelMA
                             anchors.fill: parent
                             hoverEnabled: true
+                            onClicked: groupItem.expanded = !groupItem.expanded
                             onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
                         }
                     }

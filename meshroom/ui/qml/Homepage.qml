@@ -27,6 +27,16 @@ Page {
         _window.frameSwapped.connect(onFrame)
     }
 
+    function openProject(path) {
+        mainStack.push("Application.qml")
+        if (_currentScene.load(path)) {
+            MeshroomApp.addRecentProjectFile(path)
+        } else {
+            root.isLoading = false
+            homepageGridView.loadingIndex = -1
+        }
+    }
+
     onVisibleChanged: {
         logo.playing = false
         if (visible) {
@@ -458,15 +468,7 @@ Page {
                                         root.isLoading = true
                                         homepageGridView.loadingIndex = index
                                         let path = modelData["path"]
-                                        root.executeAfterFrameRendered(function() {
-                                            mainStack.push("Application.qml")
-                                            if (_currentScene.load(path)) {
-                                                MeshroomApp.addRecentProjectFile(path)
-                                            } else {
-                                                root.isLoading = false
-                                                homepageGridView.loadingIndex = -1
-                                            }
-                                        })
+                                        root.executeAfterFrameRendered(openProject, path)
                                     }
                                 }
                             }
@@ -481,15 +483,7 @@ Page {
                                         root.isLoading = true
                                         homepageGridView.loadingIndex = index
                                         let path = modelData["path"]
-                                        root.executeAfterFrameRendered(function() {
-                                            mainStack.push("Application.qml")
-                                            if (_currentScene.load(path)) {
-                                                MeshroomApp.addRecentProjectFile(path)
-                                            } else {
-                                                root.isLoading = false
-                                                homepageGridView.loadingIndex = -1
-                                            }
-                                        })
+                                        root.executeAfterFrameRendered(openProject, path)
                                     }
                                 }
 

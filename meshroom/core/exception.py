@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from typing import Dict
 
 class MeshroomException(Exception):
     """ Base class for Meshroom exceptions """
@@ -25,7 +26,7 @@ class GraphCompatibilityError(GraphException):
         filepath: The path to the file that caused the error.
         issues: A dictionnary of node names and their respective compatibility issues.
     """
-    def __init__(self, filepath, issues: dict[str, str]) -> None:
+    def __init__(self, filepath, issues: Dict[str, str]) -> None:
         self.filepath = filepath
         self.issues = issues
         msg = f"Compatibility issues found when loading {self.filepath}: {self.issues}"

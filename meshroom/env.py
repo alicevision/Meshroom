@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from enum import Enum
 import sys
 import tempfile
-from typing import Any, Type
+from typing import Any, List, Type
 
 meshroomFolder = os.path.dirname(__file__)
 
@@ -61,7 +61,7 @@ class EnvVar(Enum):
         return EnvVar._cast(value, envVar.value.valueType)
 
     @staticmethod
-    def getList(envVar: "EnvVar") -> list[Any]:
+    def getList(envVar: "EnvVar") -> List[Any]:
         """Get the value of `envVar` as a list of non-empty strings."""
         paths = EnvVar.get(envVar).split(os.pathsep)
         # filter empty values

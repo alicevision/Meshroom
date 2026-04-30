@@ -213,7 +213,8 @@ class Plugin(BaseObject):
             logging.error(f"Error while accessing the configuration file for {self.name}: {err}")
 
         # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
-        self._configFullEnv = self._configEnv | os.environ
+        # Python 3.9+ version: self._configFullEnv = self._configEnv | os.environ
+        self._configFullEnv = {**self._configEnv, **os.environ}
 
 
 class NodeDescProviderStatus(Enum):

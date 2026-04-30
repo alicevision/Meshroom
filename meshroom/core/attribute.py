@@ -334,7 +334,8 @@ class Attribute(BaseObject):
         if not self.isInput or not self._linkExpression:
             return
 
-        if not (graph := self.node.graph):
+        graph = self.node.graph
+        if not graph:
             return
 
         link = self._linkExpression[1:-1]
@@ -683,7 +684,8 @@ class Attribute(BaseObject):
                 - a list containing pairs of the source and destination Attributes (as lists) for every created edge
                 - a list containing pairs of the source and destination Attributes (as lists) for every deleted edge
         """
-        if not (graph := self.node.graph):
+        graph = self.node.graph
+        if not graph:
             return [], []
 
         deletedEdges = []
@@ -703,7 +705,8 @@ class Attribute(BaseObject):
         Returns:
             A list of all the Edge objects that were deleted during the disconnection.
         """
-        if not (graph := self.node.graph):
+        graph = self.node.graph
+        if not graph:
             return []
 
         deletedEdges = []
@@ -873,7 +876,8 @@ class ChoiceParam(Attribute):
         return len(self.getValues())
 
     def getValues(self):
-        if (linkParam := self._getInputLink()) is not None:
+        linkParam = self._getInputLink()
+        if linkParam is not None:
             return linkParam.getValues()
         return self._values if self._values is not None else self._desc._values
 

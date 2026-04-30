@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, TYPE_CHECKING, Union
+from typing import Any, Dict, List, Tuple, TYPE_CHECKING, Union
 
 import meshroom
 from meshroom.core import Version
@@ -37,7 +37,7 @@ class GraphIO:
         NodesPositions = "nodesPositions"
 
     @staticmethod
-    def getFeaturesForVersion(fileVersion: Union[str, Version]) -> tuple["GraphIO.Features", ...]:
+    def getFeaturesForVersion(fileVersion: Union[str, Version]) -> Tuple["GraphIO.Features", ...]:
         """Return the list of supported features based on a file version.
 
         Args:
@@ -79,7 +79,7 @@ class GraphSerializer:
         }
 
     @property
-    def nodes(self) -> list[Node]:
+    def nodes(self) -> List[Node]:
         return self._graph.nodes
 
     def serializeHeader(self) -> dict:
@@ -104,13 +104,13 @@ class GraphSerializer:
             }
         return header
 
-    def _getNodeTypesVersions(self) -> dict[str, str]:
+    def _getNodeTypesVersions(self) -> Dict[str, str]:
         """Get registered versions of each node types in `nodes`, excluding CompatibilityNode instances."""
         nodeTypes = {node.nodeDesc.__class__ for node in self.nodes if isinstance(node, Node)}
         nodeTypesVersions = {
-            nodeType.__name__: version
+            nodeType.__name__: meshroom.core.nodeVersion(nodeType)
             for nodeType in nodeTypes
-            if (version := meshroom.core.nodeVersion(nodeType)) is not None
+            if meshroom.core.nodeVersion(nodeType) is not None
         }
         # Sort them by name (to avoid random order changing from one save to another).
         return dict(sorted(nodeTypesVersions.items()))
@@ -172,12 +172,12 @@ class TemplateGraphSerializer(GraphSerializer):
 class PartialGraphSerializer(GraphSerializer):
     """Serializer to serialize a partial graph (a subset of nodes)."""
 
-    def __init__(self, graph: "Graph", nodes: list[Node]):
+    def __init__(self, graph: "Graph", nodes: List[Node]):
         super().__init__(graph)
         self._nodes = nodes
 
     @property
-    def nodes(self) -> list[Node]:
+    def nodes(self) -> List[Node]:
         """Override to consider only the subset of nodes."""
         return self._nodes
 
@@ -225,9 +225,9 @@ class PartialGraphSerializer(GraphSerializer):
             # Recusively serialize each child of the ListAttribute, skipping those for which the attribute
             # serialization logic above returns None.
             return [
-                exportValue
+                self._serializeAttribute(child)
                 for child in attribute
-                if (exportValue := self._serializeAttribute(child)) is not None
+                if self._serializeAttribute(child) is not None
             ]
 
         if isinstance(attribute, AnySet):

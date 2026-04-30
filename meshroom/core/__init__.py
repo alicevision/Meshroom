@@ -8,6 +8,7 @@ from pathlib import Path
 import pkgutil
 import sys
 import traceback
+from typing import Dict, List
 import uuid
 
 try:
@@ -34,8 +35,8 @@ sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
 pluginManager: PluginManager = PluginManager()
-submitters: dict[str, BaseSubmitter] = {}
-pipelineTemplates: dict[str, str] = {}
+submitters: Dict[str, BaseSubmitter] = {}
+pipelineTemplates: Dict[str, str] = {}
 
 
 def hashValue(value) -> str:
@@ -73,7 +74,7 @@ def add_to_path(p, packageName=None, pluginUid: str = None):
                             attr.__module__ = uniqueModName
 
 
-def loadClasses(folder: str, packageName: str, classType: type, pluginUid: str = None) -> list[type]:
+def loadClasses(folder: str, packageName: str, classType: type, pluginUid: str = None) -> List[type]:
     """
     Go over the Python module named "packageName" located in "folder" to find files
     that contain classes of type "classType" and return these classes in a list.
@@ -162,7 +163,7 @@ def loadClasses(folder: str, packageName: str, classType: type, pluginUid: str =
     return classes
 
 
-def loadClassesNodes(folder: str, packageName: str, pluginUid: str) -> list[NodeDescProvider]:
+def loadClassesNodes(folder: str, packageName: str, pluginUid: str) -> List[NodeDescProvider]:
     """
     Return the list of all the NodeDescProviders that were created following the search of the
     Python module named "packageName" located in the folder "folder".
@@ -181,7 +182,7 @@ def loadClassesNodes(folder: str, packageName: str, pluginUid: str) -> list[Node
     return loadClasses(folder, packageName, desc.BaseNode, pluginUid=pluginUid)
 
 
-def loadClassesSubmitters(folder: str, packageName: str) -> list[BaseSubmitter]:
+def loadClassesSubmitters(folder: str, packageName: str) -> List[BaseSubmitter]:
     """
     Return the list of all the submitters that were found during the search of the
     Python module named "packageName" that located in the folder "folder".
@@ -345,7 +346,7 @@ def nodeVersion(nodeDesc: desc.Node, default=None):
     return moduleVersion(nodeDesc.__module__, default)
 
 
-def loadNodes(folder, packageName, pluginUid) -> list[NodeDescProvider]:
+def loadNodes(folder, packageName, pluginUid) -> List[NodeDescProvider]:
     if not os.path.isdir(folder):
         logging.error(f"Node folder '{folder}' does not exist.")
         return []
@@ -354,7 +355,7 @@ def loadNodes(folder, packageName, pluginUid) -> list[NodeDescProvider]:
     return nodes
 
 
-def loadAllNodes(folder) -> list[Plugin]:
+def loadAllNodes(folder) -> List[Plugin]:
     plugins = []
     for _, package, ispkg in pkgutil.iter_modules([folder]):
         if ispkg:
@@ -369,7 +370,7 @@ def loadAllNodes(folder) -> list[Plugin]:
     return plugins
 
 
-def loadPluginFolder(folder, userPlugin: bool = False) -> list[Plugin]:
+def loadPluginFolder(folder, userPlugin: bool = False) -> List[Plugin]:
     if not os.path.isdir(folder):
         logging.info(f"Plugin folder '{folder}' does not exist.")
         return []
@@ -395,7 +396,7 @@ def registerSubmitter(s: BaseSubmitter):
     submitters[s.name] = s
 
 
-def loadSubmitters(folder, packageName) -> list[BaseSubmitter]:
+def loadSubmitters(folder, packageName) -> List[BaseSubmitter]:
     if not os.path.isdir(folder):
         logging.error(f"Submitters folder '{folder}' does not exist.")
         return
@@ -403,7 +404,7 @@ def loadSubmitters(folder, packageName) -> list[BaseSubmitter]:
     return loadClassesSubmitters(folder, packageName)
 
 
-def loadAllSubmitters(folder) -> list[BaseSubmitter]:
+def loadAllSubmitters(folder) -> List[BaseSubmitter]:
     submitters = []
     for _, package, ispkg in pkgutil.iter_modules([folder]):
         if ispkg:

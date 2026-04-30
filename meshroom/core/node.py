@@ -14,7 +14,7 @@ import time
 import uuid
 from collections import namedtuple, OrderedDict
 from enum import Enum, IntEnum, auto
-from typing import Callable, Optional, List, Union
+from typing import Callable, Dict, Optional, List, Union
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
@@ -483,7 +483,7 @@ class LogManager:
             return logging.NOTSET
 
 
-runningProcesses: dict[str, "NodeChunk"] = {}
+runningProcesses: Dict[str, "NodeChunk"] = {}
 
 
 @atexit.register
@@ -2069,10 +2069,10 @@ class BaseNode(BaseObject):
         else:
             return "NONE"
 
-    def getChunks(self) -> list[NodeChunk]:
+    def getChunks(self) -> List[NodeChunk]:
         return self._chunks
 
-    def getAllChunks(self) -> list[NodeChunk]:
+    def getAllChunks(self) -> List[NodeChunk]:
         chunks = []
         if self.hasPreprocessChunk:
             chunks.append(self._preprocessChunk)

@@ -877,4 +877,16 @@ Item {
             }
         }
     }
+
+    /// Set to true by the GraphEditor's DropArea when files are dragged over this InitNode
+    property bool initNodeDragHover: false
+
+    // Highlight overlay shown when files are dragged over this InitNode
+    Rectangle {
+        anchors.fill: mouseArea
+        visible: root.node && root.node.isInitNode && root.initNodeDragHover
+        color: Colors.sysPalette.highlight
+        opacity: 0.35
+        radius: background.radius
+    }
 }

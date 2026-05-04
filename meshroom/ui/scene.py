@@ -833,7 +833,7 @@ class Scene(UIGraph):
             node (Node): the InitNode to initialize
             urls (list of QUrl): the list of dropped file/directory URLs
         """
-        if not isinstance(node.nodeDesc, meshroom.core.desc.InitNode):
+        if not node.isInitNode:
             logging.warning(f"initializeNode called on non-InitNode '{node.name}' — ignoring.")
             return
         inputs = [localFile for url in urls if (localFile := url.toLocalFile())]

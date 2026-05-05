@@ -130,8 +130,13 @@ class _NodeCreator:
         )
 
     def _checkAttributesAreCompatibleWithDescription(self) -> bool:
+        # Dynamic inputs are managed separately and should not be checked
+        # against the node descriptor's attribute descriptions.
+        serializedDynamicInputNames = set(self.nodeData.get('dynamicInputs', {}).keys())
+        staticInputs = {k: v for k, v in self.inputs.items()
+                        if k not in serializedDynamicInputNames}
         return (
-            self._checkAttributesCompatibility(self.nodeDesc.inputs, self.inputs)
+            self._checkAttributesCompatibility(self.nodeDesc.inputs, staticInputs)
             and self._checkAttributesCompatibility(self.nodeDesc.internalInputs,
                                                    self.internalInputs)
             and self._checkAttributesCompatibility(self.nodeDesc.outputs, self.outputs)
@@ -143,10 +148,22 @@ class _NodeCreator:
             if isinstance(attr, desc.PushButtonParam):
                 # PushButtonParam are not serialized has they do not hold a value.
                 return False
+            if isinstance(attr, desc.DynamicAttribute):
+                # DynamicAttribute itself is not serialized; its generated children are.
+                return False
             return True
 
         refAttributes = filter(serializedInput, self.nodeDesc.inputs)
-        return self._checkAttributesNamesStrictlyMatch(refAttributes, self.inputs)
+
+        # Collect static expected names
+        expectedNames = {attr.name for attr in refAttributes}
+
+        # Add dynamically generated input names from serialized data
+        serializedDynamicInputs = self.nodeData.get('dynamicInputs', {})
+        expectedNames.update(serializedDynamicInputs.keys())
+
+        actualNames = set(self.inputs.keys())
+        return expectedNames == actualNames
 
     def _checkOutputAttributesNames(self) -> bool:
         def serializedOutput(attr: desc.Attribute) -> bool:
@@ -188,6 +205,7 @@ class _NodeCreator:
             self.nodeType,
             position=self.position,
             uid=self.uid,
+            dynamicInputs=self.nodeData.get('dynamicInputs', {}),
             **self.inputs,
             **internalInputs,
             **self.outputs,

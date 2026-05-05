@@ -25,7 +25,7 @@ from PySide6.QtCore import (
 
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
-from meshroom.core.attribute import Attribute, ListAttribute, ShapeAttribute
+from meshroom.core.attribute import Attribute, ListAttribute, ShapeAttribute, DynamicAttribute
 from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
@@ -1251,7 +1251,10 @@ class UIGraph(QObject):
 
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
-        if isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
+        if isinstance(dst, DynamicAttribute):
+            with self.groupedGraphModification(f"Connect to DynamicAttribute {dst.fullName}"):
+                self.push(commands.AddDynamicInputCommand(self._graph, src, dst))
+        elif isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
             self._addEdge(src.at(0), dst)
         elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
             with self.groupedGraphModification(f"Insert and Add Edge on {dst.fullName}"):
@@ -1272,6 +1275,10 @@ class UIGraph(QObject):
             if isinstance(edge.dst.root, ListAttribute):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
                 self.removeAttribute(edge.dst)
+                return
+            if getattr(edge.dst, '_isDynamic', False):
+                self.push(commands.RemoveEdgeCommand(self._graph, edge))
+                self.push(commands.RemoveDynamicInputCommand(self._graph, edge.dst))
                 return
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 

@@ -28,6 +28,7 @@ RowLayout {
 
     readonly property bool isList: attribute && attribute.type === "ListAttribute"
     readonly property bool isGroup: attribute && attribute.type === "GroupAttribute"
+    readonly property bool isDynamic: attribute && attribute.type === "DynamicAttribute"
     readonly property bool isConnected: attribute.hasAnyInputLinks || attribute.hasAnyOutputLinks
 
     signal childPinCreated(var childAttribute, var pin)
@@ -80,6 +81,8 @@ RowLayout {
             border.color: {
                 if (innerInputAnchor.hasConnectedChildren)
                     return Colors.sysPalette.text
+                if (root.isDynamic)
+                    return Colors.sysPalette.highlight
                 return Colors.sysPalette.mid
             }
             color: Colors.sysPalette.base
@@ -98,6 +101,7 @@ RowLayout {
                     return false
                 }
                 visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || hasConnectedChildren ||
+                        root.isDynamic ||
                         (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
                 radius: root.isList ? 0 : 2
                 anchors.fill: parent
@@ -107,6 +111,8 @@ RowLayout {
                         return Colors.sysPalette.highlight
                     if (hasConnectedChildren)
                         return Colors.sysPalette.mid
+                    if (root.isDynamic)
+                        return Colors.sysPalette.highlight
                     return Colors.sysPalette.text
                 }
             }
@@ -284,7 +290,7 @@ RowLayout {
             label.elide: hovered ? Text.ElideNone : Text.ElideMiddle
             label.horizontalAlignment: root.attribute && root.attribute.isOutput ? Text.AlignRight : Text.AlignLeft
             label.verticalAlignment: Text.AlignVCenter
-            label.visible: true
+            label.visible: !root.isDynamic
 
             // Icon
             iconText: {

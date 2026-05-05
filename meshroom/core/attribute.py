@@ -1687,3 +1687,17 @@ class ShapeListAttribute(ListAttribute):
     isVisible = Property(bool, _getVisible, _setVisible, notify=shapeListChanged)
     # Override hasDisplayableShape property.
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
+
+
+class DynamicAttribute(Attribute):
+    """
+    Instance of a DynamicAttribute descriptor.
+    A DynamicAttribute is a special input pin that accepts connections of any type.
+    When connected, a new sibling attribute matching the connected attribute's type
+    is created on the node and the link is established.
+    The DynamicAttribute itself stays empty and is always available for new connections.
+    """
+
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        """Accept connections of any type."""
+        return True

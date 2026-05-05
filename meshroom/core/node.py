@@ -2245,7 +2245,7 @@ class Node(BaseNode):
     """
     A standard Graph node based on a node type.
     """
-    def __init__(self, nodeType, position=None, parent=None, uid=None, **kwargs):
+    def __init__(self, nodeType, position=None, parent=None, uid=None, dynamicInputs=None, **kwargs):
         super().__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
 
         if not self.nodeDesc:
@@ -2253,9 +2253,19 @@ class Node(BaseNode):
 
         self.packageName = self.nodeDesc.packageName
 
+        # _dynamicInputs maps generated attribute name -> DynamicAttribute name
+        self._dynamicInputs = {}
+
         for attrDesc in self.nodeDesc.inputs:
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
                                                   isOutput=False, node=self))
+
+        # Restore dynamic inputs that were created in a previous session
+        if dynamicInputs:
+            for attrName, (typeName, dynAttrName) in dynamicInputs.items():
+                if not self.hasAttribute(attrName) and self.hasAttribute(dynAttrName):
+                    self._insertDynamicInput(attrName, typeName, dynAttrName,
+                                             kwargs.get(attrName, None))
 
         for attrDesc in self.nodeDesc.outputs:
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
@@ -2290,6 +2300,97 @@ class Node(BaseNode):
                 continue
             attr = self.attribute(k)
             attr.value = v
+
+    def _insertDynamicInput(self, attrName, typeName, dynAttrName, value=None):
+        """
+        Create a dynamic input attribute of the given type and insert it before
+        the DynamicAttribute it belongs to.
+
+        Args:
+            attrName: Name for the new attribute.
+            typeName: Class name of the descriptor to use (e.g. "File", "IntParam").
+            dynAttrName: Name of the DynamicAttribute that owns this input.
+            value: Optional initial value (usually a link expression).
+        """
+        descClass = getattr(desc, typeName, None)
+        if descClass is None:
+            logging.warning(
+                f"Unknown attribute type '{typeName}' for dynamic input '{attrName}' "
+                f"on node '{self._name}'"
+            )
+            return
+
+        attrDesc = descClass(name=attrName)
+        newAttr = attributeFactory(attrDesc, value, isOutput=False, node=self)
+        newAttr._isDynamic = True
+
+        # Find the position of the owning DynamicAttribute and insert before it
+        dynAttr = self._attributes.get(dynAttrName)
+        dynIdx = next(
+            (i for i, a in enumerate(self._attributes) if a is dynAttr),
+            len(list(self._attributes)),
+        )
+        self._attributes.insert(dynIdx, newAttr)
+
+        self._dynamicInputs[attrName] = dynAttrName
+
+        if newAttr.invalidate:
+            self.invalidatingAttributes.add(newAttr)
+
+        return newAttr
+
+    def addDynamicInput(self, attrName, srcDesc, dynAttr):
+        """
+        Create and register a dynamic input attribute based on *srcDesc* and
+        insert it before *dynAttr* in the node's attribute list.
+
+        Args:
+            attrName: Unique name for the new attribute.
+            srcDesc: Attribute descriptor to clone (the type of the created attr).
+            dynAttr: The DynamicAttribute before which to insert the new attr.
+
+        Returns:
+            The newly created Attribute instance.
+        """
+        import copy as _copy
+
+        descCopy = _copy.deepcopy(srcDesc)
+        descCopy._name = attrName
+
+        newAttr = attributeFactory(descCopy, None, isOutput=False, node=self)
+        newAttr._isDynamic = True
+
+        dynIdx = next(
+            (i for i, a in enumerate(self._attributes) if a is dynAttr),
+            len(list(self._attributes)),
+        )
+        self._attributes.insert(dynIdx, newAttr)
+
+        self._dynamicInputs[attrName] = dynAttr.name
+
+        if newAttr.invalidate:
+            self.invalidatingAttributes.add(newAttr)
+
+        return newAttr
+
+    def removeDynamicInput(self, attrName):
+        """
+        Remove the dynamic input attribute with the given name from this node.
+
+        Args:
+            attrName: Name of the dynamic input to remove.
+        """
+        if attrName not in self._dynamicInputs:
+            return
+
+        attr = self._attributes.get(attrName)
+        if attr is None:
+            return
+
+        self.invalidatingAttributes.discard(attr)
+        self._attributes.remove(attr)
+        del self._dynamicInputs[attrName]
+
 
     def upgradeAttributeValues(self, values):
         # initialize attribute values
@@ -2330,6 +2431,13 @@ class Node(BaseNode):
         outputs = ({k: v.getSerializedValue() for k, v in self._attributes.objects.items()
                     if v.isOutput and not v.desc.isDynamicValue})
 
+        # Serialize dynamically created inputs: {attrName: [typeName, dynAttrName]}
+        dynamicInputs = {
+            name: [self._attributes.objects[name]._desc.__class__.__name__, dynAttrName]
+            for name, dynAttrName in self._dynamicInputs.items()
+            if name in self._attributes.objects
+        }
+
         return {
             'nodeType': self.nodeType,
             'position': self._position,
@@ -2342,6 +2450,7 @@ class Node(BaseNode):
             'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
             'outputs': outputs,
+            'dynamicInputs': dynamicInputs,
         }
 
     def _resetChunks(self):

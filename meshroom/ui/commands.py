@@ -469,7 +469,122 @@ class AddEdgeCommand(GraphCommand):
         return True
 
 
+class AddDynamicInputCommand(GraphCommand):
+    """
+    Create a new dynamic input attribute on a node by connecting a source attribute
+    to a DynamicAttribute.
+
+    When executed, a new attribute of the same type as the source is created on the
+    node (inserted before the DynamicAttribute) and the edge is established.
+    On undo, the edge is removed and the created attribute is deleted.
+    """
+
+    def __init__(self, graph, src, dynamicAttr, parent=None):
+        super().__init__(graph, parent)
+        self.srcAttrName = src.fullName
+        self.dynamicAttrName = dynamicAttr.fullName
+        self.newAttrFullName = None
+        self.setText(f"Connect '{src.fullName}' to DynamicAttribute '{dynamicAttr.fullName}'")
+
+    def redoImpl(self) -> bool:
+        import copy as _copy
+
+        srcAttr = self.graph.attribute(self.srcAttrName)
+        dynamicAttr = self.graph.attribute(self.dynamicAttrName)
+        node = dynamicAttr.node
+
+        # Generate a unique name derived from the DynamicAttribute's name
+        baseName = dynamicAttr.name
+        idx = 0
+        while node.hasAttribute(f"{baseName}_{idx}"):
+            idx += 1
+        newName = f"{baseName}_{idx}"
+
+        # Create the new attribute on the node
+        newAttr = node.addDynamicInput(newName, srcAttr._desc, dynamicAttr)
+        self.newAttrFullName = newAttr.fullName
+
+        # Connect source to the new attribute
+        try:
+            srcAttr.connectTo(newAttr)
+        except Exception:
+            node.removeDynamicInput(newName)
+            self.newAttrFullName = None
+            return False
+
+        return True
+
+    def undoImpl(self) -> bool:
+        if not self.newAttrFullName:
+            return True
+
+        newAttr = self.graph.attribute(self.newAttrFullName)
+        node = newAttr.node
+
+        # Disconnect the edge
+        newAttr.disconnectEdge()
+
+        # Remove the dynamic attribute from the node
+        node.removeDynamicInput(newAttr.name)
+        self.newAttrFullName = None
+        return True
+
+
 class RemoveEdgeCommand(GraphCommand):
+    def __init__(self, graph, edge, parent=None):
+        super().__init__(graph, parent)
+        self.srcAttr = edge.src.fullName
+        self.dstAttr = edge.dst.fullName
+        self.deletedEdges = []  # List of all the edges that have been deleted
+        self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
+
+    def redoImpl(self) -> bool:
+        self.deletedEdges = self.graph.attribute(self.dstAttr).disconnectEdge()
+        return True
+
+    def undoImpl(self) -> bool:
+        for edge in self.deletedEdges:
+            edge[0].connectTo(edge[1])
+        return True
+
+
+class RemoveDynamicInputCommand(GraphCommand):
+    """
+    Remove a dynamic input attribute from a node.
+
+    On undo, the attribute is re-created and the edge re-established.
+    """
+
+    def __init__(self, graph, attr, parent=None):
+        super().__init__(graph, parent)
+        self.attrFullName = attr.fullName
+        self.attrName = attr.name
+        self.nodeName = attr.node.name
+        self.dynAttrName = attr.node._dynamicInputs.get(attr.name, "")
+        self.typeName = attr._desc.__class__.__name__
+        # Save the serialized value (usually a link expression) for undo
+        self.savedValue = attr.getSerializedValue()
+        self.setText(f"Remove dynamic input '{attr.fullName}'")
+
+    def redoImpl(self) -> bool:
+        node = self.graph.node(self.nodeName)
+        node.removeDynamicInput(self.attrName)
+        return True
+
+    def undoImpl(self) -> bool:
+        node = self.graph.node(self.nodeName)
+        if not self.dynAttrName or not node.hasAttribute(self.dynAttrName):
+            return True
+        dynAttr = node.attribute(self.dynAttrName)
+        newAttr = node._insertDynamicInput(
+            self.attrName, self.typeName, self.dynAttrName, self.savedValue
+        )
+        if newAttr is not None:
+            node._applyExpr()
+        return True
+
+
+
     def __init__(self, graph, edge, parent=None):
         super().__init__(graph, parent)
         self.srcAttr = edge.src.fullName

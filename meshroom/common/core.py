@@ -51,6 +51,18 @@ class CoreDictModel:
         assert key not in self._objects
         self._objects[key] = obj
 
+    def insert(self, i, obj):
+        """Insert obj at position i in the ordered dict.
+
+        Rebuilds the internal dict to place the new entry at the given index.
+        """
+        key = getattr(obj, self._keyAttrName, None)
+        assert key is not None
+        assert key not in self._objects
+        items = list(self._objects.items())
+        items.insert(i, (key, obj))
+        self._objects = dict(items)
+
     def rename(self, oldKey: str, newKey: str):
         """ Rename an element in the dict model
 

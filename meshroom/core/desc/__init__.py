@@ -3,6 +3,7 @@ from .attribute import (
     BoolParam,
     ChoiceParam,
     ColorParam,
+    DynamicAttribute,
     File,
     FloatParam,
     GroupAttribute,

@@ -584,24 +584,6 @@ class RemoveDynamicInputCommand(GraphCommand):
         return True
 
 
-
-    def __init__(self, graph, edge, parent=None):
-        super().__init__(graph, parent)
-        self.srcAttr = edge.src.fullName
-        self.dstAttr = edge.dst.fullName
-        self.deletedEdges = []  # List of all the edges that have been deleted
-        self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
-
-    def redoImpl(self) -> bool:
-        self.deletedEdges = self.graph.attribute(self.dstAttr).disconnectEdge()
-        return True
-
-    def undoImpl(self) -> bool:
-        for edge in self.deletedEdges:
-            edge[0].connectTo(edge[1])
-        return True
-
-
 class ListAttributeAppendCommand(GraphCommand):
     def __init__(self, graph, listAttribute, value, parent=None):
         super().__init__(graph, parent)

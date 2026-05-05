@@ -938,94 +938,6 @@ FocusScope {
                     }
                 }
 
-                // LightingCalibration: display circle
-                ExifOrientedViewer {
-                    property var activeNode: _currentScene.activeNodes.get("SphereDetection").node 
-    
-                    anchors.centerIn: parent
-                    orientationTag: imgContainer.orientationTag
-                    xOrigin: imgContainer.width / 2
-                    yOrigin: imgContainer.height / 2
-                    active: displayLightingCircleLoader.checked && activeNode
-
-                    sourceComponent: CircleGizmo {
-                        property var jsonFolder: activeNode.attribute("output").value
-                        property var json: null
-                        property var currentViewId: _currentScene.selectedViewId
-                        property var nodeCircleX: activeNode.attribute("sphereCenter.x").value
-                        property var nodeCircleY: activeNode.attribute("sphereCenter.y").value
-                        property var nodeCircleRadius: activeNode.attribute("sphereRadius").value
-                        
-                        width: imgContainer.width
-                        height: imgContainer.height
-                        readOnly: activeNode.attribute("autoDetect").value
-                        circleX: nodeCircleX
-                        circleY: nodeCircleY
-                        circleRadius: nodeCircleRadius
-                        circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))
-
-                        onJsonFolderChanged: {
-                            json = null
-                            if (activeNode.attribute("autoDetect").value) {
-                                // Auto detection enabled
-                                var jsonPath = activeNode.attribute("output").value
-                                Request.get(Filepath.stringToUrl(jsonPath), function(xhr) {
-                                    if (xhr.readyState === XMLHttpRequest.DONE) {
-                                        try {
-                                            json = JSON.parse(xhr.responseText)
-                                        } catch(exc) {
-                                            console.warn("Failed to parse SphereDetection JSON file: " + jsonPath)
-                                        }
-                                    }
-                                    updateGizmo()
-                                })
-                            }
-                        }
-
-                        onCurrentViewIdChanged: { updateGizmo() }
-                        onNodeCircleXChanged : { updateGizmo() }
-                        onNodeCircleYChanged : { updateGizmo() }
-                        onNodeCircleRadiusChanged : { updateGizmo() }
-
-                        function updateGizmo() {
-                            if (activeNode.attribute("autoDetect").value) {
-                                // Update gizmo from auto detection JSON file
-                                if (json) {
-                                    // JSON file found
-                                    var data = json[currentViewId]
-                                    if (data && data[0]) {
-                                        // Current view id found
-                                        circleX = data[0].x
-                                        circleY= data[0].y
-                                        circleRadius = data[0].r
-                                        return
-                                    }
-                                }
-                                // No auto detection data
-                                circleX = -1
-                                circleY= -1
-                                circleRadius = 0
-                            }
-                            else {
-                                // Update gizmo from node manual parameters
-                                circleX = nodeCircleX
-                                circleY = nodeCircleY
-                                circleRadius = nodeCircleRadius
-                            }
-                        }
-
-                        onMoved: {
-                            _currentScene.setAttribute(activeNode.attribute("sphereCenter"),
-                                                         JSON.stringify([xoffset, yoffset]))
-                        }
-
-                        onIncrementRadius: {
-                            _currentScene.setAttribute(activeNode.attribute("sphereRadius"),
-                                                         activeNode.attribute("sphereRadius").value + radiusOffset)
-                        }
-                    }
-                }
-
                 // ColorCheckerViewer: display color checker detection results
                 // Note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
                 ExifOrientedViewer {
@@ -1772,19 +1684,6 @@ FocusScope {
                             checkable: true
                             checked: false
                             enabled: activeNode && activeNode.attribute("useFisheye").value && !displayPanoramaViewer.checked
-                            visible: activeNode
-                        }
-
-                        MaterialToolButton {
-                            id: displayLightingCircleLoader
-                            property var activeNode: _currentScene.activeNodes.get("SphereDetection").node
-                            ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
-                            text: MaterialIcons.location_searching
-                            font.pointSize: 11
-                            Layout.minimumWidth: 0
-                            checkable: true
-                            checked: false
-                            enabled: activeNode
                             visible: activeNode
                         }
 

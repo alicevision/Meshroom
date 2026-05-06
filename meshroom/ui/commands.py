@@ -474,16 +474,24 @@ class RemoveEdgeCommand(GraphCommand):
         super().__init__(graph, parent)
         self.srcAttr = edge.src.fullName
         self.dstAttr = edge.dst.fullName
-        self.deletedEdges = []  # List of all the edges that have been deleted
+        self.deletedEdgeNames = []  # Store the names of deleted edges.
         self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
 
     def redoImpl(self) -> bool:
-        self.deletedEdges = self.graph.attribute(self.dstAttr).disconnectEdge()
+        deletedEdges = self.graph.attribute(self.dstAttr).disconnectEdge()
+        # Store the fullNames instead of the actual attribute objects
+        self.deletedEdgeNames = [
+            (edge[0].fullName, edge[1].fullName) for edge in deletedEdges
+        ]
         return True
 
     def undoImpl(self) -> bool:
-        for edge in self.deletedEdges:
-            edge[0].connectTo(edge[1])
+        for srcName, dstName in self.deletedEdgeNames:
+            # Resolve the attributes from their names at undo time
+            # This way for ListAttribute we avoid getting a deleted object
+            srcAttr = self.graph.attribute(srcName)
+            dstAttr = self.graph.attribute(dstName)
+            srcAttr.connectTo(dstAttr)
         return True
 
 

@@ -186,7 +186,7 @@ FloatingPane {
         }
 
     
-        Slider {
+        TimelineSlider {
             id: frameSlider
 
             Layout.fillWidth: true
@@ -199,6 +199,8 @@ FloatingPane {
 
             from: frameRange.min
             to: frameRange.max
+
+            cachedFrames: viewer ? viewer.cachedFrames : []
 
             onValueChanged: {
                 m.frame = value
@@ -214,32 +216,6 @@ FloatingPane {
                 parent: frameSlider.handle
                 visible: frameSlider.hovered
                 text: m.frame
-            }
-
-
-            background: Rectangle {
-                x: frameSlider.leftPadding
-                y: frameSlider.topPadding + frameSlider.height / 2 - height / 2
-                width: frameSlider.availableWidth
-                height: 4
-                radius: 2
-                color: Colors.grey
-
-                Repeater {
-                    id: cacheView
-
-                    model: viewer ? viewer.cachedFrames : []
-                    property real frameLength: sortedViewIds.length > 0 ? frameSlider.width / (frameRange.max - frameRange.min + 1) : 0
-
-                    Rectangle {
-                        x: modelData.x * cacheView.frameLength
-                        y: 0
-                        width: cacheView.frameLength * (modelData.y - modelData.x + 1)
-                        height: 4
-                        radius: 2
-                        color: Colors.blue
-                    }
-                }
             }
         }
 

@@ -872,8 +872,8 @@ class ListAttribute(Attribute):
         attrs = [attributeFactory(self._desc.elementDesc, v, self.isOutput, self.node, self)
                  for v in values]
         self._value.insert(index, attrs)
-        self.valueChanged.emit()
         self._applyExpr()
+        self.valueChanged.emit()
         if self.isInput:
             self.requestGraphUpdate()
 

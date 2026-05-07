@@ -77,8 +77,9 @@ Item {
     x: root.node ? root.node.x : undefined
     y: root.node ? root.node.y : undefined
 
-    // The backdrop node always needs to be at the back
-    z: -1
+    // The backdrop node always needs to be at the back (below nodes which default to z=0).
+    // Among backdrops, smaller area gets a higher (less negative) z so it renders on top.
+    z: -(width * height)
 
     width: root.node ? root.node.nodeWidth : 300
     height: root.node ? root.node.nodeHeight : 200

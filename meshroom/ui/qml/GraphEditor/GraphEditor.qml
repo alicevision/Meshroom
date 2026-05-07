@@ -1216,7 +1216,7 @@ Item {
                     sourceComponent: object.isBackdropNode ? backdropComponent : nodeComponent
 
                     onLoaded: {
-                        nodeLoader.z = nodeLoader.item.z
+                        nodeLoader.z = Qt.binding(function() { return nodeLoader.item ? nodeLoader.item.z : 0 })
                     }
                 }
             }

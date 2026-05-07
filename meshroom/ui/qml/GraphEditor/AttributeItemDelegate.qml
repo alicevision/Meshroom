@@ -47,6 +47,7 @@ RowLayout {
     }
 
     Pane {
+        visible: attribute.type !== "GroupAttribute"
         background: Rectangle {
             id: background
             color: object != undefined && object.isValid ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
@@ -805,20 +806,66 @@ RowLayout {
             id: groupAttributeComponent
             ColumnLayout {
                 id: groupItem
-                Component.onCompleted:  {
+                spacing: 0
+                property bool expanded: true
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+
+                    ToolButton {
+                        text: groupItem.expanded ? MaterialIcons.expand_more : MaterialIcons.chevron_right
+                        font.family: MaterialIcons.fontFamily
+                        font.pointSize: 10
+                        padding: 2
+                        onClicked: groupItem.expanded = !groupItem.expanded
+                    }
+
+                    Label {
+                        text: attribute.label
+                        font.bold: true
+                        font.pointSize: 8
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        padding: 3
+
+                        ToolTip {
+                            text: {
+                                var tooltip = ""
+                                if (attribute.desc)
+                                    tooltip += "<b>" + attribute.desc.name + ":</b> " + attribute.type + "<br>" + Format.plainToHtml(attribute.desc.description)
+                                return tooltip
+                            }
+                            visible: labelMA.containsMouse
+                            delay: 800
+                        }
+
+                        MouseArea {
+                            id: labelMA
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: groupItem.expanded = !groupItem.expanded
+                            onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
+                        }
+                    }
+                }
+
+                Component.onCompleted: {
                     var cpt = Qt.createComponent("AttributeEditor.qml");
                     var obj = cpt.createObject(groupItem,
                                                {
                                                    'model': Qt.binding(function() { return attribute.value }),
                                                    'readOnly': Qt.binding(function() { return root.readOnly }),
-                                                   'labelWidth': 100,  // Reduce label width for children (space gain)
+                                                   'labelWidth': Qt.binding(function() { return root.labelWidth }),
                                                    'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
                                                    'filterText': Qt.binding(function() { return root.filterText }),
+                                                   'visible': Qt.binding(function() { return groupItem.expanded }),
                                                })
                     obj.Layout.fillWidth = true;
+                    obj.Layout.leftMargin = 8;
                     obj.attributeDoubleClicked.connect(
-                        function(attr) {
-                            root.doubleClicked(attr)
+                        function(mouse, attr) {
+                            root.doubleClicked(mouse, attr)
                         }
                     )
                     obj.inAttributeClicked.connect(
@@ -829,6 +876,11 @@ RowLayout {
                     obj.outAttributeClicked.connect(
                         function(srcItem, mouse, outAttributes) {
                             root.outAttributeClicked(srcItem, mouse, outAttributes)
+                        }
+                    )
+                    obj.showInViewer.connect(
+                        function(attr) {
+                            root.showInViewer(attr)
                         }
                     )
                 }

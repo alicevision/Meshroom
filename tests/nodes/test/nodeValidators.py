@@ -1,5 +1,5 @@
 from meshroom.core import desc
-from meshroom.core.desc.validators import NotEmptyValidator, RangeValidator
+from meshroom.core.desc.validators import NotEmptyValidator, RangeValidator, success, error
 
 
 class NodeWithValidators(desc.CommandLineNode):
@@ -28,6 +28,7 @@ class NodeWithValidators(desc.CommandLineNode):
             label='range input',
             description='''''',
             value=0,
+            validators=[lambda node, attr: success() if 0 <= attr.value < 5 else error("Value should be in range 0-5")]
         ),
 
     ]

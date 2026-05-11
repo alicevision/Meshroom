@@ -6,10 +6,8 @@ from enum import auto, Enum
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList, strtobool, deprecated
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from meshroom.core.desc.validators import AttributeValidator
+from typing import Sequence
+from meshroom.core.desc.validators import AttributeValidator
 
 # Pre-compile regexes for better performance on repeated calls
 _ACRONYM_RE = re.compile(r'([A-Z]+)([A-Z][a-z])')
@@ -65,7 +63,7 @@ class Attribute(BaseObject):
     """
 
     def __init__(self, name, label, description, value, advanced, semantic, commandLineGroup, enabled,
-                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None, visible=True, exposed=False, validators:list["AttributeValidator"]=None):
+                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None, visible=True, exposed=False, validators:Sequence["AttributeValidator"]=None):
         super(Attribute, self).__init__()
         self._name = name
         self._label = convertToLabel(name) if label is None else label
@@ -88,10 +86,12 @@ class Attribute(BaseObject):
 
         if validators is None:
             self._validators = []
-        elif isinstance(validators, (list, tuple)):
+        elif isinstance(validators, Sequence) and all(
+            isinstance(x, AttributeValidator) for x in validators
+        ):
             self._validators = validators
         else:
-            raise RuntimeError(f"Validators should be of type 'list[AttributeValidator]', the type '{type(validators)}' is not supported.")
+            raise RuntimeError(f"Validators should be of type 'Sequence[AttributeValidator]', the type '{type(validators)}' is not supported.")
         
     def getInstanceType(self):
         """ Return the correct Attribute instance corresponding to the description. """

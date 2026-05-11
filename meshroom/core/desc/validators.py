@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from meshroom.core.attribute import Attribute
@@ -11,7 +11,8 @@ def success() -> tuple[bool, list[str]]:
 def error(*messages: str) -> tuple[bool, list[str]]:
     return (False, list(messages))
 
-class AttributeValidator(object):
+@runtime_checkable
+class AttributeValidator(Protocol):
     """ Interface for an attribute validation
         You can inherit from this class and override the __call__ methods to implement your own attribute validation logic
 

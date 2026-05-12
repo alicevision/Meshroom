@@ -281,7 +281,7 @@ class BaseNode(object):
         pass
 
     @property
-    def _hasPreprocess(self):
+    def hasPreprocess(self):
         """ Returns True if the class has a preprocess """
         return type(self).preprocess is not BaseNode.preprocess
 
@@ -294,7 +294,7 @@ class BaseNode(object):
         pass
 
     @property
-    def _hasPostprocess(self):
+    def hasPostprocess(self):
         """ Returns True if the class has a postprocess """
         return type(self).postprocess is not BaseNode.postprocess
 

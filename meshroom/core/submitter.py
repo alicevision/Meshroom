@@ -132,7 +132,7 @@ class OrderedNode:
         """
         if self.isExpanding:
             return None
-        if not self.isExpanding and self.node.isParallelized:
+        if self.node.isParallelized:
             _, _, nbBlocks = self.node.nodeDesc.parallelization.getSizes(self.node)
             iterationsToIgnore = []
             for c in self.node._chunks:
@@ -144,11 +144,11 @@ class OrderedNode:
 
     @property
     def hasPreprocess(self) -> bool:
-        return self.node.nodeDesc._hasPreprocess
+        return self.node.nodeDesc.hasPreprocess
 
     @property
     def hasPostprocess(self) -> bool:
-        return self.node.nodeDesc._hasPostprocess
+        return self.node.nodeDesc.hasPostprocess
     
     def __repr__(self):
         depsNames = "|".join([t.node.name for t in self.dependencies])
@@ -181,7 +181,7 @@ class OrderedTasks:
 
     def _orderNodes(self, nodes, edges):
         """
-        Take all the nodes and connections and orger them by processing step
+        Take all the nodes and connections and order them by processing step
         0 is the root nodes (can be executed last)
         Then 1 is the level with the direct dependencies for the root nodes, and etc...
         """

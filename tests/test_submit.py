@@ -171,7 +171,6 @@ class TestNodeSubmit:
         nodeB = self.addNewNode(graph, "PluginSubmitter"+"B", nodeParams={"inputs": [nodeA.output]})
         nodeC = self.addNewNode(graph, "PluginSubmitter"+"C", nodeParams={"inputs": [nodeB.output]})
         # Order tasks
-        submitter = get_submitter()
         nodes, edges = graph.dfsOnFinish(startNodes=[nodeC])
         orderedTasks = OrderedTasks(nodes, edges)
         # === Test result ===

@@ -75,27 +75,6 @@ class TaskThread(QThread):
             self._manager.chunksCreated.disconnect(onChunksCreated)
             timer.stop()
     
-    def execChunk(self, chunk, node, function) -> bool:
-        """ Handle the chunk process & fail
-
-        Args:
-            chunk (chunk to process): _description_
-            node (_type_): _description_
-            function (_type_): _description_
-
-        Returns:
-            bool: _description_
-        """
-        try:
-            function(self.forceCompute)
-        except Exception as exc:
-            if chunk.isStopped():
-                return True
-            else:
-                logging.error(f"Error on node computation: {exc}")
-                self.clearNodes(node)
-        return False
-    
     def clearNodes(self, node):
         nodesToRemove, _ = self._manager._graph.dfsOnDiscover(startNodes=[node], reverse=True)
         # remove following nodes from the task queue
@@ -152,7 +131,7 @@ class TaskThread(QThread):
                 for chunk in node._chunks:
                     if chunk.isAlreadySubmitted():
                         chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
-                if node.nodeDesc._hasPostprocess:
+                if node.nodeDesc.hasPostprocess:
                     node._postprocessChunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
                 break
 

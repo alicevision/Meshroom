@@ -845,9 +845,9 @@ class BaseNode(BaseObject):
         self.dirty: bool = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks: list[NodeChunk] = ListModel(parent=self)
         self._preprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.PREPROCESS)) if \
-            self.nodeDesc and self.nodeDesc._hasPreprocess else None
+            self.nodeDesc and self.nodeDesc.hasPreprocess else None
         self._postprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.POSTPROCESS)) if \
-            self.nodeDesc and self.nodeDesc._hasPostprocess else None
+            self.nodeDesc and self.nodeDesc.hasPostprocess else None
         self._chunksCreated = False  # Only initialize chunks on compute
         self._chunkPlaceholder: list[NodeChunk] = ListModel(parent=self)  # Placeholder chunk for nodes with dynamic ones
         self._uid: str = uid
@@ -1468,9 +1468,9 @@ class BaseNode(BaseObject):
 
     def upgradeStatusTo(self, newStatus, execMode=None):
         """ Upgrade node to the given status and save it on disk. """
-        if self.nodeDesc._hasPreprocess:
+        if self.nodeDesc.hasPreprocess:
             self._preprocessChunk.upgradeStatusTo(newStatus)
-        if self.nodeDesc._hasPostprocess:
+        if self.nodeDesc.hasPostprocess:
             self._postprocessChunk.upgradeStatusTo(newStatus)
         if self._chunksCreated:
             for chunk in self._chunks:
@@ -1674,9 +1674,9 @@ class BaseNode(BaseObject):
                 logging.warning(f"Could not create chunks from cache: {e}")
                 return
         s = self.globalStatus
-        if self.nodeDesc._hasPreprocess:
+        if self.nodeDesc.hasPreprocess:
             self._preprocessChunk.updateStatusFromCache()
-        if self.nodeDesc._hasPostprocess:
+        if self.nodeDesc.hasPostprocess:
             self._postprocessChunk.updateStatusFromCache()
         if self._chunksCreated:
             for chunk in self._chunks:
@@ -1780,7 +1780,7 @@ class BaseNode(BaseObject):
 
     def preprocess(self, forceCompute=False, inCurrentEnv=False):
         """ Prepare the node processing """
-        if self.nodeDesc._hasPreprocess:
+        if self.nodeDesc.hasPreprocess:
             self.prepareLogger(ChunkIndex.PREPROCESS)
             self._preprocessChunk.process(forceCompute, inCurrentEnv)
             self.restoreLogger()
@@ -1794,7 +1794,7 @@ class BaseNode(BaseObject):
         Invoke the post process on Client Node to execute after the processing on the
         node is completed
         """
-        if self.nodeDesc._hasPostprocess:
+        if self.nodeDesc.hasPostprocess:
             self.prepareLogger(ChunkIndex.POSTPROCESS)
             self._postprocessChunk.process(forceCompute, inCurrentEnv)
             self.restoreLogger()
@@ -1904,9 +1904,9 @@ class BaseNode(BaseObject):
 
     def stopComputation(self):
         """ Stop the computation of this node. """
-        if self.nodeDesc._hasPreprocess:
+        if self.nodeDesc.hasPreprocess:
             self._preprocessChunk.stopProcess()
-        if self.nodeDesc._hasPostprocess:
+        if self.nodeDesc.hasPostprocess:
             self._postprocessChunk.stopProcess()
         if self._chunks:
             for chunk in self._chunks.values():
@@ -2005,19 +2005,19 @@ class BaseNode(BaseObject):
     @property
     def _allChunks(self) -> list[NodeChunk]:
         chunks = []
-        if self.nodeDesc._hasPreprocess:
+        if self.nodeDesc.hasPreprocess:
             chunks.append(self._preprocessChunk)
         chunks.extend([c for c in self._chunks])
-        if self.nodeDesc._hasPostprocess:
+        if self.nodeDesc.hasPostprocess:
             chunks.append(self._postprocessChunk)
         return chunks
 
     def getAllChunks(self):
         allChunks = []
-        if self.nodeDesc._hasPreprocess:
+        if self.nodeDesc.hasPreprocess:
             allChunks.append({"chunkIndex": ChunkIndex.PREPROCESS, "chunk": self._preprocessChunk, "name": "Preprocess"})
         allChunks.extend([{"chunkIndex": i, "chunk": c, "name": str(i)} for i, c in enumerate(self._chunks)])
-        if self.nodeDesc._hasPostprocess:
+        if self.nodeDesc.hasPostprocess:
             allChunks.append({"chunkIndex": ChunkIndex.POSTPROCESS, "chunk": self._postprocessChunk, "name": "Postprocess"})
         return allChunks
 
@@ -2280,6 +2280,8 @@ class BaseNode(BaseObject):
     chunksCreated = Property(bool, lambda self: self._chunksCreated, notify=chunksCreatedChanged)
     chunksChanged = Signal()
     chunks = Property(Variant, getChunks, notify=chunksChanged)
+    preprocessChunk = Property(Variant, lambda self: self._preprocessChunk, notify=chunksChanged)
+    postprocessChunk = Property(Variant, lambda self: self._postprocessChunk, notify=chunksChanged)
     allChunks = Property(Variant, getAllChunks, notify=chunksChanged)
     chunkPlaceholder = Property(Variant, lambda self: self._chunkPlaceholder, notify=chunksChanged)
     nbParallelizationBlocks = Property(int, lambda self: len(self._chunks) if self._chunksCreated else 0, notify=chunksChanged)
@@ -2474,12 +2476,12 @@ class Node(BaseNode):
             self.setSize(0)
             self._chunkPlaceholder.setObjectList([NodeChunk(self, desc.computation.Range())])
         # Pre/post process
-        if self.nodeDesc._hasPreprocess:
+        if self.nodeDesc.hasPreprocess:
             self._preprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.PREPROCESS))
             self._preprocessChunk.statusChanged.connect(self.globalStatusChanged)
         else:
             self._preprocessChunk = None
-        if self.nodeDesc._hasPostprocess:
+        if self.nodeDesc.hasPostprocess:
             self._postprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.POSTPROCESS))
             self._postprocessChunk.statusChanged.connect(self.globalStatusChanged)
         else:

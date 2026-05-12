@@ -78,24 +78,25 @@ def getRequestPackages(packagesDelimiter="=="):
     return list(reqPackages)
 
 
-def rezWrapCommand(cmd, useCurrentContext=False, useRequestedContext=True, otherRezPkg: List[str] = None, additionalEnv: dict=None):
-    """ Wrap command to be runned using rez.
-    :param cmd: command to run
-    :type cmd: bool
-    :param useCurrentContext: use current rez context to retrieve a list of rez packages
-    :type useCurrentContext: bool
-    :param useRequestedContext: use rez packages that have been requested (not the full context)  # TODO : remove it
-    :type useRequestedContext: bool
-    :param otherRezPkg: Additionnal rez packages
-    :type otherRezPkg: list[str]
+def rezWrapCommand(cmd: str, 
+                   useCurrentContext:bool=False, 
+                   otherRezPkg: List[str] = None, 
+                   additionalEnv: dict=None) -> str:
+    """Wrap command to be runned using rez.
+
+    Args:
+        cmd (str): command to run
+        useCurrentContext (bool, optional): use current rez context to retrieve a list of rez packages.
+        otherRezPkg (List[str], optional): Additionnal rez packages.
+        additionalEnv (dict, optional): Additional environment variables.
+
+    Returns:
+        str: the final command to execute
     """
     packages = set()
     if useCurrentContext:
         # In this case we want to use the full context
         packages.update([p for p in os.environ.get('REZ_RESOLVE', '').split(" ") if p])
-    elif useRequestedContext:
-        # In this case we want to use only packages in the rez request
-        packages.update(getRequestPackages())
     # Add additional packages
     if otherRezPkg:
         packages.update(otherRezPkg)

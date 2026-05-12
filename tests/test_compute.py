@@ -220,15 +220,14 @@ class TestNodeLogger:
         root = chunkLog.parent
         preprocessLog = root / "preprocess.log"
         postprocessLog = root / "postprocess.log"
-        def check_file(path, suffix = ""):
+        def check_file(path, suffix=""):
             with open(path, "r") as f:
                 content = f.read()
-                suffix = ""
                 reg = re.compile(self.logPrefix + "TestNodeD_1" + suffix)
                 assert len(reg.findall(content)) == 1
-        check_file(preprocessLog, " (preprocess)")
+        check_file(preprocessLog, " \(preprocess\)")
         check_file(chunkLog, "")
-        check_file(postprocessLog, " postprocess")
+        check_file(postprocessLog, " \(postprocess\)")
 
 
 class TestLockUpdates:
@@ -597,8 +596,8 @@ class TestPrePostProcess:
         
         # Check node
         assert len(node.chunks) == 1
-        assert node.nodeDesc._hasPreprocess
-        assert node.nodeDesc._hasPostprocess
+        assert node.nodeDesc.hasPreprocess
+        assert node.nodeDesc.hasPostprocess
 
         # Check status before
         assert node.globalStatus == Status.NONE.name

@@ -4,6 +4,7 @@ GraphEditor 1.0 GraphEditor.qml
 NodeEditor 1.0 NodeEditor.qml
 Node 1.0 Node.qml
 NodeChunks 1.0 NodeChunks.qml
+ApplicationChunks 1.0 ApplicationChunks.qml
 Edge 1.0 Edge.qml
 Backdrop 1.0 Backdrop.qml
 AttributePin 1.0 AttributePin.qml

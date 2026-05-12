@@ -1191,12 +1191,11 @@ Page {
         spacing: 4
 
         // "ProgressBar" reflecting status of all the chunks in the graph, in their process order
-        NodeChunks {
+        ApplicationChunks {
             id: chunksListView
             height: 6
             Layout.fillWidth: true
             model: _currentScene ? _currentScene.sortedDFSChunks : null
-            highlightChunks: false
         }
 
         MSplitView {

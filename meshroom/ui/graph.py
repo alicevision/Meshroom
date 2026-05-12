@@ -436,14 +436,18 @@ class UIGraph(QObject):
         self.updateChunks()
 
     def updateChunks(self):
-        dfsNodes = self._graph.dfsOnFinish(None)[0]
+        dfsNodes: list[Node] = self._graph.dfsOnFinish(None)[0]
         chunks = []
         for node in dfsNodes:
+            if node._preprocessChunk:
+                chunks.append(node._preprocessChunk)
             if node._chunksCreated:
                 nodechunks = node.getChunks()
                 chunks.extend(nodechunks)
             else:
                 chunks.extend(node.chunkPlaceholder)
+            if node._postprocessChunk:
+                chunks.append(node._postprocessChunk)
         if self._sortedDFSChunks.objectList() == chunks:
             # Nothing has changed, return
             return

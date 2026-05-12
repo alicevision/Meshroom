@@ -565,6 +565,7 @@ Item {
                     defaultColor: Colors.sysPalette.mid
                     implicitHeight: 3
                     width: parent.width
+
                     model: {
                         if (node && node.chunksCreated)
                             return node.chunks
@@ -573,6 +574,8 @@ Item {
 
                         return undefined
                     }
+                    preprocessChunk: node && node.hasPreprocessChunk ? node.preprocessChunk : null
+                    postprocessChunk: node && node.hasPostprocessChunk ? node.postprocessChunk : null
 
                     Rectangle {
                         anchors.fill: parent

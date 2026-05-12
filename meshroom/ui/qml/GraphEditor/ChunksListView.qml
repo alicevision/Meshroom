@@ -18,21 +18,30 @@ ColumnLayout {
     }
 
     property var uigraph: null
-    property variant chunks
+    property variant chunks  // Chunks model : list of NodeChunk
     property int currentIndex: 0
 
     function getCurrentChunkIndex() {
-        if ( currentIndex == undefined || !chunks || currentIndex == ChunksListView.IndexItems.NULL ) { return -1 }
-        let hasPreprocess  = chunks.some(function(chk) { return chk.chunkIndex == ChunksListView.IndexItems.PREPROCESS })
-        let hasPostprocess = chunks.some(function(chk) { return chk.chunkIndex == ChunksListView.IndexItems.POSTPROCESS })
-        if ( currentIndex == ChunksListView.IndexItems.PREPROCESS ) return hasPreprocess ? 0 : -1                    // Preprocess chunk
-        if ( currentIndex == ChunksListView.IndexItems.POSTPROCESS ) return hasPostprocess ? chunks.length - 1 : -1  // Postprocess chunk
-        return currentIndex + (hasPreprocess ? 1 : 0)                                                                // Process Chunk
+        if ( currentIndex == undefined || !chunks || chunks.length === 0 || currentIndex == ChunksListView.IndexItems.NULL ) {
+            return -1
+        }
+        let hasPreprocess  = chunks[0].chunkNode.hasPreprocessChunk
+        let hasPostprocess  = chunks[0].chunkNode.hasPostprocessChunk
+        // Preprocess chunk
+        if ( currentIndex == ChunksListView.IndexItems.PREPROCESS ) {
+            return hasPreprocess ? 0 : -1
+        }
+        // Postprocess chunk
+        if ( currentIndex == ChunksListView.IndexItems.POSTPROCESS ) {
+            return hasPostprocess ? chunks.length - 1 : -1
+        }
+        // Process Chunk
+        return currentIndex + (hasPreprocess ? 1 : 0)
     }
 
     property int currentItemIndex: getCurrentChunkIndex()
 
-    property variant currentChunk: (currentItemIndex >= 0 && chunks && chunks.length > currentItemIndex) ? chunks[currentItemIndex].chunk : undefined
+    property variant currentChunk: (currentItemIndex >= 0 && chunks && chunks.length > currentItemIndex) ? chunks[currentItemIndex] : undefined
 
     onChunksChanged: {
         // When the list changes, ensure the current index is in the new range
@@ -87,8 +96,8 @@ ColumnLayout {
 
         delegate: ItemDelegate {
             id: chunkDelegate
-            property var chunk: modelData.chunk
-            text: modelData.name
+            property var chunk: modelData
+            text: modelData.chunkIndexName
             highlighted: (currentItemIndex >= 0 && index == currentItemIndex)
             property int chunkIndex: modelData.chunkIndex
             width: ListView.view.width
@@ -109,7 +118,7 @@ ColumnLayout {
         target: _currentScene
         function onSelectedChunkChanged() {
             for (var i = 0; i < root.chunks.length; i++) {
-                if (_currentScene.selectedChunk === root.chunks[i].chunk) {
+                if (_currentScene.selectedChunk === root.chunks[i]) {
                     root.currentIndex = i
                     break;
                 }

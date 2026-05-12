@@ -15,7 +15,7 @@ import logging
 
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core import desc, pluginManager, loadClassesNodes
-from meshroom.core.node import Status
+from meshroom.core.node import Status, ChunkIndex
 from meshroom.core.plugins import Plugin
 from .utils import registerNodeDesc, unregisterNodeDesc
 
@@ -27,7 +27,8 @@ def executeChunks(node, size):
     logFiles = {}
     node.preprocess()
     for chunkIndex in range(size):
-        iteration = chunkIndex if size > 1 else -1
+        iteration = chunkIndex if size >= 0 else ChunkIndex.NONE
+        node.prepareLogger(iteration)
         logFileName = f"{chunkIndex}.log"
         logFile = Path(node.internalFolder) / logFileName
         logFiles[chunkIndex] = logFile

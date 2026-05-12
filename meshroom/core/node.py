@@ -844,8 +844,10 @@ class BaseNode(BaseObject):
         self.graph = None
         self.dirty: bool = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks: list[NodeChunk] = ListModel(parent=self)
-        self._preprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.PREPROCESS)) if self.nodeDesc._hasPreprocess else None
-        self._postprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.POSTPROCESS)) if self.nodeDesc._hasPostprocess else None
+        self._preprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.PREPROCESS)) if \
+            self.nodeDesc and self.nodeDesc._hasPreprocess else None
+        self._postprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.POSTPROCESS)) if \
+            self.nodeDesc and self.nodeDesc._hasPostprocess else None
         self._chunksCreated = False  # Only initialize chunks on compute
         self._chunkPlaceholder: list[NodeChunk] = ListModel(parent=self)  # Placeholder chunk for nodes with dynamic ones
         self._uid: str = uid
@@ -1772,10 +1774,10 @@ class BaseNode(BaseObject):
 
     def preprocess(self, forceCompute=False, inCurrentEnv=False):
         """ Prepare the node processing """
-        self.prepareLogger(ChunkIndex.PREPROCESS)
         if self.nodeDesc._hasPreprocess:
+            self.prepareLogger(ChunkIndex.PREPROCESS)
             self._preprocessChunk.process(forceCompute, inCurrentEnv)
-        self.restoreLogger()
+            self.restoreLogger()
 
     def process(self, forceCompute=False, inCurrentEnv=False):
         for chunk in self._chunks:
@@ -1786,10 +1788,10 @@ class BaseNode(BaseObject):
         Invoke the post process on Client Node to execute after the processing on the
         node is completed
         """
-        self.prepareLogger(ChunkIndex.POSTPROCESS)
         if self.nodeDesc._hasPostprocess:
+            self.prepareLogger(ChunkIndex.POSTPROCESS)
             self._postprocessChunk.process(forceCompute, inCurrentEnv)
-        self.restoreLogger()
+            self.restoreLogger()
 
     def getLogHandlers(self):
         return self._handlers

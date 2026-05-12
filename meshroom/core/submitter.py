@@ -104,7 +104,7 @@ class OrderedTask:
 
 
 class OrderedNode:
-    """ A task = a node"""
+    """ Intermediate structure used to order tasks """
 
     def __init__(self, node, dependencies=None):
         # node can be None for placeholder tasks (task that don't do anything else than regrouping dependencies)
@@ -214,32 +214,32 @@ class OrderedTasks:
         """ Create tasks corresponding to a node and link them correctly.
         Also link them to the parent task, and recursively create children tasks.
         """
-        print(f"* (createNodeTasks) node {orderedNode.node._name}, parent {parentTask.node}")
+        logger.debug(f"* (createNodeTasks) node {orderedNode.node._name}, parent {parentTask.node}")
         # Check if task has already been created
         visited = (nodeUid:=orderedNode.node._uid) in self._nodeUidToLastTask
         if visited:
-            print("  -> is visited")
+            logger.debug("  -> is visited")
             # If task is already created simply create the connection
             lastTask = self._nodeUidToLastTask[nodeUid]
             parentTask.addDependency(lastTask)
             return
         # Create node tasks
         if orderedNode.isPlaceholder:
-            print("  -> is placeholder")
+            logger.debug("  -> is placeholder")
             task = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode)
             firstTask = lastTask = task
         else:
             lastTask = firstTask = None
             # Create pre/post tasks if needed
             if orderedNode.hasPostprocess:
-                print("  -> postprocess")
+                logger.debug("  -> postprocess")
                 lastTask = OrderedTask(OrderedTaskType.POSTPROCESS, orderedNode)
             if orderedNode.hasPreprocess:
-                print("  -> preprocess")
+                logger.debug("  -> preprocess")
                 firstTask = OrderedTask(OrderedTaskType.PREPROCESS, orderedNode)
             # Process
             if orderedNode.isExpanding:
-                print("  -> is expanding")
+                logger.debug("  -> is expanding")
                 expandingTask = OrderedTask(OrderedTaskType.EXPANDING, orderedNode)
                 if lastTask:
                     lastTask.addDependency(expandingTask)
@@ -250,7 +250,7 @@ class OrderedTasks:
                 else:
                     firstTask = expandingTask
             else:
-                print("  -> has chunks :", orderedNode.chunksIterations)
+                logger.debug(f"  -> has chunks : {orderedNode.chunksIterations}")
                 # Handle 0 chunks case
                 if len(orderedNode.chunksIterations) == 0:
                     if firstTask and lastTask:
@@ -267,7 +267,7 @@ class OrderedTasks:
                     lastTask = lastTask if lastTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode)
                     firstTask = firstTask if firstTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode)
                     for iteration in orderedNode.chunksIterations:
-                        print(f"    - chunk {iteration}")
+                        logger.debug(f"    - chunk {iteration}")
                         chunkTask = OrderedTask(OrderedTaskType.CHUNK, orderedNode, iteration=iteration)
                         lastTask.addDependency(chunkTask)
                         chunkTask.addDependency(firstTask)
@@ -275,11 +275,11 @@ class OrderedTasks:
         parentTask.addDependency(lastTask)
         # Create children
         for n in orderedNode.dependencies:
-            print("  -> create deps", n)
+            logger.debug(f"  -> create deps {n}")
             self.createNodeTasks(n, firstTask)
         # Add the last task to execute for this node to _nodeUidToLastTask
         self._nodeUidToLastTask[nodeUid] = lastTask
-        print(f"  -> done {orderedNode.node._name}")
+        logger.debug(f"  -> done {orderedNode.node._name}")
 
     def _orderTasks(self):
         """ Use the nodesByLevel info to create all tasks to send to the submitter """
@@ -292,7 +292,7 @@ class OrderedTasks:
     def display(self, task:OrderedTask=None, level=0):
         if task is None:
             task = self.rootTask
-        print(f"{' '*4*level}[{level:02d}] {task}")
+        logger.debug(f"{' '*4*level}[{level:02d}] {task}")
         for child in task.dependencies:
             self.display(child, level+1)
 

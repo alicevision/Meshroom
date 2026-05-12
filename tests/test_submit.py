@@ -17,9 +17,14 @@ from meshroom.core.plugins import Plugin
 from meshroom.core.node import Node, Status
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.submitter import jobManager
+from meshroom.core.submitter import OrderedTask, OrderedTasks, OrderedTaskType
 from meshroom.submitters.localFarmSubmitter import LocalFarmSubmitter, LocalFarmJob
 
 from localfarm.localFarmLauncher import FarmLauncher
+
+import logging
+from meshroom.core.submitter import logger
+logger.setLevel(logging.DEBUG)
 
 
 IS_LINUX = (platform == "linux" or platform == "linux2")
@@ -134,26 +139,68 @@ class TestNodeSubmit:
         registerNodeDesc(nodeType)
         return nodeType.__name__
 
-    def addNewNode(self, graph, name, nodeParams):
+    def addNewNode(self, graph, name, nodeParams=None):
         nodeTypeName = self.registerNode(name)
-        if nodeParams:
-            node = graph.addNewNode(nodeTypeName, **nodeParams)
-        else:
-            node = graph.addNewNode(nodeTypeName)
+        nodeParams = nodeParams or {}
+        node = graph.addNewNode(nodeTypeName, **nodeParams)
         return node
 
-    def test_buildTaskGraph(self):
+    def test_orderTasks(self):
+        """
+        phd=placeholder
+        chk=chunk
+                                                                    *" [B chk_0] "* 
+        [phd (start_A)] - [A chks] - [phd (end_A)] - [phd (start_B)]               [B post] - [C pre] - [C expand] - [C post] - [phd (root)]
+                                                                    *_ [B chk_1] _* 
+        """
         graph = Graph("")
         # Add nodes
-        nodeA = self.addNewNode(graph, "PluginSubmitter"+"A"+"PrePost", nodeParams={})
-        nodeB = self.addNewNode(graph, "PluginSubmitter"+"B"+"PrePost", nodeParams={"inputs": [nodeA.output]})
-        nodeC = self.addNewNode(graph, "PluginSubmitter"+"C"+"PrePost", nodeParams={"inputs": [nodeB.output]})
-        # Submit
+        nodeA = self.addNewNode(graph, "PluginSubmitter"+"A", nodeParams={})
+        nodeB = self.addNewNode(graph, "PluginSubmitter"+"B", nodeParams={"inputs": [nodeA.output]})
+        nodeC = self.addNewNode(graph, "PluginSubmitter"+"C", nodeParams={"inputs": [nodeB.output]})
+        # Order tasks
         submitter = get_submitter()
         nodes, edges = graph.dfsOnFinish(startNodes=[nodeC])
-        print(nodes, edges)
-        res = submitter.submit(nodes, edges, "")
-        print("res", res)
+        orderedTasks = OrderedTasks(nodes, edges)
+        # === Test result ===
+        def checkTask(task, taskType, nbDependencies):
+            assert task.taskType == taskType
+            assert len(task.dependencies) == nbDependencies
+        # root
+        rootTask = orderedTasks.rootTask
+        checkTask(rootTask, OrderedTaskType.PLACEHOLDER, 1)
+        # C (post)
+        task: OrderedTask = rootTask.dependencies[0]
+        checkTask(task, OrderedTaskType.POSTPROCESS, 1)
+        # C (expand)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.EXPANDING, 1)
+        # C (pre)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.PREPROCESS, 1)
+        # B (post)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.POSTPROCESS, 2)
+        # B (chunks)
+        task_0: OrderedTask = task.dependencies[0]
+        task_1: OrderedTask = task.dependencies[1]
+        checkTask(task_0, OrderedTaskType.CHUNK, 1)
+        checkTask(task_1, OrderedTaskType.CHUNK, 1)
+        assert (task_0.iteration, task_1.iteration) == (0, 1)
+        assert task_0.dependencies[0] == task_1.dependencies[0]
+        # B (pre)
+        task: OrderedTask = task_0.dependencies[0]
+        checkTask(task, OrderedTaskType.PLACEHOLDER, 1)
+        # A (post)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.PLACEHOLDER, 1)
+        # A (chunks)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.CHUNK, 1)
+        assert task.iteration == -1
+        # A (pre)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.PLACEHOLDER, 0)
 
     def test_submitNoParallel(self, tmp_path):
         graph = Graph("")

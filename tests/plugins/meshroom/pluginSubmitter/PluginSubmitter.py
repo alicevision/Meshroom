@@ -8,7 +8,7 @@ from meshroom.core import desc
 LOGGER = logging.getLogger("TestSubmit")
 
 
-class PluginSubmitterA(desc.BaseNode):
+class PluginSubmitterA(desc.Node):
     """
     Test process no parallelization
     """
@@ -58,6 +58,9 @@ class PluginSubmitterB(PluginSubmitterA):
     size = desc.StaticNodeSize(2)
     parallelization = desc.Parallelization(blockSize=1)
 
+    def postprocess(self, node):
+        LOGGER.info(f"> PluginSubmitterB postprocess Done")
+
 
 class PluginSubmitterC(PluginSubmitterA):
     """
@@ -65,20 +68,9 @@ class PluginSubmitterC(PluginSubmitterA):
     """
     size = desc.DynamicNodeSize("nbChunks")
     parallelization = desc.Parallelization(blockSize=1)
-
-
-class PluginSubmitterAPrePost(PluginSubmitterA):
+    
     def preprocess(self, node):
-        LOGGER.info(f"> Done")
+        LOGGER.info(f"> PluginSubmitterC preprocess Done")
+
     def postprocess(self, node):
-        LOGGER.info(f"> Done")
-
-
-class PluginSubmitterBPrePost(PluginSubmitterB):
-    def postprocess(self, node):
-        LOGGER.info(f"> Done")
-
-
-class PluginSubmitterCPrePost(PluginSubmitterC):
-    def postprocess(self, node):
-        LOGGER.info(f"> Done")
+        LOGGER.info(f"> PluginSubmitterC postprocess Done")

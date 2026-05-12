@@ -7,7 +7,7 @@ import logging
 import operator
 
 from enum import IntFlag, auto
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from itertools import accumulate
 
 import meshroom
@@ -172,18 +172,36 @@ class OrderedTasks:
 
     def __init__(self, nodes, edges):
         # First correctly order the nodes
-        self.nodesByLevel: list[list[OrderedNode]] = []
-        self._orderNodes(nodes, edges)
+        self._firstLevelorderedNodes: list[list[OrderedNode]] = self.__orderNodes(nodes, edges)
         # Now create all the OrderedChunkTask objects
         self.rootTask = OrderedTask(taskType=OrderedTaskType.PLACEHOLDER)
         self._nodeUidToLastTask: Dict[str, OrderedTask] = {}  # { _uid: lastTaskToProcess }
-        self._orderTasks()
+        self.__orderTasks()
 
-    def _orderNodes(self, nodes, edges):
+    def display(self, task:OrderedTask=None, level=0):
+        if task is None:
+            task = self.rootTask
+        logger.debug(f"{' '*4*level}[{level:02d}] {task}")
+        for child in task.dependencies:
+            self.display(child, level+1)
+
+    def iterOnTasks(self, current:OrderedTask=None):
+        if current is None:
+            current = self.rootTask
+        yield current
+        for task in current.dependencies:
+            yield from self.iterOnTasks(task)
+
+    def __iter__(self):
+        yield from self.iterOnTasks()
+
+    def __orderNodes(self, nodes, edges):
         """
         Take all the nodes and connections and order them by processing step
         0 is the root nodes (can be executed last)
         Then 1 is the level with the direct dependencies for the root nodes, and etc...
+        
+        At the end return only the 1st level nodes
         """
         # uid -> orderedNode
         nodeToOrderedNode = {n._uid: OrderedNode(n) for n in nodes}
@@ -196,21 +214,31 @@ class OrderedTasks:
             parentTask.dependencies.append(childTask)
 
         # Create a task 
-        rootTask = OrderedNode(None, dependencies=nodeToOrderedNode.values())
+        rootNode = OrderedNode(None, dependencies=nodeToOrderedNode.values())
         # Find each node depth (= what level the node is)
-        depthByTask = {}
-        def updateDepth(tasks, depthByTask, currentDepth=0):
-            for task in tasks:
-                if currentDepth > depthByTask.get(task, -1):
-                    depthByTask[task] = currentDepth
-                if task.dependencies:
-                    updateDepth(task.dependencies, depthByTask, currentDepth+1)
-        updateDepth([rootTask], depthByTask, currentDepth=-1)
+        depthByNode = {}
+        self.__updateDepth([rootNode], depthByNode, currentDepth=-1)
         # Regroup nodes by level
-        levels = list(set(l for l in list(depthByTask.values())))
-        self.nodesByLevel = [[t for t, l in depthByTask.items() if l == lev] for lev in levels]
-    
-    def createNodeTasks(self, orderedNode: OrderedNode, parentTask: OrderedTask):
+        levels = list(set(l for l in list(depthByNode.values())))
+        nodesByLevels = [[t for t, l in depthByNode.items() if l == lev] for lev in levels]
+        return nodesByLevels[0]
+
+    def __updateDepth(self, nodes: List[OrderedNode], depthByNode, currentDepth=0):
+        """ Compute the depth for each """
+        for orderedNode in nodes:
+            if currentDepth > depthByNode.get(orderedNode, -1):
+                depthByNode[orderedNode] = currentDepth
+            if orderedNode.dependencies:
+                self.__updateDepth(orderedNode.dependencies, depthByNode, currentDepth+1)
+
+    def __orderTasks(self):
+        """ Use the nodesByLevel info to create all tasks to send to the submitter """
+        # Start from a root task
+        self._nodeUidToLastTask = {}
+        for n in self._firstLevelorderedNodes:
+            self.__createNodeTasks(n, self.rootTask)
+
+    def __createNodeTasks(self, orderedNode: OrderedNode, parentTask: OrderedTask):
         """ Create tasks corresponding to a node and link them correctly.
         Also link them to the parent task, and recursively create children tasks.
         """
@@ -276,35 +304,10 @@ class OrderedTasks:
         # Create children
         for n in orderedNode.dependencies:
             logger.debug(f"  -> create deps {n}")
-            self.createNodeTasks(n, firstTask)
+            self.__createNodeTasks(n, firstTask)
         # Add the last task to execute for this node to _nodeUidToLastTask
         self._nodeUidToLastTask[nodeUid] = lastTask
         logger.debug(f"  -> done {orderedNode.node._name}")
-
-    def _orderTasks(self):
-        """ Use the nodesByLevel info to create all tasks to send to the submitter """
-        firstLevelOrderedNodes = self.nodesByLevel[0]
-        # Start from a root task
-        self._nodeUidToLastTask = {}
-        for n in firstLevelOrderedNodes:
-            self.createNodeTasks(n, self.rootTask)
-
-    def display(self, task:OrderedTask=None, level=0):
-        if task is None:
-            task = self.rootTask
-        logger.debug(f"{' '*4*level}[{level:02d}] {task}")
-        for child in task.dependencies:
-            self.display(child, level+1)
-
-    def iterOnTasks(self, current:OrderedTask=None):
-        if current is None:
-            current = self.rootTask
-        yield current
-        for task in current.dependencies:
-            yield from self.iterOnTasks(task)
-
-    def __iter__(self):
-        yield from self.iterOnTasks()
 
 
 class BaseSubmittedJob:

@@ -105,22 +105,6 @@ class TaskThread(QThread):
             if node.isFinishedOrRunning() or node.isCompatibilityNode:
                 continue
 
-            # Request chunk creation if not already done
-            if not node._chunksCreated:
-                self.createChunksSignal.emit(node)
-                # Wait for chunk creation to complete
-                if not self.waitForChunkCreation(node):
-                    logging.error(f"Failed to create chunks for {node.name}, stopping the process")
-                    break
-            else:
-                node._updateNodeSize()
-
-            # if a node does not exist anymore, node.chunks becomes a PySide property
-            try:
-                multiChunks = len(node.chunks) > 1
-            except TypeError:
-                continue
-
             # Preprocess
             try:
                 node.preprocess(self.forceCompute)
@@ -136,6 +120,22 @@ class TaskThread(QThread):
                 if node.nodeDesc.hasPostprocess:
                     node._postprocessChunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
                 break
+
+            # Request chunk creation if not already done
+            if not node._chunksCreated:
+                self.createChunksSignal.emit(node)
+                # Wait for chunk creation to complete
+                if not self.waitForChunkCreation(node):
+                    logging.error(f"Failed to create chunks for {node.name}, stopping the process")
+                    break
+            else:
+                node._updateNodeSize()
+
+            # if a node does not exist anymore, node.chunks becomes a PySide property
+            try:
+                multiChunks = len(node.chunks) > 1
+            except TypeError:
+                continue
 
             # Process
             processHasFailed = False

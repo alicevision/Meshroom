@@ -440,7 +440,9 @@ Panel {
                     // The list of chunks
                     ChunksListView {
                         id: chunksLV
-                        enabled: root.node ? root.node.chunksCreated : false
+                        enabled: root.node ?
+                            root.node.chunksCreated || root.node.hasPreprocessChunk || root.node.hasPostprocessChunk 
+                            : false
                         chunks: root.node ? root.node.allChunks : null
                         visible: enabled && (tabBar.currentIndex >= 1 && tabBar.currentIndex <= 3)
                         SplitView.preferredWidth: 88  // Just fit to display "postprocess"

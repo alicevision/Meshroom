@@ -196,7 +196,6 @@ class LocalFarmClientContext(LocalFarmClient):
         self.disconnect()
 
 
-
 class Task:
     def __init__(self, name, command, metadata=None, env=None):
         print(f"Create task with command {command}")

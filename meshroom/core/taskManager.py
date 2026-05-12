@@ -84,7 +84,9 @@ class TaskThread(QThread):
             except ValueError:
                 # Node already removed (for instance a global clear of _nodesToProcess)
                 pass
-            n.clearSubmittedChunks()
+            # clearSubmittedChunks may create NodeChunk QObjects; those must be  
+            # created on the main thread so QML can safely connect to them.  
+            QMetaObject.invokeMethod(n, "clearSubmittedChunks", Qt.QueuedConnection)
 
     def run(self):
         """ Consume compute tasks. """
@@ -160,18 +162,6 @@ class TaskThread(QThread):
                         break
                     else:
                         logging.error(f"Error on node computation: {exc}")
-                        nodesToRemove, _ = self._manager._graph.dfsOnDiscover(startNodes=[node], reverse=True)
-                        # remove following nodes from the task queue
-                        for n in nodesToRemove[1:]:  # exclude current node
-                            try:
-                                self._manager._nodesToProcess.remove(n)
-                            except ValueError:
-                                # Node already removed (for instance a global clear of _nodesToProcess)
-                                pass
-                            # clearSubmittedChunks may create NodeChunk QObjects; those must be
-                            # created on the main thread so QML can safely connect to them.
-                            QMetaObject.invokeMethod(n, "clearSubmittedChunks", Qt.QueuedConnection)
-                            n.clearSubmittedChunks()
                         self.clearNodes(node)
 
             if processHasFailed:

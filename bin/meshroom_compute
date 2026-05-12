@@ -140,10 +140,10 @@ if args.node:
         sys.exit(0)
 
     if args.preprocess:
-        chunks = [node._preprocessChunk]
+        chunks = [node.preprocessChunk]
     elif args.postprocess:
-        chunks = [node._postprocessChunk]
-    elif args.iteration == ChunkIndex.NONE:  # Warning : default value
+        chunks = [node.postprocessChunk]
+    elif args.iteration == ChunkIndex.NONE:  # Default value
         chunks = node.chunks
     else:
         chunks = [node.chunks[args.iteration]]

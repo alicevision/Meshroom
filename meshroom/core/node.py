@@ -14,7 +14,7 @@ import time
 import uuid
 from collections import namedtuple, OrderedDict
 from enum import Enum, IntEnum, auto
-from typing import Callable, Optional, List, Dict, Union
+from typing import Callable, Optional, List, Union
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
@@ -498,7 +498,7 @@ class NodeChunk(BaseObject):
     def isPostprocess(self):
         return self.index == ChunkIndex.POSTPROCESS
 
-    def getIndexName(self):
+    def getChunkIndexName(self):
         if self.isPreprocess:
             return "preprocess"
         if self.isPostprocess:
@@ -511,7 +511,7 @@ class NodeChunk(BaseObject):
 
     @property
     def name(self):
-        return f"{self.node.name} ({self.getIndexName()})"
+        return f"{self.node.name} ({self.getChunkIndexName()})"
 
     @property
     def logManager(self):
@@ -576,13 +576,7 @@ class NodeChunk(BaseObject):
         Return the path for the requested type of file.
         It is expected to be prefixed by the chunk number, but for compatibility purposes, it may not be.
         """
-        if self.isPreprocess:
-            chunkName = "preprocess"
-        elif self.isPostprocess:
-            chunkName = "postprocess"
-        else:
-            chunkIndex = self.index if self.range.blockSize else 0
-            chunkName = str(chunkIndex)
+        chunkName = self.getChunkIndexName()
         # Retro-compatibility: ensure we do not lose files computed when single chunks were not prefixed
         # If both the prefixed and not prefixed files exist, the prefixed one should be returned
         if os.path.exists(os.path.join(self.node.internalFolder, fileType)):
@@ -788,15 +782,13 @@ class NodeChunk(BaseObject):
                 return meshroom.core.sessionUid not in (self.node._nodeStatus.submitterSessionUid, self._status.computeSessionUid)
             return False
         return False
-    
+
     statusChanged = Signal()
     status = Property(Variant, lambda self: self._status, notify=statusChanged)
     statusName = Property(str, getStatusName, notify=statusChanged)
     execModeName = Property(str, getExecModeName, notify=statusChanged)
     statisticsChanged = Signal()
-    
-    chunkName = Property(str, lambda self: self.name, constant=True)
-    chunkIndexName = Property(str, getIndexName, constant=True)
+    chunkIndexName = Property(str, getChunkIndexName, constant=True)
     chunkIndex = Property(int, lambda self: self.index, constant=True)
     chunkNode = Property(Variant, lambda self: self.node, constant=True)
 
@@ -1806,7 +1798,10 @@ class BaseNode(BaseObject):
         self._chunks[iteration].process()
 
     def preprocess(self, forceCompute=False, inCurrentEnv=False):
-        """ Prepare the node processing """
+        """
+        Invoke the pre process command on Client Node to execute before
+        we start the processing on the node
+        """
         if self.nodeDesc.hasPreprocess:
             if not self._preprocessChunk:
                 raise RuntimeError("Trying to process preprocess chunk but it doesn't exist")
@@ -1820,8 +1815,8 @@ class BaseNode(BaseObject):
 
     def postprocess(self, forceCompute=False, inCurrentEnv=False):
         """
-        Invoke the post process on Client Node to execute after the processing on the
-        node is completed
+        Invoke the post process command on Client Node to execute after 
+        the processing on the node is completed
         """
         if self.nodeDesc.hasPostprocess:
             if not self._postprocessChunk:
@@ -2043,7 +2038,7 @@ class BaseNode(BaseObject):
     def getChunks(self) -> list[NodeChunk]:
         return self._chunks
 
-    def getAllChunks(self):
+    def getAllChunks(self) -> list[NodeChunk]:
         chunks = []
         if self.nodeDesc.hasPreprocess:
             chunks.append(self._preprocessChunk)
@@ -2314,9 +2309,9 @@ class BaseNode(BaseObject):
     chunksChanged = Signal()
     chunks = Property(Variant, getChunks, notify=chunksChanged)
     allChunks = Property(Variant, getAllChunks, notify=chunksChanged)
-    hasPreprocessChunk = Property(Variant, lambda self: self.nodeDesc.hasPreprocess, notify=chunksChanged)
+    hasPreprocessChunk = Property(bool, lambda self: self.nodeDesc.hasPreprocess, notify=chunksChanged)
     preprocessChunk = Property(Variant, lambda self: self._preprocessChunk, notify=chunksChanged)
-    hasPostprocessChunk = Property(Variant, lambda self: self.nodeDesc.hasPostprocess, notify=chunksChanged)
+    hasPostprocessChunk = Property(bool, lambda self: self.nodeDesc.hasPostprocess, notify=chunksChanged)
     postprocessChunk = Property(Variant, lambda self: self._postprocessChunk, notify=chunksChanged)
     chunkPlaceholder = Property(Variant, lambda self: self._chunkPlaceholder, notify=chunksChanged)
     nbParallelizationBlocks = Property(int, lambda self: len(self._chunks) if self._chunksCreated else 0, notify=chunksChanged)
@@ -2505,7 +2500,7 @@ class Node(BaseNode):
             self._chunksCreated = False
             self.setSize(0)
             self._chunkPlaceholder.setObjectList([NodeChunk(self, desc.computation.Range(), placeholder=True)])
-        
+
         # Create chunks when possible
         self.chunksCreatedChanged.emit()
         self.chunksChanged.emit()

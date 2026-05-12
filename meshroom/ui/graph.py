@@ -58,7 +58,7 @@ class WatchedFile:
     @property
     def monitoredObjectName(self):
         if self.isChunk:
-            return self.chunk.getIndexName()
+            return self.chunk.getChunkIndexName()
         return self.node.name
 
     @property

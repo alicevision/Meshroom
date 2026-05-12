@@ -79,19 +79,19 @@ def getRequestPackages(packagesDelimiter="=="):
 
 
 def rezWrapCommand(cmd: str, 
-                   useCurrentContext:bool=False, 
+                   useCurrentContext: bool=False, 
                    otherRezPkg: List[str] = None, 
                    additionalEnv: dict=None) -> str:
     """Wrap command to be runned using rez.
 
     Args:
-        cmd (str): command to run
-        useCurrentContext (bool, optional): use current rez context to retrieve a list of rez packages.
-        otherRezPkg (List[str], optional): Additionnal rez packages.
-        additionalEnv (dict, optional): Additional environment variables.
+        cmd: command to run
+        useCurrentContext: use current rez context to retrieve a list of rez packages.
+        otherRezPkg: Additionnal rez packages.
+        additionalEnv: Additional environment variables.
 
     Returns:
-        str: the final command to execute
+        the final command to execute
     """
     packages = set()
     if useCurrentContext:

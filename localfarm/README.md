@@ -1,13 +1,13 @@
 # Meshroom Local Farm
 
-This folder contains a local farm tool for meshroom. It can be used in various ways :
+This folder contains a local farm tool for Meshroom. It can be used in various ways:
 - For testing we setup and launch the farm backend process and use it to test the submitting process
-- We also added a submitter to be able to use it inside meshroom
+- We also added a submitter to be able to use it inside Meshroom
 
 > [!NOTE]  
-> Note that the local famr only works in Unix for now because we use `fork` for daemonization.
+> Note that the local farm only works on Unix for now because we use `fork` for daemonization.
 > We could implement the [`DETACHED_PROCESS`](https://stackoverflow.com/a/12854376) flag with `subprocess.Popen`
-> to handle the farm in Windows.
+> to handle the farm on Windows.
 
 ## How to use
 
@@ -22,17 +22,17 @@ The `FARM_ROOT` folder will contain the logs for each process and for the main p
 
 ### Commands
 
-- _start_ : Launch the farm
-- _clean_ : Clean the files
-- _stop_ : Stop the farm process
-- _restart_ : Restart the farm process
-- _status_ : Check the status
-- _fullInfo_ : Display additional info
+- _start_: Launch the farm
+- _clean_: Clean the files
+- _stop_: Stop the farm process
+- _restart_: Restart the farm process
+- _status_: Check the status
+- _fullInfo_: Display additional info
 
 ### Add jobs
 
 The `test.py` script can be used to find examples on how to use it.
-Basically here's how to create jobs and tasks :
+Basically here's how to create jobs and tasks:
 
 ```py
 import os
@@ -100,7 +100,7 @@ while True:
             currentRunningTids = newRunningTasks
 ```
 
-And this gives :
+And this gives:
 
 ```
 10:54:36 -> job: {'jid': 1}
@@ -113,7 +113,7 @@ And this gives :
 
 ### Launch the backend from a python process
 
-Instead of using the command line you can also use the launcher as an API :
+Instead of using the command line you can also use the launcher as an API:
 
 ```py
 from localfarm.localFarmLauncher import FarmLauncher
@@ -131,7 +131,7 @@ launcher.status()
 launcher.stop()
 ```
 
-And here are the logs :
+And here are the logs:
 ```
 <!-- Launch -->
 Clean farm files...
@@ -154,7 +154,7 @@ Farm backend stopped
 
 ## Logs
 
-Here are the files we can find on the farm root :
+Here are the files we can find on the farm root:
 ```
 .
 ├── backend.log
@@ -171,4 +171,4 @@ Here are the files we can find on the farm root :
 - _backend.log_ contains the logs for the backend process
 - _farm.pid_ contains the PID for the backend process
 - _backend.port_ contains the port used for the TCP connection
-- In the jobs folder you can find all logs for the tasks of each job. The structure is : `jobs/{jid}/tasks/{tid}.log`
+- In the "jobs" folder, you can find all logs for the tasks of each job. The structure is: `jobs/{jid}/tasks/{tid}.log`

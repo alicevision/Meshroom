@@ -142,7 +142,7 @@ class TestNodeSubmit:
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
-    
+
     def registerNode(self, name):
         plugin = pluginManager.getPlugin("pluginSubmitter")
         node = plugin.nodes[name]

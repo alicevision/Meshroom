@@ -69,11 +69,11 @@ class SubmitterOptions:
 
 class OrderedTaskType(IntFlag):
     PLACEHOLDER = 0
-    """No command : just here to have dependencies"""
+    """No command: just here to have dependencies"""
     PREPROCESS = 1
     """Task that executes a node preprocess method"""
     EXPANDING = 2
-    """Task that executes a node preprocess method"""
+    """Task that will spawn tasks on execution"""
     CHUNK = 3
     """Task that will expand during the processing"""
     POSTPROCESS = 4
@@ -107,9 +107,9 @@ class OrderedNode:
     """ Intermediate structure used to order tasks """
 
     def __init__(self, node, dependencies=None):
-        # node can be None for placeholder tasks (task that don't do anything else than regrouping dependencies)
+        # node can be None for placeholder tasks (tasks that don't do anything else than regrouping dependencies)
         self.node = node  # BaseNode
-        self.dependencies: list[OrderedNode] = dependencies or []  # Tasks that needs to run before the current one
+        self.dependencies: list[OrderedNode] = dependencies or []  # Tasks that need to run before the current one
 
     @property
     def isPlaceholder(self) -> bool:
@@ -118,7 +118,7 @@ class OrderedNode:
 
     @property
     def isExpanding(self) -> bool:
-        """ Expanding nodes are nodes which number of chunks is not determined yet. 
+        """ Expanding nodes are nodes whose number of chunks has not been determined yet. 
         It will be resolved when the node processing starts. Therefore a first process is launched that 
         will create chunks and then chunk tasks are created later (from the submitted process).
         """
@@ -128,7 +128,7 @@ class OrderedNode:
     def chunksIterations(self) -> list[int]:
         """ Get all iterations to process.
         Used in the case where the node is parallelized and when we know how many chunks are executed.
-        It should not be called is `self.isExpanding` therefore we return None
+        It should not be called if `self.isExpanding` therefore we return None
         """
         if self.isExpanding:
             return None
@@ -279,18 +279,8 @@ class OrderedTasks:
                     firstTask = expandingTask
             else:
                 logger.debug(f"  -> has chunks : {orderedNode.chunksIterations}")
-                # Handle 0 chunks case
-                if len(orderedNode.chunksIterations) == 0:
-                    if firstTask and lastTask:
-                        lastTask.addDependency(firstTask)
-                    elif firstTask:
-                        lastTask = firstTask
-                    elif lastTask:
-                        firstTask = lastTask
-                    else:
-                        firstTask = lastTask = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
                 # Create and link chunks
-                else:
+                if len(orderedNode.chunksIterations):
                     # Create placeholders for pre/post
                     lastTask = lastTask if lastTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
                     firstTask = firstTask if firstTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
@@ -299,6 +289,15 @@ class OrderedTasks:
                         chunkTask = OrderedTask(OrderedTaskType.CHUNK, orderedNode.node, iteration=iteration)
                         lastTask.addDependency(chunkTask)
                         chunkTask.addDependency(firstTask)
+                else:  # Handle 0 chunks case
+                    if firstTask and lastTask:
+                        lastTask.addDependency(firstTask)
+                    elif firstTask:
+                        lastTask = firstTask
+                    elif lastTask:
+                        firstTask = lastTask
+                    else:
+                        firstTask = lastTask = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
         # Add parent dependency
         parentTask.addDependency(lastTask)
         # Create children

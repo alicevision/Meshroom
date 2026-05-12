@@ -123,7 +123,6 @@ class TestNodeE(TestNodeC):
         raise RuntimeError()
 
 
-
 class TestNodeLogger:
     """
     Test that the logger is correctly set up during the different stages of the compute and that logs are correctly
@@ -184,7 +183,6 @@ class TestNodeLogger:
                 assert len(reg.findall(content)) == 1
 
     def test_processChunkInEnvironment_quotesGraphFilepathWithSpaces(self, tmp_path):
-        print("")
         graphFilepath = Path(tmp_path, "project with spaces", "scene with spaces.mg")
         graphFilepath.parent.mkdir()
 

@@ -107,11 +107,9 @@ def rezWrapCommand(cmd, useCurrentContext=False, useRequestedContext=True, other
             rezBin = os.path.join(os.environ["REZ_PACKAGES_ROOT"], "bin/rez")
         elif shutil.which("rez"):
             rezBin = shutil.which("rez")
-        addEnvCmd = ""
         if additionalEnv:
             envVars = " ".join([f'{k}="{v}"' for k, v in additionalEnv.items()])
-            addEnvCmd = f"env {envVars} "
-        return f"{rezBin} env {packagesStr} -- {addEnvCmd}{cmd}"
+        return f"{rezBin} env {packagesStr} -- {envVars} {cmd}"
     return cmd
 
 

@@ -100,6 +100,7 @@ def processSubmit(node: Node, graph, tmp_path):
     except Exception as e:
         error = e
     finally:
+        farmLauncher.status(allInfo=True)
         farmLauncher.stop()
     if error:
         raise error
@@ -146,12 +147,13 @@ class TestNodeSubmit:
         return node
 
     def test_orderTasks(self):
-        """
-        phd=placeholder
+        """ Here is the example we use for testing :
+                                                             *" [B chk_0] "* 
+        [phd start_A] - [A chk] - [phd end_A] - [phd start_B]               [B post] - [C pre] - [C exp] - [C post] - [phd root]
+                                                             *_ [B chk_1] _* 
+        phd=placeholder (no command/process executed)
         chk=chunk
-                                                                    *" [B chk_0] "* 
-        [phd (start_A)] - [A chks] - [phd (end_A)] - [phd (start_B)]               [B post] - [C pre] - [C expand] - [C post] - [phd (root)]
-                                                                    *_ [B chk_1] _* 
+        exp=expand
         """
         graph = Graph("")
         # Add nodes

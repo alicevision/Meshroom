@@ -94,9 +94,9 @@ class OrderedTask:
         if self.taskType == OrderedTaskType.PLACEHOLDER:
             string = f"<OrderedTask placeholder {id(self)}"
             if self.node:
-                string += f" node={self.node.node._name}"
+                string += f" node={self.node._name}"
             return string + f">"
-        string = f"<OrderedTask {self.node.node._uid[:5]} {self.node.node.name} {self.taskType.name} ("
+        string = f"<OrderedTask {self.node._uid[:5]} {self.node.name} {self.taskType.name} ("
         if self.iteration >= 0:
             string += f"iteration={self.iteration}, "
         string += f"{len(self.dependencies)} deps)>"
@@ -226,21 +226,21 @@ class OrderedTasks:
         # Create node tasks
         if orderedNode.isPlaceholder:
             logger.debug("  -> is placeholder")
-            task = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode)
+            task = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
             firstTask = lastTask = task
         else:
             lastTask = firstTask = None
             # Create pre/post tasks if needed
             if orderedNode.hasPostprocess:
                 logger.debug("  -> postprocess")
-                lastTask = OrderedTask(OrderedTaskType.POSTPROCESS, orderedNode)
+                lastTask = OrderedTask(OrderedTaskType.POSTPROCESS, orderedNode.node)
             if orderedNode.hasPreprocess:
                 logger.debug("  -> preprocess")
-                firstTask = OrderedTask(OrderedTaskType.PREPROCESS, orderedNode)
+                firstTask = OrderedTask(OrderedTaskType.PREPROCESS, orderedNode.node)
             # Process
             if orderedNode.isExpanding:
                 logger.debug("  -> is expanding")
-                expandingTask = OrderedTask(OrderedTaskType.EXPANDING, orderedNode)
+                expandingTask = OrderedTask(OrderedTaskType.EXPANDING, orderedNode.node)
                 if lastTask:
                     lastTask.addDependency(expandingTask)
                 else:
@@ -260,15 +260,15 @@ class OrderedTasks:
                     elif lastTask:
                         firstTask = lastTask
                     else:
-                        firstTask = lastTask = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode)
+                        firstTask = lastTask = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
                 # Create and link chunks
                 else:
                     # Create placeholders for pre/post
-                    lastTask = lastTask if lastTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode)
-                    firstTask = firstTask if firstTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode)
+                    lastTask = lastTask if lastTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
+                    firstTask = firstTask if firstTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
                     for iteration in orderedNode.chunksIterations:
                         logger.debug(f"    - chunk {iteration}")
-                        chunkTask = OrderedTask(OrderedTaskType.CHUNK, orderedNode, iteration=iteration)
+                        chunkTask = OrderedTask(OrderedTaskType.CHUNK, orderedNode.node, iteration=iteration)
                         lastTask.addDependency(chunkTask)
                         chunkTask.addDependency(firstTask)
         # Add parent dependency
@@ -296,13 +296,17 @@ class OrderedTasks:
         for child in task.dependencies:
             self.display(child, level+1)
 
-    def iterOnTasks(self, current : OrderedTask = None):
+    def iterOnTasks(self, current:OrderedTask=None):
         if current is None:
-            self.iterOnTasks(self.rootTask)
-        else:
-            yield current
-            for task in current.dependencies:
-                self.iterOnTasks(task)
+            current = self.rootTask
+        items = [current]
+        for task in current.dependencies:
+            items.extend(self.iterOnTasks(task))
+        return items
+
+    def __iter__(self):
+        for item in self.iterOnTasks():
+            yield item
 
 
 class BaseSubmittedJob:
@@ -462,9 +466,7 @@ class BaseSubmitter(BaseObject):
              bool: whether the submission succeeded
         """
         orderedTasks = OrderedTasks(nodes, edges)
-        orderedTasks.display()
-        # job = self.createJob(orderedTasks, filepath, submitLabel)
-        job = self.createJob(nodes, edges, filepath, submitLabel)
+        job = self.createJob(orderedTasks, filepath, submitLabel)
         if not job:
             # Failed to create the job
             return None

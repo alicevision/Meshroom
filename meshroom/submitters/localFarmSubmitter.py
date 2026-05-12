@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict
 from meshroom.core.submitter import BaseSubmitter, SubmitterOptions, BaseSubmittedJob, SubmitterOptionsEnum
+from meshroom.core.submitter import OrderedTask, OrderedTasks, OrderedTaskType
 from meshroom.core.node import Status
 from collections import namedtuple, defaultdict
 
@@ -262,38 +263,25 @@ class LocalFarmSubmitter(BaseSubmitter):
                 job.addTaskDependency(child, chunkTask)
             job.addTaskDependency(chunkTask, parentTask)
 
-    def createTask(self, meshroomFile: str, node) -> CreatedTask:
-        cmdArgs = f"--node {node.name} \"{meshroomFile}\" --extern"
-        metadata = {"nodeUid": node._uid}
-
-        if not node._chunksCreated:
+    def createFarmTask(self, meshroomFile: str, orderedTask: OrderedTask, createdTasks: Dict[OrderedTask, Task]) -> Task:
+        metadata = dict()
+        if orderedTask.node:
+            metadata = {"nodeUid": orderedTask.node._uid, "iteration": orderedTask.iteration}
+        
+        if orderedTask.taskType == OrderedTaskType.PLACEHOLDER:
+            return Task(name=orderedTask.node.name if orderedTask.node else "", command="", metadata=metadata)
+        
+        cmdArgs = f"--node {orderedTask.node.name} \"{meshroomFile}\" --extern"
+        metadata = {"nodeUid": orderedTask.node._uid, "iteration": orderedTask.iteration}
+        
+        if orderedTask.taskType == OrderedTaskType.EXPANDING:
             cmd = self.getExpandWrappedCmd(cmdArgs, self.reqPackages)
-            task = Task(name=node.name, command=cmd, metadata=metadata, env=self.jobEnv)
-            task = CreatedTask(task, None)
-
-        elif node.isParallelized:
-            _, _, nbBlocks = node.nodeDesc.parallelization.getSizes(node)
-            iterationsToIgnore = []
-            for c in node._chunks:
-                if c._status.status == Status.SUCCESS:
-                    iterationsToIgnore.append(c.range.iteration)
-            chunkParams = {
-                "start": 0, "end": nbBlocks - 1, "step": 1,
-                "ignoreIterations": iterationsToIgnore,
-                "chunkCmdArgs": cmdArgs
-            }
-            task = Task(name=node.name, command="", metadata=metadata, env=self.jobEnv)
-            task = CreatedTask(task, chunkParams)
-
+            task = Task(name=orderedTask.node.name, command=cmd, metadata=metadata, env=self.jobEnv)
         else:
             cmdBin = wrapMeshroomBin("meshroom_compute")
-            cmd = f"{cmdBin} {cmdArgs} --iteration 0"
-            if not self.disabled_rez:
-                cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages)
-            task = Task(name=node.name, command=cmd, metadata=metadata, env=self.jobEnv)
-            task = CreatedTask(task, None)
-
-        print("Created task: ", task)
+            cmd = f"{cmdBin} {cmdArgs} --iteration {orderedTask.iteration}"
+            cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages)
+            task = Task(name=orderedTask.node.name, command=cmd, metadata=metadata, env=self.jobEnv)
 
         return task
 
@@ -328,21 +316,29 @@ class LocalFarmSubmitter(BaseSubmitter):
             if createdTask.chunkParams:
                 self.__createChunkTasks(job, createdTask.task, childrenTasks, createdTask.chunkParams)
 
-    def createJob(self, nodes, edges, filepath, submitLabel="{projectName}") -> LocalFarmJob:
+    def createJob(self, orderedTasks, filepath, submitLabel="{projectName}") -> LocalFarmJob:
         projectName = os.path.splitext(os.path.basename(filepath))[0]
         name = submitLabel.format(projectName=projectName)
         # Create job
         job = Job(name)
+        
         # Create tasks
-        nodeUidToTask: Dict[str, CreatedTask] = {}
-        for node in nodes:
-            if node._uid in nodeUidToTask:
-                continue  # HACK: Should not be necessary
-            createdTask: CreatedTask = self.createTask(filepath, node)
-            job.addTask(createdTask.task)
-            nodeUidToTask[node._uid] = createdTask
-        # Build dependencies
-        self.buildDependencies(job, nodeUidToTask, edges)
+        orderedTasks.display()
+        createdTasks: Dict[OrderedTask, Task] = dict()
+        for taskToCreate in orderedTasks.iterOnTasks():
+            if taskToCreate in createdTasks.keys():
+                continue
+            createdTask = self.createFarmTask(filepath, taskToCreate, createdTasks)
+            createdTasks[taskToCreate] = createdTask
+        
+        for orderedTask, task in createdTasks.items():
+            print(orderedTask, "->", task)
+        
+        for orderedTask, task in createdTasks.items():
+            deps = [createdTasks.get(t) for t in orderedTask.dependencies]
+            for dependency in deps:
+                job.addTaskDependency(dependency, task)
+        
         # Submit job
         engine = LocalFarmEngine(self.farmPath)
         res = job.submit(engine)

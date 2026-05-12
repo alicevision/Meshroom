@@ -16,7 +16,7 @@ import time
 import uuid
 from collections import namedtuple, OrderedDict
 from enum import Enum, IntEnum, auto
-from typing import Callable, Optional, List, Dict
+from typing import Callable, Optional, List, Dict, Union
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
@@ -481,7 +481,7 @@ class NodeChunk(BaseObject):
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
 
     def __repr__(self):
-        return f"<NodeChunk {hex(id(self))}>"
+        return f"<NodeChunk {self.name} ({self.getStatusName()}) {hex(id(self))}>"
 
     @property
     def index(self):
@@ -1323,11 +1323,11 @@ class BaseNode(BaseObject):
         return self.nodeDesc.resolvedRam(self)
 
     def hasStatus(self, status: Status):
+        if self.isInputNode:
+            return status == Status.INPUT
         if not self._chunks or not self._chunksCreated:
-            if self.isInputNode:
-                return status == Status.INPUT
             return status == Status.NONE
-        for chunk in self._chunks:
+        for chunk in self._allChunks:
             if chunk.status.status != status:
                 return False
         return True
@@ -1368,19 +1368,19 @@ class BaseNode(BaseObject):
     @Slot(result=str)
     def getStartDateTime(self):
         """ Return the date (str) of the first running chunk """
-        dateTime = [chunk._status.startDateTime for chunk in self._chunks if chunk._status.status
+        dateTime = [chunk._status.startDateTime for chunk in self._allChunks if chunk._status.status
                     not in (Status.NONE, Status.SUBMITTED) and chunk._status.startDateTime != ""]
         return min(dateTime) if len(dateTime) != 0 else ""
 
     def isAlreadySubmitted(self):
         if self._chunksCreated:
-            return any(c.isAlreadySubmitted() for c in self._chunks)
+            return any(c.isAlreadySubmitted() for c in self._allChunks)
         else:
             return self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING)
 
     def isAlreadySubmittedOrFinished(self):
         if self._chunksCreated:
-            return all(c.isAlreadySubmittedOrFinished() for c in self._chunks)
+            return all(c.isAlreadySubmittedOrFinished() for c in self._allChunks)
         else:
             return self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS)
 
@@ -1394,7 +1394,7 @@ class BaseNode(BaseObject):
             return False
         if not self.isAlreadySubmittedOrFinished():
             return False
-        for chunk in self._chunks:
+        for chunk in self._allChunks:
             if chunk.isRunning():
                 return True
         return False
@@ -1402,7 +1402,7 @@ class BaseNode(BaseObject):
     @Slot(result=bool)
     def isRunning(self):
         """ Return True if at least one chunk of this Node is running, False otherwise. """
-        return any(chunk.isRunning() for chunk in self._chunks)
+        return any(chunk.isRunning() for chunk in self._allChunks)
 
     @Slot(result=bool)
     def isFinishedOrRunning(self):
@@ -1410,14 +1410,14 @@ class BaseNode(BaseObject):
         Return True if all chunks of this Node is either finished or running, False
         otherwise.
         """
-        if not self._chunks:
+        if not self._allChunks:
             return False
-        return all(chunk.isFinishedOrRunning() for chunk in self._chunks)
+        return all(chunk.isFinishedOrRunning() for chunk in self._allChunks)
 
     @Slot(result=bool)
     def isPartiallyFinished(self):
         """ Return True is at least one chunk of this Node is finished, False otherwise. """
-        return any(chunk.isFinished() for chunk in self._chunks)
+        return any(chunk.isFinished() for chunk in self._allChunks)
 
     def isExtern(self):
         """
@@ -1436,7 +1436,7 @@ class BaseNode(BaseObject):
             elif self._nodeStatus.execMode == ExecMode.LOCAL and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
                 return meshroom.core.sessionUid != self._nodeStatus.submitterSessionUid
             return False
-        return any(chunk.isExtern() for chunk in self._chunks)
+        return any(chunk.isExtern() for chunk in self._allChunks)
 
     @Slot()
     def clearSubmittedChunks(self):
@@ -1448,28 +1448,30 @@ class BaseNode(BaseObject):
             This must be used with caution. This could lead to inconsistent node status
             if the graph is still being computed.
         """
-        if self._chunksCreated:
-            for chunk in self._chunks:
-                if chunk.isAlreadySubmitted():
-                    chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
-        else:
-            if self.isAlreadySubmitted():
-                self.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+        chunks: List[Union[BaseNode, NodeChunk]] = self._allChunks
+        if not self._chunksCreated:
+            chunks.append(self)
+        for chunk in chunks:
+            if chunk.isAlreadySubmitted():
+                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
         self.globalStatusChanged.emit()
 
     def clearLocallySubmittedChunks(self):
         """ Reset all locally submitted chunks to Status.NONE. """
-        if self._chunksCreated:
-            for chunk in self._chunks:
-                if chunk.isAlreadySubmitted() and not chunk.isExtern():
-                    chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
-        else:
-            if self.isAlreadySubmitted() and not self.isExtern():
-                self.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+        chunks: List[Union[BaseNode, NodeChunk]] = self._allChunks
+        if not self._chunksCreated:
+            chunks.append(self)
+        for chunk in chunks:
+            if chunk.isAlreadySubmitted() and not chunk.isExtern():
+                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
         self.globalStatusChanged.emit()
 
     def upgradeStatusTo(self, newStatus, execMode=None):
         """ Upgrade node to the given status and save it on disk. """
+        if self.nodeDesc._hasPreprocess:
+            self._preprocessChunk.upgradeStatusTo(newStatus)
+        if self.nodeDesc._hasPostprocess:
+            self._postprocessChunk.upgradeStatusTo(newStatus)
         if self._chunksCreated:
             for chunk in self._chunks:
                 chunk.upgradeStatusTo(newStatus)
@@ -1486,7 +1488,7 @@ class BaseNode(BaseObject):
         self.globalStatusChanged.emit()
 
     def updateStatisticsFromCache(self):
-        for chunk in self._chunks:
+        for chunk in self._allChunks:
             chunk.updateStatisticsFromCache()
 
     def _resetChunks(self):
@@ -1672,6 +1674,10 @@ class BaseNode(BaseObject):
                 logging.warning(f"Could not create chunks from cache: {e}")
                 return
         s = self.globalStatus
+        if self.nodeDesc._hasPreprocess:
+            self._preprocessChunk.updateStatusFromCache()
+        if self.nodeDesc._hasPostprocess:
+            self._postprocessChunk.updateStatusFromCache()
         if self._chunksCreated:
             for chunk in self._chunks:
                 chunk.updateStatusFromCache()
@@ -1717,7 +1723,7 @@ class BaseNode(BaseObject):
             #    `updateStatusFromCache()` will NOT recreate chunks from stale cache,
             #    allowing `node.createChunks()` to evaluate fresh chunk parameters.
             self._nodeStatus.resetChunkInfo()
-        for chunk in self._chunks:
+        for chunk in self._allChunks:
             if forceCompute or chunk._status.status != Status.SUCCESS:
                 hasChunkToLaunch = True
                 chunk._status.setNode(self)
@@ -1742,7 +1748,7 @@ class BaseNode(BaseObject):
             # Same rationale as initStatusOnSubmit: clear stale chunk info
             # so that the nodeStatus file does not contain outdated chunk setup.
             self._nodeStatus.resetChunkInfo()
-        for chunk in self._chunks:
+        for chunk in self._allChunks:
             if forceCompute or (chunk._status.status not in (Status.RUNNING, Status.SUCCESS)):
                 hasChunkToLaunch = True
                 chunk._status.setNode(self)
@@ -1898,6 +1904,10 @@ class BaseNode(BaseObject):
 
     def stopComputation(self):
         """ Stop the computation of this node. """
+        if self.nodeDesc._hasPreprocess:
+            self._preprocessChunk.stopProcess()
+        if self.nodeDesc._hasPostprocess:
+            self._postprocessChunk.stopProcess()
         if self._chunks:
             for chunk in self._chunks.values():
                 chunk.stopProcess()
@@ -1920,12 +1930,12 @@ class BaseNode(BaseObject):
         if not self._chunksCreated:
             # Get status from nodeStatus
             return self._nodeStatus.status
-        if not self._chunks:
+        if not self._allChunks:
             return Status.NONE
-        if len(self._chunks) == 1:
-            return self._chunks[0]._status.status
-
-        chunksStatus = [chunk._status.status for chunk in self._chunks]
+        if len(self._allChunks) == 1:
+            return self._allChunks[0]._status.status
+        
+        chunksStatus = [chunk._status.status for chunk in self._allChunks]
 
         anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
                  Status.RUNNING, Status.SUBMITTED)
@@ -1942,11 +1952,11 @@ class BaseNode(BaseObject):
 
     @Slot(result=ChunkStatusData)
     def getFusedStatus(self):
-        if not self._chunks:
+        if not self._allChunks:
             return ChunkStatusData()
         fusedStatus = ChunkStatusData()
-        fusedStatus.fromDict(self._chunks[0]._status.toDict())
-        for chunk in self._chunks[1:]:
+        fusedStatus.fromDict(self._allChunks[0]._status.toDict())
+        for chunk in self._allChunks[1:]:
             fusedStatus.merge(chunk._status)
         fusedStatus.status = self.getGlobalStatus()
         return fusedStatus
@@ -1975,8 +1985,8 @@ class BaseNode(BaseObject):
     def globalExecMode(self):
         if not self._chunksCreated:
             return self._nodeStatus.execMode.name
-        if len(self._chunks):
-            return self._chunks.at(0).getExecModeName()
+        if len(self._allChunks):
+            return self._allChunks[0].getExecModeName()
         else:
             return ExecMode.NONE
 
@@ -1991,7 +2001,17 @@ class BaseNode(BaseObject):
 
     def getChunks(self) -> list[NodeChunk]:
         return self._chunks
-    
+
+    @property
+    def _allChunks(self) -> list[NodeChunk]:
+        chunks = []
+        if self.nodeDesc._hasPreprocess:
+            chunks.append(self._preprocessChunk)
+        chunks.extend([c for c in self._chunks])
+        if self.nodeDesc._hasPostprocess:
+            chunks.append(self._postprocessChunk)
+        return chunks
+
     def getAllChunks(self):
         allChunks = []
         if self.nodeDesc._hasPreprocess:
@@ -2114,9 +2134,9 @@ class BaseNode(BaseObject):
 
     def initFromThisSession(self) -> bool:
         """ Check if the node was submitted from the current session """
-        if not self._chunksCreated or not self._chunks:
+        if not self._chunksCreated or not self._allChunks:
             return meshroom.core.sessionUid == self._nodeStatus.submitterSessionUid
-        for chunk in self._chunks:
+        for chunk in self._allChunks:
             # Technically the check on chunk._status.computeSessionUid is useless
             if meshroom.core.sessionUid not in (chunk._status.computeSessionUid, self._nodeStatus.submitterSessionUid):
                 return False
@@ -2124,9 +2144,9 @@ class BaseNode(BaseObject):
 
     def isMainNode(self) -> bool:
         """ In case of a node with duplicates, we check that the node is the one driving the computation. """
-        if len(self._chunks) == 0:
+        if len(self._allChunks) == 0:
             return True
-        firstChunk = self._chunks.at(0)
+        firstChunk = self._allChunks[0]
         if not firstChunk.statusNodeName:
             # If nothing is declared, anyone could become the main (if there are duplicates).
             return True

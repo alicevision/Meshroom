@@ -105,6 +105,26 @@ class TestNodeC(desc.BaseNode):
         LOGGER.info(f"> {node.name}")
 
 
+class TestNodeD(TestNodeC):
+    """
+    Implement preprocess / postprocess methods
+    """
+    def preprocess(self, node):
+        LOGGER.info(f"> {node.name} (preprocess)")
+
+    def postprocess(self, node):
+        LOGGER.info(f"> {node.name} (postprocess)")
+
+
+class TestNodeE(TestNodeC):
+    """
+    Implement preprocess / postprocess methods
+    """
+    def preprocess(self, node):
+        raise RuntimeError()
+
+
+
 class TestNodeLogger:
     """
     Test that the logger is correctly set up during the different stages of the compute and that logs are correctly
@@ -118,12 +138,14 @@ class TestNodeLogger:
         registerNodeDesc(TestNodeA)
         registerNodeDesc(TestNodeB)
         registerNodeDesc(TestNodeC)
+        registerNodeDesc(TestNodeD)
 
     @classmethod
     def teardown_class(cls):
         unregisterNodeDesc(TestNodeA)
         unregisterNodeDesc(TestNodeB)
         unregisterNodeDesc(TestNodeC)
+        unregisterNodeDesc(TestNodeD)
 
     def test_processChunks(self, tmp_path):
         graph = Graph("")
@@ -188,6 +210,26 @@ class TestNodeLogger:
         assert f'"{graphFilepath.as_posix()}"' in executed["cmd"]
         assert shlex.split(executed["cmd"])[2] == graphFilepath.as_posix()
         assert "--iteration 1" in executed["cmd"]
+
+    def test_prepostprocess(self, tmp_path):
+        graph = Graph("")
+        graph._cacheDir = tmp_path
+        node = graph.addNewNode(TestNodeD.__name__)
+        # Compute
+        logFiles = executeChunks(node, 1)
+        chunkLog = logFiles[0]
+        root = chunkLog.parent
+        preprocessLog = root / "preprocess.log"
+        postprocessLog = root / "postprocess.log"
+        def check_file(path, suffix = ""):
+            with open(path, "r") as f:
+                content = f.read()
+                suffix = ""
+                reg = re.compile(self.logPrefix + "TestNodeD_1" + suffix)
+                assert len(reg.findall(content)) == 1
+        check_file(preprocessLog, " (preprocess)")
+        check_file(chunkLog, "")
+        check_file(postprocessLog, " postprocess")
 
 
 class TestLockUpdates:
@@ -532,3 +574,73 @@ class TestSizeUpdate:
         nodeC.createChunks()
         nodeC.process(inCurrentEnv=True)
         self.checkNodeSizeAndStatus(nodeC, 2, 2, Status.SUCCESS)
+
+
+class TestPrePostProcess:
+    """
+    Test that preprocess and postprocess are correctly executed
+    """
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(TestNodeD)
+        registerNodeDesc(TestNodeE)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(TestNodeD)
+        unregisterNodeDesc(TestNodeE)
+
+    def test_status(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNodeD.__name__)
+        graph.save()
+        os.makedirs(node.internalFolder)
+        
+        # Check node
+        assert len(node.chunks) == 1
+        assert node.nodeDesc._hasPreprocess
+        assert node.nodeDesc._hasPostprocess
+
+        # Check status before
+        assert node.globalStatus == Status.NONE.name
+        assert node.chunks[0]._status.status == Status.NONE
+        assert node._preprocessChunk._status.status == Status.NONE
+        assert node._postprocessChunk._status.status == Status.NONE
+
+        # Process
+        node.preprocess(inCurrentEnv=True)
+        node.process(inCurrentEnv=True)
+        node.postprocess(inCurrentEnv=True)
+
+        # Check status after
+        assert node.globalStatus == Status.SUCCESS.name
+        assert node.chunks[0]._status.status == Status.SUCCESS
+        assert node._preprocessChunk._status.status == Status.SUCCESS
+        assert node._postprocessChunk._status.status == Status.SUCCESS
+    
+    def test_failingpreprocess(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNodeE.__name__)
+        graph.save()
+        os.makedirs(node.internalFolder)
+
+        # Check status before
+        assert node.globalStatus == Status.NONE.name
+        assert node._preprocessChunk._status.status == Status.NONE
+        assert node.chunks[0]._status.status == Status.NONE
+
+        # Process
+        try:
+            node.preprocess(inCurrentEnv=True)
+        except Exception:
+            pass
+        else:
+            raise RuntimeError
+        # We execute the process because we know this will succeed and 
+        # we want to test that the failed preprocess leads the global status
+        node.process(inCurrentEnv=True)
+
+        # Check status after
+        assert node.globalStatus == Status.ERROR.name
+        assert node.chunks[0]._status.status == Status.SUCCESS
+        assert node._preprocessChunk._status.status == Status.ERROR

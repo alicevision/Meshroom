@@ -61,19 +61,6 @@ class MrNodeType(enum.Enum):
     BACKDROP = enum.auto()
 
 
-def add_method_flag(methodName: str):
-    """ Decorator used to add a flag to a method. A flag is simply a variable set to True.
-    It will be used in this context to track whether a method is overloaded or not.
-
-    Args:
-        methodName (str): Name of the annotation to set
-    """
-    def wrapper(method):
-        method.__annotations__[methodName] = True
-        return method
-    return wrapper
-
-
 class InternalAttributesFactory:
     BASIC = [
         StringParam(
@@ -285,7 +272,6 @@ class BaseNode(object):
         """
         pass
 
-    @add_method_flag("disabled_preprocess")
     def preprocess(self, node):
         """ Gets invoked just before the processChunk method for the node.
 
@@ -297,9 +283,8 @@ class BaseNode(object):
     @property
     def _hasPreprocess(self):
         """ Returns True if the class has a preprocess """
-        return not self.preprocess.__annotations__.get("disabled_preprocess", False)
+        return type(self).preprocess is not BaseNode.preprocess
 
-    @add_method_flag("disabled_postprocess")
     def postprocess(self, node):
         """ Gets invoked after the processChunk method for the node.
 
@@ -311,7 +296,7 @@ class BaseNode(object):
     @property
     def _hasPostprocess(self):
         """ Returns True if the class has a postprocess """
-        return not self.postprocess.__annotations__.get("disabled_postprocess", False)
+        return type(self).postprocess is not BaseNode.postprocess
 
     def process(self, node):
         raise NotImplementedError(f'No process implementation on node: "{node.name}"')

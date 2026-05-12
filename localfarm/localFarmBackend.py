@@ -66,6 +66,13 @@ class Task:
         self.returnCode = None
         self.process = None
         self.logFile: Path = self.taskDir / f"{tid}.log"
+    
+    @property
+    def duration_string(self):
+        end_time = self.finished_at or datetime.now()
+        if not self.started_at:
+            return 0
+        return str(end_time - self.started_at)
 
     def to_dict(self):
         return {
@@ -383,7 +390,7 @@ class LocalFarmEngine:
         task.return_code = returncode
         if returncode == 0:
             task.status = Status.SUCCESS
-            logger.info(f"Task {task.tid} completed")
+            logger.info(f"Task {task.tid} completed after {task.duration_string}")
         else:
             task.status = Status.ERROR
             logger.error(f"Task {task.tid} failed with code {returncode}")
@@ -596,12 +603,16 @@ class LocalFarmRequestHandler(BaseRequestHandler):
 
     def handle(self):
         """ Handle incoming requests (multiple per connection). """
+        logger.debug("Connected to client")
         while True:
             try:
-                self.__read_and_answer_request()
+                connected = self.__read_and_answer_request()
+                if not connected:
+                    logger.debug("Disconnected from client")
+                    return
             except ConnectionResetError:
                 # Client disconnected abruptly
-                logger.debug("Client disconnected")
+                logger.debug("Connection has been reset")
                 return
             except json.JSONDecodeError as e:
                 logger.error(f"Invalid JSON received: {e}")
@@ -618,12 +629,12 @@ class LocalFarmRequestHandler(BaseRequestHandler):
             token = self.request.recv(MAX_BYTES_REQUEST)
             if not token:
                 # Client disconnected
-                return
+                return False
             data += token
             if b"\n" in token:
                 break
         if not data:
-            return
+            return False
         request = json.loads(data.decode("utf-8"))
         logger.debug(f"Received request: {request}")
         # Dispatch method
@@ -641,6 +652,7 @@ class LocalFarmRequestHandler(BaseRequestHandler):
         # Send response
         response_data = json.dumps(response) + '\n'
         self.request.sendall(response_data.encode('utf-8'))
+        return True
 
 
 def main(root):

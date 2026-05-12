@@ -51,11 +51,13 @@ class LocalFarmClient:
         raise ConnectionError("Farm backend not found")
 
     def reconnect(self):
+        logger.info("Reconnecting client")
         self._sock = None
         return self.connect()
 
     def disconnect(self):
         """Explicitly close the connection."""
+        logger.info(f"Disconnecting client {self._sock}")
         if self._sock:
             self._sock.close()
             self._sock = None

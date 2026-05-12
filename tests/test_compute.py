@@ -225,9 +225,9 @@ class TestNodeLogger:
                 content = f.read()
                 reg = re.compile(self.logPrefix + "TestNodeD_1" + suffix)
                 assert len(reg.findall(content)) == 1
-        check_file(preprocessLog, " \(preprocess\)")
+        check_file(preprocessLog, r" \(preprocess\)")
         check_file(chunkLog, "")
-        check_file(postprocessLog, " \(postprocess\)")
+        check_file(postprocessLog, r" \(postprocess\)")
 
 
 class TestLockUpdates:
@@ -642,3 +642,8 @@ class TestPrePostProcess:
         assert node.globalStatus == Status.ERROR.name
         assert node.chunks[0]._status.status == Status.SUCCESS
         assert node._preprocessChunk._status.status == Status.ERROR
+        
+        # Cleanup: Close all logging handlers to release file locks (Windows fix)
+        for handler in logging.root.handlers[:]:
+            handler.close()
+            logging.root.removeHandler(handler)

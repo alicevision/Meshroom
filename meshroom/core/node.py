@@ -1785,14 +1785,17 @@ class BaseNode(BaseObject):
                 self._chunkPlaceholder.setObjectList([chunkPlaceholder])
                 self.chunksChanged.emit()
     
-    def getChunkName(self, iteration: int):
+    def getChunkLogfileName(self, iteration: int):
         if iteration >= 0:
-            return str(self.chunks[iteration].index)
+            stem = str(self.chunks[iteration].index)
         elif iteration == ChunkIndex.PREPROCESS:
-            return "preprocess"
+            stem = "preprocess"
         elif iteration == ChunkIndex.POSTPROCESS:
-            return "postprocess"
-        return "0"
+            stem = "postprocess"
+        else:
+            stem = "0"
+        logFileName = f"{stem}.log"
+        return logFileName
 
     def processIteration(self, iteration):
         self._chunks[iteration].process()
@@ -1830,8 +1833,7 @@ class BaseNode(BaseObject):
 
     def prepareLogger(self, iteration=ChunkIndex.NONE):
         # Get file handler path
-        chunkName = self.getChunkName(iteration)
-        logFileName = f"{chunkName}.log"
+        logFileName = self.getChunkLogfileName(iteration)
         logFile = os.path.join(self.internalFolder, logFileName)
         # Setup logger
         rootLogger = logging.getLogger()

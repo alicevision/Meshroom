@@ -301,37 +301,6 @@ class LocalFarmSubmitter(BaseSubmitter):
 
         return task
 
-    def buildDependencies(self, job: Job, nodeUidToTask: Dict[str, CreatedTask], edges):
-        """ Gather and create dependencies.
-        First we get all parents and all children for each task.
-        Then for each task:
-        - we add the dependency to their parent and children
-        - if the task is a chunked task (which means multi iteration tasks) the we create the
-          chunk tasks and add dependencies from chunk tasks to children tasks
-
-        # TODO: there is a lot of confusion between nodes and tasks here
-        """
-        # Gather dependencies
-        tasksParentsUids = defaultdict(set)
-        tasksChildrenUids = defaultdict(set)
-        for u, v in edges:
-            # tasksParentsUids[v._uid].add(u._uid)
-            # tasksChildrenUids[u._uid].add(v._uid)
-            tasksParentsUids[u._uid].add(v._uid)
-            tasksChildrenUids[v._uid].add(u._uid)
-        # Create dependencies
-        for taskUid, createdTask in nodeUidToTask.items():
-            parentsTasks = [nodeUidToTask[tuid].task for tuid in tasksParentsUids.get(taskUid, set())]
-            childrenTasks = [nodeUidToTask[tuid].task for tuid in tasksChildrenUids.get(taskUid, set())]
-            # Create regular dependencies
-            for parentTask in parentsTasks:
-                job.addTaskDependency(createdTask.task, parentTask)
-            for childTask in childrenTasks:
-                job.addTaskDependency(childTask, createdTask.task)
-            # Create chunk tasks if necessary
-            if createdTask.chunkParams:
-                self.__createChunkTasks(job, createdTask.task, childrenTasks, createdTask.chunkParams)
-
     def createJob(self, orderedTasks, filepath, submitLabel="{projectName}") -> LocalFarmJob:
         projectName = os.path.splitext(os.path.basename(filepath))[0]
         name = submitLabel.format(projectName=projectName)

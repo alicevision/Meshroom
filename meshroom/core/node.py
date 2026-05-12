@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-# core/node.py
-
 import sys
 import atexit
 import copy
@@ -1709,7 +1707,12 @@ class BaseNode(BaseObject):
             # Restore placeholder chunk if needed
             chunkPlaceholder = NodeChunk(self, desc.computation.Range(), placeholder=True)
             chunkPlaceholder._status.execMode = self._nodeStatus.execMode
-            chunkPlaceholder._status.status = self._nodeStatus.status
+            if self._nodeStatus.status in (Status.NONE, Status.SUBMITTED):
+                chunkPlaceholder._status.status = self._nodeStatus.status
+            elif self._nodeStatus.status in (Status.RUNNING,):
+                chunkPlaceholder._status.status = Status.SUBMITTED
+            else:
+                chunkPlaceholder._status.status = Status.NONE
             self._chunkPlaceholder.setObjectList([chunkPlaceholder])
         # logging.debug(f"updateStatusFromCache: {self.name}, status: {s} => {self.globalStatus}")
         self.updateOutputAttr()
@@ -1957,9 +1960,16 @@ class BaseNode(BaseObject):
         Returns:
             Status: the node global status
         """
+        anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
+                 Status.RUNNING, Status.SUBMITTED)
+        allOf = (Status.SUCCESS,)
+        
         if self.isInputNode:
             return Status.INPUT
         if not self._chunksCreated:
+            # If the preprocess chunk failed we might not reach the chunk creation part
+            if self.nodeDesc.hasPreprocess and self._preprocessChunk._status.status in anyOf:
+                return self._preprocessChunk._status.status
             # Get status from nodeStatus
             return self._nodeStatus.status
         allChunks = self.getAllChunks()
@@ -1969,10 +1979,6 @@ class BaseNode(BaseObject):
         chunksStatus = [chunk._status.status for chunk in allChunks]
         if len(chunksStatus) == 1:
             return chunksStatus[0]
-
-        anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
-                 Status.RUNNING, Status.SUBMITTED)
-        allOf = (Status.SUCCESS,)
 
         for status in anyOf:
             if any(s == status for s in chunksStatus):

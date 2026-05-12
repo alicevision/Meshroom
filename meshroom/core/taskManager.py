@@ -136,6 +136,7 @@ class TaskThread(QThread):
                 break
 
             # Process
+            processHasFailed = False
             for cId, chunk in enumerate(node.chunks):
                 if chunk.isFinishedOrRunning() or not self.isRunning():
                     continue
@@ -153,6 +154,7 @@ class TaskThread(QThread):
                 try:
                     chunk.process(self.forceCompute)
                 except Exception as exc:
+                    processHasFailed = True
                     if chunk.isStopped():
                         stopAndRestart = True
                         break
@@ -172,6 +174,10 @@ class TaskThread(QThread):
                             n.clearSubmittedChunks()
                         self.clearNodes(node)
 
+            if processHasFailed:
+                if node.nodeDesc.hasPostprocess:
+                    node._postprocessChunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+                break
             # Postprocess
             try:
                 node.postprocess(self.forceCompute)

@@ -358,6 +358,7 @@ class LocalFarmEngine:
             with open(task.logFile, "w") as log:
                 log.write(f"# ========== Starting task {task.tid} at {task.started_at.isoformat()}"
                           f" (command=\"{task.command}\") ==========\n")
+                log.write(f"# metadata: {task.metadata}\n")
                 log.write(f"# process_env:\n")
                 log.write(f"# Additional env variables:\n")
                 for _k, _v in additional_env.items():

@@ -299,14 +299,12 @@ class OrderedTasks:
     def iterOnTasks(self, current:OrderedTask=None):
         if current is None:
             current = self.rootTask
-        items = [current]
+        yield current
         for task in current.dependencies:
-            items.extend(self.iterOnTasks(task))
-        return items
+            yield from self.iterOnTasks(task)
 
     def __iter__(self):
-        for item in self.iterOnTasks():
-            yield item
+        yield from self.iterOnTasks()
 
 
 class BaseSubmittedJob:

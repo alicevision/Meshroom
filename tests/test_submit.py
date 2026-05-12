@@ -52,18 +52,25 @@ def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=25):
     print(f"Waiting for node {node.name} to complete...")
     startTime = time.time()
     while True:
+        time.sleep(1)
+        if time.time() - startTime > timeout:
+            raise TimeoutError(f"Node {node.name} did not complete within {timeout} seconds")
+        # Check for job error
+        err = job.getJobErrors()
+        if err:
+            raise RuntimeError(f"Job encountered an error: {err}")
+        # Check that all tasks are finished
+        for task in job.localfarmTasks.values():
+            if task.get("status") not in (Status.NONE.name, Status.SUCCESS.name, Status.STOPPED.name, Status.ERROR.name):
+                continue
+        break
+        # Stop if the node switched to done
         node.updateStatusFromCache()
         nodeStatus = node.getGlobalStatus()
         if nodeStatus not in (Status.SUBMITTED, Status.RUNNING):
             print(f"Node status switched to {nodeStatus}")
             return
-        # Check for job error
-        err = job.getJobErrors()
-        if err:
-            raise RuntimeError(f"Job encountered an error: {err}")
-        if time.time() - startTime > timeout:
-            raise TimeoutError(f"Node {node.name} did not complete within {timeout} seconds")
-        time.sleep(1)
+
 
 def processSubmit(node: Node, graph, tmp_path):
     """

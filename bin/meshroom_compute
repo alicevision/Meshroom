@@ -138,20 +138,21 @@ if args.node:
         print(f"InputNode: No computation to do.")
         sys.exit(0)
 
-    if args.iteration == ChunkIndex.NONE:
-        chunks = node.chunks
-    elif args.preprocess:
+    if args.preprocess:
         chunks = [node._preprocessChunk]
     elif args.postprocess:
         chunks = [node._postprocessChunk]
+    elif args.iteration == ChunkIndex.NONE:  # Warning : default value
+        chunks = node.chunks
     else:
         chunks = [node.chunks[args.iteration]]
-
+    
     if not args.forceStatus and not args.forceCompute:
         for chunk in chunks:
             if chunk.status.status in submittedStatuses:
                 # Particular case for the local isolated, the node status is set to RUNNING by the submitter directly.
-                # We ensure that no other instance has started to compute, by checking that the computeSessionUid is empty.
+                # We ensure that no other instance has start
+                # ed to compute, by checking that the computeSessionUid is empty.
                 if chunk.node.getMrNodeType() == meshroom.core.MrNodeType.NODE and \
                     not chunk.status.computeSessionUid and node._nodeStatus.submitterSessionUid:
                     continue

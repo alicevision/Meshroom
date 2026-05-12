@@ -45,7 +45,7 @@ def getJobEnv():
     }
 
 
-def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=25):
+def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=10):
     """
     Wait for a node to complete processing
     """
@@ -54,7 +54,11 @@ def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=25):
     while True:
         time.sleep(1)
         if time.time() - startTime > timeout:
-            raise TimeoutError(f"Node {node.name} did not complete within {timeout} seconds")
+            raise TimeoutError((
+                f"Node {node.name} did not complete within {timeout} seconds. "
+                "You might want to increase the timeout duration in the test "
+                "or check why the test is taking more time."
+            ))
         # Check for job error
         err = job.getJobErrors()
         if err:

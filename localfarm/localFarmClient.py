@@ -199,6 +199,7 @@ class LocalFarmClientContext(LocalFarmClient):
 
 class Task:
     def __init__(self, name, command, metadata=None, env=None):
+        print(f"Create task with command {command}")
         self.uid = str(uuid.uuid1())
         self.name = name
         self.command = command

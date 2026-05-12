@@ -286,7 +286,8 @@ class LocalFarmSubmitter(BaseSubmitter):
                 cmd += f" --postprocess"
             elif orderedTask.taskType == OrderedTaskType.CHUNK:
                 cmd += f" --iteration {orderedTask.iteration}"
-            cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages, additionalEnv=self.jobEnv)
+            if not self.disabled_rez:
+                cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages, additionalEnv=self.jobEnv)
             task = Task(name=orderedTask.node.name, command=cmd, metadata=metadata, env=self.jobEnv)
 
         return task
@@ -353,7 +354,8 @@ class LocalFarmSubmitter(BaseSubmitter):
                 metadata = {"nodeUid": node._uid, "iteration": chunk.iteration}
                 cmdBin = wrapMeshroomBin("meshroom_compute")
                 cmd = f"{cmdBin} {cmdArgs} --iteration {chunk.iteration}"
-                cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages, additionalEnv=self.jobEnv)
+                if not self.disabled_rez:
+                    cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages, additionalEnv=self.jobEnv)
                 print("Additional chunk task command: ", cmd)
                 task = Task(name=name, command=cmd, metadata=metadata, env=taskEnv)
                 client.create_additional_task(currentJid, currentTid, task)

@@ -6,9 +6,11 @@ import shutil
 import logging
 from pathlib import Path
 from typing import Dict, List
+from collections import namedtuple
+
+from meshroom.core import MESHROOM_ROOT
 from meshroom.core.submitter import BaseSubmitter, SubmitterOptions, BaseSubmittedJob, SubmitterOptionsEnum
 from meshroom.core.submitter import OrderedTask, OrderedTaskType
-from collections import namedtuple
 
 from localfarm.localFarmClient import Task, Job, LocalFarmClientContext
 
@@ -19,7 +21,6 @@ logger.setLevel(logging.INFO)
 
 DEFAULT_FARM_PATH = os.getenv("MR_LOCAL_FARM_PATH", os.path.join(os.path.expanduser("~"), ".local_farm"))
 REZ_DELIMITER_PATTERN = re.compile(r"(-|==|>=|>|<=|<)")
-MESHROOM_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 Chunk = namedtuple("chunk", ["iteration", "start", "end"])

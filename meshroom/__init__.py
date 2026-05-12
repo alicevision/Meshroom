@@ -2,6 +2,7 @@ from enum import Enum, IntEnum
 import logging
 import os
 import sys
+from pathlib import Path
 
 
 class VersionStatus(Enum):
@@ -32,6 +33,9 @@ if __version_status__ is VersionStatus.develop:
     # Allow override from env variable
     if "REZ_MESHROOM_VERSION" in os.environ:
         __version_label__ += " package=" + os.environ.get("REZ_MESHROOM_VERSION")
+
+
+_MESHROOM_ROOT = Path(__file__).parent.parent.resolve()
 
 
 # Internal imports after the definition of the version

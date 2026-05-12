@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 from collections import namedtuple
 
-from meshroom.core import MESHROOM_ROOT
+from meshroom import _MESHROOM_ROOT
 from meshroom.core.submitter import BaseSubmitter, SubmitterOptions, BaseSubmittedJob, SubmitterOptionsEnum
 from meshroom.core.submitter import OrderedTask, OrderedTaskType
 
@@ -31,7 +31,7 @@ def wrapMeshroomBin(_bin):
     if shutil.which(_bin):
         # The alias exists so use it directly
         return _bin
-    binFolder = str(MESHROOM_ROOT / "bin")
+    binFolder = str(_MESHROOM_ROOT / "bin")
     return os.path.join(binFolder, _bin)
 
 

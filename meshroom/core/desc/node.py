@@ -12,14 +12,13 @@ import subprocess
 
 import psutil
 
-import meshroom
+from meshroom import _MESHROOM_ROOT
 from meshroom.core import cgroup
 from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
 from .attribute import Attribute, ChoiceParam, ColorParam, IntParam, StringParam
 
-_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
 

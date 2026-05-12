@@ -8,10 +8,10 @@ import subprocess
 from pathlib import Path
 
 import meshroom
+from meshroom import _MESHROOM_ROOT
 from meshroom.core import desc
 
 
-_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent
 _MESHROOM_BATCH = Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch"
 
 

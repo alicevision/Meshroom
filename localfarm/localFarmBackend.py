@@ -595,39 +595,52 @@ class LocalFarmRequestHandler(BaseRequestHandler):
         return self.server.server_address[1]
 
     def handle(self):
-        """ Handle incoming request. """
-        try:
-            # Read request
-            data = b""
-            while True:
-                token = self.request.recv(MAX_BYTES_REQUEST)
-                if not token:
-                    break
-                data += token
-                if b"\n" in token:
-                    break
-            if not data:
+        """ Handle incoming requests (multiple per connection). """
+        while True:
+            try:
+                self.__read_and_answer_request()
+            except ConnectionResetError:
+                # Client disconnected abruptly
+                logger.debug("Client disconnected")
                 return
-            request = json.loads(data.decode("utf-8"))
-            logger.debug(f"Received request: {request}")
-            # Dispatch method
-            method = request.get("method")
-            params = request.get("params", {})
-            if not hasattr(self.backend, method):
-                response = {"success": False, "error": f"Unknown request: {method}"}
-            else:
-                try:
-                    result = getattr(self.backend, method)(**params)
-                    response = result
-                except Exception as e:
-                    logger.error(f"Error executing {method}: {e}", exc_info=True)
-                    response = {'success': False, 'error': str(e)}
-            # Send response
-            response_data = json.dumps(response) + '\n'
-            self.request.sendall(response_data.encode('utf-8'))
-
-        except Exception as e:
-            logger.error(f"Error handling request: {e}", exc_info=True)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON received: {e}")
+                response = {"success": False, "error": "Invalid JSON"}
+                self.request.sendall((json.dumps(response) + '\n').encode('utf-8'))
+            except Exception as e:
+                logger.error(f"Error handling request: {e}", exc_info=True)
+                return
+    
+    def __read_and_answer_request(self):
+        """ Read request, get response and send response """
+        data = b""
+        while True:
+            token = self.request.recv(MAX_BYTES_REQUEST)
+            if not token:
+                # Client disconnected
+                return
+            data += token
+            if b"\n" in token:
+                break
+        if not data:
+            return
+        request = json.loads(data.decode("utf-8"))
+        logger.debug(f"Received request: {request}")
+        # Dispatch method
+        method = request.get("method")
+        params = request.get("params", {})
+        if not hasattr(self.backend, method):
+            response = {"success": False, "error": f"Unknown request: {method}"}
+        else:
+            try:
+                result = getattr(self.backend, method)(**params)
+                response = result
+            except Exception as e:
+                logger.error(f"Error executing {method}: {e}", exc_info=True)
+                response = {'success': False, 'error': str(e)}
+        # Send response
+        response_data = json.dumps(response) + '\n'
+        self.request.sendall(response_data.encode('utf-8'))
 
 
 def main(root):

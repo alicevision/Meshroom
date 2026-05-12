@@ -16,18 +16,31 @@ class PluginSubmitterA(desc.BaseNode):
     
     inputs = [
         desc.IntParam(
-            name="input",
-            label="Input",
-            description="input",
+            name="nbChunks",
+            label="nbChunks",
+            description="Nb Chunks",
             value=1,
+            exposed=True
+        ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="inputfile",
+                label="Input file",
+                description="",
+                value="",
+            ),
+            name="inputs",
+            label="inputs",
+            description="inputs",
+            exposed=True,
         ),
     ]
     outputs = [
-        desc.IntParam(
+        desc.File(
             name="output",
             label="Output",
             description="Output",
-            value=None,
+            value="",
         ),
     ]
 
@@ -50,5 +63,22 @@ class PluginSubmitterC(PluginSubmitterA):
     """
     Test process with parallelization and dynamic node size
     """
-    size = desc.DynamicNodeSize("input")
+    size = desc.DynamicNodeSize("nbChunks")
     parallelization = desc.Parallelization(blockSize=1)
+
+
+class PluginSubmitterAPrePost(PluginSubmitterA):
+    def preprocess(self, node):
+        LOGGER.info(f"> Done")
+    def postprocess(self, node):
+        LOGGER.info(f"> Done")
+
+
+class PluginSubmitterBPrePost(PluginSubmitterB):
+    def postprocess(self, node):
+        LOGGER.info(f"> Done")
+
+
+class PluginSubmitterCPrePost(PluginSubmitterC):
+    def postprocess(self, node):
+        LOGGER.info(f"> Done")

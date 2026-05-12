@@ -16,7 +16,8 @@ from typing import Dict, List, Generator
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(name)s][%(levelname)s] %(message)s'
+    format='%(asctime)s [%(name)s][%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
 )
 logger = logging.getLogger("LocalFarm")
 logger.setLevel(logging.INFO)
@@ -31,7 +32,7 @@ class LocalFarmEngine:
 
     def connect(self):
         """ Connect to the backend. """
-        print("Connect to farm located at", self.root)
+        logger.info(f"Connect to farm located at {self.root}")
         if self.tcpPortFile.exists():
             try:
                 port = int(self.tcpPortFile.read_text())

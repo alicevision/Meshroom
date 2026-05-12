@@ -15,6 +15,7 @@ from meshroom.core import pluginManager, loadClassesNodes, loadSubmitters, regis
 from meshroom.core.graph import Graph
 from meshroom.core.plugins import Plugin
 from meshroom.core.node import Node, Status
+from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.submitter import jobManager
 from meshroom.submitters.localFarmSubmitter import LocalFarmSubmitter, LocalFarmJob
 
@@ -125,32 +126,52 @@ class TestNodeSubmit:
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
-
-    def setupNode(self, graph, name):
+    
+    def registerNode(self, name):
         plugin = pluginManager.getPlugin("pluginSubmitter")
         node = plugin.nodes[name]
         nodeType = node.nodeDescriptor
         registerNodeDesc(nodeType)
-        node = graph.addNewNode(nodeType.__name__)
+        return nodeType.__name__
+
+    def addNewNode(self, graph, name, nodeParams):
+        nodeTypeName = self.registerNode(name)
+        if nodeParams:
+            node = graph.addNewNode(nodeTypeName, **nodeParams)
+        else:
+            node = graph.addNewNode(nodeTypeName)
         return node
+
+    def test_buildTaskGraph(self):
+        graph = Graph("")
+        # Add nodes
+        nodeA = self.addNewNode(graph, "PluginSubmitter"+"A"+"PrePost", nodeParams={})
+        nodeB = self.addNewNode(graph, "PluginSubmitter"+"B"+"PrePost", nodeParams={"inputs": [nodeA.output]})
+        nodeC = self.addNewNode(graph, "PluginSubmitter"+"C"+"PrePost", nodeParams={"inputs": [nodeB.output]})
+        # Submit
+        submitter = get_submitter()
+        nodes, edges = graph.dfsOnFinish(startNodes=[nodeC])
+        print(nodes, edges)
+        res = submitter.submit(nodes, edges, "")
+        print("res", res)
 
     def test_submitNoParallel(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = os.path.join(tmp_path, "cache")
-        node = self.setupNode(graph, "PluginSubmitterA")
+        node = self.addNewNode(graph, "PluginSubmitterA")
         # Submit
         processSubmit(node, graph, tmp_path)
 
     def test_submitStaticSize(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = os.path.join(tmp_path, "cache")
-        node = self.setupNode(graph, "PluginSubmitterB")
+        node = self.addNewNode(graph, "PluginSubmitterB")
         # Submit
         processSubmit(node, graph, tmp_path)
 
     def test_submitDynamicSize(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = os.path.join(tmp_path, "cache")
-        node = self.setupNode(graph, "PluginSubmitterC")
+        node = self.addNewNode(graph, "PluginSubmitterC")
         # Submit
         processSubmit(node, graph, tmp_path)

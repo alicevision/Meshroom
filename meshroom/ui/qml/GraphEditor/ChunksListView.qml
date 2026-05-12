@@ -11,21 +11,40 @@ import Utils 1.0
 ColumnLayout {
     id: root
 
+    enum IndexItems {
+        NULL=-3,
+        PREPROCESS=-2,
+        POSTPROCESS=-1
+    }
+
     property var uigraph: null
     property variant chunks
     property int currentIndex: 0
-    property variant currentChunk: (chunks && currentIndex >= 0) ? chunks.at(currentIndex) : undefined
+
+    function getCurrentChunkIndex() {
+        console.log("(getCurrentChunkIndex)", currentIndex, chunks.length)
+        if ( currentIndex == undefined || !chunks || currentIndex == ChunksListView.IndexItems.NULL ) { return -1 }
+        let hasPreprocess  = chunks.some(function(chk) { return chk.chunkIndex == ChunksListView.IndexItems.PREPROCESS })
+        let hasPostprocess = chunks.some(function(chk) { return chk.chunkIndex == ChunksListView.IndexItems.POSTPROCESS })
+        if ( currentIndex == ChunksListView.IndexItems.PREPROCESS ) return hasPreprocess ? 0 : -1                    // Preprocess chunk
+        if ( currentIndex == ChunksListView.IndexItems.POSTPROCESS ) return hasPostprocess ? chunks.length - 1 : -1  // Postprocess chunk
+        return currentIndex + (hasPreprocess ? 1 : 0)                                                                // Process Chunk
+    }
+
+    property int currentItemIndex: getCurrentChunkIndex()
+
+    property variant currentChunk: (currentItemIndex >= 0 && chunks && chunks.length > currentItemIndex) ? chunks[currentItemIndex].chunk : null
 
     onChunksChanged: {
         // When the list changes, ensure the current index is in the new range
         if (!chunks)
-            currentIndex = -1
-        else if (currentIndex >= chunks.count)
-            currentIndex = chunks.count-1
+            currentIndex = ChunksListView.IndexItems.NULL
+        else if (currentIndex >= chunks.length)
+            currentIndex = chunks.length-1
     }
 
     // chunksSummary is in sync with allChunks button (but not directly accessible as it is in a Component)
-    property bool chunksSummary: (currentIndex === -1)
+    property bool chunksSummary: (currentItemIndex === -1)
 
     width: 60
 
@@ -61,31 +80,24 @@ ColumnLayout {
                     checked = summaryEnabled
                 }
                 onClicked: {
-                    root.currentIndex = -1
+                    root.currentIndex = ChunksListView.IndexItems.NULL
                     checked = true
                 }
             }
         }
-        highlight: Component {
-            Rectangle {
-                visible: true  // !root.chunksSummary
-                color: activePalette.highlight
-                opacity: 0.3
-                z: 2
-            }
-        }
-        highlightMoveDuration: 0
-        highlightResizeDuration: 0
 
         delegate: ItemDelegate {
             id: chunkDelegate
-            property var chunk: object
-            text: index
+            property var chunk: modelData.chunk
+            text: modelData.name
+            highlighted: (currentItemIndex >= 0 && index == currentItemIndex)
+            property int chunkIndex: modelData.chunkIndex
             width: ListView.view.width
             leftPadding: 8
             onClicked: {
+                console.log("clicked on chunk", chunkIndex, "(", text, ")")
                 chunksLV.forceActiveFocus()
-                root.currentIndex = index
+                root.currentIndex = chunkIndex
             }
             Rectangle {
                 width: 4
@@ -98,8 +110,8 @@ ColumnLayout {
     Connections {
         target: _currentScene
         function onSelectedChunkChanged() {
-            for (var i = 0; i < root.chunks.count; i++) {
-                if (_currentScene.selectedChunk === root.chunks.at(i)) {
+            for (var i = 0; i < root.chunks.length; i++) {
+                if (_currentScene.selectedChunk === root.chunks[i]) {
                     root.currentIndex = i
                     break;
                 }

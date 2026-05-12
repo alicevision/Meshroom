@@ -12,8 +12,8 @@ import shutil
 import time
 import uuid
 from collections import namedtuple, OrderedDict
-from enum import Enum, auto
-from typing import Callable, Optional, List
+from enum import Enum, IntEnum, auto
+from typing import Callable, Optional, List, Dict
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
@@ -59,6 +59,12 @@ class ExecMode(Enum):
     NONE = auto()
     LOCAL = auto()
     EXTERN = auto()
+
+
+class ChunkIndex(IntEnum):
+    PREPROCESS=-2
+    POSTPROCESS=-1
+    # Standard chunks are indexed from 0
 
 
 # Simple structure for storing chunk information
@@ -231,14 +237,10 @@ class ChunkStatusData(BaseObject):
 
     def __init__(self, nodeName='', mrNodeType: MrNodeType = MrNodeType.NONE, parent: BaseObject = None):
         super().__init__(parent)
-
         self.nodeName: str = nodeName
         self.mrNodeType = mrNodeType
-
         self.computeSessionUid: Optional[str] = None    # Session where computation is done
-
         self.execMode: ExecMode = ExecMode.NONE
-
         self.resetDynamicValues()
 
     def resetDynamicValues(self):
@@ -249,6 +251,9 @@ class ChunkStatusData(BaseObject):
         self.endDateTime: str = ""
         self.elapsedTime: float = 0.0
         self.hostname: str = ""
+
+    def checkStatus(self, statusName):
+        return self.status == Status[statusName]
 
     def setNode(self, node):
         """ Set the node information from one node instance. """
@@ -464,8 +469,8 @@ def clearProcessesStatus():
 class NodeChunk(BaseObject):
     def __init__(self, node, range, parent=None):
         super().__init__(parent)
-        self.node = node
-        self.range = range
+        self.node: Node = node
+        self.range: desc.Range = range
         self._logManager = None
         self._status: ChunkStatusData = ChunkStatusData(nodeName=node.name, mrNodeType=node.getMrNodeType())
         self.statistics: stats.Statistics = stats.Statistics()
@@ -482,11 +487,22 @@ class NodeChunk(BaseObject):
         return self.range.iteration
 
     @property
+    def isPreprocess(self):
+        return self.index == ChunkIndex.PREPROCESS
+    
+    @property
+    def isPostprocess(self):
+        return self.index == ChunkIndex.POSTPROCESS
+
+    @property
     def name(self):
+        if self.isPreprocess:
+            return f"{self.node.name}(preprocess)"
+        if self.isPostprocess:
+            return f"{self.node.name}(postprocess)"
         if self.range.blockSize:
             return f"{self.node.name}({self.index})"
-        else:
-            return self.node.name
+        return self.node.name
 
     @property
     def logManager(self):
@@ -551,13 +567,19 @@ class NodeChunk(BaseObject):
         Return the path for the requested type of file.
         It is expected to be prefixed by the chunk number, but for compatibility purposes, it may not be.
         """
-        chunkIndex = self.index if self.range.blockSize else 0
+        if self.isPreprocess:
+            chunkName = "preprocess"
+        elif self.isPostprocess:
+            chunkName = "postprocess"
+        else:
+            chunkIndex = self.index if self.range.blockSize else 0
+            chunkName = str(chunkIndex)
         # Retro-compatibility: ensure we do not lose files computed when single chunks were not prefixed
         # If both the prefixed and not prefixed files exist, the prefixed one should be returned
         if os.path.exists(os.path.join(self.node.internalFolder, fileType)):
-            if not os.path.exists(os.path.join(self.node.internalFolder, str(chunkIndex) + "." + fileType)):
+            if not os.path.exists(os.path.join(self.node.internalFolder, chunkName + "." + fileType)):
                 return os.path.join(self.node.internalFolder, fileType)
-        return os.path.join(self.node.internalFolder, str(chunkIndex) + "." + fileType)
+        return os.path.join(self.node.internalFolder, chunkName + "." + fileType)
 
     def getStatusFile(self):
         return self._getFile("status")
@@ -642,6 +664,13 @@ class NodeChunk(BaseObject):
         return self._status.status == Status.SUCCESS
 
     def process(self, forceCompute=False, inCurrentEnv=False):
+        if self.isPreprocess:
+            return self.node.nodeDesc.preprocess(self.node)
+        if self.isPostprocess:
+            return self.node.nodeDesc.postprocess(self.node)
+        return self._process(forceCompute, inCurrentEnv)
+
+    def _process(self, forceCompute=False, inCurrentEnv=False):
         if not forceCompute and self._status.status == Status.SUCCESS:
             logging.info(f"Node chunk already computed: {self.name}")
             return
@@ -754,7 +783,7 @@ class NodeChunk(BaseObject):
                 return meshroom.core.sessionUid not in (self.node._nodeStatus.submitterSessionUid, self._status.computeSessionUid)
             return False
         return False
-
+    
     statusChanged = Signal()
     status = Property(Variant, lambda self: self._status, notify=statusChanged)
     statusName = Property(str, getStatusName, notify=statusChanged)
@@ -818,6 +847,8 @@ class BaseNode(BaseObject):
         self.graph = None
         self.dirty: bool = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks: list[NodeChunk] = ListModel(parent=self)
+        self._preprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.PREPROCESS)) if self.nodeDesc._hasPreprocess else None
+        self._postprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.POSTPROCESS)) if self.nodeDesc._hasPostprocess else None
         self._chunksCreated = False  # Only initialize chunks on compute
         self._chunkPlaceholder: list[NodeChunk] = ListModel(parent=self)  # Placeholder chunk for nodes with dynamic ones
         self._uid: str = uid
@@ -1734,17 +1765,29 @@ class BaseNode(BaseObject):
         self._chunks[iteration].process()
 
     def preprocess(self):
-        # Invoke the Node Description's pre-process for the Client Node to prepare its processing
-        self.nodeDesc.preprocess(self)
+        """ Prepare the node processing """
+        print("(preprocess)")
+        if self.nodeDesc._hasPreprocess:
+            print("-> has preprocess")
+            # self.nodeDesc.preprocess(self)
+            self._preprocessChunk.process()
 
     def process(self, forceCompute=False, inCurrentEnv=False):
+        print("(process)")
         for chunk in self._chunks:
+            print("-> chunk", chunk)
             chunk.process(forceCompute, inCurrentEnv)
 
     def postprocess(self):
-        # Invoke the post process on Client Node to execute after the processing on the
-        # node is completed
-        self.nodeDesc.postprocess(self)
+        """
+        Invoke the post process on Client Node to execute after the processing on the
+        node is completed
+        """
+        print("(postprocess)")
+        if self.nodeDesc._hasPostprocess:
+            print("-> has postprocess")
+            # self.nodeDesc.postprocess(self)
+            self._postprocessChunk.process()
 
     def getLogHandlers(self):
         return self._handlers
@@ -1944,6 +1987,15 @@ class BaseNode(BaseObject):
 
     def getChunks(self) -> list[NodeChunk]:
         return self._chunks
+    
+    def getAllChunks(self):
+        allChunks = []
+        if self.nodeDesc._hasPreprocess:
+            allChunks.append({"chunkIndex": ChunkIndex.PREPROCESS, "chunk": self._preprocessChunk, "name": "Preprocess"})
+        allChunks.extend([{"chunkIndex": i, "chunk": c, "name": str(i)} for i, c in enumerate(self._chunks)])
+        if self.nodeDesc._hasPostprocess:
+            allChunks.append({"chunkIndex": ChunkIndex.POSTPROCESS, "chunk": self._postprocessChunk, "name": "Postprocess"})
+        return allChunks
 
     def getSize(self):
         return self._size
@@ -2204,6 +2256,7 @@ class BaseNode(BaseObject):
     chunksCreated = Property(bool, lambda self: self._chunksCreated, notify=chunksCreatedChanged)
     chunksChanged = Signal()
     chunks = Property(Variant, getChunks, notify=chunksChanged)
+    allChunks = Property(Variant, getAllChunks, notify=chunksChanged)
     chunkPlaceholder = Property(Variant, lambda self: self._chunkPlaceholder, notify=chunksChanged)
     nbParallelizationBlocks = Property(int, lambda self: len(self._chunks) if self._chunksCreated else 0, notify=chunksChanged)
     sizeChanged = Signal()

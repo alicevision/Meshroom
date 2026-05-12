@@ -25,6 +25,7 @@ LOGGER = logging.getLogger("TestCompute")
 def executeChunks(node, size):
     os.makedirs(node.internalFolder)
     logFiles = {}
+    node.preprocess()
     for chunkIndex in range(size):
         iteration = chunkIndex if size > 1 else -1
         logFileName = f"{chunkIndex}.log"
@@ -32,14 +33,13 @@ def executeChunks(node, size):
         logFiles[chunkIndex] = logFile
         logFile.touch()
         node.prepareLogger(iteration)
-        node.preprocess()
         if size > 1:
             chunk = node.chunks[chunkIndex]
             chunk.process(True, True)
         else:
             node.process(True, True)
-        node.postprocess()
         node.restoreLogger()
+    node.postprocess()
     return logFiles
 
 

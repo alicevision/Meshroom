@@ -1,3 +1,5 @@
+# desc/node.py
+
 import enum
 from inspect import getfile, getattr_static
 from pathlib import Path
@@ -466,8 +468,11 @@ class Node(BaseNode):
         meshroomComputeCmd = f"{chunk.node.nodeDesc.pythonExecutable} {_MESHROOM_COMPUTE}" + \
                              f" \"{chunk.node.graph.filepath}\" --node {chunk.node.name}" + \
                               " --extern --inCurrentEnv"
-
-        if len(chunk.node.getChunks()) > 1:
+        if chunk.isPreprocess:
+            meshroomComputeCmd += f" --preprocess"
+        elif chunk.isPostprocess:
+            meshroomComputeCmd += f" --postprocess"
+        elif len(chunk.node.getChunks()) >= 1:
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
 
         runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv

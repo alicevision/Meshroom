@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+# core/node.py
+
 import sys
 import atexit
 import copy
@@ -62,6 +65,7 @@ class ExecMode(Enum):
 
 
 class ChunkIndex(IntEnum):
+    NONE=-3
     PREPROCESS=-2
     POSTPROCESS=-1
     # Standard chunks are indexed from 0
@@ -411,11 +415,9 @@ class LogManager:
 
             f.close()
 
-        with open(self.logFile) as f:
+        with open(self.logFile, "r") as f:
             content = f.read()
             self.progressBarPosition = content.rfind('\n')
-
-            f.close()
 
     def updateProgressBar(self, value):
         assert self.progressBar
@@ -423,13 +425,12 @@ class LogManager:
 
         tics = round((value/self.progressEnd)*51)
 
-        with open(self.logFile, 'r+') as f:
+        with open(self.logFile, "r+") as f:
             text = f.read()
             for i in range(tics-self.currentProgressTics):
                 text = text[:self.progressBarPosition]+'*'+text[self.progressBarPosition:]
             f.seek(0)
             f.write(text)
-            f.close()
 
         self.currentProgressTics = tics
 
@@ -664,13 +665,6 @@ class NodeChunk(BaseObject):
         return self._status.status == Status.SUCCESS
 
     def process(self, forceCompute=False, inCurrentEnv=False):
-        if self.isPreprocess:
-            return self.node.nodeDesc.preprocess(self.node)
-        if self.isPostprocess:
-            return self.node.nodeDesc.postprocess(self.node)
-        return self._process(forceCompute, inCurrentEnv)
-
-    def _process(self, forceCompute=False, inCurrentEnv=False):
         if not forceCompute and self._status.status == Status.SUCCESS:
             logging.info(f"Node chunk already computed: {self.name}")
             return
@@ -692,8 +686,12 @@ class NodeChunk(BaseObject):
         self.statThread.start()
 
         try:
-            logging.info(f"[Process chunk] Start processing...")
-            self.node.nodeDesc.processChunk(self)
+            if self.isPreprocess:
+                self.node.nodeDesc.preprocess(self.node)
+            elif self.isPostprocess:
+                self.node.nodeDesc.postprocess(self.node)
+            else:
+                self.node.nodeDesc.processChunk(self)
             # NOTE: this assumes saving the output attributes for each chunk
             self.node.saveOutputAttr()
             executionStatus = Status.SUCCESS
@@ -718,7 +716,6 @@ class NodeChunk(BaseObject):
             self.statThread.join()
             self.statistics = stats.Statistics()
             del runningProcesses[self.name]
-
 
     def _processInIsolatedEnvironment(self):
         """
@@ -1760,42 +1757,47 @@ class BaseNode(BaseObject):
                 chunkPlaceholder._status.status = self._nodeStatus.status
                 self._chunkPlaceholder.setObjectList([chunkPlaceholder])
                 self.chunksChanged.emit()
+    
+    def getChunkName(self, iteration: int):
+        if iteration >= 0:
+            return str(self.chunks[iteration].index)
+        elif iteration == ChunkIndex.PREPROCESS:
+            return "preprocess"
+        elif iteration == ChunkIndex.POSTPROCESS:
+            return "postprocess"
+        return "0"
 
     def processIteration(self, iteration):
         self._chunks[iteration].process()
 
-    def preprocess(self):
+    def preprocess(self, forceCompute=False, inCurrentEnv=False):
         """ Prepare the node processing """
-        print("(preprocess)")
+        self.prepareLogger(ChunkIndex.PREPROCESS)
         if self.nodeDesc._hasPreprocess:
-            print("-> has preprocess")
-            # self.nodeDesc.preprocess(self)
-            self._preprocessChunk.process()
+            self._preprocessChunk.process(forceCompute, inCurrentEnv)
+        self.restoreLogger()
 
     def process(self, forceCompute=False, inCurrentEnv=False):
-        print("(process)")
         for chunk in self._chunks:
-            print("-> chunk", chunk)
             chunk.process(forceCompute, inCurrentEnv)
 
-    def postprocess(self):
+    def postprocess(self, forceCompute=False, inCurrentEnv=False):
         """
         Invoke the post process on Client Node to execute after the processing on the
         node is completed
         """
-        print("(postprocess)")
+        self.prepareLogger(ChunkIndex.POSTPROCESS)
         if self.nodeDesc._hasPostprocess:
-            print("-> has postprocess")
-            # self.nodeDesc.postprocess(self)
-            self._postprocessChunk.process()
+            self._postprocessChunk.process(forceCompute, inCurrentEnv)
+        self.restoreLogger()
 
     def getLogHandlers(self):
         return self._handlers
 
-    def prepareLogger(self, iteration=-1):
+    def prepareLogger(self, iteration=ChunkIndex.NONE):
         # Get file handler path
-        chunkIndex = self.chunks[iteration].index if iteration != -1 else 0
-        logFileName = f"{chunkIndex}.log"
+        chunkName = self.getChunkName(iteration)
+        logFileName = f"{chunkName}.log"
         logFile = os.path.join(self.internalFolder, logFileName)
         # Setup logger
         rootLogger = logging.getLogger()
@@ -2401,10 +2403,14 @@ class Node(BaseNode):
         """ Set chunks on the node.
         # TODO : Maybe do not delete chunks if we will recreate them as before ?
         """
-        if self.isInputNode:
+        if not self.isComputableType:
             self._chunksCreated = True
             return
         # Disconnect signals
+        if self._preprocessChunk:
+            self._preprocessChunk.statusChanged.disconnect(self.globalStatusChanged)
+        if self._postprocessChunk:
+            self._postprocessChunk.statusChanged.disconnect(self.globalStatusChanged)
         for chunk in self._chunks:
             chunk.statusChanged.disconnect(self.globalStatusChanged)
         # Empty list
@@ -2445,7 +2451,18 @@ class Node(BaseNode):
             self._chunksCreated = False
             self.setSize(0)
             self._chunkPlaceholder.setObjectList([NodeChunk(self, desc.computation.Range())])
-
+        # Pre/post process
+        if self.nodeDesc._hasPreprocess:
+            self._preprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.PREPROCESS))
+            self._preprocessChunk.statusChanged.connect(self.globalStatusChanged)
+        else:
+            self._preprocessChunk = None
+        if self.nodeDesc._hasPostprocess:
+            self._postprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.POSTPROCESS))
+            self._postprocessChunk.statusChanged.connect(self.globalStatusChanged)
+        else:
+            self._postprocessChunk = None
+        
         # Create chunks when possible
         self.chunksCreatedChanged.emit()
         self.chunksChanged.emit()

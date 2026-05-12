@@ -1775,25 +1775,32 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
         node.initStatusOnCompute(forceCompute)
 
     for n, node in enumerate(nodes):
+        print(f"(executeGraph) {n} {node}")
         try:
             # If the node is in compatibility mode, it cannot be computed
             if node.isCompatibilityNode:
                 logging.warning(f"{node.name} is in Compatibility Mode and cannot be computed: {node.issueDetails}.")
                 continue
 
-            node.preprocess()
+            print("A")
+            node.preprocess(forceCompute)
             if not node._chunksCreated:
+                print("B create chunks")
                 node.createChunks()
             multiChunks = len(node.chunks) > 1
+            print("C")
             for c, chunk in enumerate(node.chunks):
+                print("D", c, chunk)
                 if multiChunks:
                     print('\n[{node}/{nbNodes}]({chunk}/{nbChunks}) {nodeName}'.format(
                         node=n+1, nbNodes=len(nodes),
                         chunk=c+1, nbChunks=len(node.chunks), nodeName=node.nodeType))
                 else:
                     print(f'\n[{n + 1}/{len(nodes)}] {node.nodeType}')
+                print("E")
                 chunk.process(forceCompute)
-            node.postprocess()
+            print("F")
+            node.postprocess(forceCompute)
         except Exception as exc:
             logging.error(f"Error on node computation: {exc}")
             graph.clearSubmittedNodes()

@@ -17,10 +17,6 @@ FocusScope {
     property int currentChunkIndex
     property variant currentChunk
 
-    onCurrentChunkIndexChanged: {
-        console.log("[log] changed chunk :", currentChunkIndex, root.currentChunk.logFile)
-    }
-
     Layout.fillWidth: true
     Layout.fillHeight: true
 

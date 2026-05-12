@@ -22,7 +22,6 @@ ColumnLayout {
     property int currentIndex: 0
 
     function getCurrentChunkIndex() {
-        console.log("(getCurrentChunkIndex)", currentIndex, chunks.length)
         if ( currentIndex == undefined || !chunks || currentIndex == ChunksListView.IndexItems.NULL ) { return -1 }
         let hasPreprocess  = chunks.some(function(chk) { return chk.chunkIndex == ChunksListView.IndexItems.PREPROCESS })
         let hasPostprocess = chunks.some(function(chk) { return chk.chunkIndex == ChunksListView.IndexItems.POSTPROCESS })
@@ -33,7 +32,7 @@ ColumnLayout {
 
     property int currentItemIndex: getCurrentChunkIndex()
 
-    property variant currentChunk: (currentItemIndex >= 0 && chunks && chunks.length > currentItemIndex) ? chunks[currentItemIndex].chunk : null
+    property variant currentChunk: (currentItemIndex >= 0 && chunks && chunks.length > currentItemIndex) ? chunks[currentItemIndex].chunk : undefined
 
     onChunksChanged: {
         // When the list changes, ensure the current index is in the new range
@@ -95,7 +94,6 @@ ColumnLayout {
             width: ListView.view.width
             leftPadding: 8
             onClicked: {
-                console.log("clicked on chunk", chunkIndex, "(", text, ")")
                 chunksLV.forceActiveFocus()
                 root.currentIndex = chunkIndex
             }

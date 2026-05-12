@@ -5,7 +5,7 @@ import re
 import shutil
 import logging
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 from meshroom.core.submitter import BaseSubmitter, SubmitterOptions, BaseSubmittedJob, SubmitterOptionsEnum
 from meshroom.core.submitter import OrderedTask, OrderedTaskType
 from collections import namedtuple
@@ -77,7 +77,7 @@ def getRequestPackages(packagesDelimiter="=="):
     return list(reqPackages)
 
 
-def rezWrapCommand(cmd, useCurrentContext=False, useRequestedContext=True, otherRezPkg: list[str] = None, additionalEnv: dict=None):
+def rezWrapCommand(cmd, useCurrentContext=False, useRequestedContext=True, otherRezPkg: List[str] = None, additionalEnv: dict=None):
     """ Wrap command to be runned using rez.
     :param cmd: command to run
     :type cmd: bool
@@ -256,23 +256,6 @@ class LocalFarmSubmitter(BaseSubmitter):
         if not self.disabled_rez:
             cmd = rezWrapCommand(cmd, otherRezPkg=rezPackages, additionalEnv=self.jobEnv)
         return cmd
-
-    def __createChunkTasks(self, job: Job, parentTask: Task, children: List[Task], chunkParams: dict) -> Task:
-        cmdArgs = chunkParams.get("chunkCmdArgs")
-        chunks = self.getChunks(chunkParams)
-        for c in chunks:
-            name = f"{parentTask.name}_{c.start}_{c.end}"
-            meta = parentTask.metadata.copy()
-            meta["iteration"] = c.iteration
-            cmdBin = wrapMeshroomBin("meshroom_compute")
-            cmd = f"{cmdBin} {cmdArgs} --iteration {c.iteration}"
-            if not self.disabled_rez:
-                cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages)
-            chunkTask = Task(name=name, command=cmd, metadata=meta, env=self.jobEnv)
-            job.addTask(chunkTask)
-            for child in children:
-                job.addTaskDependency(child, chunkTask)
-            job.addTaskDependency(chunkTask, parentTask)
 
     def createFarmTask(self, meshroomFile: str, orderedTask: OrderedTask, createdTasks: Dict[OrderedTask, Task]) -> Task:
         metadata = dict()

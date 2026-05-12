@@ -18,7 +18,7 @@ from meshroom.core.node import Node, Status
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.submitter import jobManager
 from meshroom.core.submitter import OrderedTask, OrderedTasks, OrderedTaskType
-from meshroom.submitters.localFarmSubmitter import LocalFarmSubmitter, LocalFarmJob
+from meshroom.submitters.localFarm.localFarmSubmitter import LocalFarmSubmitter, LocalFarmJob
 
 from localfarm.localFarmLauncher import FarmLauncher
 
@@ -62,14 +62,13 @@ def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=25):
         # Check that all tasks are finished
         for task in job.localfarmTasks.values():
             if task.get("status") not in (Status.NONE.name, Status.SUCCESS.name, Status.STOPPED.name, Status.ERROR.name):
-                continue
-        break
-        # Stop if the node switched to done
-        node.updateStatusFromCache()
-        nodeStatus = node.getGlobalStatus()
-        if nodeStatus not in (Status.SUBMITTED, Status.RUNNING):
+                break
+        else:
+            # All the tasks are finished
+            node.updateStatusFromCache()
+            nodeStatus = node.getGlobalStatus()
             print(f"Node status switched to {nodeStatus}")
-            return
+            break
 
 
 def processSubmit(node: Node, graph, tmp_path):
@@ -120,8 +119,8 @@ class TestNodeSubmit:
 
     @classmethod
     def setup_class(cls):
-        # meshroom.core.initSubmitters()
-        submitters = loadSubmitters(meshroomFolder, "submitters")
+        submittersFolder = os.path.join(meshroomFolder, "submitters")
+        submitters = loadSubmitters(submittersFolder, "localFarm")
         for submitter in submitters:
             registerSubmitter(submitter())
 

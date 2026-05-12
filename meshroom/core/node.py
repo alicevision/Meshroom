@@ -96,7 +96,7 @@ class NodeStatusData(BaseObject):
         self.resetDynamicValues()
 
     def resetChunkInfo(self):
-        self.chunks: NodeChunkSetup = None
+        self.chunksSetup: NodeChunkSetup = None
 
     def resetDynamicValues(self):
         self.status: Status = Status.NONE
@@ -157,10 +157,10 @@ class NodeStatusData(BaseObject):
         for _k, _v in d.items():
             if isinstance(_v, Enum):
                 d[_k] = _v.name
-        if self.chunks and self.chunks.nbBlocks > 0:
-            d["chunksBlockSize"] = self.chunks.blockSize
-            d["chunksFullSize"] = self.chunks.fullSize
-            d["chunksNbBlocks"] = self.chunks.nbBlocks
+        if self.chunksSetup and self.chunksSetup.nbBlocks > 0:
+            d["chunksBlockSize"] = self.chunksSetup.blockSize
+            d["chunksFullSize"] = self.chunksSetup.fullSize
+            d["chunksNbBlocks"] = self.chunksSetup.nbBlocks
         else:
             # Ensure we do not write chunk keys with zero/invalid values,
             # as they would create a poisoned NodeChunkSetup(0,0,0) on reload
@@ -178,7 +178,7 @@ class NodeStatusData(BaseObject):
             fullSize = int(d.pop("chunksFullSize") or 0)
             nbBlocks = int(d.pop("chunksNbBlocks") or 0)
             if nbBlocks > 0:
-                self.chunks = NodeChunkSetup(blockSize, fullSize, nbBlocks)
+                self.chunksSetup = NodeChunkSetup(blockSize, fullSize, nbBlocks)
         if "status" in d:
             self.status: Status = Status[d.pop("status")]
         if "execMode" in d:
@@ -199,24 +199,24 @@ class NodeStatusData(BaseObject):
 
     @property
     def nbChunks(self):
-        nbBlocks = self.chunks.nbBlocks if self.chunks else -1
+        nbBlocks = self.chunksSetup.nbBlocks if self.chunksSetup else -1
         return nbBlocks
 
     @property
     def fullSize(self):
-        fullSize = self.chunks.fullSize if self.chunks else -1
+        fullSize = self.chunksSetup.fullSize if self.chunksSetup else -1
         return fullSize
 
     def getChunkRanges(self):
-        if not self.chunks:
+        if not self.chunksSetup:
             return []
         ranges = []
-        for i in range(self.chunks.nbBlocks):
+        for i in range(self.chunksSetup.nbBlocks):
             ranges.append(desc.Range(
                 iteration=i,
-                blockSize=self.chunks.blockSize,
-                fullSize=self.chunks.fullSize,
-                nbBlocks=self.chunks.nbBlocks
+                blockSize=self.chunksSetup.blockSize,
+                fullSize=self.chunksSetup.fullSize,
+                nbBlocks=self.chunksSetup.nbBlocks
             ))
         return ranges
 
@@ -226,7 +226,7 @@ class NodeStatusData(BaseObject):
             r = c.range
             blockSize, fullSize, nbBlocks = r.blockSize, r.fullSize, r.nbBlocks
             break
-        self.chunks = NodeChunkSetup(blockSize, fullSize, nbBlocks)
+        self.chunksSetup = NodeChunkSetup(blockSize, fullSize, nbBlocks)
 
 
 class ChunkStatusData(BaseObject):
@@ -1644,9 +1644,9 @@ class BaseNode(BaseObject):
         """
         chunksRangeHasChanged = False
         if os.path.exists(self.nodeStatusFile):
-            oldChunkSetup = self._nodeStatus.chunks
+            oldChunkSetup = self._nodeStatus.chunksSetup
             self._nodeStatus.loadFromCache(self.nodeStatusFile)
-            if self._nodeStatus.chunks != oldChunkSetup:
+            if self._nodeStatus.chunksSetup != oldChunkSetup:
                 chunksRangeHasChanged = True
             self.nodeStatusFileLastModTime = os.path.getmtime(self.nodeStatusFile)
         else:

@@ -36,6 +36,9 @@ submitters: dict[str, BaseSubmitter] = {}
 pipelineTemplates: dict[str, str] = {}
 
 
+MESHROOM_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
 def hashValue(value) -> str:
     """ Hash 'value' using sha1. """
     hashObject = hashlib.sha1(str(value).encode('utf-8'))

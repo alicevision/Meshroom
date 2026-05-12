@@ -68,15 +68,15 @@ class SubmitterOptions:
 
 
 class OrderedTaskType(IntFlag):
-    PLACEHOLDER = auto()
+    PLACEHOLDER = 0
     """No command : just here to have dependencies"""
-    PREPROCESS = auto()
+    PREPROCESS = 1
     """Task that executes a node preprocess method"""
-    EXPANDING = auto()
+    EXPANDING = 2
     """Task that executes a node preprocess method"""
-    CHUNK = auto()
+    CHUNK = 3
     """Task that will expand during the processing"""
-    POSTPROCESS = auto()
+    POSTPROCESS = 4
     """Task that executes a node postprocess method"""
 
 

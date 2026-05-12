@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import Utils 1.0
+import Node 1.0
 
 /**
  * ChunksListView
@@ -11,28 +12,22 @@ import Utils 1.0
 ColumnLayout {
     id: root
 
-    enum IndexItems {
-        NULL=-3,
-        PREPROCESS=-2,
-        POSTPROCESS=-1
-    }
-
     property var uigraph: null
     property variant chunks  // Chunks model : list of NodeChunk
     property int currentIndex: 0
 
     function getCurrentChunkIndex() {
-        if ( currentIndex == undefined || !chunks || chunks.length === 0 || currentIndex == ChunksListView.IndexItems.NULL ) {
+        if ( currentIndex == undefined || !chunks || chunks.length === 0 || currentIndex == ChunkIndexEnum.NULL ) {
             return -1
         }
         let hasPreprocess  = chunks[0].chunkNode.hasPreprocessChunk
         let hasPostprocess  = chunks[0].chunkNode.hasPostprocessChunk
         // Preprocess chunk
-        if ( currentIndex == ChunksListView.IndexItems.PREPROCESS ) {
+        if ( currentIndex == ChunkIndexEnum.PREPROCESS ) {
             return hasPreprocess ? 0 : -1
         }
         // Postprocess chunk
-        if ( currentIndex == ChunksListView.IndexItems.POSTPROCESS ) {
+        if ( currentIndex == ChunkIndexEnum.POSTPROCESS ) {
             return hasPostprocess ? chunks.length - 1 : -1
         }
         // Process Chunk
@@ -46,7 +41,7 @@ ColumnLayout {
     onChunksChanged: {
         // When the list changes, ensure the current index is in the new range
         if (!chunks)
-            currentIndex = ChunksListView.IndexItems.NULL
+            currentIndex = ChunkIndexEnum.NULL
         else if (currentIndex >= chunks.length)
             currentIndex = chunks.length-1
     }
@@ -88,7 +83,7 @@ ColumnLayout {
                     checked = summaryEnabled
                 }
                 onClicked: {
-                    root.currentIndex = ChunksListView.IndexItems.NULL
+                    root.currentIndex = ChunkIndexEnum.NULL
                     checked = true
                 }
             }

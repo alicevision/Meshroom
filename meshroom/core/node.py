@@ -69,6 +69,26 @@ class ChunkIndex(IntEnum):
     # Standard chunks are indexed from 0
 
 
+class ChunkIndexEnum(BaseObject):
+    """
+    Wrapper class to expose ChunkIndex enum to QML.
+    
+    Usage in QML:
+        import Node 1.0
+        
+        if (chunkIndex === ChunkIndexEnum.PREPROCESS) {
+            // Handle preprocess case
+        }
+    """
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+    
+    NONE = Property(int, lambda self: int(ChunkIndex.NONE), constant=True)
+    PREPROCESS = Property(int, lambda self: int(ChunkIndex.PREPROCESS), constant=True)
+    POSTPROCESS = Property(int, lambda self: int(ChunkIndex.POSTPROCESS), constant=True)
+
+
 # Simple structure for storing chunk information
 NodeChunkSetup = namedtuple("NodeChunks", ["blockSize", "fullSize", "nbBlocks"])
 

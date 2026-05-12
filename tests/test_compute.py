@@ -184,6 +184,7 @@ class TestNodeLogger:
                 assert len(reg.findall(content)) == 1
 
     def test_processChunkInEnvironment_quotesGraphFilepathWithSpaces(self, tmp_path):
+        print("")
         graphFilepath = Path(tmp_path, "project with spaces", "scene with spaces.mg")
         graphFilepath.parent.mkdir()
 
@@ -202,7 +203,10 @@ class TestNodeLogger:
             nodeDesc=SimpleNamespace(pythonExecutable="python", plugin=plugin),
             getChunks=lambda: [object(), object()],
         )
-        chunk = SimpleNamespace(node=node, range=SimpleNamespace(iteration=1))
+        chunk = SimpleNamespace(
+            isPreprocess=False, isPostprocess=False,
+            node=node, range=SimpleNamespace(iteration=1)
+        )
 
         nodeDesc.processChunkInEnvironment(chunk)
 

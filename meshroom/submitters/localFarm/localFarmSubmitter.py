@@ -5,13 +5,12 @@ import re
 import shutil
 import logging
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict
 from meshroom.core.submitter import BaseSubmitter, SubmitterOptions, BaseSubmittedJob, SubmitterOptionsEnum
-from meshroom.core.submitter import OrderedTask, OrderedTasks, OrderedTaskType
-from meshroom.core.node import Status
-from collections import namedtuple, defaultdict
+from meshroom.core.submitter import OrderedTask, OrderedTaskType
+from collections import namedtuple
 
-from localfarm.localFarm import Task, Job, LocalFarmEngine
+from localfarm.localFarmClient import Task, Job, LocalFarmClientContext
 
 
 logger = logging.getLogger("LocalFarmSubmitter")
@@ -126,23 +125,21 @@ class LocalFarmJob(BaseSubmittedJob):
         self.__localJob = None
         self.__localJobTasks = None
         self.farmPath = farmPath or DEFAULT_FARM_PATH
-        self._engine = LocalFarmEngine(self.farmPath)
 
     def __getJobInfo(self):
         """ Find job. """
-        self.__localJob = self._engine.get_job_info(self.jid)
-        self.__localJobTasks = {t.get("tid"): t for t in self.__localJob["tasks"]}
+        with LocalFarmClientContext(self.farmPath) as client:
+            self.__localJob = client.get_job_info(self.jid)
+            self.__localJobTasks = {t.get("tid"): t for t in self.__localJob["tasks"]}
 
     @property
     def localfarmJob(self):
-        if not self.__localJob:
-            self.__getJobInfo()
+        self.__getJobInfo()
         return self.__localJob
 
     @property
     def localfarmTasks(self):
-        if not self.__localJobTasks:
-            self.__getJobInfo()
+        self.__getJobInfo()
         return self.__localJobTasks
 
     def __getChunkTasks(self, nodeUid, iteration):
@@ -159,46 +156,56 @@ class LocalFarmJob(BaseSubmittedJob):
     def stopChunkTask(self, node, iteration):
         """ This will kill one task. """
         tasks = self.__getChunkTasks(node._uid, iteration)
-        for task in tasks:
-            self._engine.stop_task(self.jid, task["tid"])
+        with LocalFarmClientContext(self.farmPath) as client:
+            for task in tasks:
+                client.stop_task(self.jid, task["tid"])
 
     def skipChunkTask(self, node, iteration):
         """ This will skip one task. """
         tasks = self.__getChunkTasks(node._uid, iteration)
-        for task in tasks:
-            self._engine.skip_task(self.jid, task["tid"])
+        with LocalFarmClientContext(self.farmPath) as client:
+            for task in tasks:
+                client.skip_task(self.jid, task["tid"])
 
     def restartChunkTask(self, node, iteration):
         """ This will restart one task. """
         tasks = self.__getChunkTasks(node._uid, iteration)
-        for task in tasks:
-            self._engine.restart_task(self.jid, task["tid"])
+        with LocalFarmClientContext(self.farmPath) as client:
+            for task in tasks:
+                client.restart_task(self.jid, task["tid"])
 
     # Job actions
 
     def getJobErrors(self):
         """ Check for error in the job. """
-        return self._engine.get_job_errors(self.jid)
+        with LocalFarmClientContext(self.farmPath) as client:
+            jobErrors = client.get_job_errors(self.jid)
+        return jobErrors
 
     def pauseJob(self):
         """ This will pause the job: new tasks will not be processed. """
-        self._engine.pause_job(self.jid)
+        with LocalFarmClientContext(self.farmPath) as client:
+            client.pause_job(self.jid)
 
     def resumeJob(self):
         """ This will unpause the job. """
-        self._engine.unpause_job(self.jid)
+        with LocalFarmClientContext(self.farmPath) as client:
+            client.unpause_job(self.jid)
 
     def interruptJob(self):
         """ This will interrupt the job (and kill running tasks). """
-        self._engine.interrupt_job(self.jid)
+        with LocalFarmClientContext(self.farmPath) as client:
+            client.interrupt_job(self.jid)
 
     def restartJob(self):
         """ Restart the whole job. """
-        self._engine.restart_job(self.jid)
+        with LocalFarmClientContext(self.farmPath) as client:
+            client.restart_job(self.jid)
 
     def restartErrorTasks(self):
         """ Restart all error tasks on the job. """
-        self._engine.restart_error_tasks(self.jid)
+        with LocalFarmClientContext(self.farmPath) as client:
+            client.restart_error_tasks(self.jid)
 
 
 class LocalFarmSubmitter(BaseSubmitter):
@@ -326,8 +333,9 @@ class LocalFarmSubmitter(BaseSubmitter):
                 job.addTaskDependency(task, dependency)
     
         # Submit job
-        engine = LocalFarmEngine(self.farmPath)
-        res = job.submit(engine)
+        with LocalFarmClientContext(self.farmPath) as client:
+            res = job.submit(client)
+
         print(f"Submitted job : {res}")
         if self.dryRun:
             return True
@@ -349,8 +357,6 @@ class LocalFarmSubmitter(BaseSubmitter):
         }
         if self.jobEnv:
             taskEnv.update(self.jobEnv)
-        # Get engine
-        engine = LocalFarmEngine(self.farmPath)
         # Get chunk info
         cmdArgs = f"--node {node.name} \"{graphFile}\" --extern"
         _, _, nbBlocks = node.nodeDesc.parallelization.getSizes(node)
@@ -358,12 +364,13 @@ class LocalFarmSubmitter(BaseSubmitter):
             return
         chunkRangeParams = {'start': 0, 'end': nbBlocks - 1, 'step': 1}
         # Create subtasks
-        for chunk in self.getChunks(chunkRangeParams):
-            name = f"{node.name}_{chunk.start}_{chunk.end}"
-            metadata = {"nodeUid": node._uid, "iteration": chunk.iteration}
-            cmdBin = wrapMeshroomBin("meshroom_compute")
-            cmd = f"{cmdBin} {cmdArgs} --iteration {chunk.iteration}"
-            cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages, additionalEnv=self.jobEnv)
-            print("Additional chunk task command: ", cmd)
-            task = Task(name=name, command=cmd, metadata=metadata, env=taskEnv)
-            engine.create_additional_task(currentJid, currentTid, task)
+        with LocalFarmClientContext(self.farmPath) as client:
+            for chunk in self.getChunks(chunkRangeParams):
+                name = f"{node.name}_{chunk.start}_{chunk.end}"
+                metadata = {"nodeUid": node._uid, "iteration": chunk.iteration}
+                cmdBin = wrapMeshroomBin("meshroom_compute")
+                cmd = f"{cmdBin} {cmdArgs} --iteration {chunk.iteration}"
+                cmd = rezWrapCommand(cmd, otherRezPkg=self.reqPackages, additionalEnv=self.jobEnv)
+                print("Additional chunk task command: ", cmd)
+                task = Task(name=name, command=cmd, metadata=metadata, env=taskEnv)
+                client.create_additional_task(currentJid, currentTid, task)

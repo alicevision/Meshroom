@@ -30,20 +30,35 @@ class LocalFarmClient:
     def __init__(self, root):
         self.root = Path(root)
         self.tcpPortFile = self.root / "backend.port"
+        self._sock = None
 
     def connect(self):
         """ Connect to the backend. """
+        if self._sock is not None:
+            return self._sock
+
         logger.info(f"Connect to farm located at {self.root}")
         if self.tcpPortFile.exists():
             try:
                 port = int(self.tcpPortFile.read_text())
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect(("localhost", port))
+                self._sock = sock
                 return sock
             except Exception as e:
                 logger.error(f"Could not connect via TCP: {e}")
                 raise ConnectionError("Cannot connect to farm backend")
         raise ConnectionError("Farm backend not found")
+
+    def reconnect(self):
+        self._sock = None
+        return self.connect()
+
+    def disconnect(self):
+        """Explicitly close the connection."""
+        if self._sock:
+            self._sock.close()
+            self._sock = None
 
     def _call(self, method, **params):
         """ Make an query to the backend. """
@@ -51,6 +66,7 @@ class LocalFarmClient:
             "method": method,
             "params": params
         }
+        def get_response(sock):
             response_data = b""
             while True:
                 chunk = sock.recv(4096)
@@ -63,6 +79,20 @@ class LocalFarmClient:
             if not response.get("success"):
                 raise RuntimeError(response.get("error", "Unknown error"))
             return response
+        try:
+            sock = self.connect()
+            # Send request
+            request_data = json.dumps(request) + "\n"
+            sock.sendall(request_data.encode("utf-8"))
+            return get_response(sock)
+        except (BrokenPipeError, ConnectionResetError):
+            # Connection lost, try to reconnect once
+            sock = self.reconnect()
+            request_data = json.dumps(request) + "\n"
+            sock.sendall(request_data.encode("utf-8"))
+            return get_response(sock)
+        except Exception as err:
+            logger.error(f"Could not send request: {err}\n" + "\n".join(traceback.format_stack()))
 
     def submit_job(self, job: Job):
         """ Submit the job to the farm. """
@@ -150,6 +180,19 @@ class LocalFarmClient:
             return True
         except Exception:
             return False
+
+
+class LocalFarmClientContext(LocalFarmClient):
+    def __init__(self, root):
+        super().__init__(root)
+
+    def __enter__(self):
+        self.connect()
+        return self
+    
+    def __exit__(self, *args):
+        self.disconnect()
+
 
 
 class Task:

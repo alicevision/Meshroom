@@ -109,7 +109,7 @@ ColumnLayout {
         target: _currentScene
         function onSelectedChunkChanged() {
             for (var i = 0; i < root.chunks.length; i++) {
-                if (_currentScene.selectedChunk === root.chunks[i]) {
+                if (_currentScene.selectedChunk === root.chunks[i].chunk) {
                     root.currentIndex = i
                     break;
                 }

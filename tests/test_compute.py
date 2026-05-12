@@ -27,8 +27,7 @@ def executeChunks(node, size):
     logFiles = {}
     node.preprocess()
     for chunkIndex in range(size):
-        iteration = chunkIndex if size >= 0 else ChunkIndex.NONE
-        node.prepareLogger(iteration)
+        iteration = chunkIndex if size > 0 else ChunkIndex.NONE
         logFileName = f"{chunkIndex}.log"
         logFile = Path(node.internalFolder) / logFileName
         logFiles[chunkIndex] = logFile

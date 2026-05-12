@@ -10,7 +10,7 @@ from pathlib import Path
 import subprocess
 from collections import defaultdict
 
-from localfarm.localFarm import LocalFarmEngine
+from localfarm.localFarmClient import LocalFarmClient
 
 
 class FarmLauncher:
@@ -19,6 +19,13 @@ class FarmLauncher:
         self.root.mkdir(parents=True, exist_ok=True)
         self.pidFile = self.root / "farm.pid"
         self.logFile = self.root / "backend.log"
+        self.__client = None
+
+    @property
+    def engine(self):
+        if self.__client is None:
+            self.__client = LocalFarmClient(root=self.root)
+        return self.__client
 
     def clean(self):
         """ Clean farm backend files. """

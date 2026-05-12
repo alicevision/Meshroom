@@ -2,7 +2,7 @@
 
 import os
 from time import sleep
-from localfarm.localFarm import Task, Job, LocalFarmEngine
+from localfarm.localFarmClient import Task, Job, LocalFarmClient
 from localfarm.localFarmLauncher import FarmLauncher
 from collections import defaultdict
 from typing import List
@@ -11,7 +11,7 @@ from typing import List
 class TestLocalFarm:
     def __init__(self, farmPath):
         self.launcher = FarmLauncher(root=farmPath)
-        self.engine = LocalFarmEngine(farmPath)
+        self.client = LocalFarmClient(farmPath)
 
     def prepare(self):
         self.launcher.clean()

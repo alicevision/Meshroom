@@ -10,6 +10,7 @@ import logging
 import json
 import socket
 import uuid
+import traceback
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Generator
@@ -23,7 +24,7 @@ logger = logging.getLogger("LocalFarm")
 logger.setLevel(logging.INFO)
 
 
-class LocalFarmEngine:
+class LocalFarmClient:
     """ Client to communicate with the farm backend. """
 
     def __init__(self, root):
@@ -50,12 +51,6 @@ class LocalFarmEngine:
             "method": method,
             "params": params
         }
-        sock = self.connect()
-        try:
-            # Send request
-            request_data = json.dumps(request) + "\n"
-            sock.sendall(request_data.encode("utf-8"))
-            # Receive response
             response_data = b""
             while True:
                 chunk = sock.recv(4096)
@@ -68,8 +63,6 @@ class LocalFarmEngine:
             if not response.get("success"):
                 raise RuntimeError(response.get("error", "Unknown error"))
             return response
-        finally:
-            sock.close()
 
     def submit_job(self, job: Job):
         """ Submit the job to the farm. """
@@ -180,10 +173,10 @@ class Job:
         self.tasks: Dict[str, Task] = {}
         self.dependencies: Dict[str: List[str]] = defaultdict(set)
         self.reverseDependencies: Dict[str: List[str]] = defaultdict(set)
-        self._engine: LocalFarmEngine = None
+        self._client: LocalFarmClient = None
 
-    def setEngine(self, engine: LocalFarmEngine):
-        self._engine = engine
+    def setClient(self, client: LocalFarmClient):
+        self._client = client
 
     def addTask(self, task):
         if task.name in self.tasks:
@@ -262,13 +255,13 @@ class Job:
             for task in tasks:
                 yield task
 
-    def submit(self, engine: LocalFarmEngine = None):
-        engine = engine or self._engine
-        if engine:
-            result = engine.submit_job(self)
+    def submit(self, client: LocalFarmClient = None):
+        client = client or self._client
+        if client:
+            result = client.submit_job(self)
             return result
         else:
-            raise ValueError("No LocalFarmEngine set for this job")
+            raise ValueError("No LocalFarmClient set for this job")
 
 
 def test():

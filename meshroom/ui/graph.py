@@ -45,6 +45,52 @@ class PollerRefreshStatus(Enum):
     MINIMAL_ENABLED = 2  # The file watcher only polls status files for chunks that are either submitted or running externally
 
 
+class WatchedFile:
+    def __init__(self, obj):
+        self.isChunk = isinstance(obj, NodeChunk)
+        self.chunk: Optional[NodeChunk] = obj if self.isChunk else None
+        self.node: Node = obj.node if self.isChunk else obj
+
+    @property
+    def monitoredObject(self):
+        return self.chunk if self.isChunk else self.node
+
+    @property
+    def monitoredObjectName(self):
+        if self.isChunk:
+            return self.chunk.getIndexName()
+        return self.node.name
+
+    @property
+    def path(self):
+        if self.isChunk:
+            return self.chunk.getStatusFile()
+        return self.node.nodeStatusFile
+
+    @property
+    def lastModTime(self):
+        if self.isChunk:
+            return self.chunk.statusFileLastModTime
+        return self.node.nodeStatusFileLastModTime
+
+    def shouldMonitorChanges(self):
+        return self.monitoredObject.shouldMonitorChanges()
+
+    def updateStatusFromCache(self):
+        """
+        Update status from cache and return the node if it should load output attributes,
+        or None otherwise.
+        """
+        self.monitoredObject.updateStatusFromCache()
+        if self.isChunk:
+            if self.chunk._status.status == Status.SUCCESS:
+                return True
+        else:
+            if self.node.getGlobalStatus() == Status.SUCCESS:
+                return True
+        return False
+
+
 class FilesModTimePollerThread(QObject):
     """
     Thread responsible for non-blocking polling of last modification times of a list of files.
@@ -149,7 +195,7 @@ class NodeStatusMonitor(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.monitorableNodes = []
-        self.monitoredFiles = {}  # Dict {filepath: node}
+        self.monitoredItems: OrderedDict[str, WatchedFile] = {}  # Dict {filepath: WatchedFile}
         self._filesTimePoller = FilesModTimePollerThread(parent=self)
         self._filesTimePoller.timesAvailable.connect(self.compareFilesTimes, Qt.QueuedConnection)
         self._filesTimePoller.start()
@@ -159,8 +205,7 @@ class NodeStatusMonitor(QObject):
 
     def setWatchedFiles(self):
         self.monitoredItems = self.getMonitoredFiles()
-        monitoredFiles = list([f for f in self.monitoredItems.keys()])
-        self._filesTimePoller.setFiles(monitoredFiles)
+        self._filesTimePoller.setFiles(list(self.monitoredItems.keys()))
 
     def setMonitored(self, nodes):
         self.monitorableNodes = nodes
@@ -170,24 +215,27 @@ class NodeStatusMonitor(QObject):
         """ Stop the status files monitoring. """
         self._filesTimePoller.stop()
 
-    def getMonitoredFiles(self):
+    def getMonitoredFiles(self) -> OrderedDict:
+        """ Get files to monitor. """
         monitoredItems = OrderedDict()
         for node in self.monitorableNodes:
+            # Gather all potential files
             if node._chunksCreated:
-                fileItems = {c.getStatusFile(): ("chunk", c) for c in node._chunks}
+                watchedFiles = [WatchedFile(c) for c in node.getAllChunks()]
             else:
-                fileItems = {node.nodeStatusFile: ("node", node)}
-            if self.filePollerRefresh is PollerRefreshStatus.AUTO_ENABLED.value:
-                # Add everything
-                monitoredItems.update(fileItems)
-            elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
-                # Only chunks that are run externally or local_isolated should be monitored,
-                # when run locally, status changes are already notified.
-                # Chunks with an ERROR status may be re-submitted externally and should thus still be monitored
-                for file, (_type, _item) in fileItems.items():
-                    if not _item.shouldMonitorChanges():
-                        continue
-                    monitoredItems[file] = (_type, _item)
+                watchedFiles = [WatchedFile(node)]
+                if node.nodeDesc.hasPreprocess:
+                    watchedFiles.append(WatchedFile(node._preprocessChunk))
+                if node.nodeDesc.hasPostprocess:
+                    watchedFiles.append(WatchedFile(node._postprocessChunk))
+            # Filter depending on PollerRefreshStatus
+            for wf in watchedFiles:
+                if self.filePollerRefresh == PollerRefreshStatus.AUTO_ENABLED.value:
+                    monitoredItems[wf.path] = wf
+                # Minimal mode will not watch nodes that have succeeded for example
+                elif self.filePollerRefresh == PollerRefreshStatus.MINIMAL_ENABLED.value:
+                    if wf.shouldMonitorChanges():
+                        monitoredItems[wf.path] = wf
         return monitoredItems
 
     def compareFilesTimes(self, times):
@@ -198,29 +246,25 @@ class NodeStatusMonitor(QObject):
         Args:
             times: the last modification times for currently monitored files.
         """
-        newRecords = dict(zip(self.monitoredItems.items(), times))
         nodesToUpdate = set()
-        for monitoredItem, fileModTime in newRecords.items():
-            _, (_type, _item) = monitoredItem
-            if _type == "chunk":
-                chunk = _item
-                # update chunk status if last modification time has changed since previous record
-                if fileModTime != chunk.statusFileLastModTime:
-                    chunk.updateStatusFromCache()
-                    if chunk._status.status == Status.SUCCESS:
-                        nodesToUpdate.add(chunk.node)
-            elif _type == "node":
-                node = _item
-                if fileModTime != node.nodeStatusFileLastModTime:
-                    node.updateStatusFromCache()
-                    # Check for success
-                    if node.getGlobalStatus() == Status.SUCCESS:
-                        nodesToUpdate.add(node)
-                    elif node._chunksCreated:
-                        # Chunks have been created -> set the watched files again
-                        self.setWatchedFiles()
+        needsRebuild = False
+        for wf, fileModTime in zip(self.monitoredItems.values(), times):
+            # File has not changed : nothing to do
+            if fileModTime == wf.lastModTime:
+                continue
+            success = wf.updateStatusFromCache()
+            if success:
+                needsRebuild = True  # There are files to stop watching
+                nodesToUpdate.add(wf.node)
+            # Chunks have been created, rebuild the watch list
+            if not wf.isChunk and wf.node._chunksCreated:
+                needsRebuild = True
+
         for node in nodesToUpdate:
             node.loadOutputAttr()
+
+        if needsRebuild:
+            self.setWatchedFiles()
 
     def onFilePollerRefreshUpdated(self):
         """

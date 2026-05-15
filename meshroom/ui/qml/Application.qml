@@ -137,7 +137,7 @@ Page {
 
     function getAllNodes() {
         const nodes = []
-        for(let i=0; i<graphEditor.graph.nodes.count; i++) {
+        for (let i = 0; i < graphEditor.graph.nodes.count; i++) {
             nodes.push(graphEditor.graph.nodes.at(i))
         }
         return nodes
@@ -278,17 +278,17 @@ Page {
             }
             else {
                 try {
-                    if(nodes == null) {
+                    if (nodes == null) {
                         nodes = getAllNodes()
                     }
-                    if ( nodes && nodes.find(node => node.hasInvalidAttribute) ) {
+                    if (nodes && nodes.find(node => node.hasInvalidAttribute)) {
                         submitWithWarningDialog.nodes = nodes
                         submitWithWarningDialog.open()
                     } else {
                         _currentScene.submit(nodes)
                     }
                 }
-                 catch (error) {
+                catch (error) {
                     const data = ErrorHandler.analyseError(error)
                     if (data.context === "SUBMITTING") {
                         computeSubmitErrorDialog.openError(data.type, data.msg, nodes)
@@ -425,9 +425,9 @@ Page {
             icon.text: MaterialIcons.warning
             parent: Overlay.overlay
             preset: "Warning"
-            title: "Nodes Containing Warnings"
-            text: "Some nodes contain warnings. Are you sure you want to submit?"
-            helperText: "Submit even if some nodes have warnings"
+            title: "Nodes With Warnings"
+            text: "Some nodes have warnings. Are you sure you want to submit them?"
+            helperText: "Submit nodes even if some of them have warnings."
             standardButtons: Dialog.Cancel | Dialog.Yes
 
             property var nodes: []

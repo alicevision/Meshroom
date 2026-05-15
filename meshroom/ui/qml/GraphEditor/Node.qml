@@ -343,14 +343,11 @@ Item {
                 return 2
             }
             border.color: {
-
-                if(hasWarnings === true) {
+                if (hasWarnings === true)
                     return Colors.warning                    
-                }
-                
-                if(root.mainSelected)
+                if (root.mainSelected)
                     return activePalette.highlight
-                if(root.selected)
+                if (root.selected)
                     return Qt.darker(activePalette.highlight, 1.2)
                 return Qt.lighter(activePalette.base, 3)
             }
@@ -480,7 +477,7 @@ Item {
                                 padding: 2
                                 font.pointSize: 7
                                 palette.text: Colors.sysPalette.text
-                                ToolTip.text: "Some attribute validations are failing"
+                                ToolTip.text: "Some attribute validations are failing for this node."
                             }
 
                             // Submitted externally indicator

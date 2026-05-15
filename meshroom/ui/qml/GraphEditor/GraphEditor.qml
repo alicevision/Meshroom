@@ -941,9 +941,9 @@ Item {
                             node: object
                             width: uigraph.layout.nodeWidth
 
-                    mainSelected: uigraph.selectedNode === node
-                    hovered: uigraph.hoveredNode === node
-                    hasWarnings: node.hasInvalidAttribute
+                            mainSelected: uigraph.selectedNode === node
+                            hovered: uigraph.hoveredNode === node
+                            hasWarnings: node.hasInvalidAttribute
 
                             // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
                             selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
@@ -1219,7 +1219,6 @@ Item {
                     onLoaded: {
                         nodeLoader.z = Qt.binding(function() { return nodeLoader.item ? nodeLoader.item.z : 0 })
                     }
-
                 }
             }
         }

@@ -37,7 +37,6 @@ RowLayout {
         function onValueChanged() {
             root.errorMessages = attribute.errorMessages
         }
-
     }
 
     spacing: 2
@@ -108,7 +107,7 @@ RowLayout {
                     y: parameterMA.mouseY + 10
 
                     text: {
-                        return `<b>${object.desc.name} :</b> ${attribute.type}  <br> ${Format.plainToHtml(object.desc.description)}`
+                        return `<b>${object.desc.name}:</b> ${attribute.type}<br>${Format.plainToHtml(object.desc.description)}`
                     }
                     visible: parameterMA.containsMouse
                     delay: 800
@@ -409,15 +408,15 @@ RowLayout {
                         }
                     }
                     onPressed: (event) => {
-                        if(event.button == Qt.RightButton) {
+                        if (event.button == Qt.RightButton) {
                             // Keep selection persistent while context menu is open to
                             // visualize what is being copied or what will be replaced on paste.
-                            persistentSelection = true;
-                            const menu = textFieldMenuComponent.createObject(textField);
-                            menu.popup();
+                            persistentSelection = true
+                            const menu = textFieldMenuComponent.createObject(textField)
+                            menu.popup()
 
-                            if(selectedText === "") {
-                                cursorPosition = positionAt(event.x, event.y);
+                            if (selectedText === "") {
+                                cursorPosition = positionAt(event.x, event.y)
                             }
                         }
                     }
@@ -427,26 +426,26 @@ RowLayout {
                         Menu {
                             onOpened: {
                                 // Keep cursor visible to see where pasting would happen.
-                                textField.cursorVisible = true;
+                                textField.cursorVisible = true
                             }
                             onClosed: {
                                 // Disable selection persistency behavior once menu is closed and
                                 // give focus back to the parent TextField.
-                                textField.persistentSelection = false;
-                                textField.forceActiveFocus();
-                                destroy();
+                                textField.persistentSelection = false
+                                textField.forceActiveFocus()
+                                destroy()
                             }
                             MenuItem {
                                 text: "Copy"
                                 enabled: attribute.value != ""
                                 onTriggered: {
-                                    const hasSelection = textField.selectionStart !== textField.selectionEnd;
-                                    if(hasSelection) {
+                                    const hasSelection = textField.selectionStart !== textField.selectionEnd
+                                    if (hasSelection) {
                                         // Use `TextField.copy` to copy only the current selection.
-                                        textField.copy();
+                                        textField.copy()
                                     }
                                     else {
-                                        Clipboard.setText(attribute.value);
+                                        Clipboard.setText(attribute.value)
                                     }
                                 }
                             }
@@ -454,24 +453,22 @@ RowLayout {
                                 text: "Paste"
                                 enabled: !readOnly
                                 onTriggered: {
-                                    const clipboardText = Clipboard.getText();
+                                    const clipboardText = Clipboard.getText()
                                     if (clipboardText.length === 0) {
-                                        return;
+                                        return
                                     }
-                                    const before = textField.text.substr(0, textField.selectionStart);
-                                    const after = textField.text.substr(textField.selectionEnd, textField.text.length);
-                                    const updatedValue = before + clipboardText + after;
-                                    setTextFieldAttribute(updatedValue);
+                                    const before = textField.text.substr(0, textField.selectionStart)
+                                    const after = textField.text.substr(textField.selectionEnd, textField.text.length)
+                                    const updatedValue = before + clipboardText + after
+                                    setTextFieldAttribute(updatedValue)
                                     // Set the cursor at the end of the added text
-                                    textField.cursorPosition = before.length + clipboardText.length;
+                                    textField.cursorPosition = before.length + clipboardText.length
                                 }
                             }
                         }
                     }
+                }
             }
-
-            }
-
         }
 
         Component {
@@ -714,7 +711,7 @@ RowLayout {
 
                         onPressedChanged: {
                             if (!pressed) {
-                                if(attribute.keyable)
+                                if (attribute.keyable)
                                     _currentScene.addAttributeKeyValue(attribute, _currentScene.selectedViewId, formattedValue)
                                 else
                                     _currentScene.setAttribute(attribute, formattedValue)

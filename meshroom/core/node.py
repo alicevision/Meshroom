@@ -1522,6 +1522,8 @@ class BaseNode(BaseObject):
         if callback:
             callback(self)
 
+        self.hasInvalidAttributeChanged.emit()
+
         if self.graph:
             # If we are in a graph, propagate the notification to the connected output attributes
             for edge in self.graph.outEdges(attr):
@@ -1792,7 +1794,7 @@ class BaseNode(BaseObject):
         # This does not apply to non dynamic output
         if not self.nodeDesc.hasDynamicOutputAttribute:
             return
-        
+
         # Check existence of values.json file
         valuesFile = self.valuesFile
         if not os.path.exists(valuesFile):
@@ -2160,6 +2162,12 @@ class BaseNode(BaseObject):
         """
         return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.isTextDisplayable), None) is not None
 
+    def _hasInvalidAttribute(self):
+        for attribute in self._attributes:
+            if len(attribute.errorMessages) > 0:
+                return True
+        return False
+
     def _hasDisplayableShape(self):
         """
         Return True if at least one attribute is a ShapeAttribute, a ShapeListAttribute or a shape File.
@@ -2239,6 +2247,9 @@ class BaseNode(BaseObject):
     hasTextOutput = Property(bool, hasTextOutputAttribute, notify=outputAttrChanged)
     # Whether the node contains a ShapeAttribute, a ShapeListAttribute or a shape File.
     hasDisplayableShape = Property(bool, _hasDisplayableShape, constant=True)
+
+    hasInvalidAttributeChanged = Signal()
+    hasInvalidAttribute = Property(bool, _hasInvalidAttribute, notify=hasInvalidAttributeChanged)
 
 
 class Node(BaseNode):

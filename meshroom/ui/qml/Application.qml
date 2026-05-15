@@ -39,7 +39,7 @@ Page {
         property alias showImageGallery: imageGalleryVisibilityCB.checked
         property alias showTextViewer: textViewerVisibilityCB.checked
     }
-    
+
     Settings {
         id: nodeActionsSettings
         category: "NodeActions"
@@ -133,6 +133,14 @@ Page {
 
         // Everything is valid
         return true;
+    }
+
+    function getAllNodes() {
+        const nodes = []
+        for (let i = 0; i < graphEditor.graph.nodes.count; i++) {
+            nodes.push(graphEditor.graph.nodes.at(i))
+        }
+        return nodes
     }
 
     // File dialogs
@@ -267,14 +275,24 @@ Page {
         function submit(nodes) {
             if (!canSubmit) {
                 unsavedSubmitDialog.open()
-            } else {
+            }
+            else {
                 try {
-                    _currentScene.submit(nodes)
+                    if (nodes == null) {
+                        nodes = getAllNodes()
+                    }
+                    if (nodes && nodes.find(node => node.hasInvalidAttribute)) {
+                        submitWithWarningDialog.nodes = nodes
+                        submitWithWarningDialog.open()
+                    } else {
+                        _currentScene.submit(nodes)
+                    }
                 }
                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
-                    if (data.context === "SUBMITTING")
+                    if (data.context === "SUBMITTING") {
                         computeSubmitErrorDialog.openError(data.type, data.msg, nodes)
+                    }
                 }
             }
         }
@@ -398,6 +416,26 @@ Page {
 
             onDiscarded: close()
             onAccepted: saveAsAction.trigger()
+        }
+
+        MessageDialog {
+            id: submitWithWarningDialog
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "Nodes With Warnings"
+            text: "Some nodes have warnings. Are you sure you want to submit them?"
+            helperText: "Submit nodes even if some of them have warnings."
+            standardButtons: Dialog.Cancel | Dialog.Yes
+
+            property var nodes: []
+
+            onDiscarded: close()
+            onAccepted: {
+                _currentScene.submit(nodes)
+            }
         }
 
         MessageDialog {
@@ -733,7 +771,7 @@ Page {
                         model: MeshroomApp.recentProjectFiles
                         MenuItem {
                             enabled: modelData["status"] != 0
-                            
+
                             onTriggered: ensureSaved(function() {
                                 openRecentMenu.dismiss()
                                 if (_currentScene.load(modelData["path"])) {
@@ -887,7 +925,7 @@ Page {
                         id: nodeActionsSettingsMenu
                         title: "NodeActions Settings"
                         implicitWidth: 250
-                        
+
                         MenuItem {
                             id: nodeActionsConfirmDelete
                             checkable: true
@@ -1504,7 +1542,7 @@ Page {
                     SplitView.minimumWidth: 350
 
                     node: _currentScene ? _currentScene.selectedNode : null
-                    property bool computing: _currentScene ? _currentScene.computing : false       
+                    property bool computing: _currentScene ? _currentScene.computing : false
                     property var currentAttributes: []
 
                     // Make NodeEditor readOnly when computing

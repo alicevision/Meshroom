@@ -47,6 +47,7 @@ Item {
     property int directionY: 0;
 
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
+    property bool hasWarnings: false
 
     Item {
         id: m
@@ -342,9 +343,11 @@ Item {
                 return 2
             }
             border.color: {
-                if(root.mainSelected)
+                if (hasWarnings === true)
+                    return Colors.warning                    
+                if (root.mainSelected)
                     return activePalette.highlight
-                if(root.selected)
+                if (root.selected)
                     return Qt.darker(activePalette.highlight, 1.2)
                 return Qt.lighter(activePalette.base, 3)
             }
@@ -464,6 +467,17 @@ Item {
                                     repeat: false
                                     onTriggered: parent.toolTipText = visible ? parent.baseText : ""
                                 }
+                            }
+
+                            // Attribute warnings
+                            MaterialLabel {
+                                visible: hasWarnings
+                                text: MaterialIcons.fmd_bad
+                                color: Colors.warning
+                                padding: 2
+                                font.pointSize: 7
+                                palette.text: Colors.sysPalette.text
+                                ToolTip.text: "Some attribute validations are failing for this node."
                             }
 
                             // Submitted externally indicator

@@ -9,6 +9,7 @@ function intToString(v) {
 
 // Convert a plain text to an html escaped string.
 function plainToHtml(t) {
+    if (!t) { return t }
     var escaped = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')  // Escape text
     return escaped.replace(/\n/g, '<br>')  // Replace line breaks
 }

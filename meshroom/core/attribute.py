@@ -85,7 +85,6 @@ class Attribute(BaseObject):
         self._enabled: bool = True
         self._depth: int = root.depth + 1 if root is not None else 0
         self._exposed: bool = root.exposed if root is not None else attributeDesc.exposed
-        self._description: str = attributeDesc.description
         self._invalidate = False if self._isOutput else attributeDesc.invalidate
         self._invalidationValue = ""  # invalidation value for output attributes
         self._value = None
@@ -236,15 +235,6 @@ class Attribute(BaseObject):
             # Internal attributes are set as inputs
             self.requestNodeUpdate()
         self.valueChanged.emit()
-
-    def _get_description(self):
-        return self._description
-
-    def _set_description(self, desc):
-        if self._description == desc:
-            return
-        self._description = desc
-        self.descriptionChanged.emit()
 
     def _getKeyValues(self):
         """

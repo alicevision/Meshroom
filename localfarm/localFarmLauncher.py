@@ -10,7 +10,7 @@ from pathlib import Path
 import subprocess
 from collections import defaultdict
 
-from localfarm.localFarm import LocalFarmEngine
+from localfarm.localFarmClient import LocalFarmClient
 
 
 class FarmLauncher:
@@ -19,6 +19,13 @@ class FarmLauncher:
         self.root.mkdir(parents=True, exist_ok=True)
         self.pidFile = self.root / "farm.pid"
         self.logFile = self.root / "backend.log"
+        self.__client = None
+
+    @property
+    def client(self):
+        if self.__client is None:
+            self.__client = LocalFarmClient(root=self.root)
+        return self.__client
 
     def clean(self):
         """ Clean farm backend files. """
@@ -70,6 +77,10 @@ class FarmLauncher:
             print("Farm backend is not running")
             return
 
+        if self.__client:
+            self.__client.disconnect()
+            self.__client = None
+
         pid = self.getFarmPid()
         print(f"Stopping farm backend (PID: {pid})...")
 
@@ -101,8 +112,7 @@ class FarmLauncher:
         if self.is_running():
             # Try to get job list
             try:
-                engine = LocalFarmEngine(root=self.root)
-                jobs = engine.list_jobs()
+                jobs = self.client.list_jobs()
                 return jobs
             except Exception as e:
                 raise ValueError(f"Could not fetch jobs: {e}")
@@ -118,8 +128,7 @@ class FarmLauncher:
 
             # Try to get job list
             try:
-                engine = LocalFarmEngine(root=self.root)
-                jobs = engine.list_jobs()
+                jobs = self.client.list_jobs()
                 print(f"Active jobs: {len(jobs)}")
                 for job in jobs:
                     jid = job.get("jid")

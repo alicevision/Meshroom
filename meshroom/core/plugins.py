@@ -15,7 +15,8 @@ from pathlib import Path
 from meshroom.common import BaseObject
 from meshroom.core import desc
 from meshroom.core.desc.attribute import ValueTypeErrors
-from meshroom.core.desc.node import _MESHROOM_ROOT, _MESHROOM_COMPUTE_DEPS
+from meshroom import _MESHROOM_ROOT
+from meshroom.core.desc.node import _MESHROOM_COMPUTE_DEPS
 
 
 def validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors]]:

@@ -1781,7 +1781,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                 logging.warning(f"{node.name} is in Compatibility Mode and cannot be computed: {node.issueDetails}.")
                 continue
 
-            node.preprocess()
+            node.preprocess(forceCompute)
             if not node._chunksCreated:
                 node.createChunks()
             multiChunks = len(node.chunks) > 1
@@ -1793,7 +1793,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                 else:
                     print(f'\n[{n + 1}/{len(nodes)}] {node.nodeType}')
                 chunk.process(forceCompute)
-            node.postprocess()
+            node.postprocess(forceCompute)
         except Exception as exc:
             logging.error(f"Error on node computation: {exc}")
             graph.clearSubmittedNodes()

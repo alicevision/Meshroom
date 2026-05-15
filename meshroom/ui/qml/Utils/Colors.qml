@@ -53,7 +53,7 @@ QtObject {
     ]
 
     function getChunkColor(chunk, overrides) {
-        if (chunk === undefined)
+        if (chunk === undefined || chunk == null)
             return "transparent"
         if (overrides && chunk.statusName in overrides) {
             return overrides[chunk.statusName]

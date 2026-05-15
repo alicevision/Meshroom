@@ -13,7 +13,7 @@ if strtobool(os.environ.get("DEBUGGING", "0")):
 
 import meshroom
 from meshroom.common import BaseObject, DictModel, Property, Signal, Slot
-from meshroom.core.node import Node, Status
+from meshroom.core.node import Node, Status, ExecMode
 from meshroom.core.graph import Graph
 from meshroom.core.submitter import jobManager, BaseSubmittedJob
 import meshroom.core.graph
@@ -74,6 +74,19 @@ class TaskThread(QThread):
         finally:
             self._manager.chunksCreated.disconnect(onChunksCreated)
             timer.stop()
+    
+    def clearNodes(self, node):
+        nodesToRemove, _ = self._manager._graph.dfsOnDiscover(startNodes=[node], reverse=True)
+        # remove following nodes from the task queue
+        for n in nodesToRemove[1:]:  # exclude current node
+            try:
+                self._manager._nodesToProcess.remove(n)
+            except ValueError:
+                # Node already removed (for instance a global clear of _nodesToProcess)
+                pass
+            # clearSubmittedChunks may create NodeChunk QObjects; those must be  
+            # created on the main thread so QML can safely connect to them.  
+            QMetaObject.invokeMethod(n, "clearSubmittedChunks", Qt.QueuedConnection)
 
     def run(self):
         """ Consume compute tasks. """
@@ -92,6 +105,22 @@ class TaskThread(QThread):
             if node.isFinishedOrRunning() or node.isCompatibilityNode:
                 continue
 
+            # Preprocess
+            try:
+                node.preprocess(self.forceCompute)
+            except Exception as exc:
+                if node._preprocessChunk.isStopped():
+                    stopAndRestart = True
+                else:
+                    logging.error(f"Error on node preprocess: {exc}")
+                    self.clearNodes(node)
+                for chunk in node._chunks:
+                    if chunk.isAlreadySubmitted():
+                        chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+                if node.nodeDesc.hasPostprocess:
+                    node._postprocessChunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+                break
+
             # Request chunk creation if not already done
             if not node._chunksCreated:
                 self.createChunksSignal.emit(node)
@@ -108,7 +137,8 @@ class TaskThread(QThread):
             except TypeError:
                 continue
 
-            node.preprocess()
+            # Process
+            processHasFailed = False
             for cId, chunk in enumerate(node.chunks):
                 if chunk.isFinishedOrRunning() or not self.isRunning():
                     continue
@@ -126,26 +156,27 @@ class TaskThread(QThread):
                 try:
                     chunk.process(self.forceCompute)
                 except Exception as exc:
+                    processHasFailed = True
                     if chunk.isStopped():
                         stopAndRestart = True
                         break
                     else:
                         logging.error(f"Error on node computation: {exc}")
-                        nodesToRemove, _ = self._manager._graph.dfsOnDiscover(startNodes=[node], reverse=True)
-                        # remove following nodes from the task queue
-                        for n in nodesToRemove[1:]:  # exclude current node
-                            try:
-                                self._manager._nodesToProcess.remove(n)
-                            except ValueError:
-                                # Node already removed (for instance a global clear of _nodesToProcess)
-                                pass
-                            # clearSubmittedChunks may create NodeChunk QObjects; those must be
-                            # created on the main thread so QML can safely connect to them.
-                            QMetaObject.invokeMethod(n, "clearSubmittedChunks", Qt.QueuedConnection)
-            node.postprocess()
+                        self.clearNodes(node)
 
-            if stopAndRestart:
+            if processHasFailed:
+                if node.nodeDesc.hasPostprocess:
+                    node._postprocessChunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
                 break
+            # Postprocess
+            try:
+                node.postprocess(self.forceCompute)
+            except Exception as exc:
+                if node._postprocessChunk.isStopped():
+                    stopAndRestart = True
+                else:
+                    logging.error(f"Error on node postprocess: {exc}")
+                    self.clearNodes(node)
 
         if stopAndRestart:
             self._state = State.STOPPED

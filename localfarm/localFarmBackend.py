@@ -66,6 +66,13 @@ class Task:
         self.returnCode = None
         self.process = None
         self.logFile: Path = self.taskDir / f"{tid}.log"
+    
+    @property
+    def duration_string(self):
+        end_time = self.finished_at or datetime.now()
+        if not self.started_at:
+            return 0
+        return str(end_time - self.started_at)
 
     def to_dict(self):
         return {
@@ -358,6 +365,7 @@ class LocalFarmEngine:
             with open(task.logFile, "w") as log:
                 log.write(f"# ========== Starting task {task.tid} at {task.started_at.isoformat()}"
                           f" (command=\"{task.command}\") ==========\n")
+                log.write(f"# metadata: {task.metadata}\n")
                 log.write(f"# process_env:\n")
                 log.write(f"# Additional env variables:\n")
                 for _k, _v in additional_env.items():
@@ -382,7 +390,7 @@ class LocalFarmEngine:
         task.return_code = returncode
         if returncode == 0:
             task.status = Status.SUCCESS
-            logger.info(f"Task {task.tid} completed")
+            logger.info(f"Task {task.tid} completed after {task.duration_string}")
         else:
             task.status = Status.ERROR
             logger.error(f"Task {task.tid} failed with code {returncode}")
@@ -594,39 +602,57 @@ class LocalFarmRequestHandler(BaseRequestHandler):
         return self.server.server_address[1]
 
     def handle(self):
-        """ Handle incoming request. """
-        try:
-            # Read request
-            data = b""
-            while True:
-                token = self.request.recv(MAX_BYTES_REQUEST)
-                if not token:
-                    break
-                data += token
-                if b"\n" in token:
-                    break
-            if not data:
+        """ Handle incoming requests (multiple per connection). """
+        logger.debug("Connected to client")
+        while True:
+            try:
+                connected = self.__read_and_answer_request()
+                if not connected:
+                    logger.debug("Disconnected from client")
+                    return
+            except ConnectionResetError:
+                # Client disconnected abruptly
+                logger.debug("Connection has been reset")
                 return
-            request = json.loads(data.decode("utf-8"))
-            logger.debug(f"Received request: {request}")
-            # Dispatch method
-            method = request.get("method")
-            params = request.get("params", {})
-            if not hasattr(self.backend, method):
-                response = {"success": False, "error": f"Unknown request: {method}"}
-            else:
-                try:
-                    result = getattr(self.backend, method)(**params)
-                    response = result
-                except Exception as e:
-                    logger.error(f"Error executing {method}: {e}", exc_info=True)
-                    response = {'success': False, 'error': str(e)}
-            # Send response
-            response_data = json.dumps(response) + '\n'
-            self.request.sendall(response_data.encode('utf-8'))
-
-        except Exception as e:
-            logger.error(f"Error handling request: {e}", exc_info=True)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON received: {e}")
+                response = {"success": False, "error": "Invalid JSON"}
+                self.request.sendall((json.dumps(response) + '\n').encode('utf-8'))
+            except Exception as e:
+                logger.error(f"Error handling request: {e}", exc_info=True)
+                return
+    
+    def __read_and_answer_request(self):
+        """ Read request, get response and send response """
+        data = b""
+        while True:
+            token = self.request.recv(MAX_BYTES_REQUEST)
+            if not token:
+                # Client disconnected
+                return False
+            data += token
+            if b"\n" in token:
+                break
+        if not data:
+            return False
+        request = json.loads(data.decode("utf-8"))
+        logger.debug(f"Received request: {request}")
+        # Dispatch method
+        method = request.get("method")
+        params = request.get("params", {})
+        if not hasattr(self.backend, method):
+            response = {"success": False, "error": f"Unknown request: {method}"}
+        else:
+            try:
+                result = getattr(self.backend, method)(**params)
+                response = result
+            except Exception as e:
+                logger.error(f"Error executing {method}: {e}", exc_info=True)
+                response = {'success': False, 'error': str(e)}
+        # Send response
+        response_data = json.dumps(response) + '\n'
+        self.request.sendall(response_data.encode('utf-8'))
+        return True
 
 
 def main(root):

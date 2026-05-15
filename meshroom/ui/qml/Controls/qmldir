@@ -25,3 +25,4 @@ StatusBar 1.0 StatusBar.qml
 NodeActions 1.0 NodeActions.qml
 ThinSlider 1.0 ThinSlider.qml
 TimelineSlider 1.0 TimelineSlider.qml
+ApplicationChunks 1.0 ApplicationChunks.qml

@@ -18,6 +18,7 @@ meshroom.setupEnvironment()
 import meshroom.core
 import meshroom.core.graph
 from meshroom.core.node import Status
+from meshroom.core.node import ChunkIndex
 
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
@@ -49,10 +50,17 @@ parser.add_argument('-v', '--verbose',
                     default=os.environ.get('MESHROOM_VERBOSE', 'info'),
                     choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'])
 
-parser.add_argument('-i', '--iteration', type=int,
-                    default=-1, help='')
+parser.add_argument('-i', '--iteration', type=int, default=ChunkIndex.NONE, 
+                    help='Define specific chunk index to compute')
+parser.add_argument('--preprocess', help='Execute preprocess chunk', action='store_true')
+parser.add_argument('--postprocess', help='Execute postprocess chunk', action='store_true')
 
 args = parser.parse_args()
+
+if args.preprocess:
+    args.iteration = ChunkIndex.PREPROCESS
+elif args.postprocess:
+    args.iteration = ChunkIndex.POSTPROCESS
 
 # Setup the verbose level
 if args.extern:
@@ -131,11 +139,16 @@ if args.node:
         print(f"InputNode: No computation to do.")
         sys.exit(0)
 
+    if args.preprocess:
+        chunks = [node.preprocessChunk]
+    elif args.postprocess:
+        chunks = [node.postprocessChunk]
+    elif args.iteration == ChunkIndex.NONE:  # Default value
+        chunks = node.chunks
+    else:
+        chunks = [node.chunks[args.iteration]]
+    
     if not args.forceStatus and not args.forceCompute:
-        if args.iteration != -1:
-            chunks = [node.chunks[args.iteration]]
-        else:
-            chunks = node.chunks
         for chunk in chunks:
             if chunk.status.status in submittedStatuses:
                 # Particular case for the local isolated, the node status is set to RUNNING by the submitter directly.
@@ -149,25 +162,29 @@ if args.node:
     if args.extern:
         # Restore the log level
         logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
-
-    node.prepareLogger(args.iteration)
-    node.preprocess()
-    if args.iteration != -1:
-        chunk = node.chunks[args.iteration]
-        if chunk._status.status == Status.STOPPED:
-            print(f"Chunk {chunk}: status is STOPPED")
-            killRunningJob(node)
-        chunk.process(args.forceCompute, args.inCurrentEnv)
-    else:
+        
+    if args.iteration == ChunkIndex.NONE:
+        # Process the whole node
         if node.nodeStatus.status == Status.STOPPED:
             print(f"Node {node}: status is STOPPED")
             killRunningJob(node)
         node.createChunks()
+        node.prepareLogger(args.iteration)
+        node.preprocess(args.forceCompute, args.inCurrentEnv)
         node.process(args.forceCompute, args.inCurrentEnv)
-    node.postprocess()
-    node.restoreLogger()
+        node.postprocess(args.forceCompute, args.inCurrentEnv)
+        node.restoreLogger()
+    else:
+        chunk = chunks[0]
+        if chunk._status.status == Status.STOPPED:
+            print(f"Chunk {chunk}: status is STOPPED")
+            killRunningJob(node)
+        node.prepareLogger(args.iteration)
+        chunk.process(args.forceCompute, args.inCurrentEnv)
+        node.restoreLogger()
+
 else:
-    if args.iteration != -1:
+    if args.iteration != ChunkIndex.NONE:
         print('Error: "--iteration" only makes sense when used with "--node".')
         sys.exit(-1)
     toNodes = None

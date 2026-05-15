@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+
 import sys
 import logging
 import operator
 
 from enum import IntFlag, auto
-from typing import Optional
+from typing import Optional, Dict, List
 from itertools import accumulate
 
 import meshroom
@@ -63,6 +65,250 @@ class SubmitterOptions:
         if self._options == SubmitterOptionsEnum.ALL:
             return f"<SubmitterOptions ALL>"
         return f"<SubmitterOptions {'|'.join([o.name for o in self])}>"
+
+
+class OrderedTaskType(IntFlag):
+    PLACEHOLDER = 0
+    """No command: just here to have dependencies"""
+    PREPROCESS = 1
+    """Task that executes a node preprocess method"""
+    EXPANDING = 2
+    """Task that will spawn tasks on execution"""
+    CHUNK = 3
+    """Task that will expand during the processing"""
+    POSTPROCESS = 4
+    """Task that executes a node postprocess method"""
+
+
+class OrderedTask:
+    def __init__(self, taskType, node = None, iteration : int = -1):
+        self.taskType: OrderedTaskType = taskType
+        self.node = node  # BaseNode
+        self.iteration = iteration
+        self.dependencies = []
+    
+    def addDependency(self, otherTask: OrderedTask):
+        self.dependencies.append(otherTask)
+    
+    def __repr__(self):
+        if self.taskType == OrderedTaskType.PLACEHOLDER:
+            string = f"<OrderedTask placeholder {id(self)}"
+            if self.node:
+                string += f" node={self.node._name}"
+            return string + f">"
+        string = f"<OrderedTask {self.node._uid[:5]} {self.node.name} {self.taskType.name} ("
+        if self.iteration >= 0:
+            string += f"iteration={self.iteration}, "
+        string += f"{len(self.dependencies)} deps)>"
+        return string
+
+
+class OrderedNode:
+    """ Intermediate structure used to order tasks """
+
+    def __init__(self, node, dependencies=None):
+        # node can be None for placeholder tasks (tasks that don't do anything else than regrouping dependencies)
+        self.node = node  # BaseNode
+        self.dependencies: list[OrderedNode] = dependencies or []  # Tasks that need to run before the current one
+
+    @property
+    def isPlaceholder(self) -> bool:
+        """ If the node is None then it's just a void item to be used as a task placeholder """
+        return self.node is None
+
+    @property
+    def isExpanding(self) -> bool:
+        """ Expanding nodes are nodes whose number of chunks has not been determined yet. 
+        It will be resolved when the node processing starts. Therefore a first process is launched that 
+        will create chunks and then chunk tasks are created later (from the submitted process).
+        """
+        return not self.node._chunksCreated
+
+    @property
+    def chunksIterations(self) -> list[int]:
+        """ Get all iterations to process.
+        Used in the case where the node is parallelized and when we know how many chunks are executed.
+        It should not be called if `self.isExpanding` therefore we return None
+        """
+        if self.isExpanding:
+            return None
+        if self.node.isParallelized:
+            _, _, nbBlocks = self.node.nodeDesc.parallelization.getSizes(self.node)
+            iterationsToIgnore = []
+            for c in self.node._chunks:
+                if c._status.checkStatus("SUCCESS"):
+                    iterationsToIgnore.append(c.range.iteration)
+            if nbBlocks > 0:
+                return [k for k in range(nbBlocks) if k not in iterationsToIgnore]
+        return [-1]
+
+    @property
+    def hasPreprocess(self) -> bool:
+        return self.node.nodeDesc.hasPreprocess
+
+    @property
+    def hasPostprocess(self) -> bool:
+        return self.node.nodeDesc.hasPostprocess
+    
+    def __repr__(self):
+        depsNames = "|".join([t.node.name for t in self.dependencies])
+        if self.isPlaceholder:
+            return f"<OrderedNode:placeholder deps=[{depsNames}]>"
+        else:
+            return f"<OrderedNode node={self.node.name} deps=[{depsNames}]>"
+
+
+class OrderedTasks:
+    """ Build and provide access to tasks that are ordered
+
+    Note: 
+        We change a bit the logic from the meshroom graph because here the last node to be processed
+        is the "root" and its dependencies are the "children". This is necessary because this is usually
+        the order where the tasks will be created on the farm (we create one task, then add other tasks as
+        dependencies, and not we create a task, then we add a task to execute next as we do it here).
+    
+    TODO: Keep the meshroom order and just provide an `inverse` method.
+    """
+
+    def __init__(self, nodes, edges):
+        # First correctly order the nodes
+        self._firstLevelorderedNodes: list[list[OrderedNode]] = self.__orderNodes(nodes, edges)
+        # Now create all the OrderedChunkTask objects
+        self.rootTask = OrderedTask(taskType=OrderedTaskType.PLACEHOLDER)
+        self._nodeUidToLastTask: Dict[str, OrderedTask] = {}  # { _uid: lastTaskToProcess }
+        self.__orderTasks()
+
+    def display(self, task:OrderedTask=None, level=0):
+        if task is None:
+            task = self.rootTask
+        logger.debug(f"{' '*4*level}[{level:02d}] {task}")
+        for child in task.dependencies:
+            self.display(child, level+1)
+
+    def iterOnTasks(self, current:OrderedTask=None, skipRootTask=False):
+        skipCurrent = (current is None) and skipRootTask
+        if current is None:
+            current = self.rootTask
+        if not skipCurrent:
+            yield current
+        for task in current.dependencies:
+            yield from self.iterOnTasks(task)
+
+    def __iter__(self):
+        yield from self.iterOnTasks()
+
+    def __orderNodes(self, nodes, edges):
+        """
+        Take all the nodes and connections and order them by processing step
+        0 is the root nodes (can be executed last)
+        Then 1 is the level with the direct dependencies for the root nodes, and etc...
+        
+        At the end return only the 1st level nodes
+        """
+        # uid -> orderedNode
+        nodeToOrderedNode = {n._uid: OrderedNode(n) for n in nodes}
+        # Build dependency relationships from edges
+        for u, v in edges:
+            # Change a bit the ordering logic of Meshroom :
+            # parent task is the last one to be executed, child are their dependencies
+            parentTask = nodeToOrderedNode[u._uid]
+            childTask = nodeToOrderedNode[v._uid]
+            parentTask.dependencies.append(childTask)
+
+        # Create a task 
+        rootNode = OrderedNode(None, dependencies=nodeToOrderedNode.values())
+        # Find each node depth (= what level the node is)
+        depthByNode = {}
+        self.__updateDepth([rootNode], depthByNode, currentDepth=-1)
+        # Regroup nodes by level
+        levels = list(set(l for l in list(depthByNode.values())))
+        nodesByLevels = [[t for t, l in depthByNode.items() if l == lev] for lev in levels]
+        return nodesByLevels[0]
+
+    def __updateDepth(self, nodes: List[OrderedNode], depthByNode, currentDepth=0):
+        """ Compute the depth for each """
+        for orderedNode in nodes:
+            if currentDepth > depthByNode.get(orderedNode, -1):
+                depthByNode[orderedNode] = currentDepth
+            if orderedNode.dependencies:
+                self.__updateDepth(orderedNode.dependencies, depthByNode, currentDepth+1)
+
+    def __orderTasks(self):
+        """ Use the nodesByLevel info to create all tasks to send to the submitter """
+        # Start from a root task
+        self._nodeUidToLastTask = {}
+        for n in self._firstLevelorderedNodes:
+            self.__createNodeTasks(n, self.rootTask)
+
+    def __createNodeTasks(self, orderedNode: OrderedNode, parentTask: OrderedTask):
+        """ Create tasks corresponding to a node and link them correctly.
+        Also link them to the parent task, and recursively create children tasks.
+        """
+        logger.debug(f"* (createNodeTasks) node {orderedNode.node._name}, parent {parentTask.node}")
+        # Check if task has already been created
+        visited = (nodeUid:=orderedNode.node._uid) in self._nodeUidToLastTask
+        if visited:
+            logger.debug("  -> is visited")
+            # If task is already created simply create the connection
+            lastTask = self._nodeUidToLastTask[nodeUid]
+            parentTask.addDependency(lastTask)
+            return
+        # Create node tasks
+        if orderedNode.isPlaceholder:
+            logger.debug("  -> is placeholder")
+            task = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
+            firstTask = lastTask = task
+        else:
+            lastTask = firstTask = None
+            # Create pre/post tasks if needed
+            if orderedNode.hasPostprocess:
+                logger.debug("  -> postprocess")
+                lastTask = OrderedTask(OrderedTaskType.POSTPROCESS, orderedNode.node)
+            if orderedNode.hasPreprocess:
+                logger.debug("  -> preprocess")
+                firstTask = OrderedTask(OrderedTaskType.PREPROCESS, orderedNode.node)
+            # Process
+            if orderedNode.isExpanding:
+                logger.debug("  -> is expanding")
+                expandingTask = OrderedTask(OrderedTaskType.EXPANDING, orderedNode.node)
+                if lastTask:
+                    lastTask.addDependency(expandingTask)
+                else:
+                    lastTask = expandingTask
+                if firstTask:
+                    expandingTask.addDependency(firstTask)
+                else:
+                    firstTask = expandingTask
+            else:
+                logger.debug(f"  -> has chunks : {orderedNode.chunksIterations}")
+                # Create and link chunks
+                if len(orderedNode.chunksIterations):
+                    # Create placeholders for pre/post
+                    lastTask = lastTask if lastTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
+                    firstTask = firstTask if firstTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
+                    for iteration in orderedNode.chunksIterations:
+                        logger.debug(f"    - chunk {iteration}")
+                        chunkTask = OrderedTask(OrderedTaskType.CHUNK, orderedNode.node, iteration=iteration)
+                        lastTask.addDependency(chunkTask)
+                        chunkTask.addDependency(firstTask)
+                else:  # Handle 0 chunks case
+                    if firstTask and lastTask:
+                        lastTask.addDependency(firstTask)
+                    elif firstTask:
+                        lastTask = firstTask
+                    elif lastTask:
+                        firstTask = lastTask
+                    else:
+                        firstTask = lastTask = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
+        # Add parent dependency
+        parentTask.addDependency(lastTask)
+        # Create children
+        for n in orderedNode.dependencies:
+            logger.debug(f"  -> create deps {n}")
+            self.__createNodeTasks(n, firstTask)
+        # Add the last task to execute for this node to _nodeUidToLastTask
+        self._nodeUidToLastTask[nodeUid] = lastTask
+        logger.debug(f"  -> done {orderedNode.node._name}")
 
 
 class BaseSubmittedJob:
@@ -200,7 +446,7 @@ class BaseSubmitter(BaseObject):
     def name(self):
         return self._name
 
-    def createJob(self, nodes, edges, filepath, submitLabel="{projectName}"):
+    def createJob(self, orderedTasks: OrderedTasks, filepath: str, submitLabel: str = "{projectName}"):
         """ Submit the given graph
          Returns:
              bool: whether the submission succeeded
@@ -221,7 +467,8 @@ class BaseSubmitter(BaseObject):
          Returns:
              bool: whether the submission succeeded
         """
-        job = self.createJob(nodes, edges, filepath, submitLabel)
+        orderedTasks = OrderedTasks(nodes, edges)
+        job = self.createJob(orderedTasks, filepath, submitLabel)
         if not job:
             # Failed to create the job
             return None

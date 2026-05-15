@@ -135,13 +135,13 @@ if not args.forceStatus and not args.forceCompute:
                 f"submitterSessionUid: {node._nodeStatus.submitterSessionUid}")
 
 if chunksToProcess:
-    node.prepareLogger()
     node.preprocess()
+    node.prepareLogger()
     for chunk in chunksToProcess:
         logging.info(f"[MeshroomCreateChunks] process chunk {chunk}")
         chunk.process(args.forceCompute, args.inCurrentEnv)
-    node.postprocess()
     node.restoreLogger()
+    node.postprocess()
 else:
     logging.info(f"[MeshroomCreateChunks] -> create job to process chunks {[c for c in node.chunks]}")
     submitter.createChunkTask(node, graphFile=args.graphFile, cache=args.cache, 

@@ -27,7 +27,7 @@ FocusScope {
         clip: true
         anchors.fill: parent
 
-        property string currentFile: (root.currentChunkIndex >= 0 && root.currentChunk) ? root.currentChunk["logFile"] : ""
+        property string currentFile: root.currentChunk ? root.currentChunk.logFile: ""
         property url sourceFile: Filepath.stringToUrl(currentFile)
 
         sourceComponent: textFileViewerComponent

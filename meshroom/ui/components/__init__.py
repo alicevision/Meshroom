@@ -9,6 +9,7 @@ def registerTypes():
     from meshroom.ui.components.geom2D import Geom2D
     from meshroom.ui.components.scriptEditor import PySyntaxHighlighter
     from meshroom.ui.components.logLinesModel import LogLinesModel, LogLevelEnum
+    from meshroom.core.node import ChunkIndexEnum
 
     qmlRegisterType(EdgeMouseArea, "GraphEditor", 1, 0, "EdgeMouseArea")
     qmlRegisterType(ClipboardHelper, "Meshroom.Helpers", 1, 0, "ClipboardHelper")  # TODO: uncreatable
@@ -22,3 +23,5 @@ def registerTypes():
 
     qmlRegisterSingletonType(Geom2D, "Meshroom.Helpers", 1, 0, "Geom2D")
     qmlRegisterSingletonType(LogLevelEnum, "DataObjects", 1, 0, "LogLevelEnum")
+
+    qmlRegisterSingletonType(ChunkIndexEnum, "Node", 1, 0, "ChunkIndexEnum")

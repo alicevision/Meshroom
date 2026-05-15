@@ -1,3 +1,5 @@
+# desc/node.py
+
 import enum
 from inspect import getfile, getattr_static
 from pathlib import Path
@@ -10,14 +12,13 @@ import subprocess
 
 import psutil
 
-import meshroom
+from meshroom import _MESHROOM_ROOT
 from meshroom.core import cgroup
 from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
 from .attribute import Attribute, ChoiceParam, ColorParam, IntParam, StringParam
 
-_MESHROOM_ROOT = Path(meshroom.__file__).parent.parent.as_posix()
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
 
@@ -278,6 +279,11 @@ class BaseNode(object):
         """
         pass
 
+    @property
+    def hasPreprocess(self):
+        """ Returns True if the class has a preprocess """
+        return type(self).preprocess is not BaseNode.preprocess
+
     def postprocess(self, node):
         """ Gets invoked after the processChunk method for the node.
 
@@ -285,6 +291,11 @@ class BaseNode(object):
             node: The BaseNode instance which is processed.
         """
         pass
+
+    @property
+    def hasPostprocess(self):
+        """ Returns True if the class has a postprocess """
+        return type(self).postprocess is not BaseNode.postprocess
 
     def process(self, node):
         raise NotImplementedError(f'No process implementation on node: "{node.name}"')
@@ -441,8 +452,11 @@ class Node(BaseNode):
         meshroomComputeCmd = f"{chunk.node.nodeDesc.pythonExecutable} {_MESHROOM_COMPUTE}" + \
                              f" \"{chunk.node.graph.filepath}\" --node {chunk.node.name}" + \
                               " --extern --inCurrentEnv"
-
-        if len(chunk.node.getChunks()) > 1:
+        if chunk.isPreprocess:
+            meshroomComputeCmd += f" --preprocess"
+        elif chunk.isPostprocess:
+            meshroomComputeCmd += f" --postprocess"
+        elif len(chunk.node.getChunks()) >= 1:
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
 
         runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv

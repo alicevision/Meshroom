@@ -10,38 +10,57 @@ import logging
 import json
 import socket
 import uuid
+import traceback
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Generator
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(name)s][%(levelname)s] %(message)s'
+    format='%(asctime)s [%(name)s][%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
 )
 logger = logging.getLogger("LocalFarm")
 logger.setLevel(logging.INFO)
 
 
-class LocalFarmEngine:
+class LocalFarmClient:
     """ Client to communicate with the farm backend. """
 
     def __init__(self, root):
         self.root = Path(root)
         self.tcpPortFile = self.root / "backend.port"
+        self._sock = None
 
     def connect(self):
         """ Connect to the backend. """
-        print("Connect to farm located at", self.root)
+        if self._sock is not None:
+            return self._sock
+
+        logger.info(f"Connect to farm located at {self.root}")
         if self.tcpPortFile.exists():
             try:
                 port = int(self.tcpPortFile.read_text())
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect(("localhost", port))
+                self._sock = sock
                 return sock
             except Exception as e:
                 logger.error(f"Could not connect via TCP: {e}")
                 raise ConnectionError("Cannot connect to farm backend")
         raise ConnectionError("Farm backend not found")
+
+    def reconnect(self):
+        logger.info("Reconnecting client")
+        self._sock = None
+        return self.connect()
+
+    def disconnect(self):
+        """Explicitly close the connection."""
+        logger.info(f"Disconnecting client {self._sock}")
+        if self._sock:
+            self._sock.close()
+            self._sock = None
 
     def _call(self, method, **params):
         """ Make an query to the backend. """
@@ -49,12 +68,7 @@ class LocalFarmEngine:
             "method": method,
             "params": params
         }
-        sock = self.connect()
-        try:
-            # Send request
-            request_data = json.dumps(request) + "\n"
-            sock.sendall(request_data.encode("utf-8"))
-            # Receive response
+        def get_response(sock):
             response_data = b""
             while True:
                 chunk = sock.recv(4096)
@@ -67,8 +81,20 @@ class LocalFarmEngine:
             if not response.get("success"):
                 raise RuntimeError(response.get("error", "Unknown error"))
             return response
-        finally:
-            sock.close()
+        try:
+            sock = self.connect()
+            # Send request
+            request_data = json.dumps(request) + "\n"
+            sock.sendall(request_data.encode("utf-8"))
+            return get_response(sock)
+        except (BrokenPipeError, ConnectionResetError):
+            # Connection lost, try to reconnect once
+            sock = self.reconnect()
+            request_data = json.dumps(request) + "\n"
+            sock.sendall(request_data.encode("utf-8"))
+            return get_response(sock)
+        except Exception as err:
+            logger.error(f"Could not send request: {err}\n" + "\n".join(traceback.format_stack()))
 
     def submit_job(self, job: Job):
         """ Submit the job to the farm. """
@@ -158,8 +184,21 @@ class LocalFarmEngine:
             return False
 
 
+class LocalFarmClientContext(LocalFarmClient):
+    def __init__(self, root):
+        super().__init__(root)
+
+    def __enter__(self):
+        self.connect()
+        return self
+    
+    def __exit__(self, *args):
+        self.disconnect()
+
+
 class Task:
     def __init__(self, name, command, metadata=None, env=None):
+        print(f"Create task with command {command}")
         self.uid = str(uuid.uuid1())
         self.name = name
         self.command = command
@@ -179,10 +218,10 @@ class Job:
         self.tasks: Dict[str, Task] = {}
         self.dependencies: Dict[str: List[str]] = defaultdict(set)
         self.reverseDependencies: Dict[str: List[str]] = defaultdict(set)
-        self._engine: LocalFarmEngine = None
+        self._client: LocalFarmClient = None
 
-    def setEngine(self, engine: LocalFarmEngine):
-        self._engine = engine
+    def setClient(self, client: LocalFarmClient):
+        self._client = client
 
     def addTask(self, task):
         if task.name in self.tasks:
@@ -261,13 +300,13 @@ class Job:
             for task in tasks:
                 yield task
 
-    def submit(self, engine: LocalFarmEngine = None):
-        engine = engine or self._engine
-        if engine:
-            result = engine.submit_job(self)
+    def submit(self, client: LocalFarmClient = None):
+        client = client or self._client
+        if client:
+            result = client.submit_job(self)
             return result
         else:
-            raise ValueError("No LocalFarmEngine set for this job")
+            raise ValueError("No LocalFarmClient set for this job")
 
 
 def test():

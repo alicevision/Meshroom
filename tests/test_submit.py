@@ -15,10 +15,16 @@ from meshroom.core import pluginManager, loadClassesNodes, loadSubmitters, regis
 from meshroom.core.graph import Graph
 from meshroom.core.plugins import Plugin
 from meshroom.core.node import Node, Status
+from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.submitter import jobManager
-from meshroom.submitters.localFarmSubmitter import LocalFarmSubmitter, LocalFarmJob
+from meshroom.core.submitter import OrderedTask, OrderedTasks, OrderedTaskType
+from meshroom.submitters.localFarm.localFarmSubmitter import LocalFarmSubmitter, LocalFarmJob
 
 from localfarm.localFarmLauncher import FarmLauncher
+
+import logging
+from meshroom.core.submitter import logger
+logger.setLevel(logging.DEBUG)
 
 
 IS_LINUX = (platform == "linux" or platform == "linux2")
@@ -39,25 +45,35 @@ def getJobEnv():
     }
 
 
-def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=25):
+def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=10):
     """
     Wait for a node to complete processing
     """
     print(f"Waiting for node {node.name} to complete...")
     startTime = time.time()
     while True:
-        node.updateStatusFromCache()
-        nodeStatus = node.getGlobalStatus()
-        if nodeStatus not in (Status.SUBMITTED, Status.RUNNING):
-            print(f"Node status switched to {nodeStatus}")
-            return
+        time.sleep(1)
+        if time.time() - startTime > timeout:
+            raise TimeoutError((
+                f"Node {node.name} did not complete within {timeout} seconds. "
+                "You might want to increase the timeout duration in the test "
+                "or check why the test is taking more time."
+            ))
         # Check for job error
         err = job.getJobErrors()
         if err:
             raise RuntimeError(f"Job encountered an error: {err}")
-        if time.time() - startTime > timeout:
-            raise TimeoutError(f"Node {node.name} did not complete within {timeout} seconds")
-        time.sleep(1)
+        # Check that all tasks are finished
+        for task in job.localfarmTasks.values():
+            if task.get("status") not in (Status.NONE.name, Status.SUCCESS.name, Status.STOPPED.name, Status.ERROR.name):
+                break
+        else:
+            # All the tasks are finished
+            node.updateStatusFromCache()
+            nodeStatus = node.getGlobalStatus()
+            print(f"Node status switched to {nodeStatus}")
+            break
+
 
 def processSubmit(node: Node, graph, tmp_path):
     """
@@ -94,6 +110,7 @@ def processSubmit(node: Node, graph, tmp_path):
     except Exception as e:
         error = e
     finally:
+        farmLauncher.status(allInfo=True)
         farmLauncher.stop()
     if error:
         raise error
@@ -106,8 +123,8 @@ class TestNodeSubmit:
 
     @classmethod
     def setup_class(cls):
-        # meshroom.core.initSubmitters()
-        submitters = loadSubmitters(meshroomFolder, "submitters")
+        submittersFolder = os.path.join(meshroomFolder, "submitters")
+        submitters = loadSubmitters(submittersFolder, "localFarm")
         for submitter in submitters:
             registerSubmitter(submitter())
 
@@ -126,31 +143,93 @@ class TestNodeSubmit:
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
-    def setupNode(self, graph, name):
+    def registerNode(self, name):
         plugin = pluginManager.getPlugin("pluginSubmitter")
         node = plugin.nodes[name]
         nodeType = node.nodeDescriptor
         registerNodeDesc(nodeType)
-        node = graph.addNewNode(nodeType.__name__)
+        return nodeType.__name__
+
+    def addNewNode(self, graph, name, nodeParams=None):
+        nodeTypeName = self.registerNode(name)
+        nodeParams = nodeParams or {}
+        node = graph.addNewNode(nodeTypeName, **nodeParams)
         return node
+
+    def test_orderTasks(self):
+        """ Here is the example we use for testing :
+                                                             *" [B chk_0] "* 
+        [phd start_A] - [A chk] - [phd end_A] - [phd start_B]               [B post] - [C pre] - [C exp] - [C post] - [phd root]
+                                                             *_ [B chk_1] _* 
+        phd=placeholder (no command/process executed)
+        chk=chunk
+        exp=expand
+        """
+        graph = Graph("")
+        # Add nodes
+        nodeA = self.addNewNode(graph, "PluginSubmitter"+"A", nodeParams={})
+        nodeB = self.addNewNode(graph, "PluginSubmitter"+"B", nodeParams={"inputs": [nodeA.output]})
+        nodeC = self.addNewNode(graph, "PluginSubmitter"+"C", nodeParams={"inputs": [nodeB.output]})
+        # Order tasks
+        nodes, edges = graph.dfsOnFinish(startNodes=[nodeC])
+        orderedTasks = OrderedTasks(nodes, edges)
+        # === Test result ===
+        def checkTask(task, taskType, nbDependencies):
+            assert task.taskType == taskType
+            assert len(task.dependencies) == nbDependencies
+        # root
+        rootTask = orderedTasks.rootTask
+        checkTask(rootTask, OrderedTaskType.PLACEHOLDER, 1)
+        # C (post)
+        task: OrderedTask = rootTask.dependencies[0]
+        checkTask(task, OrderedTaskType.POSTPROCESS, 1)
+        # C (expand)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.EXPANDING, 1)
+        # C (pre)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.PREPROCESS, 1)
+        # B (post)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.POSTPROCESS, 2)
+        # B (chunks)
+        task_0: OrderedTask = task.dependencies[0]
+        task_1: OrderedTask = task.dependencies[1]
+        checkTask(task_0, OrderedTaskType.CHUNK, 1)
+        checkTask(task_1, OrderedTaskType.CHUNK, 1)
+        assert (task_0.iteration, task_1.iteration) == (0, 1)
+        assert task_0.dependencies[0] == task_1.dependencies[0]
+        # B (pre)
+        task: OrderedTask = task_0.dependencies[0]
+        checkTask(task, OrderedTaskType.PLACEHOLDER, 1)
+        # A (post)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.PLACEHOLDER, 1)
+        # A (chunks)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.CHUNK, 1)
+        assert task.iteration == -1
+        # A (pre)
+        task: OrderedTask = task.dependencies[0]
+        checkTask(task, OrderedTaskType.PLACEHOLDER, 0)
 
     def test_submitNoParallel(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = os.path.join(tmp_path, "cache")
-        node = self.setupNode(graph, "PluginSubmitterA")
+        node = self.addNewNode(graph, "PluginSubmitterA")
         # Submit
         processSubmit(node, graph, tmp_path)
 
     def test_submitStaticSize(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = os.path.join(tmp_path, "cache")
-        node = self.setupNode(graph, "PluginSubmitterB")
+        node = self.addNewNode(graph, "PluginSubmitterB")
         # Submit
         processSubmit(node, graph, tmp_path)
 
     def test_submitDynamicSize(self, tmp_path):
         graph = Graph("")
         graph._cacheDir = os.path.join(tmp_path, "cache")
-        node = self.setupNode(graph, "PluginSubmitterC")
+        node = self.addNewNode(graph, "PluginSubmitterC")
         # Submit
         processSubmit(node, graph, tmp_path)

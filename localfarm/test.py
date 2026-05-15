@@ -2,7 +2,7 @@
 
 import os
 from time import sleep
-from localfarm.localFarm import Task, Job, LocalFarmEngine
+from localfarm.localFarmClient import Task, Job, LocalFarmClient
 from localfarm.localFarmLauncher import FarmLauncher
 from collections import defaultdict
 from typing import List
@@ -11,7 +11,7 @@ from typing import List
 class TestLocalFarm:
     def __init__(self, farmPath):
         self.launcher = FarmLauncher(root=farmPath)
-        self.engine = LocalFarmEngine(farmPath)
+        self.client = LocalFarmClient(farmPath)
 
     def prepare(self):
         self.launcher.clean()
@@ -28,10 +28,10 @@ class TestLocalFarm:
     def expandTask(self, jid, tid, n=2):
         for i in range(n):
             task = Task(f"Expanded Task {i}", f"echo 'Hello from Expanded Task {i}' && sleep 5")
-            self.engine.create_additional_task(jid, tid, task)
+            self.client.create_additional_task(jid, tid, task)
 
     def getTasksByStatus(self, jid: int):
-        jobInfo = self.engine.get_job_status(jid)
+        jobInfo = self.client.get_job_status(jid)
         if not jobInfo:
             return {}
         taskByStatus = defaultdict(set)
@@ -43,7 +43,7 @@ class TestLocalFarm:
     def run(self):
         # Create job
         job = Job("Example Job")
-        job.setEngine(self.engine)
+        job.setClient(self.client)
         # Add tasks
         task1 = self.createTask(job, 1, sleepTime=2, dependencies=[])
         task2 = self.createTask(job, 2, sleepTime=2, dependencies=[task1])
@@ -80,6 +80,7 @@ class TestLocalFarm:
                     self.expandTask(jid, expandingTid, n=2)
 
     def finish(self):
+        self.client.disconnect()
         self.launcher.stop()
         # self.launcher.clean()
 

@@ -3,10 +3,9 @@ import os
 import re
 from collections.abc import Iterable
 from enum import auto, Enum
+from typing import Sequence
 
 from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList, strtobool, deprecated
-
-from typing import Sequence
 from meshroom.core.desc.validators import AttributeValidator
 
 # Pre-compile regexes for better performance on repeated calls
@@ -63,7 +62,7 @@ class Attribute(BaseObject):
     """
 
     def __init__(self, name, label, description, value, advanced, semantic, commandLineGroup, enabled,
-                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None, visible=True, exposed=False, validators:Sequence["AttributeValidator"]=None):
+                 keyable=False, keyType=None, invalidate=True, uidIgnoreValue=None, visible=True, exposed=False, validators: Sequence[AttributeValidator]=None):
         super(Attribute, self).__init__()
         self._name = name
         self._label = convertToLabel(name) if label is None else label
@@ -86,9 +85,7 @@ class Attribute(BaseObject):
 
         if validators is None:
             self._validators = []
-        elif isinstance(validators, Sequence) and all(
-            isinstance(x, AttributeValidator) for x in validators
-        ):
+        elif isinstance(validators, Sequence) and all(isinstance(x, AttributeValidator) for x in validators):
             self._validators = validators
         else:
             raise RuntimeError(f"Validators should be of type 'Sequence[AttributeValidator]', the type '{type(validators)}' is not supported.")

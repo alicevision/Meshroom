@@ -484,8 +484,7 @@ class Attribute(BaseObject):
         self._setEnabled(self._getEnabled())
 
     def getErrorMessages(self) -> list[str]:
-        """ Execute the validators and aggregate the eventual error messages"""
-
+        """ Execute the validators and aggregate the error messages if there are any. """
         result = []
 
         for validator in self.desc.validators:
@@ -500,9 +499,7 @@ class Attribute(BaseObject):
         return result
 
     def _isValid(self) -> bool:
-        """ Check the validation and return False if any validator return (False, erorrs)
-        """
-
+        """ Check the validation and return False if any validator returns (False, errors). """
         for validator in self.desc.validators:
             isValid, _ = validator(self.node, self)
 
@@ -512,8 +509,7 @@ class Attribute(BaseObject):
         return True
 
     def _isMandatory(self) -> bool:
-        """ An attribute is considered as mandatory it contain a NotEmptyValidator """
-
+        """ An attribute is considered as mandatory if it contains a NotEmptyValidator. """
         for validator in self.desc.validators:
             if isinstance(validator, NotEmptyValidator):
                 return True

@@ -185,10 +185,12 @@ class OrderedTasks:
         for child in task.dependencies:
             self.display(child, level+1)
 
-    def iterOnTasks(self, current:OrderedTask=None):
+    def iterOnTasks(self, current:OrderedTask=None, skipRootTask=False):
+        skipCurrent = (current is None) and skipRootTask
         if current is None:
             current = self.rootTask
-        yield current
+        if not skipCurrent:
+            yield current
         for task in current.dependencies:
             yield from self.iterOnTasks(task)
 

@@ -4,8 +4,8 @@ from textwrap import dedent
 from pathlib import Path
 
 from meshroom.core import desc
-from meshroom.core.graph import Graph
-from meshroom.core.node import CompatibilityIssue
+from meshroom.core.graph import Graph, loadGraph
+from meshroom.core.node import CompatibilityIssue, CompatibilityNode
 
 from .utils import registeredNodeTypes, overrideNodeTypeVersion
 
@@ -448,3 +448,36 @@ class TestTemplateSerialization:
             nodeData = data["graph"]["SimpleNode_1"]
 
             assert nodeData["inputs"]["input"] == "/some/path"
+
+
+class TestLoadGraphWithCompatibilityNodes:
+    """ Tests for loading graphs that contain CompatibilityNodes. """
+
+    def test_loadGraphWithUnknownNodeType(self, graphSavedOnDisk):
+        """
+        Test that loading a graph whose node type is unknown (producing a CompatibilityNode
+        with nodeDesc=None) succeeds even when the cache directory already exists on disk.
+
+        For CompatibilityNodes whose type is entirely unknown, nodeDesc=None, so
+        there may be some forbidden property accesses that raise an AttributeError, preventing
+        the graph from being loaded.
+        """
+        graph: Graph = graphSavedOnDisk
+        nodeName = ""
+
+        with registeredNodeTypes([SimpleNode]):
+            node = graph.addNewNode(SimpleNode.__name__)
+            nodeName = node.name
+            graph.save()
+            # Create the node's internal folder to ensure that Graph.update() will call
+            # updateStatusFromCache() on reload, thus checking that no "AttributeError: 'NoneType' object
+            # has no attribute 'xxx'" is raised.
+            os.makedirs(node.internalFolder)
+
+        # SimpleNode is no longer registered: reloading will produce a CompatibilityNode
+        # with nodeDesc=None.
+        loadedGraph = loadGraph(graph.filepath)
+
+        assert len(loadedGraph.nodes) == 1
+        assert len(loadedGraph.compatibilityNodes) == 1
+        assert isinstance(loadedGraph.node(nodeName), CompatibilityNode)

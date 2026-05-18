@@ -224,9 +224,9 @@ class NodeStatusMonitor(QObject):
                 watchedFiles = [WatchedFile(c) for c in node.getAllChunks()]
             else:
                 watchedFiles = [WatchedFile(node)]
-                if node.nodeDesc.hasPreprocess:
+                if node.hasPreprocessChunk:
                     watchedFiles.append(WatchedFile(node._preprocessChunk))
-                if node.nodeDesc.hasPostprocess:
+                if node.hasPostprocessChunk:
                     watchedFiles.append(WatchedFile(node._postprocessChunk))
             # Filter depending on PollerRefreshStatus
             for wf in watchedFiles:

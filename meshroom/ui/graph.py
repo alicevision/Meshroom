@@ -1461,6 +1461,7 @@ class UIGraph(QObject):
 
             # After every check we finally remove the attribute
             self.removeAttribute(image)
+        self.imageListChanged.emit()
 
     @Slot(list)
     def removeImages(self, images: list):
@@ -1468,16 +1469,19 @@ class UIGraph(QObject):
         if not images:
             return
         self.push(commands.RemoveSelectedImagesCommand(self._graph, self.cameraInit, images))
+        self.imageListChanged.emit()
 
     @Slot()
     def removeAllImages(self):
         with self.groupedGraphModification("Remove All Images"):
             self.push(commands.RemoveImagesCommand(self._graph, [self.cameraInit]))
+        self.imageListChanged.emit()
 
     @Slot()
     def removeImagesFromAllGroups(self):
         with self.groupedGraphModification("Remove Images From All CameraInit Nodes"):
             self.push(commands.RemoveImagesCommand(self._graph, list(self.cameraInits)))
+        self.imageListChanged.emit()
 
     @Slot(list)
     @Slot(list, int)
@@ -1656,6 +1660,8 @@ class UIGraph(QObject):
 
     sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, constant=True)
     lockedChanged = Signal()
+    
+    imageListChanged = Signal()
 
     selectedNodeChanged = Signal()
     # Current main selected node

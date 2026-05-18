@@ -104,8 +104,8 @@ Slider {
 
                 Item {
                     readonly property int frameNum: root.from + index * ruler.majorInterval
-                    readonly property real xPos: ruler.range > 0
-                        ? (frameNum - root.from) / ruler.range * ruler.width
+                    readonly property real xPos: (root.to - root.from + 1) > 0
+                        ? (frameNum - root.from) / (root.to - root.from + 1) * ruler.width
                         : 0
 
                     x: xPos - width / 2

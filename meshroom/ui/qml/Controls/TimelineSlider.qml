@@ -20,7 +20,11 @@ Slider {
 
     implicitHeight: _rulerHeight + _trackHeight + topPadding + bottomPadding
 
-    // ── Playhead handle ──────────────────────────────────────────────────────
+    // The phantom-frame cell size: it will appear as available space on the right of the last frame,
+    // but will not be interactable (the handle will stop at the left edge of that cell when visualPosition=1.0).
+    rightPadding: (to > from) ? (width - leftPadding) / (to - from + 1) : 0
+
+    // Playhead handle
     handle: Item {
         // Center the playhead on the logical slider position
         x: root.leftPadding + root.visualPosition * root.availableWidth - width / 2
@@ -66,11 +70,12 @@ Slider {
         }
     }
 
-    // ── Background: ruler + track ────────────────────────────────────────────
+    // Background: ruler + track
     background: Item {
         x: root.leftPadding
         y: root.topPadding
-        width: root.availableWidth
+        // Extend to the full visual width (interactive zone + the phantom-frame cell)
+        width: root.availableWidth + root.rightPadding
         height: root.availableHeight
 
         // Ruler: tick marks and frame-number labels

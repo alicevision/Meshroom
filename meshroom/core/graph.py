@@ -178,6 +178,33 @@ def blockNodeCallbacks(func):
     return inner
 
 
+def _updateLinkExpressionsInData(data: Any, renameMap: dict) -> Any:
+    """Recursively update node name references in link expression strings.
+
+    Link expressions have the form "{NodeName.attrPath}" and appear as values
+    in the serialized node data. This function updates the node name part of
+    any such expression that matches a key in `renameMap`.
+
+    Args:
+        data: The data to update (dict, list, str, or other scalar).
+        renameMap: A mapping from old node names to new node names.
+
+    Returns:
+        The updated data with renamed node references in link expressions.
+    """
+    if isinstance(data, dict):
+        return {k: _updateLinkExpressionsInData(v, renameMap) for k, v in data.items()}
+    if isinstance(data, list):
+        return [_updateLinkExpressionsInData(item, renameMap) for item in data]
+    if isinstance(data, str) and data.startswith('{') and data.endswith('}') and '.' in data:
+        parts = data[1:-1].split('.', 1)
+        if len(parts) == 2:
+            nodeName, rest = parts
+            if nodeName in renameMap:
+                return '{' + renameMap[nodeName] + '.' + rest + '}'
+    return data
+
+
 def generateTempProjectFilepath(tmpFolder=None):
     """
     Generate a temporary project filepath.
@@ -471,6 +498,67 @@ class Graph(BaseObject):
 
         _renameClashingNodes()
         importedNodes = _importNodesAndEdges()
+        return importedNodes
+
+    @blockNodeCallbacks
+    def importGraphContentFromData(self, graphData: dict) -> list[Node]:
+        """Import serialized graph content directly into this Graph instance.
+
+        This method is more efficient than creating an intermediate Graph object,
+        calling `_deserialize` and then calling `importGraphContent`, as it avoids
+        creating all node objects twice.
+
+        Nodes are imported with their original names if possible, otherwise a new unique
+        name is generated from their node type.
+
+        Args:
+            graphData: The serialized graph data dictionary.
+
+        Returns:
+            The list of newly created Nodes.
+        """
+        header = graphData.get(GraphIO.Keys.Header, {})
+        fileVersion = Version(header.get(GraphIO.Keys.FileVersion, "0.0"))
+        graphContent = self._normalizeGraphContent(graphData, fileVersion)
+
+        # Sort node names by index, consistent with _deserialize
+        sortedNodeNames = sorted(graphContent.keys(), key=lambda x: self.getNodeIndexFromName(x))
+
+        # Rename clashing nodes and update link expressions in the serialized data
+        if self.nodes:
+            unavailableNames = set(self.nodes.keys())
+            renameMap = {}
+            for name in sortedNodeNames:
+                if name in unavailableNames:
+                    nodeType = graphContent[name]["nodeType"]
+                    newName = self._createUniqueNodeName(nodeType, unavailableNames)
+                    renameMap[name] = newName
+                    unavailableNames.add(newName)
+                else:
+                    unavailableNames.add(name)
+
+            if renameMap:
+                newGraphContent = {}
+                for name in sortedNodeNames:
+                    newName = renameMap.get(name, name)
+                    newGraphContent[newName] = _updateLinkExpressionsInData(graphContent[name], renameMap)
+                graphContent = newGraphContent
+
+        nodeVersions = header.get(GraphIO.Keys.NodesVersions, {})
+        inTemplate = header.get(GraphIO.Keys.Template, False)
+
+        importedNodes = []
+        with GraphModification(self):
+            for nodeName in sorted(graphContent.keys(), key=lambda x: self.getNodeIndexFromName(x)):
+                nodeData = dict(graphContent[nodeName])
+                if "version" not in nodeData:
+                    if version := nodeVersions.get(nodeData["nodeType"]):
+                        nodeData["version"] = version
+                node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate)
+                self._addNode(node, nodeName)
+                importedNodes.append(node)
+            self._applyExpr()
+
         return importedNodes
 
     @property

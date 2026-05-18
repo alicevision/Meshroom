@@ -225,19 +225,47 @@ class PasteNodesCommand(GraphCommand):
         self.nodeNames: list[str] = []
 
     def redoImpl(self):
-        graph = Graph("")
-        try:
-            graph._deserialize(self.data)
-        except:
+        # Extract the graph content from the data (may be nested under a "graph" key
+        # in the full serialized format, or be the root dict in the partial format).
+        graphContent = self.data.get("graph", self.data)
+
+        if not graphContent:
             return False
 
-        boundingBoxCenter = self._boundingBoxCenter(graph.nodes)
-        offset = Position(self.position.x - boundingBoxCenter.x, self.position.y - boundingBoxCenter.y)
+        # Compute the bounding box center from node positions in the serialized data.
+        # Positions are stored as [x, y] lists in the serialized format.
+        positions = [
+            nodeData.get("position", [0, 0])
+            for nodeData in graphContent.values()
+            if isinstance(nodeData, dict)
+        ]
+        if positions:
+            xs = [p[0] for p in positions]
+            ys = [p[1] for p in positions]
+            centerX = (min(xs) + max(xs)) / 2
+            centerY = (min(ys) + max(ys)) / 2
+        else:
+            centerX = centerY = 0
 
-        for node in graph.nodes:
-            node.position = Position(node.position.x + offset.x, node.position.y + offset.y)
+        offsetX = self.position.x - centerX
+        offsetY = self.position.y - centerY
 
-        nodes = self.graph.importGraphContent(graph)
+        # Apply position offset to a modified copy of the graph content.
+        offsetGraphContent = {}
+        for nodeName, nodeData in graphContent.items():
+            if not isinstance(nodeData, dict):
+                continue
+            pos = nodeData.get("position", [0, 0])
+            offsetGraphContent[nodeName] = {**nodeData, "position": [pos[0] + offsetX, pos[1] + offsetY]}
+        modifiedData = {**self.data, "graph": offsetGraphContent} if "graph" in self.data else offsetGraphContent
+
+        try:
+            nodes = self.graph.importGraphContentFromData(modifiedData)
+        except Exception:
+            return False
+
+        if not nodes:
+            return False
 
         self.nodeNames = [node.name for node in nodes]
         self.setText(f"Paste Node{'s' if len(self.nodeNames) > 1 else ''} ({', '.join(self.nodeNames)})")
@@ -247,24 +275,6 @@ class PasteNodesCommand(GraphCommand):
         for name in self.nodeNames:
             self.graph.removeNode(name)
 
-    def _boundingBox(self, nodes) -> tuple[int, int, int, int]:
-        if not nodes:
-            return (0, 0, 0 , 0)
-
-        minX = maxX = nodes[0].x
-        minY = maxY = nodes[0].y
-
-        for node in nodes[1:]:
-            minX = min(minX, node.x)
-            minY = min(minY, node.y)
-            maxX = max(maxX, node.x)
-            maxY = max(maxY, node.y)
-
-        return (minX, minY, maxX, maxY)
-
-    def _boundingBoxCenter(self, nodes):
-        minX, minY, maxX, maxY = self._boundingBox(nodes)
-        return Position((minX + maxX) / 2, (minY + maxY) / 2)
 
 class ImportProjectCommand(GraphCommand):
     """

@@ -481,3 +481,125 @@ class TestLoadGraphWithCompatibilityNodes:
         assert len(loadedGraph.nodes) == 1
         assert len(loadedGraph.compatibilityNodes) == 1
         assert isinstance(loadedGraph.node(nodeName), CompatibilityNode)
+
+
+class TestImportGraphContentFromData:
+    """Test suite for Graph.importGraphContentFromData."""
+
+    def test_importEmptyData(self):
+        graph = Graph("")
+        nodes = graph.importGraphContentFromData({})
+        assert len(nodes) == 0
+        assert len(graph.nodes) == 0
+
+    def test_importSingleNode(self):
+        with registeredNodeTypes([SimpleNode]):
+            srcGraph = Graph("")
+            srcGraph.addNewNode(SimpleNode.__name__)
+            serialized = srcGraph.serializePartial(list(srcGraph.nodes))
+
+            targetGraph = Graph("")
+            nodes = targetGraph.importGraphContentFromData(serialized)
+
+            assert len(nodes) == 1
+            assert compareGraphsContent(srcGraph, targetGraph)
+
+    def test_importMultipleNodes(self):
+        with registeredNodeTypes([SimpleNode]):
+            srcGraph = Graph("")
+            srcGraph.addNewNode(SimpleNode.__name__)
+            srcGraph.addNewNode(SimpleNode.__name__)
+            serialized = srcGraph.serializePartial(list(srcGraph.nodes))
+
+            targetGraph = Graph("")
+            nodes = targetGraph.importGraphContentFromData(serialized)
+
+            assert len(nodes) == 2
+            assert compareGraphsContent(srcGraph, targetGraph)
+
+    def test_importNodesWithEdges(self):
+        with registeredNodeTypes([SimpleNode]):
+            srcGraph = Graph("")
+            nodeA = srcGraph.addNewNode(SimpleNode.__name__)
+            nodeB = srcGraph.addNewNode(SimpleNode.__name__)
+            nodeA.output.connectTo(nodeB.input)
+            serialized = srcGraph.serializePartial(list(srcGraph.nodes))
+
+            targetGraph = Graph("")
+            nodes = targetGraph.importGraphContentFromData(serialized)
+
+            assert len(nodes) == 2
+            assert compareGraphsContent(srcGraph, targetGraph)
+
+    def test_edgeRemappingOnImportingSeveralTimes(self):
+        with registeredNodeTypes([SimpleNode]):
+            srcGraph = Graph("")
+            nodeA = srcGraph.addNewNode(SimpleNode.__name__)
+            nodeB = srcGraph.addNewNode(SimpleNode.__name__)
+            nodeA.output.connectTo(nodeB.input)
+            serialized = srcGraph.serializePartial(list(srcGraph.nodes))
+
+            targetGraph = Graph("")
+            targetGraph.importGraphContentFromData(serialized)
+            targetGraph.importGraphContentFromData(serialized)
+
+            assert len(targetGraph.nodes) == 4
+            # Both sets of edges should be present
+            assert len(targetGraph.edges) == 2
+
+    def test_importWithUnknownNodeTypesCreatesCompatibilityNodes(self):
+        with registeredNodeTypes([SimpleNode]):
+            srcGraph = Graph("")
+            srcGraph.addNewNode(SimpleNode.__name__)
+            serialized = srcGraph.serializePartial(list(srcGraph.nodes))
+
+        targetGraph = Graph("")
+        nodes = targetGraph.importGraphContentFromData(serialized)
+
+        assert len(nodes) == 1
+        assert nodes[0].isCompatibilityNode
+
+    def test_importWithUnknownNodeTypesSeveralTimes(self):
+        with registeredNodeTypes([SimpleNode]):
+            srcGraph = Graph("")
+            nodeA = srcGraph.addNewNode(SimpleNode.__name__)
+            nodeB = srcGraph.addNewNode(SimpleNode.__name__)
+            nodeA.output.connectTo(nodeB.input)
+            serialized = srcGraph.serializePartial(list(srcGraph.nodes))
+
+        targetGraph = Graph("")
+        targetGraph.importGraphContentFromData(serialized)
+        targetGraph.importGraphContentFromData(serialized)
+
+        assert len(targetGraph.nodes) == 4
+        assert len(targetGraph.compatibilityNodes) == 4
+        assert len(targetGraph.edges) == 2
+
+    def test_importFromMinimalData(self):
+        """Test that importing from minimal data (without header) works."""
+        with registeredNodeTypes([SimpleNode]):
+            minimalData = {
+                "SimpleNode_1": {"nodeType": SimpleNode.__name__}
+            }
+            graph = Graph("")
+            nodes = graph.importGraphContentFromData(minimalData)
+
+            assert len(nodes) == 1
+            assert not nodes[0].isCompatibilityNode
+
+    def test_importProducesEquivalentResultToImportGraphContent(self):
+        """importGraphContentFromData and importGraphContent should produce the same result."""
+        with registeredNodeTypes([SimpleNode]):
+            srcGraph = Graph("")
+            nodeA = srcGraph.addNewNode(SimpleNode.__name__)
+            nodeB = srcGraph.addNewNode(SimpleNode.__name__)
+            nodeA.output.connectTo(nodeB.input)
+            serialized = srcGraph.serializePartial(list(srcGraph.nodes))
+
+            graphA = Graph("")
+            graphA.importGraphContentFromData(serialized)
+
+            graphB = Graph("")
+            graphB.importGraphContent(srcGraph)
+
+            assert compareGraphsContent(graphA, graphB)

@@ -870,11 +870,11 @@ class BaseNode(BaseObject):
         self.dirty: bool = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks: list[NodeChunk] = ListModel(parent=self)
         self._preprocessChunk = None
-        if self.nodeDesc and self.nodeDesc.hasPreprocess:
+        if self.hasPreprocessChunk:
             self._preprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.PREPROCESS), parent=self)
             self._preprocessChunk.statusChanged.connect(self.globalStatusChanged)
         self._postprocessChunk = None
-        if self.nodeDesc and self.nodeDesc.hasPostprocess:
+        if self.hasPostprocessChunk:
             self._postprocessChunk = NodeChunk(self, desc.Range(ChunkIndex.POSTPROCESS), parent=self)
             self._postprocessChunk.statusChanged.connect(self.globalStatusChanged)
         self._chunksCreated = False  # Only initialize chunks on compute
@@ -1706,11 +1706,11 @@ class BaseNode(BaseObject):
                 logging.warning(f"Could not create chunks from cache: {e}")
                 return
         s = self.globalStatus
-        if self.nodeDesc.hasPreprocess:
+        if self.hasPreprocessChunk:
             if not self._preprocessChunk:
                 raise ValueError("No preprocess chunk")
             self._preprocessChunk.updateStatusFromCache()
-        if self.nodeDesc.hasPostprocess:
+        if self.hasPostprocessChunk:
             if not self._postprocessChunk:
                 raise ValueError("No postprocess chunk")
             self._postprocessChunk.updateStatusFromCache()
@@ -1827,7 +1827,7 @@ class BaseNode(BaseObject):
         Invoke the pre process command on Client Node to execute before
         we start the processing on the node
         """
-        if self.nodeDesc.hasPreprocess:
+        if self.hasPreprocessChunk:
             if not self._preprocessChunk:
                 raise RuntimeError("Trying to process preprocess chunk but it doesn't exist")
             self.prepareLogger(ChunkIndex.PREPROCESS)
@@ -1843,7 +1843,7 @@ class BaseNode(BaseObject):
         Invoke the post process command on Client Node to execute after 
         the processing on the node is completed
         """
-        if self.nodeDesc.hasPostprocess:
+        if self.hasPostprocessChunk:
             if not self._postprocessChunk:
                 raise RuntimeError("Trying to process postprocess chunk but it doesn't exist")
             self.prepareLogger(ChunkIndex.POSTPROCESS)
@@ -1954,11 +1954,11 @@ class BaseNode(BaseObject):
 
     def stopComputation(self):
         """ Stop the computation of this node. """
-        if self.nodeDesc.hasPreprocess:
+        if self.hasPreprocessChunk:
             if not self._preprocessChunk:
                 logging.warning("No preprocess chunk to stop")
             self._preprocessChunk.stopProcess()
-        if self.nodeDesc.hasPostprocess:
+        if self.hasPostprocessChunk:
             if not self._postprocessChunk:
                 logging.warning("No postprocess chunk to stop")
             self._postprocessChunk.stopProcess()
@@ -1987,7 +1987,7 @@ class BaseNode(BaseObject):
             return Status.INPUT
         if not self._chunksCreated:
             # If the preprocess chunk failed we might not reach the chunk creation part
-            if self.nodeDesc.hasPreprocess and self._preprocessChunk._status.status in anyOf:
+            if self.hasPreprocessChunk and self._preprocessChunk._status.status in anyOf:
                 return self._preprocessChunk._status.status
             # Get status from nodeStatus
             return self._nodeStatus.status
@@ -2064,10 +2064,10 @@ class BaseNode(BaseObject):
 
     def getAllChunks(self) -> list[NodeChunk]:
         chunks = []
-        if self.nodeDesc.hasPreprocess:
+        if self.hasPreprocessChunk:
             chunks.append(self._preprocessChunk)
         chunks.extend([c for c in self._chunks])
-        if self.nodeDesc.hasPostprocess:
+        if self.hasPostprocessChunk:
             chunks.append(self._postprocessChunk)
         return chunks
 

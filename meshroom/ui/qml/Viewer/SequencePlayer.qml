@@ -39,7 +39,7 @@ FloatingPane {
     function updateSceneView() {
         if (isOutputSequence)
             return
-        if (_currentScene && m.frame >= frameRange.min && m.frame < frameRange.max + 1) {
+        if (_currentScene && sortedViewIds.length > 0 && m.frame >= frameRange.min && m.frame < frameRange.max + 1) {
             if (!m.playing && !frameSlider.pressed) {
                 _currentScene.selectedViewId = sortedViewIds[m.frame]
             } else {
@@ -58,6 +58,14 @@ FloatingPane {
     }
 
     onSortedViewIdsChanged: {
+        if (sortedViewIds.length === 0) {
+            // Reset state when the sequence becomes empty
+            // (e.g. all images removed from gallery or CameraInit deleted)
+            m.playing = false
+            m.frame = 0
+            frameRange.min = 0
+            frameRange.max = 0
+        }
         frameSlider.from = frameRange.min
         frameSlider.to = frameRange.max
     }
@@ -80,11 +88,13 @@ FloatingPane {
         }
 
         onPlayingChanged: {
-            if (!playing) {
-                updateSceneView()
-            } else if (playing && (frame + 1 >= frameRange.max + 1)) {
+            if (playing && (frame + 1 >= frameRange.max + 1)) {
                 frame = frameRange.min
             }
+            // Always update the scene view: when starting playback we need to
+            // trigger fetching from the current frame; when stopping we need to
+            // update the selected view to reflect the paused frame.
+            updateSceneView()
             viewer.playback(playing)
         }
     }
@@ -191,6 +201,8 @@ FloatingPane {
 
             Layout.fillWidth: true
 
+            enabled: sortedViewIds.length > 0
+
             value: m.frame
 
             stepSize: 1
@@ -242,7 +254,6 @@ FloatingPane {
             text: MaterialIcons.subscriptions
             ToolTip.text: "Fetch"
             checkable: true
-            checked: loading
         }
 
         MaterialToolButton {

@@ -559,10 +559,14 @@ class TaskManager(BaseObject):
 
         nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
         if not nodesToProcess:
-            logging.warning('Nothing to compute')
+            logging.warning('Nothing to submit')
             return
         self.checkCompatibilityNodes(graph, nodesToProcess, "SUBMITTING")  # name of the context is important for QML
         self.checkDuplicates(nodesToProcess, "SUBMITTING")  # name of the context is important for QML
+
+        nodesToProcess = [node for node in nodesToProcess if not self.contains(node)]  # be sure to avoid non-real conflicts
+        nodesToProcess = list(set(nodesToProcess))
+        nodesToProcess = sorted(nodesToProcess, key=lambda x: x.depth)
 
         # Update nodes status
         for node in nodesToProcess:

@@ -15,7 +15,6 @@ from meshroom.common import BaseObject, Property
 
 
 logger = logging.getLogger("Submitter")
-logger.setLevel(logging.INFO)
 
 
 class SubmitterOptionsEnum(IntFlag):
@@ -81,25 +80,48 @@ class OrderedTaskType(IntFlag):
 
 
 class OrderedTask:
+    _usedUids = set()
+
     def __init__(self, taskType, node = None, iteration : int = -1):
         self.taskType: OrderedTaskType = taskType
         self.node = node  # BaseNode
         self.iteration = iteration
         self.dependencies = []
-    
+        self.uid = self._generateUid()
+
+    @property
+    def nodeName(self):
+        return self.node.name if self.node else "NONE"
+
+    @classmethod
+    def _generateUid(cls) -> int:
+        nextUid = max(cls._usedUids) + 1 if len(cls._usedUids) > 0 else 0
+        cls._usedUids.add(nextUid)
+        return nextUid
+
     def addDependency(self, otherTask: OrderedTask):
         self.dependencies.append(otherTask)
-    
+
+    @property
+    def shortName(self):
+        sn = self.nodeName if self.node else "NONE"
+        if self.taskType == OrderedTaskType.CHUNK:
+            sn += f"_{self.iteration if self.iteration >=0 else 'allchunks'}"
+        else:
+            sn += f"_{self.taskType.name}"
+        return f"{self.uid:03d} {sn}"
+
     def __repr__(self):
         if self.taskType == OrderedTaskType.PLACEHOLDER:
-            string = f"<OrderedTask placeholder {id(self)}"
-            if self.node:
-                string += f" node={self.node._name}"
-            return string + f">"
-        string = f"<OrderedTask {self.node._uid[:5]} {self.node.name} {self.taskType.name} ("
+            string = f"<OrderedTask {self.uid:04d} type=placeholder"
+            string += f" node={self.nodeName}>" if self.node else ">"
+            return string
+        string = f"<OrderedTask {self.uid:04d}"
+        string += f" type={self.taskType.name}"
+        string += f" node={self.nodeName} ({self.node._uid[:5]})"
         if self.iteration >= 0:
-            string += f"iteration={self.iteration}, "
-        string += f"{len(self.dependencies)} deps)>"
+            string += f" iteration={self.iteration}"
+        string += f" ({len(self.dependencies)} deps)>"
         return string
 
 
@@ -110,6 +132,10 @@ class OrderedNode:
         # node can be None for placeholder tasks (tasks that don't do anything else than regrouping dependencies)
         self.node = node  # BaseNode
         self.dependencies: list[OrderedNode] = dependencies or []  # Tasks that need to run before the current one
+
+    @property
+    def nodeName(self):
+        return self.node.name if self.node else "NONE"
 
     @property
     def isPlaceholder(self) -> bool:
@@ -149,13 +175,13 @@ class OrderedNode:
     @property
     def hasPostprocess(self) -> bool:
         return self.node.nodeDesc.hasPostprocess
-    
+
     def __repr__(self):
-        depsNames = "|".join([t.node.name for t in self.dependencies])
+        depsNames = "|".join([t.nodeName for t in self.dependencies])
         if self.isPlaceholder:
             return f"<OrderedNode:placeholder deps=[{depsNames}]>"
         else:
-            return f"<OrderedNode node={self.node.name} deps=[{depsNames}]>"
+            return f"<OrderedNode node={self.nodeName} deps=[{depsNames}]>"
 
 
 class OrderedTasks:
@@ -166,24 +192,35 @@ class OrderedTasks:
         is the "root" and its dependencies are the "children". This is necessary because this is usually
         the order where the tasks will be created on the farm (we create one task, then add other tasks as
         dependencies, and not we create a task, then we add a task to execute next as we do it here).
-    
+
     TODO: Keep the meshroom order and just provide an `inverse` method.
     """
 
-    def __init__(self, nodes, edges):
+    def __init__(self, nodes, edges, reduceConnections=True):
         # First correctly order the nodes
-        self._firstLevelorderedNodes: list[list[OrderedNode]] = self.__orderNodes(nodes, edges)
+        self.nodesByLevels = []
+        self._firstLevelorderedNodes: list[OrderedNode] = self.__orderNodes(nodes, edges)
+        if reduceConnections:
+            allNodes = set()
+            for nodes in self.nodesByLevels:
+                allNodes.update(nodes)
+            for node in allNodes:
+                self.applyTransitiveReduction(node)
         # Now create all the OrderedChunkTask objects
         self.rootTask = OrderedTask(taskType=OrderedTaskType.PLACEHOLDER)
-        self._nodeUidToLastTask: Dict[str, OrderedTask] = {}  # { _uid: lastTaskToProcess }
+        self._nodeUidToBoundaryTasks: Dict[str, OrderedTask] = {}  # { _uid: (firstTaskToProcess, lastTaskToProcess) }
         self.__orderTasks()
 
-    def display(self, task:OrderedTask=None, level=0):
-        if task is None:
-            task = self.rootTask
-        logger.debug(f"{' '*4*level}[{level:02d}] {task}")
-        for child in task.dependencies:
-            self.display(child, level+1)
+    def display(self):
+        logging.debug(f"{'='*10} ORDERED TASKS {'='*10}")
+        def gatherTasks(task):
+            allTasks = [task]
+            for child in task.dependencies:
+                allTasks.extend(gatherTasks(child))
+            return allTasks
+        tasks: list[OrderedTask] = gatherTasks(self.rootTask)
+        for task in set(tasks):
+            logging.debug(f"[{task.shortName}] {task} -> depends on {[t.shortName for t in task.dependencies]}")
 
     def iterOnTasks(self, current:OrderedTask=None, skipRootTask=False):
         skipCurrent = (current is None) and skipRootTask
@@ -211,104 +248,207 @@ class OrderedTasks:
         for u, v in edges:
             # Change a bit the ordering logic of Meshroom :
             # parent task is the last one to be executed, child are their dependencies
-            parentTask = nodeToOrderedNode[u._uid]
-            childTask = nodeToOrderedNode[v._uid]
-            parentTask.dependencies.append(childTask)
+            parentNode = nodeToOrderedNode[u._uid]
+            childNode = nodeToOrderedNode[v._uid]
+            parentNode.dependencies.append(childNode)
 
         # Create a task 
         rootNode = OrderedNode(None, dependencies=nodeToOrderedNode.values())
         # Find each node depth (= what level the node is)
         depthByNode = {}
-        self.__updateDepth([rootNode], depthByNode, currentDepth=-1)
+        def __updateDepth(nodes: List[OrderedNode], currentDepth=0):
+            """ Compute the depth for each """
+            for orderedNode in nodes:
+                if currentDepth > depthByNode.get(orderedNode, -1):
+                    depthByNode[orderedNode] = currentDepth
+                if orderedNode.dependencies:
+                    __updateDepth(orderedNode.dependencies, currentDepth+1)
+        __updateDepth([rootNode], currentDepth=-1)
         # Regroup nodes by level
         levels = list(set(l for l in list(depthByNode.values())))
-        nodesByLevels = [[t for t, l in depthByNode.items() if l == lev] for lev in levels]
-        return nodesByLevels[0]
+        self.nodesByLevels = [[n for n, l in depthByNode.items() if l == lev] for lev in levels]
+        logger.debug("---- NODE ORDERING ----")
+        for levelIndex, levelNodes in enumerate(self.nodesByLevels):
+            logger.debug(f"[LEVEL {levelIndex:03d}] : {', '.join([n.nodeName for n in levelNodes])}")
+        return self.nodesByLevels[0]
 
-    def __updateDepth(self, nodes: List[OrderedNode], depthByNode, currentDepth=0):
-        """ Compute the depth for each """
-        for orderedNode in nodes:
-            if currentDepth > depthByNode.get(orderedNode, -1):
-                depthByNode[orderedNode] = currentDepth
-            if orderedNode.dependencies:
-                self.__updateDepth(orderedNode.dependencies, depthByNode, currentDepth+1)
+    def applyTransitiveReduction(self, node: OrderedNode):
+        """ Remove redundant dependencies.
+        If we have A -> (B, C) and B -> C then we don't need A -> C, we will instead get A -> B -> C
+        """
+        def _updateLongestPaths(currentNode: OrderedNode, longestPathToNodes: dict, currentDepth: int):
+            for dep in currentNode.dependencies:
+                if dep in longestPathToNodes:
+                    longestPathToNodes[dep] = max(longestPathToNodes[dep], currentDepth)
+                _updateLongestPaths(dep, longestPathToNodes, currentDepth + 1)
+
+        longestPathToNodes = {n: 1 for n in node.dependencies}
+        for nodeDependency in node.dependencies:
+            # Try to find a longer path than the direct one (depth 1)
+            _updateLongestPaths(nodeDependency, longestPathToNodes, currentDepth=2)
+        newDependencies = [n for n in node.dependencies if longestPathToNodes[n] == 1]
+        if set(newDependencies) != set(node.dependencies):
+            logging.debug(f"(Reduced dependencies) {node.nodeName} before={[n.nodeName for n in node.dependencies]}, after={[n.nodeName for n in newDependencies]}")
+        node.dependencies = newDependencies
+        for childNode in node.dependencies:
+            self.applyTransitiveReduction(childNode)            
 
     def __orderTasks(self):
-        """ Use the nodesByLevel info to create all tasks to send to the submitter """
-        # Start from a root task
-        self._nodeUidToLastTask = {}
-        for n in self._firstLevelorderedNodes:
-            self.__createNodeTasks(n, self.rootTask)
-
-    def __createNodeTasks(self, orderedNode: OrderedNode, parentTask: OrderedTask):
-        """ Create tasks corresponding to a node and link them correctly.
-        Also link them to the parent task, and recursively create children tasks.
+        """ Use the nodesByLevel info to create all tasks to send to the submitter
         """
-        logger.debug(f"* (createNodeTasks) node {orderedNode.node._name}, parent {parentTask.node}")
+        # Start from a root task
+        self._nodeUidToBoundaryTasks = {}
+        for n in self._firstLevelorderedNodes:
+            self.__addNodeTasks(n, self.rootTask)
+
+    def __addNodeTasks(self, orderedNode: OrderedNode, parentTask: OrderedTask):
+        """ Recursive function that takes a node on a graph where nodes are already ordered,
+        - creates the internal tasks of this node
+        - connect the last task to the parent
+        - call itself on the dependencies with the current last task as the new parentTask
+
+        Note:
+            The parent task is the first task on the node that executes _after_ the current node.
+            We need to connect it to the _last task_ that we will create on the current node.
+
+        Args:
+            orderedNode: current node that we want to create internal tasks.
+            parentTask: task on the parent node to connect to the first internal task that 
+                        will be created for the current orderedNode.
+        """
+        logger.debug(f"* (addNodeTasks) node {orderedNode.node._name}, parent {parentTask.node}")
         # Check if task has already been created
-        visited = (nodeUid:=orderedNode.node._uid) in self._nodeUidToLastTask
+        visited = (nodeUid := orderedNode.node._uid) in self._nodeUidToBoundaryTasks
         if visited:
             logger.debug("  -> is visited")
             # If task is already created simply create the connection
-            lastTask = self._nodeUidToLastTask[nodeUid]
+            firstTask, lastTask = self._nodeUidToBoundaryTasks[nodeUid]
             parentTask.addDependency(lastTask)
             return
-        # Create node tasks
+
+        # Create tasks
         if orderedNode.isPlaceholder:
             logger.debug("  -> is placeholder")
             task = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
-            firstTask = lastTask = task
+            firstTask, lastTask = task
+        elif orderedNode.isExpanding:
+            logger.debug("  -> is expanding")
+            firstTask, lastTask = self.__createExpandingChunkTasks(orderedNode)
         else:
-            lastTask = firstTask = None
-            # Create pre/post tasks if needed
-            if orderedNode.hasPostprocess:
-                logger.debug("  -> postprocess")
-                lastTask = OrderedTask(OrderedTaskType.POSTPROCESS, orderedNode.node)
-            if orderedNode.hasPreprocess:
-                logger.debug("  -> preprocess")
-                firstTask = OrderedTask(OrderedTaskType.PREPROCESS, orderedNode.node)
-            # Process
-            if orderedNode.isExpanding:
-                logger.debug("  -> is expanding")
-                expandingTask = OrderedTask(OrderedTaskType.EXPANDING, orderedNode.node)
-                if lastTask:
-                    lastTask.addDependency(expandingTask)
-                else:
-                    lastTask = expandingTask
-                if firstTask:
-                    expandingTask.addDependency(firstTask)
-                else:
-                    firstTask = expandingTask
-            else:
-                logger.debug(f"  -> has chunks : {orderedNode.chunksIterations}")
-                # Create and link chunks
-                if len(orderedNode.chunksIterations):
-                    # Create placeholders for pre/post
-                    lastTask = lastTask if lastTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
-                    firstTask = firstTask if firstTask else OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
-                    for iteration in orderedNode.chunksIterations:
-                        logger.debug(f"    - chunk {iteration}")
-                        chunkTask = OrderedTask(OrderedTaskType.CHUNK, orderedNode.node, iteration=iteration)
-                        lastTask.addDependency(chunkTask)
-                        chunkTask.addDependency(firstTask)
-                else:  # Handle 0 chunks case
-                    if firstTask and lastTask:
-                        lastTask.addDependency(firstTask)
-                    elif firstTask:
-                        lastTask = firstTask
-                    elif lastTask:
-                        firstTask = lastTask
-                    else:
-                        firstTask = lastTask = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
-        # Add parent dependency
+            iterations: list[int] = orderedNode.chunksIterations
+            logger.debug(f"  -> has chunks : {iterations}")
+            firstTask, lastTask = self.__createProcessChunkTasks(orderedNode, iterations)
+
+        # Parent depends on the last task of this node
         parentTask.addDependency(lastTask)
-        # Create children
+
+        # Children (dependencies of this node) attach to firstTask
         for n in orderedNode.dependencies:
             logger.debug(f"  -> create deps {n}")
-            self.__createNodeTasks(n, firstTask)
-        # Add the last task to execute for this node to _nodeUidToLastTask
-        self._nodeUidToLastTask[nodeUid] = lastTask
+            self.__addNodeTasks(n, firstTask)
+
+        # Register the last task so revisited nodes connect correctly
+        self._nodeUidToBoundaryTasks[nodeUid] = (firstTask, lastTask)
         logger.debug(f"  -> done {orderedNode.node._name}")
+
+    def __createExpandingChunkTasks(self, orderedNode: OrderedNode):
+        """ Create internal tasks corresponding to a node.
+        Build the task chain : firstTask -> expanding -> lastTask.
+
+        Note:
+            If we have preprocess or postprocess chunks then they will be used for first/last tasks
+            If we don't have them but we have multiple chunks then we will create placeholder tasks
+            for first/last tasks because we need an anchor point for parent and children nodes. 
+        """ 
+        # Create preprocess & postprocess tasks
+        preprocessTask, postprocessTask = self.__createPrePostTasks(orderedNode)
+
+        # Create expanding chunk task
+        expandingTask = OrderedTask(OrderedTaskType.EXPANDING, orderedNode.node)
+
+        # Chain: preprocess -> expanding -> postprocess
+        if preprocessTask:
+            expandingTask.addDependency(preprocessTask)
+        if postprocessTask:
+            postprocessTask.addDependency(expandingTask)
+
+        firstTask = preprocessTask or expandingTask
+        lastTask = postprocessTask or expandingTask
+        return firstTask, lastTask
+    
+    def __createProcessChunkTasks(self, orderedNode: OrderedNode, iterations: list[int]):
+        """ Create internal tasks corresponding to a node.
+        Build the task chain : firstTask -> expanding -> lastTask.
+        
+        Note:
+            If we have preprocess or postprocess chunks then they will be used for first/last tasks
+            If we don't have them but we have multiple chunks then we will create placeholder tasks
+            for first/last tasks because we need an anchor point for parent and children nodes. 
+        """ 
+        # Create preprocess & postprocess tasks
+        preprocessTask, postprocessTask = self.__createPrePostTasks(orderedNode)
+
+        if not iterations:
+            if preprocessTask and postprocessTask:
+                postprocessTask.addDependency(preprocessTask)
+                firstTask = preprocessTask
+                lastTask = postprocessTask
+            elif preprocessTask:
+                firstTask = lastTask = preprocessTask
+            elif postprocessTask:
+                firstTask = lastTask = postprocessTask
+            else:
+                # Nothing to do — create a single placeholder
+                placeholder = OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
+                firstTask = lastTask = placeholder
+            return firstTask, lastTask
+
+        chunkTasks = []
+        for iteration in iterations:
+            logger.debug(f"    - chunk {iteration}")
+            chunkTask = OrderedTask(OrderedTaskType.CHUNK, orderedNode.node, iteration=iteration)
+            chunkTasks.append(chunkTask)
+
+        multipleChunks = len(chunkTasks) > 1
+
+        # Get chunkStart/chunkEnd
+        if multipleChunks:
+            # Need placeholders only when parallelized (multiple chunks)
+            # unless pre/post tasks already serve that purpose
+            chunkStart = preprocessTask or OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
+            chunkEnd = postprocessTask or OrderedTask(OrderedTaskType.PLACEHOLDER, orderedNode.node)
+        else:
+            # Single chunk: use pre/post directly, no placeholders needed
+            chunkStart = preprocessTask  # may be None
+            chunkEnd = postprocessTask    # may be None
+
+        # Link chunks to chunkStart/chunkEnd
+        for chunkTask in chunkTasks:
+            if chunkEnd:
+                chunkEnd.addDependency(chunkTask)
+            if chunkStart:
+                chunkTask.addDependency(chunkStart)
+
+        if multipleChunks:
+            firstTask = chunkStart
+            lastTask = chunkEnd
+        else:
+            chunkTask = chunkTasks[0]
+            firstTask = preprocessTask or chunkTask
+            lastTask = postprocessTask or chunkTask
+
+        return firstTask, lastTask
+
+    def __createPrePostTasks(self, orderedNode: OrderedNode):
+        preprocessTask = None
+        postprocessTask = None
+        if orderedNode.hasPreprocess:
+            logger.debug("  -> preprocess")
+            preprocessTask = OrderedTask(OrderedTaskType.PREPROCESS, orderedNode.node)
+        if orderedNode.hasPostprocess:
+            logger.debug("  -> postprocess")
+            postprocessTask = OrderedTask(OrderedTaskType.POSTPROCESS, orderedNode.node)
+        return preprocessTask, postprocessTask
 
 
 class BaseSubmittedJob:

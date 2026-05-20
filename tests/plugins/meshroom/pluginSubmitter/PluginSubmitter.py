@@ -51,6 +51,14 @@ class PluginSubmitterA(desc.Node):
         LOGGER.info(f"> Done")
 
 
+class PluginSubmitterA1(PluginSubmitterA):
+    """
+    Test process with parallelization and dynamic node size
+    """
+    size = desc.StaticNodeSize(2)
+    parallelization = desc.Parallelization(blockSize=1)
+
+
 class PluginSubmitterB(PluginSubmitterA):
     """
     Test process with parallelization adn static node size

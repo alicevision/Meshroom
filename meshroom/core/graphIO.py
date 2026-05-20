@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class GraphIO:
     """Centralize Graph file keys and IO version."""
 
-    __version__ = "2.0"
+    __version__ = "2.1"
 
     class Keys:
         """File Keys."""
@@ -23,6 +23,7 @@ class GraphIO:
         NodesVersions = "nodesVersions"
         ReleaseVersion = "releaseVersion"
         FileVersion = "fileVersion"
+        CacheDir = "cacheDir"
         Graph = "graph"
         Template = "template"
 
@@ -94,6 +95,13 @@ class GraphSerializer:
         header[GraphIO.Keys.ReleaseVersion] = meshroom.__version__
         header[GraphIO.Keys.FileVersion] = GraphIO.__version__
         header[GraphIO.Keys.NodesVersions] = self._getNodeTypesVersions()
+        if self._graph._hasExplicitCacheDir:
+            # We store the absolute but also the relative cacheDir path (to the scene file)
+            # to make sure that if we move the scene+cacheDir we can still retrieve the cache 
+            header[GraphIO.Keys.CacheDir] = {
+                "absoluteCacheDir": self._graph._absoluteCacheDir,
+                "relativeCacheDir": self._graph._relativeCacheDir,
+            }
         return header
 
     def _getNodeTypesVersions(self) -> dict[str, str]:

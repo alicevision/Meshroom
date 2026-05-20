@@ -222,8 +222,11 @@ class Graph(BaseObject):
         # Edges: use dst attribute as unique key since it can only have one input connection
         self._edges = DictModel(keyAttrName='dst', parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
-        self._cacheDir: str = ''
-        self._filepath: str = ''
+        self._hasExplicitCacheDir: bool = False
+        self._absoluteCacheDir: str = ""
+        self._relativeCacheDir: str = ""
+        self._cacheDir: str = ""
+        self._filepath: str = ""
         self._fileDateVersion = 0
         self.header = {}
 
@@ -311,6 +314,9 @@ class Graph(BaseObject):
         fileVersion = Version(self.header.get(GraphIO.Keys.FileVersion, "0.0"))
         graphContent = self._normalizeGraphContent(graphData, fileVersion)
         isTemplate = self.header.get(GraphIO.Keys.Template, False)
+        explicitCachePaths = self.header.get(GraphIO.Keys.CacheDir)
+        if explicitCachePaths:
+            self._deserializeCacheDir(explicitCachePaths)
 
         with GraphModification(self):
             # iterate over nodes sorted by suffix index in their names
@@ -334,6 +340,36 @@ class Graph(BaseObject):
         # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
         # that were computed.
         self._evaluateUidConflicts(graphContent)
+
+    def _deserializeCacheDir(self, explicitCachePaths):
+        """ Set correct cacheDir and _relativeCacheDir if the info is set in the file """
+        if not isinstance(explicitCachePaths, dict):
+            logging.error(f"Failed to deserialize cacheDir from {explicitCachePaths}. We expect a dictionnary.")
+            return
+        absoluteCacheDir = explicitCachePaths.get("absoluteCacheDir")
+        relativeCacheDir = explicitCachePaths.get("relativeCacheDir")
+        if not all((absoluteCacheDir, relativeCacheDir)):
+            logging.error(f"Failed to deserialize cacheDir from {explicitCachePaths}. Missing key(s).")
+            return
+        # Try to get the cacheDir from the absoluteCacheDir
+        if Path(absoluteCacheDir).exists():
+            logging.info(f"Using {absoluteCacheDir} as cache directory.")
+            self.cacheDir = str(absoluteCacheDir)
+            self._hasExplicitCacheDir = True
+        elif relativeCacheDir:
+            absolutePath = Path(self._filepath).parent.absolute() / relativeCacheDir
+            if Path(absolutePath).exists():
+                logging.info(f"Using {relativeCacheDir} ({absolutePath}) as cache directory.")
+                self.cacheDir = str(absolutePath)
+                self._hasExplicitCacheDir = True
+            else:
+                logging.warning(f"Could not find a cache from relative path {relativeCacheDir}.")
+        else:
+            logging.warning(f"Could not find caches from {explicitCachePaths}.")
+        # If we managed to find an explicit cacheDir
+        if self._hasExplicitCacheDir:
+            self._absoluteCacheDir = absoluteCacheDir
+            self._relativeCacheDir = relativeCacheDir
 
     def _normalizeGraphContent(self, graphData: dict, fileVersion: Version) -> dict:
         graphContent = graphData.get(GraphIO.Keys.Graph, graphData)
@@ -1498,7 +1534,10 @@ class Graph(BaseObject):
         #  * cache folder is located next to the graph file
         #  * graph name if the basename of the graph file
         self.name = os.path.splitext(os.path.basename(filepath))[0]
-        self.cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
+        if self._hasExplicitCacheDir:
+            self.setExplicitCacheDir(self._relativeCacheDir)
+        else:
+            self.setDefaultCacheDir()
         self.filepathChanged.emit()
 
     def _unsetFilepath(self):
@@ -1674,6 +1713,51 @@ class Graph(BaseObject):
         self.updateInternals(force=True)
         self.updateStatusFromCache(force=True)
         self.cacheDirChanged.emit()
+
+    @property
+    def defaultCacheDir(self):
+        filepath = Path(self._filepath)
+        cacheDir = filepath.parent.absolute() / meshroom.core.cacheFolderName
+        return str(cacheDir)
+
+    def setDefaultCacheDir(self):
+        """ Set the cacheDir to the default path """
+        self._hasExplicitCacheDir = False
+        self._relativeCacheDir = ""
+        self._absoluteCacheDir = ""
+        self.cacheDir = self.defaultCacheDir
+
+    def setExplicitCacheDir(self, value: str):
+        """
+        Set the cache directory to a specific folder.
+        When set this way, it will be serialized in the graph file
+        and will take priority over the default location on load.
+        """
+        if not value:
+            logging.warning("Reset the cache directory")
+            self.setDefaultCacheDir()
+            return
+
+        if Path(value).is_absolute():
+            absoluteCacheDir = value
+            # Get relative cache dir
+            base = Path(self._filepath).parent.absolute()
+            relativeCacheDir = os.path.relpath(value, base)
+        else:
+            relativeCacheDir = value
+            # Get absolute cache dir
+            base = Path(self._filepath).parent.absolute()
+            absoluteCacheDir = str((base / value).resolve())
+
+        # Create the folder
+        if not os.path.exists(absoluteCacheDir):
+            logging.info(f"Create cache folder {absoluteCacheDir}")
+            os.makedirs(absoluteCacheDir, exist_ok=True)
+
+        self.cacheDir = absoluteCacheDir
+        self._absoluteCacheDir = str(Path(absoluteCacheDir))
+        self._relativeCacheDir = str(Path(relativeCacheDir))
+        self._hasExplicitCacheDir = True
 
     @property
     def fileDateVersion(self):

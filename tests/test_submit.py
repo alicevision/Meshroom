@@ -45,6 +45,12 @@ def getJobEnv():
     }
 
 
+def checkTask(task, taskType, nbDependencies):
+    """ Check a task has the correct type and number of dependencies """
+    assert task.taskType == taskType
+    assert len(task.dependencies) == nbDependencies
+
+
 def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=10):
     """
     Wait for a node to complete processing
@@ -156,27 +162,56 @@ class TestNodeSubmit:
         node = graph.addNewNode(nodeTypeName, **nodeParams)
         return node
 
-    def test_orderTasks(self):
+    def test_simpleOrderTasks(self):
         """ Here is the example we use for testing :
-                                                             *" [B chk_0] "* 
-        [phd start_A] - [A chk] - [phd end_A] - [phd start_B]               [B post] - [C pre] - [C exp] - [C post] - [phd root]
-                                                             *_ [B chk_1] _* 
+
+                     *" [A chk_0] "* 
+        [phd start_A]               [phd end_A] - [phd root]
+                     *_ [A chk_1] _* 
+
+        phd=placeholder (no command/process executed)
+        chk=chunk
+        """
+        graph = Graph("")
+        nodeA = self.addNewNode(graph, "PluginSubmitterA1", nodeParams={})
+        nodes, edges = graph.dfsOnFinish(startNodes=[nodeA])
+        orderedTasks = OrderedTasks(nodes, edges)
+        rootTask = orderedTasks.rootTask
+        checkTask(rootTask, OrderedTaskType.PLACEHOLDER, 1)
+        task: OrderedTask = rootTask.dependencies[0]
+        checkTask(task, OrderedTaskType.PLACEHOLDER, 2)
+        task_0: OrderedTask = task.dependencies[0]
+        task_1: OrderedTask = task.dependencies[1]
+        checkTask(task_0, OrderedTaskType.CHUNK, 1)
+        checkTask(task_1, OrderedTaskType.CHUNK, 1)
+        task: OrderedTask = task_0.dependencies[0]
+        checkTask(task, OrderedTaskType.PLACEHOLDER, 0)
+
+    def test_complexOrderTasks(self):
+        """ Here is the example we use for testing :
+
+        [A_0 chk] "*.             *" [B chk_0] "* 
+                     [phd start_B]               [B post] - [C pre] - [C exp] - [C post] - [phd root]
+        [A_1 chk] _*"             *_ [B chk_1] _* 
+
         phd=placeholder (no command/process executed)
         chk=chunk
         exp=expand
         """
+
+        # First do a simple test
+        
+        # Now do a more complex test
         graph = Graph("")
         # Add nodes
-        nodeA = self.addNewNode(graph, "PluginSubmitter"+"A", nodeParams={})
-        nodeB = self.addNewNode(graph, "PluginSubmitter"+"B", nodeParams={"inputs": [nodeA.output]})
-        nodeC = self.addNewNode(graph, "PluginSubmitter"+"C", nodeParams={"inputs": [nodeB.output]})
+        nodeA0 = self.addNewNode(graph, "PluginSubmitterA", nodeParams={})
+        nodeA1 = self.addNewNode(graph, "PluginSubmitterA", nodeParams={})
+        nodeB = self.addNewNode(graph, "PluginSubmitterB", nodeParams={"inputs": [nodeA0.output, nodeA1.output]})
+        nodeC = self.addNewNode(graph, "PluginSubmitterC", nodeParams={"inputs": [nodeB.output]})
         # Order tasks
         nodes, edges = graph.dfsOnFinish(startNodes=[nodeC])
         orderedTasks = OrderedTasks(nodes, edges)
         # === Test result ===
-        def checkTask(task, taskType, nbDependencies):
-            assert task.taskType == taskType
-            assert len(task.dependencies) == nbDependencies
         # root
         rootTask = orderedTasks.rootTask
         checkTask(rootTask, OrderedTaskType.PLACEHOLDER, 1)
@@ -201,17 +236,16 @@ class TestNodeSubmit:
         assert task_0.dependencies[0] == task_1.dependencies[0]
         # B (pre)
         task: OrderedTask = task_0.dependencies[0]
-        checkTask(task, OrderedTaskType.PLACEHOLDER, 1)
-        # A (post)
-        task: OrderedTask = task.dependencies[0]
-        checkTask(task, OrderedTaskType.PLACEHOLDER, 1)
+        checkTask(task, OrderedTaskType.PLACEHOLDER, 2)
+        # A
+        # No post process, no preprocess, 1 chunk = no placeholder pre/post either
         # A (chunks)
-        task: OrderedTask = task.dependencies[0]
-        checkTask(task, OrderedTaskType.CHUNK, 1)
-        assert task.iteration == -1
-        # A (pre)
-        task: OrderedTask = task.dependencies[0]
-        checkTask(task, OrderedTaskType.PLACEHOLDER, 0)
+        task_A0: OrderedTask = task.dependencies[0]
+        checkTask(task_A0, OrderedTaskType.CHUNK, 0)
+        assert task_A0.iteration == -1
+        task_A1: OrderedTask = task.dependencies[1]
+        checkTask(task_A1, OrderedTaskType.CHUNK, 0)
+        assert task_A1.iteration == -1
 
     def test_submitNoParallel(self, tmp_path):
         graph = Graph("")

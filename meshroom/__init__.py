@@ -77,6 +77,13 @@ logStringToPython = {
     'trace': logging.TRACE,
 }
 logging.getLogger().setLevel(logStringToPython[os.environ.get('MESHROOM_VERBOSE', 'warning')])
+# Add default handler
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter(
+    '[%(asctime)s.%(msecs)03d][%(name)s][%(levelname)s] %(message)s', 
+    '%Y-%m-%d %H:%M:%S'
+))
+logging.getLogger().addHandler(handler)
 
 
 class MeshroomExitStatus(IntEnum):

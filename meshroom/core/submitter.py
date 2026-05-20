@@ -15,7 +15,6 @@ from meshroom.common import BaseObject, Property
 
 
 logger = logging.getLogger("Submitter")
-logger.setLevel(logging.INFO)
 
 
 class SubmitterOptionsEnum(IntFlag):

@@ -31,6 +31,8 @@ FloatingPane {
     property alias frameId: m.frame
     property var frameRange: { "min" : 0, "max" : 0 }
 
+    property int nbViewpoints: _currentScene ? _currentScene.viewpoints.count : 0
+
     Settings {
         id: settings_SequencePlayer
         property int maxCacheMemory: viewer && viewer.ramInfo != undefined ? viewer.ramInfo.x / 4 : 0
@@ -80,9 +82,8 @@ FloatingPane {
         }
 
         onPlayingChanged: {
-            if (!playing) {
-                updateSceneView()
-            } else if (playing && (frame + 1 >= frameRange.max + 1)) {
+            updateSceneView()
+            if (playing && (frame + 1 >= frameRange.max + 1)) {
                 frame = frameRange.min
             }
             viewer.playback(playing)
@@ -99,6 +100,10 @@ FloatingPane {
                     m.frame = idx
                 }
             }
+        }
+
+        function onImageListChanged() {
+            nbViewpoints = Qt.binding(function() { return _currentScene ? _currentScene.viewpoints.count : 0 })
         }
     }
 
@@ -166,6 +171,7 @@ FloatingPane {
 
         MaterialToolButton {
             id: playButton
+            enabled: nbViewpoints > 0
 
             checkable: true
             checked: false
@@ -188,6 +194,7 @@ FloatingPane {
     
         TimelineSlider {
             id: frameSlider
+            enabled: nbViewpoints > 0
 
             Layout.fillWidth: true
 
@@ -200,7 +207,7 @@ FloatingPane {
             from: frameRange.min
             to: frameRange.max
 
-            cachedFrames: viewer ? viewer.cachedFrames : []
+            cachedFrames: viewer && nbViewpoints > 0 ? viewer.cachedFrames : []
 
             onValueChanged: {
                 m.frame = value
@@ -242,7 +249,6 @@ FloatingPane {
             text: MaterialIcons.subscriptions
             ToolTip.text: "Fetch"
             checkable: true
-            checked: loading
         }
 
         MaterialToolButton {

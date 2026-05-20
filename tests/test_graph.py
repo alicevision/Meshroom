@@ -1,8 +1,6 @@
 from meshroom.core.exception import CyclicDependencyError
 from meshroom.core.graph import Graph
 
-import pytest
-
 
 def test_depth():
     graph = Graph("Tests tasks depth")
@@ -299,3 +297,108 @@ def test_rename_nodes():
     ls0.setLocked(True)
     graph.renameNode(ls0, "lockedLs")
     assert ls0.name == "nodels"
+
+
+def test_dfs_no_duplicates_start_node_is_ancestor_of_another():
+    """
+    Test that DFS does not visit the same node more than once when one startNode
+    is an ancestor (in the traversal direction) of another startNode.
+
+    Graph:
+    A -> B -> C
+
+    Starting DFS (reverse=False, toward roots) from both C and B: visiting C first
+    will traverse C -> B -> A. B should not be discovered or finished a second time
+    when it is encountered again as a startNode.
+    """
+    graph = Graph("")
+
+    A = graph.addNewNode("Ls", input="/tmp")
+    B = graph.addNewNode("AppendText", inputText=A.output)
+    C = graph.addNewNode("AppendText", inputText=B.output)
+
+    nodes, _ = graph.dfsOnFinish(startNodes=[C, B])
+
+    # B must appear exactly once — it is visited when traversing from C, and
+    # must NOT be re-visited when it is encountered as a startNode.
+    assert len(nodes) == len(set(nodes)), "dfsOnFinish returned duplicate nodes"
+    assert len(nodes) == 3
+    assert set(nodes) == {A, B, C}
+
+
+def test_dfs_no_duplicates_start_node_is_root_of_another():
+    """
+    Test that DFS does not visit the same node more than once when one startNode
+    is the root of the whole graph, and also appears in the traversal path of
+    another startNode in the list.
+
+    Graph:
+    A -> B -> C
+
+    Starting DFS (reverse=False) from both C and A: visiting C will traverse
+    C -> B -> A. A should not be discovered or finished a second time when it is
+    encountered again as a startNode.
+    """
+    graph = Graph("")
+
+    A = graph.addNewNode("Ls", input="/tmp")
+    B = graph.addNewNode("AppendText", inputText=A.output)
+    C = graph.addNewNode("AppendText", inputText=B.output)
+
+    nodes, _ = graph.dfsOnFinish(startNodes=[C, A])
+
+    # A must appear exactly once.
+    assert len(nodes) == len(set(nodes)), "dfsOnFinish returned duplicate nodes"
+    assert len(nodes) == 3
+    assert set(nodes) == {A, B, C}
+
+
+def test_dfs_no_duplicates_reverse_start_node_is_descendant_of_another():
+    """
+    Test that reverse DFS does not visit the same node more than once when one
+    startNode is a descendant (in the reverse traversal direction, i.e. toward
+    leaves) of another startNode.
+
+    Graph:
+    A -> B -> C
+
+    Starting reverse DFS from both A and B: visiting A first traverses A -> B -> C.
+    B and C should not be discovered a second time when B is encountered again as
+    a startNode.
+    """
+    graph = Graph("")
+
+    A = graph.addNewNode("Ls", input="/tmp")
+    B = graph.addNewNode("AppendText", inputText=A.output)
+    C = graph.addNewNode("AppendText", inputText=B.output)
+
+    nodes, _ = graph.dfsOnDiscover(startNodes=[A, B], reverse=True)
+
+    # B must appear exactly once — it is visited when traversing forward from A,
+    # and must NOT be re-visited when encountered as a startNode.
+    assert len(nodes) == len(set(nodes)), "dfsOnDiscover(reverse=True) returned duplicate nodes"
+    assert set(nodes) == {A, B, C}
+
+
+def test_dfs_no_duplicates_discover_start_node_is_ancestor_of_another():
+    """
+    Test that dfsOnDiscover does not return duplicate nodes when one startNode
+    is an ancestor (in the traversal direction) of another startNode.
+
+    Graph:
+    A -> B -> C
+
+    Starting dfsOnDiscover (reverse=False) from both C and B: visiting C first
+    traverses C -> B -> A. B should not be discovered a second time when it is
+    encountered again as a startNode.
+    """
+    graph = Graph("")
+
+    A = graph.addNewNode("Ls", input="/tmp")
+    B = graph.addNewNode("AppendText", inputText=A.output)
+    C = graph.addNewNode("AppendText", inputText=B.output)
+
+    nodes, _ = graph.dfsOnDiscover(startNodes=[C, B])
+
+    assert len(nodes) == len(set(nodes)), "dfsOnDiscover returned duplicate nodes"
+    assert set(nodes) == {A, B, C}

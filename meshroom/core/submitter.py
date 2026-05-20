@@ -114,11 +114,11 @@ class OrderedTask:
     def __repr__(self):
         if self.taskType == OrderedTaskType.PLACEHOLDER:
             string = f"<OrderedTask {self.uid:04d} type=placeholder"
-            string += f" node={self.node._name}>" if self.node else ">"
+            string += f" node={self.nodeName}>" if self.node else ">"
             return string
         string = f"<OrderedTask {self.uid:04d}"
         string += f" type={self.taskType.name}"
-        string += f" node={self.node._name} ({self.node._uid[:5]})"
+        string += f" node={self.nodeName} ({self.node._uid[:5]})"
         if self.iteration >= 0:
             string += f" iteration={self.iteration}"
         string += f" ({len(self.dependencies)} deps)>"
@@ -132,7 +132,7 @@ class OrderedNode:
         # node can be None for placeholder tasks (tasks that don't do anything else than regrouping dependencies)
         self.node = node  # BaseNode
         self.dependencies: list[OrderedNode] = dependencies or []  # Tasks that need to run before the current one
-    
+
     @property
     def nodeName(self):
         return self.node.name if self.node else "NONE"
@@ -175,7 +175,7 @@ class OrderedNode:
     @property
     def hasPostprocess(self) -> bool:
         return self.node.nodeDesc.hasPostprocess
-    
+
     def __repr__(self):
         depsNames = "|".join([t.nodeName for t in self.dependencies])
         if self.isPlaceholder:
@@ -192,7 +192,7 @@ class OrderedTasks:
         is the "root" and its dependencies are the "children". This is necessary because this is usually
         the order where the tasks will be created on the farm (we create one task, then add other tasks as
         dependencies, and not we create a task, then we add a task to execute next as we do it here).
-    
+
     TODO: Keep the meshroom order and just provide an `inverse` method.
     """
 

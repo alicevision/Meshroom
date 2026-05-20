@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import re
-import sys
 
 import meshroom.core.graph
 from meshroom.common import strtobool
@@ -122,6 +121,15 @@ advanced_group.add_argument(
     help='A JSON file containing the graph parameters override.')
 
 advanced_group.add_argument(
+    '--overrideCacheDir', metavar='STRING', type=str, default=None,
+    help=(
+        'Override the cache location for the scene. If the scene is saved, the cache will be '
+        'set as the selected location. By default the cache location will be set as a folder '
+        'named MeshroomCavhe at the project file root folder.'
+    )
+)
+
+advanced_group.add_argument(
     '--paramOverrides', metavar='NODETYPE:param=value NODEINSTANCE.param=value', type=str, default=None, nargs='*',
     help='Override specific parameters directly from the command line (by node type or by node names).')
 
@@ -175,6 +183,10 @@ with meshroom.core.graph.GraphModification(graph):
     else:
         # custom pipeline
         graph.initFromTemplate(args.pipeline, copyOutputs=True if args.output else False)
+
+    if args.overrideCacheDir is not None:
+        # Set the cache folder
+        graph.setExplicitCacheDir(args.overrideCacheDir)
 
     # Set invalidation string
     if args.setInvalidationString:

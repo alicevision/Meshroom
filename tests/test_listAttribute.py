@@ -31,6 +31,37 @@ class NodeWithNestedListAttribute(desc.Node):
     ]
 
 
+class NodeWithListOfGroupsAttribute(desc.Node):
+    """Node with a ListAttribute whose elements are GroupAttributes (list of groups)."""
+    inputs = [
+        desc.ListAttribute(
+            name="listOfGroups",
+            label="List of Groups",
+            description="ListAttribute of GroupAttributes, each group containing a string and an int.",
+            elementDesc=desc.GroupAttribute(
+                name="item",
+                label="Item",
+                description="A group item with a name and a value.",
+                items=[
+                    desc.StringParam(
+                        name="itemLabel",
+                        label="Item Label",
+                        description="String field in the group.",
+                        value="",
+                    ),
+                    desc.IntParam(
+                        name="count",
+                        label="Count",
+                        description="Integer field in the group.",
+                        value=0,
+                        range=(0, 1000, 1),
+                    ),
+                ],
+            ),
+        ),
+    ]
+
+
 
 class TestListAttribute:
 
@@ -198,3 +229,89 @@ class TestNestedListAttribute:
         # Remaining elements are at indices 0 and 1
         assert node.nestedListInput.at(0).at(0).value == "a"
         assert node.nestedListInput.at(1).at(0).value == "c"
+
+
+class TestListOfGroupsAttribute:
+    """
+    Tests for a ListAttribute whose elements are GroupAttributes (flat list[idx].field pattern).
+    """
+
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(NodeWithListOfGroupsAttribute)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(NodeWithListOfGroupsAttribute)
+
+    def test_appendGroupElement(self):
+        """ Appending a dict to a list-of-groups creates a GroupAttribute element. """
+        from meshroom.core.attribute import GroupAttribute
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithListOfGroupsAttribute.__name__)
+
+        node.listOfGroups.append({"itemLabel": "hello", "count": 3})
+
+        assert len(node.listOfGroups) == 1
+        elem = node.listOfGroups.at(0)
+        assert isinstance(elem, GroupAttribute)
+
+    def test_groupElementFieldValues(self):
+        """ Fields within a list-of-groups element have the correct values. """
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithListOfGroupsAttribute.__name__)
+
+        node.listOfGroups.extend([
+            {"itemLabel": "foo", "count": 10},
+            {"itemLabel": "bar", "count": 20},
+        ])
+
+        assert node.listOfGroups.at(0).itemLabel.value == "foo"
+        assert node.listOfGroups.at(0).count.value == 10
+        assert node.listOfGroups.at(1).itemLabel.value == "bar"
+        assert node.listOfGroups.at(1).count.value == 20
+
+    def test_listOfGroupsAttributeAccessByName(self):
+        """ node.attribute('listOfGroups[0].label') resolves to the correct leaf attribute. """
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithListOfGroupsAttribute.__name__)
+
+        node.listOfGroups.extend([
+            {"itemLabel": "alpha", "count": 1},
+            {"itemLabel": "beta", "count": 2},
+        ])
+
+        assert node.attribute("listOfGroups[0].itemLabel").value == "alpha"
+        assert node.attribute("listOfGroups[0].count").value == 1
+        assert node.attribute("listOfGroups[1].itemLabel").value == "beta"
+        assert node.attribute("listOfGroups[1].count").value == 2
+
+    def test_modifyGroupElementFieldViaAttributePath(self):
+        """ A field retrieved via 'listOfGroups[idx].field' path notation can be mutated. """
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithListOfGroupsAttribute.__name__)
+
+        node.listOfGroups.append({"itemLabel": "original", "count": 0})
+
+        node.attribute("listOfGroups[0].itemLabel").value = "updated"
+        node.attribute("listOfGroups[0].count").value = 99
+
+        assert node.listOfGroups.at(0).itemLabel.value == "updated"
+        assert node.listOfGroups.at(0).count.value == 99
+
+    def test_removeGroupElement(self):
+        """ Removing an element from a list of groups shifts subsequent elements correctly. """
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithListOfGroupsAttribute.__name__)
+
+        node.listOfGroups.extend([
+            {"itemLabel": "A", "count": 1},
+            {"itemLabel": "B", "count": 2},
+            {"itemLabel": "C", "count": 3},
+        ])
+
+        node.listOfGroups.remove(1)  # Remove "B"
+
+        assert len(node.listOfGroups) == 2
+        assert node.attribute("listOfGroups[0].itemLabel").value == "A"
+        assert node.attribute("listOfGroups[1].itemLabel").value == "C"

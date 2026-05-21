@@ -15,6 +15,7 @@ class NodeWithListAttribute(desc.Node):
         )
     ]
 
+
 class NodeWithNestedListAttribute(desc.Node):
     inputs = [
         desc.ListAttribute(
@@ -61,6 +62,44 @@ class NodeWithListOfGroupsAttribute(desc.Node):
         ),
     ]
 
+
+class NodeWithNestedListOfGroupsAttribute(desc.Node):
+    """
+    Node with a ListAttribute of ListAttribute of GroupAttribute.
+    Accessing a leaf field requires two index levels: list[outer][inner].field
+    """
+    inputs = [
+        desc.ListAttribute(
+            name="nestedListOfGroups",
+            label="Nested List of Groups",
+            description="Outer list whose elements are inner lists of GroupAttributes.",
+            elementDesc=desc.ListAttribute(
+                name="innerListOfGroups",
+                label="Inner List of Groups",
+                description="Inner list of GroupAttributes.",
+                elementDesc=desc.GroupAttribute(
+                    name="item",
+                    label="Item",
+                    description="A group with two fields.",
+                    items=[
+                        desc.StringParam(
+                            name="itemName",
+                            label="Item Name",
+                            description="Name of the item.",
+                            value="",
+                        ),
+                        desc.IntParam(
+                            name="itemValue",
+                            label="Item Value",
+                            description="Value of the item.",
+                            value=0,
+                            range=(0, 9999, 1),
+                        ),
+                    ],
+                ),
+            ),
+        )
+    ]
 
 
 class TestListAttribute:
@@ -315,3 +354,109 @@ class TestListOfGroupsAttribute:
         assert len(node.listOfGroups) == 2
         assert node.attribute("listOfGroups[0].itemLabel").value == "A"
         assert node.attribute("listOfGroups[1].itemLabel").value == "C"
+
+
+class TestNestedListOfGroupsAttribute:
+    """
+    Tests for GroupAttributes accessed through two levels of ListAttribute indexing:
+    list[outer][inner].field  (ListAttribute of ListAttribute of GroupAttribute).
+    """
+
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(NodeWithNestedListOfGroupsAttribute)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(NodeWithNestedListOfGroupsAttribute)
+
+    def test_appendInnerListOfGroups(self):
+        """
+        Appending an inner list of group dicts creates inner ListAttribute elements
+        that are themselves GroupAttributes.
+        """
+        from meshroom.core.attribute import GroupAttribute as GA
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithNestedListOfGroupsAttribute.__name__)
+
+        node.nestedListOfGroups.append([{"itemName": "a", "itemValue": 1}])
+
+        assert len(node.nestedListOfGroups) == 1
+        inner = node.nestedListOfGroups.at(0)
+        assert isinstance(inner, ListAttribute)
+        assert len(inner) == 1
+        assert isinstance(inner.at(0), GA)
+
+    def test_innerGroupFieldValues(self):
+        """ Group fields are accessible via direct attribute traversal through two list levels. """
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithNestedListOfGroupsAttribute.__name__)
+
+        node.nestedListOfGroups.extend([
+            [{"itemName": "x", "itemValue": 10}, {"itemName": "y", "itemValue": 20}],
+            [{"itemName": "z", "itemValue": 30}],
+        ])
+
+        assert node.nestedListOfGroups.at(0).at(0).itemName.value == "x"
+        assert node.nestedListOfGroups.at(0).at(0).itemValue.value == 10
+        assert node.nestedListOfGroups.at(0).at(1).itemName.value == "y"
+        assert node.nestedListOfGroups.at(0).at(1).itemValue.value == 20
+        assert node.nestedListOfGroups.at(1).at(0).itemName.value == "z"
+        assert node.nestedListOfGroups.at(1).at(0).itemValue.value == 30
+
+    def test_nestedListOfGroupsAttributeAccessByName(self):
+        """ node.attribute('nestedListOfGroups[outer][inner].field') resolves correctly. """
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithNestedListOfGroupsAttribute.__name__)
+
+        node.nestedListOfGroups.extend([
+            [{"itemName": "alpha", "itemValue": 1}, {"itemName": "beta", "itemValue": 2}],
+            [{"itemName": "gamma", "itemValue": 3}],
+        ])
+
+        assert node.attribute("nestedListOfGroups[0][0].itemName").value == "alpha"
+        assert node.attribute("nestedListOfGroups[0][0].itemValue").value == 1
+        assert node.attribute("nestedListOfGroups[0][1].itemName").value == "beta"
+        assert node.attribute("nestedListOfGroups[0][1].itemValue").value == 2
+        assert node.attribute("nestedListOfGroups[1][0].itemName").value == "gamma"
+        assert node.attribute("nestedListOfGroups[1][0].itemValue").value == 3
+
+    def test_modifyGroupFieldViaNestedPath(self):
+        """ Fields reached through list[outer][inner].field path notation can be mutated. """
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithNestedListOfGroupsAttribute.__name__)
+
+        node.nestedListOfGroups.append([{"itemName": "old", "itemValue": 0}])
+
+        node.attribute("nestedListOfGroups[0][0].itemName").value = "new"
+        node.attribute("nestedListOfGroups[0][0].itemValue").value = 42
+
+        assert node.nestedListOfGroups.at(0).at(0).itemName.value == "new"
+        assert node.nestedListOfGroups.at(0).at(0).itemValue.value == 42
+
+    def test_multipleInnerGroupsPerOuterElement(self):
+        """ Multiple groups in the same inner list are all independently accessible. """
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithNestedListOfGroupsAttribute.__name__)
+
+        inner = [{"itemName": str(i), "itemValue": i * 10} for i in range(4)]
+        node.nestedListOfGroups.append(inner)
+
+        for i in range(4):
+            assert node.attribute(f"nestedListOfGroups[0][{i}].itemName").value == str(i)
+            assert node.attribute(f"nestedListOfGroups[0][{i}].itemValue").value == i * 10
+
+    def test_removeOuterListReducesLength(self):
+        """ Removing an outer element and verifying the remaining inner groups are correct. """
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithNestedListOfGroupsAttribute.__name__)
+
+        node.nestedListOfGroups.extend([
+            [{"itemName": "keep", "itemValue": 1}],
+            [{"itemName": "remove", "itemValue": 2}],
+        ])
+
+        node.nestedListOfGroups.remove(1)
+
+        assert len(node.nestedListOfGroups) == 1
+        assert node.attribute("nestedListOfGroups[0][0].itemName").value == "keep"

@@ -294,3 +294,129 @@ class TestGroupAttributes:
         assert subAttributeB.isLink
         assert subAttributeA.fullName != subAttributeB.fullName
         assert groupA.firstGroup.firstGroupIntA.value == groupB.firstGroup.firstGroupIntA.value == 1234
+
+    def test_listOfGroupsInsideGroupAttributeAccess(self):
+        """
+        Check that elements of a list-of-groups nested inside a GroupAttribute are accessible
+        via the 'group.list[idx].field' path notation.
+        """
+        graph = Graph("List of groups inside group")
+        node = graph.addNewNode("GroupAttributes")
+
+        # groupedList is initially empty; append two group elements
+        node.firstGroup.groupedList.append({"listedGroupInt": 7})
+        node.firstGroup.groupedList.append({"listedGroupInt": 42})
+
+        # Access via direct attribute traversal
+        assert node.firstGroup.groupedList.at(0).listedGroupInt.value == 7
+        assert node.firstGroup.groupedList.at(1).listedGroupInt.value == 42
+
+        # Access via node.attribute() path notation: group . list[idx] . group_field
+        assert node.attribute("firstGroup.groupedList[0].listedGroupInt").value == 7
+        assert node.attribute("firstGroup.groupedList[1].listedGroupInt").value == 42
+
+    def test_listOfGroupsInsideGroupAttributeModify(self):
+        """
+        Check that fields of group elements in a list-of-groups nested inside a GroupAttribute
+        can be mutated via the path notation.
+        """
+        graph = Graph("Modify list of groups inside group")
+        node = graph.addNewNode("GroupAttributes")
+
+        node.firstGroup.groupedList.append({"listedGroupInt": 0})
+
+        node.attribute("firstGroup.groupedList[0].listedGroupInt").value = 99
+
+        assert node.firstGroup.groupedList.at(0).listedGroupInt.value == 99
+
+    def test_listInsideGroupAttributeAccess(self):
+        """
+        Check that elements of a simple list nested inside a GroupAttribute are accessible
+        via the 'group.list[idx]' path notation.
+        The 'GroupAttributes' node has firstGroup.singleGroupedList, a ListAttribute of IntParam.
+        """
+        graph = Graph("List inside group")
+        node = graph.addNewNode("GroupAttributes")
+
+        node.firstGroup.singleGroupedList.extend([10, 20, 30])
+
+        # Access via direct attribute traversal
+        assert node.firstGroup.singleGroupedList.at(0).value == 10
+        assert node.firstGroup.singleGroupedList.at(2).value == 30
+
+        # Access via node.attribute() path notation: group . list[idx]
+        assert node.attribute("firstGroup.singleGroupedList[0]").value == 10
+        assert node.attribute("firstGroup.singleGroupedList[1]").value == 20
+        assert node.attribute("firstGroup.singleGroupedList[2]").value == 30
+
+    def test_listInsideGroupAttributeModify(self):
+        """
+        Check that elements of a list nested inside a GroupAttribute can be mutated
+        via the 'group.list[idx]' path notation.
+        """
+        graph = Graph("Modify list inside group")
+        node = graph.addNewNode("GroupAttributes")
+
+        node.firstGroup.singleGroupedList.extend([1, 2, 3])
+        node.attribute("firstGroup.singleGroupedList[1]").value = 999
+
+        assert node.firstGroup.singleGroupedList.at(1).value == 999
+        # Neighbours should be unaffected
+        assert node.firstGroup.singleGroupedList.at(0).value == 1
+        assert node.firstGroup.singleGroupedList.at(2).value == 3
+
+    def test_listInsideGroupRemove(self):
+        """
+        Check that removing an element from a list nested inside a GroupAttribute
+        shifts subsequent elements correctly.
+        """
+        graph = Graph("Remove from list inside group")
+        node = graph.addNewNode("GroupAttributes")
+
+        node.firstGroup.singleGroupedList.extend([100, 200, 300])
+        node.firstGroup.singleGroupedList.remove(0)
+
+        assert len(node.firstGroup.singleGroupedList) == 2
+        assert node.attribute("firstGroup.singleGroupedList[0]").value == 200
+        assert node.attribute("firstGroup.singleGroupedList[1]").value == 300
+
+    def test_nestedGroupAttributePathAccess(self):
+        """
+        Check that a field inside a GroupAttribute nested within another GroupAttribute is
+        accessible via the 'outerGroup.innerGroup.field' path notation.
+        The 'GroupAttributes' node has firstGroup.nestedGroup.nestedGroupFloat.
+        """
+        graph = Graph("Nested group path access")
+        node = graph.addNewNode("GroupAttributes")
+
+        # Default value check via path string
+        assert node.attribute("firstGroup.nestedGroup.nestedGroupFloat").value == 1.0
+
+        # Mutation via path string
+        node.attribute("firstGroup.nestedGroup.nestedGroupFloat").value = 3.14
+
+        assert node.firstGroup.nestedGroup.nestedGroupFloat.value == 3.14
+        assert node.attribute("firstGroup.nestedGroup.nestedGroupFloat").value == 3.14
+
+    def test_listOfGroupsInsideNestedGroupPathAccess(self):
+        """
+        Check that elements of a list-of-groups that is itself inside a nested GroupAttribute
+        are reachable via the full 'outerGroup.list[idx].field' path.
+        """
+        graph = Graph("List of groups inside nested group path access")
+        node = graph.addNewNode("GroupAttributes")
+
+        node.firstGroup.groupedList.extend([
+            {"listedGroupInt": 5},
+            {"listedGroupInt": 15},
+            {"listedGroupInt": 25},
+        ])
+
+        # Full path: outerGroup . list[idx] . innerGroup_field
+        assert node.attribute("firstGroup.groupedList[0].listedGroupInt").value == 5
+        assert node.attribute("firstGroup.groupedList[1].listedGroupInt").value == 15
+        assert node.attribute("firstGroup.groupedList[2].listedGroupInt").value == 25
+
+        # Mutate via full path and verify via direct traversal
+        node.attribute("firstGroup.groupedList[1].listedGroupInt").value = 99
+        assert node.firstGroup.groupedList.at(1).listedGroupInt.value == 99

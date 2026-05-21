@@ -1,8 +1,6 @@
 from meshroom.core.exception import CyclicDependencyError
 from meshroom.core.graph import Graph
 
-import pytest
-
 
 def test_depth():
     graph = Graph("Tests tasks depth")
@@ -17,98 +15,6 @@ def test_depth():
     assert tA.depth == 0
     assert tB.depth == 1
     assert tC.depth == 2
-
-
-def test_depth_diamond_graph():
-    graph = Graph("Tests tasks depth")
-
-    tA = graph.addNewNode("Ls", input="/tmp")
-    tB = graph.addNewNode("AppendText", inputText="echo B")
-    tC = graph.addNewNode("AppendText", inputText="echo C")
-    tD = graph.addNewNode("AppendFiles")
-
-    tA.output.connectTo(tB.input)
-    tA.output.connectTo(tC.input)
-    tB.output.connectTo(tD.input)
-    tC.output.connectTo(tD.input2)
-
-    assert tA.depth == 0
-    assert tB.depth == 1
-    assert tC.depth == 1
-    assert tD.depth == 2
-
-    nodes, edges = graph.dfsOnFinish()
-    assert len(nodes) == 4
-    assert nodes[0] == tA
-    assert nodes[-1] == tD
-    assert len(edges) == 4
-
-    nodes, edges = graph.dfsOnFinish(startNodes=[tD])
-    assert len(nodes) == 4
-    assert nodes[0] == tA
-    assert nodes[-1] == tD
-    assert len(edges) == 4
-
-    nodes, edges = graph.dfsOnFinish(startNodes=[tB])
-    assert len(nodes) == 2
-    assert nodes[0] == tA
-    assert nodes[-1] == tB
-    assert len(edges) == 1
-
-
-def test_depth_diamond_graph2():
-    graph = Graph("Tests tasks depth")
-
-    tA = graph.addNewNode("Ls", input="/tmp")
-    tB = graph.addNewNode("AppendText", inputText="echo B")
-    tC = graph.addNewNode("AppendText", inputText="echo C")
-    tD = graph.addNewNode("AppendText", inputText="echo D")
-    tE = graph.addNewNode("AppendFiles")
-    #         C
-    #       /   \
-    #  /---/---->\
-    # A -> B ---> E
-    #      \     /
-    #       \   /
-    #         D
-    tA.output.connectTo(tB.input)
-    tB.output.connectTo(tC.input)
-    tB.output.connectTo(tD.input)
-    tA.output.connectTo(tE.input)
-    tB.output.connectTo(tE.input2)
-    tC.output.connectTo(tE.input3)
-    tD.output.connectTo(tE.input4)
-
-    assert tA.depth == 0
-    assert tB.depth == 1
-    assert tC.depth == 2
-    assert tD.depth == 2
-    assert tE.depth == 3
-
-    nodes, edges = graph.dfsOnFinish()
-    assert len(nodes) == 5
-    assert nodes[0] == tA
-    assert nodes[-1] == tE
-    assert len(edges) == 7
-
-    nodes, edges = graph.dfsOnFinish(startNodes=[tE])
-    assert len(nodes) == 5
-    assert nodes[0] == tA
-    assert nodes[-1] == tE
-    assert len(edges) == 7
-
-    nodes, edges = graph.dfsOnFinish(startNodes=[tD])
-    assert len(nodes) == 3
-    assert nodes[0] == tA
-    assert nodes[1] == tB
-    assert nodes[2] == tD
-    assert len(edges) == 2
-
-    nodes, edges = graph.dfsOnFinish(startNodes=[tB])
-    assert len(nodes) == 2
-    assert nodes[0] == tA
-    assert nodes[-1] == tB
-    assert len(edges) == 1
 
 
 def test_transitive_reduction():
@@ -146,78 +52,6 @@ def test_transitive_reduction():
     assert len(graph._nodesMinMaxDepths) == len(graph.nodes)
     for node, (_, maxDepth) in graph._nodesMinMaxDepths.items():
         assert node.depth == maxDepth
-
-
-def test_graph_reverse_dfsOnDiscover():
-    graph = Graph("Test dfsOnDiscover(reverse=True)")
-
-    #    ------------\
-    #   /   ~ C - E - F
-    # A - B
-    #      ~ D
-
-    A = graph.addNewNode("Ls", input="/tmp")
-    B = graph.addNewNode("AppendText", inputText=A.output)
-    C = graph.addNewNode("AppendText", inputText=B.output)
-    D = graph.addNewNode("AppendText", inputText=B.output)
-    E = graph.addNewNode("Ls", input=C.output)
-    F = graph.addNewNode("AppendText", input=A.output, inputText=E.output)
-
-    # Get all nodes from A (use set, order not guaranteed)
-    nodes = graph.dfsOnDiscover(startNodes=[A], reverse=True)[0]
-    assert set(nodes) == {A, B, D, C, E, F}
-    # Get all nodes from B
-    nodes = graph.dfsOnDiscover(startNodes=[B], reverse=True)[0]
-    assert set(nodes) == {B, D, C, E, F}
-    # Get all nodes of type AppendText from B
-    nodes = graph.dfsOnDiscover(startNodes=[B], filterTypes=["AppendText"], reverse=True)[0]
-    assert set(nodes) == {B, D, C, F}
-    # Get all nodes from C (order guaranteed)
-    nodes = graph.dfsOnDiscover(startNodes=[C], reverse=True)[0]
-    assert nodes == [C, E, F]
-    # Get all nodes
-    nodes = graph.dfsOnDiscover(reverse=True)[0]
-    assert set(nodes) == {A, B, C, D, E, F}
-
-
-def test_graph_dfsOnDiscover():
-    graph = Graph("Test dfsOnDiscover(reverse=False)")
-
-    #    ------------\
-    #   /   ~ C - E - F
-    # A - B
-    #      ~ D
-    #    G
-
-    G = graph.addNewNode("Ls", input="/tmp")
-    A = graph.addNewNode("Ls", input="/tmp")
-    B = graph.addNewNode("AppendText", inputText=A.output)
-    C = graph.addNewNode("AppendText", inputText=B.output)
-    D = graph.addNewNode("AppendText", input=G.output, inputText=B.output)
-    E = graph.addNewNode("Ls", input=C.output)
-    F = graph.addNewNode("AppendText", input=A.output, inputText=E.output)
-
-    # Get all nodes from A (use set, order not guaranteed)
-    nodes = graph.dfsOnDiscover(startNodes=[A], reverse=False)[0]
-    assert set(nodes) == {A}
-    # Get all nodes from D
-    nodes = graph.dfsOnDiscover(startNodes=[D], reverse=False)[0]
-    assert set(nodes) == {A, B, D, G}
-    # Get all nodes from E
-    nodes = graph.dfsOnDiscover(startNodes=[E], reverse=False)[0]
-    assert set(nodes) == {A, B, C, E}
-    # Get all nodes from F
-    nodes = graph.dfsOnDiscover(startNodes=[F], reverse=False)[0]
-    assert set(nodes) == {A, B, C, E, F}
-    # Get all nodes of type AppendText from C
-    nodes = graph.dfsOnDiscover(startNodes=[C], filterTypes=["AppendText"], reverse=False)[0]
-    assert set(nodes) == {B, C}
-    # Get all nodes from D (order guaranteed)
-    nodes = graph.dfsOnDiscover(startNodes=[D], longestPathFirst=True, reverse=False)[0]
-    assert nodes == [D, B, A, G]
-    # Get all nodes
-    nodes = graph.dfsOnDiscover(reverse=False)[0]
-    assert set(nodes) == {A, B, C, D, E, F, G}
 
 
 def test_graph_nodes_sorting():
@@ -299,3 +133,268 @@ def test_rename_nodes():
     ls0.setLocked(True)
     graph.renameNode(ls0, "lockedLs")
     assert ls0.name == "nodels"
+
+
+class TestDFS:
+    """ Tests for the graph DFS traversal methods. """
+
+    def test_dfs_on_finish_depth_diamond_graph(self):
+        graph = Graph("Tests tasks depth (diamond graph)")
+
+        tA = graph.addNewNode("Ls", input="/tmp")
+        tB = graph.addNewNode("AppendText", inputText="echo B")
+        tC = graph.addNewNode("AppendText", inputText="echo C")
+        tD = graph.addNewNode("AppendFiles")
+
+        tA.output.connectTo(tB.input)
+        tA.output.connectTo(tC.input)
+        tB.output.connectTo(tD.input)
+        tC.output.connectTo(tD.input2)
+
+        assert tA.depth == 0
+        assert tB.depth == 1
+        assert tC.depth == 1
+        assert tD.depth == 2
+
+        nodes, edges = graph.dfsOnFinish()
+        assert len(nodes) == 4
+        assert nodes[0] == tA
+        assert nodes[-1] == tD
+        assert len(edges) == 4
+
+        nodes, edges = graph.dfsOnFinish(startNodes=[tD])
+        assert len(nodes) == 4
+        assert nodes[0] == tA
+        assert nodes[-1] == tD
+        assert len(edges) == 4
+
+        nodes, edges = graph.dfsOnFinish(startNodes=[tB])
+        assert len(nodes) == 2
+        assert nodes[0] == tA
+        assert nodes[-1] == tB
+        assert len(edges) == 1
+
+    def test_dfs_on_finish_depth_diamond_graph2(self):
+        graph = Graph("Tests tasks depth (diamond graph 2)")
+
+        tA = graph.addNewNode("Ls", input="/tmp")
+        tB = graph.addNewNode("AppendText", inputText="echo B")
+        tC = graph.addNewNode("AppendText", inputText="echo C")
+        tD = graph.addNewNode("AppendText", inputText="echo D")
+        tE = graph.addNewNode("AppendFiles")
+        #         C
+        #       /   \
+        #  /---/----->\
+        # A -> B ---> E
+        #      \     /
+        #       \   /
+        #         D
+        tA.output.connectTo(tB.input)
+        tB.output.connectTo(tC.input)
+        tB.output.connectTo(tD.input)
+        tA.output.connectTo(tE.input)
+        tB.output.connectTo(tE.input2)
+        tC.output.connectTo(tE.input3)
+        tD.output.connectTo(tE.input4)
+
+        assert tA.depth == 0
+        assert tB.depth == 1
+        assert tC.depth == 2
+        assert tD.depth == 2
+        assert tE.depth == 3
+
+        nodes, edges = graph.dfsOnFinish()
+        assert len(nodes) == 5
+        assert nodes[0] == tA
+        assert nodes[-1] == tE
+        assert len(edges) == 7
+
+        nodes, edges = graph.dfsOnFinish(startNodes=[tE])
+        assert len(nodes) == 5
+        assert nodes[0] == tA
+        assert nodes[-1] == tE
+        assert len(edges) == 7
+
+        nodes, edges = graph.dfsOnFinish(startNodes=[tD])
+        assert len(nodes) == 3
+        assert nodes[0] == tA
+        assert nodes[1] == tB
+        assert nodes[2] == tD
+        assert len(edges) == 2
+
+        nodes, edges = graph.dfsOnFinish(startNodes=[tB])
+        assert len(nodes) == 2
+        assert nodes[0] == tA
+        assert nodes[-1] == tB
+        assert len(edges) == 1
+
+    def test_reverse_dfs_on_discover(self):
+        graph = Graph("Test dfsOnDiscover(reverse=True)")
+
+        #    ------------\
+        #   /   ~ C - E - F
+        # A - B
+        #      ~ D
+
+        A = graph.addNewNode("Ls", input="/tmp")
+        B = graph.addNewNode("AppendText", inputText=A.output)
+        C = graph.addNewNode("AppendText", inputText=B.output)
+        D = graph.addNewNode("AppendText", inputText=B.output)
+        E = graph.addNewNode("Ls", input=C.output)
+        F = graph.addNewNode("AppendText", input=A.output, inputText=E.output)
+
+        # Get all nodes from A (use set, order not guaranteed)
+        nodes = graph.dfsOnDiscover(startNodes=[A], reverse=True)[0]
+        assert set(nodes) == {A, B, D, C, E, F}
+        # Get all nodes from B
+        nodes = graph.dfsOnDiscover(startNodes=[B], reverse=True)[0]
+        assert set(nodes) == {B, D, C, E, F}
+        # Get all nodes of type AppendText from B
+        nodes = graph.dfsOnDiscover(startNodes=[B], filterTypes=["AppendText"], reverse=True)[0]
+        assert set(nodes) == {B, D, C, F}
+        # Get all nodes from C (order guaranteed)
+        nodes = graph.dfsOnDiscover(startNodes=[C], reverse=True)[0]
+        assert nodes == [C, E, F]
+        # Get all nodes
+        nodes = graph.dfsOnDiscover(reverse=True)[0]
+        assert set(nodes) == {A, B, C, D, E, F}
+
+    def test_dfs_on_discover(self):
+        graph = Graph("Test dfsOnDiscover(reverse=False)")
+
+        #    ------------\
+        #   /   ~ C - E - F
+        # A - B
+        #      ~ D
+        #    G
+
+        G = graph.addNewNode("Ls", input="/tmp")
+        A = graph.addNewNode("Ls", input="/tmp")
+        B = graph.addNewNode("AppendText", inputText=A.output)
+        C = graph.addNewNode("AppendText", inputText=B.output)
+        D = graph.addNewNode("AppendText", input=G.output, inputText=B.output)
+        E = graph.addNewNode("Ls", input=C.output)
+        F = graph.addNewNode("AppendText", input=A.output, inputText=E.output)
+
+        # Get all nodes from A (use set, order not guaranteed)
+        nodes = graph.dfsOnDiscover(startNodes=[A], reverse=False)[0]
+        assert set(nodes) == {A}
+        # Get all nodes from D
+        nodes = graph.dfsOnDiscover(startNodes=[D], reverse=False)[0]
+        assert set(nodes) == {A, B, D, G}
+        # Get all nodes from E
+        nodes = graph.dfsOnDiscover(startNodes=[E], reverse=False)[0]
+        assert set(nodes) == {A, B, C, E}
+        # Get all nodes from F
+        nodes = graph.dfsOnDiscover(startNodes=[F], reverse=False)[0]
+        assert set(nodes) == {A, B, C, E, F}
+        # Get all nodes of type AppendText from C
+        nodes = graph.dfsOnDiscover(startNodes=[C], filterTypes=["AppendText"], reverse=False)[0]
+        assert set(nodes) == {B, C}
+        # Get all nodes from D (order guaranteed)
+        nodes = graph.dfsOnDiscover(startNodes=[D], longestPathFirst=True, reverse=False)[0]
+        assert nodes == [D, B, A, G]
+        # Get all nodes
+        nodes = graph.dfsOnDiscover(reverse=False)[0]
+        assert set(nodes) == {A, B, C, D, E, F, G}
+
+    def test_no_duplicates_start_node_is_ancestor_of_another(self):
+        """
+        Test that DFS does not visit the same node more than once when one startNode
+        is an ancestor (in the traversal direction) of another startNode.
+
+        Graph:
+        A -> B -> C
+
+        Starting DFS (reverse=False, toward roots) from both C and B: visiting C first
+        will traverse C -> B -> A. B should not be discovered or finished a second time
+        when it is encountered again as a startNode.
+        """
+        graph = Graph("")
+
+        A = graph.addNewNode("Ls", input="/tmp")
+        B = graph.addNewNode("AppendText", inputText=A.output)
+        C = graph.addNewNode("AppendText", inputText=B.output)
+
+        nodes, _ = graph.dfsOnFinish(startNodes=[C, B])
+
+        # B must appear exactly once — it is visited when traversing from C, and
+        # must NOT be re-visited when it is encountered as a startNode.
+        assert len(nodes) == len(set(nodes)), "dfsOnFinish returned duplicate nodes"
+        assert len(nodes) == 3
+        assert set(nodes) == {A, B, C}
+
+    def test_no_duplicates_start_node_is_root_of_another(self):
+        """
+        Test that DFS does not visit the same node more than once when one startNode
+        is the root of the whole graph, and also appears in the traversal path of
+        another startNode in the list.
+
+        Graph:
+        A -> B -> C
+
+        Starting DFS (reverse=False) from both C and A: visiting C will traverse
+        C -> B -> A. A should not be discovered or finished a second time when it is
+        encountered again as a startNode.
+        """
+        graph = Graph("")
+
+        A = graph.addNewNode("Ls", input="/tmp")
+        B = graph.addNewNode("AppendText", inputText=A.output)
+        C = graph.addNewNode("AppendText", inputText=B.output)
+
+        nodes, _ = graph.dfsOnFinish(startNodes=[C, A])
+
+        # A must appear exactly once.
+        assert len(nodes) == len(set(nodes)), "dfsOnFinish returned duplicate nodes"
+        assert len(nodes) == 3
+        assert set(nodes) == {A, B, C}
+
+    def test_no_duplicates_reverse_start_node_is_descendant_of_another(self):
+        """
+        Test that reverse DFS does not visit the same node more than once when one
+        startNode is a descendant (in the reverse traversal direction, i.e. toward
+        leaves) of another startNode.
+
+        Graph:
+        A -> B -> C
+
+        Starting reverse DFS from both A and B: visiting A first traverses A -> B -> C.
+        B and C should not be discovered a second time when B is encountered again as
+        a startNode.
+        """
+        graph = Graph("")
+
+        A = graph.addNewNode("Ls", input="/tmp")
+        B = graph.addNewNode("AppendText", inputText=A.output)
+        C = graph.addNewNode("AppendText", inputText=B.output)
+
+        nodes, _ = graph.dfsOnDiscover(startNodes=[A, B], reverse=True)
+
+        # B must appear exactly once — it is visited when traversing forward from A,
+        # and must NOT be re-visited when encountered as a startNode.
+        assert len(nodes) == len(set(nodes)), "dfsOnDiscover(reverse=True) returned duplicate nodes"
+        assert set(nodes) == {A, B, C}
+
+    def test_no_duplicates_discover_start_node_is_ancestor_of_another(self):
+        """
+        Test that dfsOnDiscover does not return duplicate nodes when one startNode
+        is an ancestor (in the traversal direction) of another startNode.
+
+        Graph:
+        A -> B -> C
+
+        Starting dfsOnDiscover (reverse=False) from both C and B: visiting C first
+        traverses C -> B -> A. B should not be discovered a second time when it is
+        encountered again as a startNode.
+        """
+        graph = Graph("")
+
+        A = graph.addNewNode("Ls", input="/tmp")
+        B = graph.addNewNode("AppendText", inputText=A.output)
+        C = graph.addNewNode("AppendText", inputText=B.output)
+
+        nodes, _ = graph.dfsOnDiscover(startNodes=[C, B])
+
+        assert len(nodes) == len(set(nodes)), "dfsOnDiscover returned duplicate nodes"
+        assert set(nodes) == {A, B, C}

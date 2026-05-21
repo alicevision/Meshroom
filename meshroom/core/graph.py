@@ -1025,7 +1025,8 @@ class Graph(BaseObject):
 
         try:
             for node in nodes:
-                self.dfsVisit(node, visitor, colors, nodeChildren, longestPathFirst)
+                if colors.get(node, WHITE) == WHITE:
+                    self.dfsVisit(node, visitor, colors, nodeChildren, longestPathFirst)
         except StopGraphVisit:
             pass
 

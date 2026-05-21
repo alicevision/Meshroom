@@ -80,6 +80,15 @@ class TestListAttribute:
         assert nodeB.listInput.at(0).node == nodeA
         assert nodeB.listInput.index(nodeB.listInput.at(0)) == 0
 
+    def test_valueAccessorsMatch(self):
+        graph = Graph("")
+
+        nodeA = graph.addNewNode(NodeWithListAttribute.__name__)
+        nodeA.listInput.extend(["A", "B", "C"])
+        assert nodeA.listInput.at(0) == nodeA.listInput.value[0]
+        assert nodeA.listInput.at(1).value == nodeA.listInput.value[1].value
+        assert nodeA.listInput.at(2).value == nodeA.listInput.value[2].value == "C"
+
 
 class TestNestedListAttribute:
 

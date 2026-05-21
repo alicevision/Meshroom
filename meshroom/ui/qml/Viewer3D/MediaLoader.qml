@@ -57,6 +57,8 @@ import Utils 1.0
                     component = sceneLoaderEntityComponent
                 }
                 break
+            case ".usda":
+            case ".usdc":
             case ".abc": 
             case ".json":
             case ".sfm":

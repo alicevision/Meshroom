@@ -17,6 +17,8 @@ Item {
     readonly property var supportedExtensions: {
         var exts = [".obj", ".stl", ".fbx", ".gltf", ".ply"];
         if (supportSfmData) {
+            exts.push(".usda")
+            exts.push(".usdc")
             exts.push(".abc")
             exts.push(".json")
             exts.push(".sfm")

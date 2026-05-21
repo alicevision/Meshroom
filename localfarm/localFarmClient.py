@@ -68,6 +68,7 @@ class LocalFarmClient:
             "method": method,
             "params": params
         }
+
         def get_response(sock):
             response_data = b""
             while True:
@@ -111,8 +112,8 @@ class LocalFarmClient:
                     raise RuntimeError(f"Parent task {parentTask.name} not created yet")
                 deps.append(tasksCreated[parentTask])
             createdTask = self._call("create_task",
-                jid=jid, name=task.name, command=task.command,
-                metadata=task.metadata, dependencies=deps, env=task.env)
+                                     jid=jid, name=task.name, command=task.command,
+                                     metadata=task.metadata, dependencies=deps, env=task.env)
             tasksCreated[task] = createdTask["tid"]
         # Submit the job
         self._call("submit_job", jid=jid)
@@ -121,8 +122,8 @@ class LocalFarmClient:
     def create_additional_task(self, jid, tid, task):
         """ Create new task in an existing job. """
         createdTask = self._call("expand_task",
-            jid=jid, name=task.name, command=task.command,
-            metadata=task.metadata, parentTid=tid, env=task.env)
+                                 jid=jid, name=task.name, command=task.command,
+                                 metadata=task.metadata, parentTid=tid, env=task.env)
         return {"tid": createdTask["tid"]}
 
     def get_job_info(self, jid):
@@ -191,7 +192,7 @@ class LocalFarmClientContext(LocalFarmClient):
     def __enter__(self):
         self.connect()
         return self
-    
+
     def __exit__(self, *args):
         self.disconnect()
 
@@ -280,6 +281,7 @@ class Job:
         Tasks closer to roots appear first.
         """
         taskLevels = {}
+
         def exploreTask(task: str, currentLevel=0):
             if task in taskLevels:
                 if currentLevel > taskLevels[task]:
@@ -288,6 +290,7 @@ class Job:
                 taskLevels[task] = currentLevel
             for child in self.reverseDependencies[task]:
                 exploreTask(child, currentLevel + 1)
+
         # Start from root and explore down
         for task in self.getRootTasks():
             exploreTask(task.uid)

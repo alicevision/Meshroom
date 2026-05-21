@@ -49,7 +49,7 @@ class TestLocalFarm:
         task2 = self.createTask(job, 2, sleepTime=2, dependencies=[task1])
         task3 = self.createTask(job, 3, sleepTime=2, dependencies=[task1])
         task4 = self.createTask(job, 4, sleepTime=2, dependencies=[task2, task3])
-        task5 = self.createTask(job, 5, sleepTime=2, dependencies=[task4])
+        self.createTask(job, 5, sleepTime=2, dependencies=[task4])
         # Submit job
         res = job.submit()
         jid = res['jid']

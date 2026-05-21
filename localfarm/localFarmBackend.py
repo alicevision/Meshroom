@@ -9,7 +9,6 @@ import sys
 import random
 import argparse
 import json
-import shlex
 import time
 import signal
 import logging
@@ -66,7 +65,7 @@ class Task:
         self.returnCode = None
         self.process = None
         self.logFile: Path = self.taskDir / f"{tid}.log"
-    
+
     @property
     def duration_string(self):
         end_time = self.finished_at or datetime.now()
@@ -91,7 +90,7 @@ class Task:
 
 
 class Job:
-    def __init__(self, jid: str, label: str, farmRoot: PathLike, maxParallel: int=4):
+    def __init__(self, jid: str, label: str, farmRoot: PathLike, maxParallel: int = 4):
         self.jid: str = jid
         self.label: str = label
         self.submitted: bool = False
@@ -259,7 +258,7 @@ class LocalFarmEngine:
 
     def start(self):
         """ Start the server. """
-        logger.info(f"Starting the server...")
+        logger.info("Starting the server...")
         # Start the server to listen to queries
         self.running = True
         handler = lambda *args: LocalFarmRequestHandler(self, *args)
@@ -366,14 +365,13 @@ class LocalFarmEngine:
                 log.write(f"# ========== Starting task {task.tid} at {task.started_at.isoformat()}"
                           f" (command=\"{task.command}\") ==========\n")
                 log.write(f"# metadata: {task.metadata}\n")
-                log.write(f"# process_env:\n")
-                log.write(f"# Additional env variables:\n")
+                log.write("# process_env:\n")
+                log.write("# Additional env variables:\n")
                 for _k, _v in additional_env.items():
                     log.write(f"# - {str(_k)}={str(_v)}\n")
-                log.write(f"\n")
+                log.write("\n")
                 task.process = subprocess.Popen(
                     task.command,
-                    # shlex.split(task.command),
                     stdout=log,
                     stderr=log,
                     cwd=task.taskDir,
@@ -621,7 +619,7 @@ class LocalFarmRequestHandler(BaseRequestHandler):
             except Exception as e:
                 logger.error(f"Error handling request: {e}", exc_info=True)
                 return
-    
+
     def __read_and_answer_request(self):
         """ Read request, get response and send response """
         data = b""

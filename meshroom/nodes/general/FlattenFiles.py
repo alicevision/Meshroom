@@ -47,6 +47,7 @@ for example before passing them to a node that expects a flat list.
             name="outputFiles",
             label="Output Files",
             description="Flat list of all files from the input lists.",
+            value=None,
             exposed=True,
         ),
     ]

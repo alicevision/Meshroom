@@ -68,10 +68,9 @@ class CsvData(QObject):
                 reader = csv.reader(fp)
                 for row in reader:
                     csvRows.append(row)
-            # Create the objects in dataList
-            # with the first line elements as objects' title
+            # Create the objects in dataList with the first line elements as objects' title
             for elt in csvRows[0]:
-                dataList.append(CsvColumn(elt)) # , parent=self._data
+                dataList.append(CsvColumn(elt))
             # Populate the content attribute
             for elt in csvRows[1:]:
                 for idx, value in enumerate(elt):

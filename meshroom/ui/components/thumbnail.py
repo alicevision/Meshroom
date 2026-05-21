@@ -257,7 +257,7 @@ class ThumbnailCache(QObject):
     def _createEmptyThumbnail(path: str):
         """ Create an empty thumbnail file on disk. """
         try:
-            with open(path, 'a') as f:
+            with open(path, 'a'):
                 os.utime(path, None)
         except Exception as exc:
             logging.error(f'[ThumbnailCache] Failed to create empty thumbnail at {path}: {exc}')
@@ -297,8 +297,8 @@ class ThumbnailCache(QObject):
         else:
             # Scale image while preserving aspect ratio
             thumbnail = img.scaled(ThumbnailCache.thumbnailSize,
-                                aspectMode=Qt.KeepAspectRatio,
-                                mode=Qt.SmoothTransformation)
+                                   aspectMode=Qt.KeepAspectRatio,
+                                   mode=Qt.SmoothTransformation)
 
             # Write thumbnail to disk and check for potential errors
             writer = QImageWriter(path)

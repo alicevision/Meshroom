@@ -1,6 +1,10 @@
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, Slot
 from meshroom.core.attribute import Attribute
-import json, os, re
+
+import json
+import os
+import re
+
 
 class ShapeFile(BaseObject):
     """
@@ -34,7 +38,7 @@ class ShapeFile(BaseObject):
             """
             return self._visible
 
-        def _setVisible(self, visible:bool):
+        def _setVisible(self, visible: bool):
             """
             Set the shape visibility for display.
             """
@@ -89,7 +93,7 @@ class ShapeFile(BaseObject):
         # The shape current observation.
         observation = Property(Variant, _getObservation, notify=viewIdChanged)
         # Whether the shape is keyabale (multiple observations).
-        observationKeyable = Property(bool,lambda self: self._keyable, constant=True)
+        observationKeyable = Property(bool, lambda self: self._keyable, constant=True)
         # The shape list of observation keys.
         observationKeys = Property(Variant, lambda self: [key for key in self._observations], constant=True)
         # The number of observation defined.
@@ -120,7 +124,7 @@ class ShapeFile(BaseObject):
         """
         return self._visible
 
-    def _setVisible(self, visible:bool):
+    def _setVisible(self, visible: bool):
         """
         Set the shape file visibility for display.
         """

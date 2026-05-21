@@ -1,5 +1,6 @@
 from meshroom.common import BaseObject, Property, Variant, Signal, Slot
 
+
 class ShapeViewerHelper(BaseObject):
     """
     Manages interactions with the qml ShapeViewer (2d Viewer).
@@ -26,7 +27,7 @@ class ShapeViewerHelper(BaseObject):
     def _getContainerScale(self) -> float:
         return self._containerScale
 
-    def _setSelectedShapeName(self, shapeName:str):
+    def _setSelectedShapeName(self, shapeName: str):
         self._selectedShapeName = shapeName
         self.selectedShapeNameChanged.emit()
 
@@ -35,7 +36,7 @@ class ShapeViewerHelper(BaseObject):
         self.containerWidthChanged.emit()
 
     def _setContainerHeight(self, height: float):
-        self._containerHeight= height
+        self._containerHeight = height
         self.containerHeightChanged.emit()
 
     def _setContainerScale(self, scale: float):
@@ -49,16 +50,16 @@ class ShapeViewerHelper(BaseObject):
         """
         match shapeType:
             case "Point2d":
-                return { "x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5}
+                return {"x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5}
             case "Line2d":
-                return { "a": { "x": self._containerWidth * 0.4, "y": self._containerHeight * 0.4},
-                         "b": { "x": self._containerWidth * 0.6, "y": self._containerHeight * 0.6}}
+                return {"a": {"x": self._containerWidth * 0.4, "y": self._containerHeight * 0.4},
+                        "b": {"x": self._containerWidth * 0.6, "y": self._containerHeight * 0.6}}
             case "Circle":
-                return { "center": {"x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5},
-                         "radius": self._containerWidth * 0.1}
+                return {"center": {"x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5},
+                        "radius": self._containerWidth * 0.1}
             case "Rectangle":
-                return { "center": { "x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5},
-                         "size": { "width": self._containerWidth * 0.2, "height": self._containerHeight * 0.2}}
+                return {"center": {"x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5},
+                        "size": {"width": self._containerWidth * 0.2, "height": self._containerHeight * 0.2}}
         return None
 
     # Properties and signals

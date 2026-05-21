@@ -169,15 +169,15 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
 
     # Syntax styles that can be shared by all languages
     STYLES = {
-        "keyword"   : CharFormat("#9e59b3"),               # Purple
-        "operator"  : CharFormat("#2cb8a0"),               # Teal
-        "brace"     : CharFormat("#2f807e"),               # Dark Aqua
-        "defclass"  : CharFormat("#c9ba49", bold=True),    # Yellow
-        "deffunc"   : CharFormat("#4996c9", bold=True),    # Blue
-        "string"    : CharFormat("#7dbd39"),               # Greeny
-        "comment"   : CharFormat("#8d8d8d", italic=True),  # Dark Grayish
-        "self"      : CharFormat("#e6ba43", italic=True),  # Yellow
-        "numbers"   : CharFormat("#d47713"),               # Orangish
+        "keyword": CharFormat("#9e59b3"),  # Purple
+        "operator": CharFormat("#2cb8a0"),  # Teal
+        "brace": CharFormat("#2f807e"),  # Dark Aqua
+        "defclass": CharFormat("#c9ba49", bold=True),  # Yellow
+        "deffunc": CharFormat("#4996c9", bold=True),  # Blue
+        "string": CharFormat("#7dbd39"),  # Greeny
+        "comment": CharFormat("#8d8d8d", italic=True),  # Dark Grayish
+        "self": CharFormat("#e6ba43", italic=True),  # Yellow
+        "numbers": CharFormat("#d47713"),  # Orangish
     }
 
     # Python keywords
@@ -228,11 +228,14 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
         rules = []
 
         # Keyword rules
-        rules += [(QtCore.QRegularExpression(r"\b" + w + r"\s"), 0, PySyntaxHighlighter.STYLES["keyword"]) for w in PySyntaxHighlighter.keywords]
+        rules += [(QtCore.QRegularExpression(r"\b" + w + r"\s"), 0,
+                   PySyntaxHighlighter.STYLES["keyword"]) for w in PySyntaxHighlighter.keywords]
         # Operator rules
-        rules += [(QtCore.QRegularExpression(o), 0, PySyntaxHighlighter.STYLES["operator"]) for o in PySyntaxHighlighter.operators]
+        rules += [(QtCore.QRegularExpression(o), 0,
+                   PySyntaxHighlighter.STYLES["operator"]) for o in PySyntaxHighlighter.operators]
         # Braces
-        rules += [(QtCore.QRegularExpression(b), 0, PySyntaxHighlighter.STYLES["brace"]) for b in PySyntaxHighlighter.braces]
+        rules += [(QtCore.QRegularExpression(b), 0,
+                   PySyntaxHighlighter.STYLES["brace"]) for b in PySyntaxHighlighter.braces]
 
         # All other rules
         rules += [
@@ -247,7 +250,8 @@ class PySyntaxHighlighter(QtGui.QSyntaxHighlighter):
             # Numeric literals
             (QtCore.QRegularExpression(r'\b[+-]?[0-9]+[lL]?\b'), 0, PySyntaxHighlighter.STYLES["numbers"]),
             (QtCore.QRegularExpression(r'\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b'), 0, PySyntaxHighlighter.STYLES["numbers"]),
-            (QtCore.QRegularExpression(r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b'), 0, PySyntaxHighlighter.STYLES["numbers"]),
+            (QtCore.QRegularExpression(r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b'), 0,
+             PySyntaxHighlighter.STYLES["numbers"]),
 
             # Double-quoted string, possibly containing escape sequences
             (QtCore.QRegularExpression(r'"[^"\\]*(\\.[^"\\]*)*"'), 0, PySyntaxHighlighter.STYLES["string"]),

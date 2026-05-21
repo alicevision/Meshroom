@@ -8,12 +8,13 @@ from .shapeFile import ShapeFile
 import warnings
 warnings.filterwarnings("ignore", message=".*Failed to disconnect.*", category=RuntimeWarning)
 
+
 class ShapeFilesHelper(BaseObject):
     """
     Manages active project selected node shape files.
     """
 
-    def __init__(self, activeProject:Scene, parent=None):
+    def __init__(self, activeProject: Scene, parent=None):
         super().__init__(parent)
         self._activeProject = activeProject
         self._currentNode = activeProject.selectedNode

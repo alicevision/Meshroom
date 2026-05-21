@@ -100,7 +100,7 @@ class FilepathHelper(QObject):
         fileList = glob.glob(self.asStr(path))
         fileList.sort()
         if fileList:
-          return fileList[0]
+            return fileList[0]
         return ""
 
     @Slot(QUrl, result=int)
@@ -113,8 +113,10 @@ class FilepathHelper(QObject):
         # Resolve dynamic path that depends on viewpoint
         from meshroom.core import fileUtils
 
-        if vp == None:
-            replacements = FilepathHelper.getFilenamesFromFolder(FilepathHelper, FilepathHelper.dirname(FilepathHelper, path), FilepathHelper.extension(FilepathHelper, path))
+        if vp is None:
+            replacements = FilepathHelper.getFilenamesFromFolder(FilepathHelper,
+                                                                 FilepathHelper.dirname(FilepathHelper, path),
+                                                                 FilepathHelper.extension(FilepathHelper, path))
             resolved = [path for i in range(len(replacements))]
             for key in replacements:
                 for i in range(len(resolved)):

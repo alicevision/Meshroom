@@ -5,16 +5,14 @@ from meshroom.core import desc
 
 class FlattenFiles(desc.Node):
     """
-    Utility conversion node that flattens a list of lists of files into a single list of files.
+    This node takes a list of lists of files as input and produces a single flat list of
+    files as output.
+
+    It is useful to merge multiple file lists coming from different nodes into a unified
+    list, for example before passing them to a node that expects a flat list.
     """
 
     category = "Utils"
-    documentation = """
-This node takes a list of lists of files as input and produces a single flat list of files as output.
-
-It is useful to merge multiple file lists coming from different nodes into a unified list,
-for example before passing them to a node that expects a flat list.
-"""
 
     inputs = [
         desc.ListAttribute(
@@ -22,16 +20,16 @@ for example before passing them to a node that expects a flat list.
                 elementDesc=desc.File(
                     name="file",
                     label="File",
-                    description="A file.",
+                    description="An input file.",
                     value="",
                 ),
                 name="fileList",
                 label="File List",
-                description="A list of files.",
+                description="An input list of files.",
             ),
             name="inputFiles",
             label="Input Files",
-            description="List of lists of files to flatten into a single list.",
+            description="Input list of lists of files to flatten into a single list.",
             exposed=True,
         ),
     ]
@@ -39,14 +37,14 @@ for example before passing them to a node that expects a flat list.
     outputs = [
         desc.ListAttribute(
             elementDesc=desc.File(
-                name="file",
+                name="outputFile",
                 label="File",
-                description="A file.",
+                description="An output file.",
                 value="",
             ),
             name="outputFiles",
             label="Output Files",
-            description="Flat list of all files from the input lists.",
+            description="Output flat list of all files from the input lists.",
             value=None,
             exposed=True,
         ),

@@ -40,7 +40,6 @@ class TestGroupAttributes:
 
         assert graph.node("GroupAttributes_2").firstGroup.inputLink == graph.node("GroupAttributes_1").firstGroup
 
-
     def test_saveLoadGroupConnections(self):
         """
         Ensure that connecting attributes that are part of GroupAttributes does not cause their nodes to have
@@ -67,7 +66,6 @@ class TestGroupAttributes:
         # Ensure the nodes are not CompatibilityNodes
         for node in graph.nodes:
             assert not isinstance(node, CompatibilityNode)
-
 
     def test_groupAttributesFlatChildren(self):
         """
@@ -100,7 +98,6 @@ class TestGroupAttributes:
         assert isinstance(outputGroup, GroupAttribute)
         assert len(outputGroup.flatStaticChildren) == GROUPATTRIBUTES_OUTPUTGROUP_NB_CHILDREN
 
-
     def test_groupAttributesDepthLevels(self):
         """
         Check that the depth level of children attributes is correctly set.
@@ -124,11 +121,9 @@ class TestGroupAttributes:
         for child in outputGroup.flatStaticChildren:  # Single element in the group
             assert child.depth == 1
 
-
         intAttr = node.attribute("exposedInt")
         assert not isinstance(intAttr, GroupAttribute)
         assert intAttr.depth == 0
-
 
     def test_groupAttributesWithMatchingStructure(self):
         """
@@ -145,7 +140,6 @@ class TestGroupAttributes:
         # Then
         assert acceptedConnection
 
-
     def test_groupAttributesWithDifferentStructures(self):
         """
         Check that two different GroupAttributes cannot be connected if they have different structures.
@@ -160,7 +154,6 @@ class TestGroupAttributes:
 
         # Then
         assert not acceptedConnection
-
 
     def test_connectGroupsWithSubAttributes(self):
         """
@@ -229,7 +222,6 @@ class TestGroupAttributes:
         assert nestedPosition.xyz.test.z.isLink and \
             nestedPosition.xyz.test.z.inputLink.asLinkExpr() == nestedColor.rgb.test.b.asLinkExpr()
 
-
     def test_connectSubAttributes(self):
         """
         After a group has been connected to another group, connecting individually a sub-attribute
@@ -280,7 +272,6 @@ class TestGroupAttributes:
             nestedPosition.xyz.test.y.inputLink.asLinkExpr() == nestedColor.rgb.test.g.asLinkExpr()
         assert nestedPosition.xyz.test.z.isLink and \
             nestedPosition.xyz.test.z.inputLink.asLinkExpr() == r.asLinkExpr() == nestedColor.rgb.r.asLinkExpr()
-
 
     def test_connectGroupSubAttributesByValue(self):
         """

@@ -3,7 +3,7 @@ import os
 from textwrap import dedent
 from pathlib import Path
 
-from meshroom.core import desc
+from meshroom.core import desc, cacheFolderName
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityIssue, CompatibilityNode
 
@@ -256,6 +256,35 @@ class TestGraphSave:
             graph.saveAsNewVersion()
             newScenePath = os.path.join(tmp_path, "scene1.mg")
             assert os.path.exists(newScenePath)
+    
+    def test_cacheDir(self, graphSavedOnDisk, tmp_path):
+        """ Check features related to the cacheDir
+        - default/explicit location
+        - serialization of explicit location
+        """
+        graph: Graph = graphSavedOnDisk
+        root = Path(graph._filepath).parent
+        assertPathsAreEqual(graph.cacheDir, os.path.join(root, cacheFolderName))
+        # Change cacheDir
+        newCacheDir = root / "MeshroomNewCache"
+        graph.setExplicitCacheDir(str(newCacheDir))
+        assertPathsAreEqual(graph.cacheDir, newCacheDir)
+        # Save
+        graph.save()
+        # Open in a different graph
+        # Check the cache dir is the explicit location
+        otherGraph = Graph("")
+        otherGraph.load(graph.filepath)
+        assertPathsAreEqual(otherGraph.cacheDir, newCacheDir)
+        # Remove explicit cache dir
+        # Then save and reopen
+        # Check the cache dir is the default location
+        otherGraph.setDefaultCacheDir()
+        otherGraphFilepath = os.path.join(tmp_path, "otherGraph.mg")
+        otherGraph.save(filepath=otherGraphFilepath)
+        otherGraph = Graph("")
+        otherGraph.load(otherGraphFilepath)
+        assertPathsAreEqual(otherGraph.cacheDir, os.path.join(tmp_path, cacheFolderName))
 
 
 class TestGraphPartialSerialization:

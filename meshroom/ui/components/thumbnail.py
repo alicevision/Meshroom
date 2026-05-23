@@ -1,8 +1,8 @@
 from meshroom.common import Signal
 
-from PySide6.QtCore import QObject, Slot, QSize, QUrl, Qt, QStandardPaths
-from PySide6.QtGui import QImageReader, QImageWriter
+from PySide6.QtCore import QObject, Slot, QSize, QUrl, QStandardPaths
 
+from pyalicevision import image as avImage
 import os
 from pathlib import Path
 import stat
@@ -283,30 +283,47 @@ class ThumbnailCache(QObject):
 
         logging.debug(f'[ThumbnailCache] Creating thumbnail {path} for image {imgPath}')
 
-        # Initialize image reader object
-        reader = QImageReader()
-        reader.setFileName(imgPath)
-        reader.setAutoTransform(True)
-
-        # Read image and check for potential errors
-        img = reader.read()
-        if img.isNull():
-            logging.error(f'[ThumbnailCache] Error when reading image: {reader.errorString()}')
+        # Read image with pyalicevision (uses OpenImageIO, supports RAW, EXR, and other formats)
+        image = avImage.Image_RGBColor()
+        readOptions = avImage.ImageReadOptions(avImage.EImageColorSpace_SRGB)
+        try:
+            avImage.readImage(imgPath, image, readOptions)
+        except Exception as exc:
+            logging.error(f'[ThumbnailCache] Error when reading image: {exc}')
             logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')
             ThumbnailCache._createEmptyThumbnail(path)
-        else:
-            # Scale image while preserving aspect ratio
-            thumbnail = img.scaled(ThumbnailCache.thumbnailSize,
-                                aspectMode=Qt.KeepAspectRatio,
-                                mode=Qt.SmoothTransformation)
+            self.thumbnailCreated.emit(imgSource, callerID)
+            return path
 
-            # Write thumbnail to disk and check for potential errors
-            writer = QImageWriter(path)
-            success = writer.write(thumbnail)
-            if not success:
-                logging.error(f'[ThumbnailCache] Error when writing thumbnail: {writer.errorString()}')
-                logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')
-                ThumbnailCache._createEmptyThumbnail(path)
+        # Compute thumbnail dimensions preserving aspect ratio
+        w, h = image.width(), image.height()
+
+        if w == 0 or h == 0:
+            logging.error(f'[ThumbnailCache] Error when reading image: null image')
+            logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')
+            ThumbnailCache._createEmptyThumbnail(path)
+            self.thumbnailCreated.emit(imgSource, callerID)
+            return path
+
+        maxW, maxH = ThumbnailCache.thumbnailSize.width(), ThumbnailCache.thumbnailSize.height()
+        scale = min(maxW / w, maxH / h)
+        newW = max(1, round(w * scale))
+        newH = max(1, round(h * scale))
+
+        # Downscale image using pyalicevision (uses OpenImageIO high-quality resampling)
+        thumbnail = avImage.Image_RGBColor()
+        avImage.resizeImage(newW, newH, image, thumbnail)
+
+        # Write thumbnail with pyalicevision
+        writeOptions = avImage.ImageWriteOptions()
+        # Data is already in sRGB; skip any color-space conversion during write.
+        writeOptions.toColorSpace(avImage.EImageColorSpace_NO_CONVERSION)
+        try:
+            avImage.writeImage(path, thumbnail, writeOptions, avImage.oiioParams().get())
+        except Exception as exc:
+            logging.error(f'[ThumbnailCache] Error when writing thumbnail: {exc}')
+            logging.error(f'[ThumbnailCache] Creating empty thumbnail for {imgPath}')
+            ThumbnailCache._createEmptyThumbnail(path)
 
         # Notify listeners
         self.thumbnailCreated.emit(imgSource, callerID)

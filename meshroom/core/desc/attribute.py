@@ -664,6 +664,36 @@ class StringParam(Param):
         return "", ValueTypeErrors.NONE
 
 
+class DynamicAttribute(Attribute):
+    """
+    A DynamicAttribute is a special input attribute with no fixed type.
+    It appears as an empty connection pin in the graph editor (no label).
+    When an attribute is connected to it, a new attribute of the same type as the
+    connected attribute is automatically created on the node and the link is established.
+    The DynamicAttribute itself remains empty and available for further connections.
+    """
+    @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
+    def __init__(self, name, label=None, description=None, group="allParams",
+                 commandLineGroup=_setParamSentinel, advanced=False, enabled=True,
+                 visible=True, exposed=False):
+        commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
+        super(DynamicAttribute, self).__init__(
+            name=name, label=label, description=description or "", value=None,
+            commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled,
+            invalidate=False, semantic="", visible=visible, exposed=exposed,
+        )
+
+    def getInstanceType(self):
+        from meshroom.core.attribute import DynamicAttribute
+        return DynamicAttribute
+
+    def validateValue(self, value):
+        return value
+
+    def checkValueTypes(self):
+        return "", ValueTypeErrors.NONE
+
+
 class ColorParam(Param):
     """
     """

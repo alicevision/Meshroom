@@ -1,4 +1,3 @@
-import json
 from PySide6.QtCore import QObject
 from datetime import datetime
 from meshroom.common import Signal, Slot, Property

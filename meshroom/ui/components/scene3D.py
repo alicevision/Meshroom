@@ -7,6 +7,7 @@ from PySide6.QtGui import QVector3D, QQuaternion, QVector2D, QVector4D, QMatrix4
 
 from meshroom.ui.utils import makeProperty
 
+
 class Scene3DHelper(QObject):
 
     @Slot(Qt3DCore.QEntity, str, result="QVariantList")
@@ -264,7 +265,7 @@ class Transformations3DHelper(QObject):
         transformQuat = QQuaternion.fromAxisAndAngle(axis, degree)
 
         # Compute the new rotation quaternion and then calculate the matrix
-        newRotQuat = initialRotQuat * transformQuat # Order is important
+        newRotQuat = initialRotQuat * transformQuat  # Order is important
         newRotationMat = self.quaternionToRotationMatrix(newRotQuat)
 
         # Compute the new model matrix (POSITION * NEW_COMPUTED_ROTATION * SCALE) and set it to the Transform
@@ -287,12 +288,16 @@ class Transformations3DHelper(QObject):
         # Update the scale matrix copy (X then Y then Z) with the scaleVec values
         scaleVecTuple = scaleVec.toTuple()
         for i in range(3):
-            currentRow = list(scaleMat.row(i).toTuple()) # QVector3D does not implement [] operator or easy way to access value by index so this little hack is required
+            # QVector3D does not implement [] operator or easy way to access value by index so
+            # this little hack is required
+            currentRow = list(scaleMat.row(i).toTuple())
             value = currentRow[i] + scaleVecTuple[i]
-            value = value if value >= 0 else -value # Make sure to have only positive scale (because negative scale can make issues with matrix decomposition)
+            # Make sure to have only positive scale (because negative scale can make issues with matrix decomposition)
+            value = value if value >= 0 else -value
             currentRow[i] = value
 
-            scaleMat.setRow(i, QVector4D(currentRow[0], currentRow[1], currentRow[2], currentRow[3])) # Apply the new row to the scale matrix
+            # Apply the new row to the scale matrix
+            scaleMat.setRow(i, QVector4D(currentRow[0], currentRow[1], currentRow[2], currentRow[3]))
 
         # Compute the new model matrix (POSITION * ROTATION * SCALE) and set it to the Transform
         mat = initialPosMat * initialRotMat * scaleMat
@@ -394,12 +399,13 @@ class Transformations3DHelper(QObject):
 
         unitScaleModelMat = posMat * rotMat * QMatrix4x4()
 
-        worldCenterPoint = unitScaleModelMat.map(QVector4D(0,0,0,1))
-        worldAxisUnitPoint = unitScaleModelMat.map(QVector4D(axis.x(),axis.y(),axis.z(),1))
+        worldCenterPoint = unitScaleModelMat.map(QVector4D(0, 0, 0, 1))
+        worldAxisUnitPoint = unitScaleModelMat.map(QVector4D(axis.x(), axis.y(), axis.z(), 1))
         screenCenter2D = self.pointFromWorldToScreen(worldCenterPoint, camera, windowSize)
         screenAxisUnitPoint2D = self.pointFromWorldToScreen(worldAxisUnitPoint, camera, windowSize)
 
-        screenVector = QVector2D(screenAxisUnitPoint2D.x() - screenCenter2D.x(), -(screenAxisUnitPoint2D.y() - screenCenter2D.y()))
+        screenVector = QVector2D(screenAxisUnitPoint2D.x() - screenCenter2D.x(),
+                                 -(screenAxisUnitPoint2D.y() - screenCenter2D.y()))
 
         value = screenVector.length()
         return value if (value and value > 10) else 10  # Threshold to avoid problems in extreme case

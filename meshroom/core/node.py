@@ -835,8 +835,8 @@ class BaseNode(BaseObject):
     """
 
     # Regexp handling complex attribute names with recursive understanding of Lists and Groups
-    # i.e: a.b, a[0], a[0].b.c[1]
-    attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
+    # i.e: a.b, a[0], a[0].b.c[1], a[0][1] (list of lists)
+    attributeRE = re.compile(r'\.?(?P<name>\w*)(?:\[(?P<index>\d+)\])?')
 
     def __init__(self, nodeType: str, position: Position = None, parent: BaseObject = None,
                  uid: str = None, **kwargs):
@@ -1058,21 +1058,28 @@ class BaseNode(BaseObject):
     @Slot(str, result=Attribute)
     def attribute(self, name):
         att = None
-        # Complex name indicating group or list attribute
+        # Complex name indicating a GroupAttribute or ListAttribute
         if '[' in name or '.' in name:
-            p = self.attributeRE.findall(name)
+            p = self.attributeRE.findall(name)  # Can produce zero-length matches at delimiter positions
 
             for n, idx in p:
-                # first step: get root attribute
-                if att is None:
-                    att = self._attributes.get(n)
-                else:
-                    # get child Attribute in Group
-                    assert isinstance(att, GroupAttribute)
-                    att = att.value.get(n)
-                if idx != '':
-                    # get child Attribute in List
-                    assert isinstance(att, ListAttribute)
+                if not n and not idx:
+                    # Empty tuples ('', '') carry no useful information and are just artifacts of how
+                    # findall works with optional groups, and they should be ignored.
+                    continue
+                elif n:
+                    if att is None:
+                        # Get root attribute
+                        att = self._attributes.get(n)
+                    else:
+                        # GroupAttribute, the access should be done through the name
+                        if not isinstance(att, GroupAttribute):
+                            raise ValueError(f"Cannot access '{n}': {att.fullName} is not a GroupAttribute.")
+                        att = att.value.get(n)  # Get child attribute in Group
+                if idx:
+                    # ListAttribute, the access should be done through the index
+                    if not isinstance(att, ListAttribute):
+                        raise ValueError(f"Cannot access index '{idx}': {att.fullName} is not a ListAttribute.")
                     att = att.value.at(int(idx))
         else:
             att = self._attributes.getr(name)

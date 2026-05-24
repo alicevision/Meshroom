@@ -1,0 +1,177 @@
+name: Nightly Build
+
+on:
+  schedule:
+    # Runs every day at 02:00 UTC
+    - cron: '0 2 * * *'
+  # Allow manual trigger from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write  # needed to edit releases, upload/delete assets and update "nightly" tag
+
+jobs:
+  # ────────────────────────────────────────────────────────────
+  # Guard: skip everything if develop hasn't changed since the
+  # SHA recorded in the single persistent "nightly" release.
+  # ────────────────────────────────────────────────────────────
+  check-changes:
+    name: Check for new commits on develop
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+      short_sha:    ${{ steps.check.outputs.short_sha }}
+      full_sha:     ${{ steps.check.outputs.full_sha }}
+      build_label:  ${{ steps.check.outputs.build_label }}
+
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-tags: true  # required to find the previous nightly tag
+
+      - name: Determine whether a build is needed
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          FULL_SHA=$(git rev-parse HEAD)
+          BUILD_LABEL="$(date -u '+%Y.%m.%d')-${SHORT_SHA}"
+          echo "short_sha=$SHORT_SHA"   >> "$GITHUB_OUTPUT"
+          echo "full_sha=$FULL_SHA"     >> "$GITHUB_OUTPUT"
+          echo "build_label=$BUILD_LABEL" >> "$GITHUB_OUTPUT"
+
+          # Read the SHA stored in the body of the persistent "nightly" release.
+          # The body always contains a line of the form:  **Latest commit:** `<sha>`
+          # LAST_SHA=$(
+          #   gh release view nightly \
+          #     --repo "$GITHUB_REPOSITORY" \
+          #     --json body \
+          #     --jq '.body' 2>/dev/null \
+          #   | grep -oP '(?<=\*\*Latest commit:\*\* `)[\w]+' \
+          #   || true
+          # )
+          # Read the SHA of the last "nightly" git tag
+          LAST_SHA=$(git rev-parse --short nightly 2>/dev/null || true)
+
+          if [ "$SHORT_SHA" = "$LAST_SHA" ]; then
+            echo "develop unchanged since last nightly (SHA: $SHORT_SHA). Skipping."
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New commits detected (current: $SHORT_SHA, last nightly: ${LAST_SHA:-none}). Building."
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-windows:
+    name: Build Windows binary
+    needs: check-changes
+    if: needs.check-changes.outputs.should_build == 'true'
+    uses: ./.github/workflows/build-binary.yml
+    with:
+      os: windows-latest
+      build_label: ${{ needs.check-changes.outputs.build_label }}
+
+  build-linux:
+    name: Build Linux binary
+    needs: check-changes
+    if: needs.check-changes.outputs.should_build == 'true'
+    uses: ./.github/workflows/build-binary.yml
+    with:
+      os: ubuntu-22.04
+      build_label: ${{ needs.check-changes.outputs.build_label }}
+
+  # ────────────────────────────────────────────────────────────
+  # Update the single persistent "nightly" pre-release:
+  #   - delete old assets
+  #   - upload new assets
+  #   - prepend a build entry to the release body
+  #   - prune body entries older than 3 days
+  # ────────────────────────────────────────────────────────────
+  release:
+    name: Update nightly release
+    needs: [check-changes, build-windows, build-linux]
+    if: needs.check-changes.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # to push git tag nightly
+
+    env:
+      SHORT_SHA:   ${{ needs.check-changes.outputs.short_sha }}
+      BUILD_LABEL: ${{ needs.check-changes.outputs.build_label }}
+      GH_TOKEN:    ${{ github.token }}
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      # ── Create the release if it doesn't exist yet ──────────
+      - name: Ensure "nightly" release exists
+        run: |
+          if ! gh release view nightly --repo "$GITHUB_REPOSITORY" &>/dev/null; then
+            echo "Creating initial nightly release…"
+            gh release create nightly \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Nightly build (develop)" \
+              --notes "_(first build — history will appear here)_" \
+              --prerelease
+          fi
+
+      # ── Replace assets ───────────────────────────────────────
+      # Delete every existing asset on the release, then upload the fresh ones.
+      # This keeps the release page clean: always exactly two assets.
+      - name: Delete existing assets
+        run: |
+          gh release view nightly \
+            --repo "$GITHUB_REPOSITORY" \
+            --json assets \
+            --jq '.assets[].name' \
+          | while read -r ASSET; do
+              echo "  → Deleting asset: $ASSET"
+              gh release delete-asset nightly "$ASSET" \
+                --repo "$GITHUB_REPOSITORY" --yes
+            done
+
+      - name: Upload new assets
+        run: |
+          find dist/ -type f -ls
+          gh release upload nightly \
+            --repo "$GITHUB_REPOSITORY" \
+            "dist/binary-windows/Meshroom-${BUILD_LABEL}-windows.zip" \
+            "dist/binary-linux/Meshroom-${BUILD_LABEL}-linux.tar.gz"
+
+      # ── Update release body ──────────────────────────────────
+      # Rewrite the release body with the latest build info.
+      - name: Update release notes
+        run: |
+          NOW=$(date -u '+%Y-%m-%d %H:%M UTC')
+ 
+          cat > nightly_release_notes.md << EOF
+          > [!WARNING]
+          > **Automated nightly build** from the \`develop\` branch. May be unstable.
+ 
+          | | |
+          |---|---|
+          | Date   | ${NOW} |
+          | Commit | [${SHORT_SHA}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) |
+          | **Windows** | \`Meshroom-${BUILD_LABEL}-windows.zip\` |
+          | **Linux** | \`Meshroom-${BUILD_LABEL}-linux.tar.gz\` |
+          EOF
+ 
+          gh release edit nightly \
+            --repo "$GITHUB_REPOSITORY" \
+            --notes-file nightly_release_notes.md
+
+      # ── Move the nightly tag to current HEAD ──────
+      - name: Re-tag nightly
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Force-update the nightly tag to current HEAD via the GitHub API.
+          # This avoids needing git remote auth or being inside a git directory.
+          gh api --method PATCH "/repos/${{ github.repository }}/git/refs/tags/nightly" -f sha="${{ github.sha }}" -F force=true || \
+          gh api --method POST "/repos/${{ github.repository }}/git/refs" -f ref="refs/tags/nightly" -f sha="${{ github.sha }}"

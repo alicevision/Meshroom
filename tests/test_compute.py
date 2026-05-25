@@ -8,6 +8,7 @@ TODO : We could directly test by launching the executable (`desc.node._MESHROOM_
 
 import os
 import re
+import shutil
 import shlex
 from types import SimpleNamespace
 from pathlib import Path
@@ -649,3 +650,112 @@ class TestPrePostProcess:
         for handler in logging.root.handlers[:]:
             handler.close()
             logging.root.removeHandler(handler)
+
+
+class TestCacheDir:
+    """
+    Test cache directory handling, including relative paths and explicit cache directory settings.
+    """
+    
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(TestNodeB)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(TestNodeB)
+
+    def test_default_cache_dir(self, tmp_path):
+        """Test that relative cache directories are properly resolved."""
+        # Create a temporary directory structure
+        root_dir = Path(tmp_path)
+        scene_file = root_dir / "scene.mg"
+        default_cache_dir = root_dir / "MeshroomCache"
+
+        # Create graph with relative cache directory
+        graph = Graph("")
+        graph.save(scene_file)
+        assert str(Path(graph._cacheDir).absolute().resolve()) == str(default_cache_dir.absolute().resolve())
+    
+    def test_setting_explicit_cache_dir(self, tmp_path):
+        """Test that we can set an explicit cache directory for a graph."""
+        # Create a temporary directory structure
+        root_dir = Path(tmp_path)
+        scene_file = root_dir / "scene.mg"
+        custom_cache_dir = root_dir / "CustomCache"
+
+        # Create graph with default cache directory first
+        graph = Graph("")
+        node = graph.addNewNode(TestNodeB.__name__)
+        graph.save(scene_file)
+
+        # Set explicit cache directory
+        graph.setExplicitCacheDir(str(custom_cache_dir))
+        assert custom_cache_dir.exists()
+        assert Path(node.internalFolder).parent == custom_cache_dir / TestNodeB.__name__
+
+        # Process node to check there's no issue
+        assert node.globalStatus == Status.NONE.name
+        node.process(inCurrentEnv=True)
+        assert node.globalStatus == Status.SUCCESS.name
+
+        # Save and reload to ensure persistence
+        graph.save(scene_file)
+        loaded_graph = loadGraph(str(scene_file))
+        assert str(Path(loaded_graph._cacheDir).absolute().resolve()) == str(custom_cache_dir.absolute().resolve())
+        assert loaded_graph._hasExplicitCacheDir is True
+
+    def test_move_scene(self, tmp_path):
+        """Test we can retrieve the cache dir with the following workflow:
+        - Create the scene
+        - Set a custom cache directory
+        - Compute the graph
+        - Move the scene in a sub-folder
+        - Check if we retrieve the cache (we use the absolute path here because only the scene moved)
+        - Move the cache in the same sub-folder
+        - Check if we retrieve the cache (we use the relative path here)
+        """
+        def check_cache(scene_path, expected_cache_path, nodeName):
+            loaded_graph = loadGraph(str(scene_path))
+            loaded_node = loaded_graph.node(nodeName)
+            assert str(Path(loaded_graph._cacheDir).absolute().resolve()) == str(expected_cache_path.absolute().resolve())
+            # Verify the node can still access its cache
+            assert Path(loaded_node.internalFolder).exists()
+            assert loaded_node.globalStatus == Status.SUCCESS.name
+
+        # Create a temporary directory structure
+        root_dir = Path(tmp_path)
+        initial_scene_file = root_dir / "scene.mg"
+        initial_cache_dir = root_dir / "CustomCache"
+        new_folder_path = root_dir / "SubFolder"
+        os.makedirs(new_folder_path)
+        relative_cache_path = "CustomCache"
+        new_scene_file = new_folder_path / "scene.mg"
+        new_cache_dir = new_folder_path / relative_cache_path
+
+        # Create graph and add a node
+        graph = Graph("")
+        node = graph.addNewNode(TestNodeB.__name__)
+        graph.save(initial_scene_file)
+        graph.setExplicitCacheDir(relative_cache_path)
+        # Verify default cache directory
+        assert str(Path(graph._cacheDir).absolute().resolve()) == str(initial_cache_dir.absolute().resolve())
+        graph.save(initial_scene_file)
+
+        # Compute the node & check it succeeded
+        os.makedirs(node.internalFolder, exist_ok=True)
+        node.process(inCurrentEnv=True)
+        assert Path(node.internalFolder).exists()
+        assert node.globalStatus == Status.SUCCESS.name
+
+        # Move scene in a subfolder
+        shutil.move(initial_scene_file, new_folder_path)
+        assert new_scene_file.exists()
+        # Check we can retrieve the cache
+        check_cache(new_scene_file, initial_cache_dir, node.name)
+
+        # Move cache in a subfolder
+        shutil.move(initial_cache_dir, new_folder_path)
+        assert new_cache_dir.exists()
+        # Check we can retrieve the cache
+        check_cache(new_scene_file, new_cache_dir, node.name)

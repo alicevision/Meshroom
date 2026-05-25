@@ -1739,6 +1739,10 @@ class Graph(BaseObject):
             self.setDefaultCacheDir()
             return
 
+        if not self._filepath:
+            raise RuntimeError("Setting an explicit cache directory is only "
+                                "possible if the file is already saved.")
+
         if Path(value).is_absolute():
             absoluteCacheDir = value
             # Get relative cache dir

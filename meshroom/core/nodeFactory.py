@@ -152,7 +152,7 @@ class _NodeCreator:
             return True
 
         def optionalInput(attr: desc.Attribute) -> bool:
-            """ Returns True if the attribute may optionally be serialized (present or absent in file). """
+            """ Return True if the attribute may optionally be serialized (present or absent in file). """
             return isinstance(attr, desc.Flow)
 
         refAttributes = filter(serializedInput, self.nodeDesc.inputs)
@@ -194,13 +194,12 @@ class _NodeCreator:
         attrNames = sorted(attributesDict.keys())
         return refNames == attrNames
 
-    def _checkAttributesNamesMatchWithOptional(
-        self,
-        requiredDescAttributes: Iterable[desc.Attribute],
-        attributesDict: dict[str, Any],
-        optionalDescAttributes: Iterable[desc.Attribute],
-    ) -> bool:
-        """Check that attribute names in 'attributesDict' match the expected description,
+    def _checkAttributesNamesMatchWithOptional(self,
+                                               requiredDescAttributes: Iterable[desc.Attribute],
+                                               attributesDict: dict[str, Any],
+                                               optionalDescAttributes: Iterable[desc.Attribute]) -> bool:
+        """
+        Check that attribute names in 'attributesDict' match the expected description,
         where 'requiredDescAttributes' must all be present and 'optionalDescAttributes'
         may optionally be present.
 

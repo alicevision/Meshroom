@@ -703,12 +703,10 @@ class Flow(Attribute):
     """
     def __init__(self, name, label=None, description=None, advanced=False, enabled=True,
                  visible=True, exposed=False):
-        super().__init__(
-            name=name, label=label, description=description,
-            value=None, invalidate=False, commandLineGroup="",
-            advanced=advanced, semantic="", enabled=enabled,
-            visible=visible, exposed=exposed
-        )
+        super().__init__(name=name, label=label, description=description,
+                         value=None, invalidate=False, commandLineGroup="",
+                         advanced=advanced, semantic="", enabled=enabled,
+                         visible=visible, exposed=exposed)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies

@@ -169,7 +169,7 @@ class InternalAttributesFactory:
         Flow(
             name="flowOutput",
             label="Flow Output",
-            description="Outgoing flow connection to express a dependency on another node.",
+            description="Outgoing flow connection to express a dependency to another node.",
         )
     ]
 
@@ -188,7 +188,8 @@ class InternalAttributesFactory:
 
     @classmethod
     def getInternalFlowInputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
-        """Return the list of internal input Flow attributes for a given node type.
+        """
+        Return the list of internal input Flow attributes for a given node type.
 
         These are added to internal attributes so they appear as connection pins in
         the graph editor header while remaining separate from the regular attribute list.
@@ -199,7 +200,8 @@ class InternalAttributesFactory:
 
     @classmethod
     def getInternalFlowOutputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
-        """Return the list of internal output Flow attributes for a given node type.
+        """
+        Return the list of internal output Flow attributes for a given node type.
 
         These are added to internal attributes so they appear as connection pins in
         the graph editor header while remaining separate from the regular attribute list.

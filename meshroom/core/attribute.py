@@ -1741,6 +1741,5 @@ class Flow(Attribute):
             return super().uid()
         return hashValue(None)
 
-    # Re-declare the isDefault Property binding so Python's property resolution
-    # uses this class's _isDefault override rather than the parent's version.
+    # Override
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)

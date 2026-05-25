@@ -1054,7 +1054,7 @@ class BaseNode(BaseObject):
             for key, value in additionalNodeInfo:
                 info[key] = value
         return [{"key": k, "value": v} for k, v in info.items()]
-    
+
     def getAnyAttribute(self, name, internal=False):
         attrList = self._internalAttributes if internal else self._attributes
         att = None

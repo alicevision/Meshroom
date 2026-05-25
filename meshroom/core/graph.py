@@ -642,9 +642,9 @@ class Graph(BaseObject):
                 # use the duplicate; otherwise use the original node
                 if edgeSrcNode in duplicates:
                     edgeSrcNode = duplicates.get(edgeSrcNode)[0]
-                try:
+                if edgeSrcNode.hasAttribute(edgeSrcAttrName):
                     edgeSrcAttr = edgeSrcNode.attribute(edgeSrcAttrName)
-                except KeyError:
+                else:
                     edgeSrcAttr = edgeSrcNode.internalAttribute(edgeSrcAttrName)
                 self.addEdge(edgeSrcAttr, attr)
 

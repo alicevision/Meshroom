@@ -159,8 +159,10 @@ class _NodeCreator:
         refAttributes = filter(serializedInput, self.nodeDesc.inputs)
         # FlowAttributes from both regular inputs and internalFlowInputs may appear in 'inputs'
         # (as link expressions when connected), so treat them all as optional.
-        allFlowAttrs = list(filter(optionalInput, self.nodeDesc.inputs)) + \
-                       list(self.nodeDesc.internalFlowInputs)
+        allFlowAttrs = (
+            list(filter(optionalInput, self.nodeDesc.inputs))
+            + list(self.nodeDesc.internalFlowInputs)
+        )
         return self._checkAttributesNamesMatchWithOptional(refAttributes, self.inputs, allFlowAttrs)
 
     def _checkOutputAttributesNames(self) -> bool:

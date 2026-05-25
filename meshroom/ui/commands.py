@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
 
-from meshroom.core.attribute import ListAttribute, Attribute
+from meshroom.core.attribute import Attribute, Flow, ListAttribute
 from meshroom.core.exception import CyclicDependencyError,InvalidEdgeError
 from meshroom.core.graph import Graph, GraphModification
 from meshroom.core.node import Position, CompatibilityIssue
@@ -486,7 +486,7 @@ class RemoveEdgeCommand(GraphCommand):
         super().__init__(graph, parent)
         self.srcAttr = edge.src.fullName
         self.dstAttr = edge.dst.fullName
-        self.isFlow = (edge.dst.name == "flowInput")
+        self.isFlow = isinstance(edge.dst, Flow)
         self.deletedEdgeNames = []  # Store the names of deleted edges.
         self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
     
@@ -522,7 +522,7 @@ class ListAttributeAppendCommand(GraphCommand):
         super().__init__(graph, parent)
         assert isinstance(listAttribute, ListAttribute)
         self.attrName = listAttribute.fullName
-        self.isFlowInputs = (listAttribute.desc.name == "flowInputs")
+        self.isFlowInputs = (listAttribute.baseType == Flow.__name__)
         self.index = None
         self.count = 1
         self.value = value if value else None
@@ -553,7 +553,7 @@ class ListAttributeRemoveCommand(GraphCommand):
     def __init__(self, graph, attribute, parent=None):
         super().__init__(graph, parent)
         listAttribute = attribute.root
-        self.isFlowInputs = (listAttribute.desc.name == "flowInputs")
+        self.isFlowInputs = (listAttribute.baseType == Flow.__name__)
         assert isinstance(listAttribute, ListAttribute)
         self.listAttrName = listAttribute.fullName
         self.index = listAttribute.index(attribute)

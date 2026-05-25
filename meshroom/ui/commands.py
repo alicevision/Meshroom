@@ -460,11 +460,18 @@ class AddEdgeCommand(GraphCommand):
 
     def redoImpl(self) -> bool:
         try:
-            self.createdEdges, self.deletedEdges = self.graph.attribute(self.srcAttr).connectTo(self.graph.attribute(self.dstAttr))
+            srcAttribute = self.graph.attribute(self.srcAttr) or self.graph.internalAttribute(self.srcAttr)
+            dstAttribute = self.graph.attribute(self.dstAttr) or self.graph.internalAttribute(self.dstAttr)
+
+            if srcAttribute and dstAttribute:
+                self.createdEdges, self.deletedEdges = srcAttribute.connectTo(dstAttribute)
+                return True
+
         except CyclicDependencyError:
             self.graph.removeEdge(self.graph.attribute(self.dstAttr))
             return False
-        return True
+
+        return False
 
     def undoImpl(self) -> bool:
         for edge in self.createdEdges:
@@ -483,11 +490,14 @@ class RemoveEdgeCommand(GraphCommand):
         self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
 
     def redoImpl(self) -> bool:
-        deletedEdges = self.graph.attribute(self.dstAttr).disconnectEdge()
-        # Store the fullNames instead of the actual attribute objects
-        self.deletedEdgeNames = [
-            (edge[0].fullName, edge[1].fullName) for edge in deletedEdges
-        ]
+        dstAttribute = self.graph.attribute(self.dstAttr) or self.graph.internalAttribute(self.dstAttr)
+        if dstAttribute:
+            deletedEdges = dstAttribute.disconnectEdge()
+            # Store the fullNames instead of the actual attribute objects
+            self.deletedEdgeNames = [
+                (edge[0].fullName, edge[1].fullName) for edge in deletedEdges
+            ]
+            return True
         return True
 
     def undoImpl(self) -> bool:

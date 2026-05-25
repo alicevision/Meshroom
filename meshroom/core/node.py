@@ -2490,7 +2490,7 @@ class Node(BaseNode):
             'uid': self._uid,
             'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
-            'outputs': outputs,
+            'outputs': {k: v for k, v in outputs.items() if v is not None},  # filter empty values
         }
 
     def _resetChunks(self):

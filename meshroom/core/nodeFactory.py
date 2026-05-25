@@ -143,10 +143,19 @@ class _NodeCreator:
             if isinstance(attr, desc.PushButtonParam):
                 # PushButtonParam are not serialized has they do not hold a value.
                 return False
+            if isinstance(attr, desc.FlowAttribute):
+                # FlowAttribute inputs are only serialized when connected (as link expressions).
+                # They are optional in the serialized data, so they are handled separately.
+                return False
             return True
 
+        def optionalInput(attr: desc.Attribute) -> bool:
+            """ Filter that includes desc input attributes that may optionally be serialized. """
+            return isinstance(attr, desc.FlowAttribute)
+
         refAttributes = filter(serializedInput, self.nodeDesc.inputs)
-        return self._checkAttributesNamesStrictlyMatch(refAttributes, self.inputs)
+        optionalAttributes = filter(optionalInput, self.nodeDesc.inputs)
+        return self._checkAttributesNamesMatchWithOptional(refAttributes, self.inputs, optionalAttributes)
 
     def _checkOutputAttributesNames(self) -> bool:
         def serializedOutput(attr: desc.Attribute) -> bool:
@@ -154,6 +163,9 @@ class _NodeCreator:
             if attr.isDynamicValue:
                 # Dynamic outputs values are not serialized with the node,
                 # as their value is written in the computed output data.
+                return False
+            if isinstance(attr, desc.FlowAttribute):
+                # FlowAttribute outputs hold no data and are never serialized.
                 return False
             return True
 
@@ -170,6 +182,38 @@ class _NodeCreator:
         refNames = sorted([attr.name for attr in descAttributes])
         attrNames = sorted(attributesDict.keys())
         return refNames == attrNames
+
+    def _checkAttributesNamesMatchWithOptional(
+        self,
+        requiredDescAttributes: Iterable[desc.Attribute],
+        attributesDict: dict[str, Any],
+        optionalDescAttributes: Iterable[desc.Attribute],
+    ) -> bool:
+        """Check that attribute names in 'attributesDict' match the expected description,
+        where 'requiredDescAttributes' must all be present and 'optionalDescAttributes'
+        may optionally be present.
+
+        Args:
+            requiredDescAttributes: Desc attributes that must be serialized.
+            attributesDict: The serialized attribute dict to check against.
+            optionalDescAttributes: Desc attributes that may or may not be serialized.
+
+        Returns:
+            True if all required attributes are present and no unknown attributes exist.
+        """
+        requiredNames = set(attr.name for attr in requiredDescAttributes)
+        optionalNames = set(attr.name for attr in optionalDescAttributes)
+        allowedNames = requiredNames | optionalNames
+        attrNames = set(attributesDict.keys())
+
+        # All required attributes must be present in the serialized data.
+        if not requiredNames <= attrNames:
+            return False
+        # All serialized attribute names must be either required or optional (no unknown attrs).
+        if not attrNames <= allowedNames:
+            return False
+
+        return True
 
     def _checkAttributesCompatibility(
         self, descAttributes: list[desc.Attribute], attributesDict: dict[str, Any]

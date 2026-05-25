@@ -693,3 +693,30 @@ class ColorParam(Param):
         if not isinstance(self.value, str):
             return self.name, ValueTypeErrors.TYPE
         return "", ValueTypeErrors.NONE
+
+
+class FlowAttribute(Attribute):
+    """
+    An Attribute that holds no data but can be connected to create dependencies between nodes.
+    Unlike other attributes, FlowAttribute has no value to save in the graph file.
+    Only connections (edges) to/from FlowAttribute are serialized.
+    """
+    def __init__(self, name, label=None, description=None, advanced=False, enabled=True,
+                 visible=True, exposed=False):
+        super(FlowAttribute, self).__init__(
+            name=name, label=label, description=description,
+            value=None, invalidate=False, commandLineGroup="",
+            advanced=advanced, semantic="", enabled=enabled,
+            visible=visible, exposed=exposed
+        )
+
+    def getInstanceType(self):
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import FlowAttribute
+        return FlowAttribute
+
+    def validateValue(self, value):
+        return None
+
+    def checkValueTypes(self):
+        return "", ValueTypeErrors.NONE

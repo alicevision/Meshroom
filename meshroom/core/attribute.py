@@ -1709,3 +1709,38 @@ class ShapeListAttribute(ListAttribute):
     isVisible = Property(bool, _getVisible, _setVisible, notify=shapeListChanged)
     # Override hasDisplayableShape property.
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
+
+
+class FlowAttribute(Attribute):
+    """
+    An Attribute that holds no data but can be connected to create dependencies between nodes.
+    Unlike other attributes, FlowAttribute has no value to save in the graph file.
+    Only connections (edges) to/from FlowAttribute are serialized.
+    """
+
+    def __init__(self, node, attributeDesc: desc.FlowAttribute, isOutput: bool,
+                 root=None, parent=None):
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+
+    # Override
+    def getSerializedValue(self):
+        if self.isLink:
+            return self._getInputLink().asLinkExpr()
+        return None
+
+    # Override
+    def getDefaultValue(self):
+        return None
+
+    # Override
+    def _isDefault(self):
+        return not self.isLink
+
+    # Override
+    def uid(self):
+        if self.isLink:
+            return super().uid()
+        return hashValue(None)
+
+    # Re-declare Property so the overridden _isDefault method is used
+    isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)

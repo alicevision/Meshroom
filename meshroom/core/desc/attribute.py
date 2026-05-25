@@ -720,7 +720,3 @@ class Flow(Attribute):
 
     def checkValueTypes(self):
         return "", ValueTypeErrors.NONE
-
-
-# Backward-compatibility alias
-FlowAttribute = Flow

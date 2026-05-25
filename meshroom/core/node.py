@@ -1054,14 +1054,13 @@ class BaseNode(BaseObject):
             for key, value in additionalNodeInfo:
                 info[key] = value
         return [{"key": k, "value": v} for k, v in info.items()]
-
-    @Slot(str, result=Attribute)
-    def attribute(self, name):
+    
+    def getAnyAttribute(self, name, internal=False):
+        attrList = self._internalAttributes if internal else self._attributes
         att = None
         # Complex name indicating a GroupAttribute or ListAttribute
         if '[' in name or '.' in name:
             p = self.attributeRE.findall(name)  # Can produce zero-length matches at delimiter positions
-
             for n, idx in p:
                 if not n and not idx:
                     # Empty tuples ('', '') carry no useful information and are just artifacts of how
@@ -1070,7 +1069,7 @@ class BaseNode(BaseObject):
                 elif n:
                     if att is None:
                         # Get root attribute
-                        att = self._attributes.get(n)
+                        att = attrList.get(n) if internal else attrList.get(n)
                     else:
                         # GroupAttribute, the access should be done through the name
                         if not isinstance(att, GroupAttribute):
@@ -1082,14 +1081,16 @@ class BaseNode(BaseObject):
                         raise ValueError(f"Cannot access index '{idx}': {att.fullName} is not a ListAttribute.")
                     att = att.value.at(int(idx))
         else:
-            att = self._attributes.getr(name)
+            att = attrList.getr(name)
         return att
 
     @Slot(str, result=Attribute)
+    def attribute(self, name):
+        return self.getAnyAttribute(name, internal=False)
+
+    @Slot(str, result=Attribute)
     def internalAttribute(self, name):
-        # No group or list attributes for internal attributes
-        # The internal attribute itself can be returned directly
-        return self._internalAttributes.get(name)
+        return self.getAnyAttribute(name, internal=True)
 
     def setInternalAttributeValues(self, values):
         # initialize internal attribute values
@@ -1114,6 +1115,9 @@ class BaseNode(BaseObject):
 
     @Slot(str, result=bool)
     def hasInternalAttribute(self, name):
+        if "[" in name or "." in name:
+            p = self.attributeRE.findall(name)
+            return p[0][0] in self._internalAttributes.keys() or p[0][1] in self._internalAttributes.keys()
         return name in self._internalAttributes.keys()
 
     def _applyExpr(self):

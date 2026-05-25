@@ -1000,8 +1000,6 @@ class ListAttribute(Attribute):
             return self._getInputLink().asLinkExpr()
         return [attr.getSerializedValue() for attr in self._value]
 
-    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
-
     # Override
     def _resolveValue(self):
         """
@@ -1141,7 +1139,7 @@ class ListAttribute(Attribute):
 
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
-    isDefault = Property(bool, lambda self: len(self.value) == 0, notify=Attribute.valueChanged)
+    isDefault = Property(bool, lambda self: self.value is None or len(self.value) == 0, notify=Attribute.valueChanged)
     baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
 
     # Override attribute link properties
@@ -1746,7 +1744,3 @@ class Flow(Attribute):
     # Re-declare the isDefault Property binding so Python's property resolution
     # uses this class's _isDefault override rather than the parent's version.
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
-
-
-# Backward-compatibility alias
-FlowAttribute = Flow

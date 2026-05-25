@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 import logging
-from pathlib import Path
 from typing import Dict, List
 from collections import namedtuple
 
@@ -78,11 +77,12 @@ def getRequestPackages(packagesDelimiter="=="):
     return list(reqPackages)
 
 
-def rezWrapCommand(cmd: str, 
-                   useCurrentContext: bool=False, 
-                   otherRezPkg: List[str] = None, 
-                   additionalEnv: dict=None) -> str:
-    """Wrap command to be runned using rez.
+def rezWrapCommand(cmd: str,
+                   useCurrentContext: bool = False,
+                   otherRezPkg: List[str] = None,
+                   additionalEnv: dict = None) -> str:
+    """
+    Wrap command to be runned using rez.
 
     Args:
         cmd: command to run
@@ -261,7 +261,7 @@ class LocalFarmSubmitter(BaseSubmitter):
         metadata = dict()
         if orderedTask.node:
             metadata = {"nodeUid": orderedTask.node._uid}
-        
+
         if orderedTask.iteration >= 0:
             metadata["iteration"] = orderedTask.iteration
         elif orderedTask.taskType == OrderedTaskType.PREPROCESS:
@@ -271,9 +271,9 @@ class LocalFarmSubmitter(BaseSubmitter):
 
         if orderedTask.taskType == OrderedTaskType.PLACEHOLDER:
             return Task(name=orderedTask.node.name if orderedTask.node else "", command="", metadata=metadata)
-        
+
         cmdArgs = f"--node {orderedTask.node.name} \"{meshroomFile}\" --extern"
-        
+
         if orderedTask.taskType == OrderedTaskType.EXPANDING:
             cmd = self.getExpandWrappedCmd(cmdArgs, self.reqPackages)
             task = Task(name=orderedTask.node.name, command=cmd, metadata=metadata, env=self.jobEnv)
@@ -281,9 +281,9 @@ class LocalFarmSubmitter(BaseSubmitter):
             cmdBin = wrapMeshroomBin("meshroom_compute")
             cmd = f"{cmdBin} {cmdArgs}"
             if orderedTask.taskType == OrderedTaskType.PREPROCESS:
-                cmd += f" --preprocess"
+                cmd += " --preprocess"
             elif orderedTask.taskType == OrderedTaskType.POSTPROCESS:
-                cmd += f" --postprocess"
+                cmd += " --postprocess"
             elif orderedTask.taskType == OrderedTaskType.CHUNK:
                 cmd += f" --iteration {orderedTask.iteration}"
             if not self.disabled_rez:
@@ -315,7 +315,7 @@ class LocalFarmSubmitter(BaseSubmitter):
             deps = [createdTasks.get(t) for t in orderedTask.dependencies]
             for dependency in deps:
                 job.addTaskDependency(task, dependency)
-    
+
         # Submit job
         with LocalFarmClientContext(self.farmPath) as client:
             res = job.submit(client)

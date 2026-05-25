@@ -486,11 +486,18 @@ class RemoveEdgeCommand(GraphCommand):
         super().__init__(graph, parent)
         self.srcAttr = edge.src.fullName
         self.dstAttr = edge.dst.fullName
+        self.isFlow = (edge.dst.name == "flowInput")
         self.deletedEdgeNames = []  # Store the names of deleted edges.
         self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
+    
+    def getAttribute(self, attrName):
+        if self.isFlow:
+            return self.graph.internalAttribute(attrName)
+        else:
+            return self.graph.attribute(attrName)
 
     def redoImpl(self) -> bool:
-        dstAttribute = self.graph.attribute(self.dstAttr) or self.graph.internalAttribute(self.dstAttr)
+        dstAttribute = self.getAttribute(self.dstAttr)
         if dstAttribute:
             deletedEdges = dstAttribute.disconnectEdge()
             # Store the fullNames instead of the actual attribute objects
@@ -504,8 +511,8 @@ class RemoveEdgeCommand(GraphCommand):
         for srcName, dstName in self.deletedEdgeNames:
             # Resolve the attributes from their names at undo time
             # This way for ListAttribute we avoid getting a deleted object
-            srcAttr = self.graph.attribute(srcName)
-            dstAttr = self.graph.attribute(dstName)
+            srcAttr = self.getAttribute(srcName)
+            dstAttr = self.getAttribute(dstName)
             srcAttr.connectTo(dstAttr)
         return True
 

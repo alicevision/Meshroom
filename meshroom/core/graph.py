@@ -605,6 +605,8 @@ class Graph(BaseObject):
             if not withEdges:
                 for _, attr in node.attributes.items():
                     _removeLinkExpressions(attr, skippedEdges)
+                for _, attr in node.internalAttributes.items():
+                    _removeLinkExpressions(attr, skippedEdges)
         return node, skippedEdges
 
     def duplicateNodes(self, srcNodes):
@@ -640,7 +642,11 @@ class Graph(BaseObject):
                 # use the duplicate; otherwise use the original node
                 if edgeSrcNode in duplicates:
                     edgeSrcNode = duplicates.get(edgeSrcNode)[0]
-                self.addEdge(edgeSrcNode.attribute(edgeSrcAttrName), attr)
+                try:
+                    edgeSrcAttr = edgeSrcNode.attribute(edgeSrcAttrName)
+                except KeyError:
+                    edgeSrcAttr = edgeSrcNode.internalAttribute(edgeSrcAttrName)
+                self.addEdge(edgeSrcAttr, attr)
 
         return duplicates
 

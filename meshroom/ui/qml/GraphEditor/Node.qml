@@ -273,8 +273,6 @@ Item {
         const attributes = []
         for (let i = 0; i < node.attributes.count; i++) {
             let attr = node.attributes.at(i)
-            // Flow pins are displayed in the node header, not in the regular attribute sections
-            if (attr.type === "Flow") continue
             if (attr.isOutput == isOutput) {
                 // Add the attribute to the model
                 attributes.push(attr)
@@ -434,7 +432,6 @@ Item {
                                 onPressed: function(mouse) { root.pressed(mouse) }
                                 onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
                             }
-
                         }
 
                         // Node Name

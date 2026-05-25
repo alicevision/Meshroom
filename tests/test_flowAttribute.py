@@ -8,7 +8,6 @@ import pytest
 
 from meshroom.core import desc
 from meshroom.core.graph import Graph
-from meshroom.core.node import CompatibilityIssue
 
 from .utils import registeredNodeTypes
 

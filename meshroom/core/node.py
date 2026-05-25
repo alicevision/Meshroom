@@ -1119,6 +1119,8 @@ class BaseNode(BaseObject):
     def _applyExpr(self):
         for attr in self._attributes:
             attr._applyExpr()
+        for attr in self._internalAttributes:
+            attr._applyExpr()
 
     @property
     def nodeType(self):
@@ -2414,18 +2416,18 @@ class Node(BaseNode):
             self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
                                                           isOutput=False, node=self))
 
-        # Add internal flow input/output attributes to _attributes so they appear as connection pins.
+        # Add internal flow input/output attributes to _internalAttributes.
         # Skip any that are already defined by the node itself (in inputs/outputs).
         existingAttrNames = set(self._attributes.keys())
         for attrDesc in self.nodeDesc.internalFlowInputs:
             if attrDesc.name not in existingAttrNames:
-                self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
-                                                      isOutput=False, node=self))
+                self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
+                                                              isOutput=False, node=self))
 
         for attrDesc in self.nodeDesc.internalFlowOutputs:
             if attrDesc.name not in existingAttrNames:
-                self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
-                                                      isOutput=True, node=self))
+                self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
+                                                              isOutput=True, node=self))
 
         # Declare events for specific output attributes
         for attr in self._attributes:
@@ -2503,7 +2505,7 @@ class Node(BaseNode):
             'uid': self._uid,
             'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
-            'outputs': {k: v for k, v in outputs.items() if v is not None},  # filter empty values
+            'outputs': outputs,
         }
 
     def _resetChunks(self):

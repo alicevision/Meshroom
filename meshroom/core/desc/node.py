@@ -17,7 +17,7 @@ from meshroom.core import cgroup
 from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
-from .attribute import Attribute, ChoiceParam, ColorParam, FlowAttribute, IntParam, StringParam
+from .attribute import Attribute, ChoiceParam, ColorParam, Flow, IntParam, StringParam
 
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
@@ -150,7 +150,7 @@ class InternalAttributesFactory:
     ]
 
     FLOW_IN = [
-        FlowAttribute(
+        Flow(
             name="flowIn",
             label="Flow In",
             description="Incoming flow connection to express a dependency from another node.",
@@ -159,7 +159,7 @@ class InternalAttributesFactory:
     ]
 
     FLOW_OUT = [
-        FlowAttribute(
+        Flow(
             name="flowOut",
             label="Flow Out",
             description="Outgoing flow connection to express a dependency on another node.",
@@ -181,10 +181,10 @@ class InternalAttributesFactory:
 
     @classmethod
     def getInternalFlowInputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
-        """Return the list of internal input FlowAttributes for a given node type.
+        """Return the list of internal input Flow attributes for a given node type.
 
-        These are added as regular input attributes (not internal attributes) so
-        that they appear as connection pins in the graph editor.
+        These are added to internal attributes so they appear as connection pins in
+        the graph editor header while remaining separate from the regular attribute list.
         """
         if mrNodeType == MrNodeType.BACKDROP:
             return []
@@ -192,10 +192,10 @@ class InternalAttributesFactory:
 
     @classmethod
     def getInternalFlowOutputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
-        """Return the list of internal output FlowAttributes for a given node type.
+        """Return the list of internal output Flow attributes for a given node type.
 
-        These are added as regular output attributes (not internal attributes) so
-        that they appear as connection pins in the graph editor.
+        These are added to internal attributes so they appear as connection pins in
+        the graph editor header while remaining separate from the regular attribute list.
         """
         if mrNodeType == MrNodeType.BACKDROP:
             return []

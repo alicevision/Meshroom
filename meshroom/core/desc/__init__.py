@@ -4,6 +4,7 @@ from .attribute import (
     ChoiceParam,
     ColorParam,
     File,
+    Flow,
     FlowAttribute,
     FloatParam,
     GroupAttribute,

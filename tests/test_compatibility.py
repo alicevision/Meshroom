@@ -266,9 +266,12 @@ def test_description_conflict():
             assert isinstance(upgradedNode, Node) and \
                 isinstance(upgradedNode.nodeDesc, SampleNodeV2)
 
-            assert list(upgradedNode.attributes.keys()) == ["in", "paramA", "output", "flowIn", "flowOut"]
+            assert list(upgradedNode.attributes.keys()) == ["in", "paramA", "output"]
             assert not hasattr(upgradedNode, "input")
             assert hasattr(upgradedNode, "in")
+            # Flow attributes are now in internalAttributes
+            assert upgradedNode.hasInternalAttribute("flowIn")
+            assert upgradedNode.hasInternalAttribute("flowOut")
             # Check UID has changed (not the same set of attributes)
             assert upgradedNode.internalFolder != srcNode.internalFolder
 

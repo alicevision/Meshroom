@@ -295,7 +295,8 @@ class Attribute(BaseObject):
             node = graph.node(linkNodeName)
             if node is None:
                 raise InvalidEdgeError(self.fullName, link, "Source node does not exist.")
-            attr = node.attribute(linkAttrName)
+            # Search in regular attributes first, then internal attributes (e.g. Flow outputs)
+            attr = node.attribute(linkAttrName) if node.hasAttribute(linkAttrName) else node.internalAttribute(linkAttrName)
             if attr is None:
                 raise InvalidEdgeError(self.fullName, link, "Source attribute does not exist.")
             attr.connectTo(self)
@@ -1711,14 +1712,14 @@ class ShapeListAttribute(ListAttribute):
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
 
 
-class FlowAttribute(Attribute):
+class Flow(Attribute):
     """
     An Attribute that holds no data but can be connected to create dependencies between nodes.
-    Unlike other attributes, FlowAttribute has no value to save in the graph file.
-    Only connections (edges) to/from FlowAttribute are serialized.
+    Unlike other attributes, Flow has no value to save in the graph file.
+    Only connections (edges) to/from Flow are serialized.
     """
 
-    def __init__(self, node, attributeDesc: desc.FlowAttribute, isOutput: bool,
+    def __init__(self, node, attributeDesc: desc.Flow, isOutput: bool,
                  root=None, parent=None):
         super().__init__(node, attributeDesc, isOutput, root, parent)
 
@@ -1745,3 +1746,7 @@ class FlowAttribute(Attribute):
     # Re-declare the isDefault Property binding so Python's property resolution
     # uses this class's _isDefault override rather than the parent's version.
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+
+
+# Backward-compatibility alias
+FlowAttribute = Flow

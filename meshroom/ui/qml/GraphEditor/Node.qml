@@ -273,8 +273,8 @@ Item {
         const attributes = []
         for (let i = 0; i < node.attributes.count; i++) {
             let attr = node.attributes.at(i)
-            // FlowAttribute pins are displayed in the node header, not in the regular attribute sections
-            if (attr.type === "FlowAttribute") continue
+            // Flow pins are displayed in the node header, not in the regular attribute sections
+            if (attr.type === "Flow") continue
             if (attr.isOutput == isOutput) {
                 // Add the attribute to the model
                 attributes.push(attr)
@@ -411,12 +411,12 @@ Item {
                         // flowIn pin - left side of header
                         Loader {
                             id: flowInLoader
-                            active: node && node.hasAttribute("flowIn")
+                            active: node && node.hasInternalAttribute("flowIn")
                             Layout.alignment: Qt.AlignVCenter
 
                             sourceComponent: AttributePin {
                                 id: flowInHeaderPin
-                                attribute: node.attribute("flowIn")
+                                attribute: node.internalAttribute("flowIn")
                                 nodeItem: root
                                 compact: true
                                 displayOutputPinForInput: false
@@ -602,12 +602,12 @@ Item {
                         // flowOut pin - right side of header
                         Loader {
                             id: flowOutLoader
-                            active: node && node.hasAttribute("flowOut")
+                            active: node && node.hasInternalAttribute("flowOut")
                             Layout.alignment: Qt.AlignVCenter
 
                             sourceComponent: AttributePin {
                                 id: flowOutHeaderPin
-                                attribute: node.attribute("flowOut")
+                                attribute: node.internalAttribute("flowOut")
                                 nodeItem: root
                                 compact: true
 

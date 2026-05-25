@@ -281,7 +281,7 @@ RowLayout {
 
         sourceComponent: {
             // PushButtonParam always has value == undefined, so it needs to be excluded from this check
-            if (attribute.type != "PushButtonParam" && attribute.type != "FlowAttribute" && !attribute.keyable && attribute.value === undefined) {
+            if (attribute.type != "PushButtonParam" && attribute.type != "Flow" && !attribute.keyable && attribute.value === undefined) {
                 return notComputedComponent
             }
             switch (attribute.type) {
@@ -306,8 +306,8 @@ RowLayout {
                     return textFieldComponent
                 case "ColorParam":
                     return colorComponent
-                case "FlowAttribute":
-                    return flowAttributeComponent
+                case "Flow":
+                    return flowComponent
                 default:
                     return textFieldComponent
             }
@@ -342,8 +342,8 @@ RowLayout {
         }
 
         Component {
-            id: flowAttributeComponent
-            // FlowAttribute has no data to display; connection state is shown via the attribute pin
+            id: flowComponent
+            // Flow has no data to display; connection state is shown via the attribute pin
             Item {}
         }
 

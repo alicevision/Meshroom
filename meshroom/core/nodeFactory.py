@@ -130,13 +130,12 @@ class _NodeCreator:
         )
 
     def _checkAttributesAreCompatibleWithDescription(self) -> bool:
-        # Combine regular inputs with internal flow inputs for compatibility checking,
-        # as internal flow inputs (when connected) appear in the 'inputs' section of the file.
-        allInputDescriptions = list(self.nodeDesc.inputs) + list(self.nodeDesc.internalFlowInputs)
+        # Combine regular internal attributes with internal flow inputs for compatibility checking,
+        # as internal flow inputs (when connected) appear in the 'internalInputs' section of the file.
+        allInternalDescriptions = list(self.nodeDesc.internalInputs) + list(self.nodeDesc.internalFlowInputs)
         return (
-            self._checkAttributesCompatibility(allInputDescriptions, self.inputs)
-            and self._checkAttributesCompatibility(self.nodeDesc.internalInputs,
-                                                   self.internalInputs)
+            self._checkAttributesCompatibility(self.nodeDesc.inputs, self.inputs)
+            and self._checkAttributesCompatibility(allInternalDescriptions, self.internalInputs)
             and self._checkAttributesCompatibility(self.nodeDesc.outputs, self.outputs)
         )
 
@@ -146,24 +145,21 @@ class _NodeCreator:
             if isinstance(attr, desc.PushButtonParam):
                 # PushButtonParam are not serialized has they do not hold a value.
                 return False
-            if isinstance(attr, desc.FlowAttribute):
-                # FlowAttribute inputs are only serialized when connected (as link expressions).
+            if isinstance(attr, desc.Flow):
+                # Flow inputs are only serialized when connected (as link expressions).
                 # They are optional in the serialized data, so they are handled separately.
                 return False
             return True
 
         def optionalInput(attr: desc.Attribute) -> bool:
             """ Returns True if the attribute may optionally be serialized (present or absent in file). """
-            return isinstance(attr, desc.FlowAttribute)
+            return isinstance(attr, desc.Flow)
 
         refAttributes = filter(serializedInput, self.nodeDesc.inputs)
-        # FlowAttributes from both regular inputs and internalFlowInputs may appear in 'inputs'
-        # (as link expressions when connected), so treat them all as optional.
-        allFlowAttrs = (
-            list(filter(optionalInput, self.nodeDesc.inputs))
-            + list(self.nodeDesc.internalFlowInputs)
-        )
-        return self._checkAttributesNamesMatchWithOptional(refAttributes, self.inputs, allFlowAttrs)
+        # User-defined Flow inputs in nodeDesc.inputs are optional in the 'inputs' section.
+        # Internal flow inputs (internalFlowInputs) now go in 'internalInputs', not 'inputs'.
+        optionalFlowAttrs = list(filter(optionalInput, self.nodeDesc.inputs))
+        return self._checkAttributesNamesMatchWithOptional(refAttributes, self.inputs, optionalFlowAttrs)
 
     def _checkOutputAttributesNames(self) -> bool:
         def serializedOutput(attr: desc.Attribute) -> bool:
@@ -172,8 +168,8 @@ class _NodeCreator:
                 # Dynamic outputs values are not serialized with the node,
                 # as their value is written in the computed output data.
                 return False
-            if isinstance(attr, desc.FlowAttribute):
-                # FlowAttribute outputs hold no data and are never serialized.
+            if isinstance(attr, desc.Flow):
+                # Flow outputs hold no data and are never serialized.
                 return False
             return True
 
@@ -181,8 +177,15 @@ class _NodeCreator:
         return self._checkAttributesNamesStrictlyMatch(refAttributes, self.outputs)
 
     def _checkInternalAttributesNames(self) -> bool:
+        # Required: all invalidating internal attributes must be present.
         invalidatingDescAttributes = [attr.name for attr in self.nodeDesc.internalInputs if attr.invalidate]
-        return all(attr in self.internalInputs.keys() for attr in invalidatingDescAttributes)
+        if not all(attr in self.internalInputs.keys() for attr in invalidatingDescAttributes):
+            return False
+        # Optional: internal Flow attributes may optionally appear in internalInputs
+        # (as link expressions when connected).
+        allInternalDescriptions = list(self.nodeDesc.internalInputs) + list(self.nodeDesc.internalFlowInputs)
+        allowedNames = {attr.name for attr in allInternalDescriptions}
+        return all(k in allowedNames for k in self.internalInputs.keys())
 
     def _checkAttributesNamesStrictlyMatch(
         self, descAttributes: Iterable[desc.Attribute], attributesDict: dict[str, Any]

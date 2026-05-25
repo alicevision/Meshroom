@@ -161,8 +161,9 @@ class InternalAttributesFactory:
                 label="Flow Input",
                 description="Incoming flow connection to express a dependency from another node.",
                 exposed=True,
-            )
-        ),
+            ),
+            uidIgnoreValueIfEmpty=True
+        )
     ]
 
     FLOW_OUT = [

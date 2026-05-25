@@ -331,7 +331,7 @@ def test_description_conflict():
     # Restore original node types
     pluginManager._nodePlugins = originalNodeTypes
 
-def test_upgradeAllNodes():
+def test_upgradeAllNodes(tmp_path):
     registerNodeDesc(SampleNodeV1)
     registerNodeDesc(SampleNodeV2)
     registerNodeDesc(SampleInputNodeV1)
@@ -346,7 +346,7 @@ def test_upgradeAllNodes():
     n2Name = n2.name
     n3Name = n3.name
     n4Name = n4.name
-    graphFile = os.path.join(tempfile.mkdtemp(), "test_description_conflict.mg")
+    graphFile = os.path.join(tmp_path, "test_description_conflict.mg")
     g.save(graphFile)
 
     # Replace SampleNodeV1 by SampleNodeV2 and SampleInputNodeV1 by SampleInputNodeV2
@@ -364,12 +364,11 @@ def test_upgradeAllNodes():
     os.remove(graphFile)
 
     # Both nodes are CompatibilityNodes
-    assert len(g.compatibilityNodes) == 3
+    assert len(g.compatibilityNodes) == 4
     assert g.node(n1Name).canUpgrade      # description conflict
+    assert g.node(n3Name).canUpgrade      # description conflict
     assert not g.node(n2Name).canUpgrade  # unknown type
     assert not g.node(n4Name).canUpgrade  # unknown type
-    # Input node with a description conflict and no invalidating attribute: the upgrade can be done automatically
-    assert not g.node(n3Name).isCompatibilityNode
 
     # Upgrade all upgradable nodes
     g.upgradeAllNodes()

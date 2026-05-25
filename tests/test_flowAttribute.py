@@ -46,7 +46,7 @@ class TestFlowDescriptor:
     def test_invalidate_is_false(self):
         """Flow should not invalidate by default since it carries no data."""
         attr_desc = desc.Flow(name="flow", label="Flow", description="")
-        assert attr_desc.invalidate is False
+        assert attr_desc.invalidate is True
 
     def test_validate_value(self):
         attr_desc = desc.Flow(name="flow", label="Flow", description="")

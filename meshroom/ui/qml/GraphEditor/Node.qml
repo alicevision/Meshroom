@@ -273,6 +273,8 @@ Item {
         const attributes = []
         for (let i = 0; i < node.attributes.count; i++) {
             let attr = node.attributes.at(i)
+            // FlowAttribute pins are displayed in the node header, not in the regular attribute sections
+            if (attr.type === "FlowAttribute") continue
             if (attr.isOutput == isOutput) {
                 // Add the attribute to the model
                 attributes.push(attr)
@@ -405,6 +407,33 @@ Item {
                         id: headerLayout
                         width: parent.width
                         spacing: 0
+
+                        // flowIn pin - left side of header
+                        Loader {
+                            id: flowInLoader
+                            active: node && node.hasAttribute("flowIn")
+                            Layout.alignment: Qt.AlignVCenter
+
+                            sourceComponent: AttributePin {
+                                id: flowInHeaderPin
+                                attribute: node.attribute("flowIn")
+                                nodeItem: root
+                                compact: true
+                                displayOutputPinForInput: false
+
+                                // globalX/Y: root is in the draggable coordinate space.
+                                // All intermediate items (mouseArea, nodeContent, body, header, headerLayout)
+                                // are at position (0,0), so only the Loader's position within the RowLayout matters.
+                                property real globalX: root.x + flowInLoader.x
+                                property real globalY: root.y + flowInLoader.y
+
+                                Component.onCompleted: attributePinCreated(attribute, flowInHeaderPin)
+                                Component.onDestruction: attributePinDeleted(attribute, flowInHeaderPin)
+
+                                onPressed: function(mouse) { root.pressed(mouse) }
+                                onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
+                            }
+                        }
 
                         // Node Name
                         Label {
@@ -567,6 +596,32 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                 }
+                            }
+                        }
+
+                        // flowOut pin - right side of header
+                        Loader {
+                            id: flowOutLoader
+                            active: node && node.hasAttribute("flowOut")
+                            Layout.alignment: Qt.AlignVCenter
+
+                            sourceComponent: AttributePin {
+                                id: flowOutHeaderPin
+                                attribute: node.attribute("flowOut")
+                                nodeItem: root
+                                compact: true
+
+                                // globalX/Y: root is in the draggable coordinate space.
+                                // All intermediate items (mouseArea, nodeContent, body, header, headerLayout)
+                                // are at position (0,0), so only the Loader's position within the RowLayout matters.
+                                property real globalX: root.x + flowOutLoader.x
+                                property real globalY: root.y + flowOutLoader.y
+
+                                Component.onCompleted: attributePinCreated(attribute, flowOutHeaderPin)
+                                Component.onDestruction: attributePinDeleted(attribute, flowOutHeaderPin)
+
+                                onPressed: function(mouse) { root.pressed(mouse) }
+                                onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
                             }
                         }
                     }

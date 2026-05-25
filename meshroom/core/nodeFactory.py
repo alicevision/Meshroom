@@ -150,7 +150,7 @@ class _NodeCreator:
             return True
 
         def optionalInput(attr: desc.Attribute) -> bool:
-            """ Filter that includes desc input attributes that may optionally be serialized. """
+            """ Returns True if the attribute may optionally be serialized (present or absent in file). """
             return isinstance(attr, desc.FlowAttribute)
 
         refAttributes = filter(serializedInput, self.nodeDesc.inputs)
@@ -206,7 +206,7 @@ class _NodeCreator:
         allowedNames = requiredNames | optionalNames
         attrNames = set(attributesDict.keys())
 
-        # All required attributes must be present in the serialized data.
+        # All required attributes must be present in the serialized data (subset check).
         if not requiredNames <= attrNames:
             return False
         # All serialized attribute names must be either required or optional (no unknown attrs).

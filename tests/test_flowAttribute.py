@@ -220,7 +220,7 @@ class TestFlowAttributeSerialization:
             graph = Graph("")
             graph.addNewNode("NodeWithFlowAttributes")
 
-            with tempfile.NamedTemporaryFile(suffix=".mg", delete=False, mode='w') as tmp:
+            with tempfile.NamedTemporaryFile(suffix=".mg", delete=False) as tmp:
                 tmpPath = tmp.name
 
             try:

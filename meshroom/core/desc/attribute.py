@@ -704,7 +704,7 @@ class Flow(Attribute):
     def __init__(self, name, label=None, description=None, advanced=False, enabled=True,
                  visible=True, exposed=False):
         super().__init__(name=name, label=label, description=description,
-                         value=None, invalidate=False, commandLineGroup="",
+                         value=None, invalidate=True, commandLineGroup="",
                          advanced=advanced, semantic="", enabled=enabled,
                          visible=visible, exposed=exposed)
 

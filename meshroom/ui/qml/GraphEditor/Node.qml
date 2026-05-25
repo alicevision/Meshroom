@@ -739,8 +739,8 @@ Item {
                                         }
 
                                         readOnly: Boolean(root.readOnly || modelData.isReadOnly)
-                                        Component.onCompleted: function(attribute, inPin) { attributePinCreated(attribute, inPin) }
-                                        Component.onDestruction: function(attribute, inPin) { attributePinDeleted(attribute, inPin) }
+                                        Component.onCompleted: attributePinCreated(attribute, inPin)
+                                        Component.onDestruction: attributePinDeleted(attribute, inPin)
 
                                         onPressed: function(mouse) {
                                             root.pressed(mouse)
@@ -849,8 +849,8 @@ Item {
                                             visible: (height == childrenRect.height)
 
                                             readOnly: Boolean(root.readOnly || modelData.isReadOnly)
-                                            Component.onCompleted: function(attribute, inParamsPin) { attributePinCreated(attribute, inParamsPin) }
-                                            Component.onDestruction: function(attribute, inParamsPin) { attributePinDeleted(attribute, inParamsPin) }
+                                            Component.onCompleted: attributePinCreated(attribute, inParamsPin)
+                                            Component.onDestruction: attributePinDeleted(attribute, inParamsPin)
 
                                             onPressed: function(mouse) {
                                                 root.pressed(mouse)

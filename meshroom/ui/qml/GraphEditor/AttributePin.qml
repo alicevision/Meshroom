@@ -267,7 +267,7 @@ RowLayout {
             // elements upon their first display without waiting for a mouse interaction
             property bool parentNotReady: nameContainer.width == 0
 
-            property bool hovered: parentNotReady || (inputConnectMA.containsMouse ||
+            property bool hovered: (nameLabel.visible && parentNotReady) || (inputConnectMA.containsMouse ||
                                                       inputConnectMA.drag.active ||
                                                       inputDropArea.containsDrag ||
                                                       outputConnectMA.containsMouse ||

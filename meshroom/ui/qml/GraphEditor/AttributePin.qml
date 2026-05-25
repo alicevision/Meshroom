@@ -43,6 +43,7 @@ RowLayout {
     objectName: attribute ? attribute.name + "." : ""
     layoutDirection: Qt.LeftToRight
     spacing: 3
+    height: attribute && attribute.isOutput ? outputAnchor.height : inputAnchor.height
 
     ToolTip {
         text: attribute.fullName + ": " + attribute.type

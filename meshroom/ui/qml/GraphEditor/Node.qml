@@ -408,18 +408,18 @@ Item {
                         width: parent.width
                         spacing: 0
 
-                        // flowIn pin - left side of header
                         Loader {
                             id: flowInLoader
-                            active: node && node.hasInternalAttribute("flowIn")
-                            Layout.alignment: Qt.AlignVCenter
+                            Layout.leftMargin: 1
 
+                           // flowIn pin - left side of header
                             sourceComponent: AttributePin {
                                 id: flowInHeaderPin
                                 attribute: node.internalAttribute("flowIn")
                                 nodeItem: root
                                 compact: true
                                 displayOutputPinForInput: false
+                                Layout.alignment: Qt.AlignVCenter
 
                                 // globalX/Y: root is in the draggable coordinate space.
                                 // All intermediate items (mouseArea, nodeContent, body, header, headerLayout)
@@ -433,6 +433,7 @@ Item {
                                 onPressed: function(mouse) { root.pressed(mouse) }
                                 onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
                             }
+
                         }
 
                         // Node Name
@@ -603,6 +604,7 @@ Item {
                         Loader {
                             id: flowOutLoader
                             active: node && node.hasInternalAttribute("flowOut")
+                            Layout.rightMargin: 1
                             Layout.alignment: Qt.AlignVCenter
 
                             sourceComponent: AttributePin {

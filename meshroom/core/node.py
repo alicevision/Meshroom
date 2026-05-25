@@ -2494,7 +2494,12 @@ class Node(BaseNode):
 
     def toDict(self):
         inputs = {k: v.getSerializedValue() for k, v in self._attributes.objects.items() if v.isInput}
-        internalInputs = {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items()}
+        # Special case for internal inputs : flowInputs is only serialized if it is not the default value
+        internalInputs = {}
+        for k, v in self._internalAttributes.objects.items():
+            if k == "flowInputs" and v.isDefault:
+                continue
+            internalInputs[k] = v.getSerializedValue()
         outputs = ({k: v.getSerializedValue() for k, v in self._attributes.objects.items()
                     if v.isOutput and not v.desc.isDynamicValue})
 

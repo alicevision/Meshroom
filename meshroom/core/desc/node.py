@@ -17,7 +17,7 @@ from meshroom.core import cgroup
 from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
-from .attribute import Attribute, ChoiceParam, ColorParam, Flow, IntParam, StringParam
+from .attribute import Attribute, ChoiceParam, ColorParam, Flow, IntParam, StringParam, ListAttribute
 
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
@@ -150,20 +150,28 @@ class InternalAttributesFactory:
     ]
 
     FLOW_IN = [
-        Flow(
-            name="flowIn",
-            label="Flow In",
-            description="Incoming flow connection to express a dependency from another node.",
+        
+        ListAttribute(
+            name="flowInputs",
+            label="Flow Inputs",
+            description="Incoming flow connections to express node dependencies.",
             exposed=True,
+            commandLineGroup="",
+            elementDesc=Flow(
+                name="flowInput",
+                label="Flow Input",
+                description="Incoming flow connection to express a dependency from another node.",
+                exposed=True,
+            )
         ),
     ]
 
     FLOW_OUT = [
         Flow(
-            name="flowOut",
-            label="Flow Out",
+            name="flowOutput",
+            label="Flow Output",
             description="Outgoing flow connection to express a dependency on another node.",
-        ),
+        )
     ]
 
     @classmethod

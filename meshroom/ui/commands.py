@@ -515,13 +515,20 @@ class ListAttributeAppendCommand(GraphCommand):
         super().__init__(graph, parent)
         assert isinstance(listAttribute, ListAttribute)
         self.attrName = listAttribute.fullName
+        self.isFlowInputs = (listAttribute.desc.name == "flowInputs")
         self.index = None
         self.count = 1
         self.value = value if value else None
         self.setText(f"Append to {self.attrName}")
+    
+    def getAttribute(self):
+        if self.isFlowInputs:
+            return self.graph.internalAttribute(self.attrName)
+        else:
+            return self.graph.attribute(self.attrName)
 
     def redoImpl(self):
-        listAttribute = self.graph.attribute(self.attrName)
+        listAttribute = self.getAttribute()
         self.index = len(listAttribute)
         if isinstance(self.value, list):
             listAttribute.extend(self.value)
@@ -531,7 +538,7 @@ class ListAttributeAppendCommand(GraphCommand):
         return True
 
     def undoImpl(self):
-        listAttribute = self.graph.attribute(self.attrName)
+        listAttribute = self.getAttribute()
         listAttribute.remove(self.index, self.count)
 
 
@@ -539,19 +546,26 @@ class ListAttributeRemoveCommand(GraphCommand):
     def __init__(self, graph, attribute, parent=None):
         super().__init__(graph, parent)
         listAttribute = attribute.root
+        self.isFlowInputs = (listAttribute.desc.name == "flowInputs")
         assert isinstance(listAttribute, ListAttribute)
         self.listAttrName = listAttribute.fullName
         self.index = listAttribute.index(attribute)
         self.value = attribute.getSerializedValue()
         self.setText(f"Remove {attribute.fullName}")
+    
+    def getAttribute(self):
+        if self.isFlowInputs:
+            return self.graph.internalAttribute(self.listAttrName)
+        else:
+            return self.graph.attribute(self.listAttrName)
 
     def redoImpl(self):
-        listAttribute = self.graph.attribute(self.listAttrName)
+        listAttribute = self.getAttribute()
         listAttribute.remove(self.index)
         return True
 
     def undoImpl(self):
-        listAttribute = self.graph.attribute(self.listAttrName)
+        listAttribute = self.getAttribute()
         listAttribute.insert(self.index, self.value)
 
 

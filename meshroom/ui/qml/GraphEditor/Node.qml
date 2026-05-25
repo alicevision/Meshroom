@@ -409,13 +409,14 @@ Item {
                         spacing: 0
 
                         Loader {
-                            id: flowInLoader
+                            id: flowInputsLoader
+                            active: node && node.hasInternalAttribute("flowInputs")
                             Layout.leftMargin: 1
 
-                           // flowIn pin - left side of header
+                           // flowInputs pin - left side of header
                             sourceComponent: AttributePin {
-                                id: flowInHeaderPin
-                                attribute: node.internalAttribute("flowIn")
+                                id: flowInputsHeaderPin
+                                attribute: node.internalAttribute("flowInputs")
                                 nodeItem: root
                                 compact: true
                                 displayOutputPinForInput: false
@@ -424,11 +425,11 @@ Item {
                                 // globalX/Y: root is in the draggable coordinate space.
                                 // All intermediate items (mouseArea, nodeContent, body, header, headerLayout)
                                 // are at position (0,0), so only the Loader's position within the RowLayout matters.
-                                property real globalX: root.x + flowInLoader.x
-                                property real globalY: root.y + flowInLoader.y
+                                property real globalX: root.x + flowInputsLoader.x
+                                property real globalY: root.y + flowInputsLoader.y
 
-                                Component.onCompleted: attributePinCreated(attribute, flowInHeaderPin)
-                                Component.onDestruction: attributePinDeleted(attribute, flowInHeaderPin)
+                                Component.onCompleted: attributePinCreated(attribute, flowInputsHeaderPin)
+                                Component.onDestruction: attributePinDeleted(attribute, flowInputsHeaderPin)
 
                                 onPressed: function(mouse) { root.pressed(mouse) }
                                 onEdgeAboutToBeRemoved: function(input) { root.edgeAboutToBeRemoved(input) }
@@ -603,13 +604,13 @@ Item {
                         // flowOut pin - right side of header
                         Loader {
                             id: flowOutLoader
-                            active: node && node.hasInternalAttribute("flowOut")
+                            active: node && node.hasInternalAttribute("flowOutput")
                             Layout.rightMargin: 1
                             Layout.alignment: Qt.AlignVCenter
 
                             sourceComponent: AttributePin {
                                 id: flowOutHeaderPin
-                                attribute: node.internalAttribute("flowOut")
+                                attribute: node.internalAttribute("flowOutput")
                                 nodeItem: root
                                 compact: true
 

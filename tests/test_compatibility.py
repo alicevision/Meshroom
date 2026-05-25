@@ -270,8 +270,8 @@ def test_description_conflict():
             assert not hasattr(upgradedNode, "input")
             assert hasattr(upgradedNode, "in")
             # Flow attributes are now in internalAttributes
-            assert upgradedNode.hasInternalAttribute("flowIn")
-            assert upgradedNode.hasInternalAttribute("flowOut")
+            assert upgradedNode.hasInternalAttribute("flowInputs")
+            assert upgradedNode.hasInternalAttribute("flowOutput")
             # Check UID has changed (not the same set of attributes)
             assert upgradedNode.internalFolder != srcNode.internalFolder
 

@@ -2414,6 +2414,19 @@ class Node(BaseNode):
             self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
                                                           isOutput=False, node=self))
 
+        # Add internal flow input/output attributes to _attributes so they appear as connection pins.
+        # Skip any that are already defined by the node itself (in inputs/outputs).
+        existingAttrNames = set(self._attributes.keys())
+        for attrDesc in self.nodeDesc.internalFlowInputs:
+            if attrDesc.name not in existingAttrNames:
+                self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
+                                                      isOutput=False, node=self))
+
+        for attrDesc in self.nodeDesc.internalFlowOutputs:
+            if attrDesc.name not in existingAttrNames:
+                self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
+                                                      isOutput=True, node=self))
+
         # Declare events for specific output attributes
         for attr in self._attributes:
             if attr.isOutput and attr.desc.semantic == "image":

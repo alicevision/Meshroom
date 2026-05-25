@@ -17,7 +17,7 @@ from meshroom.core import cgroup
 from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
-from .attribute import Attribute, ChoiceParam, ColorParam, IntParam, StringParam
+from .attribute import Attribute, ChoiceParam, ColorParam, FlowAttribute, IntParam, StringParam
 
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
@@ -149,6 +149,23 @@ class InternalAttributesFactory:
         ),
     ]
 
+    FLOW_IN = [
+        FlowAttribute(
+            name="flowIn",
+            label="Flow In",
+            description="Incoming flow connection to express a dependency from another node.",
+            exposed=True,
+        ),
+    ]
+
+    FLOW_OUT = [
+        FlowAttribute(
+            name="flowOut",
+            label="Flow Out",
+            description="Outgoing flow connection to express a dependency on another node.",
+        ),
+    ]
+
     @classmethod
     def getInternalAttributes(cls, mrNodeType: MrNodeType) -> list[Attribute]:
         paramMap = {
@@ -162,6 +179,28 @@ class InternalAttributesFactory:
 
         return paramMap.get(mrNodeType)
 
+    @classmethod
+    def getInternalFlowInputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
+        """Return the list of internal input FlowAttributes for a given node type.
+
+        These are added as regular input attributes (not internal attributes) so
+        that they appear as connection pins in the graph editor.
+        """
+        if mrNodeType == MrNodeType.BACKDROP:
+            return []
+        return cls.FLOW_IN
+
+    @classmethod
+    def getInternalFlowOutputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
+        """Return the list of internal output FlowAttributes for a given node type.
+
+        These are added as regular output attributes (not internal attributes) so
+        that they appear as connection pins in the graph editor.
+        """
+        if mrNodeType == MrNodeType.BACKDROP:
+            return []
+        return cls.FLOW_OUT
+
 
 class BaseNode(object):
     """
@@ -174,6 +213,8 @@ class BaseNode(object):
     _mrNodeType: MrNodeType = MrNodeType.BASENODE
 
     internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+    internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
+    internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
 
     inputs = []
     outputs = []
@@ -405,6 +446,8 @@ class InputNode(BaseNode):
     """
     _mrNodeType: MrNodeType = MrNodeType.INPUT
     internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+    internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
+    internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
 
     def __init__(self):
         super(InputNode, self).__init__()
@@ -424,6 +467,8 @@ class BackdropNode(BaseNode):
     """
     _mrNodeType: MrNodeType = MrNodeType.BACKDROP
     internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+    internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
+    internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
 
     def __init__(self):
         super(BackdropNode, self).__init__()

@@ -1,4 +1,4 @@
-"""Tests for the FlowAttribute type."""
+"""Tests for the FlowAttribute type and automatic internal flow attributes."""
 
 import json
 import tempfile
@@ -13,25 +13,23 @@ from meshroom.core.node import CompatibilityIssue
 from .utils import registeredNodeTypes
 
 
-class NodeWithFlowAttributes(desc.Node):
-    """A test node with FlowAttribute inputs and outputs."""
+class SimpleNode(desc.Node):
+    """A basic test node with no manually-defined flow attributes."""
     inputs = [
-        desc.FlowAttribute(name="flowIn", label="Flow In", description="Flow input"),
+        desc.File(name="input", label="Input", description="", value=""),
     ]
     outputs = [
-        desc.FlowAttribute(name="flowOut", label="Flow Out", description="Flow output"),
+        desc.File(name="output", label="Output", description="", value=""),
     ]
 
 
 class NodeWithMixedAttributes(desc.Node):
-    """A test node with both flow and regular attributes."""
+    """A test node with regular attributes (gets flow attrs automatically)."""
     inputs = [
         desc.File(name="input", label="Input", description="", value=""),
-        desc.FlowAttribute(name="flowIn", label="Flow In", description=""),
     ]
     outputs = [
         desc.File(name="output", label="Output", description="", value=""),
-        desc.FlowAttribute(name="flowOut", label="Flow Out", description=""),
     ]
 
 
@@ -64,42 +62,56 @@ class TestFlowAttributeDescriptor:
         assert error == ValueTypeErrors.NONE
 
 
-class TestFlowAttributeInstance:
-    """Tests for FlowAttribute instance behavior in a graph."""
+class TestAutomaticFlowAttributes:
+    """Tests verifying that every node automatically receives flowIn and flowOut."""
 
-    def test_create_node_with_flow_attributes(self):
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+    def test_every_node_has_flow_attributes(self):
+        """Every node should automatically have flowIn (input) and flowOut (output)."""
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            node = graph.addNewNode("NodeWithFlowAttributes")
-            assert node is not None
+            node = graph.addNewNode("SimpleNode")
             assert node.attribute("flowIn") is not None
             assert node.attribute("flowOut") is not None
 
-    def test_flow_attribute_type(self):
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+    def test_flow_in_is_input(self):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            node = graph.addNewNode("NodeWithFlowAttributes")
+            node = graph.addNewNode("SimpleNode")
+            assert node.attribute("flowIn").isInput
+            assert not node.attribute("flowIn").isOutput
+
+    def test_flow_out_is_output(self):
+        with registeredNodeTypes([SimpleNode]):
+            graph = Graph("")
+            node = graph.addNewNode("SimpleNode")
+            assert node.attribute("flowOut").isOutput
+            assert not node.attribute("flowOut").isInput
+
+    def test_flow_attribute_type(self):
+        with registeredNodeTypes([SimpleNode]):
+            graph = Graph("")
+            node = graph.addNewNode("SimpleNode")
             assert node.attribute("flowIn").type == "FlowAttribute"
             assert node.attribute("flowOut").type == "FlowAttribute"
 
     def test_flow_input_not_connected_by_default(self):
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            node = graph.addNewNode("NodeWithFlowAttributes")
+            node = graph.addNewNode("SimpleNode")
             assert not node.attribute("flowIn").isLink
             assert not node.attribute("flowOut").hasAnyOutputLinks
 
     def test_flow_attribute_is_default_when_not_connected(self):
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            node = graph.addNewNode("NodeWithFlowAttributes")
+            node = graph.addNewNode("SimpleNode")
             assert node.attribute("flowIn").isDefault
 
     def test_connect_flow_attributes(self):
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            nodeA = graph.addNewNode("NodeWithFlowAttributes")
-            nodeB = graph.addNewNode("NodeWithFlowAttributes")
+            nodeA = graph.addNewNode("SimpleNode")
+            nodeB = graph.addNewNode("SimpleNode")
 
             graph.addEdge(nodeA.attribute("flowOut"), nodeB.attribute("flowIn"))
 
@@ -123,17 +135,17 @@ class TestFlowAttributeInstance:
                 graph.addEdge(nodeA.attribute("output"), nodeB.attribute("flowIn"))
 
     def test_flow_serialized_value_is_none_when_not_connected(self):
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            node = graph.addNewNode("NodeWithFlowAttributes")
+            node = graph.addNewNode("SimpleNode")
             assert node.attribute("flowIn").getSerializedValue() is None
             assert node.attribute("flowOut").getSerializedValue() is None
 
     def test_flow_serialized_value_is_link_when_connected(self):
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            nodeA = graph.addNewNode("NodeWithFlowAttributes")
-            nodeB = graph.addNewNode("NodeWithFlowAttributes")
+            nodeA = graph.addNewNode("SimpleNode")
+            nodeB = graph.addNewNode("SimpleNode")
 
             graph.addEdge(nodeA.attribute("flowOut"), nodeB.attribute("flowIn"))
 
@@ -141,12 +153,12 @@ class TestFlowAttributeInstance:
             assert serialized is not None
             assert "{" in serialized  # Should be a link expression
 
-    def test_flow_attribute_is_default_when_connected(self):
+    def test_flow_attribute_is_not_default_when_connected(self):
         """FlowAttribute is not default when connected."""
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            nodeA = graph.addNewNode("NodeWithFlowAttributes")
-            nodeB = graph.addNewNode("NodeWithFlowAttributes")
+            nodeA = graph.addNewNode("SimpleNode")
+            nodeB = graph.addNewNode("SimpleNode")
 
             graph.addEdge(nodeA.attribute("flowOut"), nodeB.attribute("flowIn"))
 
@@ -158,28 +170,28 @@ class TestFlowAttributeSerialization:
 
     def test_unconnected_flow_not_in_serialized_inputs(self):
         """Unconnected FlowAttribute inputs should not appear in the serialized file."""
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            node = graph.addNewNode("NodeWithFlowAttributes")
+            node = graph.addNewNode("SimpleNode")
             node_dict = node.toDict()
             # flowIn should not be in inputs since it has no value
             assert "flowIn" not in node_dict["inputs"]
 
     def test_unconnected_flow_not_in_serialized_outputs(self):
         """Unconnected FlowAttribute outputs should not appear in the serialized file."""
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            node = graph.addNewNode("NodeWithFlowAttributes")
+            node = graph.addNewNode("SimpleNode")
             node_dict = node.toDict()
             # flowOut should not be in outputs since it has no value
             assert "flowOut" not in node_dict["outputs"]
 
     def test_connected_flow_in_serialized_inputs(self):
         """Connected FlowAttribute inputs should appear in the serialized file as link expressions."""
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            nodeA = graph.addNewNode("NodeWithFlowAttributes")
-            nodeB = graph.addNewNode("NodeWithFlowAttributes")
+            nodeA = graph.addNewNode("SimpleNode")
+            nodeB = graph.addNewNode("SimpleNode")
 
             graph.addEdge(nodeA.attribute("flowOut"), nodeB.attribute("flowIn"))
 
@@ -189,10 +201,10 @@ class TestFlowAttributeSerialization:
 
     def test_save_and_load_graph_with_flow_connection(self):
         """Graph with flow connections should be correctly saved and reloaded."""
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            nodeA = graph.addNewNode("NodeWithFlowAttributes")
-            nodeB = graph.addNewNode("NodeWithFlowAttributes")
+            nodeA = graph.addNewNode("SimpleNode")
+            nodeB = graph.addNewNode("SimpleNode")
 
             graph.addEdge(nodeA.attribute("flowOut"), nodeB.attribute("flowIn"))
 
@@ -216,9 +228,9 @@ class TestFlowAttributeSerialization:
 
     def test_save_and_load_graph_no_data_for_unconnected_flow(self):
         """Unconnected FlowAttribute should not produce data in the saved file."""
-        with registeredNodeTypes([NodeWithFlowAttributes]):
+        with registeredNodeTypes([SimpleNode]):
             graph = Graph("")
-            graph.addNewNode("NodeWithFlowAttributes")
+            graph.addNewNode("SimpleNode")
 
             with tempfile.NamedTemporaryFile(suffix=".mg", delete=False) as tmp:
                 tmpPath = tmp.name

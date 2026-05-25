@@ -130,8 +130,11 @@ class _NodeCreator:
         )
 
     def _checkAttributesAreCompatibleWithDescription(self) -> bool:
+        # Combine regular inputs with internal flow inputs for compatibility checking,
+        # as internal flow inputs (when connected) appear in the 'inputs' section of the file.
+        allInputDescriptions = list(self.nodeDesc.inputs) + list(self.nodeDesc.internalFlowInputs)
         return (
-            self._checkAttributesCompatibility(self.nodeDesc.inputs, self.inputs)
+            self._checkAttributesCompatibility(allInputDescriptions, self.inputs)
             and self._checkAttributesCompatibility(self.nodeDesc.internalInputs,
                                                    self.internalInputs)
             and self._checkAttributesCompatibility(self.nodeDesc.outputs, self.outputs)
@@ -154,8 +157,11 @@ class _NodeCreator:
             return isinstance(attr, desc.FlowAttribute)
 
         refAttributes = filter(serializedInput, self.nodeDesc.inputs)
-        optionalAttributes = filter(optionalInput, self.nodeDesc.inputs)
-        return self._checkAttributesNamesMatchWithOptional(refAttributes, self.inputs, optionalAttributes)
+        # FlowAttributes from both regular inputs and internalFlowInputs may appear in 'inputs'
+        # (as link expressions when connected), so treat them all as optional.
+        allFlowAttrs = list(filter(optionalInput, self.nodeDesc.inputs)) + \
+                       list(self.nodeDesc.internalFlowInputs)
+        return self._checkAttributesNamesMatchWithOptional(refAttributes, self.inputs, allFlowAttrs)
 
     def _checkOutputAttributesNames(self) -> bool:
         def serializedOutput(attr: desc.Attribute) -> bool:

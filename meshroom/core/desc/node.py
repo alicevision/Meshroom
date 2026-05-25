@@ -150,7 +150,6 @@ class InternalAttributesFactory:
     ]
 
     FLOW_IN = [
-        
         ListAttribute(
             name="flowInputs",
             label="Flow Inputs",

@@ -5,7 +5,16 @@ from collections.abc import Iterable
 from enum import auto, Enum
 from typing import Sequence
 
-from meshroom.common import BaseObject, JSValue, Property, Variant, VariantList, strtobool, deprecated
+from meshroom.common import (
+    BaseObject, 
+    ListModel, 
+    JSValue, 
+    Property, 
+    Variant, 
+    VariantList, 
+    strtobool, 
+    deprecated
+)
 from meshroom.core.desc.validators import AttributeValidator
 
 # Pre-compile regexes for better performance on repeated calls
@@ -104,6 +113,10 @@ class Attribute(BaseObject):
         """
         raise NotImplementedError("Attribute.validateValue is an abstract function that should be "
                                   "implemented in the derived class.")
+    
+    def checkUidIgnoreValue(self, testValue):
+        """ Return true if the test value is the same as the `uidIgnoreValue` """
+        return self._uidIgnoreValue == testValue
 
     def validateKeyValues(self, keyValues):
         """ Return validated/conformed 'keyValues'.
@@ -169,7 +182,6 @@ class Attribute(BaseObject):
     enabled = Property(Variant, lambda self: self._enabled, constant=True)
     invalidate = Property(Variant, lambda self: self._invalidate, constant=True)
     semantic = Property(str, lambda self: self._semantic, constant=True)
-    uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
     # visible:
     #   The attribute is not displayed in the Graph Editor if False but still visible in the Node Editor.
     #   This property is useful to hide some attributes that are not relevant for the user.
@@ -188,7 +200,8 @@ class ListAttribute(Attribute):
     """ A list of Attributes """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, elementDesc, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
-                 advanced=False, semantic="", enabled=True, joinChar=" ", visible=True, exposed=False, value=None, validators=None):
+                 advanced=False, semantic="", enabled=True, joinChar=" ", uidIgnoreValueIfEmpty=False, visible=True, exposed=False, 
+                 value=None, validators=None):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         :param value: default value. Use None to declare a dynamic output ListAttribute
@@ -201,6 +214,7 @@ class ListAttribute(Attribute):
         super(ListAttribute, self).__init__(name=name, label=label, description=description, value=value,
                                             invalidate=False, commandLineGroup=commandLineGroup, advanced=advanced, semantic=semantic,
                                             enabled=enabled, visible=visible, exposed=exposed, validators=validators)
+        self._uidIgnoreValueIfEmpty = uidIgnoreValueIfEmpty
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
@@ -223,6 +237,12 @@ class ListAttribute(Attribute):
             raise ValueError(f"ListAttribute only supports list/tuple input values "
                              f"(param: {self.name}, value: {value}, type: {type(value)})")
         return value
+
+    def checkUidIgnoreValue(self, testValue):
+        """ Don't affect Uid if _uidIgnoreValueIfEmpty is set to True 
+        and if testValue is an empty list.
+        """
+        return self._uidIgnoreValueIfEmpty and len(testValue) == 0
 
     def checkValueTypes(self):
         return self.elementDesc.checkValueTypes()
@@ -692,4 +712,29 @@ class ColorParam(Param):
             return "", ValueTypeErrors.NONE
         if not isinstance(self.value, str):
             return self.name, ValueTypeErrors.TYPE
+        return "", ValueTypeErrors.NONE
+
+
+class Flow(Attribute):
+    """
+    An Attribute that holds no data but can be connected to create dependencies between nodes.
+    Unlike other attributes, Flow has no value to save in the graph file.
+    Only connections (edges) to/from Flow are serialized.
+    """
+    def __init__(self, name, label=None, description=None, advanced=False, enabled=True,
+                 visible=True, exposed=False):
+        super().__init__(name=name, label=label, description=description,
+                         value=None, invalidate=True, commandLineGroup="",
+                         advanced=advanced, semantic="", enabled=enabled,
+                         visible=visible, exposed=exposed)
+
+    def getInstanceType(self):
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import Flow
+        return Flow
+
+    def validateValue(self, value):
+        return None
+
+    def checkValueTypes(self):
         return "", ValueTypeErrors.NONE

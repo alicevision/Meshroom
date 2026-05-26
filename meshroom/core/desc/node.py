@@ -17,7 +17,7 @@ from meshroom.core import cgroup
 from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
-from .attribute import Attribute, ChoiceParam, ColorParam, IntParam, StringParam
+from .attribute import Attribute, ChoiceParam, ColorParam, Flow, IntParam, StringParam, ListAttribute
 
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
@@ -149,6 +149,31 @@ class InternalAttributesFactory:
         ),
     ]
 
+    FLOW_IN = [
+        ListAttribute(
+            name="flowInputs",
+            label="Flow Inputs",
+            description="Incoming flow connections to express node dependencies.",
+            exposed=True,
+            commandLineGroup="",
+            elementDesc=Flow(
+                name="flowInput",
+                label="Flow Input",
+                description="Incoming flow connection to express a dependency from another node.",
+                exposed=True,
+            ),
+            uidIgnoreValueIfEmpty=True
+        )
+    ]
+
+    FLOW_OUT = [
+        Flow(
+            name="flowOutput",
+            label="Flow Output",
+            description="Outgoing flow connection to express a dependency to another node.",
+        )
+    ]
+
     @classmethod
     def getInternalAttributes(cls, mrNodeType: MrNodeType) -> list[Attribute]:
         paramMap = {
@@ -162,6 +187,30 @@ class InternalAttributesFactory:
 
         return paramMap.get(mrNodeType)
 
+    @classmethod
+    def getInternalFlowInputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
+        """
+        Return the list of internal input Flow attributes for a given node type.
+
+        These are added to internal attributes so they appear as connection pins in
+        the graph editor header while remaining separate from the regular attribute list.
+        """
+        if mrNodeType == MrNodeType.BACKDROP:
+            return []
+        return cls.FLOW_IN
+
+    @classmethod
+    def getInternalFlowOutputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
+        """
+        Return the list of internal output Flow attributes for a given node type.
+
+        These are added to internal attributes so they appear as connection pins in
+        the graph editor header while remaining separate from the regular attribute list.
+        """
+        if mrNodeType == MrNodeType.BACKDROP:
+            return []
+        return cls.FLOW_OUT
+
 
 class BaseNode(object):
     """
@@ -174,6 +223,8 @@ class BaseNode(object):
     _mrNodeType: MrNodeType = MrNodeType.BASENODE
 
     internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+    internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
+    internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
 
     inputs = []
     outputs = []
@@ -405,6 +456,8 @@ class InputNode(BaseNode):
     """
     _mrNodeType: MrNodeType = MrNodeType.INPUT
     internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+    internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
+    internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
 
     def __init__(self):
         super(InputNode, self).__init__()
@@ -424,6 +477,8 @@ class BackdropNode(BaseNode):
     """
     _mrNodeType: MrNodeType = MrNodeType.BACKDROP
     internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+    internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
+    internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
 
     def __init__(self):
         super(BackdropNode, self).__init__()

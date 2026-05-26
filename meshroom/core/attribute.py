@@ -295,7 +295,8 @@ class Attribute(BaseObject):
             node = graph.node(linkNodeName)
             if node is None:
                 raise InvalidEdgeError(self.fullName, link, "Source node does not exist.")
-            attr = node.attribute(linkAttrName)
+            # Search in regular attributes first, then internal attributes (e.g. Flow outputs)
+            attr = node.attribute(linkAttrName) if node.hasAttribute(linkAttrName) else node.internalAttribute(linkAttrName)
             if attr is None:
                 raise InvalidEdgeError(self.fullName, link, "Source attribute does not exist.")
             attr.connectTo(self)
@@ -999,8 +1000,6 @@ class ListAttribute(Attribute):
             return self._getInputLink().asLinkExpr()
         return [attr.getSerializedValue() for attr in self._value]
 
-    value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
-
     # Override
     def _resolveValue(self):
         """
@@ -1140,7 +1139,7 @@ class ListAttribute(Attribute):
 
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
-    isDefault = Property(bool, lambda self: len(self.value) == 0, notify=Attribute.valueChanged)
+    isDefault = Property(bool, lambda self: self.value is None or len(self.value) == 0, notify=Attribute.valueChanged)
     baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
 
     # Override attribute link properties
@@ -1709,3 +1708,38 @@ class ShapeListAttribute(ListAttribute):
     isVisible = Property(bool, _getVisible, _setVisible, notify=shapeListChanged)
     # Override hasDisplayableShape property.
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
+
+
+class Flow(Attribute):
+    """
+    An Attribute that holds no data but can be connected to create dependencies between nodes.
+    Unlike other attributes, Flow has no value to save in the graph file.
+    Only connections (edges) to/from Flow are serialized.
+    """
+
+    def __init__(self, node, attributeDesc: desc.Flow, isOutput: bool,
+                 root=None, parent=None):
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+
+    # Override
+    def getSerializedValue(self):
+        if self.isLink:
+            return self._getInputLink().asLinkExpr()
+        return None
+
+    # Override
+    def getDefaultValue(self):
+        return None
+
+    # Override
+    def _isDefault(self):
+        return not self.isLink
+
+    # Override
+    def uid(self):
+        if self.isLink:
+            return super().uid()
+        return hashValue(None)
+
+    # Override
+    isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)

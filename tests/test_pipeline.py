@@ -41,7 +41,7 @@ def test_pipeline():
     for node in graph1.nodes:
         otherNode = graph2.node(node.name)
         for key, attr in node.attributes.items():
-            if attr.isOutput and attr.enabled:
+            if attr.isOutput and attr.enabled and attr.type != "Flow":
                 otherAttr = otherNode.attribute(key)
                 assert attr.uid() != otherAttr.uid()
 

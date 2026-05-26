@@ -605,6 +605,8 @@ class Graph(BaseObject):
             if not withEdges:
                 for _, attr in node.attributes.items():
                     _removeLinkExpressions(attr, skippedEdges)
+                for _, attr in node.internalAttributes.items():
+                    _removeLinkExpressions(attr, skippedEdges)
         return node, skippedEdges
 
     def duplicateNodes(self, srcNodes):
@@ -640,7 +642,11 @@ class Graph(BaseObject):
                 # use the duplicate; otherwise use the original node
                 if edgeSrcNode in duplicates:
                     edgeSrcNode = duplicates.get(edgeSrcNode)[0]
-                self.addEdge(edgeSrcNode.attribute(edgeSrcAttrName), attr)
+                if edgeSrcNode.hasAttribute(edgeSrcAttrName):
+                    edgeSrcAttr = edgeSrcNode.attribute(edgeSrcAttrName)
+                else:
+                    edgeSrcAttr = edgeSrcNode.internalAttribute(edgeSrcAttrName)
+                self.addEdge(edgeSrcAttr, attr)
 
         return duplicates
 
@@ -812,7 +818,7 @@ class Graph(BaseObject):
                 {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
         """
         def _recreateTargetListAttributeChildren(listAttrName: str, index: int, value: Any):
-            listAttr = self.attribute(listAttrName)
+            listAttr = self.anyAttribute(listAttrName)
             if not isinstance(listAttr, ListAttribute):
                 return
             if isinstance(value, list):
@@ -825,8 +831,8 @@ class Graph(BaseObject):
             if dstName in outListAttributes:
                 _recreateTargetListAttributeChildren(*outListAttributes[dstName])
             try:
-                srcAttr = self.attribute(srcName)
-                dstAttr = self.attribute(dstName)
+                srcAttr = self.anyAttribute(srcName)
+                dstAttr = self.anyAttribute(dstName)
                 if srcAttr is None or dstAttr is None:
                     logging.warning(f"Failed to restore edge {srcName}{' (missing)' if srcAttr is None else ''} -> {dstName}{' (missing)' if dstAttr is None else ''}")
                     continue
@@ -885,6 +891,21 @@ class Graph(BaseObject):
         If it does not exist, return None.
         """
         node, attribute = fullName.split('.', 1)
+        if self.node(node).hasInternalAttribute(attribute):
+            return self.node(node).internalAttribute(attribute)
+        return None
+    
+    @Slot(str, result=Attribute)
+    def anyAttribute(self, fullName):
+        # type: (str) -> Attribute
+        """
+        Return the attribute identified by the unique name 'fullName'.
+        Search on attributes AND internal attributes
+        If it does not exist, return None.
+        """
+        node, attribute = fullName.split('.', 1)
+        if self.node(node).hasAttribute(attribute):
+            return self.node(node).attribute(attribute)
         if self.node(node).hasInternalAttribute(attribute):
             return self.node(node).internalAttribute(attribute)
         return None

@@ -18,6 +18,9 @@ RowLayout {
     property bool readOnly: false
     /// Whether to display an output pin for input attribute
     property bool displayOutputPinForInput: true
+    /// Compact mode: hides the attribute label, showing only the connection circle.
+    /// Useful for embedding the pin in space-constrained areas like the node header.
+    property bool compact: false
 
     // position of the anchor for attaching and edge to this attribute pin
     readonly property point inputAnchorPos: Qt.point(inputAnchor.x + inputAnchor.width / 2,
@@ -40,6 +43,7 @@ RowLayout {
     objectName: attribute ? attribute.name + "." : ""
     layoutDirection: Qt.LeftToRight
     spacing: 3
+    height: attribute && attribute.isOutput ? outputAnchor.height : inputAnchor.height
 
     ToolTip {
         text: attribute.fullName + ": " + attribute.type
@@ -65,7 +69,7 @@ RowLayout {
     Item {
         width: childrenRect.width
         Layout.alignment: Qt.AlignVCenter
-        Layout.fillWidth: true
+        Layout.fillWidth: !root.compact
         Layout.fillHeight: true
 
         Rectangle {
@@ -239,7 +243,9 @@ RowLayout {
         id: nameContainer
         implicitHeight: childrenRect.height
         implicitWidth: childrenRect.width
-        Layout.fillWidth: true
+        visible: !root.compact
+        Layout.fillWidth: !root.compact
+        Layout.maximumWidth: root.compact ? 0 : Number.POSITIVE_INFINITY
         Layout.fillHeight: true
         Layout.alignment: Qt.AlignVCenter
 
@@ -261,7 +267,7 @@ RowLayout {
             // elements upon their first display without waiting for a mouse interaction
             property bool parentNotReady: nameContainer.width == 0
 
-            property bool hovered: parentNotReady || (inputConnectMA.containsMouse ||
+            property bool hovered: (nameLabel.visible && parentNotReady) || (inputConnectMA.containsMouse ||
                                                       inputConnectMA.drag.active ||
                                                       inputDropArea.containsDrag ||
                                                       outputConnectMA.containsMouse ||

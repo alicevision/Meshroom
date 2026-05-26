@@ -1055,13 +1055,12 @@ class BaseNode(BaseObject):
                 info[key] = value
         return [{"key": k, "value": v} for k, v in info.items()]
 
-    @Slot(str, result=Attribute)
-    def attribute(self, name):
+    def getAnyAttribute(self, name, internal=False):
+        attrList = self._internalAttributes if internal else self._attributes
         att = None
         # Complex name indicating a GroupAttribute or ListAttribute
         if '[' in name or '.' in name:
             p = self.attributeRE.findall(name)  # Can produce zero-length matches at delimiter positions
-
             for n, idx in p:
                 if not n and not idx:
                     # Empty tuples ('', '') carry no useful information and are just artifacts of how
@@ -1070,7 +1069,7 @@ class BaseNode(BaseObject):
                 elif n:
                     if att is None:
                         # Get root attribute
-                        att = self._attributes.get(n)
+                        att = attrList.getr(n)
                     else:
                         # GroupAttribute, the access should be done through the name
                         if not isinstance(att, GroupAttribute):
@@ -1082,14 +1081,16 @@ class BaseNode(BaseObject):
                         raise ValueError(f"Cannot access index '{idx}': {att.fullName} is not a ListAttribute.")
                     att = att.value.at(int(idx))
         else:
-            att = self._attributes.getr(name)
+            att = attrList.getr(name)
         return att
 
     @Slot(str, result=Attribute)
+    def attribute(self, name):
+        return self.getAnyAttribute(name, internal=False)
+
+    @Slot(str, result=Attribute)
     def internalAttribute(self, name):
-        # No group or list attributes for internal attributes
-        # The internal attribute itself can be returned directly
-        return self._internalAttributes.get(name)
+        return self.getAnyAttribute(name, internal=True)
 
     def setInternalAttributeValues(self, values):
         # initialize internal attribute values
@@ -1114,10 +1115,15 @@ class BaseNode(BaseObject):
 
     @Slot(str, result=bool)
     def hasInternalAttribute(self, name):
+        if "[" in name or "." in name:
+            p = self.attributeRE.findall(name)
+            return p[0][0] in self._internalAttributes.keys() or p[0][1] in self._internalAttributes.keys()
         return name in self._internalAttributes.keys()
 
     def _applyExpr(self):
         for attr in self._attributes:
+            attr._applyExpr()
+        for attr in self._internalAttributes:
             attr._applyExpr()
 
     @property
@@ -1193,7 +1199,7 @@ class BaseNode(BaseObject):
             # In particular, when loading a project file, the UIDs are updated first,
             # and the node status and the dynamic output values are not yet loaded,
             # so we should not read the attribute value.
-            if not dynamicOutputAttr and not attr.keyable and attr.value == attr.desc.uidIgnoreValue:
+            if not dynamicOutputAttr and not attr.keyable and attr.desc.checkUidIgnoreValue(attr.value):
                 continue  # For non-dynamic attributes, check if the value should be ignored
             uidAttributes.append((attr.name, attr.uid()))
         uidAttributes.sort()
@@ -2414,6 +2420,19 @@ class Node(BaseNode):
             self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
                                                           isOutput=False, node=self))
 
+        # Add internal flow input/output attributes to _internalAttributes.
+        # Skip any that are already defined by the node itself (in inputs/outputs).
+        existingAttrNames = set(self._attributes.keys())
+        for attrDesc in self.nodeDesc.internalFlowInputs:
+            if attrDesc.name not in existingAttrNames:
+                self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
+                                                              isOutput=False, node=self))
+
+        for attrDesc in self.nodeDesc.internalFlowOutputs:
+            if attrDesc.name not in existingAttrNames:
+                self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
+                                                              isOutput=True, node=self))
+
         # Declare events for specific output attributes
         for attr in self._attributes:
             if attr.isOutput and attr.desc.semantic == "image":
@@ -2475,7 +2494,12 @@ class Node(BaseNode):
 
     def toDict(self):
         inputs = {k: v.getSerializedValue() for k, v in self._attributes.objects.items() if v.isInput}
-        internalInputs = {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items()}
+        # Special case for internal inputs : flowInputs is only serialized if it is not the default value
+        internalInputs = {}
+        for k, v in self._internalAttributes.objects.items():
+            if k == "flowInputs" and v.isDefault:
+                continue
+            internalInputs[k] = v.getSerializedValue()
         outputs = ({k: v.getSerializedValue() for k, v in self._attributes.objects.items()
                     if v.isOutput and not v.desc.isDynamicValue})
 

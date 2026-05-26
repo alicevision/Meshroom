@@ -191,6 +191,10 @@ class PartialGraphSerializer(GraphSerializer):
         if nodeData.get("inputs", None):
             for attributeName in nodeData["inputs"]:
                 nodeData["inputs"][attributeName] = self._serializeAttribute(node.attribute(attributeName))
+        # Handle internal inputs
+        internalInputs = nodeData.get("internalInputs", [])
+        for attributeName in internalInputs:
+            internalInputs[attributeName] = self._serializeAttribute(node.internalAttribute(attributeName))
 
         # Clear UID for non-compatibility nodes, as the custom attribute serialization
         # can be impacting the UID by removing connections to missing nodes.

@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
 
-from meshroom.core.attribute import ListAttribute, Attribute
+from meshroom.core.attribute import Attribute, Flow, ListAttribute
 from meshroom.core.exception import CyclicDependencyError,InvalidEdgeError
 from meshroom.core.graph import Graph, GraphModification
 from meshroom.core.node import Position, CompatibilityIssue
@@ -460,11 +460,18 @@ class AddEdgeCommand(GraphCommand):
 
     def redoImpl(self) -> bool:
         try:
-            self.createdEdges, self.deletedEdges = self.graph.attribute(self.srcAttr).connectTo(self.graph.attribute(self.dstAttr))
+            srcAttribute = self.graph.attribute(self.srcAttr) or self.graph.internalAttribute(self.srcAttr)
+            dstAttribute = self.graph.attribute(self.dstAttr) or self.graph.internalAttribute(self.dstAttr)
+
+            if srcAttribute and dstAttribute:
+                self.createdEdges, self.deletedEdges = srcAttribute.connectTo(dstAttribute)
+                return True
+
         except CyclicDependencyError:
             self.graph.removeEdge(self.graph.attribute(self.dstAttr))
             return False
-        return True
+
+        return False
 
     def undoImpl(self) -> bool:
         for edge in self.createdEdges:
@@ -479,23 +486,33 @@ class RemoveEdgeCommand(GraphCommand):
         super().__init__(graph, parent)
         self.srcAttr = edge.src.fullName
         self.dstAttr = edge.dst.fullName
+        self.isFlow = isinstance(edge.dst, Flow)
         self.deletedEdgeNames = []  # Store the names of deleted edges.
         self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
+    
+    def getAttribute(self, attrName):
+        if self.isFlow:
+            return self.graph.internalAttribute(attrName)
+        else:
+            return self.graph.attribute(attrName)
 
     def redoImpl(self) -> bool:
-        deletedEdges = self.graph.attribute(self.dstAttr).disconnectEdge()
-        # Store the fullNames instead of the actual attribute objects
-        self.deletedEdgeNames = [
-            (edge[0].fullName, edge[1].fullName) for edge in deletedEdges
-        ]
+        dstAttribute = self.getAttribute(self.dstAttr)
+        if dstAttribute:
+            deletedEdges = dstAttribute.disconnectEdge()
+            # Store the fullNames instead of the actual attribute objects
+            self.deletedEdgeNames = [
+                (edge[0].fullName, edge[1].fullName) for edge in deletedEdges
+            ]
+            return True
         return True
 
     def undoImpl(self) -> bool:
         for srcName, dstName in self.deletedEdgeNames:
             # Resolve the attributes from their names at undo time
             # This way for ListAttribute we avoid getting a deleted object
-            srcAttr = self.graph.attribute(srcName)
-            dstAttr = self.graph.attribute(dstName)
+            srcAttr = self.getAttribute(srcName)
+            dstAttr = self.getAttribute(dstName)
             srcAttr.connectTo(dstAttr)
         return True
 
@@ -505,13 +522,20 @@ class ListAttributeAppendCommand(GraphCommand):
         super().__init__(graph, parent)
         assert isinstance(listAttribute, ListAttribute)
         self.attrName = listAttribute.fullName
+        self.isFlowInputs = (listAttribute.baseType == Flow.__name__)
         self.index = None
         self.count = 1
         self.value = value if value else None
         self.setText(f"Append to {self.attrName}")
+    
+    def getAttribute(self):
+        if self.isFlowInputs:
+            return self.graph.internalAttribute(self.attrName)
+        else:
+            return self.graph.attribute(self.attrName)
 
     def redoImpl(self):
-        listAttribute = self.graph.attribute(self.attrName)
+        listAttribute = self.getAttribute()
         self.index = len(listAttribute)
         if isinstance(self.value, list):
             listAttribute.extend(self.value)
@@ -521,7 +545,7 @@ class ListAttributeAppendCommand(GraphCommand):
         return True
 
     def undoImpl(self):
-        listAttribute = self.graph.attribute(self.attrName)
+        listAttribute = self.getAttribute()
         listAttribute.remove(self.index, self.count)
 
 
@@ -529,19 +553,26 @@ class ListAttributeRemoveCommand(GraphCommand):
     def __init__(self, graph, attribute, parent=None):
         super().__init__(graph, parent)
         listAttribute = attribute.root
+        self.isFlowInputs = (listAttribute.baseType == Flow.__name__)
         assert isinstance(listAttribute, ListAttribute)
         self.listAttrName = listAttribute.fullName
         self.index = listAttribute.index(attribute)
         self.value = attribute.getSerializedValue()
         self.setText(f"Remove {attribute.fullName}")
+    
+    def getAttribute(self):
+        if self.isFlowInputs:
+            return self.graph.internalAttribute(self.listAttrName)
+        else:
+            return self.graph.attribute(self.listAttrName)
 
     def redoImpl(self):
-        listAttribute = self.graph.attribute(self.listAttrName)
+        listAttribute = self.getAttribute()
         listAttribute.remove(self.index)
         return True
 
     def undoImpl(self):
-        listAttribute = self.graph.attribute(self.listAttrName)
+        listAttribute = self.getAttribute()
         listAttribute.insert(self.index, self.value)
 
 

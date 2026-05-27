@@ -584,6 +584,7 @@ class UIGraph(QObject):
         # ensure file is saved with ".mg" extension
         if os.path.splitext(localFile)[-1] != ".mg":
             localFile += ".mg"
+        self.parent().showMessage(f"Saving file to {localFile}", "ok")
         self._graph.save(localFile, setupProjectFile=setupProjectFile, template=template)
         self._undoStack.setClean()
         # saving file on disk impacts cache folder location

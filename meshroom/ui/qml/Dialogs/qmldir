@@ -1,0 +1,3 @@
+module Dialogs
+
+MrFileDialog 1.0 MrFileDialog.qml

@@ -12,6 +12,7 @@ import GraphEditor 1.0
 import MaterialIcons 2.2
 import Utils 1.0
 import Controls 1.0
+import Dialogs 1.0
 
 Page {
     id: root
@@ -144,49 +145,32 @@ Page {
     }
 
     // File dialogs
-    Platform.FileDialog {
+
+    MrFileDialog {
         id: saveFileDialog
+        saveMode: true
+        nameFilters: ["*"]
+        property string fileToSave: ""
 
-        property var _callback: undefined
-
-        signal closed(var result)
-
-        title: "Save File"
-        nameFilters: ["Meshroom Graphs (*.mg)"]
-        defaultSuffix: ".mg"
-        fileMode: Platform.FileDialog.SaveFile
+        onFileSelected: (path) => {
+            fileToSave = path.toString().replace("file://", "")
+            // Do something with the file path
+        }
+        
         onAccepted: {
-            if (!validateFilepathForSave(currentFile, saveFileDialog))
+            if (!validateFilepathForSave(fileToSave, saveFileDialog))
             {
                 return;
             }
 
             // Only save a valid file
-            _currentScene.saveAs(currentFile)
-            MeshroomApp.addRecentProjectFile(currentFile.toString())
-            closed(Platform.Dialog.Accepted)
-            fireCallback(Platform.Dialog.Accepted)
+            _currentScene.saveAs("file://" + fileToSave)
+            MeshroomApp.addRecentProjectFile(fileToSave.toString())
         }
-        onRejected: {
-            closed(Platform.Dialog.Rejected)
-            fireCallback(Platform.Dialog.Rejected)
-        }
-
-        function fireCallback(rc)
-        {
-            // Call the callback and reset it
-            if (_callback)
-                _callback(rc)
-            _callback = undefined
-        }
-
-        // Open the unsaved dialog warning with an optional
-        // callback to fire when the dialog is accepted/discarded
-        function prompt(callback)
-        {
-            _callback = callback
-            open()
-        }
+        
+        // onRejected: {
+        //     console.log("File not saved")
+        // }
     }
 
     Platform.FileDialog {

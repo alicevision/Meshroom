@@ -1568,6 +1568,20 @@ class Graph(BaseObject):
         self.cacheDir = ""
         self.filepathChanged.emit()
 
+    @Slot(result=str)
+    def getCurrentFilename(self):
+        if os.path.exists(self._filepath):
+            return os.path.basename(self._filepath)
+        else:
+            return ""
+        
+    @Slot(result=str)
+    def getCurrentFolder(self):
+        if os.path.exists(self._filepath):
+            return os.path.dirname(self._filepath)
+        else:
+            return os.getcwd()
+
     def updateInternals(self, startNodes=None, force=False):
         nodes, edges = self.dfsOnFinish(startNodes=startNodes)
         for node in nodes:

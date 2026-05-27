@@ -116,4 +116,19 @@ QtObject {
             }
         }
     }
+
+    function getFileColor(filename) {
+        const fileExt = filename.split('.').pop()
+        switch (fileExt) {
+            case "": {
+                return "#ffa726"
+            }
+            // case "txt": {
+            //     return "#90caf9"
+            // }
+            default: {
+                return "#90caf9"
+            }
+        }
+    }
 }

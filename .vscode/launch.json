@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Meshroom",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "meshroom/ui",
+            "console": "integratedTerminal",
+            "env": {
+                "MESHROOM_NODES_PATH": "${MESHROOM_NODES_PATH}:${workspaceFolder}/tests/nodes",
+                "MESHROOM_PLUGINS_PATH": "${MESHROOM_PLUGINS_PATH}",
+                "MESHROOM_OUTPUT_QML_WARNINGS": "1",
+                "MESHROOM_QML_DEBUG": "0",
+                "MESHROOM_QML_DEBUG_PARAMS": "port:7789",
+            },
+            "args": [
+                "-1"  // Open previous scene
+            ],
+            "subProcess": true,
+        }
+    ]
+}

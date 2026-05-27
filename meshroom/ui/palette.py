@@ -56,6 +56,10 @@ class PaletteManager(QObject):
         if self.qmlEngine.rootObjects():
             self.qmlEngine.reload()
         self.paletteChanged.emit()
+    
+    @Slot(result=bool)
+    def isDarkPalette(self):
+        return QApplication.instance().palette() == self.darkPalette
 
     paletteChanged = Signal()
     palette = Property(QPalette, lambda self: QApplication.instance().palette(), notify=paletteChanged)

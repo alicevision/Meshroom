@@ -1555,11 +1555,13 @@ class BaseNode(BaseObject):
     def _getAttributeChangedCallback(self, attr: Attribute) -> Optional[Callable]:
         """ Get the node descriptor-defined value changed callback associated to `attr` if any. """
 
-        # Callbacks cannot be defined on nested attributes.
-        if attr.root is not None:
+        # Callbacks cannot be defined on ListAttributes, but may be defined on nested attributes in GroupAttributes
+        if attr.root is not None and attr.isInsideList:
             return None
 
-        attrCapitalizedName = attr.name[:1].upper() + attr.name[1:]
+        attrCapitalizedName = ""
+        for sub in attr.rootName.split("."):
+            attrCapitalizedName += sub[:1].upper() + sub[1:]
         callbackName = f"on{attrCapitalizedName}Changed"
 
         callback = getattr(self.nodeDesc, callbackName, None)

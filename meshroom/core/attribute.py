@@ -92,6 +92,14 @@ class Attribute(BaseObject):
         self._linkExpression: Optional[str] = None
         self._initValue()
 
+        self._isInsideList: bool = False
+        current = self._root() if self._root else None
+        while current is not None:
+            if isinstance(current, ListAttribute):
+                self._isInsideList = True
+                break
+            current = current._root() if current._root else None
+
     def _getFullName(self) -> str:
         """
         Get the attribute name following the path from the node to the attribute.
@@ -112,6 +120,10 @@ class Attribute(BaseObject):
         elif isinstance(self.root, GroupAttribute):
             return f'{self.root.rootName}.{self._desc.name}'
         return self._desc.name
+
+    @property
+    def isInsideList(self) -> bool:
+        return self._isInsideList
 
     def asLinkExpr(self) -> str:
         """

@@ -105,7 +105,10 @@ class Attribute(BaseObject):
         Return: groupName.subGroupName.name
         """
         if isinstance(self.root, ListAttribute):
-            return f'{self.root.rootName}[{self.root.index(self)}]'
+            try:
+                return f'{self.root.rootName}[{self.root.index(self)}]'
+            except ValueError:
+                return f'{self.root.rootName}'
         elif isinstance(self.root, GroupAttribute):
             return f'{self.root.rootName}.{self._desc.name}'
         return self._desc.name

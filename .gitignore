@@ -12,7 +12,7 @@
 # Windows
 Thumbs.db
 # vscode
-.vscode
+.vscode/*
 
 # python
 *.pyc
@@ -22,6 +22,7 @@ __pycache__
 # backup files
 *.json
 !*Config.json
+!.vscode/launch.json
 
 # datas or personal files
 /data

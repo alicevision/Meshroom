@@ -17,9 +17,10 @@ class ComputeMeshroomScene(desc.CommandLineNode):
     Compute or Submits a meshroom scene on the farm.
     """
 
+    pythonExecutable = "python"
     category = "Utils"
     commandLine = "{node.nodeDesc.pythonExecutable} " + str(_MESHROOM_BATCH) + " -p {node.scene.value} --save {node.scene.value}"
-    
+
     def __getSubmitters():
         from meshroom.core import submitters
         submitterNames = []

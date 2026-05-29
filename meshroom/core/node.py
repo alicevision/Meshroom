@@ -2317,6 +2317,7 @@ class BaseNode(BaseObject):
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
     nodeInfo = Property(Variant, getNodeInfo, constant=True)
+    nodeVersionType = Property(int, lambda self: int(self.nodeDesc.nodeVersionType) if self.nodeDesc else int(desc.NodeVersionType.UNKNOWN), constant=True)
     nodeStatusChanged = Signal()
     nodeStatus = Property(Variant, lambda self: self._nodeStatus, notify=nodeStatusChanged)
     nodeStatusNodeName = Property(str, lambda self: self._nodeStatus.nodeName, notify=nodeStatusChanged)

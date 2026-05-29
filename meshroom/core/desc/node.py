@@ -213,6 +213,13 @@ class InternalAttributesFactory:
         return cls.FLOW_OUT
 
 
+class NodeVersionType(enum.IntEnum):
+    UNKNOWN = enum.auto()
+    RELEASED = enum.auto()
+    BETA = enum.auto()
+    USER = enum.auto()
+
+
 class BaseNode(object):
     """
     """
@@ -234,6 +241,7 @@ class BaseNode(object):
     documentation = ""
     category = "Other"
     plugin = None
+    nodeVersionType: NodeVersionType = NodeVersionType.UNKNOWN
     # Licenses required to run the plugin
     # Only used to select machines on the farm when the node is submitted
     _licenses = []

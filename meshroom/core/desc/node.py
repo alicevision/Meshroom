@@ -13,6 +13,7 @@ from collections import OrderedDict
 import psutil
 
 from meshroom import _MESHROOM_ROOT
+from meshroom.common import BaseObject, Property
 from meshroom.core import cgroup
 from meshroom.core.desc.anySet import AnySet
 from meshroom.core.utils import VERBOSE_LEVEL
@@ -218,6 +219,16 @@ class NodeVersionType(enum.IntEnum):
     RELEASED = enum.auto()
     BETA = enum.auto()
     USER = enum.auto()
+
+
+NodeVersionTypeEnum = type(
+    "NodeVersionTypeEnum",
+    (BaseObject,),
+    {
+        "__init__": lambda self, parent=None: BaseObject.__init__(self, parent),
+        **{name: Property(int, lambda self, v=int(member): v, constant=True) for name, member in NodeVersionType.__members__.items()},
+    },
+)
 
 
 class BaseNode(object):

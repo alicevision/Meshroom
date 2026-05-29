@@ -48,4 +48,5 @@ from .node import (
     MrNodeType,
     Node,
     NodeVersionType,
+    NodeVersionTypeEnum,
 )

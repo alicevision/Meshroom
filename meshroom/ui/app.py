@@ -15,6 +15,7 @@ from PySide6.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import pluginManager
+from meshroom.core.desc import NodeVersionTypeEnum
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
@@ -316,6 +317,7 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
         self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
+        self.engine.rootContext().setContextProperty("NodeVersionType", NodeVersionTypeEnum(parent=self))
 
         # request any potential computation to stop on exit
         self.aboutToQuit.connect(self._activeProject.stopChildThreads)

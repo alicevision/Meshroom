@@ -1069,7 +1069,7 @@ class BaseNode(BaseObject):
                 elif n:
                     if att is None:
                         # Get root attribute
-                        att = attrList.getr(n)
+                        att = attrList.get(n)
                     else:
                         # GroupAttribute, the access should be done through the name
                         if not isinstance(att, GroupAttribute):

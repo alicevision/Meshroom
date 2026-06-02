@@ -17,7 +17,7 @@ ColumnLayout {
     property int currentIndex: 0
 
     function getCurrentChunkIndex() {
-        if ( currentIndex == undefined || !chunks || chunks.length === 0 || currentIndex == ChunkIndexEnum.NULL ) {
+        if ( currentIndex == undefined || !chunks || chunks.length === 0 || currentIndex == ChunkIndexEnum.NONE ) {
             return -1
         }
         let hasPreprocess  = chunks[0].chunkNode.hasPreprocessChunk
@@ -41,7 +41,7 @@ ColumnLayout {
     onChunksChanged: {
         // When the list changes, ensure the current index is in the new range
         if (!chunks)
-            currentIndex = ChunkIndexEnum.NULL
+            currentIndex = ChunkIndexEnum.NONE
         else if (currentIndex >= chunks.length)
             currentIndex = chunks.length-1
     }
@@ -83,7 +83,7 @@ ColumnLayout {
                     checked = summaryEnabled
                 }
                 onClicked: {
-                    root.currentIndex = ChunkIndexEnum.NULL
+                    root.currentIndex = ChunkIndexEnum.NONE
                     checked = true
                 }
             }

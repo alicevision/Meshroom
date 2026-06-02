@@ -39,6 +39,7 @@ ListView {
     header: Loader {
         active: root.hasHeader
         visible: active
+        width: active ? root.chunkWidth : 0
         
         sourceComponent: Rectangle {
             height: root.chunkHeight
@@ -78,6 +79,7 @@ ListView {
     footer: Loader {
         active: root.hasFooter
         visible: active
+        width: active ? root.chunkWidth : 0
         
         sourceComponent: Rectangle {
             height: root.chunkHeight

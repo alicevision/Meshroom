@@ -454,7 +454,7 @@ def initPlugins():
         # Set the ProcessEnv for each plugin
         if plugins:
             for plugin in plugins:
-                plugin.processEnv = processEnvFactory(f, plugin.configEnv)
+                plugin.processEnv = processEnvFactory(f, plugin.configEnv, plugin.name)
 
     # Rez plugins (with a RezProcessEnv)
     rezPlugins = initRezPlugins()
@@ -471,6 +471,6 @@ def initRezPlugins():
         # Set the ProcessEnv for Rez plugins
         if plugins:
             for plugin in plugins:
-                plugin.processEnv = processEnvFactory(path, plugin.configEnv, envType="rez", uri=name)
+                plugin.processEnv = processEnvFactory(path, plugin.configEnv, plugin.name, envType="rez", uri=name)
 
     return rezPlugins

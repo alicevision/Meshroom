@@ -1,0 +1,97 @@
+# .github/workflows/run-tests.yml
+# Reusable workflow – called by continuous-integration.yml
+#
+# Runs on a single OS/Python combination:
+#   1. Lint with flake8
+#   2. Test with pytest  (+coverage upload on Linux)
+#   3. Smoke-test meshroom_compute with Python 3.9
+
+name: Run tests
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: "Runner OS: 'ubuntu-latest' or 'windows-latest'"
+        type: string
+        required: true
+      python-version:
+        description: "Python version used for lint + tests"
+        type: string
+        default: '3.11'
+    secrets:
+      CODECOV_TOKEN:
+        description: "Codecov upload token (only needed on Linux)"
+        required: false
+
+env:
+  CI: true
+  PYTHONPATH: ${{ github.workspace }}
+
+jobs:
+  test:
+    runs-on: ${{ inputs.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Primary Python environment ───────────────────────────
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest pytest-cov
+          pip install -r requirements.txt -r dev_requirements.txt --timeout 45
+
+      # ── Lint ─────────────────────────────────────────────────
+      - name: Lint with flake8
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Treat all other errors as warnings (line length 127, GitHub editor width)
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      # ── Tests ────────────────────────────────────────────────
+      - name: Test with pytest
+        run: pytest tests/
+
+      # Coverage is generated and uploaded only on Linux to avoid double-counting
+      - name: Test with pytest (coverage)
+        if: runner.os == 'Linux'
+        run: pytest --cov --cov-report=xml --junitxml=junit.xml
+
+      - name: Upload coverage to Codecov
+        if: runner.os == 'Linux'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results to Codecov
+        if: runner.os == 'Linux' && !cancelled()
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      # ── meshroom_compute smoke test (Python 3.9) ─────────────
+      # Verifies that the CLI entry-point works on the minimum supported version.
+      - name: Set up Python 3.9 – meshroom_compute smoke test
+        if: runner.os == 'Linux'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install runtime dependencies (Python 3.9)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python3.9 -m pip install --upgrade pip
+          python3.9 -m pip install -r requirements.txt --timeout 45
+
+      - name: Run meshroom_compute –h (Python 3.9)
+        if: runner.os == 'Linux'
+        run: python3.9 bin/meshroom_compute -h

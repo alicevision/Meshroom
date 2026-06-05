@@ -10,7 +10,7 @@ class NodeWithValidators(desc.CommandLineNode):
             label="Mandatory Input",
             description="",
             value="",
-            validators= [
+            validators=[
                 NotEmptyValidator()
             ]
         ),

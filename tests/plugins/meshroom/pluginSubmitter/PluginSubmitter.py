@@ -10,10 +10,10 @@ LOGGER = logging.getLogger("TestSubmit")
 
 class PluginSubmitterA(desc.Node):
     """
-    Test process no parallelization
+    Test process no parallelization.
     """
     parallelization = None
-    
+
     inputs = [
         desc.IntParam(
             name="nbChunks",
@@ -48,12 +48,12 @@ class PluginSubmitterA(desc.Node):
         iteration = chunk.range.iteration
         nbBlocks = chunk.range.nbBlocks
         LOGGER.info(f"> Process chunk {iteration}/{nbBlocks}")
-        LOGGER.info(f"> Done")
+        LOGGER.info("> Done")
 
 
 class PluginSubmitterA1(PluginSubmitterA):
     """
-    Test process with parallelization and dynamic node size
+    Test process with parallelization and dynamic node size.
     """
     size = desc.StaticNodeSize(2)
     parallelization = desc.Parallelization(blockSize=1)
@@ -61,24 +61,24 @@ class PluginSubmitterA1(PluginSubmitterA):
 
 class PluginSubmitterB(PluginSubmitterA):
     """
-    Test process with parallelization adn static node size
+    Test process with parallelization adn static node size.
     """
     size = desc.StaticNodeSize(2)
     parallelization = desc.Parallelization(blockSize=1)
 
     def postprocess(self, node):
-        LOGGER.info(f"> PluginSubmitterB postprocess Done")
+        LOGGER.info("> PluginSubmitterB postprocess Done")
 
 
 class PluginSubmitterC(PluginSubmitterA):
     """
-    Test process with parallelization and dynamic node size
+    Test process with parallelization and dynamic node size.
     """
     size = desc.DynamicNodeSize("nbChunks")
     parallelization = desc.Parallelization(blockSize=1)
-    
+
     def preprocess(self, node):
-        LOGGER.info(f"> PluginSubmitterC preprocess Done")
+        LOGGER.info("> PluginSubmitterC preprocess Done")
 
     def postprocess(self, node):
-        LOGGER.info(f"> PluginSubmitterC postprocess Done")
+        LOGGER.info("> PluginSubmitterC postprocess Done")

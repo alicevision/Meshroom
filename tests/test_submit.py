@@ -15,7 +15,6 @@ from meshroom.core import pluginManager, loadClassesNodes, loadSubmitters, regis
 from meshroom.core.graph import Graph
 from meshroom.core.plugins import Plugin
 from meshroom.core.node import Node, Status
-from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.submitter import jobManager
 from meshroom.core.submitter import OrderedTask, OrderedTasks, OrderedTaskType
 from meshroom.submitters.localFarm.localFarmSubmitter import LocalFarmSubmitter, LocalFarmJob
@@ -105,7 +104,7 @@ def processSubmit(node: Node, graph, tmp_path):
         # Update nodes status
         for node in nodesToProcess:
             node.initStatusOnSubmit()
-        # Update monitored to make sure meshroom knows when task status change 
+        # Update monitored to make sure meshroom knows when task status change
         graph.updateMonitoredFiles()
         assert node.getGlobalStatus() == Status.SUBMITTED
         res = submitter.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel="TestSubmit")
@@ -165,9 +164,9 @@ class TestNodeSubmit:
     def test_simpleOrderTasks(self):
         """ Here is the example we use for testing :
 
-                     *" [A chk_0] "* 
+                     *" [A chk_0] "*
         [phd start_A]               [phd end_A] - [phd root]
-                     *_ [A chk_1] _* 
+                     *_ [A chk_1] _*
 
         phd=placeholder (no command/process executed)
         chk=chunk
@@ -190,9 +189,9 @@ class TestNodeSubmit:
     def test_complexOrderTasks(self):
         """ Here is the example we use for testing :
 
-        [A_0 chk] "*.             *" [B chk_0] "* 
+        [A_0 chk] "*.             *" [B chk_0] "*
                      [phd start_B]               [B post] - [C pre] - [C exp] - [C post] - [phd root]
-        [A_1 chk] _*"             *_ [B chk_1] _* 
+        [A_1 chk] _*"             *_ [B chk_1] _*
 
         phd=placeholder (no command/process executed)
         chk=chunk
@@ -200,7 +199,7 @@ class TestNodeSubmit:
         """
 
         # First do a simple test
-        
+
         # Now do a more complex test
         graph = Graph("")
         # Add nodes

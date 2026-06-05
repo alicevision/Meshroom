@@ -331,6 +331,7 @@ def test_description_conflict():
     # Restore original node types
     pluginManager._nodePlugins = originalNodeTypes
 
+
 def test_upgradeAllNodes(tmp_path):
     registerNodeDesc(SampleNodeV1)
     registerNodeDesc(SampleNodeV2)

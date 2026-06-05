@@ -1,4 +1,3 @@
-from meshroom.core.exception import CyclicDependencyError
 from meshroom.core.graph import Graph
 
 
@@ -128,7 +127,7 @@ def test_rename_nodes():
     assert ls1.name == "nodels_1"
     graph.renameNode(ls2, "nodels")
     assert ls2.name == "nodels_2"
-    
+
     # Check we cannot rename in locked mode
     ls0.setLocked(True)
     graph.renameNode(ls0, "lockedLs")

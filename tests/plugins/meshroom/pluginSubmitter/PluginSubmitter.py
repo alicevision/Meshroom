@@ -53,7 +53,7 @@ class PluginSubmitterA(desc.Node):
 
 class PluginSubmitterA1(PluginSubmitterA):
     """
-    Test process with parallelization and dynamic node size.
+    Test process with parallelization and static node size.
     """
     size = desc.StaticNodeSize(2)
     parallelization = desc.Parallelization(blockSize=1)
@@ -61,7 +61,7 @@ class PluginSubmitterA1(PluginSubmitterA):
 
 class PluginSubmitterB(PluginSubmitterA):
     """
-    Test process with parallelization adn static node size.
+    Test process with parallelization and static node size.
     """
     size = desc.StaticNodeSize(2)
     parallelization = desc.Parallelization(blockSize=1)

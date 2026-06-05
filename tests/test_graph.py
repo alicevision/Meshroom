@@ -135,6 +135,14 @@ def test_rename_nodes():
     assert ls0.name == "nodels"
 
 
+def test_empty_graph():
+    """Test edge-case behavior on a graph with no nodes."""
+    graph = Graph("")
+    assert graph.nodes == []
+    assert graph.nodesOfType("Ls") == []
+    assert graph.flowEdges() == []
+
+
 class TestDFS:
     """ Tests for the graph DFS traversal methods. """
 

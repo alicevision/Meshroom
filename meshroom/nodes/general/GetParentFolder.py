@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
-from pathlib import Path
+import os
+import logging
 from meshroom.core import desc
 
 
@@ -29,10 +30,13 @@ class GetParentFolder(desc.Node):
     ]
 
     def process(self, node):
-        path = node.file.value
-        if path:
-            path = Path(path)
-            if path.exists():
-                node.folder.value = str(Path(path).parent)
-                return
         node.folder.value = ""
+        path = node.file.value
+        if not path:
+            return
+        # Additional security but it's supposedly handeled by the validator
+        path = os.path.normpath(path)
+        parent = os.path.dirname(path)
+        if not os.path.exists(parent):
+            logging.warning(f"Parent path {parent} does not exist")
+        node.folder.value = parent

@@ -251,7 +251,7 @@ Item {
         if (Boolean(attribute.enabled)) {
             // If the parent is a GroupAttribute, use the status of the parent's pin to determine visibility
             // UNLESS the child attribute is already connected with a visible edge
-            if (attribute.root && attribute.root.baseType === "GroupAttribute") {
+            if (attribute.root && attribute.root.isCollapsable) {
                 var visible = Boolean(parentPins.get(attribute.root.name))
                 if (!visible && parentPins.has(attribute.name) && parentPins.get(attribute.name) === true) {
                     parentPins.set(attribute.name, false)
@@ -275,8 +275,8 @@ Item {
             if (attr.isOutput == isOutput) {
                 // Add the attribute to the model
                 attributes.push(attr)
-                if (attr.baseType === "GroupAttribute") {
-                    // If it is a GroupAttribute, initialize its pin status
+                if (attr.isCollapsable) {
+                    // initialize its pin status
                     parentPins.set(attr.name, false)
                 }
 
@@ -284,7 +284,7 @@ Item {
                 attr.flatStaticChildren.forEach((child) =>
                     {
                         attributes.push(child)
-                        if (child.baseType === "GroupAttribute") {
+                        if (child.isCollapsable) {
                             parentPins.set(child.name, false)
                         }
                     }
@@ -614,7 +614,7 @@ Item {
                                     active: Boolean(modelData.isOutput && modelData.desc.visible)
                                     visible: {
                                         if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
-                                            if (modelData.root && modelData.root.baseType === "GroupAttribute") {
+                                            if (modelData.root && modelData.root.isCollapsable) {
                                                 return Boolean(outputs.parentPins.get(modelData.root.name) ||
                                                                modelData.hasAnyOutputLinks ||
                                                                modelData.hasAnyInputLinks)
@@ -689,7 +689,7 @@ Item {
                                     active: !modelData.isOutput && modelData.exposed && modelData.desc.visible
                                     visible: {
                                         if (Boolean(modelData.enabled)) {
-                                            if (modelData.root && modelData.root.baseType === "GroupAttribute") {
+                                            if (modelData.root && (modelData.root.baseType === "GroupAttribute" || modelData.root.baseType === "CustomAttributes") ) {
                                                 return Boolean(inputs.parentPins.get(modelData.root.name) ||
                                                                modelData.hasAnyOutputLinks ||
                                                                modelData.hasAnyInputLinks)

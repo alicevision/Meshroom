@@ -12,17 +12,43 @@ import inspect
 from collections.abc import Iterable, Sequence
 from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
+from meshroom.core.desc import Attribute as AttributeDescription
 from meshroom.core import desc, hashValue
+from meshroom.core.desc.attribute import FloatParam
+from meshroom.core.desc.attribute import GroupAttribute as GroupAttributeDesc
 from meshroom.core.keyValues import KeyValues
 from meshroom.core.exception import InvalidEdgeError
 
 from typing import TYPE_CHECKING, Optional
 
+from meshroom.core.mixins import Collapsable
+
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
 
+STR_TO_ATTR_DESCRIPTION = {
+    'FloatParam': FloatParam,
+    'GroupAttribute': GroupAttributeDesc
+}
 
-def attributeFactory(description: str, value, isOutput: bool, node, root=None, parent=None):
+def getAttributeDescription(description: dict) -> AttributeDescription:
+    attrClass = STR_TO_ATTR_DESCRIPTION.get(description.get('type'))
+    if not attrClass:
+        return None
+
+    desc = description.get('desc', {})
+    name = desc.get('name')
+    label = description.get('label')
+    description = desc.get('description')
+
+    if issubclass(attrClass, GroupAttributeDesc):
+        attr = attrClass(name=name, label=label, description=description, items=[])
+    else:
+        attr = attrClass(name=name, label=label, description=description)
+
+    return attr
+
+def attributeFactory(description: AttributeDescription, value, isOutput: bool, node, root=None, parent=None):
     """
     Create an Attribute based on description type.
 
@@ -738,7 +764,9 @@ class Attribute(BaseObject):
     # Whether the attribute or any of its elements is linked by another attribute.
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
     # The list of attributes that refer to this one as their parent.
-    flatStaticChildren = Property(Variant, _getFlatStaticChildren, constant=True)
+
+    flatStaticChildrenChanged = Signal()
+    flatStaticChildren = Property(Variant, lambda self: self._getFlatStaticChildren(), notify=flatStaticChildrenChanged)
 
     expressionApplied = Signal()
 
@@ -1128,7 +1156,7 @@ class ListAttribute(Attribute):
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=Attribute.outputLinksChanged)
 
 
-class GroupAttribute(Attribute):
+class GroupAttribute(Attribute, Collapsable):
 
     def __init__(self, node, attributeDesc: desc.GroupAttribute, isOutput: bool,
                  root=None, parent=None):
@@ -1689,6 +1717,70 @@ class ShapeListAttribute(ListAttribute):
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
 
 
+class CustomAttributes(GroupAttribute):
+
+    def duplicateAttribute(self, attribute: Attribute) -> Attribute:
+        newDesc = attribute.desc.clone()
+        newAttribute = attributeFactory(newDesc,
+                                        value= None, 
+                                        isOutput=attribute.isOutput,
+                                        node=self.node,
+                                        root=self)
+
+        idx = self._value.count - 1
+        self._value.insert(idx, newAttribute)
+        self.flatStaticChildrenChanged.emit()
+        return newAttribute
+
+    # Override    
+    def _setValue(self, exportedValue):
+        if self._handleLinkValue(exportedValue):
+            return
+
+        value = self.validateValue(exportedValue)
+        if isinstance(value, dict):
+            # set individual child attribute values
+            for key, v in value.items():
+                attr = self._value.get(key)
+                if not attr:
+                    idx = self._value.count - 1
+                    attrDescType = v.get('type', None)
+
+                    if not attrDescType:
+                        continue
+
+                    if attrDescType not in STR_TO_ATTR_DESCRIPTION:
+                        continue
+
+                    attrDesc = getAttributeDescription(v)
+                    attr = attributeFactory(
+                        description=attrDesc,
+                        value=v.get('value', None),
+                        isOutput=False,
+                        node=self.node,
+                        root=self
+                    )
+                    self._value.insert(idx, attr)
+
+                attr.value = v.get('value', v)
+        elif isinstance(value, (list, tuple)):
+            if len(self._desc._items) != len(value):
+                raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
+            for attrDesc, v in zip(self._desc._items, value):
+                self._value.get(attrDesc.name).value = v
+        else:
+            raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
+
+    # Override
+    def getSerializedValue(self):
+        return {key: {
+            'value':attr.getSerializedValue(),
+            'desc':attr.desc.serialize(),
+            'type': str(attr.__class__.__name__),
+            'label':attr.label,
+            } for key, attr in self._value.objects.items()}
+
+
 class DynamicAttribute(Attribute):
     """
     Instance of a DynamicAttribute descriptor.
@@ -1697,6 +1789,10 @@ class DynamicAttribute(Attribute):
     is created on the node and the link is established.
     The DynamicAttribute itself stays empty and is always available for new connections.
     """
+    
+    #Override
+    def _setValue(self, _):
+        pass
 
     def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
         """Accept connections of any type."""

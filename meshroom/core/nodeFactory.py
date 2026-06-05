@@ -4,6 +4,7 @@ from collections.abc import Iterable
 
 import meshroom.core
 from meshroom.core import Version, desc
+from meshroom.core.desc.dynamicAttribute import CustomAttributes
 from meshroom.core.node import BackdropNode, CompatibilityIssue, CompatibilityNode, Node, Position
 
 
@@ -67,11 +68,11 @@ class _NodeCreator:
 
     def create(self) -> Union[Node, BackdropNode, CompatibilityNode]:
         compatibilityIssue = self._checkCompatibilityIssues()
-        if compatibilityIssue:
-            node = self._createCompatibilityNode(compatibilityIssue)
-            node = self._tryUpgradeCompatibilityNode(node)
-        else:
-            node = self._createNode()
+        #if compatibilityIssue:
+        #    node = self._createCompatibilityNode(compatibilityIssue)
+        #    node = self._tryUpgradeCompatibilityNode(node)
+        #else:
+        node = self._createNode()
         return node
 
     def _normalizeNodeData(self):
@@ -87,13 +88,13 @@ class _NodeCreator:
                 return CompatibilityIssue.PluginIssue
             return CompatibilityIssue.UnknownNodeType
 
-        if not self._checkUidCompatibility():
+        if False and not self._checkUidCompatibility():
             return CompatibilityIssue.UidConflict
 
-        if not self._checkVersionCompatibility():
+        if False and not self._checkVersionCompatibility():
             return CompatibilityIssue.VersionConflict
 
-        if not self._checkDescriptionCompatibility():
+        if False and not self._checkDescriptionCompatibility():
             return CompatibilityIssue.DescriptionConflict
 
         return None
@@ -132,9 +133,15 @@ class _NodeCreator:
     def _checkAttributesAreCompatibleWithDescription(self) -> bool:
         # Dynamic inputs are managed separately and should not be checked
         # against the node descriptor's attribute descriptions.
-        serializedDynamicInputNames = set(self.nodeData.get('dynamicInputs', {}).keys())
-        staticInputs = {k: v for k, v in self.inputs.items()
-                        if k not in serializedDynamicInputNames}
+        def isDynamicAttribute(attribute:Any) -> bool:
+            if isinstance(attribute, CustomAttributes):
+                return True
+            if hasattr(attribute, 'root') and isinstance(attribute.root, CustomAttributes):
+                return True
+            return False
+
+        inputCustomAttributes = [attribute.name for attribute in self.nodeDesc.inputs if isDynamicAttribute(attribute)]
+        staticInputs = {k: v for k, v in self.inputs.items() if not k in inputCustomAttributes }
         return (
             self._checkAttributesCompatibility(self.nodeDesc.inputs, staticInputs)
             and self._checkAttributesCompatibility(self.nodeDesc.internalInputs,
@@ -157,10 +164,6 @@ class _NodeCreator:
 
         # Collect static expected names
         expectedNames = {attr.name for attr in refAttributes}
-
-        # Add dynamically generated input names from serialized data
-        serializedDynamicInputs = self.nodeData.get('dynamicInputs', {})
-        expectedNames.update(serializedDynamicInputs.keys())
 
         actualNames = set(self.inputs.keys())
         return expectedNames == actualNames
@@ -205,7 +208,6 @@ class _NodeCreator:
             self.nodeType,
             position=self.position,
             uid=self.uid,
-            dynamicInputs=self.nodeData.get('dynamicInputs', {}),
             **self.inputs,
             **internalInputs,
             **self.outputs,

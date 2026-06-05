@@ -18,6 +18,7 @@ Item {
     property variant nodeTypesModel: null  /// The list of node types that can be instantiated
     property real maxZoom: 2.0
     property real minZoom: 0.1
+    property int forceEdgesVisualUpdate: 0
 
     property var edgeAboutToBeRemoved: undefined
 
@@ -499,8 +500,8 @@ Item {
                 delegate: Edge {
                     function getAttributePin(attribute) {
                         // Get the first visible parent of "attribute"
-                        let dstAttributeDelegate = root._attributeToDelegate[attribute]
-                        if (dstAttributeDelegate && dstAttributeDelegate.visible) {
+                        let dstAttributeDelegate = root._attributeToDelegate[attribute.fullName]
+                        if (dstAttributeDelegate) {
                             return dstAttributeDelegate
                         }
 
@@ -517,7 +518,7 @@ Item {
                             groupAttribute = groupAttribute ? groupAttribute.root : null
 
                             if (groupAttribute) {
-                                groupAttributeDelegate = root._attributeToDelegate[groupAttribute]
+                                groupAttributeDelegate = root._attributeToDelegate[groupAttribute.fullName]
                             }
                         }
 
@@ -528,9 +529,15 @@ Item {
                         return dstAttributeDelegate
                     }
 
-                    property var src: getAttributePin(edge.src)
-                    property var dst: getAttributePin(edge.dst)
-                    property bool isValidEdge: src !== null && dst !== null
+                    property var src: {
+                        root.forceEdgesVisualUpdate;
+                        return getAttributePin(edge.src)
+                        }
+                    property var dst: {
+                        root.forceEdgesVisualUpdate;
+                        return getAttributePin(edge.dst)
+                        }
+                    property bool isValidEdge: src !== undefined && src !== null && dst !== undefined && dst !== null
                     visible: isValidEdge && src.visible && dst.visible
 
                     property bool forLoop: {
@@ -544,7 +551,10 @@ Item {
 
                     edge: object
                     isForLoop: forLoop
-                    loopSize: forLoop ? edge.src.root.value.count : 0
+                    loopSize: {
+                        return forLoop ? edge.src.root.value.count : 0
+                        }
+
                     iteration: forLoop ? edge.src.root.value.indexOf(edge.src) : 0
                     color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
                     thickness: {
@@ -1567,11 +1577,13 @@ Item {
     }
 
     function registerAttributePin(attribute, pin) {
-        root._attributeToDelegate[attribute] = pin
+        root._attributeToDelegate[attribute.fullName] = pin
+        root.forceEdgesVisualUpdate++
     }
 
     function unregisterAttributePin(attribute, pin) {
-        delete root._attributeToDelegate[attribute]
+        delete root._attributeToDelegate[attribute.fullName]
+        root.forceEdgesVisualUpdate++
     }
 
     function boundingBox() {

@@ -3,7 +3,6 @@ from .attribute import (
     BoolParam,
     ChoiceParam,
     ColorParam,
-    DynamicAttribute,
     File,
     FloatParam,
     GroupAttribute,
@@ -25,6 +24,10 @@ from .shapeAttribute import (
     Line2d,
     Rectangle,
     Circle
+)
+from .dynamicAttribute import (
+    DynamicAttribute,
+    CustomAttributes
 )
 from .computation import (
     DynamicNodeSize,

@@ -310,6 +310,8 @@ RowLayout {
                     return listAttributeComponent
                 case "GroupAttribute":
                     return groupAttributeComponent
+                case "CustomAttributes":
+                    return groupAttributeComponent
                 case "StringParam":
                     if (attribute.desc.semantic.includes('multiline'))
                         return textAreaComponent
@@ -803,6 +805,40 @@ RowLayout {
 
         Component {
             id: groupAttributeComponent
+            ColumnLayout {
+                id: groupItem
+                Component.onCompleted:  {
+                    var cpt = Qt.createComponent("AttributeEditor.qml");
+                    var obj = cpt.createObject(groupItem,
+                                               {
+                                                   'model': Qt.binding(function() { return attribute.value }),
+                                                   'readOnly': Qt.binding(function() { return root.readOnly }),
+                                                   'labelWidth': 100,  // Reduce label width for children (space gain)
+                                                   'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
+                                                   'filterText': Qt.binding(function() { return root.filterText }),
+                                               })
+                    obj.Layout.fillWidth = true;
+                    obj.attributeDoubleClicked.connect(
+                        function(attr) {
+                            root.doubleClicked(attr)
+                        }
+                    )
+                    obj.inAttributeClicked.connect(
+                        function(srcItem, mouse, inAttributes) {
+                            root.inAttributeClicked(srcItem, mouse, inAttributes)
+                        }
+                    )
+                    obj.outAttributeClicked.connect(
+                        function(srcItem, mouse, outAttributes) {
+                            root.outAttributeClicked(srcItem, mouse, outAttributes)
+                        }
+                    )
+                }
+            }
+        }
+
+        Component {
+            id: dynamicAttributesComponent
             ColumnLayout {
                 id: groupItem
                 Component.onCompleted:  {

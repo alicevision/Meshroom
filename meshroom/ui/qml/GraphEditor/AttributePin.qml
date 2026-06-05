@@ -27,8 +27,8 @@ RowLayout {
                                                       outputAnchor.y + outputAnchor.height / 2)
 
     readonly property bool isList: attribute && attribute.type === "ListAttribute"
-    readonly property bool isGroup: attribute && attribute.type === "GroupAttribute"
-    readonly property bool isDynamic: attribute && attribute.type === "DynamicAttribute"
+    readonly property bool isGroup: attribute && (attribute.type === "GroupAttribute" || attribute.type === "CustomAttributes")
+    readonly property bool isDynamic: false //attribute && attribute.type === "DynamicAttribute"
     readonly property bool isConnected: attribute.hasAnyInputLinks || attribute.hasAnyOutputLinks
 
     signal childPinCreated(var childAttribute, var pin)
@@ -130,7 +130,7 @@ RowLayout {
 
                 keys: [inputDragTarget.objectName]
                 onEntered: function(drag) {
-                    var validIncomingConnection = drag.source.attribute.validateIncomingConnection(inputDragTarget.attribute)
+                    var validIncomingConnection = inputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
                     // Check if attributes are compatible to create a valid connection
                     if (root.readOnly                                            // Cannot connect on a read-only attribute
                         || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
@@ -290,7 +290,7 @@ RowLayout {
             label.elide: hovered ? Text.ElideNone : Text.ElideMiddle
             label.horizontalAlignment: root.attribute && root.attribute.isOutput ? Text.AlignRight : Text.AlignLeft
             label.verticalAlignment: Text.AlignVCenter
-            label.visible: !root.isDynamic
+            label.visible: true
 
             // Icon
             iconText: {

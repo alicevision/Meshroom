@@ -1252,8 +1252,7 @@ class UIGraph(QObject):
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(dst, DynamicAttribute):
-            with self.groupedGraphModification(f"Connect to DynamicAttribute {dst.fullName}"):
-                self.push(commands.AddDynamicInputCommand(self._graph, src, dst))
+            self.push(commands.ConnectDynamicAttributeCommand(self._graph, src, dst))
         elif isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
             self._addEdge(src.at(0), dst)
         elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
@@ -1278,7 +1277,6 @@ class UIGraph(QObject):
                 return
             if getattr(edge.dst, '_isDynamic', False):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
-                self.push(commands.RemoveDynamicInputCommand(self._graph, edge.dst))
                 return
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 

@@ -135,6 +135,17 @@ class Attribute(BaseObject):
             return False
         return True
 
+    def clone(self):
+        return self.__class__(name=self.name, label=self.label, description=self.description, value=self.value)
+
+    def serialize(self):
+        return {
+            'name':self.name, 
+            'label':self.label, 
+            'description':self.description, 
+            'value':self.value
+        }
+    
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
@@ -229,6 +240,21 @@ class ListAttribute(Attribute):
             return self._elementDesc.matchDescription(value[0], strict)
         return True
 
+    def clone(self):
+        return self.__class__(elementDesc=self.elementDesc,
+                              name=self.name,
+                              label=self.label,
+                              description=self.description,
+                              commandLineGroup=self.commandLineGroup,
+                              advanced=self.advanced,
+                              semantic=self.semantic,
+                              enabled=self.enabled,
+                              joinChar=self.joinChar,
+                              visible=self.visible,
+                              exposed=self.exposed,
+                              value=self.value
+                              )
+
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     invalidate = Property(Variant, lambda self: self.elementDesc.invalidate, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
@@ -255,6 +281,7 @@ class GroupAttribute(Attribute):
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
         from meshroom.core.attribute import GroupAttribute
+        
         return GroupAttribute
 
     def validateValue(self, value):
@@ -263,7 +290,7 @@ class GroupAttribute(Attribute):
             return value
         if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
-            raise ValueError("GroupAttribute.validateValue: cannot recognize QJSValue. "
+            raise ValueError("GroupAttribute.validateValue:cannot recognize QJSValue. "
                              "Please, use JSON.stringify(value) in QML.")
         if isinstance(value, str):
             # Alternative solution to set values from QML is to convert values to JSON string
@@ -338,6 +365,20 @@ class GroupAttribute(Attribute):
         for desc in self._items:
             allInvalidations.append(desc.invalidate)
         return allInvalidations
+
+    def clone(self):
+        return self.__class__(items=[item.clone() for item in self._items],
+                              name=self.name,
+                              label=self.label,
+                              description=self.description,
+                              commandLineGroup=self.commandLineGroup,
+                              advanced=self.advanced,
+                              semantic=self.semantic,
+                              enabled=self.enabled,
+                              joinChar=self.joinChar,
+                              brackets=self.brackets,
+                              visible=self.visible,
+                              exposed=self.exposed)
 
     items = Property(Variant, lambda self: self._items, constant=True)
     invalidate = Property(Variant, retrieveChildrenInvalidations, constant=True)
@@ -661,36 +702,6 @@ class StringParam(Param):
             return "", ValueTypeErrors.NONE
         if not isinstance(self.value, str):
             return self.name, ValueTypeErrors.TYPE
-        return "", ValueTypeErrors.NONE
-
-
-class DynamicAttribute(Attribute):
-    """
-    A DynamicAttribute is a special input attribute with no fixed type.
-    It appears as an empty connection pin in the graph editor (no label).
-    When an attribute is connected to it, a new attribute of the same type as the
-    connected attribute is automatically created on the node and the link is established.
-    The DynamicAttribute itself remains empty and available for further connections.
-    """
-    @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, name, label=None, description=None, group="allParams",
-                 commandLineGroup=_setParamSentinel, advanced=False, enabled=True,
-                 visible=True, exposed=False):
-        commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
-        super(DynamicAttribute, self).__init__(
-            name=name, label=label, description=description or "", value=None,
-            commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled,
-            invalidate=False, semantic="", visible=visible, exposed=exposed,
-        )
-
-    def getInstanceType(self):
-        from meshroom.core.attribute import DynamicAttribute
-        return DynamicAttribute
-
-    def validateValue(self, value):
-        return value
-
-    def checkValueTypes(self):
         return "", ValueTypeErrors.NONE
 
 

@@ -195,6 +195,10 @@ import Utils 1.0
     // instantiate a MaterialSwitcher instead. Returns the faceCount
     function sceneLoaderPostProcess(rootEntity)
     {
+        // Ensure all geometries have normal attributes to prevent
+        // Metal RHI pipeline crashes with built-in Qt3D materials
+        Scene3DHelper.ensureNormals(rootEntity)
+
         var materials = Scene3DHelper.findChildrenByProperty(rootEntity, "diffuse")
         var entities = []
         var texCount = 0

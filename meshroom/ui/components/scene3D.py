@@ -1,6 +1,7 @@
+import struct
 from math import acos, pi, sqrt, atan2, cos, sin, asin
 
-from PySide6.QtCore import QObject, Slot, QSize, Signal, QPointF
+from PySide6.QtCore import QObject, Slot, QSize, Signal, QPointF, QByteArray
 from PySide6.Qt3DCore import Qt3DCore
 from PySide6.Qt3DRender import Qt3DRender
 from PySide6.QtGui import QVector3D, QQuaternion, QVector2D, QVector4D, QMatrix4x4
@@ -52,6 +53,47 @@ class Scene3DHelper(QObject):
         for geo in entity.findChildren(Qt3DCore.QGeometry):
             count += sum([attr.count() for attr in geo.attributes() if attr.name() == "vertexColor"])
         return count
+
+    @Slot(Qt3DCore.QEntity)
+    def ensureNormals(self, entity):
+        """
+        Add default normal attributes to geometries that don't have them.
+        This prevents Metal RHI pipeline crashes when built-in Qt3D materials
+        (which require vertexNormal) are used with meshes lacking normals.
+        """
+        for geo in entity.findChildren(Qt3DCore.QGeometry):
+            hasNormals = any(attr.name() == "vertexNormal" for attr in geo.attributes())
+            if hasNormals:
+                continue
+
+            # Find the vertexPosition attribute to get vertex count
+            posAttr = None
+            for attr in geo.attributes():
+                if attr.name() == "vertexPosition":
+                    posAttr = attr
+                    break
+            if not posAttr:
+                continue
+
+            vertexCount = posAttr.count()
+
+            # Create a buffer filled with (0, 1, 0) default normals
+            normalData = QByteArray(struct.pack('<fff', 0.0, 1.0, 0.0) * vertexCount)
+            normalBuffer = Qt3DCore.QBuffer(geo)
+            normalBuffer.setData(normalData)
+
+            # Create the normal attribute
+            normalAttr = Qt3DCore.QAttribute(geo)
+            normalAttr.setName("vertexNormal")
+            normalAttr.setVertexBaseType(Qt3DCore.QAttribute.Float)
+            normalAttr.setVertexSize(3)
+            normalAttr.setAttributeType(Qt3DCore.QAttribute.VertexAttribute)
+            normalAttr.setBuffer(normalBuffer)
+            normalAttr.setByteStride(3 * 4)  # 3 floats * 4 bytes
+            normalAttr.setByteOffset(0)
+            normalAttr.setCount(vertexCount)
+
+            geo.addAttribute(normalAttr)
 
 
 class TrackballController(QObject):

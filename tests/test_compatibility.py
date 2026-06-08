@@ -155,7 +155,8 @@ class SampleInputNodeV1(desc.InputNode):
 
 
 class SampleInputNodeV2(desc.InputNode):
-    """ Changes from V1:
+    """
+    Changes from V1:
         * 'path' has been renamed to 'in'
     """
     inputs = [
@@ -167,8 +168,33 @@ class SampleInputNodeV2(desc.InputNode):
     ]
 
 
+class OutputTemplateNodeV1(desc.Node):
+    """ Node with an output File attribute pointing to a specific file. """
+    inputs = [
+        desc.File(name="input", label="Input", description="", value=""),
+    ]
+    outputs = [
+        desc.File(name="output", label="Output", description="",
+                  value="{nodeCacheFolder}/file.abc"),
+    ]
+
+
+class OutputTemplateNodeV2(desc.Node):
+    """
+    Changes from OutputTemplateNodeV1:
+        * The output value template has changed from 'file.abc' to 'file.cba'.
+    """
+    inputs = [
+        desc.File(name="input", label="Input", description="", value=""),
+    ]
+    outputs = [
+        desc.File(name="output", label="Output", description="",
+                  value="{nodeCacheFolder}/file.cba"),
+    ]
+
+
 def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
-    """Change the `nodeDesc` associated to `nodeType`."""
+    """ Change the `nodeDesc` associated to `nodeType`. """
     pluginManager.getRegisteredNodePlugins()[nodeType] = NodePlugin(nodeDesc)
 
 
@@ -421,6 +447,47 @@ def test_conformUpgrade():
 
     unregisterNodeDesc(SampleNodeV5)
     unregisterNodeDesc(SampleNodeV6)
+
+
+def test_outputValueAfterDefaultOutputChange(tmp_path):
+    """
+    Test that when the default value of a node's output attribute is changed in the node
+    description, a saved graph that is reopened preserves the values saved on disk.
+
+    A new instance of that node is then created to check that the new default value is
+    properly applied to new nodes.
+    """
+    registerNodeDesc(OutputTemplateNodeV1)
+
+    g = Graph("")
+    n = g.addNewNode(OutputTemplateNodeV1.__name__)
+    nodeName = n.name
+    assert n.output.value.endswith("/file.abc")
+
+    graphFile = os.path.join(tmp_path, "test_output_value_change.mg")
+    g.save(graphFile)
+
+    # Replace the registered description with V2 (only the output value changes)
+    replaceNodeTypeDesc(OutputTemplateNodeV1.__name__, OutputTemplateNodeV2)
+
+    # Reload the graph with the updated description
+    reloadedGraph = loadGraph(graphFile)
+    reloadedNode = reloadedGraph.node(nodeName)
+
+    # The reloaded node should not be a CompatibilityNode
+    assert not isinstance(reloadedNode, CompatibilityNode)
+
+    # The reloaded node should reflect the value saved on disk, not the new default value in the description
+    assert not reloadedNode.output.value.endswith("/file.cba")
+
+    # The internal folder (driven by inputs, not outputs) must be unchanged
+    assert reloadedNode.internalFolder == n.internalFolder
+
+    # A new instance of this node should reflect the new default value in the description
+    n = g.addNewNode(OutputTemplateNodeV1.__name__)
+    assert n.output.value.endswith("/file.cba")
+
+    unregisterNodeDesc(OutputTemplateNodeV1)
 
 
 class TestGraphLoadingWithStrictCompatibility:

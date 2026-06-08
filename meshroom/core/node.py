@@ -1272,8 +1272,16 @@ class BaseNode(BaseObject):
                         logging.warning(f'Invalid lambda evaluation for "{self.name}.{attr.name}"')
                     if defaultValue is not None:
                         try:
-                            attr.value = defaultValue.format(**self._expVars)
+                            if attr.value and (attr.value != defaultValue and
+                                               attr.value != defaultValue.format(**self._expVars)):
+                                attr.value = attr.value.format(**self._expVars)
+                            else:
+                                attr.value = defaultValue.format(**self._expVars)
+
+                            # Always recompute from the template so _invalidationValue
+                            # reflects the current UID, regardless of attr.value state
                             attr._invalidationValue = defaultValue.format(**expVarsNoCache)
+
                         except KeyError as err:
                             logging.warning(f'Invalid expression with missing key on "{self.name}.{attr.name}" with '
                                             f'value "{defaultValue}".\nError: {str(err)}')

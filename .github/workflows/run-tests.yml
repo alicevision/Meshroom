@@ -80,18 +80,15 @@ jobs:
       # ── meshroom_compute smoke test (Python 3.9) ─────────────
       # Verifies that the CLI entry-point works on the minimum supported version.
       - name: Set up Python 3.9 – meshroom_compute smoke test
-        if: runner.os == 'Linux'
         uses: actions/setup-python@v6
         with:
           python-version: '3.9'
 
       - name: Install runtime dependencies (Python 3.9)
-        if: runner.os == 'Linux'
         shell: bash
         run: |
-          python3.9 -m pip install --upgrade pip
-          python3.9 -m pip install -r requirements.txt --timeout 45
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt --timeout 45
 
       - name: Run meshroom_compute –h (Python 3.9)
-        if: runner.os == 'Linux'
-        run: python3.9 bin/meshroom_compute -h
+        run: python3 bin/meshroom_compute -h

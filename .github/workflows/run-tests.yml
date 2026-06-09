@@ -73,9 +73,10 @@ jobs:
 
       - name: Upload test results to Codecov
         if: runner.os == 'Linux' && !cancelled()
-        uses: codecov/test-results-action@v1
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
 
       # ── meshroom_compute smoke test (Python 3.9) ─────────────
       # Verifies that the CLI entry-point works on the minimum supported version.

@@ -2292,42 +2292,6 @@ class Node(BaseNode):
             attr = self.attribute(k)
             attr.value = v
 
-    def _insertDynamicInput(self, attrName, typeName, dynAttrName, value=None):
-        """
-        Create a dynamic input attribute of the given type and insert it before
-        the DynamicAttribute it belongs to.
-
-        Args:
-            attrName: Name for the new attribute.
-            typeName: Class name of the descriptor to use (e.g. "File", "IntParam").
-            dynAttrName: Name of the DynamicAttribute that owns this input.
-            value: Optional initial value (usually a link expression).
-        """
-        descClass = getattr(desc, typeName, None)
-        if descClass is None:
-            logging.warning(
-                f"Unknown attribute type '{typeName}' for dynamic input '{attrName}' "
-                f"on node '{self._name}'"
-            )
-            return
-
-        attrDesc = descClass(name=attrName)
-        newAttr = attributeFactory(attrDesc, value, isOutput=False, node=self)
-        newAttr._isDynamic = True
-
-        # Find the position of the owning DynamicAttribute and insert before it
-        dynAttr = self._attributes.get(dynAttrName)
-        dynIdx = next(
-            (i for i, a in enumerate(self._attributes) if a is dynAttr),
-            len(list(self._attributes)),
-        )
-        self._attributes.insert(dynIdx, newAttr)
-
-        if newAttr.invalidate:
-            self.invalidatingAttributes.add(newAttr)
-
-        return newAttr
-
     def upgradeAttributeValues(self, values):
         # initialize attribute values
         for k, v in values.items():

@@ -48,3 +48,17 @@ from .node import (
     MrNodeType,
     Node,
 )
+
+STR_TO_ATTRIBUTE_DESCRIPTION = {
+    'Attribute': Attribute,
+    'BoolParam': BoolParam,
+    'ChoiceParam': ChoiceParam,
+    'ColorParam': ColorParam,
+    'File': File,
+    'FloatParam': FloatParam,
+    'GroupAttribute': GroupAttribute,
+    'IntParam': IntParam,
+    'ListAttribute': ListAttribute,
+    'PushButtonParam': PushButtonParam,
+    'StringParam': StringParam
+}

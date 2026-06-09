@@ -12,10 +12,14 @@ import inspect
 from collections.abc import Iterable, Sequence
 from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
-from meshroom.core.desc import Attribute as AttributeDescription
+
 from meshroom.core import desc, hashValue
-from meshroom.core.desc.attribute import FloatParam
+
+from meshroom.core.desc import STR_TO_ATTRIBUTE_DESCRIPTION
+from meshroom.core.desc import Attribute as AttributeDescription
 from meshroom.core.desc.attribute import GroupAttribute as GroupAttributeDesc
+from meshroom.core.desc.attribute import ListAttribute as ListAttributeDesc
+
 from meshroom.core.keyValues import KeyValues
 from meshroom.core.exception import InvalidEdgeError
 
@@ -26,23 +30,22 @@ from meshroom.core.mixins import Collapsable
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
 
-STR_TO_ATTR_DESCRIPTION = {
-    'FloatParam': FloatParam,
-    'GroupAttribute': GroupAttributeDesc
-}
 
-def getAttributeDescription(description: dict) -> AttributeDescription:
-    attrClass = STR_TO_ATTR_DESCRIPTION.get(description.get('type'))
+def getAttributeDescription(desc: dict) -> AttributeDescription:
+    attrClass = STR_TO_ATTRIBUTE_DESCRIPTION.get(desc.get('type'))
     if not attrClass:
         return None
 
-    desc = description.get('desc', {})
     name = desc.get('name')
-    label = description.get('label')
+    label = desc.get('label')
     description = desc.get('description')
+    elementDesc = desc.get('elementDesc')
 
+    # TODO: Refacto to be polymorph as possible
     if issubclass(attrClass, GroupAttributeDesc):
         attr = attrClass(name=name, label=label, description=description, items=[])
+    elif elementDesc:
+        attr = attrClass(name=name, label=label, description=description, elementDesc=elementDesc)
     else:
         attr = attrClass(name=name, label=label, description=description)
 
@@ -376,6 +379,16 @@ class Attribute(BaseObject):
         if self.isOutput and self._desc.isExpression:
             return self.getDefaultValue()
         return self.value
+
+    def asDict(self) -> dict:
+        serializedData = {
+            "name": self.name,
+            "label": self.label,
+            "type": self.desc.__class__.__name__,
+            "value": self.getSerializedValue()
+        }
+        
+        return serializedData
 
     def getPrimitiveValue(self, exportDefault=True):
         return self._value
@@ -1144,6 +1157,12 @@ class ListAttribute(Attribute):
         return super()._hasAnyOutputLinks() or \
                any(attribute.hasAnyOutputLinks for attribute in self._value if hasattr(attribute, 'hasAnyOutputLinks'))
 
+    # Override
+    def asDict(self):
+        serializedData = super().asDict()
+        serializedData['elementDesc'] = self.desc._elementDesc.serialize()
+        return serializedData
+
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, lambda self: len(self.value) == 0, notify=Attribute.valueChanged)
@@ -1194,6 +1213,7 @@ class GroupAttribute(Attribute, Collapsable):
         if isinstance(value, dict):
             # set individual child attribute values
             for key, v in value.items():
+
                 self._value.get(key).value = v
         elif isinstance(value, (list, tuple)):
             if len(self._desc._items) != len(value):
@@ -1290,6 +1310,13 @@ class GroupAttribute(Attribute, Collapsable):
         for attr in self._value:
             attr.updateInternals()
 
+    #Override
+    def asDict(self) -> dict:
+        serialized = super().asDict()
+        serialized['items'] = [ item.asDict() for item in self.flatStaticChildren ]
+
+        return serialized
+
     # Override
     def _getFlatStaticChildren(self) -> list[Attribute]:
         attributes = []
@@ -1355,6 +1382,9 @@ class GroupAttribute(Attribute, Collapsable):
 
         for index, nestedAttribute in enumerate(list(self.value)):
             # If the attributes are already connected, do not connect them again
+            if index >= len(nestedDstAttributes):
+                continue
+
             if not nestedDstAttributes[index] in nestedAttribute.outputLinks:
                 connected, deleted = nestedAttribute.connectTo(nestedDstAttributes[index])
                 connectedEdges += connected
@@ -1720,10 +1750,11 @@ class ShapeListAttribute(ListAttribute):
 class CustomAttributes(GroupAttribute):
 
     def duplicateAttribute(self, attribute: Attribute) -> Attribute:
+
         newDesc = attribute.desc.clone()
         newAttribute = attributeFactory(newDesc,
                                         value= None, 
-                                        isOutput=attribute.isOutput,
+                                        isOutput=self.isOutput,
                                         node=self.node,
                                         root=self)
 
@@ -1734,51 +1765,61 @@ class CustomAttributes(GroupAttribute):
 
     # Override    
     def _setValue(self, exportedValue):
-        if self._handleLinkValue(exportedValue):
-            return
+        if not isinstance(exportedValue, dict):
+            raise AttributeError(f"Failed to set on CustomAttribute: {str(exportedValue)}")
 
-        value = self.validateValue(exportedValue)
-        if isinstance(value, dict):
-            # set individual child attribute values
-            for key, v in value.items():
-                attr = self._value.get(key)
-                if not attr:
-                    idx = self._value.count - 1
-                    attrDescType = v.get('type', None)
+        # set individual child attribute values
+        for key, attrChildValue in exportedValue.items():
+            childAttr = self._value.get(key)
+            seriliazedValue = attrChildValue.get('value', None)            
 
-                    if not attrDescType:
-                        continue
+            if not childAttr:
+                idx = self._value.count - 1
+                attrDescType = attrChildValue.get('type', None)
 
-                    if attrDescType not in STR_TO_ATTR_DESCRIPTION:
-                        continue
+                if not attrDescType:
+                    continue
 
-                    attrDesc = getAttributeDescription(v)
-                    attr = attributeFactory(
-                        description=attrDesc,
-                        value=v.get('value', None),
-                        isOutput=False,
-                        node=self.node,
-                        root=self
-                    )
-                    self._value.insert(idx, attr)
+                if attrDescType not in STR_TO_ATTRIBUTE_DESCRIPTION:
+                    continue
 
-                attr.value = v.get('value', v)
-        elif isinstance(value, (list, tuple)):
-            if len(self._desc._items) != len(value):
-                raise AttributeError(f"Incorrect number of values on GroupAttribute: {str(value)}")
-            for attrDesc, v in zip(self._desc._items, value):
-                self._value.get(attrDesc.name).value = v
-        else:
-            raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
+                attrDesc = getAttributeDescription(attrChildValue)
+                attrDesc._name = attrChildValue.get('name', None)
+                attrDesc._label = attrChildValue.get('label', None)
+                
+                # TODO: Refacto to be as polymorph as possible
+                if 'elementDesc' in attrChildValue:
+                    elementDesc = getAttributeDescription(attrChildValue['elementDesc'])
+                    attrDesc._elementDesc = elementDesc
+
+                if 'items' in attrChildValue:
+                    itemDescriptions = attrChildValue.get('items', None)
+                    items = [getAttributeDescription(item) for item in itemDescriptions]
+                    attrDesc._items = items
+
+                childAttr = attributeFactory(
+                    description = attrDesc,
+                    value = seriliazedValue,
+                    isOutput = False,
+                    node = self.node,
+                    root = self
+                )
+
+                if elementDesc:
+                    childAttr.desc._elementDesc = elementDesc
+
+                self._value.insert(idx, childAttr)
+
+            elif seriliazedValue:
+                childAttr.value = seriliazedValue
 
     # Override
     def getSerializedValue(self):
-        return {key: {
-            'value':attr.getSerializedValue(),
-            'desc':attr.desc.serialize(),
-            'type': str(attr.__class__.__name__),
-            'label':attr.label,
-            } for key, attr in self._value.objects.items()}
+        serializedValue = {}
+        for key, attr in self._value.objects.items():
+            serializedValue[key] = attr.asDict()
+
+        return serializedValue
 
 
 class DynamicAttribute(Attribute):

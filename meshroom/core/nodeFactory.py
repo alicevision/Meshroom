@@ -88,13 +88,13 @@ class _NodeCreator:
                 return CompatibilityIssue.PluginIssue
             return CompatibilityIssue.UnknownNodeType
 
-        if False and not self._checkUidCompatibility():
+        if not self._checkUidCompatibility():
             return CompatibilityIssue.UidConflict
 
-        if False and not self._checkVersionCompatibility():
+        if not self._checkVersionCompatibility():
             return CompatibilityIssue.VersionConflict
 
-        if False and not self._checkDescriptionCompatibility():
+        if not self._checkDescriptionCompatibility():
             return CompatibilityIssue.DescriptionConflict
 
         return None

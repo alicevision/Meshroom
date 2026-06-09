@@ -695,6 +695,9 @@ class ConnectDynamicAttributeCommand(GraphCommand):
 
         # Create the new attribute on the node
         newAttr = dynamicAttr.root.duplicateAttribute(srcAttr)
+        if not newAttr:
+            return False
+        
         self.newAttrFullName = newAttr.fullName
         self.newAttribute = newAttr
 

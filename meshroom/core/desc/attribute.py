@@ -140,12 +140,24 @@ class Attribute(BaseObject):
 
     def serialize(self):
         return {
+            'type': self.__class__.__name__,
             'name':self.name, 
             'label':self.label, 
             'description':self.description, 
-            'value':self.value
+            'value':self.value,
+            'advanced': self.advanced,
+            'semantic': self.semantic,
+            'commandLineGroup': self.commandLineGroup,
+            'enabled': self.enabled,
+            'keyable':self.keyable, 
+            'keyType':self.keyType, 
+            'invalidate':self.invalidate
         }
     
+    @classmethod
+    def deserialize(cls, serializedData: dict):
+        return cls(**serializedData)
+
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
@@ -255,6 +267,11 @@ class ListAttribute(Attribute):
                               value=self.value
                               )
 
+    def serialize(self):
+        serializedData = super().serialize()
+        serializedData['elementDesc'] = self._elementDesc.serialize()
+        return serializedData
+    
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     invalidate = Property(Variant, lambda self: self.elementDesc.invalidate, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
@@ -429,7 +446,6 @@ class File(Attribute):
         if not isinstance(self.value, str) and not callable(self.value):
             return self.name, ValueTypeErrors.TYPE
         return "", ValueTypeErrors.NONE
-
 
 class BoolParam(Param):
     """

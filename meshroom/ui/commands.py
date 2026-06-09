@@ -459,19 +459,18 @@ class AddEdgeCommand(GraphCommand):
             raise InvalidEdgeError(src.fullName, dst.fullName, "Attributes are not compatible.")
 
     def redoImpl(self) -> bool:
+        srcAttribute = self.graph.anyAttribute(self.srcAttr)
+        dstAttribute = self.graph.anyAttribute(self.dstAttr)
+
+        if srcAttribute is None or dstAttribute is None:
+            return False
         try:
-            srcAttribute = self.graph.attribute(self.srcAttr) or self.graph.internalAttribute(self.srcAttr)
-            dstAttribute = self.graph.attribute(self.dstAttr) or self.graph.internalAttribute(self.dstAttr)
-
-            if srcAttribute and dstAttribute:
-                self.createdEdges, self.deletedEdges = srcAttribute.connectTo(dstAttribute)
-                return True
-
+            self.createdEdges, self.deletedEdges = srcAttribute.connectTo(dstAttribute)
         except CyclicDependencyError:
             self.graph.removeEdge(self.graph.attribute(self.dstAttr))
             return False
 
-        return False
+        return True
 
     def undoImpl(self) -> bool:
         for edge in self.createdEdges:
@@ -498,13 +497,13 @@ class RemoveEdgeCommand(GraphCommand):
 
     def redoImpl(self) -> bool:
         dstAttribute = self.getAttribute(self.dstAttr)
-        if dstAttribute:
-            deletedEdges = dstAttribute.disconnectEdge()
-            # Store the fullNames instead of the actual attribute objects
-            self.deletedEdgeNames = [
-                (edge[0].fullName, edge[1].fullName) for edge in deletedEdges
-            ]
-            return True
+        if dstAttribute is None:
+            return False
+        deletedEdges = dstAttribute.disconnectEdge()
+        # Store the fullNames instead of the actual attribute objects
+        self.deletedEdgeNames = [
+            (edge[0].fullName, edge[1].fullName) for edge in deletedEdges
+        ]
         return True
 
     def undoImpl(self) -> bool:

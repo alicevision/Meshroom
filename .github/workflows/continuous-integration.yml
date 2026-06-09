@@ -1,4 +1,9 @@
+# .github/workflows/continuous-integration.yml
+
 name: Continuous Integration
+
+permissions:
+  contents: read
 
 on:
   push:
@@ -16,93 +21,19 @@ on:
       - '**.rst'
       - 'docs/**'
 
-env:
-  CI: True
-  PYTHONPATH: ${{ github.workspace }}
-
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [ 3.11 ]
+  test-linux:
+    name: Test (Linux)
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      os: ubuntu-latest
+      python-version: '3.11'
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest pytest-cov
-        pip install -r requirements.txt -r dev_requirements.txt --timeout 45
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        pytest tests/
-        pytest --cov --cov-report=xml --junitxml=junit.xml
-    - name: Upload results to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/test-results-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-    - name: Set up Python 3.9 - meshroom_compute test
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
-    - name: Install dependencies (Python 3.9) - meshroom_compute test
-      run: |
-        python3.9 -m pip install --upgrade pip
-        python3.9 -m pip install -r requirements.txt --timeout 45
-    - name: Run imports - meshroom_compute test
-      run: |
-        python3.9 bin/meshroom_compute -h
-
-  build-windows:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        python-version: [ 3.11 ]
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8 pytest
-          pip install -r requirements.txt -r dev_requirements.txt --timeout 45
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      - name: Test with pytest
-        run: |
-          pytest tests/
-      - name: Set up Python 3.9 - meshroom_compute test
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-      - name: Install dependencies (Python 3.9) - meshroom_compute test
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements.txt --timeout 45
-      - name: Run imports - meshroom_compute test
-        run: |
-          python3 bin/meshroom_compute -h
+  test-windows:
+    name: Test (Windows)
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      os: windows-latest
+      python-version: '3.11'

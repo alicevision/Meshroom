@@ -1,8 +1,10 @@
-import platform
-
 import os
+import pathlib
+import platform
+import subprocess
 import setuptools  # for bdist
 from cx_Freeze import setup, Executable
+from cx_Freeze.command.build_exe import build_exe
 import meshroom
 
 currentDir = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +42,33 @@ class PlatformExecutable(Executable):
         super(PlatformExecutable, self).__init__(script, initScript, base, targetName, icon, shortcutName,
                                                  shortcutDir, copyright, trademarks)
 
+# Post-build strip for Linux
+cmdclass = {}
+
+if platform.system() == "Linux":
+
+    class build_exe_and_strip(build_exe):
+        """Strip debug symbols from all .so files after the normal build."""
+
+        def run(self):
+            super().run()
+
+            build_dir = pathlib.Path(self.build_exe)
+            so_files = [
+                f for f in build_dir.rglob("*.so*")
+                if f.is_file() and not f.is_symlink()
+            ]
+            print(f"-- Stripping {len(so_files)} .so files in {build_dir}")
+            for so in so_files:
+                result = subprocess.run(
+                    ["strip", "--strip-unneeded", str(so)],
+                    capture_output=True, text=True,
+                )
+                if result.returncode != 0:
+                    print(f"   WARNING: strip failed on {so.name}: {result.stderr.strip()}")
+            print("-- Stripping done.")
+
+    cmdclass = {"build_exe": build_exe_and_strip}
 
 build_exe_options = {
     # include dynamically loaded plugins
@@ -58,7 +87,46 @@ build_exe_options = {
         "cmath",
         "numpy"
     ],
-    "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md", "bin"]
+    "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md", "bin"],
+    "excludes": [
+        # Python stdlib bloat
+        "tkinter",
+        "unittest",
+        "email",
+        "html",
+        "http.server",
+        "xmlrpc",
+        # Unused PySide6/Qt modules
+        "PySide6.QtWebEngineCore",
+        "PySide6.QtWebEngineWidgets",
+        "PySide6.QtWebEngineQuick",
+        "PySide6.QtMultimedia",
+        "PySide6.QtMultimediaWidgets",
+        "PySide6.QtSpatialAudio",
+        "PySide6.QtCharts",
+        "PySide6.QtDataVisualization",
+        "PySide6.QtGraphs",
+        "PySide6.QtGraphsWidgets",
+        "PySide6.QtBluetooth",
+        "PySide6.QtNfc",
+        "PySide6.QtSerialPort",
+        "PySide6.QtSerialBus",
+        "PySide6.QtPositioning",
+        "PySide6.QtLocation",
+        "PySide6.QtSensors",
+        "PySide6.QtTextToSpeech",
+        "PySide6.QtVirtualKeyboard",
+        "PySide6.QtWebSockets",
+        "PySide6.QtWebChannel",
+        "PySide6.QtPdf",
+        "PySide6.QtPdfWidgets",
+        "PySide6.QtQuick3D",
+        "PySide6.QtRemoteObjects",
+        "PySide6.QtScxml",
+        "PySide6.QtStateMachine",
+        "PySide6.QtNetworkAuth",
+        "PySide6.QtAxContainer",
+    ],
 }
 if os.path.isdir(os.path.join(currentDir, "tractor")):
     build_exe_options["packages"].append("tractor")
@@ -150,4 +218,5 @@ setup(
     version=meshroom.__version__,
     options={"build_exe": build_exe_options},
     executables=executables,
+    cmdclass=cmdclass,
 )

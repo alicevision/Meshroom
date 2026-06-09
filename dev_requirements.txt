@@ -1,5 +1,5 @@
 # packaging
-cx_Freeze==7.2.10
+cx_Freeze==8.6.4
 
 # Python binding packaging
 numpy==1.*

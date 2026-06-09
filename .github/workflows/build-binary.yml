@@ -1,0 +1,162 @@
+# .github/workflows/build-binary.yml
+# Reusable workflow – called by continuous-integration.yml and nightly.yml
+
+name: Build binary
+
+on:
+  workflow_call:
+    inputs:
+      build_label:
+        description: "Label appended to the output folder name, e.g. '20240101-abc1234'"
+        type: string
+        required: true
+      os:
+        description: "Runner OS: 'ubuntu-22.04' or 'windows-latest'"
+        type: string
+        required: true
+    outputs:
+      artifact_name:
+        description: "Name of the uploaded artifact"
+        value: ${{ jobs.build.outputs.artifact_name }}
+
+jobs:
+  build:
+    runs-on: ${{ inputs.os }}
+
+    outputs:
+      artifact_name: ${{ steps.set-names.outputs.artifact_name }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Compute platform names
+        id: set-names
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "platform=windows"          >> "$GITHUB_OUTPUT"
+            echo "output_dir=Meshroom-${{ inputs.build_label }}-windows"   >> "$GITHUB_OUTPUT"
+            echo "archive=Meshroom-${{ inputs.build_label }}-windows.zip"  >> "$GITHUB_OUTPUT"
+            echo "artifact_name=binary-windows"                            >> "$GITHUB_OUTPUT"
+          else
+            echo "platform=linux"            >> "$GITHUB_OUTPUT"
+            echo "output_dir=Meshroom-${{ inputs.build_label }}-linux"     >> "$GITHUB_OUTPUT"
+            echo "archive=Meshroom-${{ inputs.build_label }}-linux.tar.gz" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=binary-linux"                              >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install system dependencies (Linux only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libgl1 libglib2.0-0 libdbus-1-3 \
+            libxcb-cursor0 libxcb-xinerama0 libxcb-icccm4 \
+            libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+            libxcb-render-util0 libxcb-shape0 libxkbcommon-x11-0
+
+      - name: Install Python dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r dev_requirements.txt
+
+      - name: Build executable
+        shell: bash
+        env:
+          OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
+        run: |
+          python setup.py install_exe -d "$OUTPUT_DIR"
+
+      - name: Fix missing PySide6 DLL (Windows only)
+        if: runner.os == 'Windows'
+        shell: cmd
+        env:
+          OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
+        run: |
+          curl -L "https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv" ^
+            -o "%OUTPUT_DIR%\lib\PySide6\Qt63DQuickScene3D.dll"
+
+      - name: Remove unused PySide6 files (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        env:
+          OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
+        run: |
+          cd "%OUTPUT_DIR%\lib\PySide6"
+          del /s /q Qt6Web*.dll Qt6Designer*.dll *.exe
+          if exist resources    rmdir /s /q resources
+          if exist translations rmdir /s /q translations
+          if exist typesystems  rmdir /s /q typesystems
+          if exist examples     rmdir /s /q examples
+          if exist include      rmdir /s /q include
+
+      - name: Remove unused PySide6 files (Linux)
+        if: runner.os == 'Linux'
+        env:
+          OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
+        run: |
+          cd "${OUTPUT_DIR}/lib/PySide6"
+          rm -rf resources translations typesystems examples include
+          cd Qt/lib
+          rm -f \
+            *Qt6WebEngine*.so* \
+            *Qt6Designer*.so* \
+            *Qt6Multimedia*.so* \
+            *Qt6SpatialAudio*.so* \
+            *Qt6Charts*.so* \
+            *Qt6DataVisualization*.so* \
+            *Qt6Graphs*.so* \
+            *Qt6Bluetooth*.so* \
+            *Qt6Nfc*.so* \
+            *Qt6SerialPort*.so* \
+            *Qt6SerialBus*.so* \
+            *Qt6Positioning*.so* \
+            *Qt6Location*.so* \
+            *Qt6Sensors*.so* \
+            *Qt6TextToSpeech*.so* \
+            *Qt6VirtualKeyboard*.so* \
+            *Qt6WebSockets*.so* \
+            *Qt6WebChannel*.so* \
+            *Qt6Pdf*.so* \
+            *Qt6Quick3D*.so* \
+            *Qt6RemoteObjects*.so* \
+            *Qt6Scxml*.so* \
+            *Qt6StateMachine*.so* \
+            *Qt6NetworkAuth*.so*
+
+      - name: Strip debug symbols from .so files (Linux)
+        if: runner.os == 'Linux'
+        env:
+          OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
+        run: |
+          find "$OUTPUT_DIR" -name "*.so*" -not -type l | xargs strip --strip-unneeded
+
+      - name: Create archive (Windows)
+        if: github.workflow == 'Nightly' && runner.os == 'Windows'
+        shell: pwsh
+        env:
+          OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
+          ARCHIVE:    ${{ steps.set-names.outputs.archive }}
+        run: Compress-Archive -Path "$env:OUTPUT_DIR" -DestinationPath "$env:ARCHIVE"
+
+      - name: Create archive (Linux)
+        if: github.workflow == 'Nightly' && runner.os == 'Linux'
+        env:
+          OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
+          ARCHIVE:    ${{ steps.set-names.outputs.archive }}
+        run: tar -czf "$ARCHIVE" "$OUTPUT_DIR"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        if: github.workflow == 'Nightly'
+        with:
+          name: ${{ steps.set-names.outputs.artifact_name }}
+          path: ${{ steps.set-names.outputs.archive }}
+          retention-days: 1
+

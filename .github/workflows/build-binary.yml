@@ -109,7 +109,6 @@ jobs:
             *Qt6Designer*.so* \
             *Qt6Multimedia*.so* \
             *Qt6SpatialAudio*.so* \
-            *Qt6Charts*.so* \
             *Qt6DataVisualization*.so* \
             *Qt6Graphs*.so* \
             *Qt6Bluetooth*.so* \

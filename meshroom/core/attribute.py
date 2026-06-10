@@ -23,6 +23,24 @@ if TYPE_CHECKING:
     from meshroom.core.graph import Edge
 
 
+def _captureExpressionTemplates(attr, value):
+    """
+    Recursively set _expressionTemplate on output expression attributes from their loaded values.
+    Preserves the serialized expression template so that description changes on the node type
+    only affect new nodes, not existing ones loaded from a project file.
+    """
+    if attr.desc.isExpression and isinstance(value, str):
+        attr._expressionTemplate = value
+    elif isinstance(attr, GroupAttribute) and isinstance(value, dict):
+        for key, childValue in value.items():
+            try:
+                childAttr = attr._value.get(key)
+                if childAttr is not None:
+                    _captureExpressionTemplates(childAttr, childValue)
+            except (KeyError, AttributeError):
+                logging.debug(f"Skipping expression template capture for {key} on {attr}.")
+
+
 def attributeFactory(description: str, value, isOutput: bool, node, root=None, parent=None):
     """
     Create an Attribute based on description type.
@@ -39,6 +57,10 @@ def attributeFactory(description: str, value, isOutput: bool, node, root=None, p
     attr: Attribute = description.instanceType(node, description, isOutput, root, parent)
     if value is not None:
         attr._setValue(value)
+        # For output expression attributes loaded from a file, store the expression template
+        # so that description changes on the node type only affect new nodes.
+        if isOutput:
+            _captureExpressionTemplates(attr, value)
     else:
         attr.resetToDefaultValue()
     # Only connect slot that reacts to value change once initial value has been set.
@@ -90,6 +112,10 @@ class Attribute(BaseObject):
         self._value = None
         self._keyValues = None  # list of pairs (key, value) for keyable attribute
         self._linkExpression: Optional[str] = None
+        # Expression template stored when loading from a saved project file.
+        # When set, this overrides the descriptor's expression for this node instance,
+        # so that description changes on the node type only affect new nodes.
+        self._expressionTemplate: Optional[str] = None
         self._initValue()
 
     def _getFullName(self) -> str:
@@ -350,6 +376,8 @@ class Attribute(BaseObject):
         if self.keyable:
             return self._keyValues.getSerializedValues()
         if self.isOutput and self._desc.isExpression:
+            if self._expressionTemplate is not None:
+                return self._expressionTemplate
             return self.getDefaultValue()
         return self.value
 

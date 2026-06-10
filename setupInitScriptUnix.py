@@ -19,13 +19,18 @@ paths = os.environ.get("LD_LIBRARY_PATH", "").split(os.pathsep)
 
 if DIR_NAME not in paths:
     paths.insert(0, DIR_NAME)
-    paths.insert(0, os.path.join(DIR_NAME, "lib"))
-    paths.insert(0, os.path.join(DIR_NAME, "aliceVision", "lib"))
-    paths.insert(0, os.path.join(DIR_NAME, "aliceVision", "lib64"))
-    paths.insert(0, os.path.join(DIR_NAME, "lib", "PySide6", "Qt", "qml", "QtQuick", "Dialogs"))
-
+    for lib in ("lib", "lib64"):
+        paths.insert(0, os.path.join(DIR_NAME, lib))
+        paths.insert(0, os.path.join(DIR_NAME, "aliceVision", lib))
+        paths.insert(0, os.path.join(DIR_NAME, lib, "PySide6", "Qt", "qml", "QtQuick", "Dialogs"))
     os.environ["LD_LIBRARY_PATH"] = os.pathsep.join(paths)
-    os.environ["PYTHONPATH"] = os.path.join(DIR_NAME, "aliceVision", "lib", "python") + os.pathsep + os.path.join(DIR_NAME, "aliceVision", "lib", "python3.11", "site-packages")
+
+    pypaths = []
+    for lib in ("lib", "lib64"):
+        pypaths += [os.path.join(DIR_NAME, "aliceVision", lib, "python"),
+                    os.path.join(DIR_NAME, "aliceVision", lib, "python3.11", "site-packages")]
+    os.environ["PYTHONPATH"] = os.pathsep.join(pypaths)
+
     os.execv(sys.executable, sys.argv)
 
 sys.frozen = True

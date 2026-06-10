@@ -103,7 +103,6 @@ build_exe_options = {
         "PySide6.QtMultimedia",
         "PySide6.QtMultimediaWidgets",
         "PySide6.QtSpatialAudio",
-        "PySide6.QtCharts",
         "PySide6.QtDataVisualization",
         "PySide6.QtGraphs",
         "PySide6.QtGraphsWidgets",

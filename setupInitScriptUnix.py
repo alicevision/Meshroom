@@ -27,7 +27,7 @@ if DIR_NAME not in paths:
     os.environ["LD_LIBRARY_PATH"] = os.pathsep.join(newPaths + paths)
 
     newPythonPaths = []
-    for lib in ("lib", "lib64"):
+    for lib in ("lib64", "lib"):
         newPythonPaths += [os.path.join(DIR_NAME, "aliceVision", lib, "python"),
                            os.path.join(DIR_NAME, "aliceVision", lib, "python3.11", "site-packages")]
     pythonPaths = os.environ.get("PYTHONPATH", "").split(os.pathsep)

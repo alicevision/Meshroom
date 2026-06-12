@@ -115,15 +115,11 @@ jobs:
             *Qt6Nfc*.so* \
             *Qt6SerialPort*.so* \
             *Qt6SerialBus*.so* \
-            *Qt6Positioning*.so* \
-            *Qt6Location*.so* \
             *Qt6Sensors*.so* \
             *Qt6TextToSpeech*.so* \
             *Qt6VirtualKeyboard*.so* \
             *Qt6WebSockets*.so* \
             *Qt6WebChannel*.so* \
-            *Qt6Pdf*.so* \
-            *Qt6Quick3D*.so* \
             *Qt6RemoteObjects*.so* \
             *Qt6Scxml*.so* \
             *Qt6StateMachine*.so* \

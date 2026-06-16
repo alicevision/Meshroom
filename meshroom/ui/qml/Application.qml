@@ -148,10 +148,11 @@ Page {
         id: saveFileDialog
 
         property var _callback: undefined
+        property bool _saveAsTemplate: false
 
         signal closed(var result)
 
-        title: "Save File"
+        title: _saveAsTemplate ? "Save Template" : "Save File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         defaultSuffix: ".mg"
         fileMode: Platform.FileDialog.SaveFile
@@ -161,9 +162,15 @@ Page {
                 return;
             }
 
-            // Only save a valid file
-            _currentScene.saveAs(currentFile)
-            MeshroomApp.addRecentProjectFile(currentFile.toString())
+            if (_saveAsTemplate) {
+                // Save as template
+                _currentScene.saveAsTemplate(currentFile)
+                MeshroomApp.reloadTemplateList()
+            } else {
+                // Standard save
+                _currentScene.saveAs(currentFile)
+                MeshroomApp.addRecentProjectFile(currentFile.toString())
+            }
             closed(Platform.Dialog.Accepted)
             fireCallback(Platform.Dialog.Accepted)
         }
@@ -187,29 +194,91 @@ Page {
             _callback = callback
             open()
         }
+
+        function openForSave(asTemplate) {
+            _saveAsTemplate = asTemplate !== undefined ? asTemplate : false
+            initFileDialogFolder(saveFileDialog)
+            open()
+        }
+
+        function promptForSave(asTemplate, callback) {
+            _saveAsTemplate = asTemplate !== undefined ? asTemplate : false
+            _callback = callback
+            initFileDialogFolder(saveFileDialog)
+            open()
+        }
     }
 
-    Platform.FileDialog {
-        id: saveTemplateDialog
+    // Dialog to ask user whether to save as template or standard save
+    // Only shown when the "save" callback is registered (MR_ASK_TEMPLATE_BEFORE_SAVING=1)
+    Dialog {
+        id: saveChoiceDialog
 
-        signal closed(var result)
+        property var _pendingAction: undefined  // function to call after choice
 
-        title: "Save Template"
-        nameFilters: ["Meshroom Graphs (*.mg)"]
-        defaultSuffix: ".mg"
-        fileMode: Platform.FileDialog.SaveFile
-        onAccepted: {
-            if (!validateFilepathForSave(currentFile, saveTemplateDialog))
-            {
-                return;
+        anchors.centerIn: Overlay.overlay
+        parent: Overlay.overlay
+        modal: true
+        title: "Save Options"
+        standardButtons: Dialog.Cancel
+
+        width: 350
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 12
+
+            Label {
+                text: "How would you like to save?"
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
             }
 
-            // Only save a valid template
-            _currentScene.saveAsTemplate(currentFile)
-            closed(Platform.Dialog.Accepted)
-            MeshroomApp.reloadTemplateList()
+            Button {
+                text: "Save as Project"
+                Layout.fillWidth: true
+                onClicked: {
+                    saveChoiceDialog.close()
+                    if (saveChoiceDialog._pendingAction)
+                        saveChoiceDialog._pendingAction(false)
+                    saveChoiceDialog._pendingAction = undefined
+                }
+            }
+
+            Button {
+                text: "Save as Template"
+                Layout.fillWidth: true
+                onClicked: {
+                    saveChoiceDialog.close()
+                    if (saveChoiceDialog._pendingAction)
+                        saveChoiceDialog._pendingAction(true)
+                    saveChoiceDialog._pendingAction = undefined
+                }
+            }
         }
-        onRejected: closed(Platform.Dialog.Rejected)
+
+        onRejected: {
+            _pendingAction = undefined
+        }
+
+        function ask(actionCallback) {
+            _pendingAction = actionCallback
+            open()
+        }
+    }
+
+    // Helper function: execute "save" callback and use result to decide save flow
+    function executeSaveWithCallback(actionCallback) {
+        if (MeshroomApp.hasRegisteredCallback("save")) {
+            var result = MeshroomApp.getCallbackResult("save")
+            if (result && result.askTemplate) {
+                // Show the choice dialog
+                saveChoiceDialog.ask(actionCallback)
+                return
+            }
+        }
+        // No callback or callback says no template question: proceed with standard save
+        actionCallback(false)
     }
 
     Platform.FileDialog {
@@ -796,19 +865,23 @@ Page {
                     shortcut: "Ctrl+S"
                     enabled: _currentScene ? (_currentScene.graph && !_currentScene.graph.filepath) || !_currentScene.undoStack.clean : false
                     onTriggered: {
-                        if (_currentScene.graph.filepath) {
-                            // Get current time date
-                            var date = _currentScene.graph.getFileDateVersionFromPath(_currentScene.graph.filepath)
+                        executeSaveWithCallback(function(asTemplate) {
+                            if (asTemplate) {
+                                // User chose to save as template
+                                saveFileDialog.openForSave(true)
+                            } else if (_currentScene.graph.filepath) {
+                                // Get current time date
+                                var date = _currentScene.graph.getFileDateVersionFromPath(_currentScene.graph.filepath)
 
-                            // Check if the file has been modified by another instance
-                            if (_currentScene.graph.fileDateVersion !== date) {
-                                fileModifiedDialog.open()
-                            } else
-                                _currentScene.save()
-                        } else {
-                            initFileDialogFolder(saveFileDialog)
-                            saveFileDialog.open()
-                        }
+                                // Check if the file has been modified by another instance
+                                if (_currentScene.graph.fileDateVersion !== date) {
+                                    fileModifiedDialog.open()
+                                } else
+                                    _currentScene.save()
+                            } else {
+                                saveFileDialog.openForSave(false)
+                            }
+                        })
                     }
                 }
                 Action {
@@ -816,8 +889,9 @@ Page {
                     text: "Save As..."
                     shortcut: "Ctrl+Shift+S"
                     onTriggered: {
-                        initFileDialogFolder(saveFileDialog)
-                        saveFileDialog.open()
+                        executeSaveWithCallback(function(asTemplate) {
+                            saveFileDialog.openForSave(asTemplate)
+                        })
                     }
                 }
                 Action {
@@ -867,8 +941,7 @@ Page {
                             onActivated: saveAsTemplateAction.triggered()
                         }
                         onTriggered: {
-                            initFileDialogFolder(saveTemplateDialog)
-                            saveTemplateDialog.open()
+                            saveFileDialog.openForSave(true)
                         }
                     }
 

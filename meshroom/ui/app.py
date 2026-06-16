@@ -15,6 +15,7 @@ from PySide6.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import pluginManager
+from meshroom.core.callbacks import getRegisteredCallback, triggerCallback
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
@@ -253,6 +254,10 @@ class MeshroomApp(QApplication):
         meshroom.core.initSubmitters()
         meshroom.core.initPlugins()
         meshroom.core.initNodes()
+
+        # Register callbacks (conditional on environment variables)
+        from meshroom.core.save_callback import registerSaveCallback
+        registerSaveCallback()
 
         # Initialize the list of recent project files
         self._recentProjectFiles = self._getRecentProjectFilesFromSettings()
@@ -771,6 +776,37 @@ class MeshroomApp(QApplication):
     def setDefaultSubmitter(self, name):
         logging.info(f"Submitter is now set to : {name}")
         self._defaultSubmitterName = name
+
+    @Slot(str, result=bool)
+    def hasRegisteredCallback(self, name):
+        """Check if a callback is registered with the given name."""
+        return getRegisteredCallback(name) is not None
+
+    @Slot(str, result="QVariant")
+    def getCallbackResult(self, name):
+        """
+        Trigger a registered callback by name (no arguments) and return the result.
+        Returns None (undefined in QML) if no callback is registered.
+        """
+        cb = getRegisteredCallback(name)
+        if cb is None:
+            return None
+        return triggerCallback(name)
+
+    @Slot(str, "QVariantList", result="QVariant")
+    def triggerCallbackWithArgs(self, name, args):
+        """
+        Trigger a registered callback by name with arguments and return the result.
+        Args:
+            name (str): The callback name.
+            args (list): List of arguments to pass to the callback.
+        Returns:
+            The result of the callback, or None if not registered.
+        """
+        cb = getRegisteredCallback(name)
+        if cb is None:
+            return None
+        return triggerCallback(name, *args)
 
     activeProjectChanged = Signal()
     activeProject = Property(Variant, lambda self: self._activeProject, notify=activeProjectChanged)

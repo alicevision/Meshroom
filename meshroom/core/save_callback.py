@@ -3,12 +3,13 @@ Save callback for Meshroom.
 
 When the environment variable MR_ASK_TEMPLATE_BEFORE_SAVING is set to "1",
 this module registers a "save" callback that returns information about whether
-the user wants to save as a template or do a standard save.
+the user should be asked to choose between saving as a template or a standard save.
 
 The callback returns a dictionary:
-    {"saveAsTemplate": True/False}
+    {"askTemplate": True}
 
-This result is used by the QML save dialog to decide which save logic to execute.
+This result is used by the QML save dialog to decide whether to present
+a choice dialog to the user.
 """
 
 import os
@@ -25,7 +26,7 @@ def _saveCallback(*args, **kwargs):
     as a template or as a standard project file.
 
     Returns:
-        dict: {"saveAsTemplate": True} to indicate the system should present
+        dict: {"askTemplate": True} to indicate the system should present
               the template-or-save choice to the user.
     """
     return {"askTemplate": True}

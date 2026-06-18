@@ -1370,6 +1370,10 @@ class BaseNode(BaseObject):
     def hasStatus(self, status: Status):
         if self.isInputNode:
             return status == Status.INPUT
+        if self.isCompatibilityNode:
+            # CompatibilityNodes have no chunks but may still have a status
+            # Use it instead of defaulting to checking with Status.NONE
+            return status == self._nodeStatus.status
         if not self._chunks or not self._chunksCreated:
             return status == Status.NONE
         for chunk in self.getAllChunks():

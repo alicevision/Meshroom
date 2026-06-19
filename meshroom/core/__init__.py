@@ -104,7 +104,7 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                     isPackage = hasattr(pluginMod, "__path__")
                     # Sub-folders/Packages should not raise a warning
                     if not isPackage:
-                        logging.warning(f"No class defined in plugin: {package.__name__}.{pluginName} ('{pluginMod.__file__}')")
+                        logging.debug(f"No class defined in plugin: {package.__name__}.{pluginName} ('{pluginMod.__file__}')")
 
                 for p in plugins:
                     p.packageName = packageName

@@ -297,7 +297,10 @@ RowLayout {
                 case "BoolParam":
                     return checkboxComponent
                 case "ListAttribute":
-                    return listAttributeComponent
+                    if (attribute.baseType == "GroupAttribute")
+                        return tableViewAttributeComponent
+                    else
+                        return listAttributeComponent
                 case "GroupAttribute":
                     return groupAttributeComponent
                 case "StringParam":

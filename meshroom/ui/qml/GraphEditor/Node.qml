@@ -635,11 +635,23 @@ Item {
                     implicitHeight: 3
                     width: parent.width
 
+                    ListModel {
+                        id: compatibilityModel
+                    }
+
                     model: {
-                        if (node && node.chunksCreated)
+                        if (!node)
+                            return undefined
+
+                        if (node.chunksCreated)
                             return node.chunks
-                        else if (node && !node.chunksCreated)
+                        else if (!node.chunksCreated && !node.isCompatibilityNode)
                             return node.chunkPlaceholder
+                        else if (node.isCompatibilityNode && !["NONE"].includes(node.globalStatus)) {
+                            compatibilityModel.clear()
+                            compatibilityModel.append({ "object": { "statusName": node.globalStatus } })
+                            return compatibilityModel
+                        }
 
                         return undefined
                     }

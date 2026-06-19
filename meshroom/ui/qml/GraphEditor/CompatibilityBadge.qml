@@ -33,7 +33,9 @@ Loader {
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
-                onPressed: mouse.accepted = false
+                onPressed: function(mouse) {
+                    mouse.accepted = false
+                }
                 ToolTip.text: issueDetails
                 ToolTip.visible: containsMouse
             }

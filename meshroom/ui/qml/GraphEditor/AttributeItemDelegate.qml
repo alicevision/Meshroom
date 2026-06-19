@@ -831,6 +831,245 @@ RowLayout {
         }
 
         Component {
+            id: tableViewAttributeComponent
+            ColumnLayout {
+                id: tableLayout
+                spacing: 0
+                width: parent ? parent.width : 400
+                property var columnNames: {
+                    if (!attribute || !attribute.value || attribute.value.count === 0) return []
+                    var firstRow = attribute.value.at(0)
+                    if (!firstRow || !firstRow.value) return []
+                    var names = []
+                    for (var i = 0; i < firstRow.value.count; i++) {
+                        var child = firstRow.value.at(i)
+                        if (child) names.push(child.label)
+                    }
+                    return names
+                }
+                property var  columnWidths: []
+                property var  rowHeights:   []
+                property real totalTableWidth: {
+                    var w = columnWidths
+                    if (!w || w.length === 0) return 0
+                    var t = 0
+                    for (var i = 0; i < w.length; i++) t += w[i]
+                    t += Math.max(0, w.length - 1)
+                    return t
+                }
+                property real totalTableHeight: {
+                    var h = rowHeights
+                    if (!h || h.length === 0) return 0
+                    var t = 0
+                    for (var i = 0; i < h.length; i++) t += h[i]
+                    t += Math.max(0, h.length - 1)
+                    return t
+                }
+                FontMetrics {
+                    id: fontMetrics
+                    font.bold: false
+                }
+                function initSizes() {
+                    var names = tableLayout.columnNames
+                    if (!names || names.length === 0) {
+                        tableLayout.columnWidths = []
+                        tableLayout.rowHeights   = []
+                        return
+                    }
+                    var widths = []
+                    for (var i = 0; i < names.length; i++)
+                        widths.push(fontMetrics.advanceWidth(names[i]) + 20)
+                    var heights = []
+                    if (attribute && attribute.value) {
+                        for (var r = 0; r < attribute.value.count; r++) {
+                            var rowAttr = attribute.value.at(r)
+                            if (!rowAttr || !rowAttr.value) { heights.push(30); continue }
+                            for (var c = 0; c < rowAttr.value.count && c < widths.length; c++) {
+                                var cell = rowAttr.value.at(c)
+                                var cellText = cell ? String(cell.value) : ""
+                                var cw = fontMetrics.advanceWidth(cellText) + 20
+                                if (cw > widths[c]) widths[c] = cw
+                            }
+                            heights.push(30)
+                        }
+                    }
+                    tableLayout.columnWidths = widths
+                    tableLayout.rowHeights   = heights
+                }
+                Component.onCompleted: tableLayout.initSizes()
+                Connections {
+                    target: attribute ? attribute.value : null
+                    function onCountChanged()  { tableLayout.initSizes() }
+                    function onModelReset()    { tableLayout.initSizes() }
+                    function onRowsInserted()  { tableLayout.initSizes() }
+                    function onDataChanged()   { tableLayout.initSizes() }
+                }
+                Item {
+                    id: outerFrame
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.min(tableLayout.totalTableHeight + 30, 330)
+                    ScrollBar {
+                        id: hBar
+                        orientation:  Qt.Horizontal
+                        anchors.left:   outerFrame.left
+                        anchors.right:  outerFrame.right
+                        anchors.bottom: outerFrame.bottom
+                        anchors.rightMargin: vBar.width
+                        policy: ScrollBar.AlwaysOn
+                        size: (outerFrame.width - vBar.width) /
+                              Math.max(tableLayout.totalTableWidth, 1)
+                    }
+                    ScrollBar {
+                        id: vBar
+                        orientation: Qt.Vertical
+                        anchors.top:    outerFrame.top
+                        anchors.bottom: outerFrame.bottom
+                        anchors.right:  outerFrame.right
+                        anchors.bottomMargin: hBar.height
+                        policy: ScrollBar.AlwaysOn
+                        size: (outerFrame.height - hBar.height) /
+                              Math.max(tableLayout.totalTableHeight + 30, 1)
+                    }
+                    Item {
+                        id: viewport
+                        anchors.left:   outerFrame.left
+                        anchors.top:    outerFrame.top
+                        anchors.right:  outerFrame.right
+                        anchors.bottom: outerFrame.bottom
+                        anchors.rightMargin:  vBar.width
+                        anchors.bottomMargin: hBar.height
+                        clip: true
+                        Item {
+                            id: content
+                            width:  tableLayout.totalTableWidth
+                            height: tableLayout.totalTableHeight + 30
+                            x: -hBar.position * tableLayout.totalTableWidth
+                            y: -vBar.position * (tableLayout.totalTableHeight + 30)
+                            Row {
+                                id: headerRow
+                                spacing: 1
+                                Repeater {
+                                    model: tableLayout.columnNames
+                                    delegate: Item {
+                                        id: headerCell
+                                        required property int    index
+                                        required property string modelData
+                                        width:  tableLayout.columnWidths[index] || 100
+                                        height: 30      
+
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: "#2d2d2d"
+                                            border.color: "#1d1d1d"
+                                            Text {
+                                                anchors.fill: parent
+                                                text: headerCell.modelData
+                                                color: "#aaaaaa"
+                                                font.bold: false
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment:   Text.AlignVCenter
+                                                elide: Text.ElideRight
+                                            }
+                                        }
+                                        MouseArea {
+                                            width: 6
+                                            height: parent.height
+                                            anchors.right: parent.right
+                                            cursorShape: Qt.SizeHorCursor
+                                            property real startX: 0
+                                            property real startW: 0
+                                            onPressed: function(mouse) {
+                                                startX = mouse.x
+                                                startW = tableLayout.columnWidths[headerCell.index]
+                                            }
+                                            onPositionChanged: function(mouse) {
+                                                if (!pressed) return
+                                                var newW = Math.max(40, startW + (mouse.x - startX))
+                                                var arr  = tableLayout.columnWidths.slice()
+                                                arr[headerCell.index] = newW
+                                                tableLayout.columnWidths = arr
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            Column {
+                                spacing: 1
+                                anchors.top: headerRow.bottom
+                                anchors.topMargin: 1
+                                Repeater {
+                                    model: attribute ? attribute.value : null
+                                    delegate: Item {
+                                        id: rowItem
+                                        required property int index
+                                        required property var object
+                                        width:  tableLayout.totalTableWidth
+                                        height: tableLayout.rowHeights[index] || 30
+                                        Row {
+                                            spacing: 1
+                                            anchors.fill: parent
+                                            Repeater {
+                                                model: rowItem.object && rowItem.object.value
+                                                       ? rowItem.object.value.count
+                                                       : 0
+                                                delegate: Rectangle {
+                                                    id: cellRect
+                                                    required property int index
+                                                    width:  tableLayout.columnWidths[index] || 100
+                                                    height: rowItem.height
+                                                    color:  rowItem.index % 2 === 0 ? "#2d2d2d" : "#333333"
+                                                    border.color: cellInput.activeFocus ? "#5599ff" : "#1d1d1d"
+                                                    clip: true
+                                                    TextInput {
+                                                        id: cellInput
+                                                        anchors.fill: parent
+                                                        anchors.margins: 4
+                                                        verticalAlignment: TextInput.AlignVCenter
+                                                        horizontalAlignment: TextInput.AlignHCenter
+                                                        color: "#aaaaaa"
+                                                        selectionColor: "#5599ff"
+                                                        clip: true
+                                                        text: {
+                                                            var cell = rowItem.object.value.at(index)
+                                                            return cell ? String(cell.value) : ""
+                                                        }
+                                                        onEditingFinished: {
+                                                            var cell = rowItem.object.value.at(cellRect.index)
+                                                            if (cell) cell.value = text
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        MouseArea {
+                                            width:  parent.width
+                                            height: 6
+                                            anchors.bottom: parent.bottom
+                                            cursorShape: Qt.SizeVerCursor
+                                            property real startY: 0
+                                            property real startH: 0
+                                            onPressed: function(mouse) {
+                                                startY = mouse.y
+                                                startH = tableLayout.rowHeights[rowItem.index]
+                                            }
+                                            onPositionChanged: function(mouse) {
+                                                if (!pressed) return
+                                                var newH = Math.max(20, startH + (mouse.y - startY))
+                                                var arr  = tableLayout.rowHeights.slice()
+                                                arr[rowItem.index] = newH
+                                                tableLayout.rowHeights = arr
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Component {
             id: groupAttributeComponent
             ColumnLayout {
                 id: groupItem

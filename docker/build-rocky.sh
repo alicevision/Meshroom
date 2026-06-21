@@ -1,7 +1,8 @@
 #!/bin/bash
-set -e
+set -ex
 
 test -z "$MESHROOM_VERSION" && MESHROOM_VERSION="$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)"
+test -z "$QTAV_VERSION" && echo "qtAliceVision version not specified, set QTAV_VERSION in the environment" && exit 1
 test -z "$AV_VERSION" && echo "AliceVision version not specified, set AV_VERSION in the environment" && exit 1
 test -z "$CUDA_VERSION" && CUDA_VERSION=12.1.1
 test -z "$ROCKY_VERSION" && ROCKY_VERSION=9
@@ -33,6 +34,7 @@ docker build \
     --build-arg "MESHROOM_VERSION=${MESHROOM_VERSION}" \
     --build-arg "CUDA_VERSION=${CUDA_VERSION}" \
     --build-arg "ROCKY_VERSION=${ROCKY_VERSION}" \
+    --build-arg "QTAV_VERSION=${QTAV_VERSION}" \
     --build-arg "AV_VERSION=${AV_VERSION}" \
     --tag "alicevision/meshroom:${MESHROOM_VERSION}-av${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}" \
     -f docker/Dockerfile_rocky .

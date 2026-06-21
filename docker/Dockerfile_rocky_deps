@@ -7,11 +7,11 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
 # docker run -it --runtime=nvidia meshroom
 
-ENV MESHROOM_DEV=/opt/Meshroom \
-    MESHROOM_BUILD=/tmp/Meshroom_build \
-    QT_DIR=/opt/Qt/6.8.3/gcc_64 \
-    QT_CI_LOGIN=alicevisionjunk@gmail.com \
-    QT_CI_P=azerty1.
+ENV MESHROOM_DEV=/opt/Meshroom
+ENV MESHROOM_BUILD=/tmp/Meshroom_build
+ENV QT_DIR=/opt/Qt/6.8.3/gcc_64
+ENV QT_CI_LOGIN=alicevisionjunk@gmail.com
+ENV QT_CI_P=azerty1.
 
 # Install libs needed by Qt
 RUN dnf update -y

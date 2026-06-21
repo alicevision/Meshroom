@@ -3,6 +3,7 @@ ARG AV_VERSION
 ARG CUDA_VERSION
 ARG ROCKY_VERSION
 FROM alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}
+ARG QTAV_VERSION
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
@@ -11,12 +12,12 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 RUN dnf install -y patchelf
 
-ENV MESHROOM_DEV=/opt/Meshroom \
-    MESHROOM_BUILD=/tmp/Meshroom_build \
-    MESHROOM_BUNDLE=/opt/Meshroom_bundle \
-    AV_INSTALL=/opt/AliceVision_install \
-    QT_DIR=/opt/Qt/6.8.3/gcc_64 \
-    PATH="${PATH}:${MESHROOM_BUNDLE}"
+ENV MESHROOM_DEV=/opt/Meshroom
+ENV MESHROOM_BUILD=/tmp/Meshroom_build
+ENV MESHROOM_BUNDLE=/opt/Meshroom_bundle
+ENV AV_INSTALL=/opt/AliceVision_install
+ENV QT_DIR=/opt/Qt/6.8.3/gcc_64
+ENV PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 COPY *.txt *.md *.py ${MESHROOM_DEV}/
 COPY ./docs ${MESHROOM_DEV}/docs
@@ -46,7 +47,7 @@ RUN mkdir ${MESHROOM_BUNDLE}/aliceVision && \
     mv /opt/AliceVision_bundle/* ${MESHROOM_BUNDLE}/aliceVision
 
 # Build Meshroom plugins
-RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
+RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DQTALICEVISION_VERSION=${QTAV_VERSION} -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
 RUN make "-j$(nproc)" QtAliceVision
 RUN make "-j$(nproc)" && \
 	rm -rf "${MESHROOM_BUILD}" "${MESHROOM_DEV}" \

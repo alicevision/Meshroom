@@ -844,7 +844,7 @@ FocusScope {
                 ExifOrientedViewer {
                     id: featuresViewerLoader
                     active: displayFeatures.checked && !useExternal
-                    property var activeNode: _currentScene ? _currentScene.activeNodes.get("featureProvider").node : null
+                    property var activeNode: _currentScene ? _currentScene.activeNodes.get("FeatureProviderInterface").node : null
                     width: imgContainer.width
                     height: imgContainer.height
                     anchors.centerIn: parent
@@ -856,7 +856,13 @@ FocusScope {
                         if (active) {
                             // Instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             setSource("FeaturesViewer.qml", {
-                                "model": Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : "" }),
+                                "model": Qt.binding(function() {
+                                    let result = []
+                                    if (activeNode) {
+                                        result = _currentScene.callInterfaceMethod("FeatureProviderInterface", "getDescriberTypes") || ""
+                                    }
+                                    return result
+                                }),
                                 "currentViewId": Qt.binding(function() { return _currentScene.selectedViewId }),
                                 "features": Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null }),
                                 "tracks": Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null }),
@@ -1171,7 +1177,7 @@ FocusScope {
                             if (!root.aliceVisionPluginAvailable) {
                                 return null
                             }
-                            return _currentScene ? _currentScene.activeNodes.get("featureProvider").node : null
+                            return _currentScene ? _currentScene.activeNodes.get("FeatureProviderInterface").node : null
                         }
                         property bool isComputed: activeNode && activeNode.isComputed
                         active: isUsed && isComputed
@@ -1182,23 +1188,16 @@ FocusScope {
                                 // so it can fail safely if the C++ plugin is not available
                                 setSource("MFeatures.qml", {
                                     "describerTypes": Qt.binding(function() {
-                                        return activeNode ? activeNode.attribute("describerTypes").value : {}
+                                        let result = []
+                                        if (activeNode) {
+                                            result = _currentScene.callInterfaceMethod("FeatureProviderInterface", "getDescriberTypes") || ""
+                                        }
+                                        return result
                                     }),
                                     "featureFolders": Qt.binding(function() {
                                         let result = []
                                         if (activeNode) {
-                                            if (activeNode.nodeType == "FeatureExtraction" && isComputed) {
-                                                result.push(activeNode.attribute("output").value)
-                                            } 
-                                            else if (activeNode.nodeType == "RomaReducer" && isComputed) {
-                                                result.push(activeNode.attribute("featuresFolder").value)
-                                            }
-                                            else if (activeNode.hasAttribute("featuresFolders")) {
-                                                for (let i = 0; i < activeNode.attribute("featuresFolders").value.count; i++) {
-                                                    let attr = activeNode.attribute("featuresFolders").value.at(i)
-                                                    result.push(attr.value)
-                                                }
-                                            }
+                                            result = _currentScene.callInterfaceMethod("FeatureProviderInterface", "getFeaturesFolders") || ""
                                         }
                                         return result
                                     }),
@@ -1282,12 +1281,12 @@ FocusScope {
                             if (_currentScene)
                             {
                                 //Try first to use tracks
-                                if (_currentScene.activeNodes.get("trackProvider").node)
+                                if (_currentScene.activeNodes.get("TrackProviderInterface").node)
                                 {
-                                    return _currentScene.activeNodes.get("trackProvider").node
+                                    return _currentScene.activeNodes.get("TrackProviderInterface").node
                                 }
 
-                                return _currentScene.activeNodes.get("matchProvider").node
+                                return _currentScene.activeNodes.get("MatchProviderInterface").node
                             }
 
                             return null
@@ -1306,26 +1305,14 @@ FocusScope {
                                     "matchingFolders": Qt.binding(function() {
                                         let result = []
                                         if (activeNode) {
-                                            if (activeNode.nodeType == "FeatureMatching" && isComputed) {
-                                                result.push(activeNode.attribute("output").value)
-                                            } else if (activeNode.hasAttribute("matchesFolders")) {
-                                                for (let i = 0; i < activeNode.attribute("matchesFolders").value.count; i++) {
-                                                    let attr = activeNode.attribute("matchesFolders").value.at(i)
-                                                    result.push(attr.value)
-                                                }
-                                            }
+                                            result = _currentScene.callInterfaceMethod("MatchProviderInterface", "getMatchesFolders") || []
                                         }
                                         return result
                                     }),
                                     "tracksFile": Qt.binding(function() {
                                         let result = ""
                                         if (activeNode) {
-                                            if (activeNode.nodeType == "TracksBuilding" && isComputed) {
-                                                result = activeNode.attribute("output").value
-                                            }
-                                            else if (activeNode.hasAttribute("tracksFilename")) {
-                                                result = activeNode.attribute("tracksFilename").value
-                                            }
+                                            result = _currentScene.callInterfaceMethod("TrackProviderInterface", "getTracksFile") || ""
                                         }
                                         return result
                                     })

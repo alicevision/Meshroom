@@ -598,14 +598,14 @@ Item {
                                 }
                             }
 
-                            // BETA version type indicator
+                            // Version type indicator
                             MaterialLabel {
-                                text: MaterialIcons.science
-                                visible: node && node.nodeVersionType === NodeVersionType.BETA
+                                text: node.nodeVersionType === NodeVersionType.BETA ? MaterialIcons.science : MaterialIcons.new_releases
+                                visible: node.nodeVersionType === NodeVersionType.BETA || node.nodeVersionType === NodeVersionType.USER
                                 font.pointSize: 7
                                 padding: 2
                                 palette.text: Colors.sysPalette.text
-                                ToolTip.text: "This node is in beta version."
+                                ToolTip.text: node.nodeVersionType === NodeVersionType.BETA ? "This node is in beta version." : "This node is a user plugin. It is not maintained by the core team."
                             }
                         }
 

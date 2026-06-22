@@ -265,8 +265,11 @@ class BaseNode(object):
         mod = sys.modules[self.__class__.__module__]
         version = getattr(mod, "__version__", None) if mod else None
 
+        if self.plugin and self.plugin.isUserPlugin:
+            self.nodeVersionType = NodeVersionType.USER
+
         # If "version" is not defined, the node version type remains "UNKNOWN"
-        if version:
+        if version and self.nodeVersionType == NodeVersionType.UNKNOWN:
             try:
                 major = int(version.split(".")[0])
                 if major < 1:

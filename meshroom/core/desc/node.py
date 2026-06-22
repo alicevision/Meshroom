@@ -262,6 +262,20 @@ class BaseNode(object):
         self.hasDynamicOutputAttribute = any(output.isDynamicValue or isinstance(output, AnySet) for output in self.outputs)
         self.sourceCodeFolder = Path(getfile(self.__class__)).parent.resolve().as_posix()
 
+        mod = sys.modules[self.__class__.__module__]
+        version = getattr(mod, "__version__", None) if mod else None
+
+        # If "version" is not defined, the node version type remains "UNKNOWN"
+        if version:
+            try:
+                major = int(version.split(".")[0])
+                if major < 1:
+                    self.nodeVersionType = NodeVersionType.BETA
+                else:
+                    self.nodeVersionType = NodeVersionType.RELEASED
+            except ValueError:
+                pass
+
     def getMrNodeType(self):
         return self._mrNodeType
 

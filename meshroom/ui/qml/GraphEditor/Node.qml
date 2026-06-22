@@ -962,13 +962,13 @@ Item {
         }
     }
 
-    /// Set to true by the GraphEditor's DropArea when files are dragged over this InitNode
-    property bool initNodeDragHover: false
+    /// Set to true by the GraphEditor's DropArea when files are dragged over this NewInputNode
+    property bool newInputNodeDragHover: false
 
-    // Highlight overlay shown when files are dragged over this InitNode
+    // Highlight overlay shown when files are dragged over this NewInputNode
     Rectangle {
         anchors.fill: mouseArea
-        visible: root.node && root.node.isInitNode && root.initNodeDragHover
+        visible: root.node && root.node.isNewInputNode && root.newInputNodeDragHover
         color: Colors.sysPalette.highlight
         opacity: 0.35
         radius: background.radius

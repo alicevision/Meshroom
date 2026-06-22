@@ -2033,8 +2033,8 @@ class BaseNode(BaseObject):
     def _isInputNode(self):
         return isinstance(self.nodeDesc, desc.InputNode)
 
-    def _isInitNode(self):
-        return isinstance(self.nodeDesc, desc.InitNode)
+    def _isNewInputNode(self):
+        return isinstance(self.nodeDesc, desc.NewInputNode)
 
     def _isBackdropNode(self) -> bool:
         return False
@@ -2354,7 +2354,7 @@ class BaseNode(BaseObject):
                                     notify=globalStatusChanged)
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
-    isInitNode = Property(bool, lambda self: self._isInitNode(), constant=True)
+    isNewInputNode = Property(bool, lambda self: self._isNewInputNode(), constant=True)
     isBackdropNode = Property(bool, lambda self: self._isBackdropNode(), constant=True)
 
     globalExecMode = Property(str, globalExecMode.fget, notify=globalStatusChanged)

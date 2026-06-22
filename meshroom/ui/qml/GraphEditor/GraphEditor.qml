@@ -59,11 +59,11 @@ Item {
         return undefined
     }
 
-    /// Get the InitNode delegate at the given position in 'draggable' coordinates, or null
-    function initNodeDelegateAt(draggableX, draggableY) {
+    /// Get the NewInputNode delegate at the given position in 'draggable' coordinates, or null
+    function newInputNodeDelegateAt(draggableX, draggableY) {
         for (var i = 0; i < nodeRepeater.count; ++i) {
             var delegate = nodeRepeater.getItemAt(i)
-            if (delegate && delegate.node && delegate.node.isInitNode && !delegate.readOnly) {
+            if (delegate && delegate.node && delegate.node.isNewInputNode && !delegate.readOnly) {
                 if (draggableX >= delegate.x && draggableX <= delegate.x + delegate.width &&
                     draggableY >= delegate.y && draggableY <= delegate.y + delegate.height) {
                     return delegate
@@ -1254,8 +1254,8 @@ Item {
             anchors.fill: parent
             keys: ["text/uri-list"]
 
-            /// The InitNode delegate currently being hovered during a file drag, if any
-            property var hoveredInitNodeDelegate: null
+            /// The NewInputNode delegate currently being hovered during a file drag, if any
+            property var hoveredNewInputNodeDelegate: null
 
             onEntered: function(drag) {
                 nbMeshroomScenes = 0
@@ -1267,46 +1267,46 @@ Item {
                     }
                 })
 
-                // Check if the drag enters directly over an InitNode
+                // Check if the drag enters directly over a NewInputNode
                 var draggablePos = mapToItem(draggable, drag.x, drag.y)
-                hoveredInitNodeDelegate = initNodeDelegateAt(draggablePos.x, draggablePos.y)
-                if (hoveredInitNodeDelegate) {
-                    hoveredInitNodeDelegate.initNodeDragHover = true
+                hoveredNewInputNodeDelegate = newInputNodeDelegateAt(draggablePos.x, draggablePos.y)
+                if (hoveredNewInputNodeDelegate) {
+                    hoveredNewInputNodeDelegate.newInputNodeDragHover = true
                 }
             }
 
             onPositionChanged: function(drag) {
-                // Update which InitNode (if any) the drag is currently over
+                // Update which NewInputNode (if any) the drag is currently over
                 var draggablePos = mapToItem(draggable, drag.x, drag.y)
-                var newDelegate = initNodeDelegateAt(draggablePos.x, draggablePos.y)
-                if (newDelegate !== hoveredInitNodeDelegate) {
-                    if (hoveredInitNodeDelegate) {
-                        hoveredInitNodeDelegate.initNodeDragHover = false
+                var newDelegate = newInputNodeDelegateAt(draggablePos.x, draggablePos.y)
+                if (newDelegate !== hoveredNewInputNodeDelegate) {
+                    if (hoveredNewInputNodeDelegate) {
+                        hoveredNewInputNodeDelegate.newInputNodeDragHover = false
                     }
-                    hoveredInitNodeDelegate = newDelegate
-                    if (hoveredInitNodeDelegate) {
-                        hoveredInitNodeDelegate.initNodeDragHover = true
+                    hoveredNewInputNodeDelegate = newDelegate
+                    if (hoveredNewInputNodeDelegate) {
+                        hoveredNewInputNodeDelegate.newInputNodeDragHover = true
                     }
                 }
             }
 
             onExited: {
-                if (hoveredInitNodeDelegate) {
-                    hoveredInitNodeDelegate.initNodeDragHover = false
-                    hoveredInitNodeDelegate = null
+                if (hoveredNewInputNodeDelegate) {
+                    hoveredNewInputNodeDelegate.newInputNodeDragHover = false
+                    hoveredNewInputNodeDelegate = null
                 }
             }
 
             onDropped: function(drop) {
                 // Clear visual feedback
-                if (hoveredInitNodeDelegate) {
-                    hoveredInitNodeDelegate.initNodeDragHover = false
+                if (hoveredNewInputNodeDelegate) {
+                    hoveredNewInputNodeDelegate.newInputNodeDragHover = false
                 }
 
-                // If dropped on an InitNode, forward the files to its initialize() method
-                if (hoveredInitNodeDelegate) {
-                    _currentScene.initializeNode(hoveredInitNodeDelegate.node, drop.urls)
-                    hoveredInitNodeDelegate = null
+                // If dropped on a NewInputNode, forward the files to its initialize() method
+                if (hoveredNewInputNodeDelegate) {
+                    _currentScene.initializeNode(hoveredNewInputNodeDelegate.node, drop.urls)
+                    hoveredNewInputNodeDelegate = null
                     return
                 }
 

@@ -5,7 +5,7 @@ import os
 
 from meshroom.core import desc
 
-class InputFile(desc.InputNode, desc.InitNode):
+class InputFile(desc.InputNode, desc.NewInputNode):
     """
 This node is an input node that receives a File.
 """

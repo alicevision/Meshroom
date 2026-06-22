@@ -619,9 +619,9 @@ class AVCommandLineNode(CommandLineNode):
         return commandLineString + AVCommandLineNode.cmdMem + AVCommandLineNode.cmdCore
 
 
-class InitNode(object):
+class NewInputNode(object):
     def __init__(self):
-        super(InitNode, self).__init__()
+        super(NewInputNode, self).__init__()
 
     def initialize(self, node, inputs, recursiveInputs):
         """

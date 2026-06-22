@@ -139,7 +139,7 @@ class TestNewInputNode:
     def test_newInputNode(self):
         g = Graph("")
 
-        node = g.addNewNode("PluginAInputNewInputNode")
+        node = g.addNewNode("PluginAInitNewInputNode")
 
         # Check that the NewInputNode is correctly detected
         newInputNodes = g.findNewInputNodes()

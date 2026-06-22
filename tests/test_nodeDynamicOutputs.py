@@ -113,7 +113,7 @@ class NodeWithDynamicListOutput(desc.Node):
         chunk.node.listOutput.value = outputValues
 
 
-class InputNodeWithDynamicOutputs(desc.InputNode):
+class InitNodeWithDynamicOutputs(desc.InitNode):
     inputs = [
         desc.File(
             name="fileInput",
@@ -218,36 +218,36 @@ class TestNodesWithDynamicOutputs:
         assert loadedNode.floatOutput.value == 10.0
 
 
-class TestInputNodeWithDynamicOutputs:
-    def test_registerInputNodeWithDynamicOutputs(self):
+class TestInitNodeWithDynamicOutputs:
+    def test_registerInitNodeWithDynamicOutputs(self):
         """
         Force the registration of a node with an invalid description and check that its description is rejected
         and its status states it clearly.
         """
-        registerNodeDesc(InputNodeWithDynamicOutputs)
+        registerNodeDesc(InitNodeWithDynamicOutputs)
 
         # Check that the plugin has been correctly registered (there has been attempt to load it)
-        assert pluginManager.isRegistered(InputNodeWithDynamicOutputs.__name__)
+        assert pluginManager.isRegistered(InitNodeWithDynamicOutputs.__name__)
 
         # Check that the plugin's status is DESC_ERROR, since the node description is invalid
-        # Additionally, the list of errors should include an error about having a dynamic output in an InputNode
-        plugin = pluginManager.getRegisteredNodePlugin(InputNodeWithDynamicOutputs.__name__)
+        # Additionally, the list of errors should include an error about having a dynamic output in an InitNode
+        plugin = pluginManager.getRegisteredNodePlugin(InitNodeWithDynamicOutputs.__name__)
         assert plugin
         assert plugin.status == NodePluginStatus.DESC_ERROR
         assert len(plugin.errors) == 1
         errType = plugin.errors[0][1]
         assert errType == desc.ValueTypeErrors.DYNAMIC_OUTPUT
 
-        unregisterNodeDesc(InputNodeWithDynamicOutputs)
+        unregisterNodeDesc(InitNodeWithDynamicOutputs)
 
-    def test_registerInputNodeWithDynamicOutputsV2(self):
-        """" Check that an input node with dynamic outputs has not been registered because it is invalid. """
+    def test_registerInitNodeWithDynamicOutputsV2(self):
+        """" Check that an init node with dynamic outputs has not been registered because it is invalid. """
         graph = Graph("")
         with pytest.raises(UnknownNodeTypeError):
-            # InputDynamicOutputs is located in tests/nodes/test/InputDynamicOutputs.py
-            # InputDynamicOutputs has the same description as InputNodeWithDynamicOutputs: had it been valid, it would
+            # InitDynamicOutputs is located in tests/nodes/test/InitDynamicOutputs.py
+            # InitDynamicOutputs has the same description as InitNodeWithDynamicOutputs: had it been valid, it would
             # have been loaded and registered by the plugin manager at the upper level of the test suite.
-            graph.addNewNode("InputDynamicOutputs")
+            graph.addNewNode("InitDynamicOutputs")
 
 
 class TestDynamicListOutputs:

@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class PluginAInputNode(desc.InputNode):
+class PluginAInitNewInputNode(desc.InitNode, desc.NewInputNode):
     inputs = [
         desc.File(
             name="input",
@@ -21,3 +21,7 @@ class PluginAInputNode(desc.InputNode):
             value="",
         ),
     ]
+
+    def initialize(self, node, inputs, recursiveInputs):
+        if len(inputs) >= 1:
+            self.setAttributes(node, {"input": inputs[0]})

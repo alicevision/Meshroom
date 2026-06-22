@@ -51,7 +51,7 @@ class Status(Enum):
     STOPPED = 4
     KILLED = 5
     SUCCESS = 6
-    INPUT = 7  # Special status for input nodes
+    INIT = 7  # Special status for init nodes
 
 
 class ExecMode(Enum):
@@ -1347,8 +1347,8 @@ class BaseNode(BaseObject):
         return self.nodeDesc.resolvedRam(self)
 
     def hasStatus(self, status: Status):
-        if self.isInputNode:
-            return status == Status.INPUT
+        if self.isInitNode:
+            return status == Status.INIT
         if self.isCompatibilityNode:
             # CompatibilityNodes have no chunks but may still have a status
             # Use it instead of defaulting to checking with Status.NONE
@@ -1371,7 +1371,7 @@ class BaseNode(BaseObject):
         """
         # Ambiguous case for NONE, which could be used for compatibility nodes if we do not have
         # any information about the node descriptor.
-        return self.getMrNodeType() != MrNodeType.INPUT and self.getMrNodeType() != MrNodeType.BACKDROP
+        return self.getMrNodeType() != MrNodeType.INIT and self.getMrNodeType() != MrNodeType.BACKDROP
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -1564,8 +1564,8 @@ class BaseNode(BaseObject):
             # Compatibility nodes are not meant to be updated.
             return
 
-        if attr.isOutput and not self.isInputNode:
-            # Ignore changes on output attributes for non-input nodes
+        if attr.isOutput and not self.isInitNode:
+            # Ignore changes on output attributes for non-init nodes
             # as they are updated during the node's computation.
             # And we do not want notifications during the graph processing.
             return
@@ -1982,8 +1982,8 @@ class BaseNode(BaseObject):
                  Status.RUNNING, Status.SUBMITTED)
         allOf = (Status.SUCCESS,)
         
-        if self.isInputNode:
-            return Status.INPUT
+        if self.isInitNode:
+            return Status.INIT
         if not self._chunksCreated:
             # If the preprocess chunk failed we might not reach the chunk creation part
             if self.hasPreprocessChunk and self._preprocessChunk._status.status in anyOf:
@@ -2030,8 +2030,8 @@ class BaseNode(BaseObject):
     def _isCompatibilityNode(self):
         return False
 
-    def _isInputNode(self):
-        return isinstance(self.nodeDesc, desc.InputNode)
+    def _isInitNode(self):
+        return isinstance(self.nodeDesc, desc.InitNode)
 
     def _isNewInputNode(self):
         return isinstance(self.nodeDesc, desc.NewInputNode)
@@ -2353,7 +2353,7 @@ class BaseNode(BaseObject):
     recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime,
                                     notify=globalStatusChanged)
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)
-    isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
+    isInitNode = Property(bool, lambda self: self._isInitNode(), constant=True)
     isNewInputNode = Property(bool, lambda self: self._isNewInputNode(), constant=True)
     isBackdropNode = Property(bool, lambda self: self._isBackdropNode(), constant=True)
 
@@ -2603,7 +2603,7 @@ class Node(BaseNode):
         """ Create chunks when computation is about to start. """
         if self._chunksCreated:
             return
-        if self.isInputNode:
+        if self.isInitNode:
             self._chunksCreated = True
             self.chunksChanged.emit()
             return

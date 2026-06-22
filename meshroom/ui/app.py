@@ -389,6 +389,7 @@ class MeshroomApp(QApplication):
     def reloadTemplateList(self):
         meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
+        self.pluginMenuActionsChanged.emit()
 
     @Slot()
     def forceUIUpdate(self):
@@ -767,6 +768,22 @@ class MeshroomApp(QApplication):
             })
         return submittersList
 
+    def _pluginMenuActions(self):
+        """
+        Get the list of menu actions contributed by all loaded plugins.
+        Model provides:
+            label: the text to display in the menu item
+            tooltip: an optional tooltip for the menu item
+            actionId: the unique identifier for the action
+            pluginName: the name of the plugin providing this action
+        """
+        return pluginManager.getAllMenuActions()
+
+    @Slot(str)
+    def executePluginMenuAction(self, actionId):
+        """Execute the plugin menu action identified by 'actionId'."""
+        pluginManager.executeMenuAction(actionId)
+
     @Slot(str)
     def setDefaultSubmitter(self, name):
         logging.info(f"Submitter is now set to : {name}")
@@ -780,6 +797,7 @@ class MeshroomApp(QApplication):
     pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
     recentImportedImagesFoldersChanged = Signal()
+    pluginMenuActionsChanged = Signal()
     pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames, notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", lambda self: self._recentProjectFiles, notify=recentProjectFilesChanged)
@@ -787,3 +805,4 @@ class MeshroomApp(QApplication):
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)
     defaultSequencePlayerEnabled = Property(bool, _defaultSequencePlayerEnabled, constant=True)
     submittersListModel = Property("QVariantList", _submittersList, constant=True)
+    pluginMenuActions = Property("QVariantList", _pluginMenuActions, notify=pluginMenuActionsChanged)

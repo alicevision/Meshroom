@@ -1088,6 +1088,25 @@ Page {
                     shortcut: "F1"
                 }
             }
+            Menu {
+                id: pluginsMenu
+                title: "Plugins"
+                visible: pluginsMenuItems.count > 0
+                Repeater {
+                    id: pluginsMenuItems
+                    model: MeshroomApp.pluginMenuActions
+                    MenuItem {
+                        text: modelData["label"]
+                        onTriggered: MeshroomApp.executePluginMenuAction(modelData["actionId"])
+                        ToolTip {
+                            visible: parent.hovered && modelData["tooltip"] !== ""
+                            text: modelData["tooltip"]
+                            x: pluginsMenu.implicitWidth
+                            y: 0
+                        }
+                    }
+                }
+            }
         }
 
         Rectangle {

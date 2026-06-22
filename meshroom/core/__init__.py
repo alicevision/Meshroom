@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import pkgutil
 import sys
+import threading
 import traceback
 import uuid
 
@@ -34,6 +35,28 @@ cacheFolderName = 'MeshroomCache'
 pluginManager: NodePluginManager = NodePluginManager()
 submitters: dict[str, BaseSubmitter] = {}
 pipelineTemplates: dict[str, str] = {}
+_pluginLoadingContext = threading.local()
+
+
+def registerMenuAction(label: str, function: callable, tooltip: str = ""):
+    """
+    Register a menu action for the plugin currently being loaded.
+
+    This function is intended to be called from a plugin's Python code (e.g. its
+    ``__init__.py``) during the plugin loading phase. It associates a menu entry
+    with a Python callable so that the action can be triggered from Meshroom's
+    Plugins menu.
+
+    Args:
+        label: the text to display in the menu item.
+        function: the Python callable to invoke when the menu item is triggered.
+        tooltip: an optional tooltip for the menu item.
+    """
+    plugin = getattr(_pluginLoadingContext, "currentPlugin", None)
+    if plugin is None:
+        logging.warning("registerMenuAction called outside of plugin loading context.")
+        return
+    plugin.addMenuAction(label, function, tooltip)
 
 
 def hashValue(value) -> str:
@@ -338,12 +361,25 @@ def loadAllNodes(folder) -> list[Plugin]:
     for _, package, ispkg in pkgutil.iter_modules([folder]):
         if ispkg:
             plugin = Plugin(package, folder)
+            _pluginLoadingContext.currentPlugin = plugin
             nodePlugins = loadNodes(folder, package)
+            _pluginLoadingContext.currentPlugin = None
             if nodePlugins:
                 for node in nodePlugins:
                     plugin.addNodePlugin(node)
                 nodesStr = ', '.join([node.nodeDescriptor.__name__ for node in nodePlugins])
                 logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
+            # Call the plugin's register() hook if it defines one.
+            # This is the reliable way to register menu actions because it is called
+            # explicitly on every load, even when the module is already cached.
+            pkg_module = sys.modules.get(package)
+            if pkg_module is not None:
+                register_fn = getattr(pkg_module, "register", None)
+                if callable(register_fn):
+                    try:
+                        register_fn(plugin)
+                    except Exception as exc:
+                        logging.error(f"Error calling register() for plugin '{package}': {exc}")
             plugins.append(plugin)
     return plugins
 

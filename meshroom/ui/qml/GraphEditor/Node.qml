@@ -412,7 +412,7 @@ Item {
                             active: node && node.hasInternalAttribute("flowInputs")
                             Layout.leftMargin: 1
 
-                           // flowInputs pin - left side of header
+                            // flowInputs pin - left side of header
                             sourceComponent: AttributePin {
                                 id: flowInputsHeaderPin
                                 attribute: node.internalAttribute("flowInputs")
@@ -596,6 +596,16 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                 }
+                            }
+
+                            // BETA version type indicator
+                            MaterialLabel {
+                                text: MaterialIcons.science
+                                visible: node && node.nodeVersionType === NodeVersionType.BETA
+                                font.pointSize: 7
+                                padding: 2
+                                palette.text: Colors.sysPalette.text
+                                ToolTip.text: "This node is in beta version."
                             }
                         }
 

@@ -196,33 +196,33 @@ with meshroom.core.graph.GraphModification(graph):
                 node.setInternalAttributeValues({"invalidation": args.setInvalidationString})
 
     if args.input:
-        # get new input nodes
-        newInputNodes = graph.findNewInputNodes()
-        newInputNodesNames = [n.getName() for n in newInputNodes]
+        # get input nodes
+        inputNodes = graph.findInputNodes()
+        inputNodesNames = [n.getName() for n in inputNodes]
 
-        # parse inputs for each new input node
+        # parse inputs for each input node
         mapInput = parseInitInputs(args.input)
 
-        # parse recursive inputs for each new input node
+        # parse recursive inputs for each input node
         mapInputRecursive = parseInitInputs(args.inputRecursive)
 
         # check that input nodes exist in the pipeline template
         for nodeName in mapInput.keys() | mapInputRecursive.keys():
-            if nodeName and nodeName not in newInputNodesNames:
-                raise RuntimeError(f"Failed to find the NewInput Node '{nodeName}' in your pipeline.\nAvailable NewInput Nodes: {newInputNodesNames}")
+            if nodeName and nodeName not in inputNodesNames:
+                raise RuntimeError(f"Failed to find the Input Node '{nodeName}' in your pipeline.\nAvailable Input Nodes: {inputNodesNames}")
 
-        # feed inputs (recursive and non-recursive paths) to corresponding new input nodes
-        for newInputNode in newInputNodes:
-            nodeName = newInputNode.getName()
+        # feed inputs (recursive and non-recursive paths) to corresponding input nodes
+        for inputNode in inputNodes:
+            nodeName = inputNode.getName()
             if nodeName not in mapInput | mapInputRecursive and \
                "" not in mapInput | mapInputRecursive:
                 continue
 
-            # Retrieve input per node and inputs for all new input node types
+            # Retrieve input per node and inputs for all input node types
             input = mapInput.get(nodeName, []) + mapInput.get("", [])
             # Retrieve recursive inputs
             inputRec = mapInputRecursive.get(nodeName, []) + mapInputRecursive.get("", [])
-            newInputNode.nodeDesc.initialize(newInputNode, input, inputRec)
+            inputNode.nodeDesc.initialize(inputNode, input, inputRec)
 
     if not graph.canComputeLeaves:
         raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")

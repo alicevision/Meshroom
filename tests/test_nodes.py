@@ -116,7 +116,7 @@ class TestNodeVariables:
             assert n._expVars["node"] is n
 
 
-class TestNewInputNode:
+class TestInputNode:
     plugin = None
 
     @classmethod
@@ -136,16 +136,15 @@ class TestNewInputNode:
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
-    def test_newInputNode(self):
+    def test_inputNode(self):
         g = Graph("")
 
-        node = g.addNewNode("PluginAInitNewInputNode")
+        node = g.addNewNode("PluginAInitInputNode")
 
-        # Check that the NewInputNode is correctly detected
-        newInputNodes = g.findNewInputNodes()
-        assert len(newInputNodes) == 1 and node in newInputNodes
-
-        # Check that the NewInputNode's initialize method has been set
+        # Check that the InputNode is correctly detected
+        inputNodes = g.findInputNodes()
+        assert len(inputNodes) == 1 and node in inputNodes
+        # Check that the InputNode's initialize method has been set
         inputs = ["/path/to/file", "/path/to/file/2"]
         node.nodeDesc.initialize(node, inputs, None)
         assert node.input.value == inputs[0]

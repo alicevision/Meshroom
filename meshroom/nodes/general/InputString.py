@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class InputString(desc.InitNode, desc.NewInputNode):
+class InputString(desc.InitNode, desc.InputNode):
     """
     This node is an init node that receives a String.
     """

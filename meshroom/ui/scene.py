@@ -823,17 +823,17 @@ class Scene(UIGraph):
     @Slot(QObject, "QList<QUrl>")
     def initializeNode(self, node, urls):
         """
-        Initialize a NewInputNode with the provided list of dropped files/URLs.
+        Initialize an InputNode with the provided list of dropped files/URLs.
 
         Converts the list of QUrls to local file paths and calls the node descriptor's
         initialize() method with those paths as inputs.
 
         Args:
-            node (Node): the NewInputNode to initialize
+            node (Node): the InputNode to initialize
             urls (list of QUrl): the list of dropped file/directory URLs
         """
-        if not node.isNewInputNode:
-            logging.warning(f"initializeNode called on non-NewInputNode '{node.name}' — ignoring.")
+        if not node.isInputNode:
+            logging.warning(f"initializeNode called on non-InputNode '{node.name}' — ignoring.")
             return
         inputs = [localFile for url in urls if (localFile := url.toLocalFile())]
         node.nodeDesc.initialize(node, inputs, [])

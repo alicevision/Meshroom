@@ -39,7 +39,7 @@ from .node import (
     BaseNode,
     BackdropNode,
     CommandLineNode,
-    NewInputNode,
+    InputNode,
     InitNode,
     InternalAttributesFactory,
     MrNodeType,

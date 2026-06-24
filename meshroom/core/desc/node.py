@@ -249,7 +249,7 @@ class BaseNode(object):
     def getNodeInfo(cls):
         info = OrderedDict([
             ("module", cls.__module__),
-            ("modulePath", cls.plugin.path),
+            ("modulePath", cls.plugin.path if cls.plugin else ""),
         ])
         # > Info from the plugin module
         plugin_module = sys.modules.get(cls.__module__)
@@ -267,6 +267,8 @@ class BaseNode(object):
         # > Additional node information stored in a __nodeInfo__ parameter
         additionalNodeInfo = getattr(cls, "__nodeInfo__", None)
         if additionalNodeInfo:
+            if isinstance(additionalNodeInfo, dict):
+                additionalNodeInfo = list(additionalNodeInfo.items())
             for key, value in additionalNodeInfo:
                 info[key] = value
         return info

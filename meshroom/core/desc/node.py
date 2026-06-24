@@ -9,7 +9,7 @@ import shutil
 import sys
 import signal
 import subprocess
-
+from collections import OrderedDict
 import psutil
 
 from meshroom import _MESHROOM_ROOT
@@ -244,6 +244,32 @@ class BaseNode(object):
 
     def getMrNodeType(self):
         return self._mrNodeType
+
+    @classmethod
+    def getNodeInfo(cls):
+        info = OrderedDict([
+            ("module", cls.__module__),
+            ("modulePath", cls.plugin.path),
+        ])
+        # > Info from the plugin module
+        plugin_module = sys.modules.get(cls.__module__)
+        if getattr(plugin_module, "__author__", None):
+            info["author"] = plugin_module.__author__
+        if getattr(plugin_module, "__license__", None):
+            info["license"] = plugin_module.__license__
+        if getattr(plugin_module, "__version__", None):
+            info["version"] = plugin_module.__version__
+        # > Overrides at the node-level
+        if getattr(cls, "author", None):
+            info["author"] = cls.author
+        if getattr(cls, "version", None):
+            info["version"] = cls.version
+        # > Additional node information stored in a __nodeInfo__ parameter
+        additionalNodeInfo = getattr(cls, "__nodeInfo__", None)
+        if additionalNodeInfo:
+            for key, value in additionalNodeInfo:
+                info[key] = value
+        return info
 
     @classmethod
     def resolvedCpu(cls, node):

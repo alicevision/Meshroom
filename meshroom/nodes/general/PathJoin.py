@@ -12,21 +12,17 @@ class PathJoin(desc.Node):
     inputs = [
         desc.ListAttribute(
             name="paths",
-            label="Paths",
             description="Paths to join.",
             exposed=True,
             elementDesc=desc.StringParam(
                 name="path",
-                label="Path",
-                description="Path.",
                 exposed=True,
                 value=""
             )
         ),
         desc.BoolParam(
             name="checkIfExists",
-            label="Check Exists",
-            description="Checkl if the output path exists. If it doesn't, the output will be an empty string.",
+            description="Check if the output path exists. If it doesn't, the output will be an empty string.",
             value=False,
         )
     ]
@@ -35,8 +31,6 @@ class PathJoin(desc.Node):
         desc.File(
             name="outputPath",
             label="Path",
-            description="Path.",
-            value=None,
         )
     ]
     

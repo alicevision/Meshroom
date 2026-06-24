@@ -197,6 +197,7 @@ executables = [
     # Command line
     PlatformExecutable("bin/meshroom_batch"),
     PlatformExecutable("bin/meshroom_compute"),
+    PlatformExecutable("bin/meshroom_info"),
     PlatformExecutable("bin/meshroom_newNodeType"),
     PlatformExecutable("bin/meshroom_statistics"),
     PlatformExecutable("bin/meshroom_status"),

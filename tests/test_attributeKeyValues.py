@@ -34,6 +34,7 @@ class NodeWithKeyableAttributes(desc.Node):
         ),
     ]
 
+
 class TestKeyableAttribute:
 
     @classmethod
@@ -65,7 +66,7 @@ class TestKeyableAttribute:
         assert nodeA.keyableFloat.isDefault
 
         # Check attribute description value
-        assert nodeA.keyableBool.desc.value == True
+        assert nodeA.keyableBool.desc.value
         assert nodeA.keyableInt.desc.value == 5
         assert nodeA.keyableFloat.desc.value == 5.5
 
@@ -84,21 +85,20 @@ class TestKeyableAttribute:
         assert nodeA.keyableInt.getValueStr() == "{}"
         assert nodeA.keyableFloat.getValueStr() == "{}"
 
-
     def test_createReadUpdateDelete(self):
         graph = Graph("")
 
         nodeA = graph.addNewNode(NodeWithKeyableAttributes.__name__)
 
         # Check attribute value at key "0", should be default value
-        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0") == True
+        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0")
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("0") == 5
         assert nodeA.keyableFloat.keyValues.getValueAtKeyOrDefault("0") == 5.5
 
         # Check attribute has key "0", should be False (no key)
-        assert nodeA.keyableBool.keyValues.hasKey("0") == False
-        assert nodeA.keyableInt.keyValues.hasKey("0") == False
-        assert nodeA.keyableFloat.keyValues.hasKey("0") == False
+        assert not nodeA.keyableBool.keyValues.hasKey("0")
+        assert not nodeA.keyableInt.keyValues.hasKey("0")
+        assert not nodeA.keyableFloat.keyValues.hasKey("0")
 
         # Add attribute (key, value) at key "0"
         nodeA.keyableBool.keyValues.add("0", False)
@@ -106,14 +106,14 @@ class TestKeyableAttribute:
         nodeA.keyableFloat.keyValues.add("0", 10.1)
 
         # Check attribute value at key "0", should be the new value
-        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0") == False
+        assert not nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0")
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("0") == 10
         assert nodeA.keyableFloat.keyValues.getValueAtKeyOrDefault("0") == 10.1
 
         # Check attribute has key "0", should be True (key exists)
-        assert nodeA.keyableBool.keyValues.hasKey("0") == True
-        assert nodeA.keyableInt.keyValues.hasKey("0") == True
-        assert nodeA.keyableFloat.keyValues.hasKey("0") == True
+        assert nodeA.keyableBool.keyValues.hasKey("0")
+        assert nodeA.keyableInt.keyValues.hasKey("0")
+        assert nodeA.keyableFloat.keyValues.hasKey("0")
 
         # Update attribute (key, value) at key "0"
         nodeA.keyableBool.keyValues.add("0", True)
@@ -121,14 +121,14 @@ class TestKeyableAttribute:
         nodeA.keyableFloat.keyValues.add("0", 20.2)
 
         # Check attribute value at key "0", should be the new updated value
-        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0") == True
+        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0")
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("0") == 20
         assert nodeA.keyableFloat.keyValues.getValueAtKeyOrDefault("0") == 20.2
 
         # Check attribute has key "0", should be True (key exists)
-        assert nodeA.keyableBool.keyValues.hasKey("0") == True
-        assert nodeA.keyableInt.keyValues.hasKey("0") == True
-        assert nodeA.keyableFloat.keyValues.hasKey("0") == True
+        assert nodeA.keyableBool.keyValues.hasKey("0")
+        assert nodeA.keyableInt.keyValues.hasKey("0")
+        assert nodeA.keyableFloat.keyValues.hasKey("0")
 
         # Remove (key, value) at key "0"
         nodeA.keyableBool.keyValues.remove("0")
@@ -136,15 +136,14 @@ class TestKeyableAttribute:
         nodeA.keyableFloat.keyValues.remove("0")
 
         # Check attributes values at key "0", should be default value
-        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0") == True
+        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0")
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("0") == 5
         assert nodeA.keyableFloat.keyValues.getValueAtKeyOrDefault("0") == 5.5
 
         # Check attribute has key "0", should be False (no key)
-        assert nodeA.keyableBool.keyValues.hasKey("0") == False
-        assert nodeA.keyableInt.keyValues.hasKey("0") == False
-        assert nodeA.keyableFloat.keyValues.hasKey("0") == False
-
+        assert not nodeA.keyableBool.keyValues.hasKey("0")
+        assert not nodeA.keyableInt.keyValues.hasKey("0")
+        assert not nodeA.keyableFloat.keyValues.hasKey("0")
 
     def test_multipleKeys(self):
         graph = Graph("")
@@ -167,32 +166,32 @@ class TestKeyableAttribute:
         nodeA.keyableFloat.keyValues.add("2", 3.3)
 
         # Check attribute has key "0", should be True (key exists)
-        assert nodeA.keyableBool.keyValues.hasKey("0") == True
-        assert nodeA.keyableInt.keyValues.hasKey("0") == True
-        assert nodeA.keyableFloat.keyValues.hasKey("0") == True
+        assert nodeA.keyableBool.keyValues.hasKey("0")
+        assert nodeA.keyableInt.keyValues.hasKey("0")
+        assert nodeA.keyableFloat.keyValues.hasKey("0")
 
         # Check attribute has key "1", should be True (key exists)
-        assert nodeA.keyableBool.keyValues.hasKey("1") == True
-        assert nodeA.keyableInt.keyValues.hasKey("1") == True
-        assert nodeA.keyableFloat.keyValues.hasKey("1") == True
+        assert nodeA.keyableBool.keyValues.hasKey("1")
+        assert nodeA.keyableInt.keyValues.hasKey("1")
+        assert nodeA.keyableFloat.keyValues.hasKey("1")
 
         # Check attribute has key "2", should be True (key exists)
-        assert nodeA.keyableBool.keyValues.hasKey("2") == True
-        assert nodeA.keyableInt.keyValues.hasKey("2") == True
-        assert nodeA.keyableFloat.keyValues.hasKey("2") == True
+        assert nodeA.keyableBool.keyValues.hasKey("2")
+        assert nodeA.keyableInt.keyValues.hasKey("2")
+        assert nodeA.keyableFloat.keyValues.hasKey("2")
 
         # Check attributes values at key "0", should be default value
-        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0") == False
+        assert not nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("0")
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("0") == 1
         assert nodeA.keyableFloat.keyValues.getValueAtKeyOrDefault("0") == 1.1
 
         # Check attributes values at key "1", should be default value
-        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("1") == False
+        assert not nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("1")
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("1") == 2
         assert nodeA.keyableFloat.keyValues.getValueAtKeyOrDefault("1") == 2.2
 
         # Check attributes values at key "2", should be default value
-        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("2") == True
+        assert nodeA.keyableBool.keyValues.getValueAtKeyOrDefault("2")
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("2") == 3
         assert nodeA.keyableFloat.keyValues.getValueAtKeyOrDefault("2") == 3.3
 
@@ -202,10 +201,9 @@ class TestKeyableAttribute:
         nodeA.keyableFloat.keyValues.remove("1")
 
         # Check attribute has key "1", should be False (no key)
-        assert nodeA.keyableBool.keyValues.hasKey("1") == False
-        assert nodeA.keyableInt.keyValues.hasKey("1") == False
-        assert nodeA.keyableFloat.keyValues.hasKey("1") == False
-
+        assert not nodeA.keyableBool.keyValues.hasKey("1")
+        assert not nodeA.keyableInt.keyValues.hasKey("1")
+        assert not nodeA.keyableFloat.keyValues.hasKey("1")
 
     def test_linkAttribute(self):
         graph = Graph("")
@@ -223,12 +221,12 @@ class TestKeyableAttribute:
         nodeA.keyableInt.connectTo(nodeB.keyableInt)
 
         # Check link
-        assert nodeB.keyableInt.isLink == True
+        assert nodeB.keyableInt.isLink
         assert nodeB.keyableInt.keyValues == nodeA.keyableInt.keyValues
 
         # Check existing (key, value) in nodeA.keyableInt and nodeB.keyableInt
-        assert nodeA.keyableInt.keyValues.hasKey("1") == True
-        assert nodeB.keyableInt.keyValues.hasKey("1") == True
+        assert nodeA.keyableInt.keyValues.hasKey("1")
+        assert nodeB.keyableInt.keyValues.hasKey("1")
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("1") == 1
         assert nodeB.keyableInt.keyValues.getValueAtKeyOrDefault("1") == 1
 
@@ -236,14 +234,13 @@ class TestKeyableAttribute:
         nodeB.keyableInt.keyValues.add("3", 3)
 
         # Check new (key, value) in nodeA.keyableInt and nodeB.keyableInt
-        assert nodeA.keyableInt.keyValues.hasKey("3") == True
-        assert nodeB.keyableInt.keyValues.hasKey("3") == True
+        assert nodeA.keyableInt.keyValues.hasKey("3")
+        assert nodeB.keyableInt.keyValues.hasKey("3")
         assert nodeA.keyableInt.keyValues.getValueAtKeyOrDefault("3") == 3
         assert nodeB.keyableInt.keyValues.getValueAtKeyOrDefault("3") == 3
 
         # Check nodeB.keyableInt serialized values
         assert nodeB.keyableInt.getSerializedValue() == nodeA.keyableInt.asLinkExpr()
-
 
     def test_uid(self):
         graph = Graph("")

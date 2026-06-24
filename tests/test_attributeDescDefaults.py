@@ -77,7 +77,7 @@ def test_param_minimal_creation(attrDesc):
     """All attribute types should be constructible with minimal arguments (name only)."""
     assert attrDesc.name is not None
     assert attrDesc.label != ""       # label is auto-generated from the name
-    assert attrDesc.description == "" # description defaults to empty string
+    assert attrDesc.description == ""  # description defaults to empty string
 
 
 @pytest.mark.parametrize("attrDesc", [

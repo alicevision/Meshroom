@@ -256,7 +256,7 @@ class TestGraphSave:
             graph.saveAsNewVersion()
             newScenePath = os.path.join(tmp_path, "scene1.mg")
             assert os.path.exists(newScenePath)
-    
+
     def test_cacheDir(self, graphSavedOnDisk, tmp_path):
         """ Check features related to the cacheDir
         - default/explicit location

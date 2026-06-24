@@ -3,9 +3,10 @@ from unittest.mock import patch
 
 import meshroom
 from meshroom.core import desc, pluginManager, loadPluginFolder
-from meshroom.core.plugins import NodePlugin, NodePluginStatus
+from meshroom.core.plugins import NodePlugin
 
 import os
+
 
 @contextmanager
 def registeredNodeTypes(nodeTypes: list[desc.Node]):
@@ -53,6 +54,7 @@ def registeredPlugins(folder: str):
 
     for plugin in plugins:
         pluginManager.removePlugin(plugin)
+
 
 @contextmanager
 def overrideOsEnvironmentVariables(envVariables: dict):

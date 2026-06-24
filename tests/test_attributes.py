@@ -10,7 +10,7 @@ logger = logging.getLogger('test')
 valid3DExtensionFiles = [(f'test.{ext}', True) for ext in ('obj', 'stl', 'fbx', 'gltf', 'abc', 'ply', 'usda', 'usdc')]
 invalid3DExtensionFiles = [(f'test.{ext}', False) for ext in ('', 'exe', 'jpg', 'png', 'py')]
 
-valid2DSemantics= [(semantic, True) for semantic in ('image', 'imageList', 'sequence')]
+valid2DSemantics = [(semantic, True) for semantic in ('image', 'imageList', 'sequence')]
 invalid2DSemantics = [(semantic, False) for semantic in ('3d', '', 'multiline', 'color/hue')]
 
 registerNodeDesc(NodeWithValidators)
@@ -60,7 +60,6 @@ def test_attribute_is3D_file_extensions(givenFile, expected):
     """
     Check what makes an attribute a valid 3d media
     """
-
     g = Graph('')
     n0 = g.addNewNode('Ls', input='')
 
@@ -73,9 +72,9 @@ def test_attribute_is3D_file_extensions(givenFile, expected):
     # Then
     assert n0.input.is3dDisplayable == expected
 
+
 def test_attribute_i3D_by_description_semantic():
     """ """
-
     # Given
     g = Graph('')
     n0 = g.addNewNode('Ls', input='')
@@ -107,10 +106,9 @@ def test_attribute_is2D_file_semantic(givenSemantic, expected):
 
     # Then
     assert n0.input.is2dDisplayable == expected
-    
+
 
 def test_attribute_notEmpty_validation():
-
     # Given
     g = Graph('')
     node = g.addNewNode('NodeWithValidators')
@@ -132,8 +130,8 @@ def test_attribute_notEmpty_validation():
     assert len(node.mandatory.getErrorMessages()) == 0
     assert not node.hasInvalidAttribute
 
-def test_attribute_range_validation():
 
+def test_attribute_range_validation():
     # Given
     g = Graph('')
     node = g.addNewNode('NodeWithValidators')

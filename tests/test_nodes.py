@@ -277,7 +277,7 @@ class TestBackdropNode:
     def test_backdropNode_templateSerialization(self):
         """ Test that a graph with a backdrop node can be saved as a template. """
         g = Graph("Backdrop node template serialization")
-        backdrop = g.addNewNode("Backdrop")
+        g.addNewNode("Backdrop")
 
         # Save the graph as a template
         templateFile = os.path.join(tempfile.mkdtemp(), "test_backdrop_template.mg")
@@ -617,14 +617,14 @@ class TestGenerateMgScene:
         graphFile = tmpdir / "test_template_generatemgscene.mg"
         graph.save(graphFile)
         return graphFile
-    
+
     @staticmethod
     def processNode(node):
         """ Process a non-parallelized node and check that it succeed """
         cache = Path(node.internalFolder)
         cache.mkdir(parents=True)
         # Process
-        logFile = cache / f"0.log"
+        logFile = cache / "0.log"
         logFile.touch()
         node.prepareLogger(-1)
         node.preprocess()
@@ -633,15 +633,15 @@ class TestGenerateMgScene:
         node.restoreLogger()
         # Check output
         nodeStatusFile = cache / "nodeStatus"
-        assert(nodeStatusFile.exists())
+        assert nodeStatusFile.exists()
         with open(str(nodeStatusFile), "r") as f:
             c = json.load(f)
-        assert(c.get("status") == "SUCCESS")
+        assert c.get("status") == "SUCCESS"
         return True
 
     @staticmethod
     def comparePaths(pathA, pathB):
-        assert(Path(pathA) == Path(pathB))
+        assert Path(pathA) == Path(pathB)
 
     def test_generatemgscene(self):
         """ Test the GenerateMeshroomScene & MeshroomSceneParameter nodes
@@ -702,11 +702,11 @@ class TestGenerateMgScene:
         self.processNode(testNode)
         # Check output scene
         scene = Path(testNode.internalFolder) / "scene.mg"
-        assert(scene.exists())
+        assert scene.exists()
         with open(str(scene), "r") as f:
             c = json.load(f)
         generatedSceneGraph = c["graph"]
-        assert(generatedSceneGraph["A_1"]["inputs"]["string"] == "test")
-        assert(generatedSceneGraph["B_1"]["inputs"]["integer"] == 42)
-        assert(generatedSceneGraph["C_1"]["inputs"]["integer"] == 42)
+        assert generatedSceneGraph["A_1"]["inputs"]["string"] == "test"
+        assert generatedSceneGraph["B_1"]["inputs"]["integer"] == 42
+        assert generatedSceneGraph["C_1"]["inputs"]["integer"] == 42
         self.comparePaths(generatedSceneGraph["InputImages_1"]["inputs"]["inputFile"], images)

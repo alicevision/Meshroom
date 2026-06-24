@@ -16,6 +16,7 @@ class Color(desc.Node):
         ),
     ]
 
+
 class NestedColor(desc.Node):
     inputs = [
         desc.GroupAttribute(
@@ -27,7 +28,9 @@ class NestedColor(desc.Node):
                 desc.FloatParam(name="r", label="r", description="r", value=0.0),
                 desc.FloatParam(name="g", label="g", description="g", value=0.0),
                 desc.FloatParam(name="b", label="b", description="b", value=0.0),
-                desc.GroupAttribute(label="test", name="test", description="",
+                desc.GroupAttribute(
+                    name="test",
+                    label="test",
                     items=[
                         desc.FloatParam(name="r", label="r", description="r", value=0.0),
                         desc.FloatParam(name="g", label="g", description="g", value=0.0),

@@ -61,6 +61,7 @@ _OUTPUTS = [
     ),
 ]
 
+
 class TestNodeA(desc.BaseNode):
     """
     Test process with chunks
@@ -223,11 +224,13 @@ class TestNodeLogger:
         root = chunkLog.parent
         preprocessLog = root / "preprocess.log"
         postprocessLog = root / "postprocess.log"
+
         def check_file(path, suffix=""):
             with open(path, "r") as f:
                 content = f.read()
                 reg = re.compile(self.logPrefix + "TestNodeD_1" + suffix)
                 assert len(reg.findall(content)) == 1
+
         check_file(preprocessLog, r" \(preprocess\)")
         check_file(chunkLog, "")
         check_file(postprocessLog, r" \(postprocess\)")
@@ -515,13 +518,16 @@ class TestNode_SizeA(desc.BaseNode):
             commandLineGroup='',
         ),
     ]
+
     def processChunk(self, chunk):
         pass
+
 
 class TestNode_SizeB(TestNode_SizeA):
     """ Inherit the linked node size but not parallelized """
     size = desc.DynamicNodeSize("nodeInput")
     parallelization = False
+
 
 class TestNode_SizeC(TestNode_SizeA):
     """ Inherit the linked node size and parallelized """
@@ -543,7 +549,7 @@ class TestSizeUpdate:
         unregisterNodeDesc(TestNode_SizeA)
         unregisterNodeDesc(TestNode_SizeB)
         unregisterNodeDesc(TestNode_SizeC)
-    
+
     @staticmethod
     def checkNodeSizeAndStatus(node, nodeSize, nbChunks, status):
         assert node.size == nodeSize
@@ -558,7 +564,7 @@ class TestSizeUpdate:
         nodeC = graph.addNewNode("TestNode_SizeC")
         nodeB.output.connectTo(nodeC.nodeInput)
         graph.save()
-        
+
         # A
         self.checkNodeSizeAndStatus(nodeA, 0, 0, Status.NONE)
         nodeA.createChunks()
@@ -596,7 +602,7 @@ class TestPrePostProcess:
         node = graph.addNewNode(TestNodeD.__name__)
         graph.save()
         os.makedirs(node.internalFolder)
-        
+
         # Check node
         assert len(node.chunks) == 1
         assert node.nodeDesc.hasPreprocess
@@ -618,7 +624,7 @@ class TestPrePostProcess:
         assert node.chunks[0]._status.status == Status.SUCCESS
         assert node._preprocessChunk._status.status == Status.SUCCESS
         assert node._postprocessChunk._status.status == Status.SUCCESS
-    
+
     def test_failingpreprocess(self, graphSavedOnDisk):
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(TestNodeE.__name__)
@@ -637,7 +643,7 @@ class TestPrePostProcess:
             pass
         else:
             raise RuntimeError
-        # We execute the process because we know this will succeed and 
+        # We execute the process because we know this will succeed and
         # we want to test that the failed preprocess leads the global status
         node.process(inCurrentEnv=True)
 
@@ -645,7 +651,7 @@ class TestPrePostProcess:
         assert node.globalStatus == Status.ERROR.name
         assert node.chunks[0]._status.status == Status.SUCCESS
         assert node._preprocessChunk._status.status == Status.ERROR
-        
+
         # Cleanup: Close all logging handlers to release file locks (Windows fix)
         for handler in logging.root.handlers[:]:
             handler.close()
@@ -656,7 +662,7 @@ class TestCacheDir:
     """
     Test cache directory handling, including relative paths and explicit cache directory settings.
     """
-    
+
     @classmethod
     def setup_class(cls):
         registerNodeDesc(TestNodeB)
@@ -676,7 +682,7 @@ class TestCacheDir:
         graph = Graph("")
         graph.save(scene_file)
         assert str(Path(graph._cacheDir).absolute().resolve()) == str(default_cache_dir.absolute().resolve())
-    
+
     def test_setting_explicit_cache_dir(self, tmp_path):
         """Test that we can set an explicit cache directory for a graph."""
         # Create a temporary directory structure

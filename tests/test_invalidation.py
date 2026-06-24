@@ -48,6 +48,7 @@ def test_output_invalidation():
     assert n2.input.uid() == n3.input.uid()  # => UIDs on both node are still equal
     unregisterNodeDesc(SampleNode)
 
+
 def test_inputLinkInvalidation():
     """
     Input links should not change the invalidation.

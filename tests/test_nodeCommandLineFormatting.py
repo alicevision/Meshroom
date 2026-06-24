@@ -31,6 +31,7 @@ class NodeWithCommandLineFormatting_usingNodeAndLambda(desc.CommandLineNode):
         ),
     ]
 
+
 def customFunction_commandline(node):
     return f"myapp --input {node.input.value} --output {node.output.value}"
 
@@ -156,4 +157,3 @@ class TestCommandLineFormatting:
         assert cmdNL == cmdNF
         assert cmdN == cmdNL
         assert cmdN == cmdV
-

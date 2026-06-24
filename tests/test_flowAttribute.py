@@ -202,7 +202,7 @@ class TestFlowAttributeSerialization:
             nodeB = graph.addNewNode("SimpleNode")
             nodeB.internalAttribute("flowInputs").append("0")
             graph.addEdge(nodeA.internalAttribute("flowOutput"), nodeB.internalAttribute("flowInputs").at(0))
-            
+
             node_dict = nodeB.toDict()
             assert "flowInputs" in node_dict["internalInputs"]
             flowInputs = node_dict["internalInputs"]["flowInputs"]

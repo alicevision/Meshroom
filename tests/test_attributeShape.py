@@ -78,6 +78,7 @@ class NodeWithShapeAttributes(desc.Node):
         ),
     ]
 
+
 class TestShapeAttribute:
 
     @classmethod
@@ -153,7 +154,6 @@ class TestShapeAttribute:
         assert node.keyableRectangle.geometry.observationKeyable
         assert node.keyableCircle.geometry.observationKeyable
 
-
     def test_staticShapeGeometry(self):
         graph = Graph("")
         node = graph.addNewNode(NodeWithShapeAttributes.__name__)
@@ -218,7 +218,6 @@ class TestShapeAttribute:
         assert node.rectangle.geometry.getObservation("0") == node.rectangle.geometry.getDefaultValue()
         assert node.circle.geometry.getObservation("0") == node.circle.geometry.getDefaultValue()
 
-
     def test_keyableShapeGeometry(self):
         graph = Graph("")
         node = graph.addNewNode(NodeWithShapeAttributes.__name__)
@@ -235,10 +234,10 @@ class TestShapeAttribute:
         assert not node.keyableCircle.geometry.hasObservation("0")
 
         # Check keyable shape get observation at key "0", should be None (no observation)
-        assert node.keyablePoint.geometry.getObservation("0") == None
-        assert node.keyableLine.geometry.getObservation("0") == None
-        assert node.keyableRectangle.geometry.getObservation("0") == None
-        assert node.keyableCircle.geometry.getObservation("0") == None
+        assert node.keyablePoint.geometry.getObservation("0") is None
+        assert node.keyableLine.geometry.getObservation("0") is None
+        assert node.keyableRectangle.geometry.getObservation("0") is None
+        assert node.keyableCircle.geometry.getObservation("0") is None
 
         # Create observation at key "0"
         node.keyablePoint.geometry.setObservation("0", observationPoint)
@@ -373,7 +372,6 @@ class TestShapeAttribute:
         assert len(node.pointList) == 0
         assert len(node.keyablePointList) == 0
 
-
     def test_linkAttribute(self):
         graph = Graph("")
         nodeA = graph.addNewNode(NodeWithShapeAttributes.__name__)
@@ -389,9 +387,9 @@ class TestShapeAttribute:
         nodeA.point.connectTo(nodeB.point)
 
         # Check link
-        assert nodeB.pointList.isLink == True
+        assert nodeB.pointList.isLink
         assert nodeB.pointList.inputLink == nodeA.pointList
-        assert nodeB.point.isLink == True
+        assert nodeB.point.isLink
         assert nodeB.point.inputLink == nodeA.point
 
         # Set observation for nodeA.point
@@ -421,7 +419,6 @@ class TestShapeAttribute:
         # Check serialized value
         assert nodeB.point.getSerializedValue() == nodeA.point.asLinkExpr()
         assert nodeB.pointList.getSerializedValue() == nodeA.pointList.asLinkExpr()
-
 
     def test_exportDict(self):
         graph = Graph("")
@@ -506,7 +503,7 @@ class TestShapeAttribute:
         assert node.line.geometry.getValueAsDict() == observationLine
         assert node.rectangle.geometry.getValueAsDict() == observationRectangle
         assert node.circle.geometry.getValueAsDict() == observationCircle
-        assert node.point.getShapeAsDict().get("properties") ==  {"color": node.point.userColor} | observationPoint
+        assert node.point.getShapeAsDict().get("properties") == {"color": node.point.userColor} | observationPoint
         assert node.line.getShapeAsDict().get("properties") == {"color": node.line.userColor} | observationLine
         assert node.rectangle.getShapeAsDict().get("properties") == {"color": node.rectangle.userColor} | observationRectangle
         assert node.circle.getShapeAsDict().get("properties") == {"color": node.circle.userColor} | observationCircle

@@ -1031,28 +1031,7 @@ class BaseNode(BaseObject):
     def getNodeInfo(self):
         if not self.nodeDesc:
             return []
-        info = OrderedDict([
-            ("module", self.nodeDesc.__module__),
-            ("modulePath", self.nodeDesc.plugin.path),
-        ])
-        # > Info from the plugin module
-        plugin_module = sys.modules.get(self.nodeDesc.__module__)
-        if getattr(plugin_module, "__author__", None):
-            info["author"] = plugin_module.__author__
-        if getattr(plugin_module, "__license__", None):
-            info["license"] = plugin_module.__license__
-        if getattr(plugin_module, "__version__", None):
-            info["version"] = plugin_module.__version__
-        # > Overrides at the node-level
-        if getattr(self.nodeDesc, "author", None):
-            info["author"] = self.nodeDesc.author
-        if getattr(self.nodeDesc, "version", None):
-            info["version"] = self.nodeDesc.version
-        # > Additional node information stored in a __nodeInfo__ parameter
-        additionalNodeInfo = getattr(self.nodeDesc, "__nodeInfo__", None)
-        if additionalNodeInfo:
-            for key, value in additionalNodeInfo:
-                info[key] = value
+        info = self.nodeDesc.getNodeInfo()
         return [{"key": k, "value": v} for k, v in info.items()]
 
     def getAnyAttribute(self, name, internal=False):

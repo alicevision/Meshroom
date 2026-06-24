@@ -1,0 +1,170 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import sys
+import logging
+import json
+
+import meshroom
+
+
+parser = argparse.ArgumentParser(description="Query infos on meshroom.")
+
+parser.add_argument("-v", "--verbose",
+                    help="Set the verbosity level for logging:\n"
+                            "  - fatal: Show only critical errors.\n"
+                            "  - error: Show errors only.\n"
+                            "  - warning: Show warnings and errors.\n"
+                            "  - info: Show standard informational messages.\n"
+                            "  - debug: Show detailed debug information.\n"
+                            "  - trace: Show all messages, including trace-level details.",
+                    default=os.environ.get("MESHROOM_VERBOSE", "error"),
+                    choices=["fatal", "error", "warning", "info", "debug", "trace"])
+
+subparsers = parser.add_subparsers(dest="command")
+
+# Version subparser
+version_mode_parser = subparsers.add_parser(
+    "version", help="Display Meshroom version.")
+version_mode_parser.add_argument("-p", "--path", action="store_true")
+
+# Node info subparser
+nodes_mode_parser = subparsers.add_parser(
+    "nodeinfo", help="Display nodes info.")
+nodes_mode_parser.add_argument("-n", "--name", type=str, help="Get infos for a specific node.")
+nodes_mode_parser.add_argument("--default_value", action="store_true", help="Display input default value.")
+
+# Pipeline info subparser
+pipeline_mode_parser = subparsers.add_parser(
+    "pipelines", help="Display pipelines info.")
+pipeline_mode_parser.add_argument("-n", "--name", type=str, help="Get infos for a specific pipeline.")
+
+
+# ===== VERSION =====
+def get_version(args):
+    print(f"Meshroom version is {meshroom.__version__}")
+    if args.path:
+        print(f"Meshroom is located at {meshroom._MESHROOM_ROOT}")
+
+
+# ===== NODES =====
+def get_nodes_info(args):
+    import meshroom.core
+    meshroom.setupEnvironment()
+    meshroom.core.initPlugins()
+    meshroom.core.initNodes()
+    nodeName = args.name
+    nodePlugins = meshroom.core.pluginManager.getRegisteredNodePlugins()
+    if nodeName:
+        get_node_info(args, nodePlugins, nodeName)
+    else:
+        get_all_node_info(args, nodePlugins)
+
+
+def get_node_info(args, nodePlugins, name):
+    from meshroom.core.desc import BaseNode
+    if name not in nodePlugins:
+        print(f"Error: Node '{name}' not found.")
+        sys.exit(1)
+
+    nodeDesc = nodePlugins[name].nodeDescriptor
+    nodeBaseClass = [c for c in nodeDesc.__bases__ if issubclass(c, BaseNode)]
+    nodeInfo = nodeDesc.getNodeInfo()
+
+    print(f"Node: {name}" + (f" ({nodeBaseClass[0].__name__})" if nodeBaseClass else ""))
+    print(f"  Category     : {nodeDesc.category}")
+    if doc:=nodeDesc.documentation.strip():
+        print(f"  Description  : {doc}")
+    for name, info in nodeInfo.items():
+        print(f"  {name:13}: {info}")
+
+    print("")
+    if nodeDesc.inputs:
+        print(f"  Inputs:")
+        for input in nodeDesc.inputs:
+            print(f"    - ({input.__class__.__name__}) {input.name} \"{input.label}\"")
+            print(f"        Description   : {input.description}")
+            if args.default_value:
+                print(f"        Default Value : \"{input.value}\"")
+
+    print("")
+    if nodeDesc.outputs:
+        print(f"  Outputs:")
+        for output in nodeDesc.outputs:
+            print(f"    - ({output.__class__.__name__}) {output.name} \"{output.label}\"")
+            print(f"        Description : {output.description}")
+
+
+def get_all_node_info(args, nodePlugins):
+    # Group nodes by category
+    categories = {}
+    for name, nodePlugin in sorted(nodePlugins.items()):
+        category = nodePlugin.nodeDescriptor.category
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(name)
+
+    print(f"Available Nodes ({len(nodePlugins)}):")
+    for category, nodes in sorted(categories.items()):
+        print(f"\n  [{category}]")
+        for name in nodes:
+            print(f"    - {name}")
+
+
+# ===== PIPELINES =====
+def get_pipelines_info(args):
+    import meshroom.core
+    meshroom.setupEnvironment()
+    meshroom.core.initPipelines()
+    meshroom.core.initPlugins()
+
+    templates = meshroom.core.pipelineTemplates
+    pipelineName = args.name
+
+    if pipelineName:
+        get_pipeline_info(args, templates, pipelineName)
+    else:
+        print(f"Available Pipelines ({len(templates)}):")
+        for name in sorted(templates.keys()):
+            print(f"  - {name}")
+
+
+def get_pipeline_info(args, templates, name):
+    if name not in templates:
+        print(f"Error: Pipeline '{name}' not found.")
+        sys.exit(1)
+
+    tplPath = templates.get(name)
+    print(f"Pipeline {name}")
+    print(f"  Path           : {tplPath}")
+    with open(tplPath, "r") as f:
+        content = json.load(f)
+    header = content.get("header", {})
+    print(f"  template       : {header.get('template', False)}")
+    print(f"  releaseVersion : {header.get('releaseVersion')}")
+    print(f"  fileVersion    : {header.get('fileVersion')}")
+    nodesVersions = header.get("nodesVersions")
+    if nodesVersions:
+        length = max(len(k) for k in nodesVersions)
+        print(f"  nodeVersions")
+        print(f"  ------------")
+        for k, v in nodesVersions.items():
+            print(f"    {k:{length+1}}: {v}")
+
+
+# ===== parse args =====
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
+    
+    if args.command == "version":
+        get_version(args)
+    elif args.command == "nodeinfo":
+        get_nodes_info(args)
+    elif args.command == "pipelines":
+        get_pipelines_info(args)
+    else:
+        parser.print_help()
+        sys.exit(0)

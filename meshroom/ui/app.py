@@ -169,6 +169,11 @@ Additional Resources:
         help='Save the created scene to the specified Meshroom project file.'
     )
     project_group.add_argument(
+        '-0', '--new',
+        action='store_true',
+        help='Opens directly a new project.'
+    )
+    project_group.add_argument(
         '-1', '--latest',
         action='store_true',
         help='Load the most recent scene (-2 and -3 to load the previous ones).'
@@ -324,6 +329,8 @@ class MeshroomApp(QApplication):
             args.project = os.path.abspath(args.project)
             self._activeProject.load(args.project)
             self.addRecentProjectFile(args.project)
+        elif args.new:
+            self._activeProject.new()
         elif args.latest or args.latest2 or args.latest3:
             projects = self._recentProjectFiles
             if projects:

@@ -16,7 +16,6 @@ ENV MESHROOM_DEV=/opt/Meshroom
 ENV MESHROOM_BUILD=/tmp/Meshroom_build
 ENV MESHROOM_BUNDLE=/opt/Meshroom_bundle
 ENV AV_INSTALL=/opt/AliceVision_install
-ENV QT_DIR=/opt/Qt/6.8.3/gcc_64
 ENV PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 COPY *.txt *.md *.py ${MESHROOM_DEV}/
@@ -46,8 +45,11 @@ WORKDIR ${MESHROOM_BUILD}
 RUN mkdir ${MESHROOM_BUNDLE}/aliceVision && \
     mv /opt/AliceVision_bundle/* ${MESHROOM_BUNDLE}/aliceVision
 
+# PySide6: copy missing libQt63DQuickScene3D.so along with its dependencies to avoid runtime issues
+RUN cp ${QT_ROOT}/lib/libQt63DQuickScene3D.so.6.8.3 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/lib/libQt63DQuickScene3D.so.6
+
 # Build Meshroom plugins
-RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DQTALICEVISION_VERSION=${QTAV_VERSION} -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
+RUN cmake "${MESHROOM_DEV}" -DQT_DIR=${QT_ROOT} -DALICEVISION_ROOT="${AV_INSTALL}" -DQTALICEVISION_VERSION=${QTAV_VERSION} -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
 RUN make "-j$(nproc)" QtAliceVision
 RUN make "-j$(nproc)" && \
 	rm -rf "${MESHROOM_BUILD}" "${MESHROOM_DEV}" \
@@ -58,15 +60,6 @@ RUN make "-j$(nproc)" && \
 		${MESHROOM_BUNDLE}/aliceVision/share/libraw \
 		${MESHROOM_BUNDLE}/aliceVision/share/man/ \
 		aliceVision/share/pkgconfig
-
-# PySide6: copy missing libQt63DQuickScene3D.so along with its dependencies to avoid runtime issues
-RUN cp ${QT_DIR}/lib/libQt63DQuickScene3D.so.6.8.3 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs/libQt63DQuickScene3D.so.6
-
-# cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/lib/libQt6Concurrent.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs &&
-# cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Core/libQt63DCore.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
-# cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Input/libQt63DInput.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
-# cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Logic/libQt63DLogic.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs && \
-# cp ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/Qt3D/Render/libQt63DRender.so.6 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/qml/QtQuick/Dialogs
 
 # Copy libOpenGL in the bundle: needed by QtAliceVision as a side effect of a Qt6 bug
 RUN cp /usr/lib64/libOpenGL.so.0.0.0 ${MESHROOM_BUNDLE}/lib
@@ -86,4 +79,3 @@ WORKDIR /root
 
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
-

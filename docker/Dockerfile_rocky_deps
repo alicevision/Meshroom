@@ -7,38 +7,47 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
 # docker run -it --runtime=nvidia meshroom
 
-ENV MESHROOM_DEV=/opt/Meshroom
-ENV MESHROOM_BUILD=/tmp/Meshroom_build
-ENV QT_DIR=/opt/Qt/6.8.3/gcc_64
-ENV QT_CI_LOGIN=alicevisionjunk@gmail.com
-ENV QT_CI_P=azerty1.
-
 # Install libs needed by Qt
 RUN dnf update -y --nobest
-RUN dnf install -y flex fontconfig freetype glib2-devel libICE
-RUN dnf install -y libX11 libXext libXi libXrender libSM
-RUN dnf install -y libXt-devel mesa-libGLU-devel mesa-libGL-devel mesa-libEGL-devel
-RUN dnf install -y zlib-devel systemd openssh-server
-RUN dnf install -y libxcb-devel \
-                   libxkbcommon-devel \
-                   libxkbcommon-x11-devel \
-                   xcb-util-wm xcb-util-image \
-                   xcb-util-keysyms \
-                   xcb-util-renderutil
-RUN dnf install -y libglvnd-opengl
+
+RUN dnf install -y \
+        # Python / pip (needed by aqtinstall)
+        python3 \
+        python3-pip \
+        # Qt runtime/build dependencies
+        flex fontconfig freetype glib2-devel libICE \
+        libX11 libXext libXi libXrender libSM \
+        libXt-devel mesa-libGLU-devel mesa-libGL-devel mesa-libEGL-devel \
+        zlib-devel systemd openssh-server \
+        libxcb-devel \
+        libxkbcommon-devel \
+        libxkbcommon-x11-devel \
+        xcb-util-wm xcb-util-image \
+        xcb-util-keysyms \
+        xcb-util-renderutil \
+        libglvnd-opengl
+
+RUN pip3 install --upgrade pip && \
+    pip3 install aqtinstall
+
+    
+ENV QT_VERSION=6.8.3
+ENV QT_ARCH=linux_gcc_64
+ENV QT_ARCH_SHORT=gcc_64
+ENV QT_MODULES="qtcharts qt3d qtshadertools"
+ENV QT_DIR=/opt/Qt
+ENV QT_ROOT=/opt/Qt/${QT_VERSION}/${QT_ARCH_SHORT}
 
 # Install Qt (to build plugins)
-WORKDIR /tmp/qt
-COPY dl/qt.run /tmp/qt
-RUN chmod +x qt.run
-RUN ./qt.run --root /opt/Qt --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations \
-    --accept-licenses --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore \
-    --no-force-installations --no-default-installations --confirm-command \
-    install qt.qt6.683.linux_gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
-RUN rm qt.run
+RUN aqt install-qt \
+      --outputdir "${QT_DIR}" \
+      linux desktop "${QT_VERSION}" "${QT_ARCH}" \
+      -m ${QT_MODULES}
 
 # Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023
-RUN find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
+# RUN find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
+
+ENV MESHROOM_DEV=/opt/Meshroom
 
 COPY ./*requirements.txt ${MESHROOM_DEV}/
 

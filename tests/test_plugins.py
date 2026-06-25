@@ -1,8 +1,9 @@
 # coding:utf-8
 
 from meshroom.core import pluginManager, loadClassesNodes
+from meshroom.core.desc.node import NodeVersionType
 from meshroom.core.plugins import NodePluginStatus, Plugin
-from .utils import overrideOsEnvironmentVariables, registeredPlugins
+from .utils import overrideOsEnvironmentVariables, registeredPlugins, registeredUserPlugins
 
 from pathlib import Path
 import os
@@ -379,3 +380,37 @@ class TestPluginsConfiguration:
 
             assert config[self.CONFIG_STRING[0]] != self.CONFIG_STRING[2]
             assert configFullEnv[self.CONFIG_STRING[0]] == self.CONFIG_STRING[2]
+
+
+class TestVersionPlugins:
+    def test_nodeVersionType(self):
+        folder = os.path.join(os.path.dirname(__file__), "plugins")
+        with registeredPlugins(folder):
+            pluginA = pluginManager.getPlugin("pluginA", uname=False)
+            assert pluginA
+            nodeA = pluginManager.getRegisteredNodePlugin("PluginANodeA")
+            assert nodeA
+            assert nodeA.nodeDescriptor().nodeVersionType == NodeVersionType.RELEASED
+
+            nodeB = pluginManager.getRegisteredNodePlugin("PluginANodeB")
+            assert nodeB
+            assert nodeB.nodeDescriptor().nodeVersionType == NodeVersionType.BETA
+
+            nodeInput = pluginManager.getRegisteredNodePlugin("PluginAInitNode")
+            assert nodeInput
+            assert nodeInput.nodeDescriptor().nodeVersionType == NodeVersionType.UNKNOWN
+
+        with registeredUserPlugins(folder):
+            pluginA = pluginManager.getPlugin("pluginA", uname=False)
+            assert pluginA
+            nodeA = pluginManager.getRegisteredNodePlugin("PluginANodeA")
+            assert nodeA
+            assert nodeA.nodeDescriptor().nodeVersionType == NodeVersionType.USER
+
+            nodeB = pluginManager.getRegisteredNodePlugin("PluginANodeB")
+            assert nodeB
+            assert nodeB.nodeDescriptor().nodeVersionType == NodeVersionType.USER
+
+            nodeInput = pluginManager.getRegisteredNodePlugin("PluginAInitNode")
+            assert nodeInput
+            assert nodeInput.nodeDescriptor().nodeVersionType == NodeVersionType.USER

@@ -5,7 +5,7 @@ from meshroom.core.graph import Graph, loadGraph
 from .utils import registerNodeDesc, unregisterNodeDesc
 
 
-class NodeWithCreationCallback(desc.InputNode):
+class NodeWithCreationCallback(desc.InitNode):
     """Node defining an 'onNodeCreated' callback, triggered a new node is added to a Graph."""
 
     inputs = [

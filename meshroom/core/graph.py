@@ -950,12 +950,12 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if n.nodeType == nodeType]
         return self.sortNodesByIndex(nodes) if sortedByIndex else nodes
 
-    def findInitNodes(self):
+    def findInputNodes(self):
         """
         Returns:
-            list[Node]: the list of Init nodes (nodes inheriting from InitNode)
+            list[Node]: the list of Input nodes (nodes inheriting from InputNode)
         """
-        nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InitNode)]
+        nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InputNode)]
         return nodes
 
     def findNodeCandidates(self, nodeNameExpr: str) -> list[Node]:

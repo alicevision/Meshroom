@@ -135,8 +135,8 @@ if args.node:
             )
             sys.exit(-1)
 
-    if node.isInputNode:
-        print(f"InputNode: No computation to do.")
+    if node.isInitNode:
+        print(f"InitNode: No computation to do.")
         sys.exit(0)
 
     if args.preprocess:

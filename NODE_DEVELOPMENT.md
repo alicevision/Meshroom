@@ -3,7 +3,7 @@
 
 ## Node Creation
 
-This guide shows how to implement three common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, and non-computational `InputNode`.
+This guide shows how to implement three common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, and non-computational `InitNode`.
 
 ### 1. Node (Pure Python)
 
@@ -73,30 +73,30 @@ class MyCmdNode(desc.CommandLineNode):
     ]
 ```
 
-### 3. InputNode (non-computational placeholder)
+### 3. InitNode (non-computational placeholder)
 
-Use `desc.InputNode` for nodes that only hold data and do not run computation.
+Use `desc.InitNode` for nodes that only hold data and do not run computation.
 
-#### Example: Input Node
+#### Example: Init Node
 
 ```python
 from meshroom.core import desc
 
-class MyInputNode(desc.InputNode):
+class MyInitNode(desc.InitNode):
     category = "Custom"
     inputs = [
         desc.File(name="file", label="File", description="", value=""),
     ]
 ```
 
-#### Example: Input Node with Initialization
+#### Example: Init Node with input Initialization
 
-The InitNodes could be combined with `desc.InitNode` to implement `initialize` for command line batching or initialization from drag&drop.
+The InitNodes could be combined with `desc.InputNode` to implement `initialize` for command line batching or initialization from drag&drop.
 
 ```python
 from meshroom.core import desc
 
-class MyInputNode(desc.InputNode, desc.InitNode):
+class MyInitNode(desc.InitNode, desc.InputNode):
     category = "Custom"
     inputs = [
         desc.File(name="file", label="File", description="", value=""),

@@ -143,8 +143,8 @@ class SampleNodeV6(desc.Node):
     ]
 
 
-class SampleInputNodeV1(desc.InputNode):
-    """ Version 1 Sample Input Node """
+class SampleInitNodeV1(desc.InitNode):
+    """ Version 1 Sample Init Node """
     inputs = [
         desc.StringParam(name="path", label="Path", description="",
                          value="", invalidate=False)  # No impact on UID
@@ -154,7 +154,7 @@ class SampleInputNodeV1(desc.InputNode):
     ]
 
 
-class SampleInputNodeV2(desc.InputNode):
+class SampleInitNodeV2(desc.InitNode):
     """
     Changes from V1:
         * 'path' has been renamed to 'in'
@@ -361,14 +361,14 @@ def test_description_conflict():
 def test_upgradeAllNodes(tmp_path):
     registerNodeDesc(SampleNodeV1)
     registerNodeDesc(SampleNodeV2)
-    registerNodeDesc(SampleInputNodeV1)
-    registerNodeDesc(SampleInputNodeV2)
+    registerNodeDesc(SampleInitNodeV1)
+    registerNodeDesc(SampleInitNodeV2)
 
     g = Graph("")
     n1 = g.addNewNode("SampleNodeV1")
     n2 = g.addNewNode("SampleNodeV2")
-    n3 = g.addNewNode("SampleInputNodeV1")
-    n4 = g.addNewNode("SampleInputNodeV2")
+    n3 = g.addNewNode("SampleInitNodeV1")
+    n4 = g.addNewNode("SampleInitNodeV2")
     n1Name = n1.name
     n2Name = n2.name
     n3Name = n3.name
@@ -376,15 +376,14 @@ def test_upgradeAllNodes(tmp_path):
     graphFile = os.path.join(tmp_path, "test_description_conflict.mg")
     g.save(graphFile)
 
-    # Replace SampleNodeV1 by SampleNodeV2 and SampleInputNodeV1 by SampleInputNodeV2
+    # Replace SampleNodeV1 by SampleNodeV2 and SampleInitNodeV1 by SampleInitNodeV2
     pluginManager.getRegisteredNodePlugins()[SampleNodeV1.__name__] = \
         pluginManager.getRegisteredNodePlugin(SampleNodeV2.__name__)
-    pluginManager.getRegisteredNodePlugins()[SampleInputNodeV1.__name__] = \
-        pluginManager.getRegisteredNodePlugin(SampleInputNodeV2.__name__)
-
-    # Make SampleNodeV2 and SampleInputNodeV2 an unknown type
+    pluginManager.getRegisteredNodePlugins()[SampleInitNodeV1.__name__] = \
+        pluginManager.getRegisteredNodePlugin(SampleInitNodeV2.__name__)
+    # Make SampleNodeV2 and SampleInitNodeV2 an unknown type
     unregisterNodeDesc(SampleNodeV2)
-    unregisterNodeDesc(SampleInputNodeV2)
+    unregisterNodeDesc(SampleInitNodeV2)
 
     # Reload file
     g = loadGraph(graphFile)
@@ -406,7 +405,7 @@ def test_upgradeAllNodes(tmp_path):
     assert n4Name in g.compatibilityNodes.keys()
 
     unregisterNodeDesc(SampleNodeV1)
-    unregisterNodeDesc(SampleInputNodeV1)
+    unregisterNodeDesc(SampleInitNodeV1)
 
 
 def test_conformUpgrade():

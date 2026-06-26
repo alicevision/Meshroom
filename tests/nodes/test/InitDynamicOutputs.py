@@ -1,7 +1,6 @@
 from meshroom.core import desc
 
-
-class InputDynamicOutputs(desc.InputNode):
+class InitDynamicOutputs(desc.InitNode):
     inputs = [
         desc.File(
             name="fileInput",

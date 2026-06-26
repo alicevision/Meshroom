@@ -45,7 +45,7 @@ def validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors
 
     for param in nodeDesc.outputs:
         if param.value is None:
-            if issubclass(nodeDesc, desc.InputNode):
+            if issubclass(nodeDesc, desc.InitNode):
                 errors.append((f"{param.name}", ValueTypeErrors.DYNAMIC_OUTPUT))
             continue
         errMsg, errType = param.checkValueTypes()

@@ -56,7 +56,7 @@ class MrNodeType(enum.Enum):
     BASENODE = enum.auto()
     NODE = enum.auto()
     COMMANDLINE = enum.auto()
-    INPUT = enum.auto()
+    INIT = enum.auto()
     BACKDROP = enum.auto()
 
 
@@ -181,7 +181,7 @@ class InternalAttributesFactory:
             MrNodeType.BASENODE: cls.INVALIDATION + cls.BASIC,
             MrNodeType.NODE: cls.INVALIDATION + cls.BASIC,
             MrNodeType.COMMANDLINE: cls.INVALIDATION + cls.BASIC,
-            MrNodeType.INPUT: cls.BASIC,
+            MrNodeType.INIT: cls.BASIC,
             MrNodeType.BACKDROP: cls.BASIC + cls.RESIZABLE,
         }
 
@@ -478,17 +478,17 @@ class BaseNode(object):
                 logging.info(f"[{chunk.node.name}] Permission denied to kill the process.")
 
 
-class InputNode(BaseNode):
+class InitNode(BaseNode):
     """
-    Node that does not need to be processed, it is just a placeholder for inputs.
+    Node that does not need to be processed, it is just a placeholder for initialization.
     """
-    _mrNodeType: MrNodeType = MrNodeType.INPUT
+    _mrNodeType: MrNodeType = MrNodeType.INIT
     internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
     internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
     internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
 
     def __init__(self):
-        super(InputNode, self).__init__()
+        super(InitNode, self).__init__()
 
     def getMrNodeType(self):
         return self._mrNodeType
@@ -619,9 +619,9 @@ class AVCommandLineNode(CommandLineNode):
         return commandLineString + AVCommandLineNode.cmdMem + AVCommandLineNode.cmdCore
 
 
-class InitNode(object):
+class InputNode(object):
     def __init__(self):
-        super(InitNode, self).__init__()
+        super(InputNode, self).__init__()
 
     def initialize(self, node, inputs, recursiveInputs):
         """

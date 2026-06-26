@@ -4,7 +4,7 @@ import os
 from meshroom.core import desc
 
 
-class ReadEnvVar(desc.InputNode):
+class ReadEnvVar(desc.InitNode):
     """
     Read a variable from an env
     """

@@ -3,9 +3,9 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class InputInt(desc.InputNode, desc.InitNode):
+class InputInt(desc.InitNode, desc.InputNode):
     """
-    This node is an input node that receives a String.
+    This node is an init node that receives an Integer.
     """
 
     category = "Other"

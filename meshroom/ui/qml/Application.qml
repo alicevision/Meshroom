@@ -654,7 +654,7 @@ Page {
     Action {
         id: loadTemplateAction
 
-        property string tooltip: "Load a template like a regular project file (any \"CopyFiles\" node will be displayed)"
+        property string tooltip: "Load a template like a regular project file (any output node will be displayed)"
         text: "Load Template"
         onTriggered: {
             ensureSaved(function() {

@@ -248,7 +248,7 @@ class TestLockUpdates:
         folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginA"
         cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin._uid)
+        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)

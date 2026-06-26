@@ -357,7 +357,7 @@ def loadAllNodes(folder) -> list[Plugin]:
     for _, package, ispkg in pkgutil.iter_modules([folder]):
         if ispkg:
             plugin = Plugin(package, folder)
-            nodePlugins = loadNodes(folder, package, plugin._uid)
+            nodePlugins = loadNodes(folder, package, plugin.uid)
             if nodePlugins:
                 for node in nodePlugins:
                     plugin.addNodePlugin(node)

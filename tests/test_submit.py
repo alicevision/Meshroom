@@ -136,7 +136,7 @@ class TestNodeSubmit:
         cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginSubmitter"
         cls.plugin = Plugin(package, cls.folder)
-        nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin._uid)
+        nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)

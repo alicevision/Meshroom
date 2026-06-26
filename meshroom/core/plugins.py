@@ -317,6 +317,10 @@ class Plugin(BaseObject):
         return f"<Plugin {self._name} (uid={self._uid})>"
 
     @property
+    def uid(self):
+        return self._uid
+
+    @property
     def name(self):
         """ Return the name of the plugin. """
         return self._name

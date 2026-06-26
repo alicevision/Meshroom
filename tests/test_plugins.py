@@ -17,7 +17,7 @@ class TestPluginWithValidNodesOnly:
         folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginA"
         cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin._uid)
+        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)
@@ -28,7 +28,7 @@ class TestPluginWithValidNodesOnly:
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
-    
+
     def test_getPlugin(self):
         # Assert that there are loaded plugins, and that "pluginA" is one of them
         assert len(pluginManager.getPlugins()) >= 1
@@ -37,7 +37,7 @@ class TestPluginWithValidNodesOnly:
         assert plugin == self.plugin
         # Get with unique name
         pluginUName = self.plugin.uname
-        assert pluginUName == f"{self.plugin._uid}_pluginA"
+        assert pluginUName == f"{self.plugin.uid}_pluginA"
         plugin = pluginManager.getPlugin(pluginUName, uname=True)
         assert plugin == self.plugin
         # Check path too
@@ -135,7 +135,7 @@ class TestPluginWithInvalidNodes:
         folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginB"
         cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin._uid)
+        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)

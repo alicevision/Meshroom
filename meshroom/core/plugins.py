@@ -294,13 +294,13 @@ class Plugin(BaseObject):
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
     
-    _pluginLastUid = 0
+    _instancesCount = 0
 
     def __init__(self, name: str, path: str):
         super().__init__()
 
-        Plugin._pluginLastUid += 1
-        self._uid: str = f"{Plugin._pluginLastUid:04d}"
+        Plugin._instancesCount += 1
+        self._uid: str = f"{Plugin._instancesCount:04d}"
         self._name: str = name
         self._path: str = path
 

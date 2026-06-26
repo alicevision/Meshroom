@@ -10,6 +10,7 @@ import sys
 import signal
 import subprocess
 from collections import OrderedDict
+from typing import Any, ClassVar, Mapping, Optional, Sequence, TYPE_CHECKING
 import psutil
 
 from meshroom import _MESHROOM_ROOT
@@ -19,7 +20,11 @@ from meshroom.core.desc.anySet import AnySet
 from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
-from .attribute import Attribute, ChoiceParam, ColorParam, Flow, IntParam, StringParam, ListAttribute
+from .attribute import Attribute, ChoiceParam, ColorParam, File, Flow, IntParam, StringParam, ListAttribute
+
+if TYPE_CHECKING:
+    from meshroom.core.attribute import Attribute as CoreAttribute
+    from meshroom.core.node import Node as CoreNode
 
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
@@ -659,23 +664,11 @@ class AVCommandLineNode(CommandLineNode):
         return commandLineString + AVCommandLineNode.cmdMem + AVCommandLineNode.cmdCore
 
 
-class InputNode(object):
+class IONode(object):
     def __init__(self):
-        super(InputNode, self).__init__()
+        super(IONode, self).__init__()
 
-    def initialize(self, node, inputs, recursiveInputs):
-        """
-        Initialize the attributes that are needed for a node to start running.
-
-        Args:
-            node (Node): the node whose attributes must be initialized
-            inputs (list): the user-provided list of input files/directories
-            recursiveInputs (list): the user-provided list of input directories to search
-                                    recursively for images
-        """
-        pass
-
-    def resetAttributes(self, node, attributeNames):
+    def resetAttributes(self, node: "CoreNode", attributeNames: Sequence[str]) -> None:
         """
         Reset the values of the provided attributes for a node.
 
@@ -687,7 +680,7 @@ class InputNode(object):
             if node.hasAttribute(attrName):
                 node.attribute(attrName).resetToDefaultValue()
 
-    def extendAttributes(self, node, attributesDict):
+    def extendAttributes(self, node: "CoreNode", attributesDict: Mapping[str, Any]) -> None:
         """
         Extend the values of the provided attributes for a node.
 
@@ -700,7 +693,7 @@ class InputNode(object):
             if node.hasAttribute(attr):
                 node.attribute(attr).extend(attributesDict[attr])
 
-    def setAttributes(self, node, attributesDict):
+    def setAttributes(self, node: "CoreNode", attributesDict: Mapping[str, Any]) -> None:
         """
         Set the values of the provided attributes for a node.
 
@@ -712,3 +705,84 @@ class InputNode(object):
         for attr in attributesDict:
             if node.hasAttribute(attr):
                 node.attribute(attr).value = attributesDict[attr]
+
+
+class InputNode(IONode):
+    def __init__(self):
+        super(InputNode, self).__init__()
+
+    def initialize(self, node: "CoreNode", inputs: Sequence[str], recursiveInputs: Sequence[str]) -> None:
+        """
+        Initialize the attributes that are needed for a node to start running.
+
+        Args:
+            node (Node): the node whose attributes must be initialized
+            inputs (list): the user-provided list of input files/directories
+            recursiveInputs (list): the user-provided list of input directories to search
+                                    recursively for images
+        """
+        pass
+
+
+class OutputNode(IONode):
+    outputAttributes: ClassVar[Optional[Sequence[str]]] = None
+    outputAttribute: ClassVar[str] = "output"
+
+    def __init__(self):
+        super(OutputNode, self).__init__()
+
+    def getOutputAttributes(self, node: "CoreNode") -> list["CoreAttribute"]:
+        """
+        Return the attributes explicitly exposed by this output node.
+
+        If "outputAttributes" is not set, "outputAttribute" is used as a
+        backward-compatible fallback.
+        """
+        if self.outputAttributes is None:
+            attributeNames: Sequence[str] = [self.outputAttribute] if self.outputAttribute else []
+            return [node.attribute(attrName) for attrName in attributeNames if node.hasAttribute(attrName)]
+        else:
+            attributeNames = self.outputAttributes
+
+        attributes: list["CoreAttribute"] = []
+        for attrName in attributeNames:
+            if not node.hasAttribute(attrName):
+                raise AttributeError(f"'{node.name}.{attrName}' is not an output node attribute.")
+            attributes.append(node.attribute(attrName))
+        return attributes
+
+    def getOutputFolderAttributes(self, node: "CoreNode") -> list["CoreAttribute"]:
+        """
+        Return the exposed File attributes managed as output folders.
+        """
+        return [attr for attr in self.getOutputAttributes(node) if isinstance(attr.desc, File)]
+
+    def setOutputAttribute(self, node: "CoreNode", attributeName: str, value: Any) -> "CoreAttribute":
+        """
+        Set an explicitly exposed output attribute.
+
+        Args:
+            node (Node): the node whose exposed output attribute must be initialized
+            attributeName (str): the exposed output attribute name
+            value: the value to set on the exposed output attribute
+        """
+        for attr in self.getOutputAttributes(node):
+            if attr.name == attributeName:
+                self.setAttributes(node, {attributeName: value})
+                return attr
+        raise AttributeError(f"'{node.name}.{attributeName}' is not an exposed output attribute.")
+
+    def setOutputFolder(self, node: "CoreNode", outputFolder: str) -> None:
+        """
+        Initialize the exposed File output attributes of a node.
+
+        Args:
+            node (Node): the node whose output folder must be initialized
+            outputFolder (str): the output folder to set
+        """
+        outputFolderAttributes = self.getOutputFolderAttributes(node)
+        if not outputFolderAttributes:
+            raise AttributeError(f"'{node.name}' has no exposed File output attribute.")
+
+        for attr in outputFolderAttributes:
+            self.setAttributes(node, {attr.name: outputFolder})

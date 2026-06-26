@@ -7,11 +7,14 @@ import json
 from pathlib import Path
 import tempfile
 
+import pytest
+
 from meshroom.core import desc, pluginManager, loadClassesNodes, initNodes
 from meshroom.core.node import Position
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.plugins import Plugin
 
+from .nodes.test.OutputNode import OutputNodeTest
 from .utils import registerNodeDesc, unregisterNodeDesc, registeredNodeTypes
 
 
@@ -148,8 +151,162 @@ class TestInputNode:
         assert len(inputNodes) == 1 and node in inputNodes
         # Check that the InputNode's initialize method has been set
         inputs = ["/path/to/file", "/path/to/file/2"]
-        node.nodeDesc.initialize(node, inputs, None)
+        node.nodeDesc.initialize(node, inputs, [])
         assert node.input.value == inputs[0]
+
+
+class TestOutputNode:
+    loadedPlugins = pluginManager.getPlugins()
+
+    @classmethod
+    def setup_class(cls):
+        initNodes()
+        registerNodeDesc(OutputNodeTest)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(OutputNodeTest)
+        for plugin in pluginManager.getPlugins():
+            if plugin not in cls.loadedPlugins:
+                for node in plugin.nodes.values():
+                    pluginManager.unregisterNode(node)
+                pluginManager.removePlugin(plugin)
+
+    def test_copyFiles_is_outputNode(self):
+        g = Graph("")
+
+        node = g.addNewNode("CopyFiles")
+
+        outputNodes = g.findOutputNodes()
+        assert len(outputNodes) == 1 and node in outputNodes
+
+    def test_outputNode_setOutputFolder_uses_configured_attribute(self):
+        g = Graph("")
+        node = g.addNewNode("OutputNodeTest")
+
+        node.nodeDesc.setOutputFolder(node, "/anyFolder/output")
+
+        assert node.folder.value == "/anyFolder/output"
+        assert node.outputFile.value == "/anyFolder/output"
+
+    def test_outputNode_exposes_configured_attributes(self):
+        g = Graph("")
+        node = g.addNewNode("OutputNodeTest")
+
+        outputAttributes = node.nodeDesc.getOutputAttributes(node)
+
+        assert [attr.name for attr in outputAttributes] == ["folder", "outputFile", "exportLabel", "exportEnabled"]
+        node.nodeDesc.setOutputAttribute(node, "exportLabel", "custom")
+        node.nodeDesc.setOutputAttribute(node, "exportEnabled", False)
+        assert node.exportLabel.value == "custom"
+        assert node.exportEnabled.value is False
+
+    def test_configureOutputNodes_sets_global_output_folder(self):
+        graph = Graph("")
+        firstNode = graph.addNewNode("OutputNodeTest")
+        secondNode = graph.addNewNode("OutputNodeTest")
+
+        graph.configureOutputNodes(["/output/results"])
+
+        assert firstNode.folder.value == "/output/results"
+        assert firstNode.outputFile.value == "/output/results"
+        assert secondNode.folder.value == "/output/results"
+        assert secondNode.outputFile.value == "/output/results"
+
+    def test_configureOutputNodes_sets_targeted_output_folder(self):
+        graph = Graph("")
+        node = graph.addNewNode("CopyFiles")
+
+        graph.configureOutputNodes([f"{node.name}=/output/copyfiles"])
+
+        assert node.output.value == "/output/copyfiles"
+
+    def test_configureOutputNodes_sets_multiple_targeted_output_folders(self):
+        graph = Graph("")
+        firstNode = graph.addNewNode("OutputNodeTest")
+        secondNode = graph.addNewNode("OutputNodeTest")
+
+        graph.configureOutputNodes([f"{firstNode.name}=/output/mesh", f"{secondNode.name}=/output/textures"])
+
+        assert firstNode.folder.value == "/output/mesh"
+        assert firstNode.outputFile.value == "/output/mesh"
+        assert secondNode.folder.value == "/output/textures"
+        assert secondNode.outputFile.value == "/output/textures"
+
+    def test_configureOutputNodes_sets_explicit_file_attribute(self):
+        graph = Graph("")
+        node = graph.addNewNode("OutputNodeTest")
+
+        graph.configureOutputNodes([f"{node.name}.folder=/anyFolder/export"])
+
+        assert node.folder.value == "/anyFolder/export"
+        assert node.outputFile.value == ""
+
+    def test_configureOutputNodes_sets_global_folder_and_targeted_attributes(self):
+        graph = Graph("")
+        node = graph.addNewNode("OutputNodeTest")
+
+        graph.configureOutputNodes(
+            ["/output/default", f"{node.name}.exportLabel=final", f"{node.name}.exportEnabled=false"]
+        )
+
+        assert node.folder.value == "/output/default"
+        assert node.outputFile.value == "/output/default"
+        assert node.exportLabel.value == "final"
+        assert node.exportEnabled.value is False
+
+    def test_configureOutputNodes_with_non_file_attribute_keeps_output_folder(self):
+        graph = Graph("")
+        node = graph.addNewNode("OutputNodeTest")
+
+        graph.configureOutputNodes([f"{node.name}.exportLabel=custom"])
+
+        assert node.exportLabel.value == "custom"
+        assert node.folder.value == "/default/output"
+        assert node.outputFile.value == ""
+
+    def test_outputNode_setOutputFolder_only_updates_exposed_file_attributes(self):
+        g = Graph("")
+        node = g.addNewNode("OutputNodeTest")
+
+        node.nodeDesc.setOutputFolder(node, "/anyFolder/output")
+
+        assert node.folder.value == "/anyFolder/output"
+        assert node.outputFile.value == "/anyFolder/output"
+        assert node.exportLabel.value == "default"
+
+    def test_outputNode_rejects_unexposed_attributes(self):
+        g = Graph("")
+        node = g.addNewNode("OutputNodeTest")
+
+        with pytest.raises(AttributeError):
+            node.nodeDesc.setOutputAttribute(node, "internalLabel", "custom")
+
+        assert node.internalLabel.value == "internal"
+
+    def test_initFromTemplate_removes_outputNodes_by_default(self):
+        graph = Graph("Template")
+        graph.addNewNode("OutputNodeTest")
+        graph.addNewNode("PathJoin")
+        graphFile = os.path.join(tempfile.mkdtemp(), "test_output_node_template.mg")
+        graph.save(graphFile, template=True)
+
+        loadedGraph = Graph("")
+        loadedGraph.initFromTemplate(graphFile)
+
+        assert loadedGraph.findOutputNodes() == []
+        assert len(loadedGraph.nodesOfType("PathJoin")) == 1
+
+    def test_initFromTemplate_can_keep_outputNodes(self):
+        graph = Graph("Template")
+        graph.addNewNode("OutputNodeTest")
+        graphFile = os.path.join(tempfile.mkdtemp(), "test_output_node_template.mg")
+        graph.save(graphFile, template=True)
+
+        loadedGraph = Graph("")
+        loadedGraph.initFromTemplate(graphFile, keepOutputNodes=True)
+
+        assert len(loadedGraph.findOutputNodes()) == 1
 
 
 class TestBackdropNode:

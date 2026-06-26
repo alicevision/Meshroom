@@ -26,7 +26,7 @@ class TestNodeInfo:
         cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginC"
         cls.plugin = Plugin(package, cls.folder)
-        nodes = loadClassesNodes(cls.folder, package)
+        nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)
@@ -40,7 +40,9 @@ class TestNodeInfo:
 
     def test_loadedPlugin(self):
         assert len(pluginManager.getPlugins()) >= 1
-        plugin = pluginManager.getPlugin("pluginC")
+        plugin = pluginManager.getPlugin("pluginC", uname=False)
+        pluginUName = plugin.uname
+        assert pluginUName.endswith("pluginC")
         assert plugin == self.plugin
         node = plugin.nodes["PluginCNodeA"]
         nodeType = node.nodeDescriptor
@@ -52,7 +54,7 @@ class TestNodeInfo:
         nodeDocumentation = node.getDocumentation()
         assert nodeDocumentation == "PluginCNodeA"
         nodeInfo = {item["key"]: item["value"] for item in node.getNodeInfo()}
-        assert nodeInfo["module"] == "pluginC.PluginCNodeA"
+        assert nodeInfo["module"].endswith("pluginC.PluginCNodeA")
         pluginPath = os.path.join(self.folder, "pluginC", "PluginCNodeA.py")
         assert nodeInfo["modulePath"] == Path(pluginPath).as_posix()  # modulePath seems to follow Linux convention
         assert nodeInfo["author"] == "testAuthor"
@@ -69,7 +71,7 @@ class TestNodeVariables:
         folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginA"
         cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package)
+        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)
@@ -124,7 +126,7 @@ class TestInputNode:
         folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginA"
         cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package)
+        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)

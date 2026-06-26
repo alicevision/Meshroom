@@ -17,7 +17,7 @@ class TestPluginWithValidNodesOnly:
         folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginA"
         cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package)
+        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)
@@ -29,13 +29,23 @@ class TestPluginWithValidNodesOnly:
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
-    def test_loadedPlugin(self):
+    def test_getPlugin(self):
         # Assert that there are loaded plugins, and that "pluginA" is one of them
         assert len(pluginManager.getPlugins()) >= 1
-        plugin = pluginManager.getPlugin("pluginA")
+        # Get with name
+        plugin = pluginManager.getPlugin("pluginA", uname=False)
         assert plugin == self.plugin
+        # Get with unique name
+        pluginUName = self.plugin.uname
+        assert pluginUName == f"{self.plugin.uid}_pluginA"
+        plugin = pluginManager.getPlugin(pluginUName, uname=True)
+        assert plugin == self.plugin
+        # Check path too
         assert str(plugin.path) == os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
 
+    def test_loadedPlugin(self):
+        # Assert that there are loaded plugins, and that "pluginA" is one of them
+        plugin = pluginManager.getPlugin("pluginA", uname=False)
         # Assert that the nodes of pluginA have been successfully registered
         assert len(pluginManager.getRegisteredNodePlugins()) >= 2
         for nodeName, nodePlugin in plugin.nodes.items():
@@ -49,14 +59,14 @@ class TestPluginWithValidNodesOnly:
         assert plugin.templates[name] == os.path.join(str(plugin.path), "sharedTemplate.mg")
 
     def test_unloadPlugin(self):
-        plugin = pluginManager.getPlugin("pluginA")
+        plugin = pluginManager.getPlugin("pluginA", uname=False)
         assert plugin == self.plugin
 
         # Unload the plugin without unregistering the nodes
         pluginManager.removePlugin(plugin, unregisterNodePlugins=False)
 
         # Assert the plugin is not loaded anymore
-        assert pluginManager.getPlugin(plugin.name) is None
+        assert pluginManager.getPlugin(plugin.name, uname=False) is None
 
         # Assert the nodes are still registered and belong to an unloaded plugin
         for nodeName, nodePlugin in plugin.nodes.items():
@@ -66,13 +76,13 @@ class TestPluginWithValidNodesOnly:
 
         # Re-add the plugin
         pluginManager.addPlugin(plugin, registerNodePlugins=False)
-        assert pluginManager.getPlugin(plugin.name)
+        assert pluginManager.getPlugin(plugin.name, uname=False)
 
         # Unload the plugin with a full unregistration of the nodes
         pluginManager.removePlugin(plugin)
 
         # Assert the plugin is not loaded anymore
-        assert pluginManager.getPlugin(plugin.name) is None
+        assert pluginManager.getPlugin(plugin.name, uname=False) is None
 
         # Assert the nodes have been successfully unregistered
         for nodeName, nodePlugin in plugin.nodes.items():
@@ -81,14 +91,14 @@ class TestPluginWithValidNodesOnly:
 
         # Re-add the plugin and re-register the nodes
         pluginManager.addPlugin(plugin)
-        assert pluginManager.getPlugin(plugin.name)
+        assert pluginManager.getPlugin(plugin.name, uname=False)
         for nodeName, nodePlugin in plugin.nodes.items():
             assert nodePlugin.status == NodePluginStatus.LOADED
             assert pluginManager.isRegistered(nodeName)
 
     def test_updateRegisteredNodes(self):
         nbRegisteredNodes = len(pluginManager.getRegisteredNodePlugins())
-        plugin = pluginManager.getPlugin("pluginA")
+        plugin = pluginManager.getPlugin("pluginA", uname=False)
         assert plugin == self.plugin
         nodeA = pluginManager.getRegisteredNodePlugin("PluginANodeA")
         nodeAName = nodeA.nodeDescriptor.__name__
@@ -125,7 +135,7 @@ class TestPluginWithInvalidNodes:
         folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginB"
         cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package)
+        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)
@@ -140,7 +150,7 @@ class TestPluginWithInvalidNodes:
     def test_loadedPlugin(self):
         # Assert that there are loaded plugins, and that "pluginB" is one of them
         assert len(pluginManager.getPlugins()) >= 1
-        plugin = pluginManager.getPlugin("pluginB")
+        plugin = pluginManager.getPlugin("pluginB", uname=False)
         assert plugin == self.plugin
         assert str(plugin.path) == os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
 
@@ -161,7 +171,7 @@ class TestPluginWithInvalidNodes:
         assert plugin.templates[name] == os.path.join(str(plugin.path), "sharedTemplate.mg")
 
     def test_reloadNodePluginInvalidDescrpition(self):
-        plugin = pluginManager.getPlugin("pluginB")
+        plugin = pluginManager.getPlugin("pluginB", uname=False)
         assert plugin == self.plugin
         node = plugin.nodes["PluginBNodeB"]
         nodeName = node.nodeDescriptor.__name__
@@ -220,7 +230,7 @@ class TestPluginWithInvalidNodes:
         assert not pluginManager.isRegistered(nodeName)
 
     def test_reloadNodePluginSyntaxError(self):
-        plugin = pluginManager.getPlugin("pluginB")
+        plugin = pluginManager.getPlugin("pluginB", uname=False)
         assert plugin == self.plugin
         node = plugin.nodes["PluginBNodeA"]
         nodeName = node.nodeDescriptor.__name__
@@ -265,7 +275,7 @@ class TestPluginsConfiguration:
         # correctly loaded
         folder = os.path.join(os.path.dirname(__file__), "plugins")
         with registeredPlugins(folder):
-            plugin = pluginManager.getPlugin("pluginA")
+            plugin = pluginManager.getPlugin("pluginA", uname=False)
             assert plugin
 
             # Check that the config file has been properly loaded
@@ -303,7 +313,7 @@ class TestPluginsConfiguration:
 
         folder = os.path.join(os.path.dirname(__file__), "plugins")
         with (overrideOsEnvironmentVariables(environment), registeredPlugins(folder)):
-            plugin = pluginManager.getPlugin("pluginA")
+            plugin = pluginManager.getPlugin("pluginA", uname=False)
             assert plugin
 
             # Check that the config file has been properly loaded and read
@@ -340,7 +350,7 @@ class TestPluginsConfiguration:
 
         folder = os.path.join(os.path.dirname(__file__), "plugins")
         with (overrideOsEnvironmentVariables(environment), registeredPlugins(folder)):
-            plugin = pluginManager.getPlugin("pluginA")
+            plugin = pluginManager.getPlugin("pluginA", uname=False)
             assert plugin
 
             # Check that the config file has been properly loaded and read

@@ -195,7 +195,7 @@ Additional Resources:
         type=str,
         required=False,
         nargs='*',
-        help='Set the output folder for the CopyFiles nodes.'
+        help='Set the output folder for the output nodes.'
     )
 
     # Pipeline Options
@@ -342,13 +342,14 @@ class MeshroomApp(QApplication):
                 self.addRecentProjectFile(project)
         elif getattr(args, "import", None) or args.importRecursive or args.save or args.pipeline:
             if args.output:
-                # Initialize the template and keep the "CopyFiles" nodes
-                self._activeProject.newWithCopyOutputs()
-                # Use the provided output paths to initialize the "CopyFiles" nodes
-                copyNodes = self._activeProject.graph.nodesOfType("CopyFiles")
-                if len(copyNodes) > 0:
-                    for index, node in enumerate(copyNodes):
-                        node.output.value = args.output[index] if index < len(args.output) else args.output[0]
+                # Initialize the template and keep the output nodes
+                self._activeProject.newWithOutputNodes()
+                # Use the provided output paths to initialize the output nodes
+                outputNodes = self._activeProject.graph.findOutputNodes()
+                if len(outputNodes) > 0:
+                    for index, node in enumerate(outputNodes):
+                        outputFolder = args.output[index] if index < len(args.output) else args.output[0]
+                        node.nodeDesc.setOutputFolder(node, outputFolder)
             else:
                 self._activeProject.new()
 

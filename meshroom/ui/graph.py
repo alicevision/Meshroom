@@ -25,6 +25,7 @@ from PySide6.QtCore import (
 )
 
 from meshroom.core import sessionUid
+from meshroom.common import deprecated
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, AnySet, ListAttribute, ShapeAttribute
 from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
@@ -545,10 +546,17 @@ class UIGraph(QObject):
 
     @Slot(str)
     @Slot(str, bool)
-    def initFromTemplate(self, filepath, copyOutputs=False):
+    @deprecated.depreciateParam(
+        "copyOutputs",
+        "UIGraph.initFromTemplate 'copyOutputs' parameter is deprecated. Please use 'keepOutputNodes' instead."
+    )
+    def initFromTemplate(self, filepath: str, keepOutputNodes: bool = False, copyOutputs: Optional[bool] = None) -> None:
+        if copyOutputs is not None:
+            keepOutputNodes = copyOutputs
+
         graph = Graph("")
         if filepath:
-            graph.initFromTemplate(filepath, copyOutputs=copyOutputs)
+            graph.initFromTemplate(filepath, keepOutputNodes=keepOutputNodes)
         self.setGraph(graph)
 
     @Slot(QUrl, result="QVariantList")

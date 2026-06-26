@@ -975,6 +975,55 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.OutputNode)]
         return self.sortNodesByIndex(nodes)
 
+    def configureOutputNodes(self, outputValues: list[str]) -> None:
+        """
+        Configure output nodes from command line output values.
+
+        Supported formats:
+            - "path": set the output folder on all output nodes.
+            - "OutputNodeName=path": set the output folder on one output node.
+            - "OutputNodeName.attribute=value": set one exposed output attribute.
+        """
+        outputNodes = self.findOutputNodes()
+        if len(outputNodes) == 0:
+            raise RuntimeError('meshroom_batch requires a pipeline graph with at least ' +
+                               'one output node, none found.')
+
+        reExtract = re.compile(r'(\w+)(?:\.(\w+))?=(.*)')  # NodeName=value or NodeName.attribute=value
+        globalOutputPath: Optional[str] = None
+        remainingOutputNodes = list(outputNodes)
+        for outputValue in outputValues:
+            result = reExtract.match(outputValue)
+            if not result:  # If the argument is only a path, set it for the global path
+                globalOutputPath = outputValue
+                continue
+
+            nodeName, attributeName, value = result.groups()
+            outputNode = next((n for n in outputNodes if n.name == nodeName), None)
+            if outputNode is None:
+                raise RuntimeError(f'Unknown output node "{nodeName}".')
+
+            outputFolderSet = False
+            if attributeName:
+                attribute = outputNode.nodeDesc.setOutputAttribute(outputNode, attributeName, value)
+                outputFolderSet = attribute in outputNode.nodeDesc.getOutputFolderAttributes(outputNode)
+                if outputFolderSet and outputNode in remainingOutputNodes:
+                    remainingOutputNodes.remove(outputNode)
+            else:
+                outputNode.nodeDesc.setOutputFolder(outputNode, value)
+                outputFolderSet = True
+                if outputNode in remainingOutputNodes:
+                    remainingOutputNodes.remove(outputNode)
+
+            if outputFolderSet and globalOutputPath is None:  # Fallback in case some nodes would have no path
+                globalOutputPath = value
+
+        if globalOutputPath is None:
+            return
+
+        for node in remainingOutputNodes:  # Set the remaining output nodes with the global path
+            node.nodeDesc.setOutputFolder(node, globalOutputPath)
+
     def findNodeCandidates(self, nodeNameExpr: str) -> list[Node]:
         pattern = re.compile(nodeNameExpr)
         return [v for k, v in self._nodes.objects.items() if pattern.match(k)]

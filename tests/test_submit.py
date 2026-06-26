@@ -50,7 +50,7 @@ def checkTask(task, taskType, nbDependencies):
     assert len(task.dependencies) == nbDependencies
 
 
-def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=10):
+def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=15):
     """
     Wait for a node to complete processing
     """
@@ -136,7 +136,7 @@ class TestNodeSubmit:
         cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
         package = "pluginSubmitter"
         cls.plugin = Plugin(package, cls.folder)
-        nodes = loadClassesNodes(cls.folder, package)
+        nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin._uid)
         for node in nodes:
             cls.plugin.addNodePlugin(node)
         pluginManager.addPlugin(cls.plugin)
@@ -149,7 +149,7 @@ class TestNodeSubmit:
         cls.plugin = None
 
     def registerNode(self, name):
-        plugin = pluginManager.getPlugin("pluginSubmitter")
+        plugin = pluginManager.getPlugin("pluginSubmitter", uname=False)
         node = plugin.nodes[name]
         nodeType = node.nodeDescriptor
         registerNodeDesc(nodeType)

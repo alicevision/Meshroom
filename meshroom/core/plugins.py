@@ -293,10 +293,14 @@ class Plugin(BaseObject):
         configFullEnv: the static merge of os.environ and configEnv, with os.environ taking precedence
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
+    
+    _pluginLastUid = 0
 
     def __init__(self, name: str, path: str):
         super().__init__()
 
+        Plugin._pluginLastUid += 1
+        self._uid: str = f"{Plugin._pluginLastUid:04d}"
         self._name: str = name
         self._path: str = path
 
@@ -309,10 +313,18 @@ class Plugin(BaseObject):
         self.loadTemplates()
         self.loadConfig()
 
+    def __repr__(self):
+        return f"<Plugin {self._name} (uid={self._uid})>"
+
     @property
     def name(self):
         """ Return the name of the plugin. """
         return self._name
+    
+    @property
+    def uname(self):
+        """ Return the unique name of the plugin. """
+        return f"{self._uid}_{self._name}"
 
     @property
     def path(self):
@@ -634,18 +646,28 @@ class NodePluginManager(BaseObject):
         """
         return self._plugins
 
-    def getPlugin(self, name: str) -> Plugin:
+    def getPlugin(self, name: str, uname: bool = True) -> Plugin:
         """
-        Return the loaded Plugin object named "name".
+        Return the loaded Plugin object with "name".
 
         Args:
-            name: the name of the Plugin, used upon its loading.
+            name: the unique name of the Plugin, used upon its loading.
+            uname: the name passed as argument is the unique name of the plugin.
+                   if set to False, we will search for any plugin with this name
+                   but this means there can be a collision. To avoid any confusion
+                   use this function with the unique name as much as possible.
 
         Returns:
             Plugin | None: the loaded Plugin object if it exists, None otherwise.
         """
-        if name in self._plugins:
-            return self._plugins[name]
+        if uname:
+            # Find plugin with unique name
+            if name in self._plugins:
+                return self._plugins[name]
+        else:
+            for plugin in self._plugins.values():
+                if plugin.name == name:
+                    return plugin
         return None
 
     def addPlugin(self, plugin: Plugin, registerNodePlugins: bool = True):
@@ -658,11 +680,14 @@ class NodePluginManager(BaseObject):
                                  at the same time the plugin is being loaded. Otherwise, the
                                  NodePlugins will have to be registered at a later occasion.
         """
-        if not self.getPlugin(plugin.name):
-            self._plugins[plugin.name] = plugin
-            if registerNodePlugins:
-                for node in plugin.nodes:
-                    self.registerNode(plugin.nodes[node])
+        pluginUName = plugin.uname
+        if self.getPlugin(pluginUName):
+            logging.warning(f"Plugin {pluginUName} is already registered.")
+            return
+        self._plugins[pluginUName] = plugin
+        if registerNodePlugins:
+            for node in plugin.nodes:
+                self.registerNode(plugin.nodes[node])
 
     def removePlugin(self, plugin: Plugin, unregisterNodePlugins: bool = True):
         """
@@ -675,11 +700,11 @@ class NodePluginManager(BaseObject):
                                    the registered NodePlugins will remain while the Plugin itself will
                                    be unloaded.
         """
-        if self.getPlugin(plugin.name):
+        if self.getPlugin(plugin.uname):
             if unregisterNodePlugins:
                 for node in plugin.nodes.values():
                     self.unregisterNode(node)
-            del self._plugins[plugin.name]
+            del self._plugins[plugin.uname]
 
     def getRegisteredNodePlugins(self) -> dict[str: NodePlugin]:
         """

@@ -43,7 +43,7 @@ def hashValue(value) -> str:
 
 
 @contextmanager
-def add_to_path(p):
+def add_to_path(p, packageName=None, pluginUid: str = None):
     import sys
     old_path = sys.path
     sys.path = sys.path[:]
@@ -52,9 +52,26 @@ def add_to_path(p):
         yield
     finally:
         sys.path = old_path
+        # Rename all meshroom plugins modules so that they all
+        # have a unique module name.
+        if packageName is not None:
+            for modName in list(sys.modules):
+                if modName == packageName or modName.startswith(packageName + "."):
+                    mod = sys.modules.pop(modName)
+                    uniqueModName = f"{pluginUid}_{modName}"
+                    mod.__name__ = uniqueModName
+                    sys.modules[uniqueModName] = mod
+                    # Update the spec name, required for module reloading
+                    mod.__spec__.name = uniqueModName
+                    # Update classes __module__ so that all functions using
+                    # __module__ string lookup resolve correctly.
+                    for attrName in dir(mod):
+                        attr = getattr(mod, attrName)
+                        if isinstance(attr, type) and attr.__module__ == modName:
+                            attr.__module__ = uniqueModName
 
 
-def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
+def loadClasses(folder: str, packageName: str, classType: type, pluginUid: str = None) -> list[type]:
     """
     Go over the Python module named "packageName" located in "folder" to find files
     that contain classes of type "classType" and return these classes in a list.
@@ -63,13 +80,14 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
         folder: the folder to load the module from.
         packageName: the name of the module to look for nodes in.
         classType: the class to look for in the files that are inspected.
+        pluginUid: (optional) A unique node for the plugin where will be the nodes.
     """
     classes = []
     errors = []
 
     resolvedFolder = str(Path(folder).resolve())
     # temporarily add folder to python path
-    with add_to_path(resolvedFolder):
+    with add_to_path(resolvedFolder, packageName, pluginUid):
         # import node package
 
         try:
@@ -107,7 +125,7 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
                         logging.debug(f"No class defined in plugin: {package.__name__}.{pluginName} ('{pluginMod.__file__}')")
 
                 for p in plugins:
-                    p.packageName = packageName
+                    p.packageName = f"{pluginUid}_{packageName}"
                     p.packagePath = packagePath
                     if classType == desc.BaseNode:
                         nodePlugin = NodePlugin(p)
@@ -142,7 +160,7 @@ def loadClasses(folder: str, packageName: str, classType: type) -> list[type]:
     return classes
 
 
-def loadClassesNodes(folder: str, packageName: str) -> list[NodePlugin]:
+def loadClassesNodes(folder: str, packageName: str, pluginUid: str) -> list[NodePlugin]:
     """
     Return the list of all the NodePlugins that were created following the search of the
     Python module named "packageName" located in the folder "folder".
@@ -152,12 +170,13 @@ def loadClassesNodes(folder: str, packageName: str) -> list[NodePlugin]:
     Args:
         folder: the folder to load the module from.
         packageName: the name of the module to look for nodes in.
+        pluginUid: A unique node for the plugin where will be the nodes.
 
     Returns:
         list[NodePlugin]: a list of all the NodePlugins that were created based on the
                           module's search. If none has been created, an empty list is returned.
     """
-    return loadClasses(folder, packageName, desc.BaseNode)
+    return loadClasses(folder, packageName, desc.BaseNode, pluginUid=pluginUid)
 
 
 def loadClassesSubmitters(folder: str, packageName: str) -> list[BaseSubmitter]:
@@ -324,12 +343,12 @@ def nodeVersion(nodeDesc: desc.Node, default=None):
     return moduleVersion(nodeDesc.__module__, default)
 
 
-def loadNodes(folder, packageName) -> list[NodePlugin]:
+def loadNodes(folder, packageName, pluginUid) -> list[NodePlugin]:
     if not os.path.isdir(folder):
         logging.error(f"Node folder '{folder}' does not exist.")
         return []
 
-    nodes = loadClassesNodes(folder, packageName)
+    nodes = loadClassesNodes(folder, packageName, pluginUid)
     return nodes
 
 
@@ -338,7 +357,7 @@ def loadAllNodes(folder) -> list[Plugin]:
     for _, package, ispkg in pkgutil.iter_modules([folder]):
         if ispkg:
             plugin = Plugin(package, folder)
-            nodePlugins = loadNodes(folder, package)
+            nodePlugins = loadNodes(folder, package, plugin._uid)
             if nodePlugins:
                 for node in nodePlugins:
                     plugin.addNodePlugin(node)

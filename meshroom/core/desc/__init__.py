@@ -45,6 +45,7 @@ from .node import (
     InputNode,
     InitNode,
     InternalAttributesFactory,
+    IONode,
     MrNodeType,
     Node,
     NodeVersionType,

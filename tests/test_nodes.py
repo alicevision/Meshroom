@@ -149,6 +149,8 @@ class TestInputNode:
         # Check that the InputNode is correctly detected
         inputNodes = g.findInputNodes()
         assert len(inputNodes) == 1 and node in inputNodes
+        assert isinstance(node.nodeDesc, desc.IONode)
+        assert node.isIONode
         # Check that the InputNode's initialize method has been set
         inputs = ["/path/to/file", "/path/to/file/2"]
         node.nodeDesc.initialize(node, inputs, [])
@@ -179,6 +181,8 @@ class TestOutputNode:
 
         outputNodes = g.findOutputNodes()
         assert len(outputNodes) == 1 and node in outputNodes
+        assert isinstance(node.nodeDesc, desc.IONode)
+        assert node.isIONode
 
     def test_outputNode_setOutputFolder_uses_configured_attribute(self):
         g = Graph("")

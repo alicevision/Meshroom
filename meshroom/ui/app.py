@@ -262,6 +262,7 @@ class MeshroomApp(QApplication):
 
         # Initialize the list of recent project files
         self._recentProjectFiles = self._getRecentProjectFilesFromSettings()
+        self._recentTemplateFiles = self._getRecentTemplateFilesFromSettings()
         # Flag set to True if, for all the project files in the list, thumbnails have been retrieved when they
         # are available. If set to False, then all the paths in the list are accurate, but some thumbnails might
         # be retrievable
@@ -330,7 +331,10 @@ class MeshroomApp(QApplication):
         if args.project:
             args.project = os.path.abspath(args.project)
             self._activeProject.load(args.project)
-            self.addRecentProjectFile(args.project)
+            if self._activeProject.graph.filepath:
+                self.addRecentProjectFile(args.project)
+            else:
+                self.addRecentTemplateFile(args.project)
         elif args.new:
             self._activeProject.new()
         elif args.latest or args.latest2 or args.latest3:
@@ -467,6 +471,27 @@ class MeshroomApp(QApplication):
         settings.endGroup()
         return projects
 
+    def _getRecentTemplateFilesFromSettings(self) -> list[dict[str, str]]:
+        """
+        Read the list of recent template files from QSettings.
+
+        Returns:
+            The list containing dictionaries of the form {"path": "/path/to/template/file", "status": 1}.
+        """
+        templates = []
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        size = settings.beginReadArray("Templates")
+        for i in range(size):
+            settings.setArrayIndex(i)
+            path = settings.value("filepath")
+            if path:
+                fileStatus = FileStatus.EXISTS if os.path.isfile(path) else FileStatus.MISSING
+                templates.append({"path": path, "status": fileStatus.value})
+        settings.endArray()
+        settings.endGroup()
+        return templates
+
     @Slot()
     def updateRecentProjectFilesThumbnails(self) -> None:
         """
@@ -498,16 +523,7 @@ class MeshroomApp(QApplication):
         Args:
             projectFile (str or QUrl): path to the project file to add to the list
         """
-        if not isinstance(projectFile, (QUrl, str)):
-            raise TypeError(f"Unexpected data type: {projectFile.__class__}")
-        if isinstance(projectFile, QUrl):
-            projectFileNorm = projectFile.toLocalFile()
-            if not projectFileNorm:
-                projectFileNorm = projectFile.toString()
-        else:
-            projectFileNorm = QUrl(projectFile).toLocalFile()
-            if not projectFileNorm:
-                projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
+        projectFileNorm = self._normalizeFilepath(projectFile)
 
         # Get the list of recent projects without re-reading the QSettings
         projects = self._recentProjectFiles
@@ -544,22 +560,46 @@ class MeshroomApp(QApplication):
 
     @Slot(str)
     @Slot(QUrl)
+    def addRecentTemplateFile(self, templateFile) -> None:
+        """
+        Add a template file to the list of recent template files.
+        """
+        templateFileNorm = self._normalizeFilepath(templateFile)
+
+        templates = self._recentTemplateFiles
+        filepaths = [t["path"] for t in templates]
+        if templateFileNorm in filepaths:
+            idx = filepaths.index(templateFileNorm)
+            del templates[idx]
+
+        templates.insert(0, {"path": templateFileNorm, "status": FileStatus.EXISTS.value})
+
+        maxNbTemplates = 40
+        if len(templates) > maxNbTemplates:
+            templates = templates[0:maxNbTemplates]
+
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        settings.beginWriteArray("Templates")
+        for i, t in enumerate(templates):
+            settings.setArrayIndex(i)
+            settings.setValue("filepath", t["path"])
+        settings.endArray()
+        settings.endGroup()
+        settings.sync()
+
+        self._recentTemplateFiles = templates
+        self.recentTemplateFilesChanged.emit()
+
+    @Slot(str)
+    @Slot(QUrl)
     def removeRecentProjectFile(self, projectFile) -> None:
         """
         Remove a given project file from the list of recent project files.
         If the provided filepath is not already present in the list of recent project files, nothing is done.
         Otherwise, it is effectively removed and the QSettings are updated accordingly.
         """
-        if not isinstance(projectFile, (QUrl, str)):
-            raise TypeError(f"Unexpected data type: {projectFile.__class__}")
-        if isinstance(projectFile, QUrl):
-            projectFileNorm = projectFile.toLocalFile()
-            if not projectFileNorm:
-                projectFileNorm = projectFile.toString()
-        else:
-            projectFileNorm = QUrl(projectFile).toLocalFile()
-            if not projectFileNorm:
-                projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
+        projectFileNorm = self._normalizeFilepath(projectFile)
 
         # Get the list of recent projects without re-reading the QSettings
         projects = self._recentProjectFiles
@@ -586,6 +626,20 @@ class MeshroomApp(QApplication):
         # Update the final list of recent projects
         self._recentProjectFiles = projects
         self.recentProjectFilesChanged.emit()
+
+    @staticmethod
+    def _normalizeFilepath(filepath) -> str:
+        if not isinstance(filepath, (QUrl, str)):
+            raise TypeError(f"Unexpected data type: {filepath.__class__}")
+        if isinstance(filepath, QUrl):
+            filepathNorm = filepath.toLocalFile()
+            if not filepathNorm:
+                filepathNorm = filepath.toString()
+        else:
+            filepathNorm = QUrl(filepath).toLocalFile()
+            if not filepathNorm:
+                filepathNorm = QUrl.fromLocalFile(filepath).toLocalFile()
+        return filepathNorm
 
     def _recentImportedImagesFolders(self):
         folders = []
@@ -789,10 +843,12 @@ class MeshroomApp(QApplication):
     licensesModel = Property("QVariantList", _licensesModel, constant=True)
     pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
+    recentTemplateFilesChanged = Signal()
     recentImportedImagesFoldersChanged = Signal()
     pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames, notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", lambda self: self._recentProjectFiles, notify=recentProjectFilesChanged)
+    recentTemplateFiles = Property("QVariantList", lambda self: self._recentTemplateFiles, notify=recentTemplateFilesChanged)
     recentImportedImagesFolders = Property("QVariantList", _recentImportedImagesFolders, notify=recentImportedImagesFoldersChanged)
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)
     defaultSequencePlayerEnabled = Property(bool, _defaultSequencePlayerEnabled, constant=True)

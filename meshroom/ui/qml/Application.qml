@@ -102,7 +102,7 @@ Page {
          * Otherwise, show a warning dialog and returns false.
          * Closing the warning dialog reopens the specified `sourceSaveDialog`, to allow the user to try again.
          */
-        const emptyFilename = Filepath.basename(filepath).trim() === ".mg";
+        const emptyFilename = Filepath.basename(filepath).trim() === sourceSaveDialog.defaultSuffix;
 
         // Provided filename is not valid
         if (emptyFilename) {
@@ -195,8 +195,8 @@ Page {
         signal closed(var result)
 
         title: "Save Template"
-        nameFilters: ["Meshroom Graphs (*.mg)"]
-        defaultSuffix: ".mg"
+        nameFilters: ["Meshroom Templates (*.mgt)"]
+        defaultSuffix: ".mgt"
         fileMode: Platform.FileDialog.SaveFile
         onAccepted: {
             if (!validateFilepathForSave(currentFile, saveTemplateDialog))
@@ -214,12 +214,11 @@ Page {
 
     Platform.FileDialog {
         id: loadTemplateDialog
-        title: "Load Template"
-        nameFilters: ["Meshroom Graphs (*.mg)"]
+        title: "Open Template"
+        nameFilters: ["Meshroom Templates (*.mgt *.mg)"]
         onAccepted: {
-            // Open the template as a regular file
-            if (_currentScene.load(currentFile)) {
-                MeshroomApp.addRecentProjectFile(currentFile.toString())
+            if (_currentScene.loadTemplate(currentFile)) {
+                MeshroomApp.addRecentTemplateFile(currentFile.toString())
             }
         }
     }
@@ -654,8 +653,8 @@ Page {
     Action {
         id: loadTemplateAction
 
-        property string tooltip: "Load a template like a regular project file (any output node will be displayed)"
-        text: "Load Template"
+        property string tooltip: "Open a template as a new unsaved project (any output node will be displayed)"
+        text: "Open Template"
         onTriggered: {
             ensureSaved(function() {
                 initFileDialogFolder(loadTemplateDialog)
@@ -789,7 +788,6 @@ Page {
                         }
                     }
                 }
-                MenuSeparator { }
                 Action {
                     id: saveAction
                     text: "Save"
@@ -830,6 +828,63 @@ Page {
                         MeshroomApp.addRecentProjectFile(_currentScene.graph.filepath)
                     }
                 }
+                Menu {
+                    title: "Templates"
+
+                    MenuItem {
+                        action: loadTemplateAction
+                    }
+                    Menu {
+                        id: openRecentTemplatesMenu
+                        title: "Recent Templates"
+                        enabled: recentTemplateFilesMenuItems.model != undefined && recentTemplateFilesMenuItems.model.length > 0
+                        property int maxWidth: 1000
+                        property int fullWidth: {
+                            let result = 0;
+                            for (let i = 0; i < count; ++i) {
+                                const item = itemAt(i)
+                                result = Math.max(item.implicitWidth + item.padding * 2, result)
+                            }
+                            return result
+                        }
+                        implicitWidth: fullWidth
+                        Repeater {
+                            id: recentTemplateFilesMenuItems
+                            model: MeshroomApp.recentTemplateFiles
+                            MenuItem {
+                                enabled: modelData["status"] != 0
+
+                                onTriggered: ensureSaved(function() {
+                                    openRecentTemplatesMenu.dismiss()
+                                    if (_currentScene.loadTemplate(modelData["path"])) {
+                                        MeshroomApp.addRecentTemplateFile(modelData["path"])
+                                    }
+                                })
+
+                                text: fileTextMetrics.elidedText
+                                TextMetrics {
+                                    id: fileTextMetrics
+                                    text: modelData["path"]
+                                    elide: Text.ElideLeft
+                                    elideWidth: openRecentTemplatesMenu.maxWidth
+                                }
+                            }
+                        }
+                    }
+                    Action {
+                        id: saveAsTemplateAction
+                        text: "Save As Template..."
+                        shortcut: Shortcut {
+                            sequence: "Ctrl+Shift+T"
+                            context: Qt.ApplicationShortcut
+                            onActivated: saveAsTemplateAction.triggered()
+                        }
+                        onTriggered: {
+                            initFileDialogFolder(saveTemplateDialog)
+                            saveTemplateDialog.open()
+                        }
+                    }
+                }
                 MenuSeparator { }
                 Action {
                     id: importImagesAction
@@ -857,31 +912,6 @@ Page {
                     id: advancedMenu
                     title: "Advanced"
                     implicitWidth: 300
-
-                    Action {
-                        id: saveAsTemplateAction
-                        text: "Save As Template..."
-                        shortcut: Shortcut {
-                            sequence: "Ctrl+Shift+T"
-                            context: Qt.ApplicationShortcut
-                            onActivated: saveAsTemplateAction.triggered()
-                        }
-                        onTriggered: {
-                            initFileDialogFolder(saveTemplateDialog)
-                            saveTemplateDialog.open()
-                        }
-                    }
-
-                    MenuItem {
-                        action: loadTemplateAction
-
-                        ToolTip {
-                            visible: parent.hovered
-                            text: loadTemplateAction.tooltip
-                            x: advancedMenu.implicitWidth
-                            y: 0
-                        }
-                    }
 
                     Action {
                         id: importProjectAction
@@ -1504,10 +1534,15 @@ Page {
                         }
                         onFilesDropped: function(drop, mousePosition) {
                             var filesByType = _currentScene.getFilesByTypeFromDrop(drop.urls)
-                            if (filesByType["meshroomScenes"].length == 1) {
+                            if (filesByType["meshroomScenes"].length == 1 || filesByType["meshroomTemplates"].length == 1) {
                                 ensureSaved(function() {
                                     if (_currentScene.handleFilesUrl(filesByType, null, mousePosition)) {
-                                        MeshroomApp.addRecentProjectFile(filesByType["meshroomScenes"][0])
+                                        if (_currentScene.graph.filepath)
+                                            MeshroomApp.addRecentProjectFile(filesByType["meshroomScenes"][0])
+                                        else if (filesByType["meshroomTemplates"].length == 1)
+                                            MeshroomApp.addRecentTemplateFile(filesByType["meshroomTemplates"][0])
+                                        else
+                                            MeshroomApp.addRecentTemplateFile(filesByType["meshroomScenes"][0])
                                     }
                                 })
                             } else {

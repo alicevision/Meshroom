@@ -1269,7 +1269,8 @@ Item {
                 nbDraggedFiles = drag.urls.length
 
                 drag.urls.forEach(function(file) {
-                    if (String(file).endsWith(".mg")) {
+                    const extension = Filepath.extension(file)
+                    if (extension === ".mg" || extension === ".mgt") {
                         nbMeshroomScenes++
                     }
                 })
@@ -1389,7 +1390,7 @@ Item {
         icon.color: "#F44336"
 
         title: "Different File Types"
-        text: "Do not mix .mg files and other types of files."
+        text: "Do not mix Meshroom project/template files and other types of files."
         standardButtons: Dialog.Ok
 
         parent: Overlay.overlay

@@ -19,6 +19,7 @@ from meshroom.core import Version
 from meshroom.core import submitters
 from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
+from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
@@ -189,7 +190,7 @@ def generateTempProjectFilepath(tmpFolder=None):
         from meshroom.env import EnvVar
         tmpFolder = EnvVar.get(EnvVar.MESHROOM_TEMP_PATH)
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    return os.path.join(tmpFolder, f"meshroom_{timestamp}.mg")
+    return os.path.join(tmpFolder, f"meshroom_{timestamp}{MESHROOM_PROJECT_EXTENSION}")
 
 
 class Graph(BaseObject):

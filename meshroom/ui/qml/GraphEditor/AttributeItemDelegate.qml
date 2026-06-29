@@ -868,6 +868,27 @@ RowLayout {
                     t += Math.max(0, h.length - 1)
                     return t
                 }
+                property bool expanded: false
+                RowLayout {
+                    spacing: 4
+                    ToolButton {
+                        text: tableLayout.expanded  ? MaterialIcons.keyboard_arrow_down : MaterialIcons.keyboard_arrow_right
+                        font.family: MaterialIcons.fontFamily
+                        onClicked: tableLayout.expanded = !tableLayout.expanded
+                    }
+                    Label {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: attribute.value.count + " elements"
+                    }
+                    ToolButton {
+                        text: MaterialIcons.add_circle_outline
+                        font.family: MaterialIcons.fontFamily
+                        font.pointSize: 11
+                        padding: 2
+                        enabled: root.editable
+                        onClicked: _currentScene.appendAttribute(attribute, undefined)
+                    }
+                }
                 FontMetrics {
                     id: fontMetrics
                     font.bold: false
@@ -885,9 +906,9 @@ RowLayout {
                     var heights = []
                     if (attribute && attribute.value) {
                         for (var r = 0; r < attribute.value.count; r++) {
-                            var rowAttr = attribute.value.at(r)
-                            if (!rowAttr || !rowAttr.value) { heights.push(30); continue }
-                            for (var c = 0; c < rowAttr.value.count && c < widths.length; c++) {
+                            var rowAttr = attribute.value.at(r)  // instance of a group attribute
+                            if (!rowAttr || !rowAttr.value) continue
+                            for (var c = 0; c < rowAttr.value.count && c < widths.length; c++) {  // group member
                                 var cell = rowAttr.value.at(c)
                                 var cellText = cell ? String(cell.value) : ""
                                 var cw = fontMetrics.advanceWidth(cellText) + 20
@@ -910,7 +931,10 @@ RowLayout {
                 Item {
                     id: outerFrame
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(tableLayout.totalTableHeight + 30, 330)
+                    visible: tableLayout.expanded
+                    Layout.preferredHeight: tableLayout.expanded
+                                            ? Math.min(tableLayout.totalTableHeight + 30, 330)
+                                            : 0
                     ScrollBar {
                         id: hBar
                         orientation:  Qt.Horizontal

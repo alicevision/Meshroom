@@ -938,9 +938,9 @@ RowLayout {
                     ScrollBar {
                         id: hBar
                         orientation:  Qt.Horizontal
-                        anchors.left:   outerFrame.left
-                        anchors.right:  outerFrame.right
-                        anchors.bottom: outerFrame.bottom
+                        anchors.left:        fixedStrip.right
+                        anchors.right:       outerFrame.right
+                        anchors.bottom:      outerFrame.bottom
                         anchors.rightMargin: vBar.width
                         policy: ScrollBar.AlwaysOn
                         size: (outerFrame.width - vBar.width) /
@@ -958,11 +958,46 @@ RowLayout {
                               Math.max(tableLayout.totalTableHeight + 30, 1)
                     }
                     Item {
+                        id: fixedStrip
+                        anchors.left:         outerFrame.left
+                        anchors.top:          outerFrame.top
+                        anchors.bottom:       outerFrame.bottom
+                        anchors.bottomMargin: hBar.height
+                        width: 30
+                        clip:  true
+                        Column {
+                            spacing: 1
+                            width: parent.width
+                            y: 31 - vBar.position * (tableLayout.totalTableHeight + 30)
+                            Repeater {
+                                model: attribute ? attribute.value : null
+                                delegate: Item {
+                                    id: removeDelegate
+                                    required property int index
+                                    required property var object
+                                    width:  fixedStrip.width
+                                    height: tableLayout.rowHeights[index] || 30
+                                    ToolButton {
+                                        anchors.centerIn: parent
+                                        enabled:          root.editable
+                                        text:             MaterialIcons.remove_circle_outline
+                                        font.family:      MaterialIcons.fontFamily
+                                        font.pointSize:   11
+                                        padding:          2
+                                        ToolTip.text:     "Remove Element"
+                                        ToolTip.visible:  hovered
+                                        onClicked:        _currentScene.removeAttribute(removeDelegate.object)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Item {
                         id: viewport
-                        anchors.left:   outerFrame.left
-                        anchors.top:    outerFrame.top
-                        anchors.right:  outerFrame.right
-                        anchors.bottom: outerFrame.bottom
+                        anchors.left:         fixedStrip.right
+                        anchors.top:          outerFrame.top
+                        anchors.right:        outerFrame.right
+                        anchors.bottom:       outerFrame.bottom
                         anchors.rightMargin:  vBar.width
                         anchors.bottomMargin: hBar.height
                         clip: true

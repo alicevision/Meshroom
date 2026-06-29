@@ -1025,6 +1025,7 @@ RowLayout {
                                                     clip: true
                                                     TextInput {
                                                         id: cellInput
+                                                        property var cell: rowItem.object.value.at(index)
                                                         anchors.fill: parent
                                                         anchors.margins: 4
                                                         verticalAlignment: TextInput.AlignVCenter
@@ -1032,13 +1033,11 @@ RowLayout {
                                                         color: "#aaaaaa"
                                                         selectionColor: "#5599ff"
                                                         clip: true
-                                                        text: {
-                                                            var cell = rowItem.object.value.at(index)
-                                                            return cell ? String(cell.value) : ""
-                                                        }
+                                                        text: cell ? String(cell.value) : ""
                                                         onEditingFinished: {
-                                                            var cell = rowItem.object.value.at(cellRect.index)
-                                                            if (cell) cell.value = text
+                                                            if (cell && text != String(cell.value)) {
+                                                                _currentScene.setAttribute(cell, text)
+                                                            }
                                                         }
                                                     }
                                                 }

@@ -49,6 +49,18 @@ class ShapeList(ListAttribute):
         from meshroom.core.attribute import ShapeListAttribute
         return ShapeListAttribute
 
+    def clone(self):
+        return self.__class__(shape=self.elementDesc,
+                              name=self.name,
+                              label=self.label,
+                              description=self.description,
+                              commandLineGroup=self.commandLineGroup,
+                              advanced=self.advanced,
+                              semantic=self.semantic,
+                              enabled=self.enabled,
+                              visible=self.visible,
+                              exposed=self.exposed)
+
 class Point2d(Shape):
     """
     Point2d is a Shape attribute that allows to display and modify a 2d point.
@@ -67,6 +79,23 @@ class Point2d(Shape):
         super(Point2d, self).__init__(geometryItems, name, label, description, commandLineGroup=None, advanced=advanced,
                                       semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
 
+    def clone(self):
+        clone = self.__class__(
+             name=self.name,
+             label=self.label,
+             description=self.description,
+             keyable=self.items[0].keyable,
+             keyType=self.items[0].keyType,
+             commandLineGroup=self.commandLineGroup,
+             advanced=self.advanced,
+             semantic=self.semantic,
+             enabled=self.enabled,
+             visible=self.visible,
+             exposed=self.exposed
+        )
+        clone._items = [item.clone() for item in self._items]
+        return clone
+
 class Line2d(Shape):
     """
     Line2d is a Shape attribute that allows to display and modify a 2d line.
@@ -84,6 +113,23 @@ class Line2d(Shape):
         # ShapeAttribute constructor
         super(Line2d, self).__init__(geometryItems, name, label, description, commandLineGroup=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
+
+    def clone(self):
+        cloned = self.__class__(
+             name=self.name,
+             label=self.label,
+             description=self.description,
+             keyable=self.items[0].keyable,
+             keyType=self.items[0].keyType,
+             commandLineGroup=self.commandLineGroup,
+             advanced=self.advanced,
+             semantic=self.semantic,
+             enabled=self.enabled,
+             visible=self.visible,
+             exposed=self.exposed
+        )
+        cloned._items = [item.clone() for item in self._items]
+        return cloned
 
 class Rectangle(Shape):
     """
@@ -105,6 +151,23 @@ class Rectangle(Shape):
         super(Rectangle, self).__init__(geometryItems, name, label, description, commandLineGroup=None, advanced=advanced,
                                         semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
 
+    def clone(self):
+        cloned = self.__class__(
+             name=self.name,
+             label=self.label,
+             description=self.description,
+             keyable=self.items[0].keyable,
+             keyType=self.items[0].keyType,
+             commandLineGroup=self.commandLineGroup,
+             advanced=self.advanced,
+             semantic=self.semantic,
+             enabled=self.enabled,
+             visible=self.visible,
+             exposed=self.exposed
+        )
+        cloned._items = [item.clone() for item in self._items]
+        return cloned
+
 class Circle(Shape):
     """
     Circle is a Shape attribute that allows to display and modify a circle.
@@ -124,3 +187,20 @@ class Circle(Shape):
         # ShapeAttribute constructor
         super(Circle, self).__init__(geometryItems, name, label, description, commandLineGroup=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
+
+    def clone(self):
+        cloned = self.__class__(
+             name=self.name,
+             label=self.label,
+             description=self.description,
+             keyable=self.items[0].keyable,
+             keyType=self.items[0].keyType,
+             commandLineGroup=self.commandLineGroup,
+             advanced=self.advanced,
+             semantic=self.semantic,
+             enabled=self.enabled,
+             visible=self.visible,
+             exposed=self.exposed
+        )
+        cloned._items = [item.clone() for item in self._items]
+        return cloned

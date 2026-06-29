@@ -27,6 +27,10 @@ class CoreDictModel:
         return self._objects.values()
 
     @property
+    def count(self):
+        return len(self._objects)
+
+    @property
     def objects(self):
         return self._objects
 
@@ -50,6 +54,18 @@ class CoreDictModel:
         assert key is not None
         assert key not in self._objects
         self._objects[key] = obj
+
+    def insert(self, i, obj):
+        """Insert obj at position i in the ordered dict.
+
+        Rebuilds the internal dict to place the new entry at the given index.
+        """
+        key = getattr(obj, self._keyAttrName, None)
+        assert key is not None
+        assert key not in self._objects
+        items = list(self._objects.items())
+        items.insert(i, (key, obj))
+        self._objects = dict(items)
 
     def rename(self, oldKey: str, newKey: str):
         """ Rename an element in the dict model

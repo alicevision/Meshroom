@@ -26,6 +26,9 @@ from .shapeAttribute import (
     Rectangle,
     Circle
 )
+from .anySet import (
+    AnySet
+)
 from .computation import (
     DynamicNodeSize,
     Level,

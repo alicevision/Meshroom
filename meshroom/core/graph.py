@@ -16,7 +16,7 @@ import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core import Version
 from meshroom.core import submitters
-from meshroom.core.attribute import Attribute, ListAttribute, GroupAttribute
+from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
@@ -327,8 +327,8 @@ class Graph(BaseObject):
 
             # Create graph edges by resolving attributes expressions
             self._applyExpr()
-            
-        # Templates are specific: they contain only the minimal amount of 
+
+        # Templates are specific: they contain only the minimal amount of
         # serialized data to describe the graph structure.
         # They are not meant to be computed: therefore, we can early return here,
         # as uid conflict evaluation is only meaningful for nodes with computed data.
@@ -413,7 +413,7 @@ class Graph(BaseObject):
         """
         Compare the computed UIDs of all the nodes in the graph with the UIDs serialized in `graphContent`. If there
         are mismatches, the nodes with the unexpected UID are replaced with "UidConflict" compatibility nodes.
-  
+
         Args:
             graphContent: The serialized Graph content.
         """
@@ -439,7 +439,7 @@ class Graph(BaseObject):
 
         logging.warning("UID Compatibility issues found: recreating conflicting nodes as CompatibilityNodes.")
 
-        # A uid conflict is contagious: if a node has a uid conflict, all of its downstream nodes may be 
+        # A uid conflict is contagious: if a node has a uid conflict, all of its downstream nodes may be
         # impacted as well, as the uid flows through connections.
         # Therefore, we deal with conflicting uid nodes by depth: replacing a node with a CompatibilityNode restores
         # the serialized uid, which might solve "false-positives" downstream conflicts as well.
@@ -894,7 +894,7 @@ class Graph(BaseObject):
         if self.node(node).hasInternalAttribute(attribute):
             return self.node(node).internalAttribute(attribute)
         return None
-    
+
     @Slot(str, result=Attribute)
     def anyAttribute(self, fullName):
         # type: (str) -> Attribute
@@ -995,7 +995,7 @@ class Graph(BaseObject):
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    "Attributes do not belong to this graph.")
 
-        if not dstAttr.validateIncomingConnection(srcAttr):
+        if not isinstance(srcAttr, AnySet) and not dstAttr.validateIncomingConnection(srcAttr):
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    f"Attributes are not compatible (src base type: {srcAttr.baseType}; dst base type: {dstAttr.baseType}).")
 
@@ -1462,7 +1462,7 @@ class Graph(BaseObject):
             self._save(filepath=filepath, setupProjectFile=setupProjectFile, template=template)
         finally:
             self._saving = False
-    
+
     def _generateNextPath(self):
         """
         Generate the filename for the next version
@@ -1600,7 +1600,7 @@ class Graph(BaseObject):
         # Now, update each individual node
         for node in self.nodes:
             node.updateDuplicates(nodesPerUid)
-    
+
     def updateJobManagerWithNode(self, node):
         if node._uid in jobManager._nodeToJob.keys():
             return
@@ -1640,7 +1640,7 @@ class Graph(BaseObject):
             self.dirtyTopology = False
 
         self.updated.emit()
-    
+
     def updateMonitoredFiles(self):
         self.statusUpdated.emit()
 

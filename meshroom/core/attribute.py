@@ -14,10 +14,15 @@ from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core.desc.validators import NotEmptyValidator
 from meshroom.core import desc, hashValue
+
+from meshroom.core.desc import Attribute as AttributeDescription
+
 from meshroom.core.keyValues import KeyValues
 from meshroom.core.exception import InvalidEdgeError
 
 from typing import TYPE_CHECKING, Optional
+
+from meshroom.core.mixins import Collapsable
 
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
@@ -40,8 +45,30 @@ def _captureExpressionTemplates(attr, value):
             except (KeyError, AttributeError):
                 logging.debug(f"Skipping expression template capture for {key} on {attr}.")
 
+def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
+    """ Retrieve the corresponding Attribute Description from the given dictionary
+    """
+    attrClass = getattr(desc, descType.get('type', None))
+    if not attrClass:
+        return None
 
-def attributeFactory(description: str, value, isOutput: bool, node, root=None, parent=None):
+    name = descType.get('name')
+    label = descType.get('label')
+    description = descType.get('description')
+    elementDesc = descType.get('elementDesc')
+    items = descType.get('items')
+
+    attr = None
+    if items:
+        attr = attrClass(name=name, label=label, description=description, items=[attributeDescriptionFactory(item) for item in items])
+    elif elementDesc:
+        attr = attrClass(name=name, label=label, description=description, elementDesc=attributeDescriptionFactory(elementDesc))
+    else:
+        attr = attrClass(name=name, label=label, description=description)
+
+    return attr
+
+def attributeFactory(description: AttributeDescription, value, isOutput: bool, node, root=None, parent=None):
     """
     Create an Attribute based on description type.
 
@@ -169,7 +196,7 @@ class Attribute(BaseObject):
         params = inspect.signature(value).parameters
         if len(params) == 1 and list(params)[0] == "attr":
             return value(self)
-        
+
         return value(self.node)
 
     def _initValue(self):
@@ -380,6 +407,16 @@ class Attribute(BaseObject):
                 return self._expressionTemplate
             return self.getDefaultValue()
         return self.value
+
+    def asDict(self) -> dict:
+        serializedData = {
+            "name": self.name,
+            "label": self.label,
+            "type": self.desc.__class__.__name__,
+            "value": self.getSerializedValue()
+        }
+
+        return serializedData
 
     def getPrimitiveValue(self, exportDefault=True):
         return self._value
@@ -785,14 +822,16 @@ class Attribute(BaseObject):
     hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=inputLinksChanged)
     # Whether the attribute or any of its elements is linked by another attribute.
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
+
     # The list of attributes that refer to this one as their parent.
-    flatStaticChildren = Property(Variant, _getFlatStaticChildren, constant=True)
+    flatStaticChildrenChanged = Signal()  # AnySet's children list can change on runtime
+    flatStaticChildren = Property(Variant, _getFlatStaticChildren, notify=flatStaticChildrenChanged)
 
     expressionApplied = Signal()
 
     errorMessageChanged = Signal()
     errorMessages = Property(Variant, lambda self: self.getErrorMessages(), notify=errorMessageChanged)
-    isMandatory = Property(bool, _isMandatory, constant=True )    
+    isMandatory = Property(bool, _isMandatory, constant=True )
 
 def raiseIfLink(func):
     """
@@ -1058,13 +1097,13 @@ class ListAttribute(Attribute):
         elif len(self._value) > 0:
             # Erase all items before reassigning
             self._value.removeAt(0, len(self._value))
-        
+
         # Effectively create the objects from the raw data
         if pendingValue:
             attrs = [attributeFactory(self._desc.elementDesc, v, self.isOutput, self.node, self)
                      for v in pendingValue]
             self._value.insert(0, attrs)
-        
+
         self.valueChanged.emit()
 
     # Override
@@ -1076,7 +1115,7 @@ class ListAttribute(Attribute):
                 if self._dynamicValue is None:
                     return []
                 return list(self._dynamicValue)
-        
+
         if exportDefault:
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value]
         return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value
@@ -1165,6 +1204,12 @@ class ListAttribute(Attribute):
         return super()._hasAnyOutputLinks() or \
                any(attribute.hasAnyOutputLinks for attribute in self._value if hasattr(attribute, 'hasAnyOutputLinks'))
 
+    # Override
+    def asDict(self):
+        serializedData = super().asDict()
+        serializedData['elementDesc'] = self.desc._elementDesc.asDict()
+        return serializedData
+
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, lambda self: self.value is None or len(self.value) == 0, notify=Attribute.valueChanged)
@@ -1177,7 +1222,7 @@ class ListAttribute(Attribute):
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=Attribute.outputLinksChanged)
 
 
-class GroupAttribute(Attribute):
+class GroupAttribute(Attribute, Collapsable):
 
     def __init__(self, node, attributeDesc: desc.GroupAttribute, isOutput: bool,
                  root=None, parent=None):
@@ -1191,6 +1236,10 @@ class GroupAttribute(Attribute):
                 return self._value.get(key)
             except KeyError:
                 raise AttributeError(key)
+
+    def _resetToNone(self):
+        for child in self.flatStaticChildren:
+                child.value = None
 
     # Override
     def _initValue(self):
@@ -1208,6 +1257,11 @@ class GroupAttribute(Attribute):
 
     # Override
     def _setValue(self, exportedValue):
+
+        if exportedValue is None:
+            self._resetToNone()
+            return
+
         if self._handleLinkValue(exportedValue):
             return
 
@@ -1215,6 +1269,7 @@ class GroupAttribute(Attribute):
         if isinstance(value, dict):
             # set individual child attribute values
             for key, v in value.items():
+
                 self._value.get(key).value = v
         elif isinstance(value, (list, tuple)):
             if len(self._desc._items) != len(value):
@@ -1311,6 +1366,13 @@ class GroupAttribute(Attribute):
         for attr in self._value:
             attr.updateInternals()
 
+    #Override
+    def asDict(self) -> dict:
+        serialized = super().asDict()
+        serialized['items'] = [ item.asDict() for item in self.flatStaticChildren ]
+
+        return serialized
+
     # Override
     def _getFlatStaticChildren(self) -> list[Attribute]:
         attributes = []
@@ -1376,6 +1438,9 @@ class GroupAttribute(Attribute):
 
         for index, nestedAttribute in enumerate(list(self.value)):
             # If the attributes are already connected, do not connect them again
+            if index >= len(nestedDstAttributes):
+                continue
+
             if not nestedDstAttributes[index] in nestedAttribute.outputLinks:
                 connected, deleted = nestedAttribute.connectTo(nestedDstAttributes[index])
                 connectedEdges += connected
@@ -1408,7 +1473,7 @@ class GroupAttribute(Attribute):
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
     # Override value property
-    value = Property(Variant, _getValue, _setValue, notify=Attribute.valueChanged)
+    value = Property(Variant, lambda self: self._getValue(), lambda self, value: self._setValue(value), notify=Attribute.valueChanged)
     # Override flatStaticChildren property
     flatStaticChildren = Property(Variant, _getFlatStaticChildren, constant=True)
     isDefault = Property(bool, lambda self: all(v.isDefault for v in self.value),
@@ -1736,6 +1801,121 @@ class ShapeListAttribute(ListAttribute):
     isVisible = Property(bool, _getVisible, _setVisible, notify=shapeListChanged)
     # Override hasDisplayableShape property.
     hasDisplayableShape = Property(bool, lambda self: True, constant=True)
+
+
+class AnySet(GroupAttribute):
+
+    def duplicateAttribute(self, attribute: Attribute, isOutput: bool|None=None) -> Attribute:
+        """ Create an attribute as child of the current, with the same description as the given one.
+            Duplicated name's are handled by _renameAttributeDescriptionInPlace()
+        """
+
+        newDesc = attribute.desc.clone()
+        self._renameAttributeDescriptionInPlace(newDesc)
+        newAttribute = attributeFactory(newDesc,
+                                        value=None,
+                                        isOutput=self.isOutput if isOutput is None else isOutput,
+                                        node=self.node,
+                                        root=self)
+
+        if newAttribute.isOutput:
+            newAttribute._isOutput = True
+            newAttribute._desc._isDynamicValue = True
+
+        lastIndex = self._value.count - 1
+        self._value.insert(lastIndex, newAttribute)
+        self.flatStaticChildrenChanged.emit()
+
+        return newAttribute
+
+    def removeAttribute(self, attribute: Attribute):
+        if attribute in self._value:
+            self._value.remove(attribute)
+            self.flatStaticChildrenChanged.emit()
+
+    def _renameAttributeDescriptionInPlace(self, attributeDesc: AttributeDescription, indexPattern:str="{name}_{index}"):
+        """ If an attribute already exists with the same name,
+            the attributeDescription name and label are indexed with a suffix using the givnen pattern "{name}_{index}" by default"
+        """
+
+        if indexPattern is None:
+            indexPattern = "{name}_{index}"
+
+        duplicateIndex = -1
+        newAttributeName = attributeDesc.name
+        while newAttributeName in self._value.keys():
+            duplicateIndex += 1
+            newAttributeName = indexPattern.format(name=attributeDesc.name, index=duplicateIndex)
+
+        attributeDesc._name = newAttributeName
+        if duplicateIndex != -1:
+            attributeDesc._label = indexPattern.format(name=attributeDesc._label, index=duplicateIndex)
+
+    def _setChildrenValues(self, values: dict):
+        """ Set individual children value from a dict
+        """
+
+        for key, attrChildValue in values.items():
+            childAttr = self._value.get(key) if key in self._value.keys() else None
+            seriliazedValue = attrChildValue.get('value', None)
+
+            if not childAttr:
+                idx = self._value.count - 1
+                attrDescType = attrChildValue.get('type', None)
+
+                if not attrDescType:
+                    continue
+
+                attributeClass = getattr(desc, attrDescType, None)
+                if attributeClass is None or not issubclass(attributeClass, AttributeDescription):
+                    continue
+
+                childAttr = attributeFactory(
+                    description = attributeDescriptionFactory(attrChildValue),
+                    value = seriliazedValue,
+                    isOutput = self.isOutput,
+                    node = self.node,
+                    root = self
+                )
+
+                self._value.insert(idx, childAttr)
+
+            elif seriliazedValue:
+                childAttr.value = seriliazedValue
+
+    # Override
+    def getSerializedValue(self):
+        serializedValue = {}
+        for key, attr in self._value.objects.items():
+            serializedValue[key] = attr.asDict()
+
+        return serializedValue
+
+    # Override
+    def _getValue(self):
+        return self._value
+
+    # Override
+    def _setValue(self, exportedValue):
+
+        if exportedValue is None:
+            self._resetToNone()
+            return
+
+        if not isinstance(exportedValue, dict):
+            raise AttributeError(f"Failed to set on CustomAttribute: {str(exportedValue)}")
+
+        self._setChildrenValues(exportedValue)
+
+
+    # Override
+    def _populateFromDynamicValue(self, exportedValue):
+        super()._setValue(exportedValue)  # Use the GroupAttribute usual setValue to restore values.json data
+
+    # Override
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        """Accept connections of any type."""
+        return True
 
 
 class Flow(Attribute):

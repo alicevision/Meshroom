@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
 
-from meshroom.core.attribute import Attribute, Flow, ListAttribute
+from meshroom.core.attribute import Attribute, Flow, ListAttribute, AnySet
 from meshroom.core.exception import CyclicDependencyError,InvalidEdgeError
 from meshroom.core.graph import Graph, GraphModification
 from meshroom.core.node import Position, CompatibilityIssue
@@ -318,7 +318,7 @@ class SetAttributeCommand(GraphCommand):
         else:
             attribute = self.graph.internalAttribute(self.attrName)
 
-        attribute.value = self.value        
+        attribute.value = self.value
 
         return True
 
@@ -455,7 +455,7 @@ class AddEdgeCommand(GraphCommand):
         self.deletedEdges = []  # List of all the edges that have been deleted to create the new edge(s)
         self.setText(f"Connect '{self.srcAttr}' -> '{self.dstAttr}'")
 
-        if not dst.validateIncomingConnection(src):
+        if not isinstance(src, AnySet) and not dst.validateIncomingConnection(src):
             raise InvalidEdgeError(src.fullName, dst.fullName, "Attributes are not compatible.")
 
     def redoImpl(self) -> bool:
@@ -466,6 +466,7 @@ class AddEdgeCommand(GraphCommand):
             return False
         try:
             self.createdEdges, self.deletedEdges = srcAttribute.connectTo(dstAttribute)
+
         except CyclicDependencyError:
             self.graph.removeEdge(self.graph.attribute(self.dstAttr))
             return False
@@ -488,7 +489,7 @@ class RemoveEdgeCommand(GraphCommand):
         self.isFlow = isinstance(edge.dst, Flow)
         self.deletedEdgeNames = []  # Store the names of deleted edges.
         self.setText(f"Disconnect '{self.srcAttr}' -> '{self.dstAttr}'")
-    
+
     def getAttribute(self, attrName):
         if self.isFlow:
             return self.graph.internalAttribute(attrName)
@@ -526,7 +527,7 @@ class ListAttributeAppendCommand(GraphCommand):
         self.count = 1
         self.value = value if value else None
         self.setText(f"Append to {self.attrName}")
-    
+
     def getAttribute(self):
         if self.isFlowInputs:
             return self.graph.internalAttribute(self.attrName)
@@ -558,7 +559,7 @@ class ListAttributeRemoveCommand(GraphCommand):
         self.index = listAttribute.index(attribute)
         self.value = attribute.getSerializedValue()
         self.setText(f"Remove {attribute.fullName}")
-    
+
     def getAttribute(self):
         if self.isFlowInputs:
             return self.graph.internalAttribute(self.listAttrName)
@@ -704,6 +705,65 @@ class EnableGraphUpdateCommand(GraphCommand):
 
     def undoImpl(self):
         self.graph.updateEnabled = self.previousState
+
+
+class ConnectAnySetCommand(GraphCommand):
+    """
+    Create a new dynamic input attribute on a node by connecting a source attribute
+    to a AnySet.
+
+    When executed, a new attribute of the same type as the source is created on the
+    node (inserted before the AnySet) and the edge is established.
+    On undo, the edge is removed and the created attribute is deleted.
+    """
+
+    def __init__(self, graph, src, anySetAttribute, parent=None):
+        super().__init__(graph, parent)
+        self.srcAttrName = src.fullName
+        self.anySetAttribute = anySetAttribute.fullName
+        self.newAttrFullName = None
+        self.setText(f"Connect '{src.fullName}' to AnySet '{anySetAttribute.fullName}'")
+        self.newAttribute = None
+
+    def redoImpl(self) -> bool:
+
+        srcAttr = self.graph.attribute(self.srcAttrName)
+        anySetAttribute = self.graph.attribute(self.anySetAttribute)
+
+        # Create the new attribute on the node
+        newAttr = anySetAttribute.duplicateAttribute(srcAttr, isOutput=anySetAttribute.isOutput)
+        if newAttr is None:
+            return False
+
+        self.newAttrFullName = newAttr.fullName
+        self.newAttribute = newAttr
+
+        # Connect newly created attribute to the other one
+        try:
+            if anySetAttribute.isOutput:
+                self.graph.addEdge(newAttr, srcAttr)
+            else:
+                self.graph.addEdge(srcAttr, newAttr)
+        except Exception:
+            return False
+
+        return True
+
+    def undoImpl(self) -> bool:
+        if not self.newAttrFullName:
+            return True
+
+        newAttr = self.graph.attribute(self.newAttrFullName)
+        node = newAttr.node
+
+        # Disconnect the edge
+        newAttr.disconnectEdge()
+
+        anySetAttribute = self.graph.attribute(self.anySetAttribute)
+        anySetAttribute.removeAttribute(newAttr)
+
+        self.newAttrFullName = None
+        return True
 
 
 @contextmanager

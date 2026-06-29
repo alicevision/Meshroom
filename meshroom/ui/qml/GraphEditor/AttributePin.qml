@@ -30,7 +30,8 @@ RowLayout {
                                                       outputAnchor.y + outputAnchor.height / 2)
 
     readonly property bool isList: attribute && attribute.type === "ListAttribute"
-    readonly property bool isGroup: attribute && attribute.type === "GroupAttribute"
+    readonly property bool isCollapsable: attribute && attribute.isCollapsable === true
+    readonly property bool isDynamic: !!attribute.desc && !!attribute.desc.isCustomAttribute
     readonly property bool isConnected: attribute.hasAnyInputLinks || attribute.hasAnyOutputLinks
 
     signal childPinCreated(var childAttribute, var pin)
@@ -44,6 +45,16 @@ RowLayout {
     layoutDirection: Qt.LeftToRight
     spacing: 3
     height: attribute && attribute.isOutput ? outputAnchor.height : inputAnchor.height
+
+    function getCurrentAttributePinColor(hasChildrenConnected) {
+        if (root.isDynamic) {
+            return "transparent"
+        }
+        if (hasChildrenConnected) {
+            return Colors.sysPalette.iconText
+        }
+        return Colors.sysPalette.mid
+    }
 
     ToolTip {
         text: attribute.fullName + ": " + attribute.type
@@ -81,18 +92,14 @@ RowLayout {
             radius: root.isList ? 0 : width / 2
             Layout.alignment: Qt.AlignVCenter
 
-            border.color: {
-                if (innerInputAnchor.hasConnectedChildren)
-                    return Colors.sysPalette.text
-                return Colors.sysPalette.mid
-            }
+            border.color: getCurrentAttributePinColor(innerInputAnchor.hasConnectedChildren)
             color: Colors.sysPalette.base
 
             Rectangle {
                 id: innerInputAnchor
                 property bool linkEnabled: true
                 property bool hasConnectedChildren: {
-                    if (!root.isGroup || root.isConnected || !attribute)
+                    if (!isCollapsable || root.isConnected || !attribute)
                         return false
                     for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
                         if (attribute.flatStaticChildren[i].hasAnyInputLinks) {
@@ -102,6 +109,7 @@ RowLayout {
                     return false
                 }
                 visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || hasConnectedChildren ||
+                        root.isDynamic ||
                         (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
                 radius: root.isList ? 0 : 2
                 anchors.fill: parent
@@ -111,6 +119,8 @@ RowLayout {
                         return Colors.sysPalette.highlight
                     if (hasConnectedChildren)
                         return Colors.sysPalette.mid
+                    if (root.isDynamic)
+                        return "transparent"
                     return Colors.sysPalette.text
                 }
             }
@@ -128,7 +138,7 @@ RowLayout {
 
                 keys: [inputDragTarget.objectName]
                 onEntered: function(drag) {
-                    var validIncomingConnection = drag.source.attribute.validateIncomingConnection(inputDragTarget.attribute)
+                    var validIncomingConnection = inputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
                     // Check if attributes are compatible to create a valid connection
                     if (root.readOnly                                            // Cannot connect on a read-only attribute
                         || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
@@ -167,7 +177,7 @@ RowLayout {
                 readonly property alias nodeItem: root.nodeItem
                 readonly property bool isOutput: Boolean(attribute.isOutput)
                 readonly property alias isList: root.isList
-                readonly property alias isGroup: root.isGroup
+                readonly property alias isCollapsable: root.isCollapsable
                 property bool dragAccepted: false
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -291,10 +301,11 @@ RowLayout {
             label.horizontalAlignment: root.attribute && root.attribute.isOutput ? Text.AlignRight : Text.AlignLeft
             label.verticalAlignment: Text.AlignVCenter
             label.visible: true
+            label.font.italic: root.isDynamic || (!!attribute.root && !!attribute.root.desc && !!attribute.root.desc.isCustomAttribute)
 
             // Icon
             iconText: {
-                if (root.isGroup) {
+                if (root.isCollapsable) {
                     return root.expanded ? MaterialIcons.expand_more : MaterialIcons.chevron_right
                 }
                 return ""
@@ -320,18 +331,14 @@ RowLayout {
 
         Layout.alignment: Qt.AlignVCenter
 
-        border.color: {
-            if (innerOutputAnchor.hasConnectedChildren)
-                return Colors.sysPalette.text
-            return Colors.sysPalette.mid
-        }
+        border.color: getCurrentAttributePinColor(innerOutputAnchor.hasConnectedChildren)
         color: Colors.sysPalette.base
 
         Rectangle {
             id: innerOutputAnchor
             property bool linkEnabled: true
             property bool hasConnectedChildren: {
-                if (!root.isGroup || root.isConnected)
+                if (!root.isCollapsable || root.isConnected)
                     return false
                 for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
                     if (attribute.flatStaticChildren[i].hasAnyOutputLinks) {
@@ -402,7 +409,7 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: Boolean(attribute.isOutput)
             readonly property alias isList: root.isList
-            readonly property alias isGroup: root.isGroup
+            readonly property alias isCollapsable: root.isCollapsable
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter

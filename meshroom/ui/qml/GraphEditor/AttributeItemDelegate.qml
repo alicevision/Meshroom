@@ -175,7 +175,7 @@ RowLayout {
                             onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.evalValue))
                         }
 
-                        MenuItem { 
+                        MenuItem {
                             visible: attribute.isOutput && (attribute.is2dDisplayable || attribute.is3dDisplayable || attribute.isTextDisplayable)
                             height: visible ? implicitHeight : 0
                             text: {
@@ -299,6 +299,8 @@ RowLayout {
                 case "ListAttribute":
                     return listAttributeComponent
                 case "GroupAttribute":
+                    return groupAttributeComponent
+                case "AnySet":
                     return groupAttributeComponent
                 case "StringParam":
                     if (attribute.desc.semantic.includes('multiline'))

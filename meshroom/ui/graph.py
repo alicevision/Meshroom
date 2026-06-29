@@ -26,7 +26,7 @@ from PySide6.QtCore import (
 
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
-from meshroom.core.attribute import Attribute, ListAttribute, ShapeAttribute
+from meshroom.core.attribute import Attribute, AnySet, ListAttribute, ShapeAttribute
 from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
@@ -1300,7 +1300,11 @@ class UIGraph(QObject):
 
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
-        if isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
+        if isinstance(src, AnySet):
+            self.push(commands.ConnectAnySetCommand(self._graph, src=dst, anySetAttribute=src))
+        elif isinstance(dst, AnySet):
+            self.push(commands.ConnectAnySetCommand(self._graph, src=src, anySetAttribute=dst))
+        elif isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
             self._addEdge(src.at(0), dst)
         elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
             with self.groupedGraphModification(f"Insert and Add Edge on {dst.fullName}"):
@@ -1660,7 +1664,7 @@ class UIGraph(QObject):
 
     sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, constant=True)
     lockedChanged = Signal()
-    
+
     imageListChanged = Signal()
 
     selectedNodeChanged = Signal()

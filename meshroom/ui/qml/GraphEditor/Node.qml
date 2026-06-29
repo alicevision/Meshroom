@@ -35,7 +35,7 @@ Item {
     /// Shake Relevance
     readonly property double maxAmplitude: 500.0;
     readonly property int shakeThreshold: 5;
-    
+
     property int shakeCounter: 0;
     property bool shaking: false;
     property int shakeDetectionInterval: 1000;  // 1 Second to complete the shake else the counter is reset
@@ -147,7 +147,7 @@ Item {
          * Detects a shake if a the node has been moved across the originally captured x and y positions
          * back and forth a given number of times specified by the amplitude.
          */
-        
+
         if (!root.shaking) {
             return;
         }
@@ -252,10 +252,11 @@ Item {
         if (Boolean(attribute.enabled)) {
             // If the parent is a GroupAttribute, use the status of the parent's pin to determine visibility
             // UNLESS the child attribute is already connected with a visible edge
-            if (attribute.root && attribute.root.baseType === "GroupAttribute") {
-                var visible = Boolean(parentPins.get(attribute.root.name))
-                if (!visible && parentPins.has(attribute.name) && parentPins.get(attribute.name) === true) {
-                    parentPins.set(attribute.name, false)
+            if (attribute.root && attribute.root.isCollapsable) {
+
+                var visible = Boolean(parentPins.get(attribute.root.fullName))
+                if (!visible && parentPins.has(attribute.fullName) && parentPins.get(attribute.fullName) === true) {
+                    parentPins.set(attribute.fullName, false)
                     pin.expanded = false
                 }
                 return visible
@@ -276,17 +277,17 @@ Item {
             if (attr.isOutput == isOutput) {
                 // Add the attribute to the model
                 attributes.push(attr)
-                if (attr.baseType === "GroupAttribute") {
-                    // If it is a GroupAttribute, initialize its pin status
-                    parentPins.set(attr.name, false)
+                if (attr.isCollapsable) {
+                    // initialize its pin status
+                    parentPins.set(attr.fullName, false)
                 }
 
                 // Check and add any child this attribute might have
                 attr.flatStaticChildren.forEach((child) =>
                     {
                         attributes.push(child)
-                        if (child.baseType === "GroupAttribute") {
-                            parentPins.set(child.name, false)
+                        if (child.isCollapsable && !parentPins.has(child.fullName)) {
+                            parentPins.set(child.fullName, false)
                         }
                     }
                 )
@@ -344,7 +345,7 @@ Item {
             }
             border.color: {
                 if (hasWarnings === true)
-                    return Colors.warning                    
+                    return Colors.warning
                 if (root.mainSelected)
                     return activePalette.highlight
                 if (root.selected)
@@ -698,8 +699,8 @@ Item {
                                     active: Boolean(modelData.isOutput && modelData.desc.visible)
                                     visible: {
                                         if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
-                                            if (modelData.root && modelData.root.baseType === "GroupAttribute") {
-                                                return Boolean(outputs.parentPins.get(modelData.root.name) ||
+                                            if (modelData.root && modelData.root.isCollapsable) {
+                                                return Boolean(outputs.parentPins.get(modelData.root.fullName) ||
                                                                modelData.hasAnyOutputLinks ||
                                                                modelData.hasAnyInputLinks)
                                             }
@@ -737,8 +738,8 @@ Item {
 
                                         onClicked: function() {
                                             expanded = !expanded
-                                            if (outputs.parentPins.has(modelData.name)) {
-                                                outputs.parentPins.set(modelData.name, expanded)
+                                            if (outputs.parentPins.has(modelData.fullName)) {
+                                                outputs.parentPins.set(modelData.fullName, expanded)
                                                 outputs.parentPinsUpdated()
                                             }
                                         }
@@ -773,8 +774,8 @@ Item {
                                     active: !modelData.isOutput && modelData.exposed && modelData.desc.visible
                                     visible: {
                                         if (Boolean(modelData.enabled)) {
-                                            if (modelData.root && modelData.root.baseType === "GroupAttribute") {
-                                                return Boolean(inputs.parentPins.get(modelData.root.name) ||
+                                            if (modelData.root && (modelData.root.isCollapsable) ) {
+                                                return Boolean(inputs.parentPins.get(modelData.root.fullName) ||
                                                                modelData.hasAnyOutputLinks ||
                                                                modelData.hasAnyInputLinks)
                                             }
@@ -815,8 +816,8 @@ Item {
 
                                         onClicked: function() {
                                             expanded = !expanded
-                                            if (inputs.parentPins.has(modelData.name)) {
-                                                inputs.parentPins.set(modelData.name, expanded)
+                                            if (inputs.parentPins.has(modelData.fullName)) {
+                                                inputs.parentPins.set(modelData.fullName, expanded)
                                                 inputs.parentPinsUpdated()
                                             }
                                         }
@@ -877,7 +878,7 @@ Item {
                                         visible: {
                                             if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
                                                 if (modelData.root && modelData.root.baseType === "GroupAttribute") {
-                                                    return Boolean(inputParams.parentPins.get(modelData.root.name) ||
+                                                    return Boolean(inputParams.parentPins.get(modelData.root.fullName) ||
                                                                    modelData.hasAnyOutputLinks ||
                                                                    modelData.hasAnyInputLinks)
                                                 }
@@ -925,8 +926,8 @@ Item {
 
                                             onClicked: function() {
                                                 expanded = !expanded
-                                                if (inputParams.parentPins.has(modelData.name)) {
-                                                    inputParams.parentPins.set(modelData.name, expanded)
+                                                if (inputParams.parentPins.has(modelData.fullName)) {
+                                                    inputParams.parentPins.set(modelData.fullName, expanded)
                                                     inputParams.parentPinsUpdated()
                                                 }
                                             }

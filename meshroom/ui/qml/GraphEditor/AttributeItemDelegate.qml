@@ -937,25 +937,33 @@ RowLayout {
                                             : 0
                     ScrollBar {
                         id: hBar
-                        orientation:  Qt.Horizontal
                         anchors.left:        fixedStrip.right
                         anchors.right:       outerFrame.right
                         anchors.bottom:      outerFrame.bottom
                         anchors.rightMargin: vBar.width
+                        orientation: Qt.Horizontal
                         policy: ScrollBar.AlwaysOn
-                        size: (outerFrame.width - vBar.width) /
-                              Math.max(tableLayout.totalTableWidth, 1)
+                        size: flickable.width  / Math.max(tableLayout.totalTableWidth,  1)
+                        position: flickable.contentX / Math.max(tableLayout.totalTableWidth - flickable.width, 1)
+                        onPositionChanged: {
+                            if (!pressed) return
+                            flickable.contentX = position * Math.max(tableLayout.totalTableWidth - flickable.width, 1)
+                        }
                     }
                     ScrollBar {
                         id: vBar
-                        orientation: Qt.Vertical
-                        anchors.top:    outerFrame.top
-                        anchors.bottom: outerFrame.bottom
-                        anchors.right:  outerFrame.right
+                        anchors.top:          outerFrame.top
+                        anchors.bottom:       outerFrame.bottom
+                        anchors.right:        outerFrame.right
                         anchors.bottomMargin: hBar.height
+                        orientation: Qt.Vertical
                         policy: ScrollBar.AlwaysOn
-                        size: (outerFrame.height - hBar.height) /
-                              Math.max(tableLayout.totalTableHeight + 30, 1)
+                        size: flickable.height / Math.max(tableLayout.totalTableHeight + 30, 1)
+                        position: flickable.contentY / Math.max(tableLayout.totalTableHeight + 30 - flickable.height, 1)
+                        onPositionChanged: {
+                            if (!pressed) return
+                            flickable.contentY = position * Math.max(tableLayout.totalTableHeight + 30 - flickable.height, 1)
+                        }
                     }
                     Item {
                         id: fixedStrip
@@ -968,7 +976,7 @@ RowLayout {
                         Column {
                             spacing: 1
                             width: parent.width
-                            y: 31 - vBar.position * (tableLayout.totalTableHeight + 30)
+                            y: 31 - flickable.contentY
                             Repeater {
                                 model: attribute ? attribute.value : null
                                 delegate: Item {
@@ -992,8 +1000,8 @@ RowLayout {
                             }
                         }
                     }
-                    Item {
-                        id: viewport
+                    Flickable {
+                        id: flickable
                         anchors.left:         fixedStrip.right
                         anchors.top:          outerFrame.top
                         anchors.right:        outerFrame.right
@@ -1001,12 +1009,27 @@ RowLayout {
                         anchors.rightMargin:  vBar.width
                         anchors.bottomMargin: hBar.height
                         clip: true
+                        contentWidth:  tableLayout.totalTableWidth
+                        contentHeight: tableLayout.totalTableHeight + 30
+                        interactive: true
+                        WheelHandler {
+                            onWheel: function(event) {
+                                if (event.modifiers & Qt.ControlModifier) {
+                                    flickable.contentX = Math.max(0,
+                                        Math.min(flickable.contentWidth  - flickable.width,
+                                                 flickable.contentX - event.angleDelta.y / 120 * 40))
+                                } else {
+                                    flickable.contentY = Math.max(0,
+                                        Math.min(flickable.contentHeight - flickable.height,
+                                                 flickable.contentY - event.angleDelta.y / 120 * 40))
+                                }
+                                event.accepted = true
+                            }
+                        }
                         Item {
                             id: content
                             width:  tableLayout.totalTableWidth
                             height: tableLayout.totalTableHeight + 30
-                            x: -hBar.position * tableLayout.totalTableWidth
-                            y: -vBar.position * (tableLayout.totalTableHeight + 30)
                             Row {
                                 id: headerRow
                                 spacing: 1
@@ -1108,18 +1131,19 @@ RowLayout {
                                             height: 6
                                             anchors.bottom: parent.bottom
                                             cursorShape: Qt.SizeVerCursor
-                                            property real startY: 0
-                                            property real startH: 0
+                                            // Prevent Flickable from stealing the drag
+                                            preventStealing: true
+                                            property real lastY: 0
                                             onPressed: function(mouse) {
-                                                var stablePoint = mapToItem(tableLayout, mouse.x, mouse.y)
-                                                startY = stablePoint.y
-                                                startH = tableLayout.rowHeights[rowItem.index]
+                                                lastY = mapToGlobal(mouse.x, mouse.y).y
                                             }
                                             onPositionChanged: function(mouse) {
                                                 if (!pressed) return
-                                                var stablePoint = mapToItem(tableLayout, mouse.x, mouse.y)
-                                                var newH = Math.max(20, startH + (stablePoint.y - startY))
-                                                var arr  = tableLayout.rowHeights.slice()
+                                                var globalY = mapToGlobal(mouse.x, mouse.y).y
+                                                var delta = globalY - lastY
+                                                lastY = globalY
+                                                var newH = Math.max(20, tableLayout.rowHeights[rowItem.index] + delta)
+                                                var arr = tableLayout.rowHeights.slice()
                                                 arr[rowItem.index] = newH
                                                 tableLayout.rowHeights = arr
                                             }

@@ -96,9 +96,10 @@ class GenerateMeshroomScene(desc.Node):
         return overrides
 
     def process(self, node):
-        templateScene = node.templatePath.getValueStr(withQuotes=False)
+        templateScene = node.templatePath.getValueStr(withQuotes=False).strip()
+        templateScene = str(Path(templateScene).resolve())
         if not templateScene or not Path(templateScene).exists():
-            raise ValueError(f"{node} Invalid template scene: {templateScene}")
+            raise ValueError(f"{node} Invalid template scene: '{templateScene}'")
         inputOverrides = self.get_overrides(node.inputOverrides)
         paramOverrides = self.get_overrides(node.paramOverrides)
         sceneDestination = str(node.sceneDestination.getValueStr(withQuotes=False))

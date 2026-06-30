@@ -1017,8 +1017,7 @@ RowLayout {
                                         required property int    index
                                         required property string modelData
                                         width:  tableLayout.columnWidths[index] || 100
-                                        height: 30      
-
+                                        height: 30
                                         Rectangle {
                                             anchors.fill: parent
                                             color: "#2d2d2d"
@@ -1041,12 +1040,14 @@ RowLayout {
                                             property real startX: 0
                                             property real startW: 0
                                             onPressed: function(mouse) {
-                                                startX = mouse.x
+                                                var stablePoint = mapToItem(tableLayout, mouse.x, mouse.y)
+                                                startX = stablePoint.x
                                                 startW = tableLayout.columnWidths[headerCell.index]
                                             }
                                             onPositionChanged: function(mouse) {
                                                 if (!pressed) return
-                                                var newW = Math.max(40, startW + (mouse.x - startX))
+                                                var stablePoint = mapToItem(tableLayout, mouse.x, mouse.y)
+                                                var newW = Math.max(40, startW + (stablePoint.x - startX))
                                                 var arr  = tableLayout.columnWidths.slice()
                                                 arr[headerCell.index] = newW
                                                 tableLayout.columnWidths = arr
@@ -1110,12 +1111,14 @@ RowLayout {
                                             property real startY: 0
                                             property real startH: 0
                                             onPressed: function(mouse) {
-                                                startY = mouse.y
+                                                var stablePoint = mapToItem(tableLayout, mouse.x, mouse.y)
+                                                startY = stablePoint.y
                                                 startH = tableLayout.rowHeights[rowItem.index]
                                             }
                                             onPositionChanged: function(mouse) {
                                                 if (!pressed) return
-                                                var newH = Math.max(20, startH + (mouse.y - startY))
+                                                var stablePoint = mapToItem(tableLayout, mouse.x, mouse.y)
+                                                var newH = Math.max(20, startH + (stablePoint.y - startY))
                                                 var arr  = tableLayout.rowHeights.slice()
                                                 arr[rowItem.index] = newH
                                                 tableLayout.rowHeights = arr

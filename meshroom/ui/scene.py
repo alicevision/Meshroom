@@ -330,12 +330,6 @@ class Scene(UIGraph):
                     "ApplyCalibration", "SfMExpanding", "SfMBootstraping"],
         # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
-        # Nodes that can be used to provide features folders to the UI
-        "featureProvider": ["FeatureExtraction", "FeatureMatching", "StructureFromMotion", "RomaReducer"],
-        # Nodes that can be used to provide matches folders to the UI
-        "matchProvider": ["FeatureMatching", "StructureFromMotion", "RomaReducer"],
-        # Nodes that can be used to provide tracks files to the UI
-        "trackProvider": ["TracksBuilding", "SfMBootstraping", "SfMExpanding"]
     }
     # Nodes accessed from the UI
     uiNodes = [
@@ -418,9 +412,16 @@ class Scene(UIGraph):
         # For all nodes declared to be accessed by the UI
         usedNodeTypes = {j for i in self.activeNodeCategories.values() for j in i}
         allLoadedNodeTypes = set(meshroom.core.pluginManager.getRegisteredNodePlugins().keys())
+
+        for nodeType, nodePlugin in meshroom.core.pluginManager.getRegisteredNodePlugins().items():
+            nodeDesc = nodePlugin.nodeDescriptor 
+            for interface in nodeDesc.interfaces:
+                if not self._activeNodes.get(interface):
+                    self._activeNodes.add(ActiveNode(interface, parent=self))
+
         allUiNodes = set(self.uiNodes) | usedNodeTypes | allLoadedNodeTypes
 
-        for nodeType in allUiNodes:
+        for nodeType in allUiNodes:            
             self._activeNodes.add(ActiveNode(nodeType, parent=self))
 
     def clearActiveNodes(self):
@@ -985,11 +986,38 @@ class Scene(UIGraph):
 
     pluginsReloaded = Signal(list, list)
 
+    @Slot(str, str, result="QVariant")
+    def callInterfaceMethod(self, interfaceName, methodName):
+        """Call a method defined by an interface on the active node for that interface.
+
+        Args:
+            interfaceName: name of the interface (e.g. "FeatureProviderInterface")
+            methodName: name of the method to call on the nodeDesc (e.g. "getFeaturesFolders")
+
+        Returns:
+            The result of the method call, or None if the interface/method is not available.
+        """
+        entry = self.activeNodes.get(interfaceName)
+        if not entry or not entry.node:
+            return None
+        node = entry.node
+        method = getattr(node.nodeDesc, methodName, None)
+        if callable(method):
+            try:
+                return method(node)
+            except Exception as e:
+                logging.error(f"callInterfaceMethod: {interfaceName}.{methodName} raised: {e}")
+                return None
+        return None
+
     @Slot(QObject)
     def setActiveNode(self, node, categories=True, inputs=True):
         """ Set node as the active node of its type and of its categories.
         Also upgrade related input nodes.
         """
+        for interface in node.nodeDesc.interfaces:
+            self.activeNodes.getr(interface).node = node
+
         if categories:
             for category, nodeTypes in self.activeNodeCategories.items():
                 if node.nodeType in nodeTypes:

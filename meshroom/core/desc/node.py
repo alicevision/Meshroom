@@ -18,6 +18,7 @@ from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
 from .attribute import Attribute, ChoiceParam, ColorParam, Flow, IntParam, StringParam, ListAttribute
+from .interface import InterfacedClass
 
 _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
@@ -212,7 +213,7 @@ class InternalAttributesFactory:
         return cls.FLOW_OUT
 
 
-class BaseNode(object):
+class BaseNode(InterfacedClass):
     """
     """
     cpu = Level.NORMAL

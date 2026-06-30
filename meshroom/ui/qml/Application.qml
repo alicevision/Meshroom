@@ -1509,6 +1509,23 @@ Page {
                                 }
                             }
                         }
+                        // TemplateBadge
+                        MaterialToolButton {
+
+                            readonly property string templateFilePath: {
+                                const coreGraph = _currentScene ? _currentScene.graph : null
+                                const templatePath = coreGraph ? coreGraph.templateFilepath : ""
+                                return templatePath
+                            }
+
+                            text: MaterialIcons.library_books
+                            visible: Boolean(templateFilePath)
+                            font.pointSize: 11
+                            padding: 2
+                            checked: true
+                            ToolTip.text: `Current graph is a template: ${templateFilePath}`
+                            ToolTip.visible: hovered
+                        }
                     }
 
                     GraphEditor {

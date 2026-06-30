@@ -509,7 +509,10 @@ class Scene(UIGraph):
     @Slot(QUrl, result=bool)
     def loadTemplate(self, url):
         localFile = self._urlToLocalFile(url)
-        return self._loadWithErrorReport(self._initFromTemplateWithCopyOutputs, localFile)
+        loaded = self._loadWithErrorReport(self._initFromTemplateWithOutputNodes, localFile)
+        if loaded:
+            self.graph.setTemplateFilepath(localFile)
+        return loaded
 
     @staticmethod
     def _urlToLocalFile(url) -> str:

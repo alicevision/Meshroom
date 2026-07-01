@@ -20,7 +20,7 @@ LOGGER = logging.getLogger("MeshroomApi")
 
 def loadGraph(filePath, strictCompatibility=False) -> Graph:
     g = meshroomGraph.loadGraph(filePath, strictCompatibility=strictCompatibility)
-    compatibilityNodesNames = [n.name for n in g._compatibilityNodes]
+    compatibilityNodesNames = [n.name for n in g.compatibilityNodes]
     if compatibilityNodesNames:
         LOGGER.warning(f"Scene ({filePath}) loaded with compatibility nodes : {compatibilityNodesNames}")
     return g
@@ -34,15 +34,11 @@ def getNodes(graph: Graph, filterTypes: Optional[list[str]]=None) -> list[BaseNo
 
 
 def getBackdropNodes(graph: Graph) -> list[BackdropNode]:
-    return getNodes(graph, filterTypes="Backdrop")
+    return getNodes(graph, filterTypes=["Backdrop"])
 
 
 def getNode(graph: Graph, instanceName: str) -> BaseNode:
-    nodes = getNodes(graph)
-    for node in nodes:
-        if node.name == instanceName:
-            return node
-    return None
+    return graph.node(instanceName)
 
 
 def getNodesInsideBackdrop(graph: Graph, backdropNode: BackdropNode):
@@ -82,8 +78,8 @@ def getNodesInsideBackdrop(graph: Graph, backdropNode: BackdropNode):
 
 def getNodeAttributes(node: BaseNode, internalAttributes=False, allAttributes=False) -> list[Attribute]:
     attributes = []
-    if not internalAttributes or allAttributes:
-        attributes.extend([v for v in node.getAttributes().values()])
-    if internalAttributes or allAttributes:
-        attributes.extend([v for v in node.getInternalAttributes().values()])
+    if allAttributes or not internalAttributes:
+        attributes.extend(node.getAttributes().values())
+    if allAttributes or internalAttributes:
+        attributes.extend(node.getInternalAttributes().values())
     return attributes

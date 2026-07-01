@@ -19,6 +19,7 @@ def setLoglevel(level: Union[int, str]):
         level = logging._nameToLevel.get(level.upper(), None)
     if not isinstance(level, int):
         LOGGER.warning(f"Cannot set level {level} : not an integer.")
+        return
     logging.getLogger().setLevel(level)
     levelName = logging.getLevelName(int(level))
     LOGGER.info(f"Meshroom log level has been set to {levelName}.")
@@ -48,7 +49,7 @@ def listPlugins():
 
 def registerPlugin(plugin):
     pluginManager.addPlugin(plugin, registerNodePlugins=True)
-    LOGGER.info(f"Register Plugin {plugin._name}")
+    LOGGER.info(f"Register Plugin {plugin.name}")
 
 
 def unregisterPlugin(name):

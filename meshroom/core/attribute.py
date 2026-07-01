@@ -1833,6 +1833,26 @@ class AnySet(GroupAttribute):
             self._value.remove(attribute)
             self.flatStaticChildrenChanged.emit()
 
+    def insertAttribute(self, serializedAttribute: dict, index: int) -> Attribute | None:
+        """Restore a serialized child attribute at the requested position."""
+        attributeDesc = attributeDescriptionFactory(serializedAttribute)
+        if attributeDesc is None:
+            return None
+
+        restoredAttribute = attributeFactory(
+            description=attributeDesc,
+            value=serializedAttribute.get("value", None),
+            isOutput=self.isOutput,
+            node=self.node,
+            root=self
+        )
+        if restoredAttribute.isOutput:
+            restoredAttribute._isOutput = True
+            restoredAttribute._desc._isDynamicValue = True
+        self._value.insert(index, restoredAttribute)
+        self.flatStaticChildrenChanged.emit()
+        return restoredAttribute
+
     def _renameAttributeDescriptionInPlace(self, attributeDesc: AttributeDescription, indexPattern:str="{name}_{index}"):
         """ If an attribute already exists with the same name,
             the attributeDescription name and label are indexed with a suffix using the givnen pattern "{name}_{index}" by default"

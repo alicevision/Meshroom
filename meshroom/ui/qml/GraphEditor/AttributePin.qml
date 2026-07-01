@@ -32,6 +32,7 @@ RowLayout {
     readonly property bool isList: attribute && attribute.type === "ListAttribute"
     readonly property bool isCollapsable: attribute && attribute.isCollapsable === true
     readonly property bool isDynamic: !!attribute.desc && !!attribute.desc.isCustomAttribute
+    readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     readonly property bool isConnected: attribute.hasAnyInputLinks || attribute.hasAnyOutputLinks
 
     signal childPinCreated(var childAttribute, var pin)
@@ -40,6 +41,17 @@ RowLayout {
     signal pressed(var mouse)
     signal edgeAboutToBeRemoved(var input)
     signal clicked()
+
+    Component {
+        id: removeAnySetAttributeMenuComp
+        Menu {
+            MenuItem {
+                text: "Remove Attribute"
+                enabled: root.isAnySetChild
+                onTriggered: _currentScene.removeAnySetAttribute(attribute)
+            }
+        }
+    }
 
     objectName: attribute ? attribute.name + "." : ""
     layoutDirection: Qt.LeftToRight
@@ -318,6 +330,17 @@ RowLayout {
             property int groupPaddingWidth: root.attribute.depth * 10
             icon.leftPadding: root.attribute.isOutput ? 0 : groupPaddingWidth
             icon.rightPadding: root.attribute.isOutput ? groupPaddingWidth : 0
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.isAnySetChild
+            acceptedButtons: Qt.RightButton
+            onClicked: function(mouse) {
+                var menu = removeAnySetAttributeMenuComp.createObject(nameContainer)
+                menu.parent = nameContainer
+                menu.popup()
+            }
         }
     }
 

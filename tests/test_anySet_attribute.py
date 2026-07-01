@@ -100,6 +100,32 @@ def test_remove_dynamic_input():
     assert(dynamicNode.ins.input is None)
 
 
+def test_anyset_attribute_can_be_restored_with_edges():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+    srcNode.input.connectTo(dynamicNode.ins.input)
+
+    serializedAttribute = dynamicNode.ins.input.asDict()
+    index = list(dynamicNode.ins.value).index(dynamicNode.ins.input)
+    edgeNames = [(edge.src.fullName, edge.dst.fullName) for edge in graph.edges.values()]
+
+    graph.removeEdge(dynamicNode.ins.input)
+    dynamicNode.ins.removeAttribute(dynamicNode.ins.input)
+
+    assert dynamicNode.ins.input is None
+    assert not graph.edges
+
+    dynamicNode.ins.insertAttribute(serializedAttribute, index)
+    for srcName, dstName in edgeNames:
+        graph.addEdge(graph.anyAttribute(srcName), graph.anyAttribute(dstName))
+
+    assert isinstance(dynamicNode.ins.input, Attribute)
+    assert dynamicNode.ins.input.isLink
+    assert dynamicNode.ins.input.inputLink is srcNode.input
+
+
 # ---------------------------------------------------------------------------
 # Serialization / deserialization tests
 # ---------------------------------------------------------------------------

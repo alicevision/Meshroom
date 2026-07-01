@@ -576,6 +576,55 @@ class ListAttributeRemoveCommand(GraphCommand):
         listAttribute.insert(self.index, self.value)
 
 
+class RemoveAnySetAttributeCommand(GraphCommand):
+    def __init__(self, graph, attribute, parent=None):
+        super().__init__(graph, parent)
+        anySetAttribute = attribute.root
+        assert isinstance(anySetAttribute, AnySet)
+        self.anySetAttrName = anySetAttribute.fullName
+        self.index = list(anySetAttribute.value).index(attribute)
+        self.value = attribute.asDict()
+        self.edges = self._connectedEdgeNames(attribute)
+        self.setText(f"Remove {attribute.fullName}")
+
+    def _connectedEdgeNames(self, attribute):
+        attributes = [attribute] + attribute.flatStaticChildren
+        return [
+            (edge.src.fullName, edge.dst.fullName)
+            for edge in self.graph.edges.values()
+            if edge.src in attributes or edge.dst in attributes
+        ]
+
+    def redoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        attribute = self.graph.attribute(f"{self.anySetAttrName}.{self.value['name']}")
+        if anySetAttribute is None or attribute is None:
+            return False
+
+        for _, dstName in self.edges:
+            dstAttr = self.graph.anyAttribute(dstName)
+            if dstAttr is not None:
+                self.graph.removeEdge(dstAttr)
+        anySetAttribute.removeAttribute(attribute)
+        return True
+
+    def undoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        if anySetAttribute is None:
+            return False
+
+        restoredAttribute = anySetAttribute.insertAttribute(self.value, self.index)
+        if restoredAttribute is None:
+            return False
+
+        for srcName, dstName in self.edges:
+            srcAttr = self.graph.anyAttribute(srcName)
+            dstAttr = self.graph.anyAttribute(dstName)
+            if srcAttr is not None and dstAttr is not None:
+                self.graph.addEdge(srcAttr, dstAttr)
+        return True
+
+
 class RemoveImagesCommand(GraphCommand):
     """
     Remove all the images from one or several CameraInit nodes as a single operation.

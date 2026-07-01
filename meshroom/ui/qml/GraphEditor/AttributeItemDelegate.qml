@@ -25,6 +25,7 @@ RowLayout {
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink &&
                                      !readOnly && !(attribute.keyable && _currentScene.selectedViewId === "-1")
+    readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     property var errorMessages: attribute.errorMessages
 
     signal doubleClicked(var mouse, var attr)
@@ -36,6 +37,17 @@ RowLayout {
         target: attribute
         function onValueChanged() {
             root.errorMessages = attribute.errorMessages
+        }
+    }
+
+    Component {
+        id: removeAnySetAttributeMenuComp
+        Menu {
+            MenuItem {
+                text: "Remove Attribute"
+                enabled: root.isAnySetChild
+                onTriggered: _currentScene.removeAnySetAttribute(attribute)
+            }
         }
     }
 
@@ -186,6 +198,18 @@ RowLayout {
                                 return "Show in 3D Viewer"
                             }
                             onClicked: root.showInViewer(attribute)
+                        }
+
+                        MenuSeparator {
+                            visible: root.isAnySetChild
+                            height: visible ? implicitHeight : 0
+                        }
+
+                        MenuItem {
+                            visible: root.isAnySetChild
+                            height: visible ? implicitHeight : 0
+                            text: "Remove Attribute"
+                            onTriggered: _currentScene.removeAnySetAttribute(attribute)
                         }
 
                     }
@@ -873,8 +897,17 @@ RowLayout {
                         MouseArea {
                             id: labelMA
                             anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
                             hoverEnabled: true
-                            onClicked: groupItem.expanded = !groupItem.expanded
+                            onClicked: function(mouse) {
+                                if (mouse.button == Qt.RightButton && root.isAnySetChild) {
+                                    var menu = removeAnySetAttributeMenuComp.createObject(labelMA)
+                                    menu.parent = labelMA
+                                    menu.popup()
+                                    return
+                                }
+                                groupItem.expanded = !groupItem.expanded
+                            }
                             onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
                         }
                     }

@@ -1,15 +1,9 @@
 import os
-import tempfile
 import pytest
 from collections import defaultdict
 
-from meshroom.core.graph import Graph
-from meshroom.core import desc, cacheFolderName
-from meshroom.core.graph import Graph, loadGraph
-from meshroom.core.node import CompatibilityIssue, CompatibilityNode
+from meshroom.core.graph import loadGraph
 from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
-from .utils import registerNodeDesc, registeredNodeTypes, overrideNodeTypeVersion
-
 from meshroom import api as meshroomApi
 
 
@@ -25,7 +19,7 @@ def sceneFilepath():
     folder = os.path.join(os.path.dirname(__file__), "resources")
     scene = "templateGraphWithBackdrops.mg"
     path = os.path.join(folder, scene)
-    return path
+    return os.path.normpath(path)
 
 
 def loadGraph(path, failedOnCompatbility=False):

@@ -20,8 +20,9 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 .
 ├── .github/                    # CI/CD workflows, issue templates, and automated testing setups
 ├── .vscode/                    # Shared VS Code debugging and workspace configurations
-├── bin/                        # CLI entry points, packaged as executables in setup.py (batch, compute,
-│                               # createChunks, info, newNodeType, statistics, status, submit).
+├── bin/                        # CLI entry points, packaged as executables in setup.py (meshroom_batch,
+│                               # meshroom_compute, meshroom_createChunks, meshroom_info, meshroom_newNodeType,
+│                               # meshroom_statistics, meshroom_status, meshroom_submit).
 │                               # The GUI has NO bin/ script — launch it with ./start.sh (see "Run the app").
 ├── docker/                     # Dockerfiles for containerized environments (Rocky Linux, Ubuntu, etc.)
 ├── docs/                       # Documentation resources, developer guides, and illustrations

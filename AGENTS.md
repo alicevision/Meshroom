@@ -65,7 +65,7 @@ A few distinctions are easy to confuse. Keep them straight before changing engin
 * **Supported Python versions:** Target 3.9–3.11. The full test suite runs on **3.11** (Linux + Windows) in CI; `meshroom_compute` (`bin/meshroom_compute`) additionally gets a `-h` smoke test on **3.9**, the minimum supported version. Avoid syntax/features newer than 3.9 in any code reachable from it (`meshroom/core/`, CLI entry points).
 * **Lint:** Run `flake8 . --max-line-length=127` locally. CI ([.github/workflows/run-tests.yml](.github/workflows/run-tests.yml)) runs two passes: a **hard-failing** one for real errors (`--select=E9,F63,F7,F82` — syntax/undefined names) and a **non-blocking** style pass (`--exit-zero --max-complexity=10 --max-line-length=127`). Keep both clean; the [Code Style](#code-style) section lists the specific style warnings to avoid.
 * **Tests:** `pytest tests/` from the repo root. Add/run targeted tests with `pytest tests/path/to/test_file.py::test_name`.
-* **Run the app:** There is no `bin/` script for the GUI. Launch it with `./start.sh` (sets `MESHROOM_ROOT`/`PYTHONPATH`, then runs `python3 meshroom/ui`), or run `python3 meshroom/ui` directly. For headless pipeline runs use `bin/meshroom_batch`. Manually verify UI/pipeline changes this way before reporting them done.
+* **Run the app:** There is no `bin/` script for the GUI. Launch it with `./start.sh` (or `start.bat` on Windows) (sets `MESHROOM_ROOT`/`PYTHONPATH`, then runs `python3 meshroom/ui`), or run `python3 meshroom/ui` directly. For headless pipeline runs use `bin/meshroom_batch`. Manually verify UI/pipeline changes this way before reporting them done.
 
 ## Code Style
 

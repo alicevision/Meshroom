@@ -68,9 +68,11 @@ class TestMeshroomApi:
         assert "InputFile" in nodes
 
     def test_api_loadGraph(self, sceneFilepath):
+        def assertPathsAreEqual(p1, p2):
+            assert os.path.normpath(p1) == os.path.normpath(p2)
         g = loadGraph(sceneFilepath, failedOnCompatbility=True)
-        assert g.filepath == sceneFilepath
-        assert os.path.dirname(g.cacheDir) == os.path.dirname(sceneFilepath)
+        assertPathsAreEqual(g.filepath, sceneFilepath)
+        assertPathsAreEqual(os.path.dirname(g.cacheDir), os.path.dirname(sceneFilepath))
 
     def test_api_loadGraphRaiseOnCompatibility(self, sceneFilepath):
         node = getInputFileNodePlugin()

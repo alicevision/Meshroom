@@ -541,20 +541,19 @@ Item {
                     property bool isValidEdge: src != null && dst != null
                     visible: isValidEdge && src.visible && dst.visible
 
-                    property bool forLoop: {
-                        if (src != null && dst != null) {
-                            return src.attribute.type === "ListAttribute" && dst.attribute.type != "ListAttribute"
-                        }
-                        return false
-                    }
+                    property var loopSource: edge.src && edge.src.root && edge.src.root.value ? edge.src.root : null
+                    property bool forLoop: src != null && dst != null &&
+                                           loopSource != null &&
+                                           src.attribute.type === "ListAttribute" &&
+                                           dst.attribute.type != "ListAttribute"
 
                     property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge === edge)
 
                     edge: object
                     isForLoop: forLoop
-                    loopSize: forLoop ? edge.src.root.value.count : 0
+                    loopSize: forLoop ? loopSource.value.count : 0
 
-                    iteration: forLoop ? edge.src.root.value.indexOf(edge.src) : 0
+                    iteration: forLoop ? loopSource.value.indexOf(edge.src) : 0
                     color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
                     thickness: {
                         if (forLoop) {

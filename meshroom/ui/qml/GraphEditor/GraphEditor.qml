@@ -503,6 +503,14 @@ Item {
 
                         // Get the first visible parent of "attribute"
                         let dstAttributeDelegate = attributeToDelegate[attribute.fullName]
+                        if (!dstAttributeDelegate) {
+                            for (const key in attributeToDelegate) {
+                                if (attributeToDelegate[key].attribute === attribute) {
+                                    dstAttributeDelegate = attributeToDelegate[key]
+                                    break
+                                }
+                            }
+                        }
 
                         if (dstAttributeDelegate && dstAttributeDelegate.visible) {
                             return dstAttributeDelegate
@@ -1583,8 +1591,14 @@ Item {
 
     function unregisterAttributePin(attribute, pin) {
         const attributeToDelegate = Object.assign({}, root._attributeToDelegate)
-        if (attributeToDelegate[attribute.fullName] === pin) {
-            delete attributeToDelegate[attribute.fullName]
+        let updated = false
+        for (const key in attributeToDelegate) {
+            if (attributeToDelegate[key] === pin) {
+                delete attributeToDelegate[key]
+                updated = true
+            }
+        }
+        if (updated) {
             root._attributeToDelegate = attributeToDelegate
         }
     }

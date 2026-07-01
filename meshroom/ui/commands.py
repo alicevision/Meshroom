@@ -625,6 +625,38 @@ class RemoveAnySetAttributeCommand(GraphCommand):
         return True
 
 
+class RenameAnySetAttributeCommand(GraphCommand):
+    def __init__(self, graph, attribute, name, label, parent=None):
+        super().__init__(graph, parent)
+        anySetAttribute = attribute.root
+        assert isinstance(anySetAttribute, AnySet)
+        self.anySetAttrName = anySetAttribute.fullName
+        self.oldName = attribute.name
+        self.oldLabel = attribute.label
+        self.newName = name
+        self.newLabel = label
+        self.setText(f"Rename {attribute.fullName} to {name}")
+
+    def _attribute(self, name):
+        return self.graph.attribute(f"{self.anySetAttrName}.{name}")
+
+    def redoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        attribute = self._attribute(self.oldName)
+        if anySetAttribute is None or attribute is None:
+            return False
+        anySetAttribute.renameAttribute(attribute, self.newName, self.newLabel)
+        return True
+
+    def undoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        attribute = self._attribute(self.newName)
+        if anySetAttribute is None or attribute is None:
+            return False
+        anySetAttribute.renameAttribute(attribute, self.oldName, self.oldLabel)
+        return True
+
+
 class RemoveImagesCommand(GraphCommand):
     """
     Remove all the images from one or several CameraInit nodes as a single operation.

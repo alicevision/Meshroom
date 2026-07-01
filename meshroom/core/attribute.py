@@ -749,16 +749,20 @@ class Attribute(BaseObject):
     node = Property(BaseObject, lambda self: self._node(), constant=True)
     # The attribute that contains this attribute.
     root = Property(BaseObject, lambda self: self._root() if self._root else None, constant=True)
+    # The attribute name or label changed. Dynamic AnySet children can be renamed from the UI.
+    nameChanged = Signal()
+    labelChanged = Signal()
+    fullNameChanged = Signal()
     # The attribute name following the path from the node to the attribute.
-    fullName = Property(str, _getFullName, constant=True)
+    fullName = Property(str, _getFullName, notify=fullNameChanged)
     # The attribute name following the path from the root attribute.
-    rootName = Property(str, _getRootName, constant=True)
+    rootName = Property(str, _getRootName, notify=fullNameChanged)
     # The description object of the attribute.
     desc = Property(desc.Attribute, lambda self: self._desc, constant=True)
     # The name of the attribute.
-    name = Property(str, lambda self: self._desc._name, constant=True)
+    name = Property(str, lambda self: self._desc._name, notify=nameChanged)
     # The human-readable label for the attribute.
-    label = Property(str, lambda self: self._desc.label, constant=True)
+    label = Property(str, lambda self: self._desc.label, notify=labelChanged)
     # The type of attribute as a string.
     type = Property(str, lambda self: self._desc.type, constant=True)
     # The type of the elements of the attribute as a string.
@@ -1805,6 +1809,8 @@ class ShapeListAttribute(ListAttribute):
 
 class AnySet(GroupAttribute):
 
+    _attributeNameRegex = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
     def duplicateAttribute(self, attribute: Attribute, isOutput: bool|None=None) -> Attribute:
         """ Create an attribute as child of the current, with the same description as the given one.
             Duplicated name's are handled by _renameAttributeDescriptionInPlace()
@@ -1832,6 +1838,34 @@ class AnySet(GroupAttribute):
         if attribute in self._value:
             self._value.remove(attribute)
             self.flatStaticChildrenChanged.emit()
+
+    def renameAttribute(self, attribute: Attribute, name: str, label: str) -> None:
+        if attribute not in self._value:
+            raise ValueError(f"Attribute '{attribute.fullName}' is not a child of '{self.fullName}'.")
+
+        name = name.strip()
+        label = label.strip()
+        if not self._attributeNameRegex.match(name):
+            raise ValueError(f"Invalid attribute name: '{name}'.")
+        if not label:
+            raise ValueError("Attribute label cannot be empty.")
+        if name != attribute.name and name in self._value.keys():
+            raise ValueError(f"Attribute name '{name}' already exists in '{self.fullName}'.")
+
+        oldName = attribute.name
+        if name != oldName:
+            self._value.rename(oldName, name)
+            attribute._desc._name = name
+            attribute.nameChanged.emit()
+
+        if label != attribute.label:
+            attribute._desc._label = label
+            attribute.labelChanged.emit()
+
+        attribute.fullNameChanged.emit()
+        for child in attribute.flatStaticChildren:
+            child.fullNameChanged.emit()
+        self.flatStaticChildrenChanged.emit()
 
     def insertAttribute(self, serializedAttribute: dict, index: int) -> Attribute | None:
         """Restore a serialized child attribute at the requested position."""

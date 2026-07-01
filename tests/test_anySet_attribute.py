@@ -126,6 +126,39 @@ def test_anyset_attribute_can_be_restored_with_edges():
     assert dynamicNode.ins.input.inputLink is srcNode.input
 
 
+def test_rename_anyset_attribute_updates_name_label_and_keeps_edges():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+    srcNode.input.connectTo(dynamicNode.ins.input)
+
+    dynamicNode.ins.renameAttribute(dynamicNode.ins.input, "customInput", "Custom Input")
+
+    assert dynamicNode.ins.input is None
+    assert isinstance(dynamicNode.ins.customInput, Attribute)
+    assert dynamicNode.ins.customInput.name == "customInput"
+    assert dynamicNode.ins.customInput.label == "Custom Input"
+    assert dynamicNode.ins.customInput.isLink
+    assert dynamicNode.ins.customInput.inputLink is srcNode.input
+    assert graph.attribute(f"{dynamicNode.ins.fullName}.customInput") is dynamicNode.ins.customInput
+
+
+def test_rename_anyset_attribute_rejects_duplicate_name():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+
+    try:
+        dynamicNode.ins.renameAttribute(dynamicNode.ins.input_0, "input", "Input")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Renaming an AnySet child to an existing name should fail.")
+
+
 # ---------------------------------------------------------------------------
 # Serialization / deserialization tests
 # ---------------------------------------------------------------------------

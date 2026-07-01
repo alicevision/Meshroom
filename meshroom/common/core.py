@@ -80,8 +80,8 @@ class CoreDictModel:
         if newKey in self._objects.keys():
             raise KeyError(f"Key {newKey} is already in use in {self}")
         obj = self._objects[oldKey]
-        self._objects[newKey] = obj
-        del self._objects[oldKey]
+        items = [(newKey if key == oldKey else key, value) for key, value in self._objects.items()]
+        self._objects = dict(items)
 
     def pop(self, key):
         assert key in self._objects

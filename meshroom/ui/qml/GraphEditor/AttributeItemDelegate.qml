@@ -43,11 +43,96 @@ RowLayout {
     Component {
         id: removeAnySetAttributeMenuComp
         Menu {
+            id: anySetMenu
+
+            property real preferredX: 0
+            property real preferredY: 0
+
+            MenuItem {
+                text: "Rename Attribute"
+                enabled: root.isAnySetChild
+                onTriggered: {
+                    var dialog = renameAnySetAttributeDialogComp.createObject(Overlay.overlay, {
+                        "targetAttribute": attribute,
+                        "preferredX": anySetMenu.preferredX,
+                        "preferredY": anySetMenu.preferredY
+                    })
+                    dialog.open()
+                }
+            }
             MenuItem {
                 text: "Remove Attribute"
                 enabled: root.isAnySetChild
                 onTriggered: _currentScene.removeAnySetAttribute(attribute)
             }
+        }
+    }
+
+    Component {
+        id: renameAnySetAttributeDialogComp
+        Dialog {
+            id: renameDialog
+
+            property var targetAttribute: null
+            property real preferredX: 0
+            property real preferredY: 0
+
+            title: "Rename Attribute"
+            modal: true
+            parent: Overlay.overlay
+            contentWidth: 280
+            x: parent ? Math.max(0, Math.min(preferredX, parent.width - width)) : 0
+            y: parent ? Math.max(0, Math.min(preferredY, parent.height - height)) : 0
+            standardButtons: Dialog.Ok | Dialog.Cancel
+            closePolicy: Popup.CloseOnEscape
+
+            GridLayout {
+                columns: 2
+                columnSpacing: 8
+                rowSpacing: 8
+                width: renameDialog.contentWidth
+
+                Label {
+                    text: "Name"
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                }
+                TextField {
+                    id: nameField
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    text: renameDialog.targetAttribute ? renameDialog.targetAttribute.name : ""
+                    selectByMouse: true
+                    validator: RegularExpressionValidator { regularExpression: /^[A-Za-z_][A-Za-z0-9_]*$/ }
+                    onAccepted: renameDialog.accept()
+                }
+
+                Label {
+                    text: "Label"
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                }
+                TextField {
+                    id: labelField
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    text: renameDialog.targetAttribute ? renameDialog.targetAttribute.label : ""
+                    selectByMouse: true
+                    onAccepted: renameDialog.accept()
+                }
+            }
+
+            onOpened: {
+                nameField.forceActiveFocus()
+                nameField.selectAll()
+            }
+
+            onAccepted: {
+                if (targetAttribute && nameField.acceptableInput && labelField.text.trim() !== "") {
+                    _currentScene.renameAnySetAttribute(targetAttribute, nameField.text.trim(), labelField.text.trim())
+                }
+                destroy()
+            }
+
+            onRejected: destroy()
         }
     }
 
@@ -141,6 +226,8 @@ RowLayout {
                     property Component menuComp: Menu {
                         id: paramMenu
 
+                        property real preferredX: 0
+                        property real preferredY: 0
                         property bool isFileAttribute: attribute.type === "File"
                         property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.evalValue)
 
@@ -208,6 +295,20 @@ RowLayout {
                         MenuItem {
                             visible: root.isAnySetChild
                             height: visible ? implicitHeight : 0
+                            text: "Rename Attribute"
+                            onTriggered: {
+                                var dialog = renameAnySetAttributeDialogComp.createObject(Overlay.overlay, {
+                                    "targetAttribute": attribute,
+                                    "preferredX": paramMenu.preferredX,
+                                    "preferredY": paramMenu.preferredY
+                                })
+                                dialog.open()
+                            }
+                        }
+
+                        MenuItem {
+                            visible: root.isAnySetChild
+                            height: visible ? implicitHeight : 0
                             text: "Remove Attribute"
                             onTriggered: _currentScene.removeAnySetAttribute(attribute)
                         }
@@ -218,6 +319,9 @@ RowLayout {
                         forceActiveFocus()
                         if (mouse.button == Qt.RightButton) {
                             var menu = menuComp.createObject(parameterLabel)
+                            var position = parameterMA.mapToItem(Overlay.overlay, mouse.x, mouse.y)
+                            menu.preferredX = position.x
+                            menu.preferredY = position.y
                             menu.parent = parameterLabel
                             menu.popup()
                         }
@@ -902,6 +1006,9 @@ RowLayout {
                             onClicked: function(mouse) {
                                 if (mouse.button == Qt.RightButton && root.isAnySetChild) {
                                     var menu = removeAnySetAttributeMenuComp.createObject(labelMA)
+                                    var position = labelMA.mapToItem(Overlay.overlay, mouse.x, mouse.y)
+                                    menu.preferredX = position.x
+                                    menu.preferredY = position.y
                                     menu.parent = labelMA
                                     menu.popup()
                                     return

@@ -6,7 +6,13 @@ from meshroom.core.graph import Graph
 
 
 def anyset_child(serializedAnySet, name):
-    return next(attribute for attribute in serializedAnySet if attribute.get("name") == name)
+    return next(attribute for attribute in anyset_children(serializedAnySet) if attribute.get("name") == name)
+
+
+def anyset_children(serializedAnySet):
+    if isinstance(serializedAnySet, dict):
+        return serializedAnySet["children"]
+    return serializedAnySet
 
 
 def initGraphAndNode():
@@ -277,12 +283,33 @@ def test_moved_anyset_attribute_order_restored_after_load(tmp_path):
     graph.save(graphFile)
 
     serializedIns = graph.serialize()["graph"][dynamicNode.name]["inputs"]["ins"]
-    assert [attribute["name"] for attribute in serializedIns] == movedOrder
+    assert [attribute["name"] for attribute in anyset_children(serializedIns)] == movedOrder
 
     loadedGraph = loadGraph(graphFile)
     loadedDynamicNode = loadedGraph.node(dynamicNode.name)
 
     assert [attribute.name for attribute in loadedDynamicNode.ins.value] == movedOrder
+
+
+def test_anyset_expanded_state_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    dynamicNode.ins.expanded = True
+    dynamicNode.outs.expanded = False
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+
+    serializedNode = graph.serialize()["graph"][dynamicNode.name]
+    assert serializedNode["inputs"]["ins"]["expanded"] is True
+    assert serializedNode["outputs"]["outs"]["expanded"] is False
+
+    loadedGraph = loadGraph(graphFile)
+    loadedDynamicNode = loadedGraph.node(dynamicNode.name)
+
+    assert loadedDynamicNode.ins.expanded is True
+    assert loadedDynamicNode.outs.expanded is False
 
 
 def test_legacy_dict_anyset_serialization_still_loads(tmp_path):
@@ -298,7 +325,7 @@ def test_legacy_dict_anyset_serialization_still_loads(tmp_path):
     graphData = graph.serialize()
     serializedIns = graphData["graph"][dynamicNode.name]["inputs"]["ins"]
     graphData["graph"][dynamicNode.name]["inputs"]["ins"] = {
-        attribute["name"]: attribute for attribute in serializedIns
+        attribute["name"]: attribute for attribute in anyset_children(serializedIns)
     }
 
     graphFile = tmp_path / "legacy_dict_anyset.mg"
@@ -308,7 +335,32 @@ def test_legacy_dict_anyset_serialization_still_loads(tmp_path):
     loadedDynamicNode = loadedGraph.node(dynamicNode.name)
 
     assert [attribute.name for attribute in loadedDynamicNode.ins.value] == [
-        attribute["name"] for attribute in serializedIns
+        attribute["name"] for attribute in anyset_children(serializedIns)
+    ]
+
+
+def test_legacy_list_anyset_serialization_still_loads(tmp_path):
+    import json
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+
+    graphData = graph.serialize()
+    serializedIns = graphData["graph"][dynamicNode.name]["inputs"]["ins"]
+    graphData["graph"][dynamicNode.name]["inputs"]["ins"] = anyset_children(serializedIns)
+
+    graphFile = tmp_path / "legacy_list_anyset.mg"
+    graphFile.write_text(json.dumps(graphData), encoding="utf-8")
+
+    loadedGraph = loadGraph(str(graphFile))
+    loadedDynamicNode = loadedGraph.node(dynamicNode.name)
+
+    assert [attribute.name for attribute in loadedDynamicNode.ins.value] == [
+        attribute["name"] for attribute in anyset_children(serializedIns)
     ]
 
 def test_clone_attributes():

@@ -231,7 +231,7 @@ class PartialGraphSerializer(GraphSerializer):
             ]
 
         if isinstance(attribute, AnySet):
-            serializedData = []
+            serializedChildren = []
             for child in attribute.value:
                 childData = child.asDict()
                 childLinkAttr = child.inputLink
@@ -239,9 +239,12 @@ class PartialGraphSerializer(GraphSerializer):
                 # Remove connection if the sourceNode is not in the partialgraph nodes
                 if childLinkAttr and childLinkAttr.node not in self.nodes:
                     childData['value'] = child.getDefaultValue()
-                serializedData.append(childData)
+                serializedChildren.append(childData)
 
-            return serializedData
+            return {
+                "expanded": attribute.expanded,
+                "children": serializedChildren
+            }
 
 
         elif isinstance(attribute, GroupAttribute):

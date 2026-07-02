@@ -257,7 +257,7 @@ Item {
                 var visible = Boolean(parentPins.get(attribute.root.fullName))
                 if (!visible && parentPins.has(attribute.fullName) && parentPins.get(attribute.fullName) === true) {
                     parentPins.set(attribute.fullName, false)
-                    pin.expanded = false
+                    attribute.expanded = false
                 }
                 return visible
             }
@@ -279,7 +279,7 @@ Item {
                 attributes.push(attr)
                 if (attr.isCollapsable) {
                     // initialize its pin status
-                    parentPins.set(attr.fullName, false)
+                    parentPins.set(attr.fullName, attr.expanded)
                 }
 
                 // Check and add any child this attribute might have
@@ -287,7 +287,7 @@ Item {
                     {
                         attributes.push(child)
                         if (child.isCollapsable && !parentPins.has(child.fullName)) {
-                            parentPins.set(child.fullName, false)
+                            parentPins.set(child.fullName, child.expanded)
                         }
                     }
                 )
@@ -724,6 +724,7 @@ Item {
                                         id: outPin
                                         nodeItem: root
                                         attribute: modelData
+                                        expanded: Boolean(modelData.expanded)
 
                                         property real globalX: root.x + nodeAttributes.x + outputs.x + outputLoader.x + outPin.x
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
@@ -737,9 +738,9 @@ Item {
                                         }
 
                                         onClicked: function() {
-                                            expanded = !expanded
                                             if (outputs.parentPins.has(modelData.fullName)) {
-                                                outputs.parentPins.set(modelData.fullName, expanded)
+                                                modelData.expanded = !modelData.expanded
+                                                outputs.parentPins.set(modelData.fullName, modelData.expanded)
                                                 outputs.parentPinsUpdated()
                                             }
                                         }
@@ -798,6 +799,7 @@ Item {
                                         id: inPin
                                         nodeItem: root
                                         attribute: modelData
+                                        expanded: Boolean(modelData.expanded)
 
                                         property real globalX: root.x + nodeAttributes.x + inputs.x + inputLoader.x + inPin.x
                                         property real globalY: root.y + nodeAttributes.y + inputs.y + inputLoader.y + inPin.y
@@ -815,9 +817,9 @@ Item {
                                         }
 
                                         onClicked: function() {
-                                            expanded = !expanded
                                             if (inputs.parentPins.has(modelData.fullName)) {
-                                                inputs.parentPins.set(modelData.fullName, expanded)
+                                                modelData.expanded = !modelData.expanded
+                                                inputs.parentPins.set(modelData.fullName, modelData.expanded)
                                                 inputs.parentPinsUpdated()
                                             }
                                         }
@@ -877,7 +879,7 @@ Item {
                                         active: !modelData.isOutput && !modelData.exposed && modelData.desc.visible
                                         visible: {
                                             if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
-                                                if (modelData.root && modelData.root.baseType === "GroupAttribute") {
+                                                if (modelData.root && modelData.root.isCollapsable) {
                                                     return Boolean(inputParams.parentPins.get(modelData.root.fullName) ||
                                                                    modelData.hasAnyOutputLinks ||
                                                                    modelData.hasAnyInputLinks)
@@ -904,6 +906,7 @@ Item {
                                             id: inParamsPin
                                             nodeItem: root
                                             attribute: modelData
+                                            expanded: Boolean(modelData.expanded)
 
                                             property real globalX: root.x + nodeAttributes.x + inputParamsRect.x + paramLoader.x + inParamsPin.x
                                             property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inParamsPin.y
@@ -925,9 +928,9 @@ Item {
                                             }
 
                                             onClicked: function() {
-                                                expanded = !expanded
                                                 if (inputParams.parentPins.has(modelData.fullName)) {
-                                                    inputParams.parentPins.set(modelData.fullName, expanded)
+                                                    modelData.expanded = !modelData.expanded
+                                                    inputParams.parentPins.set(modelData.fullName, modelData.expanded)
                                                     inputParams.parentPinsUpdated()
                                                 }
                                             }

@@ -1917,10 +1917,17 @@ class AnySet(GroupAttribute):
         if duplicateIndex != -1:
             attributeDesc._label = indexPattern.format(name=attributeDesc._label, index=duplicateIndex)
 
+    def _serializedChildren(self, values: dict | list) -> list:
+        if isinstance(values, dict):
+            if isinstance(values.get("children"), list):
+                return values["children"]
+            return list(values.values())
+        return values
+
     def _setChildrenValues(self, values: dict | list):
         """Set individual children values from serialized AnySet data."""
 
-        serializedChildren = values.values() if isinstance(values, dict) else values
+        serializedChildren = self._serializedChildren(values)
         for attrChildValue in serializedChildren:
             if not isinstance(attrChildValue, dict):
                 continue
@@ -1954,7 +1961,10 @@ class AnySet(GroupAttribute):
 
     # Override
     def getSerializedValue(self):
-        return [attr.asDict() for attr in self._value]
+        return {
+            "expanded": self.expanded,
+            "children": [attr.asDict() for attr in self._value]
+        }
 
     # Override
     def _getValue(self):
@@ -1970,6 +1980,7 @@ class AnySet(GroupAttribute):
         if not isinstance(exportedValue, (dict, list)):
             raise AttributeError(f"Failed to set on CustomAttribute: {str(exportedValue)}")
 
+        self._restoreCollapseState(exportedValue)
         self._setChildrenValues(exportedValue)
 
 

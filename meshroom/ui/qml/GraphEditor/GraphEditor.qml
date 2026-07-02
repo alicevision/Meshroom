@@ -520,7 +520,6 @@ Item {
                             return null
                         }
 
-                        let index = Array.from(attribute.root.value).indexOf(attribute)
                         let groupAttributeDelegate = null
                         let groupAttribute = attribute
 

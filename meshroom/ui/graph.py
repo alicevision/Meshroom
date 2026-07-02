@@ -1453,6 +1453,12 @@ class UIGraph(QObject):
             return
         self.push(commands.RenameAnySetAttributeCommand(self._graph, attribute, name, label))
 
+    @Slot(Attribute, int)
+    def moveAnySetAttribute(self, attribute, offset):
+        if not isinstance(attribute.root, AnySet):
+            return
+        self.push(commands.MoveAnySetAttributeCommand(self._graph, attribute, offset))
+
     @Slot(Attribute)
     def removeImage(self, image):
         if image is None:

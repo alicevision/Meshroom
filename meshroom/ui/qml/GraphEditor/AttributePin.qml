@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import Utils 1.0
 import MaterialIcons 2.2
+import "AnySetUtils.js" as AnySetUtils
 
 /**
  * The representation of an Attribute on a Node.
@@ -50,6 +51,17 @@ RowLayout {
             property real preferredX: 0
             property real preferredY: 0
 
+            MenuItem {
+                text: "Move Up"
+                enabled: AnySetUtils.canMoveBy(attribute, -1)
+                onTriggered: _currentScene.moveAnySetAttribute(attribute, -1)
+            }
+            MenuItem {
+                text: "Move Down"
+                enabled: AnySetUtils.canMoveBy(attribute, 1)
+                onTriggered: _currentScene.moveAnySetAttribute(attribute, 1)
+            }
+            MenuSeparator {}
             MenuItem {
                 text: "Rename Attribute"
                 enabled: root.isAnySetChild

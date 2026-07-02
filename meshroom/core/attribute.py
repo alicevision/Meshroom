@@ -1867,6 +1867,18 @@ class AnySet(GroupAttribute):
             child.fullNameChanged.emit()
         self.flatStaticChildrenChanged.emit()
 
+    def moveAttribute(self, attribute: Attribute, toIndex: int) -> None:
+        if attribute not in self._value:
+            raise ValueError(f"Attribute '{attribute.fullName}' is not a child of '{self.fullName}'.")
+
+        fromIndex = list(self._value).index(attribute)
+        toIndex = max(0, min(toIndex, self._value.count - 1))
+        if fromIndex == toIndex:
+            return
+
+        self._value.move(fromIndex, toIndex)
+        self.flatStaticChildrenChanged.emit()
+
     def insertAttribute(self, serializedAttribute: dict, index: int) -> Attribute | None:
         """Restore a serialized child attribute at the requested position."""
         attributeDesc = attributeDescriptionFactory(serializedAttribute)
@@ -1905,16 +1917,19 @@ class AnySet(GroupAttribute):
         if duplicateIndex != -1:
             attributeDesc._label = indexPattern.format(name=attributeDesc._label, index=duplicateIndex)
 
-    def _setChildrenValues(self, values: dict):
-        """ Set individual children value from a dict
-        """
+    def _setChildrenValues(self, values: dict | list):
+        """Set individual children values from serialized AnySet data."""
 
-        for key, attrChildValue in values.items():
-            childAttr = self._value.get(key) if key in self._value.keys() else None
-            seriliazedValue = attrChildValue.get('value', None)
+        serializedChildren = values.values() if isinstance(values, dict) else values
+        for attrChildValue in serializedChildren:
+            if not isinstance(attrChildValue, dict):
+                continue
+
+            childName = attrChildValue.get('name', None)
+            childAttr = self._value.get(childName) if childName in self._value.keys() else None
+            serializedValue = attrChildValue.get('value', None)
 
             if not childAttr:
-                idx = self._value.count - 1
                 attrDescType = attrChildValue.get('type', None)
 
                 if not attrDescType:
@@ -1926,24 +1941,20 @@ class AnySet(GroupAttribute):
 
                 childAttr = attributeFactory(
                     description = attributeDescriptionFactory(attrChildValue),
-                    value = seriliazedValue,
+                    value = serializedValue,
                     isOutput = self.isOutput,
                     node = self.node,
                     root = self
                 )
 
-                self._value.insert(idx, childAttr)
+                self._value.insert(self._value.count, childAttr)
 
-            elif seriliazedValue:
-                childAttr.value = seriliazedValue
+            elif serializedValue:
+                childAttr.value = serializedValue
 
     # Override
     def getSerializedValue(self):
-        serializedValue = {}
-        for key, attr in self._value.objects.items():
-            serializedValue[key] = attr.asDict()
-
-        return serializedValue
+        return [attr.asDict() for attr in self._value]
 
     # Override
     def _getValue(self):
@@ -1956,7 +1967,7 @@ class AnySet(GroupAttribute):
             self._resetToNone()
             return
 
-        if not isinstance(exportedValue, dict):
+        if not isinstance(exportedValue, (dict, list)):
             raise AttributeError(f"Failed to set on CustomAttribute: {str(exportedValue)}")
 
         self._setChildrenValues(exportedValue)

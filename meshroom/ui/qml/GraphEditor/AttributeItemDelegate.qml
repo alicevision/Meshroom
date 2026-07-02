@@ -7,6 +7,7 @@ import MaterialIcons 2.2
 import Utils 1.0
 import Controls 1.0
 import "AttributeControls" as AttributeControls
+import "AnySetUtils.js" as AnySetUtils
 
 /**
  * Instantiate a control to visualize and edit an Attribute based on its type.
@@ -48,6 +49,17 @@ RowLayout {
             property real preferredX: 0
             property real preferredY: 0
 
+            MenuItem {
+                text: "Move Up"
+                enabled: AnySetUtils.canMoveBy(attribute, -1)
+                onTriggered: _currentScene.moveAnySetAttribute(attribute, -1)
+            }
+            MenuItem {
+                text: "Move Down"
+                enabled: AnySetUtils.canMoveBy(attribute, 1)
+                onTriggered: _currentScene.moveAnySetAttribute(attribute, 1)
+            }
+            MenuSeparator {}
             MenuItem {
                 text: "Rename Attribute"
                 enabled: root.isAnySetChild
@@ -285,6 +297,27 @@ RowLayout {
                                 return "Show in 3D Viewer"
                             }
                             onClicked: root.showInViewer(attribute)
+                        }
+
+                        MenuSeparator {
+                            visible: root.isAnySetChild
+                            height: visible ? implicitHeight : 0
+                        }
+
+                        MenuItem {
+                            visible: root.isAnySetChild
+                            height: visible ? implicitHeight : 0
+                            text: "Move Up"
+                            enabled: AnySetUtils.canMoveBy(attribute, -1)
+                            onTriggered: _currentScene.moveAnySetAttribute(attribute, -1)
+                        }
+
+                        MenuItem {
+                            visible: root.isAnySetChild
+                            height: visible ? implicitHeight : 0
+                            text: "Move Down"
+                            enabled: AnySetUtils.canMoveBy(attribute, 1)
+                            onTriggered: _currentScene.moveAnySetAttribute(attribute, 1)
                         }
 
                         MenuSeparator {

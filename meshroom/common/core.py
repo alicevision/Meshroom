@@ -83,6 +83,12 @@ class CoreDictModel:
         items = [(newKey if key == oldKey else key, value) for key, value in self._objects.items()]
         self._objects = dict(items)
 
+    def move(self, fromIndex: int, toIndex: int):
+        items = list(self._objects.items())
+        key, value = items.pop(fromIndex)
+        items.insert(toIndex, (key, value))
+        self._objects = dict(items)
+
     def pop(self, key):
         assert key in self._objects
         return self._objects.pop(key)

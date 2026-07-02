@@ -5,6 +5,10 @@ from meshroom.core.desc import AnySet as AnySetDesc
 from meshroom.core.graph import Graph
 
 
+def anyset_child(serializedAnySet, name):
+    return next(attribute for attribute in serializedAnySet if attribute.get("name") == name)
+
+
 def initGraphAndNode():
     graph = Graph("test")
     node = graph.addNewNode("DynamicNode")
@@ -159,6 +163,26 @@ def test_rename_anyset_attribute_rejects_duplicate_name():
         raise AssertionError("Renaming an AnySet child to an existing name should fail.")
 
 
+def test_move_anyset_attribute_updates_order():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+
+    initialOrder = [attribute.name for attribute in dynamicNode.ins.value]
+    attributeToMove = list(dynamicNode.ins.value)[-1]
+
+    dynamicNode.ins.moveAttribute(attributeToMove, 0)
+
+    assert [attribute.name for attribute in dynamicNode.ins.value] == [initialOrder[-1], *initialOrder[:-1]]
+
+    dynamicNode.ins.moveAttribute(attributeToMove, 99)
+
+    assert [attribute.name for attribute in dynamicNode.ins.value] == initialOrder
+
+
 # ---------------------------------------------------------------------------
 # Serialization / deserialization tests
 # ---------------------------------------------------------------------------
@@ -185,17 +209,19 @@ def test_dynamic_inputs_serialized_in_todict():
     nodeDict = dynamicNode.toDict()
     dynInputs = nodeDict.get('inputs', {}).get('ins')
 
-    assert dynInputs.get('input').get('name') == 'input'
-    assert dynInputs.get('input').get('label') == 'Input'
-    assert dynInputs.get('input').get('type') == 'File'
-    assert dynInputs.get('input').get('value') == '/somePath'
+    inputAttribute = anyset_child(dynInputs, "input")
+    assert inputAttribute.get('name') == 'input'
+    assert inputAttribute.get('label') == 'Input'
+    assert inputAttribute.get('type') == 'File'
+    assert inputAttribute.get('value') == '/somePath'
 
     dynOutputs = nodeDict.get('outputs', {}).get('outs')
 
-    assert dynOutputs.get('input').get('name') == 'input'
-    assert dynOutputs.get('input').get('label') == 'Input'
-    assert dynOutputs.get('input').get('type') == 'File'
-    assert dynOutputs.get('input').get('value') == ''
+    outputAttribute = anyset_child(dynOutputs, "input")
+    assert outputAttribute.get('name') == 'input'
+    assert outputAttribute.get('label') == 'Input'
+    assert outputAttribute.get('type') == 'File'
+    assert outputAttribute.get('value') == ''
 
     assert lsNode3.toDict().get('inputs').get('input') == '{DynamicNode_1.outs.input}'  # Check for connection
 
@@ -228,6 +254,62 @@ def test_dynamic_inputs_restored_after_load(tmp_path):
     assert loadedDstNode.ins.input.value == "/somePath"
     assert loadedDstNode.outs.input is not None
     assert lsNode3.input.isLink, "Dynamic output should still be connected after load"
+
+
+def test_moved_anyset_attribute_order_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+
+    initialOrder = [attribute.name for attribute in dynamicNode.ins.value]
+    attributeToMove = list(dynamicNode.ins.value)[-1]
+    dynamicNode.ins.moveAttribute(attributeToMove, 0)
+    movedOrder = [attribute.name for attribute in dynamicNode.ins.value]
+
+    assert movedOrder == [initialOrder[-1], *initialOrder[:-1]]
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+
+    serializedIns = graph.serialize()["graph"][dynamicNode.name]["inputs"]["ins"]
+    assert [attribute["name"] for attribute in serializedIns] == movedOrder
+
+    loadedGraph = loadGraph(graphFile)
+    loadedDynamicNode = loadedGraph.node(dynamicNode.name)
+
+    assert [attribute.name for attribute in loadedDynamicNode.ins.value] == movedOrder
+
+
+def test_legacy_dict_anyset_serialization_still_loads(tmp_path):
+    import json
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+
+    graphData = graph.serialize()
+    serializedIns = graphData["graph"][dynamicNode.name]["inputs"]["ins"]
+    graphData["graph"][dynamicNode.name]["inputs"]["ins"] = {
+        attribute["name"]: attribute for attribute in serializedIns
+    }
+
+    graphFile = tmp_path / "legacy_dict_anyset.mg"
+    graphFile.write_text(json.dumps(graphData), encoding="utf-8")
+
+    loadedGraph = loadGraph(str(graphFile))
+    loadedDynamicNode = loadedGraph.node(dynamicNode.name)
+
+    assert [attribute.name for attribute in loadedDynamicNode.ins.value] == [
+        attribute["name"] for attribute in serializedIns
+    ]
 
 def test_clone_attributes():
     graph = Graph("test")

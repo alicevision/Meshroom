@@ -22,7 +22,7 @@ from meshroom.core.exception import InvalidEdgeError
 
 from typing import TYPE_CHECKING, Optional
 
-from meshroom.core.mixins import Collapsable
+from meshroom.core.mixins import Expandable
 
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
@@ -1226,7 +1226,7 @@ class ListAttribute(Attribute):
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=Attribute.outputLinksChanged)
 
 
-class GroupAttribute(Attribute, Collapsable):
+class GroupAttribute(Attribute, Expandable):
 
     def __init__(self, node, attributeDesc: desc.GroupAttribute, isOutput: bool,
                  root=None, parent=None):
@@ -1980,7 +1980,7 @@ class AnySet(GroupAttribute):
         if not isinstance(exportedValue, (dict, list)):
             raise AttributeError(f"Failed to set on CustomAttribute: {str(exportedValue)}")
 
-        self._restoreCollapseState(exportedValue)
+        self._restoreExpandedState(exportedValue)
         self._setChildrenValues(exportedValue)
 
 

@@ -23,7 +23,7 @@ from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttrib
 from meshroom.core.desc.attribute import Attribute as AttributeDescription
 from meshroom.core.desc.anySet import AnySet as AnySetDescription
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
-from meshroom.core.mixins import Collapsable
+from meshroom.core.mixins import Expandable
 from meshroom.core.mtyping import PathLike
 
 
@@ -2496,7 +2496,7 @@ class Node(BaseNode):
                 continue
             internalInputs[k] = v.getSerializedValue()
         outputs = ({k: v.getSerializedValue() for k, v in self._attributes.objects.items()
-                    if v.isOutput and (not v.desc.isDynamicValue or isinstance(v, Collapsable))})
+                    if v.isOutput and (not v.desc.isDynamicValue or isinstance(v, Expandable))})
 
         return {
             'nodeType': self.nodeType,

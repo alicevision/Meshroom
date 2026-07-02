@@ -252,7 +252,7 @@ Item {
         if (Boolean(attribute.enabled)) {
             // If the parent is a GroupAttribute, use the status of the parent's pin to determine visibility
             // UNLESS the child attribute is already connected with a visible edge
-            if (attribute.root && attribute.root.isCollapsable) {
+            if (attribute.root && attribute.root.isExpandable) {
 
                 var visible = Boolean(parentPins.get(attribute.root.fullName))
                 if (!visible && parentPins.has(attribute.fullName) && parentPins.get(attribute.fullName) === true) {
@@ -277,7 +277,7 @@ Item {
             if (attr.isOutput == isOutput) {
                 // Add the attribute to the model
                 attributes.push(attr)
-                if (attr.isCollapsable) {
+                if (attr.isExpandable) {
                     // initialize its pin status
                     parentPins.set(attr.fullName, attr.expanded)
                 }
@@ -286,7 +286,7 @@ Item {
                 attr.flatStaticChildren.forEach((child) =>
                     {
                         attributes.push(child)
-                        if (child.isCollapsable && !parentPins.has(child.fullName)) {
+                        if (child.isExpandable && !parentPins.has(child.fullName)) {
                             parentPins.set(child.fullName, child.expanded)
                         }
                     }
@@ -699,7 +699,7 @@ Item {
                                     active: Boolean(modelData.isOutput && modelData.desc.visible)
                                     visible: {
                                         if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
-                                            if (modelData.root && modelData.root.isCollapsable) {
+                                            if (modelData.root && modelData.root.isExpandable) {
                                                 return Boolean(outputs.parentPins.get(modelData.root.fullName) ||
                                                                modelData.hasAnyOutputLinks ||
                                                                modelData.hasAnyInputLinks)
@@ -775,7 +775,7 @@ Item {
                                     active: !modelData.isOutput && modelData.exposed && modelData.desc.visible
                                     visible: {
                                         if (Boolean(modelData.enabled)) {
-                                            if (modelData.root && (modelData.root.isCollapsable) ) {
+                                            if (modelData.root && (modelData.root.isExpandable) ) {
                                                 return Boolean(inputs.parentPins.get(modelData.root.fullName) ||
                                                                modelData.hasAnyOutputLinks ||
                                                                modelData.hasAnyInputLinks)
@@ -879,7 +879,7 @@ Item {
                                         active: !modelData.isOutput && !modelData.exposed && modelData.desc.visible
                                         visible: {
                                             if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
-                                                if (modelData.root && modelData.root.isCollapsable) {
+                                                if (modelData.root && modelData.root.isExpandable) {
                                                     return Boolean(inputParams.parentPins.get(modelData.root.fullName) ||
                                                                    modelData.hasAnyOutputLinks ||
                                                                    modelData.hasAnyInputLinks)

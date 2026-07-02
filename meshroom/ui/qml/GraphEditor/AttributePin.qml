@@ -31,7 +31,7 @@ RowLayout {
                                                       outputAnchor.y + outputAnchor.height / 2)
 
     readonly property bool isList: attribute && attribute.type === "ListAttribute"
-    readonly property bool isCollapsable: attribute && attribute.isCollapsable === true
+    readonly property bool isExpandable: attribute && attribute.isExpandable === true
     readonly property bool isDynamic: !!attribute.desc && !!attribute.desc.isCustomAttribute
     readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     readonly property bool isConnected: attribute.hasAnyInputLinks || attribute.hasAnyOutputLinks
@@ -208,7 +208,7 @@ RowLayout {
                 id: innerInputAnchor
                 property bool linkEnabled: true
                 property bool hasConnectedChildren: {
-                    if (!isCollapsable || root.isConnected || !attribute)
+                    if (!isExpandable || root.isConnected || !attribute)
                         return false
                     for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
                         if (attribute.flatStaticChildren[i].hasAnyInputLinks) {
@@ -286,7 +286,7 @@ RowLayout {
                 readonly property alias nodeItem: root.nodeItem
                 readonly property bool isOutput: Boolean(attribute.isOutput)
                 readonly property alias isList: root.isList
-                readonly property alias isCollapsable: root.isCollapsable
+                readonly property alias isExpandable: root.isExpandable
                 property bool dragAccepted: false
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -414,7 +414,7 @@ RowLayout {
 
             // Icon
             iconText: {
-                if (root.isCollapsable) {
+                if (root.isExpandable) {
                     return root.expanded ? MaterialIcons.expand_more : MaterialIcons.chevron_right
                 }
                 return ""
@@ -461,7 +461,7 @@ RowLayout {
             id: innerOutputAnchor
             property bool linkEnabled: true
             property bool hasConnectedChildren: {
-                if (!root.isCollapsable || root.isConnected)
+                if (!root.isExpandable || root.isConnected)
                     return false
                 for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
                     if (attribute.flatStaticChildren[i].hasAnyOutputLinks) {
@@ -532,7 +532,7 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: Boolean(attribute.isOutput)
             readonly property alias isList: root.isList
-            readonly property alias isCollapsable: root.isCollapsable
+            readonly property alias isExpandable: root.isExpandable
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter

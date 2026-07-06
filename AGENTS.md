@@ -96,6 +96,8 @@ A few distinctions are easy to confuse. Keep them straight before changing engin
 
 4. **Testing:** Changes purely to the UI/QML layer do not require unit tests.
 
+5. **Structure:** Split overly complex components into dedicated `.qml` files. For data models, avoid complex JavaScript implementations; instead, construct models on the Python UI side and utilize them via context properties.
+
 ## Workflow & Delivery
 
 * Provide only targeted code patches instead of full files.

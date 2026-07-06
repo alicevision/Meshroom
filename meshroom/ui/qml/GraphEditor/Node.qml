@@ -35,7 +35,7 @@ Item {
     /// Shake Relevance
     readonly property double maxAmplitude: 500.0;
     readonly property int shakeThreshold: 5;
-    
+
     property int shakeCounter: 0;
     property bool shaking: false;
     property int shakeDetectionInterval: 1000;  // 1 Second to complete the shake else the counter is reset
@@ -147,7 +147,7 @@ Item {
          * Detects a shake if a the node has been moved across the originally captured x and y positions
          * back and forth a given number of times specified by the amplitude.
          */
-        
+
         if (!root.shaking) {
             return;
         }
@@ -252,11 +252,12 @@ Item {
         if (Boolean(attribute.enabled)) {
             // If the parent is a GroupAttribute, use the status of the parent's pin to determine visibility
             // UNLESS the child attribute is already connected with a visible edge
-            if (attribute.root && attribute.root.baseType === "GroupAttribute") {
-                var visible = Boolean(parentPins.get(attribute.root.name))
-                if (!visible && parentPins.has(attribute.name) && parentPins.get(attribute.name) === true) {
-                    parentPins.set(attribute.name, false)
-                    pin.expanded = false
+            if (attribute.root && attribute.root.isExpandable) {
+
+                var visible = Boolean(parentPins.get(attribute.root.fullName))
+                if (!visible && parentPins.has(attribute.fullName) && parentPins.get(attribute.fullName) === true) {
+                    parentPins.set(attribute.fullName, false)
+                    attribute.expanded = false
                 }
                 return visible
             }
@@ -276,17 +277,17 @@ Item {
             if (attr.isOutput == isOutput) {
                 // Add the attribute to the model
                 attributes.push(attr)
-                if (attr.baseType === "GroupAttribute") {
-                    // If it is a GroupAttribute, initialize its pin status
-                    parentPins.set(attr.name, false)
+                if (attr.isExpandable) {
+                    // initialize its pin status
+                    parentPins.set(attr.fullName, attr.expanded)
                 }
 
                 // Check and add any child this attribute might have
                 attr.flatStaticChildren.forEach((child) =>
                     {
                         attributes.push(child)
-                        if (child.baseType === "GroupAttribute") {
-                            parentPins.set(child.name, false)
+                        if (child.isExpandable && !parentPins.has(child.fullName)) {
+                            parentPins.set(child.fullName, child.expanded)
                         }
                     }
                 )
@@ -344,7 +345,7 @@ Item {
             }
             border.color: {
                 if (hasWarnings === true)
-                    return Colors.warning                    
+                    return Colors.warning
                 if (root.mainSelected)
                     return activePalette.highlight
                 if (root.selected)
@@ -698,8 +699,8 @@ Item {
                                     active: Boolean(modelData.isOutput && modelData.desc.visible)
                                     visible: {
                                         if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
-                                            if (modelData.root && modelData.root.baseType === "GroupAttribute") {
-                                                return Boolean(outputs.parentPins.get(modelData.root.name) ||
+                                            if (modelData.root && modelData.root.isExpandable) {
+                                                return Boolean(outputs.parentPins.get(modelData.root.fullName) ||
                                                                modelData.hasAnyOutputLinks ||
                                                                modelData.hasAnyInputLinks)
                                             }
@@ -723,6 +724,7 @@ Item {
                                         id: outPin
                                         nodeItem: root
                                         attribute: modelData
+                                        expanded: Boolean(modelData.expanded)
 
                                         property real globalX: root.x + nodeAttributes.x + outputs.x + outputLoader.x + outPin.x
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
@@ -736,9 +738,9 @@ Item {
                                         }
 
                                         onClicked: function() {
-                                            expanded = !expanded
-                                            if (outputs.parentPins.has(modelData.name)) {
-                                                outputs.parentPins.set(modelData.name, expanded)
+                                            if (outputs.parentPins.has(modelData.fullName)) {
+                                                modelData.expanded = !modelData.expanded
+                                                outputs.parentPins.set(modelData.fullName, modelData.expanded)
                                                 outputs.parentPinsUpdated()
                                             }
                                         }
@@ -773,8 +775,8 @@ Item {
                                     active: !modelData.isOutput && modelData.exposed && modelData.desc.visible
                                     visible: {
                                         if (Boolean(modelData.enabled)) {
-                                            if (modelData.root && modelData.root.baseType === "GroupAttribute") {
-                                                return Boolean(inputs.parentPins.get(modelData.root.name) ||
+                                            if (modelData.root && (modelData.root.isExpandable) ) {
+                                                return Boolean(inputs.parentPins.get(modelData.root.fullName) ||
                                                                modelData.hasAnyOutputLinks ||
                                                                modelData.hasAnyInputLinks)
                                             }
@@ -797,6 +799,7 @@ Item {
                                         id: inPin
                                         nodeItem: root
                                         attribute: modelData
+                                        expanded: Boolean(modelData.expanded)
 
                                         property real globalX: root.x + nodeAttributes.x + inputs.x + inputLoader.x + inPin.x
                                         property real globalY: root.y + nodeAttributes.y + inputs.y + inputLoader.y + inPin.y
@@ -814,9 +817,9 @@ Item {
                                         }
 
                                         onClicked: function() {
-                                            expanded = !expanded
-                                            if (inputs.parentPins.has(modelData.name)) {
-                                                inputs.parentPins.set(modelData.name, expanded)
+                                            if (inputs.parentPins.has(modelData.fullName)) {
+                                                modelData.expanded = !modelData.expanded
+                                                inputs.parentPins.set(modelData.fullName, modelData.expanded)
                                                 inputs.parentPinsUpdated()
                                             }
                                         }
@@ -876,8 +879,8 @@ Item {
                                         active: !modelData.isOutput && !modelData.exposed && modelData.desc.visible
                                         visible: {
                                             if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
-                                                if (modelData.root && modelData.root.baseType === "GroupAttribute") {
-                                                    return Boolean(inputParams.parentPins.get(modelData.root.name) ||
+                                                if (modelData.root && modelData.root.isExpandable) {
+                                                    return Boolean(inputParams.parentPins.get(modelData.root.fullName) ||
                                                                    modelData.hasAnyOutputLinks ||
                                                                    modelData.hasAnyInputLinks)
                                                 }
@@ -903,6 +906,7 @@ Item {
                                             id: inParamsPin
                                             nodeItem: root
                                             attribute: modelData
+                                            expanded: Boolean(modelData.expanded)
 
                                             property real globalX: root.x + nodeAttributes.x + inputParamsRect.x + paramLoader.x + inParamsPin.x
                                             property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inParamsPin.y
@@ -924,9 +928,9 @@ Item {
                                             }
 
                                             onClicked: function() {
-                                                expanded = !expanded
-                                                if (inputParams.parentPins.has(modelData.name)) {
-                                                    inputParams.parentPins.set(modelData.name, expanded)
+                                                if (inputParams.parentPins.has(modelData.fullName)) {
+                                                    modelData.expanded = !modelData.expanded
+                                                    inputParams.parentPins.set(modelData.fullName, modelData.expanded)
                                                     inputParams.parentPinsUpdated()
                                                 }
                                             }

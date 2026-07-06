@@ -4,6 +4,7 @@ from collections.abc import Iterable
 
 import meshroom.core
 from meshroom.core import Version, desc
+from meshroom.core.desc.anySet import AnySet
 from meshroom.core.node import BackdropNode, CompatibilityIssue, CompatibilityNode, Node, Position
 
 
@@ -37,6 +38,15 @@ def getNodeConstructor(nodeType: str, position: Optional[Position]=None, **kwarg
     constructor = constructors.get(nodeType, Node)
     return constructor(nodeType, position=position, **kwargs)
 
+
+def isCustomAttribute(attribute:Any) -> bool:
+    # Check if the given attribute is a AnySet instance or a child of a AnySet
+
+    if isinstance(attribute, AnySet):
+        return True
+    if hasattr(attribute, 'root') and isinstance(attribute.root, AnySet):
+        return True
+    return False
 
 class _NodeCreator:
 
@@ -130,13 +140,19 @@ class _NodeCreator:
         )
 
     def _checkAttributesAreCompatibleWithDescription(self) -> bool:
+
+        inputAnySet = [attribute.name for attribute in self.nodeDesc.inputs if isCustomAttribute(attribute)]
+        outputAnySet = [attribute.name for attribute in self.nodeDesc.outputs if isCustomAttribute(attribute)]
+        staticInputs = {k: v for k, v in self.inputs.items() if not k in inputAnySet }
+        staticOutputs = {k: v for k, v in self.outputs.items() if not k in outputAnySet }
+
         # Combine regular internal attributes with internal flow inputs for compatibility checking,
         # as internal flow inputs (when connected) appear in the 'internalInputs' section of the file.
         allInternalDescriptions = list(self.nodeDesc.internalInputs) + list(self.nodeDesc.internalFlowInputs)
         return (
-            self._checkAttributesCompatibility(self.nodeDesc.inputs, self.inputs)
+            self._checkAttributesCompatibility(self.nodeDesc.inputs, staticInputs)
             and self._checkAttributesCompatibility(allInternalDescriptions, self.internalInputs)
-            and self._checkAttributesCompatibility(self.nodeDesc.outputs, self.outputs)
+            and self._checkAttributesCompatibility(self.nodeDesc.outputs, staticOutputs)
         )
 
     def _checkInputAttributesNames(self) -> bool:

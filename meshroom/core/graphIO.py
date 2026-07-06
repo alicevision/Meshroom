@@ -3,7 +3,7 @@ from typing import Any, TYPE_CHECKING, Union
 
 import meshroom
 from meshroom.core import Version
-from meshroom.core.attribute import Attribute, GroupAttribute, ListAttribute
+from meshroom.core.attribute import Attribute, AnySet, GroupAttribute, ListAttribute
 from meshroom.core.node import Node
 
 if TYPE_CHECKING:
@@ -97,7 +97,7 @@ class GraphSerializer:
         header[GraphIO.Keys.NodesVersions] = self._getNodeTypesVersions()
         if self._graph._hasExplicitCacheDir:
             # We store the absolute but also the relative cacheDir path (to the scene file)
-            # to make sure that if we move the scene+cacheDir we can still retrieve the cache 
+            # to make sure that if we move the scene+cacheDir we can still retrieve the cache
             header[GraphIO.Keys.CacheDir] = {
                 "absoluteCacheDir": self._graph._absoluteCacheDir,
                 "relativeCacheDir": self._graph._relativeCacheDir,
@@ -230,7 +230,24 @@ class PartialGraphSerializer(GraphSerializer):
                 if (exportValue := self._serializeAttribute(child)) is not None
             ]
 
-        if isinstance(attribute, GroupAttribute):
+        if isinstance(attribute, AnySet):
+            serializedChildren = []
+            for child in attribute.value:
+                childData = child.asDict()
+                childLinkAttr = child.inputLink
+
+                # Remove connection if the sourceNode is not in the partialgraph nodes
+                if childLinkAttr and childLinkAttr.node not in self.nodes:
+                    childData['value'] = child.getDefaultValue()
+                serializedChildren.append(childData)
+
+            return {
+                "expanded": attribute.expanded,
+                "children": serializedChildren
+            }
+
+
+        elif isinstance(attribute, GroupAttribute):
             # Recursively serialize each child of the group attribute.
             return {name: self._serializeAttribute(child) for name, child in attribute.value.items()}
 

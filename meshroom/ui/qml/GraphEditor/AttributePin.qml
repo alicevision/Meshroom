@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import Utils 1.0
 import MaterialIcons 2.2
+import "AnySetUtils.js" as AnySetUtils
 
 /**
  * The representation of an Attribute on a Node.
@@ -30,7 +31,9 @@ RowLayout {
                                                       outputAnchor.y + outputAnchor.height / 2)
 
     readonly property bool isList: attribute && attribute.type === "ListAttribute"
-    readonly property bool isGroup: attribute && attribute.type === "GroupAttribute"
+    readonly property bool isExpandable: attribute && attribute.isExpandable === true
+    readonly property bool isDynamic: !!attribute.desc && !!attribute.desc.isCustomAttribute
+    readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     readonly property bool isConnected: attribute.hasAnyInputLinks || attribute.hasAnyOutputLinks
 
     signal childPinCreated(var childAttribute, var pin)
@@ -40,10 +43,127 @@ RowLayout {
     signal edgeAboutToBeRemoved(var input)
     signal clicked()
 
+    Component {
+        id: removeAnySetAttributeMenuComp
+        Menu {
+            id: anySetMenu
+
+            property real preferredX: 0
+            property real preferredY: 0
+
+            MenuItem {
+                text: "Move Up"
+                enabled: AnySetUtils.canMoveBy(attribute, -1)
+                onTriggered: _currentScene.moveAnySetAttribute(attribute, -1)
+            }
+            MenuItem {
+                text: "Move Down"
+                enabled: AnySetUtils.canMoveBy(attribute, 1)
+                onTriggered: _currentScene.moveAnySetAttribute(attribute, 1)
+            }
+            MenuSeparator {}
+            MenuItem {
+                text: "Rename Attribute"
+                enabled: root.isAnySetChild
+                onTriggered: {
+                    var dialog = renameAnySetAttributeDialogComp.createObject(Overlay.overlay, {
+                        "targetAttribute": attribute,
+                        "preferredX": anySetMenu.preferredX,
+                        "preferredY": anySetMenu.preferredY
+                    })
+                    dialog.open()
+                }
+            }
+            MenuItem {
+                text: "Remove Attribute"
+                enabled: root.isAnySetChild
+                onTriggered: _currentScene.removeAnySetAttribute(attribute)
+            }
+        }
+    }
+
+    Component {
+        id: renameAnySetAttributeDialogComp
+        Dialog {
+            id: renameDialog
+
+            property var targetAttribute: null
+            property real preferredX: 0
+            property real preferredY: 0
+
+            title: "Rename Attribute"
+            modal: true
+            parent: Overlay.overlay
+            contentWidth: 280
+            x: parent ? Math.max(0, Math.min(preferredX, parent.width - width)) : 0
+            y: parent ? Math.max(0, Math.min(preferredY, parent.height - height)) : 0
+            standardButtons: Dialog.Ok | Dialog.Cancel
+            closePolicy: Popup.CloseOnEscape
+
+            GridLayout {
+                columns: 2
+                columnSpacing: 8
+                rowSpacing: 8
+                width: renameDialog.contentWidth
+
+                Label {
+                    text: "Name"
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                }
+                TextField {
+                    id: nameField
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    text: renameDialog.targetAttribute ? renameDialog.targetAttribute.name : ""
+                    selectByMouse: true
+                    validator: RegularExpressionValidator { regularExpression: /^[A-Za-z_][A-Za-z0-9_]*$/ }
+                    onAccepted: renameDialog.accept()
+                }
+
+                Label {
+                    text: "Label"
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                }
+                TextField {
+                    id: labelField
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    text: renameDialog.targetAttribute ? renameDialog.targetAttribute.label : ""
+                    selectByMouse: true
+                    onAccepted: renameDialog.accept()
+                }
+            }
+
+            onOpened: {
+                nameField.forceActiveFocus()
+                nameField.selectAll()
+            }
+
+            onAccepted: {
+                if (targetAttribute && nameField.acceptableInput && labelField.text.trim() !== "") {
+                    _currentScene.renameAnySetAttribute(targetAttribute, nameField.text.trim(), labelField.text.trim())
+                }
+                destroy()
+            }
+
+            onRejected: destroy()
+        }
+    }
+
     objectName: attribute ? attribute.name + "." : ""
     layoutDirection: Qt.LeftToRight
     spacing: 3
     height: attribute && attribute.isOutput ? outputAnchor.height : inputAnchor.height
+
+    function getCurrentAttributePinColor(hasChildrenConnected) {
+        if (root.isDynamic) {
+            return "transparent"
+        }
+        if (hasChildrenConnected) {
+            return Colors.sysPalette.iconText
+        }
+        return Colors.sysPalette.mid
+    }
 
     ToolTip {
         text: attribute.fullName + ": " + attribute.type
@@ -81,18 +201,14 @@ RowLayout {
             radius: root.isList ? 0 : width / 2
             Layout.alignment: Qt.AlignVCenter
 
-            border.color: {
-                if (innerInputAnchor.hasConnectedChildren)
-                    return Colors.sysPalette.text
-                return Colors.sysPalette.mid
-            }
+            border.color: getCurrentAttributePinColor(innerInputAnchor.hasConnectedChildren)
             color: Colors.sysPalette.base
 
             Rectangle {
                 id: innerInputAnchor
                 property bool linkEnabled: true
                 property bool hasConnectedChildren: {
-                    if (!root.isGroup || root.isConnected || !attribute)
+                    if (!isExpandable || root.isConnected || !attribute)
                         return false
                     for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
                         if (attribute.flatStaticChildren[i].hasAnyInputLinks) {
@@ -102,6 +218,7 @@ RowLayout {
                     return false
                 }
                 visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || hasConnectedChildren ||
+                        root.isDynamic ||
                         (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
                 radius: root.isList ? 0 : 2
                 anchors.fill: parent
@@ -111,6 +228,8 @@ RowLayout {
                         return Colors.sysPalette.highlight
                     if (hasConnectedChildren)
                         return Colors.sysPalette.mid
+                    if (root.isDynamic)
+                        return "transparent"
                     return Colors.sysPalette.text
                 }
             }
@@ -128,7 +247,7 @@ RowLayout {
 
                 keys: [inputDragTarget.objectName]
                 onEntered: function(drag) {
-                    var validIncomingConnection = drag.source.attribute.validateIncomingConnection(inputDragTarget.attribute)
+                    var validIncomingConnection = inputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
                     // Check if attributes are compatible to create a valid connection
                     if (root.readOnly                                            // Cannot connect on a read-only attribute
                         || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
@@ -167,7 +286,7 @@ RowLayout {
                 readonly property alias nodeItem: root.nodeItem
                 readonly property bool isOutput: Boolean(attribute.isOutput)
                 readonly property alias isList: root.isList
-                readonly property alias isGroup: root.isGroup
+                readonly property alias isExpandable: root.isExpandable
                 property bool dragAccepted: false
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -291,10 +410,11 @@ RowLayout {
             label.horizontalAlignment: root.attribute && root.attribute.isOutput ? Text.AlignRight : Text.AlignLeft
             label.verticalAlignment: Text.AlignVCenter
             label.visible: true
+            label.font.italic: root.isDynamic || (!!attribute.root && !!attribute.root.desc && !!attribute.root.desc.isCustomAttribute)
 
             // Icon
             iconText: {
-                if (root.isGroup) {
+                if (root.isExpandable) {
                     return root.expanded ? MaterialIcons.expand_more : MaterialIcons.chevron_right
                 }
                 return ""
@@ -308,6 +428,20 @@ RowLayout {
             icon.leftPadding: root.attribute.isOutput ? 0 : groupPaddingWidth
             icon.rightPadding: root.attribute.isOutput ? groupPaddingWidth : 0
         }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.isAnySetChild
+            acceptedButtons: Qt.RightButton
+            onClicked: function(mouse) {
+                var menu = removeAnySetAttributeMenuComp.createObject(nameContainer)
+                var position = mapToItem(Overlay.overlay, mouse.x, mouse.y)
+                menu.preferredX = position.x
+                menu.preferredY = position.y
+                menu.parent = nameContainer
+                menu.popup()
+            }
+        }
     }
 
     Rectangle {
@@ -320,18 +454,14 @@ RowLayout {
 
         Layout.alignment: Qt.AlignVCenter
 
-        border.color: {
-            if (innerOutputAnchor.hasConnectedChildren)
-                return Colors.sysPalette.text
-            return Colors.sysPalette.mid
-        }
+        border.color: getCurrentAttributePinColor(innerOutputAnchor.hasConnectedChildren)
         color: Colors.sysPalette.base
 
         Rectangle {
             id: innerOutputAnchor
             property bool linkEnabled: true
             property bool hasConnectedChildren: {
-                if (!root.isGroup || root.isConnected)
+                if (!root.isExpandable || root.isConnected)
                     return false
                 for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
                     if (attribute.flatStaticChildren[i].hasAnyOutputLinks) {
@@ -402,7 +532,7 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: Boolean(attribute.isOutput)
             readonly property alias isList: root.isList
-            readonly property alias isGroup: root.isGroup
+            readonly property alias isExpandable: root.isExpandable
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter

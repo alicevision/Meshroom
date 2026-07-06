@@ -20,7 +20,10 @@ import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
 from meshroom.core import desc, plugins, stats, hashValue, nodeVersion, Version, MrNodeType
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
+from meshroom.core.desc.attribute import Attribute as AttributeDescription
+from meshroom.core.desc.anySet import AnySet as AnySetDescription
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
+from meshroom.core.mixins import Expandable
 from meshroom.core.mtyping import PathLike
 
 
@@ -40,6 +43,10 @@ def renameWritingToFinalPath(writingFilepath: str, filepath: str) -> str:
             except OSError:
                 pass
     os.rename(writingFilepath, filepath)
+
+
+def hasADynamicValue(attribute: AttributeDescription) ->bool:
+    return attribute.isDynamicValue or isinstance(attribute, AnySetDescription)
 
 class Status(Enum):
     """
@@ -72,18 +79,18 @@ class ChunkIndex(IntEnum):
 class ChunkIndexEnum(BaseObject):
     """
     Wrapper class to expose ChunkIndex enum to QML.
-    
+
     Usage in QML:
         import Node 1.0
-        
+
         if (chunkIndex === ChunkIndexEnum.PREPROCESS) {
             // Handle preprocess case
         }
     """
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
-    
+
     NONE = Property(int, lambda self: int(ChunkIndex.NONE), constant=True)
     PREPROCESS = Property(int, lambda self: int(ChunkIndex.PREPROCESS), constant=True)
     POSTPROCESS = Property(int, lambda self: int(ChunkIndex.POSTPROCESS), constant=True)
@@ -502,7 +509,7 @@ class NodeChunk(BaseObject):
 
     def __repr__(self):
         return f"<NodeChunk {self.name} ({self.getStatusName()}) {self.__uid}>"
-    
+
     def __del__(self):
         logging.debug(f"NodeChunk: delete chunk {self}")
 
@@ -513,7 +520,7 @@ class NodeChunk(BaseObject):
     @property
     def isPreprocess(self):
         return self.index == ChunkIndex.PREPROCESS
-    
+
     @property
     def isPostprocess(self):
         return self.index == ChunkIndex.POSTPROCESS
@@ -1805,7 +1812,7 @@ class BaseNode(BaseObject):
                 chunkPlaceholder._status.status = self._nodeStatus.status
                 self._chunkPlaceholder.setObjectList([chunkPlaceholder])
                 self.chunksChanged.emit()
-    
+
     def getChunkLogfileName(self, iteration: int):
         if iteration >= 0:
             stem = str(self.chunks[iteration].index)
@@ -1839,7 +1846,7 @@ class BaseNode(BaseObject):
 
     def postprocess(self, forceCompute=False, inCurrentEnv=False):
         """
-        Invoke the post process command on Client Node to execute after 
+        Invoke the post process command on Client Node to execute after
         the processing on the node is completed
         """
         if self.hasPostprocessChunk:
@@ -1908,14 +1915,14 @@ class BaseNode(BaseObject):
         # loop over all output attributes in the node description
         for output in self.nodeDesc.outputs:
             # Only consider dynamic values
-            if output.isDynamicValue:
+            if hasADynamicValue(output):
                 if self.hasAttribute(output.name) and output.name in data:
                     attr = self.attribute(output.name)
 
                     # Use _populateFromDynamicValue for compatible classes
                     # (E.g. for ListAttributes) to properly
                     # create QObject children on the main thread
-                    if hasattr(attr, '_populateFromDynamicValue'):
+                    if hasattr(attr, '_populateFromDynamicValue') and attr._populateFromDynamicValue is not None:
                         attr._populateFromDynamicValue(data[output.name])
                     else:
                         attr.value = data[output.name]
@@ -1932,9 +1939,10 @@ class BaseNode(BaseObject):
         """
         if not self.nodeDesc.hasDynamicOutputAttribute:
             return
+
         data = {}
         for output in self.nodeDesc.outputs:
-            if output.isDynamicValue:
+            if hasADynamicValue(output):
                 if self.hasAttribute(output.name):
                     # Store the primitive value and not the value itself
                     data[output.name] = self.attribute(output.name).getPrimitiveValue()
@@ -1981,7 +1989,7 @@ class BaseNode(BaseObject):
         anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
                  Status.RUNNING, Status.SUBMITTED)
         allOf = (Status.SUCCESS,)
-        
+
         if self.isInitNode:
             return Status.INIT
         if not self._chunksCreated:
@@ -2394,6 +2402,7 @@ class Node(BaseNode):
 
         self.packageName = self.nodeDesc.packageName
 
+
         for attrDesc in self.nodeDesc.inputs:
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
                                                   isOutput=False, node=self))
@@ -2487,7 +2496,7 @@ class Node(BaseNode):
                 continue
             internalInputs[k] = v.getSerializedValue()
         outputs = ({k: v.getSerializedValue() for k, v in self._attributes.objects.items()
-                    if v.isOutput and not v.desc.isDynamicValue})
+                    if v.isOutput and (not v.desc.isDynamicValue or isinstance(v, Expandable))})
 
         return {
             'nodeType': self.nodeType,
@@ -2500,7 +2509,7 @@ class Node(BaseNode):
             'uid': self._uid,
             'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
-            'outputs': outputs,
+            'outputs': outputs
         }
 
     def _resetChunks(self):

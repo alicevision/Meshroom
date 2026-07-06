@@ -18,7 +18,6 @@ Item {
     property variant nodeTypesModel: null  /// The list of node types that can be instantiated
     property real maxZoom: 2.0
     property real minZoom: 0.1
-
     property var edgeAboutToBeRemoved: undefined
 
     property var _attributeToDelegate: ({})
@@ -209,7 +208,7 @@ Item {
             root.forceActiveFocus()
             workspaceClicked()
         }
-        
+
         onPositionChanged: {
             if (drag.active)
                 workspaceMoved()
@@ -423,7 +422,7 @@ Item {
                             }
                         }
 
-                        // We add 1 to the index because of human readable index (starting at 1) 
+                        // We add 1 to the index because of human readable index (starting at 1)
                         value: listAttr ? listAttr.value.indexOf(edgeMenu.currentEdge.src) + 1 : 0
                         range: { "min": 1, "max": listAttr ? listAttr.value.count : 0 }
 
@@ -497,9 +496,22 @@ Item {
                 model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
 
                 delegate: Edge {
-                    function getAttributePin(attribute) {
+                    function getAttributePin(attribute, attributeToDelegate) {
+                        if (!attribute) {
+                            return null
+                        }
+
                         // Get the first visible parent of "attribute"
-                        let dstAttributeDelegate = root._attributeToDelegate[attribute]
+                        let dstAttributeDelegate = attributeToDelegate[attribute.fullName]
+                        if (!dstAttributeDelegate) {
+                            for (const key in attributeToDelegate) {
+                                if (attributeToDelegate[key].attribute === attribute) {
+                                    dstAttributeDelegate = attributeToDelegate[key]
+                                    break
+                                }
+                            }
+                        }
+
                         if (dstAttributeDelegate && dstAttributeDelegate.visible) {
                             return dstAttributeDelegate
                         }
@@ -508,7 +520,6 @@ Item {
                             return null
                         }
 
-                        let index = Array.from(attribute.root.value).indexOf(attribute)
                         let groupAttributeDelegate = null
                         let groupAttribute = attribute
 
@@ -517,35 +528,39 @@ Item {
                             groupAttribute = groupAttribute ? groupAttribute.root : null
 
                             if (groupAttribute) {
-                                groupAttributeDelegate = root._attributeToDelegate[groupAttribute]
+                                groupAttributeDelegate = attributeToDelegate[groupAttribute.fullName]
                             }
                         }
 
-                        if (groupAttributeDelegate) {
+                        if (groupAttributeDelegate && groupAttributeDelegate.visible) {
                             return groupAttributeDelegate
                         }
 
                         return dstAttributeDelegate
                     }
 
-                    property var src: getAttributePin(edge.src)
-                    property var dst: getAttributePin(edge.dst)
-                    property bool isValidEdge: src !== null && dst !== null
+                    property var src: {
+                        return getAttributePin(edge.src, root._attributeToDelegate)
+                        }
+                    property var dst: {
+                        return getAttributePin(edge.dst, root._attributeToDelegate)
+                        }
+                    property bool isValidEdge: src != null && dst != null
                     visible: isValidEdge && src.visible && dst.visible
 
-                    property bool forLoop: {
-                        if (src !== null && dst !== null) {
-                            return src.attribute.type === "ListAttribute" && dst.attribute.type != "ListAttribute"
-                        }
-                        return false
-                    }
+                    property var loopSource: edge.src && edge.src.root && edge.src.root.value ? edge.src.root : null
+                    property bool forLoop: src != null && dst != null &&
+                                           loopSource != null &&
+                                           src.attribute.type === "ListAttribute" &&
+                                           dst.attribute.type != "ListAttribute"
 
                     property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge === edge)
 
                     edge: object
                     isForLoop: forLoop
-                    loopSize: forLoop ? edge.src.root.value.count : 0
-                    iteration: forLoop ? edge.src.root.value.indexOf(edge.src) : 0
+                    loopSize: forLoop ? loopSource.value.count : 0
+
+                    iteration: forLoop ? loopSource.value.indexOf(edge.src) : 0
                     color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
                     thickness: {
                         if (forLoop) {
@@ -609,7 +624,7 @@ Item {
                 id: nodeMenuComponent
                 Menu {
                     id: nodeMenu
-                    
+
                     property var currentNode: nodeMenuLoader.currentNode
 
                     // Cache computatibility/submitability status of each selected node.
@@ -699,7 +714,7 @@ Item {
                         onTriggered: {
                             if (nodeMenu.isSelectionFullyComputed) {
                                 nodeMenuLoader.showDataDeletionDialog(
-                                    false, 
+                                    false,
                                     function(request, uigraph) {
                                         request(uigraph.getSelectedNodes())
                                     }.bind(null, computeRequest, uigraph)
@@ -720,7 +735,7 @@ Item {
                         onTriggered: {
                             if (nodeMenu.isSelectionFullyComputed) {
                                 nodeMenuLoader.showDataDeletionDialog(
-                                    false, 
+                                    false,
                                     function(request, uigraph) {
                                         request(uigraph.getSelectedNodes())
                                     }.bind(null, submitRequest, uigraph)
@@ -1477,7 +1492,7 @@ Item {
             // Search nodes in the graph
             SearchBar {
                 id: graphSearchBar
-  
+
                 toggle: true // enable toggling the actual text field by the search button
                 Layout.minimumWidth: graphSearchBar.width
                 maxWidth: 150
@@ -1568,11 +1583,23 @@ Item {
     }
 
     function registerAttributePin(attribute, pin) {
-        root._attributeToDelegate[attribute] = pin
+        const attributeToDelegate = Object.assign({}, root._attributeToDelegate)
+        attributeToDelegate[attribute.fullName] = pin
+        root._attributeToDelegate = attributeToDelegate
     }
 
     function unregisterAttributePin(attribute, pin) {
-        delete root._attributeToDelegate[attribute]
+        const attributeToDelegate = Object.assign({}, root._attributeToDelegate)
+        let updated = false
+        for (const key in attributeToDelegate) {
+            if (attributeToDelegate[key] === pin) {
+                delete attributeToDelegate[key]
+                updated = true
+            }
+        }
+        if (updated) {
+            root._attributeToDelegate = attributeToDelegate
+        }
     }
 
     function boundingBox() {
@@ -1596,7 +1623,7 @@ Item {
     function selectionBoundingBox() {
         /**
          * Returns the bounding box considering the nodes which are selected.
-         * The returned bounding box starts from the Minumum x,y position to the 
+         * The returned bounding box starts from the Minumum x,y position to the
          * Maximum x,y postion of the selected nodes.
          */
         var firstIdx = uigraph.nodeSelection.selectedIndexes[0]

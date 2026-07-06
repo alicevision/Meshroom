@@ -14,6 +14,7 @@ import psutil
 
 from meshroom import _MESHROOM_ROOT
 from meshroom.core import cgroup
+from meshroom.core.desc.anySet import AnySet
 from meshroom.core.utils import VERBOSE_LEVEL
 
 from .computation import Level, StaticNodeSize
@@ -239,7 +240,7 @@ class BaseNode(object):
 
     def __init__(self):
         super(BaseNode, self).__init__()
-        self.hasDynamicOutputAttribute = any(output.isDynamicValue for output in self.outputs)
+        self.hasDynamicOutputAttribute = any(output.isDynamicValue or isinstance(output, AnySet) for output in self.outputs)
         self.sourceCodeFolder = Path(getfile(self.__class__)).parent.resolve().as_posix()
 
     def getMrNodeType(self):

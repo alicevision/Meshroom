@@ -6,13 +6,13 @@ from enum import auto, Enum
 from typing import Sequence
 
 from meshroom.common import (
-    BaseObject, 
-    ListModel, 
-    JSValue, 
-    Property, 
-    Variant, 
-    VariantList, 
-    strtobool, 
+    BaseObject,
+    ListModel,
+    JSValue,
+    Property,
+    Variant,
+    VariantList,
+    strtobool,
     deprecated
 )
 from meshroom.core.desc.validators import AttributeValidator
@@ -24,7 +24,7 @@ _SPLIT_RE = re.compile(r'[_\s]+')
 
 def convertToLabel(name: str) -> str:
     """Convert a camelCase or snake_case attribute name into a human-readable label.
-    
+
     Examples:
         >>> convertToLabel('camelCase')
         'Camel Case'
@@ -39,14 +39,14 @@ def convertToLabel(name: str) -> str:
     """
     if not name:
         return ''
-    
+
     # Handle consecutive uppercase letters (e.g. 'URL', 'HTTP')
     name = _ACRONYM_RE.sub(r'\1 \2', name)
     # Insert space between camelCase boundaries
     name = _CAMEL_CASE_RE.sub(r'\1 \2', name)
     # Split on underscores or spaces
     words = _SPLIT_RE.split(name)
-    
+
     # Preserve uppercase acronyms, capitalize others
     return ' '.join(
         word if word.isupper() else word.capitalize()
@@ -98,7 +98,7 @@ class Attribute(BaseObject):
             self._validators = validators
         else:
             raise RuntimeError(f"Validators should be of type 'Sequence[AttributeValidator]', the type '{type(validators)}' is not supported.")
-        
+
     def getInstanceType(self):
         """ Return the correct Attribute instance corresponding to the description. """
         # Import within the method to prevent cyclic dependencies
@@ -113,7 +113,7 @@ class Attribute(BaseObject):
         """
         raise NotImplementedError("Attribute.validateValue is an abstract function that should be "
                                   "implemented in the derived class.")
-    
+
     def checkUidIgnoreValue(self, testValue):
         """ Return true if the test value is the same as the `uidIgnoreValue` """
         return self._uidIgnoreValue == testValue
@@ -152,11 +152,43 @@ class Attribute(BaseObject):
         except ValueError:
             return False
         return True
-    
+
     @property
     def validators(self):
         return self._validators
-    
+
+    def clone(self):
+        return self.__class__(
+                name=self.name,
+                label=self.label,
+                description=self.description,
+                value=self.value,
+                advanced=self.advanced,
+                semantic=self.semantic,
+                commandLineGroup=self.commandLineGroup,
+                enabled=self.enabled,
+                invalidate=self.invalidate,
+                visible=self.visible,
+                exposed=self.exposed,
+                validators=self.validators
+            )
+
+    def asDict(self):
+        return {
+            'type': self.__class__.__name__,
+            'name':self.name,
+            'label':self.label,
+            'description':self.description,
+            'value':self.value,
+            'advanced': self.advanced,
+            'semantic': self.semantic,
+            'commandLineGroup': self.commandLineGroup,
+            'enabled': self.enabled,
+            'keyable':self.keyable,
+            'keyType':self.keyType,
+            'invalidate':self.invalidate
+        }
+
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
@@ -199,8 +231,8 @@ class Attribute(BaseObject):
 class ListAttribute(Attribute):
     """ A list of Attributes """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, elementDesc, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
-                 advanced=False, semantic="", enabled=True, joinChar=" ", uidIgnoreValueIfEmpty=False, visible=True, exposed=False, 
+    def __init__(self, elementDesc, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel,
+                 advanced=False, semantic="", enabled=True, joinChar=" ", uidIgnoreValueIfEmpty=False, visible=True, exposed=False,
                  value=None, validators=None):
         """
         :param elementDesc: the Attribute description of elements to store in that list
@@ -210,7 +242,7 @@ class ListAttribute(Attribute):
         self._elementDesc = elementDesc
         self._joinChar = joinChar
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
-        
+
         super(ListAttribute, self).__init__(name=name, label=label, description=description, value=value,
                                             invalidate=False, commandLineGroup=commandLineGroup, advanced=advanced, semantic=semantic,
                                             enabled=enabled, visible=visible, exposed=exposed, validators=validators)
@@ -239,7 +271,7 @@ class ListAttribute(Attribute):
         return value
 
     def checkUidIgnoreValue(self, testValue):
-        """ Don't affect Uid if _uidIgnoreValueIfEmpty is set to True 
+        """ Don't affect Uid if _uidIgnoreValueIfEmpty is set to True
         and if testValue is an empty list.
         """
         return self._uidIgnoreValueIfEmpty and len(testValue) == 0
@@ -256,6 +288,27 @@ class ListAttribute(Attribute):
             return self._elementDesc.matchDescription(value[0], strict)
         return True
 
+    def clone(self):
+        return self.__class__(elementDesc=self.elementDesc,
+                              name=self.name,
+                              label=self.label,
+                              description=self.description,
+                              commandLineGroup=self.commandLineGroup,
+                              advanced=self.advanced,
+                              semantic=self.semantic,
+                              enabled=self.enabled,
+                              joinChar=self.joinChar,
+                              visible=self.visible,
+                              exposed=self.exposed,
+                              value=self.value
+                              )
+
+    # Override
+    def asDict(self):
+        serializedData = super().asDict()
+        serializedData['elementDesc'] = self._elementDesc.asDict()
+        return serializedData
+
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     invalidate = Property(Variant, lambda self: self.elementDesc.invalidate, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
@@ -264,7 +317,7 @@ class ListAttribute(Attribute):
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
-    def __init__(self, items, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel, 
+    def __init__(self, items, name, label=None, description=None, group="allParams", commandLineGroup=_setParamSentinel,
                  advanced=False, semantic="",  enabled=True, joinChar=" ", brackets=None, visible=True,
                  exposed=False, validators=None):
         """
@@ -282,6 +335,7 @@ class GroupAttribute(Attribute):
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies
         from meshroom.core.attribute import GroupAttribute
+
         return GroupAttribute
 
     def validateValue(self, value):
@@ -290,8 +344,7 @@ class GroupAttribute(Attribute):
             return value
         if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
-            raise ValueError("GroupAttribute.validateValue: cannot recognize QJSValue. "
-                             "Please, use JSON.stringify(value) in QML.")
+            raise ValueError("GroupAttribute.validateValue:cannot recognize QJSValue.\nPlease, use JSON.stringify(value) in QML.")
         if isinstance(value, str):
             # Alternative solution to set values from QML is to convert values to JSON string
             # In this case, it works with all data types
@@ -366,6 +419,20 @@ class GroupAttribute(Attribute):
             allInvalidations.append(desc.invalidate)
         return allInvalidations
 
+    def clone(self):
+        return self.__class__(items=[item.clone() for item in self._items],
+                              name=self.name,
+                              label=self.label,
+                              description=self.description,
+                              commandLineGroup=self.commandLineGroup,
+                              advanced=self.advanced,
+                              semantic=self.semantic,
+                              enabled=self.enabled,
+                              joinChar=self.joinChar,
+                              brackets=self.brackets,
+                              visible=self.visible,
+                              exposed=self.exposed)
+
     items = Property(Variant, lambda self: self._items, constant=True)
     invalidate = Property(Variant, retrieveChildrenInvalidations, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
@@ -381,6 +448,25 @@ class Param(Attribute):
                                     keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
                                     enabled=enabled, invalidate=invalidate, semantic=semantic,
                                     uidIgnoreValue=uidIgnoreValue, visible=visible, exposed=exposed, validators=validators)
+
+    #Override
+    def clone(self):
+        return self.__class__(
+                name=self.name,
+                label=self.label,
+                description=self.description,
+                value=self.value,
+                advanced=self.advanced,
+                semantic=self.semantic,
+                commandLineGroup=self.commandLineGroup,
+                enabled=self.enabled,
+                keyable=self.keyable,
+                keyType=self.keyType,
+                invalidate=self.invalidate,
+                visible=self.visible,
+                exposed=self.exposed,
+                validators=self.validators
+            )
 
 
 class File(Attribute):
@@ -414,6 +500,8 @@ class File(Attribute):
             return self.name, ValueTypeErrors.TYPE
         return "", ValueTypeErrors.NONE
 
+    def clone(self):
+        return Attribute.clone(self)
 
 class BoolParam(Param):
     """
@@ -552,6 +640,20 @@ class PushButtonParam(Param):
     def checkValueTypes(self):
         return "", ValueTypeErrors.NONE
 
+    def clone(self):
+        return self.__class__(
+            name=self.name,
+            label=self.label,
+            description=self.description,
+            commandLineGroup=self.commandLineGroup,
+            advanced=self.advanced,
+            enabled=self.enabled,
+            invalidate=self.invalidate,
+            semantic=self.semantic,
+            visible=self.visible,
+            exposed=self.exposed,
+            validators=self.validators
+        )
 
 class ChoiceParam(Param):
     """
@@ -648,6 +750,9 @@ class ChoiceParam(Param):
 
         return "", ValueTypeErrors.NONE
 
+    def clone(self):
+        return Attribute.clone(self)
+
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
@@ -683,6 +788,8 @@ class StringParam(Param):
             return self.name, ValueTypeErrors.TYPE
         return "", ValueTypeErrors.NONE
 
+    def clone(self):
+        return Attribute.clone(self)
 
 class ColorParam(Param):
     """
@@ -714,6 +821,8 @@ class ColorParam(Param):
             return self.name, ValueTypeErrors.TYPE
         return "", ValueTypeErrors.NONE
 
+    def clone(self):
+        return Attribute.clone(self)
 
 class Flow(Attribute):
     """

@@ -13,13 +13,13 @@ def registeredNodeTypes(nodeTypes: list[desc.Node]):
     nodePluginsList = {}
     for nodeType in nodeTypes:
         nodePlugin = NodePlugin(nodeType)
-        pluginManager.registerNode(nodePlugin)
+        pluginManager.loadNodeProvider(nodePlugin)
         nodePluginsList[nodeType] = nodePlugin
 
     yield
 
     for nodeType in nodeTypes:
-        pluginManager.unregisterNode(nodePluginsList[nodeType])
+        pluginManager.unloadNodeProvider(nodePluginsList[nodeType])
 
 
 @contextmanager

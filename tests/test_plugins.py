@@ -26,7 +26,7 @@ class TestPluginWithValidNodesOnly:
     @classmethod
     def teardown_class(cls):
         for node in cls.plugin.nodes.values():
-            pluginManager.unregisterNode(node)
+            pluginManager.unloadNodeProvider(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
@@ -106,7 +106,7 @@ class TestPluginWithValidNodesOnly:
 
         # Unregister a node
         assert nodeA
-        pluginManager.unregisterNode(nodeA)
+        pluginManager.unloadNodeProvider(nodeA)
 
         # Check that the node has been fully unregistered:
         #   - its status is "NOT_LOADED"
@@ -121,7 +121,7 @@ class TestPluginWithValidNodesOnly:
         assert len(pluginManager.getRegisteredNodePlugins()) == nbRegisteredNodes - 1
 
         # Re-register the node
-        pluginManager.registerNode(nodeA)
+        pluginManager.loadNodeProvider(nodeA)
 
         assert nodeA.status == NodeProviderStatus.LOADED
         assert pluginManager.getRegisteredNodePlugin(nodeAName)
@@ -144,7 +144,7 @@ class TestPluginWithInvalidNodes:
     @classmethod
     def teardown_class(cls):
         for node in cls.plugin.nodes.values():
-            pluginManager.unregisterNode(node)
+            pluginManager.unloadNodeProvider(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
@@ -182,7 +182,7 @@ class TestPluginWithInvalidNodes:
         assert not pluginManager.isLoaded(nodeName)
 
         # Check that the node cannot be registered
-        pluginManager.registerNode(node)
+        pluginManager.loadNodeProvider(node)
         assert not pluginManager.isLoaded(nodeName)
 
         # Replace directly in the node file the line that fails the validation
@@ -200,7 +200,7 @@ class TestPluginWithInvalidNodes:
         assert node.status == NodeProviderStatus.NOT_LOADED
 
         # Attempt to register node plugin
-        pluginManager.registerNode(node)
+        pluginManager.loadNodeProvider(node)
         assert pluginManager.isLoaded(nodeName)
 
         # Reload the node again without any change
@@ -226,7 +226,7 @@ class TestPluginWithInvalidNodes:
         assert pluginManager.isLoaded(nodeName)
 
         # Unregister it
-        pluginManager.unregisterNode(node)
+        pluginManager.unloadNodeProvider(node)
         assert node.status == NodeProviderStatus.DESC_ERROR  # Not NOT_LOADED
         assert not pluginManager.isLoaded(nodeName)
 

@@ -710,7 +710,7 @@ class PluginManager(BaseObject):
         self._plugins[pluginUName] = plugin
         if registerNodePlugins:
             for node in plugin.nodes:
-                self.registerNode(plugin.nodes[node])
+                self.loadNodeProvider(plugin.nodes[node])
 
     def removePlugin(self, plugin: Plugin, unregisterNodePlugins: bool = True):
         """
@@ -726,7 +726,7 @@ class PluginManager(BaseObject):
         if self.getPlugin(plugin.uname):
             if unregisterNodePlugins:
                 for node in plugin.nodes.values():
-                    self.unregisterNode(node)
+                    self.unloadNodeProvider(node)
             del self._plugins[plugin.uname]
 
     def getRegisteredNodePlugins(self) -> dict[str: NodePlugin]:
@@ -750,7 +750,7 @@ class PluginManager(BaseObject):
             return self._nodePlugins[name]
         return None
 
-    def registerNode(self, nodePlugin: NodePlugin):
+    def loadNodeProvider(self, nodePlugin: NodePlugin):
         """
         Register a node plugin. A registered node plugin will become instantiable.
         If it is already registered, or if there is an issue with the node description,
@@ -782,7 +782,7 @@ class PluginManager(BaseObject):
             logging.error(f"NodePlugin {name} could not be loaded: {exc}")
             nodePlugin.status = NodeProviderStatus.LOADING_ERROR
 
-    def unregisterNode(self, nodePlugin: NodePlugin):
+    def unloadNodeProvider(self, nodePlugin: NodePlugin):
         """
         Unregister a node plugin. When unregistered, a node plugin cannot be instantiated anymore.
         If it is not registered already, nothing happens.

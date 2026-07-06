@@ -34,7 +34,7 @@ class TestNodeInfo:
     @classmethod
     def teardown_class(cls):
         for node in cls.plugin.nodes.values():
-            pluginManager.unregisterNode(node)
+            pluginManager.unloadNodeProvider(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
@@ -79,7 +79,7 @@ class TestNodeVariables:
     @classmethod
     def teardown_class(cls):
         for node in cls.plugin.nodes.values():
-            pluginManager.unregisterNode(node)
+            pluginManager.unloadNodeProvider(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
@@ -134,7 +134,7 @@ class TestInputNode:
     @classmethod
     def teardown_class(cls):
         for node in cls.plugin.nodes.values():
-            pluginManager.unregisterNode(node)
+            pluginManager.unloadNodeProvider(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
@@ -164,7 +164,7 @@ class TestBackdropNode:
         for plugin in pluginManager.getPlugins():
             if plugin not in cls.loadedPlugins:
                 for node in plugin.nodes.values():
-                    pluginManager.unregisterNode(node)
+                    pluginManager.unloadNodeProvider(node)
                 pluginManager.removePlugin(plugin)
 
     def test_backdropNode(self):
@@ -594,7 +594,7 @@ class TestGenerateMgScene:
         for plugin in pluginManager.getPlugins():
             if plugin not in cls.loadedPlugins:
                 for node in plugin.nodes.values():
-                    pluginManager.unregisterNode(node)
+                    pluginManager.unloadNodeProvider(node)
                 pluginManager.removePlugin(plugin)
 
     @staticmethod

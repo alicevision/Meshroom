@@ -144,11 +144,11 @@ class TestNodeSubmit:
     @classmethod
     def teardown_class(cls):
         for node in cls.plugin.nodes.values():
-            pluginManager.unregisterNode(node)
+            pluginManager.unloadNodeProvider(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
-    def registerNode(self, name):
+    def loadNodeProvider(self, name):
         plugin = pluginManager.getPlugin("pluginSubmitter", uname=False)
         node = plugin.nodes[name]
         nodeType = node.nodeDescriptor
@@ -156,7 +156,7 @@ class TestNodeSubmit:
         return nodeType.__name__
 
     def addNewNode(self, graph, name, nodeParams=None):
-        nodeTypeName = self.registerNode(name)
+        nodeTypeName = self.loadNodeProvider(name)
         nodeParams = nodeParams or {}
         node = graph.addNewNode(nodeTypeName, **nodeParams)
         return node

@@ -113,7 +113,7 @@ class TestPluginWithValidNodesOnly:
         #   - it is still part of pluginA
         #   - it is not in the list of registered plugins anymore (and returns None when requested)
         assert nodeA.status == NodeProviderStatus.NOT_LOADED
-        assert plugin.containsNodePlugin(nodeAName)
+        assert plugin.containsNodeProvider(nodeAName)
         assert nodeA.plugin == plugin
 
         assert pluginManager.getLoadedNodeProvider(nodeAName) is None

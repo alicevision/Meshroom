@@ -465,7 +465,7 @@ class Plugin(BaseObject):
         # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
         self._configFullEnv = self._configEnv | os.environ
 
-    def containsNodePlugin(self, name: str) -> bool:
+    def containsNodeProvider(self, name: str) -> bool:
         """
         Return whether the node plugin "name" is part of the plugin, independently from its
         status.
@@ -658,7 +658,7 @@ class PluginManager(BaseObject):
             Plugin | None: the Plugin the node belongs to if it exists, None otherwise.
         """
         for plugin in self._plugins.values():
-            if plugin.containsNodePlugin(name):
+            if plugin.containsNodeProvider(name):
                 return plugin
         return None
 

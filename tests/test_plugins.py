@@ -64,7 +64,7 @@ class TestPluginWithValidNodesOnly:
         assert plugin == self.plugin
 
         # Unload the plugin without unloading the nodes
-        pluginManager.removePlugin(plugin, unregisterNodeProviders=False)
+        pluginManager.removePlugin(plugin, unloadNodeProviders=False)
 
         # Assert the plugin is not loaded anymore
         assert pluginManager.getPlugin(plugin.name, uname=False) is None
@@ -76,7 +76,7 @@ class TestPluginWithValidNodesOnly:
             assert pluginManager.belongsToPlugin(nodeName) is None
 
         # Re-add the plugin
-        pluginManager.addPlugin(plugin, registerNodeProviders=False)
+        pluginManager.addPlugin(plugin, loadNodeProviders=False)
         assert pluginManager.getPlugin(plugin.name, uname=False)
 
         # Unload the plugin with a full unload of the nodes

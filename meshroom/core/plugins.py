@@ -691,13 +691,13 @@ class PluginManager(BaseObject):
                     return plugin
         return None
 
-    def addPlugin(self, plugin: Plugin, registerNodeProviders: bool = True):
+    def addPlugin(self, plugin: Plugin, loadNodeProviders: bool = True):
         """
         Load a Plugin object.
 
         Args:
             plugin: the Plugin to load and add to the list of loaded plugins.
-            registerNodeProviders: True if all the NodeProviders from the plugin should be loaded
+            loadNodeProviders: True if all the NodeProviders from the plugin should be loaded
                                  at the same time the plugin is being loaded. Otherwise, the
                                  NodeProviders will have to be loaded at a later occasion.
         """
@@ -706,23 +706,23 @@ class PluginManager(BaseObject):
             logging.warning(f"Plugin {pluginUName} is already loaded.")
             return
         self._plugins[pluginUName] = plugin
-        if registerNodeProviders:
+        if loadNodeProviders:
             for node in plugin.nodes:
                 self.loadNodeProvider(plugin.nodes[node])
 
-    def removePlugin(self, plugin: Plugin, unregisterNodeProviders: bool = True):
+    def removePlugin(self, plugin: Plugin, unloadNodeProviders: bool = True):
         """
         Remove a loaded Plugin object.
 
         Args:
             plugin: the Plugin to remove from the list of loaded plugins.
-            unregisterNodeProviders: True if all the nodes from the plugin should be unloaded (if they
+            unloadNodeProviders: True if all the nodes from the plugin should be unloaded (if they
                                    are loaded) at the same time as the plugin is unloaded. Otherwise,
                                    the loaded NodeProviders will remain while the Plugin itself will
                                    be unloaded.
         """
         if self.getPlugin(plugin.uname):
-            if unregisterNodeProviders:
+            if unloadNodeProviders:
                 for node in plugin.nodes.values():
                     self.unloadNodeProvider(node)
             del self._plugins[plugin.uname]

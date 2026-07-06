@@ -98,8 +98,8 @@ class TestPluginWithValidNodesOnly:
             assert nodeProvider.status == NodeProviderStatus.LOADED
             assert pluginManager.isLoaded(nodeName)
 
-    def test_updateRegisteredNodes(self):
-        nbRegisteredNodes = len(pluginManager.getLoadedNodeProviders())
+    def test_updateLoadedNodeProviders(self):
+        nbLoadedNodeProviders = len(pluginManager.getLoadedNodeProviders())
         plugin = pluginManager.getPlugin("pluginA", uname=False)
         assert plugin == self.plugin
         nodeA = pluginManager.getLoadedNodeProvider("PluginANodeA")
@@ -119,14 +119,14 @@ class TestPluginWithValidNodesOnly:
 
         assert pluginManager.getLoadedNodeProvider(nodeAName) is None
         assert nodeAName not in pluginManager.getLoadedNodeProviders()
-        assert len(pluginManager.getLoadedNodeProviders()) == nbRegisteredNodes - 1
+        assert len(pluginManager.getLoadedNodeProviders()) == nbLoadedNodeProviders - 1
 
         # Re-load the node
         pluginManager.loadNodeProvider(nodeA)
 
         assert nodeA.status == NodeProviderStatus.LOADED
         assert pluginManager.getLoadedNodeProvider(nodeAName)
-        assert len(pluginManager.getLoadedNodeProviders()) == nbRegisteredNodes
+        assert len(pluginManager.getLoadedNodeProviders()) == nbLoadedNodeProviders
 
 
 class TestPluginWithInvalidNodes:

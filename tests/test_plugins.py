@@ -2,7 +2,7 @@
 
 from meshroom.core import pluginManager, loadClassesNodes
 from meshroom.core.desc.node import NodeVersionType
-from meshroom.core.plugins import NodePluginStatus, Plugin
+from meshroom.core.plugins import NodeProviderStatus, Plugin
 from .utils import overrideOsEnvironmentVariables, registeredPlugins, registeredUserPlugins
 
 from pathlib import Path
@@ -50,7 +50,7 @@ class TestPluginWithValidNodesOnly:
         # Assert that the nodes of pluginA have been successfully registered
         assert len(pluginManager.getRegisteredNodePlugins()) >= 2
         for nodeName, nodePlugin in plugin.nodes.items():
-            assert nodePlugin.status == NodePluginStatus.LOADED
+            assert nodePlugin.status == NodeProviderStatus.LOADED
             assert pluginManager.isRegistered(nodeName)
 
         # Assert the template has been loaded
@@ -71,7 +71,7 @@ class TestPluginWithValidNodesOnly:
 
         # Assert the nodes are still registered and belong to an unloaded plugin
         for nodeName, nodePlugin in plugin.nodes.items():
-            assert nodePlugin.status == NodePluginStatus.LOADED
+            assert nodePlugin.status == NodeProviderStatus.LOADED
             assert pluginManager.isRegistered(nodeName)
             assert pluginManager.belongsToPlugin(nodeName) is None
 
@@ -87,14 +87,14 @@ class TestPluginWithValidNodesOnly:
 
         # Assert the nodes have been successfully unregistered
         for nodeName, nodePlugin in plugin.nodes.items():
-            assert nodePlugin.status == NodePluginStatus.NOT_LOADED
+            assert nodePlugin.status == NodeProviderStatus.NOT_LOADED
             assert not pluginManager.isRegistered(nodeName)
 
         # Re-add the plugin and re-register the nodes
         pluginManager.addPlugin(plugin)
         assert pluginManager.getPlugin(plugin.name, uname=False)
         for nodeName, nodePlugin in plugin.nodes.items():
-            assert nodePlugin.status == NodePluginStatus.LOADED
+            assert nodePlugin.status == NodeProviderStatus.LOADED
             assert pluginManager.isRegistered(nodeName)
 
     def test_updateRegisteredNodes(self):
@@ -112,7 +112,7 @@ class TestPluginWithValidNodesOnly:
         #   - its status is "NOT_LOADED"
         #   - it is still part of pluginA
         #   - it is not in the list of registered plugins anymore (and returns None when requested)
-        assert nodeA.status == NodePluginStatus.NOT_LOADED
+        assert nodeA.status == NodeProviderStatus.NOT_LOADED
         assert plugin.containsNodePlugin(nodeAName)
         assert nodeA.plugin == plugin
 
@@ -123,7 +123,7 @@ class TestPluginWithValidNodesOnly:
         # Re-register the node
         pluginManager.registerNode(nodeA)
 
-        assert nodeA.status == NodePluginStatus.LOADED
+        assert nodeA.status == NodeProviderStatus.LOADED
         assert pluginManager.getRegisteredNodePlugin(nodeAName)
         assert len(pluginManager.getRegisteredNodePlugins()) == nbRegisteredNodes
 
@@ -157,12 +157,12 @@ class TestPluginWithInvalidNodes:
 
         # Assert that PluginBNodeA is successfully registered
         assert pluginManager.isRegistered("PluginBNodeA")
-        assert plugin.nodes["PluginBNodeA"].status == NodePluginStatus.LOADED
+        assert plugin.nodes["PluginBNodeA"].status == NodeProviderStatus.LOADED
         assert plugin.nodes["PluginBNodeA"].plugin == plugin
 
         # Assert that PluginBNodeB has not been registered (description error)
         assert not pluginManager.isRegistered("PluginBNodeB")
-        assert plugin.nodes["PluginBNodeB"].status == NodePluginStatus.DESC_ERROR
+        assert plugin.nodes["PluginBNodeB"].status == NodeProviderStatus.DESC_ERROR
         assert plugin.nodes["PluginBNodeB"].plugin == plugin
 
         # Assert the template has been loaded
@@ -178,7 +178,7 @@ class TestPluginWithInvalidNodes:
         nodeName = node.nodeDescriptor.__name__
 
         # Check that the node has not been registered
-        assert node.status == NodePluginStatus.DESC_ERROR
+        assert node.status == NodeProviderStatus.DESC_ERROR
         assert not pluginManager.isRegistered(nodeName)
 
         # Check that the node cannot be registered
@@ -197,7 +197,7 @@ class TestPluginWithInvalidNodes:
 
         # Reload the node and assert it is valid
         node.reload()
-        assert node.status == NodePluginStatus.NOT_LOADED
+        assert node.status == NodeProviderStatus.NOT_LOADED
 
         # Attempt to register node plugin
         pluginManager.registerNode(node)
@@ -222,12 +222,12 @@ class TestPluginWithInvalidNodes:
 
         # Reload the node and assert it is invalid while still registered
         node.reload()
-        assert node.status == NodePluginStatus.DESC_ERROR
+        assert node.status == NodeProviderStatus.DESC_ERROR
         assert pluginManager.isRegistered(nodeName)
 
         # Unregister it
         pluginManager.unregisterNode(node)
-        assert node.status == NodePluginStatus.DESC_ERROR  # Not NOT_LOADED
+        assert node.status == NodeProviderStatus.DESC_ERROR  # Not NOT_LOADED
         assert not pluginManager.isRegistered(nodeName)
 
     def test_reloadNodePluginSyntaxError(self):
@@ -237,7 +237,7 @@ class TestPluginWithInvalidNodes:
         nodeName = node.nodeDescriptor.__name__
 
         # Check that the node has been registered
-        assert node.status == NodePluginStatus.LOADED
+        assert node.status == NodeProviderStatus.LOADED
         assert pluginManager.isRegistered(nodeName)
 
         # Introduce a syntax error in the description
@@ -251,7 +251,7 @@ class TestPluginWithInvalidNodes:
 
         # Reload the node and assert it is invalid but still registered
         node.reload()
-        assert node.status == NodePluginStatus.DESC_ERROR
+        assert node.status == NodeProviderStatus.DESC_ERROR
         assert pluginManager.isRegistered(nodeName)
 
         # Restore the node file to its original state (with a description error)
@@ -260,7 +260,7 @@ class TestPluginWithInvalidNodes:
 
         # Assert the status is correct and the node is still registered
         node.reload()
-        assert node.status == NodePluginStatus.NOT_LOADED
+        assert node.status == NodeProviderStatus.NOT_LOADED
         assert pluginManager.isRegistered(nodeName)
 
 

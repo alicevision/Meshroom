@@ -19,7 +19,7 @@ from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position, CompatibilityIssue
 from meshroom.core.taskManager import TaskManager
 from meshroom.core.evaluation import MathEvaluator
-from meshroom.core.plugins import NodePluginStatus
+from meshroom.core.plugins import NodeProviderStatus
 
 from meshroom.ui import commands
 from meshroom.ui.graph import UIGraph
@@ -452,7 +452,7 @@ class Scene(UIGraph):
                 if node.reload():
                     reloadedNodes.append(node.nodeDescriptor.__name__)
                 else:
-                    if node.status == NodePluginStatus.DESC_ERROR or node.status == NodePluginStatus.ERROR:
+                    if node.status == NodeProviderStatus.DESC_ERROR or node.status == NodeProviderStatus.ERROR:
                         errorNodes.append(node.nodeDescriptor.__name__)
 
         self.pluginsReloaded.emit(reloadedNodes, errorNodes)

@@ -4,7 +4,7 @@ from meshroom.core import desc
 from meshroom.core import pluginManager
 from meshroom.core.exception import UnknownNodeTypeError
 from meshroom.core.graph import Graph, loadGraph
-from meshroom.core.plugins import NodePluginStatus
+from meshroom.core.plugins import NodeProviderStatus
 
 from .utils import registerNodeDesc, unregisterNodeDesc
 
@@ -233,7 +233,7 @@ class TestInitNodeWithDynamicOutputs:
         # Additionally, the list of errors should include an error about having a dynamic output in an InitNode
         plugin = pluginManager.getRegisteredNodePlugin(InitNodeWithDynamicOutputs.__name__)
         assert plugin
-        assert plugin.status == NodePluginStatus.DESC_ERROR
+        assert plugin.status == NodeProviderStatus.DESC_ERROR
         assert len(plugin.errors) == 1
         errType = plugin.errors[0][1]
         assert errType == desc.ValueTypeErrors.DYNAMIC_OUTPUT

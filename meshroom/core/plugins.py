@@ -266,7 +266,7 @@ def processEnvFactory(folder: str, configEnv: dict[str: str], pluginName: str, e
     return RezProcessEnv(folder, configEnv, pluginName, uri=uri)
 
 
-class NodePluginStatus(Enum):
+class NodeProviderStatus(Enum):
     """
     Loading status for NodePlugin objects.
     """
@@ -501,11 +501,11 @@ class NodePlugin(BaseObject):
         self.nodeDescriptor: desc.BaseNode = nodeDesc
         self.nodeDescriptor.plugin = self
 
-        self.status: NodePluginStatus = NodePluginStatus.NOT_LOADED
+        self.status: NodeProviderStatus = NodeProviderStatus.NOT_LOADED
         self.errors: list[tuple[str, ValueTypeErrors]] = validateNodeDesc(nodeDesc)
 
         if self.errors:
-            self.status = NodePluginStatus.DESC_ERROR
+            self.status = NodeProviderStatus.DESC_ERROR
 
         self._processEnv = None
         self._timestamp = os.path.getmtime(self.path)
@@ -523,7 +523,7 @@ class NodePlugin(BaseObject):
         try:
             timestamp = os.path.getmtime(self.path)
         except FileNotFoundError:
-            self.status = NodePluginStatus.ERROR
+            self.status = NodeProviderStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The path at {self.path} was not "
                           f"not found.")
             return False
@@ -537,19 +537,19 @@ class NodePlugin(BaseObject):
             updated = importlib.reload(sys.modules.get(self.nodeDescriptor.__module__))
         except Exception as exc:
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: {exc} ({type(exc).__name__})")
-            self.status = NodePluginStatus.DESC_ERROR
+            self.status = NodeProviderStatus.DESC_ERROR
             return False
         descriptor = getattr(updated, self.nodeDescriptor.__name__)
 
         if not descriptor:
-            self.status = NodePluginStatus.ERROR
+            self.status = NodeProviderStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
                           f"was not found.")
             return False
 
         self.errors = validateNodeDesc(descriptor)
         if self.errors:
-            self.status = NodePluginStatus.DESC_ERROR
+            self.status = NodeProviderStatus.DESC_ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
                           f"has description errors.")
             return False
@@ -557,7 +557,7 @@ class NodePlugin(BaseObject):
         self.nodeDescriptor = descriptor
         self.nodeDescriptor.plugin = self
         self._timestamp = timestamp
-        self.status = NodePluginStatus.NOT_LOADED
+        self.status = NodeProviderStatus.NOT_LOADED
         logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Successful reloading.")
         return True
 
@@ -767,8 +767,8 @@ class PluginManager(BaseObject):
                 f"because another node is already registered with this name ({existingPlugin.path})"
             )
             return
-        if nodePlugin.status in (NodePluginStatus.DESC_ERROR,
-                                 NodePluginStatus.ERROR):
+        if nodePlugin.status in (NodeProviderStatus.DESC_ERROR,
+                                 NodeProviderStatus.ERROR):
             logging.warning(
                 f"Could not register node {name} ({nodePlugin.path}) "
                 f"because the node is in error ({nodePlugin.status})."
@@ -777,10 +777,10 @@ class PluginManager(BaseObject):
 
         try:
             self._nodePlugins[name] = nodePlugin
-            nodePlugin.status = NodePluginStatus.LOADED
+            nodePlugin.status = NodeProviderStatus.LOADED
         except Exception as exc:
             logging.error(f"NodePlugin {name} could not be loaded: {exc}")
-            nodePlugin.status = NodePluginStatus.LOADING_ERROR
+            nodePlugin.status = NodeProviderStatus.LOADING_ERROR
 
     def unregisterNode(self, nodePlugin: NodePlugin):
         """
@@ -792,8 +792,8 @@ class PluginManager(BaseObject):
         """
         name = nodePlugin.nodeDescriptor.__name__
         if self.isRegistered(name):
-            if nodePlugin.status != NodePluginStatus.LOADED:
+            if nodePlugin.status != NodeProviderStatus.LOADED:
                 logging.warning(f"NodePlugin {name} is registered but is not correctly loaded.")
             else:
-                nodePlugin.status = NodePluginStatus.NOT_LOADED
+                nodePlugin.status = NodeProviderStatus.NOT_LOADED
             del self._nodePlugins[name]

@@ -18,7 +18,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, processEnvFactory, formatNodeDescriptionErrorMessage
+from meshroom.core.plugins import NodePlugin, PluginManager, Plugin, processEnvFactory, formatNodeDescriptionErrorMessage
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -31,7 +31,7 @@ logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=log
 sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
-pluginManager: NodePluginManager = NodePluginManager()
+pluginManager: PluginManager = PluginManager()
 submitters: dict[str, BaseSubmitter] = {}
 pipelineTemplates: dict[str, str] = {}
 

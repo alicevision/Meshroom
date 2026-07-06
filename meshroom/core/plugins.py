@@ -620,7 +620,7 @@ class NodePlugin(BaseObject):
             return {}
         return self.plugin.configFullEnv
 
-class NodePluginManager(BaseObject):
+class PluginManager(BaseObject):
     """
     Manager for all the loaded Plugin objects as well as the registered NodePlugin objects.
 

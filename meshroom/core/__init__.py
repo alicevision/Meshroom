@@ -360,7 +360,7 @@ def loadAllNodes(folder) -> list[Plugin]:
             nodePlugins = loadNodes(folder, package, plugin.uid)
             if nodePlugins:
                 for node in nodePlugins:
-                    plugin.addNodePlugin(node)
+                    plugin.addNodeProvider(node)
                 nodesStr = ', '.join([node.nodeDescriptor.__name__ for node in nodePlugins])
                 logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
             plugins.append(plugin)

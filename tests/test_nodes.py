@@ -28,7 +28,7 @@ class TestNodeInfo:
         cls.plugin = Plugin(package, cls.folder)
         nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod
@@ -73,7 +73,7 @@ class TestNodeVariables:
         cls.plugin = Plugin(package, folder)
         nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod
@@ -128,7 +128,7 @@ class TestInputNode:
         cls.plugin = Plugin(package, folder)
         nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod

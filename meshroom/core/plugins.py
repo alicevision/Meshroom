@@ -383,7 +383,7 @@ class Plugin(BaseObject):
         """ Return the fusion of the os.environ dictionary with the configEnv dictionary. """
         return self._configFullEnv
 
-    def addNodePlugin(self, nodePlugin: NodePlugin):
+    def addNodeProvider(self, nodePlugin: NodePlugin):
         """
         Add a node plugin to the current plugin object and assign it as its containing plugin.
         The node plugin is added to the dictionary of node plugins with the name of the node

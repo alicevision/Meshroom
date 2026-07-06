@@ -250,7 +250,7 @@ class TestLockUpdates:
         cls.plugin = Plugin(package, folder)
         nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod

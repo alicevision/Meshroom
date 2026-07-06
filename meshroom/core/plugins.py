@@ -395,7 +395,7 @@ class Plugin(BaseObject):
         self._nodePlugins[nodePlugin.nodeDescriptor.__name__] = nodePlugin
         nodePlugin.plugin = self
 
-    def removeNodePlugin(self, name: str):
+    def removeNodeProvider(self, name: str):
         """
         Remove a node plugin from the current plugin object and delete any container relationship.
 

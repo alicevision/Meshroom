@@ -8,7 +8,7 @@ from typing import Type
 import pytest
 
 from meshroom.core import desc, pluginManager
-from meshroom.core.plugins import NodePlugin
+from meshroom.core.plugins import NodeProvider
 from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
@@ -195,7 +195,7 @@ class OutputTemplateNodeV2(desc.Node):
 
 def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
     """ Change the `nodeDesc` associated to `nodeType`. """
-    pluginManager.getLoadedNodeProviders()[nodeType] = NodePlugin(nodeDesc)
+    pluginManager.getLoadedNodeProviders()[nodeType] = NodeProvider(nodeDesc)
 
 
 def test_unknown_node_type():
@@ -265,7 +265,7 @@ def test_description_conflict():
     # Offset node types register to create description conflicts
     # Each node type name now reference the next one's implementation
     for i, nt in enumerate(nodeTypes[:-1]):
-        pluginManager.getLoadedNodeProviders()[nt.__name__] = NodePlugin(nodeTypes[i + 1])
+        pluginManager.getLoadedNodeProviders()[nt.__name__] = NodeProvider(nodeTypes[i + 1])
 
     # Reload file
     g = loadGraph(graphFile)
@@ -355,7 +355,7 @@ def test_description_conflict():
             raise ValueError("Unexpected node type: " + srcNode.nodeType)
 
     # Restore original node types
-    pluginManager._nodePlugins = originalNodeTypes
+    pluginManager._nodeProviders = originalNodeTypes
 
 
 def test_upgradeAllNodes(tmp_path):

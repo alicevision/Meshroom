@@ -49,8 +49,8 @@ class TestPluginWithValidNodesOnly:
         plugin = pluginManager.getPlugin("pluginA", uname=False)
         # Assert that the nodes of pluginA have been successfully registered
         assert len(pluginManager.getLoadedNodeProviders()) >= 2
-        for nodeName, nodePlugin in plugin.nodes.items():
-            assert nodePlugin.status == NodeProviderStatus.LOADED
+        for nodeName, nodeProvider in plugin.nodes.items():
+            assert nodeProvider.status == NodeProviderStatus.LOADED
             assert pluginManager.isLoaded(nodeName)
 
         # Assert the template has been loaded
@@ -64,19 +64,19 @@ class TestPluginWithValidNodesOnly:
         assert plugin == self.plugin
 
         # Unload the plugin without unregistering the nodes
-        pluginManager.removePlugin(plugin, unregisterNodePlugins=False)
+        pluginManager.removePlugin(plugin, unregisterNodeProviders=False)
 
         # Assert the plugin is not loaded anymore
         assert pluginManager.getPlugin(plugin.name, uname=False) is None
 
         # Assert the nodes are still registered and belong to an unloaded plugin
-        for nodeName, nodePlugin in plugin.nodes.items():
-            assert nodePlugin.status == NodeProviderStatus.LOADED
+        for nodeName, nodeProvider in plugin.nodes.items():
+            assert nodeProvider.status == NodeProviderStatus.LOADED
             assert pluginManager.isLoaded(nodeName)
             assert pluginManager.belongsToPlugin(nodeName) is None
 
         # Re-add the plugin
-        pluginManager.addPlugin(plugin, registerNodePlugins=False)
+        pluginManager.addPlugin(plugin, registerNodeProviders=False)
         assert pluginManager.getPlugin(plugin.name, uname=False)
 
         # Unload the plugin with a full unregistration of the nodes
@@ -86,15 +86,15 @@ class TestPluginWithValidNodesOnly:
         assert pluginManager.getPlugin(plugin.name, uname=False) is None
 
         # Assert the nodes have been successfully unregistered
-        for nodeName, nodePlugin in plugin.nodes.items():
-            assert nodePlugin.status == NodeProviderStatus.NOT_LOADED
+        for nodeName, nodeProvider in plugin.nodes.items():
+            assert nodeProvider.status == NodeProviderStatus.NOT_LOADED
             assert not pluginManager.isLoaded(nodeName)
 
         # Re-add the plugin and re-register the nodes
         pluginManager.addPlugin(plugin)
         assert pluginManager.getPlugin(plugin.name, uname=False)
-        for nodeName, nodePlugin in plugin.nodes.items():
-            assert nodePlugin.status == NodeProviderStatus.LOADED
+        for nodeName, nodeProvider in plugin.nodes.items():
+            assert nodeProvider.status == NodeProviderStatus.LOADED
             assert pluginManager.isLoaded(nodeName)
 
     def test_updateRegisteredNodes(self):
@@ -171,7 +171,7 @@ class TestPluginWithInvalidNodes:
         assert name == "sharedTemplate"
         assert plugin.templates[name] == os.path.join(str(plugin.path), "sharedTemplate.mg")
 
-    def test_reloadNodePluginInvalidDescrpition(self):
+    def test_reloadNodeProviderInvalidDescrpition(self):
         plugin = pluginManager.getPlugin("pluginB", uname=False)
         assert plugin == self.plugin
         node = plugin.nodes["PluginBNodeB"]
@@ -199,7 +199,7 @@ class TestPluginWithInvalidNodes:
         node.reload()
         assert node.status == NodeProviderStatus.NOT_LOADED
 
-        # Attempt to register node plugin
+        # Attempt to register node provider
         pluginManager.loadNodeProvider(node)
         assert pluginManager.isLoaded(nodeName)
 
@@ -230,7 +230,7 @@ class TestPluginWithInvalidNodes:
         assert node.status == NodeProviderStatus.DESC_ERROR  # Not NOT_LOADED
         assert not pluginManager.isLoaded(nodeName)
 
-    def test_reloadNodePluginSyntaxError(self):
+    def test_reloadNodeProviderSyntaxError(self):
         plugin = pluginManager.getPlugin("pluginB", uname=False)
         assert plugin == self.plugin
         node = plugin.nodes["PluginBNodeA"]

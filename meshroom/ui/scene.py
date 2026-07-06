@@ -441,7 +441,7 @@ class Scene(UIGraph):
 
     def _reloadPlugins(self):
         """
-        Reload all the NodePlugins from all the registered plugins.
+        Reload all the NodeProviders from all the registered plugins.
         The nodes in the graph will be updated to match the changes in the description, if
         there was any.
         """
@@ -459,7 +459,7 @@ class Scene(UIGraph):
 
     @Slot(list)
     def _onPluginsReloaded(self, reloadedNodes: list, errorNodes: list):
-        self._graph.reloadNodePlugins(reloadedNodes)
+        self._graph.reloadNodeProviders(reloadedNodes)
         if len(errorNodes) > 0:
             self.parent().showMessage(f"Some plugins failed to reload: {', '.join(errorNodes)}", "error")
         else:

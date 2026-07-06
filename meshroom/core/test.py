@@ -63,8 +63,8 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
 
     finally:
         if not nodesAlreadyLoaded:
-            nodePlugins = meshroom.core.pluginManager.getLoadedNodeProviders()
-            for node in nodePlugins:
+            nodeProviders = meshroom.core.pluginManager.getLoadedNodeProviders()
+            for node in nodeProviders:
                 meshroom.core.pluginManager.unloadNodeProvider(node)
 
 

@@ -343,8 +343,8 @@ class NodeWithDynamicOutputValue(desc.BaseNode):
 
 
 class TestAttributeCallbackBehaviorWithUpstreamDynamicOutputs:
-    # nodePluginAttributeChangedCallback = NodePlugin(NodeWithAttributeChangedCallback)
-    # nodePluginDynamicOutputValue = NodePlugin(NodeWithDynamicOutputValue)
+    # nodeProviderAttributeChangedCallback = NodeProvider(NodeWithAttributeChangedCallback)
+    # nodeProviderDynamicOutputValue = NodeProvider(NodeWithDynamicOutputValue)
 
     @classmethod
     def setup_class(cls):

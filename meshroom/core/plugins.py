@@ -268,25 +268,25 @@ def processEnvFactory(folder: str, configEnv: dict[str: str], pluginName: str, e
 
 class NodeProviderStatus(Enum):
     """
-    Loading status for NodePlugin objects.
+    Loading status for NodeProvider objects.
     """
-    NOT_LOADED = 0  # The node plugin exists but is not loaded and cannot be used (not registered)
-    LOADED = 1  # The node plugin is currently loaded and functional (it has been registered)
-    DESC_ERROR = 2  # The node plugin exists but has an invalid description
-    LOADING_ERROR = 3  # The node plugin exists and is valid but could not be successfully registered
-    ERROR = 4  # Error when importing the node plugin from its module
+    NOT_LOADED = 0  # The node provider exists but is not loaded and cannot be used (not registered)
+    LOADED = 1  # The node provider is currently loaded and functional (it has been registered)
+    DESC_ERROR = 2  # The node provider exists but has an invalid description
+    LOADING_ERROR = 3  # The node provider exists and is valid but could not be successfully registered
+    ERROR = 4  # Error when importing the node provider from its module
 
 
 class Plugin(BaseObject):
     """
-    A collection of node plugins.
+    A collection of node providers.
 
     Members:
-        name: the name of the plugin (e.g. name of the Python module containing the node plugins)
+        name: the name of the plugin (e.g. name of the Python module containing the node providers)
         path: the absolute path of the plugin
         user: whether the plugin is a user plugin (not maintained by the core Meshroom team)
-        nodePlugins: dictionary mapping the name of a node plugin contained in the plugin
-                     to its corresponding NodePlugin object
+        nodeProviders: dictionary mapping the name of a node provider contained in the plugin
+                     to its corresponding NodeProvider object
         templates: dictionary mapping the name of templates (.mg files) associated to the plugin
                    with their absolute paths
         configEnv: the environment variables and their values, as described in the plugin's
@@ -306,7 +306,7 @@ class Plugin(BaseObject):
         self._path: str = path
         self._user: bool = False
 
-        self._nodePlugins: dict[str: NodePlugin] = {}
+        self._nodeProviders: dict[str: NodeProvider] = {}
         self._templates: dict[str: str] = {}
         self._configEnv: dict[str: str] = {}
         self._configFullEnv: dict[str: str] = {}
@@ -350,10 +350,10 @@ class Plugin(BaseObject):
     @property
     def nodes(self):
         """
-        Return the dictionary containing the NodePlugin objects associated to
+        Return the dictionary containing the NodeProvider objects associated to
         the plugin.
         """
-        return self._nodePlugins
+        return self._nodeProviders
 
     @property
     def templates(self):
@@ -383,30 +383,30 @@ class Plugin(BaseObject):
         """ Return the fusion of the os.environ dictionary with the configEnv dictionary. """
         return self._configFullEnv
 
-    def addNodeProvider(self, nodePlugin: NodePlugin):
+    def addNodeProvider(self, nodeProvider: NodeProvider):
         """
-        Add a node plugin to the current plugin object and assign it as its containing plugin.
-        The node plugin is added to the dictionary of node plugins with the name of the node
+        Add a node provider to the current plugin object and assign it as its containing plugin.
+        The node provider is added to the dictionary of node providers with the name of the node
         descriptor as its key.
 
         Args:
-            nodePlugin: the NodePlugin object to add to the Plugin.
+            nodeProvider: the NodeProvider object to add to the Plugin.
         """
-        self._nodePlugins[nodePlugin.nodeDescriptor.__name__] = nodePlugin
-        nodePlugin.plugin = self
+        self._nodeProviders[nodeProvider.nodeDescriptor.__name__] = nodeProvider
+        nodeProvider.plugin = self
 
     def removeNodeProvider(self, name: str):
         """
-        Remove a node plugin from the current plugin object and delete any container relationship.
+        Remove a node provider from the current plugin object and delete any container relationship.
 
         Args:
-            name: the name of the NodePlugin to remove.
+            name: the name of the NodeProvider to remove.
         """
-        if name in self._nodePlugins:
-            self._nodePlugins[name].plugin = None
-            del self._nodePlugins[name]
+        if name in self._nodeProviders:
+            self._nodeProviders[name].plugin = None
+            del self._nodeProviders[name]
         else:
-            logging.warning(f"Node plugin {name} is not part of the plugin {self.name}.")
+            logging.warning(f"node provider {name} is not part of the plugin {self.name}.")
 
     def loadTemplates(self):
         """
@@ -467,28 +467,28 @@ class Plugin(BaseObject):
 
     def containsNodeProvider(self, name: str) -> bool:
         """
-        Return whether the node plugin "name" is part of the plugin, independently from its
+        Return whether the node provider "name" is part of the plugin, independently from its
         status.
 
         Args:
-            name: the name of the node plugin to be checked.
+            name: the name of the node provider to be checked.
         """
-        return name in self._nodePlugins
+        return name in self._nodeProviders
 
 
-class NodePlugin(BaseObject):
+class NodeProvider(BaseObject):
     """
-    Based on a node description, a NodePlugin represents a loadable node.
+    Based on a node description, a NodeProvider represents a loadable node.
 
     Members:
-        plugin: the Plugin object that contains this node plugin
+        plugin: the Plugin object that contains this node provider
         path: absolute path to the file containing the node's description
         nodeDescriptor: the description of the node
-        status: the loading status on the node plugin
+        status: the loading status on the node provider
         errors: the list of errors (if there are any) when validating the description
                 of the node or attempting to load it
-        processEnv: the environment required for the node plugin's process. It can either
-                    be specific to this node plugin, or be common for all the node plugins within
+        processEnv: the environment required for the node provider's process. It can either
+                    be specific to this node provider, or be common for all the node providers within
                     the plugin
         timestamp: the timestamp corresponding to the last time the node description's file has been
                    modified
@@ -512,11 +512,11 @@ class NodePlugin(BaseObject):
 
     def reload(self) -> bool:
         """
-        Reload the node plugin and update its status accordingly. If the timestamp of the node plugin's
+        Reload the node provider and update its status accordingly. If the timestamp of the node provider's
         path has not changed since the last time the plugin has been loaded, then nothing will happen.
 
         Returns:
-            bool: True if the node plugin has successfully been reloaded (i.e. there was no error, and
+            bool: True if the node provider has successfully been reloaded (i.e. there was no error, and
                   some changes were made since its last loading), False otherwise.
         """
         timestamp = 0.0
@@ -564,15 +564,15 @@ class NodePlugin(BaseObject):
     @property
     def plugin(self):
         """
-        Return the Plugin object that contains this node plugin.
-        If the node plugin has not been assigned to a plugin yet, this value will
+        Return the Plugin object that contains this node provider.
+        If the node provider has not been assigned to a plugin yet, this value will
         be set to None.
         """
         return self._plugin
 
     @plugin.setter
     def plugin(self, plugin: Plugin):
-        """ Assign this node plugin to a containing Plugin object. """
+        """ Assign this node provider to a containing Plugin object. """
         self._plugin = plugin
 
     @property
@@ -585,7 +585,7 @@ class NodePlugin(BaseObject):
     @property
     def processEnv(self):
         """"
-        Return the process environment that is specific to the node plugin if it has any.
+        Return the process environment that is specific to the node provider if it has any.
         Otherwise, the Plugin's is returned.
         """
         if self._processEnv:
@@ -601,14 +601,14 @@ class NodePlugin(BaseObject):
 
     @property
     def commandPrefix(self) -> str:
-        """ Return the command prefix for the NodePlugin's execution. """
+        """ Return the command prefix for the NodeProvider's execution. """
         if not self.processEnv:
             return ""
         return self.processEnv.getCommandPrefix()
 
     @property
     def commandSuffix(self) -> str:
-        """ Return the command suffix for the NodePlugin's execution. """
+        """ Return the command suffix for the NodeProvider's execution. """
         if not self.processEnv:
             return ""
         return self.processEnv.getCommandSuffix()
@@ -622,12 +622,12 @@ class NodePlugin(BaseObject):
 
 class PluginManager(BaseObject):
     """
-    Manager for all the loaded Plugin objects as well as the registered NodePlugin objects.
+    Manager for all the loaded Plugin objects as well as the registered NodeProvider objects.
 
     Members:
         plugins: dictionary containing all the loaded Plugins, with their name as the key
-        nodePlugins: dictionary containing all the NodePlugins that have been registered
-                      (a NodePlugin may exist without having been registered) with their name as
+        nodeProviders: dictionary containing all the NodeProviders that have been registered
+                      (a NodeProvider may exist without having been registered) with their name as
                       the key
     """
 
@@ -635,24 +635,24 @@ class PluginManager(BaseObject):
         super().__init__()
 
         self._plugins: dict[str: Plugin] = {}  # loaded plugins
-        self._nodePlugins: dict[str: NodePlugin] = {}  # registered node plugins
+        self._nodeProviders: dict[str: NodeProvider] = {}  # registered node providers
 
     def isLoaded(self, name: str) -> bool:
         """
-        Return whether the node plugin has been loaded already.
+        Return whether the node provider has been loaded already.
 
         Args:
-            name: the name of the node plugin.
+            name: the name of the node provider.
         """
-        return name in self._nodePlugins
+        return name in self._nodeProviders
 
     def belongsToPlugin(self, name: str) -> Plugin:
         """
-        Check whether the node plugin belongs to a loaded plugin, independently from
+        Check whether the node provider belongs to a loaded plugin, independently from
         whether it has been registered or not.
 
         Args:
-            name: the name of the node plugin that needs to be searched for across plugins.
+            name: the name of the node provider that needs to be searched for across plugins.
 
         Returns:
             Plugin | None: the Plugin the node belongs to if it exists, None otherwise.
@@ -693,107 +693,107 @@ class PluginManager(BaseObject):
                     return plugin
         return None
 
-    def addPlugin(self, plugin: Plugin, registerNodePlugins: bool = True):
+    def addPlugin(self, plugin: Plugin, registerNodeProviders: bool = True):
         """
         Load a Plugin object.
 
         Args:
             plugin: the Plugin to load and add to the list of loaded plugins.
-            registerNodePlugins: True if all the NodePlugins from the plugin should be registered
+            registerNodeProviders: True if all the NodeProviders from the plugin should be registered
                                  at the same time the plugin is being loaded. Otherwise, the
-                                 NodePlugins will have to be registered at a later occasion.
+                                 NodeProviders will have to be registered at a later occasion.
         """
         pluginUName = plugin.uname
         if self.getPlugin(pluginUName):
             logging.warning(f"Plugin {pluginUName} is already registered.")
             return
         self._plugins[pluginUName] = plugin
-        if registerNodePlugins:
+        if registerNodeProviders:
             for node in plugin.nodes:
                 self.loadNodeProvider(plugin.nodes[node])
 
-    def removePlugin(self, plugin: Plugin, unregisterNodePlugins: bool = True):
+    def removePlugin(self, plugin: Plugin, unregisterNodeProviders: bool = True):
         """
         Remove a loaded Plugin object.
 
         Args:
             plugin: the Plugin to remove from the list of loaded plugins.
-            unregisterNodePlugins: True if all the nodes from the plugin should be unregistered (if they
+            unregisterNodeProviders: True if all the nodes from the plugin should be unregistered (if they
                                    are registered) at the same time as the plugin is unloaded. Otherwise,
-                                   the registered NodePlugins will remain while the Plugin itself will
+                                   the registered NodeProviders will remain while the Plugin itself will
                                    be unloaded.
         """
         if self.getPlugin(plugin.uname):
-            if unregisterNodePlugins:
+            if unregisterNodeProviders:
                 for node in plugin.nodes.values():
                     self.unloadNodeProvider(node)
             del self._plugins[plugin.uname]
 
-    def getLoadedNodeProviders(self) -> dict[str: NodePlugin]:
+    def getLoadedNodeProviders(self) -> dict[str: NodeProvider]:
         """
-        Return a dictionary containing all the registered NodePlugins, with
-        {key, value} = {name, NodePlugin}.
+        Return a dictionary containing all the registered NodeProviders, with
+        {key, value} = {name, NodeProvider}.
         """
-        return self._nodePlugins
+        return self._nodeProviders
 
-    def getLoadedNodeProvider(self, name: str) -> NodePlugin:
+    def getLoadedNodeProvider(self, name: str) -> NodeProvider:
         """
-        Return the NodePlugin object that has been registered under the name "name" if it exists.
+        Return the NodeProvider object that has been registered under the name "name" if it exists.
 
         Args:
-            name: the name of the NodePlugin used for its registration.
+            name: the name of the NodeProvider used for its registration.
 
         Returns:
-            NodePlugin | None: the loaded NodePlugin object if it exists, None otherwise.
+            NodeProvider | None: the loaded NodeProvider object if it exists, None otherwise.
         """
         if self.isLoaded(name):
-            return self._nodePlugins[name]
+            return self._nodeProviders[name]
         return None
 
-    def loadNodeProvider(self, nodePlugin: NodePlugin):
+    def loadNodeProvider(self, nodeProvider: NodeProvider):
         """
-        Register a node plugin. A registered node plugin will become instantiable.
+        Register a node provider. A registered node provider will become instantiable.
         If it is already registered, or if there is an issue with the node description,
-        the node plugin will not be registered and its status will be updated.
+        the node provider will not be registered and its status will be updated.
 
         Args:
-            nodePlugin: the node plugin to register.
+            nodeProvider: the node provider to register.
         """
-        name = nodePlugin.nodeDescriptor.__name__
+        name = nodeProvider.nodeDescriptor.__name__
         if self.isLoaded(name):
-            existingPlugin: NodePlugin = self._nodePlugins[name]
+            existingPlugin: NodeProvider = self._nodeProviders[name]
             logging.warning(
-                f"Could not register node {name} ({nodePlugin.path}) "
+                f"Could not register node {name} ({nodeProvider.path}) "
                 f"because another node is already registered with this name ({existingPlugin.path})"
             )
             return
-        if nodePlugin.status in (NodeProviderStatus.DESC_ERROR,
+        if nodeProvider.status in (NodeProviderStatus.DESC_ERROR,
                                  NodeProviderStatus.ERROR):
             logging.warning(
-                f"Could not register node {name} ({nodePlugin.path}) "
-                f"because the node is in error ({nodePlugin.status})."
+                f"Could not register node {name} ({nodeProvider.path}) "
+                f"because the node is in error ({nodeProvider.status})."
             )
             return
 
         try:
-            self._nodePlugins[name] = nodePlugin
-            nodePlugin.status = NodeProviderStatus.LOADED
+            self._nodeProviders[name] = nodeProvider
+            nodeProvider.status = NodeProviderStatus.LOADED
         except Exception as exc:
-            logging.error(f"NodePlugin {name} could not be loaded: {exc}")
-            nodePlugin.status = NodeProviderStatus.LOADING_ERROR
+            logging.error(f"NodeProvider {name} could not be loaded: {exc}")
+            nodeProvider.status = NodeProviderStatus.LOADING_ERROR
 
-    def unloadNodeProvider(self, nodePlugin: NodePlugin):
+    def unloadNodeProvider(self, nodeProvider: NodeProvider):
         """
-        Unregister a node plugin. When unregistered, a node plugin cannot be instantiated anymore.
+        Unregister a node provider. When unregistered, a node provider cannot be instantiated anymore.
         If it is not registered already, nothing happens.
 
         Args:
-            nodePlugin: the node plugin to unregister.
+            nodeProvider: the node provider to unregister.
         """
-        name = nodePlugin.nodeDescriptor.__name__
+        name = nodeProvider.nodeDescriptor.__name__
         if self.isLoaded(name):
-            if nodePlugin.status != NodeProviderStatus.LOADED:
-                logging.warning(f"NodePlugin {name} is registered but is not correctly loaded.")
+            if nodeProvider.status != NodeProviderStatus.LOADED:
+                logging.warning(f"NodeProvider {name} is registered but is not correctly loaded.")
             else:
-                nodePlugin.status = NodeProviderStatus.NOT_LOADED
-            del self._nodePlugins[name]
+                nodeProvider.status = NodeProviderStatus.NOT_LOADED
+            del self._nodeProviders[name]

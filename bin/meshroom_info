@@ -55,20 +55,20 @@ def get_nodes_info(args):
     meshroom.core.initPlugins()
     meshroom.core.initNodes()
     nodeName = args.name
-    nodePlugins = meshroom.core.pluginManager.getLoadedNodeProviders()
+    nodeProviders = meshroom.core.pluginManager.getLoadedNodeProviders()
     if nodeName:
-        get_node_info(args, nodePlugins, nodeName)
+        get_node_info(args, nodeProviders, nodeName)
     else:
-        get_all_node_info(args, nodePlugins)
+        get_all_node_info(args, nodeProviders)
 
 
-def get_node_info(args, nodePlugins, name):
+def get_node_info(args, nodeProviders, name):
     from meshroom.core.desc import BaseNode
-    if name not in nodePlugins:
+    if name not in nodeProviders:
         print(f"Error: Node '{name}' not found.")
         sys.exit(1)
 
-    nodeDesc = nodePlugins[name].nodeDescriptor
+    nodeDesc = nodeProviders[name].nodeDescriptor
     nodeBaseClass = [c for c in nodeDesc.__bases__ if issubclass(c, BaseNode)]
     nodeInfo = nodeDesc.getNodeInfo()
 
@@ -96,16 +96,16 @@ def get_node_info(args, nodePlugins, name):
             print(f"        Description : {output.description}")
 
 
-def get_all_node_info(args, nodePlugins):
+def get_all_node_info(args, nodeProviders):
     # Group nodes by category
     categories = {}
-    for name, nodePlugin in sorted(nodePlugins.items()):
-        category = nodePlugin.nodeDescriptor.category
+    for name, nodeProvider in sorted(nodeProviders.items()):
+        category = nodeProvider.nodeDescriptor.category
         if category not in categories:
             categories[category] = []
         categories[category].append(name)
 
-    print(f"Available Nodes ({len(nodePlugins)}):")
+    print(f"Available Nodes ({len(nodeProviders)}):")
     for category, nodes in sorted(categories.items()):
         print(f"\n  [{category}]")
         for name in nodes:

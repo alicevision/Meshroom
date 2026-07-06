@@ -218,7 +218,7 @@ class Attribute(BaseObject):
         For string, expressions will be evaluated.
         """
         if isinstance(self.value, str):
-            env = self.node.nodePlugin.configFullEnv if self.node.nodePlugin else os.environ
+            env = self.node.nodeProvider.configFullEnv if self.node.nodeProvider else os.environ
             substituted = Template(self.value).safe_substitute(env)
             try:
                 varResolved = substituted.format(**self.node._expVars, **self.node._staticExpVars)

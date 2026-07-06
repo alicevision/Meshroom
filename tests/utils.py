@@ -3,23 +3,23 @@ from unittest.mock import patch
 
 import meshroom
 from meshroom.core import desc, pluginManager, loadPluginFolder
-from meshroom.core.plugins import NodePlugin
+from meshroom.core.plugins import NodeProvider
 
 import os
 
 
 @contextmanager
 def registeredNodeTypes(nodeTypes: list[desc.Node]):
-    nodePluginsList = {}
+    nodeProvidersList = {}
     for nodeType in nodeTypes:
-        nodePlugin = NodePlugin(nodeType)
-        pluginManager.loadNodeProvider(nodePlugin)
-        nodePluginsList[nodeType] = nodePlugin
+        nodeProvider = NodeProvider(nodeType)
+        pluginManager.loadNodeProvider(nodeProvider)
+        nodeProvidersList[nodeType] = nodeProvider
 
     yield
 
     for nodeType in nodeTypes:
-        pluginManager.unloadNodeProvider(nodePluginsList[nodeType])
+        pluginManager.unloadNodeProvider(nodeProvidersList[nodeType])
 
 
 @contextmanager
@@ -37,13 +37,13 @@ def overrideNodeTypeVersion(nodeType: desc.Node, version: str):
 def registerNodeDesc(nodeDesc: desc.Node):
     name = nodeDesc.__name__
     if not pluginManager.isLoaded(name):
-        pluginManager._nodePlugins[name] = NodePlugin(nodeDesc)
+        pluginManager._nodeProviders[name] = NodeProvider(nodeDesc)
 
 
 def unregisterNodeDesc(nodeDesc: desc.Node):
     name = nodeDesc.__name__
     if pluginManager.isLoaded(name):
-        del pluginManager._nodePlugins[name]
+        del pluginManager._nodeProviders[name]
 
 
 @contextmanager

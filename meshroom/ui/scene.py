@@ -441,7 +441,7 @@ class Scene(UIGraph):
 
     def _reloadPlugins(self):
         """
-        Reload all the NodeProviders from all the registered plugins.
+        Reload all the NodeProviders from all the loaded plugins.
         The nodes in the graph will be updated to match the changes in the description, if
         there was any.
         """

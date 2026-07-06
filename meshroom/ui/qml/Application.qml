@@ -593,7 +593,7 @@ Page {
 
     Action {
         id: reloadPluginsAction
-        property string tooltip: "Reload the source code for all nodes from all registered plugins"
+        property string tooltip: "Reload the source code for all nodes from all plugins"
         text: "Reload Plugins Source Code"
         shortcut: "Ctrl+Shift+R"
         onTriggered: {

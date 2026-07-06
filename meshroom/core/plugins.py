@@ -270,10 +270,10 @@ class NodeProviderStatus(Enum):
     """
     Loading status for NodeProvider objects.
     """
-    NOT_LOADED = 0  # The node provider exists but is not loaded and cannot be used (not registered)
-    LOADED = 1  # The node provider is currently loaded and functional (it has been registered)
+    NOT_LOADED = 0  # The node provider exists but is not loaded and cannot be used
+    LOADED = 1  # The node provider is currently loaded and functional
     DESC_ERROR = 2  # The node provider exists but has an invalid description
-    LOADING_ERROR = 3  # The node provider exists and is valid but could not be successfully registered
+    LOADING_ERROR = 3  # The node provider exists and is valid but could not be successfully loaded
     ERROR = 4  # Error when importing the node provider from its module
 
 
@@ -622,20 +622,18 @@ class NodeProvider(BaseObject):
 
 class PluginManager(BaseObject):
     """
-    Manager for all the loaded Plugin objects as well as the registered NodeProvider objects.
+    Manager for all the loaded Plugin objects as well as the loaded NodeProvider objects.
 
     Members:
         plugins: dictionary containing all the loaded Plugins, with their name as the key
-        nodeProviders: dictionary containing all the NodeProviders that have been registered
-                      (a NodeProvider may exist without having been registered) with their name as
-                      the key
+        nodeProviders: dictionary containing all the loaded NodeProviders 
     """
 
     def __init__(self):
         super().__init__()
 
         self._plugins: dict[str: Plugin] = {}  # loaded plugins
-        self._nodeProviders: dict[str: NodeProvider] = {}  # registered node providers
+        self._nodeProviders: dict[str: NodeProvider] = {}  # loaded node providers
 
     def isLoaded(self, name: str) -> bool:
         """
@@ -649,7 +647,7 @@ class PluginManager(BaseObject):
     def belongsToPlugin(self, name: str) -> Plugin:
         """
         Check whether the node provider belongs to a loaded plugin, independently from
-        whether it has been registered or not.
+        whether it has been loaded or not.
 
         Args:
             name: the name of the node provider that needs to be searched for across plugins.
@@ -699,13 +697,13 @@ class PluginManager(BaseObject):
 
         Args:
             plugin: the Plugin to load and add to the list of loaded plugins.
-            registerNodeProviders: True if all the NodeProviders from the plugin should be registered
+            registerNodeProviders: True if all the NodeProviders from the plugin should be loaded
                                  at the same time the plugin is being loaded. Otherwise, the
-                                 NodeProviders will have to be registered at a later occasion.
+                                 NodeProviders will have to be loaded at a later occasion.
         """
         pluginUName = plugin.uname
         if self.getPlugin(pluginUName):
-            logging.warning(f"Plugin {pluginUName} is already registered.")
+            logging.warning(f"Plugin {pluginUName} is already loaded.")
             return
         self._plugins[pluginUName] = plugin
         if registerNodeProviders:
@@ -718,9 +716,9 @@ class PluginManager(BaseObject):
 
         Args:
             plugin: the Plugin to remove from the list of loaded plugins.
-            unregisterNodeProviders: True if all the nodes from the plugin should be unregistered (if they
-                                   are registered) at the same time as the plugin is unloaded. Otherwise,
-                                   the registered NodeProviders will remain while the Plugin itself will
+            unregisterNodeProviders: True if all the nodes from the plugin should be unloaded (if they
+                                   are loaded) at the same time as the plugin is unloaded. Otherwise,
+                                   the loaded NodeProviders will remain while the Plugin itself will
                                    be unloaded.
         """
         if self.getPlugin(plugin.uname):
@@ -731,17 +729,17 @@ class PluginManager(BaseObject):
 
     def getLoadedNodeProviders(self) -> dict[str: NodeProvider]:
         """
-        Return a dictionary containing all the registered NodeProviders, with
+        Return a dictionary containing all the loaded NodeProviders, with
         {key, value} = {name, NodeProvider}.
         """
         return self._nodeProviders
 
     def getLoadedNodeProvider(self, name: str) -> NodeProvider:
         """
-        Return the NodeProvider object that has been registered under the name "name" if it exists.
+        Return the NodeProvider object that has been loaded under the name "name" if it exists.
 
         Args:
-            name: the name of the NodeProvider used for its registration.
+            name: the name of the NodeProvider.
 
         Returns:
             NodeProvider | None: the loaded NodeProvider object if it exists, None otherwise.
@@ -752,25 +750,25 @@ class PluginManager(BaseObject):
 
     def loadNodeProvider(self, nodeProvider: NodeProvider):
         """
-        Register a node provider. A registered node provider will become instantiable.
-        If it is already registered, or if there is an issue with the node description,
-        the node provider will not be registered and its status will be updated.
+        Load a node provider. A loaded node provider will become instantiable.
+        If it is already loaded, or if there is an issue with the node description,
+        the node provider will not be loaded and its status will be updated.
 
         Args:
-            nodeProvider: the node provider to register.
+            nodeProvider: the node provider to load.
         """
         name = nodeProvider.nodeDescriptor.__name__
         if self.isLoaded(name):
             existingPlugin: NodeProvider = self._nodeProviders[name]
             logging.warning(
-                f"Could not register node {name} ({nodeProvider.path}) "
-                f"because another node is already registered with this name ({existingPlugin.path})"
+                f"Could not load node {name} ({nodeProvider.path}) "
+                f"because another node is already loaded with this name ({existingPlugin.path})"
             )
             return
         if nodeProvider.status in (NodeProviderStatus.DESC_ERROR,
                                  NodeProviderStatus.ERROR):
             logging.warning(
-                f"Could not register node {name} ({nodeProvider.path}) "
+                f"Could not load node {name} ({nodeProvider.path}) "
                 f"because the node is in error ({nodeProvider.status})."
             )
             return
@@ -784,16 +782,16 @@ class PluginManager(BaseObject):
 
     def unloadNodeProvider(self, nodeProvider: NodeProvider):
         """
-        Unregister a node provider. When unregistered, a node provider cannot be instantiated anymore.
-        If it is not registered already, nothing happens.
+        Unload a node provider. When unloaded, a node provider cannot be instantiated anymore.
+        If it is not loaded already, nothing happens.
 
         Args:
-            nodeProvider: the node provider to unregister.
+            nodeProvider: the node provider to unload.
         """
         name = nodeProvider.nodeDescriptor.__name__
         if self.isLoaded(name):
             if nodeProvider.status != NodeProviderStatus.LOADED:
-                logging.warning(f"NodeProvider {name} is registered but is not correctly loaded.")
+                logging.warning(f"NodeProvider {name} is not correctly loaded.")
             else:
                 nodeProvider.status = NodeProviderStatus.NOT_LOADED
             del self._nodeProviders[name]

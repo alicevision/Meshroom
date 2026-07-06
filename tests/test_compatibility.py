@@ -238,7 +238,7 @@ def test_description_conflict():
     """
     Test compatibility behavior for conflicting node descriptions.
     """
-    # Copy registered node types to be able to restore them
+    # Copy loaded node types to be able to restore them
     originalNodeTypes = copy.deepcopy(pluginManager.getLoadedNodeProviders())
 
     nodeTypes = [SampleNodeV1, SampleNodeV2, SampleNodeV3, SampleNodeV4, SampleNodeV5]

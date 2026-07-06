@@ -637,12 +637,12 @@ class PluginManager(BaseObject):
         self._plugins: dict[str: Plugin] = {}  # loaded plugins
         self._nodePlugins: dict[str: NodePlugin] = {}  # registered node plugins
 
-    def isRegistered(self, name: str) -> bool:
+    def isLoaded(self, name: str) -> bool:
         """
-        Return whether the node plugin has been registered already.
+        Return whether the node plugin has been loaded already.
 
         Args:
-            name: the name of the node plugin whose registration needs to be checked.
+            name: the name of the node plugin.
         """
         return name in self._nodePlugins
 
@@ -746,7 +746,7 @@ class PluginManager(BaseObject):
         Returns:
             NodePlugin | None: the loaded NodePlugin object if it exists, None otherwise.
         """
-        if self.isRegistered(name):
+        if self.isLoaded(name):
             return self._nodePlugins[name]
         return None
 
@@ -760,7 +760,7 @@ class PluginManager(BaseObject):
             nodePlugin: the node plugin to register.
         """
         name = nodePlugin.nodeDescriptor.__name__
-        if self.isRegistered(name):
+        if self.isLoaded(name):
             existingPlugin: NodePlugin = self._nodePlugins[name]
             logging.warning(
                 f"Could not register node {name} ({nodePlugin.path}) "
@@ -791,7 +791,7 @@ class PluginManager(BaseObject):
             nodePlugin: the node plugin to unregister.
         """
         name = nodePlugin.nodeDescriptor.__name__
-        if self.isRegistered(name):
+        if self.isLoaded(name):
             if nodePlugin.status != NodeProviderStatus.LOADED:
                 logging.warning(f"NodePlugin {name} is registered but is not correctly loaded.")
             else:

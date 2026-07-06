@@ -36,13 +36,13 @@ def overrideNodeTypeVersion(nodeType: desc.Node, version: str):
 
 def registerNodeDesc(nodeDesc: desc.Node):
     name = nodeDesc.__name__
-    if not pluginManager.isRegistered(name):
+    if not pluginManager.isLoaded(name):
         pluginManager._nodePlugins[name] = NodePlugin(nodeDesc)
 
 
 def unregisterNodeDesc(nodeDesc: desc.Node):
     name = nodeDesc.__name__
-    if pluginManager.isRegistered(name):
+    if pluginManager.isLoaded(name):
         del pluginManager._nodePlugins[name]
 
 

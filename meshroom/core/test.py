@@ -30,7 +30,7 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
 
         for _, nodeData in graphData.items():
             nodeType = nodeData["nodeType"]
-            if not meshroom.core.pluginManager.isRegistered(nodeType):
+            if not meshroom.core.pluginManager.isLoaded(nodeType):
                 print(f"'{nodeType}' in '{path}' is an unknown type.")
                 return False
 

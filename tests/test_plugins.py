@@ -3,7 +3,8 @@
 from meshroom.core import pluginManager, loadClassesNodes
 from meshroom.core.desc.node import NodeVersionType
 from meshroom.core.plugins import NodeProviderStatus, Plugin
-from .utils import overrideOsEnvironmentVariables, registeredPlugins, registeredUserPlugins
+from .utils import overrideOsEnvironmentVariables, loadedPlugins, registeredUserPlugins
+
 
 from pathlib import Path
 import os
@@ -275,7 +276,7 @@ class TestPluginsConfiguration:
         # Check that the config.json file for the plugins in the "plugins" directory is
         # correctly loaded
         folder = os.path.join(os.path.dirname(__file__), "plugins")
-        with registeredPlugins(folder):
+        with loadedPlugins(folder):
             plugin = pluginManager.getPlugin("pluginA", uname=False)
             assert plugin
 
@@ -313,7 +314,7 @@ class TestPluginsConfiguration:
         }
 
         folder = os.path.join(os.path.dirname(__file__), "plugins")
-        with (overrideOsEnvironmentVariables(environment), registeredPlugins(folder)):
+        with (overrideOsEnvironmentVariables(environment), loadedPlugins(folder)):
             plugin = pluginManager.getPlugin("pluginA", uname=False)
             assert plugin
 
@@ -350,7 +351,7 @@ class TestPluginsConfiguration:
         }
 
         folder = os.path.join(os.path.dirname(__file__), "plugins")
-        with (overrideOsEnvironmentVariables(environment), registeredPlugins(folder)):
+        with (overrideOsEnvironmentVariables(environment), loadedPlugins(folder)):
             plugin = pluginManager.getPlugin("pluginA", uname=False)
             assert plugin
 
@@ -385,7 +386,7 @@ class TestPluginsConfiguration:
 class TestVersionPlugins:
     def test_nodeVersionType(self):
         folder = os.path.join(os.path.dirname(__file__), "plugins")
-        with registeredPlugins(folder):
+        with loadedPlugins(folder):
             pluginA = pluginManager.getPlugin("pluginA", uname=False)
             assert pluginA
             nodeA = pluginManager.getLoadedNodeProvider("PluginANodeA")

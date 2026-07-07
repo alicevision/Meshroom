@@ -47,7 +47,7 @@ def unregisterNodeDesc(nodeDesc: desc.Node):
 
 
 @contextmanager
-def registeredPlugins(folder: str):
+def loadedPlugins(folder: str):
     plugins = loadPluginFolder(folder)
 
     yield

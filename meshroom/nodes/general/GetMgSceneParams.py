@@ -47,6 +47,11 @@ class GetMeshroomSceneParams(desc.CommandLineNode):
         cmdLine += f" --scene {shlex.quote(node.scene.value)}"
         cmdLine += f" --request {shlex.quote(request)}"
         cmdLine += f" --output {shlex.quote(node.paramValuesDict.value)}"
+        
+        if node.advanced.failOnMissingScene.value == True:
+            cmdLine += " --failOnMissingScene"
+        if node.advanced.failOnMissingParams.value == True:
+            cmdLine += " --failOnMissingParams"
 
         node.nodeDesc.commandLine = cmdLine
         return super().buildCommandLine(chunk)
@@ -83,6 +88,23 @@ class GetMeshroomSceneParams(desc.CommandLineNode):
                     )
                 ]
             )
+        ),
+        desc.GroupAttribute(
+            name="advanced",
+            items=[
+                desc.BoolParam(
+                    name="failOnMissingScene",
+                    description="Fail if the scene doesn't exist.",
+                    value=True,
+                    invalidate=False
+                ),
+                desc.BoolParam(
+                    name="failOnMissingParams",
+                    description="Fail if we don't find one or several params inside the scene.",
+                    value=True,
+                    invalidate=False
+                ),
+            ]
         )
     ]
 
@@ -140,9 +162,11 @@ class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
     @staticmethod
     def updateChoices(node):
         if not node.jsonFile.isLink:
+            node.selectedParameter.setValues([])
             return
         inputNode = node.jsonFile.inputLink.node
         if inputNode.nodeType != "GetMeshroomSceneParams":
+            node.selectedParameter.setValues([])
             return
         inputChoices = []
         for item in inputNode.parameters.value:
@@ -162,6 +186,7 @@ class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
         nodeInstance, param = selectedParameter.split(":", 1)
         jsonFile = node.jsonFile.value
         if not Path(jsonFile).exists():
+            node.outputValue.value = ""
             return
         with open(jsonFile, "r") as f:
             data = json.load(f)
@@ -169,16 +194,16 @@ class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
         for item in data:
             if item.get("node") == nodeInstance and item.get("parameter") == param:
                 node.outputValue.value = item.get("value")
-                return
+                break
+        else:
+            node.outputValue.value = ""
 
     def update(self, node):
         try:
-            node.selectedParameter.setValues([])
             self.updateChoices(node)
         except Exception as e:
             logging.warning(f"[UnwrapMeshroomSceneParam] Failed to set the choices: {e}")
         try:
-            node.outputValue.value = ""
             self.setOutput(node)
         except Exception as e:
             logging.warning(f"[UnwrapMeshroomSceneParam] Failed to set the node output: {e}")

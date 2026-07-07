@@ -389,7 +389,26 @@ Item {
                     id: header
                     width: parent.width
                     height: headerLayout.height
-                    color: root.baseColor
+                    color: {
+                        if (!node)
+                            return root.baseColor
+
+                        if (node.nodeVersionType === NodeVersionType.USER)
+                            return Qt.hsla(0.0,
+                                        Math.max(root.baseColor.hslSaturation, 0.5),
+                                        root.baseColor.hslLightness > 0.5 ?  // Handle light palette
+                                                root.baseColor.hslLightness * 0.75 : root.baseColor.hslLightness,
+                                        1.0)
+                        else if (node.nodeVersionType === NodeVersionType.BETA)
+                            return Qt.hsla(0.083,
+                                        Math.max(root.baseColor.hslSaturation, 0.45),
+                                        root.baseColor.hslLightness > 0.5 ?
+                                                root.baseColor.hslLightness * 0.6 :
+                                                Math.max(root.baseColor.hslLightness, 0.5),
+                                        1.0)
+
+                        return root.baseColor
+                    }
                     radius: background.radius
 
                     // Fill header's bottom radius
@@ -412,7 +431,7 @@ Item {
                             active: node && node.hasInternalAttribute("flowInputs")
                             Layout.leftMargin: 1
 
-                           // flowInputs pin - left side of header
+                            // flowInputs pin - left side of header
                             sourceComponent: AttributePin {
                                 id: flowInputsHeaderPin
                                 attribute: node.internalAttribute("flowInputs")
@@ -535,7 +554,6 @@ Item {
                                 text: MaterialIcons.comment
                                 padding: 2
                                 font.pointSize: 7
-
                                 ToolTip {
                                     id: nodeCommentTooltip
                                     parent: header
@@ -596,6 +614,16 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                 }
+                            }
+
+                            // Version type indicator
+                            MaterialLabel {
+                                text: node.nodeVersionType === NodeVersionType.BETA ? MaterialIcons.science : MaterialIcons.new_releases
+                                visible: node.nodeVersionType === NodeVersionType.BETA || node.nodeVersionType === NodeVersionType.USER
+                                font.pointSize: 7
+                                padding: 2
+                                palette.text: Colors.sysPalette.text
+                                ToolTip.text: node.nodeVersionType === NodeVersionType.BETA ? "This node is in beta version." : "This node is a user plugin. It is not maintained by the core team."
                             }
                         }
 

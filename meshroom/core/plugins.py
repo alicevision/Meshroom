@@ -284,6 +284,7 @@ class Plugin(BaseObject):
     Members:
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
         path: the absolute path of the plugin
+        user: whether the plugin is a user plugin (not maintained by the core Meshroom team)
         nodePlugins: dictionary mapping the name of a node plugin contained in the plugin
                      to its corresponding NodePlugin object
         templates: dictionary mapping the name of templates (.mg files) associated to the plugin
@@ -303,6 +304,7 @@ class Plugin(BaseObject):
         self._uid: str = f"{Plugin._instancesCount:04d}"
         self._name: str = name
         self._path: str = path
+        self._user: bool = False
 
         self._nodePlugins: dict[str: NodePlugin] = {}
         self._templates: dict[str: str] = {}
@@ -334,6 +336,16 @@ class Plugin(BaseObject):
     def path(self):
         """ Return the absolute path of the plugin. """
         return self._path
+
+    @property
+    def isUserPlugin(self):
+        """ Return whether the plugin is a user plugin (not maintained by the core Meshroom team). """
+        return self._user
+
+    @isUserPlugin.setter
+    def isUserPlugin(self, user: bool):
+        """ Set whether the plugin is a user plugin. """
+        self._user = user
 
     @property
     def nodes(self):
@@ -562,6 +574,13 @@ class NodePlugin(BaseObject):
     def plugin(self, plugin: Plugin):
         """ Assign this node plugin to a containing Plugin object. """
         self._plugin = plugin
+
+    @property
+    def isUserPlugin(self):
+        """ Return whether the node plugin belongs to a user plugin. """
+        if self.plugin:
+            return self.plugin.isUserPlugin
+        return False
 
     @property
     def processEnv(self):

@@ -13,6 +13,7 @@ from collections import OrderedDict
 import psutil
 
 from meshroom import _MESHROOM_ROOT
+from meshroom.common import BaseObject, Property
 from meshroom.core import cgroup
 from meshroom.core.desc.anySet import AnySet
 from meshroom.core.utils import VERBOSE_LEVEL
@@ -213,6 +214,23 @@ class InternalAttributesFactory:
         return cls.FLOW_OUT
 
 
+class NodeVersionType(enum.IntEnum):
+    UNKNOWN = enum.auto()
+    RELEASED = enum.auto()
+    BETA = enum.auto()
+    USER = enum.auto()
+
+
+NodeVersionTypeEnum = type(
+    "NodeVersionTypeEnum",
+    (BaseObject,),
+    {
+        "__init__": lambda self, parent=None: BaseObject.__init__(self, parent),
+        **{name: Property(int, lambda self, v=int(member): v, constant=True) for name, member in NodeVersionType.__members__.items()},
+    },
+)
+
+
 class BaseNode(object):
     """
     """
@@ -234,6 +252,7 @@ class BaseNode(object):
     documentation = ""
     category = "Other"
     plugin = None
+    nodeVersionType: NodeVersionType = NodeVersionType.UNKNOWN
     # Licenses required to run the plugin
     # Only used to select machines on the farm when the node is submitted
     _licenses = []
@@ -242,6 +261,23 @@ class BaseNode(object):
         super(BaseNode, self).__init__()
         self.hasDynamicOutputAttribute = any(output.isDynamicValue or isinstance(output, AnySet) for output in self.outputs)
         self.sourceCodeFolder = Path(getfile(self.__class__)).parent.resolve().as_posix()
+
+        mod = sys.modules[self.__class__.__module__]
+        version = getattr(mod, "__version__", None) if mod else None
+
+        if self.plugin and self.plugin.isUserPlugin:
+            self.nodeVersionType = NodeVersionType.USER
+
+        # If "version" is not defined, the node version type remains "UNKNOWN"
+        if version and self.nodeVersionType == NodeVersionType.UNKNOWN:
+            try:
+                major = int(version.split(".")[0])
+                if major < 1:
+                    self.nodeVersionType = NodeVersionType.BETA
+                else:
+                    self.nodeVersionType = NodeVersionType.RELEASED
+            except ValueError:
+                pass
 
     def getMrNodeType(self):
         return self._mrNodeType

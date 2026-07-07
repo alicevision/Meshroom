@@ -55,6 +55,15 @@ def registeredPlugins(folder: str):
     for plugin in plugins:
         pluginManager.removePlugin(plugin)
 
+@contextmanager
+def registeredUserPlugins(folder: str):
+    plugins = loadPluginFolder(folder, userPlugin=True)
+
+    yield
+
+    for plugin in plugins:
+        pluginManager.removePlugin(plugin)
+
 
 @contextmanager
 def overrideOsEnvironmentVariables(envVariables: dict):

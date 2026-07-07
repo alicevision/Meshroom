@@ -47,4 +47,6 @@ from .node import (
     InternalAttributesFactory,
     MrNodeType,
     Node,
+    NodeVersionType,
+    NodeVersionTypeEnum,
 )

@@ -100,6 +100,26 @@ Panel {
         root.displayNodeName = root.validatedNodeName
     }
 
+    headerColor: {
+        if (!node)
+            return defaultHeaderColor
+
+        if (node && node.nodeVersionType === NodeVersionType.USER)
+            return Qt.hsla(0.0,
+                           Math.max(defaultHeaderColor.hslSaturation, 0.3),
+                           defaultHeaderColor.hslLightness > 0.5 ?  // Handle light palette
+                                defaultHeaderColor.hslLightness * 0.85 : defaultHeaderColor.hslLightness,
+                           1.0)
+        else if (node && node.nodeVersionType === NodeVersionType.BETA)
+            return Qt.hsla(0.083,
+                        Math.max(defaultHeaderColor.hslSaturation, 0.45),
+                        defaultHeaderColor.hslLightness > 0.5 ?
+                                defaultHeaderColor.hslLightness * 0.75 :
+                                Math.max(defaultHeaderColor.hslLightness, 0.5),
+                        1.0)
+        return defaultHeaderColor
+    }
+
     // Add custom title component for editing
     titleComponent: Component {
         RowLayout {

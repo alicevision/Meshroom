@@ -367,34 +367,24 @@ def loadAllNodes(folder) -> list[Plugin]:
     return plugins
 
 
-def loadPluginFolder(folder) -> list[Plugin]:
+def loadPluginFolder(folder, userPlugin: bool = False) -> list[Plugin]:
     if not os.path.isdir(folder):
         logging.info(f"Plugin folder '{folder}' does not exist.")
-        return
+        return []
 
     mrFolder = Path(folder, 'meshroom')
     if not mrFolder.exists():
         logging.info(f"Plugin folder '{folder}' does not contain a 'meshroom' folder.")
-        return
+        return []
 
     plugins = loadAllNodes(folder=mrFolder)
     if plugins:
         for plugin in plugins:
+            plugin.isUserPlugin = userPlugin
             pluginManager.addPlugin(plugin)
             pipelineTemplates.update(plugin.templates)
 
     return plugins
-
-
-def loadPluginsFolder(folder):
-    if not os.path.isdir(folder):
-        logging.debug(f"PluginSet folder '{folder}' does not exist.")
-        return
-
-    for file in os.listdir(folder):
-        if os.path.isdir(file):
-            subFolder = os.path.join(folder, file)
-            loadPluginFolder(subFolder)
 
 
 def registerSubmitter(s: BaseSubmitter):
@@ -468,12 +458,21 @@ def initPlugins():
     # Classic plugins (with a DirTreeProcessEnv)
     additionalPluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
     pluginsFolders = [os.path.join(meshroomFolder, "plugins")] + additionalPluginsPath
-    for f in pluginsFolders:
-        plugins = loadPluginFolder(folder=f)
+    for folder in pluginsFolders:
+        plugins = loadPluginFolder(folder)
         # Set the ProcessEnv for each plugin
         if plugins:
             for plugin in plugins:
-                plugin.processEnv = processEnvFactory(f, plugin.configEnv, plugin.name)
+                plugin.processEnv = processEnvFactory(folder, plugin.configEnv, plugin.name)
+
+    # User plugins (with a DirTreeProcessEnv)
+    userPluginsFolders = EnvVar.getList(EnvVar.MESHROOM_USER_PLUGINS_PATH)
+    for folder in userPluginsFolders:
+        plugins = loadPluginFolder(folder, userPlugin=True)
+        # Set the ProcessEnv for each user plugin
+        if plugins:
+            for plugin in plugins:
+                plugin.processEnv = processEnvFactory(folder, plugin.configEnv, plugin.name)
 
     # Rez plugins (with a RezProcessEnv)
     rezPlugins = initRezPlugins()
@@ -484,12 +483,22 @@ def initRezPlugins():
     rezList = EnvVar.getList(EnvVar.MESHROOM_REZ_PLUGINS)
 
     for p in rezList:
-        name, path = p.split("=")
-        rezPlugins[name] = path  # "name" is the name of the Rez package
-        plugins = loadPluginFolder(folder=path)
+        name, folder = p.split("=")
+        rezPlugins[name] = folder  # "name" is the name of the Rez package
+        plugins = loadPluginFolder(folder)
         # Set the ProcessEnv for Rez plugins
         if plugins:
             for plugin in plugins:
-                plugin.processEnv = processEnvFactory(path, plugin.configEnv, plugin.name, envType="rez", uri=name)
+                plugin.processEnv = processEnvFactory(folder, plugin.configEnv, plugin.name, envType="rez", uri=name)
+
+    userRezList = EnvVar.getList(EnvVar.MESHROOM_USER_REZ_PLUGINS)
+    for p in userRezList:
+        name, folder = p.split("=")
+        rezPlugins[name] = folder  # "name" is the name of the Rez package
+        plugins = loadPluginFolder(folder, userPlugin=True)
+        # Set the ProcessEnv for user Rez plugins
+        if plugins:
+            for plugin in plugins:
+                plugin.processEnv = processEnvFactory(folder, plugin.configEnv, plugin.name, envType="rez", uri=name)
 
     return rezPlugins

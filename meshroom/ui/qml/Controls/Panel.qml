@@ -16,6 +16,8 @@ Page {
     id: root
 
     property alias headerBar: headerLayout.data
+    readonly property color defaultHeaderColor: Qt.darker(palette.window, 1.15)
+    property color headerColor: defaultHeaderColor
     property Component titleComponent: null  // Allow custom component for title
     property alias footerContent: footerLayout.data
     property alias icon: iconPlaceHolder.data
@@ -28,7 +30,7 @@ Page {
         id: m
         property int hPadding: 6
         property int vPadding: 4
-        readonly property color paneBackgroundColor: Qt.darker(root.palette.window, 1.15)
+        readonly property color paneBackgroundColor: root.headerColor
     }
 
     padding: 1

@@ -43,10 +43,10 @@ class GetMeshroomSceneParams(desc.CommandLineNode):
         request = ";".join(requestedParams)
 
         # Build command line
-        cmdLine = f"{node.nodeDesc.pythonExecutable} {SCRIPT}"
-        cmdLine += f" --scene '{shlex.quote(node.scene.value)}'"
-        cmdLine += f" --request '{shlex.quote(request)}'"
-        cmdLine += f" --output '{shlex.quote(node.paramValuesDict.value)}'"
+        cmdLine = f"{node.nodeDesc.pythonExecutable} {SCRIPT.as_posix()}"
+        cmdLine += f" --scene {shlex.quote(node.scene.value)}"
+        cmdLine += f" --request {shlex.quote(request)}"
+        cmdLine += f" --output {shlex.quote(node.paramValuesDict.value)}"
 
         node.nodeDesc.commandLine = cmdLine
         return super().buildCommandLine(chunk)

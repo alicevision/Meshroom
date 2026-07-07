@@ -231,7 +231,7 @@ class TestInitNodeWithDynamicOutputs:
 
         # Check that the plugin's status is DESC_ERROR, since the node description is invalid
         # Additionally, the list of errors should include an error about having a dynamic output in an InitNode
-        plugin = pluginManager.getRegisteredNodePlugin(InitNodeWithDynamicOutputs.__name__)
+        plugin = pluginManager.getLoadedNodeProvider(InitNodeWithDynamicOutputs.__name__)
         assert plugin
         assert plugin.status == NodeProviderStatus.DESC_ERROR
         assert len(plugin.errors) == 1

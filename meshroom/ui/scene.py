@@ -417,7 +417,7 @@ class Scene(UIGraph):
             self._activeNodes.add(ActiveNode(category, parent=self))
         # For all nodes declared to be accessed by the UI
         usedNodeTypes = {j for i in self.activeNodeCategories.values() for j in i}
-        allLoadedNodeTypes = set(meshroom.core.pluginManager.getRegisteredNodePlugins().keys())
+        allLoadedNodeTypes = set(meshroom.core.pluginManager.getLoadedNodeProviders().keys())
         allUiNodes = set(self.uiNodes) | usedNodeTypes | allLoadedNodeTypes
 
         for nodeType in allUiNodes:
@@ -609,7 +609,7 @@ class Scene(UIGraph):
         if not sfmFile or not os.path.isfile(sfmFile):
             self.tempCameraInit = None
             return
-        nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin("CameraInit").nodeDescriptor()
+        nodeDesc = meshroom.core.pluginManager.getLoadedNodeProvider("CameraInit").nodeDescriptor()
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
         tmpCameraInit.locked = True

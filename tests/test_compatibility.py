@@ -195,7 +195,7 @@ class OutputTemplateNodeV2(desc.Node):
 
 def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
     """ Change the `nodeDesc` associated to `nodeType`. """
-    pluginManager.getRegisteredNodePlugins()[nodeType] = NodePlugin(nodeDesc)
+    pluginManager.getLoadedNodeProviders()[nodeType] = NodePlugin(nodeDesc)
 
 
 def test_unknown_node_type():
@@ -239,7 +239,7 @@ def test_description_conflict():
     Test compatibility behavior for conflicting node descriptions.
     """
     # Copy registered node types to be able to restore them
-    originalNodeTypes = copy.deepcopy(pluginManager.getRegisteredNodePlugins())
+    originalNodeTypes = copy.deepcopy(pluginManager.getLoadedNodeProviders())
 
     nodeTypes = [SampleNodeV1, SampleNodeV2, SampleNodeV3, SampleNodeV4, SampleNodeV5]
     nodes = []
@@ -265,7 +265,7 @@ def test_description_conflict():
     # Offset node types register to create description conflicts
     # Each node type name now reference the next one's implementation
     for i, nt in enumerate(nodeTypes[:-1]):
-        pluginManager.getRegisteredNodePlugins()[nt.__name__] = NodePlugin(nodeTypes[i + 1])
+        pluginManager.getLoadedNodeProviders()[nt.__name__] = NodePlugin(nodeTypes[i + 1])
 
     # Reload file
     g = loadGraph(graphFile)
@@ -377,10 +377,10 @@ def test_upgradeAllNodes(tmp_path):
     g.save(graphFile)
 
     # Replace SampleNodeV1 by SampleNodeV2 and SampleInitNodeV1 by SampleInitNodeV2
-    pluginManager.getRegisteredNodePlugins()[SampleNodeV1.__name__] = \
-        pluginManager.getRegisteredNodePlugin(SampleNodeV2.__name__)
-    pluginManager.getRegisteredNodePlugins()[SampleInitNodeV1.__name__] = \
-        pluginManager.getRegisteredNodePlugin(SampleInitNodeV2.__name__)
+    pluginManager.getLoadedNodeProviders()[SampleNodeV1.__name__] = \
+        pluginManager.getLoadedNodeProvider(SampleNodeV2.__name__)
+    pluginManager.getLoadedNodeProviders()[SampleInitNodeV1.__name__] = \
+        pluginManager.getLoadedNodeProvider(SampleInitNodeV2.__name__)
     # Make SampleNodeV2 and SampleInitNodeV2 an unknown type
     unregisterNodeDesc(SampleNodeV2)
     unregisterNodeDesc(SampleInitNodeV2)
@@ -420,8 +420,8 @@ def test_conformUpgrade():
     g.save(graphFile)
 
     # Replace SampleNodeV5 by SampleNodeV6
-    pluginManager.getRegisteredNodePlugins()[SampleNodeV5.__name__] = \
-        pluginManager.getRegisteredNodePlugin(SampleNodeV6.__name__)
+    pluginManager.getLoadedNodeProviders()[SampleNodeV5.__name__] = \
+        pluginManager.getLoadedNodeProvider(SampleNodeV6.__name__)
 
     # Reload file
     g = loadGraph(graphFile)

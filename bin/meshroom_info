@@ -55,7 +55,7 @@ def get_nodes_info(args):
     meshroom.core.initPlugins()
     meshroom.core.initNodes()
     nodeName = args.name
-    nodePlugins = meshroom.core.pluginManager.getRegisteredNodePlugins()
+    nodePlugins = meshroom.core.pluginManager.getLoadedNodeProviders()
     if nodeName:
         get_node_info(args, nodePlugins, nodeName)
     else:

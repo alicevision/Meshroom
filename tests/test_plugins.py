@@ -48,7 +48,7 @@ class TestPluginWithValidNodesOnly:
         # Assert that there are loaded plugins, and that "pluginA" is one of them
         plugin = pluginManager.getPlugin("pluginA", uname=False)
         # Assert that the nodes of pluginA have been successfully registered
-        assert len(pluginManager.getRegisteredNodePlugins()) >= 2
+        assert len(pluginManager.getLoadedNodeProviders()) >= 2
         for nodeName, nodePlugin in plugin.nodes.items():
             assert nodePlugin.status == NodeProviderStatus.LOADED
             assert pluginManager.isLoaded(nodeName)
@@ -98,10 +98,10 @@ class TestPluginWithValidNodesOnly:
             assert pluginManager.isLoaded(nodeName)
 
     def test_updateRegisteredNodes(self):
-        nbRegisteredNodes = len(pluginManager.getRegisteredNodePlugins())
+        nbRegisteredNodes = len(pluginManager.getLoadedNodeProviders())
         plugin = pluginManager.getPlugin("pluginA", uname=False)
         assert plugin == self.plugin
-        nodeA = pluginManager.getRegisteredNodePlugin("PluginANodeA")
+        nodeA = pluginManager.getLoadedNodeProvider("PluginANodeA")
         nodeAName = nodeA.nodeDescriptor.__name__
 
         # Unregister a node
@@ -116,16 +116,16 @@ class TestPluginWithValidNodesOnly:
         assert plugin.containsNodePlugin(nodeAName)
         assert nodeA.plugin == plugin
 
-        assert pluginManager.getRegisteredNodePlugin(nodeAName) is None
-        assert nodeAName not in pluginManager.getRegisteredNodePlugins()
-        assert len(pluginManager.getRegisteredNodePlugins()) == nbRegisteredNodes - 1
+        assert pluginManager.getLoadedNodeProvider(nodeAName) is None
+        assert nodeAName not in pluginManager.getLoadedNodeProviders()
+        assert len(pluginManager.getLoadedNodeProviders()) == nbRegisteredNodes - 1
 
         # Re-register the node
         pluginManager.loadNodeProvider(nodeA)
 
         assert nodeA.status == NodeProviderStatus.LOADED
-        assert pluginManager.getRegisteredNodePlugin(nodeAName)
-        assert len(pluginManager.getRegisteredNodePlugins()) == nbRegisteredNodes
+        assert pluginManager.getLoadedNodeProvider(nodeAName)
+        assert len(pluginManager.getLoadedNodeProviders()) == nbRegisteredNodes
 
 
 class TestPluginWithInvalidNodes:
@@ -388,29 +388,29 @@ class TestVersionPlugins:
         with registeredPlugins(folder):
             pluginA = pluginManager.getPlugin("pluginA", uname=False)
             assert pluginA
-            nodeA = pluginManager.getRegisteredNodePlugin("PluginANodeA")
+            nodeA = pluginManager.getLoadedNodeProvider("PluginANodeA")
             assert nodeA
             assert nodeA.nodeDescriptor().nodeVersionType == NodeVersionType.RELEASED
 
-            nodeB = pluginManager.getRegisteredNodePlugin("PluginANodeB")
+            nodeB = pluginManager.getLoadedNodeProvider("PluginANodeB")
             assert nodeB
             assert nodeB.nodeDescriptor().nodeVersionType == NodeVersionType.BETA
 
-            nodeInput = pluginManager.getRegisteredNodePlugin("PluginAInitNode")
+            nodeInput = pluginManager.getLoadedNodeProvider("PluginAInitNode")
             assert nodeInput
             assert nodeInput.nodeDescriptor().nodeVersionType == NodeVersionType.UNKNOWN
 
         with registeredUserPlugins(folder):
             pluginA = pluginManager.getPlugin("pluginA", uname=False)
             assert pluginA
-            nodeA = pluginManager.getRegisteredNodePlugin("PluginANodeA")
+            nodeA = pluginManager.getLoadedNodeProvider("PluginANodeA")
             assert nodeA
             assert nodeA.nodeDescriptor().nodeVersionType == NodeVersionType.USER
 
-            nodeB = pluginManager.getRegisteredNodePlugin("PluginANodeB")
+            nodeB = pluginManager.getLoadedNodeProvider("PluginANodeB")
             assert nodeB
             assert nodeB.nodeDescriptor().nodeVersionType == NodeVersionType.USER
 
-            nodeInput = pluginManager.getRegisteredNodePlugin("PluginAInitNode")
+            nodeInput = pluginManager.getLoadedNodeProvider("PluginAInitNode")
             assert nodeInput
             assert nodeInput.nodeDescriptor().nodeVersionType == NodeVersionType.USER

@@ -729,14 +729,14 @@ class PluginManager(BaseObject):
                     self.unloadNodeProvider(node)
             del self._plugins[plugin.uname]
 
-    def getRegisteredNodePlugins(self) -> dict[str: NodePlugin]:
+    def getLoadedNodeProviders(self) -> dict[str: NodePlugin]:
         """
         Return a dictionary containing all the registered NodePlugins, with
         {key, value} = {name, NodePlugin}.
         """
         return self._nodePlugins
 
-    def getRegisteredNodePlugin(self, name: str) -> NodePlugin:
+    def getLoadedNodeProvider(self, name: str) -> NodePlugin:
         """
         Return the NodePlugin object that has been registered under the name "name" if it exists.
 

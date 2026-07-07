@@ -10,7 +10,7 @@ import tempfile
 from meshroom.core import desc, pluginManager, loadClassesNodes, initNodes
 from meshroom.core.node import Position
 from meshroom.core.graph import Graph, loadGraph
-from meshroom.core.plugins import Plugin
+from meshroom.core.plugins.manager import Plugin
 
 from .utils import registerNodeDesc, unregisterNodeDesc, registeredNodeTypes
 

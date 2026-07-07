@@ -8,10 +8,10 @@ from typing import Type
 import pytest
 
 from meshroom.core import desc, pluginManager
-from meshroom.core.plugins import NodeProvider
 from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
+from meshroom.core.plugins.manager import NodeProvider
 
 from .utils import registeredNodeTypes, overrideNodeTypeVersion, registerNodeDesc, unregisterNodeDesc
 

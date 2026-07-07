@@ -2,7 +2,7 @@
 
 from meshroom.core import pluginManager, loadClassesNodes
 from meshroom.core.desc.node import NodeVersionType
-from meshroom.core.plugins import NodeProviderStatus, Plugin
+from meshroom.core.plugins.manager import NodeProviderStatus, Plugin
 from .utils import overrideOsEnvironmentVariables, loadedPlugins, loadedUserPlugins
 
 

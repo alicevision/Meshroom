@@ -18,7 +18,8 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import NodeProvider, PluginManager, Plugin, processEnvFactory, formatNodeDescriptionErrorMessage
+from meshroom.core.plugins.env import processEnvFactory
+from meshroom.core.plugins.manager import PluginManager, Plugin, NodeProvider, formatNodeDescriptionErrorMessage
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc

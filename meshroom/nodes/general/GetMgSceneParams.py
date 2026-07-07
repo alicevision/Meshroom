@@ -137,7 +137,8 @@ class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
         ),
     ]
 
-    def updateChoices(self, node):
+    @staticmethod
+    def updateChoices(node):
         if not node.jsonFile.isLink:
             return
         inputNode = node.jsonFile.inputLink.node
@@ -155,14 +156,12 @@ class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
     @staticmethod
     def setOutput(node):
         if not node.selectedParameter or not node.selectedParameter.value:
-            node.outputValue.value = ""
             return
         selectedParameter = node.selectedParameter.value
         logging.debug(f"[UnwrapMeshroomSceneParam] Selected parameter: {selectedParameter}")
-        nodeInstance, param = selectedParameter.split(":")
+        nodeInstance, param = selectedParameter.split(":", 1)
         jsonFile = node.jsonFile.value
         if not Path(jsonFile).exists():
-            node.outputValue.value = ""
             return
         with open(jsonFile, "r") as f:
             data = json.load(f)
@@ -173,5 +172,13 @@ class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
                 return
 
     def update(self, node):
-        self.updateChoices(node)
-        self.setOutput(node)
+        try:
+            node.selectedParameter.setValues([])
+            self.updateChoices(node)
+        except Exception as e:
+            logging.warning(f"[UnwrapMeshroomSceneParam] Failed to set the choices: {e}")
+        try:
+            node.outputValue.value = ""
+            self.setOutput(node)
+        except Exception as e:
+            logging.warning(f"[UnwrapMeshroomSceneParam] Failed to set the node output: {e}")

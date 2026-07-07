@@ -8,14 +8,38 @@ from pathlib import Path
 import tempfile
 
 from meshroom.core import desc, pluginManager, loadClassesNodes, initNodes
-from meshroom.core.node import Position
+from meshroom.core.node import Position, BaseNode
 from meshroom.core.graph import Graph, loadGraph
-from meshroom.core.plugins import Plugin
+from meshroom.core.plugins import Plugin, ProcessEnv
+from meshroom.nodes.general.InputString import InputString
+from meshroom.nodes.general.GetMgSceneParams import GetMeshroomSceneParams
 
 from .utils import registerNodeDesc, unregisterNodeDesc, registeredNodeTypes
 
 
 TEST_RESOURCES = Path(__file__).parent / "resources"
+
+
+def processNode(node: BaseNode):
+    """ Process a non-parallelized node and check that it succeed """
+    cache = Path(node.internalFolder)
+    cache.mkdir(parents=True)
+    print("cache", cache)
+    # Process
+    logFile = cache / "0.log"
+    logFile.touch()
+    node.prepareLogger(-1)
+    node.preprocess()
+    node.process(True, True)
+    node.postprocess()
+    node.restoreLogger()
+    # Check output
+    nodeStatusFile = cache / "nodeStatus"
+    assert nodeStatusFile.exists()
+    with open(str(nodeStatusFile), "r") as f:
+        c = json.load(f)
+    assert c.get("status") == "SUCCESS"
+    return True
 
 
 class TestNodeInfo:
@@ -620,27 +644,6 @@ class TestGenerateMgScene:
         return graphFile
 
     @staticmethod
-    def processNode(node):
-        """ Process a non-parallelized node and check that it succeed """
-        cache = Path(node.internalFolder)
-        cache.mkdir(parents=True)
-        # Process
-        logFile = cache / "0.log"
-        logFile.touch()
-        node.prepareLogger(-1)
-        node.preprocess()
-        node.process(True, True)
-        node.postprocess()
-        node.restoreLogger()
-        # Check output
-        nodeStatusFile = cache / "nodeStatus"
-        assert nodeStatusFile.exists()
-        with open(str(nodeStatusFile), "r") as f:
-            c = json.load(f)
-        assert c.get("status") == "SUCCESS"
-        return True
-
-    @staticmethod
     def comparePaths(pathA, pathB):
         assert Path(pathA) == Path(pathB)
 
@@ -699,8 +702,8 @@ class TestGenerateMgScene:
         graph.save(graphFile)
         # Execute graph
         for node in [nodeA, nodeB, nodeC, nodeD, nodeE]:
-            self.processNode(node)
-        self.processNode(testNode)
+            processNode(node)
+        processNode(testNode)
         # Check output scene
         scene = Path(testNode.internalFolder) / "scene.mg"
         assert scene.exists()
@@ -711,3 +714,35 @@ class TestGenerateMgScene:
         assert generatedSceneGraph["B_1"]["inputs"]["integer"] == 42
         assert generatedSceneGraph["C_1"]["inputs"]["integer"] == 42
         self.comparePaths(generatedSceneGraph["InputImages_1"]["inputs"]["inputFile"], images)
+
+
+def test_GetMeshroomSceneParams(graphSavedOnDisk):
+    with registeredNodeTypes([InputString, GetMeshroomSceneParams]):
+        # Create the input scene
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(InputString.__name__, "A_1")
+        node.string.value = "string_value"
+        graph.save()
+        inputScene = str(graph._filepath)
+        print("scene", inputScene)
+
+        # Create the test scene
+        tmpdir = Path(tempfile.mkdtemp())
+        graphFile = tmpdir / "test_scene_getmeshroomsceneparams.mg"
+        graph = Graph()
+        node = graph.addNewNode(GetMeshroomSceneParams.__name__, "B_1")
+        node.scene.value = inputScene
+        node.parameters.extend([{
+            "nodeInstance": f"A_1",
+            "paramName": "string",
+        }])
+        print("graphFile", graphFile)
+        graph.save(graphFile)
+        # Process node
+        node.nodePlugin._processEnv = ProcessEnv("", {}, "test_plugin")
+        processNode(node)
+        # Check output
+        outputJson = Path(node.internalFolder) / "values.json"
+        with open(outputJson, "r") as f:
+            c = json.load(f)
+        assert c == [{'node': 'A_1', 'parameter': 'string', 'value': 'string_value'}]

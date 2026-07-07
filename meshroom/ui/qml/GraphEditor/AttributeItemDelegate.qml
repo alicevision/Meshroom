@@ -942,9 +942,9 @@ RowLayout {
                 }
                 ListView {
                     id: lv
-                    model: listAttributeLayout.expanded ? attribute.value : undefined
-                    visible: model !== undefined && count > 0
-                    implicitHeight: Math.min(contentHeight, 300)
+                    model: attribute.value
+                    visible: listAttributeLayout.expanded && count > 0
+                    implicitHeight: visible ? Math.min(contentHeight, 300) : 0
                     Layout.fillWidth: true
                     Layout.margins: 4
                     clip: true

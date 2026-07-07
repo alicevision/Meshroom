@@ -4,6 +4,7 @@ __version__ = "1.0"
 
 import json
 import logging
+import shlex
 from pathlib import Path
 from meshroom.core import desc
 
@@ -43,9 +44,9 @@ class GetMeshroomSceneParams(desc.CommandLineNode):
 
         # Build command line
         cmdLine = f"{node.nodeDesc.pythonExecutable} {SCRIPT}"
-        cmdLine += f" --scene '{node.scene.value}'"
-        cmdLine += f" --request '{request}'"
-        cmdLine += f" --output '{node.paramValuesDict.value}'"
+        cmdLine += f" --scene '{shlex.quote(node.scene.value)}'"
+        cmdLine += f" --request '{shlex.quote(request)}'"
+        cmdLine += f" --output '{shlex.quote(node.paramValuesDict.value)}'"
 
         node.nodeDesc.commandLine = cmdLine
         return super().buildCommandLine(chunk)

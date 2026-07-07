@@ -80,11 +80,7 @@ graph = loadGraph(str(scenePath))
 # Extract parameters
 parameters = []
 for nodeInstance, paramPath in requestedParams:
-    try:
-        node = graph.node(nodeInstance)
-    except Exception as e:
-        raise RuntimeError(f"Node '{nodeInstance}' not found in scene.\n") from e
-
+    node = graph.node(nodeInstance)
     if node is None:
         raise RuntimeError(f"Node '{nodeInstance}' not found in scene.")
     

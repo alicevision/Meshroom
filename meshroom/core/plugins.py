@@ -499,7 +499,7 @@ class NodeProvider(BaseObject):
         self.plugin: Plugin = plugin
         self.path: str = Path(getfile(nodeDesc)).resolve().as_posix()
         self.nodeDescriptor: desc.BaseNode = nodeDesc
-        self.nodeDescriptor.plugin = self
+        self.nodeDescriptor.provider = self
 
         self.status: NodeProviderStatus = NodeProviderStatus.NOT_LOADED
         self.errors: list[tuple[str, ValueTypeErrors]] = validateNodeDesc(nodeDesc)
@@ -555,7 +555,7 @@ class NodeProvider(BaseObject):
             return False
 
         self.nodeDescriptor = descriptor
-        self.nodeDescriptor.plugin = self
+        self.nodeDescriptor.provider = self
         self._timestamp = timestamp
         self.status = NodeProviderStatus.NOT_LOADED
         logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Successful reloading.")

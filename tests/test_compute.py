@@ -196,11 +196,11 @@ class TestNodeLogger:
             executed["env"] = env
 
         nodeDesc.executeChunkCommandLine = executeChunkCommandLine
-        plugin = SimpleNamespace(runtimeEnv=None, commandPrefix="", commandSuffix="")
+        provider = SimpleNamespace(runtimeEnv=None, commandPrefix="", commandSuffix="")
         node = SimpleNamespace(
             name="TestNode_1",
             graph=SimpleNamespace(filepath=graphFilepath.as_posix()),
-            nodeDesc=SimpleNamespace(pythonExecutable="python", plugin=plugin),
+            nodeDesc=SimpleNamespace(pythonExecutable="python", provider=provider),
             getChunks=lambda: [object(), object()],
         )
         chunk = SimpleNamespace(

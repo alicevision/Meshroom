@@ -39,7 +39,6 @@ class GenerateMeshroomScene(desc.Node):
         ),
         desc.ListAttribute(
             name="inputOverrides",
-            label="Input Overrides",
             description="Overrides for the CameraInit nodes.",
             exposed=True,
             commandLineGroup="",
@@ -71,6 +70,13 @@ class GenerateMeshroomScene(desc.Node):
             name="setInvalidationString",
             label="Invalidation String",
             description="Set an invalidation string on the scene nodes.",
+            value="",
+            exposed=False
+        ),
+        desc.File(
+            name="setCacheDir",
+            label="Cache Folder",
+            description="Path to the cache folder.",
             value="",
             exposed=False
         ),
@@ -133,7 +139,9 @@ class GenerateMeshroomScene(desc.Node):
         command += ["--compute", "no"]
         if invalidationString := node.setInvalidationString.value:
             command += ["--setInvalidationString", invalidationString]
-        
+        if cacheDir := node.setCacheDir.value:
+            command += ["--overrideCacheDir", cacheDir]
+
         # Launch subprocess
         logging.info(f"{'='*10} Command {'='*10}")
         logging.info(f"{shlex.join(command)}")

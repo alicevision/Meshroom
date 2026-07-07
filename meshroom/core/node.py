@@ -863,8 +863,9 @@ class BaseNode(BaseObject):
 
         # instantiate node description if nodeType is valid
         if meshroom.core.pluginManager.getLoadedNodeProvider(nodeType):
-            self.nodeDesc = meshroom.core.pluginManager.getLoadedNodeProvider(nodeType).nodeDescriptor()
             self.nodeProvider = meshroom.core.pluginManager.getLoadedNodeProvider(nodeType)
+            self.nodeDesc = self.nodeProvider.nodeDescriptor()
+
 
         self.packageName: str = ""
         self._internalFolder: str = ""

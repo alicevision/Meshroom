@@ -859,7 +859,7 @@ class BaseNode(BaseObject):
         super().__init__(parent)
         self._nodeType: str = nodeType
         self.nodeDesc: desc.BaseNode = None
-        self.nodeProvider: plugins.Plugin = None
+        self.nodeProvider: plugins.NodeProvider = None
 
         # instantiate node description if nodeType is valid
         if meshroom.core.pluginManager.getLoadedNodeProvider(nodeType):

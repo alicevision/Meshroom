@@ -56,7 +56,7 @@ def loadedPlugins(folder: str):
         pluginManager.removePlugin(plugin)
 
 @contextmanager
-def registeredUserPlugins(folder: str):
+def loadedUserPlugins(folder: str):
     plugins = loadPluginFolder(folder, userPlugin=True)
 
     yield

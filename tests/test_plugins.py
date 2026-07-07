@@ -3,7 +3,7 @@
 from meshroom.core import pluginManager, loadClassesNodes
 from meshroom.core.desc.node import NodeVersionType
 from meshroom.core.plugins import NodeProviderStatus, Plugin
-from .utils import overrideOsEnvironmentVariables, loadedPlugins, registeredUserPlugins
+from .utils import overrideOsEnvironmentVariables, loadedPlugins, loadedUserPlugins
 
 
 from pathlib import Path
@@ -401,7 +401,7 @@ class TestVersionPlugins:
             assert nodeInput
             assert nodeInput.nodeDescriptor().nodeVersionType == NodeVersionType.UNKNOWN
 
-        with registeredUserPlugins(folder):
+        with loadedUserPlugins(folder):
             pluginA = pluginManager.getPlugin("pluginA", uname=False)
             assert pluginA
             nodeA = pluginManager.getLoadedNodeProvider("PluginANodeA")

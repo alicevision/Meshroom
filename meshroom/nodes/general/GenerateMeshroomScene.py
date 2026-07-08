@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "1.0"
+__version__ = "2.0"
 
 import shlex
 import logging
@@ -53,7 +53,7 @@ class GenerateMeshroomScene(desc.Node):
         ),
         desc.ListAttribute(
             name="paramOverrides",
-            label="Parameter overrides",
+            label="Parameter Overrides",
             description="Overrides for the nodes in the Meshroom scene to create.",
             exposed=True,
             commandLineGroup="",

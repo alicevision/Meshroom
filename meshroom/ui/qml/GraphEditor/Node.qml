@@ -35,7 +35,7 @@ Item {
         if (node.isIONode)
             return Colors.blue
         if (!node.isComputableType)
-            return "#BA3D69"
+            return '#2f6352'
         return activePalette.base
     }
     property color baseColor: defaultColor

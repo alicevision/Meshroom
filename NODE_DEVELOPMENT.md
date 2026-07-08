@@ -132,6 +132,7 @@ Meshroom provides several attribute types you can use in a node’s `inputs` and
 |------|-------------|----------|
 | `ListAttribute` | Homogeneous list of elements defined by `elementDesc`. | `elementDesc`, `joinChar` |
 | `GroupAttribute` | Fixed collection of heterogeneous child attributes (`items`). | `items`, `joinChar` |
+| `AnySet` | Flexible, container for any mixed set of child attributes. | N/A (Uses `GroupAttribute`) |
 
 Both inherit from `Attribute` and support nesting (lists of groups, groups with lists).
 

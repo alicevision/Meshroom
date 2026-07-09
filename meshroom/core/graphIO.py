@@ -148,6 +148,9 @@ class TemplateGraphSerializer(GraphSerializer):
 
         for attrName in inputKeys:
             attribute = node.attribute(attrName)
+            if isinstance(attribute, AnySet):
+                nodeData["inputs"][attrName] = self._serializeAnySetAttribute(node.attribute(attrName))
+                continue
             # check that attribute is not a link for choice attributes
             if attribute.isDefault and not attribute.isLink:
                 del nodeData["inputs"][attrName]
@@ -167,6 +170,24 @@ class TemplateGraphSerializer(GraphSerializer):
         nodeData.pop("parallelization", None)
 
         return nodeData
+
+    def _serializeAnySetAttribute(self, attribute: Attribute) -> Any:
+        """ Serialize AnySet attributes
+        """
+        serializedChildren = []
+        for child in attribute.value:
+            childData = child.asDict()
+            childLinkAttr = child.inputLink
+
+            # Remove connection if the sourceNode is not in the partialgraph nodes
+            if childLinkAttr and childLinkAttr.node not in self.nodes:
+                childData['value'] = child.getDefaultValue()
+            serializedChildren.append(childData)
+
+        return {
+            "expanded": attribute.expanded,
+            "children": serializedChildren
+        }
 
 
 class PartialGraphSerializer(GraphSerializer):

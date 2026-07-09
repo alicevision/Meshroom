@@ -70,6 +70,14 @@ general_group.add_argument(
          'To target a specific Init Node, use the format Node1=input1,input2 Node2=input3')
 
 general_group.add_argument(
+    '-gi', '--graphInput', 
+    metavar='ATTRIBUTE=VALUE', 
+    nargs='+',
+    type=lambda item: item.split('=', 1),
+    help='Override graph input parameters. '
+         'When the graph has a GraphInput nodes, it will set the inputs parameters.')
+
+general_group.add_argument(
     '-I', '--inputRecursive',
     metavar='FOLDER FOLDER_2 NODEINSTANCE=FOLDER,FOLDER_2,...',
     type=str,
@@ -91,10 +99,17 @@ general_group.add_argument(
     metavar='FOLDER OUTPUT_NODE_INSTANCE=FOLDER OUTPUT_NODE_INSTANCE.ATTRIBUTE=VALUE',
     type=str,
     required=False,
+    default=[],
     nargs='*',
     help='Output folder for results. '
          'Sets output folder for all output nodes, target specific nodes using OUTPUT_NODE_INSTANCE=FOLDER, '
          'or target exposed output attributes using OUTPUT_NODE_INSTANCE.ATTRIBUTE=VALUE.')
+
+general_group.add_argument(
+    '-go', '--graphOutput', 
+    metavar='FOLDER', 
+    type=str,
+    help='Set the GraphOutput folder. ')
 
 general_group.add_argument(
     '-s', '--save', metavar='FILE', type=str, required=False,
@@ -176,14 +191,15 @@ meshroom.core.initNodes()
 graph = meshroom.core.graph.Graph(name=args.pipeline)
 
 with meshroom.core.graph.GraphModification(graph):
+    hasOutput = args.output or args.graphOutput
     # initialize template pipeline
     loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
     if args.pipeline.lower() in loweredPipelineTemplates:
         graph.initFromTemplate(loweredPipelineTemplates[args.pipeline.lower()],
-                               True if args.output else False)
+                               True if hasOutput else False)
     else:
         # custom pipeline
-        graph.initFromTemplate(args.pipeline, True if args.output else False)
+        graph.initFromTemplate(args.pipeline, True if hasOutput else False)
 
     if args.overrideCacheDir is not None:
         # Set the cache folder
@@ -225,13 +241,24 @@ with meshroom.core.graph.GraphModification(graph):
             inputRec = mapInputRecursive.get(nodeName, []) + mapInputRecursive.get("", [])
             inputNode.nodeDesc.initialize(inputNode, input, inputRec)
 
+    if args.graphInput:
+        # Fetch input attributes
+        inputParamsNames: dict[str, list["BaseNode"]] = graph.findGraphInputAttributes()
+        print("inputParamsNames",inputParamsNames)
+        # Fill parameters
+        for attrName, attrValue in args.graphInput:
+            if attrName not in inputParamsNames:
+                raise KeyError(f"No attribute {attrName} on GraphInput nodes of the scene.")
+            for node in inputParamsNames[attrName]:
+                node.nodeDesc.setInputAttribute(node, attrName, attrValue)
+
     if not graph.canComputeLeaves:
         raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")
 
     if args.verbose:
         graph.setVerbose(args.verbose)
 
-    if args.output:
+    if hasOutput:
         # The output folders for output nodes can be set as follows:
         # - for each node, the output folder is specified following the
         #   "OutputNode_name=/output/folder/path" convention.
@@ -248,6 +275,11 @@ with meshroom.core.graph.GraphModification(graph):
         #   any will be set with the output folder of the first specified output node.
         # - several output folders are provided without specifying any node: the last one will
         #   be used to set all the output nodes' output folders.
+        
+        if args.graphOutput:
+            outputNodes = graph.findGraphOutputNodes()
+            for o in outputNodes:
+                args.output.append(f"{o.name}={args.graphOutput}")
 
         graph.configureOutputNodes(args.output)
     elif args.submit or args.compute:

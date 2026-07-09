@@ -967,6 +967,25 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InputNode)]
         return nodes
 
+    def findGraphInputNodes(self):
+        """
+        Returns:
+            list[Node]: the list of InputNode nodes of type GraphInput
+        """
+        nodes = [n for n in self.findInputNodes() if n.nodeType == "GraphInput"]
+        return nodes
+
+    def findGraphInputAttributes(self):
+        """
+        Returns:
+            dict[str, list[Node]]: the mapping of attribute names to GraphInput nodes exposing them
+        """
+        inputParamsNames: dict[str, list["BaseNode"]] = defaultdict(list)
+        for n in self.findGraphInputNodes():
+            for p in n.nodeDesc.getParams(n):
+                inputParamsNames[p].append(n)
+        return inputParamsNames
+
     def findOutputNodes(self) -> list[Node]:
         """
         Returns:
@@ -974,6 +993,14 @@ class Graph(BaseObject):
         """
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.OutputNode)]
         return self.sortNodesByIndex(nodes)
+
+    def findGraphOutputNodes(self):
+        """
+        Returns:
+            list[Node]: the list of OutputNode nodes of type GraphOutput
+        """
+        nodes = [n for n in self.findOutputNodes() if n.nodeType == "GraphOutput"]
+        return nodes
 
     def configureOutputNodes(self, outputValues: list[str]) -> None:
         """

@@ -869,10 +869,12 @@ RowLayout {
                     return t
                 }
                 property bool expanded: false
+                property var appPalette: palette
                 RowLayout {
                     spacing: 4
                     ToolButton {
-                        text: tableLayout.expanded  ? MaterialIcons.keyboard_arrow_down : MaterialIcons.keyboard_arrow_right
+                        text: tableLayout.expanded ? MaterialIcons.keyboard_arrow_down
+                                                   : MaterialIcons.keyboard_arrow_right
                         font.family: MaterialIcons.fontFamily
                         onClicked: tableLayout.expanded = !tableLayout.expanded
                     }
@@ -887,6 +889,78 @@ RowLayout {
                         padding: 2
                         enabled: root.editable
                         onClicked: _currentScene.appendAttribute(attribute, undefined)
+                    }
+                    ToolButton {
+                        text: MaterialIcons.fullscreen
+                        font.family: MaterialIcons.fontFamily
+                        font.pointSize: 11
+                        padding: 2
+                        ToolTip.text: "Open in fullscreen"
+                        ToolTip.visible: hovered
+                        onClicked: {
+                            outerFrame.anchors.fill           = undefined
+                            outerFrame.anchors.top            = undefined
+                            outerFrame.anchors.left           = undefined
+                            outerFrame.anchors.right          = undefined
+                            outerFrame.anchors.bottom         = undefined
+                            outerFrame.Layout.fillWidth       = false
+                            outerFrame.Layout.preferredHeight = 0
+                            outerFrame.visible                = true
+                            outerFrame.parent  = fullscreenContent
+                            outerFrame.x       = 0
+                            outerFrame.y       = 0
+                            outerFrame.width   = Qt.binding(function() { return fullscreenWindow.width  })
+                            outerFrame.height  = Qt.binding(function() { return fullscreenWindow.height })
+                            outerFrame.isFullscreen = true
+                            fullscreenWindow.show()
+                        }
+                    }
+                }
+                Window {
+                    id: fullscreenWindow
+                    color: "#2d2d2d"
+                    width:  tableLayout.totalTableWidth  + 30 + 16 + 20
+                    height: tableLayout.totalTableHeight + 10 + 16 + 20
+                    title: attribute ? attribute.label : ""
+                    palette.window:          tableLayout.appPalette.window
+                    palette.windowText:      tableLayout.appPalette.windowText
+                    palette.base:            tableLayout.appPalette.base
+                    palette.alternateBase:   tableLayout.appPalette.alternateBase
+                    palette.text:            tableLayout.appPalette.text
+                    palette.button:          tableLayout.appPalette.button
+                    palette.buttonText:      tableLayout.appPalette.buttonText
+                    palette.highlight:       tableLayout.appPalette.highlight
+                    palette.highlightedText: tableLayout.appPalette.highlightedText
+                    palette.mid:             tableLayout.appPalette.mid
+                    palette.dark:            tableLayout.appPalette.dark
+                    palette.light:           tableLayout.appPalette.light
+                    palette.midlight:        tableLayout.appPalette.midlight
+                    palette.shadow:          tableLayout.appPalette.shadow
+                    palette.toolTipBase:     tableLayout.appPalette.toolTipBase
+                    palette.toolTipText:     tableLayout.appPalette.toolTipText
+                    Item {
+                        id: fullscreenContent
+                        anchors.fill: parent
+                    }
+                    onClosing: {
+                        outerFrame.anchors.fill           = undefined
+                        outerFrame.anchors.top            = undefined
+                        outerFrame.anchors.left           = undefined
+                        outerFrame.anchors.right          = undefined
+                        outerFrame.anchors.bottom         = undefined
+                        outerFrame.width                  = undefined
+                        outerFrame.height                 = undefined
+                        outerFrame.parent                 = tableLayout
+                        outerFrame.isFullscreen           = false
+                        outerFrame.Layout.fillWidth       = true
+                        outerFrame.Layout.preferredHeight = Qt.binding(function() {
+                            return tableLayout.expanded
+                                ? Math.min(tableLayout.totalTableHeight + 40, 330)
+                                : 0
+                        })
+                        outerFrame.visible = Qt.binding(function() {
+                            return tableLayout.expanded
+                        })
                     }
                 }
                 FontMetrics {
@@ -906,9 +980,9 @@ RowLayout {
                     var heights = []
                     if (attribute && attribute.value) {
                         for (var r = 0; r < attribute.value.count; r++) {
-                            var rowAttr = attribute.value.at(r)  // instance of a group attribute
+                            var rowAttr = attribute.value.at(r)
                             if (!rowAttr || !rowAttr.value) continue
-                            for (var c = 0; c < rowAttr.value.count && c < widths.length; c++) {  // group member
+                            for (var c = 0; c < rowAttr.value.count && c < widths.length; c++) {
                                 var cell = rowAttr.value.at(c)
                                 var cellText = cell ? String(cell.value) : ""
                                 var cw = fontMetrics.advanceWidth(cellText) + 20
@@ -923,31 +997,36 @@ RowLayout {
                 Component.onCompleted: tableLayout.initSizes()
                 Connections {
                     target: attribute ? attribute.value : null
-                    function onCountChanged()  { tableLayout.initSizes() }
-                    function onModelReset()    { tableLayout.initSizes() }
-                    function onRowsInserted()  { tableLayout.initSizes() }
-                    function onDataChanged()   { tableLayout.initSizes() }
+                    function onCountChanged() { tableLayout.initSizes() }
+                    function onModelReset()   { tableLayout.initSizes() }
+                    function onRowsInserted() { tableLayout.initSizes() }
+                    function onDataChanged()  { tableLayout.initSizes() }
                 }
                 Item {
                     id: outerFrame
                     Layout.fillWidth: true
                     visible: tableLayout.expanded
                     Layout.preferredHeight: tableLayout.expanded
-                                            ? Math.min(tableLayout.totalTableHeight + 30, 330)
+                                            ? Math.min(tableLayout.totalTableHeight + 40, 330)
                                             : 0
+                    property bool isFullscreen: false
                     ScrollBar {
                         id: hBar
                         anchors.left:        fixedStrip.right
                         anchors.right:       outerFrame.right
                         anchors.bottom:      outerFrame.bottom
                         anchors.rightMargin: vBar.width
-                        orientation: Qt.Horizontal
-                        policy: ScrollBar.AlwaysOn
-                        size: flickable.width  / Math.max(tableLayout.totalTableWidth,  1)
-                        position: flickable.contentX / Math.max(tableLayout.totalTableWidth - flickable.width, 1)
+                        orientation:         Qt.Horizontal
+                        policy: flickable.contentWidth > flickable.width
+                                ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+                        size: Math.min(1.0, flickable.width / Math.max(flickable.contentWidth, 1))
+                        position: (flickable.contentX / Math.max(flickable.contentWidth - flickable.width, 1))
+                                  * (1.0 - size)
                         onPositionChanged: {
                             if (!pressed) return
-                            flickable.contentX = position * Math.max(tableLayout.totalTableWidth - flickable.width, 1)
+                            var maxPos = 1.0 - size
+                            var ratio  = maxPos > 0 ? position / maxPos : 0
+                            flickable.contentX = ratio * Math.max(flickable.contentWidth - flickable.width, 1)
                         }
                     }
                     ScrollBar {
@@ -956,13 +1035,75 @@ RowLayout {
                         anchors.bottom:       outerFrame.bottom
                         anchors.right:        outerFrame.right
                         anchors.bottomMargin: hBar.height
-                        orientation: Qt.Vertical
-                        policy: ScrollBar.AlwaysOn
-                        size: flickable.height / Math.max(tableLayout.totalTableHeight + 30, 1)
-                        position: flickable.contentY / Math.max(tableLayout.totalTableHeight + 30 - flickable.height, 1)
+                        orientation:          Qt.Vertical
+                        policy: flickable.contentHeight > flickable.height
+                                ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+                        size: Math.min(1.0, flickable.height / Math.max(flickable.contentHeight, 1))
+                        position: (flickable.contentY / Math.max(flickable.contentHeight - flickable.height, 1))
+                                  * (1.0 - size)
                         onPositionChanged: {
                             if (!pressed) return
-                            flickable.contentY = position * Math.max(tableLayout.totalTableHeight + 30 - flickable.height, 1)
+                            var maxPos = 1.0 - size
+                            var ratio  = maxPos > 0 ? position / maxPos : 0
+                            flickable.contentY = ratio * Math.max(flickable.contentHeight - flickable.height, 1)
+                        }
+                    }
+                    Item {
+                        id: fixedHeader
+                        anchors.left:        fixedStrip.right
+                        anchors.right:       outerFrame.right
+                        anchors.top:         outerFrame.top
+                        anchors.rightMargin: vBar.width
+                        height: 30
+                        clip:   true
+                        Row {
+                            spacing: 1
+                            x: -flickable.contentX
+                            Repeater {
+                                model: tableLayout.columnNames
+                                delegate: Item {
+                                    id: headerCell
+                                    required property int    index
+                                    required property string modelData
+                                    width:  tableLayout.columnWidths[index] || 100
+                                    height: 30
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color:        "#2d2d2d"
+                                        border.color: "#1d1d1d"
+                                        Text {
+                                            anchors.fill:        parent
+                                            text:                headerCell.modelData
+                                            color:               "#aaaaaa"
+                                            font.bold:           false
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment:   Text.AlignVCenter
+                                            elide:               Text.ElideRight
+                                        }
+                                    }
+                                    MouseArea {
+                                        width:  6
+                                        height: parent.height
+                                        anchors.right: parent.right
+                                        cursorShape:   Qt.SizeHorCursor
+                                        property real startX: 0
+                                        property real startW: 0
+                                        onPressed: function(mouse) {
+                                            var p = mapToItem(tableLayout, mouse.x, mouse.y)
+                                            startX = p.x
+                                            startW = tableLayout.columnWidths[headerCell.index]
+                                        }
+                                        onPositionChanged: function(mouse) {
+                                            if (!pressed) return
+                                            var p    = mapToItem(tableLayout, mouse.x, mouse.y)
+                                            var newW = Math.max(40, startW + (p.x - startX))
+                                            var arr  = tableLayout.columnWidths.slice()
+                                            arr[headerCell.index] = newW
+                                            tableLayout.columnWidths = arr
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     Item {
@@ -970,13 +1111,14 @@ RowLayout {
                         anchors.left:         outerFrame.left
                         anchors.top:          outerFrame.top
                         anchors.bottom:       outerFrame.bottom
+                        anchors.topMargin:    30
                         anchors.bottomMargin: hBar.height
                         width: 30
                         clip:  true
                         Column {
                             spacing: 1
                             width: parent.width
-                            y: 31 - flickable.contentY
+                            y: -flickable.contentY
                             Repeater {
                                 model: attribute ? attribute.value : null
                                 delegate: Item {
@@ -992,9 +1134,16 @@ RowLayout {
                                         font.family:      MaterialIcons.fontFamily
                                         font.pointSize:   11
                                         padding:          2
-                                        ToolTip.text:     "Remove Element"
-                                        ToolTip.visible:  hovered
-                                        onClicked:        _currentScene.removeAttribute(removeDelegate.object)
+                                        ToolTip.text:    "Remove Element"
+                                        ToolTip.visible: hovered
+                                        contentItem: Text {
+                                            text:                parent.text
+                                            font:                parent.font
+                                            color:               "#aaaaaa"
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment:   Text.AlignVCenter
+                                        }
+                                        onClicked: _currentScene.removeAttribute(removeDelegate.object)
                                     }
                                 }
                             }
@@ -1006,12 +1155,13 @@ RowLayout {
                         anchors.top:          outerFrame.top
                         anchors.right:        outerFrame.right
                         anchors.bottom:       outerFrame.bottom
+                        anchors.topMargin:    30
                         anchors.rightMargin:  vBar.width
                         anchors.bottomMargin: hBar.height
-                        clip: true
+                        clip:          true
                         contentWidth:  tableLayout.totalTableWidth
-                        contentHeight: tableLayout.totalTableHeight + 30
-                        interactive: true
+                        contentHeight: tableLayout.totalTableHeight
+                        interactive:   true
                         WheelHandler {
                             onWheel: function(event) {
                                 if (event.modifiers & Qt.ControlModifier) {
@@ -1026,127 +1176,343 @@ RowLayout {
                                 event.accepted = true
                             }
                         }
-                        Item {
-                            id: content
-                            width:  tableLayout.totalTableWidth
-                            height: tableLayout.totalTableHeight + 30
-                            Row {
-                                id: headerRow
-                                spacing: 1
-                                Repeater {
-                                    model: tableLayout.columnNames
-                                    delegate: Item {
-                                        id: headerCell
-                                        required property int    index
-                                        required property string modelData
-                                        width:  tableLayout.columnWidths[index] || 100
-                                        height: 30
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            color: "#2d2d2d"
-                                            border.color: "#1d1d1d"
-                                            Text {
-                                                anchors.fill: parent
-                                                text: headerCell.modelData
-                                                color: "#aaaaaa"
-                                                font.bold: false
-                                                horizontalAlignment: Text.AlignHCenter
-                                                verticalAlignment:   Text.AlignVCenter
-                                                elide: Text.ElideRight
-                                            }
-                                        }
-                                        MouseArea {
-                                            width: 6
-                                            height: parent.height
-                                            anchors.right: parent.right
-                                            cursorShape: Qt.SizeHorCursor
-                                            property real startX: 0
-                                            property real startW: 0
-                                            onPressed: function(mouse) {
-                                                var stablePoint = mapToItem(tableLayout, mouse.x, mouse.y)
-                                                startX = stablePoint.x
-                                                startW = tableLayout.columnWidths[headerCell.index]
-                                            }
-                                            onPositionChanged: function(mouse) {
-                                                if (!pressed) return
-                                                var stablePoint = mapToItem(tableLayout, mouse.x, mouse.y)
-                                                var newW = Math.max(40, startW + (stablePoint.x - startX))
-                                                var arr  = tableLayout.columnWidths.slice()
-                                                arr[headerCell.index] = newW
-                                                tableLayout.columnWidths = arr
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            Column {
-                                spacing: 1
-                                anchors.top: headerRow.bottom
-                                anchors.topMargin: 1
-                                Repeater {
-                                    model: attribute ? attribute.value : null
-                                    delegate: Item {
-                                        id: rowItem
-                                        required property int index
-                                        required property var object
-                                        width:  tableLayout.totalTableWidth
-                                        height: tableLayout.rowHeights[index] || 30
-                                        Row {
-                                            spacing: 1
-                                            anchors.fill: parent
-                                            Repeater {
-                                                model: rowItem.object && rowItem.object.value
-                                                       ? rowItem.object.value.count
-                                                       : 0
-                                                delegate: Rectangle {
-                                                    id: cellRect
-                                                    required property int index
-                                                    width:  tableLayout.columnWidths[index] || 100
-                                                    height: rowItem.height
-                                                    color:  rowItem.index % 2 === 0 ? "#2d2d2d" : "#333333"
-                                                    border.color: cellInput.activeFocus ? "#5599ff" : "#1d1d1d"
-                                                    clip: true
-                                                    TextInput {
-                                                        id: cellInput
-                                                        property var cell: rowItem.object.value.at(index)
-                                                        anchors.fill: parent
-                                                        anchors.margins: 4
-                                                        verticalAlignment: TextInput.AlignVCenter
-                                                        horizontalAlignment: TextInput.AlignHCenter
-                                                        color: "#aaaaaa"
-                                                        selectionColor: "#5599ff"
-                                                        clip: true
-                                                        text: cell ? String(cell.value) : ""
-                                                        onEditingFinished: {
-                                                            if (cell && text != String(cell.value)) {
-                                                                _currentScene.setAttribute(cell, text)
+                        Column {
+                            spacing: 1
+                            Repeater {
+                                model: attribute ? attribute.value : null
+                                delegate: Item {
+                                    id: rowItem
+                                    required property int index
+                                    required property var object
+                                    width:  tableLayout.totalTableWidth
+                                    height: tableLayout.rowHeights[index] || 30
+                                    Row {
+                                        spacing:     1
+                                        anchors.fill: parent
+                                        Repeater {
+                                            model: rowItem.object && rowItem.object.value
+                                                   ? rowItem.object.value.count : 0
+                                            delegate: Rectangle {
+                                                id: cellRect
+                                                required property int index
+                                                width:        tableLayout.columnWidths[index] || 100
+                                                height:       rowItem.height
+                                                color:        rowItem.index % 2 === 0 ? "#2d2d2d" : "#333333"
+                                                border.color: cellFocused ? "#5599ff" : "#1d1d1d"
+                                                clip:         true
+                                                property bool cellFocused: {
+                                                    var item = cellLoader.item
+                                                    if (!item) return false
+                                                    return item.activeFocus ||
+                                                           (item.children && item.children.length > 0 &&
+                                                            item.children[0] && item.children[0].activeFocus)
+                                                }
+                                                property var cell: rowItem.object.value.at(index)
+                                                function choiceValues(attr) {
+                                                    if (!attr) return []
+                                                    if (attr.desc && Array.isArray(attr.desc.values))
+                                                        return attr.desc.values
+                                                    if (attr.values && Array.isArray(attr.values))
+                                                        return attr.values
+                                                    if (attr.values && typeof attr.values.count === "number") {
+                                                        var out = []
+                                                        for (var i = 0; i < attr.values.count; i++)
+                                                            out.push(attr.values.at(i).value)
+                                                        return out
+                                                    }
+                                                    return []
+                                                }
+                                                Rectangle {
+                                                    anchors.centerIn: parent
+                                                    width:  cellLoader.width  + 8
+                                                    height: cellLoader.height + 4
+                                                    radius: 3
+                                                    color:  "#444444"
+                                                    visible: cellRect.cell &&
+                                                             (cellRect.cell.type === "BoolParam" ||
+                                                              cellRect.cell.type === "ChoiceParam")
+                                                }
+                                                Loader {
+                                                    id: cellLoader
+                                                    anchors.centerIn: parent
+                                                    width:  parent.width
+                                                    height: parent.height
+                                                    property var attribute: cellRect.cell
+                                                    sourceComponent: {
+                                                        var attr = cellRect.cell
+                                                        if (!attr) return null
+                                                        switch (attr.type) {
+                                                            case "PushButtonParam":
+                                                                return cellPushButtonComponent
+                                                            case "ChoiceParam":
+                                                                return (attr.desc && attr.desc.exclusive)
+                                                                       ? cellChoiceComponent
+                                                                       : cellChoiceMultiComponent
+                                                            case "IntParam":
+                                                                return cellSliderComponent
+                                                            case "FloatParam":
+                                                                return (attr.desc && attr.desc.semantic === "color/hue")
+                                                                       ? cellColorHueComponent
+                                                                       : cellSliderComponent
+                                                            case "BoolParam":
+                                                                return cellCheckboxComponent
+                                                            case "StringParam":
+                                                                return (attr.desc && attr.desc.semantic &&
+                                                                        attr.desc.semantic.includes("multiline"))
+                                                                       ? cellTextAreaComponent
+                                                                       : cellTextFieldComponent
+                                                            case "ColorParam":
+                                                                return cellColorComponent
+                                                            default:
+                                                                return cellTextFieldComponent
+                                                        }
+                                                    }
+                                                    Component {
+                                                        id: cellChoiceComponent
+                                                        AttributeControls.Choice {
+                                                            value:   cellLoader.attribute ? cellLoader.attribute.value  : ""
+                                                            values:  cellLoader.attribute ? cellLoader.attribute.values : []
+                                                            enabled: root.editable
+                                                            Component.onCompleted: {
+                                                                if (typeof popup !== "undefined" && popup !== null) {
+                                                                    popup.margins = -1
+                                                                }
+                                                            }
+                                                            onEditingFinished: function(value) {
+                                                                if (cellLoader.attribute)
+                                                                    _currentScene.setAttribute(cellLoader.attribute, value)
+                                                            }
+                                                        }
+                                                    }
+                                                    Component {
+                                                        id: cellChoiceMultiComponent
+                                                        AttributeControls.ChoiceMulti {
+                                                            value:            cellLoader.attribute ? cellLoader.attribute.value  : []
+                                                            values:           cellLoader.attribute ? cellLoader.attribute.values : []
+                                                            enabled:          root.editable
+                                                            customValueColor: Colors.orange
+                                                            onToggled: function(value, checked) {
+                                                                if (!cellLoader.attribute) return
+                                                                var cur = cellLoader.attribute.value.slice()
+                                                                if (!checked) {
+                                                                    var idx = cur.indexOf(value)
+                                                                    if (idx !== -1) cur.splice(idx, 1)
+                                                                } else {
+                                                                    cur.push(value)
+                                                                }
+                                                                _currentScene.setAttribute(cellLoader.attribute, cur)
+                                                            }
+                                                        }
+                                                    }
+                                                    Component {
+                                                        id: cellSliderComponent
+                                                        RowLayout {
+                                                            spacing: 2
+                                                            TextField {
+                                                                id: cellNumField
+                                                                Layout.fillWidth: !cellSliderLoader.active
+                                                                implicitWidth:    70
+                                                                enabled:          root.editable
+                                                                selectByMouse:    true
+                                                                horizontalAlignment: TextInput.AlignRight
+                                                                text: {
+                                                                    if (cellSliderLoader.active && cellSliderLoader.item &&
+                                                                            cellSliderLoader.item.pressed)
+                                                                        return String(cellSliderLoader.item.formattedValue)
+                                                                    return cellLoader.attribute ? String(cellLoader.attribute.value) : ""
+                                                                }
+                                                                background: Rectangle { color: "#3c3c3c"; radius: 2 }
+                                                                color: "#cccccc"
+                                                                onEditingFinished: {
+                                                                    if (cellLoader.attribute)
+                                                                        _currentScene.setAttribute(cellLoader.attribute,
+                                                                            cellLoader.attribute.type === "IntParam"
+                                                                                ? parseInt(text) : parseFloat(text))
+                                                                }
+                                                                // Mouse-wheel scroll to increment/decrement
+                                                                WheelHandler {
+                                                                    onWheel: function(event) {
+                                                                        if (!root.editable || !cellLoader.attribute) return
+                                                                        var step = 1
+                                                                        if (cellLoader.attribute.desc &&
+                                                                                cellLoader.attribute.desc.range &&
+                                                                                cellLoader.attribute.desc.range.length === 3)
+                                                                            step = cellLoader.attribute.desc.range[2]
+                                                                        var dir = event.angleDelta.y > 0 ? 1 : -1
+                                                                        var v   = Number(cellLoader.attribute.value) + dir * step
+                                                                        if (cellLoader.attribute.desc && cellLoader.attribute.desc.range) {
+                                                                            v = Math.max(cellLoader.attribute.desc.range[0],
+                                                                                Math.min(cellLoader.attribute.desc.range[1], v))
+                                                                        }
+                                                                        _currentScene.setAttribute(cellLoader.attribute,
+                                                                            cellLoader.attribute.type === "IntParam"
+                                                                                ? Math.round(v) : v)
+                                                                        event.accepted = true
+                                                                    }
+                                                                }
+                                                            }
+                                                            Loader {
+                                                                id: cellSliderLoader
+                                                                Layout.fillWidth: true
+                                                                active: cellLoader.attribute &&
+                                                                        cellLoader.attribute.desc &&
+                                                                        cellLoader.attribute.desc.range &&
+                                                                        cellLoader.attribute.desc.range.length === 3
+                                                                sourceComponent: Slider {
+                                                                    readonly property int  stepDecimalCount: stepSize < 1
+                                                                        ? String(stepSize).split(".").pop().length : 0
+                                                                    readonly property real formattedValue: value.toFixed(stepDecimalCount)
+                                                                    enabled:  root.editable
+                                                                    value:    cellLoader.attribute ? cellLoader.attribute.value : 0
+                                                                    from:     cellLoader.attribute.desc.range[0]
+                                                                    to:       cellLoader.attribute.desc.range[1]
+                                                                    stepSize: cellLoader.attribute.desc.range[2]
+                                                                    snapMode: Slider.SnapAlways
+                                                                    onPressedChanged: {
+                                                                        if (!pressed && cellLoader.attribute)
+                                                                            _currentScene.setAttribute(cellLoader.attribute,
+                                                                                formattedValue)
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    Component {
+                                                        id: cellCheckboxComponent
+                                                        CheckBox {
+                                                            enabled: root.editable
+                                                            checked: cellLoader.attribute
+                                                                     ? cellLoader.attribute.value : false
+                                                            onToggled: {
+                                                                if (cellLoader.attribute)
+                                                                    _currentScene.setAttribute(
+                                                                        cellLoader.attribute, checked)
+                                                            }
+                                                        }
+                                                    }
+                                                    Component {
+                                                        id: cellTextFieldComponent
+                                                        TextField {
+                                                            enabled:       root.editable
+                                                            text:          cellLoader.attribute
+                                                                           ? String(cellLoader.attribute.value)
+                                                                           : ""
+                                                            selectByMouse: true
+                                                            background: Rectangle {
+                                                                color:  "#3c3c3c"
+                                                                radius: 2
+                                                            }
+                                                            color: "#cccccc"
+                                                            onEditingFinished: {
+                                                                if (cellLoader.attribute)
+                                                                    _currentScene.setAttribute(
+                                                                        cellLoader.attribute, text.trim())
+                                                            }
+                                                        }
+                                                    }
+                                                    Component {
+                                                        id: cellTextAreaComponent
+                                                        TextField {
+                                                            enabled:       root.editable
+                                                            text:          cellLoader.attribute
+                                                                           ? String(cellLoader.attribute.value)
+                                                                           : ""
+                                                            selectByMouse: true
+                                                            background: Rectangle {
+                                                                color:  "#3c3c3c"
+                                                                radius: 2
+                                                            }
+                                                            color: "#cccccc"
+                                                            onEditingFinished: {
+                                                                if (cellLoader.attribute)
+                                                                    _currentScene.setAttribute(
+                                                                        cellLoader.attribute, text.trim())
+                                                            }
+                                                        }
+                                                    }
+                                                    Component {
+                                                        id: cellColorComponent
+                                                        TextField {
+                                                            enabled:       root.editable
+                                                            text:          cellLoader.attribute
+                                                                           ? String(cellLoader.attribute.value)
+                                                                           : ""
+                                                            selectByMouse: true
+                                                            background: Rectangle {
+                                                                color:  "#3c3c3c"
+                                                                radius: 2
+                                                            }
+                                                            color: "#cccccc"
+                                                            onEditingFinished: {
+                                                                if (cellLoader.attribute)
+                                                                    _currentScene.setAttribute(
+                                                                        cellLoader.attribute, text)
+                                                            }
+                                                        }
+                                                    }
+                                                    Component {
+                                                        id: cellPushButtonComponent
+                                                        Button {
+                                                            text:    cellLoader.attribute
+                                                                     ? cellLoader.attribute.label : ""
+                                                            enabled: root.editable
+                                                            onClicked: {
+                                                                if (cellLoader.attribute)
+                                                                    cellLoader.attribute.clicked()
+                                                            }
+                                                        }
+                                                    }
+                                                    Component {
+                                                        id: cellColorHueComponent
+                                                        RowLayout {
+                                                            Slider {
+                                                                id: cellHueSlider
+                                                                Layout.fillWidth: true
+                                                                enabled:  root.editable
+                                                                value:    cellLoader.attribute
+                                                                          ? cellLoader.attribute.value : 0
+                                                                from:     0
+                                                                to:       1
+                                                                stepSize: 0.01
+                                                                snapMode: Slider.SnapAlways
+                                                                onPressedChanged: {
+                                                                    if (!pressed && cellLoader.attribute)
+                                                                        _currentScene.setAttribute(
+                                                                            cellLoader.attribute,
+                                                                            value.toFixed(2))
+                                                                }
+                                                            }
+                                                            Rectangle {
+                                                                width:  16
+                                                                height: 16
+                                                                color:  Qt.hsla(cellHueSlider.value, 1, 0.5, 1)
                                                             }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
-                                        MouseArea {
-                                            width:  parent.width
-                                            height: 6
-                                            anchors.bottom: parent.bottom
-                                            cursorShape: Qt.SizeVerCursor
-                                            // Prevent Flickable from stealing the drag
-                                            preventStealing: true
-                                            property real lastY: 0
-                                            onPressed: function(mouse) {
-                                                lastY = mapToGlobal(mouse.x, mouse.y).y
-                                            }
-                                            onPositionChanged: function(mouse) {
-                                                if (!pressed) return
-                                                var globalY = mapToGlobal(mouse.x, mouse.y).y
-                                                var delta = globalY - lastY
-                                                lastY = globalY
-                                                var newH = Math.max(20, tableLayout.rowHeights[rowItem.index] + delta)
-                                                var arr = tableLayout.rowHeights.slice()
-                                                arr[rowItem.index] = newH
-                                                tableLayout.rowHeights = arr
-                                            }
+                                    }
+                                    MouseArea {
+                                        width:  parent.width
+                                        height: 6
+                                        anchors.bottom: parent.bottom
+                                        cursorShape:      Qt.SizeVerCursor
+                                        preventStealing:  true
+                                        property real lastY: 0
+                                        onPressed:          function(mouse) {
+                                            lastY = mapToGlobal(mouse.x, mouse.y).y
+                                        }
+                                        onPositionChanged:  function(mouse) {
+                                            if (!pressed) return
+                                            var globalY = mapToGlobal(mouse.x, mouse.y).y
+                                            var delta   = globalY - lastY
+                                            lastY       = globalY
+                                            var newH    = Math.max(20,
+                                                             tableLayout.rowHeights[rowItem.index] + delta)
+                                            var arr     = tableLayout.rowHeights.slice()
+                                            arr[rowItem.index] = newH
+                                            tableLayout.rowHeights = arr
                                         }
                                     }
                                 }

@@ -280,7 +280,7 @@ Set `parallelization` to control chunk division:
 class MyParallelCmd(desc.CommandLineNode):
     commandLine = "mytool --input {inputValue} --output {outputValue}"
     commandLineRange = "--range {rangeStart} {rangeEnd}"  # Specific way to precise the range to compute on the command line
-    
+
     size = desc.StaticNodeSize(100)  # 100 items total
     parallelization = desc.Parallelization(blockSize=10)  # 10 chunks of 10 items
 ```
@@ -290,7 +290,7 @@ class MyParallelCmd(desc.CommandLineNode):
 class MyParallelNode(desc.Node):
     size = desc.DynamicNodeSize("inputList")  # Size matches list length
     parallelization = desc.Parallelization(blockSize=3)  # Create a chunk every 3 elements in the list
-    
+
     def processChunk(self, chunk):
         # Process chunk.range.iteration
         pass

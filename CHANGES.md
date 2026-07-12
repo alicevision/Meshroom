@@ -1,6 +1,6 @@
 # Meshroom Changelog
 
-For algorithmic changes related to the photogrammetric pipeline, 
+For algorithmic changes related to the photogrammetric pipeline,
 please refer to [AliceVision changelog](https://github.com/alicevision/AliceVision/blob/develop/CHANGES.md).
 
 ## Meshroom 2025.1.0 (2025/08/18)
@@ -790,9 +790,9 @@ Based on [AliceVision 2.3.0](https://github.com/alicevision/AliceVision/tree/v2.
  - [nodes] New Panorama Stitching nodes with support for fisheye lenses [PR](https://github.com/alicevision/meshroom/pull/639) [PR](https://github.com/alicevision/meshroom/pull/808)
  - [nodes] HDR: Largely improved HDR calibration, including new LdrToHdrSampling for optimal sample selection [PR](https://github.com/alicevision/meshroom/pull/808) [PR](https://github.com/alicevision/meshroom/pull/1016) [PR](https://github.com/alicevision/meshroom/pull/990)
  - [ui] Viewer3D: Input bounding box (Meshing) & manual transformation (SfMTransform) thanks to a new 3D Gizmo [PR](https://github.com/alicevision/meshroom/pull/978)
- - [ui] Sync 3D camera with image selection [PR](https://github.com/alicevision/meshroom/pull/633) 
+ - [ui] Sync 3D camera with image selection [PR](https://github.com/alicevision/meshroom/pull/633)
  - [ui] New HDR (floating point) Image Viewer [PR](https://github.com/alicevision/meshroom/pull/795)
- - [ui] Ability to load depth maps into 2D and 3D Viewers [PR](https://github.com/alicevision/meshroom/pull/769) [PR](https://github.com/alicevision/meshroom/pull/657) 
+ - [ui] Ability to load depth maps into 2D and 3D Viewers [PR](https://github.com/alicevision/meshroom/pull/769) [PR](https://github.com/alicevision/meshroom/pull/657)
  - [ui] New features overlay in Viewer2D allows to display tracks and landmarks [PR](https://github.com/alicevision/meshroom/pull/873) [PR](https://github.com/alicevision/meshroom/pull/1001)
  - [ui] Add SfM statistics [PR](https://github.com/alicevision/meshroom/pull/873)
  - [ui] Visual interface for node resources usage [PR](https://github.com/alicevision/meshroom/pull/564)
@@ -817,7 +817,7 @@ Based on [AliceVision 2.3.0](https://github.com/alicevision/AliceVision/tree/v2.
  - [core] new Node Update Hooks mechanism [PR](https://github.com/alicevision/meshroom/pull/733)
  - [core] Option to make chunks optional [PR](https://github.com/alicevision/meshroom/pull/778)
  - [nodes] Add methods in ImageMatching and features in StructureFromMotion and FeatureMatching [PR](https://github.com/alicevision/meshroom/pull/768)
- - [nodes] FeatureExtraction: add maxThreads argument [PR](https://github.com/alicevision/meshroom/pull/647) 
+ - [nodes] FeatureExtraction: add maxThreads argument [PR](https://github.com/alicevision/meshroom/pull/647)
  - [nodes] Fix python nodes being blocked by log [PR](https://github.com/alicevision/meshroom/pull/783)
  - [nodes] ImageProcessing: add new option to fix non finite pixels [PR](https://github.com/alicevision/meshroom/pull/1057)
  - [nodes] Meshing: simplify input depth map folders [PR](https://github.com/alicevision/meshroom/pull/951)
@@ -834,7 +834,7 @@ Based on [AliceVision 2.3.0](https://github.com/alicevision/AliceVision/tree/v2.
  - [ui] Avoid crash in 3D with large panoramas [PR](https://github.com/alicevision/meshroom/pull/1061)
  - [ui] Fix graph axes naming for ram statistics [PR](https://github.com/alicevision/meshroom/pull/1033)
  - [ui] NodeEditor: minor improvements with single tab group and status table [PR](https://github.com/alicevision/meshroom/pull/637)
- - [ui] Viewer3D: Display equirectangular images as environment maps [PR](https://github.com/alicevision/meshroom/pull/731) 
+ - [ui] Viewer3D: Display equirectangular images as environment maps [PR](https://github.com/alicevision/meshroom/pull/731)
  - [windows] Fix open recent broken on windows and remove unnecessary warnings [PR](https://github.com/alicevision/meshroom/pull/940)
 
 ### Build, CI, Documentation
@@ -944,5 +944,5 @@ for more details about algorithmic changes.
 
 ## Release 2018.1.0 (2018.08.09)
 
- First release of Meshroom.  
+ First release of Meshroom.
  Based on [AliceVision 2.0.0](https://github.com/alicevision/AliceVision/tree/v2.0.0).

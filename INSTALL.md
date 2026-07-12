@@ -21,7 +21,7 @@ This guide will help you setup a development environment to launch and contribut
     3. [Custom plugins](#custom-plugins)
 
 
-## Use prebuilt release 
+## Use prebuilt release
 
 To quickly run Meshroom without setting up a development environment, follow these simple steps:
 
@@ -68,7 +68,7 @@ pip install -r requirements.txt -r dev_requirements.txt
 
 > [!WARNING]
 > For PySide 6.8.0 and over, the following error may occur when leaving Meshroom's homepage: `Cannot load /path/to/pip/install/PySide6/qml/QtQuick/Scene3D/qtquickscene3dplugin.dll: specified module cannot be found`.
-> This is caused by Qt63DQuickScene3D.dll which seems to be missing from the pip distribution, but can be retrieved from a standard Qt installation. 
+> This is caused by Qt63DQuickScene3D.dll which seems to be missing from the pip distribution, but can be retrieved from a standard Qt installation.
 > On recent Linux systems such as Ubuntu 25, this can be resolved by installing `libqt63dquickscene3d6` using the package manager.
 > Alternatively:
 > - On Windows, the DLL for MSVC2022_64 can be directly downloaded [here](https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv). It then needs to be placed in `/path/to/pip/install/PySide6`.

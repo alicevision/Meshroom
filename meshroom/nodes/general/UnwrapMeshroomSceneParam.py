@@ -8,7 +8,7 @@ from pathlib import Path
 from meshroom.core import desc
 
 
-class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
+class UnwrapMeshroomSceneParam(desc.CommandLineNode):
     """Unwrap the JSON file created by a MeshroomSceneParameter node
     to expose its items to the graph.
     
@@ -45,7 +45,7 @@ class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
         desc.StringParam(
             name="outputValue",
             description="Extracted value from the JSON file.",
-            value="",
+            value=None,
         ),
     ]
 
@@ -74,6 +74,8 @@ class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
         selectedParameter = node.selectedParameter.value
         logging.debug(f"[UnwrapMeshroomSceneParam] Selected parameter: {selectedParameter}")
         nodeInstance, param = selectedParameter.split(":", 1)
+        logging.debug(f"  nodeInstance: {nodeInstance}")
+        logging.debug(f"  param       : {param}")
         jsonFile = node.jsonFile.value
         if not Path(jsonFile).exists():
             node.outputValue.value = ""
@@ -93,7 +95,6 @@ class UnwrapMeshroomSceneParam(desc.InputNode, desc.InitNode):
             self.updateChoices(node)
         except Exception as e:
             logging.warning(f"[UnwrapMeshroomSceneParam] Failed to set the choices: {e}")
-        try:
-            self.setOutput(node)
-        except Exception as e:
-            logging.warning(f"[UnwrapMeshroomSceneParam] Failed to set the node output: {e}")
+
+    def processChunk(self, chunk):
+        self.setOutput(chunk.node)

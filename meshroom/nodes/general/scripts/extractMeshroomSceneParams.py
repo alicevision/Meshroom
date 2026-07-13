@@ -145,7 +145,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--failOnMissingParams", action="store_true",
-        help="FaiFail if we don't find one or several params inside the scene."
+        help="Fail if we don't find one or several parameters inside the scene."
     )
 
     args = parser.parse_args()

@@ -9,7 +9,7 @@ from meshroom.core import desc
 
 
 class UnwrapMeshroomSceneParam(desc.CommandLineNode):
-    """Unwrap the JSON file created by a MeshroomSceneParameter node
+    """Unwrap the JSON file created by a GetMeshroomSceneParams node
     to expose its items to the graph.
     
     It uses the jsonFile connection to fetch parameters from the

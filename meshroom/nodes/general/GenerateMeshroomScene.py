@@ -129,7 +129,7 @@ class GenerateMeshroomScene(desc.Node):
             logging.info(f"Creating parent folder: {sceneRoot}")
             sceneRoot.mkdir(parents=True, exist_ok=True)
 
-        command = [self.pythonExecutable, str(_MESHROOM_BATCH), "-p", templateScene]
+        command = [self.pythonExecutable, str(_MESHROOM_BATCH)]
         command += ["-p", templateScene]
         if inputOverrides:
             command += ["--input"] + inputOverrides

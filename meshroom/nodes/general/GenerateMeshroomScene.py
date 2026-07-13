@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "1.0"
+__version__ = "2.0"
 
 import shlex
 import logging
@@ -39,7 +39,6 @@ class GenerateMeshroomScene(desc.Node):
         ),
         desc.ListAttribute(
             name="inputOverrides",
-            label="Input Overrides",
             description="Overrides for the CameraInit nodes.",
             exposed=True,
             commandLineGroup="",
@@ -54,7 +53,7 @@ class GenerateMeshroomScene(desc.Node):
         ),
         desc.ListAttribute(
             name="paramOverrides",
-            label="Parameter overrides",
+            label="Parameter Overrides",
             description="Overrides for the nodes in the Meshroom scene to create.",
             exposed=True,
             commandLineGroup="",
@@ -71,6 +70,13 @@ class GenerateMeshroomScene(desc.Node):
             name="setInvalidationString",
             label="Invalidation String",
             description="Set an invalidation string on the scene nodes.",
+            value="",
+            exposed=False
+        ),
+        desc.File(
+            name="setCacheDir",
+            label="Cache Folder",
+            description="Path to the cache folder.",
             value="",
             exposed=False
         ),
@@ -123,7 +129,7 @@ class GenerateMeshroomScene(desc.Node):
             logging.info(f"Creating parent folder: {sceneRoot}")
             sceneRoot.mkdir(parents=True, exist_ok=True)
 
-        command = [self.pythonExecutable, str(_MESHROOM_BATCH), "-p", templateScene]
+        command = [self.pythonExecutable, str(_MESHROOM_BATCH)]
         command += ["-p", templateScene]
         if inputOverrides:
             command += ["--input"] + inputOverrides
@@ -133,7 +139,9 @@ class GenerateMeshroomScene(desc.Node):
         command += ["--compute", "no"]
         if invalidationString := node.setInvalidationString.value:
             command += ["--setInvalidationString", invalidationString]
-        
+        if cacheDir := node.setCacheDir.value:
+            command += ["--overrideCacheDir", cacheDir]
+
         # Launch subprocess
         logging.info(f"{'='*10} Command {'='*10}")
         logging.info(f"{shlex.join(command)}")

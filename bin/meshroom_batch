@@ -169,6 +169,10 @@ args = parser.parse_args()
 
 logging.getLogger().setLevel(logStringToPython[args.verbose])
 
+if not args.save:
+    # overrideCacheDir can only work if we want to save the scene
+    args.overrideCacheDir = None
+
 meshroom.core.initPlugins()
 meshroom.core.initNodes()
 
@@ -185,6 +189,9 @@ with meshroom.core.graph.GraphModification(graph):
         graph.initFromTemplate(args.pipeline, copyOutputs=True if args.output else False)
 
     if args.overrideCacheDir is not None:
+        # If the graph is not saved yet we need to save it because the
+        # explicit cache saves a relative path to the scene filepath
+        graph.save(args.save)
         # Set the cache folder
         graph.setExplicitCacheDir(args.overrideCacheDir)
 

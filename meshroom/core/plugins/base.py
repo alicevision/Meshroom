@@ -37,6 +37,8 @@ class Plugin(BaseObject):
         user: whether the plugin is a user plugin (not maintained by the core Meshroom team)
         nodeDescProviders: dictionary mapping the name of a node descriptor provider contained in the
                      plugin to its corresponding NodeDescProvider object
+        submitterProviders: dictionary mapping the name of a submitter provider contained in the
+                     plugin to its corresponding SubmitterProvider object
         templates: dictionary mapping the name of templates (.mg files) associated to the plugin
                    with their absolute paths
         configEnv: the environment variables and their values, as described in the plugin's
@@ -55,8 +57,8 @@ class Plugin(BaseObject):
         self._name: str = name
         self._path: str = path
         self._user: bool = False
-
         self._nodeDescProviders: dict[str: NodeDescProvider] = {}
+        self._submitterProviders: dict[str: SubmitterProvider] = {}
         self._templates: dict[str: str] = {}
         self._configEnv: dict[str: str] = {}
         self._configFullEnv: dict[str: str] = {}
@@ -104,6 +106,14 @@ class Plugin(BaseObject):
         the plugin.
         """
         return self._nodeDescProviders
+
+    @property
+    def submitterProviders(self):
+        """
+        Return the dictionary containing the SubmitterProvider objects associated to
+        the plugin.
+        """
+        return self._submitterProviders
 
     @property
     def templates(self):
@@ -168,6 +178,40 @@ class Plugin(BaseObject):
             name: the name of the node descriptor provider to be checked.
         """
         return name in self._nodeDescProviders
+
+    def addSubmitterProvider(self, submitterClass: type[BaseSubmitter]):
+        """
+        Create a SubmitterProvider for "submitterClass" and add it to the current plugin object,
+        assigning the plugin as its container. The submitter provider is added to the dictionary
+        of submitter providers with the name of the submitter class as its key.
+
+        Args:
+            submitterClass: the BaseSubmitter subclass to create a SubmitterProvider for.
+        """
+        submitterProvider = SubmitterProvider(submitterClass, self)
+        self._submitterProviders[submitterProvider.submitterClass.__name__] = submitterProvider
+
+    def removeSubmitterProvider(self, name: str):
+        """
+        Remove a submitter provider from the current plugin object.
+
+        Args:
+            name: the name of the SubmitterProvider to remove.
+        """
+        if name in self._submitterProviders:
+            del self._submitterProviders[name]
+        else:
+            logging.warning(f"submitter provider {name} is not part of the plugin {self.name}.")
+
+    def containsSubmitterProvider(self, name: str) -> bool:
+        """
+        Return whether the submitter provider "name" is part of the plugin, independently from
+        its status.
+
+        Args:
+            name: the name of the submitter provider to be checked.
+        """
+        return name in self._submitterProviders
 
     def loadTemplates(self):
         """

@@ -3,7 +3,9 @@ from __future__ import annotations
 import logging
 
 from meshroom.common import BaseObject
-from meshroom.core.plugins.base import NodeDescProvider, NodeDescProviderStatus, Plugin
+from meshroom.core.plugins.base import (
+    Plugin, NodeDescProvider, NodeDescProviderStatus, SubmitterProvider, SubmitterProviderStatus,
+)
 
 
 class PluginManager(BaseObject):
@@ -12,9 +14,10 @@ class PluginManager(BaseObject):
 
     Members:
         plugins: dictionary containing all the loaded Plugins, with their name as the key
-        nodeDescProviders: dictionary containing all the NodeDescProviders that have been registered
-                      (a NodeDescProvider may exist without having been registered) with their name as
-                      the key
+        nodeDescProviders: dictionary containing all the NodeDescProviders that have been registered,
+                            with their name as the key
+        submitterProviders: dictionary containing all the SubmitterProviders that have been registered,
+                            with the name of the submitter as the key
     """
 
     def __init__(self):
@@ -22,6 +25,7 @@ class PluginManager(BaseObject):
 
         self._plugins: dict[str: Plugin] = {}  # loaded plugins
         self._nodeDescProviders: dict[str: NodeDescProvider] = {}  # registered node descriptor providers
+        self._submitterProviders: dict[str: SubmitterProvider] = {}  # registered submitter providers
 
     def getPlugins(self) -> dict[str: Plugin]:
         """
@@ -118,8 +122,8 @@ class PluginManager(BaseObject):
 
     def getNodeDescProviders(self) -> dict[str: NodeDescProvider]:
         """
-        Return a dictionary containing all the registered NodeDescProviders, with
-        {key, value} = {name, NodeDescProvider}.
+        Return a dictionary containing all the registered NodeDescProviders,
+        with {key, value} = {name, NodeDescProvider}.
         """
         return self._nodeDescProviders
 
@@ -128,13 +132,43 @@ class PluginManager(BaseObject):
         Return the NodeDescProvider object that has been registered under the name "name" if it exists.
 
         Args:
-            name: the name of the NodeDescProvider used for its registration.
+            name: the name of the NodeDescProvider.
 
         Returns:
-            NodeDescProvider | None: the loaded NodeDescProvider object if it exists, None otherwise.
+            NodeDescProvider | None: the registered NodeDescProvider object if it exists, None otherwise.
         """
         if self.isNodeDescRegistered(name):
             return self._nodeDescProviders[name]
+        return None
+
+    def isSubmitterRegistered(self, name: str) -> bool:
+        """
+        Return whether the submitter provider has been registered already.
+
+        Args:
+            name: the name of the submitter provider.
+        """
+        return name in self._submitterProviders
+
+    def getSubmitterProviders(self) -> dict[str: SubmitterProvider]:
+        """
+        Return a dictionary containing all the registered SubmitterProvider,
+        with {key, value} = {name, SubmitterProvider}.
+        """
+        return self._submitterProviders
+
+    def getSubmitterProvider(self, name: str) -> SubmitterProvider:
+        """
+        Return the SubmitterProvider object that has been registered under the name "name" if it exists.
+
+        Args:
+            name: the name of the SubmitterProvider.
+
+        Returns:
+            SubmitterProvider | None: the registered SubmitterProvider object if it exists, None otherwise.
+        """
+        if self.isSubmitterRegistered(name):
+            return self._submitterProviders[name]
         return None
 
     def registerNode(self, nodeDescProvider: NodeDescProvider):

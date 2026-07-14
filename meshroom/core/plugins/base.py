@@ -101,7 +101,7 @@ class Plugin(BaseObject):
         self._isUserPlugin = isUserPlugin
 
     @property
-    def nodes(self):
+    def nodeDescProviders(self):
         """
         Return the dictionary containing the NodeDescProvider objects associated to
         the plugin.

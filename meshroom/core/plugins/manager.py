@@ -91,8 +91,8 @@ class PluginManager(BaseObject):
             return
         self._plugins[pluginUName] = plugin
         if registerNodeDescProviders:
-            for node in plugin.nodes:
-                self.registerNode(plugin.nodes[node])
+            for node in plugin.nodeDescProviders:
+                self.registerNode(plugin.nodeDescProviders[node])
 
     def removePlugin(self, plugin: Plugin, unregisterNodeDescProviders: bool = True):
         """
@@ -107,7 +107,7 @@ class PluginManager(BaseObject):
         """
         if self.getPlugin(plugin.uname):
             if unregisterNodeDescProviders:
-                for node in plugin.nodes.values():
+                for node in plugin.nodeDescProviders.values():
                     self.unregisterNode(node)
             del self._plugins[plugin.uname]
 

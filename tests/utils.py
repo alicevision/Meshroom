@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from unittest.mock import patch
+from pathlib import Path
 
 import meshroom
 from meshroom.core import desc, pluginManager, loadPluginFolder
@@ -7,6 +8,10 @@ from meshroom.core.plugins.base import NodeDescProvider
 
 import os
 
+def writeFile(filePath: Path, content: str = "") -> Path:
+    filePath.parent.mkdir(parents=True, exist_ok=True)
+    filePath.write_text(content)
+    return filePath
 
 @contextmanager
 def registeredNodeTypes(nodeTypes: list[desc.Node]):

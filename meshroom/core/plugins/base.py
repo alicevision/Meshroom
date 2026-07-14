@@ -252,10 +252,10 @@ class NodeDescProvider(BaseObject):
     """
 
     @staticmethod
-    def __validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors]]:
+    def __validateNodeDescClass(nodeDescClass: type[desc.BaseNode]) -> list[tuple[str, ValueTypeErrors]]:
         """
-        Check that the node has a valid description before being loaded. For the description
-        to be valid, the default value of every parameter needs to correspond to the type
+        Check that the node description class is a valid description. 
+        To be valid, the default value of every parameter needs to correspond to the type
         of the parameter.
         An empty returned list means that every parameter is valid, and so is the node's description.
         If it is not valid, the returned list contains the names of the invalid parameters. In case
@@ -264,19 +264,19 @@ class NodeDescProvider(BaseObject):
         "group", is invalid, then it will be added to the list as "group:x".
 
         Args:
-            nodeDesc: Description of the node.
+            nodeDescClass: Description class of a node.
 
         Returns:
             errors: The list of invalid parameters if there are any, empty list otherwise.
         """
         errors = []
-        for param in nodeDesc.inputs:
+        for param in nodeDescClass.inputs:
             errMsg, errType = param.checkValueTypes()
             if errMsg:
                 errors.append((errMsg, errType))
-        for param in nodeDesc.outputs:
+        for param in nodeDescClass.outputs:
             if param.value is None:
-                if issubclass(nodeDesc, desc.InitNode):
+                if issubclass(nodeDescClass, desc.InitNode):
                     errors.append((f"{param.name}", ValueTypeErrors.DYNAMIC_OUTPUT))
                 continue
             errMsg, errType = param.checkValueTypes()
@@ -313,7 +313,7 @@ class NodeDescProvider(BaseObject):
         self.plugin: Plugin = plugin
 
         self.status: NodeDescProviderStatus = NodeDescProviderStatus.NOT_LOADED
-        self.errors: list[tuple[str, ValueTypeErrors]] = self.__validateNodeDesc(nodeDesc)
+        self.errors: list[tuple[str, ValueTypeErrors]] = self.__validateNodeDescClass(nodeDesc)
 
         if self.errors:
             self.status = NodeDescProviderStatus.DESC_ERROR
@@ -359,7 +359,7 @@ class NodeDescProvider(BaseObject):
                           f"was not found.")
             return False
 
-        self.errors = self.__validateNodeDesc(descriptor)
+        self.errors = self.__validateNodeDescClass(descriptor)
         if self.errors:
             self.status = NodeDescProviderStatus.DESC_ERROR
             logging.error(f"[Reload] {self.nodeDescClass.__name__}: The node description at {self.path} "

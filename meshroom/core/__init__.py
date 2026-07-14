@@ -18,7 +18,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins.base import NodeDescProvider, Plugin, formatNodeDescriptionErrorMessage
+from meshroom.core.plugins.base import NodeDescProvider, Plugin
 from meshroom.core.plugins.env import processEnvFactory
 from meshroom.core.plugins.manager import PluginManager
 from meshroom.core.submitter import BaseSubmitter
@@ -134,7 +134,7 @@ def loadClasses(folder: str, packageName: str, classType: type, pluginUid: str =
                         if nodeDescProvider.errors:
                             explicitErrors = []
                             for err in nodeDescProvider.errors:
-                                explicitErrors.append(f"\n\t - {formatNodeDescriptionErrorMessage(err)}")
+                                explicitErrors.append(f"\n\t - {NodeDescProvider.formatNodeDescriptionErrorMessage(err)}")
                             errors.append(f"  * {pluginName}: The following parameters have issues: {''.join(explicitErrors)}")
                         classes.append(nodeDescProvider)
                     else:

@@ -16,62 +16,6 @@ from meshroom.core.desc.attribute import ValueTypeErrors
 from meshroom.core.plugins.env import ProcessEnv
 
 
-def validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors]]:
-    """
-    Check that the node has a valid description before being loaded. For the description
-    to be valid, the default value of every parameter needs to correspond to the type
-    of the parameter.
-    An empty returned list means that every parameter is valid, and so is the node's description.
-    If it is not valid, the returned list contains the names of the invalid parameters. In case
-    of nested parameters (parameters in groups or lists, for example), the name of the parameter
-    follows the name of the parent attributes. For example, if the attribute "x", contained in group
-    "group", is invalid, then it will be added to the list as "group:x".
-
-    Args:
-        nodeDesc: Description of the node.
-
-    Returns:
-        errors: The list of invalid parameters if there are any, empty list otherwise.
-    """
-    errors = []
-
-    for param in nodeDesc.inputs:
-        errMsg, errType = param.checkValueTypes()
-        if errMsg:
-            errors.append((errMsg, errType))
-
-    for param in nodeDesc.outputs:
-        if param.value is None:
-            if issubclass(nodeDesc, desc.InitNode):
-                errors.append((f"{param.name}", ValueTypeErrors.DYNAMIC_OUTPUT))
-            continue
-        errMsg, errType = param.checkValueTypes()
-        if errMsg:
-            errors.append((errMsg, errType))
-
-    return errors
-
-def formatNodeDescriptionErrorMessage(error: tuple[str, ValueTypeErrors]) -> str:
-    """
-    Format a node description error message from a tuple containing the error message (name of the attribute) and type.
-
-    Args:
-        error: Tuple containing the name of the parameter that was rejected, and the type of the error.
-
-    Returns:
-        str: Formatted error message.
-    """
-    errMsg, errType = error
-
-    if errType == ValueTypeErrors.TYPE:
-        return f"'value': Invalid type for parameter '{errMsg}'."
-    if errType == ValueTypeErrors.RANGE:
-        return f"'range': Invalid range value for parameter '{errMsg}'."
-    if errType == ValueTypeErrors.DYNAMIC_OUTPUT:
-        return f"'value': Unsupported dynamic output for parameter '{errMsg}'."
-    return f"Unknown error for parameter '{errMsg}'."
-
-
 class Plugin(BaseObject):
     """
     A collection of node plugins.
@@ -301,6 +245,59 @@ class NodeDescProvider(BaseObject):
                    modified
     """
 
+    @staticmethod
+    def __validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors]]:
+        """
+        Check that the node has a valid description before being loaded. For the description
+        to be valid, the default value of every parameter needs to correspond to the type
+        of the parameter.
+        An empty returned list means that every parameter is valid, and so is the node's description.
+        If it is not valid, the returned list contains the names of the invalid parameters. In case
+        of nested parameters (parameters in groups or lists, for example), the name of the parameter
+        follows the name of the parent attributes. For example, if the attribute "x", contained in group
+        "group", is invalid, then it will be added to the list as "group:x".
+
+        Args:
+            nodeDesc: Description of the node.
+
+        Returns:
+            errors: The list of invalid parameters if there are any, empty list otherwise.
+        """
+        errors = []
+        for param in nodeDesc.inputs:
+            errMsg, errType = param.checkValueTypes()
+            if errMsg:
+                errors.append((errMsg, errType))
+        for param in nodeDesc.outputs:
+            if param.value is None:
+                if issubclass(nodeDesc, desc.InitNode):
+                    errors.append((f"{param.name}", ValueTypeErrors.DYNAMIC_OUTPUT))
+                continue
+            errMsg, errType = param.checkValueTypes()
+            if errMsg:
+                errors.append((errMsg, errType))
+        return errors
+    
+    @staticmethod
+    def formatNodeDescriptionErrorMessage(error: tuple[str, ValueTypeErrors]) -> str:
+        """
+        Format a node description error message from a tuple containing the error message (name of the attribute) and type.
+
+        Args:
+            error: Tuple containing the name of the parameter that was rejected, and the type of the error.
+
+        Returns:
+            str: Formatted error message.
+        """
+        errMsg, errType = error
+        if errType == ValueTypeErrors.TYPE:
+            return f"'value': Invalid type for parameter '{errMsg}'."
+        if errType == ValueTypeErrors.RANGE:
+            return f"'range': Invalid range value for parameter '{errMsg}'."
+        if errType == ValueTypeErrors.DYNAMIC_OUTPUT:
+            return f"'value': Unsupported dynamic output for parameter '{errMsg}'."
+        return f"Unknown error for parameter '{errMsg}'."
+
     def __init__(self, nodeDesc: desc.BaseNode, plugin: Plugin = None):
         super().__init__()
         self.plugin: Plugin = plugin
@@ -309,7 +306,7 @@ class NodeDescProvider(BaseObject):
         self.nodeDescClass.provider = self
 
         self.status: NodeDescProviderStatus = NodeDescProviderStatus.NOT_LOADED
-        self.errors: list[tuple[str, ValueTypeErrors]] = validateNodeDesc(nodeDesc)
+        self.errors: list[tuple[str, ValueTypeErrors]] = self.__validateNodeDesc(nodeDesc)
 
         if self.errors:
             self.status = NodeDescProviderStatus.DESC_ERROR
@@ -355,7 +352,7 @@ class NodeDescProvider(BaseObject):
                           f"was not found.")
             return False
 
-        self.errors = validateNodeDesc(descriptor)
+        self.errors = self.__validateNodeDesc(descriptor)
         if self.errors:
             self.status = NodeDescProviderStatus.DESC_ERROR
             logging.error(f"[Reload] {self.nodeDescClass.__name__}: The node description at {self.path} "

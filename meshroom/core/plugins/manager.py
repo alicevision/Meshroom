@@ -146,7 +146,7 @@ class PluginManager(BaseObject):
         Args:
             nodeDescProvider: the node descriptor provider to register.
         """
-        name = nodeDescProvider.nodeDescriptor.__name__
+        name = nodeDescProvider.nodeDescClass.__name__
         if self.isRegistered(name):
             existingProvider: NodeDescProvider = self._nodeDescProviders[name]
             logging.warning(
@@ -177,7 +177,7 @@ class PluginManager(BaseObject):
         Args:
             nodeDescProvider: the node descriptor provider to unregister.
         """
-        name = nodeDescProvider.nodeDescriptor.__name__
+        name = nodeDescProvider.nodeDescClass.__name__
         if self.isRegistered(name):
             if nodeDescProvider.status != NodeDescProviderStatus.LOADED:
                 logging.warning(f"NodeDescProvider {name} is registered but is not correctly loaded.")

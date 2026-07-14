@@ -70,7 +70,7 @@ class TestNodeInfo:
         assert pluginUName.endswith("pluginC")
         assert plugin == self.plugin
         node = plugin.nodes["PluginCNodeA"]
-        nodeType = node.nodeDescriptor
+        nodeType = node.nodeDescClass
 
         g = Graph("")
         registerNodeDesc(nodeType)

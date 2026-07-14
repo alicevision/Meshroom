@@ -151,7 +151,7 @@ class TestNodeSubmit:
     def registerNode(self, name):
         plugin = pluginManager.getPlugin("pluginSubmitter", uname=False)
         node = plugin.nodes[name]
-        nodeType = node.nodeDescriptor
+        nodeType = node.nodeDescClass
         registerNodeDesc(nodeType)
         return nodeType.__name__
 

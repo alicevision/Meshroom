@@ -73,7 +73,7 @@ class _NodeCreator:
         self.uid = self.nodeData.get("uid", None)
         self.nodeDesc = None
         if meshroom.core.pluginManager.isRegistered(self.nodeType):
-            self.nodeDesc = meshroom.core.pluginManager.getNodeDescProvider(self.nodeType).nodeDescriptor
+            self.nodeDesc = meshroom.core.pluginManager.getNodeDescProvider(self.nodeType).nodeDescClass
 
     def create(self) -> Union[Node, BackdropNode, CompatibilityNode]:
         compatibilityIssue = self._checkCompatibilityIssues()

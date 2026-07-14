@@ -363,7 +363,7 @@ def loadAllNodes(folder) -> list[Plugin]:
             if nodeDescProviders:
                 for node in nodeDescProviders:
                     plugin.addNodeDescProvider(node)
-                nodesStr = ', '.join([node.nodeDescriptor.__name__ for node in nodeDescProviders])
+                nodesStr = ', '.join([node.nodeDescClass.__name__ for node in nodeDescProviders])
                 logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
             plugins.append(plugin)
     return plugins

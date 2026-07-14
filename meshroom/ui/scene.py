@@ -450,10 +450,10 @@ class Scene(UIGraph):
         for plugin in meshroom.core.pluginManager.getPlugins().values():
             for node in plugin.nodes.values():
                 if node.reload():
-                    reloadedNodes.append(node.nodeDescriptor.__name__)
+                    reloadedNodes.append(node.nodeDescClass.__name__)
                 else:
                     if node.status == NodeDescProviderStatus.DESC_ERROR or node.status == NodeDescProviderStatus.ERROR:
-                        errorNodes.append(node.nodeDescriptor.__name__)
+                        errorNodes.append(node.nodeDescClass.__name__)
 
         self.pluginsReloaded.emit(reloadedNodes, errorNodes)
 
@@ -609,7 +609,7 @@ class Scene(UIGraph):
         if not sfmFile or not os.path.isfile(sfmFile):
             self.tempCameraInit = None
             return
-        nodeDesc = meshroom.core.pluginManager.getNodeDescProvider("CameraInit").nodeDescriptor()
+        nodeDesc = meshroom.core.pluginManager.getNodeDescProvider("CameraInit").nodeDescClass()
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
         tmpCameraInit.locked = True

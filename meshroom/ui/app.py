@@ -289,7 +289,7 @@ class MeshroomApp(QApplication):
             self.engine.addImportPath(pyside6QmlPath)
 
         # expose available node types that can be instantiated
-        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getNodeDescProviders()[n].nodeDescriptor.category} for n in sorted(pluginManager.getNodeDescProviders().keys())})
+        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getNodeDescProviders()[n].nodeDescClass.category} for n in sorted(pluginManager.getNodeDescProviders().keys())})
 
         # instantiate the 3D Scene object
         self._undoStack = commands.UndoStack(self)

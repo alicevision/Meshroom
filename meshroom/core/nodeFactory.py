@@ -93,7 +93,7 @@ class _NodeCreator:
 
     def _checkCompatibilityIssues(self) -> Optional[CompatibilityIssue]:
         if self.nodeDesc is None:
-            if meshroom.core.pluginManager.belongsToPlugin(self.nodeType) is not None:
+            if meshroom.core.pluginManager.getPluginFromNodeDesc(self.nodeType) is not None:
                 return CompatibilityIssue.PluginIssue
             return CompatibilityIssue.UnknownNodeType
 

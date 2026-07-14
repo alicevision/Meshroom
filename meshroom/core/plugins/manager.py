@@ -54,6 +54,23 @@ class PluginManager(BaseObject):
                     return plugin
         return None
 
+    def getPluginFromNodeDesc(self, name: str) -> Plugin:
+        """
+        Return the loaded Plugin that contains the node descriptor "name", independently
+        from whether it has been registered or not.
+
+        Args:
+            name: the name of the node descriptor that needs to be searched for across
+                  plugins.
+
+        Returns:
+            Plugin | None: the Plugin the node belongs to if it exists, None otherwise.
+        """
+        for plugin in self._plugins.values():
+            if plugin.containsNodeDescProvider(name):
+                return plugin
+        return None
+
     def addPlugin(self, plugin: Plugin, registerNodeDescProviders: bool = True):
         """
         Load a Plugin object.
@@ -89,23 +106,6 @@ class PluginManager(BaseObject):
                 for node in plugin.nodes.values():
                     self.unregisterNode(node)
             del self._plugins[plugin.uname]
-
-    def belongsToPlugin(self, name: str) -> Plugin:
-        """
-        Check whether the node descriptor provider belongs to a loaded plugin, independently from
-        whether it has been registered or not.
-
-        Args:
-            name: the name of the node descriptor provider that needs to be searched for across
-                  plugins.
-
-        Returns:
-            Plugin | None: the Plugin the node belongs to if it exists, None otherwise.
-        """
-        for plugin in self._plugins.values():
-            if plugin.containsNodeDescProvider(name):
-                return plugin
-        return None
 
     def isNodeDescRegistered(self, name: str) -> bool:
         """

@@ -73,7 +73,7 @@ class TestPluginWithValidNodesOnly:
         for nodeName, nodeDescProvider in plugin.nodes.items():
             assert nodeDescProvider.status == NodeDescProviderStatus.LOADED
             assert pluginManager.isNodeDescRegistered(nodeName)
-            assert pluginManager.belongsToPlugin(nodeName) is None
+            assert pluginManager.getPluginFromNodeDesc(nodeName) is None
 
         # Re-add the plugin
         pluginManager.addPlugin(plugin, registerNodeDescProviders=False)

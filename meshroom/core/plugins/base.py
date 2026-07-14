@@ -9,10 +9,12 @@ import sys
 from enum import Enum
 from inspect import getfile
 from pathlib import Path
+from typing import Optional
 
 from meshroom.common import BaseObject
 from meshroom.core import desc
 from meshroom.core.desc.attribute import ValueTypeErrors
+from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.plugins.env import ProcessEnv
 
 
@@ -429,3 +431,54 @@ class NodeDescProvider(BaseObject):
         if not self.plugin:
             return {}
         return self.plugin.configFullEnv
+
+
+class SubmitterProviderStatus(Enum):
+    """
+    Validity status for SubmitterProvider objects.
+    """
+    VALID = 0  # The submitter was successfully instantiated
+    ERROR = 1  # Error when instantiating the submitter
+
+
+class SubmitterProvider(BaseObject):
+    """
+    Based on a BaseSubmitter subclass, a SubmitterProvider represents a loadable submitter.
+
+    Members:
+        plugin: the Plugin object that contains this submitter provider. Set once at
+                construction and constant for the lifetime of the submitter provider.
+        path: absolute path to the file containing the submitter's class
+        submitterClass: the BaseSubmitter subclass
+        name: the name of the submitter, as declared by its class
+        status: the validity status of the submitter provider
+        instance: the instantiated submitter, or None if instantiation failed
+    """
+
+    def __init__(self, submitterClass: type[BaseSubmitter], plugin: Plugin):
+        super().__init__()
+        self._plugin: Plugin = plugin
+        self.path: str = Path(getfile(submitterClass)).resolve().as_posix()
+        self.submitterClass: type[BaseSubmitter] = submitterClass
+        self.status: SubmitterProviderStatus = SubmitterProviderStatus.VALID
+        self.error: Optional[str] = None
+
+        try:
+            self.instance: Optional[BaseSubmitter] = submitterClass()
+        except Exception as exc:
+            self.error = f"SubmitterProvider {submitterClass.__name__} could not be instantiated: {exc}"
+            self.instance = None
+            self.status = SubmitterProviderStatus.ERROR
+
+    @property
+    def name(self) -> str:
+        """ Return the name of the submitter, as declared by its class. """
+        return self.submitterClass._name
+
+    @property
+    def plugin(self):
+        """
+        Return the Plugin object that contains this submitter provider. Set once at
+        construction and constant for the lifetime of the submitter provider.
+        """
+        return self._plugin

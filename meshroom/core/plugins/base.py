@@ -17,6 +17,15 @@ from meshroom.core.plugins.env import ProcessEnv
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension, isTemplateFile
 
 
+class PluginType(Enum):
+    """
+    Determines how a plugin is discovered and how its process environment is configured.
+    """
+    BUILTIN = 1  # Plugin folder using meshroom environment
+    PATH = 2  # Plugin provided by a path
+    REZ = 3  # Plugin provided by a rez package
+
+
 class Plugin(BaseObject):
     """
     A collection of node plugins.

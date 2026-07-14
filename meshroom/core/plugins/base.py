@@ -298,16 +298,16 @@ class NodeDescProvider(BaseObject):
             return f"'value': Unsupported dynamic output for parameter '{errMsg}'."
         return f"Unknown error for parameter '{errMsg}'."
 
-    def __init__(self, nodeDesc: desc.BaseNode, plugin: Plugin = None):
+    def __init__(self, nodeDescClass: type[desc.BaseNode], plugin: Plugin = None):
         super().__init__()
-        self.path: str = Path(getfile(nodeDesc)).resolve().as_posix()
-        self.nodeDescClass: desc.BaseNode = nodeDesc
+        self.path: str = Path(getfile(nodeDescClass)).resolve().as_posix()
+        self.nodeDescClass: desc.BaseNode = nodeDescClass
         self.nodeDescClass.provider = self
         self.nodeDescClass.plugin = plugin
         self.plugin: Plugin = plugin
 
         self.status: NodeDescProviderStatus = NodeDescProviderStatus.NOT_LOADED
-        self.errors: list[tuple[str, ValueTypeErrors]] = self.__validateNodeDescClass(nodeDesc)
+        self.errors: list[tuple[str, ValueTypeErrors]] = self.__validateNodeDescClass(nodeDescClass)
 
         if self.errors:
             self.status = NodeDescProviderStatus.DESC_ERROR

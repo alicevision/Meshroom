@@ -152,7 +152,7 @@ class Plugin(BaseObject):
         Args:
             nodeDescProvider: the NodeDescProvider object to add to the Plugin.
         """
-        self._nodeDescProviders[nodeDescProvider.nodeDescClass.__name__] = nodeDescProvider
+        self._nodeDescProviders[nodeDescProvider.name] = nodeDescProvider
         nodeDescProvider.plugin = self
 
     def removeNodeDescProvider(self, name: str):
@@ -290,6 +290,7 @@ class NodeDescProvider(BaseObject):
         plugin: the Plugin object that contains this node descriptor provider
         path: absolute path to the file containing the node's description
         nodeDescClass: the description of the node
+        name: the name of the node descriptor, as declared by its class
         status: the loading status on the node descriptor provider
         errors: the list of errors (if there are any) when validating the description
                 of the node or attempting to load it
@@ -385,33 +386,33 @@ class NodeDescProvider(BaseObject):
             timestamp = os.path.getmtime(self.path)
         except FileNotFoundError:
             self.status = NodeDescProviderStatus.ERROR
-            logging.error(f"[Reload] {self.nodeDescClass.__name__}: The path at {self.path} was not "
+            logging.error(f"[Reload] {self.name}: The path at {self.path} was not "
                           f"not found.")
             return False
 
         if self._timestamp == timestamp:
-            logging.info(f"[Reload] {self.nodeDescClass.__name__}: Not reloading. The node description "
+            logging.info(f"[Reload] {self.name}: Not reloading. The node description "
                          f"at {self.path} has not been modified since the last load.")
             return False
 
         try:
             updated = importlib.reload(sys.modules.get(self.nodeDescClass.__module__))
         except Exception as exc:
-            logging.error(f"[Reload] {self.nodeDescClass.__name__}: {exc} ({type(exc).__name__})")
+            logging.error(f"[Reload] {self.name}: {exc} ({type(exc).__name__})")
             self.status = NodeDescProviderStatus.DESC_ERROR
             return False
-        descriptor = getattr(updated, self.nodeDescClass.__name__)
+        descriptor = getattr(updated, self.name)
 
         if not descriptor:
             self.status = NodeDescProviderStatus.ERROR
-            logging.error(f"[Reload] {self.nodeDescClass.__name__}: The node description at {self.path} "
+            logging.error(f"[Reload] {self.name}: The node description at {self.path} "
                           f"was not found.")
             return False
 
         self.errors = self.__validateNodeDescClass(descriptor)
         if self.errors:
             self.status = NodeDescProviderStatus.DESC_ERROR
-            logging.error(f"[Reload] {self.nodeDescClass.__name__}: The node description at {self.path} "
+            logging.error(f"[Reload] {self.name}: The node description at {self.path} "
                           f"has description errors.")
             return False
 
@@ -420,8 +421,13 @@ class NodeDescProvider(BaseObject):
         self.nodeDescClass.plugin = self.plugin
         self._timestamp = timestamp
         self.status = NodeDescProviderStatus.NOT_LOADED
-        logging.info(f"[Reload] {self.nodeDescClass.__name__}: Successful reloading.")
+        logging.info(f"[Reload] {self.name}: Successful reloading.")
         return True
+
+    @property
+    def name(self) -> str:
+        """ Return the name of the node descriptor, as declared by its class. """
+        return self.nodeDescClass.__name__
 
     @property
     def plugin(self):

@@ -227,7 +227,7 @@ class TestInitNodeWithDynamicOutputs:
         registerNodeDesc(InitNodeWithDynamicOutputs)
 
         # Check that the plugin has been correctly registered (there has been attempt to load it)
-        assert pluginManager.isRegistered(InitNodeWithDynamicOutputs.__name__)
+        assert pluginManager.isNodeDescRegistered(InitNodeWithDynamicOutputs.__name__)
 
         # Check that the plugin's status is DESC_ERROR, since the node description is invalid
         # Additionally, the list of errors should include an error about having a dynamic output in an InitNode

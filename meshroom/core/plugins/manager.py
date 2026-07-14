@@ -23,32 +23,6 @@ class PluginManager(BaseObject):
         self._plugins: dict[str: Plugin] = {}  # loaded plugins
         self._nodeDescProviders: dict[str: NodeDescProvider] = {}  # registered node descriptor providers
 
-    def isRegistered(self, name: str) -> bool:
-        """
-        Return whether the node descriptor provider has been registered already.
-
-        Args:
-            name: the name of the node descriptor provider whose registration needs to be checked.
-        """
-        return name in self._nodeDescProviders
-
-    def belongsToPlugin(self, name: str) -> Plugin:
-        """
-        Check whether the node descriptor provider belongs to a loaded plugin, independently from
-        whether it has been registered or not.
-
-        Args:
-            name: the name of the node descriptor provider that needs to be searched for across
-                  plugins.
-
-        Returns:
-            Plugin | None: the Plugin the node belongs to if it exists, None otherwise.
-        """
-        for plugin in self._plugins.values():
-            if plugin.containsNodeDescProvider(name):
-                return plugin
-        return None
-
     def getPlugins(self) -> dict[str: Plugin]:
         """
         Return a dictionary containing all the loaded Plugins, with {key, value} =
@@ -116,6 +90,32 @@ class PluginManager(BaseObject):
                     self.unregisterNode(node)
             del self._plugins[plugin.uname]
 
+    def belongsToPlugin(self, name: str) -> Plugin:
+        """
+        Check whether the node descriptor provider belongs to a loaded plugin, independently from
+        whether it has been registered or not.
+
+        Args:
+            name: the name of the node descriptor provider that needs to be searched for across
+                  plugins.
+
+        Returns:
+            Plugin | None: the Plugin the node belongs to if it exists, None otherwise.
+        """
+        for plugin in self._plugins.values():
+            if plugin.containsNodeDescProvider(name):
+                return plugin
+        return None
+
+    def isNodeDescRegistered(self, name: str) -> bool:
+        """
+        Return whether the node descriptor provider has been registered already.
+
+        Args:
+            name: the name of the node descriptor whose registration needs to be checked.
+        """
+        return name in self._nodeDescProviders
+
     def getNodeDescProviders(self) -> dict[str: NodeDescProvider]:
         """
         Return a dictionary containing all the registered NodeDescProviders, with
@@ -133,7 +133,7 @@ class PluginManager(BaseObject):
         Returns:
             NodeDescProvider | None: the loaded NodeDescProvider object if it exists, None otherwise.
         """
-        if self.isRegistered(name):
+        if self.isNodeDescRegistered(name):
             return self._nodeDescProviders[name]
         return None
 
@@ -147,7 +147,7 @@ class PluginManager(BaseObject):
             nodeDescProvider: the node descriptor provider to register.
         """
         name = nodeDescProvider.nodeDescClass.__name__
-        if self.isRegistered(name):
+        if self.isNodeDescRegistered(name):
             existingProvider: NodeDescProvider = self._nodeDescProviders[name]
             logging.warning(
                 f"Could not register node {name} ({nodeDescProvider.path}) "
@@ -178,7 +178,7 @@ class PluginManager(BaseObject):
             nodeDescProvider: the node descriptor provider to unregister.
         """
         name = nodeDescProvider.nodeDescClass.__name__
-        if self.isRegistered(name):
+        if self.isNodeDescRegistered(name):
             if nodeDescProvider.status != NodeDescProviderStatus.LOADED:
                 logging.warning(f"NodeDescProvider {name} is registered but is not correctly loaded.")
             else:

@@ -20,7 +20,7 @@ except Exception:
 
 from meshroom.core.plugins.base import NodePlugin, Plugin, formatNodeDescriptionErrorMessage
 from meshroom.core.plugins.env import processEnvFactory
-from meshroom.core.plugins.manager import NodePluginManager
+from meshroom.core.plugins.manager import PluginManager
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -33,7 +33,7 @@ logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=log
 sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
-pluginManager: NodePluginManager = NodePluginManager()
+pluginManager: PluginManager = PluginManager()
 submitters: dict[str, BaseSubmitter] = {}
 pipelineTemplates: dict[str, str] = {}
 

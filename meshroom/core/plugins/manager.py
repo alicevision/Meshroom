@@ -6,7 +6,7 @@ from meshroom.common import BaseObject
 from meshroom.core.plugins.base import NodePlugin, NodePluginStatus, Plugin
 
 
-class NodePluginManager(BaseObject):
+class PluginManager(BaseObject):
     """
     Manager for all the loaded Plugin objects as well as the registered NodePlugin objects.
 

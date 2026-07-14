@@ -143,14 +143,14 @@ class TestNodeSubmit:
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodes.values():
+        for node in cls.plugin.nodeDescProviders.values():
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
 
     def registerNode(self, name):
         plugin = pluginManager.getPlugin("pluginSubmitter", uname=False)
-        node = plugin.nodes[name]
+        node = plugin.nodeDescProviders[name]
         nodeType = node.nodeDescClass
         registerNodeDesc(nodeType)
         return nodeType.__name__

@@ -255,7 +255,7 @@ class TestLockUpdates:
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodes.values():
+        for node in cls.plugin.nodeDescProviders.values():
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None

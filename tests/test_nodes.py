@@ -58,7 +58,7 @@ class TestNodeInfo:
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodes.values():
+        for node in cls.plugin.nodeDescProviders.values():
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
@@ -69,7 +69,7 @@ class TestNodeInfo:
         pluginUName = plugin.uname
         assert pluginUName.endswith("pluginC")
         assert plugin == self.plugin
-        node = plugin.nodes["PluginCNodeA"]
+        node = plugin.nodeDescProviders["PluginCNodeA"]
         nodeType = node.nodeDescClass
 
         g = Graph("")
@@ -103,7 +103,7 @@ class TestNodeVariables:
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodes.values():
+        for node in cls.plugin.nodeDescProviders.values():
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
@@ -111,13 +111,13 @@ class TestNodeVariables:
     def test_staticVariables(self):
         g = Graph("")
 
-        for nodeName in self.plugin.nodes.keys():
+        for nodeName in self.plugin.nodeDescProviders.keys():
             n = g.addNewNode(nodeName)
             assert nodeName == n._staticExpVars["nodeType"]
             assert n.sourceCodeFolder
             assert n.sourceCodeFolder == n._staticExpVars["nodeSourceCodeFolder"]
 
-            self.plugin.nodes[nodeName].reload()
+            self.plugin.nodeDescProviders[nodeName].reload()
 
             assert nodeName == n._staticExpVars["nodeType"]
             assert n.sourceCodeFolder
@@ -126,7 +126,7 @@ class TestNodeVariables:
     def test_expVariables(self):
         g = Graph("")
 
-        for nodeName in self.plugin.nodes.keys():
+        for nodeName in self.plugin.nodeDescProviders.keys():
             n = g.addNewNode(nodeName)
             assert n._expVars["uid"] == n._uid
             assert n.internalFolder
@@ -134,7 +134,7 @@ class TestNodeVariables:
             assert "node" in n._expVars
             assert n._expVars["node"] is n
 
-            self.plugin.nodes[nodeName].reload()
+            self.plugin.nodeDescProviders[nodeName].reload()
 
             assert n._expVars["uid"] == n._uid
             assert n.internalFolder
@@ -158,7 +158,7 @@ class TestInputNode:
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodes.values():
+        for node in cls.plugin.nodeDescProviders.values():
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
@@ -188,7 +188,7 @@ class TestBackdropNode:
     def teardown_class(cls):
         for plugin in pluginManager.getPlugins():
             if plugin not in cls.loadedPlugins:
-                for node in plugin.nodes.values():
+                for node in plugin.nodeDescProviders.values():
                     pluginManager.unregisterNode(node)
                 pluginManager.removePlugin(plugin)
 
@@ -618,7 +618,7 @@ class TestGenerateMgScene:
     def teardown_class(cls):
         for plugin in pluginManager.getPlugins():
             if plugin not in cls.loadedPlugins:
-                for node in plugin.nodes.values():
+                for node in plugin.nodeDescProviders.values():
                     pluginManager.unregisterNode(node)
                 pluginManager.removePlugin(plugin)
 

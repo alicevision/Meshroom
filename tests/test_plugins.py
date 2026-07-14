@@ -25,7 +25,7 @@ class TestPluginWithValidNodesOnly:
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodes.values():
+        for node in cls.plugin.nodeDescProviders.values():
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
@@ -49,7 +49,7 @@ class TestPluginWithValidNodesOnly:
         plugin = pluginManager.getPlugin("pluginA", uname=False)
         # Assert that the nodes of pluginA have been successfully registered
         assert len(pluginManager.getNodeDescProviders()) >= 2
-        for nodeName, nodeDescProvider in plugin.nodes.items():
+        for nodeName, nodeDescProvider in plugin.nodeDescProviders.items():
             assert nodeDescProvider.status == NodeDescProviderStatus.LOADED
             assert pluginManager.isNodeDescRegistered(nodeName)
 
@@ -70,7 +70,7 @@ class TestPluginWithValidNodesOnly:
         assert pluginManager.getPlugin(plugin.name, uname=False) is None
 
         # Assert the nodes are still registered and belong to an unloaded plugin
-        for nodeName, nodeDescProvider in plugin.nodes.items():
+        for nodeName, nodeDescProvider in plugin.nodeDescProviders.items():
             assert nodeDescProvider.status == NodeDescProviderStatus.LOADED
             assert pluginManager.isNodeDescRegistered(nodeName)
             assert pluginManager.getPluginFromNodeDesc(nodeName) is None
@@ -86,14 +86,14 @@ class TestPluginWithValidNodesOnly:
         assert pluginManager.getPlugin(plugin.name, uname=False) is None
 
         # Assert the nodes have been successfully unregistered
-        for nodeName, nodeDescProvider in plugin.nodes.items():
+        for nodeName, nodeDescProvider in plugin.nodeDescProviders.items():
             assert nodeDescProvider.status == NodeDescProviderStatus.NOT_LOADED
             assert not pluginManager.isNodeDescRegistered(nodeName)
 
         # Re-add the plugin and re-register the nodes
         pluginManager.addPlugin(plugin)
         assert pluginManager.getPlugin(plugin.name, uname=False)
-        for nodeName, nodeDescProvider in plugin.nodes.items():
+        for nodeName, nodeDescProvider in plugin.nodeDescProviders.items():
             assert nodeDescProvider.status == NodeDescProviderStatus.LOADED
             assert pluginManager.isNodeDescRegistered(nodeName)
 
@@ -143,7 +143,7 @@ class TestPluginWithInvalidNodes:
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodes.values():
+        for node in cls.plugin.nodeDescProviders.values():
             pluginManager.unregisterNode(node)
         pluginManager.removePlugin(cls.plugin)
         cls.plugin = None
@@ -157,13 +157,13 @@ class TestPluginWithInvalidNodes:
 
         # Assert that PluginBNodeA is successfully registered
         assert pluginManager.isNodeDescRegistered("PluginBNodeA")
-        assert plugin.nodes["PluginBNodeA"].status == NodeDescProviderStatus.LOADED
-        assert plugin.nodes["PluginBNodeA"].plugin == plugin
+        assert plugin.nodeDescProviders["PluginBNodeA"].status == NodeDescProviderStatus.LOADED
+        assert plugin.nodeDescProviders["PluginBNodeA"].plugin == plugin
 
         # Assert that PluginBNodeB has not been registered (description error)
         assert not pluginManager.isNodeDescRegistered("PluginBNodeB")
-        assert plugin.nodes["PluginBNodeB"].status == NodeDescProviderStatus.DESC_ERROR
-        assert plugin.nodes["PluginBNodeB"].plugin == plugin
+        assert plugin.nodeDescProviders["PluginBNodeB"].status == NodeDescProviderStatus.DESC_ERROR
+        assert plugin.nodeDescProviders["PluginBNodeB"].plugin == plugin
 
         # Assert the template has been loaded
         assert len(plugin.templates) == 1
@@ -174,7 +174,7 @@ class TestPluginWithInvalidNodes:
     def test_reloadNodeDescProviderInvalidDescrpition(self):
         plugin = pluginManager.getPlugin("pluginB", uname=False)
         assert plugin == self.plugin
-        node = plugin.nodes["PluginBNodeB"]
+        node = plugin.nodeDescProviders["PluginBNodeB"]
         nodeName = node.nodeDescClass.__name__
 
         # Check that the node has not been registered
@@ -233,7 +233,7 @@ class TestPluginWithInvalidNodes:
     def test_reloadNodeDescProviderSyntaxError(self):
         plugin = pluginManager.getPlugin("pluginB", uname=False)
         assert plugin == self.plugin
-        node = plugin.nodes["PluginBNodeA"]
+        node = plugin.nodeDescProviders["PluginBNodeA"]
         nodeName = node.nodeDescClass.__name__
 
         # Check that the node has been registered

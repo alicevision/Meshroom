@@ -448,7 +448,7 @@ class Scene(UIGraph):
         reloadedNodes: list[str] = []
         errorNodes: list[str] = []
         for plugin in meshroom.core.pluginManager.getPlugins().values():
-            for node in plugin.nodes.values():
+            for node in plugin.nodeDescProviders.values():
                 if node.reload():
                     reloadedNodes.append(node.nodeDescClass.__name__)
                 else:

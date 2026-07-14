@@ -56,7 +56,7 @@ class Plugin(BaseObject):
         self._uid: str = f"{Plugin._instancesCount:04d}"
         self._name: str = name
         self._path: str = path
-        self._user: bool = False
+        self._isUserPlugin: bool = False
         self._nodeDescProviders: dict[str: NodeDescProvider] = {}
         self._submitterProviders: dict[str: SubmitterProvider] = {}
         self._templates: dict[str: str] = {}
@@ -92,12 +92,12 @@ class Plugin(BaseObject):
     @property
     def isUserPlugin(self):
         """ Return whether the plugin is a user plugin (not maintained by the core Meshroom team). """
-        return self._user
+        return self._isUserPlugin
 
     @isUserPlugin.setter
-    def isUserPlugin(self, user: bool):
+    def isUserPlugin(self, isUserPlugin: bool):
         """ Set whether the plugin is a user plugin. """
-        self._user = user
+        self._isUserPlugin = isUserPlugin
 
     @property
     def nodes(self):

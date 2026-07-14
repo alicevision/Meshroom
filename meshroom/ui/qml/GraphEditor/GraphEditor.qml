@@ -1662,4 +1662,61 @@ Item {
         draggable.x = bbox.x * draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
         draggable.y = bbox.y * draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
     }
+
+    // Node type browser panel (left side)
+    NodeTypeBrowser {
+        id: nodeTypeBrowser
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        width: browserWidthProxy.x
+        visible: false
+        nodeTypesModel: root.nodeTypesModel
+
+        onNodeTypeDoubleClicked: function(nodeType) {
+            var position = getCenterPosition()
+            var node = uigraph.addNewNode(nodeType, position)
+            uigraph.selectedNode = node
+            uigraph.selectNodes([node])
+            nodeTypeBrowser.visible = false
+        }
+    }
+
+    // Invisible proxy item whose x-coordinate defines the NodeTypeBrowser width (default: 500)
+    Item {
+        id: browserWidthProxy
+        x: 500
+        visible: false
+    }
+
+    // Drag handle on the right edge of the NodeTypeBrowser to resize it
+    MouseArea {
+        id: browserResizeHandle
+        anchors.top: nodeTypeBrowser.top
+        anchors.bottom: nodeTypeBrowser.bottom
+        anchors.left: nodeTypeBrowser.right
+        width: 5
+        visible: nodeTypeBrowser.visible
+        cursorShape: Qt.SizeHorCursor
+        drag.target: browserWidthProxy
+        drag.axis: Drag.XAxis
+        drag.minimumX: 300
+        drag.maximumX: root.width - 100
+    }
+
+    // Button to toggle node type browser panel (top-left)
+    FloatingPane {
+        padding: 2
+        anchors.top: parent.top
+        anchors.left: parent.left
+
+        MaterialToolButton {
+            text: MaterialIcons.category
+            ToolTip.text: "Node Types"
+            checked: nodeTypeBrowser.visible
+            Accessible.name: "Toggle Node Types Browser"
+            Accessible.role: Accessible.Button
+            onClicked: nodeTypeBrowser.visible = !nodeTypeBrowser.visible
+        }
+    }
 }

@@ -17,7 +17,7 @@ import logging
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core import desc, pluginManager, loadClassesNodes
 from meshroom.core.node import Status, ChunkIndex
-from meshroom.core.plugins import Plugin
+from meshroom.core.plugins.base import Plugin
 from .utils import registerNodeDesc, unregisterNodeDesc
 
 LOGGER = logging.getLogger("TestCompute")

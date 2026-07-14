@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import meshroom
 from meshroom.core import desc, pluginManager, loadPluginFolder
-from meshroom.core.plugins import NodePlugin
+from meshroom.core.plugins.base import NodePlugin
 
 import os
 

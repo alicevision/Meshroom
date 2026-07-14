@@ -10,7 +10,8 @@ import tempfile
 from meshroom.core import desc, pluginManager, loadClassesNodes, initNodes
 from meshroom.core.node import Position, BaseNode
 from meshroom.core.graph import Graph, loadGraph
-from meshroom.core.plugins import Plugin, ProcessEnv
+from meshroom.core.plugins.base import Plugin
+from meshroom.core.plugins.env import ProcessEnv
 from meshroom.nodes.general.InputString import InputString
 from meshroom.nodes.general.GetMgSceneParams import GetMeshroomSceneParams
 

@@ -13,7 +13,7 @@ from .utils import registerNodeDesc
 import meshroom
 from meshroom.core import pluginManager, loadClassesNodes, loadSubmitters, registerSubmitter, meshroomFolder
 from meshroom.core.graph import Graph
-from meshroom.core.plugins import Plugin
+from meshroom.core.plugins.base import Plugin
 from meshroom.core.node import Node, Status
 from meshroom.core.submitter import jobManager
 from meshroom.core.submitter import OrderedTask, OrderedTasks, OrderedTaskType

@@ -19,7 +19,7 @@ from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position, CompatibilityIssue
 from meshroom.core.taskManager import TaskManager
 from meshroom.core.evaluation import MathEvaluator
-from meshroom.core.plugins import NodePluginStatus
+from meshroom.core.plugins.base import NodePluginStatus
 
 from meshroom.ui import commands
 from meshroom.ui.graph import UIGraph

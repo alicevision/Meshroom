@@ -4,7 +4,7 @@ from meshroom.core import desc
 from meshroom.core import pluginManager
 from meshroom.core.exception import UnknownNodeTypeError
 from meshroom.core.graph import Graph, loadGraph
-from meshroom.core.plugins import NodePluginStatus
+from meshroom.core.plugins.base import NodePluginStatus
 
 from .utils import registerNodeDesc, unregisterNodeDesc
 

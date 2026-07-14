@@ -251,8 +251,11 @@ class BaseNode(object):
     parallelization = None
     documentation = ""
     category = "Other"
-    provider = None
     nodeVersionType: NodeVersionType = NodeVersionType.UNKNOWN
+    # The plugin NodeDescProvider that supplied this node
+    provider = None
+    # The plugin that contains this node
+    plugin = None
     # Licenses required to run the plugin
     # Only used to select machines on the farm when the node is submitted
     _licenses = []
@@ -265,7 +268,7 @@ class BaseNode(object):
         mod = sys.modules[self.__class__.__module__]
         version = getattr(mod, "__version__", None) if mod else None
 
-        if self.provider and self.provider.isUserPlugin:
+        if self.plugin and self.plugin.isUserPlugin:
             self.nodeVersionType = NodeVersionType.USER
 
         # If "version" is not defined, the node version type remains "UNKNOWN"

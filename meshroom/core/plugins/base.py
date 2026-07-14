@@ -300,10 +300,11 @@ class NodeDescProvider(BaseObject):
 
     def __init__(self, nodeDesc: desc.BaseNode, plugin: Plugin = None):
         super().__init__()
-        self.plugin: Plugin = plugin
         self.path: str = Path(getfile(nodeDesc)).resolve().as_posix()
         self.nodeDescClass: desc.BaseNode = nodeDesc
         self.nodeDescClass.provider = self
+        self.nodeDescClass.plugin = plugin
+        self.plugin: Plugin = plugin
 
         self.status: NodeDescProviderStatus = NodeDescProviderStatus.NOT_LOADED
         self.errors: list[tuple[str, ValueTypeErrors]] = self.__validateNodeDesc(nodeDesc)
@@ -379,13 +380,7 @@ class NodeDescProvider(BaseObject):
     def plugin(self, plugin: Plugin):
         """ Assign this node descriptor provider to a containing Plugin object. """
         self._plugin = plugin
-
-    @property
-    def isUserPlugin(self):
-        """ Return whether the node descriptor provider belongs to a user plugin. """
-        if self.plugin:
-            return self.plugin.isUserPlugin
-        return False
+        self.nodeDescClass.plugin = plugin
 
     @property
     def processEnv(self):

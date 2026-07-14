@@ -189,7 +189,7 @@ class Plugin(BaseObject):
             submitterClass: the BaseSubmitter subclass to create a SubmitterProvider for.
         """
         submitterProvider = SubmitterProvider(submitterClass, self)
-        self._submitterProviders[submitterProvider.submitterClass.__name__] = submitterProvider
+        self._submitterProviders[submitterProvider.name] = submitterProvider
 
     def removeSubmitterProvider(self, name: str):
         """

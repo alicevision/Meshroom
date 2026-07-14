@@ -157,7 +157,7 @@ class Plugin(BaseObject):
             name: the name of the node descriptor provider to be checked.
         """
         return name in self._nodeDescProviders
-    
+
     def loadTemplates(self):
         """
         Load all the pipeline templates that are available within the plugin folder.
@@ -277,7 +277,7 @@ class NodeDescProvider(BaseObject):
             if errMsg:
                 errors.append((errMsg, errType))
         return errors
-    
+
     @staticmethod
     def formatNodeDescriptionErrorMessage(error: tuple[str, ValueTypeErrors]) -> str:
         """
@@ -362,6 +362,7 @@ class NodeDescProvider(BaseObject):
 
         self.nodeDescClass = descriptor
         self.nodeDescClass.provider = self
+        self.nodeDescClass.plugin = self.plugin
         self._timestamp = timestamp
         self.status = NodeDescProviderStatus.NOT_LOADED
         logging.info(f"[Reload] {self.nodeDescClass.__name__}: Successful reloading.")

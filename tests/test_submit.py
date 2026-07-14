@@ -138,7 +138,7 @@ class TestNodeSubmit:
         cls.plugin = Plugin(package, cls.folder)
         nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeDescProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod

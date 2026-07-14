@@ -20,7 +20,7 @@ class SampleNode(desc.Node):
 
 
 def test_output_invalidation():
-    registerNodeDesc(SampleNode)  # Register standalone NodePlugin
+    registerNodeDesc(SampleNode)  # Register standalone NodeDescProvider
     graph = Graph("")
     n1 = graph.addNewNode("SampleNode", input="/tmp")
     n2 = graph.addNewNode("SampleNode")
@@ -53,7 +53,7 @@ def test_inputLinkInvalidation():
     """
     Input links should not change the invalidation.
     """
-    registerNodeDesc(SampleNode)  # Register standalone NodePlugin
+    registerNodeDesc(SampleNode)  # Register standalone NodeDescProvider
     graph = Graph("")
     n1 = graph.addNewNode("SampleNode")
     n2 = graph.addNewNode("SampleNode")

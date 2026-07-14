@@ -847,7 +847,7 @@ class Graph(BaseObject):
             for nodeName in nodeNames:
                 self.upgradeNode(nodeName)
 
-    def reloadNodePlugins(self, nodeTypes: list[str]):
+    def reloadNodeDescProviders(self, nodeTypes: list[str]):
         """
         Replace all the node instances of "nodeTypes" in the current graph with new node instances of the
         same type. If the description of the nodes has changed, the reloaded nodes will reflect theses

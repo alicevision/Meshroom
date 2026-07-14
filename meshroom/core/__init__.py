@@ -18,7 +18,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins.base import NodePlugin, Plugin, formatNodeDescriptionErrorMessage
+from meshroom.core.plugins.base import NodeDescProvider, Plugin, formatNodeDescriptionErrorMessage
 from meshroom.core.plugins.env import processEnvFactory
 from meshroom.core.plugins.manager import PluginManager
 from meshroom.core.submitter import BaseSubmitter
@@ -130,13 +130,13 @@ def loadClasses(folder: str, packageName: str, classType: type, pluginUid: str =
                     p.packageName = f"{pluginUid}_{packageName}"
                     p.packagePath = packagePath
                     if classType == desc.BaseNode:
-                        nodePlugin = NodePlugin(p)
-                        if nodePlugin.errors:
+                        nodeDescProvider = NodeDescProvider(p)
+                        if nodeDescProvider.errors:
                             explicitErrors = []
-                            for err in nodePlugin.errors:
+                            for err in nodeDescProvider.errors:
                                 explicitErrors.append(f"\n\t - {formatNodeDescriptionErrorMessage(err)}")
                             errors.append(f"  * {pluginName}: The following parameters have issues: {''.join(explicitErrors)}")
-                        classes.append(nodePlugin)
+                        classes.append(nodeDescProvider)
                     else:
                         classes.append(p)
             except Exception as exc:
@@ -162,11 +162,11 @@ def loadClasses(folder: str, packageName: str, classType: type, pluginUid: str =
     return classes
 
 
-def loadClassesNodes(folder: str, packageName: str, pluginUid: str) -> list[NodePlugin]:
+def loadClassesNodes(folder: str, packageName: str, pluginUid: str) -> list[NodeDescProvider]:
     """
-    Return the list of all the NodePlugins that were created following the search of the
+    Return the list of all the NodeDescProviders that were created following the search of the
     Python module named "packageName" located in the folder "folder".
-    A NodePlugin is created when a file within "packageName" that contains a class inheriting
+    A NodeDescProvider is created when a file within "packageName" that contains a class inheriting
     desc.BaseNode is found.
 
     Args:
@@ -175,7 +175,7 @@ def loadClassesNodes(folder: str, packageName: str, pluginUid: str) -> list[Node
         pluginUid: A unique node for the plugin where will be the nodes.
 
     Returns:
-        list[NodePlugin]: a list of all the NodePlugins that were created based on the
+        list[NodeDescProvider]: a list of all the NodeDescProviders that were created based on the
                           module's search. If none has been created, an empty list is returned.
     """
     return loadClasses(folder, packageName, desc.BaseNode, pluginUid=pluginUid)
@@ -345,7 +345,7 @@ def nodeVersion(nodeDesc: desc.Node, default=None):
     return moduleVersion(nodeDesc.__module__, default)
 
 
-def loadNodes(folder, packageName, pluginUid) -> list[NodePlugin]:
+def loadNodes(folder, packageName, pluginUid) -> list[NodeDescProvider]:
     if not os.path.isdir(folder):
         logging.error(f"Node folder '{folder}' does not exist.")
         return []
@@ -359,11 +359,11 @@ def loadAllNodes(folder) -> list[Plugin]:
     for _, package, ispkg in pkgutil.iter_modules([folder]):
         if ispkg:
             plugin = Plugin(package, folder)
-            nodePlugins = loadNodes(folder, package, plugin.uid)
-            if nodePlugins:
-                for node in nodePlugins:
-                    plugin.addNodePlugin(node)
-                nodesStr = ', '.join([node.nodeDescriptor.__name__ for node in nodePlugins])
+            nodeDescProviders = loadNodes(folder, package, plugin.uid)
+            if nodeDescProviders:
+                for node in nodeDescProviders:
+                    plugin.addNodeDescProvider(node)
+                nodesStr = ', '.join([node.nodeDescriptor.__name__ for node in nodeDescProviders])
                 logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
             plugins.append(plugin)
     return plugins

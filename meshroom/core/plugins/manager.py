@@ -3,17 +3,17 @@ from __future__ import annotations
 import logging
 
 from meshroom.common import BaseObject
-from meshroom.core.plugins.base import NodePlugin, NodePluginStatus, Plugin
+from meshroom.core.plugins.base import NodeDescProvider, NodeDescProviderStatus, Plugin
 
 
 class PluginManager(BaseObject):
     """
-    Manager for all the loaded Plugin objects as well as the registered NodePlugin objects.
+    Manager for all the loaded Plugin objects as well as the registered NodeDescProvider objects.
 
     Members:
         plugins: dictionary containing all the loaded Plugins, with their name as the key
-        nodePlugins: dictionary containing all the NodePlugins that have been registered
-                      (a NodePlugin may exist without having been registered) with their name as
+        nodeDescProviders: dictionary containing all the NodeDescProviders that have been registered
+                      (a NodeDescProvider may exist without having been registered) with their name as
                       the key
     """
 
@@ -21,30 +21,31 @@ class PluginManager(BaseObject):
         super().__init__()
 
         self._plugins: dict[str: Plugin] = {}  # loaded plugins
-        self._nodePlugins: dict[str: NodePlugin] = {}  # registered node plugins
+        self._nodeDescProviders: dict[str: NodeDescProvider] = {}  # registered node descriptor providers
 
     def isRegistered(self, name: str) -> bool:
         """
-        Return whether the node plugin has been registered already.
+        Return whether the node descriptor provider has been registered already.
 
         Args:
-            name: the name of the node plugin whose registration needs to be checked.
+            name: the name of the node descriptor provider whose registration needs to be checked.
         """
-        return name in self._nodePlugins
+        return name in self._nodeDescProviders
 
     def belongsToPlugin(self, name: str) -> Plugin:
         """
-        Check whether the node plugin belongs to a loaded plugin, independently from
+        Check whether the node descriptor provider belongs to a loaded plugin, independently from
         whether it has been registered or not.
 
         Args:
-            name: the name of the node plugin that needs to be searched for across plugins.
+            name: the name of the node descriptor provider that needs to be searched for across
+                  plugins.
 
         Returns:
             Plugin | None: the Plugin the node belongs to if it exists, None otherwise.
         """
         for plugin in self._plugins.values():
-            if plugin.containsNodePlugin(name):
+            if plugin.containsNodeDescProvider(name):
                 return plugin
         return None
 
@@ -79,107 +80,107 @@ class PluginManager(BaseObject):
                     return plugin
         return None
 
-    def addPlugin(self, plugin: Plugin, registerNodePlugins: bool = True):
+    def addPlugin(self, plugin: Plugin, registerNodeDescProviders: bool = True):
         """
         Load a Plugin object.
 
         Args:
             plugin: the Plugin to load and add to the list of loaded plugins.
-            registerNodePlugins: True if all the NodePlugins from the plugin should be registered
-                                 at the same time the plugin is being loaded. Otherwise, the
-                                 NodePlugins will have to be registered at a later occasion.
+            registerNodeDescProviders: True if all the NodeDescProviders from the plugin should be
+                                 registered at the same time the plugin is being loaded. Otherwise,
+                                 the NodeDescProviders will have to be registered at a later occasion.
         """
         pluginUName = plugin.uname
         if self.getPlugin(pluginUName):
             logging.warning(f"Plugin {pluginUName} is already registered.")
             return
         self._plugins[pluginUName] = plugin
-        if registerNodePlugins:
+        if registerNodeDescProviders:
             for node in plugin.nodes:
                 self.registerNode(plugin.nodes[node])
 
-    def removePlugin(self, plugin: Plugin, unregisterNodePlugins: bool = True):
+    def removePlugin(self, plugin: Plugin, unregisterNodeDescProviders: bool = True):
         """
         Remove a loaded Plugin object.
 
         Args:
             plugin: the Plugin to remove from the list of loaded plugins.
-            unregisterNodePlugins: True if all the nodes from the plugin should be unregistered (if they
-                                   are registered) at the same time as the plugin is unloaded. Otherwise,
-                                   the registered NodePlugins will remain while the Plugin itself will
-                                   be unloaded.
+            unregisterNodeDescProviders: True if all the nodes from the plugin should be unregistered
+                                   (if they are registered) at the same time as the plugin is unloaded.
+                                   Otherwise, the registered NodeDescProviders will remain while the
+                                   Plugin itself will be unloaded.
         """
         if self.getPlugin(plugin.uname):
-            if unregisterNodePlugins:
+            if unregisterNodeDescProviders:
                 for node in plugin.nodes.values():
                     self.unregisterNode(node)
             del self._plugins[plugin.uname]
 
-    def getRegisteredNodePlugins(self) -> dict[str: NodePlugin]:
+    def getNodeDescProviders(self) -> dict[str: NodeDescProvider]:
         """
-        Return a dictionary containing all the registered NodePlugins, with
-        {key, value} = {name, NodePlugin}.
+        Return a dictionary containing all the registered NodeDescProviders, with
+        {key, value} = {name, NodeDescProvider}.
         """
-        return self._nodePlugins
+        return self._nodeDescProviders
 
-    def getRegisteredNodePlugin(self, name: str) -> NodePlugin:
+    def getNodeDescProvider(self, name: str) -> NodeDescProvider:
         """
-        Return the NodePlugin object that has been registered under the name "name" if it exists.
+        Return the NodeDescProvider object that has been registered under the name "name" if it exists.
 
         Args:
-            name: the name of the NodePlugin used for its registration.
+            name: the name of the NodeDescProvider used for its registration.
 
         Returns:
-            NodePlugin | None: the loaded NodePlugin object if it exists, None otherwise.
+            NodeDescProvider | None: the loaded NodeDescProvider object if it exists, None otherwise.
         """
         if self.isRegistered(name):
-            return self._nodePlugins[name]
+            return self._nodeDescProviders[name]
         return None
 
-    def registerNode(self, nodePlugin: NodePlugin):
+    def registerNode(self, nodeDescProvider: NodeDescProvider):
         """
-        Register a node plugin. A registered node plugin will become instantiable.
-        If it is already registered, or if there is an issue with the node description,
-        the node plugin will not be registered and its status will be updated.
+        Register a node descriptor provider. A registered node descriptor provider will become
+        instantiable. If it is already registered, or if there is an issue with the node description,
+        the node descriptor provider will not be registered and its status will be updated.
 
         Args:
-            nodePlugin: the node plugin to register.
+            nodeDescProvider: the node descriptor provider to register.
         """
-        name = nodePlugin.nodeDescriptor.__name__
+        name = nodeDescProvider.nodeDescriptor.__name__
         if self.isRegistered(name):
-            existingPlugin: NodePlugin = self._nodePlugins[name]
+            existingProvider: NodeDescProvider = self._nodeDescProviders[name]
             logging.warning(
-                f"Could not register node {name} ({nodePlugin.path}) "
-                f"because another node is already registered with this name ({existingPlugin.path})"
+                f"Could not register node {name} ({nodeDescProvider.path}) "
+                f"because another node is already registered with this name ({existingProvider.path})"
             )
             return
-        if nodePlugin.status in (NodePluginStatus.DESC_ERROR,
-                                 NodePluginStatus.ERROR):
+        if nodeDescProvider.status in (NodeDescProviderStatus.DESC_ERROR,
+                                 NodeDescProviderStatus.ERROR):
             logging.warning(
-                f"Could not register node {name} ({nodePlugin.path}) "
-                f"because the node is in error ({nodePlugin.status})."
+                f"Could not register node {name} ({nodeDescProvider.path}) "
+                f"because the node is in error ({nodeDescProvider.status})."
             )
             return
 
         try:
-            self._nodePlugins[name] = nodePlugin
-            nodePlugin.status = NodePluginStatus.LOADED
+            self._nodeDescProviders[name] = nodeDescProvider
+            nodeDescProvider.status = NodeDescProviderStatus.LOADED
         except Exception as exc:
-            logging.error(f"NodePlugin {name} could not be loaded: {exc}")
-            nodePlugin.status = NodePluginStatus.LOADING_ERROR
+            logging.error(f"NodeDescProvider {name} could not be loaded: {exc}")
+            nodeDescProvider.status = NodeDescProviderStatus.LOADING_ERROR
 
-    def unregisterNode(self, nodePlugin: NodePlugin):
+    def unregisterNode(self, nodeDescProvider: NodeDescProvider):
         """
-        Unregister a node plugin. When unregistered, a node plugin cannot be instantiated anymore.
-        If it is not registered already, nothing happens.
+        Unregister a node descriptor provider. When unregistered, a node descriptor provider cannot be
+        instantiated anymore. If it is not registered already, nothing happens.
 
         Args:
-            nodePlugin: the node plugin to unregister.
+            nodeDescProvider: the node descriptor provider to unregister.
         """
-        name = nodePlugin.nodeDescriptor.__name__
+        name = nodeDescProvider.nodeDescriptor.__name__
         if self.isRegistered(name):
-            if nodePlugin.status != NodePluginStatus.LOADED:
-                logging.warning(f"NodePlugin {name} is registered but is not correctly loaded.")
+            if nodeDescProvider.status != NodeDescProviderStatus.LOADED:
+                logging.warning(f"NodeDescProvider {name} is registered but is not correctly loaded.")
             else:
-                nodePlugin.status = NodePluginStatus.NOT_LOADED
-            del self._nodePlugins[name]
+                nodeDescProvider.status = NodeDescProviderStatus.NOT_LOADED
+            del self._nodeDescProviders[name]

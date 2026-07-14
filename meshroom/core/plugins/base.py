@@ -72,17 +72,6 @@ def formatNodeDescriptionErrorMessage(error: tuple[str, ValueTypeErrors]) -> str
     return f"Unknown error for parameter '{errMsg}'."
 
 
-class NodePluginStatus(Enum):
-    """
-    Loading status for NodePlugin objects.
-    """
-    NOT_LOADED = 0  # The node plugin exists but is not loaded and cannot be used (not registered)
-    LOADED = 1  # The node plugin is currently loaded and functional (it has been registered)
-    DESC_ERROR = 2  # The node plugin exists but has an invalid description
-    LOADING_ERROR = 3  # The node plugin exists and is valid but could not be successfully registered
-    ERROR = 4  # Error when importing the node plugin from its module
-
-
 class Plugin(BaseObject):
     """
     A collection of node plugins.
@@ -91,8 +80,8 @@ class Plugin(BaseObject):
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
         path: the absolute path of the plugin
         user: whether the plugin is a user plugin (not maintained by the core Meshroom team)
-        nodePlugins: dictionary mapping the name of a node plugin contained in the plugin
-                     to its corresponding NodePlugin object
+        nodeDescProviders: dictionary mapping the name of a node descriptor provider contained in the
+                     plugin to its corresponding NodeDescProvider object
         templates: dictionary mapping the name of templates (.mg files) associated to the plugin
                    with their absolute paths
         configEnv: the environment variables and their values, as described in the plugin's
@@ -112,7 +101,7 @@ class Plugin(BaseObject):
         self._path: str = path
         self._user: bool = False
 
-        self._nodePlugins: dict[str: NodePlugin] = {}
+        self._nodeDescProviders: dict[str: NodeDescProvider] = {}
         self._templates: dict[str: str] = {}
         self._configEnv: dict[str: str] = {}
         self._configFullEnv: dict[str: str] = {}
@@ -156,10 +145,10 @@ class Plugin(BaseObject):
     @property
     def nodes(self):
         """
-        Return the dictionary containing the NodePlugin objects associated to
+        Return the dictionary containing the NodeDescProvider objects associated to
         the plugin.
         """
-        return self._nodePlugins
+        return self._nodeDescProviders
 
     @property
     def templates(self):
@@ -189,31 +178,42 @@ class Plugin(BaseObject):
         """ Return the fusion of the os.environ dictionary with the configEnv dictionary. """
         return self._configFullEnv
 
-    def addNodePlugin(self, nodePlugin: NodePlugin):
+    def addNodeDescProvider(self, nodeDescProvider: NodeDescProvider):
         """
-        Add a node plugin to the current plugin object and assign it as its containing plugin.
-        The node plugin is added to the dictionary of node plugins with the name of the node
-        descriptor as its key.
+        Add a node descriptor provider to the current plugin object and assign it as its containing
+        plugin. The node descriptor provider is added to the dictionary of node descriptor providers
+        with the name of the node descriptor as its key.
 
         Args:
-            nodePlugin: the NodePlugin object to add to the Plugin.
+            nodeDescProvider: the NodeDescProvider object to add to the Plugin.
         """
-        self._nodePlugins[nodePlugin.nodeDescriptor.__name__] = nodePlugin
-        nodePlugin.plugin = self
+        self._nodeDescProviders[nodeDescProvider.nodeDescriptor.__name__] = nodeDescProvider
+        nodeDescProvider.plugin = self
 
-    def removeNodePlugin(self, name: str):
+    def removeNodeDescProvider(self, name: str):
         """
-        Remove a node plugin from the current plugin object and delete any container relationship.
+        Remove a node descriptor provider from the current plugin object and delete any container
+        relationship.
 
         Args:
-            name: the name of the NodePlugin to remove.
+            name: the name of the NodeDescProvider to remove.
         """
-        if name in self._nodePlugins:
-            self._nodePlugins[name].plugin = None
-            del self._nodePlugins[name]
+        if name in self._nodeDescProviders:
+            self._nodeDescProviders[name].plugin = None
+            del self._nodeDescProviders[name]
         else:
-            logging.warning(f"Node plugin {name} is not part of the plugin {self.name}.")
+            logging.warning(f"Node descriptor provider {name} is not part of the plugin {self.name}.")
 
+    def containsNodeDescProvider(self, name: str) -> bool:
+        """
+        Return whether the node descriptor provider "name" is part of the plugin, independently
+        from its status.
+
+        Args:
+            name: the name of the node descriptor provider to be checked.
+        """
+        return name in self._nodeDescProviders
+    
     def loadTemplates(self):
         """
         Load all the pipeline templates that are available within the plugin folder.
@@ -271,31 +271,32 @@ class Plugin(BaseObject):
         # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
         self._configFullEnv = self._configEnv | os.environ
 
-    def containsNodePlugin(self, name: str) -> bool:
-        """
-        Return whether the node plugin "name" is part of the plugin, independently from its
-        status.
 
-        Args:
-            name: the name of the node plugin to be checked.
-        """
-        return name in self._nodePlugins
-
-
-class NodePlugin(BaseObject):
+class NodeDescProviderStatus(Enum):
     """
-    Based on a node description, a NodePlugin represents a loadable node.
+    Loading status for NodeDescProvider objects.
+    """
+    NOT_LOADED = 0  # The node descriptor provider exists but is not loaded and cannot be used (not registered)
+    LOADED = 1  # The node descriptor provider is currently loaded and functional (it has been registered)
+    DESC_ERROR = 2  # The node descriptor provider exists but has an invalid description
+    LOADING_ERROR = 3  # The node descriptor provider exists and is valid but could not be successfully registered
+    ERROR = 4  # Error when importing the node descriptor provider from its module
+
+
+class NodeDescProvider(BaseObject):
+    """
+    Based on a node description, a NodeDescProvider represents a loadable node.
 
     Members:
-        plugin: the Plugin object that contains this node plugin
+        plugin: the Plugin object that contains this node descriptor provider
         path: absolute path to the file containing the node's description
         nodeDescriptor: the description of the node
-        status: the loading status on the node plugin
+        status: the loading status on the node descriptor provider
         errors: the list of errors (if there are any) when validating the description
                 of the node or attempting to load it
-        processEnv: the environment required for the node plugin's process. It can either
-                    be specific to this node plugin, or be common for all the node plugins within
-                    the plugin
+        processEnv: the environment required for the node descriptor provider's process. It can either
+                    be specific to this node descriptor provider, or be common for all the node
+                    descriptor providers within the plugin
         timestamp: the timestamp corresponding to the last time the node description's file has been
                    modified
     """
@@ -305,31 +306,32 @@ class NodePlugin(BaseObject):
         self.plugin: Plugin = plugin
         self.path: str = Path(getfile(nodeDesc)).resolve().as_posix()
         self.nodeDescriptor: desc.BaseNode = nodeDesc
-        self.nodeDescriptor.plugin = self
+        self.nodeDescriptor.provider = self
 
-        self.status: NodePluginStatus = NodePluginStatus.NOT_LOADED
+        self.status: NodeDescProviderStatus = NodeDescProviderStatus.NOT_LOADED
         self.errors: list[tuple[str, ValueTypeErrors]] = validateNodeDesc(nodeDesc)
 
         if self.errors:
-            self.status = NodePluginStatus.DESC_ERROR
+            self.status = NodeDescProviderStatus.DESC_ERROR
 
         self._processEnv = None
         self._timestamp = os.path.getmtime(self.path)
 
     def reload(self) -> bool:
         """
-        Reload the node plugin and update its status accordingly. If the timestamp of the node plugin's
-        path has not changed since the last time the plugin has been loaded, then nothing will happen.
+        Reload the node descriptor provider and update its status accordingly. If the timestamp of the
+        node descriptor provider's path has not changed since the last time the plugin has been loaded,
+        then nothing will happen.
 
         Returns:
-            bool: True if the node plugin has successfully been reloaded (i.e. there was no error, and
-                  some changes were made since its last loading), False otherwise.
+            bool: True if the node descriptor provider has successfully been reloaded (i.e. there was
+                  no error, and some changes were made since its last loading), False otherwise.
         """
         timestamp = 0.0
         try:
             timestamp = os.path.getmtime(self.path)
         except FileNotFoundError:
-            self.status = NodePluginStatus.ERROR
+            self.status = NodeDescProviderStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The path at {self.path} was not "
                           f"not found.")
             return False
@@ -343,47 +345,47 @@ class NodePlugin(BaseObject):
             updated = importlib.reload(sys.modules.get(self.nodeDescriptor.__module__))
         except Exception as exc:
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: {exc} ({type(exc).__name__})")
-            self.status = NodePluginStatus.DESC_ERROR
+            self.status = NodeDescProviderStatus.DESC_ERROR
             return False
         descriptor = getattr(updated, self.nodeDescriptor.__name__)
 
         if not descriptor:
-            self.status = NodePluginStatus.ERROR
+            self.status = NodeDescProviderStatus.ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
                           f"was not found.")
             return False
 
         self.errors = validateNodeDesc(descriptor)
         if self.errors:
-            self.status = NodePluginStatus.DESC_ERROR
+            self.status = NodeDescProviderStatus.DESC_ERROR
             logging.error(f"[Reload] {self.nodeDescriptor.__name__}: The node description at {self.path} "
                           f"has description errors.")
             return False
 
         self.nodeDescriptor = descriptor
-        self.nodeDescriptor.plugin = self
+        self.nodeDescriptor.provider = self
         self._timestamp = timestamp
-        self.status = NodePluginStatus.NOT_LOADED
+        self.status = NodeDescProviderStatus.NOT_LOADED
         logging.info(f"[Reload] {self.nodeDescriptor.__name__}: Successful reloading.")
         return True
 
     @property
     def plugin(self):
         """
-        Return the Plugin object that contains this node plugin.
-        If the node plugin has not been assigned to a plugin yet, this value will
+        Return the Plugin object that contains this node descriptor provider.
+        If the node descriptor provider has not been assigned to a plugin yet, this value will
         be set to None.
         """
         return self._plugin
 
     @plugin.setter
     def plugin(self, plugin: Plugin):
-        """ Assign this node plugin to a containing Plugin object. """
+        """ Assign this node descriptor provider to a containing Plugin object. """
         self._plugin = plugin
 
     @property
     def isUserPlugin(self):
-        """ Return whether the node plugin belongs to a user plugin. """
+        """ Return whether the node descriptor provider belongs to a user plugin. """
         if self.plugin:
             return self.plugin.isUserPlugin
         return False
@@ -391,7 +393,7 @@ class NodePlugin(BaseObject):
     @property
     def processEnv(self):
         """"
-        Return the process environment that is specific to the node plugin if it has any.
+        Return the process environment that is specific to the node descriptor provider if it has any.
         Otherwise, the Plugin's is returned.
         """
         if self._processEnv:
@@ -407,14 +409,14 @@ class NodePlugin(BaseObject):
 
     @property
     def commandPrefix(self) -> str:
-        """ Return the command prefix for the NodePlugin's execution. """
+        """ Return the command prefix for the NodeDescProvider's execution. """
         if not self.processEnv:
             return ""
         return self.processEnv.getCommandPrefix()
 
     @property
     def commandSuffix(self) -> str:
-        """ Return the command suffix for the NodePlugin's execution. """
+        """ Return the command suffix for the NodeDescProvider's execution. """
         if not self.processEnv:
             return ""
         return self.processEnv.getCommandSuffix()

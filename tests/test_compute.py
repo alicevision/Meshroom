@@ -200,7 +200,7 @@ class TestNodeLogger:
         node = SimpleNamespace(
             name="TestNode_1",
             graph=SimpleNamespace(filepath=graphFilepath.as_posix()),
-            nodeDesc=SimpleNamespace(pythonExecutable="python", plugin=plugin),
+            nodeDesc=SimpleNamespace(pythonExecutable="python", provider=plugin),
             getChunks=lambda: [object(), object()],
         )
         chunk = SimpleNamespace(
@@ -250,7 +250,7 @@ class TestLockUpdates:
         cls.plugin = Plugin(package, folder)
         nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeDescProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod

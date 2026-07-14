@@ -251,7 +251,7 @@ class BaseNode(object):
     parallelization = None
     documentation = ""
     category = "Other"
-    plugin = None
+    provider = None
     nodeVersionType: NodeVersionType = NodeVersionType.UNKNOWN
     # Licenses required to run the plugin
     # Only used to select machines on the farm when the node is submitted
@@ -265,7 +265,7 @@ class BaseNode(object):
         mod = sys.modules[self.__class__.__module__]
         version = getattr(mod, "__version__", None) if mod else None
 
-        if self.plugin and self.plugin.isUserPlugin:
+        if self.provider and self.provider.isUserPlugin:
             self.nodeVersionType = NodeVersionType.USER
 
         # If "version" is not defined, the node version type remains "UNKNOWN"
@@ -286,7 +286,7 @@ class BaseNode(object):
     def getNodeInfo(cls):
         info = OrderedDict([
             ("module", cls.__module__),
-            ("modulePath", cls.plugin.path if cls.plugin else ""),
+            ("modulePath", cls.provider.path if cls.provider else ""),
         ])
         # > Info from the plugin module
         plugin_module = sys.modules.get(cls.__module__)
@@ -579,9 +579,9 @@ class Node(BaseNode):
         elif len(chunk.node.getChunks()) >= 1:
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
 
-        runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv
-        cmdPrefix = chunk.node.nodeDesc.plugin.commandPrefix
-        cmdSuffix = chunk.node.nodeDesc.plugin.commandSuffix
+        runtimeEnv = chunk.node.nodeDesc.provider.runtimeEnv
+        cmdPrefix = chunk.node.nodeDesc.provider.commandPrefix
+        cmdSuffix = chunk.node.nodeDesc.provider.commandSuffix
         self.executeChunkCommandLine(chunk, cmdPrefix + meshroomComputeCmd + cmdSuffix,
                                      env=runtimeEnv)
 
@@ -604,9 +604,9 @@ class CommandLineNode(BaseNode):
         cmdLineVars = chunk.node.createCmdLineVars()
         cmdPrefix = ""
         cmdSuffix = ""
-        if chunk.node.nodeDesc.plugin:
-            cmdPrefix = chunk.node.nodeDesc.plugin.commandPrefix
-            cmdSuffix = chunk.node.nodeDesc.plugin.commandSuffix
+        if chunk.node.nodeDesc.provider:
+            cmdPrefix = chunk.node.nodeDesc.provider.commandPrefix
+            cmdSuffix = chunk.node.nodeDesc.provider.commandSuffix
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = " " + self.commandLineRange.format(**chunk.range.toDict()) + " " + cmdSuffix
 
@@ -622,7 +622,7 @@ class CommandLineNode(BaseNode):
 
     def processChunk(self, chunk):
         cmd = self.buildCommandLine(chunk)
-        runtimeEnv = chunk.node.nodeDesc.plugin.runtimeEnv
+        runtimeEnv = chunk.node.nodeDesc.provider.runtimeEnv
         self.executeChunkCommandLine(chunk, cmd, env=runtimeEnv)
 
 

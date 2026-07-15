@@ -135,7 +135,7 @@ class Edge(BaseObject):
                     f"{srcDesc.__class__.__name__} -> {dstDesc.__class__.__name__}"
                 )
             return
-        if type(srcDesc) is type(dstDesc) or isinstance(srcDesc, type(dstDesc)):
+        if self.src.baseType == self.dst.baseType:
             self._converter = None
             return
         # Find a default converter

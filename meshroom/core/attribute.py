@@ -674,7 +674,9 @@ class Attribute(BaseObject):
         Returns:
             True if the connection is valid, False otherwise.
         """
-        return self.baseType == connectingAttribute.baseType
+        if self.baseType == connectingAttribute.baseType:
+            return True
+        return AttributeConverterRegistry.hasConverter(connectingAttribute.baseType, self.baseType)
 
     def connectTo(self, dstAttribute: Attribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
         """
@@ -748,8 +750,7 @@ class Attribute(BaseObject):
         Return True if this Attribute can receive a connection from
         "connectingAttribute", False otherwise.
         """
-        return self._validateIncomingConnection(connectingAttribute) or \
-            AttributeConverterRegistry.hasConverter(connectingAttribute.desc.type, self.desc.type)
+        return self._validateIncomingConnection(connectingAttribute)
 
     # Properties and signals
 

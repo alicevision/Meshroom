@@ -149,12 +149,14 @@ Item {
 
     // Converter badge (hide if there is the for-loop badge)
     Item {
+        z: 1
         x: (root.startX + root.endX) / 2
         y: (root.startY + root.endY) / 2
-        visible: root.hasConverter && !root.isForLoop
+        enabled: root.hasConverter && !root.isForLoop
+        visible: enabled
 
         Rectangle {
-            id: convreterBadge
+            id: converterBadge
             anchors.centerIn: parent
             property int margin: 2
             width: 10
@@ -169,13 +171,23 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.pressed(arguments[0])  // TODO: Select converter
+                acceptedButtons: Qt.RightButton
+                onClicked: (mouse) => converterMenu.popup()
+            }
+
+            ToolTip {
+                visible: converterArea.containsMouse
+                delay: 400
+                text: root.edge ? qsTr(root.edge.converterDescription) : ""
+                x: converterBadge.width + 4
+                y: converterBadge.height - height / 2
             }
         }
     }
 
     EdgeMouseArea {
         id: edgeArea
+        z: 0
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         thickness: root.thickness + 4
@@ -187,5 +199,29 @@ Item {
             root.released(event)
         }
 
+    }
+
+    Menu {
+        id: converterMenu
+        title: "Convert Attribute"
+
+        ButtonGroup {
+            id: converterChoices
+        }
+
+        Instantiator {
+            model: root.edge ? root.edge.availableConverters : []
+            RadioButton {
+                text: modelData.name
+                ButtonGroup.group: converterChoices
+                checked: root.edge && root.edge.converterName === modelData.name
+                onToggled: {
+                    if (checked) root.edge.setConverter(modelData.name)
+                    converterMenu.close()
+                }
+            }
+            onObjectAdded: (index, object) => converterMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => converterMenu.removeItem(object)
+        }
     }
 }

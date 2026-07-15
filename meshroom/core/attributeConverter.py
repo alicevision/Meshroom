@@ -20,6 +20,7 @@ class AttributeConverter(ABC):
     """
 
     name = ""
+    description = ""
     priority = 10  # Put a higher number to prioritize specific converters
 
     # Input / Output classes
@@ -73,7 +74,14 @@ class AttributeConverterRegistry:
     @classmethod
     def getAllConverters(cls) -> list[AttributeConverter]:
         return list(chain.from_iterable(cls._converters.values()))
-    
+
+    @classmethod
+    def getConverterByName(cls, name):
+        for c in cls.getAllConverters():
+            if c.getName() == name:
+                return c
+        return None
+
     @classmethod
     def hasConverter(cls, srcType: "Attribute", dstType: "Attribute") -> list[AttributeConverter]:
         return  ((srcType, dstType)) in cls._converters

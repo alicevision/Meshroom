@@ -3,6 +3,10 @@ from meshroom.core.attributeConverter import AttributeConverter
 
 
 class StringToChoice(AttributeConverter):
+    description = (
+        "Convert a StringParam to a ChoiceParam."
+    )
+    
     priority = 20
     srcType = desc.StringParam
     dstType = desc.ChoiceParam
@@ -17,6 +21,12 @@ class StringToChoiceStrict(AttributeConverter):
     StringToChoice with enforcement that the converted 
     value is included in the destination values.
     """
+    
+    description = (
+        "Convert a StringParam to a ChoiceParam "
+        "if the value is already included in the "
+        "possible values."
+    )
 
     srcType = desc.StringParam
     dstType = desc.ChoiceParam

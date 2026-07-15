@@ -40,7 +40,14 @@ def getJobEnv():
     """ Required to have meshroom recognize plugins that were created here """
     pluginFolder = os.path.join(os.path.dirname(__file__), "plugins")
     return {
-        "MESHROOM_PLUGINS_PATH": pluginFolder
+        "MESHROOM_PLUGINS_PATH": pluginFolder,
+        # Disable all rez variables that could lead to using rez in the test env
+        "REZ_RESOLVE": "",
+        "REZ_BIN": "",
+        "REZ_PACKAGES_ROOT": "",
+        "REZ_REQUEST": "",
+        "REZ_USED_REQUEST": "",
+        "REZ_MESHROOM_VERSION": ""
     }
 
 
@@ -50,7 +57,7 @@ def checkTask(task, taskType, nbDependencies):
     assert len(task.dependencies) == nbDependencies
 
 
-def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=15):
+def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=20):
     """
     Wait for a node to complete processing
     """

@@ -94,6 +94,7 @@ def rezWrapCommand(cmd: str,
         the final command to execute
     """
     packages = set()
+    additionalEnv = additionalEnv or {}
     if useCurrentContext:
         # In this case we want to use the full context
         packages.update([p for p in os.environ.get('REZ_RESOLVE', '').split(" ") if p])
@@ -109,9 +110,10 @@ def rezWrapCommand(cmd: str,
             rezBin = os.path.join(os.environ["REZ_PACKAGES_ROOT"], "bin/rez")
         elif shutil.which("rez"):
             rezBin = shutil.which("rez")
-        if additionalEnv:
-            envVars = " ".join([f'{k}="{v}"' for k, v in additionalEnv.items()])
-        return f"{rezBin} env {packagesStr} -- {envVars} {cmd}"
+        envVars = " ".join([f'{k}="{v}"' for k, v in additionalEnv.items()])
+        cmd = f"{envVars} {cmd}" if envVars else cmd
+        if rezBin:
+            cmd = f"{rezBin} env {packagesStr} -- {cmd}"
     return cmd
 
 

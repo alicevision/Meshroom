@@ -208,6 +208,39 @@ class Menu(BaseObject):
     objects = Property(Variant, lambda self: self._objects, notify=objectsChanged)
 
 
+class MenuExtension:
+    """Object used to extend another existing menu.
+    You can use a MenuExtension and then use the `registerMenuExtension`
+    method of `MeshroomMenuManager` to add entries to a top-level menu.
+    """
+
+    parent: str = None
+
+    def __init__(self):
+        self.parentMenu: Optional[Menu] = None
+
+    def _bind(self, parentMenu: Menu):
+        self.parentMenu = parentMenu
+        self.register()
+
+    def register(self):
+        """ Populate the parent menu with new items. """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} needs to override the 'register' method."
+        )
+
+    def __getattr__(self, name):
+        if not name.startswith("add"):
+            raise AttributeError(
+                f"attribute {name!r} should start with 'add'"
+            )
+        if hasattr(self.parentMenu, name):
+            return getattr(self.parentMenu, name)
+        raise AttributeError(
+            f"{type(self).__name__!r} object has no attribute {name!r}"
+        )
+
+
 class MeshroomMenuManager(BaseObject):
     """
     Registry of all user menus and their objects.
@@ -221,12 +254,17 @@ class MeshroomMenuManager(BaseObject):
 
     _menus: list[Menu] = []
     _objects: dict[str, MenuObject] = {}
+    # _menusByName contains only top-level menus
+    _menusByName: dict[str, Menu] = {}
+    # _menuExtensions can be attached to top-level menus
+    _menuExtensions: dict[str, list["MenuExtension"]] = {}
     
     LIST_OBJ_TYPES = [
         MenuObjectType.RADIOBUTTON.value
     ]
 
     def __init__(self, parent=None):
+        self._indexMenuExtensions()
         super().__init__(parent)
         self._menuModel: ListModel = ListModel(parent=self)
         self._menuModel.setObjectList(self._menus)
@@ -241,8 +279,10 @@ class MeshroomMenuManager(BaseObject):
     @classmethod  
     def clear(cls):  
         """Clear all registered menus and objects. Useful for testing and resetting state."""  
-        cls._menus.clear()  
-        cls._objects.clear()  
+        cls._menus.clear()
+        cls._objects.clear()
+        cls._menusByName.clear()
+        cls._menuExtensions.clear()
 
     @property
     def app(self):
@@ -259,9 +299,34 @@ class MeshroomMenuManager(BaseObject):
                 cls._indexMenu(obj.submenu)
 
     @classmethod
+    def _indexMenuExtensions(cls):
+        for parentMenuName, extensions in cls._menuExtensions.items():
+            parentMenu = cls._menusByName.get(parentMenuName)
+            if parentMenu is None:
+                logging.error(
+                    f"Parent menu '{parentMenuName}' is not registered: "
+                    f"cannot add {len(extensions)} extension(s)"
+                    f" ({', '.join(e.__class__.__name__ for e in extensions)})."
+                )
+                continue
+            for extension in extensions:
+                extension._bind(parentMenu)
+                # re-index parent menus
+                cls._indexMenu(parentMenu)
+
+    @classmethod
     def registerMenu(cls, menu: Menu):
         cls._menus.append(menu)
+        cls._menusByName[menu._name] = menu
         cls._indexMenu(menu)
+
+    @classmethod
+    def registerMenuExtension(cls, extension: MenuExtension):
+        """Register a menu to append to another menu.
+        It's first added in the _menuExtensions dict and then indexed during the initialization
+        of MeshroomMenuManager.
+        """
+        cls._menuExtensions.setdefault(extension.parent, []).append(extension)
 
     def getMenus(self) -> ListModel:
         return self._menuModel

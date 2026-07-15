@@ -18,8 +18,16 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, processEnvFactory, formatNodeDescriptionErrorMessage
+from meshroom.core.plugins import (
+    NodePlugin,
+    NodePluginManager,
+    AttributeConverterRegistry,
+    Plugin,
+    processEnvFactory,
+    formatNodeDescriptionErrorMessage
+)
 from meshroom.core.submitter import BaseSubmitter
+from meshroom.core.desc.attributeConverter import AttributeConverter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
 from .desc import MrNodeType
@@ -195,6 +203,23 @@ def loadClassesSubmitters(folder: str, packageName: str) -> list[BaseSubmitter]:
                              module's search
     """
     return loadClasses(folder, packageName, BaseSubmitter)
+
+
+def loadAttributeConverterClasses(folder: str, packageName: str) -> list[AttributeConverter]:
+    """
+    Return the list of all the AttributeConverter nodes that were found during
+    the search of the Python module named "packageName" that located in the folder
+    "folder". An AttributeConverter node is found if a file within "packageName"
+    contains a class inheriting from `AttributeConverter`.
+
+    Args:
+        folder: the folder to load the module from.
+        packageName: the name of the module to look for nodes in.
+
+    Returns:
+        list[AttributeConverter]: a list of all the atribute converters that were found in the module.
+    """
+    return loadClasses(folder, packageName, AttributeConverter)
 
 
 class Version:
@@ -411,6 +436,28 @@ def loadAllSubmitters(folder) -> list[BaseSubmitter]:
     return submitters
 
 
+def registerAttributeConverter(converter: AttributeConverter):
+    AttributeConverterRegistry.add(converter)
+
+
+def loadAttributeConverter(folder, packageName) -> list[AttributeConverter]:
+    if not os.path.isdir(folder):
+        logging.error(f"AttributeConverter folder '{folder}' does not exist.")
+        return
+
+    return loadAttributeConverterClasses(folder, packageName)
+
+
+def loadAllAttributeConverters(folder) -> list[AttributeConverter]:
+    attributeConverters = []
+    for _, package, ispkg in pkgutil.iter_modules([folder]):
+        if ispkg:
+            converters = loadAttributeConverter(folder, package)
+            if converters:
+                attributeConverters.extend(converters)
+    return attributeConverters
+
+
 def loadPipelineTemplates(folder: str):
     if not os.path.isdir(folder):
         logging.error(f"Pipeline templates folder '{folder}' does not exist.")
@@ -424,6 +471,11 @@ def initNodes():
     additionalNodesPath = EnvVar.getList(EnvVar.MESHROOM_NODES_PATH)
     nodesFolders = [os.path.join(meshroomFolder, "nodes")] + additionalNodesPath
     for f in nodesFolders:
+        # Load converter nodes
+        converterNodes = loadAllAttributeConverters(folder=f)
+        for cn in converterNodes:
+            registerAttributeConverter(cn)
+        # Load nodes
         plugins = loadAllNodes(folder=f)
         if plugins:
             for plugin in plugins:

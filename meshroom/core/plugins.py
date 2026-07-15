@@ -7,7 +7,8 @@ import logging
 import os
 import re
 import sys
-
+from itertools import chain
+from collections import defaultdict
 from enum import Enum
 from inspect import getfile
 from pathlib import Path
@@ -475,6 +476,41 @@ class Plugin(BaseObject):
         """
         return name in self._nodePlugins
 
+class AttributeConverterRegistry:
+    """
+    Registry of available converters
+    """
+
+    _converters = defaultdict(list)  # { (srcType, dstType): [converters] }
+
+    @classmethod
+    def add(cls, converterClass):
+        logging.info(
+            f"Add converter class: {converterClass.__name__} "
+            f"({converterClass.srcType.__name__} -> {converterClass.dstType.__name__})"
+        )
+        if not issubclass(converterClass, desc.AttributeConverter):
+            raise TypeError(f"{converterClass} must subclass AttributeConverter")
+        cls._converters[(converterClass.srcType, converterClass.dstType)].append(converterClass)
+
+    @classmethod
+    def all(cls) -> list[desc.AttributeConverter]:
+        return list(chain.from_iterable(cls._converters.values()))
+
+    @classmethod
+    def getConverters(cls, srcType, dstType) -> list[desc.AttributeConverter]:
+        """ Get priority-ordered converters.
+        """
+        converters = cls._converters.get((srcType, dstType))
+        return sorted(converters, key=lambda c: -c.priority)
+
+    @classmethod
+    def getConverter(cls, srcType, dstType) -> desc.AttributeConverter:
+        """ Get highest priority converter. """
+        converters = cls.getConverters(srcType, dstType)
+        if not converters:
+            return None
+        return converters[0]
 
 class NodePlugin(BaseObject):
     """

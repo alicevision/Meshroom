@@ -41,7 +41,7 @@ class TestPluginLoader:
 
         assert plugin is not None
         assert list(plugin.nodeDescProviders.keys()) == ["MyNode"]
-        assert plugin.nodeDescProviders["MyNode"].status == NodeDescProviderStatus.NOT_LOADED
+        assert plugin.nodeDescProviders["MyNode"].status == NodeDescProviderStatus.VALID
 
         loader.unloadPlugin("flatRootPlugin")
 
@@ -208,9 +208,9 @@ class TestPluginLoader:
         loader.unloadPlugin("userPlugin")
 
     def test_templatesLoaded(self, tmp_path):
-        """ Pipeline templates (".mg" files) at the plugin's root are registered. """
+        """ Pipeline templates (".mgt" files) at the plugin's root are registered. """
         writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
-        writeFile(tmp_path / "meshroom/myTemplate.mg", "{}")
+        writeFile(tmp_path / "meshroom/myTemplate.mgt", "{}")
 
         loader = PluginLoader()
         plugin = loader.loadPlugin("templatePlugin", str(tmp_path), PluginType.PATH)

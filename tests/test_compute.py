@@ -15,9 +15,8 @@ from pathlib import Path
 import logging
 
 from meshroom.core.graph import Graph, loadGraph
-from meshroom.core import desc, pluginManager, loadClassesNodes
+from meshroom.core import desc, pluginManager
 from meshroom.core.node import Status, ChunkIndex
-from meshroom.core.plugins.base import Plugin
 from .utils import registerNodeDesc, unregisterNodeDesc
 
 LOGGER = logging.getLogger("TestCompute")
@@ -241,24 +240,17 @@ class TestLockUpdates:
     Tests for node locking behaviour during status transitions. Nodes should be properly locked when they undergo
     computation statuses and unlocked when their status is reset (through parameter changes, for example).
     """
-    plugin = None
 
     @classmethod
     def setup_class(cls):
-        folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
-        package = "pluginA"
-        cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
-        for node in nodes:
-            cls.plugin.addNodeDescProvider(node)
-        pluginManager.addPlugin(cls.plugin)
+        folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginA")
+        pluginManager.addPluginFromPath("pluginA", folder)
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodeDescProviders.values():
-            pluginManager.unregisterNode(node)
-        pluginManager.removePlugin(cls.plugin)
-        cls.plugin = None
+        plugin = pluginManager.getPlugin("pluginA")
+        if plugin:
+            pluginManager.removePlugin(plugin)
 
     @staticmethod
     def checkNodeStatusAndLock(node, expectedStatus, expectedLock):

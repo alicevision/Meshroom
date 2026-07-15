@@ -13,7 +13,7 @@ from pathlib import Path
 
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
-from meshroom.core.plugins.base import Plugin, PluginType, NodeDescProvider
+from meshroom.core.plugins.base import Plugin, PluginType
 
 # The virtual package all the imported plugins are nested in.
 # Registered directly in sys.modules.
@@ -66,7 +66,7 @@ class PluginLoader:
         folder. Every standalone Python file at its root, every direct subfolder that is a real
         Python package, and every standalone Python file directly inside a plain (non-package)
         subfolder is loaded. A NodeDescProvider is created for each node description that is found.
-        A SubmitterProvider for each submitter class, that is found. The templates and the configuration 
+        A SubmitterProvider for each submitter class, that is found. The templates and the configuration
         file are read from "pluginFolder".
 
         Args:
@@ -105,8 +105,7 @@ class PluginLoader:
             return None
 
         # Initialize the plugin object.
-        plugin = Plugin(pluginName, mrFolder)
-        plugin.isUserPlugin = isUserPlugin
+        plugin = Plugin(pluginName, mrFolder, pluginType, isUserPlugin)
 
         # Recursive load of modules.
         issues = _LoadIssues()
@@ -116,7 +115,7 @@ class PluginLoader:
         issues.log(pluginName)
 
         # Check if the plugin is empty.
-        if (len(plugin.nodeDescProviders) <= 0 
+        if (len(plugin.nodeDescProviders) <= 0
                 and len(plugin.submitterProviders) <= 0
                 and len(plugin.templates) <= 0):
             return None
@@ -297,13 +296,17 @@ class PluginLoader:
 
             if issubclass(attr, desc.BaseNode):
                 try:
-                    plugin.addNodeDescProvider(NodeDescProvider(attr, plugin))
+                    nodeDescProvider = plugin.addNodeDescProvider(attr)
+                    if nodeDescProvider.error:
+                        issues.nodeDescProviders.append(nodeDescProvider.error)
                 except Exception as exc:
                     issues.nodeDescProviders.append(f'Failed to create the node provider for "{attrName}" from '
                                 f'"{module.__file__}"{self._formatExceptionMessage(exc)}')
             elif issubclass(attr, BaseSubmitter):
                 try:
-                    plugin.addSubmitterProvider(attr)
+                    submitterProvider = plugin.addSubmitterProvider(attr)
+                    if submitterProvider.error:
+                        issues.submitterProviders.append(submitterProvider.error)
                 except Exception as exc:
                     issues.submitterProviders.append(f'Failed to create the submitter provider for "{attrName}" from '
                                 f'"{module.__file__}"{self._formatExceptionMessage(exc)}')

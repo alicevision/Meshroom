@@ -1014,11 +1014,15 @@ class UIGraph(QObject):
         if not newName:
             # Empty string -> reset to default
             newName = node.defaultLabel
-        # Create unique name
-        uniqueName = self._graph._createUniqueNodeName(newName, {n._name for n in self._graph._nodes if n != node})
-        if not newName or uniqueName == node._name:
+        # Eliminate all characters except digits and letters and underscore
+        newName = re.sub(r"[^0-9a-zA-Z\_]", "", newName)
+        if not newName:
             return ""
-        return self.push(commands.RenameNodeCommand(self._graph, node, uniqueName, taskManager=self.taskManager))
+        # Create unique name
+        newName = self._graph._createUniqueNodeName(newName, {n._name for n in self._graph._nodes if n != node})
+        if newName == node._name:
+            return ""
+        return self.push(commands.RenameNodeCommand(self._graph, node, newName, taskManager=self.taskManager))
 
     def moveNode(self, node: Node, position: Position):
         """

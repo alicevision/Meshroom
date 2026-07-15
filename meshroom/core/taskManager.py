@@ -453,7 +453,7 @@ class TaskManager(BaseObject):
         compatNodes = []
         for node in nodes:
             if node in graph._compatibilityNodes.values():
-                compatNodes.append(node.nameToLabel(node.name))
+                compatNodes.append(node.name)
         if compatNodes:
             # Warning: Syntax and terms are parsed on QML side to recognize the error
             # Syntax : [Context] ErrorType: ErrorMessage
@@ -469,7 +469,7 @@ class TaskManager(BaseObject):
                     # Syntax : [Context] ErrorType: ErrorMessage
                     raise RuntimeError(f"[{context}] Duplicates Issue:\n"
                                        f"Cannot compute because there are some duplicate nodes to process:\n\n"
-                                       f"First match: '{node.nameToLabel(node.name)}' and '{node.nameToLabel(duplicate.name)}'\n\n"
+                                       f"First match: '{node.name}' and '{duplicate.name}'\n\n"
                                        f"There can be other duplicate nodes in the list. "
                                        f"Please, check the graph and try again.")
 

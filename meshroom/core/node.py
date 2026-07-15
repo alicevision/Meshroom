@@ -946,7 +946,7 @@ class BaseNode(BaseObject):
             label = self.internalAttribute("label").value.strip()
             if label:
                 return label
-        return self.getDefaultLabel()
+        return self.getName()
 
     def getNodeLogLevel(self) -> str:
         """
@@ -1020,16 +1020,6 @@ class BaseNode(BaseObject):
         if self.hasInternalAttribute("nodeHeight"):
             return self.internalAttribute("nodeHeight").value
         return 0
-
-
-    @Slot(str, result=str)
-    def nameToLabel(self, name):
-        """
-        Returns:
-            str: the high-level label from the technical node name
-        """
-        t, idx = name.rsplit("_", 1) if "_" in name else (name, "1")
-        return f"{t}{idx if int(idx) > 1 else ''}"
 
     def getDocumentation(self):
         if not self.nodeDesc:

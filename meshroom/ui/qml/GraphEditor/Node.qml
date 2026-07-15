@@ -232,11 +232,11 @@ Item {
             const currentNode = node.duplicates.at(i)
 
             if (i === node.duplicates.count - 1) {
-                str += currentNode.nameToLabel(currentNode.name)
+                str += currentNode.name
                 return str
             }
 
-            str += (currentNode.nameToLabel(currentNode.name) + ", ")
+            str += (currentNode.name + ", ")
         }
         return str
     }

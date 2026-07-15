@@ -570,8 +570,7 @@ class Graph(BaseObject):
         # Rename in the dict model
         self._nodes.rename(node._name, newName)
         # Finally rename the node name property and notify Qt
-        node._name = newName
-        node.nodeNameChanged.emit()
+        node.name = newName
 
     def copyNode(self, srcNode: Node, withEdges: bool=False):
         """
@@ -760,10 +759,11 @@ class Graph(BaseObject):
         existingNodeNames = existingNames or set(self._nodes.objects.keys())
 
         idx = 1
+        newName = inputName
         while idx:
-            newName = f"{inputName}_{idx}"
             if newName not in existingNodeNames:
                 return newName
+            newName = f"{inputName}_{idx}"
             idx += 1
 
     def node(self, nodeName) -> Optional[Node]:

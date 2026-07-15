@@ -1,5 +1,3 @@
-# desc/node.py
-
 import enum
 from inspect import getfile, getattr_static
 from pathlib import Path
@@ -63,19 +61,12 @@ class MrNodeType(enum.Enum):
     BACKDROP = enum.auto()
 
 
-class MeshroomCommandWrapper:
-    def __call__(self, node, command: str) -> str:
-        return command
-
-
 class StageSettings(SimpleNamespace):
     def __init__(self, cpu=Level.NORMAL, ram=Level.NORMAL, gpu=Level.NONE, **kwargs):
         super().__init__(**kwargs)
         self.cpu = cpu.value if hasattr(cpu, "value") else cpu
         self.ram = ram.value if hasattr(cpu, "value") else cpu
         self.gpu = gpu.value if hasattr(cpu, "value") else cpu
-        # Wraps the stage command
-        self.wrapCommand = MeshroomCommandWrapper()
 
     def __contains__(self, item):
         return item in self.__dict__

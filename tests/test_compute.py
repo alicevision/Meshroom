@@ -157,7 +157,7 @@ class TestNodeLogger:
         for chunkIndex, logFile in logFiles.items():
             with open(logFile, "r") as f:
                 content = f.read()
-                reg = re.compile(self.logPrefix + r"\(chunk.logger\) TestNodeA_1")
+                reg = re.compile(self.logPrefix + r"\(chunk.logger\) TestNodeA")
                 assert len(reg.findall(content)) == 1
                 reg = re.compile(self.logPrefix + r"\(root logger\) " + f"{chunkIndex}/2")
                 assert len(reg.findall(content)) == 1
@@ -167,7 +167,7 @@ class TestNodeLogger:
         for chunkIndex, logFile in logFiles.items():
             with open(logFile, "r") as f:
                 content = f.read()
-                reg = re.compile(self.logPrefix + r"\(chunk.logger\) TestNodeB_1")
+                reg = re.compile(self.logPrefix + r"\(chunk.logger\) TestNodeB")
                 assert len(reg.findall(content)) == 1
                 reg = re.compile(self.logPrefix + r"\(root logger\) 0/0")
                 assert len(reg.findall(content)) == 1
@@ -181,7 +181,7 @@ class TestNodeLogger:
         for _, logFile in logFiles.items():
             with open(logFile, "r") as f:
                 content = f.read()
-                reg = re.compile(self.logPrefix + "TestNodeC_1")
+                reg = re.compile(self.logPrefix + "TestNodeC")
                 assert len(reg.findall(content)) == 1
 
     def test_processChunkInEnvironment_quotesGraphFilepathWithSpaces(self, tmp_path):
@@ -228,7 +228,7 @@ class TestNodeLogger:
         def check_file(path, suffix=""):
             with open(path, "r") as f:
                 content = f.read()
-                reg = re.compile(self.logPrefix + "TestNodeD_1" + suffix)
+                reg = re.compile(self.logPrefix + "TestNodeD" + suffix)
                 assert len(reg.findall(content)) == 1
 
         check_file(preprocessLog, r" \(preprocess\)")

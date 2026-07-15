@@ -448,7 +448,7 @@ class TestTemplateSerialization:
             graph.addNewNode("SimpleNode")
 
             data = graph.serialize(asTemplate=True)
-            nodeData = data["graph"]["SimpleNode_1"]
+            nodeData = data["graph"]["SimpleNode"]
 
             assert "outputs" not in nodeData
             assert "uid" not in nodeData
@@ -461,7 +461,7 @@ class TestTemplateSerialization:
             graph.addNewNode("SimpleNode")
 
             data = graph.serialize(asTemplate=True)
-            nodeData = data["graph"]["SimpleNode_1"]
+            nodeData = data["graph"]["SimpleNode"]
 
             # All inputs are at default, so inputs should be empty or absent
             assert nodeData.get("inputs", {}) == {}
@@ -474,7 +474,7 @@ class TestTemplateSerialization:
             node.attribute("input").value = "/some/path"
 
             data = graph.serialize(asTemplate=True)
-            nodeData = data["graph"]["SimpleNode_1"]
+            nodeData = data["graph"]["SimpleNode"]
 
             assert nodeData["inputs"]["input"] == "/some/path"
 

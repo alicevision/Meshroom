@@ -116,9 +116,9 @@ def test_rename_nodes():
     ls2 = graph.addNewNode("Ls")
 
     # Test with empty string
-    assert ls0.name == "Ls_1"
+    assert ls0.name == "Ls"
     graph.renameNode(ls0, "")
-    assert ls0.name == "Ls_1"
+    assert ls0.name == "Ls"
 
     # Rename
     graph.renameNode(ls0, "nodels")

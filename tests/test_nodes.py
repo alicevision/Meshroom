@@ -80,7 +80,8 @@ class TestNodeInfo:
         nodeInfo = {item["key"]: item["value"] for item in node.getNodeInfo()}
         assert nodeInfo["module"].endswith("pluginC.PluginCNodeA")
         pluginPath = os.path.join(self.folder, "pluginC", "PluginCNodeA.py")
-        assert nodeInfo["modulePath"] == Path(pluginPath).as_posix()  # modulePath seems to follow Linux convention
+        # modulePath seems to follow Linux convention
+        assert nodeInfo["modulePath"] == Path(pluginPath).resolve().as_posix()
         assert nodeInfo["author"] == "testAuthor"
         assert nodeInfo["license"] == "no-license"
         assert nodeInfo["version"] == "1.0"
@@ -256,7 +257,7 @@ class TestBackdropNode:
 
         # Reload the graph and check the values for the backdrop node are the default ones
         g = loadGraph(graphFile)
-        backdrop = g.node("Backdrop_1")
+        backdrop = g.node("Backdrop")
         assert backdrop is not None
         assert backdrop.nodeWidth == 600
         assert backdrop.nodeHeight == 400
@@ -290,7 +291,7 @@ class TestBackdropNode:
 
         # Reload the graph and check the values for the backdrop node are the default ones
         g = loadGraph(graphFile)
-        backdrop = g.node("Backdrop_1")
+        backdrop = g.node("Backdrop")
         assert backdrop is not None
         assert backdrop.nodeWidth == 400
         assert backdrop.nodeHeight == 200
@@ -310,7 +311,7 @@ class TestBackdropNode:
 
         # Reload the graph and check both nodes are present
         g = loadGraph(templateFile)
-        assert g.node("Backdrop_1") is not None
+        assert g.node("Backdrop") is not None
 
     def test_backdropNode_templateSerialization_customAttributes(self):
         """ Test that a backdrop node with custom values is correctly saved as a template. """
@@ -326,7 +327,7 @@ class TestBackdropNode:
 
         # Reload and verify custom values are preserved
         g = loadGraph(templateFile)
-        backdrop = g.node("Backdrop_1")
+        backdrop = g.node("Backdrop")
         assert backdrop is not None
         assert backdrop.nodeWidth == 400
         assert backdrop.comment == "Template backdrop"

@@ -34,7 +34,7 @@ class TaskThread(QThread):
     """
     A thread with a pile of nodes to compute
     """
-    def __init__(self, manager):
+    def __init__(self, manager: "TaskManager"):
         QThread.__init__(self)
         self._state = State.IDLE
         self._manager = manager
@@ -397,6 +397,11 @@ class TaskManager(BaseObject):
         if name in self._nodes.keys():
             return True
         return False
+
+    def renameNode(self, node, newName):
+        """ Rename the node in the taskManager model. """
+        if self.containsNodeName(node.name):
+            self._nodes.rename(node.name, newName)
 
     def removeNode(self, node, displayList=True, processList=False, externList=False):
         """ Remove node from the Task Manager.

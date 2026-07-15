@@ -931,7 +931,11 @@ class BaseNode(BaseObject):
         return self._name
 
     def getDefaultLabel(self):
-        return self.nameToLabel(self._name)
+        return self.nodeType
+
+    def setName(self, value):
+        self._name = value
+        self.nodeNameChanged.emit()
 
     def getLabel(self) -> str:
         """
@@ -2312,7 +2316,7 @@ class BaseNode(BaseObject):
 
 
     nodeNameChanged = Signal()
-    name = Property(str, getName, notify=nodeNameChanged)
+    name = Property(str, getName, setName, notify=nodeNameChanged)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)

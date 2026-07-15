@@ -334,7 +334,7 @@ Item {
                     }
                 }
                 Label {
-                    text: object.label
+                    text: object.name
                     elide: Text.ElideRight
                     Layout.preferredWidth: 200
                     Layout.preferredHeight: parent.height

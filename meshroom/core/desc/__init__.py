@@ -50,6 +50,6 @@ from .node import (
     NodeVersionType,
     NodeVersionTypeEnum,
     MeshroomCommandWrapper,
-    SubmitionSettings,
+    SubmissionSettings,
     StageSettings,
 )

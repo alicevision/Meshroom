@@ -81,7 +81,7 @@ class StageSettings(SimpleNamespace):
         return item in self.__dict__
 
 
-class SubmitionSettings:
+class SubmissionSettings:
     def __init__(self, node):
         """Holds infos used when we submit the node for remote computing.
 
@@ -96,10 +96,10 @@ class SubmitionSettings:
         self.process.licenses = node.nodeDesc._licenses
         # Retrocompatibility behaviour
         if hasattr(node.nodeDesc, "_cuda_tag"):
-            logging.warning(f"DepreciationWarning : Node of type {node.nodeDesc} use '_cuda_tag'. Please use SubmitionSettings instead.")
+            logging.warning(f"DepreciationWarning : Node of type {node.nodeDesc} use '_cuda_tag'. Please use SubmissionSettings instead.")
             self.process.cuda_tag = node.nodeDesc._cuda_tag
         if hasattr(node.nodeDesc, "_service_key"):
-            logging.warning(f"DepreciationWarning : Node of type {node.nodeDesc} use '_service_key'. Please use SubmitionSettings instead.")
+            logging.warning(f"DepreciationWarning : Node of type {node.nodeDesc} use '_service_key'. Please use SubmissionSettings instead.")
             self.process.service_key = node.nodeDesc._service_key
 
     def getStageSettings(self, stageName="process"):
@@ -439,14 +439,14 @@ class BaseNode(object):
         """
         pass
 
-    def getSubmitionSettings(self, node) -> SubmitionSettings:
+    def getSubmissionSettings(self, node) -> SubmissionSettings:
         """ Gets invoked when we submit the node on farm.
-        SubmitionSettings contain all the settings that we can use on the submitter
+        SubmissionSettings contain all the settings that we can use on the submitter
 
         Args:
             node: The BaseNode instance about to be processed.
         """
-        return SubmitionSettings(node)
+        return SubmissionSettings(node)
 
     def preprocess(self, node):
         """ Gets invoked just before the processChunk method for the node.

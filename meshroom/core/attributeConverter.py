@@ -4,7 +4,7 @@ attributeConverter: base descriptors class for AttributeConverter nodes
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 from collections import defaultdict
 from itertools import chain
 
@@ -19,13 +19,19 @@ class AttributeConverter(ABC):
     so a connection can be made between them.
     """
 
-    name = ""
-    description = ""
-    priority = 10  # Put a higher number to prioritize specific converters
+    name: ClassVar[str] = ""
+    description: ClassVar[str] = ""
+    priority: ClassVar[int] = 10  # Put a higher number to prioritize specific converters
 
     # Input / Output classes
-    srcType: "Attribute" = None
-    dstType: "Attribute" = None
+    srcType: ClassVar["Attribute"] = None
+    dstType: ClassVar["Attribute"] = None
+    
+    def __init__(self):
+        if not all ((self.srcType, self.dstType)):
+            raise TypeError(
+                f"Class '{self.__class__.__name__}' must define srcType and dstType."
+            )
 
     @classmethod
     def getName(cls):
@@ -57,12 +63,12 @@ class AttributeConverterRegistry:
 
     @classmethod
     def add(cls, converter: AttributeConverter):
+        if not issubclass(converter.__class__, AttributeConverter):
+            raise TypeError(f"{converter} parent class must subclass AttributeConverter")
         logging.info(
             f"Add converter class: {converter.getName()} "
             f"({converter.srcType.__name__} -> {converter.dstType.__name__})"
         )
-        if not issubclass(converter.__class__, AttributeConverter):
-            raise TypeError(f"{converter} parent class must subclass AttributeConverter")
         cls._converters[(converter.srcType.__name__, converter.dstType.__name__)].append(converter)
 
     @classmethod

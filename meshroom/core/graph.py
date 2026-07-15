@@ -585,7 +585,7 @@ class Graph(BaseObject):
 
         def _renameClashingNodes(converterMap):
             if not self.nodes:
-                return
+                return converterMap
             unavailableNames = set(self.nodes.keys())
             for node in graph.nodes:
                 oldName = node._name

@@ -442,7 +442,7 @@ def registerAttributeConverter(converter: AttributeConverter):
 def loadAttributeConverter(folder, packageName) -> list[AttributeConverter]:
     if not os.path.isdir(folder):
         logging.error(f"AttributeConverter folder '{folder}' does not exist.")
-        return
+        return []
 
     return loadAttributeConverterClasses(folder, packageName)
 

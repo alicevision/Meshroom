@@ -14,7 +14,7 @@ from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core.desc.validators import NotEmptyValidator
 from meshroom.core import desc, hashValue
-from meshroom.core.attributeConverter import AttributeConverter, AttributeConverterRegistry
+from meshroom.core.attributeConverter import AttributeConverterRegistry
 from meshroom.core.desc import Attribute as AttributeDescription
 
 from meshroom.core.keyValues import KeyValues

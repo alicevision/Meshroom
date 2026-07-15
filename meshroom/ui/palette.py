@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, Qt, Slot, Property, Signal
+from PySide6.QtCore import QObject, Qt, Slot, Property, Signal, QTimer
 from PySide6.QtGui import QPalette, QColor
 from PySide6.QtWidgets import QApplication
 
@@ -53,9 +53,9 @@ class PaletteManager(QObject):
             app.setPalette(self.defaultPalette)
         else:
             app.setPalette(self.darkPalette)
-        if self.qmlEngine.rootObjects():
-            self.qmlEngine.reload()
         self.paletteChanged.emit()
+        if self.qmlEngine.rootObjects():
+            QTimer.singleShot(0, self.qmlEngine.reload)
 
     paletteChanged = Signal()
     palette = Property(QPalette, lambda self: QApplication.instance().palette(), notify=paletteChanged)

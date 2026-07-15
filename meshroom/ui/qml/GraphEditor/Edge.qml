@@ -4,6 +4,7 @@ import QtQuick.Shapes 1.6
 
 import GraphEditor 1.0
 import MaterialIcons 2.2
+import Utils 1.0
 
 /**
  * A cubic spline representing an edge, going from point1 to point2, providing mouse interaction.
@@ -22,6 +23,8 @@ Item {
     property bool isForLoop: false
     property int loopSize: 0
     property int iteration: 0
+
+    readonly property bool hasConverter: edge !== undefined && edge !== null && edge.hasConverter === true
 
     // Note: edgeArea is destroyed before path, so we need to test if not null to avoid warnings.
     readonly property bool containsMouse: (loopArea && loopArea.containsMouse) || (edgeArea && edgeArea.containsMouse)
@@ -109,6 +112,7 @@ Item {
         }
     }
 
+    // For-loop badge
     Item {
         // Place the label at the middle of the edge
         x: (root.startX + root.endX) / 2
@@ -139,6 +143,33 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: root.pressed(arguments[0])
+            }
+        }
+    }
+
+    // Converter badge (hide if there is the for-loop badge)
+    Item {
+        x: (root.startX + root.endX) / 2
+        y: (root.startY + root.endY) / 2
+        visible: root.hasConverter && !root.isForLoop
+
+        Rectangle {
+            id: convreterBadge
+            anchors.centerIn: parent
+            property int margin: 2
+            width: 10
+            height: width
+            radius: width
+            color: Colors.lightpurple
+            border.color: "#aaa"
+            border.width: 0.5
+
+            MouseArea {
+                id: converterArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.pressed(arguments[0])  // TODO: Select converter
             }
         }
     }

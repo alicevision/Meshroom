@@ -29,14 +29,6 @@ class MenuCallback:
         pass
 
 
-class MenuObjectType(Enum):
-    MENU = "menu"
-    SEPARATOR = "separator"
-    BUTTON = "button"
-    CHECKBOX = "checkbox"
-    RADIOBUTTON = "radioButton"
-
-
 class MenuItem(BaseObject):
     """A simple (name, label) pair, used for radio button entries."""
 
@@ -54,54 +46,28 @@ class MenuItem(BaseObject):
 
 
 class MenuObject(BaseObject):
+    """Item registered as an entry in a menu.
     """
-    Item registered as an entry in a menu.
-    Can be either: a menu, a separator, a button, a checkbox, a radioButton.
-    """
-
-    def __init__(self, parent: "Menu", callback: Optional[MenuCallback],
-                 menuObjectType: MenuObjectType, **kwargs):
-        if menuObjectType not in MenuObjectType:
-            raise ValueError(
-                f"Invalid MenuObject type: {menuObjectType} (valid types are " +
-                ", ".join(m.name for m in MenuObjectType) + ")"
-            )
-
+    def __init__(self, parent: "Menu", callback: Optional[MenuCallback], **kwargs):
         super().__init__(parent)
+
+        self.menuObjectType = None
 
         self._uid: str = uuid.uuid4().hex
         self.parentMenu: "Menu" = parent
         self.callback: Callable = callback
-        self.menuObjectType: MenuObjectType = menuObjectType
 
         # General properties
         self._name: str = kwargs.get("name", "")
         self._label: str = kwargs.get("label", self._name)
-        self._icon: str = kwargs.get("icon", "")
-        self._tooltip: str = kwargs.get("tooltip", "")
-        self._shortcut: str = kwargs.get("shortcut", "")
+        self._icon: str = kwargs.get("icon") or ""
+        self._tooltip: str = kwargs.get("tooltip") or ""
+        self._shortcut: str = kwargs.get("shortcut") or ""
         self.index: int = kwargs.get("index", -1)
 
-        # Menu
-        self._submenu: "Menu" = kwargs.get("submenu", None)
-        # Checkbox
-        self._checked: bool = kwargs.get("checked", False)
-        # Radio Button
-        self._items: list = kwargs.get("items") or []
-        self._selectedUid: str = kwargs.get("selectedUid", "")
-
-    def _setSubmenu(self, menu: "Menu"):
-        self._submenu = menu
-
-    def _setChecked(self, value):
-        if self._checked != value:
-            self._checked = value
-            self.checkedChanged.emit()
-
-    def _setSelectedUid(self, value):
-        if self._selectedUid != value:
-            self._selectedUid = value
-            self.selectedUidChanged.emit()
+    @classmethod
+    def allMenuTypes(cls):
+        return [t.menuObjectType for t in cls.__subclasses__()]
 
     def trigger(self, app, **kwargs):
         if self.callback is not None:
@@ -109,17 +75,64 @@ class MenuObject(BaseObject):
         return None
 
     uid = Property(str, lambda self: self._uid, constant=True)
-    objectType = Property(str, lambda self: self.menuObjectType.value, constant=True)
+    objectType = Property(str, lambda self: self.menuObjectType, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     icon = Property(str, lambda self: self._icon, constant=True)
     tooltip = Property(str, lambda self: self._tooltip, constant=True)
     shortcut = Property(str, lambda self: self._shortcut, constant=True)
-    # type: Menu
+
+
+class MenuTypeMenu(MenuObject):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.menuObjectType = "menu"
+        self._submenu: "Menu" = kwargs.get("submenu", None)
+
+    def _setSubmenu(self, menu: "Menu"):
+        self._submenu = menu
+
     submenu = Property(Variant, lambda self: self._submenu, constant=True)
-    # type: Checkbox
+
+
+class MenuTypeSeparator(MenuObject):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.menuObjectType = "separator"
+
+
+class MenuTypeButton(MenuObject):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.menuObjectType = "button"
+
+
+class MenuTypeCheckbox(MenuObject):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.menuObjectType = "checkbox"
+        self._checked: bool = kwargs.get("checked", False)
+
+    def _setChecked(self, value):
+        if self._checked != value:
+            self._checked = value
+            self.checkedChanged.emit()
+
     checkedChanged = Signal()
     checked = Property(bool, lambda self: self._checked, _setChecked, notify=checkedChanged)
-    # type: RadioButton
+
+
+class MenuTypeRadiobutton(MenuObject):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.menuObjectType = "radiobutton"
+        self._items: list = kwargs.get("items") or []
+        self._selectedUid: str = kwargs.get("selectedUid", "")
+
+    def _setSelectedUid(self, value):
+        if self._selectedUid != value:
+            self._selectedUid = value
+            self.selectedUidChanged.emit()
+
     selectedUidChanged = Signal()
     selectedUid = Property(str, lambda self: self._selectedUid, _setSelectedUid, notify=selectedUidChanged)
     items = Property("QVariantList", lambda self: self._items, constant=True)
@@ -137,10 +150,8 @@ class Menu(BaseObject):
         self._tooltip: str = tooltip or ""
         self.parentMenu: "Menu" = parent
         self.index: int = index
-        self.menuObject = MenuObject(
-            parent=self, callback=None, menuObjectType=MenuObjectType.MENU,
-            # and kwargs :
-            name=name, label=name, icon=icon, tooltip=tooltip, index=index
+        self.menuObject = MenuTypeMenu(
+            self, None, name=name, label=name, icon=icon, tooltip=tooltip, index=index
         )
         self._objects: ListModel = ListModel(parent=self)
         self._initialized = False
@@ -159,24 +170,21 @@ class Menu(BaseObject):
         return submenu
 
     def addSeparator(self, index=-1):
-        obj = MenuObject(self, None, MenuObjectType.SEPARATOR, index=index)
+        obj = MenuTypeSeparator(self, None, index=index)
         self._addObject(obj)
         return obj
 
     def addButton(self, name, callback: MenuCallback, label=None,
                   icon=None, tooltip="", index=-1, shortcut=None):
-        obj = MenuObject(self, callback, MenuObjectType.BUTTON,
-                         name=name, label=label or name, icon=icon,
-                         tooltip=tooltip, index=index, shortcut=shortcut)
+        obj = MenuTypeButton(self, callback, name=name, label=label or name, icon=icon, 
+                             tooltip=tooltip, index=index, shortcut=shortcut)
         self._addObject(obj)
         return obj
 
     def addCheckbox(self, name, callback: MenuCallback, label=None, icon=None,
                      tooltip="", index=-1, shortcut=None, checked=False):
-        obj = MenuObject(self, callback, MenuObjectType.CHECKBOX,
-                          name=name, label=label or name, icon=icon,
-                          tooltip=tooltip, index=index, shortcut=shortcut,
-                          checked=checked)
+        obj = MenuTypeCheckbox(self, callback, name=name, label=label or name, icon=icon, 
+                               tooltip=tooltip, index=index, shortcut=shortcut, checked=checked)
         self._addObject(obj)
         return obj
 
@@ -188,9 +196,9 @@ class Menu(BaseObject):
         for item in items:
             item.setParent(self)
 
-        group = MenuObject(self, callback, MenuObjectType.RADIOBUTTON,
-                           name=name, label=label or name, icon=icon,
-                           tooltip=tooltip, index=index, items=items)
+        group = MenuTypeRadiobutton(self, callback, name=name, label=label or name,
+                                    icon=icon, tooltip=tooltip, index=index, items=items)
+
         if items:
             group.selectedUid = items[0].name
         self._addObject(group)
@@ -259,9 +267,7 @@ class MeshroomMenuManager(BaseObject):
     # _menuExtensions can be attached to top-level menus
     _menuExtensions: dict[str, list["MenuExtension"]] = {}
     
-    LIST_OBJ_TYPES = [
-        MenuObjectType.RADIOBUTTON.value
-    ]
+    LIST_OBJ_TYPES = (MenuTypeRadiobutton,)
 
     def __init__(self, parent=None):
         self._indexMenuExtensions()
@@ -295,7 +301,7 @@ class MeshroomMenuManager(BaseObject):
         cls._objects[menu.menuObject.uid] = menu.menuObject
         for obj in menu._objects:  # iterate CoreListModel/QObjectListModel directly
             cls._objects[obj.uid] = obj
-            if obj.objectType == MenuObjectType.MENU.value:
+            if isinstance(obj, MenuTypeMenu):
                 cls._indexMenu(obj.submenu)
 
     @classmethod
@@ -355,7 +361,7 @@ class MeshroomMenuManager(BaseObject):
     @Slot(str, str)
     def triggerListEntry(self, groupUid: str, entryName: str):
         obj = self.getObject(groupUid)
-        if obj is None or obj.menuObjectType in self.LIST_OBJ_TYPES:
+        if not isinstance(obj, self.LIST_OBJ_TYPES):
             return
         item = next((i for i in obj.items if i.name == entryName), None)
         if item is None:

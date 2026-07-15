@@ -95,7 +95,7 @@ Menu {
                     _createdItems.push(subMenu)
                     break
                 }
-                case "radioButton": {
+                case "radiobutton": {
                     const groupMenu = radioMenuComponent.createObject(null, {"itemData": itemData})
                     root.insertMenu(i, groupMenu)
                     _createdItems.push(groupMenu)

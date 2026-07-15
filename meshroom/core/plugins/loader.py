@@ -12,6 +12,7 @@ from typing import List, Optional
 from meshroom.common import BaseObject
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
+from meshroom.core.desc.attributeConverter import AttributeConverter, AttributeConverterRegistry
 from meshroom.core.plugins.base import PluginType, PluginContext, Plugin
 from meshroom.core.plugins.metadata import PluginMetadata
 
@@ -357,6 +358,8 @@ class PluginLoader:
                         f'Failed to create the node provider for "{attrName}" from '
                         f'"{module.__file__}"{self._formatExceptionMessage(exc)}'
                     )
+            elif issubclass(attr, AttributeConverter) and attr is not AttributeConverter:
+                AttributeConverterRegistry.add(attr)
             elif issubclass(attr, BaseSubmitter):
                 try:
                     submitterProvider = plugin.addSubmitterProvider(attr)

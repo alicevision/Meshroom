@@ -2,7 +2,10 @@
 attributeConverter: base descriptors class for AttributeConverter nodes
 """
 
+import logging
 from abc import ABC, abstractmethod
+from collections import defaultdict
+from itertools import chain
 from .attribute import Attribute
 
 
@@ -43,3 +46,40 @@ class AttributeConverter(ABC):
 
     def __repr__(self):
         return f"<AttributeConverter '{self.__class__.__name__}': {self.srcType} -> {self.dstType}>"
+
+
+class AttributeConverterRegistry:
+    """
+    Registry of available converters
+    """
+
+    _converters = defaultdict(list)  # { (srcType, dstType): [converters] }
+
+    @classmethod
+    def add(cls, converterClass):
+        logging.info(
+            f"Add converter class: {converterClass.__name__} "
+            f"({converterClass.srcType.__name__} -> {converterClass.dstType.__name__})"
+        )
+        if not issubclass(converterClass, AttributeConverter):
+            raise TypeError(f"{converterClass} must subclass AttributeConverter")
+        cls._converters[(converterClass.srcType, converterClass.dstType)].append(converterClass)
+
+    @classmethod
+    def all(cls) -> list[AttributeConverter]:
+        return list(chain.from_iterable(cls._converters.values()))
+
+    @classmethod
+    def getConverters(cls, srcType, dstType) -> list[AttributeConverter]:
+        """ Get priority-ordered converters.
+        """
+        converters = cls._converters.get((srcType, dstType))
+        return sorted(converters, key=lambda c: -c.priority)
+
+    @classmethod
+    def getConverter(cls, srcType, dstType) -> AttributeConverter:
+        """ Get highest priority converter. """
+        converters = cls.getConverters(srcType, dstType)
+        if not converters:
+            return None
+        return converters[0]

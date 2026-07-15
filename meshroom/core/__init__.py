@@ -18,6 +18,7 @@ from meshroom.core.plugins import initLocalPluginsFolder, meshroomPluginsFolder,
 from meshroom.core.plugins.manager import PluginManager
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension, isTemplateFile
 from meshroom.core.submitter import BaseSubmitter
+from meshroom.core.desc.attributeConverter import AttributeConverterRegistry  # noqa: F401
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
 from .desc import MrNodeType

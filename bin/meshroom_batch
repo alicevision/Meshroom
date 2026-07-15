@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import re
-from collections import defaultdict
 
 import meshroom.core.graph
 from meshroom.common import strtobool
@@ -250,12 +249,9 @@ with meshroom.core.graph.GraphModification(graph):
             inputNode.nodeDesc.initialize(inputNode, input, inputRec)
 
     if args.graphInput:
-        # Fetch all parameters
-        inputNodes = graph.findGraphInputNodes()
-        inputParamsNames: dict[str: list["BaseNode"]] = defaultdict(list)
-        for n in inputNodes:
-            for p in n.nodeDesc.getParams(n):
-                inputParamsNames[p].append(n)
+        # Fetch input attributes
+        inputParamsNames: dict[str, list["BaseNode"]] = graph.findGraphInputAttributes()
+        print("inputParamsNames",inputParamsNames)
         # Fill parameters
         for attrName, attrValue in args.graphInput:
             if attrName not in inputParamsNames:

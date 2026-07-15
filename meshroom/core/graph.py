@@ -975,6 +975,17 @@ class Graph(BaseObject):
         nodes = [n for n in self.findInputNodes() if n.nodeType == "GraphInput"]
         return nodes
 
+    def findGraphInputAttributes(self):
+        """
+        Returns:
+            dict[str, list[Node]]: the mapping of attribute names to GraphInput nodes exposing them
+        """
+        inputParamsNames: dict[str, list["BaseNode"]] = defaultdict(list)
+        for n in self.findGraphInputNodes():
+            for p in n.nodeDesc.getParams(n):
+                inputParamsNames[p].append(n)
+        return inputParamsNames
+
     def findOutputNodes(self) -> list[Node]:
         """
         Returns:

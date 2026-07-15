@@ -23,6 +23,8 @@ from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
 from meshroom.core.submitter import BaseSubmittedJob, jobManager
+from meshroom.core.attributeConverter import AttributeConverter, AttributeConverterRegistry
+
 
 # Replace default encoder to support Enums
 
@@ -64,11 +66,16 @@ def GraphModification(graph):
 
 class Edge(BaseObject):
 
-    def __init__(self, src, dst, parent=None):
+    def __init__(self, src, dst, converter=None, parent=None):
         super().__init__(parent)
         self._src = weakref.ref(src)
         self._dst = weakref.ref(dst)
-        self._repr = f"<Edge> {self._src()} -> {self._dst()}"
+        self._converter: "AttributeConverter" = converter
+        self._resolveConverter()
+
+    def __repr__(self):
+        converter = f">-({self._converter.getName()})->" if self._converter else "->"
+        return f"<Edge {self._src()} {converter} {self._dst()}>"
 
     @property
     def src(self):
@@ -78,8 +85,52 @@ class Edge(BaseObject):
     def dst(self):
         return self._dst()
 
+    def isConverted(self):
+        return self._converter is not None
+
+    def setConverter(self, converter: "AttributeConverter"):
+        """ Change the converter used on this edge. """
+        oldConverter = self._converter
+        self._converter = converter
+        try:
+            self._resolveConverter()
+        except GraphCompatibilityError as e:
+            self._converter = oldConverter
+            self._resolveConverter()
+            raise e
+
+    def _resolveConverter(self):
+        srcDesc, dstDesc = self.src.desc, self.dst.desc
+        if self._converter:
+            if not self._converter.canConvert(srcDesc, dstDesc):
+                raise InvalidEdgeError(
+                    srcDesc.name, dstDesc.name, 
+                    f"Converter '{self._converter}' cannot convert "
+                    f"{srcDesc.__class__.__name__} -> {dstDesc.__class__.__name__}"
+                )
+            return
+        if type(srcDesc) is type(dstDesc) or isinstance(srcDesc, type(dstDesc)):
+            self._converter = None
+            return
+        # Find a default converter
+        conv = AttributeConverterRegistry.getConverter(srcDesc.type, dstDesc.type)
+        if conv is None:
+            raise InvalidEdgeError(
+                srcDesc.name, dstDesc.name, 
+                f"No AttributeConverter available for edge between attribute types "
+                f"{srcDesc.__class__.__name__} -> {dstDesc.__class__.__name__}"
+            )
+        self._converter = conv
+
+    def resolvedValue(self):
+        if self.isConverted():
+            return self._converter.convert(self.src.value)
+        return self.src.value
+
     src = Property(Attribute, src.fget, constant=True)
     dst = Property(Attribute, dst.fget, constant=True)
+    converterChanged = Signal()
+    hasConverter = Property(bool, isConverted, notify=converterChanged)
 
 
 WHITE = 0

@@ -7,8 +7,6 @@ import logging
 import os
 import re
 import sys
-from itertools import chain
-from collections import defaultdict
 from enum import Enum
 from inspect import getfile
 from pathlib import Path
@@ -18,7 +16,6 @@ from meshroom.core import desc
 from meshroom.core.desc.attribute import ValueTypeErrors
 from meshroom import _MESHROOM_ROOT
 from meshroom.core.desc.node import _MESHROOM_COMPUTE_DEPS
-from meshroom.core.attributeConverter import AttributeConverter
 
 
 def validateNodeDesc(nodeDesc: desc.BaseNode) -> list[tuple[str, ValueTypeErrors]]:
@@ -477,41 +474,6 @@ class Plugin(BaseObject):
         """
         return name in self._nodePlugins
 
-class AttributeConverterRegistry:
-    """
-    Registry of available converters
-    """
-
-    _converters = defaultdict(list)  # { (srcType, dstType): [converters] }
-
-    @classmethod
-    def add(cls, converterClass):
-        logging.info(
-            f"Add converter class: {converterClass.__name__} "
-            f"({converterClass.srcType.__name__} -> {converterClass.dstType.__name__})"
-        )
-        if not issubclass(converterClass, AttributeConverter):
-            raise TypeError(f"{converterClass} must subclass AttributeConverter")
-        cls._converters[(converterClass.srcType, converterClass.dstType)].append(converterClass)
-
-    @classmethod
-    def getAllConverters(cls) -> list[AttributeConverter]:
-        return list(chain.from_iterable(cls._converters.values()))
-
-    @classmethod
-    def getConverters(cls, srcType, dstType) -> list[AttributeConverter]:
-        """ Get priority-ordered converters.
-        """
-        converters = cls._converters.get((srcType, dstType))
-        return sorted(converters, key=lambda c: -c.priority)
-
-    @classmethod
-    def getConverter(cls, srcType, dstType) -> AttributeConverter:
-        """ Get highest priority converter. """
-        converters = cls.getConverters(srcType, dstType)
-        if not converters:
-            return None
-        return converters[0]
 
 class NodePlugin(BaseObject):
     """

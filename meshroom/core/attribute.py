@@ -14,7 +14,7 @@ from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core.desc.validators import NotEmptyValidator
 from meshroom.core import desc, hashValue
-
+from meshroom.core.attributeConverter import AttributeConverter, AttributeConverterRegistry
 from meshroom.core.desc import Attribute as AttributeDescription
 
 from meshroom.core.keyValues import KeyValues
@@ -239,7 +239,8 @@ class Attribute(BaseObject):
         if self.keyable:
             raise RuntimeError(f"Cannot get value of {self._getFullName()}, the attribute is keyable.")
         if self.isLink:
-            return self._getInputLink().value
+            edge = self.node.graph.edge(self)
+            return edge.resolvedValue()
         self._resolveValue()
         return self._value
 
@@ -741,7 +742,8 @@ class Attribute(BaseObject):
         Return True if this Attribute can receive a connection from
         "connectingAttribute", False otherwise.
         """
-        return self._validateIncomingConnection(connectingAttribute)
+        return self._validateIncomingConnection(connectingAttribute) or \
+            AttributeConverterRegistry.hasConverter(connectingAttribute.desc.type, self.desc.type)
 
     # Properties and signals
 

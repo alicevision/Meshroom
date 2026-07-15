@@ -2,8 +2,11 @@
 attributeConverter: base descriptors class for AttributeConverter nodes
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
+from collections import defaultdict
+from itertools import chain
 
 if TYPE_CHECKING:
     from meshroom.core.desc.attribute import Attribute
@@ -20,33 +23,72 @@ class AttributeConverter(ABC):
     priority = 10  # Put a higher number to prioritize specific converters
 
     # Input / Output classes
-    srcType: Attribute = None
-    dstType: Attribute = None
+    srcType: "Attribute" = None
+    dstType: "Attribute" = None
 
     @classmethod
     def getName(cls):
         return cls.name or cls.__name__
 
-    @classmethod
-    def canConvert(cls, srcType, dstType):
+    def canConvert(self, srcType, dstType):
         """ Check if this converter corresponds to a source/destination attribute pair.
         """
-        return isinstance(srcType, cls.srcType) and isinstance(dstType, cls.dstType)
+        return isinstance(srcType, self.srcType) and isinstance(dstType, self.dstType)
 
-    @classmethod
     @abstractmethod
-    def convert(cls, value):
+    def convert(self, value):
         """ Convert a value from the source attribute's type to a value for
         the destination attribute's type.
         """
         return value
 
-    @classmethod
-    def isValid(cls, value):
+    def isValid(self, value):
         """ In general case we suppose the conversion is always possible, but
         this method enables optional type checking.
         """
         return True
 
     def __repr__(self):
-        return f"<AttributeConverter '{self.getName()}': {self.srcType} -> {self.dstType}>"
+        return f"<AttributeConverter {self.getName()} ({self.srcType.__name__} -> {self.dstType.__name__})>"
+
+
+class AttributeConverterRegistry:
+    """
+    Registry of available converters
+    """
+
+    # { (srcType, dstType): [converters] }
+    _converters: dict[tuple["Attribute", "Attribute"], list[AttributeConverter]] = defaultdict(list)
+
+    @classmethod
+    def add(cls, converter: AttributeConverter):
+        logging.info(
+            f"Add converter class: {converter.getName()} "
+            f"({converter.srcType.__name__} -> {converter.dstType.__name__})"
+        )
+        if not issubclass(converter.__class__, AttributeConverter):
+            raise TypeError(f"{converter} parent class must subclass AttributeConverter")
+        cls._converters[(converter.srcType.__name__, converter.dstType.__name__)].append(converter)
+
+    @classmethod
+    def getAllConverters(cls) -> list[AttributeConverter]:
+        return list(chain.from_iterable(cls._converters.values()))
+    
+    @classmethod
+    def hasConverter(cls, srcType: "Attribute", dstType: "Attribute") -> list[AttributeConverter]:
+        return  ((srcType, dstType)) in cls._converters
+
+    @classmethod
+    def getConverters(cls, srcType: "Attribute", dstType: "Attribute") -> list[AttributeConverter]:
+        """ Get priority-ordered converters.
+        """
+        converters = cls._converters.get((srcType, dstType), [])
+        return sorted(converters, key=lambda c: -c.priority)
+
+    @classmethod
+    def getConverter(cls, srcType: "Attribute", dstType: "Attribute") -> AttributeConverter:
+        """ Get highest priority converter. """
+        converters = cls.getConverters(srcType, dstType)
+        if not converters:
+            return None
+        return converters[0]

@@ -21,13 +21,12 @@ except Exception:
 from meshroom.core.plugins import (
     NodePlugin,
     NodePluginManager,
-    AttributeConverterRegistry,
     Plugin,
     processEnvFactory,
     formatNodeDescriptionErrorMessage
 )
 from meshroom.core.submitter import BaseSubmitter
-from meshroom.core.attributeConverter import AttributeConverter
+from meshroom.core.attributeConverter import AttributeConverter, AttributeConverterRegistry
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
 from .desc import MrNodeType
@@ -437,7 +436,7 @@ def loadAllSubmitters(folder) -> list[BaseSubmitter]:
 
 
 def registerAttributeConverter(converter: AttributeConverter):
-    AttributeConverterRegistry.add(converter)
+    AttributeConverterRegistry.add(converter())
 
 
 def loadAttributeConverter(folder, packageName) -> list[AttributeConverter]:

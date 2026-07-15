@@ -967,6 +967,14 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InputNode)]
         return nodes
 
+    def findGraphInputNodes(self):
+        """
+        Returns:
+            list[Node]: the list of Input nodes of type GraphInput
+        """
+        nodes = [n for n in self.findInputNodes() if n.nodeType == "GraphInput"]
+        return nodes
+
     def findOutputNodes(self) -> list[Node]:
         """
         Returns:
@@ -974,6 +982,14 @@ class Graph(BaseObject):
         """
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.OutputNode)]
         return self.sortNodesByIndex(nodes)
+
+    def findGraphOutputNodes(self):
+        """
+        Returns:
+            list[Node]: the list of Input nodes of type GraphOutput
+        """
+        nodes = [n for n in self.findOutputNodes() if n.nodeType == "GraphOutput"]
+        return nodes
 
     def configureOutputNodes(self, outputValues: list[str]) -> None:
         """

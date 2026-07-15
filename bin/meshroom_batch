@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+from collections import defaultdict
 
 import meshroom.core.graph
 from meshroom.common import strtobool
@@ -68,6 +69,14 @@ general_group.add_argument(
     help='Input files and folders to process. '
          'When multiple Init Nodes exist in the pipeline, inputs are applied to all by default. '
          'To target a specific Init Node, use the format Node1=input1,input2 Node2=input3')
+
+general_group.add_argument(
+    '-gi', '--graphInput', 
+    metavar='ATTRIBUTE=VALUE', 
+    nargs='+',
+    type=lambda item: item.split('=', 1),
+    help='Override graph input parameters. '
+         'When the graph has a GraphInput nodes, it will set the inputs parameters.')
 
 general_group.add_argument(
     '-I', '--inputRecursive',
@@ -231,6 +240,21 @@ with meshroom.core.graph.GraphModification(graph):
             # Retrieve recursive inputs
             inputRec = mapInputRecursive.get(nodeName, []) + mapInputRecursive.get("", [])
             inputNode.nodeDesc.initialize(inputNode, input, inputRec)
+
+    if args.graphInput:
+        # Fetch all parameters
+        inputNodes = graph.findGraphInputNodes()
+        inputParamsNames: dict[str: list["BaseNode"]] = defaultdict(list)
+        for n in inputNodes:
+            params = n.nodeDesc.getParams(n)
+            for p in n.nodeDesc.getParams(n):
+                inputParamsNames[p].append(n)
+        # Fill parameters
+        for attrName, attrValue in args.graphInput:
+            if attrName not in inputParamsNames:
+                raise KeyError(f"No attribute {attrName} on GraphInput nodes of the scene.")
+            for node in inputParamsNames[attrName]:
+                node.nodeDesc.setInputAttribute(node, attrName, attrValue)
 
     if not graph.canComputeLeaves:
         raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")

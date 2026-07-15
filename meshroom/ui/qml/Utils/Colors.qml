@@ -23,6 +23,7 @@ QtObject {
     readonly property color grey: "#555555"
     readonly property color lightgrey: "#999999"
     readonly property color warning: "#FF9800"
+    readonly property color lightpurple: "#ab70b3"
     readonly property color darkpurple: "#5c4885"
 
     readonly property var statusColors: {

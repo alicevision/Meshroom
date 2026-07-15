@@ -494,7 +494,7 @@ class AttributeConverterRegistry:
         cls._converters[(converterClass.srcType, converterClass.dstType)].append(converterClass)
 
     @classmethod
-    def all(cls) -> list[desc.AttributeConverter]:
+    def getAllConverters(cls) -> list[desc.AttributeConverter]:
         return list(chain.from_iterable(cls._converters.values()))
 
     @classmethod

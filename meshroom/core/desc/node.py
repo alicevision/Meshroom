@@ -71,16 +71,10 @@ class MeshroomCommandWrapper:
 class StageSettings(SimpleNamespace):
     def __init__(self, cpu=Level.NORMAL, ram=Level.NORMAL, gpu=Level.NONE, **kwargs):
         super().__init__(**kwargs)
-        self.cpu = cpu.value
-        self.ram = ram.value
-        self.gpu = gpu.value
-        # command executed right before the stage
-        if kwargs.get("setup_command"):
-            self.setup_command = kwargs.get("setup_command")
-        # command executed after the stage
-        if kwargs.get("teardown_command"):
-            self.teardown_command = kwargs.get("teardown_command")
-        # wraps the stage command
+        self.cpu = cpu.value if hasattr(cpu, "value") else cpu
+        self.ram = ram.value if hasattr(cpu, "value") else cpu
+        self.gpu = gpu.value if hasattr(cpu, "value") else cpu
+        # Wraps the stage command
         self.wrapCommand = MeshroomCommandWrapper()
 
     def __contains__(self, item):

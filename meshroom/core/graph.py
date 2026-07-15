@@ -490,7 +490,7 @@ class Graph(BaseObject):
             unavailableNames = set(self.nodes.keys())
             for node in graph.nodes:
                 if node._name in unavailableNames:
-                    node._name = self._createUniqueNodeName(node.nodeType, unavailableNames)
+                    node._name = self._createUniqueNodeName(node._name, unavailableNames)
                 unavailableNames.add(node._name)
 
         def _importNodesAndEdges() -> list[Node]:
@@ -533,7 +533,7 @@ class Graph(BaseObject):
                     node.nodeType, self.name, node.graph.name))
 
         assert uniqueName not in self._nodes.keys()
-        node._name = uniqueName
+        node.name = uniqueName
         node.graph = self
         self._nodes.add(node)
         node.chunksChanged.connect(self.updated)
@@ -758,12 +758,13 @@ class Graph(BaseObject):
         """
         existingNodeNames = existingNames or set(self._nodes.objects.keys())
 
+        baseName = re.sub(r"_\d+$", "", inputName)
         idx = 1
-        newName = inputName
+        newName = baseName
         while idx:
             if newName not in existingNodeNames:
                 return newName
-            newName = f"{inputName}_{idx}"
+            newName = f"{baseName}_{idx}"
             idx += 1
 
     def node(self, nodeName) -> Optional[Node]:

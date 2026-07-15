@@ -96,19 +96,20 @@ class SubmissionSettings:
         self.process.licenses = node.nodeDesc._licenses
         # Retrocompatibility behaviour
         if hasattr(node.nodeDesc, "_cuda_tag"):
-            logging.warning(f"DepreciationWarning : Node of type {node.nodeDesc} use '_cuda_tag'. Please use SubmissionSettings instead.")
+            logging.warning(f"DeprecationWarning : Node of type {node.nodeDesc} uses '_cuda_tag'. Please use SubmissionSettings instead.")
             self.process.cuda_tag = node.nodeDesc._cuda_tag
         if hasattr(node.nodeDesc, "_service_key"):
-            logging.warning(f"DepreciationWarning : Node of type {node.nodeDesc} use '_service_key'. Please use SubmissionSettings instead.")
+            logging.warning(f"DeprecationWarning : Node of type {node.nodeDesc} uses '_service_key'. Please use SubmissionSettings instead.")
             self.process.service_key = node.nodeDesc._service_key
 
     def getStageSettings(self, stageName="process"):
-        if stageName == "preprocess":
-            return self.preprocess
-        if stageName == "process":
-            return self.process
-        if stageName == "postprocess":
-            return self.postprocess
+        stage = getattr(self, stageName, None)
+        if stage:
+            return stage
+        raise ValueError(
+             f"Unknown stageName: {stageName!r}. Expected one of: "
+             "'preprocess', 'process', 'postprocess'."
+         )
 
 
 class InternalAttributesFactory:

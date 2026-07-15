@@ -57,6 +57,7 @@ class MrNodeType(enum.Enum):
     NONE = enum.auto()
     BASENODE = enum.auto()
     NODE = enum.auto()
+    INLINE = enum.auto()
     COMMANDLINE = enum.auto()
     INIT = enum.auto()
     BACKDROP = enum.auto()
@@ -527,9 +528,6 @@ class InitNode(BaseNode):
     def __init__(self):
         super(InitNode, self).__init__()
 
-    def getMrNodeType(self):
-        return self._mrNodeType
-
     def processChunk(self, chunk):
         pass
 
@@ -584,6 +582,17 @@ class Node(BaseNode):
         cmdSuffix = chunk.node.nodeDesc.plugin.commandSuffix
         self.executeChunkCommandLine(chunk, cmdPrefix + meshroomComputeCmd + cmdSuffix,
                                      env=runtimeEnv)
+
+
+class InlineNode(BaseNode):
+    """
+    Node that can be computed in the current Meshroom environment.
+    """
+    parallelization = None
+    _mrNodeType: MrNodeType = MrNodeType.INLINE
+
+    def __init__(self):
+        super(InlineNode, self).__init__()
 
 
 class CommandLineNode(BaseNode):

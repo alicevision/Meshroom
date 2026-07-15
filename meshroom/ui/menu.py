@@ -15,10 +15,17 @@ Example :
 
 import logging
 import uuid
-from enum import Enum
 from typing import Optional, Callable
 
-from meshroom.common import BaseObject, Property, Signal, Slot, Variant, ListModel
+from PySide6.QtCore import QObject
+from meshroom.common.qt import (
+    Property,
+    Signal,
+    Slot,
+    Variant,
+    VariantList,
+    ListModel
+)
 
 
 class MenuCallback:
@@ -29,7 +36,7 @@ class MenuCallback:
         pass
 
 
-class MenuItem(BaseObject):
+class MenuItem(QObject):
     """A simple (name, label) pair, used for radio button entries."""
 
     def __init__(self, name, label=None, tooltip=None, shortcut=None, parent=None):
@@ -45,7 +52,7 @@ class MenuItem(BaseObject):
     shortcut = Property(str, lambda self: self._shortcut, constant=True)
 
 
-class MenuObject(BaseObject):
+class MenuObject(QObject):
     """Item registered as an entry in a menu.
     """
     def __init__(self, parent: "Menu", callback: Optional[MenuCallback], **kwargs):
@@ -135,10 +142,10 @@ class MenuTypeRadiobutton(MenuObject):
 
     selectedUidChanged = Signal()
     selectedUid = Property(str, lambda self: self._selectedUid, _setSelectedUid, notify=selectedUidChanged)
-    items = Property("QVariantList", lambda self: self._items, constant=True)
+    items = Property(VariantList, lambda self: self._items, constant=True)
 
 
-class Menu(BaseObject):
+class Menu(QObject):
     """Registerable menu (or submenu)."""
 
     def __init__(self, name: str, icon: str = None, tooltip: str = None,
@@ -249,7 +256,7 @@ class MenuExtension:
         )
 
 
-class MeshroomMenuManager(BaseObject):
+class MeshroomMenuManager(QObject):
     """
     Registry of all user menus and their objects.
     
@@ -370,4 +377,4 @@ class MeshroomMenuManager(BaseObject):
         self.trigger(groupUid, selected=item)
 
     menusChanged = Signal()
-    menus = Property(BaseObject, getMenus, notify=menusChanged)
+    menus = Property(QObject, getMenus, notify=menusChanged)

@@ -30,9 +30,6 @@ from .shapeAttribute import (
 from .anySet import (
     AnySet
 )
-from ..attributeConverter import (
-    AttributeConverter
-)
 from .computation import (
     DynamicNodeSize,
     Level,

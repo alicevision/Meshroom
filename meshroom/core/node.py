@@ -1106,9 +1106,9 @@ class BaseNode(BaseObject):
             return p[0][0] in self._internalAttributes.keys() or p[0][1] in self._internalAttributes.keys()
         return name in self._internalAttributes.keys()
 
-    def _applyExpr(self):
+    def _applyExpr(self, converterMap: dict = None):
         for attr in self._attributes:
-            attr._applyExpr()
+            attr._applyExpr(converterMap)
         for attr in self._internalAttributes:
             attr._applyExpr()
 

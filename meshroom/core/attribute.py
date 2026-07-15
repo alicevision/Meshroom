@@ -324,7 +324,7 @@ class Attribute(BaseObject):
             self._linkExpression = value
         return True
 
-    def _applyExpr(self):
+    def _applyExpr(self, converterMap: dict = None):
         """
         For string parameters with an expression (when loaded from file),
         this function convert the expression into a real edge in the graph
@@ -353,7 +353,13 @@ class Attribute(BaseObject):
             attr = node.attribute(linkAttrName) if node.hasAttribute(linkAttrName) else node.internalAttribute(linkAttrName)
             if attr is None:
                 raise InvalidEdgeError(self.fullName, link, "Source attribute does not exist.")
-            attr.connectTo(self)
+            connectedEdge, _ = attr.connectTo(self)
+            if connectedEdge:
+                src, dst = connectedEdge[0]
+                if converterMap and (converterName:=converterMap.get((src.fullName, dst.fullName))): 
+                    logging.info(f"Edge {src.fullName}->{dst.fullName}: set converter to {converterName}")
+                    edge = self.node.graph.edge(dst)
+                    edge.setConverter(converterName)
         except InvalidEdgeError as err:
             logging.warning(err)
         except Exception as err:
@@ -1039,9 +1045,9 @@ class ListAttribute(Attribute):
             self.requestGraphUpdate()
 
     # Override
-    def _applyExpr(self):
+    def _applyExpr(self, converterMap: dict = None):
         if self._linkExpression:
-            super()._applyExpr()
+            super()._applyExpr(converterMap)
         else:
             for value in self._value:
                 value._applyExpr()
@@ -1288,12 +1294,12 @@ class GroupAttribute(Attribute, Expandable):
             raise AttributeError(f"Failed to set on GroupAttribute: {str(value)}")
 
     # Override
-    def _applyExpr(self):
+    def _applyExpr(self, converterMap: dict = None):
         if self._linkExpression:
-            super()._applyExpr()
+            super()._applyExpr(converterMap)
         else:
             for value in self._value:
-                value._applyExpr()
+                value._applyExpr(converterMap)
 
     # Override
     def resetToDefaultValue(self):

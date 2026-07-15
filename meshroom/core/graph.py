@@ -401,6 +401,8 @@ class Graph(BaseObject):
         self.header = graphData.get(GraphIO.Keys.Header, {})
         fileVersion = Version(self.header.get(GraphIO.Keys.FileVersion, "0.0"))
         graphContent = self._normalizeGraphContent(graphData, fileVersion)
+        graphConverters = graphData.get(GraphIO.Keys.Converters, {})
+        converterMap = {tuple(v): k for k, v in graphConverters.items()}
         isTemplate = self.header.get(GraphIO.Keys.Template, False)
         explicitCachePaths = self.header.get(GraphIO.Keys.CacheDir)
         if explicitCachePaths:
@@ -414,7 +416,7 @@ class Graph(BaseObject):
                 self._deserializeNode(nodeData, nodeName, self)
 
             # Create graph edges by resolving attributes expressions
-            self._applyExpr()
+            self._applyExpr(converterMap)
 
         # Templates are specific: they contain only the minimal amount of
         # serialized data to describe the graph structure.
@@ -571,15 +573,30 @@ class Graph(BaseObject):
         Returns:
             The list of newly created Nodes.
         """
+        
+        edgesWithConverters = [e for e in graph.edges if e._converter]
+        converterMap = {
+            (e.src.fullName, e.dst.fullName): e._converter.getName()
+            for e in edgesWithConverters
+        }
 
-        def _renameClashingNodes():
+        def replaceKey(src, dst, oldName, newName):
+            return (src.replace(oldName, newName, 1), dst.replace(oldName, newName, 1))
+
+        def _renameClashingNodes(converterMap):
             if not self.nodes:
                 return
             unavailableNames = set(self.nodes.keys())
             for node in graph.nodes:
-                if node._name in unavailableNames:
+                oldName = node._name
+                if oldName in unavailableNames:
                     node._name = self._createUniqueNodeName(node.nodeType, unavailableNames)
+                    converterMap = {
+                        replaceKey(src, dst, oldName, node._name): value
+                        for (src, dst), value in converterMap.items()
+                    }
                 unavailableNames.add(node._name)
+            return converterMap
 
         def _importNodesAndEdges() -> list[Node]:
             importedNodes = []
@@ -590,10 +607,10 @@ class Graph(BaseObject):
                 for srcNode in nodes:
                     node = self._deserializeNode(srcNode.toDict(), srcNode.name, graph)
                     importedNodes.append(node)
-                self._applyExpr()
+                self._applyExpr(converterMap)
             return importedNodes
 
-        _renameClashingNodes()
+        converterMap = _renameClashingNodes(converterMap)
         importedNodes = _importNodesAndEdges()
         return importedNodes
 
@@ -1489,10 +1506,10 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=[startNode])
         return visitor.canCompute + (2 * visitor.canSubmit)
 
-    def _applyExpr(self):
+    def _applyExpr(self, converterMap: dict = None):
         with GraphModification(self):
             for node in self._nodes:
-                node._applyExpr()
+                node._applyExpr(converterMap)
 
     def toDict(self):
         nodes = {k: node.toDict() for k, node in self._nodes.objects.items()}

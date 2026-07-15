@@ -343,6 +343,32 @@ def nodeVersion(nodeDesc: desc.Node, default=None):
     return moduleVersion(nodeDesc.__module__, default)
 
 
+def loadPluginMenu(pluginMenuFile):
+    """
+    Registers a menu from a python script
+
+    Args:
+        folder: the folder where we search for the menu.
+    """
+    # Generate a custom module name to avoid collisions
+    moduleName = f"mrMenus.{uuid.uuid4().hex}"
+    try:
+        spec = importlib.util.spec_from_file_location(moduleName, pluginMenuFile)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[moduleName] = module
+        spec.loader.exec_module(module)
+        logging.debug(f"Loaded menu registration from '{pluginMenuFile}'.")
+    except Exception as exc:
+        tb = traceback.extract_tb(exc.__traceback__)
+        last_call = tb[-1]
+        logging.warning(
+            f"  * Failed to load menu file '{pluginMenuFile}' ({type(exc).__name__}): {str(exc)}\n"
+            f"{last_call.filename}:{last_call.lineno} {last_call.name}\n"
+            f"{last_call.line}"
+            f"\n{traceback.format_exc()}\n\n"
+        )
+
+
 def loadNodes(folder, packageName, pluginUid) -> list[NodePlugin]:
     if not os.path.isdir(folder):
         logging.error(f"Node folder '{folder}' does not exist.")
@@ -376,6 +402,11 @@ def loadPluginFolder(folder, userPlugin: bool = False) -> list[Plugin]:
     if not mrFolder.exists():
         logging.info(f"Plugin folder '{folder}' does not contain a 'meshroom' folder.")
         return []
+
+    # Register any menu(s) declared by this plugin
+    pluginMenuFile = mrFolder / "menu.py"
+    if pluginMenuFile.exists():
+        loadPluginMenu(pluginMenuFile)
 
     plugins = loadAllNodes(folder=mrFolder)
     if plugins:

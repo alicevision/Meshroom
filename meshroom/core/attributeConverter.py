@@ -43,12 +43,6 @@ class AttributeConverter(ABC):
         """
         return value
 
-    def isValid(self, value):
-        """ In general case we suppose the conversion is always possible, but
-        this method enables optional type checking.
-        """
-        return True
-
     def __repr__(self):
         return f"<AttributeConverter {self.getName()} ({self.srcType.__name__} -> {self.dstType.__name__})>"
 

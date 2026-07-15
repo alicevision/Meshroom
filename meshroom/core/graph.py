@@ -153,6 +153,14 @@ class Edge(BaseObject):
             return self._converter.convert(self.src.value)
         return self.src.value
 
+    def resolvedValues(self):
+        if self.isConverted():
+            srcAttr = self.src
+            if hasattr(srcAttr, "values"):
+                return srcAttr.values
+            return [srcAttr.value]
+        return self.src.values
+
     src = Property(Attribute, src.fget, constant=True)
     dst = Property(Attribute, dst.fget, constant=True)
     converterChanged = Signal()

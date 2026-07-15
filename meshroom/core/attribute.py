@@ -872,7 +872,9 @@ class ChoiceParam(Attribute):
 
     def getValues(self):
         if (linkParam := self._getInputLink()) is not None:
-            return linkParam.getValues()
+            edges = [e for e in self.node.graph.edges.values() if e.dst == self]
+            if edges:
+                return edges[0].resolvedValues()
         return self._values if self._values is not None else self._desc._values
 
     def setValues(self, values):

@@ -94,7 +94,7 @@ def test_plugin_template_discovery_supports_mgt_and_legacy_mg_metadata(tmp_path)
     write_graph_file(legacy_template_file, template=True)
     write_graph_file(project_file, template=False)
 
-    plugin = Plugin("testPlugin", str(tmp_path), PluginType.BUILTIN)
+    plugin = Plugin("testPlugin", str(tmp_path), str(tmp_path), PluginType.BUILTIN)
 
     assert plugin.templates == {
         "explicit": str(explicit_template_file),

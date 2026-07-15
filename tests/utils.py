@@ -46,7 +46,7 @@ def registeredNodeTypes(nodeDescs: list[desc.Node]):
 
 @contextmanager
 def registeredPlugin(pluginName: str, pluginFolder: str, isUserPlugin: bool = False):
-    pluginManager.addPluginFromPath(pluginName, pluginFolder, isUserPlugin)
+    pluginManager.addPluginFromPath(pluginName, pluginFolder, isUserPlugin=isUserPlugin)
 
     yield
 

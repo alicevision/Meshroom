@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+import json
 import logging
 import sys
 
@@ -283,3 +284,76 @@ class TestPluginLoader:
         assert packageChildModuleName not in sys.modules
         assert folderChildModuleName not in sys.modules
         assert PLUGINS_ROOT_PACKAGE in sys.modules
+
+    def test_configNameAndVersionOverride(self, tmp_path):
+        """ "name"/"version" in the configuration file override the given plugin name/version. """
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/config.json", json.dumps({
+            "name": "overriddenName",
+            "version": "1.2.3",
+            "env": [{"key": "MY_VAR", "type": "string", "value": "myValue"}],
+        }))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("originalName", str(tmp_path), PluginType.PATH, pluginVersion="0.0.1")
+
+        assert plugin is not None
+        assert plugin.name == "overriddenName"
+        assert plugin.version == "1.2.3"
+        assert plugin.configEnv["MY_VAR"] == "myValue"
+        assert f"{PLUGINS_ROOT_PACKAGE}.overriddenName" in sys.modules
+
+        loader.unloadPlugin("overriddenName")
+
+    def test_configOverrideIgnoredForRezPlugin(self, tmp_path):
+        """ For a Rez plugin, "name"/"version" from the configuration file are ignored: the
+        Rez-resolved values take precedence. """
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/config.json", json.dumps({
+            "name": "shouldBeIgnored",
+            "version": "9.9.9",
+        }))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("rezPlugin", str(tmp_path), PluginType.REZ, pluginVersion="1.0.0")
+
+        assert plugin is not None
+        assert plugin.name == "rezPlugin"
+        assert plugin.version == "1.0.0"
+
+        loader.unloadPlugin("rezPlugin")
+
+    def test_listConfigFormatWorks(self, tmp_path):
+        """ A "config.json" using the flat-list format that only sets environment variables. """
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/config.json", json.dumps(
+            [{"key": "MY_VAR", "type": "string", "value": "myValue"}]
+        ))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("listConfigPlugin", str(tmp_path), PluginType.PATH, pluginVersion="1.0.0")
+
+        assert plugin is not None
+        assert plugin.name == "listConfigPlugin"
+        assert plugin.version == "1.0.0"
+        assert plugin.configEnv["MY_VAR"] == "myValue"
+
+        loader.unloadPlugin("listConfigPlugin")
+
+    def test_invalidConfigNameAndVersionFallBack(self, tmp_path):
+        """ An invalid "name"/"version" in the configuration file is ignored, falling back to the
+        given values, with a warning logged. """
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/config.json", json.dumps({
+            "name": "invalid-name",
+            "version": "not_a_version",
+        }))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("fallbackPlugin", str(tmp_path), PluginType.PATH, pluginVersion="1.0.0")
+
+        assert plugin is not None
+        assert plugin.name == "fallbackPlugin"
+        assert plugin.version == "1.0.0"
+
+        loader.unloadPlugin("fallbackPlugin")

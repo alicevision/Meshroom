@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects 
 
 import Controls 1.0
 import MaterialIcons 2.2
@@ -24,6 +25,14 @@ Item {
     readonly property int autoscrollSpeed: 15    // Speed factor
     property bool isDraggingEdge: false          // Tracks whether we are dragging an AttributePin
     property point dragMousePos: Qt.point(0, 0)  // Position of the mouse during edge dragging
+
+    readonly property real borderHighlightOpacity: 0.05
+    readonly property color borderHighlightColor: Colors.blue
+    readonly property real borderHighlightWidth: 3
+    property bool highlightedBorderLeft: false
+    property bool highlightedBorderRight: false
+    property bool highlightedBorderTop: false
+    property bool highlightedBorderBottom: false
 
     property var edgeAboutToBeRemoved: undefined
 
@@ -213,13 +222,45 @@ Item {
                 deltaY = -root.autoscrollSpeed * Math.pow(factorY, 2)
             }
 
+            root.highlightedBorderRight=false
+            root.highlightedBorderLeft=false
+            root.highlightedBorderTop=false
+            root.highlightedBorderBottom=false
+
             // Apply scroll on workspaxe
             if (deltaX !== 0 || deltaY !== 0) {
                 draggable.x += deltaX
                 draggable.y += deltaY
                 workspaceMoved()
+
+                if (deltaX>0)      { root.highlightedBorderLeft=true }
+                else if (deltaX<0) { root.highlightedBorderRight=true }
+                if (deltaY>0)      { root.highlightedBorderTop=true }
+                else if (deltaY<0) { root.highlightedBorderBottom=true }
             }
         }
+    }
+
+    // Display scroll direction
+    Rectangle {
+        enabled: root.isDraggingEdge
+        color: "transparent"
+        border.color: root.borderHighlightColor
+        border.width: root.borderHighlightWidth
+
+        // Combine fill and margins into one anchor block
+        anchors {
+            fill: parent
+            leftMargin:   root.highlightedBorderLeft   ? 0 : -root.borderHighlightWidth
+            rightMargin:  root.highlightedBorderRight  ? 0 : -root.borderHighlightWidth
+            topMargin:    root.highlightedBorderTop    ? 0 : -root.borderHighlightWidth
+            bottomMargin: root.highlightedBorderBottom ? 0 : -root.borderHighlightWidth
+        }
+
+        Behavior on anchors.leftMargin   { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+        Behavior on anchors.rightMargin  { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+        Behavior on anchors.topMargin    { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+        Behavior on anchors.bottomMargin { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
     }
 
     MouseArea {

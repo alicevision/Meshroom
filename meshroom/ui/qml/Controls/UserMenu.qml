@@ -52,24 +52,16 @@ Menu {
         Menu {
             required property var itemData
             title: itemData.label
-        }
-    }
 
-    Component {
-        id: radioMenuItemComponent
-        MenuItem {
-            required property var groupData
-            required property var entryData
-
-            text: entryData.label
-            checkable: true
-            autoExclusive: true
-            checked: groupData.selectedUid === entryData.name
-
-            ToolTip.visible: hovered && entryData.tooltip !== ""
-            ToolTip.text: entryData.tooltip
-
-            onTriggered: MeshroomMenuManager.triggerRadioEntry(groupData.uid, entryData.name)
+            Repeater {
+                model: itemData.items
+                RadioButton {
+                    required property var modelData
+                    text: modelData.label
+                    checked: itemData.selectedUid === modelData.name
+                    onClicked: MeshroomMenuManager.triggerListEntry(itemData.uid, modelData.name)
+                }
+            }
         }
     }
 
@@ -91,36 +83,27 @@ Menu {
             switch (itemData.objectType) {
                 case "separator": {
                     const sep = separatorComponent.createObject(null)
-                    _createdItems.push(sep)
                     root.insertItem(i, sep)
+                    _createdItems.push(sep)
                     break
                 }
                 case "menu": {
                     const subMenuComponent = Qt.createComponent(Qt.resolvedUrl("UserMenu.qml"))
                     const subMenu = subMenuComponent.createObject(null, {"menuData": itemData.submenu})
-                    _createdItems.push(subMenu)
                     root.insertMenu(i, subMenu)
+                    _createdItems.push(subMenu)
                     break
                 }
                 case "radioButton": {
                     const groupMenu = radioMenuComponent.createObject(null, {"itemData": itemData})
-                    const entries = itemData.items || []
-                    for (let j = 0; j < entries.length; ++j) {
-                        const entry = radioMenuItemComponent.createObject(null, {
-                            "groupData": itemData,
-                            "entryData": entries[j]
-                        })
-                        groupMenu.insertItem(j, entry)
-                        _createdItems.push(entry)
-                    }
                     root.insertMenu(i, groupMenu)
                     _createdItems.push(groupMenu)
                     break
                 }
                 default: {
                     const item = menuItemComponent.createObject(null, {"itemData": itemData})
-                    _createdItems.push(item)
                     root.insertItem(i, item)
+                    _createdItems.push(item)
                     break
                 }
             }

@@ -14,6 +14,7 @@ from enum import Enum
 import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
+from meshroom.common import deprecated
 from meshroom.core import Version
 from meshroom.core import submitters
 from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttribute
@@ -270,7 +271,11 @@ class Graph(BaseObject):
         self._deserialize(Graph._loadGraphData(filepath))
         self._fileDateVersion = os.path.getmtime(filepath)
 
-    def initFromTemplate(self, filepath: PathLike, copyOutputs: bool = False):
+    @deprecated.depreciateParam(
+        "copyOutputs",
+        "Graph.initFromTemplate 'copyOutputs' parameter is deprecated. Please use 'keepOutputNodes' instead."
+    )
+    def initFromTemplate(self, filepath: PathLike, keepOutputNodes: bool = False, copyOutputs: Optional[bool] = None):
         """
         Deserialize a template Meshroom Graph ".mg" file in place.
 
@@ -279,8 +284,12 @@ class Graph(BaseObject):
 
         Args:
             filepath: The path to the Meshroom Graph file to load.
-            copyOutputs: (optional) Whether to keep 'CopyFiles' nodes.
+            keepOutputNodes: (optional) Whether to keep OutputNode nodes.
+            copyOutputs: Deprecated alias for keepOutputNodes.
         """
+        if copyOutputs is not None:
+            keepOutputNodes = copyOutputs
+
         self._deserialize(Graph._loadGraphData(filepath))
 
         # Creating nodes from a template is conceptually similar to explicit node creation,
@@ -288,9 +297,9 @@ class Graph(BaseObject):
         # node instance created by this process.
         self._triggerNodeCreatedCallback(self.nodes)
 
-        if not copyOutputs:
+        if not keepOutputNodes:
             with GraphModification(self):
-                for node in [node for node in self.nodes if node.nodeType == "CopyFiles"]:
+                for node in self.findOutputNodes():
                     self.removeNode(node.name)
 
     @staticmethod
@@ -957,6 +966,14 @@ class Graph(BaseObject):
         """
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InputNode)]
         return nodes
+
+    def findOutputNodes(self) -> list[Node]:
+        """
+        Returns:
+            list[Node]: the list of Output nodes (nodes inheriting from OutputNode)
+        """
+        nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.OutputNode)]
+        return self.sortNodesByIndex(nodes)
 
     def findNodeCandidates(self, nodeNameExpr: str) -> list[Node]:
         pattern = re.compile(nodeNameExpr)

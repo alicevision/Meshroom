@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import hashlib
 import importlib
+import importlib.util
 import inspect
 import logging
 import os
@@ -363,8 +364,11 @@ def loadPluginMenu(pluginMenuFile):
         last_call = tb[-1]
         logging.warning(
             f"  * Failed to load menu file '{pluginMenuFile}' ({type(exc).__name__}): {str(exc)}\n"
+            # filename:lineNumber functionName
             f"{last_call.filename}:{last_call.lineno} {last_call.name}\n"
+            # line of code with the error
             f"{last_call.line}"
+            # Full traceback
             f"\n{traceback.format_exc()}\n\n"
         )
 

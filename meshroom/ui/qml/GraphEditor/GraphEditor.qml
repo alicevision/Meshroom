@@ -23,6 +23,7 @@ Item {
     // Autoscroll properties
     readonly property int autoscrollMargin: 100  // Border thickness (width in pixels)
     readonly property int autoscrollSpeed: 15    // Speed factor
+    readonly property real maxScrollSpeed: 3.0   // Clamp scroll speed
     property bool isDraggingEdge: false          // Tracks whether we are dragging an AttributePin
     property point dragMousePos: Qt.point(0, 0)  // Position of the mouse during edge dragging
 
@@ -179,6 +180,10 @@ Item {
 
         function onEdgeDraggingChanged(dragging) {
             root.isDraggingEdge = dragging
+            root.highlightedBorderRight=false
+            root.highlightedBorderLeft=false
+            root.highlightedBorderTop=false
+            root.highlightedBorderBottom=false
         }
 
         function onEdgeDragMousePosChanged(windowX, windowY) {
@@ -203,23 +208,23 @@ Item {
 
             // Left
             if (mouseX < root.autoscrollMargin) {
-                var factorX = (root.autoscrollMargin - mouseX) / root.autoscrollMargin
-                deltaX = root.autoscrollSpeed * Math.pow(factorX, 2)
+                var factorX = Math.min(root.maxScrollSpeed, (root.autoscrollMargin - mouseX) / root.autoscrollMargin)
+                deltaX = root.autoscrollSpeed * factorX
             }
             // Right
             else if (mouseX > root.width - root.autoscrollMargin) {
-                var factorX = (mouseX - (root.width - root.autoscrollMargin)) / root.autoscrollMargin
-                deltaX = -root.autoscrollSpeed * Math.pow(factorX, 2)
+                var factorX = Math.min(root.maxScrollSpeed, (mouseX - (root.width - root.autoscrollMargin)) / root.autoscrollMargin)
+                deltaX = -root.autoscrollSpeed * factorX
             }
             // Top
             if (mouseY < root.autoscrollMargin) {
-                var factorY = (root.autoscrollMargin - mouseY) / root.autoscrollMargin
-                deltaY = root.autoscrollSpeed * Math.pow(factorY, 2)
+                var factorY = Math.min(root.maxScrollSpeed, (root.autoscrollMargin - mouseY) / root.autoscrollMargin)
+                deltaY = root.autoscrollSpeed * factorY
             }
             // Bottom
             else if (mouseY > root.height - root.autoscrollMargin) {
-                var factorY = (mouseY - (root.height - root.autoscrollMargin)) / root.autoscrollMargin
-                deltaY = -root.autoscrollSpeed * Math.pow(factorY, 2)
+                var factorY = Math.min(root.maxScrollSpeed, (mouseY - (root.height - root.autoscrollMargin)) / root.autoscrollMargin)
+                deltaY = -root.autoscrollSpeed * factorY
             }
 
             root.highlightedBorderRight=false

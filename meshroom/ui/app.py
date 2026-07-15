@@ -31,6 +31,7 @@ from meshroom.ui.components.thumbnail import ThumbnailCache
 from meshroom.ui.components.messaging import MessageController
 from meshroom.ui.components.shapes import ShapeFilesHelper, ShapeViewerHelper
 from meshroom.ui.palette import PaletteManager
+from meshroom.ui.menu import MeshroomMenuManager
 from meshroom.ui.scene import Scene
 from meshroom.ui.utils import QmlInstantEngine
 from meshroom.ui import commands
@@ -287,6 +288,9 @@ class MeshroomApp(QApplication):
         pyside6QmlPath = os.path.join(os.path.dirname(QtCore.__file__), "Qt", "qml")
         if os.path.isdir(pyside6QmlPath):
             self.engine.addImportPath(pyside6QmlPath)
+
+        # Expose the menu manager
+        self.engine.rootContext().setContextProperty("MeshroomMenuManager", MeshroomMenuManager(parent=self))
 
         # expose available node types that can be instantiated
         self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getRegisteredNodePlugins()[n].nodeDescriptor.category} for n in sorted(pluginManager.getRegisteredNodePlugins().keys())})

@@ -781,6 +781,17 @@ Item {
                         onTriggered: uigraph.restartJobErrorTasks(nodeMenu.currentNode)
                     }
                     MenuItem {
+                        text: "Unlock Node"
+                        enabled: nodeMenu.currentNode.locked
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.graph.forceUnlockNodes([nodeMenu.currentNode])
+                    }
+                    MenuItem {
+                        text: "Unlock Selected Nodes"
+                        height: visible ? implicitHeight : 0
+                        onTriggered: uigraph.graph.forceUnlockNodes(_currentScene.getSelectedNodes())
+                    }
+                    MenuItem {
                         text: "Open Folder"
                         visible: nodeMenu.currentNode.isComputableType
                         height: visible ? implicitHeight : 0

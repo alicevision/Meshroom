@@ -196,11 +196,12 @@ def initNodes():
     nodesFolder = os.path.join(meshroomFolder, "nodes")  # Built-in nodes
     additionalNodesFolders = EnvVar.getList(EnvVar.MESHROOM_NODES_PATH)
     for folder in [nodesFolder] + additionalNodesFolders:
-        # Determine the plugin name based on the names of the subfolders
-        subFolders = sorted(p.name for p in Path(folder).iterdir()
-                        if p.is_dir() and not p.name.startswith("__")) if os.path.isdir(folder) else []
-        pluginName = "_".join(subFolders) if subFolders else Path(folder).name
-        pluginManager.addPluginFromBuiltInFolder(pluginName, folder)
+        if not os.path.isdir(folder):
+            continue
+        # Load each subfolder as a built-in plugin
+        for subfolderPath in sorted(p for p in Path(folder).iterdir()
+                                     if p.is_dir() and not p.name.startswith("__")):
+            pluginManager.addPluginFromBuiltInFolder(subfolderPath.name, str(subfolderPath))
 
 
 def initSubmitters():
@@ -208,11 +209,12 @@ def initSubmitters():
     # submittersFolder = os.path.join(meshroomFolder, "submitters")  # Built-in submitters
     additionalSubmittersFolders = EnvVar.getList(EnvVar.MESHROOM_SUBMITTERS_PATH)
     for folder in additionalSubmittersFolders:
-        # Determine the plugin name based on the names of the subfolders
-        subFolders = sorted(p.name for p in Path(folder).iterdir()
-                        if p.is_dir() and not p.name.startswith("__")) if os.path.isdir(folder) else []
-        pluginName = "_".join(subFolders) if subFolders else Path(folder).name
-        pluginManager.addPluginFromBuiltInFolder(pluginName, folder)
+        if not os.path.isdir(folder):
+            continue
+        # Load each subfolder as a built-in plugin
+        for subfolderPath in sorted(p for p in Path(folder).iterdir()
+                                     if p.is_dir() and not p.name.startswith("__")):
+            pluginManager.addPluginFromBuiltInFolder(subfolderPath.name, str(subfolderPath))
 
     submitters.update({provider.name: provider.instance for provider in pluginManager.getSubmitterProviders().values()})
 

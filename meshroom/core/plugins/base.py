@@ -15,7 +15,7 @@ from meshroom.common import BaseObject
 from meshroom.core import desc
 from meshroom.core.desc.attribute import ValueTypeErrors
 from meshroom.core.submitter import BaseSubmitter
-from meshroom.core.plugins.env import ProcessEnv
+from meshroom.core.plugins.env import ProcessEnv, processEnvFactory
 
 
 class PluginType(Enum):
@@ -34,7 +34,9 @@ class Plugin(BaseObject):
     Members:
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
         path: the absolute path of the plugin
-        user: whether the plugin is a user plugin (not maintained by the core Meshroom team)
+        isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team)
+        type: the PluginType describing how the plugin was discovered and how its process
+              environment is configured
         nodeDescProviders: dictionary mapping the name of a node descriptor provider contained in the
                      plugin to its corresponding NodeDescProvider object
         submitterProviders: dictionary mapping the name of a submitter provider contained in the
@@ -47,32 +49,27 @@ class Plugin(BaseObject):
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
-    _instancesCount = 0
-
-    def __init__(self, name: str, path: str):
+    def __init__(self, name: str, path: str, type: PluginType, isUserPlugin: bool = False):
         super().__init__()
 
-        Plugin._instancesCount += 1
-        self._uid: str = f"{Plugin._instancesCount:04d}"
         self._name: str = name
         self._path: str = path
-        self._isUserPlugin: bool = False
+        self._type: PluginType = type
+        self._isUserPlugin: bool = isUserPlugin
         self._nodeDescProviders: dict[str: NodeDescProvider] = {}
         self._submitterProviders: dict[str: SubmitterProvider] = {}
         self._templates: dict[str: str] = {}
         self._configEnv: dict[str: str] = {}
         self._configFullEnv: dict[str: str] = {}
-        self._processEnv: ProcessEnv = ProcessEnv(path, self._configEnv, self._name)
 
         self.loadTemplates()
         self.loadConfig()
 
-    def __repr__(self):
-        return f"<Plugin {self._name} (uid={self._uid})>"
+        envType = "rez" if type is PluginType.REZ else "dirtree"
+        self._processEnv: ProcessEnv = processEnvFactory(self._path, self._configEnv, self._name, envType=envType)
 
-    @property
-    def uid(self):
-        return self._uid
+    def __repr__(self):
+        return f"<Plugin {self._name}>"
 
     @property
     def name(self):
@@ -80,24 +77,19 @@ class Plugin(BaseObject):
         return self._name
 
     @property
-    def uname(self):
-        """ Return the unique name of the plugin. """
-        return f"{self._uid}_{self._name}"
-
-    @property
     def path(self):
         """ Return the absolute path of the plugin. """
         return self._path
 
     @property
+    def type(self):
+        """ Return the PluginType describing how the plugin was discovered. """
+        return self._type
+
+    @property
     def isUserPlugin(self):
         """ Return whether the plugin is a user plugin (not maintained by the core Meshroom team). """
         return self._isUserPlugin
-
-    @isUserPlugin.setter
-    def isUserPlugin(self, isUserPlugin: bool):
-        """ Set whether the plugin is a user plugin. """
-        self._isUserPlugin = isUserPlugin
 
     @property
     def nodeDescProviders(self):
@@ -125,11 +117,6 @@ class Plugin(BaseObject):
         """ Return the environment required to successfully execute processes. """
         return self._processEnv
 
-    @processEnv.setter
-    def processEnv(self, processEnv: ProcessEnv):
-        """ Set the environment required to successfully execute processes. """
-        self._processEnv = processEnv
-
     @property
     def configEnv(self):
         """
@@ -143,17 +130,21 @@ class Plugin(BaseObject):
         """ Return the fusion of the os.environ dictionary with the configEnv dictionary. """
         return self._configFullEnv
 
-    def addNodeDescProvider(self, nodeDescProvider: NodeDescProvider):
+    def addNodeDescProvider(self, nodeDescClass: type[desc.BaseNode]) -> NodeDescProvider:
         """
-        Add a node descriptor provider to the current plugin object and assign it as its containing
-        plugin. The node descriptor provider is added to the dictionary of node descriptor providers
-        with the name of the node descriptor as its key.
+        Create a NodeDescProvider for "nodeDescClass" and add it to the current plugin object,
+        assigning the plugin as its container. The node descriptor provider is added to the dictionary
+        of node descriptor providers with the name of the node descriptor as its key.
 
         Args:
-            nodeDescProvider: the NodeDescProvider object to add to the Plugin.
+            nodeDescClass: the desc.BaseNode subclass to create a NodeDescProvider for.
+
+        Returns:
+            NodeDescProvider: the created node descriptor provider.
         """
+        nodeDescProvider = NodeDescProvider(nodeDescClass, self)
         self._nodeDescProviders[nodeDescProvider.name] = nodeDescProvider
-        nodeDescProvider.plugin = self
+        return nodeDescProvider
 
     def removeNodeDescProvider(self, name: str):
         """
@@ -179,7 +170,7 @@ class Plugin(BaseObject):
         """
         return name in self._nodeDescProviders
 
-    def addSubmitterProvider(self, submitterClass: type[BaseSubmitter]):
+    def addSubmitterProvider(self, submitterClass: type[BaseSubmitter]) -> SubmitterProvider:
         """
         Create a SubmitterProvider for "submitterClass" and add it to the current plugin object,
         assigning the plugin as its container. The submitter provider is added to the dictionary
@@ -187,9 +178,13 @@ class Plugin(BaseObject):
 
         Args:
             submitterClass: the BaseSubmitter subclass to create a SubmitterProvider for.
+
+        Returns:
+            SubmitterProvider: the created submitter provider.
         """
         submitterProvider = SubmitterProvider(submitterClass, self)
         self._submitterProviders[submitterProvider.name] = submitterProvider
+        return submitterProvider
 
     def removeSubmitterProvider(self, name: str):
         """
@@ -273,13 +268,11 @@ class Plugin(BaseObject):
 
 class NodeDescProviderStatus(Enum):
     """
-    Loading status for NodeDescProvider objects.
+    Validity status for NodeDescProvider objects.
     """
-    NOT_LOADED = 0  # The node descriptor provider exists but is not loaded and cannot be used (not registered)
-    LOADED = 1  # The node descriptor provider is currently loaded and functional (it has been registered)
-    DESC_ERROR = 2  # The node descriptor provider exists but has an invalid description
-    LOADING_ERROR = 3  # The node descriptor provider exists and is valid but could not be successfully registered
-    ERROR = 4  # Error when importing the node descriptor provider from its module
+    VALID = 0  # The node description is valid and can be instantiated
+    DESC_ERROR = 1  # The node provider exists but has an invalid description
+    ERROR = 2  # Error when importing the node provider from its module
 
 
 class NodeDescProvider(BaseObject):
@@ -288,38 +281,38 @@ class NodeDescProvider(BaseObject):
 
     Members:
         plugin: the Plugin object that contains this node descriptor provider
+        name: the name of the node descriptor, as declared by its class
         path: absolute path to the file containing the node's description
         nodeDescClass: the description of the node
-        name: the name of the node descriptor, as declared by its class
         status: the loading status on the node descriptor provider
-        errors: the list of errors (if there are any) when validating the description
-                of the node or attempting to load it
+        error: a single formatted message combining every description "errors", or None if valid
         processEnv: the environment required for the node descriptor provider's process. It can either
                     be specific to this node descriptor provider, or be common for all the node
                     descriptor providers within the plugin
+        runtimeEnv: the environment dictionary for the runtime, derived from processEnv
+        commandPrefix: the command prefix for the node provider's execution, derived from processEnv
+        commandSuffix: the command suffix for the node provider's execution, derived from processEnv
+        configFullEnv: the plugin's full environment dictionary
         timestamp: the timestamp corresponding to the last time the node description's file has been
                    modified
     """
 
     @staticmethod
-    def __validateNodeDescClass(nodeDescClass: type[desc.BaseNode]) -> list[tuple[str, ValueTypeErrors]]:
+    def __validateNodeDescClass(nodeDescClass: type[desc.BaseNode]) -> Optional[str]:
         """
         Check that the node description class is a valid description. 
         To be valid, the default value of every parameter needs to correspond to the type
-        of the parameter.
-        An empty returned list means that every parameter is valid, and so is the node's description.
-        If it is not valid, the returned list contains the names of the invalid parameters. In case
-        of nested parameters (parameters in groups or lists, for example), the name of the parameter
-        follows the name of the parent attributes. For example, if the attribute "x", contained in group
-        "group", is invalid, then it will be added to the list as "group:x".
+        of the parameter. In case of nested parameters (parameters in groups or lists, for example),
+        the name of the parameter follows the name of the parent attributes. For example, if the attribute
+        "x", contained in group "group", is invalid, then it will be added to the list as "group:x".
 
         Args:
             nodeDescClass: Description class of a node.
 
         Returns:
-            errors: The list of invalid parameters if there are any, empty list otherwise.
+            error: The list of invalid parameters in a formatted error message.
         """
-        errors = []
+        errors: list[tuple[str, ValueTypeErrors]] = []
         for param in nodeDescClass.inputs:
             errMsg, errType = param.checkValueTypes()
             if errMsg:
@@ -332,43 +325,40 @@ class NodeDescProvider(BaseObject):
             errMsg, errType = param.checkValueTypes()
             if errMsg:
                 errors.append((errMsg, errType))
-        return errors
-
-    @staticmethod
-    def formatNodeDescriptionErrorMessage(error: tuple[str, ValueTypeErrors]) -> str:
-        """
-        Format a node description error message from a tuple containing the error message (name of the attribute) and type.
-
-        Args:
-            error: Tuple containing the name of the parameter that was rejected, and the type of the error.
-
-        Returns:
-            str: Formatted error message.
-        """
-        errMsg, errType = error
-        if errType == ValueTypeErrors.TYPE:
-            return f"'value': Invalid type for parameter '{errMsg}'."
-        if errType == ValueTypeErrors.RANGE:
-            return f"'range': Invalid range value for parameter '{errMsg}'."
-        if errType == ValueTypeErrors.DYNAMIC_OUTPUT:
-            return f"'value': Unsupported dynamic output for parameter '{errMsg}'."
-        return f"Unknown error for parameter '{errMsg}'."
+        errorMessages: list[str] = []
+        for error in errors:
+            errMsg, errType = error
+            if errType == ValueTypeErrors.TYPE:
+                errorMessages.append(f" - 'value': Invalid type for parameter '{errMsg}'.")
+            elif errType == ValueTypeErrors.RANGE:
+                errorMessages.append(f" - 'range': Invalid range value for parameter '{errMsg}'.")
+            elif errType == ValueTypeErrors.DYNAMIC_OUTPUT:
+                errorMessages.append(f" - 'value': Unsupported dynamic output for parameter '{errMsg}'.")
+            else:
+                errorMessages.append(f" - Unknown error for parameter '{errMsg}'.")
+        if errorMessages:
+            return f"NodeDescProvider {nodeDescClass.__name__} could not be validated:\n" + "\n".join(errorMessages)
+        return None
 
     def __init__(self, nodeDescClass: type[desc.BaseNode], plugin: Plugin = None):
         super().__init__()
+        self._plugin: Plugin = plugin
         self.path: str = Path(getfile(nodeDescClass)).resolve().as_posix()
         self.nodeDescClass: desc.BaseNode = nodeDescClass
         self.nodeDescClass.provider = self
         self.nodeDescClass.plugin = plugin
-        self.plugin: Plugin = plugin
+        self.nodeDescClass.packageName = plugin.name if plugin else ""
 
-        self.status: NodeDescProviderStatus = NodeDescProviderStatus.NOT_LOADED
-        self.errors: list[tuple[str, ValueTypeErrors]] = self.__validateNodeDescClass(nodeDescClass)
+        self.status: NodeDescProviderStatus = NodeDescProviderStatus.VALID
+        self.error: Optional[str] = self.__validateNodeDescClass(nodeDescClass)
 
-        if self.errors:
+        if self.error:
             self.status = NodeDescProviderStatus.DESC_ERROR
 
         self._processEnv = None
+        if plugin:
+            envType = "rez" if plugin.type is PluginType.REZ else "dirtree"
+            self._processEnv: ProcessEnv = processEnvFactory(plugin.path, plugin.configEnv, plugin.name, pluginSubPackage=self.relativePackage, envType=envType)
         self._timestamp = os.path.getmtime(self.path)
 
     def reload(self) -> bool:
@@ -409,8 +399,8 @@ class NodeDescProvider(BaseObject):
                           f"was not found.")
             return False
 
-        self.errors = self.__validateNodeDescClass(descriptor)
-        if self.errors:
+        self.error = self.__validateNodeDescClass(descriptor)
+        if self.error:
             self.status = NodeDescProviderStatus.DESC_ERROR
             logging.error(f"[Reload] {self.name}: The node description at {self.path} "
                           f"has description errors.")
@@ -419,15 +409,11 @@ class NodeDescProvider(BaseObject):
         self.nodeDescClass = descriptor
         self.nodeDescClass.provider = self
         self.nodeDescClass.plugin = self.plugin
+        self.nodeDescClass.packageName = self._plugin.name if self._plugin else ""
         self._timestamp = timestamp
-        self.status = NodeDescProviderStatus.NOT_LOADED
+        self.status = NodeDescProviderStatus.VALID
         logging.info(f"[Reload] {self.name}: Successful reloading.")
         return True
-
-    @property
-    def name(self) -> str:
-        """ Return the name of the node descriptor, as declared by its class. """
-        return self.nodeDescClass.__name__
 
     @property
     def plugin(self):
@@ -438,11 +424,33 @@ class NodeDescProvider(BaseObject):
         """
         return self._plugin
 
-    @plugin.setter
-    def plugin(self, plugin: Plugin):
-        """ Assign this node descriptor provider to a containing Plugin object. """
-        self._plugin = plugin
-        self.nodeDescClass.plugin = plugin
+    @property
+    def name(self) -> str:
+        """ Return the name of the node descriptor, as declared by its class. """
+        return self.nodeDescClass.__name__
+
+    @property
+    def absolutePackage(self) -> str:
+        """
+        Return the full dotted path of the package containing the node's description class.
+
+        Only strip the last dotted component of the class' module name if that module is a leaf
+        file within a package: if the class is declared directly in a package's "__init__.py",
+        its module name already is that package's dotted path and must be kept as-is.
+        """
+        moduleName = self.nodeDescClass.__module__
+        module = sys.modules.get(moduleName)
+        if module is not None and hasattr(module, "__path__"):
+            return moduleName
+        return moduleName.rsplit(".", 1)[0]
+
+    @property
+    def relativePackage(self) -> str:
+        """
+        Return the dotted path of the package containing the node's description class,
+        relative to the plugin's root (i.e. without the "_meshroomPlugins.<pluginName>" prefix).
+        """
+        return ".".join(self.absolutePackage.split(".")[2:])
 
     @property
     def processEnv(self):
@@ -502,6 +510,7 @@ class SubmitterProvider(BaseObject):
         submitterClass: the BaseSubmitter subclass
         name: the name of the submitter, as declared by its class
         status: the validity status of the submitter provider
+        error: a single formatted message combining every submitter "errors", or None if valid
         instance: the instantiated submitter, or None if instantiation failed
     """
 
@@ -521,14 +530,37 @@ class SubmitterProvider(BaseObject):
             self.status = SubmitterProviderStatus.ERROR
 
     @property
-    def name(self) -> str:
-        """ Return the name of the submitter, as declared by its class. """
-        return self.submitterClass._name
-
-    @property
     def plugin(self):
         """
         Return the Plugin object that contains this submitter provider. Set once at
         construction and constant for the lifetime of the submitter provider.
         """
         return self._plugin
+
+    @property
+    def name(self) -> str:
+        """ Return the name of the submitter, as declared by its class. """
+        return self.submitterClass._name
+
+    @property
+    def absolutePackage(self) -> str:
+        """
+        Return the full dotted path of the package containing the submitter class.
+
+        Only strip the last dotted component of the class' module name if that module is a leaf
+        file within a package: if the class is declared directly in a package's "__init__.py",
+        its module name already is that package's dotted path and must be kept as-is.
+        """
+        moduleName = self.submitterClass.__module__
+        module = sys.modules.get(moduleName)
+        if module is not None and hasattr(module, "__path__"):
+            return moduleName
+        return moduleName.rsplit(".", 1)[0]
+
+    @property
+    def relativePackage(self) -> str:
+        """
+        Return the dotted path of the package containing the submitter class,
+        relative to the plugin's root (i.e. without the "_meshroomPlugins.<pluginName>" prefix).
+        """
+        return ".".join(self.absolutePackage.split(".")[2:])

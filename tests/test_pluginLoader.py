@@ -41,7 +41,7 @@ class TestPluginLoader:
 
         assert plugin is not None
         assert list(plugin.nodeDescProviders.keys()) == ["MyNode"]
-        assert plugin.nodeDescProviders["MyNode"].status == NodeDescProviderStatus.NOT_LOADED
+        assert plugin.nodeDescProviders["MyNode"].status == NodeDescProviderStatus.VALID
 
         loader.unloadPlugin("flatRootPlugin")
 

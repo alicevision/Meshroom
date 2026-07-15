@@ -3,8 +3,9 @@ from __future__ import annotations
 import logging
 
 from meshroom.common import BaseObject
+from meshroom.core.plugins.loader import PluginLoader
 from meshroom.core.plugins.base import (
-    Plugin, NodeDescProvider, NodeDescProviderStatus, SubmitterProvider, SubmitterProviderStatus,
+    Plugin, PluginType, NodeDescProvider, NodeDescProviderStatus, SubmitterProvider, SubmitterProviderStatus,
 )
 
 
@@ -22,10 +23,152 @@ class PluginManager(BaseObject):
 
     def __init__(self):
         super().__init__()
-
+        self._pluginLoader: PluginLoader = PluginLoader()  # plugin loader in virtual package
         self._plugins: dict[str: Plugin] = {}  # loaded plugins
         self._nodeDescProviders: dict[str: NodeDescProvider] = {}  # registered node descriptor providers
         self._submitterProviders: dict[str: SubmitterProvider] = {}  # registered submitter providers
+
+    def _addPlugin(self,
+                    pluginName: str,
+                    pluginFolder: str,
+                    pluginType: PluginType,
+                    isUserPlugin: bool = False,
+                    hasMeshroomFolder: bool = True,
+                    registerProviders: bool = True):
+        """
+        Add a Plugin object and register the valid node description and submitter providers it contains.
+
+        A node description or submitter provider is not registered if it is invalid, or if its name is
+        already registered under another plugin: in that case, it remains part of "plugin" but is not
+        made available through the manager.
+
+        Args:
+            pluginName: the name of the plugin.
+            pluginFolder: the plugin's root folder.
+            pluginType: the type of the plugin.
+            isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
+            hasMeshroomFolder: whether "pluginFolder" directly contains the plugin's modules, instead of
+                        gathering them in a "meshroom" folder.
+            registerProviders: True if all the valid providers from the plugin should be registered.
+        """
+        plugin = self._pluginLoader.loadPlugin(pluginName=pluginName,
+                                                pluginFolder=pluginFolder,
+                                                pluginType=pluginType,
+                                                isUserPlugin=isUserPlugin,
+                                                hasMeshroomFolder=hasMeshroomFolder)
+        if plugin:
+            if self.getPlugin(plugin.name):
+                logging.warning(f"Plugin {plugin.name} is already registered.")
+                return
+            self._plugins[plugin.name] = plugin
+
+            if registerProviders:
+                self.registerPluginProviders(plugin)
+
+    def addPluginFromRez(self, rezPackageName: str, rezPackageFolder:str,
+                         isUserPlugin: bool = False, registerProviders: bool = True):
+        """
+        Load a plugin resolved through Rez and register its valid providers.
+
+        The plugin's modules are expected in a "meshroom" folder inside "rezPackageFolder", and its
+        process environment is built by resolving a Rez environment for its subrequires.
+
+        Args:
+            rezPackageName: the name of the Rez package, used as the plugin's name.
+            rezPackageFolder: the resolved root folder of the Rez package.
+            isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
+            registerProviders: True if all the valid providers from the plugin should be registered.
+        """
+        self._addPlugin(rezPackageName, rezPackageFolder, PluginType.REZ, isUserPlugin=isUserPlugin,
+                        hasMeshroomFolder=True, registerProviders=registerProviders)
+
+    def addPluginFromPath(self, defaultPluginName: str, pluginFolder: str,
+                          isUserPlugin: bool = False, registerProviders: bool = True):
+        """
+        Load a plugin located at an arbitrary path and register its valid providers.
+
+        The plugin's modules are expected in a "meshroom" folder inside "pluginFolder", and its
+        process environment is built from that folder's directory tree ("bin"/"lib"/"lib64"/"venv").
+
+        Args:
+            defaultPluginName: the name to register the plugin under.
+            pluginFolder: the plugin's root folder.
+            isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
+            registerProviders: True if all the valid providers from the plugin should be registered.
+        """
+        self._addPlugin(defaultPluginName, pluginFolder, PluginType.PATH, isUserPlugin=isUserPlugin,
+                        hasMeshroomFolder=True, registerProviders=registerProviders)
+
+    def addPluginFromBuiltInFolder(self, defaultPluginName: str, pluginFolder: str,
+                                   registerProviders: bool = True):
+        """
+        Load a plugin from a built-in Meshroom folder and register its valid providers.
+
+        "pluginFolder" is expected to directly contain the plugin's modules (no nested "meshroom" folder).
+        This is how Meshroom's own "nodes"/"submitters" folders are laid out. The plugin is never a user
+        plugin.
+
+        Args:
+            defaultPluginName: the name to register the plugin under.
+            pluginFolder: the plugin's root folder, directly containing its modules.
+            registerProviders: True if all the valid providers from the plugin should be registered.
+        """
+        self._addPlugin(defaultPluginName, pluginFolder, PluginType.BUILTIN, isUserPlugin=False,
+                        hasMeshroomFolder=False, registerProviders=registerProviders)
+
+    def removePlugin(self, plugin: Plugin, unregisterProviders: bool = True, unloadPlugin: bool = True):
+        """
+        Remove a loaded Plugin object.
+
+        Args:
+            plugin: the Plugin to remove from the list of loaded plugins.
+            unregisterProviders: True if all the providers from the plugin should be unregistered.
+            unloadPlugin: True if the plugin virtual package should be unload.
+        """
+        if self.getPlugin(plugin.name):
+            if unregisterProviders:
+                for name, nodeDescProvider in plugin.nodeDescProviders.items():
+                    if self._nodeDescProviders.get(name) is nodeDescProvider:
+                        del self._nodeDescProviders[name]
+                for name, submitterProvider in plugin.submitterProviders.items():
+                    if self._submitterProviders.get(name) is submitterProvider:
+                        del self._submitterProviders[name]
+            if unloadPlugin:
+                self._pluginLoader.unloadPlugin(plugin.name)
+            del self._plugins[plugin.name]
+
+    def registerPluginProviders(self, plugin: Plugin):
+        """
+        Register every valid node description and submitter provider "plugin" contains.
+
+        Args:
+            plugin: the Plugin whose valid providers should be registered.
+        """
+        for name, nodeDescProvider in plugin.nodeDescProviders.items():
+            if nodeDescProvider.status != NodeDescProviderStatus.VALID:
+                continue
+            if name in self._nodeDescProviders:
+                existingProvider = self._nodeDescProviders[name]
+                if existingProvider != nodeDescProvider:
+                    logging.warning(
+                        f"Could not register node {name} ({nodeDescProvider.path}) "
+                        f"because another node is already registered with this name ({existingProvider.path})"
+                    )
+                continue
+            self._nodeDescProviders[name] = nodeDescProvider
+
+        for name, submitterProvider in plugin.submitterProviders.items():
+            if submitterProvider.status != SubmitterProviderStatus.VALID:
+                continue
+            if name in self._submitterProviders:
+                existingProvider = self._submitterProviders[name]
+                if existingProvider != submitterProvider:
+                    logging.warning(
+                        f"Could not register submitter {name} ({submitterProvider.path}) "
+                        f"because another submitter is already registered with this name ({existingProvider.path})"
+                    )
+                continue
+            self._submitterProviders[name] = submitterProvider
 
     def getPlugins(self) -> dict[str: Plugin]:
         """
@@ -34,28 +177,19 @@ class PluginManager(BaseObject):
         """
         return self._plugins
 
-    def getPlugin(self, name: str, uname: bool = True) -> Plugin:
+    def getPlugin(self, name: str) -> Plugin:
         """
         Return the loaded Plugin object with "name".
 
         Args:
             name: the unique name of the Plugin, used upon its loading.
-            uname: the name passed as argument is the unique name of the plugin.
-                   if set to False, we will search for any plugin with this name
-                   but this means there can be a collision. To avoid any confusion
-                   use this function with the unique name as much as possible.
 
         Returns:
             Plugin | None: the loaded Plugin object if it exists, None otherwise.
         """
-        if uname:
-            # Find plugin with unique name
-            if name in self._plugins:
-                return self._plugins[name]
-        else:
-            for plugin in self._plugins.values():
-                if plugin.name == name:
-                    return plugin
+        for plugin in self._plugins.values():
+            if plugin.name == name:
+                return plugin
         return None
 
     def getPluginFromNodeDesc(self, name: str) -> Plugin:
@@ -75,41 +209,21 @@ class PluginManager(BaseObject):
                 return plugin
         return None
 
-    def addPlugin(self, plugin: Plugin, registerNodeDescProviders: bool = True):
+    def getPipelineTemplates(self) -> dict[str: str]:
         """
-        Load a Plugin object.
+        Return a dictionary combining the pipeline templates of every available Plugin,
+        with {key, value} = {template name, absolute path}.
 
-        Args:
-            plugin: the Plugin to load and add to the list of loaded plugins.
-            registerNodeDescProviders: True if all the NodeDescProviders from the plugin should be
-                                 registered at the same time the plugin is being loaded. Otherwise,
-                                 the NodeDescProviders will have to be registered at a later occasion.
-        """
-        pluginUName = plugin.uname
-        if self.getPlugin(pluginUName):
-            logging.warning(f"Plugin {pluginUName} is already registered.")
-            return
-        self._plugins[pluginUName] = plugin
-        if registerNodeDescProviders:
-            for node in plugin.nodeDescProviders:
-                self.registerNode(plugin.nodeDescProviders[node])
+        If several plugins provide a template with the same name, only the last one
+        encountered is kept.
 
-    def removePlugin(self, plugin: Plugin, unregisterNodeDescProviders: bool = True):
+        Returns:
+            dict: The combined templates of every available Plugin.
         """
-        Remove a loaded Plugin object.
-
-        Args:
-            plugin: the Plugin to remove from the list of loaded plugins.
-            unregisterNodeDescProviders: True if all the nodes from the plugin should be unregistered
-                                   (if they are registered) at the same time as the plugin is unloaded.
-                                   Otherwise, the registered NodeDescProviders will remain while the
-                                   Plugin itself will be unloaded.
-        """
-        if self.getPlugin(plugin.uname):
-            if unregisterNodeDescProviders:
-                for node in plugin.nodeDescProviders.values():
-                    self.unregisterNode(node)
-            del self._plugins[plugin.uname]
+        templates = {}
+        for plugin in self._plugins.values():
+            templates.update(plugin.templates)
+        return templates
 
     def isNodeDescRegistered(self, name: str) -> bool:
         """
@@ -170,51 +284,3 @@ class PluginManager(BaseObject):
         if self.isSubmitterRegistered(name):
             return self._submitterProviders[name]
         return None
-
-    def registerNode(self, nodeDescProvider: NodeDescProvider):
-        """
-        Register a node descriptor provider. A registered node descriptor provider will become
-        instantiable. If it is already registered, or if there is an issue with the node description,
-        the node descriptor provider will not be registered and its status will be updated.
-
-        Args:
-            nodeDescProvider: the node descriptor provider to register.
-        """
-        name = nodeDescProvider.name
-        if self.isNodeDescRegistered(name):
-            existingProvider: NodeDescProvider = self._nodeDescProviders[name]
-            logging.warning(
-                f"Could not register node {name} ({nodeDescProvider.path}) "
-                f"because another node is already registered with this name ({existingProvider.path})"
-            )
-            return
-        if nodeDescProvider.status in (NodeDescProviderStatus.DESC_ERROR,
-                                 NodeDescProviderStatus.ERROR):
-            logging.warning(
-                f"Could not register node {name} ({nodeDescProvider.path}) "
-                f"because the node is in error ({nodeDescProvider.status})."
-            )
-            return
-
-        try:
-            self._nodeDescProviders[name] = nodeDescProvider
-            nodeDescProvider.status = NodeDescProviderStatus.LOADED
-        except Exception as exc:
-            logging.error(f"NodeDescProvider {name} could not be loaded: {exc}")
-            nodeDescProvider.status = NodeDescProviderStatus.LOADING_ERROR
-
-    def unregisterNode(self, nodeDescProvider: NodeDescProvider):
-        """
-        Unregister a node descriptor provider. When unregistered, a node descriptor provider cannot be
-        instantiated anymore. If it is not registered already, nothing happens.
-
-        Args:
-            nodeDescProvider: the node descriptor provider to unregister.
-        """
-        name = nodeDescProvider.name
-        if self.isNodeDescRegistered(name):
-            if nodeDescProvider.status != NodeDescProviderStatus.LOADED:
-                logging.warning(f"NodeDescProvider {name} is registered but is not correctly loaded.")
-            else:
-                nodeDescProvider.status = NodeDescProviderStatus.NOT_LOADED
-            del self._nodeDescProviders[name]

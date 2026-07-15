@@ -11,9 +11,8 @@ from sys import platform
 from .utils import registerNodeDesc
 
 import meshroom
-from meshroom.core import pluginManager, loadClassesNodes, loadSubmitters, registerSubmitter, meshroomFolder
+from meshroom.core import pluginManager, meshroomFolder
 from meshroom.core.graph import Graph
-from meshroom.core.plugins.base import Plugin
 from meshroom.core.node import Node, Status
 from meshroom.core.submitter import jobManager
 from meshroom.core.submitter import OrderedTask, OrderedTasks, OrderedTaskType
@@ -37,8 +36,8 @@ def get_submitter() -> LocalFarmSubmitter:
 
 
 def getJobEnv():
-    """ Required to have meshroom recognize plugins that were created here """
-    pluginFolder = os.path.join(os.path.dirname(__file__), "plugins")
+    """ Required to have meshroom recognize the test plugin """
+    pluginFolder = os.path.join(os.path.dirname(__file__), "plugins", "pluginSubmitter")
     return {
         "MESHROOM_PLUGINS_PATH": pluginFolder
     }
@@ -128,28 +127,22 @@ class TestNodeSubmit:
 
     @classmethod
     def setup_class(cls):
-        submittersFolder = os.path.join(meshroomFolder, "submitters")
-        submitters = loadSubmitters(submittersFolder, "localFarm")
-        for submitter in submitters:
-            registerSubmitter(submitter())
+        localFarmFolder = os.path.join(meshroomFolder, "submitters", "localFarm")
+        pluginManager.addPluginFromBuiltInFolder("localFarm", localFarmFolder)
+        submitterProvider = pluginManager.getSubmitterProvider("LocalFarm")
+        meshroom.core.submitters[submitterProvider.name] = submitterProvider.instance
 
-        cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
-        package = "pluginSubmitter"
-        cls.plugin = Plugin(package, cls.folder)
-        nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin.uid)
-        for node in nodes:
-            cls.plugin.addNodeDescProvider(node)
-        pluginManager.addPlugin(cls.plugin)
+        cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginSubmitter")
+        pluginManager.addPluginFromBuiltInFolder("pluginSubmitter", cls.folder)
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodeDescProviders.values():
-            pluginManager.unregisterNode(node)
-        pluginManager.removePlugin(cls.plugin)
-        cls.plugin = None
+        plugin = pluginManager.getPlugin("pluginSubmitter")
+        if plugin:
+            pluginManager.removePlugin(plugin)
 
     def registerNode(self, name):
-        plugin = pluginManager.getPlugin("pluginSubmitter", uname=False)
+        plugin = pluginManager.getPlugin("pluginSubmitter")
         node = plugin.nodeDescProviders[name]
         nodeType = node.nodeDescClass
         registerNodeDesc(nodeType)

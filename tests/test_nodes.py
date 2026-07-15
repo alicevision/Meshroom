@@ -7,10 +7,9 @@ import json
 from pathlib import Path
 import tempfile
 
-from meshroom.core import desc, pluginManager, loadClassesNodes, initNodes
+from meshroom.core import desc, pluginManager, initNodes
 from meshroom.core.node import Position, BaseNode
 from meshroom.core.graph import Graph, loadGraph
-from meshroom.core.plugins.base import Plugin
 from meshroom.core.plugins.env import ProcessEnv
 from meshroom.nodes.general.InputString import InputString
 from meshroom.nodes.general.GetMgSceneParams import GetMeshroomSceneParams
@@ -44,31 +43,23 @@ def processNode(node: BaseNode):
 
 
 class TestNodeInfo:
-    plugin = None
 
     @classmethod
     def setup_class(cls):
-        cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
-        package = "pluginC"
-        cls.plugin = Plugin(package, cls.folder)
-        nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin.uid)
-        for node in nodes:
-            cls.plugin.addNodeDescProvider(node)
-        pluginManager.addPlugin(cls.plugin)
+        cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginC")
+        pluginManager.addPluginFromPath("pluginC", cls.folder)
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodeDescProviders.values():
-            pluginManager.unregisterNode(node)
-        pluginManager.removePlugin(cls.plugin)
-        cls.plugin = None
+        plugin = pluginManager.getPlugin("pluginC")
+        if plugin:
+            pluginManager.removePlugin(plugin)
 
     def test_loadedPlugin(self):
         assert len(pluginManager.getPlugins()) >= 1
-        plugin = pluginManager.getPlugin("pluginC", uname=False)
-        pluginUName = plugin.uname
-        assert pluginUName.endswith("pluginC")
-        assert plugin == self.plugin
+        plugin = pluginManager.getPlugin("pluginC")
+        assert plugin
+        assert plugin.name.endswith("pluginC")
         node = plugin.nodeDescProviders["PluginCNodeA"]
         nodeType = node.nodeDescClass
 
@@ -80,7 +71,7 @@ class TestNodeInfo:
         assert nodeDocumentation == "PluginCNodeA"
         nodeInfo = {item["key"]: item["value"] for item in node.getNodeInfo()}
         assert nodeInfo["module"].endswith("pluginC.PluginCNodeA")
-        pluginPath = os.path.join(self.folder, "pluginC", "PluginCNodeA.py")
+        pluginPath = os.path.join(self.folder, "meshroom", "PluginCNodeA.py")
         assert nodeInfo["modulePath"] == Path(pluginPath).as_posix()  # modulePath seems to follow Linux convention
         assert nodeInfo["author"] == "testAuthor"
         assert nodeInfo["license"] == "no-license"
@@ -89,35 +80,31 @@ class TestNodeInfo:
 
 
 class TestNodeVariables:
-    plugin = None
 
     @classmethod
     def setup_class(cls):
-        folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
-        package = "pluginA"
-        cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
-        for node in nodes:
-            cls.plugin.addNodeDescProvider(node)
-        pluginManager.addPlugin(cls.plugin)
+        folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginA")
+        pluginManager.addPluginFromPath("pluginA", folder)
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodeDescProviders.values():
-            pluginManager.unregisterNode(node)
-        pluginManager.removePlugin(cls.plugin)
-        cls.plugin = None
+        plugin = pluginManager.getPlugin("pluginA")
+        if plugin:
+            pluginManager.removePlugin(plugin)
 
     def test_staticVariables(self):
         g = Graph("")
 
-        for nodeName in self.plugin.nodeDescProviders.keys():
+        plugin = pluginManager.getPlugin("pluginA")
+        assert plugin
+
+        for nodeName in plugin.nodeDescProviders.keys():
             n = g.addNewNode(nodeName)
             assert nodeName == n._staticExpVars["nodeType"]
             assert n.sourceCodeFolder
             assert n.sourceCodeFolder == n._staticExpVars["nodeSourceCodeFolder"]
 
-            self.plugin.nodeDescProviders[nodeName].reload()
+            plugin.nodeDescProviders[nodeName].reload()
 
             assert nodeName == n._staticExpVars["nodeType"]
             assert n.sourceCodeFolder
@@ -126,7 +113,10 @@ class TestNodeVariables:
     def test_expVariables(self):
         g = Graph("")
 
-        for nodeName in self.plugin.nodeDescProviders.keys():
+        plugin = pluginManager.getPlugin("pluginA")
+        assert plugin
+
+        for nodeName in plugin.nodeDescProviders.keys():
             n = g.addNewNode(nodeName)
             assert n._expVars["uid"] == n._uid
             assert n.internalFolder
@@ -134,7 +124,7 @@ class TestNodeVariables:
             assert "node" in n._expVars
             assert n._expVars["node"] is n
 
-            self.plugin.nodeDescProviders[nodeName].reload()
+            plugin.nodeDescProviders[nodeName].reload()
 
             assert n._expVars["uid"] == n._uid
             assert n.internalFolder
@@ -144,24 +134,17 @@ class TestNodeVariables:
 
 
 class TestInputNode:
-    plugin = None
 
     @classmethod
     def setup_class(cls):
-        folder = os.path.join(os.path.dirname(__file__), "plugins", "meshroom")
-        package = "pluginA"
-        cls.plugin = Plugin(package, folder)
-        nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
-        for node in nodes:
-            cls.plugin.addNodeDescProvider(node)
-        pluginManager.addPlugin(cls.plugin)
+        folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginA")
+        pluginManager.addPluginFromPath("pluginA", folder)
 
     @classmethod
     def teardown_class(cls):
-        for node in cls.plugin.nodeDescProviders.values():
-            pluginManager.unregisterNode(node)
-        pluginManager.removePlugin(cls.plugin)
-        cls.plugin = None
+        plugin = pluginManager.getPlugin("pluginA")
+        if plugin:
+            pluginManager.removePlugin(plugin)
 
     def test_inputNode(self):
         g = Graph("")
@@ -188,8 +171,6 @@ class TestBackdropNode:
     def teardown_class(cls):
         for plugin in pluginManager.getPlugins():
             if plugin not in cls.loadedPlugins:
-                for node in plugin.nodeDescProviders.values():
-                    pluginManager.unregisterNode(node)
                 pluginManager.removePlugin(plugin)
 
     def test_backdropNode(self):
@@ -618,8 +599,6 @@ class TestGenerateMgScene:
     def teardown_class(cls):
         for plugin in pluginManager.getPlugins():
             if plugin not in cls.loadedPlugins:
-                for node in plugin.nodeDescProviders.values():
-                    pluginManager.unregisterNode(node)
                 pluginManager.removePlugin(plugin)
 
     @staticmethod

@@ -19,6 +19,7 @@ try:
 except Exception:
     pass
 
+from meshroom.common import CurrentBackend, Backend
 from meshroom.core.plugins import NodePlugin, NodePluginManager, Plugin, processEnvFactory, formatNodeDescriptionErrorMessage
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
@@ -409,7 +410,7 @@ def loadPluginFolder(folder, userPlugin: bool = False) -> list[Plugin]:
 
     # Register any menu(s) declared by this plugin
     pluginMenuFile = mrFolder / "menu.py"
-    if pluginMenuFile.exists():
+    if CurrentBackend == Backend.PYSIDE and pluginMenuFile.exists():
         loadPluginMenu(pluginMenuFile)
 
     plugins = loadAllNodes(folder=mrFolder)

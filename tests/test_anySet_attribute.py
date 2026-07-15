@@ -229,7 +229,7 @@ def test_dynamic_inputs_serialized_in_todict():
     assert outputAttribute.get('type') == 'File'
     assert outputAttribute.get('value') == ''
 
-    assert lsNode3.toDict().get('inputs').get('input') == '{DynamicNode_1.outs.input}'  # Check for connection
+    assert lsNode3.toDict().get('inputs').get('input') == '{DynamicNode.outs.input}'  # Check for connection
 
 def test_dynamic_inputs_restored_after_load(tmp_path):
     """Dynamic inputs survive a graph save/load cycle."""

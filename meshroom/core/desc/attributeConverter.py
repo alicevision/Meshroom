@@ -12,6 +12,9 @@ class AttributeConverter(ABC):
     into a value for a destination Attribute of a different type, 
     so a connection can be made between them.
     """
+    
+    # Put a higher number to prioritize specific converters
+    priority = 10
 
     # Input / Output classes
     srcType: Attribute = None
@@ -23,14 +26,16 @@ class AttributeConverter(ABC):
         """
         return isinstance(srcType, cls.srcType) and isinstance(dstType, cls.dstType)
 
+    @classmethod
     @abstractmethod
-    def convert(self, value):
+    def convert(cls, value):
         """ Convert a value from the source attribute's type to a value for
         the destination attribute's type.
         """
         return value
 
-    def isValid(self, value):
+    @classmethod
+    def isValid(cls, value):
         """ In general case we suppose the conversion is always possible, but
         this method enables optional type checking.
         """

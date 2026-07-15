@@ -70,8 +70,11 @@ class Edge(BaseObject):
         super().__init__(parent)
         self._src = weakref.ref(src)
         self._dst = weakref.ref(dst)
+        self._availableConverters = self.getAvailableConverters()
         self._converter: "AttributeConverter" = converter
         self._resolveConverter()
+        if self._converter:
+            self.converterChanged.emit()
 
     def __repr__(self):
         converter = f">-({self._converter.getName()})->" if self._converter else "->"
@@ -85,15 +88,38 @@ class Edge(BaseObject):
     def dst(self):
         return self._dst()
 
+    def getAvailableConverters(self) -> list[dict]:
+        converters = AttributeConverterRegistry.getConverters(self.src.desc.type, self.dst.desc.type)
+        return [
+            {
+                "name": c.getName(), 
+                "description": c.description
+            } 
+            for c in converters
+        ]
+
     def isConverted(self):
         return self._converter is not None
 
-    def setConverter(self, converter: "AttributeConverter"):
+    def getConverterDescription(self) -> str:
+        if not self._converter:
+            return ""
+        desc = f"<b>{self._converter.getName()}</b>"
+        if self._converter.description:
+            desc += f"<b>:</b><br/>{self._converter.description}"
+        return desc
+
+    @Slot(str)
+    def setConverter(self, converterName: str):
         """ Change the converter used on this edge. """
+        converter = AttributeConverterRegistry.getConverterByName(converterName)
+        if not converter:
+            raise KeyError(f"No converter named {converterName}.")
         oldConverter = self._converter
         self._converter = converter
         try:
             self._resolveConverter()
+            self.converterChanged.emit()
         except GraphCompatibilityError as e:
             self._converter = oldConverter
             self._resolveConverter()
@@ -131,6 +157,9 @@ class Edge(BaseObject):
     dst = Property(Attribute, dst.fget, constant=True)
     converterChanged = Signal()
     hasConverter = Property(bool, isConverted, notify=converterChanged)
+    converterName = Property(str, lambda self: self._converter.getName() if self._converter else "", notify=converterChanged)
+    converterDescription = Property(str, getConverterDescription, notify=converterChanged)
+    availableConverters = Property("QVariantList", lambda self: self._availableConverters, constant=True)
 
 
 WHITE = 0

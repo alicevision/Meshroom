@@ -1,7 +1,8 @@
 from meshroom.core import desc
+from meshroom.core.attributeConverter import AttributeConverter
 
 
-class FileToString(desc.AttributeConverter):
+class FileToString(AttributeConverter):
     srcType = desc.File
     dstType = desc.StringParam
 

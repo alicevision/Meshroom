@@ -1,7 +1,8 @@
 from meshroom.core import desc
+from meshroom.core.attributeConverter import AttributeConverter
 
 
-class IntToFloat(desc.AttributeConverter):
+class IntToFloat(AttributeConverter):
     srcType = desc.IntParam
     dstType = desc.FloatParam
 

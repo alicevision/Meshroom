@@ -12,7 +12,7 @@ from typing import List, Optional
 from meshroom.common import BaseObject
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
-from meshroom.core.desc.attributeConverter import AttributeConverter, AttributeConverterRegistry
+from meshroom.core.attributeConverter import AttributeConverter, AttributeConverterRegistry
 from meshroom.core.plugins.base import PluginType, PluginContext, Plugin
 from meshroom.core.plugins.metadata import PluginMetadata
 

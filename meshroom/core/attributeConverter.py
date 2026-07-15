@@ -6,7 +6,10 @@ import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from itertools import chain
-from .attribute import Attribute
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from meshroom.core.desc.attribute import Attribute
 
 
 class AttributeConverter(ABC):
@@ -15,13 +18,17 @@ class AttributeConverter(ABC):
     into a value for a destination Attribute of a different type, 
     so a connection can be made between them.
     """
-    
-    # Put a higher number to prioritize specific converters
-    priority = 10
+
+    name = ""
+    priority = 10  # Put a higher number to prioritize specific converters
 
     # Input / Output classes
     srcType: Attribute = None
     dstType: Attribute = None
+
+    @classmethod
+    def getName(cls):
+        return cls.name or cls.__name__
 
     @classmethod
     def canConvert(cls, srcType, dstType):
@@ -45,7 +52,7 @@ class AttributeConverter(ABC):
         return True
 
     def __repr__(self):
-        return f"<AttributeConverter '{self.__class__.__name__}': {self.srcType} -> {self.dstType}>"
+        return f"<AttributeConverter '{self.getName()}': {self.srcType} -> {self.dstType}>"
 
 
 class AttributeConverterRegistry:

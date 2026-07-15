@@ -1,7 +1,8 @@
 from meshroom.core import desc
+from meshroom.core.attributeConverter import AttributeConverter
 
 
-class StringToChoice(desc.AttributeConverter):
+class StringToChoice(AttributeConverter):
     priority = 20
     srcType = desc.StringParam
     dstType = desc.ChoiceParam
@@ -11,7 +12,7 @@ class StringToChoice(desc.AttributeConverter):
         return str(value)
 
 
-class StringToChoiceStrict(desc.AttributeConverter):
+class StringToChoiceStrict(AttributeConverter):
     """
     StringToChoice with enforcement that the converted 
     value is included in the destination values.

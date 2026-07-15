@@ -22,6 +22,7 @@ from PySide6.QtCore import (
     QPoint,
     QItemSelectionModel,
     QItemSelection,
+    QPointF
 )
 
 from meshroom.core import sessionUid
@@ -1691,6 +1692,9 @@ class UIGraph(QObject):
     # Current chunk selected (used to send signals from TaskManager to ChunksListView)
     selectedChunkChanged = Signal()
     selectedChunk = makeProperty(QObject, "_selectedChunk", selectedChunkChanged, resetOnDestroy=True)
+
+    edgeDraggingChanged = Signal(bool)
+    edgeDragMousePosChanged = Signal(float, float)
 
     nodeSelection = makeProperty(QObject, "_nodeSelection")
 

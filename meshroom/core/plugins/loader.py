@@ -359,7 +359,7 @@ class PluginLoader:
                         f'"{module.__file__}"{self._formatExceptionMessage(exc)}'
                     )
             elif issubclass(attr, AttributeConverter) and attr is not AttributeConverter:
-                AttributeConverterRegistry.add(attr)
+                AttributeConverterRegistry.add(attr())
             elif issubclass(attr, BaseSubmitter):
                 try:
                     submitterProvider = plugin.addSubmitterProvider(attr)

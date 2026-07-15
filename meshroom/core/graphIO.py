@@ -25,6 +25,7 @@ class GraphIO:
         FileVersion = "fileVersion"
         CacheDir = "cacheDir"
         Graph = "graph"
+        Converters = "converters"
         Template = "template"
         NodeDescriptions = "nodeDescriptions"
 
@@ -78,6 +79,7 @@ class GraphSerializer:
             GraphIO.Keys.Header: self.serializeHeader(),
             GraphIO.Keys.NodeDescriptions: self.serializeNodeDescriptions(),
             GraphIO.Keys.Graph: self.serializeContent(),
+            GraphIO.Keys.Converters: self.serializeConverters(),
         }
 
     @property
@@ -131,6 +133,13 @@ class GraphSerializer:
     def serializeContent(self) -> dict:
         """Graph content serialization logic."""
         return {node.name: self.serializeNode(node) for node in sorted(self.nodes, key=lambda n: n.name)}
+
+    def serializeConverters(self) -> dict:
+        """Graph converters serialization logic."""
+        edgesWithConverters = [e for e in self._graph.edges if e._converter]
+        return {
+            e._converter.getName(): (e.src.fullName, e.dst.fullName) for e in edgesWithConverters
+        }
 
     def serializeNode(self, node: Node) -> dict:
         """Node serialization logic."""

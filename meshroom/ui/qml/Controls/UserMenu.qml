@@ -28,6 +28,7 @@ Menu {
             Shortcut {
                 sequence: itemData.shortcut || ""
                 enabled: itemData.shortcut !== ""
+                context: Qt.ApplicationShortcut
                 onActivated: trigger()
             }
 

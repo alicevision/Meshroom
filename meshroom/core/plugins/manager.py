@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 
+from typing import Optional
+
 from meshroom.common import BaseObject
 from meshroom.core.plugins.loader import PluginLoader
 from meshroom.core.plugins.base import (
@@ -32,6 +34,7 @@ class PluginManager(BaseObject):
                     pluginName: str,
                     pluginFolder: str,
                     pluginType: PluginType,
+                    pluginVersion: Optional[str] = None,
                     isUserPlugin: bool = False,
                     hasMeshroomFolder: bool = True,
                     registerProviders: bool = True):
@@ -46,6 +49,7 @@ class PluginManager(BaseObject):
             pluginName: the name of the plugin.
             pluginFolder: the plugin's root folder.
             pluginType: the type of the plugin.
+            pluginVersion: the version of the plugin.
             isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
             hasMeshroomFolder: whether "pluginFolder" directly contains the plugin's modules, instead of
                         gathering them in a "meshroom" folder.
@@ -54,6 +58,7 @@ class PluginManager(BaseObject):
         plugin = self._pluginLoader.loadPlugin(pluginName=pluginName,
                                                 pluginFolder=pluginFolder,
                                                 pluginType=pluginType,
+                                                pluginVersion=pluginVersion,
                                                 isUserPlugin=isUserPlugin,
                                                 hasMeshroomFolder=hasMeshroomFolder)
         if plugin:
@@ -65,7 +70,7 @@ class PluginManager(BaseObject):
             if registerProviders:
                 self.registerPluginProviders(plugin)
 
-    def addPluginFromRez(self, rezPackageName: str, rezPackageFolder:str,
+    def addPluginFromRez(self, rezPackageName: str, rezPackageVersion: str, rezPackageFolder: str,
                          isUserPlugin: bool = False, registerProviders: bool = True):
         """
         Load a plugin resolved through Rez and register its valid providers.
@@ -75,14 +80,15 @@ class PluginManager(BaseObject):
 
         Args:
             rezPackageName: the name of the Rez package, used as the plugin's name.
+            rezPackageVersion: the version of the Rez package, used as the plugin's version.
             rezPackageFolder: the resolved root folder of the Rez package.
             isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
             registerProviders: True if all the valid providers from the plugin should be registered.
         """
-        self._addPlugin(rezPackageName, rezPackageFolder, PluginType.REZ, isUserPlugin=isUserPlugin,
-                        hasMeshroomFolder=True, registerProviders=registerProviders)
+        self._addPlugin(rezPackageName, rezPackageFolder, PluginType.REZ, pluginVersion=rezPackageVersion,
+                        isUserPlugin=isUserPlugin, hasMeshroomFolder=True, registerProviders=registerProviders)
 
-    def addPluginFromPath(self, defaultPluginName: str, pluginFolder: str,
+    def addPluginFromPath(self, defaultPluginName: str, pluginFolder: str, pluginVersion: Optional[str] = None,
                           isUserPlugin: bool = False, registerProviders: bool = True):
         """
         Load a plugin located at an arbitrary path and register its valid providers.
@@ -93,11 +99,12 @@ class PluginManager(BaseObject):
         Args:
             defaultPluginName: the name to register the plugin under.
             pluginFolder: the plugin's root folder.
+            pluginVersion: the plugin's version.
             isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
             registerProviders: True if all the valid providers from the plugin should be registered.
         """
-        self._addPlugin(defaultPluginName, pluginFolder, PluginType.PATH, isUserPlugin=isUserPlugin,
-                        hasMeshroomFolder=True, registerProviders=registerProviders)
+        self._addPlugin(defaultPluginName, pluginFolder, PluginType.PATH, pluginVersion=pluginVersion,
+                        isUserPlugin=isUserPlugin, hasMeshroomFolder=True, registerProviders=registerProviders)
 
     def addPluginFromBuiltInFolder(self, defaultPluginName: str, pluginFolder: str,
                                    registerProviders: bool = True):
@@ -113,8 +120,8 @@ class PluginManager(BaseObject):
             pluginFolder: the plugin's root folder, directly containing its modules.
             registerProviders: True if all the valid providers from the plugin should be registered.
         """
-        self._addPlugin(defaultPluginName, pluginFolder, PluginType.BUILTIN, isUserPlugin=False,
-                        hasMeshroomFolder=False, registerProviders=registerProviders)
+        self._addPlugin(defaultPluginName, pluginFolder, PluginType.BUILTIN, pluginVersion=None,
+                        isUserPlugin=False, hasMeshroomFolder=False, registerProviders=registerProviders)
 
     def removePlugin(self, plugin: Plugin, unregisterProviders: bool = True, unloadPlugin: bool = True):
         """

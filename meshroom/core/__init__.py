@@ -247,13 +247,15 @@ def initPlugins():
     rezPluginList = EnvVar.getList(EnvVar.MESHROOM_REZ_PLUGINS)
     for entry in rezPluginList:
         # Use the REZ package name as plugin name
-        rezPackageName, rezPackageFolder = entry.split("=")
-        pluginManager.addPluginFromRez(rezPackageName, rezPackageFolder, isUserPlugin=False)
+        rezPackageNameVersion, rezPackageFolder = entry.split("=")
+        rezPackageName, _, rezPackageVersion = rezPackageNameVersion.partition("-")
+        pluginManager.addPluginFromRez(rezPackageName, rezPackageVersion, rezPackageFolder, isUserPlugin=False)
 
     # Rez user plugins
     # Using RezProcessEnv
     rezUserPluginList = EnvVar.getList(EnvVar.MESHROOM_USER_REZ_PLUGINS)
     for entry in rezUserPluginList:
         # Use the REZ package name as plugin name
-        rezPackageName, rezPackageFolder = entry.split("=")
-        pluginManager.addPluginFromRez(rezPackageName, rezPackageFolder, isUserPlugin=True)
+        rezPackageNameVersion, rezPackageFolder = entry.split("=")
+        rezPackageName, _, rezPackageVersion = rezPackageNameVersion.partition("-")
+        pluginManager.addPluginFromRez(rezPackageName, rezPackageVersion, rezPackageFolder, isUserPlugin=True)

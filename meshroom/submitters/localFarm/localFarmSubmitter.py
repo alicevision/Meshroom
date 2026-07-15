@@ -112,7 +112,8 @@ def rezWrapCommand(cmd: str,
         elif shutil.which("rez"):
             rezBin = shutil.which("rez")
         envVars = " ".join([f'{k}="{v}"' for k, v in additionalEnv.items()])
-        cmd = f"{envVars} {cmd}"
+        if envVars:
+            cmd = f"{envVars} {cmd}"
         if rezBin:
             cmd = f"{rezBin} env {packagesStr} -- {cmd}"
     return cmd

@@ -9,49 +9,46 @@ except Exception:
     import shiboken6
 
 
-class QmlInstantEngine(QQmlApplicationEngine):
+class QmlInstantEngine(QObject):
     """
     QmlInstantEngine is a utility class helping to develop QML applications.
     It reloads itself whenever one of the watched source files is modified.
     As it consumes resources, make sure to disable file watching in production mode.
     """
 
-    def __init__(self, sourceFile="", watching=True, verbose=False, parent=None):
+    def __init__(self, sourceFile, setupEngine, watching=True, verbose=False, parent=None):
         """
-        watching -- Defines whether the watcher is active (default: True)
-        verbose -- if True, output log information (default: False)
+        sourceFile  -- Main QML file.
+        setupEngine -- Callback to call on reload after creating the engine (for hot-reload).
+        watching    -- Defines whether the watcher is active (default: True)
+        verbose     -- if True, output log information (default: False)
         """
         super().__init__(parent)
 
         self._fileWatcher = QFileSystemWatcher()  # Internal Qt File Watcher
-        self._sourceFile = ""
+        self._sourceFile = str(sourceFile) or ""
         self._watchedFiles = []  # Internal watched files list
-        self._verbose = verbose  # Verbose bool
-        self._watching = False  #
-        self._extensions = ["qml", "js"]  # File extensions that defines files to watch when adding a folder
+        self._verbose = verbose    # Verbose bool
+        self._watching = False
+        self._extensions = ["qml", "js"]
 
+        # Callback to call for the engine setup (set the context properties, etc)
+        self._setupEngine = setupEngine
+        self._engine = QQmlApplicationEngine()
         self._rootItem = None
 
-        def onObjectCreated(root, url):
-            if not root:
-                return
-            # Restore root item geometry
-            if self._rootItem:
-                root.setGeometry(self._rootItem.geometry())
-                self._rootItem.deleteLater()
-            self._rootItem = root
-
-        self.objectCreated.connect(onObjectCreated)
+        # Add a single shot timer to launch the reload after all events are processed
+        self._debounceTimer = QTimer(singleShot=True, interval=100)
+        self._debounceTimer.timeout.connect(self.reload)
 
         # Update the watching status
         self.setWatching(watching)
 
-        if sourceFile:
-            self.load(sourceFile)
-
-    def load(self, sourceFile):
-        self._sourceFile = sourceFile
-        super().load(sourceFile)
+    def __getattr__(self, name):
+        engine = self.__dict__.get("_engine")
+        if engine is not None and hasattr(engine, name):
+            return getattr(engine, name)
+        raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
 
     def setWatching(self, watchValue):
         """
@@ -145,8 +142,8 @@ class QmlInstantEngine(QQmlApplicationEngine):
                         self.addFile(os.path.join(dirpath, filename))
         else:
             filenames = os.listdir(dirname)
-            filenames = [os.path.join(dirname, filename) for filename in filenames if
-                         os.path.splitext(filename)[1][1:] in self._extensions]
+            filenames = [os.path.join(dirname, f) for f in filenames if
+                         os.path.splitext(f)[1][1:] in self._extensions]
             self.addFiles(filenames)
 
     def removeFile(self, filename):
@@ -173,28 +170,76 @@ class QmlInstantEngine(QQmlApplicationEngine):
 
         if self._verbose:
             print("Source file changed : ", filepath)
-        # Clear the QQuickEngine cache
-        self.clearComponentCache()
-        # Remove the modified file from the watched list
-        self.removeFile(filepath)
-        cptTry = 0
+        # Re-add file before debounce
+        if os.path.isfile(filepath):
+            self._fileWatcher.addPath(filepath)
+        self._debounceTimer.start()
 
-        # Make sure file is available before doing anything
-        # NOTE: useful to handle editors (Qt Creator) that deletes the source file and
-        #       creates a new one when saving
-        while not os.path.exists(filepath) and cptTry < 10:
-            time.sleep(0.1)
-            cptTry += 1
+    def rootContext(self):
+        """ Context of the currently-live engine (None before the first reload). """
+        return self._engine.rootContext() if self._engine else None
 
-        self.reload()
+    @property
+    def engine(self):
+        return self._engine
 
-        # Finally, re-add the modified file to the watch system
-        # after a short cooldown to avoid multiple consecutive reloads
-        QTimer.singleShot(200, lambda: self.addFile(filepath))
+    @property
+    def rootItem(self):
+        return self._rootItem
 
     def reload(self):
         print(f"Reloading {self._sourceFile}")
-        self.load(self._sourceFile)
+
+        # Preserve window geometry across the swap.
+        oldPos, oldSize = None, None
+        if self._rootItem is not None and shiboken6.isValid(self._rootItem):
+            try:
+                oldPos = self._rootItem.position()
+                oldSize = self._rootItem.size()
+            except AttributeError:
+                pass
+
+        # Destroy old root item and engine before building the new one.
+        if self._rootItem is not None and shiboken6.isValid(self._rootItem):
+            shiboken6.delete(self._rootItem)
+        self._rootItem = None
+
+        if self._engine is not None and shiboken6.isValid(self._engine):
+            shiboken6.delete(self._engine)
+        self._engine = None
+
+        # Build the new engine and load.
+        engine = QQmlApplicationEngine()
+        self._setupEngine(engine)
+
+        def onObjectCreated(root, url):
+            if root is None:
+                print(f"Failed to load {url.toString()} - check QML warnings above.")
+                return
+            self._rootItem = root
+            if oldPos is not None:
+                root.setPosition(oldPos)
+            if oldSize is not None:
+                root.resize(oldSize)
+
+        engine.objectCreated.connect(onObjectCreated)
+        engine.load(QUrl.fromLocalFile(self._sourceFile))
+        engine.objectCreated.disconnect(onObjectCreated)
+
+        self._engine = engine
+
+    def clearComponentCache(self):
+        if self._engine:
+            self._engine.clearComponentCache()
+
+    def collectGarbage(self):
+        if self._engine:
+            self._engine.collectGarbage()
+
+    def deleteLater(self):
+        if self._engine:
+            self._engine.deleteLater()
+        super().deleteLater()
 
 
 def makeProperty(T, attributeName, notify=None, resetOnDestroy=False):

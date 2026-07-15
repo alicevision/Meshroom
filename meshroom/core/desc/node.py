@@ -10,6 +10,7 @@ import sys
 import signal
 import subprocess
 from collections import OrderedDict
+from types import SimpleNamespace
 import psutil
 
 from meshroom import _MESHROOM_ROOT
@@ -60,6 +61,60 @@ class MrNodeType(enum.Enum):
     COMMANDLINE = enum.auto()
     INIT = enum.auto()
     BACKDROP = enum.auto()
+
+
+class MeshroomCommandWrapper:
+    def __call__(self, node, command: str) -> str:
+        return command
+
+
+class StageSettings(SimpleNamespace):
+    def __init__(self, cpu=Level.NORMAL, ram=Level.NORMAL, gpu=Level.NONE, **kwargs):
+        super().__init__(**kwargs)
+        self.cpu = cpu.value
+        self.ram = ram.value
+        self.gpu = gpu.value
+        # command executed right before the stage
+        if kwargs.get("setup_command"):
+            self.setup_command = kwargs.get("setup_command")
+        # command executed after the stage
+        if kwargs.get("teardown_command"):
+            self.teardown_command = kwargs.get("teardown_command")
+        # wraps the stage command
+        self.wrapCommand = MeshroomCommandWrapper()
+
+    def __contains__(self, item):
+        return item in self.__dict__
+
+
+class SubmitionSettings:
+    def __init__(self, node):
+        """Holds infos used when we submit the node for remote computing.
+
+        Args:
+            node (BaseNode): the BaseNode instance being updated
+        """
+        # Pre/post process use the default settings
+        self.preprocess = StageSettings()
+        self.postprocess = StageSettings()
+        # Process use the values we set on the node description
+        self.process = StageSettings(cpu=node.cpu, ram=node.ram, gpu=node.gpu)
+        self.process.licenses = node.nodeDesc._licenses
+        # Retrocompatibility behaviour
+        if hasattr(node.nodeDesc, "_cuda_tag"):
+            logging.warning(f"DepreciationWarning : Node of type {node.nodeDesc} use '_cuda_tag'. Please use SubmitionSettings instead.")
+            self.process.cuda_tag = node.nodeDesc._cuda_tag
+        if hasattr(node.nodeDesc, "_service_key"):
+            logging.warning(f"DepreciationWarning : Node of type {node.nodeDesc} use '_service_key'. Please use SubmitionSettings instead.")
+            self.process.service_key = node.nodeDesc._service_key
+
+    def getStageSettings(self, stageName="process"):
+        if stageName == "preprocess":
+            return self.preprocess
+        if stageName == "process":
+            return self.process
+        if stageName == "postprocess":
+            return self.postprocess
 
 
 class InternalAttributesFactory:
@@ -389,6 +444,15 @@ class BaseNode(object):
             NodeBase.updateInternals
         """
         pass
+
+    def getSubmitionSettings(self, node) -> SubmitionSettings:
+        """ Gets invoked when we submit the node on farm.
+        SubmitionSettings contain all the settings that we can use on the submitter
+
+        Args:
+            node: The BaseNode instance about to be processed.
+        """
+        return SubmitionSettings(node)
 
     def preprocess(self, node):
         """ Gets invoked just before the processChunk method for the node.

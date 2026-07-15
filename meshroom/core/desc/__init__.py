@@ -49,4 +49,7 @@ from .node import (
     Node,
     NodeVersionType,
     NodeVersionTypeEnum,
+    MeshroomCommandWrapper,
+    SubmitionSettings,
+    StageSettings,
 )

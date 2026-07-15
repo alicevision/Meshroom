@@ -10,6 +10,7 @@ import traceback
 
 from types import ModuleType
 from pathlib import Path
+from typing import Optional
 
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
@@ -57,6 +58,7 @@ class PluginLoader:
                     pluginName: str,
                     pluginFolder: str,
                     pluginType: PluginType,
+                    pluginVersion: Optional[str] = None,
                     isUserPlugin: bool = False,
                     hasMeshroomFolder: bool = True) -> Plugin:
         """
@@ -73,6 +75,7 @@ class PluginLoader:
             pluginName: the name of the plugin.
             pluginFolder: the plugin's root folder.
             pluginType: the type of the plugin.
+            pluginVersion: the plugin's version.
             isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
             hasMeshroomFolder: whether "pluginFolder" directly contains the plugin's modules, instead of
                         gathering them in a "meshroom" folder.
@@ -105,7 +108,7 @@ class PluginLoader:
             return None
 
         # Initialize the plugin object.
-        plugin = Plugin(pluginName, pluginFolder, mrFolder, pluginType, isUserPlugin)
+        plugin = Plugin(pluginName, pluginFolder, mrFolder, pluginType, pluginVersion, isUserPlugin)
 
         # Recursive load of modules.
         issues = _LoadIssues()

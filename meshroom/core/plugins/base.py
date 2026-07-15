@@ -51,14 +51,15 @@ class Plugin(BaseObject):
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
-    def __init__(self, name: str, rootPath: str, path: str, type: PluginType, 
-                 isUserPlugin: bool = False):
+    def __init__(self, name: str, rootPath: str, path: str, type: PluginType,
+                 version: Optional[str] = None, isUserPlugin: bool = False):
         super().__init__()
 
         self._name: str = name
         self._rootPath: str = rootPath
         self._path: str = path
         self._type: PluginType = type
+        self._version: str = version
         self._isUserPlugin: bool = isUserPlugin
         self._nodeDescProviders: dict[str: NodeDescProvider] = {}
         self._submitterProviders: dict[str: SubmitterProvider] = {}
@@ -98,6 +99,13 @@ class Plugin(BaseObject):
     def type(self):
         """ Return the PluginType describing how the plugin was discovered. """
         return self._type
+
+    @property
+    def version(self):
+        """ Return the version of the plugin. """
+        if self._version and len(self._version) > 0:
+            return self._version
+        return "unknown"
 
     @property
     def isUserPlugin(self):

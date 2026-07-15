@@ -33,7 +33,8 @@ class Plugin(BaseObject):
 
     Members:
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
-        path: the absolute path of the plugin
+        rootPath: the absolute path of the plugin's root folder
+        path: the absolute path of the plugin's modules (its "meshroom" folder)
         isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team)
         type: the PluginType describing how the plugin was discovered and how its process
               environment is configured
@@ -49,10 +50,12 @@ class Plugin(BaseObject):
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
-    def __init__(self, name: str, path: str, type: PluginType, isUserPlugin: bool = False):
+    def __init__(self, name: str, rootPath: str, path: str, type: PluginType, 
+                 isUserPlugin: bool = False):
         super().__init__()
 
         self._name: str = name
+        self._rootPath: str = rootPath
         self._path: str = path
         self._type: PluginType = type
         self._isUserPlugin: bool = isUserPlugin
@@ -66,7 +69,8 @@ class Plugin(BaseObject):
         self.loadConfig()
 
         envType = "rez" if type is PluginType.REZ else "dirtree"
-        self._processEnv: ProcessEnv = processEnvFactory(self._path, self._configEnv, self._name, envType=envType)
+        self._processEnv: ProcessEnv = processEnvFactory(self._rootPath, self._configEnv, self._name,
+                                                          envType=envType)
 
     def __repr__(self):
         return f"<Plugin {self._name}>"
@@ -78,8 +82,16 @@ class Plugin(BaseObject):
 
     @property
     def path(self):
-        """ Return the absolute path of the plugin. """
+        """ Return the absolute path of the plugin's modules (its "meshroom" folder). """
         return self._path
+
+    @property
+    def rootPath(self):
+        """
+        Return the absolute path of the plugin's root folder, containing python modules
+        as well as any "bin"/"lib"/"lib64"/"venv" dependency folders.
+        """
+        return self._rootPath
 
     @property
     def type(self):
@@ -358,7 +370,8 @@ class NodeDescProvider(BaseObject):
         self._processEnv = None
         if plugin:
             envType = "rez" if plugin.type is PluginType.REZ else "dirtree"
-            self._processEnv: ProcessEnv = processEnvFactory(plugin.path, plugin.configEnv, plugin.name, pluginSubPackage=self.relativePackage, envType=envType)
+            self._processEnv: ProcessEnv = processEnvFactory(plugin.rootPath, plugin.configEnv, plugin.name,
+                                                              pluginSubPackage=self.relativePackage, envType=envType)
         self._timestamp = os.path.getmtime(self.path)
 
     def reload(self) -> bool:

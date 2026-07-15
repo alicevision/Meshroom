@@ -105,7 +105,7 @@ class PluginLoader:
             return None
 
         # Initialize the plugin object.
-        plugin = Plugin(pluginName, mrFolder, pluginType, isUserPlugin)
+        plugin = Plugin(pluginName, pluginFolder, mrFolder, pluginType, isUserPlugin)
 
         # Recursive load of modules.
         issues = _LoadIssues()

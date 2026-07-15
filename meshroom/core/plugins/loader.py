@@ -15,6 +15,7 @@ from typing import Optional
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.plugins.base import Plugin, PluginType
+from meshroom.core.plugins.config import PluginConfig
 
 # The virtual package all the imported plugins are nested in.
 # Registered directly in sys.modules.
@@ -71,11 +72,18 @@ class PluginLoader:
         A SubmitterProvider for each submitter class, that is found. The templates and the configuration
         file are read from "pluginFolder".
 
+        The plugin's final name and version are resolved from its configuration file (config.json),
+        falling back to "pluginName"/"pluginVersion" when the configuration file does not provide them.
+        For a "pluginType" of PluginType.REZ, "pluginName" and "pluginVersion" are always used as-is,
+        the configuration file cannot override them.
+
         Args:
-            pluginName: the name of the plugin.
+            pluginName: the name of the plugin. Overridden by the "name" of its configuration file,
+                        unless "pluginType" is PluginType.REZ.
             pluginFolder: the plugin's root folder.
             pluginType: the type of the plugin.
-            pluginVersion: the plugin's version.
+            pluginVersion: the plugin's version. Overridden by the "version" of its configuration
+                        file, unless "pluginType" is PluginType.REZ.
             isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
             hasMeshroomFolder: whether "pluginFolder" directly contains the plugin's modules, instead of
                         gathering them in a "meshroom" folder.
@@ -98,6 +106,16 @@ class PluginLoader:
                 logging.info(f"Plugin folder '{pluginFolder}' does not contain a 'meshroom' folder.")
                 return None
 
+        # Resolve the plugin's final name/version from its configuration file.
+        # A Rez plugin name/version is definitive: config.json cannot override it.
+        pluginConfig = None
+        pluginConfigPath = mrFolder / "config.json"
+        if pluginConfigPath.is_file():
+            pluginConfig = PluginConfig.load(pluginConfigPath)
+            if pluginType is not PluginType.REZ:
+                pluginName = pluginConfig.name or pluginName
+                pluginVersion = pluginConfig.version or pluginVersion
+
         # The plugin's name prefixes its modules.
         # Two plugins shipping identically named files do not collide in sys.modules.
         pluginPackage = f"{PLUGINS_ROOT_PACKAGE}.{pluginName}"
@@ -108,7 +126,8 @@ class PluginLoader:
             return None
 
         # Initialize the plugin object.
-        plugin = Plugin(pluginName, pluginFolder, mrFolder, pluginType, pluginVersion, isUserPlugin)
+        plugin = Plugin(pluginName, pluginFolder, mrFolder, pluginType, pluginVersion, isUserPlugin,
+                        pluginConfig)
 
         # Recursive load of modules.
         issues = _LoadIssues()

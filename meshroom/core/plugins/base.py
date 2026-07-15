@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib
-import json
 import logging
 import os
 import sys
@@ -15,6 +14,7 @@ from meshroom.common import BaseObject
 from meshroom.core import desc
 from meshroom.core.desc.attribute import ValueTypeErrors
 from meshroom.core.submitter import BaseSubmitter
+from meshroom.core.plugins.config import PluginConfig
 from meshroom.core.plugins.env import ProcessEnv, processEnvFactory
 
 
@@ -35,6 +35,7 @@ class Plugin(BaseObject):
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
         rootPath: the absolute path of the plugin's root folder
         path: the absolute path of the plugin's modules (its "meshroom" folder)
+        version: the version of the plugin, or "unknown" if none was provided
         isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team)
         type: the PluginType describing how the plugin was discovered and how its process
               environment is configured
@@ -51,7 +52,8 @@ class Plugin(BaseObject):
     """
 
     def __init__(self, name: str, rootPath: str, path: str, type: PluginType,
-                 version: Optional[str] = None, isUserPlugin: bool = False):
+                 version: Optional[str] = None, isUserPlugin: bool = False,
+                 config: Optional[PluginConfig] = None):
         super().__init__()
 
         self._name: str = name
@@ -64,10 +66,14 @@ class Plugin(BaseObject):
         self._submitterProviders: dict[str: SubmitterProvider] = {}
         self._templates: dict[str: str] = {}
         self._configEnv: dict[str: str] = {}
-        self._configFullEnv: dict[str: str] = {}
+
+        # Get environment variables from config
+        if config:
+            self._configEnv = config.resolveEnv(self._path, self._name)
+        # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
+        self._configFullEnv: dict[str: str] = self._configEnv | os.environ
 
         self.loadTemplates()
-        self.loadConfig()
 
         envType = "rez" if type is PluginType.REZ else "dirtree"
         self._processEnv: ProcessEnv = processEnvFactory(self._rootPath, self._configEnv, self._name,
@@ -101,7 +107,7 @@ class Plugin(BaseObject):
 
     @property
     def version(self):
-        """ Return the version of the plugin. """
+        """ Return the version of the plugin, or "unknown" if none was provided. """
         if self._version and len(self._version) > 0:
             return self._version
         return "unknown"
@@ -238,52 +244,6 @@ class Plugin(BaseObject):
         for file in os.listdir(self.path):
             if file.endswith(".mg"):
                 self._templates[os.path.splitext(file)[0]] = os.path.join(self.path, file)
-
-    def loadConfig(self):
-        """
-        Load the plugin's configuration file if it exists and saves all its environment variables
-        and their values, if they are valid.
-        The configuration file is expected to be named "config.json", located at the top-level of
-        the plugin.
-        """
-        try:
-            with open(os.path.join(self.path, "config.json")) as config:
-                content = json.load(config)
-                for entry in content:
-                    # An entry is expected to be formatted as follows:
-                    # { "key": "key_of_var", "type": "type_of_value", "value": "var_value" }
-                    # If "type" is not provided, it is assumed to be "string"
-                    k = entry.get("key", None)
-                    t = entry.get("type", None)
-                    val = entry.get("value", None)
-
-                    if not k or not val:
-                        logging.warning(f"Invalid entry in configuration file for {self.name}: {entry}.")
-                        continue
-
-                    if t == "path":
-                        if os.path.isabs(val):
-                            resolvedPath = Path(val).resolve()
-                        else:
-                            resolvedPath = Path(os.path.join(self.path, val)).resolve()
-
-                        if resolvedPath.exists():
-                            val = resolvedPath.as_posix()
-                        else:
-                            logging.debug(f"{k}: {resolvedPath.as_posix()} does not exist "
-                                          f"(path before resolution: {val}).")
-
-                    self._configEnv[k] = str(val)
-
-        except FileNotFoundError:
-            logging.debug(f"No configuration file 'config.json' was found for {self.name}.")
-        except json.JSONDecodeError as err:
-            logging.error(f"Malformed JSON in the configuration file for {self.name}: {err}")
-        except IOError as err:
-            logging.error(f"Error while accessing the configuration file for {self.name}: {err}")
-
-        # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
-        self._configFullEnv = self._configEnv | os.environ
 
 
 class NodeDescProviderStatus(Enum):

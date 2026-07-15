@@ -27,7 +27,7 @@ from meshroom.core.plugins import (
     formatNodeDescriptionErrorMessage
 )
 from meshroom.core.submitter import BaseSubmitter
-from meshroom.core.desc.attributeConverter import AttributeConverter
+from meshroom.core.attributeConverter import AttributeConverter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
 from .desc import MrNodeType

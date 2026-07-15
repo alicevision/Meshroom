@@ -1,7 +1,8 @@
 from meshroom.core import desc
+from meshroom.core.attributeConverter import AttributeConverter
 
 
-class FloatToIntRound(desc.AttributeConverter):
+class FloatToIntRound(AttributeConverter):
     srcType = desc.FloatParam
     dstType = desc.IntParam
 
@@ -10,7 +11,7 @@ class FloatToIntRound(desc.AttributeConverter):
         return int(round(value))
 
 
-class FloatToIntTruncate(desc.AttributeConverter):
+class FloatToIntTruncate(AttributeConverter):
     priority = 20
     srcType = desc.FloatParam
     dstType = desc.IntParam

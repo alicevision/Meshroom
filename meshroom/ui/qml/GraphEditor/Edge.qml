@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Shapes 1.6
 
 import GraphEditor 1.0
@@ -112,75 +113,73 @@ Item {
         }
     }
 
-    // For-loop badge
     Item {
         // Place the label at the middle of the edge
         x: (root.startX + root.endX) / 2
         y: (root.startY + root.endY) / 2
-        visible: root.isForLoop
-
-        Rectangle {
-            anchors.centerIn: parent
-            property int margin: 2
-            width: icon.width + 2 * margin
-            height: icon.height + 2 * margin
-            radius: width
-            color: path.strokeColor
-
-            MaterialToolLabel {
-                id: icon
-                anchors.centerIn: parent
-
-                iconText: MaterialIcons.loop
-                label.text: (root.iteration + 1) + "/" + root.loopSize + " "
-
-                labelIconColor: palette.base
-                ToolTip.text: "Foreach Loop"
-            }
-
-            MouseArea {
-                id: loopArea
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: root.pressed(arguments[0])
-            }
-        }
-    }
-
-    // Converter badge (hide if there is the for-loop badge)
-    Item {
         z: 1
-        x: (root.startX + root.endX) / 2
-        y: (root.startY + root.endY) / 2
-        enabled: root.hasConverter && !root.isForLoop
-        visible: enabled
+        visible: root.isForLoop || root.hasConverter
 
-        Rectangle {
-            id: converterBadge
+        RowLayout {
             anchors.centerIn: parent
-            property int margin: 2
-            width: 10
-            height: width
-            radius: width
-            color: Colors.lightpurple
-            border.color: "#aaa"
-            border.width: 0.5
+            spacing: 4
 
-            MouseArea {
-                id: converterArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                acceptedButtons: Qt.RightButton
-                onClicked: (mouse) => converterMenu.popup()
+            // For-loop badge
+            Rectangle {
+                visible: root.isForLoop
+                property int margin: 2
+                Layout.preferredWidth: icon.width + 2 * margin
+                Layout.preferredHeight: icon.height + 2 * margin
+                radius: width
+                color: path.strokeColor
+
+                MaterialToolLabel {
+                    id: icon
+                    anchors.centerIn: parent
+
+                    iconText: MaterialIcons.loop
+                    label.text: (root.iteration + 1) + "/" + root.loopSize + " "
+
+                    labelIconColor: palette.base
+                    ToolTip.text: "Foreach Loop"
+                }
+
+                MouseArea {
+                    id: loopArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: root.pressed(arguments[0])
+                }
             }
 
-            ToolTip {
-                visible: converterArea.containsMouse
-                delay: 400
-                text: root.edge ? qsTr(root.edge.converterDescription) : ""
-                x: converterBadge.width + 4
-                y: converterBadge.height - height / 2
+            // Converter badge
+            Rectangle {
+                id: converterBadge
+                visible: root.hasConverter
+                property int margin: 2
+                Layout.preferredWidth: 10
+                Layout.preferredHeight: 10
+                radius: width
+                color: Colors.lightpurple
+                border.color: "#aaa"
+                border.width: 0.5
+
+                MouseArea {
+                    id: converterArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    acceptedButtons: Qt.RightButton
+                    onClicked: (mouse) => converterMenu.popup()
+                }
+
+                ToolTip {
+                    visible: converterArea.containsMouse
+                    delay: 400
+                    text: root.edge ? qsTr(root.edge.converterDescription) : ""
+                    x: converterBadge.width + 4
+                    y: converterBadge.height - height / 2
+                }
             }
         }
     }

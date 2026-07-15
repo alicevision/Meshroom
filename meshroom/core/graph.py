@@ -989,7 +989,7 @@ class Graph(BaseObject):
             raise RuntimeError('meshroom_batch requires a pipeline graph with at least ' +
                                'one output node, none found.')
 
-        reExtract = re.compile(r'(\w+)(?:\.(\w+))?=(.*)')  # NodeName=value or NodeName.attribute=value
+        reExtract = re.compile(r'(\w+)(?:[:.](\w[\w.]*))?=(.*)')  # NodeName=value or NodeName.attribute=value
         globalOutputPath: Optional[str] = None
         remainingOutputNodes = list(outputNodes)
         for outputValue in outputValues:

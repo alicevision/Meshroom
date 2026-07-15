@@ -270,6 +270,14 @@ class TestOutputNode:
         assert node.folder.value == "/anyFolder/export"
         assert node.outputFile.value == ""
 
+    def test_configureOutputNodes_accepts_colon_attribute_separator(self):
+        graph = Graph("")
+        node = graph.addNewNode("OutputNodeTest")
+
+        graph.configureOutputNodes([f"{node.name}:exportLabel=custom"])
+
+        assert node.exportLabel.value == "custom"
+
     def test_configureOutputNodes_sets_global_folder_and_targeted_attributes(self):
         graph = Graph("")
         node = graph.addNewNode("OutputNodeTest")

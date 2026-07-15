@@ -970,7 +970,7 @@ class Graph(BaseObject):
     def findGraphInputNodes(self):
         """
         Returns:
-            list[Node]: the list of Input nodes of type GraphInput
+            list[Node]: the list of InputNode nodes of type GraphInput
         """
         nodes = [n for n in self.findInputNodes() if n.nodeType == "GraphInput"]
         return nodes
@@ -986,7 +986,7 @@ class Graph(BaseObject):
     def findGraphOutputNodes(self):
         """
         Returns:
-            list[Node]: the list of Input nodes of type GraphOutput
+            list[Node]: the list of OutputNode nodes of type GraphOutput
         """
         nodes = [n for n in self.findOutputNodes() if n.nodeType == "GraphOutput"]
         return nodes

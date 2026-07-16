@@ -11,7 +11,7 @@ import os
 
 def writeFile(filePath: Path, content: str = "") -> Path:
     filePath.parent.mkdir(parents=True, exist_ok=True)
-    filePath.write_text(content)
+    filePath.write_text(content, encoding="utf-8")
     return filePath
 
 

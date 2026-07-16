@@ -1,0 +1,17 @@
+[
+    {
+        "key": "CONFIG_PATH",
+        "type": "path",
+        "value": "sharedTemplate.mg"
+    },
+    {
+        "key": "ERRONEOUS_CONFIG_PATH",
+        "type": "path",
+        "value": "erroneous_path"
+    },
+    {
+        "key": "CONFIG_STRING",
+        "type": "string",
+        "value": "configFile"
+    }
+]

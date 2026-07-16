@@ -30,7 +30,8 @@ class PluginType(Enum):
 
 class Plugin(BaseObject):
     """
-    A collection of node plugins.
+    A centralized container that manages the plugin collection of NodeDescProvider objects and
+    SubmitterProvider objects. Alongside plugin name, version, type, templates and configuration.
 
     Members:
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)

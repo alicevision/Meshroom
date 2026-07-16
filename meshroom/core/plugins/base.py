@@ -62,16 +62,16 @@ class Plugin(BaseObject):
         self._type: PluginType = type
         self._version: str = version
         self._isUserPlugin: bool = isUserPlugin
-        self._nodeDescProviders: dict[str: NodeDescProvider] = {}
-        self._submitterProviders: dict[str: SubmitterProvider] = {}
-        self._templates: dict[str: str] = {}
-        self._configEnv: dict[str: str] = {}
+        self._nodeDescProviders: dict[str, NodeDescProvider] = {}
+        self._submitterProviders: dict[str, SubmitterProvider] = {}
+        self._templates: dict[str, str] = {}
+        self._configEnv: dict[str, str] = {}
 
         # Get environment variables from config
         if config:
             self._configEnv = config.resolveEnv(self._path, self._name)
         # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
-        self._configFullEnv: dict[str: str] = self._configEnv | os.environ
+        self._configFullEnv: dict[str, str] = self._configEnv | os.environ
 
         self.loadTemplates()
 
@@ -465,7 +465,7 @@ class NodeDescProvider(BaseObject):
         return self.processEnv.getCommandSuffix()
 
     @property
-    def configFullEnv(self) -> dict[str: str]:
+    def configFullEnv(self) -> dict[str, str]:
         """ Return the plugin's full environment dictionary. """
         if not self.plugin:
             return {}

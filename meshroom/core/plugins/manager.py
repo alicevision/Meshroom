@@ -26,9 +26,9 @@ class PluginManager(BaseObject):
     def __init__(self):
         super().__init__()
         self._pluginLoader: PluginLoader = PluginLoader()  # plugin loader in virtual package
-        self._plugins: dict[str: Plugin] = {}  # loaded plugins
-        self._nodeDescProviders: dict[str: NodeDescProvider] = {}  # registered node descriptor providers
-        self._submitterProviders: dict[str: SubmitterProvider] = {}  # registered submitter providers
+        self._plugins: dict[str, Plugin] = {}  # loaded plugins
+        self._nodeDescProviders: dict[str, NodeDescProvider] = {}  # registered node descriptor providers
+        self._submitterProviders: dict[str, SubmitterProvider] = {}  # registered submitter providers
 
     def _addPlugin(self,
                     pluginName: str,
@@ -177,7 +177,7 @@ class PluginManager(BaseObject):
                 continue
             self._submitterProviders[name] = submitterProvider
 
-    def getPlugins(self) -> dict[str: Plugin]:
+    def getPlugins(self) -> dict[str, Plugin]:
         """
         Return a dictionary containing all the loaded Plugins, with {key, value} =
         {name, Plugin}.
@@ -216,7 +216,7 @@ class PluginManager(BaseObject):
                 return plugin
         return None
 
-    def getPipelineTemplates(self) -> dict[str: str]:
+    def getPipelineTemplates(self) -> dict[str, str]:
         """
         Return a dictionary combining the pipeline templates of every available Plugin,
         with {key, value} = {template name, absolute path}.
@@ -241,7 +241,7 @@ class PluginManager(BaseObject):
         """
         return name in self._nodeDescProviders
 
-    def getNodeDescProviders(self) -> dict[str: NodeDescProvider]:
+    def getNodeDescProviders(self) -> dict[str, NodeDescProvider]:
         """
         Return a dictionary containing all the registered NodeDescProviders,
         with {key, value} = {name, NodeDescProvider}.
@@ -271,7 +271,7 @@ class PluginManager(BaseObject):
         """
         return name in self._submitterProviders
 
-    def getSubmitterProviders(self) -> dict[str: SubmitterProvider]:
+    def getSubmitterProviders(self) -> dict[str, SubmitterProvider]:
         """
         Return a dictionary containing all the registered SubmitterProvider,
         with {key, value} = {name, SubmitterProvider}.

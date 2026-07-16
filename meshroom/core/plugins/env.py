@@ -14,7 +14,7 @@ from meshroom import _MESHROOM_ROOT
 from meshroom.core.desc.node import _MESHROOM_COMPUTE_DEPS
 
 
-def processEnvFactory(folder: str, configEnv: dict[str: str], pluginName: str, pluginSubPackage: str = None,
+def processEnvFactory(folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str = None,
                       envType: str = "dirtree") -> ProcessEnv:
     """
     Create the ProcessEnv matching "envType" for a plugin.
@@ -60,7 +60,7 @@ class ProcessEnv(BaseObject):
                  envType: ProcessEnvType = ProcessEnvType.DIRTREE):
         super().__init__()
         self._folder: str = folder
-        self._configEnv: dict[str: str] = configEnv
+        self._configEnv: dict[str, str] = configEnv
         self.pluginName: str = pluginName
         self.pluginSubPackage: str = pluginSubPackage
         self._processEnvType: ProcessEnvType = envType
@@ -84,7 +84,7 @@ class DirTreeProcessEnv(ProcessEnv):
     A ProcessEnv built from a plain directory tree: PYTHONPATH/LD_LIBRARY_PATH/PATH are assembled
     from the plugin's "bin"/"lib"/"lib64" folders and, if present, its "venv" virtual environment.
     """
-    def __init__(self, folder: str, configEnv: dict[str: str], pluginName: str, pluginSubPackage: str):
+    def __init__(self, folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str):
         super().__init__(folder, configEnv, pluginName, pluginSubPackage, envType=ProcessEnvType.DIRTREE)
 
         # If there is a virtual environment, it is expected to be named "venv".
@@ -146,7 +146,7 @@ class RezProcessEnv(ProcessEnv):
 
     REZ_DELIMITER_PATTERN = re.compile(r"-|==|>=|>|<=|<")
 
-    def __init__(self, folder: str, configEnv: dict[str: str], pluginName: str, pluginSubPackage: str):
+    def __init__(self, folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str):
         if not pluginName:
             raise RuntimeError("Missing name of the Rez environment needs to be provided.")
         super().__init__(folder, configEnv, pluginName, pluginSubPackage, envType=ProcessEnvType.REZ)

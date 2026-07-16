@@ -13,9 +13,11 @@ from meshroom.core.plugins.base import (
 
 class PluginManager(BaseObject):
     """
-    Manager for all the loaded Plugin objects as well as the registered NodeDescProvider objects.
+    Manager for all the loaded Plugin objects as well as the registered NodeDescProvider objects and
+    SubmitterProvider objects.
 
     Members:
+        pluginLoader: handle plugin loading in a common virtual package
         plugins: dictionary containing all the loaded Plugins, with their name as the key
         nodeDescProviders: dictionary containing all the NodeDescProviders that have been registered,
                             with their name as the key

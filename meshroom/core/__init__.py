@@ -261,3 +261,6 @@ def initPlugins():
         rezPackageNameVersion, rezPackageFolder = entry.split("=")
         rezPackageName, _, rezPackageVersion = rezPackageNameVersion.partition("-")
         pluginManager.addPluginFromRez(rezPackageName, rezPackageVersion, rezPackageFolder, isUserPlugin=True)
+    
+    # Update pipeline templates
+    pipelineTemplates.update(pluginManager.getPipelineTemplates())

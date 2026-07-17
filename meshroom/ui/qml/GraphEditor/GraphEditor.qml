@@ -1590,16 +1590,11 @@ Item {
 
     function unregisterAttributePin(attribute, pin) {
         const attributeToDelegate = Object.assign({}, root._attributeToDelegate)
-        let updated = false
-        for (const key in attributeToDelegate) {
-            if (attributeToDelegate[key] === pin) {
-                delete attributeToDelegate[key]
-                updated = true
-            }
-        }
-        if (updated) {
+        if (attributeToDelegate[attribute.fullName] === pin) {
+            delete attributeToDelegate[attribute.fullName]
             root._attributeToDelegate = attributeToDelegate
         }
+        
     }
 
     function boundingBox() {

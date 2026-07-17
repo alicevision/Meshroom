@@ -323,11 +323,11 @@ class Scene(UIGraph):
     activeNodeCategories = {
         # All nodes generating a sfm scene (3D reconstruction or panorama)
         "sfm": ["StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransform",
-                "SfMAlignment", "SfMExpanding", "SfMBootstraping"],
+                "SfMAlignment", "SfMExpanding", "SfMBootstraping", "NodalSfM"],
         # All nodes generating a sfmData file
         "sfmData": ["CameraInit", "DistortionCalibration", "StructureFromMotion", "GlobalSfM",
                     "PanoramaEstimation", "SfMTransfer", "SfMTransform", "SfMAlignment",
-                    "ApplyCalibration", "SfMExpanding", "SfMBootstraping"],
+                    "ApplyCalibration", "SfMExpanding", "SfMBootstraping", "NodalSfM"],
         # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
         # Nodes that can be used to provide features folders to the UI

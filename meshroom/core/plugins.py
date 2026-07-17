@@ -7,7 +7,6 @@ import logging
 import os
 import re
 import sys
-
 from enum import Enum
 from inspect import getfile
 from pathlib import Path

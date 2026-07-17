@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Shapes 1.6
 
 import GraphEditor 1.0
 import MaterialIcons 2.2
+import Utils 1.0
 
 /**
  * A cubic spline representing an edge, going from point1 to point2, providing mouse interaction.
@@ -22,6 +24,8 @@ Item {
     property bool isForLoop: false
     property int loopSize: 0
     property int iteration: 0
+
+    readonly property bool hasConverter: edge !== undefined && edge !== null && edge.hasConverter === true
 
     // Note: edgeArea is destroyed before path, so we need to test if not null to avoid warnings.
     readonly property bool containsMouse: (loopArea && loopArea.containsMouse) || (edgeArea && edgeArea.containsMouse)
@@ -113,38 +117,76 @@ Item {
         // Place the label at the middle of the edge
         x: (root.startX + root.endX) / 2
         y: (root.startY + root.endY) / 2
-        visible: root.isForLoop
+        z: 1
+        visible: root.isForLoop || root.hasConverter
 
-        Rectangle {
+        RowLayout {
             anchors.centerIn: parent
-            property int margin: 2
-            width: icon.width + 2 * margin
-            height: icon.height + 2 * margin
-            radius: width
-            color: path.strokeColor
+            spacing: 4
 
-            MaterialToolLabel {
-                id: icon
-                anchors.centerIn: parent
+            // For-loop badge
+            Rectangle {
+                visible: root.isForLoop
+                property int margin: 2
+                Layout.preferredWidth: icon.width + 2 * margin
+                Layout.preferredHeight: icon.height + 2 * margin
+                radius: width
+                color: path.strokeColor
 
-                iconText: MaterialIcons.loop
-                label.text: (root.iteration + 1) + "/" + root.loopSize + " "
+                MaterialToolLabel {
+                    id: icon
+                    anchors.centerIn: parent
 
-                labelIconColor: palette.base
-                ToolTip.text: "Foreach Loop"
+                    iconText: MaterialIcons.loop
+                    label.text: (root.iteration + 1) + "/" + root.loopSize + " "
+
+                    labelIconColor: palette.base
+                    ToolTip.text: "Foreach Loop"
+                }
+
+                MouseArea {
+                    id: loopArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: root.pressed(arguments[0])
+                }
             }
 
-            MouseArea {
-                id: loopArea
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: root.pressed(arguments[0])
+            // Converter badge
+            Rectangle {
+                id: converterBadge
+                visible: root.hasConverter
+                property int margin: 2
+                Layout.preferredWidth: 10
+                Layout.preferredHeight: 10
+                radius: width
+                color: Colors.lightpurple
+                border.color: "#aaa"
+                border.width: 0.5
+
+                MouseArea {
+                    id: converterArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    acceptedButtons: Qt.RightButton
+                    onClicked: (mouse) => converterMenu.popup()
+                }
+
+                ToolTip {
+                    visible: converterArea.containsMouse
+                    delay: 400
+                    text: root.edge ? qsTr(root.edge.converterDescription) : ""
+                    x: converterBadge.width + 4
+                    y: converterBadge.height - height / 2
+                }
             }
         }
     }
 
     EdgeMouseArea {
         id: edgeArea
+        z: 0
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         thickness: root.thickness + 4
@@ -156,5 +198,29 @@ Item {
             root.released(event)
         }
 
+    }
+
+    Menu {
+        id: converterMenu
+        title: "Convert Attribute"
+
+        ButtonGroup {
+            id: converterChoices
+        }
+
+        Instantiator {
+            model: root.edge ? root.edge.availableConverters : []
+            RadioButton {
+                text: modelData.name
+                ButtonGroup.group: converterChoices
+                checked: root.edge && root.edge.converterName === modelData.name
+                onToggled: {
+                    if (checked) root.edge.setConverter(modelData.name)
+                    converterMenu.close()
+                }
+            }
+            onObjectAdded: (index, object) => converterMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => converterMenu.removeItem(object)
+        }
     }
 }

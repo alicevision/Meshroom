@@ -29,6 +29,10 @@ version_mode_parser = subparsers.add_parser(
     "version", help="Display Meshroom version.")
 version_mode_parser.add_argument("-p", "--path", action="store_true")
 
+# Attribute Converter info subparser
+converters_mode_parser = subparsers.add_parser(
+    "attrconvert", help="Display AttributeConverter nodes info.")
+
 # Node info subparser
 nodes_mode_parser = subparsers.add_parser(
     "nodeinfo", help="Display nodes info.")
@@ -46,6 +50,18 @@ def get_version(args):
     print(f"Meshroom version is {meshroom.__version__}")
     if args.path:
         print(f"Meshroom is located at {meshroom._MESHROOM_ROOT}")
+
+
+# ===== ATTRIBUTE CONVERTERS =====
+def get_attributeconverter_info(args):
+    import meshroom.core
+    meshroom.core.initNodes()
+    converterNodes = meshroom.core.AttributeConverterRegistry.getAllConverters()
+    print(f"Available Attribute Converters ({len(converterNodes)}):")
+    for (srcType, dstType), converters in meshroom.core.AttributeConverterRegistry._converters.items():
+        print(f"\n  Convert from {srcType.__name__} to {dstType.__name__}:")
+        for converter in converters:
+            print(f"    - {converter.__name__}")
 
 
 # ===== NODES =====
@@ -161,6 +177,8 @@ if __name__ == "__main__":
     
     if args.command == "version":
         get_version(args)
+    elif args.command == "attrconvert":
+        get_attributeconverter_info(args)
     elif args.command == "nodeinfo":
         get_nodes_info(args)
     elif args.command == "pipelines":

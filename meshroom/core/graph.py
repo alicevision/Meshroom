@@ -23,6 +23,8 @@ from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
 from meshroom.core.submitter import BaseSubmittedJob, jobManager
+from meshroom.core.attributeConverter import AttributeConverter, AttributeConverterRegistry
+
 
 # Replace default encoder to support Enums
 
@@ -64,11 +66,19 @@ def GraphModification(graph):
 
 class Edge(BaseObject):
 
-    def __init__(self, src, dst, parent=None):
+    def __init__(self, src, dst, converter=None, parent=None):
         super().__init__(parent)
         self._src = weakref.ref(src)
         self._dst = weakref.ref(dst)
-        self._repr = f"<Edge> {self._src()} -> {self._dst()}"
+        self._availableConverters = self.getAvailableConverters()
+        self._converter: "AttributeConverter" = converter
+        self._resolveConverter()
+        if self._converter:
+            self.converterChanged.emit()
+
+    def __repr__(self):
+        converter = f">-({self._converter.getName()})->" if self._converter else "->"
+        return f"<Edge {self._src()} {converter} {self._dst()}>"
 
     @property
     def src(self):
@@ -78,8 +88,86 @@ class Edge(BaseObject):
     def dst(self):
         return self._dst()
 
+    def getAvailableConverters(self) -> list[dict]:
+        converters = AttributeConverterRegistry.getConverters(self.src.desc.type, self.dst.desc.type)
+        return [
+            {
+                "name": c.getName(), 
+                "description": c.description
+            } 
+            for c in converters
+        ]
+
+    def isConverted(self):
+        return self._converter is not None
+
+    def getConverterDescription(self) -> str:
+        if not self._converter:
+            return ""
+        desc = f"<b>{self._converter.getName()}</b>"
+        if self._converter.description:
+            desc += f"<b>:</b><br/>{self._converter.description}"
+        return desc
+
+    @Slot(str)
+    def setConverter(self, converterName: str):
+        """ Change the converter used on this edge. """
+        converter = AttributeConverterRegistry.getConverterByName(converterName)
+        if not converter:
+            raise KeyError(f"No converter named {converterName}.")
+        oldConverter = self._converter
+        self._converter = converter
+        try:
+            self._resolveConverter()
+            self.converterChanged.emit()
+        except GraphCompatibilityError as e:
+            self._converter = oldConverter
+            self._resolveConverter()
+            raise e
+
+    def _resolveConverter(self):
+        srcDesc, dstDesc = self.src.desc, self.dst.desc
+        if self._converter:
+            if not self._converter.canConvert(srcDesc, dstDesc):
+                raise InvalidEdgeError(
+                    srcDesc.name, dstDesc.name, 
+                    f"Converter '{self._converter}' cannot convert "
+                    f"{srcDesc.__class__.__name__} -> {dstDesc.__class__.__name__}"
+                )
+            return
+        if self.src.baseType == self.dst.baseType:
+            self._converter = None
+            return
+        # Find a default converter
+        conv = AttributeConverterRegistry.getConverter(srcDesc.type, dstDesc.type)
+        if conv is None:
+            raise InvalidEdgeError(
+                srcDesc.name, dstDesc.name, 
+                f"No AttributeConverter available for edge between attribute types "
+                f"{srcDesc.__class__.__name__} -> {dstDesc.__class__.__name__}"
+            )
+        self._converter = conv
+
+    def resolvedValue(self):
+        if self.isConverted():
+            return self._converter.convert(self.src.value)
+        return self.src.value
+
+    def resolvedValues(self):
+        if self.isConverted():
+            srcAttr = self.src
+            if hasattr(srcAttr, "values"):
+                return srcAttr.values
+            return [srcAttr.value]
+        return self.src.values
+
     src = Property(Attribute, src.fget, constant=True)
     dst = Property(Attribute, dst.fget, constant=True)
+    converterChanged = Signal()
+    hasConverter = Property(bool, isConverted, notify=converterChanged)
+    converterName = Property(str, lambda self: self._converter.getName() if self._converter else "", notify=converterChanged)
+    converterDescription = Property(str, getConverterDescription, notify=converterChanged)
+    availableConverters = Property("QVariantList", lambda self: self._availableConverters, constant=True)
 
 
 WHITE = 0
@@ -313,6 +401,8 @@ class Graph(BaseObject):
         self.header = graphData.get(GraphIO.Keys.Header, {})
         fileVersion = Version(self.header.get(GraphIO.Keys.FileVersion, "0.0"))
         graphContent = self._normalizeGraphContent(graphData, fileVersion)
+        graphConverters = graphData.get(GraphIO.Keys.Converters, {})
+        converterMap = {tuple(v): k for k, v in graphConverters.items()}
         isTemplate = self.header.get(GraphIO.Keys.Template, False)
         explicitCachePaths = self.header.get(GraphIO.Keys.CacheDir)
         if explicitCachePaths:
@@ -326,7 +416,7 @@ class Graph(BaseObject):
                 self._deserializeNode(nodeData, nodeName, self)
 
             # Create graph edges by resolving attributes expressions
-            self._applyExpr()
+            self._applyExpr(converterMap)
 
         # Templates are specific: they contain only the minimal amount of
         # serialized data to describe the graph structure.
@@ -483,15 +573,30 @@ class Graph(BaseObject):
         Returns:
             The list of newly created Nodes.
         """
+        
+        edgesWithConverters = [e for e in graph.edges if e._converter]
+        converterMap = {
+            (e.src.fullName, e.dst.fullName): e._converter.getName()
+            for e in edgesWithConverters
+        }
 
-        def _renameClashingNodes():
+        def replaceKey(src, dst, oldName, newName):
+            return (src.replace(oldName, newName, 1), dst.replace(oldName, newName, 1))
+
+        def _renameClashingNodes(converterMap):
             if not self.nodes:
-                return
+                return converterMap
             unavailableNames = set(self.nodes.keys())
             for node in graph.nodes:
-                if node._name in unavailableNames:
+                oldName = node._name
+                if oldName in unavailableNames:
                     node._name = self._createUniqueNodeName(node.nodeType, unavailableNames)
+                    converterMap = {
+                        replaceKey(src, dst, oldName, node._name): value
+                        for (src, dst), value in converterMap.items()
+                    }
                 unavailableNames.add(node._name)
+            return converterMap
 
         def _importNodesAndEdges() -> list[Node]:
             importedNodes = []
@@ -502,10 +607,10 @@ class Graph(BaseObject):
                 for srcNode in nodes:
                     node = self._deserializeNode(srcNode.toDict(), srcNode.name, graph)
                     importedNodes.append(node)
-                self._applyExpr()
+                self._applyExpr(converterMap)
             return importedNodes
 
-        _renameClashingNodes()
+        converterMap = _renameClashingNodes(converterMap)
         importedNodes = _importNodesAndEdges()
         return importedNodes
 
@@ -1401,10 +1506,10 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=[startNode])
         return visitor.canCompute + (2 * visitor.canSubmit)
 
-    def _applyExpr(self):
+    def _applyExpr(self, converterMap: dict = None):
         with GraphModification(self):
             for node in self._nodes:
-                node._applyExpr()
+                node._applyExpr(converterMap)
 
     def toDict(self):
         nodes = {k: node.toDict() for k, node in self._nodes.objects.items()}

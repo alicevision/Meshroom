@@ -18,7 +18,7 @@ from meshroom.core import pluginManager
 from meshroom.core.desc import NodeVersionTypeEnum
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.taskManager import TaskManager
-from meshroom.common import Property, Variant, Signal, Slot
+from meshroom.common import Property, Variant, Signal, Slot, strtobool
 
 from meshroom.env import EnvVar, EnvVarHelpAction
 
@@ -34,6 +34,9 @@ from meshroom.ui.palette import PaletteManager
 from meshroom.ui.scene import Scene
 from meshroom.ui.utils import QmlInstantEngine
 from meshroom.ui import commands
+
+
+QML_DIR = os.path.join(os.path.dirname(__file__), "qml")
 
 
 class FileStatus(Enum):
@@ -233,7 +236,8 @@ class MeshroomApp(QApplication):
             self.debugger = QQmlDebuggingEnabler(printWarning=True)
             qtArgs = [f"-qmljsdebugger={debuggerParams}"]
 
-        logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
+        verbosity = meshroom.logStringToPython[args.verbose]
+        logging.getLogger().setLevel(verbosity)
 
         super().__init__(inputArgs[:1] + qtArgs)
 
@@ -271,25 +275,13 @@ class MeshroomApp(QApplication):
         components.registerTypes()
 
         # QML engine setup
-        qmlDir = os.path.join(pwd, "qml")
-        url = os.path.join(qmlDir, "main.qml")
-        self.engine = QmlInstantEngine()
-        self.engine.addFilesFromDirectory(qmlDir, recursive=True)
-        self.engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
-        # whether to output qml warnings to stderr (disable by default)
-        self.engine.setOutputWarningsToStandardError(MessageHandler.outputQmlWarnings)
-        if QtCore.__version_info__ < (5, 14, 2):
-            # After 5.14.1, it gets stuck during logging
-            qInstallMessageHandler(MessageHandler.handler)
+        url = os.path.normpath(os.path.join(QML_DIR, "main.qml"))
 
-        self.engine.addImportPath(qmlDir)
-        # Add PySide6's bundled QML modules path (Qt3D, QtQuick.Scene3D, etc.)
-        pyside6QmlPath = os.path.join(os.path.dirname(QtCore.__file__), "Qt", "qml")
-        if os.path.isdir(pyside6QmlPath):
-            self.engine.addImportPath(pyside6QmlPath)
-
-        # expose available node types that can be instantiated
-        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getRegisteredNodePlugins()[n].nodeDescriptor.category} for n in sorted(pluginManager.getRegisteredNodePlugins().keys())})
+        watching = bool(strtobool(os.environ.get("MESHROOM_INSTANT_CODING", "0")))
+        self.engine = QmlInstantEngine(url, self.setupEngine, watching=watching)
+        if verbosity < logging.INFO:
+            self.engine.setVerbose(True)
+        self.engine.addFilesFromDirectory(QML_DIR, recursive=True)
 
         # instantiate the 3D Scene object
         self._undoStack = commands.UndoStack(self)
@@ -297,27 +289,19 @@ class MeshroomApp(QApplication):
         self._taskManager = TaskManager(self)
         self._activeProject = Scene(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
         self._activeProject.setSubmitLabel(args.submitLabel)
-        self.engine.rootContext().setContextProperty("_currentScene", self._activeProject)
 
-        # those helpers should be available from QML Utils module as singletons, but:
-        #  - qmlRegisterUncreatableType is not yet available in PySide2
-        #  - declaring them as singleton in qmldir file causes random crash at exit
-        # => expose them as context properties instead
-        self.engine.rootContext().setContextProperty("Filepath", FilepathHelper(parent=self))
-        self.engine.rootContext().setContextProperty("Scene3DHelper", Scene3DHelper(parent=self))
-        self.engine.rootContext().setContextProperty("Transformations3DHelper", Transformations3DHelper(parent=self))
-        self.engine.rootContext().setContextProperty("Clipboard", ClipboardHelper(parent=self))
-        self.engine.rootContext().setContextProperty("ThumbnailCache", ThumbnailCache(parent=self))
-        self.engine.rootContext().setContextProperty("ShapeFilesHelper", ShapeFilesHelper(self.activeProject, parent=self))
-        self.engine.rootContext().setContextProperty("ShapeViewerHelper", ShapeViewerHelper(parent=self))
-
-        # additional context properties
+        # helper objects
+        self._filepathHelper = FilepathHelper(parent=self)
+        self._scene3DHelper = Scene3DHelper(parent=self)
+        self._transformations3DHelper = Transformations3DHelper(parent=self)
+        self._clipboardHelper = ClipboardHelper(parent=self)
+        self._thumbnailCache = ThumbnailCache(parent=self)
+        self._shapeFilesHelper = ShapeFilesHelper(self.activeProject, parent=self)
+        self._shapeViewerHelper = ShapeViewerHelper(parent=self)
         self._messageController = MessageController(parent=self)
-        self.engine.rootContext().setContextProperty("_messageController", self._messageController)
-        self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
-        self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
-        self.engine.rootContext().setContextProperty("MeshroomApp", self)
-        self.engine.rootContext().setContextProperty("NodeVersionType", NodeVersionTypeEnum(parent=self))
+        self._paletteManager = PaletteManager(self.engine, parent=self)
+        self._scriptEditorManager = ScriptEditorManager(parent=self)
+        self._nodeVersionType = NodeVersionTypeEnum(parent=self)
 
         # request any potential computation to stop on exit
         self.aboutToQuit.connect(self._activeProject.stopChildThreads)
@@ -374,7 +358,49 @@ class MeshroomApp(QApplication):
             self._activeProject.saveAs(args.save)
             self.addRecentProjectFile(args.save)
 
-        self.engine.load(os.path.normpath(url))
+        self.engine.reload()
+    
+    def setupEngine(self, engine):
+        """Setup context properties and QML paths on the engine setup.
+        Runs on every build of the engine (first load + hot reloads). 
+        """
+
+        # whether to output qml warnings to stderr (disable by default)
+        engine.setOutputWarningsToStandardError(MessageHandler.outputQmlWarnings)
+        if QtCore.__version_info__ < (5, 14, 2):
+            # After 5.14.1, it gets stuck during logging
+            qInstallMessageHandler(MessageHandler.handler)
+
+        engine.addImportPath(QML_DIR)
+        # Add PySide6's bundled QML modules path (Qt3D, QtQuick.Scene3D, etc.)
+        pyside6QmlPath = os.path.join(os.path.dirname(QtCore.__file__), "Qt", "qml")
+        if os.path.isdir(pyside6QmlPath):
+            engine.addImportPath(pyside6QmlPath)
+
+        # expose available node types that can be instantiated
+        engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getRegisteredNodePlugins()[n].nodeDescriptor.category} for n in sorted(pluginManager.getRegisteredNodePlugins().keys())})
+        # expose the Scene object to access the graph
+        engine.rootContext().setContextProperty("_currentScene", self._activeProject)
+
+        # those helpers should be available from QML Utils module as singletons, but:
+        #  - qmlRegisterUncreatableType is not yet available in PySide2
+        #  - declaring them as singleton in QML_DIR file causes random crash at exit
+        # => expose them as context properties instead
+        engine.rootContext().setContextProperty("Filepath", self._filepathHelper)
+        engine.rootContext().setContextProperty("Scene3DHelper", self._scene3DHelper)
+        engine.rootContext().setContextProperty("Transformations3DHelper", self._transformations3DHelper)
+        engine.rootContext().setContextProperty("Clipboard", self._clipboardHelper)
+        engine.rootContext().setContextProperty("ThumbnailCache", self._thumbnailCache)
+        engine.rootContext().setContextProperty("ShapeFilesHelper", self._shapeFilesHelper)
+        engine.rootContext().setContextProperty("ShapeViewerHelper", self._shapeViewerHelper)
+        
+
+        # additional context properties
+        engine.rootContext().setContextProperty("_messageController", self._messageController)
+        engine.rootContext().setContextProperty("_PaletteManager", self._paletteManager)
+        engine.rootContext().setContextProperty("ScriptEditorManager", self._scriptEditorManager)
+        engine.rootContext().setContextProperty("NodeVersionType", self._nodeVersionType)
+        engine.rootContext().setContextProperty("MeshroomApp", self)
 
     def terminateManual(self):
         self.engine.clearComponentCache()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 from typing import Optional
 
@@ -57,6 +58,7 @@ class PluginManager(BaseObject):
                         gathering them in a "meshroom" folder.
             registerProviders: True if all the valid providers from the plugin should be registered.
         """
+        startTime = time.perf_counter()
         plugin = self._pluginLoader.loadPlugin(pluginName=pluginName,
                                                 pluginFolder=pluginFolder,
                                                 pluginType=pluginType,
@@ -71,6 +73,7 @@ class PluginManager(BaseObject):
 
             if registerProviders:
                 self.registerPluginProviders(plugin)
+            logging.debug(f"Plugin '{pluginName}' loaded in {time.perf_counter() - startTime:.3f}s")
 
     def addPluginFromRez(self, rezPackageName: str, rezPackageVersion: str, rezPackageFolder: str,
                          isUserPlugin: bool = False, registerProviders: bool = True):

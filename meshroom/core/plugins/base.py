@@ -341,11 +341,14 @@ class NodeDescProvider(BaseObject):
         if self.error:
             self.status = NodeDescProviderStatus.DESC_ERROR
 
+        # A "dirtree" env only depends on the plugin's folder/configEnv, not on the node's subpackage,
+        # so it is identical for every node of the plugin: reuse plugin.processEnv (via the property's
+        # fallback below) instead of rebuilding it for each node. Only a "rez" env genuinely needs its
+        # own instance, since its subrequires resolution is subpackage-specific.
         self._processEnv = None
-        if plugin:
-            envType = "rez" if plugin.type is PluginType.REZ else "dirtree"
+        if plugin and plugin.type is PluginType.REZ:
             self._processEnv: ProcessEnv = processEnvFactory(plugin.rootPath, plugin.configEnv, plugin.name,
-                                                              pluginSubPackage=self.relativePackage, envType=envType)
+                                                              pluginSubPackage=self.relativePackage, envType="rez")
         self._timestamp = os.path.getmtime(self.path)
 
     def reload(self) -> bool:

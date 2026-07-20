@@ -44,7 +44,7 @@ class _LoadIssues:
     @staticmethod
     def _format(pluginName: str, messages: list[str]) -> str:
         """ Format "messages" into a single, bulleted message for the plugin "pluginName". """
-        return f"Plugin '{pluginName}':" + "".join(f"\n  - {message}" for message in messages)
+        return f"Plugin '{pluginName}' loading issue:" + "".join(f"\n{message}" for message in messages)
 
 
 class PluginLoader:
@@ -140,6 +140,7 @@ class PluginLoader:
         if (len(plugin.nodeDescProviders) <= 0
                 and len(plugin.submitterProviders) <= 0
                 and len(plugin.templates) <= 0):
+            logging.debug(f"Plugin '{pluginName}' ({pluginFolder}) does not contain modules/templates.")
             return None
 
         return plugin
@@ -377,7 +378,7 @@ class PluginLoader:
             return f" ({type(exc).__name__}): {exc}\n{fullTraceback}"
 
         lastCall = tb[-1]
-        return (f" ({type(exc).__name__}): {exc}\n"
+        return (f" ({type(exc).__name__}):\n{exc}\n"
                 # filename:lineNumber functionName
                 f"{lastCall.filename}:{lastCall.lineno} {lastCall.name}\n"
                 # line of code with the error

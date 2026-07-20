@@ -323,7 +323,7 @@ class NodeDescProvider(BaseObject):
             else:
                 errorMessages.append(f" - Unknown error for parameter '{errMsg}'.")
         if errorMessages:
-            return f"NodeDescProvider {nodeDescClass.__name__} could not be validated:\n" + "\n".join(errorMessages)
+            return f"NodeDescProvider of '{nodeDescClass.__name__}' could not be validated:\n" + "\n".join(errorMessages)
         return None
 
     def __init__(self, nodeDescClass: type[desc.BaseNode], plugin: Plugin = None):
@@ -512,7 +512,7 @@ class SubmitterProvider(BaseObject):
         try:
             self.instance: Optional[BaseSubmitter] = submitterClass()
         except Exception as exc:
-            self.error = f"SubmitterProvider {submitterClass.__name__} could not be instantiated: {exc}"
+            self.error = f"SubmitterProvider of '{submitterClass.__name__}' could not be instantiated:\n{exc}"
             self.instance = None
             self.status = SubmitterProviderStatus.ERROR
 

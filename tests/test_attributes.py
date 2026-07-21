@@ -1,10 +1,11 @@
+import logging
+import pytest
+
+from meshroom.core.attribute import Attribute
 from meshroom.core.graph import Graph
 from tests.utils import registerNodeDesc
 from tests.nodes.test.nodeValidators import NodeWithValidators
 
-import pytest
-
-import logging
 logger = logging.getLogger('test')
 
 valid3DExtensionFiles = [(f'test.{ext}', True) for ext in ('obj', 'stl', 'fbx', 'gltf', 'abc', 'ply', 'usda', 'usdc')]
@@ -191,3 +192,42 @@ def test_attribute_isText_by_description_semantic():
 
     # Then
     assert n0.input.isTextDisplayable
+
+def test_attribute_isInsideList():
+    """
+    Check whether an attribute is, either directly or indirectly, contained within a ListAttribute.
+    """
+    graph = Graph("")
+    node = graph.addNewNode("GroupAttributes")
+
+    # IntParam within a GroupAttribute: it has a parent, but it is not inside a list
+    attr1 = node.attribute("firstGroup.firstGroupIntA")
+    assert attr1.root
+    assert attr1.depth == 1
+    assert not attr1.isInsideList
+
+    # FloatParam within a nested GroupAttribute: it has parents, but it is not inside a list
+    attr2 = node.attribute("firstGroup.nestedGroup.nestedGroupFloat")
+    assert attr2.root
+    assert attr2.depth == 2
+    assert not attr2.isInsideList
+
+    # ListAttribute within a GroupAttribute: it has a parent but is not inside a list
+    attr3 = node.attribute("firstGroup.singleGroupedList")
+    assert attr3.root
+    assert attr3.depth == 1
+    assert not attr3.isInsideList
+
+    # Insert an IntParam into the ListAttribute: the list attribute is not inside a list, but the IntParam is inside a list
+    attr3.insert(0, 1)
+
+    # Check that the value was correctly inserted
+    assert isinstance(attr3.value[0], Attribute)
+    assert attr3.value[0].value == 1
+
+    assert not attr3.isInsideList  # Check that the ListAttribute itself is still not inside a list
+
+    # Check that the IntParam inside the ListAttribute is considered to be inside a list
+    assert attr3.value[0].root
+    assert attr3.value[0].depth == 2
+    assert attr3.value[0].isInsideList

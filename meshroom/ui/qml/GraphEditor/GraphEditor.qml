@@ -502,15 +502,7 @@ Item {
                         }
 
                         // Get the first visible parent of "attribute"
-                        let dstAttributeDelegate = attributeToDelegate[attribute.fullName]
-                        if (!dstAttributeDelegate) {
-                            for (const key in attributeToDelegate) {
-                                if (attributeToDelegate[key].attribute === attribute) {
-                                    dstAttributeDelegate = attributeToDelegate[key]
-                                    break
-                                }
-                            }
-                        }
+                        let dstAttributeDelegate = attributeToDelegate[attribute.uuid]                        
 
                         if (dstAttributeDelegate && dstAttributeDelegate.visible) {
                             return dstAttributeDelegate
@@ -528,7 +520,7 @@ Item {
                             groupAttribute = groupAttribute ? groupAttribute.root : null
 
                             if (groupAttribute) {
-                                groupAttributeDelegate = attributeToDelegate[groupAttribute.fullName]
+                                groupAttributeDelegate = attributeToDelegate[groupAttribute.uuid]
                             }
                         }
 
@@ -1584,22 +1576,18 @@ Item {
 
     function registerAttributePin(attribute, pin) {
         const attributeToDelegate = Object.assign({}, root._attributeToDelegate)
-        attributeToDelegate[attribute.fullName] = pin
+        attributeToDelegate[attribute.uuid] = pin
         root._attributeToDelegate = attributeToDelegate
     }
 
     function unregisterAttributePin(attribute, pin) {
         const attributeToDelegate = Object.assign({}, root._attributeToDelegate)
-        let updated = false
-        for (const key in attributeToDelegate) {
-            if (attributeToDelegate[key] === pin) {
-                delete attributeToDelegate[key]
-                updated = true
-            }
-        }
-        if (updated) {
+
+        if (attribute.uuid in attributeToDelegate) {
+            delete attributeToDelegate[attribute.uuid]
             root._attributeToDelegate = attributeToDelegate
         }
+  
     }
 
     function boundingBox() {

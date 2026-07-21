@@ -23,6 +23,7 @@ from meshroom.core.exception import InvalidEdgeError
 from typing import TYPE_CHECKING, Optional
 
 from meshroom.core.mixins import Expandable
+import uuid
 
 if TYPE_CHECKING:
     from meshroom.core.graph import Edge
@@ -144,6 +145,7 @@ class Attribute(BaseObject):
         # so that description changes on the node type only affect new nodes.
         self._expressionTemplate: Optional[str] = None
         self._initValue()
+        self._uuid = f'{self._desc._name}-{uuid.uuid4()}'
 
     def _getFullName(self) -> str:
         """
@@ -836,6 +838,8 @@ class Attribute(BaseObject):
     errorMessageChanged = Signal()
     errorMessages = Property(Variant, lambda self: self.getErrorMessages(), notify=errorMessageChanged)
     isMandatory = Property(bool, _isMandatory, constant=True )
+
+    uuid = Property(str, lambda self: self._uuid, constant=True)
 
 def raiseIfLink(func):
     """

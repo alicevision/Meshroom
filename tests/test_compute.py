@@ -17,7 +17,7 @@ import logging
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core import desc, pluginManager, loadClassesNodes
 from meshroom.core.node import Status, ChunkIndex
-from meshroom.core.plugins import Plugin
+from meshroom.core.plugins.base import Plugin
 from .utils import registerNodeDesc, unregisterNodeDesc
 
 LOGGER = logging.getLogger("TestCompute")
@@ -200,7 +200,7 @@ class TestNodeLogger:
         node = SimpleNamespace(
             name="TestNode_1",
             graph=SimpleNamespace(filepath=graphFilepath.as_posix()),
-            nodeDesc=SimpleNamespace(pythonExecutable="python", plugin=plugin),
+            nodeDesc=SimpleNamespace(pythonExecutable="python", provider=plugin),
             getChunks=lambda: [object(), object()],
         )
         chunk = SimpleNamespace(
@@ -250,7 +250,7 @@ class TestLockUpdates:
         cls.plugin = Plugin(package, folder)
         nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeDescProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod

@@ -13,7 +13,7 @@ from .utils import registerNodeDesc
 import meshroom
 from meshroom.core import pluginManager, loadClassesNodes, loadSubmitters, registerSubmitter, meshroomFolder
 from meshroom.core.graph import Graph
-from meshroom.core.plugins import Plugin
+from meshroom.core.plugins.base import Plugin
 from meshroom.core.node import Node, Status
 from meshroom.core.submitter import jobManager
 from meshroom.core.submitter import OrderedTask, OrderedTasks, OrderedTaskType
@@ -138,7 +138,7 @@ class TestNodeSubmit:
         cls.plugin = Plugin(package, cls.folder)
         nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeDescProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod
@@ -151,7 +151,7 @@ class TestNodeSubmit:
     def registerNode(self, name):
         plugin = pluginManager.getPlugin("pluginSubmitter", uname=False)
         node = plugin.nodes[name]
-        nodeType = node.nodeDescriptor
+        nodeType = node.nodeDescClass
         registerNodeDesc(nodeType)
         return nodeType.__name__
 

@@ -10,7 +10,8 @@ import tempfile
 from meshroom.core import desc, pluginManager, loadClassesNodes, initNodes
 from meshroom.core.node import Position, BaseNode
 from meshroom.core.graph import Graph, loadGraph
-from meshroom.core.plugins import Plugin, ProcessEnv
+from meshroom.core.plugins.base import Plugin
+from meshroom.core.plugins.env import ProcessEnv
 from meshroom.nodes.general.InputString import InputString
 from meshroom.nodes.general.GetMgSceneParams import GetMeshroomSceneParams
 
@@ -52,7 +53,7 @@ class TestNodeInfo:
         cls.plugin = Plugin(package, cls.folder)
         nodes = loadClassesNodes(cls.folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeDescProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod
@@ -69,7 +70,7 @@ class TestNodeInfo:
         assert pluginUName.endswith("pluginC")
         assert plugin == self.plugin
         node = plugin.nodes["PluginCNodeA"]
-        nodeType = node.nodeDescriptor
+        nodeType = node.nodeDescClass
 
         g = Graph("")
         registerNodeDesc(nodeType)
@@ -97,7 +98,7 @@ class TestNodeVariables:
         cls.plugin = Plugin(package, folder)
         nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeDescProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod
@@ -152,7 +153,7 @@ class TestInputNode:
         cls.plugin = Plugin(package, folder)
         nodes = loadClassesNodes(folder, package, pluginUid=cls.plugin.uid)
         for node in nodes:
-            cls.plugin.addNodePlugin(node)
+            cls.plugin.addNodeDescProvider(node)
         pluginManager.addPlugin(cls.plugin)
 
     @classmethod
@@ -739,7 +740,7 @@ def test_GetMeshroomSceneParams(graphSavedOnDisk):
         print("graphFile", graphFile)
         graph.save(graphFile)
         # Process node
-        node.nodePlugin._processEnv = ProcessEnv("", {}, "test_plugin")
+        node.nodeDescProvider._processEnv = ProcessEnv("", {}, "test_plugin")
         processNode(node)
         # Check output
         outputJson = Path(node.internalFolder) / "values.json"

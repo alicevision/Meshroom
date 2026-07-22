@@ -19,7 +19,7 @@ from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position, CompatibilityIssue
 from meshroom.core.taskManager import TaskManager
 from meshroom.core.evaluation import MathEvaluator
-from meshroom.core.plugins import NodePluginStatus
+from meshroom.core.plugins.base import NodeDescProviderStatus
 
 from meshroom.ui import commands
 from meshroom.ui.graph import UIGraph
@@ -417,7 +417,7 @@ class Scene(UIGraph):
             self._activeNodes.add(ActiveNode(category, parent=self))
         # For all nodes declared to be accessed by the UI
         usedNodeTypes = {j for i in self.activeNodeCategories.values() for j in i}
-        allLoadedNodeTypes = set(meshroom.core.pluginManager.getRegisteredNodePlugins().keys())
+        allLoadedNodeTypes = set(meshroom.core.pluginManager.getNodeDescProviders().keys())
         allUiNodes = set(self.uiNodes) | usedNodeTypes | allLoadedNodeTypes
 
         for nodeType in allUiNodes:
@@ -441,7 +441,7 @@ class Scene(UIGraph):
 
     def _reloadPlugins(self):
         """
-        Reload all the NodePlugins from all the registered plugins.
+        Reload all the NodeDescProviders from all the registered plugins.
         The nodes in the graph will be updated to match the changes in the description, if
         there was any.
         """
@@ -450,16 +450,16 @@ class Scene(UIGraph):
         for plugin in meshroom.core.pluginManager.getPlugins().values():
             for node in plugin.nodes.values():
                 if node.reload():
-                    reloadedNodes.append(node.nodeDescriptor.__name__)
+                    reloadedNodes.append(node.nodeDescClass.__name__)
                 else:
-                    if node.status == NodePluginStatus.DESC_ERROR or node.status == NodePluginStatus.ERROR:
-                        errorNodes.append(node.nodeDescriptor.__name__)
+                    if node.status == NodeDescProviderStatus.DESC_ERROR or node.status == NodeDescProviderStatus.ERROR:
+                        errorNodes.append(node.nodeDescClass.__name__)
 
         self.pluginsReloaded.emit(reloadedNodes, errorNodes)
 
     @Slot(list)
     def _onPluginsReloaded(self, reloadedNodes: list, errorNodes: list):
-        self._graph.reloadNodePlugins(reloadedNodes)
+        self._graph.reloadNodeDescProviders(reloadedNodes)
         if len(errorNodes) > 0:
             self.parent().showMessage(f"Some plugins failed to reload: {', '.join(errorNodes)}", "error")
         else:
@@ -609,7 +609,7 @@ class Scene(UIGraph):
         if not sfmFile or not os.path.isfile(sfmFile):
             self.tempCameraInit = None
             return
-        nodeDesc = meshroom.core.pluginManager.getRegisteredNodePlugin("CameraInit").nodeDescriptor()
+        nodeDesc = meshroom.core.pluginManager.getNodeDescProvider("CameraInit").nodeDescClass()
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
         tmpCameraInit.locked = True

@@ -49,4 +49,6 @@ from .node import (
     Node,
     NodeVersionType,
     NodeVersionTypeEnum,
+    SubmissionSettings,
+    StageSettings,
 )

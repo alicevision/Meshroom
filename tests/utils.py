@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from typing import List, Dict
 from unittest.mock import patch
 
 import meshroom
@@ -9,7 +10,7 @@ import os
 
 
 @contextmanager
-def registeredNodeTypes(nodeTypes: list[desc.Node]):
+def registeredNodeTypes(nodeTypes: List[desc.Node]):
     nodeDescProvidersList = {}
     for nodeType in nodeTypes:
         nodeDescProvider = NodeDescProvider(nodeType)
@@ -66,6 +67,6 @@ def registeredUserPlugins(folder: str):
 
 
 @contextmanager
-def overrideOsEnvironmentVariables(envVariables: dict):
+def overrideOsEnvironmentVariables(envVariables: Dict):
     with patch.dict(os.environ, envVariables, clear=False):
         yield

@@ -838,7 +838,6 @@ RowLayout {
             ColumnLayout {
                 id: tableLayout
                 spacing: 0
-                width: parent ? parent.width : 400
                 property var columnNames: {
                     if (!attribute || !attribute.value || attribute.value.count === 0) return []
                     var firstRow = attribute.value.at(0)
@@ -853,20 +852,50 @@ RowLayout {
                 property var  columnWidths: []
                 property var  rowHeights:   []
                 property real totalTableWidth: {
-                    var w = columnWidths
-                    if (!w || w.length === 0) return 0
+                    if (!columnWidths || columnWidths.length === 0) return 0
                     var t = 0
-                    for (var i = 0; i < w.length; i++) t += w[i]
-                    t += Math.max(0, w.length - 1)
+                    for (var i = 0; i < columnWidths.length; i++) t += columnWidths[i]
+                    t += Math.max(0, columnWidths.length - 1)
                     return t
                 }
                 property real totalTableHeight: {
-                    var h = rowHeights
-                    if (!h || h.length === 0) return 0
+                    if (!rowHeights || rowHeights.length === 0) return 0
                     var t = 0
-                    for (var i = 0; i < h.length; i++) t += h[i]
-                    t += Math.max(0, h.length - 1)
+                    for (var i = 0; i < rowHeights.length; i++) t += rowHeights[i]
+                    t += Math.max(0, rowHeights.length - 1)
                     return t
+                }
+                property var  scaledColumnWidths: []
+                property real scaledTableWidth:   0
+                property var  scaledRowHeights:  []
+                property real scaledTableHeight: 0
+                property real availableW: outerFrame.width  - fixedStrip.width  - vBar.width
+                property real availableH: outerFrame.height - fixedHeader.height - hBar.height
+                function updateScaledWidths() {
+                    if (!columnWidths || columnWidths.length === 0) {
+                        scaledColumnWidths = []
+                        scaledTableWidth   = 0
+                        return
+                    }
+                    var scaleFactor = Math.max(1.0, availableW / Math.max(totalTableWidth, 1))
+                    var result = []
+                    for (var i = 0; i < columnWidths.length; i++)
+                        result.push(columnWidths[i] * scaleFactor)
+                    scaledColumnWidths = result
+                    scaledTableWidth   = Math.max(totalTableWidth, availableW)
+                }
+                function updateScaledHeights() {
+                    if (!rowHeights || rowHeights.length === 0) {
+                        scaledRowHeights  = []
+                        scaledTableHeight = 0
+                        return
+                    }
+                    var scaleFactor = Math.max(1.0, availableH / Math.max(totalTableHeight, 1))
+                    var result = []
+                    for (var i = 0; i < rowHeights.length; i++)
+                        result.push(rowHeights[i] * scaleFactor)
+                    scaledRowHeights  = result
+                    scaledTableHeight = Math.max(totalTableHeight, availableH)
                 }
                 property bool expanded: false
                 property var appPalette: palette
@@ -904,7 +933,8 @@ RowLayout {
                             outerFrame.anchors.right          = undefined
                             outerFrame.anchors.bottom         = undefined
                             outerFrame.Layout.fillWidth       = false
-                            outerFrame.Layout.preferredHeight = 0
+                            outerFrame.Layout.preferredWidth  = fullscreenWindow.width 
+                            outerFrame.Layout.preferredHeight = fullscreenWindow.height
                             outerFrame.visible                = true
                             outerFrame.parent  = fullscreenContent
                             outerFrame.x       = 0
@@ -922,22 +952,7 @@ RowLayout {
                     width:  tableLayout.totalTableWidth  + 30 + 16 + 20
                     height: tableLayout.totalTableHeight + 10 + 16 + 20
                     title: attribute ? attribute.label : ""
-                    palette.window:          tableLayout.appPalette.window
-                    palette.windowText:      tableLayout.appPalette.windowText
-                    palette.base:            tableLayout.appPalette.base
-                    palette.alternateBase:   tableLayout.appPalette.alternateBase
-                    palette.text:            tableLayout.appPalette.text
-                    palette.button:          tableLayout.appPalette.button
-                    palette.buttonText:      tableLayout.appPalette.buttonText
-                    palette.highlight:       tableLayout.appPalette.highlight
-                    palette.highlightedText: tableLayout.appPalette.highlightedText
-                    palette.mid:             tableLayout.appPalette.mid
-                    palette.dark:            tableLayout.appPalette.dark
-                    palette.light:           tableLayout.appPalette.light
-                    palette.midlight:        tableLayout.appPalette.midlight
-                    palette.shadow:          tableLayout.appPalette.shadow
-                    palette.toolTipBase:     tableLayout.appPalette.toolTipBase
-                    palette.toolTipText:     tableLayout.appPalette.toolTipText
+                    palette: tableLayout.appPalette
                     Item {
                         id: fullscreenContent
                         anchors.fill: parent
@@ -950,6 +965,7 @@ RowLayout {
                         outerFrame.anchors.bottom         = undefined
                         outerFrame.width                  = undefined
                         outerFrame.height                 = undefined
+                        outerFrame.Layout.preferredWidth  = -1
                         outerFrame.parent                 = tableLayout
                         outerFrame.isFullscreen           = false
                         outerFrame.Layout.fillWidth       = true
@@ -994,14 +1010,18 @@ RowLayout {
                     tableLayout.columnWidths = widths
                     tableLayout.rowHeights   = heights
                 }
-                Component.onCompleted: tableLayout.initSizes()
+                Component.onCompleted: {
+                    tableLayout.initSizes()
+                }
                 Connections {
                     target: attribute ? attribute.value : null
-                    function onCountChanged() { tableLayout.initSizes() }
-                    function onModelReset()   { tableLayout.initSizes() }
-                    function onRowsInserted() { tableLayout.initSizes() }
-                    function onDataChanged()  { tableLayout.initSizes() }
+                    function onCountChanged() {tableLayout.initSizes(); tableLayout.updateScaledWidths(); tableLayout.updateScaledHeights()}
+                    function onModelReset()   {tableLayout.initSizes(); tableLayout.updateScaledWidths(); tableLayout.updateScaledHeights()}
+                    function onRowsInserted() {tableLayout.initSizes(); tableLayout.updateScaledWidths(); tableLayout.updateScaledHeights()}
+                    function onDataChanged()  {tableLayout.initSizes(); tableLayout.updateScaledWidths(); tableLayout.updateScaledHeights()}
                 }
+                onAvailableWChanged: tableLayout.updateScaledWidths()
+                onAvailableHChanged: tableLayout.updateScaledHeights()
                 Item {
                     id: outerFrame
                     Layout.fillWidth: true
@@ -1065,7 +1085,7 @@ RowLayout {
                                     id: headerCell
                                     required property int    index
                                     required property string modelData
-                                    width:  tableLayout.columnWidths[index] || 100
+                                    width: tableLayout.scaledColumnWidths[index] || 100
                                     height: 30
                                     Rectangle {
                                         anchors.fill: parent
@@ -1089,9 +1109,13 @@ RowLayout {
                                         property real startX: 0
                                         property real startW: 0
                                         onPressed: function(mouse) {
+                                            grabMouse()
                                             var p = mapToItem(tableLayout, mouse.x, mouse.y)
                                             startX = p.x
                                             startW = tableLayout.columnWidths[headerCell.index]
+                                        }
+                                        onReleased: function(mouse) {
+                                            ungrabMouse()
                                         }
                                         onPositionChanged: function(mouse) {
                                             if (!pressed) return
@@ -1100,6 +1124,7 @@ RowLayout {
                                             var arr  = tableLayout.columnWidths.slice()
                                             arr[headerCell.index] = newW
                                             tableLayout.columnWidths = arr
+                                            tableLayout.updateScaledWidths()
                                         }
                                     }
                                 }
@@ -1126,7 +1151,7 @@ RowLayout {
                                     required property int index
                                     required property var object
                                     width:  fixedStrip.width
-                                    height: tableLayout.rowHeights[index] || 30
+                                    height: tableLayout.scaledRowHeights[index] || 30
                                     ToolButton {
                                         anchors.centerIn: parent
                                         enabled:          root.editable
@@ -1149,6 +1174,37 @@ RowLayout {
                             }
                         }
                     }
+                    Item {
+                        id: cornerCell
+                        anchors.left:   outerFrame.left
+                        anchors.top:    outerFrame.top
+                        width:  fixedStrip.width
+                        height: fixedHeader.height
+                        visible: outerFrame.isFullscreen
+                        Rectangle {
+                            anchors.fill: parent
+                            color:        "#2d2d2d"
+                            border.color: "#1d1d1d"
+                        }
+                        ToolButton {
+                            anchors.centerIn: parent
+                            text:             MaterialIcons.add_circle_outline
+                            font.family:      MaterialIcons.fontFamily
+                            font.pointSize:   11
+                            padding:          2
+                            enabled:          root.editable
+                            ToolTip.text:    "Add Element"
+                            ToolTip.visible: hovered
+                            contentItem: Text {
+                                text:                parent.text
+                                font:                parent.font
+                                color:               "#aaaaaa"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment:   Text.AlignVCenter
+                            }
+                            onClicked: _currentScene.appendAttribute(attribute, undefined)
+                        }
+                    }
                     Flickable {
                         id: flickable
                         anchors.left:         fixedStrip.right
@@ -1159,8 +1215,8 @@ RowLayout {
                         anchors.rightMargin:  vBar.width
                         anchors.bottomMargin: hBar.height
                         clip:          true
-                        contentWidth:  tableLayout.totalTableWidth
-                        contentHeight: tableLayout.totalTableHeight
+                        contentWidth:  tableLayout.scaledTableWidth
+                        contentHeight: tableLayout.scaledTableHeight
                         interactive:   true
                         WheelHandler {
                             onWheel: function(event) {
@@ -1184,8 +1240,8 @@ RowLayout {
                                     id: rowItem
                                     required property int index
                                     required property var object
-                                    width:  tableLayout.totalTableWidth
-                                    height: tableLayout.rowHeights[index] || 30
+                                    width:  tableLayout.scaledTableWidth
+                                    height: tableLayout.scaledRowHeights[index] || 30
                                     Row {
                                         spacing:     1
                                         anchors.fill: parent
@@ -1195,7 +1251,7 @@ RowLayout {
                                             delegate: Rectangle {
                                                 id: cellRect
                                                 required property int index
-                                                width:        tableLayout.columnWidths[index] || 100
+                                                width: tableLayout.scaledColumnWidths[index] || 100
                                                 height:       rowItem.height
                                                 color:        rowItem.index % 2 === 0 ? "#2d2d2d" : "#333333"
                                                 border.color: cellFocused ? "#5599ff" : "#1d1d1d"
@@ -1239,26 +1295,25 @@ RowLayout {
                                                     height: parent.height
                                                     property var attribute: cellRect.cell
                                                     sourceComponent: {
-                                                        var attr = cellRect.cell
-                                                        if (!attr) return null
-                                                        switch (attr.type) {
+                                                        if (!attribute) return null
+                                                        switch (attribute.type) {
                                                             case "PushButtonParam":
                                                                 return cellPushButtonComponent
                                                             case "ChoiceParam":
-                                                                return (attr.desc && attr.desc.exclusive)
+                                                                return (attribute.desc && attribute.desc.exclusive)
                                                                        ? cellChoiceComponent
                                                                        : cellChoiceMultiComponent
                                                             case "IntParam":
                                                                 return cellSliderComponent
                                                             case "FloatParam":
-                                                                return (attr.desc && attr.desc.semantic === "color/hue")
+                                                                return (attribute.desc && attribute.desc.semantic === "color/hue")
                                                                        ? cellColorHueComponent
                                                                        : cellSliderComponent
                                                             case "BoolParam":
                                                                 return cellCheckboxComponent
                                                             case "StringParam":
-                                                                return (attr.desc && attr.desc.semantic &&
-                                                                        attr.desc.semantic.includes("multiline"))
+                                                                return (attribute.desc && attribute.desc.semantic &&
+                                                                        attribute.desc.semantic.includes("multiline"))
                                                                        ? cellTextAreaComponent
                                                                        : cellTextFieldComponent
                                                             case "ColorParam":
@@ -1500,19 +1555,23 @@ RowLayout {
                                         cursorShape:      Qt.SizeVerCursor
                                         preventStealing:  true
                                         property real lastY: 0
-                                        onPressed:          function(mouse) {
+                                        onPressed: function(mouse) {
+                                            grabMouse()
                                             lastY = mapToGlobal(mouse.x, mouse.y).y
                                         }
-                                        onPositionChanged:  function(mouse) {
+                                        onReleased: function(mouse) {
+                                            ungrabMouse()
+                                        }
+                                        onPositionChanged: function(mouse) {
                                             if (!pressed) return
                                             var globalY = mapToGlobal(mouse.x, mouse.y).y
                                             var delta   = globalY - lastY
                                             lastY       = globalY
-                                            var newH    = Math.max(20,
-                                                             tableLayout.rowHeights[rowItem.index] + delta)
+                                            var newH    = Math.max(20, tableLayout.rowHeights[rowItem.index] + delta)
                                             var arr     = tableLayout.rowHeights.slice()
                                             arr[rowItem.index] = newH
                                             tableLayout.rowHeights = arr
+                                            tableLayout.updateScaledHeights()
                                         }
                                     }
                                 }

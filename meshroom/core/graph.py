@@ -983,13 +983,15 @@ class Graph(BaseObject):
             - "path": set the output folder on all output nodes.
             - "OutputNodeName=path": set the output folder on one output node.
             - "OutputNodeName.attribute=value": set one exposed output attribute.
+            - "OutputNodeType:attribute=value": set one exposed output attribute on all
+              output nodes of a given type.
         """
         outputNodes = self.findOutputNodes()
         if len(outputNodes) == 0:
             raise RuntimeError('meshroom_batch requires a pipeline graph with at least ' +
                                'one output node, none found.')
 
-        reExtract = re.compile(r'(\w+)(?:[:.](\w[\w.]*))?=(.*)')  # NodeName=value or NodeName.attribute=value
+        reExtract = re.compile(r'(\w+)(?:([:.])(\w[\w.]*))?=(.*)')
         globalOutputPath: Optional[str] = None
         remainingOutputNodes = list(outputNodes)
         for outputValue in outputValues:
@@ -998,21 +1000,27 @@ class Graph(BaseObject):
                 globalOutputPath = outputValue
                 continue
 
-            nodeName, attributeName, value = result.groups()
+            nodeName, separator, attributeName, value = result.groups()
             outputNode = next((n for n in outputNodes if n.name == nodeName), None)
-            if outputNode is None:
+            if separator == ':' and outputNode is None:
+                targetNodes = [n for n in outputNodes if n.nodeType == nodeName]
+                if not targetNodes:
+                    raise RuntimeError(f'Unknown output node type "{nodeName}".')
+            elif outputNode is None:
                 raise RuntimeError(f'Unknown output node "{nodeName}".')
+            else:
+                targetNodes = [outputNode]
 
             outputFolderSet = False
-            if attributeName:
-                attribute = outputNode.nodeDesc.setOutputAttribute(outputNode, attributeName, value)
-                outputFolderSet = attribute in outputNode.nodeDesc.getOutputFolderAttributes(outputNode)
-                if outputFolderSet and outputNode in remainingOutputNodes:
-                    remainingOutputNodes.remove(outputNode)
-            else:
-                outputNode.nodeDesc.setOutputFolder(outputNode, value)
-                outputFolderSet = True
-                if outputNode in remainingOutputNodes:
+            for outputNode in targetNodes:
+                if attributeName:
+                    attribute = outputNode.nodeDesc.setOutputAttribute(outputNode, attributeName, value)
+                    nodeOutputFolderSet = attribute in outputNode.nodeDesc.getOutputFolderAttributes(outputNode)
+                else:
+                    outputNode.nodeDesc.setOutputFolder(outputNode, value)
+                    nodeOutputFolderSet = True
+                outputFolderSet |= nodeOutputFolderSet
+                if nodeOutputFolderSet and outputNode in remainingOutputNodes:
                     remainingOutputNodes.remove(outputNode)
 
             if outputFolderSet and globalOutputPath is None:  # Fallback in case some nodes would have no path

@@ -88,13 +88,14 @@ general_group.add_argument(
 
 general_group.add_argument(
     '-o', '--output', 
-    metavar='FOLDER OUTPUT_NODE_INSTANCE=FOLDER OUTPUT_NODE_INSTANCE.ATTRIBUTE=VALUE',
+    metavar='FOLDER OUTPUT_NODE_INSTANCE=FOLDER OUTPUT_NODE_INSTANCE.ATTRIBUTE=VALUE OUTPUT_NODE_TYPE:ATTRIBUTE=VALUE',
     type=str,
     required=False,
     nargs='*',
     help='Output folder for results. '
          'Sets output folder for all output nodes, target specific nodes using OUTPUT_NODE_INSTANCE=FOLDER, '
-         'or target exposed output attributes using OUTPUT_NODE_INSTANCE.ATTRIBUTE=VALUE.')
+         'target exposed output attributes using OUTPUT_NODE_INSTANCE.ATTRIBUTE=VALUE, '
+         'or apply an attribute value to all output nodes of a type using OUTPUT_NODE_TYPE:ATTRIBUTE=VALUE.')
 
 general_group.add_argument(
     '-s', '--save', metavar='FILE', type=str, required=False,
@@ -244,6 +245,8 @@ with meshroom.core.graph.GraphModification(graph):
         #   "OutputNode_name=/output/folder/path" convention.
         # - for each exposed output attribute, the value is specified following the
         #   "OutputNode_name.attribute=value" convention.
+        # - for each output node type, an exposed attribute value is specified following the
+        #   "OutputNodeType:attribute=value" convention.
         # - a path is provided without specifying which output node should be set with it:
         #   all the output nodes will be set with it.
         # - some output nodes have their path specified, and another path is provided

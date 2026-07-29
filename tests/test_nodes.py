@@ -279,6 +279,26 @@ class TestOutputNode:
 
         assert node.exportLabel.value == "custom"
 
+    def test_configureOutputNodes_sets_attribute_by_node_type(self):
+        graph = Graph("")
+        firstNode = graph.addNewNode("OutputNodeTest")
+        secondNode = graph.addNewNode("OutputNodeTest")
+
+        graph.configureOutputNodes(["OutputNodeTest:exportLabel=final"])
+
+        assert firstNode.exportLabel.value == "final"
+        assert secondNode.exportLabel.value == "final"
+
+    def test_configureOutputNodes_sets_output_folder_attribute_by_node_type(self):
+        graph = Graph("")
+        firstNode = graph.addNewNode("OutputNodeTest")
+        secondNode = graph.addNewNode("OutputNodeTest")
+
+        graph.configureOutputNodes(["OutputNodeTest:folder=/output/results"])
+
+        assert firstNode.folder.value == "/output/results"
+        assert secondNode.folder.value == "/output/results"
+
     def test_configureOutputNodes_sets_global_folder_and_targeted_attributes(self):
         graph = Graph("")
         node = graph.addNewNode("OutputNodeTest")

@@ -5,7 +5,7 @@ import os
 from collections.abc import Iterable
 from multiprocessing.pool import ThreadPool
 from threading import Thread
-from typing import Callable
+from typing import Callable, Optional
 
 from PySide6.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint
 from PySide6.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
@@ -477,17 +477,23 @@ class Scene(UIGraph):
         filepath = loweredPipelineTemplates.get(p.lower(), p)
         return self._loadWithErrorReport(self.initFromTemplate, filepath)
 
-    def _initFromTemplateWithCopyOutputs(self, filepath):
-        self.initFromTemplate(filepath, copyOutputs=True)
+    def _initFromTemplateWithOutputNodes(self, filepath: str) -> None:
+        self.initFromTemplate(filepath, keepOutputNodes=True)
 
     @Slot(result=bool)
     @Slot(str, result=bool)
-    def newWithCopyOutputs(self, pipeline=None):
-        """ Create a new pipeline with all the "CopyFiles" nodes included if the provided template has any. """
+    def newWithOutputNodes(self, pipeline: Optional[str] = None) -> bool:
+        """ Create a new pipeline with all the output nodes included if the provided template has any. """
         p = pipeline if pipeline is not None else self._defaultPipeline
         loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
         filepath = loweredPipelineTemplates.get(p.lower(), p)
-        return self._loadWithErrorReport(self._initFromTemplateWithCopyOutputs, filepath)
+        return self._loadWithErrorReport(self._initFromTemplateWithOutputNodes, filepath)
+
+    @Slot(result=bool)
+    @Slot(str, result=bool)
+    def newWithCopyOutputs(self, pipeline: Optional[str] = None) -> bool:
+        """ Deprecated alias for newWithOutputNodes. """
+        return self.newWithOutputNodes(pipeline)
 
 
     @Slot(str, result=bool)

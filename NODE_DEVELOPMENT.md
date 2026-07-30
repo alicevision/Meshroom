@@ -3,7 +3,7 @@
 
 ## Node Creation
 
-This guide shows how to implement three common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, and non-computational `InitNode`.
+This guide shows how to implement four common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, non-computational `InitNode`, and `OutputNode` for pipeline exports.
 
 ### 1. Node (Pure Python)
 
@@ -108,6 +108,37 @@ class MyInitNode(desc.InitNode, desc.InputNode):
             node.file.value = inputs[0]
 ```
 
+### 4. OutputNode (pipeline export)
+
+Use the `desc.OutputNode` mixin on a node that represents a pipeline result or export destination. It makes the node discoverable as an output node when a pipeline template is initialized with output nodes enabled.
+
+Declare `outputAttributes` to explicitly expose the inputs that users and command-line tools may configure. Exposed `desc.File` attributes are treated as output folders; other exposed input types can carry export options such as a label or an enable flag.
+
+```python
+from meshroom.core import desc
+
+
+class ExportResults(desc.Node, desc.OutputNode):
+    outputAttributes = ["outputFolder", "exportLabel", "enabled"]
+
+    inputs = [
+        desc.File(name="outputFolder", label="Output Folder", description="", value=""),
+        desc.StringParam(name="exportLabel", label="Export Label", description="", value="results"),
+        desc.BoolParam(name="enabled", label="Enabled", description="", value=True),
+    ]
+```
+
+For compatibility with existing nodes, omit `outputAttributes` to expose the input named by `outputAttribute`, which defaults to `"output"`.
+
+`meshroom_batch --output` accepts the following output-node configuration formats:
+
+- `/path/to/results` configures the output folder of all output nodes.
+- `ExportResults_1=/path/to/results` configures one output node.
+- `ExportResults_1.exportLabel=final` configures one exposed attribute on one output node.
+- `ExportResults:exportLabel=final` configures an exposed attribute on every output node of that type.
+
+Only attributes declared in `outputAttributes` can be set through these targeted forms.
+
 
 ## Attribute Types Available in Meshroom Nodes
 
@@ -132,6 +163,7 @@ Meshroom provides several attribute types you can use in a node’s `inputs` and
 |------|-------------|----------|
 | `ListAttribute` | Homogeneous list of elements defined by `elementDesc`. | `elementDesc`, `joinChar` |
 | `GroupAttribute` | Fixed collection of heterogeneous child attributes (`items`). | `items`, `joinChar` |
+| `AnySet` | Flexible, container for any mixed set of child attributes. | N/A (Uses `GroupAttribute`) |
 
 Both inherit from `Attribute` and support nesting (lists of groups, groups with lists).
 
@@ -310,4 +342,3 @@ For `CommandLineNode`, range placeholders are automatically injected into `comma
 ## Installation
 
 See [INSTALL_PLUGINS.md](./INSTALL_PLUGINS.md)
-

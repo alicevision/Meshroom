@@ -9,7 +9,7 @@ import meshroom.core.graph
 from meshroom.common import strtobool
 from meshroom import setupEnvironment, logStringToPython
 
-def parseInitInputs(inputs: list[str]) -> dict[str, str]:
+def parseInitInputs(inputs: list[str]) -> dict[str, list[str]]:
     """Utility method for parsing the input and inputRecursive arguments.
     Args:
         inputs: Command line values in format 'nodeName=value' or just 'value' to set it on all init nodes
@@ -88,12 +88,14 @@ general_group.add_argument(
 
 general_group.add_argument(
     '-o', '--output', 
-    metavar='FOLDER COPYFILES_INSTANCE=FOLDER',
+    metavar='FOLDER OUTPUT_NODE_INSTANCE=FOLDER OUTPUT_NODE_INSTANCE.ATTRIBUTE=VALUE OUTPUT_NODE_TYPE:ATTRIBUTE=VALUE',
     type=str,
     required=False,
     nargs='*',
-    help='Output folder for copying results. '
-         'Sets output folder for all CopyFiles nodes, or target specific nodes using COPYFILES_INSTANCE=FOLDER.')
+    help='Output folder for results. '
+         'Sets output folder for all output nodes, target specific nodes using OUTPUT_NODE_INSTANCE=FOLDER, '
+         'target exposed output attributes using OUTPUT_NODE_INSTANCE.ATTRIBUTE=VALUE, '
+         'or apply an attribute value to all output nodes of a type using OUTPUT_NODE_TYPE:ATTRIBUTE=VALUE.')
 
 general_group.add_argument(
     '-s', '--save', metavar='FILE', type=str, required=False,
@@ -183,10 +185,10 @@ with meshroom.core.graph.GraphModification(graph):
     loweredPipelineTemplates = {k.lower(): v for k, v in meshroom.core.pipelineTemplates.items()}
     if args.pipeline.lower() in loweredPipelineTemplates:
         graph.initFromTemplate(loweredPipelineTemplates[args.pipeline.lower()],
-                               copyOutputs=True if args.output else False)
+                               True if args.output else False)
     else:
         # custom pipeline
-        graph.initFromTemplate(args.pipeline, copyOutputs=True if args.output else False)
+        graph.initFromTemplate(args.pipeline, True if args.output else False)
 
     if args.overrideCacheDir is not None:
         # If the graph is not saved yet we need to save it because the
@@ -238,46 +240,26 @@ with meshroom.core.graph.GraphModification(graph):
         graph.setVerbose(args.verbose)
 
     if args.output:
-        # The output folders for CopyFiles nodes can be set as follows:
+        # The output folders for output nodes can be set as follows:
         # - for each node, the output folder is specified following the
-        #   "CopyFiles_name=/output/folder/path" convention.
-        # - a path is provided without specifying which CopyFiles node should be set with it:
-        #   all the CopyFiles nodes will be set with it.
-        # - some CopyFiles nodes have their path specified, and another path is provided
-        #   without specifying a node: all CopyFiles nodes with dedicated will have their own
+        #   "OutputNode_name=/output/folder/path" convention.
+        # - for each exposed output attribute, the value is specified following the
+        #   "OutputNode_name.attribute=value" convention.
+        # - for each output node type, an exposed attribute value is specified following the
+        #   "OutputNodeType:attribute=value" convention.
+        # - a path is provided without specifying which output node should be set with it:
+        #   all the output nodes will be set with it.
+        # - some output nodes have their path specified, and another path is provided
+        #   without specifying a node: all output nodes with dedicated will have their own
         #   output folders set, and those which have not been specified will be set with the
         #   other path.
-        # - some CopyFiles nodes have their output folder specified while others do not: all
+        # - some output nodes have their output folder specified while others do not: all
         #   the nodes with specified folders will use the provided values, and those without
-        #   any will be set with the output folder of the first specified CopyFiles node.
+        #   any will be set with the output folder of the first specified output node.
         # - several output folders are provided without specifying any node: the last one will
-        #   be used to set all the CopyFiles nodes' output folders.
+        #   be used to set all the output nodes' output folders.
 
-        # Check that there is at least one CopyFiles node
-        copyNodes = graph.nodesOfType('CopyFiles')
-        if len(copyNodes) == 0:
-            raise RuntimeError('meshroom_batch requires a pipeline graph with at least ' +
-                               'one CopyFiles node, none found.')
-
-        reExtract = re.compile(r'(\w+)=(.*)')  # NodeName=value
-        globalCopyPath = ''
-        for p in args.output:
-            result = reExtract.match(p)
-            if not result:  # If the argument is only a path, set it for the global path
-                globalCopyPath = p
-                continue
-
-            node, value = result.groups()
-            for i, n in enumerate(copyNodes):  # Find the correct CopyFiles node in the list
-                if n.name == node:  # If found, set the value, and remove it from the list
-                    n.output.value = value
-                    copyNodes.pop(i)
-                    if globalCopyPath == '':  # Fallback in case some nodes would have no path
-                        globalCopyPath = value
-                    break
-
-        for n in copyNodes:  # Set the remaining CopyPath nodes with the global path
-            n.output.value = globalCopyPath
+        graph.configureOutputNodes(args.output)
     elif args.submit or args.compute:
         print(f'No output set, results will be available in the cache folder: "{graph.cacheDir}"')
 

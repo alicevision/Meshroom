@@ -3,6 +3,7 @@
 import enum
 from inspect import getfile, getattr_static
 from pathlib import Path
+from typing import List
 import logging
 import shlex
 import shutil
@@ -182,7 +183,7 @@ class InternalAttributesFactory:
     ]
 
     @classmethod
-    def getInternalAttributes(cls, mrNodeType: MrNodeType) -> list[Attribute]:
+    def getInternalAttributes(cls, mrNodeType: MrNodeType) -> List[Attribute]:
         paramMap = {
             MrNodeType.NONE: cls.BASIC,
             MrNodeType.BASENODE: cls.INVALIDATION + cls.BASIC,
@@ -195,7 +196,7 @@ class InternalAttributesFactory:
         return paramMap.get(mrNodeType)
 
     @classmethod
-    def getInternalFlowInputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
+    def getInternalFlowInputs(cls, mrNodeType: MrNodeType) -> List[Attribute]:
         """
         Return the list of internal input Flow attributes for a given node type.
 
@@ -207,7 +208,7 @@ class InternalAttributesFactory:
         return cls.FLOW_IN
 
     @classmethod
-    def getInternalFlowOutputs(cls, mrNodeType: MrNodeType) -> list[Attribute]:
+    def getInternalFlowOutputs(cls, mrNodeType: MrNodeType) -> List[Attribute]:
         """
         Return the list of internal output Flow attributes for a given node type.
 
@@ -731,7 +732,7 @@ class OutputNode(IONode):
     def __init__(self):
         super(OutputNode, self).__init__()
 
-    def getOutputAttributes(self, node: "CoreNode") -> list["CoreAttribute"]:
+    def getOutputAttributes(self, node: "CoreNode") -> List["CoreAttribute"]:
         """
         Return the attributes explicitly exposed by this output node.
 
@@ -744,14 +745,14 @@ class OutputNode(IONode):
         else:
             attributeNames = self.outputAttributes
 
-        attributes: list["CoreAttribute"] = []
+        attributes: List["CoreAttribute"] = []
         for attrName in attributeNames:
             if not node.hasAttribute(attrName):
                 raise AttributeError(f"'{node.name}.{attrName}' is not an output node attribute.")
             attributes.append(node.attribute(attrName))
         return attributes
 
-    def getOutputFolderAttributes(self, node: "CoreNode") -> list["CoreAttribute"]:
+    def getOutputFolderAttributes(self, node: "CoreNode") -> List["CoreAttribute"]:
         """
         Return the exposed File attributes managed as output folders.
         """

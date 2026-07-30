@@ -79,7 +79,7 @@ jobs:
           report_type: test_results
 
       # ── meshroom_compute smoke test (Python 3.9) ─────────────
-      # Verifies that the CLI entry-point works on the minimum supported version.
+      # Verifies that the CLI entry-point works on the minimum "ideal" supported version.
       - name: Set up Python 3.9 – meshroom_compute smoke test
         uses: actions/setup-python@v6
         with:
@@ -89,7 +89,35 @@ jobs:
         shell: bash
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements.txt --timeout 45
+          python3 -m pip install -r requirements.txt -r dev_requirements.txt --timeout 45
 
       - name: Run meshroom_compute –h (Python 3.9)
         run: python3 bin/meshroom_compute -h
+
+      - name: Run tests for plugins (Python 3.9)
+        run: |
+          pytest tests/test_plugins.py
+      
+      # ── meshroom_compute smoke test (Python 3.7) ─────────────
+      # Verifies that the CLI entry-point works on the minimum supported version.
+      - name: Set up Python 3.7 – meshroom_compute smoke test
+        uses: actions/setup-python@v6
+        if: runner.os == 'Windows'
+        with:
+          python-version: '3.7'
+
+      - name: Install runtime dependencies (Python 3.7)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt -r dev_requirements.txt --timeout 45
+
+      - name: Run meshroom_compute –h (Python 3.7)
+        if: runner.os == 'Windows'
+        run: python3 bin/meshroom_compute -h
+
+      - name: Run tests for plugins (Python 3.7)
+        if: runner.os == 'Windows'
+        run: |
+          pytest tests/test_plugins.py

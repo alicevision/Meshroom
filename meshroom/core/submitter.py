@@ -318,7 +318,8 @@ class OrderedTasks:
         """
         logger.debug(f"* (addNodeTasks) node {orderedNode.node._name}, parent {parentTask.node}")
         # Check if task has already been created
-        visited = (nodeUid := orderedNode.node._uid) in self._nodeUidToBoundaryTasks
+        nodeUid = orderedNode.node._uid
+        visited = nodeUid in self._nodeUidToBoundaryTasks
         if visited:
             logger.debug("  -> is visited")
             # If task is already created simply create the connection

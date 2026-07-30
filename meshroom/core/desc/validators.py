@@ -1,14 +1,22 @@
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, List, Tuple
 
 if TYPE_CHECKING:
     from meshroom.core.attribute import Attribute
     from meshroom.core.node import Node
+    from typing import Protocol, runtime_checkable
+else:
+    try:
+        from typing import Protocol, runtime_checkable
+    except ImportError:
+        Protocol = object
+        def runtime_checkable(cls):
+            return cls
 
 
-def success() -> tuple[bool, list[str]]:
+def success() -> Tuple[bool, List[str]]:
     return (True, [])
 
-def error(*messages: str) -> tuple[bool, list[str]]:
+def error(*messages: str) -> Tuple[bool, List[str]]:
     return (False, list(messages))
 
 @runtime_checkable
@@ -23,7 +31,7 @@ class AttributeValidator(Protocol):
         lambda node, attribute: success() if attribute.value and attribute.value != "" else error("attribute have no value")
     """
 
-    def __call__(self, node: "Node", attribute: "Attribute") -> tuple[bool, list[str]]:
+    def __call__(self, node: "Node", attribute: "Attribute") -> Tuple[bool, List[str]]:
         """
         This method can be overridden to implement any custom attribute validation logic.
         The `success()` and `error()` helpers can be used to encapsulate the returning responses.
@@ -42,7 +50,7 @@ class NotEmptyValidator(AttributeValidator):
     This class is used to determine if an attribute value should be considered as mandatory/required.
     """
 
-    def __call__(self, node: "Node", attribute: "Attribute") -> tuple[bool, list[str]]:
+    def __call__(self, node: "Node", attribute: "Attribute") -> Tuple[bool, List[str]]:
         if attribute.value is None or attribute.value == "":
             return error("An empty value is not allowed.")
 
@@ -56,7 +64,7 @@ class RangeValidator(AttributeValidator):
         self._min = min
         self._max = max
 
-    def __call__(self, node: "Node", attribute: "Attribute") -> tuple[bool, list[str]]:
+    def __call__(self, node: "Node", attribute: "Attribute") -> Tuple[bool, List[str]]:
         if attribute.value < self._min or attribute.value > self._max:
             return error(f"Value should be greater than {self._min} and less than {self._max} ",
                          f"({self._min} < {attribute.value} < {self._max}).")

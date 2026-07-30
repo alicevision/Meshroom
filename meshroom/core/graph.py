@@ -2,8 +2,8 @@ import json
 import logging
 import os
 import re
-from typing import Any, Optional
-from collections.abc import Iterable
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+# from collections.abc import Iterable
 from collections import defaultdict, OrderedDict
 import weakref
 from contextlib import contextmanager
@@ -407,7 +407,8 @@ class Graph(BaseObject):
         #   2. nodesVersion in file header: node saved from a Node
         # If unvailable, the "version" field will not be set in `nodeData`.
         if "version" not in nodeData:
-            if version := fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"]):
+            version = fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"])
+            if version:
                 nodeData["version"] = version
         inTemplate = fromGraph.header.get(GraphIO.Keys.Template, False)
         node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate)
@@ -466,7 +467,7 @@ class Graph(BaseObject):
             self.replaceNode(node.name, compatibilityNode)
 
 
-    def importGraphContentFromFile(self, filepath: PathLike) -> list[Node]:
+    def importGraphContentFromFile(self, filepath: PathLike) -> List[Node]:
         """Import the content (nodes and edges) of another Graph file into this Graph instance.
 
         Args:
@@ -479,7 +480,7 @@ class Graph(BaseObject):
         return self.importGraphContent(graph)
 
     @blockNodeCallbacks
-    def importGraphContent(self, graph: "Graph") -> list[Node]:
+    def importGraphContent(self, graph: "Graph") -> List[Node]:
         """
         Import the content (node and edges) of another `graph` into this Graph instance.
 
@@ -594,7 +595,7 @@ class Graph(BaseObject):
             The created node instance and the mapping of skipped edges per attribute
             (always empty if `withEdges` is True)
         """
-        def _removeLinkExpressions(attribute: Attribute, removed: dict[Attribute, str]):
+        def _removeLinkExpressions(attribute: Attribute, removed: Dict[Attribute, str]):
             """ Recursively remove link expressions from the given root `attribute`. """
             # Link expressions are only stored on input attributes
             if attribute.isOutput:
@@ -758,7 +759,7 @@ class Graph(BaseObject):
                 if node.nodeDesc:
                     node.nodeDesc.onNodeCreated(node)
 
-    def _createUniqueNodeName(self, inputName: str, existingNames: Optional[set[str]] = None):
+    def _createUniqueNodeName(self, inputName: str, existingNames: Optional[Set[str]] = None):
         """
         Create a unique node name based on the input name.
 
@@ -815,7 +816,7 @@ class Graph(BaseObject):
             self.addNode(newNode, nodeName)
             self._restoreOutEdges(outEdges, outListAttributes)
 
-    def _restoreOutEdges(self, outEdges: dict[str, str], outListAttributes):
+    def _restoreOutEdges(self, outEdges: Dict[str, str], outListAttributes):
         """
         Restore output edges that were removed during a call to "removeNode".
 
@@ -856,7 +857,7 @@ class Graph(BaseObject):
             for nodeName in nodeNames:
                 self.upgradeNode(nodeName)
 
-    def reloadNodeDescProviders(self, nodeTypes: list[str]):
+    def reloadNodeDescProviders(self, nodeTypes: List[str]):
         """
         Replace all the node instances of "nodeTypes" in the current graph with new node instances of the
         same type. If the description of the nodes has changed, the reloaded nodes will reflect theses
@@ -967,7 +968,7 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InputNode)]
         return nodes
 
-    def findOutputNodes(self) -> list[Node]:
+    def findOutputNodes(self) -> List[Node]:
         """
         Returns:
             list[Node]: the list of Output nodes (nodes inheriting from OutputNode)
@@ -975,7 +976,7 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.OutputNode)]
         return self.sortNodesByIndex(nodes)
 
-    def configureOutputNodes(self, outputValues: list[str]) -> None:
+    def configureOutputNodes(self, outputValues: List[str]) -> None:
         """
         Configure output nodes from command line output values.
 
@@ -1032,7 +1033,7 @@ class Graph(BaseObject):
         for node in remainingOutputNodes:  # Set the remaining output nodes with the global path
             node.nodeDesc.setOutputFolder(node, globalOutputPath)
 
-    def findNodeCandidates(self, nodeNameExpr: str) -> list[Node]:
+    def findNodeCandidates(self, nodeNameExpr: str) -> List[Node]:
         pattern = re.compile(nodeNameExpr)
         return [v for k, v in self._nodes.objects.items() if pattern.match(k)]
 
@@ -1064,7 +1065,7 @@ class Graph(BaseObject):
         return set(self._nodes) - nodesWithInputLink
 
     @changeTopology
-    def addEdge(self, srcAttr: Attribute, dstAttr: Attribute) -> tuple[list[Attribute], list[Attribute]]:
+    def addEdge(self, srcAttr: Attribute, dstAttr: Attribute) -> Tuple[List[Attribute], List[Attribute]]:
         if not srcAttr.node.graph == dstAttr.node.graph == self:
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    "Attributes do not belong to this graph.")
@@ -1508,7 +1509,7 @@ class Graph(BaseObject):
         SerializerClass = TemplateGraphSerializer if asTemplate else GraphSerializer
         return SerializerClass(self).serialize()
 
-    def serializePartial(self, nodes: list[Node]) -> dict:
+    def serializePartial(self, nodes: List[Node]) -> dict:
         """
         Partially serialize this graph considering only the given list of `nodes`.
 

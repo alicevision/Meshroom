@@ -1,6 +1,6 @@
 import logging
-from typing import Any, Optional, Union
-from collections.abc import Iterable
+from typing import Any, Dict, Iterable, List, Optional, Union
+# from collections.abc import Iterable
 
 import meshroom.core
 from meshroom.core import Version, desc
@@ -204,7 +204,7 @@ class _NodeCreator:
         return all(k in allowedNames for k in self.internalInputs.keys())
 
     def _checkAttributesNamesStrictlyMatch(
-        self, descAttributes: Iterable[desc.Attribute], attributesDict: dict[str, Any]
+        self, descAttributes: Iterable[desc.Attribute], attributesDict: Dict[str, Any]
     ) -> bool:
         refNames = sorted([attr.name for attr in descAttributes])
         attrNames = sorted(attributesDict.keys())
@@ -212,7 +212,7 @@ class _NodeCreator:
 
     def _checkAttributesNamesMatchWithOptional(self,
                                                requiredDescAttributes: Iterable[desc.Attribute],
-                                               attributesDict: dict[str, Any],
+                                               attributesDict: Dict[str, Any],
                                                optionalDescAttributes: Iterable[desc.Attribute]) -> bool:
         """
         Check that attribute names in 'attributesDict' match the expected description,
@@ -242,7 +242,7 @@ class _NodeCreator:
         return True
 
     def _checkAttributesCompatibility(
-        self, descAttributes: list[desc.Attribute], attributesDict: dict[str, Any]
+        self, descAttributes: List[desc.Attribute], attributesDict: Dict[str, Any]
     ) -> bool:
         return all(
             CompatibilityNode.attributeDescFromName(descAttributes, attrName, value) is not None

@@ -368,7 +368,7 @@ class LocalFarmEngine:
                 log.write("# process_env:\n")
                 log.write("# Additional env variables:\n")
                 for _k, _v in additional_env.items():
-                    log.write(f"# - {str(_k)}={str(_v)}\n")
+                    log.write(f"# - {str(_k)}=\'{str(_v)}\'\n")
                 log.write("\n")
                 task.process = subprocess.Popen(
                     task.command,
@@ -393,7 +393,7 @@ class LocalFarmEngine:
             task.status = Status.ERROR
             logger.error(f"Task {task.tid} failed with code {returncode}")
         with open(task.logFile, "a") as log:
-            log.write(f"\n# ========== Task {task.tid} finished at {task.finished_at.isoformat()} with status {task.status} ==========\n")
+            log.write(f"\n# ========== Task {task.tid} finished at {task.finished_at.isoformat()} after {task.duration_string} sec. with status {task.status} ==========\n")
 
     def cleanup(self):
         logger.info("Cleaning up...")

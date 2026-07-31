@@ -7,31 +7,33 @@ import Utils 1.0
 
 Rectangle {
     id: cellRect
-    property int  cellIndex: 0
-    property var  rowObject: null
-    property int  rowIndex: 0
-    property real cellWidth
-    property real cellHeight
+    property int cellIndex: 0
+    property var rowObject: null
+    property int rowIndex: 0
+    property real cellWidth:  100
+    property real cellHeight: 24
     property bool editable: true
     width : cellWidth
     height : cellHeight
-    color : rowIndex % 2 === 0 ? "#2d2d2d" : "#333333"
-    border.color : cellFocused ? "#5599ff" : "#1d1d1d"
+    property var appPalette: palette
+    color : palette.window
+    border.color : cellFocused ? palette.highlight : palette.mid
     clip : true
     property var cell: rowObject.value.at(cellIndex)
     property bool cellFocused: {
         var item = cellLoader.item
-        if (!item) return false
+        if (!item)
+            return false
         return item.activeFocus ||
                (item.children && item.children.length > 0 &&
                 item.children[0] && item.children[0].activeFocus)
     }
     Rectangle {
         anchors.centerIn: parent
-        width:   cellLoader.width  + 8
-        height:  cellLoader.height + 4
-        radius:  3
-        color:   "#444444"
+        width: cellLoader.width + 8
+        height: cellLoader.height + 4
+        radius: 3
+        color: palette.base
         visible: cellRect.cell &&
                  (cellRect.cell.type === "BoolParam" ||
                   cellRect.cell.type === "ChoiceParam")
@@ -39,34 +41,42 @@ Rectangle {
     Loader {
         id: cellLoader
         anchors.centerIn: parent
-        width:  parent.width
+        width: parent.width
         height: parent.height
         property var attribute: cellRect.cell
         sourceComponent: {
-            if (!attribute) return null
+            if (!attribute)
+                return null
             switch (attribute.type) {
-                case "PushButtonParam":  return cellPushButtonComponent
+                case "PushButtonParam": return cellPushButtonComponent
                 case "ChoiceParam":
                     return (attribute.desc && attribute.desc.exclusive)
-                           ? cellChoiceComponent : cellChoiceMultiComponent
-                case "IntParam":         return cellSliderComponent
+                           ? cellChoiceComponent
+                           : cellChoiceMultiComponent
+                case "IntParam": return cellSliderComponent
                 case "FloatParam":
                     return (attribute.desc && attribute.desc.semantic === "color/hue")
-                           ? cellColorHueComponent : cellSliderComponent
-                case "BoolParam":        return cellCheckboxComponent
+                           ? cellColorHueComponent
+                           : cellSliderComponent
+                case "BoolParam": return cellCheckboxComponent
                 case "StringParam":
                     return (attribute.desc && attribute.desc.semantic &&
                             attribute.desc.semantic.includes("multiline"))
-                           ? cellTextAreaComponent : cellTextFieldComponent
-                case "ColorParam":       return cellColorComponent
-                default:                 return cellTextFieldComponent
+                           ? cellTextAreaComponent
+                           : cellTextFieldComponent
+                case "ColorParam": return cellColorComponent
+                default: return cellTextFieldComponent
             }
         }
         Component {
             id: cellChoiceComponent
             Choice {
-                value:   cellLoader.attribute ? cellLoader.attribute.value  : ""
-                values:  cellLoader.attribute ? cellLoader.attribute.values : []
+                value: cellLoader.attribute
+                       ? cellLoader.attribute.value 
+                       : ""
+                values: cellLoader.attribute
+                        ? cellLoader.attribute.values
+                        : []
                 enabled: cellRect.editable
                 Component.onCompleted: {
                     if (typeof popup !== "undefined" && popup !== null) {
@@ -82,12 +92,17 @@ Rectangle {
         Component {
             id: cellChoiceMultiComponent
             ChoiceMulti {
-                value:            cellLoader.attribute ? cellLoader.attribute.value  : []
-                values:           cellLoader.attribute ? cellLoader.attribute.values : []
-                enabled:          cellRect.editable
+                value: cellLoader.attribute
+                       ? cellLoader.attribute.value
+                       : []
+                values: cellLoader.attribute
+                        ? cellLoader.attribute.values
+                        : []
+                enabled: cellRect.editable
                 customValueColor: Colors.orange
                 onToggled: function(value, checked) {
-                    if (!cellLoader.attribute) return
+                    if (!cellLoader.attribute)
+                        return
                     var cur = cellLoader.attribute.value.slice()
                     if (!checked) {
                         var idx = cur.indexOf(value)
@@ -106,41 +121,48 @@ Rectangle {
                 TextField {
                     id: cellNumField
                     Layout.fillWidth: !cellSliderLoader.active
-                    implicitWidth:    70
-                    enabled:          cellRect.editable
-                    selectByMouse:    true
+                    implicitWidth: 70
+                    enabled: cellRect.editable
+                    selectByMouse: true
                     horizontalAlignment: TextInput.AlignRight
                     text: {
                         if (cellSliderLoader.active && cellSliderLoader.item &&
                                 cellSliderLoader.item.pressed)
                             return String(cellSliderLoader.item.formattedValue)
-                        return cellLoader.attribute ? String(cellLoader.attribute.value) : ""
+                        return cellLoader.attribute
+                               ? String(cellLoader.attribute.value)
+                               : ""
                     }
-                    background: Rectangle { color: "#3c3c3c"; radius: 2 }
-                    color: "#cccccc"
+                    background: Rectangle { color: Qt.darker(palette.window, 1.2); radius: 2 }
+                    color: palette.text
                     onEditingFinished: {
                         if (cellLoader.attribute)
                             _currentScene.setAttribute(cellLoader.attribute,
                                 cellLoader.attribute.type === "IntParam"
-                                    ? parseInt(text) : parseFloat(text))
+                                    ? parseInt(text)
+                                    : parseFloat(text))
                     }
                     WheelHandler {
                         onWheel: function(event) {
-                            if (!cellRect.editable || !cellLoader.attribute) return
+                            if (!cellRect.editable || !cellLoader.attribute)
+                                return
                             var step = 1
                             if (cellLoader.attribute.desc &&
                                     cellLoader.attribute.desc.range &&
                                     cellLoader.attribute.desc.range.length === 3)
                                 step = cellLoader.attribute.desc.range[2]
-                            var dir = event.angleDelta.y > 0 ? 1 : -1
-                            var v   = Number(cellLoader.attribute.value) + dir * step
+                            var dir = event.angleDelta.y > 0
+                                ? 1
+                                : -1
+                            var v = Number(cellLoader.attribute.value) + dir * step
                             if (cellLoader.attribute.desc && cellLoader.attribute.desc.range) {
                                 v = Math.max(cellLoader.attribute.desc.range[0],
                                     Math.min(cellLoader.attribute.desc.range[1], v))
                             }
                             _currentScene.setAttribute(cellLoader.attribute,
                                 cellLoader.attribute.type === "IntParam"
-                                    ? Math.round(v) : v)
+                                    ? Math.round(v)
+                                    : v)
                             event.accepted = true
                         }
                     }
@@ -153,13 +175,16 @@ Rectangle {
                             cellLoader.attribute.desc.range &&
                             cellLoader.attribute.desc.range.length === 3
                     sourceComponent: Slider {
-                        readonly property int  stepDecimalCount: stepSize < 1
-                            ? String(stepSize).split(".").pop().length : 0
+                        readonly property int stepDecimalCount: stepSize < 1
+                            ? String(stepSize).split(".").pop().length
+                            : 0
                         readonly property real formattedValue: value.toFixed(stepDecimalCount)
-                        enabled:  cellRect.editable
-                        value:    cellLoader.attribute ? cellLoader.attribute.value : 0
-                        from:     cellLoader.attribute.desc.range[0]
-                        to:       cellLoader.attribute.desc.range[1]
+                        enabled: cellRect.editable
+                        value: cellLoader.attribute
+                               ? cellLoader.attribute.value
+                               : 0
+                        from: cellLoader.attribute.desc.range[0]
+                        to: cellLoader.attribute.desc.range[1]
                         stepSize: cellLoader.attribute.desc.range[2]
                         snapMode: Slider.SnapAlways
                         onPressedChanged: {
@@ -176,27 +201,31 @@ Rectangle {
             CheckBox {
                 enabled: cellRect.editable
                 checked: cellLoader.attribute
-                         ? cellLoader.attribute.value : false
+                         ? cellLoader.attribute.value
+                         : false
                 onToggled: {
                     if (cellLoader.attribute)
                         _currentScene.setAttribute(
                             cellLoader.attribute, checked)
                 }
+                background: Rectangle { color:palette.window; radius: 2 }
             }
         }
         Component {
             id: cellTextFieldComponent
             TextField {
-                enabled:       cellRect.editable
-                text:          cellLoader.attribute
-                               ? String(cellLoader.attribute.value)
-                               : ""
+                enabled: cellRect.editable
+                text: cellLoader.attribute
+                      ? String(cellLoader.attribute.value)
+                      : ""
+                placeholderText: cellLoader.attribute.isMandatory ? "This field is required" : ""
+                placeholderTextColor: "gray"
                 selectByMouse: true
                 background: Rectangle {
-                    color:  "#3c3c3c"
+                    color: Qt.darker(palette.window, 1.2)
                     radius: 2
                 }
-                color: "#cccccc"
+                color: palette.text
                 onEditingFinished: {
                     if (cellLoader.attribute)
                         _currentScene.setAttribute(
@@ -207,16 +236,16 @@ Rectangle {
         Component {
             id: cellTextAreaComponent
             TextField {
-                enabled:       cellRect.editable
-                text:          cellLoader.attribute
-                               ? String(cellLoader.attribute.value)
-                               : ""
+                enabled: cellRect.editable
+                text: cellLoader.attribute
+                      ? String(cellLoader.attribute.value)
+                      : ""
                 selectByMouse: true
                 background: Rectangle {
-                    color:  "#3c3c3c"
+                    color: palette.base
                     radius: 2
                 }
-                color: "#cccccc"
+                color: palette.text
                 onEditingFinished: {
                     if (cellLoader.attribute)
                         _currentScene.setAttribute(
@@ -227,16 +256,16 @@ Rectangle {
         Component {
             id: cellColorComponent
             TextField {
-                enabled:       cellRect.editable
-                text:          cellLoader.attribute
-                               ? String(cellLoader.attribute.value)
-                               : ""
+                enabled: cellRect.editable
+                text: cellLoader.attribute
+                      ? String(cellLoader.attribute.value)
+                      : ""
                 selectByMouse: true
                 background: Rectangle {
-                    color:  "#3c3c3c"
+                    color: Qt.darker(palette.window, 1.2)
                     radius: 2
                 }
-                color: "#cccccc"
+                color: palette.text
                 onEditingFinished: {
                     if (cellLoader.attribute)
                         _currentScene.setAttribute(
@@ -247,8 +276,9 @@ Rectangle {
         Component {
             id: cellPushButtonComponent
             Button {
-                text:    cellLoader.attribute
-                         ? cellLoader.attribute.label : ""
+                text: cellLoader.attribute
+                      ? cellLoader.attribute.label
+                      : ""
                 enabled: cellRect.editable
                 onClicked: {
                     if (cellLoader.attribute)
@@ -262,11 +292,12 @@ Rectangle {
                 Slider {
                     id: cellHueSlider
                     Layout.fillWidth: true
-                    enabled:  cellRect.editable
-                    value:    cellLoader.attribute
-                              ? cellLoader.attribute.value : 0
-                    from:     0
-                    to:       1
+                    enabled: cellRect.editable
+                    value: cellLoader.attribute
+                           ? cellLoader.attribute.value
+                           : 0
+                    from: 0
+                    to: 1
                     stepSize: 0.01
                     snapMode: Slider.SnapAlways
                     onPressedChanged: {
@@ -277,9 +308,9 @@ Rectangle {
                     }
                 }
                 Rectangle {
-                    width:  16
+                    width: 16
                     height: 16
-                    color:  Qt.hsla(cellHueSlider.value, 1, 0.5, 1)
+                    color: Qt.hsla(cellHueSlider.value, 1, 0.5, 1)
                 }
             }
         }

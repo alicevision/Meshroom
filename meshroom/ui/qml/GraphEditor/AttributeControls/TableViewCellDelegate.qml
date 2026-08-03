@@ -10,9 +10,19 @@ Rectangle {
     property int cellIndex: 0
     property var rowObject: null
     property int rowIndex: 0
-    property real cellWidth:  100
+    property real cellWidth: 100
+    property real maxWidth: cellWidth
     property real cellHeight: 24
     property bool editable: true
+    readonly property real minCellWidth: cellLoader.item && cellLoader.item.minWidth !== undefined
+                                         ? cellLoader.item.minWidth
+                                         : 60
+    readonly property real maxCellWidth: {
+        var item = cellLoader.item
+        if (!item || item.maxWidth === Infinity)
+            return Infinity
+        return -1
+    }
     width : cellWidth
     height : cellHeight
     property var appPalette: palette
@@ -71,6 +81,8 @@ Rectangle {
         Component {
             id: cellChoiceComponent
             Choice {
+                property real minWidth: 80
+                property real maxWidth: -1
                 value: cellLoader.attribute
                        ? cellLoader.attribute.value 
                        : ""
@@ -92,6 +104,8 @@ Rectangle {
         Component {
             id: cellChoiceMultiComponent
             ChoiceMulti {
+                property real minWidth: 80
+                property real maxWidth: -1
                 value: cellLoader.attribute
                        ? cellLoader.attribute.value
                        : []
@@ -117,6 +131,8 @@ Rectangle {
         Component {
             id: cellSliderComponent
             RowLayout {
+                property real minWidth: cellNumField.implicitWidth
+                property real maxWidth: Infinity
                 spacing: 2
                 TextField {
                     id: cellNumField
@@ -199,6 +215,8 @@ Rectangle {
         Component {
             id: cellCheckboxComponent
             CheckBox {
+                property real minWidth: 40
+                property real maxWidth: -1
                 enabled: cellRect.editable
                 checked: cellLoader.attribute
                          ? cellLoader.attribute.value
@@ -214,6 +232,8 @@ Rectangle {
         Component {
             id: cellTextFieldComponent
             TextField {
+                property real minWidth: 120
+                property real maxWidth: -1
                 enabled: cellRect.editable
                 text: cellLoader.attribute
                       ? String(cellLoader.attribute.value)
@@ -236,6 +256,8 @@ Rectangle {
         Component {
             id: cellTextAreaComponent
             TextField {
+                property real minWidth: 120
+                property real maxWidth: -1
                 enabled: cellRect.editable
                 text: cellLoader.attribute
                       ? String(cellLoader.attribute.value)
@@ -256,6 +278,8 @@ Rectangle {
         Component {
             id: cellColorComponent
             TextField {
+                property real minWidth: 60
+                property real maxWidth: -1
                 enabled: cellRect.editable
                 text: cellLoader.attribute
                       ? String(cellLoader.attribute.value)
@@ -276,6 +300,8 @@ Rectangle {
         Component {
             id: cellPushButtonComponent
             Button {
+                property real minWidth: 80
+                property real maxWidth: -1
                 text: cellLoader.attribute
                       ? cellLoader.attribute.label
                       : ""
@@ -289,6 +315,8 @@ Rectangle {
         Component {
             id: cellColorHueComponent
             RowLayout {
+                property real minWidth: 96
+                property real maxWidth: -1
                 Slider {
                     id: cellHueSlider
                     Layout.fillWidth: true

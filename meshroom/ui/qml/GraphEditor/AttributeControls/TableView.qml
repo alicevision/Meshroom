@@ -39,20 +39,71 @@ ColumnLayout {
     property var scaledColumnWidths: []
     property real scaledTableWidth: 0
     property real availableW: outerFrame.width > 0 
-                              ? outerFrame.width  - fixedStrip.width  - vBar.width
+                              ? outerFrame.width - fixedStrip.width - vBar.width
                               : 600
+    function computeMinColumnWidths() {
+        var firstRow = rowRepeater.itemAt(0)
+        if (!firstRow)
+            return new Array(root.columnNames.length).fill(60)
+        return firstRow.minColumnWidths
+    }
+    function computeMaxColumnWidths() {
+        var firstRow = rowRepeater.itemAt(0)
+        var n = root.columnWidths.length
+        if (!firstRow || !firstRow.maxColumnWidths || firstRow.maxColumnWidths.length !== n)
+            return new Array(n).fill(Infinity)
+        return firstRow.maxColumnWidths.map(function(v, i) {
+            return v === Infinity ? Infinity : root.columnWidths[i] * 1.2
+        })
+    }
     function updateScaledWidths() {
-        if (!columnWidths || columnWidths.length === 0) {
-            scaledColumnWidths = []
-            scaledTableWidth = 0
+        if (!root.columnWidths || root.columnWidths.length === 0)
             return
+        var mins = computeMinColumnWidths()
+        var maxs = computeMaxColumnWidths()
+        var n = root.columnWidths.length
+        var total = 0
+        var widths = []
+        for (var i = 0; i < n; i++) {
+            var w = Math.max(root.columnWidths[i], mins[i] !== undefined ? mins[i] : 60)
+            widths.push(w)
+            total += w
         }
-        var scaleFactor = Math.max(1.0, availableW / Math.max(totalTableWidth, 1))
-        var result = []
-        for (var i = 0; i < columnWidths.length; i++)
-            result.push(columnWidths[i] * scaleFactor)
-        scaledColumnWidths = result
-        scaledTableWidth = Math.max(totalTableWidth, availableW)
+        var leftover = root.availableW - total
+        if (leftover > 0) {
+            var eligible = []
+            for (var j = 0; j < n; j++) {
+                if (maxs[j] === undefined || maxs[j] === Infinity || widths[j] < maxs[j])
+                    eligible.push(j)
+            }
+            while (leftover > 0.5 && eligible.length > 0) {
+                var extra = leftover / eligible.length
+                var stillEligible = []
+                var consumed = 0
+                for (var k = 0; k < eligible.length; k++) {
+                    var idx = eligible[k]
+                    var cap = (maxs[idx] === undefined || maxs[idx] === Infinity)
+                               ? Infinity
+                               : maxs[idx]
+                    var room = (cap === Infinity) ? Infinity : cap - widths[idx]
+                    if (cap !== Infinity && room <= extra) {
+                        widths[idx] = cap
+                        consumed += room
+                    } else {
+                        widths[idx] += extra
+                        consumed += extra
+                        stillEligible.push(idx)
+                    }
+                }
+                leftover -= consumed
+                eligible = stillEligible
+            }
+        }
+        total = 0
+        for (var l = 0; l < n; l++)
+            total += widths[l]
+        root.scaledColumnWidths = widths
+        root.scaledTableWidth = total
     }
     property bool expanded: false
     property var appPalette: palette
@@ -85,23 +136,20 @@ ColumnLayout {
             ToolTip.text: "Open in fullscreen"
             ToolTip.visible: hovered
             onClicked: {
-                outerFrame.Layout.preferredWidth = fullscreenWindow.width 
-                outerFrame.Layout.preferredHeight = fullscreenWindow.height
+                outerFrame.Layout.preferredWidth = -1
+                outerFrame.Layout.preferredHeight = -1
                 outerFrame.visible = true
                 outerFrame.parent = fullscreenContent
-                outerFrame.x = 0
-                outerFrame.y = 0
-                outerFrame.width = Qt.binding(function() { return fullscreenWindow.width  })
-                outerFrame.height = Qt.binding(function() { return fullscreenWindow.height })
+                outerFrame.anchors.fill = fullscreenContent
                 outerFrame.isFullscreen = true
+                fullscreenWindow.width  = root.scaledTableWidth + fixedStrip.width + vBar.width + 2*stdHeight
+                fullscreenWindow.height = root.totalTableHeight + hBar.height + 0.75*stdHeight
                 fullscreenWindow.show()
             }
         }
     }
     Window {
         id: fullscreenWindow
-        width: root.totalTableWidth + 2*stdHeight
-        height: root.totalTableHeight + 1.5*stdHeight
         title: attribute
                ? attribute.label
                : ""
@@ -112,6 +160,7 @@ ColumnLayout {
             anchors.fill: parent
         }
         onClosing: {
+            outerFrame.anchors.fill = undefined
             outerFrame.width = undefined
             outerFrame.height = undefined
             outerFrame.Layout.preferredWidth = -1
@@ -157,6 +206,7 @@ ColumnLayout {
     }
     Component.onCompleted: {
         root.initSizes()
+        root.updateScaledWidths()
     }
     Connections {
         target: attribute
@@ -190,12 +240,9 @@ ColumnLayout {
             position: (flickable.contentX / Math.max(flickable.contentWidth - flickable.width, 1))
                       * (1.0 - size)
             onPositionChanged: {
-                if (!pressed)
-                    return
+                if (!pressed) return
                 var maxPos = 1.0 - size
-                var ratio = maxPos > 0
-                            ? position / maxPos
-                            : 0
+                var ratio = maxPos > 0 ? position / maxPos : 0
                 flickable.contentX = ratio * Math.max(flickable.contentWidth - flickable.width, 1)
             }
         }
@@ -213,12 +260,9 @@ ColumnLayout {
             position: (flickable.contentY / Math.max(flickable.contentHeight - flickable.height, 1))
                       * (1.0 - size)
             onPositionChanged: {
-                if (!pressed)
-                    return
+                if (!pressed) return
                 var maxPos = 1.0 - size
-                var ratio = maxPos > 0
-                            ? position / maxPos
-                            : 0
+                var ratio = maxPos > 0 ? position / maxPos : 0
                 flickable.contentY = ratio * Math.max(flickable.contentHeight - flickable.height, 1)
             }
         }
@@ -261,25 +305,23 @@ ColumnLayout {
                             height: parent.height
                             anchors.right: parent.right
                             cursorShape: Qt.SizeHorCursor
+                            preventStealing: true
                             property real startX: 0
                             property real startW: 0
                             onPressed: function(mouse) {
-                                colResizeHandle.grabMouse()
                                 var p = mapToItem(root, mouse.x, mouse.y)
                                 startX = p.x
                                 startW = root.columnWidths[headerCell.index]
                             }
-                            onReleased: function(mouse) {
-                                colResizeHandle.ungrabMouse()
-                            }
+                            onReleased: function(mouse) { }
                             onPositionChanged: function(mouse) {
-                                if (!pressed)
-                                    return
+                                if (!pressed) return
                                 var p = mapToItem(root, mouse.x, mouse.y)
-                                var newW = Math.max(40, startW + (p.x - startX))
-                                var arr = root.columnWidths.slice()
-                                arr[headerCell.index] = newW
-                                root.columnWidths = arr
+                                var minW = Math.max(40, computeMinColumnWidths()[headerCell.index] || 60)
+                                var newW = Math.max(minW, startW + (p.x - startX))
+                                var widthArray = root.columnWidths.slice()
+                                widthArray[headerCell.index] = newW
+                                root.columnWidths = widthArray
                                 root.updateScaledWidths()
                             }
                         }
@@ -291,19 +333,16 @@ ColumnLayout {
             id: fixedStrip
             anchors.left: outerFrame.left
             anchors.top: outerFrame.top
-            anchors.bottom: outerFrame.bottom
+            anchors.bottom: hBar.top
             anchors.topMargin: stdHeight
-            anchors.bottomMargin: hBar.height
             width: stdHeight
-            clip:  true
+            clip: true
             Column {
                 spacing: 1
                 width: parent.width
                 y: -flickable.contentY
                 Repeater {
-                    model: attribute
-                           ? attribute.value
-                           : null
+                    model: attribute ? attribute.value : null
                     delegate: Item {
                         id: removeDelegate
                         required property int index
@@ -368,10 +407,9 @@ ColumnLayout {
             anchors.left: fixedStrip.right
             anchors.top: outerFrame.top
             anchors.right: outerFrame.right
-            anchors.bottom: outerFrame.bottom
+            anchors.bottom: hBar.top
             anchors.topMargin: stdHeight
             anchors.rightMargin: vBar.width
-            anchors.bottomMargin: hBar.height
             clip: true
             contentWidth: root.scaledTableWidth
             contentHeight: root.totalTableHeight
@@ -394,9 +432,7 @@ ColumnLayout {
                 spacing: 1
                 Repeater {
                     id: rowRepeater
-                    model: attribute
-                           ? attribute.value
-                           : null
+                    model: attribute ? attribute.value : null
                     delegate: TableViewRowDelegate {
                         rowIndex: index
                         rowObject: object

@@ -135,7 +135,8 @@ Rectangle {
                         var cur = cellLoader.attribute.value.slice()
                         if (!checked) {
                             var idx = cur.indexOf(value)
-                            if (idx !== -1) cur.splice(idx, 1)
+                            if (idx !== -1)
+                                cur.splice(idx, 1)
                         } else {
                             cur.push(value)
                         }
@@ -201,7 +202,8 @@ Rectangle {
                                 cellSliderLoader.item.pressed)
                                 return cellSliderLoader.item.value
                                            .toFixed(sliderScope.decimals)
-                            if (!cellLoader.attribute) return ""
+                            if (!cellLoader.attribute)
+                                return ""
                             var v = Number(cellLoader.attribute.value)
                             return isNaN(v)
                                    ? String(cellLoader.attribute.value)

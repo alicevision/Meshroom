@@ -16,11 +16,13 @@ ColumnLayout {
         if (!attribute || !attribute.value || attribute.value.count === 0)
             return []
         var firstRow = attribute.value.at(0)
-        if (!firstRow || !firstRow.value) return []
+        if (!firstRow || !firstRow.value)
+            return []
         var names = []
         for (var i = 0; i < firstRow.value.count; i++) {
             var child = firstRow.value.at(i)
-            if (child) names.push(child.label)
+            if (child)
+                names.push(child.label)
         }
         return names
     }
@@ -56,10 +58,12 @@ ColumnLayout {
         var leftover = root.availableW - total
         if (leftover > 0.5 && n > 0) {
             var share = leftover / n
-            for (var j = 0; j < n; j++) widths[j] += share
+            for (var j = 0; j < n; j++)
+                widths[j] += share
         }
         total = 0
-        for (var l = 0; l < n; l++) total += widths[l]
+        for (var l = 0; l < n; l++)
+            total += widths[l]
         root.scaledColumnWidths = widths
         root.scaledTableWidth = total
     }
@@ -76,11 +80,13 @@ ColumnLayout {
         if (attribute && attribute.value) {
             for (var r = 0; r < attribute.value.count; r++) {
                 var rowAttr = attribute.value.at(r)
-                if (!rowAttr || !rowAttr.value) continue
+                if (!rowAttr || !rowAttr.value)
+                    continue
                 for (var c = 0; c < rowAttr.value.count && c < widths.length; c++) {
                     var ca = rowAttr.value.at(c)
                     var cw = fontMetrics.advanceWidth(ca ? String(ca.value) : "") + 20
-                    if (cw > widths[c]) widths[c] = cw
+                    if (cw > widths[c])
+                        widths[c] = cw
                 }
             }
         }
@@ -195,7 +201,7 @@ ColumnLayout {
                 var ratio  = maxPos > 0
                              ? position / maxPos
                              : 0
-                flickable.contentX = ratio *  Math.max(flickable.contentWidth - flickable.width, 1)
+                flickable.contentX = ratio * Math.max(flickable.contentWidth - flickable.width, 1)
             }
         }
         ScrollBar {
@@ -222,7 +228,7 @@ ColumnLayout {
                 var ratio = maxPos > 0
                             ? position / maxPos
                             : 0
-                flickable.contentY = ratio *  Math.max(flickable.contentHeight - flickable.height, 1)
+                flickable.contentY = ratio * Math.max(flickable.contentHeight - flickable.height, 1)
             }
         }
         Item {

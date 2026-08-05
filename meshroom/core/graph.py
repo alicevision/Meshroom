@@ -1479,6 +1479,11 @@ class Graph(BaseObject):
     def _applyExpr(self):
         with GraphModification(self):
             for node in self._nodes:
+                node._dynamicOutputsHasBeenLoaded = False
+                node._computeInternalFolder(cacheDir=self.cacheDir)
+                node.updateStatusFromCache()
+
+            for node in self._nodes:
                 node._applyExpr()
 
     def toDict(self):

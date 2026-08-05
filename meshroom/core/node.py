@@ -898,6 +898,7 @@ class BaseNode(BaseObject):
         self._locked: bool = False
         self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
         self._hasDuplicates: bool = False
+        self._dynamicOutputsHasBeenLoaded = False
 
         self._nodeStatus: NodeStatusData = NodeStatusData(self._name, nodeType, self.packageName,
                                                           self.getMrNodeType())
@@ -1878,7 +1879,7 @@ class BaseNode(BaseObject):
         if not self.nodeDesc.hasDynamicOutputAttribute:
             return
         # logging.warning(f"updateOutputAttr: {self.name}, status: {self.globalStatus}")
-        if Status.SUCCESS in [c._status.status for c in self.getChunks()]:
+        if self.globalStatus == 'SUCCESS' or Status.SUCCESS in [c._status.status for c in self.getChunks()]:
             self.loadOutputAttr()
         else:
             self.resetOutputAttr()
@@ -1898,6 +1899,8 @@ class BaseNode(BaseObject):
         """ Load output attributes with dynamic values from a values.json file.
         """
 
+        if self._dynamicOutputsHasBeenLoaded:
+            return
         # This does not apply to non dynamic output
         if not self.nodeDesc.hasDynamicOutputAttribute:
             return
@@ -1933,6 +1936,8 @@ class BaseNode(BaseObject):
                     if output.name not in data:
                         logging.warning(f"loadOutputAttr: Missing dynamic output value in file. Node={self.name}, "
                                         f"Attribute={output.name}, File={valuesFile}, Data keys={data.keys()}")
+                
+        self._dynamicOutputsHasBeenLoaded = True
 
     def saveOutputAttr(self):
         """ Save output attributes with dynamic values into a values.json file.

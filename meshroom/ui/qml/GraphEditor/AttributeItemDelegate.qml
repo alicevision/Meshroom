@@ -483,8 +483,8 @@ RowLayout {
 
         Component {
             id: pushButtonComponent
-            Button {
-                text: attribute.label
+            AttributeControls.PushButton{
+                label: attribute.label
                 enabled: root.editable
                 onClicked: {
                     attribute.clicked()

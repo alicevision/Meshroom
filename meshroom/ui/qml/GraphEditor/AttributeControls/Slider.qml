@@ -26,7 +26,7 @@ RowLayout {
         isInt: attribute.type === "FloatParam" ? false : true
         onEditingFinished: {
             if (!hasExprError) {
-                setTextFieldAttribute(expressionTextField.evaluatedValue)
+                setTextFieldAttribute(root.attribute, expressionTextField.evaluatedValue)
                 // Restore binding
                 expressionTextField.text = Qt.binding(function() { return String(expressionTextField.displayValue); })
             }
@@ -38,7 +38,7 @@ RowLayout {
             }
         onAccepted: {
             if (!hasExprError) {
-                setTextFieldAttribute(expressionTextField.evaluatedValue)
+                setTextFieldAttribute(root.attribute, expressionTextField.evaluatedValue)
                 // Restore binding
                 expressionTextField.text = Qt.binding(function() { return String(expressionTextField.displayValue); })
             }
@@ -49,7 +49,7 @@ RowLayout {
         Component.onDestruction: {
             if (activeFocus) {
                 if (!hasExprError)
-                    setTextFieldAttribute(expressionTextField.evaluatedValue)
+                    setTextFieldAttribute(root.attribute, expressionTextField.evaluatedValue)
             }
         }
         Component.onCompleted: {

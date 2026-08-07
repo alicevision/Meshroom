@@ -6,6 +6,7 @@ RowLayout {
     id: root
     required property string text
     required property bool mandatory
+    required property var attribute
     property bool editable
     anchors.fill: parent
     TextField {
@@ -38,10 +39,10 @@ RowLayout {
         selectByMouse: true
         persistentSelection: false
         onEditingFinished: {
-            setTextFieldAttribute(text)
+            setTextFieldAttribute(root.attribute, text)
         }
         onAccepted: {
-            setTextFieldAttribute(text)
+            setTextFieldAttribute(root.attribute, text)
             parameterLabel.forceActiveFocus()
         }
         Keys.onPressed: function(event) {
@@ -52,16 +53,16 @@ RowLayout {
         }
         Component.onDestruction: {
             if (activeFocus)
-                setTextFieldAttribute(text)
+                setTextFieldAttribute(root.attribute, text)
         }
         DropArea {
             enabled: root.editable
             anchors.fill: parent
             onDropped: function(drop) {
                 if (drop.hasUrls)
-                    setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
+                    setTextFieldAttribute(root.attribute, Filepath.urlToString(drop.urls[0]))
                 else if (drop.hasText && drop.text != '')
-                    setTextFieldAttribute(drop.text)
+                    setTextFieldAttribute(root.attribute, drop.text)
             }
         }
         onPressed: (event) => {
@@ -115,7 +116,7 @@ RowLayout {
                         const before = textField.text.substr(0, textField.selectionStart)
                         const after = textField.text.substr(textField.selectionEnd, textField.text.length)
                         const updatedValue = before + clipboardText + after
-                        setTextFieldAttribute(updatedValue)
+                        setTextFieldAttribute(root.attribute, updatedValue)
                         // Set the cursor at the end of the added text
                         textField.cursorPosition = before.length + clipboardText.length
                     }

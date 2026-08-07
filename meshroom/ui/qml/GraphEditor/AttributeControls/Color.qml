@@ -38,11 +38,11 @@ RowLayout {
         visible: colorCheckbox.checked
         text: colorCheckbox.checked ? attribute.value : ""
         selectByMouse: true
-        onEditingFinished: setTextFieldAttribute(text)
-        onAccepted: setTextFieldAttribute(text)
+        onEditingFinished: setTextFieldAttribute(root.attribute, text)
+        onAccepted: setTextFieldAttribute(root.attribute, text)
         Component.onDestruction: {
             if (activeFocus)
-                setTextFieldAttribute(text)
+                setTextFieldAttribute(root.attribute, text)
         }
     }
     Rectangle {

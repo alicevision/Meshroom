@@ -6,6 +6,7 @@ import Controls
 Rectangle {
     id: root
     required property string label
+    required property var attribute
     property bool isLarge
     property bool editable
 
@@ -26,7 +27,7 @@ Rectangle {
             bottomPadding: 2
             topPadding: 2
             readOnly: !root.editable
-            onEditingFinished: setTextFieldAttribute(text)
+            onEditingFinished: setTextFieldAttribute(root.attribute, text)
             text: root.label
             selectByMouse: true
             background: Rectangle {
@@ -40,16 +41,16 @@ Rectangle {
             }
             Component.onDestruction: {
                 if (activeFocus)
-                    setTextFieldAttribute(text)
+                    setTextFieldAttribute(root.attribute, text)
             }
             DropArea {
                 enabled: root.editable
                 anchors.fill: parent
                 onDropped: {
                     if (drop.hasUrls)
-                        setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
+                        setTextFieldAttribute(root.attribute, Filepath.urlToString(drop.urls[0]))
                     else if (drop.hasText && drop.text != '')
-                        setTextFieldAttribute(drop.text)
+                        setTextFieldAttribute(root.attribute, drop.text)
                 }
             }
         }

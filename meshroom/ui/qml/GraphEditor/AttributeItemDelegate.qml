@@ -413,7 +413,7 @@ RowLayout {
         }
     }
 
-    function setTextFieldAttribute(value) {
+    function setTextFieldAttribute(attr, value) {
         // editingFinished called even when TextField is readonly
         if (!editable)
             return
@@ -424,13 +424,13 @@ RowLayout {
                 if(attribute.keyable)
                     _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, Number(value))
                 else
-                    _currentScene.setAttribute(root.attribute, Number(value))
+                    _currentScene.setAttribute(attr, Number(value))
                 break
             case "File":
-                _currentScene.setAttribute(root.attribute, value)
+                _currentScene.setAttribute(attr, value)
                 break
             default:
-                _currentScene.setAttribute(root.attribute, value.trim())
+                _currentScene.setAttribute(attr, value.trim())
                 break
         }
     }
@@ -503,6 +503,7 @@ RowLayout {
             AttributeControls.TextField{
                 text: attribute.value
                 mandatory: attribute.isMandatory
+                attribute: root.attribute
                 editable: root.editable
             }
         }
@@ -512,6 +513,7 @@ RowLayout {
             AttributeControls.TextArea{
                 label: attribute.value
                 isLarge: attribute.desc.semantic.includes("large")
+                attribute: root.attribute
                 editable: root.editable
             }
         }
@@ -764,11 +766,11 @@ RowLayout {
                     validator: DoubleValidator {
                         locale: 'C'  // Use '.' decimal separator disregarding the system locale
                     }
-                    onEditingFinished: setTextFieldAttribute(text)
-                    onAccepted: setTextFieldAttribute(text)
+                    onEditingFinished: setTextFieldAttribute(root.attribute, text)
+                    onAccepted: setTextFieldAttribute(root.attribute, text)
                     Component.onDestruction: {
                         if (activeFocus)
-                            setTextFieldAttribute(text)
+                            setTextFieldAttribute(root.attribute, text)
                     }
                 }
                 Rectangle {

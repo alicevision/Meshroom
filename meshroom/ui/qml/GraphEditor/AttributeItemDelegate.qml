@@ -572,8 +572,21 @@ RowLayout {
         Component {
             id: checkboxComponent
             AttributeControls.CheckBox{
-                attribute: root.attribute
                 editable: root.editable
+                keyable: root.attribute.keyable
+                keyedValue: attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
+                plainValue: attribute.value
+                onWasFired: {
+                    if(root.attribute.keyable)
+                    {
+                        const value = root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
+                        _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, !value)
+                    }
+                    else
+                    {
+                        _currentScene.setAttribute(root.attribute, !root.attribute.value)
+                    }
+                }
             }
         }
 

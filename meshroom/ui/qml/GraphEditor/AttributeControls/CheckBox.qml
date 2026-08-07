@@ -7,14 +7,14 @@ Row {
     property bool keyable
     property var keyedValue
     property var plainValue
-    signal wasFired()
+    signal toggled()
     CheckBox {
         enabled: root.editable
         checked: root.keyable 
                  ? root.keyedValue
                  : root.plainValue
         onToggled: {
-            root.wasFired()
+            root.toggled()
         }
     }
 }

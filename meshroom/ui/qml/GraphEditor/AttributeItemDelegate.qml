@@ -576,7 +576,7 @@ RowLayout {
                 keyable: root.attribute.keyable
                 keyedValue: attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
                 plainValue: attribute.value
-                onWasFired: {
+                onToggled: {
                     if(root.attribute.keyable)
                     {
                         const value = root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)

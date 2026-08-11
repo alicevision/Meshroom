@@ -523,6 +523,27 @@ RowLayout {
             AttributeControls.Color{
                 attribute: root.attribute
                 editable: root.editable
+                onClicked: (checked, previousColor, colorTextValue) =>{
+                    if (checked) {
+                        if (colorTextValue == "") {
+                            if (previousColor != "")
+                                _currentScene.setAttribute(root.attribute, previousColor)
+                            else
+                                _currentScene.setAttribute(root.attribute, "#0000FF")
+                        }
+                        else
+                            _currentScene.setAttribute(root.attribute, colorTextValue)
+                    } else {
+                        previousColor = root.attribute.value
+                        _currentScene.setAttribute(root.attribute, "")
+                    }
+                }
+                onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
+                onAccepted: (text) => setTextFieldAttribute(root.attribute, text)
+                onDestruction: (activeFocus, text) => {
+                    if (activeFocus)
+                        setTextFieldAttribute(root.attribute, text)
+                }
             }
         }
 

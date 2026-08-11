@@ -7,6 +7,11 @@ RowLayout {
     id: root
     required property var attribute
     property bool editable
+    property string previousColor : ""
+    signal clicked(var checked, var previousColor, var colorTextValue)
+    signal editingFinished(var text)
+    signal accepted(var text)
+    signal destruction(bool activeFocus, var text)
     CheckBox {
         id: colorCheckbox
         Layout.alignment: Qt.AlignLeft
@@ -15,19 +20,7 @@ RowLayout {
         text: "Custom Color"
         property string previousColor: ""
         onClicked: {
-            if (checked) {
-                if (colorText.text == "") {
-                    if (previousColor != "")
-                        _currentScene.setAttribute(attribute, previousColor)
-                    else
-                        _currentScene.setAttribute(attribute, "#0000FF")
-                }
-                else
-                    _currentScene.setAttribute(attribute, colorText.text)
-            } else {
-                previousColor = attribute.value
-                _currentScene.setAttribute(attribute, "")
-            }
+            root.clicked(checked, previousColor, colorText.text)
         }
     }
     TextField {
@@ -38,12 +31,9 @@ RowLayout {
         visible: colorCheckbox.checked
         text: colorCheckbox.checked ? attribute.value : ""
         selectByMouse: true
-        onEditingFinished: setTextFieldAttribute(root.attribute, text)
-        onAccepted: setTextFieldAttribute(root.attribute, text)
-        Component.onDestruction: {
-            if (activeFocus)
-                setTextFieldAttribute(root.attribute, text)
-        }
+        onEditingFinished: root.editingFinished( text)
+        onAccepted: root.accepted(text)
+        Component.onDestruction: root.destruction(activeFocus, text)
     }
     Rectangle {
         height: colorText.height

@@ -521,12 +521,13 @@ RowLayout {
         Component {
             id: colorComponent
             AttributeControls.Color{
+                id: colorControl
                 attribute: root.attribute
                 editable: root.editable
                 onClicked: (checked, previousColor, colorTextValue) =>{
                     if (checked) {
                         if (colorTextValue == "") {
-                            if (previousColor != "")
+                            if (previousColor !== "")
                                 _currentScene.setAttribute(root.attribute, previousColor)
                             else
                                 _currentScene.setAttribute(root.attribute, "#0000FF")
@@ -534,7 +535,7 @@ RowLayout {
                         else
                             _currentScene.setAttribute(root.attribute, colorTextValue)
                     } else {
-                        previousColor = root.attribute.value
+                        colorControl.previousColor = root.attribute.value
                         _currentScene.setAttribute(root.attribute, "")
                     }
                 }

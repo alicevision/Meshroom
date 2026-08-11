@@ -7,7 +7,7 @@ RowLayout {
     id: root
     required property var attribute
     property bool editable
-    property string previousColor : ""
+    property string previousColor: ""
     signal clicked(var checked, var previousColor, var colorTextValue)
     signal editingFinished(var text)
     signal accepted(var text)
@@ -18,9 +18,9 @@ RowLayout {
         checked: attribute.value === "" ? false : true
         checkable: root.editable
         text: "Custom Color"
-        property string previousColor: ""
         onClicked: {
             root.clicked(checked, previousColor, colorText.text)
+
         }
     }
     TextField {

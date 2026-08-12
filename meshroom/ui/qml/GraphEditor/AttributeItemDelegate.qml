@@ -586,9 +586,9 @@ RowLayout {
         Component {
             id: sliderComponent
             AttributeControls.SliderField {
-                keyable: root.attribute.keyable
-                keyableValue: root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
-                fallbackValue: root.attribute.value
+                keyedValue: root.attribute.keyable
+                                ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
+                                : root.attribute.value
                 type: root.attribute.type
                 length: root.attribute.desc.range.length
                 start: root.attribute.desc.range[0]
@@ -633,9 +633,9 @@ RowLayout {
             id: checkboxComponent
             AttributeControls.CheckBoxRow {
                 editable: root.editable
-                keyable: root.attribute.keyable
-                keyedValue: attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
-                plainValue: attribute.value
+                keyedValue: root.attribute.keyable
+                                ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
+                                : root.attribute.value
                 onToggled: {
                     if(root.attribute.keyable)
                     {

@@ -6,9 +6,7 @@ import Utils
 
 RowLayout {
 	id: root
-	required property var keyable
-    required property var keyableValue
-    required property var fallbackValue
+    required property var keyedValue
     required property var type
     required property int length
     required property int start
@@ -25,10 +23,7 @@ RowLayout {
         Layout.fillWidth: !slider.active
         enabled: root.editable
         // Cast value to string to avoid intrusive scientific notations on numbers
-        property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue :
-                                            root.keyable 
-                                            ? root.keyableValue
-                                            : root.fallbackValue)
+        property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : keyedValue)
         text: displayValue
         selectByMouse: true
         // Note: Use autoScroll as a workaround for alignment
@@ -58,9 +53,7 @@ RowLayout {
             readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
             readonly property real formattedValue: value.toFixed(stepDecimalCount)
             enabled: root.editable
-            value: root.keyable 
-                   ? root.keyableValue
-                   : root.fallbackValue
+            value: keyedValue
             from: root.start
             to: root.end
             stepSize: root.step

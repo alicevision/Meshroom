@@ -6,6 +6,10 @@ RowLayout {
     id: root
     required property var attribute
     property bool editable
+    signal editingFinished(var text)
+    signal accepted(var text)
+    signal destruction(bool activeFocus, var text)
+    signal pressedChanged(bool pressed, var formattedValue)
     TextField {
         implicitWidth: 100
         enabled: root.editable
@@ -16,12 +20,9 @@ RowLayout {
         validator: DoubleValidator {
             locale: 'C'  // Use '.' decimal separator disregarding the system locale
         }
-        onEditingFinished: setTextFieldAttribute(root.attribute, text)
-        onAccepted: setTextFieldAttribute(root.attribute, text)
-        Component.onDestruction: {
-            if (activeFocus)
-                setTextFieldAttribute(root.attribute, text)
-        }
+        onEditingFinished: root.editingFinished(text)
+        onAccepted: root.accepted(text)        
+        Component.onDestruction: root.destruction(activeFocus, text)
     }
     Rectangle {
         height: slider.height
@@ -34,15 +35,12 @@ RowLayout {
         readonly property int stepDecimalCount: 2
         readonly property real formattedValue: value.toFixed(stepDecimalCount)
         enabled: root.editable
-        value: attribute.value
+        value: root.attribute.value
         from: 0
         to: 1
         stepSize: 0.01
         snapMode: Slider.SnapAlways
-        onPressedChanged: {
-            if (!pressed)
-                _currentScene.setAttribute(attribute, formattedValue)
-        }
+        onPressedChanged: root.pressedChanged(pressed, formattedValue)
         background: ShaderEffect {
             width: slider.availableWidth
             height: slider.availableHeight

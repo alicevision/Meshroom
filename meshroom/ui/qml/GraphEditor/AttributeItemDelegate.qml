@@ -793,6 +793,16 @@ RowLayout {
             AttributeControls.ColorHue{
                 attribute: root.attribute
                 editable: root.editable
+                onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
+                onAccepted: (text) => setTextFieldAttribute(root.attribute, text)
+                onDestruction: (activeFocus, text) => {
+                    if (activeFocus)
+                        setTextFieldAttribute(root.attribute, text)
+                }
+                onPressedChanged: (pressed, formattedValue) => {
+                    if (!pressed)
+                        _currentScene.setAttribute(root.attribute, formattedValue)
+                }
             }
         }
     }

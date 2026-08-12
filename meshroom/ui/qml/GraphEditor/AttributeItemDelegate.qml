@@ -413,7 +413,7 @@ RowLayout {
         }
     }
 
-    function setTextFieldAttribute(attr, value) {
+    function setTextFieldAttribute(value) {
         // editingFinished called even when TextField is readonly
         if (!editable)
             return
@@ -424,13 +424,13 @@ RowLayout {
                 if(attribute.keyable)
                     _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, Number(value))
                 else
-                    _currentScene.setAttribute(attr, Number(value))
+                    _currentScene.setAttribute(root.attribute, Number(value))
                 break
             case "File":
-                _currentScene.setAttribute(attr, value)
+                _currentScene.setAttribute(root.attribute, value)
                 break
             default:
-                _currentScene.setAttribute(attr, value.trim())
+                _currentScene.setAttribute(root.attribute, value.trim())
                 break
         }
     }
@@ -539,11 +539,11 @@ RowLayout {
                         _currentScene.setAttribute(root.attribute, "")
                     }
                 }
-                onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
-                onAccepted: (text) => setTextFieldAttribute(root.attribute, text)
+                onEditingFinished: (text) => setTextFieldAttribute(text)
+                onAccepted: (text) => setTextFieldAttribute(text)
                 onDestruction: (activeFocus, text) => {
                     if (activeFocus)
-                        setTextFieldAttribute(root.attribute, text)
+                        setTextFieldAttribute(text)
                 }
             }
         }
@@ -597,14 +597,14 @@ RowLayout {
                 editable: root.editable
                 onEditingFinished: (hasExprError, evaluatedValue, text, displayValue) => {
                     if (!hasExprError) {
-                        setTextFieldAttribute(root.attribute, evaluatedValue)
+                        setTextFieldAttribute(evaluatedValue)
                         // Restore binding
                         text = Qt.binding(function() { return String(displayValue); })
                     }
                 }
                 onAccepted: (hasExprError, evaluatedValue, text, displayValue) => {
                     if (!hasExprError) {
-                        setTextFieldAttribute(root.attribute, evaluatedValue)
+                        setTextFieldAttribute(evaluatedValue)
                         // Restore binding
                         text = Qt.binding(function() { return String(displayValue); })
                     }
@@ -615,7 +615,7 @@ RowLayout {
                 Component.onDestruction: (activeFocus, hasExprError, displayValue) =>  {
                     if (activeFocus) {
                         if (!hasExprError)
-                            setTextFieldAttribute(root.attribute, evaluatedValue)
+                            setTextFieldAttribute(evaluatedValue)
                     }
                 }
                 onPressedChanged: (pressed, formattedValue) => {
@@ -831,11 +831,11 @@ RowLayout {
             AttributeControls.ColorHue {
                 value: root.attribute.value
                 editable: root.editable
-                onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
-                onAccepted: (text) => setTextFieldAttribute(root.attribute, text)
+                onEditingFinished: (text) => setTextFieldAttribute(text)
+                onAccepted: (text) => setTextFieldAttribute(text)
                 onDestruction: (activeFocus, text) => {
                     if (activeFocus)
-                        setTextFieldAttribute(root.attribute, text)
+                        setTextFieldAttribute(text)
                 }
                 onPressedChanged: (pressed, formattedValue) => {
                     if (!pressed)

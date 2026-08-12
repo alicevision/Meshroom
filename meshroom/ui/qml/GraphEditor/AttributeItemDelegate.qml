@@ -500,7 +500,7 @@ RowLayout {
 
         Component {
             id: textFieldComponent
-            AttributeControls.TextField{
+            AttributeControls.TextFieldRow{
                 text: attribute.value
                 mandatory: attribute.isMandatory
                 attribute: root.attribute
@@ -510,7 +510,7 @@ RowLayout {
 
         Component {
             id: textAreaComponent
-            AttributeControls.TextArea{
+            AttributeControls.TextAreaFlick{
                 label: attribute.value
                 isLarge: attribute.desc.semantic.includes("large")
                 attribute: root.attribute
@@ -585,7 +585,7 @@ RowLayout {
 
         Component {
             id: sliderComponent
-            AttributeControls.Slider{
+            AttributeControls.SliderField{
                 attribute: root.attribute
                 editable: root.editable
             }
@@ -593,7 +593,7 @@ RowLayout {
 
         Component {
             id: checkboxComponent
-            AttributeControls.CheckBox{
+            AttributeControls.CheckBoxRow{
                 editable: root.editable
                 keyable: root.attribute.keyable
                 keyedValue: attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)

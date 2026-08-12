@@ -522,7 +522,7 @@ RowLayout {
             id: colorComponent
             AttributeControls.Color {
                 id: colorControl
-                attribute: root.attribute
+                value: root.attribute.value
                 editable: root.editable
                 onClicked: (checked, previousColor, colorTextValue) =>{
                     if (checked) {
@@ -586,8 +586,46 @@ RowLayout {
         Component {
             id: sliderComponent
             AttributeControls.SliderField {
-                attribute: root.attribute
+                keyable: root.attribute.keyable
+                keyableValue: root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
+                fallbackValue: root.attribute.value
+                type: root.attribute.type
+                length: root.attribute.desc.range.length
+                start: root.attribute.desc.range[0]
+                end: root.attribute.desc.range[1]
+                step: root.attribute.desc.range[2]
                 editable: root.editable
+                onEditingFinished: (hasExprError, evaluatedValue, text, displayValue) => {
+                    if (!hasExprError) {
+                        setTextFieldAttribute(root.attribute, evaluatedValue)
+                        // Restore binding
+                        text = Qt.binding(function() { return String(displayValue); })
+                    }
+                }
+                onAccepted: (hasExprError, evaluatedValue, text, displayValue) => {
+                    if (!hasExprError) {
+                        setTextFieldAttribute(root.attribute, evaluatedValue)
+                        // Restore binding
+                        text = Qt.binding(function() { return String(displayValue); })
+                    }
+                    // When the text is too long, display the left part
+                    // (with the most important values and cut the floating point details)
+                    ensureVisible(0)
+                }
+                Component.onDestruction: (activeFocus, hasExprError, displayValue) =>  {
+                    if (activeFocus) {
+                        if (!hasExprError)
+                            setTextFieldAttribute(root.attribute, evaluatedValue)
+                    }
+                }
+                onPressedChanged: (pressed, formattedValue) => {
+                    if (!pressed) {
+                        if (root.attribute.keyable)
+                            _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, formattedValue)
+                        else
+                            _currentScene.setAttribute(root.attribute, formattedValue)
+                    }
+                }
             }
         }
 
@@ -791,7 +829,7 @@ RowLayout {
         Component {
             id: colorHueComponent
             AttributeControls.ColorHue {
-                attribute: root.attribute
+                value: root.attribute.value
                 editable: root.editable
                 onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
                 onAccepted: (text) => setTextFieldAttribute(root.attribute, text)

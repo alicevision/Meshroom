@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 RowLayout {
     id: root
-    required property var attribute
+    required property var value
     property bool editable
     signal editingFinished(var text)
     signal accepted(var text)
@@ -14,7 +14,7 @@ RowLayout {
         implicitWidth: 100
         enabled: root.editable
         // Cast value to string to avoid intrusive scientific notations on numbers
-        property string displayValue: String(slider.pressed ? slider.formattedValue : attribute.value)
+        property string displayValue: String(slider.pressed ? slider.formattedValue : root.value)
         text: displayValue
         selectByMouse: true
         validator: DoubleValidator {
@@ -27,7 +27,7 @@ RowLayout {
     Rectangle {
         height: slider.height
         width: height
-        color: Qt.hsla(slider.pressed ? slider.formattedValue : attribute.value, 1, 0.5, 1)
+        color: Qt.hsla(slider.pressed ? slider.formattedValue : root.value, 1, 0.5, 1)
     }
     Slider {
         id: slider
@@ -35,7 +35,7 @@ RowLayout {
         readonly property int stepDecimalCount: 2
         readonly property real formattedValue: value.toFixed(stepDecimalCount)
         enabled: root.editable
-        value: root.attribute.value
+        value: root.value
         from: 0
         to: 1
         stepSize: 0.01

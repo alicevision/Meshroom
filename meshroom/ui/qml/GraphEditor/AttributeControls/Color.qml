@@ -5,7 +5,7 @@ import QtQuick.Dialogs
 
 RowLayout {
     id: root
-    required property var attribute
+    required property var value
     property bool editable
     property string previousColor: ""
     signal clicked(var checked, var previousColor, var colorTextValue)
@@ -15,7 +15,7 @@ RowLayout {
     CheckBox {
         id: colorCheckbox
         Layout.alignment: Qt.AlignLeft
-        checked: attribute.value === "" ? false : true
+        checked: root.value === "" ? false : true
         checkable: root.editable
         text: "Custom Color"
         onClicked: {
@@ -29,7 +29,7 @@ RowLayout {
         implicitWidth: 100
         enabled: colorCheckbox.checked && root.editable
         visible: colorCheckbox.checked
-        text: colorCheckbox.checked ? attribute.value : ""
+        text: colorCheckbox.checked ? root.value : ""
         selectByMouse: true
         onEditingFinished: root.editingFinished( text)
         onAccepted: root.accepted(text)
@@ -53,7 +53,7 @@ RowLayout {
         selectedColor: colorText.text
         onAccepted: {
             colorText.text = colorDialog.selectedColor
-            // Artificially trigger change of attribute value
+            // Artificially trigger change of value
             colorText.editingFinished()
             close()
         }

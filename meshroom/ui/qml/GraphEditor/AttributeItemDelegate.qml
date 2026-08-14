@@ -505,26 +505,26 @@ RowLayout {
                 mandatory: attribute.isMandatory
                 attribute: root.attribute
                 editable: root.editable
-                onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
+                onEditingFinished: (text) => setTextFieldAttribute(text)
                 onAccepted: (parameterLabel, text) => {
-                    setTextFieldAttribute(root.attribute, text)
+                    setTextFieldAttribute(text)
                     parameterLabel.forceActiveFocus()
                 }
                 onDestruction: (activeFocus, text) => {
                     if (activeFocus)
-                        setTextFieldAttribute(root.attribute, text)
+                        setTextFieldAttribute(text)
                 }
                 onDropped: (hasUrls, hasText, urlText, text) => {
                     if (hasUrls)
-                        setTextFieldAttribute(root.attribute, urlText)
+                        setTextFieldAttribute(urlText)
                     else if (hasText)
-                        setTextFieldAttribute(root.attribute, text)
+                        setTextFieldAttribute(text)
                 }
                 onTriggered: (text, start, end, length, clipboard) => {
                     const before = text.substr(0, start)
                     const after = text.substr(end, length)
                     const updatedValue = before + clipboardText + after
-                    setTextFieldAttribute(root.attribute, updatedValue)
+                    setTextFieldAttribute(updatedValue)
                     // Set the cursor at the end of the added text
                     textField.cursorPosition = before.length + clipboard.length
                 }
@@ -537,16 +537,16 @@ RowLayout {
                 label: attribute.value
                 isLarge: attribute.desc.semantic.includes("large")
                 editable: root.editable
-                onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
+                onEditingFinished: (text) => setTextFieldAttribute(text)
                 onDestruction: (activeFocus, text) => {
                     if (activeFocus)
-                        setTextFieldAttribute(root.attribute, text)
+                        setTextFieldAttribute(text)
                 }
                 onDropped: (hasUrls, hasText, urlText, text) => {
                     if (hasUrls)
-                        setTextFieldAttribute(root.attribute, urlText)
+                        setTextFieldAttribute(urlText)
                     else if (hasText)
-                        setTextFieldAttribute(root.attribute, text)
+                        setTextFieldAttribute(text)
                 }
             }
         }

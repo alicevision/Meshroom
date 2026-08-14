@@ -6,7 +6,6 @@ import Controls
 Rectangle {
     id: root
     required property string label
-    required property var attribute
     property bool isLarge
     property bool editable
     signal editingFinished(var text)

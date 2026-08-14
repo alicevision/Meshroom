@@ -12,6 +12,7 @@ RowLayout {
     signal accepted(var parameterLabel, var text)
     signal destruction(bool activeFocus, var text)
     signal dropped(bool hasUrls, bool hasText, var urlText, var text)
+    signal triggered(var text, int start, int end, int length, var clipboard)
     anchors.fill: parent
     TextField {
         id: textField
@@ -105,12 +106,7 @@ RowLayout {
                         if (clipboardText.length === 0) {
                             return
                         }
-                        const before = textField.text.substr(0, textField.selectionStart)
-                        const after = textField.text.substr(textField.selectionEnd, textField.text.length)
-                        const updatedValue = before + clipboardText + after
-                        setTextFieldAttribute(root.attribute, updatedValue)
-                        // Set the cursor at the end of the added text
-                        textField.cursorPosition = before.length + clipboardText.length
+                        triggered(textField.text, textField.selectionStart, textField.selectionEnd, textField.text.length, clipboardText)
                     }
                 }
             }

@@ -520,6 +520,14 @@ RowLayout {
                     else if (hasText)
                         setTextFieldAttribute(root.attribute, text)
                 }
+                onTriggered: (text, start, end, length, clipboard) => {
+                    const before = text.substr(0, start)
+                    const after = text.substr(end, length)
+                    const updatedValue = before + clipboardText + after
+                    setTextFieldAttribute(root.attribute, updatedValue)
+                    // Set the cursor at the end of the added text
+                    textField.cursorPosition = before.length + clipboard.length
+                }
             }
         }
 
@@ -528,7 +536,6 @@ RowLayout {
             AttributeControls.TextAreaFlick {
                 label: attribute.value
                 isLarge: attribute.desc.semantic.includes("large")
-                attribute: root.attribute
                 editable: root.editable
                 onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
                 onDestruction: (activeFocus, text) => {
@@ -616,10 +623,10 @@ RowLayout {
                                 ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
                                 : root.attribute.value
                 type: root.attribute.type
-                length: root.attribute.desc.range ? root.attribute.desc.range.length : 0
-                start: root.attribute.desc.range ? root.attribute.desc.range[0] : 0
-                end: root.attribute.desc.range ? root.attribute.desc.range[1] : 0
-                step: root.attribute.desc.range ? root.attribute.desc.range[2] : 0
+                length: (root.attribute.desc.range && root.attribute.desc.range.length) || 0
+                start: (root.attribute.desc.range && root.attribute.desc.range[0]) || 0
+                end: (root.attribute.desc.range && root.attribute.desc.range[1]) || 0
+                step: (root.attribute.desc.range && root.attribute.desc.range[2]) || 0
                 editable: root.editable
                 onEditingFinished: (hasExprError, evaluatedValue, text, displayValue) => {
                     if (!hasExprError) {

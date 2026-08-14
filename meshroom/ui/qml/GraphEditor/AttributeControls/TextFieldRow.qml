@@ -8,6 +8,10 @@ RowLayout {
     required property bool mandatory
     required property var attribute
     property bool editable
+    signal editingFinished(var text)
+    signal accepted(var parameterLabel, var text)
+    signal destruction(bool activeFocus, var text)
+    signal dropped(bool hasUrls, bool hasText, var urlText, var text)
     anchors.fill: parent
     TextField {
         id: textField
@@ -38,32 +42,20 @@ RowLayout {
         ]
         selectByMouse: true
         persistentSelection: false
-        onEditingFinished: {
-            setTextFieldAttribute(root.attribute, text)
-        }
-        onAccepted: {
-            setTextFieldAttribute(root.attribute, text)
-            parameterLabel.forceActiveFocus()
-        }
+        onEditingFinished: root.editingFinished(text)
+
+        onAccepted: root.accepted(parameterLabel, text)
         Keys.onPressed: function(event) {
             if ((event.key == Qt.Key_Escape)) {
                 event.accepted = true
                 parameterLabel.forceActiveFocus()
             }
         }
-        Component.onDestruction: {
-            if (activeFocus)
-                setTextFieldAttribute(root.attribute, text)
-        }
+        Component.onDestruction: root.destruction(activeFocus, text)
         DropArea {
             enabled: root.editable
             anchors.fill: parent
-            onDropped: function(drop) {
-                if (drop.hasUrls)
-                    setTextFieldAttribute(root.attribute, Filepath.urlToString(drop.urls[0]))
-                else if (drop.hasText && drop.text != '')
-                    setTextFieldAttribute(root.attribute, drop.text)
-            }
+            onDropped: (drop) => root.dropped(drop.hasUrls, drop.hasText && drop.text != '', Filepath.urlToString(drop.urls[0]), drop.text)
         }
         onPressed: (event) => {
             if (event.button == Qt.RightButton) {

@@ -37,7 +37,12 @@ RowLayout {
                 color: Qt.darker(palette.window, 1.2)
                 radius: 2
             }
-        onAccepted: root.accepted(hasExprError, expressionTextField.evaluatedValue, expressionTextField.text, expressionTextField.displayValue)
+        onAccepted: {
+            root.accepted(hasExprError, expressionTextField.evaluatedValue, expressionTextField.text, expressionTextField.displayValue)
+            // When the text is too long, display the left part
+            // (with the most important values and cut the floating point details)
+            ensureVisible(0)
+        }
         Component.onDestruction: root.destruction(activeFocus, hasExprError, expressionTextField.evaluatedValue)
         Component.onCompleted: {
             // When the text is too long, display the left part

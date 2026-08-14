@@ -505,6 +505,21 @@ RowLayout {
                 mandatory: attribute.isMandatory
                 attribute: root.attribute
                 editable: root.editable
+                onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
+                onAccepted: (parameterLabel, text) => {
+                    setTextFieldAttribute(root.attribute, text)
+                    parameterLabel.forceActiveFocus()
+                }
+                onDestruction: (activeFocus, text) => {
+                    if (activeFocus)
+                        setTextFieldAttribute(root.attribute, text)
+                }
+                onDropped: (hasUrls, hasText, urlText, text) => {
+                    if (hasUrls)
+                        setTextFieldAttribute(root.attribute, urlText)
+                    else if (hasText)
+                        setTextFieldAttribute(root.attribute, text)
+                }
             }
         }
 
@@ -515,6 +530,17 @@ RowLayout {
                 isLarge: attribute.desc.semantic.includes("large")
                 attribute: root.attribute
                 editable: root.editable
+                onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)
+                onDestruction: (activeFocus, text) => {
+                    if (activeFocus)
+                        setTextFieldAttribute(root.attribute, text)
+                }
+                onDropped: (hasUrls, hasText, urlText, text) => {
+                    if (hasUrls)
+                        setTextFieldAttribute(root.attribute, urlText)
+                    else if (hasText)
+                        setTextFieldAttribute(root.attribute, text)
+                }
             }
         }
 
@@ -590,10 +616,10 @@ RowLayout {
                                 ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
                                 : root.attribute.value
                 type: root.attribute.type
-                length: root.attribute.desc.range.length
-                start: root.attribute.desc.range[0]
-                end: root.attribute.desc.range[1]
-                step: root.attribute.desc.range[2]
+                length: root.attribute.desc.range ? root.attribute.desc.range.length : 0
+                start: root.attribute.desc.range ? root.attribute.desc.range[0] : 0
+                end: root.attribute.desc.range ? root.attribute.desc.range[1] : 0
+                step: root.attribute.desc.range ? root.attribute.desc.range[2] : 0
                 editable: root.editable
                 onEditingFinished: (hasExprError, evaluatedValue, text, displayValue) => {
                     if (!hasExprError) {
@@ -608,9 +634,6 @@ RowLayout {
                         // Restore binding
                         text = Qt.binding(function() { return String(displayValue); })
                     }
-                    // When the text is too long, display the left part
-                    // (with the most important values and cut the floating point details)
-                    ensureVisible(0)
                 }
                 Component.onDestruction: (activeFocus, hasExprError, displayValue) =>  {
                     if (activeFocus) {

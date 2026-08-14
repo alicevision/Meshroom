@@ -9,7 +9,9 @@ Rectangle {
     required property var attribute
     property bool isLarge
     property bool editable
-
+    signal editingFinished(var text)
+    signal destruction(bool activeFocus, var text)
+    signal dropped(bool hasUrls, bool hasText, var urlText, var text)
     // Fixed background for the flickable object
     color: palette.base
     width: parent.width
@@ -27,7 +29,7 @@ Rectangle {
             bottomPadding: 2
             topPadding: 2
             readOnly: !root.editable
-            onEditingFinished: setTextFieldAttribute(root.attribute, text)
+            onEditingFinished: root.editingFinished(text)
             text: root.label
             selectByMouse: true
             background: Rectangle {
@@ -39,19 +41,11 @@ Rectangle {
             onPressed: {
                 root.forceActiveFocus()
             }
-            Component.onDestruction: {
-                if (activeFocus)
-                    setTextFieldAttribute(root.attribute, text)
-            }
+            Component.onDestruction: root.destruction(activeFocus, text)
             DropArea {
                 enabled: root.editable
                 anchors.fill: parent
-                onDropped: {
-                    if (drop.hasUrls)
-                        setTextFieldAttribute(root.attribute, Filepath.urlToString(drop.urls[0]))
-                    else if (drop.hasText && drop.text != '')
-                        setTextFieldAttribute(root.attribute, drop.text)
-                }
+                onDropped: (drop) => root.dropped(drop.hasUrls, drop.hasText && drop.text != '', Filepath.urlToString(drop.urls[0]), drop.text)
             }
         }
     }

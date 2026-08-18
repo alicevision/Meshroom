@@ -478,12 +478,12 @@ RowLayout {
 
         Component {
             id: notComputedComponent
-            AttributeControls.NotComputed{}
+            AttributeControls.NotComputed {}
         }
 
         Component {
             id: pushButtonComponent
-            AttributeControls.PushButton{
+            AttributeControls.PushButton {
                 label: attribute.label
                 enabled: root.editable
                 onClicked: {
@@ -500,7 +500,7 @@ RowLayout {
 
         Component {
             id: textFieldComponent
-            AttributeControls.TextFieldRow{
+            AttributeControls.TextFieldRow {
                 text: attribute.value
                 mandatory: attribute.isMandatory
                 attribute: root.attribute
@@ -510,7 +510,7 @@ RowLayout {
 
         Component {
             id: textAreaComponent
-            AttributeControls.TextAreaFlick{
+            AttributeControls.TextAreaFlick {
                 label: attribute.value
                 isLarge: attribute.desc.semantic.includes("large")
                 attribute: root.attribute
@@ -520,7 +520,7 @@ RowLayout {
 
         Component {
             id: colorComponent
-            AttributeControls.Color{
+            AttributeControls.Color {
                 id: colorControl
                 attribute: root.attribute
                 editable: root.editable
@@ -585,7 +585,7 @@ RowLayout {
 
         Component {
             id: sliderComponent
-            AttributeControls.SliderField{
+            AttributeControls.SliderField {
                 attribute: root.attribute
                 editable: root.editable
             }
@@ -593,7 +593,7 @@ RowLayout {
 
         Component {
             id: checkboxComponent
-            AttributeControls.CheckBoxRow{
+            AttributeControls.CheckBoxRow {
                 editable: root.editable
                 keyable: root.attribute.keyable
                 keyedValue: attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
@@ -790,7 +790,7 @@ RowLayout {
 
         Component {
             id: colorHueComponent
-            AttributeControls.ColorHue{
+            AttributeControls.ColorHue {
                 attribute: root.attribute
                 editable: root.editable
                 onEditingFinished: (text) => setTextFieldAttribute(root.attribute, text)

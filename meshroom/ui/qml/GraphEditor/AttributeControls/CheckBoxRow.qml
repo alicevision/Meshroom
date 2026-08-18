@@ -4,11 +4,11 @@ import QtQuick.Controls
 Row {
     id: root
     property bool editable
-    property var keyedValue
+    property var checked
     signal toggled()
     CheckBox {
         enabled: root.editable
-        checked: root.keyedValue
+        checked: root.checked
         onToggled: {
             root.toggled()
         }

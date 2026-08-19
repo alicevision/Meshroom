@@ -478,19 +478,7 @@ RowLayout {
 
         Component {
             id: notComputedComponent
-            MaterialLabel {
-                anchors.fill: parent
-                text: MaterialIcons.do_not_disturb_alt
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                padding: 4
-                background: Rectangle {
-                    anchors.fill: parent
-                    border.width: 0
-                    radius: 20
-                    color: Qt.darker(palette.window, 1.1)
-                }
-            }
+            AttributeControls.NotComputed {}
         }
 
         Component {
@@ -512,264 +500,83 @@ RowLayout {
 
         Component {
             id: textFieldComponent
-
-            RowLayout {
-                anchors.fill: parent
-
-                TextField {
-                    id: textField
-                    Layout.fillWidth: true
-
-                    readOnly: !root.editable
-                    text: attribute.value
-                    placeholderText: attribute.isMandatory ? "This field is required" : ""
-                    placeholderTextColor: "gray"
-                    // Don't disable the component to keep interactive features (text selection, context menu...).
-                    // Only override the look by using the Disabled palette.
-                    SystemPalette {
-                        id: disabledPalette
-                        colorGroup: SystemPalette.Disabled
-                    }
-
-                    background: Rectangle {
-                        border.color: errorMessages.length ? "orange" : "transparent"
-                        color:  Qt.darker(palette.window, 1.2)
-                        radius: 2
-                    }
-
-                    states: [
-                        State {
-                            when: readOnly
-                            PropertyChanges {
-                                target: textField
-                                color: disabledPalette.text
-                            }
-                        }
-                    ]
-
-                    selectByMouse: true
-                    persistentSelection: false
-
-                    onEditingFinished: {
+            AttributeControls.TextFieldRow {
+                text: attribute.value
+                mandatory: attribute.isMandatory
+                attribute: root.attribute
+                editable: root.editable
+                onEditingFinished: (text) => setTextFieldAttribute(text)
+                onAccepted: (parameterLabel, text) => {
+                    setTextFieldAttribute(text)
+                    parameterLabel.forceActiveFocus()
+                }
+                onDestruction: (activeFocus, text) => {
+                    if (activeFocus)
                         setTextFieldAttribute(text)
-                    }
-
-                    onAccepted: {
+                }
+                onDropped: (hasUrls, hasText, urlText, text) => {
+                    if (hasUrls)
+                        setTextFieldAttribute(urlText)
+                    else if (hasText)
                         setTextFieldAttribute(text)
-                        parameterLabel.forceActiveFocus()
-                    }
-                    Keys.onPressed: function(event) {
-                        if ((event.key == Qt.Key_Escape)) {
-                            event.accepted = true
-                            parameterLabel.forceActiveFocus()
-                        }
-                    }
-                    Component.onDestruction: {
-                        if (activeFocus)
-                            setTextFieldAttribute(text)
-                    }
-                    DropArea {
-                        enabled: root.editable
-                        anchors.fill: parent
-                        onDropped: function(drop) {
-                            if (drop.hasUrls)
-                                setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
-                            else if (drop.hasText && drop.text != '')
-                                setTextFieldAttribute(drop.text)
-                        }
-                    }
-                    onPressed: (event) => {
-                        if (event.button == Qt.RightButton) {
-                            // Keep selection persistent while context menu is open to
-                            // visualize what is being copied or what will be replaced on paste.
-                            persistentSelection = true
-                            const menu = textFieldMenuComponent.createObject(textField)
-                            menu.popup()
-
-                            if (selectedText === "") {
-                                cursorPosition = positionAt(event.x, event.y)
-                            }
-                        }
-                    }
-
-                    Component {
-                        id: textFieldMenuComponent
-                        Menu {
-                            onOpened: {
-                                // Keep cursor visible to see where pasting would happen.
-                                textField.cursorVisible = true
-                            }
-                            onClosed: {
-                                // Disable selection persistency behavior once menu is closed and
-                                // give focus back to the parent TextField.
-                                textField.persistentSelection = false
-                                textField.forceActiveFocus()
-                                destroy()
-                            }
-                            MenuItem {
-                                text: "Copy"
-                                enabled: attribute.value != ""
-                                onTriggered: {
-                                    const hasSelection = textField.selectionStart !== textField.selectionEnd
-                                    if (hasSelection) {
-                                        // Use `TextField.copy` to copy only the current selection.
-                                        textField.copy()
-                                    }
-                                    else {
-                                        Clipboard.setText(attribute.value)
-                                    }
-                                }
-                            }
-                            MenuItem {
-                                text: "Paste"
-                                enabled: !readOnly
-                                onTriggered: {
-                                    const clipboardText = Clipboard.getText()
-                                    if (clipboardText.length === 0) {
-                                        return
-                                    }
-                                    const before = textField.text.substr(0, textField.selectionStart)
-                                    const after = textField.text.substr(textField.selectionEnd, textField.text.length)
-                                    const updatedValue = before + clipboardText + after
-                                    setTextFieldAttribute(updatedValue)
-                                    // Set the cursor at the end of the added text
-                                    textField.cursorPosition = before.length + clipboardText.length
-                                }
-                            }
-                        }
-                    }
+                }
+                onTriggered: (text, start, end, length, clipboard) => {
+                    const before = text.substr(0, start)
+                    const after = text.substr(end, length)
+                    const updatedValue = before + clipboardText + after
+                    setTextFieldAttribute(updatedValue)
+                    // Set the cursor at the end of the added text
+                    textField.cursorPosition = before.length + clipboard.length
                 }
             }
         }
 
         Component {
             id: textAreaComponent
-
-            Rectangle {
-                // Fixed background for the flickable object
-                color: palette.base
-                width: parent.width
-                height: attribute.desc.semantic.includes("large") ? 400 : 70
-
-                Flickable {
-                    width: parent.width
-                    height: parent.height
-                    contentWidth: width
-                    contentHeight: height
-
-                    ScrollBar.vertical: MScrollBar {}
-
-                    TextArea.flickable: TextArea {
-                        wrapMode: Text.WordWrap
-                        padding: 0
-                        rightPadding: 5
-                        bottomPadding: 2
-                        topPadding: 2
-                        readOnly: !root.editable
-                        onEditingFinished: setTextFieldAttribute(text)
-                        text: attribute.value
-                        selectByMouse: true
-
-                        background: Rectangle {
-                            visible: errorMessages.length
-                            border.color: "orange"
-                            color: "transparent"
-                            radius: 2
-                        }
-
-                        onPressed: {
-                            root.forceActiveFocus()
-                        }
-                        Component.onDestruction: {
-                            if (activeFocus)
-                                setTextFieldAttribute(text)
-                        }
-                        DropArea {
-                            enabled: root.editable
-                            anchors.fill: parent
-                            onDropped: {
-                                if (drop.hasUrls)
-                                    setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
-                                else if (drop.hasText && drop.text != '')
-                                    setTextFieldAttribute(drop.text)
-                            }
-                        }
-                    }
+            AttributeControls.TextAreaFlick {
+                label: attribute.value
+                isLarge: attribute.desc.semantic.includes("large")
+                editable: root.editable
+                onEditingFinished: (text) => setTextFieldAttribute(text)
+                onDestruction: (activeFocus, text) => {
+                    if (activeFocus)
+                        setTextFieldAttribute(text)
+                }
+                onDropped: (hasUrls, hasText, urlText, text) => {
+                    if (hasUrls)
+                        setTextFieldAttribute(urlText)
+                    else if (hasText)
+                        setTextFieldAttribute(text)
                 }
             }
         }
 
         Component {
             id: colorComponent
-            RowLayout {
-                CheckBox {
-                    id: colorCheckbox
-                    Layout.alignment: Qt.AlignLeft
-                    checked: attribute.value === "" ? false : true
-                    checkable: root.editable
-                    text: "Custom Color"
-                    property string previousColor: ""
-                    onClicked: {
-                        if (checked) {
-                            if (colorText.text == "") {
-                                if (previousColor != "")
-                                    _currentScene.setAttribute(attribute, previousColor)
-                                else
-                                    _currentScene.setAttribute(attribute, "#0000FF")
-                            }
+            AttributeControls.Color {
+                id: colorControl
+                value: root.attribute.value
+                editable: root.editable
+                onClicked: (checked, previousColor, colorTextValue) =>{
+                    if (checked) {
+                        if (colorTextValue == "") {
+                            if (previousColor !== "")
+                                _currentScene.setAttribute(root.attribute, previousColor)
                             else
-                                _currentScene.setAttribute(attribute, colorText.text)
-                        } else {
-                            previousColor = attribute.value
-                            _currentScene.setAttribute(attribute, "")
+                                _currentScene.setAttribute(root.attribute, "#0000FF")
                         }
+                        else
+                            _currentScene.setAttribute(root.attribute, colorTextValue)
+                    } else {
+                        colorControl.previousColor = root.attribute.value
+                        _currentScene.setAttribute(root.attribute, "")
                     }
                 }
-                TextField {
-                    id: colorText
-                    Layout.alignment: Qt.AlignLeft
-                    implicitWidth: 100
-                    enabled: colorCheckbox.checked && root.editable
-                    visible: colorCheckbox.checked
-                    text: colorCheckbox.checked ? attribute.value : ""
-                    selectByMouse: true
-                    onEditingFinished: setTextFieldAttribute(text)
-                    onAccepted: setTextFieldAttribute(text)
-                    Component.onDestruction: {
-                        if (activeFocus)
-                            setTextFieldAttribute(text)
-                    }
-                }
-
-                Rectangle {
-                    height: colorText.height
-                    width: colorText.width / 2
-                    Layout.alignment: Qt.AlignLeft
-                    visible: colorCheckbox.checked
-                    color: colorCheckbox.checked ? colorDialog.selectedColor : ""
-
-                    MouseArea {
-                        enabled: root.editable
-                        anchors.fill: parent
-                        onClicked: colorDialog.open()
-                    }
-                }
-
-                ColorDialog {
-                    id: colorDialog
-                    title: "Please choose a color"
-                    selectedColor: colorText.text
-                    onAccepted: {
-                        colorText.text = colorDialog.selectedColor
-                        // Artificially trigger change of attribute value
-                        colorText.editingFinished()
-                        close()
-                    }
-                    onRejected: close()
-                }
-                Item {
-                    // Dummy item to fill out the space if needed
-                    Layout.fillWidth: true
+                onEditingFinished: (text) => setTextFieldAttribute(text)
+                onAccepted: (text) => setTextFieldAttribute(text)
+                onDestruction: (activeFocus, text) => {
+                    if (activeFocus)
+                        setTextFieldAttribute(text)
                 }
             }
         }
@@ -811,83 +618,42 @@ RowLayout {
 
         Component {
             id: sliderComponent
-            RowLayout {
-                ExpressionTextField {
-                    id: expressionTextField
-                    implicitWidth: 100
-                    Layout.fillWidth: !slider.active
-                    enabled: root.editable
-                    // Cast value to string to avoid intrusive scientific notations on numbers
-                    property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue :
-                                                        attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId) :
-                                                        attribute.value)
-                    text: displayValue
-                    selectByMouse: true
-                    // Note: Use autoScroll as a workaround for alignment
-                    // When the value change keep the text align to the left to be able to read the most important part
-                    // of the number. When we are editing (item is in focus), the content should follow the editing.
-                    autoScroll: activeFocus
-                    isInt: attribute.type === "FloatParam" ? false : true
-                    onEditingFinished: {
-                        if (!hasExprError) {
-                            setTextFieldAttribute(expressionTextField.evaluatedValue)
-                            // Restore binding
-                            expressionTextField.text = Qt.binding(function() { return String(expressionTextField.displayValue); })
-                        }
-                    }
-
-                    background: Rectangle {
-                            border.color: errorMessages.length ? "orange" : "transparent"
-                            color: Qt.darker(palette.window, 1.2)
-                            radius: 2
-                        }
-
-                    onAccepted: {
-                        if (!hasExprError) {
-                            setTextFieldAttribute(expressionTextField.evaluatedValue)
-                            // Restore binding
-                            expressionTextField.text = Qt.binding(function() { return String(expressionTextField.displayValue); })
-                        }
-                        // When the text is too long, display the left part
-                        // (with the most important values and cut the floating point details)
-                        ensureVisible(0)
-                    }
-
-                    Component.onDestruction: {
-                        if (activeFocus) {
-                            if (!hasExprError)
-                                setTextFieldAttribute(expressionTextField.evaluatedValue)
-                        }
-                    }
-                    Component.onCompleted: {
-                        // When the text is too long, display the left part
-                        // (with the most important values and cut the floating point details)
-                        ensureVisible(0)
+            AttributeControls.SliderField {
+                checked: root.attribute.keyable
+                                ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
+                                : root.attribute.value
+                type: root.attribute.type
+                length: (root.attribute.desc.range && root.attribute.desc.range.length) || 0
+                start: (root.attribute.desc.range && root.attribute.desc.range[0]) || 0
+                end: (root.attribute.desc.range && root.attribute.desc.range[1]) || 0
+                step: (root.attribute.desc.range && root.attribute.desc.range[2]) || 0
+                editable: root.editable
+                onEditingFinished: (hasExprError, evaluatedValue, text, displayValue) => {
+                    if (!hasExprError) {
+                        setTextFieldAttribute(evaluatedValue)
+                        // Restore binding
+                        text = Qt.binding(function() { return String(displayValue); })
                     }
                 }
-
-                Loader {
-                    id: slider
-                    Layout.fillWidth: true
-                    active: attribute.desc.range.length === 3
-                    sourceComponent: Slider {
-                        readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
-                        readonly property real formattedValue: value.toFixed(stepDecimalCount)
-                        enabled: root.editable
-                        value: attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId) : attribute.value
-                        from: attribute.desc.range[0]
-                        to: attribute.desc.range[1]
-                        stepSize: attribute.desc.range[2]
-                        snapMode: Slider.SnapAlways
-
-                        onPressedChanged: {
-                            if (!pressed) {
-                                if (attribute.keyable)
-                                    _currentScene.addAttributeKeyValue(attribute, _currentScene.selectedViewId, formattedValue)
-                                else
-                                    _currentScene.setAttribute(attribute, formattedValue)
-                            }
-                        }
+                onAccepted: (hasExprError, evaluatedValue, text, displayValue) => {
+                    if (!hasExprError) {
+                        setTextFieldAttribute(evaluatedValue)
+                        // Restore binding
+                        text = Qt.binding(function() { return String(displayValue); })
+                    }
+                }
+                Component.onDestruction: (activeFocus, hasExprError, displayValue) =>  {
+                    if (activeFocus) {
+                        if (!hasExprError)
+                            setTextFieldAttribute(evaluatedValue)
+                    }
+                }
+                onPressedChanged: (pressed, formattedValue) => {
+                    if (!pressed) {
+                        if (root.attribute.keyable)
+                            _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, formattedValue)
+                        else
+                            _currentScene.setAttribute(root.attribute, formattedValue)
                     }
                 }
             }
@@ -895,20 +661,20 @@ RowLayout {
 
         Component {
             id: checkboxComponent
-            Row {
-                CheckBox {
-                    enabled: root.editable
-                    checked: attribute.keyable ? attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId) : attribute.value
-                    onToggled: {
-                        if(attribute.keyable)
-                        {
-                            const value = attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
-                            _currentScene.addAttributeKeyValue(attribute, _currentScene.selectedViewId, !value)
-                        }
-                        else
-                        {
-                            _currentScene.setAttribute(attribute, !attribute.value)
-                        }
+            AttributeControls.CheckBoxRow {
+                editable: root.editable
+                checked: root.attribute.keyable
+                                ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
+                                : root.attribute.value
+                onToggled: {
+                    if(root.attribute.keyable)
+                    {
+                        const value = root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
+                        _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, !value)
+                    }
+                    else
+                    {
+                        _currentScene.setAttribute(root.attribute, !root.attribute.value)
                     }
                 }
             }
@@ -1092,52 +858,18 @@ RowLayout {
 
         Component {
             id: colorHueComponent
-            RowLayout {
-                TextField {
-                    implicitWidth: 100
-                    enabled: root.editable
-                    // Cast value to string to avoid intrusive scientific notations on numbers
-                    property string displayValue: String(slider.pressed ? slider.formattedValue : attribute.value)
-                    text: displayValue
-                    selectByMouse: true
-                    validator: DoubleValidator {
-                        locale: 'C'  // Use '.' decimal separator disregarding the system locale
-                    }
-                    onEditingFinished: setTextFieldAttribute(text)
-                    onAccepted: setTextFieldAttribute(text)
-                    Component.onDestruction: {
-                        if (activeFocus)
-                            setTextFieldAttribute(text)
-                    }
+            AttributeControls.ColorHue {
+                value: root.attribute.value
+                editable: root.editable
+                onEditingFinished: (text) => setTextFieldAttribute(text)
+                onAccepted: (text) => setTextFieldAttribute(text)
+                onDestruction: (activeFocus, text) => {
+                    if (activeFocus)
+                        setTextFieldAttribute(text)
                 }
-                Rectangle {
-                    height: slider.height
-                    width: height
-                    color: Qt.hsla(slider.pressed ? slider.formattedValue : attribute.value, 1, 0.5, 1)
-                }
-                Slider {
-                    id: slider
-                    Layout.fillWidth: true
-
-                    readonly property int stepDecimalCount: 2
-                    readonly property real formattedValue: value.toFixed(stepDecimalCount)
-                    enabled: root.editable
-                    value: attribute.value
-                    from: 0
-                    to: 1
-                    stepSize: 0.01
-                    snapMode: Slider.SnapAlways
-                    onPressedChanged: {
-                        if (!pressed)
-                            _currentScene.setAttribute(attribute, formattedValue)
-                    }
-
-                    background: ShaderEffect {
-                        width: slider.availableWidth
-                        height: slider.availableHeight
-                        blending: false
-                        fragmentShader: "qrc:/shaders/AttributeItemDelegate.frag.qsb"
-                    }
+                onPressedChanged: (pressed, formattedValue) => {
+                    if (!pressed)
+                        _currentScene.setAttribute(root.attribute, formattedValue)
                 }
             }
         }

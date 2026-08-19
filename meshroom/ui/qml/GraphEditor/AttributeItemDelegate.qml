@@ -619,7 +619,7 @@ RowLayout {
         Component {
             id: sliderComponent
             AttributeControls.SliderField {
-                keyedValue: root.attribute.keyable
+                checked: root.attribute.keyable
                                 ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
                                 : root.attribute.value
                 type: root.attribute.type
@@ -663,7 +663,7 @@ RowLayout {
             id: checkboxComponent
             AttributeControls.CheckBoxRow {
                 editable: root.editable
-                keyedValue: root.attribute.keyable
+                checked: root.attribute.keyable
                                 ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
                                 : root.attribute.value
                 onToggled: {

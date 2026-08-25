@@ -28,6 +28,7 @@ from meshroom.core import sessionUid
 from meshroom.common import deprecated
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, AnySet, ListAttribute, ShapeAttribute
+from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, withExtension
 from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
 
@@ -577,21 +578,19 @@ class UIGraph(QObject):
 
     @Slot(QUrl)
     def saveAs(self, url):
-        self._saveAs(url)
+        self._saveAs(url, extension=MESHROOM_PROJECT_EXTENSION)
 
     @Slot(QUrl)
     def saveAsTemplate(self, url):
-        self._saveAs(url, setupProjectFile=False, template=True)
+        self._saveAs(url, setupProjectFile=False, template=True, extension=MESHROOM_TEMPLATE_EXTENSION)
 
-    def _saveAs(self, url, setupProjectFile=True, template=False):
+    def _saveAs(self, url, setupProjectFile=True, template=False, extension=MESHROOM_PROJECT_EXTENSION):
         """ Helper function for 'save as' features. """
         if isinstance(url, (str)):
             localFile = url
         else:
             localFile = url.toLocalFile()
-        # ensure file is saved with ".mg" extension
-        if os.path.splitext(localFile)[-1] != ".mg":
-            localFile += ".mg"
+        localFile = withExtension(localFile, extension)
         self._graph.save(localFile, setupProjectFile=setupProjectFile, template=template)
         self._undoStack.setClean()
         # saving file on disk impacts cache folder location

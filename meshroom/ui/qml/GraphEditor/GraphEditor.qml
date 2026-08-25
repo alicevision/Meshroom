@@ -387,6 +387,50 @@ Item {
             }
         }
 
+        Canvas {
+            id: templateBackgroundStripes
+
+            anchors.fill: parent
+            visible: Boolean(root.graph && root.graph.templateFilepath)
+            opacity: 0.03
+
+            readonly property color stripeColor: activePalette.highlight
+            readonly property int stripeWidth: 21
+            readonly property int stripeGap: 42
+
+            onPaint: {
+                const ctx = getContext("2d")
+                ctx.clearRect(0, 0, width, height)
+
+                if (!visible) {
+                    return
+                }
+
+                ctx.save()
+                ctx.strokeStyle = stripeColor
+                ctx.lineWidth = stripeWidth
+
+                const diagonal = Math.sqrt(width * width + height * height)
+                const step = stripeWidth + stripeGap
+                ctx.translate(width * 0.5, height * 0.5)
+                ctx.rotate(-Math.PI / 4)
+
+                for (let x = -diagonal; x <= diagonal; x += step) {
+                    ctx.beginPath()
+                    ctx.moveTo(x, -diagonal)
+                    ctx.lineTo(x, diagonal)
+                    ctx.stroke()
+                }
+
+                ctx.restore()
+            }
+
+            onVisibleChanged: requestPaint()
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
+            onStripeColorChanged: requestPaint()
+        }
+
         Item {
             id: draggable
             transformOrigin: Item.TopLeft
@@ -1269,7 +1313,8 @@ Item {
                 nbDraggedFiles = drag.urls.length
 
                 drag.urls.forEach(function(file) {
-                    if (String(file).endsWith(".mg")) {
+                    const extension = Filepath.extension(file)
+                    if (extension === ".mg" || extension === ".mgt") {
                         nbMeshroomScenes++
                     }
                 })
@@ -1389,7 +1434,7 @@ Item {
         icon.color: "#F44336"
 
         title: "Different File Types"
-        text: "Do not mix .mg files and other types of files."
+        text: "Do not mix Meshroom project/template files and other types of files."
         standardButtons: Dialog.Ok
 
         parent: Overlay.overlay

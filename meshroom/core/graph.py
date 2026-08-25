@@ -19,6 +19,7 @@ from meshroom.core import Version
 from meshroom.core import submitters
 from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
+from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
@@ -189,7 +190,7 @@ def generateTempProjectFilepath(tmpFolder=None):
         from meshroom.env import EnvVar
         tmpFolder = EnvVar.get(EnvVar.MESHROOM_TEMP_PATH)
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    return os.path.join(tmpFolder, f"meshroom_{timestamp}.mg")
+    return os.path.join(tmpFolder, f"meshroom_{timestamp}{MESHROOM_PROJECT_EXTENSION}")
 
 
 class Graph(BaseObject):
@@ -228,6 +229,7 @@ class Graph(BaseObject):
         self._relativeCacheDir: str = ""
         self._cacheDir: str = ""
         self._filepath: str = ""
+        self._templateFilepath: str = ""
         self._fileDateVersion = 0
         self.header = {}
 
@@ -1627,6 +1629,7 @@ class Graph(BaseObject):
         if self._filepath == newFilepath:
             return
         self._filepath = newFilepath
+        self._setTemplateFilepath("")
         # For now:
         #  * cache folder is located next to the graph file
         #  * graph name if the basename of the graph file
@@ -1639,9 +1642,21 @@ class Graph(BaseObject):
 
     def _unsetFilepath(self):
         self._filepath = ""
+        self._setTemplateFilepath("")
         self.name = ""
         self.cacheDir = ""
         self.filepathChanged.emit()
+
+    @Slot(str)
+    def setTemplateFilepath(self, filepath):
+        self._setTemplateFilepath(filepath)
+
+    def _setTemplateFilepath(self, filepath):
+        newFilepath = Path(filepath).as_posix() if filepath else ""
+        if self._templateFilepath == newFilepath:
+            return
+        self._templateFilepath = newFilepath
+        self.templateFilepathChanged.emit()
 
     def updateInternals(self, startNodes=None, force=False):
         nodes, edges = self.dfsOnFinish(startNodes=startNodes)
@@ -1885,6 +1900,8 @@ class Graph(BaseObject):
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
+    templateFilepathChanged = Signal()
+    templateFilepath = Property(str, lambda self: self._templateFilepath, notify=templateFilepathChanged)
     isSaving = Property(bool, isSaving.fget, constant=True)
     fileReleaseVersion = Property(str, lambda self: self.header.get(GraphIO.Keys.ReleaseVersion, "0.0"),
                                   notify=filepathChanged)

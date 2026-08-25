@@ -1,5 +1,7 @@
 import os
 
+from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension as hasFileExtension
+
 # Supported image extensions
 imageExtensions = [
     # bmp:
@@ -67,14 +69,15 @@ videoExtensions = [
     '.mxf',
     ]
 panoramaInfoExtensions = ['.xml']
-meshroomSceneExtensions = ['.mg']
+meshroomSceneExtensions = [MESHROOM_PROJECT_EXTENSION]
+meshroomTemplateExtensions = [MESHROOM_TEMPLATE_EXTENSION]
 
 
 def hasExtension(filepath, extensions):
     """ Return whether filepath is one of the following extensions. """
     if os.path.isdir(filepath):
         return False
-    return os.path.splitext(filepath)[1].lower() in extensions
+    return hasFileExtension(filepath, extensions)
 
 
 class FilesByType:
@@ -83,16 +86,18 @@ class FilesByType:
         self.videos = []
         self.panoramaInfo = []
         self.meshroomScenes = []
+        self.meshroomTemplates = []
         self.other = []
 
     def __bool__(self):
-        return self.images or self.videos or self.panoramaInfo or self.meshroomScenes
+        return self.images or self.videos or self.panoramaInfo or self.meshroomScenes or self.meshroomTemplates
 
     def extend(self, other):
         self.images.extend(other.images)
         self.videos.extend(other.videos)
         self.panoramaInfo.extend(other.panoramaInfo)
         self.meshroomScenes.extend(other.meshroomScenes)
+        self.meshroomTemplates.extend(other.meshroomTemplates)
         self.other.extend(other.other)
 
     def addFile(self, file):
@@ -104,6 +109,8 @@ class FilesByType:
             self.panoramaInfo.append(file)
         elif hasExtension(file, meshroomSceneExtensions):
             self.meshroomScenes.append(file)
+        elif hasExtension(file, meshroomTemplateExtensions):
+            self.meshroomTemplates.append(file)
         else:
             self.other.append(file)
 

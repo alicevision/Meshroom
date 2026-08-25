@@ -130,7 +130,10 @@ ApplicationWindow {
                 mainStack.push("Application.qml")
             }
             if (_currentScene.load(currentFile)) {
-                MeshroomApp.addRecentProjectFile(currentFile.toString())
+                if (_currentScene.graph.filepath)
+                    MeshroomApp.addRecentProjectFile(currentFile.toString())
+                else
+                    MeshroomApp.addRecentTemplateFile(currentFile.toString())
             }
         }
     }

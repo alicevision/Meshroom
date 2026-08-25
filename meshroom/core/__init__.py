@@ -22,6 +22,7 @@ except Exception:
 from meshroom.core.plugins.base import NodeDescProvider, Plugin
 from meshroom.core.plugins.env import processEnvFactory
 from meshroom.core.plugins.manager import PluginManager
+from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension, isTemplateFile
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.env import EnvVar, meshroomFolder
 from . import desc
@@ -418,9 +419,13 @@ def loadPipelineTemplates(folder: str):
     if not os.path.isdir(folder):
         logging.error(f"Pipeline templates folder '{folder}' does not exist.")
         return
-    for file in os.listdir(folder):
-        if file.endswith(".mg") and file not in pipelineTemplates:
-            pipelineTemplates[os.path.splitext(file)[0]] = os.path.join(folder, file)
+    for file in sorted(os.listdir(folder)):
+        filepath = os.path.join(folder, file)
+        templateName = Path(file).stem
+        if hasExtension(filepath, (MESHROOM_TEMPLATE_EXTENSION,)):
+            pipelineTemplates[templateName] = filepath
+        elif hasExtension(filepath, (MESHROOM_PROJECT_EXTENSION,)) and isTemplateFile(filepath):
+            pipelineTemplates.setdefault(templateName, filepath)
 
 
 def initNodes():

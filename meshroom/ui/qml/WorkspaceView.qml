@@ -87,10 +87,15 @@ Item {
                 onRemoveSelectedImagesRequest: function(objects) { currentScene.removeImages(objects) }
                 onAllViewpointsCleared: currentScene.selectedViewId = "-1"
                 onFilesDropped: function(drop) {
-                    if (drop["meshroomScenes"].length == 1) {
+                    if (drop["meshroomScenes"].length == 1 || drop["meshroomTemplates"].length == 1) {
                         ensureSaved(function() {
                             if (currentScene.handleFilesUrl(drop, cameraInit)) {
-                                MeshroomApp.addRecentProjectFile(drop["meshroomScenes"][0])
+                                if (currentScene.graph.filepath)
+                                    MeshroomApp.addRecentProjectFile(drop["meshroomScenes"][0])
+                                else if (drop["meshroomTemplates"].length == 1)
+                                    MeshroomApp.addRecentTemplateFile(drop["meshroomTemplates"][0])
+                                else
+                                    MeshroomApp.addRecentTemplateFile(drop["meshroomScenes"][0])
                             }
                         })
                     } else {

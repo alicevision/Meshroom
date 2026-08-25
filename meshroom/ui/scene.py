@@ -16,6 +16,7 @@ import meshroom.common
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
+from meshroom.core.files import extensionLower, isTemplateFile
 from meshroom.core.node import Node, CompatibilityNode, Status, Position, CompatibilityIssue
 from meshroom.core.taskManager import TaskManager
 from meshroom.core.evaluation import MathEvaluator
@@ -499,13 +500,27 @@ class Scene(UIGraph):
     @Slot(str, result=bool)
     @Slot(QUrl, result=bool)
     def load(self, url):
+        localFile = self._urlToLocalFile(url)
+        if isTemplateFile(localFile):
+            return self.loadTemplate(localFile)
+        return self._loadWithErrorReport(self.loadGraph, localFile)
+
+    @Slot(str, result=bool)
+    @Slot(QUrl, result=bool)
+    def loadTemplate(self, url):
+        localFile = self._urlToLocalFile(url)
+        loaded = self._loadWithErrorReport(self._initFromTemplateWithOutputNodes, localFile)
+        if loaded:
+            self.graph.setTemplateFilepath(localFile)
+        return loaded
+
+    @staticmethod
+    def _urlToLocalFile(url) -> str:
         if isinstance(url, QUrl):
             # depending how the QUrl has been initialized,
             # toLocalFile() may return the local path or an empty string
-            localFile = url.toLocalFile() or url.toString()
-        else:
-            localFile = url
-        return self._loadWithErrorReport(self.loadGraph, localFile)
+            return url.toLocalFile() or url.toString()
+        return url
 
     def _loadWithErrorReport(self, loadFunction: Callable[[str], None], filepath: str):
         logging.info(f"Load project file: '{filepath}'")
@@ -696,8 +711,8 @@ class Scene(UIGraph):
         This method allows to reduce process time by doing it on Python side.
 
         Args:
-            {images, videos, panoramaInfo, meshroomScenes, otherFiles}: Map containing the
-                lists of paths for recognized images, videos, Meshroom scenes and other files.
+            {images, videos, panoramaInfo, meshroomScenes, meshroomTemplates, otherFiles}: Map containing the
+                lists of paths for recognized images, videos, Meshroom scenes, Meshroom templates and other files.
             Node: cameraInit node used to add new images to it
             QPoint: position to locate the node (usually the mouse position)
         """
@@ -771,6 +786,24 @@ class Scene(UIGraph):
                             "",
                         ))
 
+        if filesByType["meshroomTemplates"]:
+            if len(filesByType["meshroomTemplates"]) > 1:
+                self.error.emit(
+                    Message(
+                    "Too Many Meshroom Templates",
+                    "A single Meshroom template (.mgt file) can be opened at once."
+                    )
+                )
+            elif filesByType["meshroomScenes"]:
+                self.error.emit(
+                    Message(
+                    "Mixed Meshroom Files",
+                    "Do not mix Meshroom projects and templates."
+                    )
+                )
+            else:
+                return self.loadTemplate(filesByType["meshroomTemplates"][0])
+
         if filesByType["meshroomScenes"]:
             if len(filesByType["meshroomScenes"]) > 1:
                 self.error.emit(
@@ -784,9 +817,9 @@ class Scene(UIGraph):
 
 
 
-        if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"] and not filesByType["meshroomScenes"]:
+        if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"] and not filesByType["meshroomScenes"] and not filesByType["meshroomTemplates"]:
             if filesByType["other"]:
-                extensions = {os.path.splitext(url)[1] for url in filesByType["other"]}
+                extensions = {extensionLower(url) for url in filesByType["other"]}
                 self.error.emit(
                     Message(
                         "No Recognized Input File",
@@ -809,8 +842,8 @@ class Scene(UIGraph):
             urls: list of filepaths
 
         Returns:
-            {images, videos, panoramaInfo, meshroomScenes, otherFiles}: Map containing the lists of paths for
-            recognized images, videos, Meshroom scenes and other files.
+            {images, videos, panoramaInfo, meshroomScenes, meshroomTemplates, otherFiles}: Map containing the lists of paths for
+            recognized images, videos, Meshroom scenes, Meshroom templates and other files.
         """
         # Build the list of images paths
         filesByType = multiview.FilesByType()
@@ -824,6 +857,7 @@ class Scene(UIGraph):
                 "videos": filesByType.videos,
                 "panoramaInfo": filesByType.panoramaInfo,
                 "meshroomScenes": filesByType.meshroomScenes,
+                "meshroomTemplates": filesByType.meshroomTemplates,
                 "other": filesByType.other}
 
     @Slot(QObject, "QList<QUrl>")

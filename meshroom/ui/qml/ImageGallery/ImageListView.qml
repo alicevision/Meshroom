@@ -173,7 +173,7 @@ ListView {
         onEntered: function(drag) {
             nbDraggedFiles = drag.urls.length
             filesByType = _currentScene.getFilesByTypeFromDrop(drag.urls)
-            nbMeshroomScenes = filesByType["meshroomScenes"].length
+            nbMeshroomScenes = filesByType["meshroomScenes"].length + filesByType["meshroomTemplates"].length
         }
         onDropped: function(drop) {
             if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
@@ -201,13 +201,13 @@ ListView {
             verticalAlignment: Text.AlignVCenter
             text: {
                 if (dropArea.nbMeshroomScenes != dropArea.nbDraggedFiles && dropArea.nbMeshroomScenes != 0) {
-                    return "Cannot Add Projects And Images Together"
+                    return "Cannot Add Meshroom Files And Images Together"
                 }
 
                 if (dropArea.nbMeshroomScenes == 1 && dropArea.nbMeshroomScenes == dropArea.nbDraggedFiles) {
-                    return "Load Project"
+                    return "Open Meshroom File"
                 } else if (dropArea.nbMeshroomScenes == dropArea.nbDraggedFiles) {
-                    return "Only One Project"
+                    return "Only One Meshroom File"
                 } else {
                     return "Add Images"
                 }

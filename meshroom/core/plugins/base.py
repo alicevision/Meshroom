@@ -14,6 +14,7 @@ from meshroom.common import BaseObject
 from meshroom.core import desc
 from meshroom.core.desc.attribute import ValueTypeErrors
 from meshroom.core.plugins.env import ProcessEnv
+from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension, isTemplateFile
 
 
 class Plugin(BaseObject):
@@ -26,8 +27,8 @@ class Plugin(BaseObject):
         user: whether the plugin is a user plugin (not maintained by the core Meshroom team)
         nodeDescProviders: dictionary mapping the name of a node descriptor provider contained in the
                      plugin to its corresponding NodeDescProvider object
-        templates: dictionary mapping the name of templates (.mg files) associated to the plugin
-                   with their absolute paths
+        templates: dictionary mapping the name of templates associated to the plugin with their
+                   absolute paths
         configEnv: the environment variables and their values, as described in the plugin's
                    configuration file
         configFullEnv: the static merge of os.environ and configEnv, with os.environ taking precedence
@@ -165,9 +166,13 @@ class Plugin(BaseObject):
         before being filled again.
         """
         self._templates.clear()
-        for file in os.listdir(self.path):
-            if file.endswith(".mg"):
-                self._templates[os.path.splitext(file)[0]] = os.path.join(self.path, file)
+        for file in sorted(os.listdir(self.path)):
+            filepath = os.path.join(self.path, file)
+            templateName = Path(file).stem
+            if hasExtension(filepath, (MESHROOM_TEMPLATE_EXTENSION,)):
+                self._templates[templateName] = filepath
+            elif hasExtension(filepath, (MESHROOM_PROJECT_EXTENSION,)) and isTemplateFile(filepath):
+                self._templates.setdefault(templateName, filepath)
 
     def loadConfig(self):
         """

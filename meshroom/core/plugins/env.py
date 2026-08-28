@@ -193,6 +193,15 @@ class RezProcessEnv(ProcessEnv):
         # This will allow loading properly descriptions for nodes from other plugins that may have imports that
         # cannot be resolved from the subrequires' PYTHONPATH alone.
         currentPythonPaths = os.environ.get("PYTHONPATH", "")
+        splitPythonPaths = currentPythonPaths.split(os.pathsep)
+        filteredPaths = []
+        for path in splitPythonPaths:
+            if "pyside" in path.lower():
+                continue
+            if "shiboken" in path.lower():
+                continue
+            filteredPaths.append(path)
+        currentPythonPaths = os.pathsep.join(filteredPaths)
         pythonPaths = f"{os.pathsep.join(['$PYTHONPATH', f'{_MESHROOM_ROOT}', f'{self._folder}', f'{currentPythonPaths}'])}"
 
         # Retrieve the loaded plugins and nodes to re-inject them in the subrequires' environment.

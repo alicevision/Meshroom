@@ -94,7 +94,8 @@ class Attribute(BaseObject):
 
         if validators is None:
             self._validators = []
-        elif isinstance(validators, Sequence) and all(isinstance(x, AttributeValidator) for x in validators):
+        elif isinstance(validators, Sequence) and all(callable(x) for x in validators):
+            # Use "callable(x)" instead of "isinstance(x, AttributeEditor)" for Python 3.7+ compatibility
             self._validators = validators
         else:
             raise RuntimeError(f"Validators should be of type 'Sequence[AttributeValidator]', the type '{type(validators)}' is not supported.")

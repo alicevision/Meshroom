@@ -6,12 +6,12 @@ from meshroom.core.utils import VERBOSE_LEVEL
 import shutil
 import glob
 import os
-from typing import ClassVar
+from typing import ClassVar, List
 
 
 class CopyFiles(desc.Node, desc.OutputNode):
     size = desc.DynamicNodeSize("inputFiles")
-    outputAttributes: ClassVar[list[str]] = ["output"]
+    outputAttributes: ClassVar[List[str]] = ["output"]
 
     category = "Export"
     documentation = """

@@ -121,3 +121,4 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           pytest tests/test_plugins.py
+          pytest tests/test_attributes.py

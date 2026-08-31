@@ -137,10 +137,10 @@ class GenerateMeshroomScene(desc.Node):
         if paramOverrides:
             command += ["--paramOverrides"] + paramOverrides
         command += ["--compute", "no"]
-        if invalidationString := node.setInvalidationString.value:
-            command += ["--setInvalidationString", invalidationString]
-        if cacheDir := node.setCacheDir.value:
-            command += ["--overrideCacheDir", cacheDir]
+        if node.setInvalidationString.value:
+            command += ["--setInvalidationString", node.setInvalidationString.value]
+        if node.setCacheDir.value:
+            command += ["--overrideCacheDir", node.setCacheDir.value]
 
         # Launch subprocess
         logging.info(f"{'='*10} Command {'='*10}")

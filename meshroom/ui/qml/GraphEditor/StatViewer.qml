@@ -1,4 +1,3 @@
-import QtCharts
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -89,7 +88,6 @@ Item {
         id: reloadTimer
         interval: root.deltaTime * 60000; running: true; repeat: false
         onTriggered: readSourceFile()
-
     }
 
     function readSourceFile() {
@@ -122,7 +120,7 @@ Item {
 
     function resetCharts() {
         root.fileVersion = 0.0
-        cpuLegend.clear()
+        root.gpuMaxAxis = 100
         cpuChart.removeAllSeries()
         ramChart.removeAllSeries()
         gpuChart.removeAllSeries()
@@ -158,57 +156,52 @@ Item {
         root.nbCores = nbCores
 
         root.cpuFrequency = getPropertyWithDefault(jsonObject.computer, "cpuFreq", -1)
+        root.nbReads = categories[0].length - 1
 
-        root.nbReads = categories[0].length-1
-
+        // Build and add one series per CPU core
         for (var j = 0; j < nbCores; j++) {
-            var lineSerie = cpuChart.createSeries(ChartView.SeriesTypeLine, "CPU" + j, valueCpuX, valueCpuY)
-
-            if (categories[j].length === 1) {
-                lineSerie.append(0, categories[j][0])
-                lineSerie.append(root.deltaTime, categories[j][0])
+            var cat = categories[j]
+            var corePoints = []
+            if (cat.length === 1) {
+                corePoints = [{ x: 0, y: cat[0] }, { x: root.deltaTime, y: cat[0] }]
             } else {
-                var displayLength = Math.min(maxDisplayLength, categories[j].length)
-                var step = categories[j].length / displayLength
-                for (var kk = 0; kk < displayLength; kk += step) {
-                    var k = Math.floor(kk * step)
-                    lineSerie.append(k * root.deltaTime, categories[j][k])
+                var displayLength = Math.min(maxDisplayLength, cat.length)
+                var step = cat.length / displayLength
+                for (var k = 0; k < displayLength; k++) {
+                    var idx = Math.floor(k * step)
+                    corePoints.push({ x: idx * root.deltaTime, y: cat[idx] })
                 }
             }
-            lineSerie.color = colors[j % colors.length]
+            cpuChart.addSeries("CPU" + j, colors[j % colors.length], corePoints)
         }
 
-        var averageLine = cpuChart.createSeries(ChartView.SeriesTypeLine, "AVERAGE", valueCpuX, valueCpuY)
+        // Compute and add the AVERAGE series
+        var avgDisplayLength = Math.min(maxDisplayLength, categories[0].length)
+        var avgStep = categories[0].length / avgDisplayLength
         var average = []
-
-        var displayLengthA = Math.min(maxDisplayLength, categories[0].length)
-        var stepA = categories[0].length / displayLengthA
-        for (var l = 0; l < displayLengthA; l += step) {
+        for (var avgIdx = 0; avgIdx < avgDisplayLength; avgIdx++) {
             average.push(0)
         }
 
         for (var m = 0; m < categories.length; m++) {
             var displayLengthB = Math.min(maxDisplayLength, categories[m].length)
-            var stepB = categories[0].length / displayLengthB
-            for (var nn = 0; nn < displayLengthB; nn++) {
-                var n = Math.floor(nn * stepB)
-                average[nn] += categories[m][n]
+            var stepB = categories[m].length / displayLengthB
+            for (var n = 0; n < displayLengthB; n++) {
+                average[n] += categories[m][Math.floor(n * stepB)]
             }
         }
 
+        var avgPoints = []
         for (var q = 0; q < average.length; q++) {
-            average[q] = average[q] / (categories.length)
-            averageLine.append(q * root.deltaTime * stepA, average[q])
+            average[q] = average[q] / categories.length
+            avgPoints.push({ x: q * root.deltaTime * avgStep, y: average[q] })
         }
-
-        averageLine.color = colors[colors.length - 1]
+        cpuChart.addSeries("AVERAGE", colors[colors.length - 1], avgPoints)
     }
 
     function hideOtherCpu(index) {
-        for (var i = 0; i < cpuChart.count; i++) {
-            cpuChart.series(i).visible = false
-        }
-        cpuChart.series(index).visible = true
+        cpuChart.setAllSeriesVisible(false)
+        cpuChart.setSeriesVisible(index, true)
     }
 
 
@@ -231,21 +224,19 @@ Item {
             root.ramLabel = "RAM Max Peak: "
         }
 
-        var ramSerie = ramChart.createSeries(ChartView.SeriesTypeLine, root.ramLabel + root.ramTotal + "GB", valueRamX, valueRamY)
-
+        var ramPoints = []
         if (ram.length === 1) {
-            // Create 2 entries if we have only one input value to create a segment that can be display
-            ramSerie.append(0, ram[0])
-            ramSerie.append(root.deltaTime, ram[0])
+            // Create 2 entries if we have only one input value to create a segment that can be displayed
+            ramPoints = [{ x: 0, y: ram[0] }, { x: root.deltaTime, y: ram[0] }]
         } else {
             var displayLength = Math.min(maxDisplayLength, ram.length)
             var step = ram.length / displayLength
-            for(var ii = 0; ii < displayLength; ii++) {
+            for (var ii = 0; ii < displayLength; ii++) {
                 var i = Math.floor(ii * step)
-                ramSerie.append(i * root.deltaTime, ram[i])
+                ramPoints.push({ x: i * root.deltaTime, y: ram[i] })
             }
         }
-        ramSerie.color = colors[10]
+        ramChart.addSeries(root.ramLabel + root.ramTotal + "GB", colors[10], ramPoints)
     }
 
 
@@ -261,35 +252,35 @@ Item {
         var gpuUsed = getPropertyWithDefault(jsonObject.computer.curves, "gpuUsed", 0)
         var gpuTemperature = getPropertyWithDefault(jsonObject.computer.curves, "gpuTemperature", 0)
 
-        var gpuUsedSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "GPU", valueGpuX, valueGpuY)
-        var gpuUsedMemorySerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Memory", valueGpuX, valueGpuY)
-        var gpuTemperatureSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Temperature", valueGpuX, valueGpuY)
-
         var gpuMemoryRatio = root.gpuTotalMemory > 0 ? (100 / root.gpuTotalMemory) : 1
 
+        var gpuUsedPoints = []
+        var gpuMemPoints  = []
+        var gpuTempPoints = []
+
         if (gpuUsedMemory.length === 1) {
-            gpuUsedSerie.append(0, gpuUsed[0])
-            gpuUsedSerie.append(1 * root.deltaTime, gpuUsed[0])
-
-            gpuUsedMemorySerie.append(0, gpuUsedMemory[0] * gpuMemoryRatio)
-            gpuUsedMemorySerie.append(1 * root.deltaTime, gpuUsedMemory[0] * gpuMemoryRatio)
-
-            gpuTemperatureSerie.append(0, gpuTemperature[0])
-            gpuTemperatureSerie.append(1 * root.deltaTime, gpuTemperature[0])
+            gpuUsedPoints = [{ x: 0, y: gpuUsed[0] },
+                             { x: root.deltaTime, y: gpuUsed[0] }]
+            gpuMemPoints  = [{ x: 0, y: gpuUsedMemory[0] * gpuMemoryRatio },
+                             { x: root.deltaTime, y: gpuUsedMemory[0] * gpuMemoryRatio }]
+            gpuTempPoints = [{ x: 0, y: gpuTemperature[0] },
+                             { x: root.deltaTime, y: gpuTemperature[0] }]
             root.gpuMaxAxis = Math.max(gpuMaxAxis, gpuTemperature[0])
         } else {
             var displayLength = Math.min(maxDisplayLength, gpuUsedMemory.length)
             var step = gpuUsedMemory.length / displayLength
-            for (var ii = 0; ii < displayLength; ii += step) {
-                var i = Math.floor(ii*step)
-                gpuUsedSerie.append(i * root.deltaTime, gpuUsed[i])
-
-                gpuUsedMemorySerie.append(i * root.deltaTime, gpuUsedMemory[i] * gpuMemoryRatio)
-
-                gpuTemperatureSerie.append(i * root.deltaTime, gpuTemperature[i])
+            for (var ii = 0; ii < displayLength; ii++) {
+                var i = Math.floor(ii * step)
+                gpuUsedPoints.push({ x: i * root.deltaTime, y: gpuUsed[i] })
+                gpuMemPoints.push({ x: i * root.deltaTime, y: gpuUsedMemory[i] * gpuMemoryRatio })
+                gpuTempPoints.push({ x: i * root.deltaTime, y: gpuTemperature[i] })
                 root.gpuMaxAxis = Math.max(gpuMaxAxis, gpuTemperature[i])
             }
         }
+
+        gpuChart.addSeries("GPU", colors[0], gpuUsedPoints)
+        gpuChart.addSeries("Memory", colors[5], gpuMemPoints)
+        gpuChart.addSeries("Temperature", colors[15], gpuTempPoints)
     }
 
 
@@ -356,14 +347,12 @@ Item {
                         checkState: cpuLegend.buttonGroup.checkState
                         leftPadding: 0
                         onClicked: {
-                            var _checked = checked;
-                            for (var i = 0; i < cpuChart.count; ++i) {
-                                cpuChart.series(i).visible = _checked
-                            }
+                            var _checked = checked
+                            cpuChart.setAllSeriesVisible(_checked)
                         }
                     }
 
-                    ChartViewLegend {
+                    LineChartLegend {
                         id: cpuLegend
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -372,147 +361,73 @@ Item {
                 }
             }
 
-            InteractiveChartView {
+            LineChart {
                 id: cpuChart
 
                 Layout.fillWidth: true
                 Layout.preferredHeight: width / 2
-                margins.top: 0
-                margins.bottom: 0
-                antialiasing: true
 
-                legend.visible: false
-                theme: ChartView.ChartThemeLight
-                backgroundColor: "transparent"
-                plotAreaColor: "transparent"
-                titleColor: textColor
-
-                visible: (root.fileVersion > 0.0)  // Only visible if we have valid information
+                textColor: root.textColor
                 title: "CPU: " + root.nbCores + " cores, " + root.cpuFrequency + "MHz"
+                xAxisTitle: "Minutes"
+                yAxisTitle: "%"
+                xMin: 0
+                xMax: root.deltaTime * Math.max(1, root.nbReads)
+                yMin: 0
+                yMax: 100
 
-                ValueAxis {
-                    id: valueCpuY
-                    min: 0
-                    max: 100
-                    titleText: "<span style='color: " + textColor + "'>%</span>"
-                    color: textColor
-                    gridLineColor: textColor
-                    minorGridLineColor: textColor
-                    shadesColor: textColor
-                    shadesBorderColor: textColor
-                    labelsColor: textColor
-                }
-
-                ValueAxis {
-                    id: valueCpuX
-                    min: 0
-                    max: root.deltaTime * Math.max(1, root.nbReads)
-                    titleText: "<span style='color: " + textColor + "'>Minutes</span>"
-                    color: textColor
-                    gridLineColor: textColor
-                    minorGridLineColor: textColor
-                    shadesColor: textColor
-                    shadesBorderColor: textColor
-                    labelsColor: textColor
-                }
+                visible: (root.fileVersion > 0.0)
             }
 
 /**************************
 ***       RAM UI        ***
 **************************/
 
-            InteractiveChartView {
+            LineChart {
                 id: ramChart
-                margins.top: 0
-                margins.bottom: 0
+
                 Layout.fillWidth: true
                 Layout.preferredHeight: width / 2
-                antialiasing: true
-                legend.color: textColor
-                legend.labelColor: textColor
-                legend.visible: false
-                theme: ChartView.ChartThemeLight
-                backgroundColor: "transparent"
-                plotAreaColor: "transparent"
-                titleColor: textColor
 
-                visible: (root.fileVersion > 0.0)  // Only visible if we have valid information
+                textColor: root.textColor
                 title: root.ramLabel + root.ramTotal + "GB"
+                xAxisTitle: "Minutes"
+                yAxisTitle: "%"
+                xMin: 0
+                xMax: root.deltaTime * Math.max(1, root.nbReads)
+                yMin: 0
+                yMax: 100
 
-                ValueAxis {
-                    id: valueRamY
-                    min: 0
-                    max: 100
-                    titleText: "<span style='color: " + textColor + "'>%</span>"
-                    color: textColor
-                    gridLineColor: textColor
-                    minorGridLineColor: textColor
-                    shadesColor: textColor
-                    shadesBorderColor: textColor
-                    labelsColor: textColor
-                }
-
-                ValueAxis {
-                    id: valueRamX
-                    min: 0
-                    max: root.deltaTime * Math.max(1, root.nbReads)
-                    titleText: "<span style='color: " + textColor + "'>Minutes</span>"
-                    color: textColor
-                    gridLineColor: textColor
-                    minorGridLineColor: textColor
-                    shadesColor: textColor
-                    shadesBorderColor: textColor
-                    labelsColor: textColor
-                }
+                visible: (root.fileVersion > 0.0)
             }
 
 /**************************
 ***       GPU UI        ***
 **************************/
 
-            InteractiveChartView {
+            LineChartLegend {
+                id: gpuLegend
+                Layout.fillWidth: true
+                Layout.leftMargin: 25
+                chartView: gpuChart
+            }
+
+            LineChart {
                 id: gpuChart
 
                 Layout.fillWidth: true
-                Layout.preferredHeight: width/2
-                margins.top: 0
-                margins.bottom: 0
-                antialiasing: true
-                legend.color: textColor
-                legend.labelColor: textColor
-                theme: ChartView.ChartThemeLight
-                backgroundColor: "transparent"
-                plotAreaColor: "transparent"
-                titleColor: textColor
+                Layout.preferredHeight: width / 2
 
-                visible: (root.fileVersion >= 2.0)  // No GPU information was collected before stats 2.0 fileVersion
+                textColor: root.textColor
                 title: (root.gpuName || root.gpuTotalMemory) ? ("GPU: " + root.gpuName + ", " + root.gpuTotalMemory + "MB") : "No GPU"
+                xAxisTitle: "Minutes"
+                yAxisTitle: "%, °C"
+                xMin: 0
+                xMax: root.deltaTime * Math.max(1, root.nbReads)
+                yMin: 0
+                yMax: root.gpuMaxAxis
 
-                ValueAxis {
-                    id: valueGpuY
-                    min: 0
-                    max: root.gpuMaxAxis
-                    titleText: "<span style='color: " + textColor + "'>%, °C</span>"
-                    color: textColor
-                    gridLineColor: textColor
-                    minorGridLineColor: textColor
-                    shadesColor: textColor
-                    shadesBorderColor: textColor
-                    labelsColor: textColor
-                }
-
-                ValueAxis {
-                    id: valueGpuX
-                    min: 0
-                    max: root.deltaTime * Math.max(1, root.nbReads)
-                    titleText: "<span style='color: " + textColor + "'>Minutes</span>"
-                    color: textColor
-                    gridLineColor: textColor
-                    minorGridLineColor: textColor
-                    shadesColor: textColor
-                    shadesBorderColor: textColor
-                    labelsColor: textColor
-                }
+                visible: (root.fileVersion >= 2.0)
             }
         }
     }

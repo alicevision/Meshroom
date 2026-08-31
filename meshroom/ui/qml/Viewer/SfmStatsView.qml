@@ -1,4 +1,3 @@
-import QtCharts
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -29,209 +28,120 @@ FloatingPane {
         onWheel: {}
     }
 
-    InteractiveChartView {
-        id: residualChart
-        width: parent.width * 0.5
-        height: parent.height * 0.5
+    GridLayout {
+        anchors.fill: parent
+        columns: 2
 
-        title: "Reprojection Errors"
-        legend.visible: false
-        antialiasing: true
+        // Reprojection Errors chart
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-        ValueAxis {
-            id: residualValueAxisX
-            titleText: "Reprojection Error"
-            min: 0.0
-            max: viewStat.residualMaxAxisX
-        }
-        ValueAxis {
-            id: residualValueAxisY
-            labelFormat: "%i"
-            titleText: "Number of Points"
-            min: 0
-            max: viewStat.residualMaxAxisY
-        }
-        LineSeries {
-            id: residualFullLineSerie
-            axisX: residualValueAxisX
-            axisY: residualValueAxisY
-            name: "Average on All Cameras"
-        }
-        LineSeries {
-            id: residualViewLineSerie
-            axisX: residualValueAxisX
-            axisY: residualValueAxisY
-            name: "Current"
-        }
-    }
-
-    Item {
-        id: residualBtnContainer
-
-        Layout.fillWidth: true
-        anchors.bottom: residualChart.bottom
-        anchors.bottomMargin: 35
-        anchors.left: residualChart.left
-        anchors.leftMargin: residualChart.width * 0.15
-
-        RowLayout {
-
-            ChartViewCheckBox {
-                id: allResiduals
-                text: "ALL"
-                color: textColor
-                checkState: residualLegend.buttonGroup.checkState
-                onClicked: {
-                    var _checked = checked;
-                    for (var i = 0; i < residualChart.count; ++i) {
-                        residualChart.series(i).visible = _checked
-                    }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 10
+                ChartViewCheckBox {
+                    text: "ALL"
+                    color: textColor
+                    leftPadding: 0
+                    checkState: residualLegend.buttonGroup.checkState
+                    onClicked: residualChart.setAllSeriesVisible(checked)
+                }
+                LineChartLegend {
+                    id: residualLegend
+                    Layout.fillWidth: true
+                    chartView: residualChart
                 }
             }
-
-            ChartViewLegend {
-                id: residualLegend
-                chartView: residualChart
+            LineChart {
+                id: residualChart
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                textColor: root.textColor
+                title: "Reprojection Errors"
+                xAxisTitle: "Reprojection Error"
+                yAxisTitle: "Number of Points"
+                xMin: 0
+                xMax: viewStat.residualMaxAxisX
+                yMin: 0
+                yMax: viewStat.residualMaxAxisY
             }
         }
-    }
 
-    InteractiveChartView {
-        id: observationsLengthsChart
-        width: parent.width * 0.5
-        height: parent.height * 0.5
-        anchors.top: parent.top
-        anchors.topMargin: (parent.height) * 0.5
+        // Observations Scale chart
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-        legend.visible: false
-        title: "Observations Lengths"
-
-        ValueAxis {
-            id: observationsLengthsvalueAxisX
-            labelFormat: "%i"
-            titleText: "Observations Length"
-            min: 2
-            max: viewStat.observationsLengthsMaxAxisX
-            tickAnchor: 2
-            tickInterval: 1
-            tickCount: 5
-        }
-        ValueAxis {
-            id: observationsLengthsvalueAxisY
-            labelFormat: "%i"
-            titleText: "Number of Points"
-            min: 0
-            max: viewStat.observationsLengthsMaxAxisY
-        }
-        LineSeries {
-            id: observationsLengthsFullLineSerie
-            axisX: observationsLengthsvalueAxisX
-            axisY: observationsLengthsvalueAxisY
-            name: "All Cameras"
-        }
-        LineSeries {
-            id: observationsLengthsViewLineSerie
-            axisX: observationsLengthsvalueAxisX
-            axisY: observationsLengthsvalueAxisY
-            name: "Current"
-        }
-    }
-
-    Item {
-        id: observationsLengthsBtnContainer
-
-        Layout.fillWidth: true
-        anchors.bottom: observationsLengthsChart.bottom
-        anchors.bottomMargin: 35
-        anchors.left: observationsLengthsChart.left
-        anchors.leftMargin: observationsLengthsChart.width * 0.25
-
-        RowLayout {
-            ChartViewCheckBox {
-                id: allObservations
-                text: "ALL"
-                color: textColor
-                checkState: observationsLengthsLegend.buttonGroup.checkState
-                onClicked: {
-                    var _checked = checked;
-                    for (var i = 0; i < observationsLengthsChart.count; ++i) {
-                        observationsLengthsChart.series(i).visible = _checked
-                    }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 10
+                ChartViewCheckBox {
+                    text: "ALL"
+                    color: textColor
+                    leftPadding: 0
+                    checkState: observationsScaleLegend.buttonGroup.checkState
+                    onClicked: observationsScaleChart.setAllSeriesVisible(checked)
+                }
+                LineChartLegend {
+                    id: observationsScaleLegend
+                    Layout.fillWidth: true
+                    chartView: observationsScaleChart
                 }
             }
-
-            ChartViewLegend {
-                id: observationsLengthsLegend
-                chartView: observationsLengthsChart
+            LineChart {
+                id: observationsScaleChart
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                textColor: root.textColor
+                title: "Observations Scale"
+                xAxisTitle: "Scale"
+                yAxisTitle: "Number of Points"
+                xMin: 0
+                xMax: viewStat.observationsScaleMaxAxisX
+                yMin: 0
+                yMax: viewStat.observationsScaleMaxAxisY
             }
         }
-    }
 
-    InteractiveChartView {
-        id: observationsScaleChart
-        width: parent.width * 0.5
-        height: parent.height * 0.5
-        anchors.left: parent.left
-        anchors.leftMargin: (parent.width) * 0.5
-        anchors.top: parent.top
+        // Observations Lengths chart
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-        legend.visible: false
-        title: "Observations Scale"
-
-        ValueAxis {
-            id: observationsScaleValueAxisX
-            titleText: "Scale"
-            min: 0
-            max: viewStat.observationsScaleMaxAxisX
-        }
-        ValueAxis {
-            id: observationsScaleValueAxisY
-            titleText: "Number of Points"
-            min: 0
-            max: viewStat.observationsScaleMaxAxisY
-        }
-        LineSeries {
-            id: observationsScaleFullLineSerie
-            axisX: observationsScaleValueAxisX
-            axisY: observationsScaleValueAxisY
-            name: " Average on All Cameras"
-        }
-        LineSeries {
-            id: observationsScaleViewLineSerie
-            axisX: observationsScaleValueAxisX
-            axisY: observationsScaleValueAxisY
-            name: "Current"
-        }
-    }
-
-    Item {
-        id: observationsScaleBtnContainer
-
-        Layout.fillWidth: true
-        anchors.bottom: observationsScaleChart.bottom
-        anchors.bottomMargin: 35
-        anchors.left: observationsScaleChart.left
-        anchors.leftMargin: observationsScaleChart.width * 0.15
-
-        RowLayout {
-            ChartViewCheckBox {
-                id: allObservationsScales
-                text: "ALL"
-                color: textColor
-                checkState: observationsScaleLegend.buttonGroup.checkState
-                onClicked: {
-                    var _checked = checked;
-                    for (var i = 0; i < observationsScaleChart.count; ++i) {
-                        observationsScaleChart.series(i).visible = _checked
-                    }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 10
+                ChartViewCheckBox {
+                    text: "ALL"
+                    color: textColor
+                    leftPadding: 0
+                    checkState: observationsLengthsLegend.buttonGroup.checkState
+                    onClicked: observationsLengthsChart.setAllSeriesVisible(checked)
+                }
+                LineChartLegend {
+                    id: observationsLengthsLegend
+                    Layout.fillWidth: true
+                    chartView: observationsLengthsChart
                 }
             }
-
-            ChartViewLegend {
-                id: observationsScaleLegend
-                chartView: observationsScaleChart
+            LineChart {
+                id: observationsLengthsChart
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                textColor: root.textColor
+                title: "Observations Lengths"
+                xAxisTitle: "Observations Length"
+                yAxisTitle: "Number of Points"
+                xMin: 2
+                xMax: viewStat.observationsLengthsMaxAxisX
+                yMin: 0
+                yMax: viewStat.observationsLengthsMaxAxisY
             }
         }
+
+        // (empty fourth cell)
+        Item { Layout.fillWidth: true; Layout.fillHeight: true }
     }
 
     // Stats from a view the sfmData
@@ -240,12 +150,18 @@ FloatingPane {
         msfmData: (root.visible && root.msfmData && root.msfmData.status === AliceVision.MSfMData.Ready) ? root.msfmData : null
         viewId: root.viewId
         onViewStatsChanged: {
-            fillResidualFullSerie(residualFullLineSerie)
-            fillResidualViewSerie(residualViewLineSerie)
-            fillObservationsLengthsFullSerie(observationsLengthsFullLineSerie)
-            fillObservationsLengthsViewSerie(observationsLengthsViewLineSerie)
-            fillObservationsScaleFullSerie(observationsScaleFullLineSerie)
-            fillObservationsScaleViewSerie(observationsScaleViewLineSerie)
+            residualChart.removeAllSeries()
+            residualChart.addSeries("Average on All Cameras", "#dc143c", viewStat.getResidualFullPoints())
+            residualChart.addSeries("Current", "#00008b", viewStat.getResidualViewPoints())
+
+            observationsLengthsChart.removeAllSeries()
+            observationsLengthsChart.addSeries("All Cameras", "#dc143c", viewStat.getObservationsLengthsFullPoints())
+            observationsLengthsChart.addSeries("Current", "#00008b", viewStat.getObservationsLengthsViewPoints())
+
+            observationsScaleChart.removeAllSeries()
+            observationsScaleChart.addSeries("Average on All Cameras", "#dc143c", viewStat.getObservationsScaleFullPoints())
+            observationsScaleChart.addSeries("Current", "#00008b", viewStat.getObservationsScaleViewPoints())
         }
     }
 }
+

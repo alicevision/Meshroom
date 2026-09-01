@@ -2137,6 +2137,11 @@ class BaseNode(BaseObject):
             return
 
         if currentStatus == Status.SUCCESS:
+            # Update the status when the lock is reevaluated while the node is
+            # successfully computed: this ensures all info reflect accurately the status
+            # (in particular with respect to dynamic output attributes)
+            self.updateStatusFromCache()
+
             # At this moment, the node is necessarily locked because of previous if statement
             inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
             outputNodes = self.getOutputNodes(recursive=True, dependenciesOnly=True)

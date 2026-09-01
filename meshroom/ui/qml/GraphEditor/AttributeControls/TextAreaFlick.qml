@@ -29,7 +29,7 @@ Rectangle {
             topPadding: 2
             readOnly: !root.editable
             onEditingFinished: root.editingFinished(text)
-            text: root.label
+            text: root.label.trim()
             selectByMouse: true
             background: Rectangle {
                 visible: errorMessages.length

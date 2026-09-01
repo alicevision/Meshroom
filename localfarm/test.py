@@ -87,7 +87,6 @@ class TestLocalFarm:
 
 def test():
     farm_path = os.getenv("MR_LOCAL_FARM_PATH", os.path.join(os.path.expanduser("~"), ".local_farm"))
-    # farm_path = "/s/prods/mvg/_source_global/users/sonoleta/tmp/local_farm"
     _test = TestLocalFarm(farm_path)
     try:
         _test.prepare()

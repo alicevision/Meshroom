@@ -33,7 +33,7 @@ Panel {
             root.validatedNodeName = nodeName
             // Set the display node type only if it is not contained in the node name
             const nodeType = _currentScene.selectedNode.nodeType
-            root.displayNodeType = nodeName.startsWith(nodeType + "_") ? "" : nodeType
+            root.displayNodeType = (nodeName == nodeType || nodeName.startsWith(nodeType + "_")) ? "" : nodeType
         }
     }
 
@@ -83,7 +83,7 @@ Panel {
 
     // Function to validate and apply node name change
     function validateNodeNameChange(name) {
-        if (root.node && name.trim() !== "") {
+        if (root.node) {
             const newNodeName = _currentScene.renameNode(_currentScene.selectedNode, name.trim())
             if (newNodeName === "") {
                 root.displayNodeName = root.nodeName

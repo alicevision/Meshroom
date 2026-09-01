@@ -123,7 +123,7 @@ class UndoStack(QUndoStack):
 class GraphCommand(UndoCommand):
     def __init__(self, graph, parent=None):
         super().__init__(parent)
-        self.graph = graph
+        self.graph: Graph = graph
 
 
 class AddNodeCommand(GraphCommand):
@@ -153,20 +153,26 @@ class AddNodeCommand(GraphCommand):
 
 
 class RenameNodeCommand(GraphCommand):
-    def __init__(self, graph, node, name, parent=None):
+    def __init__(self, graph, node, name, taskManager=None, parent=None):
         """ Command to rename a node. The new name should not be used yet.
         """
         super().__init__(graph, parent)
+        self.taskManager = taskManager
         self.node = node
         self.oldName = node._name
         self.name = name
 
+    def renameNodeFromTaskManager(self, name):
+        self.taskManager.renameNode(self.node, name)
+
     def redoImpl(self):
         self.setText(f"Rename Node {self.oldName} to {self.name}")
+        self.renameNodeFromTaskManager(self.name)
         self.graph.renameNode(self.node, self.name)
         return self.node._name
 
     def undoImpl(self):
+        self.renameNodeFromTaskManager(self.oldName)
         self.graph.renameNode(self.node, self.oldName)
 
 

@@ -1007,12 +1007,9 @@ class UIGraph(QObject):
     @Slot(Node, str, result=str)
     def renameNode(self, node: Node, newName: str):
         """ Triggers the node renaming.
-
-        In this function the last `_N` index is removed, then all special characters
-        (everything except letters and numbers) are removed.
-        The name uniqueness will be ensured later by adding a suffix (e.g. `_1`, `_2`, ...)
-
-        Labels can be used to have special characters in the displayed name.
+        This will also validate the node authorized characters and make sure the
+        name is unique.
+        An empty string will reset the name to the default.
 
         Args:
             node (Node): Node to rename.
@@ -1021,14 +1018,18 @@ class UIGraph(QObject):
         Returns:
             str: The final name of the node.
         """
-        newName = "_".join(newName.split("_")[:-1]) if "_" in newName else newName
-        # Eliminate all characters except digits and letters
-        newName = re.sub(r"[^0-9a-zA-Z]", "", newName)
-        # Create unique name
-        uniqueName = self._graph._createUniqueNodeName(newName, {n._name for n in self._graph._nodes if n != node})
-        if not newName or uniqueName == node._name:
+        if not newName:
+            # Empty string -> reset to default
+            newName = node.defaultLabel
+        # Eliminate all characters except digits and letters and underscore
+        newName = re.sub(r"[^0-9a-zA-Z\_]", "", newName)
+        if not newName:
             return ""
-        return self.push(commands.RenameNodeCommand(self._graph, node, uniqueName))
+        # Create unique name
+        newName = self._graph._createUniqueNodeName(newName, {n._name for n in self._graph._nodes if n != node})
+        if newName == node._name:
+            return ""
+        return self.push(commands.RenameNodeCommand(self._graph, node, newName, taskManager=self.taskManager))
 
     def moveNode(self, node: Node, position: Position):
         """

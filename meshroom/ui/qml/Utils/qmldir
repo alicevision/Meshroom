@@ -1,6 +1,7 @@
 module Utils
 
 singleton Colors 1.0 Colors.qml
+singleton UISettings 1.0 UISettings.qml
 SortFilterDelegateModel 1.0 SortFilterDelegateModel.qml
 Request 1.0 request.js
 Format 1.0 format.js

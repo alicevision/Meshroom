@@ -48,6 +48,7 @@ from .node import (
     IONode,
     MrNodeType,
     Node,
+    InlineNode,
     NodeVersionType,
     NodeVersionTypeEnum,
     OutputNode,

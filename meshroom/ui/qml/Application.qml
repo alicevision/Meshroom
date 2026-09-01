@@ -1332,11 +1332,14 @@ Page {
                     if (!panel3dViewer || (!attribute.node.has3DOutput && !attribute.node.hasAttribute("useBoundingBox"))) {
                         return false
                     }
-                    var loaded = panel3dViewer.viewer3D.view(attribute)
+
+                    print(attribute.name)
+                    var loaded = false
+                    //var loaded = panel3dViewer.viewer3D.view(attribute)
 
                     // solo media if Control modifier was held
                     if (loaded && mouse && mouse.modifiers & Qt.ControlModifier) {
-                        panel3dViewer.viewer3D.solo(attribute)
+                        //panel3dViewer.viewer3D.solo(attribute)
                     }
                     return loaded
                 }

@@ -35,7 +35,8 @@ Item {
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
         if (panel3dViewerLoader.active) {
-            panel3dViewerLoader.item.viewer3D.load(filepath, label)
+            print(filepath)
+            //panel3dViewerLoader.item.viewer3D.load(filepath, label)
         }
     }
 
@@ -43,7 +44,7 @@ Item {
         target: currentScene
         function onGraphChanged() {
             if (panel3dViewerLoader.active) {
-                panel3dViewerLoader.item.viewer3D.clear()
+                //panel3dViewerLoader.item.viewer3D.clear()
             }
         }
         function onSfmChanged() { viewSfM() }
@@ -57,7 +58,8 @@ Item {
         if (!activeNode)
             return
         if (panel3dViewerLoader.active) {
-            panel3dViewerLoader.item.viewer3D.view(activeNode.attribute('output'))
+            print("viewsfm")
+            //panel3dViewerLoader.item.viewer3D.view(activeNode.attribute('output'))
         }
     }
 
@@ -270,7 +272,8 @@ Item {
                             keys: ["text/uri-list"]
                             onDropped: function(drop) {
                                 drop.urls.forEach(function(url) {
-                                    load3DMedia(url)
+                                    print("drop")
+                                    //load3DMedia(url)
                                 })
                             }
                         }
@@ -278,7 +281,7 @@ Item {
                         Connections {
                             target: viewer2D
                             function onSync3DSelectedChanged() {
-                                Viewer3DSettings.syncWithPickedViewId = viewer2D.sync3DSelected
+                                //Viewer3DSettings.syncWithPickedViewId = viewer2D.sync3DSelected
                             }
                         }
                     }
@@ -288,11 +291,6 @@ Item {
                         id: inspector3d
                         SplitView.preferredWidth: 220
                         SplitView.minimumWidth: 100
-
-                        mediaLibrary: c_viewer3D.library
-                        camera: c_viewer3D.mainCamera
-                        uigraph: currentScene
-                        onNodeActivated: _currentScene.setActiveNode(node)
                     }
                 }
             }

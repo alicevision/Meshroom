@@ -1398,18 +1398,22 @@ Page {
                             checked: graphEditorMenu.visible
                             Menu {
                                 id: graphEditorMenu
+                                property int nodeSelection: _currentScene.nodeSelection.selectedIndexes.length
+                                // Must set the width because of Menu Items whose text changes
+                                width: Math.max(implicitWidth, 270)
                                 y: parent.height
                                 x: -width + parent.width
                                 MenuItem {
-                                    text: "Clear Pending Status"
+                                    text: graphEditorMenu.nodeSelection === 0 
+                                        ? "Clear Pending Status" 
+                                        : "Clear Pending Status On Selected Nodes"
                                     enabled: _currentScene ? !_currentScene.computingLocally : false
                                     onTriggered: _currentScene.graph.clearSubmittedNodes(_currentScene.getSelectedNodes())
                                 }
                                 MenuItem {
-                                    text: "Force Unlock Nodes"
+                                    text: graphEditorMenu.nodeSelection === 0 ? "Unlock All Nodes" : "Unlock Selected Nodes"
                                     onTriggered: _currentScene.graph.forceUnlockNodes(_currentScene.getSelectedNodes())
                                 }
-
                                 Menu {
                                     title: "Auto Layout Depth"
 

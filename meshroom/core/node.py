@@ -19,7 +19,7 @@ from typing import Callable, Optional, List, Union
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
 from meshroom.core import desc, plugins, stats, hashValue, nodeVersion, Version, MrNodeType
-from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
+from meshroom.core.attribute import attributeFactory, attributeDescriptionFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.desc.attribute import Attribute as AttributeDescription
 from meshroom.core.desc.anySet import AnySet as AnySetDescription
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
@@ -1165,6 +1165,9 @@ class BaseNode(BaseObject):
                                          dependenciesOnly=dependenciesOnly)
 
     def toDict(self):
+        pass
+
+    def getNodeDescription(self):
         pass
 
     def _computeUid(self):
@@ -2501,6 +2504,7 @@ class Node(BaseNode):
 
         return {
             'nodeType': self.nodeType,
+            'nodeVersion': nodeVersion(self.nodeDesc),
             'position': self._position,
             'parallelization': {
                 'blockSize': self.nodeDesc.parallelization.blockSize if self.isParallelized else 0,
@@ -2511,6 +2515,15 @@ class Node(BaseNode):
             'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
             'outputs': outputs
+        }
+
+    def getNodeDescription(self):
+        # Get the node type, the node version, and the basic information about the io (name, type and default value)
+        return {
+            'nodeType': self.nodeType,
+            'nodeVersion': nodeVersion(self.nodeDesc),
+            'inputs': {k: v.shortDesc() for k, v in self._attributes.objects.items() if v.isInput},
+            'outputs': {k: v.shortDesc() for k, v in self._attributes.objects.items() if v.isOutput}
         }
 
     def _resetChunks(self):
@@ -2678,6 +2691,7 @@ class CompatibilityIssue(Enum):
     DescriptionConflict = 3  # mismatch between node's description attributes and serialized node data
     UidConflict = 4  # mismatch between computed UIDs and UIDs stored in serialized node data
     PluginIssue = 5  # issue when loading the associated plugin
+    DescOnlyNodeType = 6  # the node type is unknown, but its description was found in the .mg file. It cannot be instantiated
 
 
 class CompatibilityNode(BaseNode):
@@ -2686,14 +2700,17 @@ class CompatibilityNode(BaseNode):
     CompatibilityNode creates an 'empty-shell' exposing the deserialized node as-is,
     with all its inputs and precomputed outputs.
     """
-    def __init__(self, nodeType, nodeDict, position=None, issue=CompatibilityIssue.UnknownIssue, parent=None):
+    def __init__(self, nodeType, nodeDict, nodeDescDict=None, position=None, issue=CompatibilityIssue.UnknownIssue, parent=None):
         super().__init__(nodeType, position, parent)
 
         self.issue = issue
         # Make a deepcopy of nodeDict to handle CompatibilityNode duplication
         # and be able to change modified inputs (see CompatibilityNode.toDict)
         self.nodeDict = copy.deepcopy(nodeDict)
+        self.nodeDescDict = nodeDescDict
         version = self.nodeDict.get("version")
+        if version is None and nodeDescDict:
+            version = nodeDescDict.get("version")
         self.version = Version(version) if version else None
 
         self._inputs = self.nodeDict.get("inputs", {})
@@ -2833,6 +2850,31 @@ class CompatibilityNode(BaseNode):
 
         return None
 
+    @staticmethod
+    def attributeDescFromDict(nodeDescDict, name, value, isOutput, strict=True):
+        """
+        Try to find a matching attribute description in nodeDescDict for given attribute
+        'name' and 'value'.
+
+        Args:
+            nodeDescDict (dict): node description dictionary containing inputs and outputs
+            name (str): attribute's name
+            value: attribute's value
+            isOutput: whether the attribute is an output
+            strict: strict test for the match (for instance, regarding a group with some parameter changes)
+
+        Returns:
+            desc.Attribute: an attribute description from nodeDescDict if a match is found, None otherwise.
+        """
+        refAttrs = nodeDescDict["outputs"] if isOutput else nodeDescDict["inputs"]
+        if name not in refAttrs:
+            return None
+        refAttrs[name]["name"] = name
+
+        attrDesc = attributeDescriptionFactory(refAttrs[name])
+        # return the attribute description if the given value passes the 'matchDescription' test
+        return attrDesc if attrDesc.matchDescription(value, strict) else None
+
     def _addAttribute(self, name, val, isOutput, internalAttr=False):
         """
         Add a new attribute on this node.
@@ -2854,6 +2896,8 @@ class CompatibilityNode(BaseNode):
                 refAttrs = self.nodeDesc.outputs if isOutput else self.nodeDesc.inputs
             attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
         matchDesc = attrDesc is not None
+        if attrDesc is None and self.nodeDescDict and not internalAttr:
+            attrDesc = CompatibilityNode.attributeDescFromDict(self.nodeDescDict, name, val, isOutput)
         if attrDesc is None:
             attrDesc = CompatibilityNode.attributeDescFromValue(name, val, isOutput)
         attribute = attributeFactory(attrDesc, val, isOutput, self)
@@ -2867,6 +2911,9 @@ class CompatibilityNode(BaseNode):
     def issueDetails(self):
         if self.issue == CompatibilityIssue.UnknownNodeType:
             return f"Unknown node type: '{self.nodeType}'."
+        elif self.issue == CompatibilityIssue.DescOnlyNodeType:
+            version = self.nodeDict["version"]
+            return f"Description for node type '{self.nodeType}' version '{version}' only found in .mg."
         elif self.issue == CompatibilityIssue.VersionConflict:
             version = self.nodeDict["version"]
             return f"Node version '{version}' conflicts with current version '{nodeVersion(self.nodeDesc)}'."
@@ -2905,6 +2952,15 @@ class CompatibilityNode(BaseNode):
         # update position
         self.nodeDict.update({"position": self.position})
         return self.nodeDict
+
+    def getNodeDescription(self):
+        # Get the node type, the node version, and the basic information about the io (name, type and default value)
+        return {
+            'nodeType': self.nodeType,
+            'nodeVersion': self.nodeDict["version"],
+            'inputs': {k: v.shortDesc() for k, v in self._attributes.objects.items() if v.isInput},
+            'outputs': {k: v.shortDesc() for k, v in self._attributes.objects.items() if v.isOutput}
+        }
 
     @property
     def canUpgrade(self):

@@ -13,6 +13,7 @@ def nodeFactory(
     name: Optional[str] = None,
     inTemplate: bool = False,
     expectedUid: Optional[str] = None,
+    nodeDescDict: dict = None,
 ) -> Union[Node, BackdropNode, CompatibilityNode]:
     """
     Create a node instance by deserializing the given node data.
@@ -28,7 +29,7 @@ def nodeFactory(
     Returns:
         The created Node instance.
     """
-    return _NodeCreator(nodeData, name, inTemplate, expectedUid).create()
+    return _NodeCreator(nodeData, name, inTemplate, expectedUid, nodeDescDict).create()
 
 
 def getNodeConstructor(nodeType: str, position: Optional[Position]=None, **kwargs) -> Union[BackdropNode, Node]:
@@ -56,6 +57,7 @@ class _NodeCreator:
         name: Optional[str] = None,
         inTemplate: bool = False,
         expectedUid: Optional[str] = None,
+        nodeDescDict: dict = None,
     ):
         self.nodeData = nodeData
         self.name = name
@@ -71,6 +73,7 @@ class _NodeCreator:
         self.version = self.nodeData.get("version", None)
         self.position = Position(*self.nodeData.get("position", []))
         self.uid = self.nodeData.get("uid", None)
+        self.nodeDescDict = nodeDescDict
         self.nodeDesc = None
         if meshroom.core.pluginManager.isNodeDescRegistered(self.nodeType):
             self.nodeDesc = meshroom.core.pluginManager.getNodeDescProvider(self.nodeType).nodeDescClass
@@ -95,6 +98,8 @@ class _NodeCreator:
         if self.nodeDesc is None:
             if meshroom.core.pluginManager.getPluginFromNodeDesc(self.nodeType) is not None:
                 return CompatibilityIssue.PluginIssue
+            if self.nodeDescDict is not None:
+                return CompatibilityIssue.DescOnlyNodeType
             return CompatibilityIssue.UnknownNodeType
 
         if not self._checkUidCompatibility():
@@ -266,12 +271,12 @@ class _NodeCreator:
     def _createCompatibilityNode(self, compatibilityIssue) -> CompatibilityNode:
         logging.warning(f"Compatibility issue detected for node '{self.name}': {compatibilityIssue.name}")
         return CompatibilityNode(
-            self.nodeType, self.nodeData, position=self.position, issue=compatibilityIssue
+            self.nodeType, self.nodeData, nodeDescDict=self.nodeDescDict, position=self.position, issue=compatibilityIssue
         )
 
     def _tryUpgradeCompatibilityNode(self, node: CompatibilityNode) -> Union[Node, CompatibilityNode]:
         """Handle possible upgrades of CompatibilityNodes, when no computed data is associated to the Node."""
-        if node.issue == CompatibilityIssue.UnknownNodeType:
+        if node.issue == CompatibilityIssue.UnknownNodeType or node.issue == CompatibilityIssue.DescOnlyNodeType:
             return node
 
         # Nodes in templates are not meant to hold computation data.

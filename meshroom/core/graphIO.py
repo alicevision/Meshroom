@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class GraphIO:
     """Centralize Graph file keys and IO version."""
 
-    __version__ = "2.1"
+    __version__ = "2.2"
 
     class Keys:
         """File Keys."""
@@ -26,6 +26,7 @@ class GraphIO:
         CacheDir = "cacheDir"
         Graph = "graph"
         Template = "template"
+        NodeDescriptions = "nodeDescriptions"
 
     class Features(Enum):
         """File Features."""
@@ -75,6 +76,7 @@ class GraphSerializer:
         """
         return {
             GraphIO.Keys.Header: self.serializeHeader(),
+            GraphIO.Keys.NodeDescriptions: self.serializeNodeDescriptions(),
             GraphIO.Keys.Graph: self.serializeContent(),
         }
 
@@ -94,7 +96,6 @@ class GraphSerializer:
         header: dict[str, Any] = {}
         header[GraphIO.Keys.ReleaseVersion] = meshroom.__version__
         header[GraphIO.Keys.FileVersion] = GraphIO.__version__
-        header[GraphIO.Keys.NodesVersions] = self._getNodeTypesVersions()
         if self._graph._hasExplicitCacheDir:
             # We store the absolute but also the relative cacheDir path (to the scene file)
             # to make sure that if we move the scene+cacheDir we can still retrieve the cache
@@ -103,6 +104,18 @@ class GraphSerializer:
                 "relativeCacheDir": self._graph._relativeCacheDir,
             }
         return header
+
+    def serializeNodeDescriptions(self) -> dict[str, str]:
+        """Get descriptions of each node types in `nodes`"""
+        nodeDescriptions = {node.nodeType: {k: v for k, v in node.getNodeDescription().items()}
+                            for node in self.nodes if node is not None}
+        nodeDescriptions = {node["nodeType"]: {
+                                node["nodeVersion"]: {
+                                    k: v for k, v in node.items() if k not in ["nodeVersion", "nodeType"]
+                                }
+                            } for node in nodeDescriptions.values()}
+        # Sort them by name (to avoid random order changing from one save to another).
+        return dict(sorted(nodeDescriptions.items()))
 
     def _getNodeTypesVersions(self) -> dict[str, str]:
         """Get registered versions of each node types in `nodes`, excluding CompatibilityNode instances."""

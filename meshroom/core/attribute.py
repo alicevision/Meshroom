@@ -56,16 +56,20 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     name = descType.get('name')
     label = descType.get('label')
     description = descType.get('description')
+    value = descType.get('value')
     elementDesc = descType.get('elementDesc')
     items = descType.get('items')
+    values = descType.get('values')
 
     attr = None
     if items:
-        attr = attrClass(name=name, label=label, description=description, items=[attributeDescriptionFactory(item) for item in items])
+        attr = attrClass(name=name, label=label, description=description, value=value, items=[attributeDescriptionFactory(item) for item in items])
     elif elementDesc:
-        attr = attrClass(name=name, label=label, description=description, elementDesc=attributeDescriptionFactory(elementDesc))
+        attr = attrClass(name=name, label=label, description=description, value=value, elementDesc=attributeDescriptionFactory(elementDesc))
+    elif values:
+        attr = attrClass(name=name, label=label, description=description, value=value, values=values)
     else:
-        attr = attrClass(name=name, label=label, description=description)
+        attr = attrClass(name=name, label=label, description=description, value=value)
 
     return attr
 
@@ -418,6 +422,13 @@ class Attribute(BaseObject):
             "value": self.getSerializedValue()
         }
 
+        return serializedData
+
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.desc.__class__.__name__,
+            "value": self.getDefaultValue()
+        }
         return serializedData
 
     def getPrimitiveValue(self, exportDefault=True):
@@ -920,6 +931,15 @@ class ChoiceParam(Attribute):
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
         }
+
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.desc.__class__.__name__,
+            "value": self.getDefaultValue(),
+            "values": self.getValues()
+        }
+        return serializedData
 
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     valuesChanged = Signal()

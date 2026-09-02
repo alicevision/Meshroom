@@ -312,6 +312,7 @@ class Graph(BaseObject):
 
         self.header = graphData.get(GraphIO.Keys.Header, {})
         fileVersion = Version(self.header.get(GraphIO.Keys.FileVersion, "0.0"))
+        self.nodeDescriptions = graphData.get(GraphIO.Keys.NodeDescriptions, {})
         graphContent = self._normalizeGraphContent(graphData, fileVersion)
         isTemplate = self.header.get(GraphIO.Keys.Template, False)
         explicitCachePaths = self.header.get(GraphIO.Keys.CacheDir)
@@ -396,12 +397,16 @@ class Graph(BaseObject):
         # Retrieve version info from:
         #   1. nodeData: node saved from a CompatibilityNode
         #   2. nodesVersion in file header: node saved from a Node
-        # If unvailable, the "version" field will not be set in `nodeData`.
-        if "version" not in nodeData:
+        # If unavailable, the "version" field will not be set in `nodeData`.
+        if "nodeVersion" in nodeData:
+            nodeData["version"] = nodeData["nodeVersion"]
+        elif "version" not in nodeData:
             if version := fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"]):
                 nodeData["version"] = version
         inTemplate = fromGraph.header.get(GraphIO.Keys.Template, False)
-        node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate)
+        nodeDescDict = fromGraph.nodeDescriptions.get(nodeData["nodeType"], {})
+        nodeDescDict = nodeDescDict.get(nodeData["version"], {})
+        node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate, nodeDescDict=nodeDescDict)
         self._addNode(node, nodeName)
         return node
 

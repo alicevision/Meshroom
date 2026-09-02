@@ -257,15 +257,16 @@ Item {
 
                 property alias viewer3D: c_viewer3D
 
-                MSplitView {
-                    id: c_viewer3DSplitView
+                RowLayout {
+                    id: c_viewer3DRowLayout
                     anchors.fill: parent
-                    orientation: Qt.Horizontal
+                    spacing: 4
+
                     Viewer3D {
                         id: c_viewer3D
-
-                        SplitView.fillWidth: true
-                        SplitView.minimumWidth: 50
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumWidth: 50
 
                         DropArea {
                             anchors.fill: parent
@@ -289,8 +290,12 @@ Item {
                     // Inspector Panel
                     Inspector3D {
                         id: inspector3d
-                        SplitView.preferredWidth: 220
-                        SplitView.minimumWidth: 100
+                        collection: c_viewer3D.collection
+                        visible: true
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 260
+                        Layout.minimumWidth: 180
+                        Layout.maximumWidth: 420
                     }
                 }
             }

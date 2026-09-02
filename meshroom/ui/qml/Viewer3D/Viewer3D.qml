@@ -6,7 +6,7 @@ import Utils 1.0
 
 Item {
     id: root
-    anchors.fill: parent
+    property alias collection: collection
 
     SceneView {
         id: sceneView
@@ -92,8 +92,16 @@ Item {
         if (attribute.desc.type === "File")
         {
             switch (Filepath.extension(attribute.value)) {
+            case ".abc":
+            case ".usda":
+            case ".sfm":
+            {
+                collection.addSfmData(attribute.value)
+                break
+            }
             case ".obj":
                 collection.addMesh(attribute.value)
+                break
             }
             return true
         }

@@ -1334,8 +1334,7 @@ Page {
                     }
 
                     print(attribute.name)
-                    var loaded = false
-                    //var loaded = panel3dViewer.viewer3D.view(attribute)
+                    var loaded = panel3dViewer.viewer3D.view(attribute)
 
                     // solo media if Control modifier was held
                     if (loaded && mouse && mouse.modifiers & Qt.ControlModifier) {
@@ -1352,7 +1351,7 @@ Page {
                     }
 
                     else if (attribute.is3dDisplayable) {
-                            workspaceView.viewIn3D(attribute, mouse)
+                        workspaceView.viewIn3D(attribute, mouse)
                     }
 
                     else if (attribute.isTextDisplayable) {

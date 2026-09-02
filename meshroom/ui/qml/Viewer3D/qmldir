@@ -2,3 +2,6 @@ module Viewer3D
 
 Viewer3D 1.0 Viewer3D.qml
 Inspector3D 1.0 Inspector3D.qml
+SceneObjectCollection 1.0 SceneObjectCollection.qml
+internal MeshEntry 1.0 MeshEntry.qml
+internal SfmDataEntry 1.0 SfmDataEntry.qml

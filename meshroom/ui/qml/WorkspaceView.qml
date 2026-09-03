@@ -35,8 +35,7 @@ Item {
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
         if (panel3dViewerLoader.active) {
-            print(filepath)
-            //panel3dViewerLoader.item.viewer3D.load(filepath, label)
+            panel3dViewerLoader.item.viewer3D.view(filepath, undefined)
         }
     }
 
@@ -44,7 +43,7 @@ Item {
         target: currentScene
         function onGraphChanged() {
             if (panel3dViewerLoader.active) {
-                //panel3dViewerLoader.item.viewer3D.clear()
+                panel3dViewerLoader.item.viewer3D.collection.clear()
             }
         }
         function onSfmChanged() { viewSfM() }
@@ -58,8 +57,7 @@ Item {
         if (!activeNode)
             return
         if (panel3dViewerLoader.active) {
-            print("viewsfm")
-            //panel3dViewerLoader.item.viewer3D.view(activeNode.attribute('output'))
+            panel3dViewerLoader.item.viewer3D.viewAttribute(activeNode.attribute('output'))
         }
     }
 
@@ -257,24 +255,22 @@ Item {
 
                 property alias viewer3D: c_viewer3D
 
-                RowLayout {
+                MSplitView {
                     id: c_viewer3DRowLayout
                     anchors.fill: parent
-                    spacing: 4
+                    orientation: Qt.Horizontal
 
                     Viewer3D {
                         id: c_viewer3D
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumWidth: 50
+                        SplitView.fillWidth: true
+                        SplitView.minimumWidth: 50
 
                         DropArea {
                             anchors.fill: parent
                             keys: ["text/uri-list"]
                             onDropped: function(drop) {
                                 drop.urls.forEach(function(url) {
-                                    print("drop")
-                                    //load3DMedia(url)
+                                    load3DMedia(url)
                                 })
                             }
                         }
@@ -292,10 +288,9 @@ Item {
                         id: inspector3d
                         collection: c_viewer3D.collection
                         visible: true
-                        Layout.fillHeight: true
-                        Layout.preferredWidth: 260
-                        Layout.minimumWidth: 180
-                        Layout.maximumWidth: 420
+                        SplitView.preferredWidth: 260
+                        SplitView.minimumWidth: 180
+                        SplitView.maximumWidth: 420
                     }
                 }
             }

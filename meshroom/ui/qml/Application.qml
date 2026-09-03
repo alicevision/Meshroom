@@ -1334,7 +1334,7 @@ Page {
                     }
 
                     print(attribute.name)
-                    var loaded = panel3dViewer.viewer3D.view(attribute)
+                    var loaded = panel3dViewer.viewer3D.viewAttribute(attribute)
 
                     // solo media if Control modifier was held
                     if (loaded && mouse && mouse.modifiers & Qt.ControlModifier) {

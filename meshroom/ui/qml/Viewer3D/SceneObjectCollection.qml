@@ -83,6 +83,12 @@ Item {
         sfmDataModel.remove(index)
     }
 
+    /** Remove all mesh and sfmData entries from the collection. */
+    function clear() {
+        meshModel.clear()
+        sfmDataModel.clear()
+    }
+
     /** Return the SfmDataObject at @p index, or null. */
     function sfmDataObjectAt(index) {
         var entry = _sfmInst.objectAt(index)

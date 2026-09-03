@@ -88,23 +88,35 @@ Item {
         sceneView: sceneView
     }
 
-    function view(attribute) {
-        if (attribute.desc.type === "File")
-        {
-            switch (Filepath.extension(attribute.value)) {
+    function view(source, label = undefined) 
+    {
+        switch (Filepath.extension(source)) {
             case ".abc":
             case ".usda":
             case ".sfm":
             {
-                collection.addSfmData(attribute.value)
+                collection.addSfmData(source, label)
                 break
             }
             case ".obj":
-                collection.addMesh(attribute.value)
+            {
+                collection.addMesh(source, label)
                 break
             }
-            return true
         }
+            
+        return true
+    }
+
+    function viewAttribute(attribute) {
+
+        if (attribute.desc.type === "File")
+        {
+            var section = attribute.node.label
+
+            view(attribute.value, `${section}.${attribute.label}`)
+        }
+
         return false
     }
 }

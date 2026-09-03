@@ -11,6 +11,7 @@ RowLayout {
     signal destruction(bool activeFocus, var text)
     signal pressedChanged(bool pressed, var formattedValue)
     TextField {
+        id: textField
         implicitWidth: 100
         enabled: root.editable
         // Cast value to string to avoid intrusive scientific notations on numbers
@@ -23,6 +24,12 @@ RowLayout {
         onEditingFinished: root.editingFinished(text)
         onAccepted: root.accepted(text)        
         Component.onDestruction: root.destruction(activeFocus, text)
+        background: Rectangle {
+            radius: 2
+            border.width: textField.activeFocus ? 2 : 1
+            border.color: textField.activeFocus ? palette.highlight : palette.mid
+            color: Qt.darker(palette.window, 1.2)
+        }
     }
     Rectangle {
         height: slider.height

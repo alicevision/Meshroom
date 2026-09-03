@@ -33,7 +33,8 @@ RowLayout {
         isInt: root.type === "FloatParam" ? false : true
         onEditingFinished: root.editingFinished(hasExprError, expressionTextField.evaluatedValue, expressionTextField.text, expressionTextField.displayValue)
         background: Rectangle {
-                border.color: errorMessages.length ? "orange" : "transparent"
+                border.width: expressionTextField.activeFocus ? 2 : 1
+                border.color: expressionTextField.activeFocus ? palette.highlight : (errorMessages.length ? "orange" : "transparent")
                 color: Qt.darker(palette.window, 1.2)
                 radius: 2
             }

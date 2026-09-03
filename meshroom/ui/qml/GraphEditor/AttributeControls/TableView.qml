@@ -36,7 +36,6 @@ ColumnLayout {
                               ? outerFrame.width - fixedStrip.width - vBar.width
                               : 600
     property bool expanded: false
-    property var appPalette: palette
     function computeMinColumnWidths() {
         var firstRow = rowRepeater.itemAt(0)
         if (!firstRow || firstRow.minColumnWidths.length === 0)
@@ -149,8 +148,8 @@ ColumnLayout {
         title:   attribute 
                  ? attribute.label
                  : ""
-        palette: root.appPalette
-        color:   palette.window
+        palette: root.palette
+        color: palette.window
         Item {
             id: fullscreenContent
             anchors.fill: parent

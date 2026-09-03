@@ -27,7 +27,8 @@ RowLayout {
             colorGroup: SystemPalette.Disabled
         }
         background: Rectangle {
-            border.color: errorMessages.length ? "orange" : "transparent"
+            border.width: textField.activeFocus ? 2 : 1
+            border.color: textField.activeFocus ? palette.highlight : (errorMessages.length ? "orange" : "transparent")
             color:  Qt.darker(palette.window, 1.2)
             radius: 2
         }

@@ -12,6 +12,31 @@ TextField {
     property bool hasExprError: false
     property bool isInt: false
 
+    // Optional external live-drive input (e.g. a paired Slider being dragged/wheeled).
+    // Bind a numeric value to this from outside and set externalValueActive to true
+    // while that external control is being actively interacted with. While active,
+    // this field becomes a pure read-only mirror of externalValue (no typed-edit
+    // bookkeeping runs); when externalValueActive goes back to false, a single
+    // commit is flushed exactly like a normal typed edit would.
+    property real externalValue: 0
+    property bool externalValueActive: false
+
+    onExternalValueChanged: {
+        if (externalValueActive)
+            mirrorExternalValue()
+    }
+
+    onExternalValueActiveChanged: {
+        if (externalValueActive) {
+            // Entering external-drive: take over display immediately.
+            mirrorExternalValue()
+        } else {
+            // Leaving external-drive: commit once, like focus loss / accepted().
+            if (exprTextChanged)
+                root.accepted()
+        }
+    }
+
     // Overlay for error state (red border on top of default background)
     Rectangle {
         anchors.fill: parent
@@ -63,6 +88,21 @@ TextField {
         exprTextChanged = false
     }
 
+    // While an external driver (e.g. a dragged Slider) is active, just mirror its
+    // value directly into text/evaluatedValue for live feedback. This intentionally
+    // does NOT go through the typed-edit exprTextChanged/updateExpression() pipeline,
+    // so there is only ever one writer of `text` at a time: whichever path is
+    // currently "live" (typing XOR external-drive), never both fighting over it.
+    function mirrorExternalValue() {
+        var newText = isInt ? Number(externalValue).toFixed(0) : String(externalValue)
+        if (root.text !== newText)
+            root.text = newText
+        evaluatedValue = externalValue
+        clearError()
+        // Mark that there is a pending real value to commit once drive ends.
+        exprTextChanged = true
+    }
+
     // onAccepted and onEditingFinished will break the bindings to text
     // so if used on fields that needs to be driven by sliders or other qml element,
     // the binding needs to be restored
@@ -71,19 +111,25 @@ TextField {
     onAccepted: {
         if (exprTextChanged)
         {
-            updateExpression()
-            if (!hasExprError && !isNaN(evaluatedValue)) {
-                // Commit the result value to the text field
-                if (isInt)
-                    root.text = Number(evaluatedValue).toFixed(0)
-                else
-                    root.text = Number(evaluatedValue)
+            if (externalValueActive) {
+                // Value already live-mirrored via mirrorExternalValue(); nothing to
+                // re-evaluate from text, just finalize bookkeeping.
+                exprTextChanged = false
+            } else {
+                updateExpression()
+                if (!hasExprError && !isNaN(evaluatedValue)) {
+                    // Commit the result value to the text field
+                    if (isInt)
+                        root.text = Number(evaluatedValue).toFixed(0)
+                    else
+                        root.text = Number(evaluatedValue)
+                }
             }
         }
     }
 
     onEditingFinished: {
-        if (exprTextChanged)
+        if (exprTextChanged && !externalValueActive)
         {
             updateExpression()
             if (!hasExprError && !isNaN(evaluatedValue)) {
@@ -96,6 +142,8 @@ TextField {
     }
 
     onTextChanged: {
+        if (externalValueActive)
+            return // text is being driven by mirrorExternalValue(); ignore as "typed" edit.
         if (!activeFocus && exprTextChanged) {
             refreshStatus()
         } else {
@@ -103,10 +151,22 @@ TextField {
         }
     }
 
-    Component.onDestruction: {
+    // Centralized flush used by wheel, up/down keys, external drivers (e.g. Slider),
+    // focus-loss and destruction, so any live/deferred edit path ends up going
+    // through the exact same commit.
+    function flushPendingChange() {
         if (exprTextChanged) {
             root.accepted()
         }
+    }
+
+    onActiveFocusChanged: {
+        if (!activeFocus)
+            flushPendingChange()
+    }
+
+    Component.onDestruction: {
+        flushPendingChange()
     }
 
     // Increment or decrement the digit immediately to the right of the cursor.
@@ -185,5 +245,15 @@ TextField {
     Keys.onDownPressed: {
         incrementAtCursor(-1)
         event.accepted = true
+    }
+
+    WheelHandler {
+        id: wheelHandler
+        target: null
+        enabled: root.activeFocus
+        onWheel: (event) => {
+            incrementAtCursor(event.angleDelta.y > 0 ? 1 : -1)
+            event.accepted = true
+        }
     }
 }

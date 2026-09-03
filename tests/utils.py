@@ -29,7 +29,7 @@ def overrideNodeTypeVersion(nodeType: desc.Node, version: str):
 
 
 @contextmanager
-def registeredNodeTypes(nodeDescs: list[desc.Node]):
+def registeredNodeTypes(nodeDescs: List[desc.Node]):
     for nodeDesc in nodeDescs:
         nodeType = nodeDesc.__name__
         if not pluginManager.isNodeDescRegistered(nodeType):

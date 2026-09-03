@@ -73,7 +73,8 @@ class Plugin(BaseObject):
         if config:
             self._configEnv = config.resolveEnv(self._path, self._name)
         # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
-        self._configFullEnv: dict[str, str] = self._configEnv | os.environ
+        # Python 3.9+ version: self._configFullEnv = self._configEnv | os.environ
+        self._configFullEnv: dict[str, str] = {**self._configEnv, **os.environ}
 
         self.loadTemplates()
 

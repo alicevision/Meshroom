@@ -94,7 +94,7 @@ if node._nodeStatus.status in (Status.STOPPED, Status.KILLED):
 if not node._chunksCreated:
     # Create node chunks
     # Once created we don't have to do it again even if we relaunch the job
-    node.createChunks()
+    node._createChunks()
     if not node._chunksCreated:
         logging.error(f"Failed to create chunks for node {node.name}.")
     # Set the chunks statuses

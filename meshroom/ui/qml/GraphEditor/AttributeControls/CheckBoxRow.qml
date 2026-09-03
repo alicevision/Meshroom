@@ -24,7 +24,7 @@ Item {
         border.width: innerCheckBox.activeFocus 
                       ? 2
                       : 0
-        border.color: palette.highlight
+        border.color: root.palette.highlight
         z: 10
         enabled: false
     }

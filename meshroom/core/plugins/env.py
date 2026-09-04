@@ -14,6 +14,28 @@ from meshroom import _MESHROOM_ROOT
 from meshroom.core.desc.node import _MESHROOM_COMPUTE_DEPS
 
 
+def processEnvFactory(folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str = None,
+                      envType: str = "dirtree") -> ProcessEnv:
+    """
+    Create the ProcessEnv matching "envType" for a plugin.
+
+    Args:
+        folder: the source folder for the process.
+        configEnv: the dictionary containing the environment variables defined in a configuration file
+                   for the process to run.
+        pluginName: the name of the plugin object.
+        pluginSubPackage: the dotted path, relative to the plugin's root, of the package containing
+                          the node/submitter class this environment is built for, if any.
+        envType: "dirtree" to build a DirTreeProcessEnv, "rez" build a RezProcessEnv.
+
+    Returns:
+        ProcessEnv: the created DirTreeProcessEnv or RezProcessEnv.
+    """
+    if envType == "dirtree":
+        return DirTreeProcessEnv(folder, configEnv, pluginName, pluginSubPackage)
+    return RezProcessEnv(folder, configEnv, pluginName, pluginSubPackage)
+
+
 class ProcessEnvType(Enum):
     """ Supported process environments. """
     DIRTREE = "dirtree",
@@ -29,18 +51,19 @@ class ProcessEnv(BaseObject):
         configEnv: the dictionary containing the environment variables defined in a configuration file
                    for the process to run.
         pluginName: the name of the plugin object.
+        pluginSubPackage: (optional) the dotted path, relative to the plugin's root, of the package
+                          containing the node/submitter class this environment is built for.
         envType: (optional) the type of process environment.
-        uri: (optional) the Unique Resource Identifier to activate the environment.
     """
 
-    def __init__(self, folder: str, configEnv: dict[str, str], pluginName: str,
-                 envType: ProcessEnvType = ProcessEnvType.DIRTREE, uri: str = ""):
+    def __init__(self, folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str = None,
+                 envType: ProcessEnvType = ProcessEnvType.DIRTREE):
         super().__init__()
         self._folder: str = folder
-        self._configEnv: dict[str: str] = configEnv
+        self._configEnv: dict[str, str] = configEnv
         self.pluginName: str = pluginName
+        self.pluginSubPackage: str = pluginSubPackage
         self._processEnvType: ProcessEnvType = envType
-        self.uri: str = uri
         self._env: dict = None
 
     def getEnvDict(self) -> dict:
@@ -58,9 +81,11 @@ class ProcessEnv(BaseObject):
 
 class DirTreeProcessEnv(ProcessEnv):
     """
+    A ProcessEnv built from a plain directory tree: PYTHONPATH/LD_LIBRARY_PATH/PATH are assembled
+    from the plugin's "bin"/"lib"/"lib64" folders and, if present, its "venv" virtual environment.
     """
-    def __init__(self, folder: str, configEnv: dict[str: str], pluginName: str):
-        super().__init__(folder, configEnv, pluginName, envType=ProcessEnvType.DIRTREE)
+    def __init__(self, folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str):
+        super().__init__(folder, configEnv, pluginName, pluginSubPackage, envType=ProcessEnvType.DIRTREE)
 
         # If there is a virtual environment, it is expected to be named "venv".
         # Beside the virtual environment, a standard "bin"/"lib"/"lib64" hierarchy at
@@ -115,14 +140,16 @@ class DirTreeProcessEnv(ProcessEnv):
 
 class RezProcessEnv(ProcessEnv):
     """
+    A ProcessEnv built by resolving a Rez environment for the plugin's subrequires, activated
+    through a "rez env" command prefix/suffix wrapped around the node's command line.
     """
 
     REZ_DELIMITER_PATTERN = re.compile(r"-|==|>=|>|<=|<")
 
-    def __init__(self, folder: str, configEnv: dict[str: str], pluginName: str, uri: str = ""):
-        if not uri:
+    def __init__(self, folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str):
+        if not pluginName:
             raise RuntimeError("Missing name of the Rez environment needs to be provided.")
-        super().__init__(folder, configEnv, pluginName, envType=ProcessEnvType.REZ, uri=uri)
+        super().__init__(folder, configEnv, pluginName, pluginSubPackage, envType=ProcessEnvType.REZ)
 
     def resolveRezSubrequires(self) -> list[str]:
         """
@@ -131,10 +158,16 @@ class RezProcessEnv(ProcessEnv):
         Note: If a package does not have a version number, the version is aligned with the main
         Meshroom environment (if this package is defined).
         """
-        if os.getenv(f"{self.uri.upper()}_{self.pluginName.upper()}_SUBREQUIRES"):
-            subrequires = os.environ.get(f"{self.uri.upper()}_{self.pluginName.upper()}_SUBREQUIRES", "").split(os.pathsep)
+        pluginNameUpper = self.pluginName.upper()
+        pluginSubPackageUpper = None
+
+        if self.pluginSubPackage:
+            pluginSubPackageUpper = self.pluginSubPackage.split('.', 1)[0].upper()  # first level sub package
+
+        if pluginSubPackageUpper and os.getenv(f"{pluginNameUpper}_{pluginSubPackageUpper}_SUBREQUIRES"):
+            subrequires = os.environ.get(f"{pluginNameUpper}_{pluginSubPackageUpper}_SUBREQUIRES", "").split(os.pathsep)
         else:
-            subrequires = os.environ.get(f"{self.uri.upper()}_SUBREQUIRES", "").split(os.pathsep)
+            subrequires = os.environ.get(f"{pluginNameUpper}_SUBREQUIRES", "").split(os.pathsep)
         if not subrequires:
             return []
 
@@ -197,9 +230,3 @@ class RezProcessEnv(ProcessEnv):
 
     def getCommandSuffix(self):
         return "'"
-
-
-def processEnvFactory(folder: str, configEnv: dict[str: str], pluginName: str, envType: str = "dirtree", uri: str = "") -> ProcessEnv:
-    if envType == "dirtree":
-        return DirTreeProcessEnv(folder, configEnv, pluginName)
-    return RezProcessEnv(folder, configEnv, pluginName, uri=uri)

@@ -1,10 +1,10 @@
-from typing import ClassVar
+from typing import ClassVar, List
 
 from meshroom.core import desc
 
 
 class OutputNodeTest(desc.Node, desc.OutputNode):
-    outputAttributes: ClassVar[list[str]] = ["folder", "outputFile", "exportLabel", "exportEnabled"]
+    outputAttributes: ClassVar[List[str]] = ["folder", "outputFile", "exportLabel", "exportEnabled"]
 
     inputs = [
         desc.File(

@@ -1,14 +1,9 @@
-from contextlib import contextmanager
 import hashlib
-import importlib
-import inspect
 import logging
 import os
 from pathlib import Path
-import pkgutil
 import sys
-import traceback
-from typing import Dict, List
+from typing import Dict
 import uuid
 
 try:
@@ -19,8 +14,6 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins.base import NodeDescProvider, Plugin
-from meshroom.core.plugins.env import processEnvFactory
 from meshroom.core.plugins.manager import PluginManager
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension, isTemplateFile
 from meshroom.core.submitter import BaseSubmitter
@@ -44,161 +37,6 @@ def hashValue(value) -> str:
     """ Hash 'value' using sha1. """
     hashObject = hashlib.sha1(str(value).encode('utf-8'))
     return hashObject.hexdigest()
-
-
-@contextmanager
-def add_to_path(p, packageName=None, pluginUid: str = None):
-    import sys
-    old_path = sys.path
-    sys.path = sys.path[:]
-    sys.path.insert(0, p)
-    try:
-        yield
-    finally:
-        sys.path = old_path
-        # Rename all meshroom plugins modules so that they all
-        # have a unique module name.
-        if packageName is not None:
-            for modName in list(sys.modules):
-                if modName == packageName or modName.startswith(packageName + "."):
-                    mod = sys.modules.pop(modName)
-                    uniqueModName = f"{pluginUid}_{modName}"
-                    mod.__name__ = uniqueModName
-                    sys.modules[uniqueModName] = mod
-                    # Update the spec name, required for module reloading
-                    mod.__spec__.name = uniqueModName
-                    # Update classes __module__ so that all functions using
-                    # __module__ string lookup resolve correctly.
-                    for attrName in dir(mod):
-                        attr = getattr(mod, attrName)
-                        if isinstance(attr, type) and attr.__module__ == modName:
-                            attr.__module__ = uniqueModName
-
-
-def loadClasses(folder: str, packageName: str, classType: type, pluginUid: str = None) -> List[type]:
-    """
-    Go over the Python module named "packageName" located in "folder" to find files
-    that contain classes of type "classType" and return these classes in a list.
-
-    Args:
-        folder: the folder to load the module from.
-        packageName: the name of the module to look for nodes in.
-        classType: the class to look for in the files that are inspected.
-        pluginUid: (optional) A unique node for the plugin where will be the nodes.
-    """
-    classes = []
-    errors = []
-
-    resolvedFolder = str(Path(folder).resolve())
-    # temporarily add folder to python path
-    with add_to_path(resolvedFolder, packageName, pluginUid):
-        # import node package
-
-        try:
-            package = importlib.import_module(packageName)
-            packageName = package.packageName if hasattr(package, "packageName") \
-                else package.__name__
-            packagePath = os.path.dirname(package.__file__)
-        except Exception as exc:
-            tb = traceback.extract_tb(exc.__traceback__)
-            last_call = tb[-1]
-            logging.warning(f'  * Failed to load package "{packageName}" from folder "{resolvedFolder}" ({type(exc).__name__}): {str(exc)}\n'
-                            # filename:lineNumber functionName
-                            f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
-                            # line of code with the error
-                            f'{last_call.line}'
-                            # Full traceback
-                            f'\n{traceback.format_exc()}\n\n'
-                            )
-            return []
-
-        for _, pluginName, _ in pkgutil.iter_modules(package.__path__):
-            pluginModuleName = "." + pluginName
-
-            try:
-                pluginMod = importlib.import_module(pluginModuleName, package=package.__name__)
-                plugins = [plugin for _, plugin in inspect.getmembers(pluginMod, inspect.isclass)
-                           if plugin.__module__ == f"{package.__name__}.{pluginName}"
-                           and issubclass(plugin, classType)]
-
-                if not plugins:
-                    # Only packages/folders have __path__, single module/file do not have it.
-                    isPackage = hasattr(pluginMod, "__path__")
-                    # Sub-folders/Packages should not raise a warning
-                    if not isPackage:
-                        logging.debug(f"No class defined in plugin: {package.__name__}.{pluginName} ('{pluginMod.__file__}')")
-
-                for p in plugins:
-                    p.packageName = f"{pluginUid}_{packageName}"
-                    p.packagePath = packagePath
-                    if classType == desc.BaseNode:
-                        nodeDescProvider = NodeDescProvider(p)
-                        if nodeDescProvider.errors:
-                            explicitErrors = []
-                            for err in nodeDescProvider.errors:
-                                explicitErrors.append(f"\n\t - {NodeDescProvider.formatNodeDescriptionErrorMessage(err)}")
-                            errors.append(f"  * {pluginName}: The following parameters have issues: {''.join(explicitErrors)}")
-                        classes.append(nodeDescProvider)
-                    else:
-                        classes.append(p)
-            except Exception as exc:
-                if classType == BaseSubmitter:
-                    logging.warning(f" Could not load submitter {pluginName} from package '{package.__name__}'\n{exc}")
-                else:
-                    tb = traceback.extract_tb(exc.__traceback__)
-                    last_call = tb[-1]
-                    errors.append(f'  * {pluginName} ({type(exc).__name__}): {exc}\n'
-                                # filename:lineNumber functionName
-                                f'{last_call.filename}:{last_call.lineno} {last_call.name}\n'
-                                # line of code with the error
-                                f'{last_call.line}'
-                                # Full traceback
-                                f'\n{traceback.format_exc()}\n\n'
-                                )
-
-    if errors:
-        logging.warning(' The following "{package}" plugins could not be loaded:\n'
-                        '{errorMsg}\n'
-                        .format(package=packageName, errorMsg='\n'.join(errors)))
-
-    return classes
-
-
-def loadClassesNodes(folder: str, packageName: str, pluginUid: str) -> List[NodeDescProvider]:
-    """
-    Return the list of all the NodeDescProviders that were created following the search of the
-    Python module named "packageName" located in the folder "folder".
-    A NodeDescProvider is created when a file within "packageName" that contains a class inheriting
-    desc.BaseNode is found.
-
-    Args:
-        folder: the folder to load the module from.
-        packageName: the name of the module to look for nodes in.
-        pluginUid: A unique node for the plugin where will be the nodes.
-
-    Returns:
-        list[NodeDescProvider]: a list of all the NodeDescProviders that were created based on the
-                          module's search. If none has been created, an empty list is returned.
-    """
-    return loadClasses(folder, packageName, desc.BaseNode, pluginUid=pluginUid)
-
-
-def loadClassesSubmitters(folder: str, packageName: str) -> List[BaseSubmitter]:
-    """
-    Return the list of all the submitters that were found during the search of the
-    Python module named "packageName" that located in the folder "folder".
-    A submitter is found if a file within "packageName" contains a class inheriting
-    from BaseSubmitter.
-
-    Args:
-        folder: the folder to load the module from.
-        packageName: the name of the module to look for nodes in.
-
-    Returns:
-        list[BaseSubmitter]: a list of all the submitters that were found during the
-                             module's search
-    """
-    return loadClasses(folder, packageName, BaseSubmitter)
 
 
 class Version:
@@ -347,74 +185,6 @@ def nodeVersion(nodeDesc: desc.Node, default=None):
     return moduleVersion(nodeDesc.__module__, default)
 
 
-def loadNodes(folder, packageName, pluginUid) -> List[NodeDescProvider]:
-    if not os.path.isdir(folder):
-        logging.error(f"Node folder '{folder}' does not exist.")
-        return []
-
-    nodes = loadClassesNodes(folder, packageName, pluginUid)
-    return nodes
-
-
-def loadAllNodes(folder) -> List[Plugin]:
-    plugins = []
-    for _, package, ispkg in pkgutil.iter_modules([folder]):
-        if ispkg:
-            plugin = Plugin(package, folder)
-            nodeDescProviders = loadNodes(folder, package, plugin.uid)
-            if nodeDescProviders:
-                for node in nodeDescProviders:
-                    plugin.addNodeDescProvider(node)
-                nodesStr = ', '.join([node.nodeDescClass.__name__ for node in nodeDescProviders])
-                logging.debug(f'Nodes loaded [{package}]: {nodesStr}')
-            plugins.append(plugin)
-    return plugins
-
-
-def loadPluginFolder(folder, userPlugin: bool = False) -> List[Plugin]:
-    if not os.path.isdir(folder):
-        logging.info(f"Plugin folder '{folder}' does not exist.")
-        return []
-
-    mrFolder = Path(folder, 'meshroom')
-    if not mrFolder.exists():
-        logging.info(f"Plugin folder '{folder}' does not contain a 'meshroom' folder.")
-        return []
-
-    plugins = loadAllNodes(folder=mrFolder)
-    if plugins:
-        for plugin in plugins:
-            plugin.isUserPlugin = userPlugin
-            pluginManager.addPlugin(plugin)
-            pipelineTemplates.update(plugin.templates)
-
-    return plugins
-
-
-def registerSubmitter(s: BaseSubmitter):
-    if s.name in submitters:
-        logging.error(f"Submitter {s.name} is already registered.")
-    submitters[s.name] = s
-
-
-def loadSubmitters(folder, packageName) -> List[BaseSubmitter]:
-    if not os.path.isdir(folder):
-        logging.error(f"Submitters folder '{folder}' does not exist.")
-        return
-
-    return loadClassesSubmitters(folder, packageName)
-
-
-def loadAllSubmitters(folder) -> List[BaseSubmitter]:
-    submitters = []
-    for _, package, ispkg in pkgutil.iter_modules([folder]):
-        if ispkg:
-            subs = loadSubmitters(folder, package)
-            if subs:
-                submitters.extend(subs)
-    return submitters
-
-
 def loadPipelineTemplates(folder: str):
     if not os.path.isdir(folder):
         logging.error(f"Pipeline templates folder '{folder}' does not exist.")
@@ -429,27 +199,30 @@ def loadPipelineTemplates(folder: str):
 
 
 def initNodes():
-    additionalNodesPath = EnvVar.getList(EnvVar.MESHROOM_NODES_PATH)
-    nodesFolders = [os.path.join(meshroomFolder, "nodes")] + additionalNodesPath
-    for f in nodesFolders:
-        plugins = loadAllNodes(folder=f)
-        if plugins:
-            for plugin in plugins:
-                pluginManager.addPlugin(plugin)
+    nodesFolder = os.path.join(meshroomFolder, "nodes")  # Built-in nodes
+    additionalNodesFolders = EnvVar.getList(EnvVar.MESHROOM_NODES_PATH)
+    for folder in [nodesFolder] + additionalNodesFolders:
+        if not os.path.isdir(folder):
+            continue
+        # Load each subfolder as a built-in plugin
+        for subfolderPath in sorted(p for p in Path(folder).iterdir()
+                                     if p.is_dir() and not p.name.startswith("__")):
+            pluginManager.addPluginFromBuiltInFolder(subfolderPath.name, str(subfolderPath))
 
 
 def initSubmitters():
-    """ Detect and register submitter plugins
-    Note: Make sure the package name (folder inside the additionalPaths folders)
-          are unique : so we cannot name them "submitters" because it is already taken
-          by the submitters package inside meshroom
-    """
-    # Load submitters
-    submitterPaths = EnvVar.getList(EnvVar.MESHROOM_SUBMITTERS_PATH)
-    for folder in submitterPaths:
-        subs = loadAllSubmitters(folder)
-        for sub in subs:
-            registerSubmitter(sub())
+    # For now we do not want meshroom/submitters always loaded
+    # submittersFolder = os.path.join(meshroomFolder, "submitters")  # Built-in submitters
+    additionalSubmittersFolders = EnvVar.getList(EnvVar.MESHROOM_SUBMITTERS_PATH)
+    for folder in additionalSubmittersFolders:
+        if not os.path.isdir(folder):
+            continue
+        # Load each subfolder as a built-in plugin
+        for subfolderPath in sorted(p for p in Path(folder).iterdir()
+                                     if p.is_dir() and not p.name.startswith("__")):
+            pluginManager.addPluginFromBuiltInFolder(subfolderPath.name, str(subfolderPath))
+
+    submitters.update({provider.name: provider.instance for provider in pluginManager.getSubmitterProviders().values()})
 
 
 def initPipelines():
@@ -458,55 +231,42 @@ def initPipelines():
     pipelineTemplatesFolders = EnvVar.getList(EnvVar.MESHROOM_PIPELINE_TEMPLATES_PATH)
     for f in pipelineTemplatesFolders:
         loadPipelineTemplates(f)
-    for plugin in pluginManager.getPlugins().values():
-        pipelineTemplates.update(plugin.templates)
+    pipelineTemplates.update(pluginManager.getPipelineTemplates())
 
 
 def initPlugins():
-    # Classic plugins (with a DirTreeProcessEnv)
+    # Plugin paths
+    # Using DirTreeProcessEnv
     additionalPluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
     pluginsFolders = [os.path.join(meshroomFolder, "plugins")] + additionalPluginsPath
     for folder in pluginsFolders:
-        plugins = loadPluginFolder(folder)
-        # Set the ProcessEnv for each plugin
-        if plugins:
-            for plugin in plugins:
-                plugin.processEnv = processEnvFactory(folder, plugin.configEnv, plugin.name)
+        # Use folder name as default plugin name
+        pluginManager.addPluginFromPath(Path(folder).name, folder, isUserPlugin=False)
 
-    # User plugins (with a DirTreeProcessEnv)
+    # User plugin paths
+    # Using DirTreeProcessEnv
     userPluginsFolders = EnvVar.getList(EnvVar.MESHROOM_USER_PLUGINS_PATH)
     for folder in userPluginsFolders:
-        plugins = loadPluginFolder(folder, userPlugin=True)
-        # Set the ProcessEnv for each user plugin
-        if plugins:
-            for plugin in plugins:
-                plugin.processEnv = processEnvFactory(folder, plugin.configEnv, plugin.name)
+        # Use folder name as default plugin name
+        pluginManager.addPluginFromPath(Path(folder).name, folder, isUserPlugin=True)
 
-    # Rez plugins (with a RezProcessEnv)
-    rezPlugins = initRezPlugins()
+    # Rez plugins
+    # Using RezProcessEnv
+    rezPluginList = EnvVar.getList(EnvVar.MESHROOM_REZ_PLUGINS)
+    for entry in rezPluginList:
+        # Use the REZ package name as plugin name
+        rezPackageNameVersion, rezPackageFolder = entry.split("=")
+        rezPackageName, _, rezPackageVersion = rezPackageNameVersion.partition("-")
+        pluginManager.addPluginFromRez(rezPackageName, rezPackageVersion, rezPackageFolder, isUserPlugin=False)
 
-
-def initRezPlugins():
-    rezPlugins = {}
-    rezList = EnvVar.getList(EnvVar.MESHROOM_REZ_PLUGINS)
-
-    for p in rezList:
-        name, folder = p.split("=")
-        rezPlugins[name] = folder  # "name" is the name of the Rez package
-        plugins = loadPluginFolder(folder)
-        # Set the ProcessEnv for Rez plugins
-        if plugins:
-            for plugin in plugins:
-                plugin.processEnv = processEnvFactory(folder, plugin.configEnv, plugin.name, envType="rez", uri=name)
-
-    userRezList = EnvVar.getList(EnvVar.MESHROOM_USER_REZ_PLUGINS)
-    for p in userRezList:
-        name, folder = p.split("=")
-        rezPlugins[name] = folder  # "name" is the name of the Rez package
-        plugins = loadPluginFolder(folder, userPlugin=True)
-        # Set the ProcessEnv for user Rez plugins
-        if plugins:
-            for plugin in plugins:
-                plugin.processEnv = processEnvFactory(folder, plugin.configEnv, plugin.name, envType="rez", uri=name)
-
-    return rezPlugins
+    # Rez user plugins
+    # Using RezProcessEnv
+    rezUserPluginList = EnvVar.getList(EnvVar.MESHROOM_USER_REZ_PLUGINS)
+    for entry in rezUserPluginList:
+        # Use the REZ package name as plugin name
+        rezPackageNameVersion, rezPackageFolder = entry.split("=")
+        rezPackageName, _, rezPackageVersion = rezPackageNameVersion.partition("-")
+        pluginManager.addPluginFromRez(rezPackageName, rezPackageVersion, rezPackageFolder, isUserPlugin=True)
+    
+    # Update pipeline templates
+    pipelineTemplates.update(pluginManager.getPipelineTemplates())

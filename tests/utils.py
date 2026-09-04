@@ -1,26 +1,19 @@
 from contextlib import contextmanager
 from typing import List, Dict
 from unittest.mock import patch
+from pathlib import Path
 
 import meshroom
-from meshroom.core import desc, pluginManager, loadPluginFolder
+from meshroom.core import desc, pluginManager
 from meshroom.core.plugins.base import NodeDescProvider
 
 import os
 
 
-@contextmanager
-def registeredNodeTypes(nodeTypes: List[desc.Node]):
-    nodeDescProvidersList = {}
-    for nodeType in nodeTypes:
-        nodeDescProvider = NodeDescProvider(nodeType)
-        pluginManager.registerNode(nodeDescProvider)
-        nodeDescProvidersList[nodeType] = nodeDescProvider
-
-    yield
-
-    for nodeType in nodeTypes:
-        pluginManager.unregisterNode(nodeDescProvidersList[nodeType])
+def writeFile(filePath: Path, content: str = "") -> Path:
+    filePath.parent.mkdir(parents=True, exist_ok=True)
+    filePath.write_text(content, encoding="utf-8")
+    return filePath
 
 
 @contextmanager
@@ -35,35 +28,43 @@ def overrideNodeTypeVersion(nodeType: desc.Node, version: str):
         yield
 
 
+@contextmanager
+def registeredNodeTypes(nodeDescs: List[desc.Node]):
+    for nodeDesc in nodeDescs:
+        nodeType = nodeDesc.__name__
+        if not pluginManager.isNodeDescRegistered(nodeType):
+            nodeDescProvider = NodeDescProvider(nodeDesc)
+            pluginManager._nodeDescProviders[nodeType] = nodeDescProvider
+
+    yield
+
+    for nodeDesc in nodeDescs:
+        nodeType = nodeDesc.__name__
+        if pluginManager.isNodeDescRegistered(nodeType):
+            del pluginManager._nodeDescProviders[nodeType]
+
+
+@contextmanager
+def registeredPlugin(pluginName: str, pluginFolder: str, isUserPlugin: bool = False):
+    pluginManager.addPluginFromPath(pluginName, pluginFolder, isUserPlugin=isUserPlugin)
+
+    yield
+
+    plugin = pluginManager.getPlugin(pluginName)
+    if plugin:
+        pluginManager.removePlugin(plugin)
+
+
 def registerNodeDesc(nodeDesc: desc.Node):
-    name = nodeDesc.__name__
-    if not pluginManager.isNodeDescRegistered(name):
-        pluginManager._nodeDescProviders[name] = NodeDescProvider(nodeDesc)
+    nodeType = nodeDesc.__name__
+    if not pluginManager.isNodeDescRegistered(nodeType):
+        pluginManager._nodeDescProviders[nodeType] = NodeDescProvider(nodeDesc)
 
 
 def unregisterNodeDesc(nodeDesc: desc.Node):
-    name = nodeDesc.__name__
-    if pluginManager.isNodeDescRegistered(name):
-        del pluginManager._nodeDescProviders[name]
-
-
-@contextmanager
-def registeredPlugins(folder: str):
-    plugins = loadPluginFolder(folder)
-
-    yield
-
-    for plugin in plugins:
-        pluginManager.removePlugin(plugin)
-
-@contextmanager
-def registeredUserPlugins(folder: str):
-    plugins = loadPluginFolder(folder, userPlugin=True)
-
-    yield
-
-    for plugin in plugins:
-        pluginManager.removePlugin(plugin)
+    nodeType = nodeDesc.__name__
+    if pluginManager.isNodeDescRegistered(nodeType):
+        del pluginManager._nodeDescProviders[nodeType]
 
 
 @contextmanager

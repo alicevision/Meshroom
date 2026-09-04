@@ -234,9 +234,8 @@ class TestInitNodeWithDynamicOutputs:
         plugin = pluginManager.getNodeDescProvider(InitNodeWithDynamicOutputs.__name__)
         assert plugin
         assert plugin.status == NodeDescProviderStatus.DESC_ERROR
-        assert len(plugin.errors) == 1
-        errType = plugin.errors[0][1]
-        assert errType == desc.ValueTypeErrors.DYNAMIC_OUTPUT
+        assert plugin.error is not None
+        assert "Unsupported dynamic output" in plugin.error
 
         unregisterNodeDesc(InitNodeWithDynamicOutputs)
 

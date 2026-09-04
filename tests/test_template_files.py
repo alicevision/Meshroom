@@ -8,7 +8,7 @@ from meshroom.core.files import (
     withExtension,
 )
 from meshroom.core.graph import Graph
-from meshroom.core.plugins.base import Plugin
+from meshroom.core.plugins.base import Plugin, PluginType
 
 
 def write_graph_file(path, template=False):
@@ -94,7 +94,7 @@ def test_plugin_template_discovery_supports_mgt_and_legacy_mg_metadata(tmp_path)
     write_graph_file(legacy_template_file, template=True)
     write_graph_file(project_file, template=False)
 
-    plugin = Plugin("testPlugin", str(tmp_path))
+    plugin = Plugin("testPlugin", str(tmp_path), str(tmp_path), PluginType.BUILTIN)
 
     assert plugin.templates == {
         "explicit": str(explicit_template_file),

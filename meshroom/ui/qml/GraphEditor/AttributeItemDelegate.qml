@@ -760,6 +760,34 @@ RowLayout {
         }
 
         Component {
+            id: groupAttrsEditorComponent
+            Dialog {
+                id: dialog
+                property alias node: editor.node
+                property alias attribute: editor.attribute
+
+                parent: Overlay.overlay
+                modal: true
+                focus: true
+                closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+                anchors.centerIn: parent
+                title: "Manage Group Attributes"
+                standardButtons: Dialog.Close
+
+                NodeAttributeEditor {
+                    id: editor
+                }
+
+                CustomAttributesEditor {
+                    nodeAttributeEditor: editor
+                    palette: Colors.sysPalette
+                }
+
+                onClosed: destroy()
+            }
+        }
+
+        Component {
             id: groupAttributeComponent
             ColumnLayout {
                 id: groupItem
@@ -815,6 +843,22 @@ RowLayout {
                                 groupItem.expanded = !groupItem.expanded
                             }
                             onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
+                        }
+                    }
+
+                    ToolButton {
+                        enabled: attribute.type == "AnySet"
+                        visible: enabled
+                        text: MaterialIcons.edit
+                        font.family: MaterialIcons.fontFamily
+                        font.pointSize: 10
+                        padding: 2
+                        onClicked: {
+                            var groupAttrEditor = groupAttrsEditorComponent.createObject(root, {
+                                'node': _currentScene.selectedNode,
+                                'attribute': attribute,
+                            })
+                            groupAttrEditor.open()
                         }
                     }
                 }

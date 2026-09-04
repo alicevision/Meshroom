@@ -56,12 +56,12 @@ class PluginLoader:
     """
 
     def loadPlugin(self,
-                    pluginName: str,
-                    pluginFolder: str,
-                    pluginType: PluginType,
-                    pluginVersion: Optional[str] = None,
-                    isUserPlugin: bool = False,
-                    hasMeshroomFolder: bool = True) -> Plugin:
+                   pluginName: str,
+                   pluginFolder: str,
+                   pluginType: PluginType,
+                   pluginVersion: Optional[str] = None,
+                   isUserPlugin: bool = False,
+                   hasMeshroomFolder: bool = True) -> Plugin:
         """
         Load the plugin located in "pluginFolder" and return it.
 
@@ -172,7 +172,7 @@ class PluginLoader:
         self._loadFlatFolder(plugin, packageName, folderRootPath, issues)
 
         for subFolderPath in sorted(p for p in folderRootPath.iterdir()
-                                     if p.is_dir() and not p.name.startswith(("__", "."))):
+                                    if p.is_dir() and not p.name.startswith(("__", "."))):
             self._loadFolder(plugin, f"{packageName}.{subFolderPath.name}", subFolderPath, issues)
 
     def _loadFolder(self, plugin: Plugin, packageName: str, folderPath: Path, issues: _LoadIssues):
@@ -265,7 +265,7 @@ class PluginLoader:
             self._collectProviders(plugin, module, issues)
 
     def _execModule(self, moduleName: str, filePath: Path, issues: _LoadIssues,
-                     submoduleSearchLocations: list[str] = None) -> ModuleType:
+                    submoduleSearchLocations: list[str] = None) -> ModuleType:
         """
         Load the Python file "filePath" as the module "moduleName" and register it in sys.modules.
 
@@ -298,7 +298,7 @@ class PluginLoader:
             # subsequent import of that name would silently return the broken module.
             sys.modules.pop(moduleName, None)
             issues.loading.append(f'Failed to load the module "{moduleName}" from "{filePath}"'
-                                   f'{self._formatExceptionMessage(exc)}')
+                                  f'{self._formatExceptionMessage(exc)}')
             return None
 
         return module
@@ -323,16 +323,20 @@ class PluginLoader:
                     if nodeDescProvider.error:
                         issues.nodeDescProviders.append(nodeDescProvider.error)
                 except Exception as exc:
-                    issues.nodeDescProviders.append(f'Failed to create the node provider for "{attrName}" from '
-                                f'"{module.__file__}"{self._formatExceptionMessage(exc)}')
+                    issues.nodeDescProviders.append(
+                        f'Failed to create the node provider for "{attrName}" from '
+                        f'"{module.__file__}"{self._formatExceptionMessage(exc)}'
+                    )
             elif issubclass(attr, BaseSubmitter):
                 try:
                     submitterProvider = plugin.addSubmitterProvider(attr)
                     if submitterProvider.error:
                         issues.submitterProviders.append(submitterProvider.error)
                 except Exception as exc:
-                    issues.submitterProviders.append(f'Failed to create the submitter provider for "{attrName}" from '
-                                f'"{module.__file__}"{self._formatExceptionMessage(exc)}')
+                    issues.submitterProviders.append(
+                        f'Failed to create the submitter provider for "{attrName}" from '
+                        f'"{module.__file__}"{self._formatExceptionMessage(exc)}'
+                    )
 
     def _registerPackage(self, packageName: str, packagePath: Path = None):
         """

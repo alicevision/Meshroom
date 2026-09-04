@@ -80,7 +80,7 @@ class Plugin(BaseObject):
 
         envType = "rez" if type is PluginType.REZ else "dirtree"
         self._processEnv: ProcessEnv = processEnvFactory(self._rootPath, self._configEnv, self._name,
-                                                          envType=envType)
+                                                         envType=envType)
 
     def __repr__(self):
         return f"<Plugin {self._name}>"
@@ -287,7 +287,7 @@ class NodeDescProvider(BaseObject):
     @staticmethod
     def __validateNodeDescClass(nodeDescClass: type[desc.BaseNode]) -> Optional[str]:
         """
-        Check that the node description class is a valid description. 
+        Check that the node description class is a valid description.
         To be valid, the default value of every parameter needs to correspond to the type
         of the parameter. In case of nested parameters (parameters in groups or lists, for example),
         the name of the parameter follows the name of the parent attributes. For example, if the attribute
@@ -349,7 +349,7 @@ class NodeDescProvider(BaseObject):
         self._processEnv = None
         if plugin and plugin.type is PluginType.REZ:
             self._processEnv: ProcessEnv = processEnvFactory(plugin.rootPath, plugin.configEnv, plugin.name,
-                                                              pluginSubPackage=self.relativePackage, envType="rez")
+                                                             pluginSubPackage=self.relativePackage, envType="rez")
         self._timestamp = os.path.getmtime(self.path)
 
     def reload(self) -> bool:

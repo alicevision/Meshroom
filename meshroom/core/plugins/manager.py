@@ -34,13 +34,13 @@ class PluginManager(BaseObject):
         self._submitterProviders: dict[str, SubmitterProvider] = {}  # registered submitter providers
 
     def _addPlugin(self,
-                    pluginName: str,
-                    pluginFolder: str,
-                    pluginType: PluginType,
-                    pluginVersion: Optional[str] = None,
-                    isUserPlugin: bool = False,
-                    hasMeshroomFolder: bool = True,
-                    registerProviders: bool = True):
+                   pluginName: str,
+                   pluginFolder: str,
+                   pluginType: PluginType,
+                   pluginVersion: Optional[str] = None,
+                   isUserPlugin: bool = False,
+                   hasMeshroomFolder: bool = True,
+                   registerProviders: bool = True):
         """
         Add a Plugin object and register the valid node description and submitter providers it contains.
 
@@ -60,11 +60,11 @@ class PluginManager(BaseObject):
         """
         startTime = time.perf_counter()
         plugin = self._pluginLoader.loadPlugin(pluginName=pluginName,
-                                                pluginFolder=pluginFolder,
-                                                pluginType=pluginType,
-                                                pluginVersion=pluginVersion,
-                                                isUserPlugin=isUserPlugin,
-                                                hasMeshroomFolder=hasMeshroomFolder)
+                                               pluginFolder=pluginFolder,
+                                               pluginType=pluginType,
+                                               pluginVersion=pluginVersion,
+                                               isUserPlugin=isUserPlugin,
+                                               hasMeshroomFolder=hasMeshroomFolder)
         if plugin:
             if self.getPlugin(plugin.name):
                 logging.warning(f"Plugin {plugin.name} is already registered.")

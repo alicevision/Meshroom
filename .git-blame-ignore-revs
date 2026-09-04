@@ -1,3 +1,5 @@
+# [plugins] Lint the `plugins` module
+81bbe4b045704ac67641c86665f4d2f7327ae9dc
 # |tests] Apply PEP8 linting
 ed96364ad9b667c0cb9f719c6c00e3d554f83291
 # [tests] nodes: Apply PEP8 linting

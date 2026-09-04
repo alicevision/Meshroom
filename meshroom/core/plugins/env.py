@@ -221,12 +221,36 @@ class RezProcessEnv(ProcessEnv):
     def getCommandPrefix(self):
         # TODO: make Windows-compatible
 
-        # Use the PYTHONPATH from the subrequires' environment (which will only be resolved once
-        # inside the execution environment) and add MESHROOM_ROOT and the plugin's folder itself
-        # to it
-        pythonPaths = f"{os.pathsep.join(['$PYTHONPATH', f'{_MESHROOM_ROOT}', f'{self._folder}'])}"
+        # Retrieve the global PYTHONPATH and append to the subrequires' environment (which will only be resolved inside
+        # the execution environment).
+        # This will allow loading properly descriptions for nodes from other plugins that may have imports that
+        # cannot be resolved from the subrequires' PYTHONPATH alone.
+        currentPythonPaths = os.environ.get("PYTHONPATH", "")
+        splitPythonPaths = currentPythonPaths.split(os.pathsep)
+        filteredPaths = []
+        for path in splitPythonPaths:
+            if "pyside" in path.lower():
+                continue
+            if "shiboken" in path.lower():
+                continue
+            filteredPaths.append(path)
+        currentPythonPaths = os.pathsep.join(filteredPaths)
+        pythonPaths = f"{os.pathsep.join(['$PYTHONPATH', f'{_MESHROOM_ROOT}', f'{self._folder}', f'{currentPythonPaths}'])}"
 
-        return f"rez env {' '.join(self.resolveRezSubrequires())} -c 'PYTHONPATH={pythonPaths} "
+        # Retrieve the loaded plugins and nodes to re-inject them in the subrequires' environment.
+        # In most cases, this is overkill as these variables are inherited by rez, but there might be some
+        # cases where a package in the subrequires' environment edits one of these variables, which will
+        # reset it.
+        rezPlugins = os.environ.get("MESHROOM_REZ_PLUGINS", "")
+        regPlugins = os.environ.get("MESHROOM_PLUGINS_PATH", "")
+        rezUserPlugins = os.environ.get("MESHROOM_USER_REZ_PLUGINS", "")
+        regUserPlugins = os.environ.get("MESHROOM_USER_PLUGINS_PATH", "")
+        meshroomNodesPath = os.environ.get("MESHROOM_NODES_PATH", "")
+
+        return f"rez env {' '.join(self.resolveRezSubrequires())} " \
+               f"-c 'PYTHONPATH={pythonPaths} MESHROOM_REZ_PLUGINS={rezPlugins} " \
+               f"MESHROOM_PLUGINS_PATH={regPlugins} MESHROOM_USER_PLUGINS_PATH={regUserPlugins} " \
+               f"MESHROOM_USER_REZ_PLUGINS={rezUserPlugins} MESHROOM_NODES_PATH={meshroomNodesPath} "
 
     def getCommandSuffix(self):
         return "'"

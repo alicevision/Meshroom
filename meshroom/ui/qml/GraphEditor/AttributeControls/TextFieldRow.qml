@@ -6,7 +6,6 @@ RowLayout {
     id: root
     required property string text
     required property bool mandatory
-    required property var attribute
     property bool editable
     signal editingFinished(var text)
     signal accepted(var parameterLabel, var text)
@@ -18,7 +17,7 @@ RowLayout {
         id: textField
         Layout.fillWidth: true
         readOnly: !root.editable
-        text: root.text
+        text: root.text.trim()
         placeholderText: root.mandatory ? "This field is required" : ""
         placeholderTextColor: "gray"
         // Don't disable the component to keep interactive features (text selection, context menu...).
@@ -28,7 +27,8 @@ RowLayout {
             colorGroup: SystemPalette.Disabled
         }
         background: Rectangle {
-            border.color: errorMessages.length ? "orange" : "transparent"
+            border.width: textField.activeFocus ? 2 : 1
+            border.color: textField.activeFocus ? palette.highlight : (errorMessages.length ? "orange" : "transparent")
             color:  Qt.darker(palette.window, 1.2)
             radius: 2
         }

@@ -620,7 +620,7 @@ FloatingPane {
                                                 to: 10
                                                 stepSize: 0.01
                                                 value: root.layerPointSize("sfmData", index, 1.0)
-                                                onValueChanged: root.setLayerPointSize("sfmData", index, value)
+                                                onMoved: root.setLayerPointSize("sfmData", index, value)
                                                 ToolTip.text: "Point Size: " + value.toFixed(2)
                                                 ToolTip.visible: hovered || pressed
                                                 ToolTip.delay: 100

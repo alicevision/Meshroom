@@ -2313,6 +2313,18 @@ class BaseNode(BaseObject):
         return next((attr for attr in self._attributes if attr.hasDisplayableShape or
                      attr.desc.semantic == "shapeFile"), None) is not None
 
+    def _hasDisplayablePoint3d(self):
+        """
+        Return True if at least one attribute can provide a Point3d display in Viewer3D.
+        False otherwise.
+        """
+        for attr in self._attributes:
+            if attr.type == "Point3d":
+                return True
+            if attr.type == "ShapeList" and attr.desc.elementDesc.__class__.__name__ == "Point3d":
+                return True
+        return False
+
 
     nodeNameChanged = Signal()
     name = Property(str, getName, notify=nodeNameChanged)
@@ -2390,6 +2402,8 @@ class BaseNode(BaseObject):
     hasTextOutput = Property(bool, hasTextOutputAttribute, notify=outputAttrChanged)
     # Whether the node contains a ShapeAttribute, a ShapeListAttribute or a shape File.
     hasDisplayableShape = Property(bool, _hasDisplayableShape, constant=True)
+    # Whether the node contains a Point3d attribute or a Point3d shape list for Viewer3D.
+    hasDisplayablePoint3d = Property(bool, _hasDisplayablePoint3d, constant=True)
 
     hasInvalidAttributeChanged = Signal()
     hasInvalidAttribute = Property(bool, _hasInvalidAttribute, notify=hasInvalidAttributeChanged)

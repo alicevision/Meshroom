@@ -28,6 +28,7 @@ Loader {
         if (!properties || !observation)
             return;
         switch (type) {
+            case "Point3d":   return pointLayerComponent
             case "Point2d":   return pointLayerComponent
             case "Line2d":    return lineLayerComponent
             case "Circle":    return circleLayerComponent

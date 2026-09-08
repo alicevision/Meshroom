@@ -237,6 +237,7 @@ Pane {
                     switch(model.type) {
                         case "ShapeFile": return MaterialIcons.insert_drive_file;
                         case "ShapeList": return MaterialIcons.layers;
+                        case "Point3d":   return MaterialIcons.gain;
                         case "Point2d":   return MaterialIcons.control_camera;
                         case "Line2d":    return MaterialIcons.linear_scale;
                         case "Circle":    return MaterialIcons.radio_button_unchecked;

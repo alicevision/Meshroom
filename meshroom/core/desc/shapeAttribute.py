@@ -1,4 +1,4 @@
-from meshroom.core.desc import ListAttribute, GroupAttribute, StringParam, FloatParam, Geometry, Size2d, Vec2d
+from meshroom.core.desc import ListAttribute, GroupAttribute, StringParam, FloatParam, BoolParam, Geometry, Size2d, Vec2d
 
 class Shape(GroupAttribute):
     """
@@ -60,6 +60,50 @@ class ShapeList(ListAttribute):
                               enabled=self.enabled,
                               visible=self.visible,
                               exposed=self.exposed)
+
+class Point3d(Shape):
+    """
+    Point3d is a Shape attribute that allows to display and modify a 3d point.
+    """
+    def __init__(self, name, label, description, keyable=False, keyType=None,
+                 commandLineGroup="allParams", advanced=False, semantic="",
+                 enabled=True, visible=True, exposed=False):
+        # Geometry group desciption
+        geometryItems = [
+            FloatParam(name="X", label="X", description="X coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
+                       commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
+            FloatParam(name="Y", label="Y", description="Y coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
+                       commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
+            FloatParam(name="Z", label="Z", description="Z coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
+                       commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
+            FloatParam(name="x", label="x", description="x 2D coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
+                        commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
+            FloatParam(name="y", label="y", description="y 2D coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
+                        commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
+            BoolParam(name="picked", label="Picked", description="Whether the point was picked in 3D.", value=False,
+                      keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
+                      enabled=enabled, visible=visible, exposed=exposed)
+        ]
+        # ShapeAttribute constructor
+        super(Point3d, self).__init__(geometryItems, name, label, description, commandLineGroup=None, advanced=advanced,
+                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
+
+    def clone(self):
+        clone = self.__class__(
+             name=self.name,
+             label=self.label,
+             description=self.description,
+             keyable=self.items[0].keyable,
+             keyType=self.items[0].keyType,
+             commandLineGroup=self.commandLineGroup,
+             advanced=self.advanced,
+             semantic=self.semantic,
+             enabled=self.enabled,
+             visible=self.visible,
+             exposed=self.exposed
+        )
+        clone._items = [item.clone() for item in self._items]
+        return clone
 
 class Point2d(Shape):
     """

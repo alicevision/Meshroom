@@ -22,6 +22,7 @@ from .shapeAttribute import (
     Shape,
     ShapeList,
     Point2d,
+    Point3d,
     Line2d,
     Rectangle,
     Circle

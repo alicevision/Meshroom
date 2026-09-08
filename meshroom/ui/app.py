@@ -29,7 +29,7 @@ from meshroom.ui.components.scene3D import Scene3DHelper, Transformations3DHelpe
 from meshroom.ui.components.scriptEditor import ScriptEditorManager
 from meshroom.ui.components.thumbnail import ThumbnailCache
 from meshroom.ui.components.messaging import MessageController
-from meshroom.ui.components.shapes import ShapeFilesHelper, ShapeViewerHelper
+from meshroom.ui.components.shapes import Point3dViewerHelper, ShapeFilesHelper, ShapeViewerHelper
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.scene import Scene
 from meshroom.ui.utils import QmlInstantEngine
@@ -310,6 +310,7 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("Clipboard", ClipboardHelper(parent=self))
         self.engine.rootContext().setContextProperty("ThumbnailCache", ThumbnailCache(parent=self))
         self.engine.rootContext().setContextProperty("ShapeFilesHelper", ShapeFilesHelper(self.activeProject, parent=self))
+        self.engine.rootContext().setContextProperty("Point3dViewerHelper", Point3dViewerHelper(self.activeProject, parent=self))
         self.engine.rootContext().setContextProperty("ShapeViewerHelper", ShapeViewerHelper(parent=self))
 
         # additional context properties

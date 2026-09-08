@@ -44,6 +44,8 @@ Item {
             },
             SphereLayer {
                 id: sphereLayer
+                visible: Point3dViewerHelper.hasSelectedNodePoint3d
+                positions: Point3dViewerHelper.positions
             }
         ]
 
@@ -60,7 +62,7 @@ Item {
             property bool draggingRight: false
 
             onClicked: (mouse) => {
-                if (mouse.button === Qt.LeftButton)
+                if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.CtrlModifier))
                 {
                     sceneView.pick(Qt.vector2d(mouse.x, mouse.y))
                 }

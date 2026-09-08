@@ -33,6 +33,18 @@ FocusScope {
         mainCamera.viewCenter = defaultCamViewCenter
     }
 
+    /// Look along 'direction', keeping the current distance to the view center.
+    function setCameraDirection(direction, upVector) {
+        var distance = mainCamera.viewCenter.minus(mainCamera.position).length()
+        mainCamera.upVector = upVector
+        mainCamera.position = mainCamera.viewCenter.minus(direction.times(distance))
+    }
+
+    /// Look at the scene from the opposite side, along the same axis.
+    function flipCameraDirection() {
+        mainCamera.position = mainCamera.viewCenter.times(2).minus(mainCamera.position)
+    }
+
     function load(filepath, label = undefined) {
         mediaLibrary.load(filepath, label)
     }
@@ -98,7 +110,8 @@ FocusScope {
 
             Camera {
                 id: mainCamera
-                projectionType: CameraLens.PerspectiveProjection
+                projectionType: Viewer3DSettings.orthographic ? CameraLens.OrthographicProjection
+                                                              : CameraLens.PerspectiveProjection
                 enabled: cameraSelector.camera == mainCamera
                 fieldOfView: 45
                 nearPlane : 0.01
@@ -107,6 +120,17 @@ FocusScope {
                 upVector: defaultCamUpVector
                 viewCenter: defaultCamViewCenter
                 aspectRatio: width/height
+
+                // An orthographic projection has no field of view, so its view volume is
+                // derived from the distance to the view center: what lies at that distance
+                // keeps its apparent size when toggling projection, and the existing
+                // distance-based zoom keeps working with no change to the controller.
+                readonly property real orthoHalfHeight: viewCenter.minus(position).length()
+                                                        * Math.tan(fieldOfView * Math.PI / 360)
+                top: orthoHalfHeight
+                bottom: -orthoHalfHeight
+                left: -orthoHalfHeight * aspectRatio
+                right: orthoHalfHeight * aspectRatio
             }
 
             ViewpointCamera {
@@ -294,6 +318,47 @@ FocusScope {
                 onCheckedChanged: Viewer3DSettings.displayNormals = checked
             }
 
+        }
+    }
+
+    // Projection and axis-aligned viewpoints
+    FloatingPane {
+        anchors.bottom: parent.bottom
+        anchors.left: renderModesPanel.right
+        padding: 4
+        Row {
+            MaterialToolButton {
+                text: Viewer3DSettings.orthographic ? MaterialIcons.crop_free : MaterialIcons.view_in_ar
+                ToolTip.text: Viewer3DSettings.orthographic ? "Orthographic Projection" : "Perspective Projection"
+                font.pointSize: 11
+                checkable: true
+                checked: Viewer3DSettings.orthographic
+                onClicked: Viewer3DSettings.orthographic = checked
+            }
+            MaterialToolButton {
+                text: MaterialIcons.vertical_align_top
+                ToolTip.text: "Top View"
+                font.pointSize: 11
+                onClicked: setCameraDirection(Qt.vector3d(0, -1, 0), Qt.vector3d(0, 0, -1))
+            }
+            MaterialToolButton {
+                text: MaterialIcons.north
+                ToolTip.text: "Front View"
+                font.pointSize: 11
+                onClicked: setCameraDirection(Qt.vector3d(0, 0, -1), Qt.vector3d(0, 1, 0))
+            }
+            MaterialToolButton {
+                text: MaterialIcons.east
+                ToolTip.text: "Side View"
+                font.pointSize: 11
+                onClicked: setCameraDirection(Qt.vector3d(-1, 0, 0), Qt.vector3d(0, 1, 0))
+            }
+            MaterialToolButton {
+                text: MaterialIcons.flip
+                ToolTip.text: "Flip View"
+                font.pointSize: 11
+                onClicked: flipCameraDirection()
+            }
         }
     }
 

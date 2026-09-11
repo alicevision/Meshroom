@@ -394,11 +394,17 @@ class LogManager:
         for handler in self.logger.handlers[:]:
             self._previousHandlers.append(handler)
             self.logger.removeHandler(handler)
-        handler = logging.FileHandler(self.logFile)
+
         formatter = self.Formatter('[%(asctime)s.%(msecs)03d][%(levelname)s] %(message)s',
                                    self.dateTimeFormatting)
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+        
+        fileHandler = logging.FileHandler(self.logFile)
+        fileHandler.setFormatter(formatter)
+        self.logger.addHandler(fileHandler)
+
+        streamHandler = logging.StreamHandler(sys.stdout)
+        streamHandler.setFormatter(formatter)
+        self.logger.addHandler(streamHandler)
 
     def restorePreviousLogger(self):
         for h in self.logger.handlers[:]:

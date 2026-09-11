@@ -10,6 +10,7 @@ import shutil
 import sys
 import signal
 import subprocess
+import threading
 from collections import OrderedDict
 from typing import Any, ClassVar, Mapping, Optional, Sequence, TYPE_CHECKING
 import psutil
@@ -57,6 +58,20 @@ class ExitCleanup:
         sys.exit(0)
 
 exitCleanup = ExitCleanup()
+
+
+def _teeSubprocessOutput(process, logFile):
+    """
+    Read the output of a subprocess and write it to both the log file and stdout.
+    """
+    try:
+        for line in iter(process.stdout.readline, ''):
+            logFile.write(line)
+            logFile.flush()
+            sys.stdout.write(line)
+            sys.stdout.flush()
+    finally:
+        process.stdout.close()
 
 
 class MrNodeType(enum.Enum):
@@ -459,23 +474,45 @@ class BaseNode(object):
                     platformArgs = {"start_new_session": True}
                     # Note: "preexec_fn"=os.setsid is the old way before python-3.2
 
+                # chunk.subprocess = psutil.Popen(
+                #     cmdList,
+                #     stdout=logF,
+                #     stderr=logF,
+                #     cwd=chunk.node.internalFolder,
+                #     env=env,
+                #     text=True,
+                #     **platformArgs,
+                # )
+                # exitCleanup.addSubprocess(chunk.subprocess)
+
+                # if hasattr(chunk, "statThread"):
+                #     # We only have a statThread if the node is running in the current process
+                #     # and not in a dedicated environment/process.
+                #     chunk.statThread.proc = chunk.subprocess
+
+                # stdout, stderr = chunk.subprocess.communicate()
+
+                # chunk.status.returnCode = chunk.subprocess.returncode
                 chunk.subprocess = psutil.Popen(
                     cmdList,
-                    stdout=logF,
-                    stderr=logF,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
                     cwd=chunk.node.internalFolder,
                     env=env,
                     text=True,
+                    bufsize=1,
                     **platformArgs,
                 )
                 exitCleanup.addSubprocess(chunk.subprocess)
 
                 if hasattr(chunk, "statThread"):
-                    # We only have a statThread if the node is running in the current process
-                    # and not in a dedicated environment/process.
                     chunk.statThread.proc = chunk.subprocess
 
-                stdout, stderr = chunk.subprocess.communicate()
+                teeThread = threading.Thread(target=_teeSubprocessOutput, args=(chunk.subprocess, logF), daemon=True)
+                teeThread.start()
+
+                chunk.subprocess.wait()
+                teeThread.join()
 
                 chunk.status.returnCode = chunk.subprocess.returncode
 

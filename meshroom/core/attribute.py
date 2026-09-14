@@ -872,12 +872,19 @@ class ChoiceParam(Attribute):
         super().__init__(node, attributeDesc, isOutput, root, parent)
         self._values = None
 
+    # Maps a ChoiceParam's value type to the scalar Param type allowed to connect to it.
+    _LINKABLE_PARAM_TYPES = {
+        int: "IntParam",
+        float: "FloatParam",
+        str: "StringParam",
+    }
+
     def __len__(self):
         return len(self.getValues())
 
     def getValues(self):
         linkParam = self._getInputLink()
-        if linkParam is not None:
+        if isinstance(linkParam, ChoiceParam):
             return linkParam.getValues()
         return self._values if self._values is not None else self._desc._values
 
@@ -897,6 +904,14 @@ class ChoiceParam(Attribute):
             raise ValueError(f"Non exclusive ChoiceParam value should be iterable (param: {self.name}, "
                              f"value: {value}, type: {type(value)})")
         return [self._conformValue(v) for v in value]
+
+    # Override
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        if super()._validateIncomingConnection(connectingAttribute):
+            return True
+
+        expectedBaseType = self._LINKABLE_PARAM_TYPES.get(self._desc._valueType)
+        return expectedBaseType is not None and connectingAttribute.baseType == expectedBaseType
 
     def _conformValue(self, val):
         """

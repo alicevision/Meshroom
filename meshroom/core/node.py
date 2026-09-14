@@ -2736,6 +2736,32 @@ class CompatibilityNode(BaseNode):
         pass
 
     @staticmethod
+    def _looksLikeAnySetValue(value) -> bool:
+        """
+        Heuristic detection of a serialized AnySet payload (current {"expanded", "children"}
+        format, or legacy list/dict-of-children forms), used to reconstruct a real AnySet
+        attribute even when there is no node description to consult
+        (e.g. CompatibilityIssue.UnknownNodeType / PluginIssue).
+        """
+        def isChildDict(entry):
+            return (
+                isinstance(entry, dict)
+                and isinstance(entry.get("name"), str)
+                and isinstance(getattr(desc, entry.get("type", ""), None), type)
+            )
+
+        if isinstance(value, dict) and isinstance(value.get("children"), list):
+            children = value["children"]
+        elif isinstance(value, list):
+            children = value
+        elif isinstance(value, dict):
+            children = list(value.values())
+        else:
+            return False
+
+        return bool(children) and all(isChildDict(c) for c in children)
+
+    @staticmethod
     def attributeDescFromValue(attrName, value, isOutput):
         """
         Generate an attribute description (desc.Attribute) that best matches 'value'.
@@ -2777,6 +2803,9 @@ class CompatibilityNode(BaseNode):
                 return desc.StringParam(**params)
         # List/GroupAttribute: recursively build descriptions
         elif isinstance(value, (list, dict)):
+            if CompatibilityNode._looksLikeAnySetValue(value):
+                return desc.AnySet(name=attrName, description="Incompatible parameter")
+
             del params["value"]
             del params["invalidate"]
             attrDesc = None
@@ -2820,6 +2849,9 @@ class CompatibilityNode(BaseNode):
         #
         # If it is a serialized link expression (no proper value to set/evaluate)
         if Attribute.isLinkExpression(value):
+            return attrDesc
+
+        if isinstance(attrDesc, AnySetDescription):
             return attrDesc
 
         # If it is a GroupAttribute, all the attributes within the group should be matched

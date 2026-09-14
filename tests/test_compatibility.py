@@ -740,3 +740,96 @@ class TestUidConflict:
 
             loadedGraph = loadGraph(graph.filepath)
             assert len(loadedGraph.compatibilityNodes) == 1
+
+
+class SampleAnySetNodeV1(desc.Node):
+    inputs = [
+        desc.File(name="input", value=""),
+        desc.AnySet(name="ins", label="Custom Inputs")
+    ]
+    outputs = [
+        desc.File(name="output", value="{nodeCacheFolder}")
+    ]
+
+
+class SampleAnySetNodeV2(desc.Node):
+    """Changes from V1: 'input' renamed to 'in' (unrelated to the AnySet attribute)."""
+    inputs = [
+        desc.File(name="in", value=""),
+        desc.AnySet(name="ins", label="Custom Inputs")
+    ]
+    outputs = [
+        desc.File(name="output", value="{nodeCacheFolder}")
+    ]
+
+
+class TestAnySetCompatibility:
+
+    def test_compatibilityNodePreservesAnySetChildrenOnUnrelatedConflict(self, graphSavedOnDisk):
+        """
+        An AnySet attribute's dynamic children must survive being wrapped in a
+        CompatibilityNode created for a reason unrelated to the AnySet attribute itself.
+        """
+        with registeredNodeTypes([SampleAnySetNodeV1]):
+            graph: Graph = graphSavedOnDisk
+            n = graph.addNewNode("SampleAnySetNodeV1")
+            lsNode = graph.addNewNode("Ls", input="/fakeDirectory")
+            n.ins.duplicateAttribute(lsNode.input)
+            n.ins.input.value = "/somePath"
+
+            graph.save()
+
+            # Force a DescriptionConflict on an unrelated attribute ("input" -> "in")
+            pluginManager.getNodeDescProviders()["SampleAnySetNodeV1"] = NodeDescProvider(SampleAnySetNodeV2)
+
+            g2 = loadGraph(graph.filepath)
+
+            compatNode = g2.node(n.name)
+            assert isinstance(compatNode, CompatibilityNode)
+
+            # The dynamic child should still be reachable and typed correctly.
+            assert compatNode.ins.input.value == "/somePath"
+
+    def test_compatibilityNodePreservesAnySetChildrenOnUnrelatedConflictManual(self, graphSavedOnDisk):
+        """
+        An AnySet attribute's dynamic children must survive being wrapped in a
+        CompatibilityNode created for a reason unrelated to the AnySet attribute itself.
+        """
+        with registeredNodeTypes([SampleAnySetNodeV1]):
+            graph: Graph = graphSavedOnDisk
+            n = graph.addNewNode("SampleAnySetNodeV1")
+            lsNode = graph.addNewNode("Ls", input="/fakeDirectory")
+            n.ins.duplicateAttribute(lsNode.input)
+            n.ins.input.value = "/somePath"
+
+            graph.save()
+
+            # Force a DescriptionConflict on an unrelated attribute ("input" -> "in")
+            pluginManager.getNodeDescProviders()["SampleAnySetNodeV1"] = NodeDescProvider(SampleAnySetNodeV2)
+
+            g2 = loadGraph(graph.filepath)
+
+            compatNode = g2.node(n.name)
+            assert isinstance(compatNode, CompatibilityNode)
+
+            # The dynamic child should still be reachable and typed correctly.
+            assert compatNode.ins.input.value == "/somePath"
+
+    def test_compatibilityNodePreservesAnySetChildrenOnUnknownType(self, graphSavedOnDisk):
+        """ Same check when the whole node type is unknown (no nodeDesc at all). """
+        registerNodeDesc(SampleAnySetNodeV1)
+        graph: Graph = graphSavedOnDisk
+        n = graph.addNewNode("SampleAnySetNodeV1")
+        lsNode = graph.addNewNode("Ls", input="/fakeDirectory")
+        n.ins.duplicateAttribute(lsNode.input)
+        n.ins.input.value = "/somePath"
+
+        graph.save()
+
+        unregisterNodeDesc(SampleAnySetNodeV1)  # node type now fully unknown
+
+        g2 = loadGraph(graph.filepath)
+
+        compatNode = g2.node(n.name)
+        assert isinstance(compatNode, CompatibilityNode)
+        assert compatNode.ins.input.value == "/somePath"

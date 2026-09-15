@@ -3,6 +3,7 @@ import QtQuick.Controls
 
 import MaterialIcons 2.2
 import Utils 1.0
+import Controls 1.0
 
 /**
  * Renders the header, rows and scrollbars for a "table" ListAttribute (a ListAttribute
@@ -42,7 +43,7 @@ Item {
     property var scaledColumnWidths: []
     property real scaledTableWidth: 0
     property real availableW: root.width > 0
-                              ? root.width - fixedStrip.width - vBar.width
+                              ? root.width - fixedStrip.width
                               : 600
     // Size that fits the table's content, used to size the fullscreen window on open.
     readonly property real preferredContentWidth: scaledTableWidth + fixedStrip.width + vBar.width + 2 * stdHeight
@@ -111,73 +112,20 @@ Item {
         target: attribute
                 ? attribute.value
                 : null
-        function onCountChanged() { root.initSizes(); root.updateScaledWidths() }
-        function onModelReset() { root.initSizes(); root.updateScaledWidths() }
-        function onRowsInserted() { root.initSizes(); root.updateScaledWidths() }
-        function onDataChanged() { root.initSizes(); root.updateScaledWidths() }
+        function refreshSizes() { root.initSizes(); root.updateScaledWidths() }
+        function onCountChanged() { refreshSizes() }
+        function onModelReset() { refreshSizes() }
+        function onRowsInserted() { refreshSizes() }
+        function onDataChanged() { refreshSizes() }
     }
     onAvailableWChanged: root.updateScaledWidths()
 
-    ScrollBar {
-        id: hBar
-        anchors {
-            left: fixedStrip.right
-            right: root.right
-            bottom: root.bottom
-            rightMargin: vBar.width
-        }
-        orientation: Qt.Horizontal
-        policy: flickable.contentWidth > flickable.width
-                ? ScrollBar.AlwaysOn
-                : ScrollBar.AlwaysOff
-        size: Math.min(1.0, flickable.width / Math.max(flickable.contentWidth, 1))
-        position: (flickable.contentX /
-                   Math.max(flickable.contentWidth - flickable.width, 1))
-                  * (1.0 - size)
-        onPositionChanged: {
-            if (!pressed)
-                return
-            var maxPos = 1.0 - size
-            var ratio  = maxPos > 0
-                         ? position / maxPos
-                         : 0
-            flickable.contentX = ratio * Math.max(flickable.contentWidth - flickable.width, 1)
-        }
-    }
-    ScrollBar {
-        id: vBar
-        anchors {
-            top: root.top
-            bottom: root.bottom
-            right: root.right
-            bottomMargin: hBar.height
-        }
-        orientation: Qt.Vertical
-        policy: flickable.contentHeight > flickable.height
-                ? ScrollBar.AlwaysOn
-                : ScrollBar.AlwaysOff
-        size: Math.min(1.0, flickable.height /
-                       Math.max(flickable.contentHeight, 1))
-        position: (flickable.contentY /
-                   Math.max(flickable.contentHeight - flickable.height, 1))
-                  * (1.0 - size)
-        onPositionChanged: {
-            if (!pressed)
-                return
-            var maxPos = 1.0 - size
-            var ratio = maxPos > 0
-                        ? position / maxPos
-                        : 0
-            flickable.contentY = ratio * Math.max(flickable.contentHeight - flickable.height, 1)
-        }
-    }
     Item {
         id: fixedHeader
         anchors {
             left: fixedStrip.right
             right: root.right
             top: root.top
-            rightMargin: vBar.width
         }
         height: stdHeight
         clip: true
@@ -247,7 +195,7 @@ Item {
         anchors {
             left: root.left
             top: root.top
-            bottom: hBar.top
+            bottom: root.bottom
             topMargin: stdHeight
         }
         width: stdHeight
@@ -266,22 +214,9 @@ Item {
                     required property var object
                     width: fixedStrip.width
                     height: stdHeight
-                    ToolButton {
+                    RemoveElementButton {
                         anchors.centerIn: parent
-                        enabled: root.editable
-                        text: MaterialIcons.remove_circle_outline
-                        font.family: MaterialIcons.fontFamily
-                        font.pointSize: 11
-                        padding: 2
-                        ToolTip.text: "Remove Element"
-                        ToolTip.visible: hovered
-                        contentItem: Text {
-                            text: parent.text
-                            font: parent.font
-                            color: palette.text
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
+                        editable: root.editable
                         onClicked: _currentScene.removeAttribute(removeDelegate.object)
                     }
                 }
@@ -302,23 +237,10 @@ Item {
             color: Qt.darker(palette.window, 1.2)
             border.color: palette.mid
         }
-        ToolButton {
+        AddElementButton {
             anchors.centerIn: parent
-            text: MaterialIcons.add_circle_outline
-            font.family: MaterialIcons.fontFamily
-            font.pointSize: 11
-            padding: 2
-            enabled: root.editable
-            ToolTip.text: "Add Element"
-            ToolTip.visible: hovered
-            contentItem: Text {
-                text: parent.text
-                font: parent.font
-                color: palette.text
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-            onClicked: _currentScene.appendAttribute(attribute, undefined)
+            editable: root.editable
+            onClicked: _currentScene.appendAttribute(root.attribute, undefined)
         }
     }
     Flickable {
@@ -327,14 +249,15 @@ Item {
             left: fixedStrip.right
             right: root.right
             top: root.top
-            bottom: hBar.top
+            bottom: root.bottom
             topMargin: stdHeight
-            rightMargin: vBar.width
         }
         clip: true
         contentWidth: root.scaledTableWidth
         contentHeight: root.totalTableHeight
         interactive: true
+        ScrollBar.horizontal: MScrollBar { id: hBar }
+        ScrollBar.vertical: MScrollBar { id: vBar }
         WheelHandler {
             onWheel: function(event) {
                 if (event.modifiers & Qt.ControlModifier) {

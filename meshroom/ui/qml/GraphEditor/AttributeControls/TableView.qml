@@ -12,26 +12,13 @@ ColumnLayout {
     required property var attribute
     property bool expanded: false
 
-    RowLayout {
-        spacing: 4
-        ToolButton {
-            text: root.expanded ? MaterialIcons.keyboard_arrow_down
-                                : MaterialIcons.keyboard_arrow_right
-            font.family: MaterialIcons.fontFamily
-            onClicked: root.expanded = !root.expanded
-        }
-        Label {
-            Layout.alignment: Qt.AlignVCenter
-            text: attribute.value.count + " elements"
-        }
-        ToolButton {
-            text: MaterialIcons.add_circle_outline
-            font.family: MaterialIcons.fontFamily
-            font.pointSize: 11
-            padding: 2
-            enabled: root.editable
-            onClicked: _currentScene.appendAttribute(attribute, undefined)
-        }
+    CollapsibleListHeader {
+        elementCount: root.attribute.value.count
+        editable: root.editable
+        expanded: root.expanded
+        onExpandToggled: root.expanded = !root.expanded
+        onAddRequested: _currentScene.appendAttribute(root.attribute, undefined)
+
         ToolButton {
             text: MaterialIcons.fullscreen
             font.family: MaterialIcons.fontFamily

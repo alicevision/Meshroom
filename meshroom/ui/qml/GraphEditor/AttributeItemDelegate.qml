@@ -465,25 +465,12 @@ RowLayout {
                 id: listAttributeLayout
                 width: parent.width
                 property bool expanded: false
-                RowLayout {
-                    spacing: 4
-                    ToolButton {
-                        text: listAttributeLayout.expanded  ? MaterialIcons.keyboard_arrow_down : MaterialIcons.keyboard_arrow_right
-                        font.family: MaterialIcons.fontFamily
-                        onClicked: listAttributeLayout.expanded = !listAttributeLayout.expanded
-                    }
-                    Label {
-                        Layout.alignment: Qt.AlignVCenter
-                        text: attribute.value.count + " elements"
-                    }
-                    ToolButton {
-                        text: MaterialIcons.add_circle_outline
-                        font.family: MaterialIcons.fontFamily
-                        font.pointSize: 11
-                        padding: 2
-                        enabled: root.editable
-                        onClicked: _currentScene.appendAttribute(attribute, undefined)
-                    }
+                AttributeControls.CollapsibleListHeader {
+                    elementCount: root.attribute.value.count
+                    editable: root.editable
+                    expanded: listAttributeLayout.expanded
+                    onExpandToggled: listAttributeLayout.expanded = !listAttributeLayout.expanded
+                    onAddRequested: _currentScene.appendAttribute(root.attribute, undefined)
                 }
                 ListView {
                     id: lv
@@ -522,14 +509,8 @@ RowLayout {
                                 obj.inAttributeClicked.connect(function(srcItem, mouse, inAttributes) { root.inAttributeClicked(srcItem, mouse, inAttributes) })
                                 obj.outAttributeClicked.connect(function(srcItem, mouse, outAttributes) { root.outAttributeClicked(srcItem, mouse, outAttributes) })
                             }
-                            ToolButton {
-                                enabled: root.editable
-                                text: MaterialIcons.remove_circle_outline
-                                font.family: MaterialIcons.fontFamily
-                                font.pointSize: 11
-                                padding: 2
-                                ToolTip.text: "Remove Element"
-                                ToolTip.visible: hovered
+                            AttributeControls.RemoveElementButton {
+                                editable: root.editable
                                 onClicked: _currentScene.removeAttribute(item.childAttrib)
                             }
                         }

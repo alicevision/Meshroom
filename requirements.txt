@@ -2,4 +2,5 @@
 psutil>=5.6.7
 PySide6==6.8.3; python_version >= "3.9"
 PySide6==6.5.3; python_version < "3.9"
+tomli>=2.0.1; python_version < "3.11"
 pyseq==0.9.0

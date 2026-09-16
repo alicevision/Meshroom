@@ -300,7 +300,7 @@ class TestPluginLoader:
         assert plugin is not None
         assert plugin.name == "overriddenName"
         assert plugin.version == "1.2.3"
-        assert plugin.configEnv["MY_VAR"] == "myValue"
+        assert plugin.env["MY_VAR"] == "myValue"
         assert f"{PLUGINS_ROOT_PACKAGE}.overriddenName" in sys.modules
 
         loader.unloadPlugin("overriddenName")
@@ -336,7 +336,7 @@ class TestPluginLoader:
         assert plugin is not None
         assert plugin.name == "listConfigPlugin"
         assert plugin.version == "1.0.0"
-        assert plugin.configEnv["MY_VAR"] == "myValue"
+        assert plugin.env["MY_VAR"] == "myValue"
 
         loader.unloadPlugin("listConfigPlugin")
 
@@ -345,7 +345,7 @@ class TestPluginLoader:
         given values, with a warning logged. """
         writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
         writeFile(tmp_path / "meshroom/config.json", json.dumps({
-            "name": "invalid-name",
+            "name": "@invalid-name",
             "version": "not_a_version",
         }))
 

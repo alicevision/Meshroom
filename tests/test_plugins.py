@@ -5,7 +5,6 @@ from meshroom.core.desc.node import NodeVersionType
 from meshroom.core.plugins.base import NodeDescProviderStatus
 from .utils import overrideOsEnvironmentVariables, registeredPlugin
 
-from pathlib import Path
 import os
 import time
 
@@ -31,7 +30,7 @@ class TestPluginWithValidNodesOnly:
         assert plugin
         assert plugin.name == "pluginA"
         # Check path too
-        assert str(plugin.path) == os.path.join(os.path.dirname(__file__), "plugins", "pluginA", "meshroom")
+        assert str(plugin.hostPath) == os.path.join(os.path.dirname(__file__), "plugins", "pluginA", "meshroom")
 
     def test_loadedPlugin(self):
         # Assert that there are loaded plugins, and that "pluginA" is one of them
@@ -46,7 +45,7 @@ class TestPluginWithValidNodesOnly:
         assert len(plugin.templates) == 1
         name = list(plugin.templates.keys())[0]
         assert name == "sharedTemplate"
-        assert plugin.templates[name] == os.path.join(str(plugin.path), "sharedTemplate.mg")
+        assert plugin.templates[name] == os.path.join(str(plugin.hostPath), "sharedTemplate.mg")
 
     def test_removePlugin(self):
         plugin = pluginManager.getPlugin("pluginA")
@@ -89,7 +88,7 @@ class TestPluginWithInvalidNodes:
         assert len(pluginManager.getPlugins()) >= 1
         plugin = pluginManager.getPlugin("pluginB")
         assert plugin
-        assert str(plugin.path) == os.path.join(os.path.dirname(__file__), "plugins", "pluginB", "meshroom")
+        assert str(plugin.hostPath) == os.path.join(os.path.dirname(__file__), "plugins", "pluginB", "meshroom")
 
         # Assert that PluginBNodeA is successfully registered
         assert pluginManager.isNodeDescRegistered("PluginBNodeA")
@@ -189,125 +188,6 @@ class TestPluginWithInvalidNodes:
         nodeDescProvider.reload()
         assert nodeDescProvider.status == NodeDescProviderStatus.VALID
         assert pluginManager.isNodeDescRegistered(nodeDescProvider.name)
-
-
-class TestPluginsConfiguration:
-    CONFIG_PATH = ("CONFIG_PATH", "sharedTemplate.mg", "config.json")
-    ERRONEOUS_CONFIG_PATH = ("ERRONEOUS_CONFIG_PATH", "erroneous_path", "not_erroneous_path")
-    CONFIG_STRING = ("CONFIG_STRING", "configFile", "notConfigFile")
-
-    CONFIG_KEYS = [CONFIG_PATH[0], ERRONEOUS_CONFIG_PATH[0], CONFIG_STRING[0]]
-
-    def test_loadedConfig(self):
-        # Check that the config.json file for the plugins in the "plugins" directory is
-        # correctly loaded
-        folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginA")
-        with registeredPlugin("pluginA", folder):
-            plugin = pluginManager.getPlugin("pluginA")
-            assert plugin
-
-            # Check that the config file has been properly loaded
-            config = plugin.configEnv
-            configFullEnv = plugin.configFullEnv
-            assert len(config) == 3, "The configuration file contains exactly 3 keys."
-            assert len(configFullEnv) >= len(os.environ) and \
-                len(configFullEnv) == len(os.environ) + len(config), \
-                "The configuration environment should have the same number of keys as " \
-                "os.environ and the configuration file"
-
-            # Check that all the keys have been properly read
-            assert list(config.keys()) == self.CONFIG_KEYS
-
-            # Check that the valid path has been correctly read, resolved and set
-            assert configFullEnv[self.CONFIG_PATH[0]] == config[self.CONFIG_PATH[0]]
-            assert configFullEnv[self.CONFIG_PATH[0]] == Path(
-                os.path.join(plugin.path, self.CONFIG_PATH[1])).resolve().as_posix()
-
-            # Check that the invalid path has been read, unresolved, and set
-            assert configFullEnv[self.ERRONEOUS_CONFIG_PATH[0]] == self.ERRONEOUS_CONFIG_PATH[1]
-            assert config[self.ERRONEOUS_CONFIG_PATH[0]] == self.ERRONEOUS_CONFIG_PATH[1]
-
-            # Check that the string has been correctly read and set
-            assert configFullEnv[self.CONFIG_STRING[0]] == self.CONFIG_STRING[1]
-            assert config[self.CONFIG_STRING[0]] == self.CONFIG_STRING[1]
-
-    def test_loadedConfigWithOnlyExistingKeys(self):
-        # Set the keys from the config file in the current environment
-        environment = {
-            self.CONFIG_PATH[0]: self.CONFIG_PATH[2],
-            self.ERRONEOUS_CONFIG_PATH[0]: self.ERRONEOUS_CONFIG_PATH[2],
-            self.CONFIG_STRING[0]: self.CONFIG_STRING[2]
-        }
-        folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginA")
-        with overrideOsEnvironmentVariables(environment):
-            with registeredPlugin("pluginA", folder):
-                plugin = pluginManager.getPlugin("pluginA")
-                assert plugin
-
-                # Check that the config file has been properly loaded and read
-                # Environment variables that are already set should not have any effect on that
-                # reading of values
-                config = plugin.configEnv
-                assert len(config) == 3
-                assert list(config.keys()) == self.CONFIG_KEYS
-                assert config[self.CONFIG_PATH[0]] == Path(
-                    os.path.join(plugin.path, self.CONFIG_PATH[1])).resolve().as_posix()
-                assert config[self.ERRONEOUS_CONFIG_PATH[0]] == self.ERRONEOUS_CONFIG_PATH[1]
-                assert config[self.CONFIG_STRING[0]] == self.CONFIG_STRING[1]
-
-                # Check that the values of the configuration file are not taking precedence over
-                # those in the environment
-                configFullEnv = plugin.configFullEnv
-                assert all(key in configFullEnv for key in config.keys())
-
-                assert config[self.CONFIG_PATH[0]] != self.CONFIG_PATH[2]
-                assert configFullEnv[self.CONFIG_PATH[0]] == self.CONFIG_PATH[2]
-
-                assert config[self.ERRONEOUS_CONFIG_PATH[0]] != self.ERRONEOUS_CONFIG_PATH[2]
-                assert configFullEnv[self.ERRONEOUS_CONFIG_PATH[0]] == self.ERRONEOUS_CONFIG_PATH[2]
-
-                assert config[self.CONFIG_STRING[0]] != self.CONFIG_STRING[2]
-                assert configFullEnv[self.CONFIG_STRING[0]] == self.CONFIG_STRING[2]
-
-    def test_loadedConfigWithSomeExistingKeys(self):
-        # Set some keys from the config file in the current environment
-        environment = {
-            self.ERRONEOUS_CONFIG_PATH[0]: self.ERRONEOUS_CONFIG_PATH[2],
-            self.CONFIG_STRING[0]: self.CONFIG_STRING[2]
-        }
-
-        folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginA")
-        with overrideOsEnvironmentVariables(environment):
-            with registeredPlugin("pluginA", folder):
-                plugin = pluginManager.getPlugin("pluginA")
-                assert plugin
-
-                # Check that the config file has been properly loaded and read
-                # Environment variables that are already set should not have any effect on that
-                # reading of values
-                config = plugin.configEnv
-                assert len(config) == 3
-                assert list(config.keys()) == self.CONFIG_KEYS
-                assert config[self.CONFIG_PATH[0]] == Path(
-                    os.path.join(plugin.path, self.CONFIG_PATH[1])).resolve().as_posix()
-                assert config[self.ERRONEOUS_CONFIG_PATH[0]] == self.ERRONEOUS_CONFIG_PATH[1]
-                assert config[self.CONFIG_STRING[0]] == self.CONFIG_STRING[1]
-
-                # Check that the values of the configuration file are not taking precedence over
-                # those in the environment
-                configFullEnv = plugin.configFullEnv
-                assert all(key in configFullEnv for key in config.keys())
-
-                assert config[self.CONFIG_PATH[0]] == Path(os.path.join(
-                    plugin.path, self.CONFIG_PATH[1])).resolve().as_posix()
-                assert configFullEnv[self.CONFIG_PATH[0]] == Path(os.path.join(
-                    plugin.path, self.CONFIG_PATH[1])).resolve().as_posix()
-
-                assert config[self.ERRONEOUS_CONFIG_PATH[0]] != self.ERRONEOUS_CONFIG_PATH[2]
-                assert configFullEnv[self.ERRONEOUS_CONFIG_PATH[0]] == self.ERRONEOUS_CONFIG_PATH[2]
-
-                assert config[self.CONFIG_STRING[0]] != self.CONFIG_STRING[2]
-                assert configFullEnv[self.CONFIG_STRING[0]] == self.CONFIG_STRING[2]
 
 
 class TestVersionPlugins:

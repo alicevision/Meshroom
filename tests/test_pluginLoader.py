@@ -357,3 +357,84 @@ class TestPluginLoader:
         assert plugin.version == "1.0.0"
 
         loader.unloadPlugin("fallbackPlugin")
+
+    def test_pyprojectNameAndVersionOverride(self, tmp_path):
+        """ "[project].name"/"[project].version" in "pyproject.toml" override the given plugin
+        name/version. """
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "pyproject.toml", (
+            "[project]\n"
+            "name = \"overriddenName\"\n"
+            "version = \"1.2.3\"\n"
+            "\n"
+            "[tool.meshroom]\n"
+            "env = [{ key = \"MY_VAR\", type = \"string\", value = \"myValue\" }]\n"
+        ))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("originalName", str(tmp_path), PluginType.PATH, pluginVersion="0.0.1")
+
+        assert plugin is not None
+        assert plugin.name == "overriddenName"
+        assert plugin.version == "1.2.3"
+        assert plugin.env["MY_VAR"] == "myValue"
+        assert f"{PLUGINS_ROOT_PACKAGE}.overriddenName" in sys.modules
+
+        loader.unloadPlugin("overriddenName")
+
+    def test_pyprojectOverrideIgnoredForRezPlugin(self, tmp_path):
+        """ For a Rez plugin, "[project].name"/"[project].version" from "pyproject.toml" are
+        ignored: the Rez-resolved values take precedence. """
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "pyproject.toml", (
+            "[project]\n"
+            "name = \"shouldBeIgnored\"\n"
+            "version = \"9.9.9\"\n"
+        ))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("rezPlugin", str(tmp_path), PluginType.REZ, pluginVersion="1.0.0")
+
+        assert plugin is not None
+        assert plugin.name == "rezPlugin"
+        assert plugin.version == "1.0.0"
+
+        loader.unloadPlugin("rezPlugin")
+
+    def test_pyprojectEnvOnlyFallsBackToGivenNameAndVersion(self, tmp_path):
+        """ A "pyproject.toml" with only a "[tool.meshroom].env" table and no "[project]" name/
+        version falls back to the given plugin name/version. """
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "pyproject.toml", (
+            "[tool.meshroom]\n"
+            "env = [{ key = \"MY_VAR\", type = \"string\", value = \"myValue\" }]\n"
+        ))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("envOnlyPlugin", str(tmp_path), PluginType.PATH, pluginVersion="1.0.0")
+
+        assert plugin is not None
+        assert plugin.name == "envOnlyPlugin"
+        assert plugin.version == "1.0.0"
+        assert plugin.env["MY_VAR"] == "myValue"
+
+        loader.unloadPlugin("envOnlyPlugin")
+
+    def test_invalidPyprojectNameAndVersionFallBack(self, tmp_path):
+        """ An invalid "[project].name"/"[project].version" in "pyproject.toml" is ignored,
+        falling back to the given values, with a warning logged. """
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "pyproject.toml", (
+            "[project]\n"
+            "name = \"@invalid_name\"\n"
+            "version = \"not a version\"\n"
+        ))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("fallbackPlugin", str(tmp_path), PluginType.PATH, pluginVersion="1.0.0")
+
+        assert plugin is not None
+        assert plugin.name == "fallbackPlugin"
+        assert plugin.version == "1.0.0"
+
+        loader.unloadPlugin("fallbackPlugin")

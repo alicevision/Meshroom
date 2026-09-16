@@ -4,7 +4,6 @@ import importlib
 import importlib.machinery
 import importlib.util
 import logging
-import os
 import sys
 import traceback
 
@@ -14,8 +13,8 @@ from typing import Optional
 
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
-from meshroom.core.plugins.base import Plugin, PluginType
-from meshroom.core.plugins.config import PluginConfig
+from meshroom.core.plugins.base import PluginType, PluginContext, Plugin
+from meshroom.core.plugins.metadata import PluginMetadata
 
 # The virtual package all the imported plugins are nested in.
 # Registered directly in sys.modules.
@@ -85,53 +84,77 @@ class PluginLoader:
             pluginVersion: the plugin's version. Overridden by the "version" of its configuration
                         file, unless "pluginType" is PluginType.REZ.
             isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
-            hasMeshroomFolder: whether "pluginFolder" directly contains the plugin's modules, instead of
-                        gathering them in a "meshroom" folder.
+            hasMeshroomFolder: whether "pluginFolder" directly contains the plugin's host modules,
+                        instead of gathering them in a "meshroom" folder.
 
         Returns:
             Plugin: the loaded plugin, or None if its folders do not exist, if its name is already
                     used, or if it does not provide any node description, submitter, or template.
         """
-        if not os.path.isdir(pluginFolder):
+        rootPath = Path(pluginFolder)
+        if not rootPath.is_dir():
             logging.info(f"Plugin folder '{pluginFolder}' does not exist.")
             return None
 
-        # Case where the folder directly contains the plugin's modules, while the other plugins are
-        # expected to gather modules in a "meshroom" folder.
-        mrFolder = Path(pluginFolder)
+        # Case where the root folder directly contains the plugin's host modules.
+        hostPath = Path(pluginFolder)
 
+        # Case where the "meshroom" subfolder contains the plugin's host modules.
         if hasMeshroomFolder:
-            mrFolder = Path(pluginFolder, "meshroom")
-            if not mrFolder.is_dir():
+            hostPath = Path(pluginFolder, "meshroom")
+            if not hostPath.is_dir():
                 logging.info(f"Plugin folder '{pluginFolder}' does not contain a 'meshroom' folder.")
                 return None
 
-        # Resolve the plugin's final name/version from its configuration file.
-        # A Rez plugin name/version is definitive: config.json cannot override it.
-        pluginConfig = None
-        pluginConfigPath = mrFolder / "config.json"
-        if pluginConfigPath.is_file():
-            pluginConfig = PluginConfig.load(pluginConfigPath)
-            if pluginType is not PluginType.REZ:
-                pluginName = pluginConfig.name or pluginName
-                pluginVersion = pluginConfig.version or pluginVersion
+        # Resolve plugin metadata, trying each source in order and keeping the first match:
+        # 1. "plugin.lock" (written by the plugin downloader, for local plugins).
+        # 2. "pyproject.toml" (standard project metadata).
+        # 3. "config.json" (legacy support).
+        # If none of them provide metadata, fall back to an empty one.
+        envBasePath = rootPath
+        metadata = PluginMetadata.loadJson(rootPath / "plugin.lock")
+        if metadata is None:
+            metadata = PluginMetadata.loadToml(rootPath / "pyproject.toml")
+            if metadata is None:
+                metadata = PluginMetadata.loadJson(hostPath / "config.json")
+                if metadata is None:
+                    metadata = PluginMetadata()
+                else:
+                    # Metadata found in legacy "config.json"
+                    # Env variables are relative to hostPath
+                    envBasePath = hostPath
+
+        # Resolve metadata name/version:
+        # - For Rez plugin "pluginName"/"pluginVersion" are definitive.
+        # - For other plugin if unset fallback to "pluginName"/"pluginVersion".
+        if not metadata.name or pluginType is PluginType.REZ:
+            metadata.name = pluginName
+        if not metadata.version or pluginType is PluginType.REZ:
+            metadata.version = pluginVersion
 
         # The plugin's name prefixes its modules.
         # Two plugins shipping identically named files do not collide in sys.modules.
-        pluginPackage = f"{PLUGINS_ROOT_PACKAGE}.{pluginName}"
+        pluginPackage = f"{PLUGINS_ROOT_PACKAGE}.{metadata.name}"
 
         # Reject a plugin whose name is already used.
         if pluginPackage in sys.modules:
-            logging.warning(f"A plugin '{pluginName}' has already been loaded.")
+            logging.warning(f"A plugin '{metadata.name}' has already been loaded.")
             return None
 
-        # Initialize the plugin object.
-        plugin = Plugin(pluginName, pluginFolder, mrFolder, pluginType, pluginVersion, isUserPlugin,
-                        pluginConfig)
+        # Create context and initialize plugin object.
+        context = PluginContext(
+            rootPath=rootPath,
+            hostPath=hostPath,
+            type=pluginType,
+            metadata=metadata,
+            isUserPlugin=isUserPlugin,
+            env=metadata.resolveEnv(envBasePath)
+        )
+        plugin = Plugin(context)
 
-        # Recursive load of modules.
+        # Recursive load of host modules.
         issues = _LoadIssues()
-        self._loadRootFolder(plugin, pluginPackage, mrFolder, issues)
+        self._loadRootFolder(plugin, pluginPackage, hostPath, issues)
 
         # Log issues.
         issues.log(pluginName)
@@ -140,7 +163,7 @@ class PluginLoader:
         if (len(plugin.nodeDescProviders) <= 0
                 and len(plugin.submitterProviders) <= 0
                 and len(plugin.templates) <= 0):
-            logging.debug(f"Plugin '{pluginName}' ({pluginFolder}) does not contain modules/templates.")
+            logging.debug(f"Plugin '{metadata.name}' ({pluginFolder}) does not contain modules/templates.")
             return None
 
         return plugin

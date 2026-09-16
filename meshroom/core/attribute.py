@@ -8,6 +8,7 @@ import threading
 import weakref
 import logging
 import inspect
+import math
 
 from collections.abc import Iterable, Sequence
 from string import Template
@@ -1544,7 +1545,10 @@ class GeometryAttribute(GroupAttribute):
                         outValue[key][attribute.name] = value
             else:
                 for pair in attribute.keyValues.pairs:
-                    outValue[str(pair.key)][attribute.name] = pair.value
+                    value = pair.value
+                    if math.isnan(value):
+                        value = 'nan'
+                    outValue[str(pair.key)][attribute.name] = value
         return dict(outValue)
 
     def _hasKeyableChilds(self) -> bool:

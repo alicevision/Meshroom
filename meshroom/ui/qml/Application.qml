@@ -1332,11 +1332,12 @@ Page {
                     if (!panel3dViewer || (!attribute.node.has3DOutput && !attribute.node.hasAttribute("useBoundingBox"))) {
                         return false
                     }
-                    var loaded = panel3dViewer.viewer3D.view(attribute)
+
+                    var loaded = panel3dViewer.viewer3D.viewAttribute(attribute)
 
                     // solo media if Control modifier was held
                     if (loaded && mouse && mouse.modifiers & Qt.ControlModifier) {
-                        panel3dViewer.viewer3D.solo(attribute)
+                        //panel3dViewer.viewer3D.solo(attribute)
                     }
                     return loaded
                 }
@@ -1349,7 +1350,7 @@ Page {
                     }
 
                     else if (attribute.is3dDisplayable) {
-                            workspaceView.viewIn3D(attribute, mouse)
+                        workspaceView.viewIn3D(attribute, mouse)
                     }
 
                     else if (attribute.isTextDisplayable) {

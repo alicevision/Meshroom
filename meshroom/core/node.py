@@ -2313,6 +2313,18 @@ class BaseNode(BaseObject):
         return next((attr for attr in self._attributes if attr.hasDisplayableShape or
                      attr.desc.semantic == "shapeFile"), None) is not None
 
+    def _hasDisplayableSurveyPoint(self):
+        """
+        Return True if at least one attribute can provide a SurveyPoint display in Viewer3D.
+        False otherwise.
+        """
+        for attr in self._attributes:
+            if attr.type == "SurveyPoint":
+                return True
+            if attr.type == "ShapeList" and attr.desc.elementDesc.__class__.__name__ == "SurveyPoint":
+                return True
+        return False
+
 
     nodeNameChanged = Signal()
     name = Property(str, getName, notify=nodeNameChanged)
@@ -2390,6 +2402,8 @@ class BaseNode(BaseObject):
     hasTextOutput = Property(bool, hasTextOutputAttribute, notify=outputAttrChanged)
     # Whether the node contains a ShapeAttribute, a ShapeListAttribute or a shape File.
     hasDisplayableShape = Property(bool, _hasDisplayableShape, constant=True)
+    # Whether the node contains a SurveyPoint attribute or a SurveyPoint shape list for Viewer3D.
+    hasDisplayableSurveyPoint = Property(bool, _hasDisplayableSurveyPoint, constant=True)
 
     hasInvalidAttributeChanged = Signal()
     hasInvalidAttribute = Property(bool, _hasInvalidAttribute, notify=hasInvalidAttributeChanged)

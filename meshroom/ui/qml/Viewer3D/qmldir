@@ -1,8 +1,12 @@
 module Viewer3D
 
 Viewer3D 1.0 Viewer3D.qml
-singleton Viewer3DSettings 1.0 Viewer3DSettings.qml
-DefaultCameraController 1.0 DefaultCameraController.qml
-Locator3D 1.0 Locator3D.qml
-Grid3D 1.0 Grid3D.qml
 Inspector3D 1.0 Inspector3D.qml
+ImageGroup3D 1.0 ImageGroup3D.qml
+CameraGroup 1.0 CameraGroup.qml
+MeshesGroup3D 1.0 MeshesGroup3D.qml
+SfmDataGroup3D 1.0 SfmDataGroup3D.qml
+SceneObjectCollection 1.0 SceneObjectCollection.qml
+internal MeshEntry 1.0 MeshEntry.qml
+internal SfmDataEntry 1.0 SfmDataEntry.qml
+internal DepthmapEntry 1.0 DepthmapEntry.qml

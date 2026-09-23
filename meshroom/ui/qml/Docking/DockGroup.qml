@@ -250,13 +250,11 @@ Item {
     Menu {
         id: tabContextMenu
 
-        readonly property bool floating: root.area !== root.manager.mainArea
-
         MenuItem {
             text: "Float"
             // A panel alone in a floating window already floats
             enabled: root.manager.layoutModel.canFloat(m.contextMenuPanelId)
-                     && !(tabContextMenu.floating && root.manager.panelsOf(root.area.rootNode).length === 1)
+                     && !(root.area.floating && root.manager.panelsOf(root.area.rootNode).length === 1)
             onTriggered: {
                 var position = root.mapToGlobal(0, 0)
                 root.manager.floatPanel(root.manager.panels[m.contextMenuPanelId], position.x + 30, position.y + 30)
@@ -264,7 +262,7 @@ Item {
         }
         MenuItem {
             text: "Dock in Main Window"
-            enabled: tabContextMenu.floating
+            enabled: root.area.floating
             onTriggered: root.manager.layoutModel.dockPanel(m.contextMenuPanelId)
         }
         MenuSeparator {}

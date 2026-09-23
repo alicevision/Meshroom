@@ -16,9 +16,8 @@ Entity {
     property real panSpeed: 500.0
     property alias focus: keyboardHandler.focus
     readonly property bool pickingActive: actionControl.active && keyboardHandler._pressed
-    property alias rotationSpeed: trackball.rotationSpeed
-    property alias windowSize: trackball.windowSize
-    property alias trackballSize: trackball.trackballSize
+    property alias rotationSpeed: turntable.rotationSpeed
+    property alias windowSize: turntable.windowSize
 
     property bool loseMouseFocus: false  // Must be changed by other entities when they want to take mouse focus
 
@@ -36,8 +35,8 @@ Entity {
     KeyboardDevice { id: keyboardSourceDevice }
     MouseDevice { id: mouseSourceDevice }
 
-    TrackballController {
-        id: trackball
+    TurntableCameraController {
+        id: turntable
         camera: root.camera
     }
 
@@ -82,8 +81,8 @@ Entity {
                 root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt))
                 return
             }
-            if (moving) {  // Trackball rotation
-                trackball.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition, dt)
+            if (moving) {  // Orbit around the view center
+                turntable.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition)
                 mouseHandler.lastPosition = mouseHandler.currentPosition
                 mouseHandler.hasMoved = true
                 return

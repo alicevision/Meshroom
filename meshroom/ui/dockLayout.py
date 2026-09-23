@@ -74,15 +74,20 @@ DEFAULT_LAYOUT = {
 }
 
 
+def _isNumber(value):
+    """ Whether a value is a finite int or float, booleans excluded. """
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
 def _isPositiveNumber(value):
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0
+    return _isNumber(value) and value > 0
 
 
 def _cleanGeometry(geometry):
     """ Return a valid [x, y, width, height] geometry as integers, or None. """
     if not isinstance(geometry, (list, tuple)) or len(geometry) != 4:
         return None
-    if not all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) for v in geometry):
+    if not all(_isNumber(v) for v in geometry):
         return None
     if geometry[2] <= 0 or geometry[3] <= 0:
         return None
@@ -154,13 +159,12 @@ class DockLayout:
     def __init__(self, defaultLayout=DEFAULT_LAYOUT, nonFloatablePanels=NON_FLOATABLE_PANELS):
         """
         Args:
-            defaultLayout: the layout used by `reset`, which also defines the known panels.
+            defaultLayout: the layout used by `reset`, without floating windows, which also defines the
+                known panels.
             nonFloatablePanels: ids of the panels that cannot be displayed in a floating window.
         """
         self._nextId = 1
         self._panelIds = panelsOf(defaultLayout["main"])
-        for window in defaultLayout.get("floating", []):
-            self._panelIds += panelsOf(window["root"])
         self._nonFloatable = set(nonFloatablePanels)
         self._default = copy.deepcopy(defaultLayout)
         self._layout = None
@@ -177,7 +181,7 @@ class DockLayout:
 
     def reset(self):
         """ Restore the default layout. """
-        self._layout = self._normalized(copy.deepcopy(self._default))
+        self._normalize(copy.deepcopy(self._default))
 
     def load(self, data):
         """
@@ -189,7 +193,7 @@ class DockLayout:
         """
         if not isinstance(data, dict) or data.get("version") != LAYOUT_VERSION:
             return False
-        self._layout = self._normalized(copy.deepcopy(data))
+        self._normalize(copy.deepcopy(data))
         return True
 
     # --- Queries ----------------------------------------------------------------------------------
@@ -317,7 +321,7 @@ class DockLayout:
             self._insertBeside(target, self._newTabs([panelId]), zone)
 
         self.setPanelOpen(panelId, True)
-        self._layout = self._normalized(self._layout)
+        self._normalize(self._layout)
         return True
 
     def floatPanel(self, panelId, geometry=None):
@@ -345,7 +349,7 @@ class DockLayout:
             "root": self._newTabs([panelId]),
         })
         self.setPanelOpen(panelId, True)
-        self._layout = self._normalized(self._layout)
+        self._normalize(self._layout)
         return windowId
 
     def dockPanel(self, panelId):
@@ -363,7 +367,7 @@ class DockLayout:
         self._insertHome(panelId)
         self.groupOf(panelId)["current"] = panelId
         self.setPanelOpen(panelId, True)
-        self._layout = self._normalized(self._layout)
+        self._normalize(self._layout)
         return True
 
     def setFloatingGeometry(self, windowId, geometry):
@@ -462,8 +466,8 @@ class DockLayout:
         else:
             self._layout["main"] = split
 
-    def _normalized(self, data):
-        """ Return a normalized copy of a layout (see the class documentation). """
+    def _normalize(self, data):
+        """ Replace the layout with a normalized copy of `data` (see the class documentation). """
         seen = set()
         layout = {
             "version": LAYOUT_VERSION,
@@ -495,8 +499,6 @@ class DockLayout:
                 self._insertHome(panelId)
                 if panelId in self._default.get("closed", []) and panelId not in closed:
                     layout["closed"].append(panelId)
-
-        return layout
 
     def _cleanNode(self, node, seen, excluded=()):
         """

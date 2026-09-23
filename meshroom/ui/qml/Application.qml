@@ -1038,6 +1038,12 @@ Page {
                     }
                 }
                 MenuSeparator {}
+                WorkspacesMenu {
+                    layoutModel: _dockLayout
+                    onSaveRequested: workspaceDialogs.promptSave()
+                    onDeleteRequested: function(name) { workspaceDialogs.confirmDelete(name) }
+                }
+                MenuSeparator {}
                 Action {
                     text: "Fullscreen"
                     checkable: true
@@ -1252,6 +1258,11 @@ Page {
             // Setup global tooltip style
             ToolTip.toolTip.background: Rectangle { color: activePalette.base; border.color: activePalette.mid }
         }
+    }
+
+    WorkspaceDialogs {
+        id: workspaceDialogs
+        layoutModel: _dockLayout
     }
 
     DockManager {

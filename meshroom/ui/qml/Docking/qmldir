@@ -5,3 +5,5 @@ DockGroup 1.0 DockGroup.qml
 DockManager 1.0 DockManager.qml
 DockNode 1.0 DockNode.qml
 DockPanel 1.0 DockPanel.qml
+WorkspaceDialogs 1.0 WorkspaceDialogs.qml
+WorkspacesMenu 1.0 WorkspacesMenu.qml

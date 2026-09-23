@@ -12,12 +12,17 @@ class DockLayoutManager(QObject):
     Exposes the layout of the dockable panels (see `meshroom.ui.dockLayout`) to QML, and keeps it in
     the application settings so that it is restored at the next start.
 
+    Layouts can also be saved as named workspaces, stored in the settings as well. The "Default"
+    workspace is built in: loading it resets the layout.
+
     It outlives the QML engine reloads (e.g. on a palette change): the QML side rebuilds the layout
     from it whenever it is (re)created.
     """
 
     settingsGroup = "UILayout"
     layoutKey = "dockLayout"
+    workspacesKey = "workspaces"
+    defaultWorkspaceName = "Default"
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -109,6 +114,68 @@ class DockLayoutManager(QObject):
         self._save()
         return fractions
 
+    def _workspaces(self):
+        """ Return the saved workspaces: their layouts by name. """
+        settings = QSettings()
+        settings.beginGroup(self.settingsGroup)
+        try:
+            workspaces = json.loads(settings.value(self.workspacesKey) or "{}")
+        except (TypeError, ValueError):
+            workspaces = None
+        return workspaces if isinstance(workspaces, dict) else {}
+
+    def _setWorkspaces(self, workspaces):
+        settings = QSettings()
+        settings.beginGroup(self.settingsGroup)
+        settings.setValue(self.workspacesKey, json.dumps(workspaces))
+        self.workspacesChanged.emit()
+
+    @Slot(str, result=bool)
+    def saveWorkspace(self, name):
+        """
+        Save the current layout as a workspace, replacing any workspace with the same name.
+
+        Returns:
+            bool: whether it was saved; the name must not be empty nor the one of the default workspace.
+        """
+        name = name.strip()
+        if not name or name.lower() == self.defaultWorkspaceName.lower():
+            return False
+        workspaces = self._workspaces()
+        workspaces[name] = self._layout.toDict()
+        self._setWorkspaces(workspaces)
+        return True
+
+    @Slot(str, result=bool)
+    def loadWorkspace(self, name):
+        """
+        Replace the current layout with a saved workspace, or with the default layout for the default one.
+
+        Returns:
+            bool: whether the workspace was loaded.
+        """
+        if name == self.defaultWorkspaceName:
+            self._layout.reset()
+        else:
+            data = self._workspaces().get(name)
+            if data is None or not self._layout.load(data):
+                logging.warning(f"Cannot load the workspace '{name}'.")
+                return False
+        self._structureChanged()
+        return True
+
+    @Slot(str)
+    def deleteWorkspace(self, name):
+        workspaces = self._workspaces()
+        if workspaces.pop(name, None) is not None:
+            self._setWorkspaces(workspaces)
+
+    @Slot(str, result=bool)
+    def hasWorkspace(self, name):
+        """ Whether a workspace with this name exists, the default one included. """
+        name = name.strip()
+        return name.lower() == self.defaultWorkspaceName.lower() or name in self._workspaces()
+
     @Slot(int, int, result=QObject)
     def windowAt(self, x, y):
         """ Return the top level window at the given global position, or None. """
@@ -122,3 +189,8 @@ class DockLayoutManager(QObject):
     panelIds = Property("QVariantList", lambda self: self._layout.panelIds, constant=True)
     # Emitted with the ids of a group and of the panel that became its current tab
     currentPanelChanged = Signal(str, str)
+    workspacesChanged = Signal()
+    # Name of the built-in workspace holding the default layout
+    defaultWorkspace = Property(str, lambda self: self.defaultWorkspaceName, constant=True)
+    # Names of the saved workspaces, the default one excluded
+    workspaceNames = Property("QVariantList", lambda self: sorted(self._workspaces(), key=str.lower), notify=workspacesChanged)

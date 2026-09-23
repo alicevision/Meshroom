@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 
+import MaterialIcons 2.2
+
 /**
  * DockGroup displays the panels of a "tabs" node of the dock layout as tabs, the contextual toolbar of
  * the current panel being displayed on the right of the tabs.
@@ -150,7 +152,8 @@ Item {
                     readonly property DockPanel panel: root.manager.panels[panelId]
                     readonly property bool displayed: panelId === root.displayedPanelId
 
-                    width: Math.min(tabLabel.implicitWidth + 16, 300)
+                    // The room of the close button is kept when it is hidden, so the tabs do not move
+                    width: Math.min(tabLabel.implicitWidth + closeButton.width, 300)
                     height: tabRow.height
                     color: displayed ? root.palette.window : Qt.darker(root.palette.window, 1.30)
                     border.color: Qt.darker(root.palette.window, 1.50)
@@ -159,10 +162,11 @@ Item {
                     Label {
                         id: tabLabel
                         anchors.fill: parent
+                        anchors.rightMargin: closeButton.width
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         leftPadding: 8
-                        rightPadding: 8
+                        rightPadding: 2
                         text: tab.panel.tabTitle
                         textFormat: Text.StyledText
                         elide: Text.ElideRight
@@ -172,6 +176,7 @@ Item {
                         id: tabMouseArea
                         anchors.fill: parent
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        hoverEnabled: true
 
                         property point pressPosition
                         property bool dragging: false
@@ -208,6 +213,21 @@ Item {
                                 root.manager.cancelDrag()
                             }
                         }
+                    }
+
+                    // Above the MouseArea, so that pressing it does not start a drag of the tab
+                    MaterialToolButton {
+                        id: closeButton
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        padding: 2
+                        font.pointSize: 8
+                        text: MaterialIcons.close
+                        // On the current tab and on the hovered one, like in most tabbed interfaces
+                        opacity: tab.displayed || tabMouseArea.containsMouse || hovered ? 1 : 0
+                        enabled: opacity > 0
+                        ToolTip.text: "Close " + tab.panel.title + " (reopen it from the View menu)"
+                        onClicked: root.manager.layoutModel.setPanelOpen(tab.panelId, false)
                     }
                 }
             }

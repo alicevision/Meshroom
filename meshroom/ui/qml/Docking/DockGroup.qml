@@ -21,10 +21,7 @@ Item {
     property Item area
 
     /// Ids of the open panels of the group, in tab order
-    readonly property var openPanelIds: {
-        var open = manager.layoutModel.openPanels
-        return node.panels.filter(function(panelId) { return open.indexOf(panelId) !== -1 })
-    }
+    readonly property var openPanelIds: node.panels.filter(function(panelId) { return manager.openPanelSet[panelId] === true })
     /// Id of the current tab, which may be a closed panel
     property string currentPanelId: node.current
     /// Id of the displayed panel: the current one, or the first open one if the current one is closed

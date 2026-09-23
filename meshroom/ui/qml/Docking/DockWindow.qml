@@ -18,10 +18,7 @@ ApplicationWindow {
     property var entry
     readonly property Item area: dockArea
 
-    readonly property var openPanels: {
-        var open = manager.layoutModel.openPanels
-        return manager.panelsOf(entry.root).filter(function(panelId) { return open.indexOf(panelId) !== -1 })
-    }
+    readonly property var openPanels: manager.panelsOf(entry.root).filter(function(panelId) { return manager.openPanelSet[panelId] === true })
 
     title: openPanels.map(function(panelId) { return manager.panels[panelId].title }).join(", ")
     // The window is hidden, not destroyed, when its panels are closed: it keeps its place in the layout

@@ -27,6 +27,8 @@ class DockLayoutManager(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._layout = DockLayout()
+        # Names of the saved workspaces, read often by the UI (their layouts are read when loaded)
+        self._workspaceNames = sorted(self._workspaces(), key=str.lower)
         self._restore()
         self._clampFloatingWindows()
 
@@ -36,10 +38,15 @@ class DockLayoutManager(QObject):
             screens = [screen.availableGeometry() for screen in QGuiApplication.screens()]
             self._layout.clampFloatingGeometries([[g.x(), g.y(), g.width(), g.height()] for g in screens])
 
-    def _restore(self):
-        """ Load the layout from the settings, or build it from the settings of older versions. """
+    def _settings(self):
+        """ Return the settings, opened in the group of the dock layout. """
         settings = QSettings()
         settings.beginGroup(self.settingsGroup)
+        return settings
+
+    def _restore(self):
+        """ Load the layout from the settings, or build it from the settings of older versions. """
+        settings = self._settings()
         data = settings.value(self.layoutKey)
         if data:
             try:
@@ -53,9 +60,7 @@ class DockLayoutManager(QObject):
         applyLegacySettings(self._layout, legacySettings)
 
     def _save(self):
-        settings = QSettings()
-        settings.beginGroup(self.settingsGroup)
-        settings.setValue(self.layoutKey, json.dumps(self._layout.toDict()))
+        self._settings().setValue(self.layoutKey, json.dumps(self._layout.toDict()))
 
     def _structureChanged(self):
         self._save()
@@ -163,19 +168,19 @@ class DockLayoutManager(QObject):
         return fractions
 
     def _workspaces(self):
-        """ Return the saved workspaces: their layouts by name. """
-        settings = QSettings()
-        settings.beginGroup(self.settingsGroup)
+        """
+        Return the saved workspaces: their layouts by name. They are read from the settings each time,
+        another instance of Meshroom may have changed them.
+        """
         try:
-            workspaces = json.loads(settings.value(self.workspacesKey) or "{}")
+            workspaces = json.loads(self._settings().value(self.workspacesKey) or "{}")
         except (TypeError, ValueError):
             workspaces = None
         return workspaces if isinstance(workspaces, dict) else {}
 
     def _setWorkspaces(self, workspaces):
-        settings = QSettings()
-        settings.beginGroup(self.settingsGroup)
-        settings.setValue(self.workspacesKey, json.dumps(workspaces))
+        self._settings().setValue(self.workspacesKey, json.dumps(workspaces))
+        self._workspaceNames = sorted(workspaces, key=str.lower)
         self.workspacesChanged.emit()
 
     @Slot(str, result=bool)
@@ -223,7 +228,7 @@ class DockLayoutManager(QObject):
     def hasWorkspace(self, name):
         """ Whether a workspace with this name exists, the default one included. """
         name = name.strip()
-        return name.lower() == self.defaultWorkspaceName.lower() or name in self._workspaces()
+        return name.lower() == self.defaultWorkspaceName.lower() or name in self._workspaceNames
 
     @Slot(int, int, result=QObject)
     def windowAt(self, x, y):
@@ -242,4 +247,4 @@ class DockLayoutManager(QObject):
     # Name of the built-in workspace holding the default layout
     defaultWorkspace = Property(str, lambda self: self.defaultWorkspaceName, constant=True)
     # Names of the saved workspaces, the default one excluded
-    workspaceNames = Property("QVariantList", lambda self: sorted(self._workspaces(), key=str.lower), notify=workspacesChanged)
+    workspaceNames = Property("QVariantList", lambda self: list(self._workspaceNames), notify=workspacesChanged)

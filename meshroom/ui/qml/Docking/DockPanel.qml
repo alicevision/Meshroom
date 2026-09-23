@@ -22,6 +22,8 @@ Item {
 
     /// The DockGroup currently displaying the panel, set by the DockManager
     property Item dockGroup: null
+    /// Whether the panel is open, bound by the DockManager
+    property bool isOpen: false
 
     /// Put the toolbar back in the panel, hidden
     function parkToolBar() {

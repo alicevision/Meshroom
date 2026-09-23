@@ -224,7 +224,7 @@ Item {
         Loader {
             id: panel3dViewerLoader
             // Closing the panel unloads the 3D scene
-            active: _dockLayout.openPanels.indexOf("viewer3D") !== -1
+            active: viewer3DPanel.isOpen
             visible: active
             anchors.fill: parent
             sourceComponent: panel3dViewerComponent

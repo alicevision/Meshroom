@@ -1026,14 +1026,13 @@ Page {
                 Repeater {
                     model: dockManager.panelList
                     MenuItem {
-                        readonly property bool panelOpen: _dockLayout.openPanels.indexOf(modelData.panelId) !== -1
                         text: modelData.title
                         checkable: true
-                        checked: panelOpen
+                        checked: modelData.isOpen
                         onTriggered: {
                             _dockLayout.setPanelOpen(modelData.panelId, checked)
                             // Clicking the item has replaced the binding
-                            checked = Qt.binding(function() { return panelOpen })
+                            checked = Qt.binding(function() { return modelData.isOpen })
                         }
                     }
                 }

@@ -189,9 +189,7 @@ class DockLayout:
         """
         if not isinstance(data, dict) or data.get("version") != LAYOUT_VERSION:
             return False
-        data = copy.deepcopy(data)
-        self._reserveIds(data)
-        self._layout = self._normalized(data)
+        self._layout = self._normalized(copy.deepcopy(data))
         return True
 
     # --- Queries ----------------------------------------------------------------------------------
@@ -205,19 +203,11 @@ class DockLayout:
 
     def node(self, nodeId):
         """ Return the node with the given id, or None. """
-        for root in self._roots():
-            for node, _ in iterNodes(root):
-                if node.get("id") == nodeId:
-                    return node
-        return None
+        return self._find(lambda node: node.get("id") == nodeId)[0]
 
     def groupOf(self, panelId):
         """ Return the tabs node containing the given panel, or None. """
-        for root in self._roots():
-            for node, _ in iterNodes(root):
-                if node["type"] == "tabs" and panelId in node["panels"]:
-                    return node
-        return None
+        return self._findGroup(panelId)[0]
 
     def canFloat(self, panelId):
         return panelId in self._panelIds and panelId not in self._nonFloatable
@@ -225,11 +215,6 @@ class DockLayout:
     def floatingWindow(self, windowId):
         """ Return the floating window with the given id, or None. """
         return next((entry for entry in self._layout["floating"] if entry["id"] == windowId), None)
-
-    def floatingWindowOf(self, panelId):
-        """ Return the floating window displaying the given panel, or None if it is in the main window. """
-        group = self.groupOf(panelId)
-        return self._windowOf(group) if group else None
 
     # --- Changes ----------------------------------------------------------------------------------
 
@@ -303,10 +288,10 @@ class DockLayout:
             bool: whether the layout changed.
         """
         source = self.groupOf(panelId)
-        target = self.node(groupId)
+        target, _, targetWindow = self._find(lambda node: node.get("id") == groupId)
         if zone not in ZONES or not source or not target or target["type"] != "tabs":
             return False
-        if self._windowOf(target) and not self.canFloat(panelId):
+        if targetWindow and not self.canFloat(panelId):
             return False
 
         if zone == "center":
@@ -347,10 +332,9 @@ class DockLayout:
             str: the id of the new floating window, or None if the panel cannot float or is already
             alone in a floating window.
         """
-        source = self.groupOf(panelId)
+        source, _, window = self._findGroup(panelId)
         if not source or not self.canFloat(panelId):
             return None
-        window = self._windowOf(source)
         if window and panelsOf(window["root"]) == [panelId]:
             return None
         source["panels"].remove(panelId)
@@ -372,8 +356,8 @@ class DockLayout:
         Returns:
             bool: whether the layout changed.
         """
-        source = self.groupOf(panelId)
-        if not source or not self._windowOf(source):
+        source, _, window = self._findGroup(panelId)
+        if not window:
             return False
         source["panels"].remove(panelId)
         self._insertHome(panelId)
@@ -417,15 +401,27 @@ class DockLayout:
 
     # --- Internals --------------------------------------------------------------------------------
 
-    def _roots(self):
-        return [self._layout["main"]] + [window["root"] for window in self._layout["floating"]]
+    def _iterAllNodes(self):
+        """
+        Iterate over the nodes of the main window and of the floating windows, depth first.
 
-    def _windowOf(self, node):
-        """ Return the floating window containing a node, or None if it is in the main window. """
+        Yields:
+            (node, parent, window) tuples, window being the floating window containing the node, or
+            None in the main window.
+        """
+        for node, parent in iterNodes(self._layout["main"]):
+            yield node, parent, None
         for window in self._layout["floating"]:
-            if any(n is node for n, _ in iterNodes(window["root"])):
-                return window
-        return None
+            for node, parent in iterNodes(window["root"]):
+                yield node, parent, window
+
+    def _find(self, predicate):
+        """ Return the (node, parent, window) tuple of the first node matching predicate, or Nones. """
+        return next((entry for entry in self._iterAllNodes() if predicate(entry[0])), (None, None, None))
+
+    def _findGroup(self, panelId):
+        """ Return the (node, parent, window) tuple of the tabs node containing a panel, or Nones. """
+        return self._find(lambda node: node["type"] == "tabs" and panelId in node["panels"])
 
     def _newId(self):
         nodeId = f"node{self._nextId}"
@@ -435,38 +431,16 @@ class DockLayout:
     def _newTabs(self, panels):
         return {"type": "tabs", "id": self._newId(), "panels": panels, "current": panels[0]}
 
-    def _reserveIds(self, data):
-        """ Make sure the ids generated from now on do not collide with the "nodeN" ids found in `data`. """
-        def ids(value):
-            if isinstance(value, dict):
-                yield value.get("id")
-                for child in value.values():
-                    yield from ids(child)
-            elif isinstance(value, list):
-                for child in value:
-                    yield from ids(child)
-
-        for nodeId in ids(data):
-            if isinstance(nodeId, str) and nodeId.startswith("node") and nodeId[4:].isdigit():
-                self._nextId = max(self._nextId, int(nodeId[4:]) + 1)
-
-    def _setRoot(self, oldRoot, newRoot):
-        """ Replace a root node of the layout. """
-        if self._layout["main"] is oldRoot:
-            self._layout["main"] = newRoot
-        for window in self._layout["floating"]:
-            if window["root"] is oldRoot:
-                window["root"] = newRoot
-
     def _insertBeside(self, target, node, zone):
         """ Insert `node` on the `zone` side of `target`, splitting it or reusing its parent split. """
         orientation = HORIZONTAL if zone in ("left", "right") else VERTICAL
         after = zone in ("right", "bottom")
-        parent = next((p for n, p in self._iterAllNodes() if n is target), None)
+        _, parent, window = self._find(lambda node: node is target)
+        # Node ids are unique: equality finds the target itself
+        i = parent["children"].index(target) if parent else None
 
         if parent and parent["orientation"] == orientation:
             # The parent already lays its children out in that direction: share the space of the target
-            i = next(i for i, child in enumerate(parent["children"]) if child is target)
             half = parent["sizes"][i] / 2
             parent["sizes"][i] = half
             j = i + 1 if after else i
@@ -482,14 +456,11 @@ class DockLayout:
             "children": [target, node] if after else [node, target],
         }
         if parent:
-            i = next(i for i, child in enumerate(parent["children"]) if child is target)
             parent["children"][i] = split
+        elif window:
+            window["root"] = split
         else:
-            self._setRoot(target, split)
-
-    def _iterAllNodes(self):
-        for root in self._roots():
-            yield from iterNodes(root)
+            self._layout["main"] = split
 
     def _normalized(self, data):
         """ Return a normalized copy of a layout (see the class documentation). """
@@ -515,6 +486,8 @@ class DockLayout:
             if panelId in self._panelIds and panelId not in layout["closed"]:
                 layout["closed"].append(panelId)
         self._layout = layout
+        # Before adding the missing panels, which may create nodes with new ids
+        self._assignIds()
 
         # Panels missing from the tree, e.g. added in a newer version, go back to their default place
         for panelId in self._panelIds:
@@ -523,7 +496,6 @@ class DockLayout:
                 if panelId in self._default.get("closed", []) and panelId not in closed:
                     layout["closed"].append(panelId)
 
-        self._assignIds()
         return layout
 
     def _cleanNode(self, node, seen, excluded=()):
@@ -609,15 +581,20 @@ class DockLayout:
             self._layout["main"] = self._newTabs([panelId])
 
     def _assignIds(self):
-        """ Give an id to the nodes and floating windows without one, or with an id already used. """
+        """
+        Give an id to the nodes and floating windows without one, or with an id already used. The ids
+        generated from now on never collide with the "nodeN" ids kept.
+        """
+        items = self._layout["floating"] + [node for node, _, _ in self._iterAllNodes()]
+        for item in items:
+            nodeId = item.get("id")
+            if isinstance(nodeId, str) and nodeId.startswith("node") and nodeId[4:].isdigit():
+                self._nextId = max(self._nextId, int(nodeId[4:]) + 1)
         used = set()
-        for node in self._layout["floating"] + [node for node, _ in self._iterAllNodes()]:
-            nodeId = node.get("id")
+        for item in items:
+            nodeId = item.get("id")
             if not isinstance(nodeId, str) or not nodeId or nodeId in used:
-                nodeId = self._newId()
-                while nodeId in used:
-                    nodeId = self._newId()
-                node["id"] = nodeId
+                item["id"] = nodeId = self._newId()
             used.add(nodeId)
 
 

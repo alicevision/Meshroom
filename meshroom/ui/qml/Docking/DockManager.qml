@@ -27,6 +27,33 @@ Item {
         return byId
     }
 
+    /// Ids of the open panels, as keys of an object: read once from the layout model on each change
+    readonly property var openPanelSet: {
+        var set = {}
+        if (layoutModel)
+            layoutModel.openPanels.forEach(function(panelId) { set[panelId] = true })
+        return set
+    }
+
+    /// Whether each node of the displayed layout contains an open panel, by node id
+    readonly property var openNodes: {
+        var byId = {}
+        var visit = function(node) {
+            var open = node.type === "tabs"
+                ? node.panels.some(function(panelId) { return openPanelSet[panelId] === true })
+                // Visit every child, not only up to the first open one
+                : node.children.map(visit).indexOf(true) !== -1
+            byId[node.id] = open
+            return open
+        }
+        if (m.layout) {
+            if (m.layout.main)
+                visit(m.layout.main)
+            m.layout.floating.forEach(function(entry) { visit(entry.root) })
+        }
+        return byId
+    }
+
     /// The panel being dragged by its tab, if any
     property DockPanel draggedPanel: null
     /// Where the dragged panel would be dropped (see DockGroup.dropZoneAt), or null
@@ -39,6 +66,8 @@ Item {
 
     QtObject {
         id: m
+        /// The displayed layout
+        property var layout: null
         property var areas: []
         property var groups: []
         /// DockWindows by id of floating window
@@ -65,12 +94,7 @@ Item {
 
     /// Whether a node of the layout contains an open panel, i.e. has to be displayed
     function hasOpenPanel(node) {
-        var open = layoutModel.openPanels
-        if (!node)
-            return false
-        if (node.type === "tabs")
-            return node.panels.some(function(panelId) { return open.indexOf(panelId) !== -1 })
-        return node.children.some(hasOpenPanel)
+        return !!node && openNodes[node.id] === true
     }
 
     /// Return the ids of the panels of a node of the layout and of its descendants
@@ -112,6 +136,7 @@ Item {
             park(panels[panelId])
         m.groups.forEach(function(group) { group.retired = true })
         m.groups = []
+        m.layout = layout
         mainArea.setRootNode(layout.main)
 
         // Keep the windows still in the layout, create the new ones

@@ -3,17 +3,20 @@
 from meshroom.core import pluginManager
 from meshroom.core.desc.node import NodeVersionType
 from meshroom.core.plugins.base import NodeDescProviderStatus
-from .utils import overrideOsEnvironmentVariables, registeredPlugin
+from ..utils import overrideOsEnvironmentVariables, registeredPlugin
 
 import os
 import time
+
+# The folder of the test plugins.
+pluginsFolder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "plugins")
 
 
 class TestPluginWithValidNodesOnly:
 
     @classmethod
     def setup_class(cls):
-        cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginA")
+        cls.folder = os.path.join(pluginsFolder, "pluginA")
         pluginManager.addPluginFromPath("pluginA", cls.folder)
 
     @classmethod
@@ -30,7 +33,7 @@ class TestPluginWithValidNodesOnly:
         assert plugin
         assert plugin.name == "pluginA"
         # Check path too
-        assert str(plugin.hostPath) == os.path.join(os.path.dirname(__file__), "plugins", "pluginA", "meshroom")
+        assert str(plugin.hostPath) == os.path.join(pluginsFolder, "pluginA", "meshroom")
 
     def test_loadedPlugin(self):
         # Assert that there are loaded plugins, and that "pluginA" is one of them
@@ -74,7 +77,7 @@ class TestPluginWithInvalidNodes:
 
     @classmethod
     def setup_class(cls):
-        cls.folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginB")
+        cls.folder = os.path.join(pluginsFolder, "pluginB")
         pluginManager.addPluginFromPath("pluginB", cls.folder)
 
     @classmethod
@@ -88,7 +91,7 @@ class TestPluginWithInvalidNodes:
         assert len(pluginManager.getPlugins()) >= 1
         plugin = pluginManager.getPlugin("pluginB")
         assert plugin
-        assert str(plugin.hostPath) == os.path.join(os.path.dirname(__file__), "plugins", "pluginB", "meshroom")
+        assert str(plugin.hostPath) == os.path.join(pluginsFolder, "pluginB", "meshroom")
 
         # Assert that PluginBNodeA is successfully registered
         assert pluginManager.isNodeDescRegistered("PluginBNodeA")
@@ -192,7 +195,7 @@ class TestPluginWithInvalidNodes:
 
 class TestVersionPlugins:
     def test_nodeVersionType(self):
-        folder = os.path.join(os.path.dirname(__file__), "plugins", "pluginA")
+        folder = os.path.join(pluginsFolder, "pluginA")
         with registeredPlugin("pluginA", folder):
             pluginA = pluginManager.getPlugin("pluginA")
             assert pluginA

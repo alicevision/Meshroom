@@ -1620,24 +1620,18 @@ Item {
     }
 
     function registerAttributePin(attribute, pin) {
-        const attributeToDelegate = Object.assign({}, root._attributeToDelegate)
-        attributeToDelegate[attribute.uuid] = pin
-        root._attributeToDelegate = attributeToDelegate
+        root._attributeToDelegate[attribute.uuid] = pin
+        root._attributeToDelegateChanged()
     }
 
     function unregisterAttributePin(attribute, pin) {
-        const attributeToDelegate = Object.assign({}, root._attributeToDelegate)
-
         if (!attribute || !hasOwnProperty(attribute, 'uid')) { return }
 
-        if (attribute.uuid in attributeToDelegate) {
-
-            if(attributeToDelegate[attribute.uuid] !== pin) { return }
-
-            delete attributeToDelegate[attribute.uuid]
-            root._attributeToDelegate = attributeToDelegate
+        if (attribute.uuid in root._attributeToDelegate) {
+            if (root._attributeToDelegate[attribute.uuid] !== pin) { return }
+            delete root._attributeToDelegate[attribute.uuid]
+            root._attributeToDelegateChanged()
         }
-  
     }
 
     function boundingBox() {

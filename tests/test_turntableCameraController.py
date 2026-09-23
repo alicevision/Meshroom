@@ -20,6 +20,9 @@ UP = QVector3D(0.0, 1.0, 0.0)
 
 def makeController(position=QVector3D(12.0, 10.0, -12.0), viewCenter=QVector3D(0.0, 0.0, 0.0), windowSize=WINDOW):
     camera = Qt3DRender.QCamera()
+    camera.setProjectionType(Qt3DRender.QCameraLens.PerspectiveProjection)
+    camera.setFieldOfView(45.0)
+    camera.setAspectRatio(windowSize.width() / windowSize.height())
     camera.setPosition(position)
     camera.setViewCenter(viewCenter)
     camera.setUpVector(UP)
@@ -30,13 +33,33 @@ def makeController(position=QVector3D(12.0, 10.0, -12.0), viewCenter=QVector3D(0
     return controller
 
 
-def drag(controller, dx, dy, steps=10):
-    """ Simulate a mouse drag of (dx, dy) pixels, split in incremental moves as the MouseHandler does. """
-    x, y = 400.0, 300.0
+def drag(controller, dx, dy, steps=10, manipulate=None, origin=(400.0, 300.0)):
+    """
+    Simulate a mouse drag of (dx, dy) pixels starting from 'origin', split in incremental
+    moves as the MouseHandler does, and return the position the cursor ends up at.
+    'manipulate' defaults to orbiting; pass 'controller.pan' to drag the view instead.
+    """
+    x, y = origin
     for _ in range(steps):
-        controller.rotate(QPointF(x, y), QPointF(x + dx / steps, y + dy / steps))
+        (manipulate or controller.rotate)(QPointF(x, y), QPointF(x + dx / steps, y + dy / steps))
         x += dx / steps
         y += dy / steps
+    return x, y
+
+
+def project(camera, point, windowSize=WINDOW):
+    """ Viewport position, in pixels, at which the given world point is drawn. """
+    clip = (camera.projectionMatrix() * camera.viewMatrix()).map(point)
+    return ((clip.x() * 0.5 + 0.5) * windowSize.width(), (0.5 - clip.y() * 0.5) * windowSize.height())
+
+
+def distance(camera):
+    return (camera.position() - camera.viewCenter()).length()
+
+
+def copy(vector):
+    """ Snapshot of a vector, to compare against after the camera has moved. """
+    return QVector3D(vector.x(), vector.y(), vector.z())
 
 
 def elevation(camera):
@@ -118,17 +141,118 @@ def test_dragDirections():
     assert elevation(controller.camera) > 0.0
 
 
-def test_rotateIsSafeWithoutValidInput():
-    """ Rotating without camera, window size or any distance to the view center must be a no-op. """
+def test_panKeepsTheGrabbedPointUnderTheCursor():
+    """ Whatever lies in the view center plane when the drag starts stays under the cursor. """
+    controller = makeController()
+    camera = controller.camera
+    grabbed = copy(camera.viewCenter())
+    startX, startY = project(camera, grabbed)
+
+    endX, endY = drag(controller, 150, 100, steps=50, manipulate=controller.pan, origin=(startX, startY))
+
+    assert project(camera, grabbed) == pytest.approx((endX, endY), abs=1e-2)
+
+
+def test_panMovesTheViewCenterAlongWithTheCamera():
+    """ Panning slides the whole orbit, so the pivot follows and the distance is preserved. """
+    controller = makeController()
+    camera = controller.camera
+    initialPosition = copy(camera.position())
+    initialViewCenter = copy(camera.viewCenter())
+
+    drag(controller, 150, 100, steps=50, manipulate=controller.pan)
+
+    translation = camera.position() - initialPosition
+    assert (camera.viewCenter() - initialViewCenter).distanceToPoint(translation) == pytest.approx(0.0, abs=1e-4)
+    assert translation.length() > 0.0
+
+
+def test_zoomIsExactlyReversible():
+    """ Being multiplicative, zooming in then back out by as many steps restores the distance. """
+    controller = makeController()
+    initial = distance(controller.camera)
+
+    for _ in range(10):
+        controller.zoom(1.0, QPointF(650.0, 150.0))
+    assert distance(controller.camera) < initial
+    for _ in range(10):
+        controller.zoom(-1.0, QPointF(650.0, 150.0))
+
+    assert distance(controller.camera) == pytest.approx(initial, rel=1e-5)
+
+
+def test_zoomTowardsCursorKeepsThePointUnderItStill():
+    """ With 'zoomToCursor' set, the view scales around the point under the cursor. """
+    controller = makeController()
+    camera = controller.camera
+    cursor = QPointF(650.0, 150.0)
+    target = camera.viewCenter() + controller.cursorOffset(cursor, distance(camera))
+    assert project(camera, target) == pytest.approx((cursor.x(), cursor.y()), abs=1e-2)
+
+    for _ in range(6):
+        controller.zoom(1.0, cursor)
+
+    assert project(camera, target) == pytest.approx((cursor.x(), cursor.y()), abs=1e-2)
+    assert distance(camera) < 0.3 * 19.7
+
+
+def test_zoomWithoutCursorTargetIsAPureDolly():
+    """ A centered zoom, or a zoom with 'zoomToCursor' cleared, leaves the view center untouched. """
+    for cursor, zoomToCursor in ((QPointF(WINDOW.width() / 2, WINDOW.height() / 2), True),
+                                 (QPointF(650.0, 150.0), False)):
+        controller = makeController()
+        controller.zoomToCursor = zoomToCursor
+        initial = distance(controller.camera)
+
+        controller.zoom(3.0, cursor)
+
+        assert controller.camera.viewCenter() == QVector3D(0.0, 0.0, 0.0)
+        assert distance(controller.camera) == pytest.approx(initial * TurntableCameraController.zoomFactor ** 3, rel=1e-5)
+
+
+def test_zoomNeverCollapsesTheDistanceInOneStep():
+    """ A single huge zoom keeps at least 'minZoomRatio' of the distance to the view center. """
+    controller = makeController()
+    initial = distance(controller.camera)
+
+    controller.zoom(100.0, QPointF(WINDOW.width() / 2, WINDOW.height() / 2))
+
+    assert distance(controller.camera) == pytest.approx(initial * TurntableCameraController.minZoomRatio, rel=1e-4)
+
+
+def test_zoomByDragIsIsotropicAndZoomsInToTheRight():
+    """ Dragging right zooms in, by an amount that only depends on the viewport height. """
+    for size in (QSize(1600, 400), QSize(800, 800)):
+        controller = makeController(windowSize=size)
+        anchor = QPointF(size.width() / 2, size.height() / 2)
+        initial = distance(controller.camera)
+
+        controller.zoomByDrag(anchor, QPointF(0.0, 0.0), QPointF(size.height() / 2.0, 0.0))
+
+        expected = initial * TurntableCameraController.zoomFactor ** (TurntableCameraController.dragZoomSteps / 2)
+        assert distance(controller.camera) == pytest.approx(expected, rel=1e-4)
+
+
+def test_manipulationsAreSafeWithoutValidInput():
+    """ Rotating, panning or zooming without camera, window size or distance to the view center is a no-op. """
+    for manipulate in ("rotate", "pan"):
+        controller = TurntableCameraController()
+        controller.windowSize = WINDOW
+        drag(controller, 10, 10, manipulate=getattr(controller, manipulate))  # No camera
+
+        controller = makeController()
+        controller.windowSize = QSize()
+        drag(controller, 10, 10, manipulate=getattr(controller, manipulate))  # No window size
+
+        # Camera position on the view center
+        controller = makeController(position=QVector3D(0.0, 0.0, 0.0))
+        drag(controller, 10, 10, manipulate=getattr(controller, manipulate))
+        assert controller.camera.position() == QVector3D(0.0, 0.0, 0.0)
+
     controller = TurntableCameraController()
-    controller.windowSize = WINDOW
-    drag(controller, 10, 10)  # No camera
+    controller.zoom(1.0, QPointF(0.0, 0.0))  # No camera
+    controller.zoomByDrag(QPointF(0.0, 0.0), QPointF(0.0, 0.0), QPointF(10.0, 0.0))  # No window size
 
     controller = makeController()
-    controller.windowSize = QSize()
-    drag(controller, 10, 10)  # No window size
-
-    # Camera position on the view center
-    controller = makeController(position=QVector3D(0.0, 0.0, 0.0))
-    drag(controller, 10, 10)
-    assert controller.camera.position() == QVector3D(0.0, 0.0, 0.0)
+    controller.zoom(0.0, QPointF(0.0, 0.0))  # No zoom step
+    assert distance(controller.camera) == pytest.approx(19.697716, abs=1e-4)

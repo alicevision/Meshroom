@@ -228,6 +228,17 @@ Item {
 
             MaterialToolButton {
                 font.pointSize: 13
+                // Show the layout the button switches to
+                text: GraphEditorSettings.scriptOutputBelow ? MaterialIcons.vertical_split : MaterialIcons.horizontal_split
+                ToolTip.text: GraphEditorSettings.scriptOutputBelow ? "Display the Output Beside the Script" : "Display the Output Below the Script"
+
+                onClicked: {
+                    GraphEditorSettings.scriptOutputBelow = !GraphEditorSettings.scriptOutputBelow
+                }
+            }
+
+            MaterialToolButton {
+                font.pointSize: 13
                 text: MaterialIcons.backspace
                 ToolTip.text: "Clear Output Window"
 
@@ -241,12 +252,14 @@ Item {
             id: scriptSplitView;
             Layout.fillHeight: true;
             Layout.fillWidth: true;
-            orientation: Qt.Horizontal;
+            orientation: GraphEditorSettings.scriptOutputBelow ? Qt.Vertical : Qt.Horizontal
 
             // Input Text Area -- Holds the input scripts to be executed
             Rectangle {
                 id: inputArea
-                SplitView.preferredWidth: root.width / 2;
+                // Half of the space, whichever the orientation
+                SplitView.preferredWidth: scriptSplitView.width / 2
+                SplitView.preferredHeight: scriptSplitView.height / 2
 
                 color: palette.base
 

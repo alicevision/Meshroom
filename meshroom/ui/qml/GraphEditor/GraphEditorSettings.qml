@@ -15,4 +15,6 @@ Settings {
     property bool showLinkAttributes: true
     property bool showNotLinkAttributes: true
     property bool lockOnCompute: true
+    // Script Editor: display the output below the script rather than beside it
+    property bool scriptOutputBelow: false
 }

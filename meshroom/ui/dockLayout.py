@@ -588,7 +588,7 @@ class DockLayout:
         items = self._layout["floating"] + [node for node, _, _ in self._iterAllNodes()]
         for item in items:
             nodeId = item.get("id")
-            if isinstance(nodeId, str) and nodeId.startswith("node") and nodeId[4:].isdigit():
+            if isinstance(nodeId, str) and nodeId.startswith("node") and nodeId[4:].isdecimal():
                 self._nextId = max(self._nextId, int(nodeId[4:]) + 1)
         used = set()
         for item in items:

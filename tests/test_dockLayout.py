@@ -284,6 +284,15 @@ class TestLoad:
         checkNormalized(layout)
         assert layout.groupOf("c")["id"] == "node4"
 
+    def test_nonDecimalIdsAreAccepted(self):
+        data = DockLayout(smallLayout()).toDict()
+        # "²" is a digit but not a decimal one: int() rejects it
+        data["main"]["id"] = "node²"
+        layout = DockLayout(smallLayout())
+        assert layout.load(data)
+        assert layout.toDict()["main"]["id"] == "node²"
+        checkNormalized(layout)
+
 
 class TestLegacySettings:
 

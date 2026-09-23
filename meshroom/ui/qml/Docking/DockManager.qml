@@ -2,8 +2,9 @@ import QtQuick
 
 /**
  * DockManager displays the DockPanels of the application in DockAreas, following the dock layout of
- * `layoutModel` (see meshroom/ui/dockLayoutManager.py), and lets the user move them by dragging
- * their tabs.
+ * `layoutModel` (see meshroom/ui/dockLayoutManager.py): the DockArea of the main window, and a
+ * DockWindow for each floating window. It lets the user move the panels by dragging their tabs,
+ * including out of the windows to float them.
  *
  * Panels are never destroyed: whenever the structure of the layout changes, the areas are rebuilt
  * and the panels are reparented into the new groups of tabs, keeping their state.
@@ -40,6 +41,8 @@ Item {
         id: m
         property var areas: []
         property var groups: []
+        /// DockWindows by id of floating window
+        property var windows: ({})
     }
 
     Connections {
@@ -49,6 +52,11 @@ Item {
     }
 
     Component.onCompleted: rebuild()
+    // The floating windows have no parent (see createWindow), they have to be destroyed explicitly
+    Component.onDestruction: {
+        for (var windowId in m.windows)
+            m.windows[windowId].destroy()
+    }
 
     function registerArea(area) { m.areas.push(area) }
     function unregisterArea(area) { m.areas = m.areas.filter(function(a) { return a !== area }) }
@@ -63,6 +71,15 @@ Item {
         if (node.type === "tabs")
             return node.panels.some(function(panelId) { return open.indexOf(panelId) !== -1 })
         return node.children.some(hasOpenPanel)
+    }
+
+    /// Return the ids of the panels of a node of the layout and of its descendants
+    function panelsOf(node) {
+        if (!node)
+            return []
+        if (node.type === "tabs")
+            return node.panels
+        return node.children.reduce(function(panelIds, child) { return panelIds.concat(panelsOf(child)) }, [])
     }
 
     /// Return the DockArea of the window displaying an item
@@ -96,7 +113,60 @@ Item {
         m.groups.forEach(function(group) { group.retired = true })
         m.groups = []
         mainArea.setRootNode(layout.main)
+
+        // Keep the windows still in the layout, create the new ones
+        var windows = {}
+        layout.floating.forEach(function(entry) {
+            var window = m.windows[entry.id] || createWindow(entry)
+            delete m.windows[entry.id]
+            window.entry = entry
+            window.area.setRootNode(entry.root)
+            windows[entry.id] = window
+        })
+        var removedWindows = m.windows
+        m.windows = windows
+
         m.groups.forEach(function(group) { group.hostPanels() })
+        // The removed windows are empty now: all the panels are displayed somewhere else
+        for (var windowId in removedWindows)
+            removedWindows[windowId].destroy()
+    }
+
+    function createWindow(entry) {
+        var mainWindow = mainArea.Window.window
+        var geometry = entry.geometry || [mainWindow.x + mainWindow.width / 2 - 300, mainWindow.y + mainWindow.height / 2 - 200, 600, 400]
+        // Created from its url: a DockWindow type dependency would be cyclic. Without a parent: it is
+        // transient for the main window anyway, and a window created with a parent item triggers a
+        // warning in Meshroom. The reference kept in m.windows prevents its garbage collection.
+        var component = Qt.createComponent(Qt.resolvedUrl("DockWindow.qml"))
+        return component.createObject(null, {
+            "manager": root,
+            "entry": entry,
+            // Keep the shortcuts of the main window working while the floating window is active
+            "transientParent": mainWindow,
+            "palette": mainWindow.palette,
+            "x": geometry[0],
+            "y": geometry[1],
+            "width": geometry[2],
+            "height": geometry[3]
+        })
+    }
+
+    /**
+     * Move a panel to a new floating window, with its top left corner at the given global position.
+     * A panel already alone in a floating window moves that window instead.
+     */
+    function floatPanel(panel, globalX, globalY) {
+        if (!layoutModel.canFloat(panel.panelId))
+            return
+        var group = panel.dockGroup
+        if (layoutModel.floatPanel(panel.panelId, globalX, globalY, Math.max(group.width, 300), Math.max(group.height, 200)))
+            return
+        var window = group.Window.window
+        if (window !== mainArea.Window.window) {
+            window.x = globalX
+            window.y = globalY
+        }
     }
 
     // --- Drag and drop of the tabs -------------------------------------------------------------
@@ -119,13 +189,19 @@ Item {
         }
     }
 
-    /// Drop the dragged panel at the given global position
+    /// Drop the dragged panel at the given global position: released out of any window, it floats
     function endDrag(globalX, globalY) {
         var panel = draggedPanel
-        var target = panel ? dropTargetAt(globalX, globalY) : null
+        if (!panel)
+            return
+        var target = dropTargetAt(globalX, globalY)
+        var window = layoutModel.windowAt(globalX, globalY)
         cancelDrag()
         if (target)
             layoutModel.movePanel(panel.panelId, target.group.node.id, target.zone, target.index)
+        else if (!window)
+            // Keep the tab under the cursor, as if it had been torn off
+            floatPanel(panel, globalX - 40, globalY - 14)
     }
 
     function cancelDrag() {
@@ -153,6 +229,8 @@ Item {
     }
 
     function isDropAllowed(target) {
+        if (target.group.area !== mainArea && !layoutModel.canFloat(draggedPanel.panelId))
+            return false
         if (target.group !== draggedPanel.dockGroup)
             return true
         // On its own group, the panel can only be moved to another tab position, or beside the group

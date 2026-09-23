@@ -1,7 +1,7 @@
 import json
 
 from meshroom.ui.dockLayout import DockLayout, DEFAULT_LAYOUT, LAYOUT_VERSION, HORIZONTAL, VERTICAL, \
-    applyLegacySettings, iterNodes, panelsOf
+    applyLegacySettings, clampGeometry, iterNodes, panelsOf
 
 
 PANELS = ["a", "b", "c", "d"]
@@ -29,12 +29,20 @@ def groups(layout):
     return [node["panels"] for node, _ in iterNodes(layout.toDict()["main"]) if node["type"] == "tabs"]
 
 
+def allNodes(data):
+    """ Iterate over the nodes of the main window and of the floating windows of a layout. """
+    for root in [data["main"]] + [window["root"] for window in data["floating"]]:
+        for node, _ in iterNodes(root):
+            yield node
+
+
 def checkNormalized(layout):
     data = layout.toDict()
-    assert sorted(panelsOf(data["main"])) == sorted(layout.panelIds)
-    ids = [node["id"] for node, _ in iterNodes(data["main"])]
+    panels = panelsOf(data["main"]) + [p for window in data["floating"] for p in panelsOf(window["root"])]
+    assert sorted(panels) == sorted(layout.panelIds)
+    ids = [node["id"] for node in allNodes(data)] + [window["id"] for window in data["floating"]]
     assert len(ids) == len(set(ids))
-    for node, parent in iterNodes(data["main"]):
+    for node in allNodes(data):
         if node["type"] == "split":
             assert len(node["children"]) >= 2
             assert abs(sum(node["sizes"]) - 1) < 1e-9
@@ -283,3 +291,147 @@ class TestLegacySettings:
         layout = DockLayout()
         applyLegacySettings(layout, {"showGraphEditor": "false"})
         assert layout.openPanels() == ["imageGallery", "imageViewer", "viewer3D"]
+
+
+def floatingLayout():
+    """ smallLayout with "d" in a floating window. """
+    layout = smallLayout()
+    layout["main"]["children"][1]["panels"] = ["c"]
+    layout["floating"] = [{"id": "float", "geometry": [10, 20, 300, 200], "root": {"type": "tabs", "panels": ["d"]}}]
+    return layout
+
+
+def floatingDockLayout():
+    layout = DockLayout(smallLayout())
+    assert layout.load(floatingLayout())
+    return layout
+
+
+class TestFloatingWindows:
+
+    def test_floatPanel(self):
+        layout = DockLayout(smallLayout(), nonFloatablePanels=["c"])
+        layout.setPanelOpen("b", False)
+        windowId = layout.floatPanel("b", [100, 50, 400, 300.5])
+        assert windowId
+        data = layout.toDict()
+        assert data["floating"] == [{"id": windowId, "geometry": [100, 50, 400, 300], "root": layout.groupOf("b")}]
+        assert layout.floatingWindowOf("b")["id"] == windowId
+        assert layout.floatingWindowOf("a") is None
+        assert layout.isOpen("b")
+        assert groups(layout) == [["a"], ["c", "d"]]
+        checkNormalized(layout)
+
+    def test_nonFloatablePanels(self):
+        layout = DockLayout(smallLayout(), nonFloatablePanels=["c"])
+        assert not layout.canFloat("c")
+        assert layout.floatPanel("c") is None
+        layout.floatPanel("d")
+        # A non floatable panel cannot be dropped in a floating window either
+        assert not layout.movePanel("c", layout.groupOf("d")["id"], "center")
+        assert not layout.movePanel("c", layout.groupOf("d")["id"], "left")
+        assert layout.floatingWindowOf("c") is None
+
+    def test_floatingAPanelAloneInAFloatingWindowDoesNothing(self):
+        layout = floatingDockLayout()
+        before = layout.toDict()
+        assert layout.floatPanel("d", [0, 0, 10, 10]) is None
+        assert layout.toDict() == before
+
+    def test_panelsCanBeDockedInAFloatingWindow(self):
+        layout = floatingDockLayout()
+        assert layout.movePanel("a", layout.groupOf("d")["id"], "right")
+        root = layout.toDict()["floating"][0]["root"]
+        assert [child["panels"] for child in root["children"]] == [["d"], ["a"]]
+        checkNormalized(layout)
+
+    def test_emptiedFloatingWindowIsRemoved(self):
+        layout = floatingDockLayout()
+        assert layout.movePanel("d", layout.groupOf("c")["id"], "center")
+        assert layout.toDict()["floating"] == []
+        checkNormalized(layout)
+
+    def test_dockPanelGoesBackToItsHomeGroup(self):
+        layout = floatingDockLayout()
+        layout.setPanelOpen("d", False)
+        assert layout.dockPanel("d")
+        # "d" is grouped with "c" in the default layout
+        assert groups(layout) == [["a", "b"], ["c", "d"]]
+        assert layout.groupOf("d")["current"] == "d"
+        assert layout.isOpen("d")
+        assert layout.toDict()["floating"] == []
+        assert not layout.dockPanel("d")
+
+    def test_setFloatingGeometry(self):
+        layout = floatingDockLayout()
+        assert layout.setFloatingGeometry("float", [1, 2, 3, 4])
+        assert not layout.setFloatingGeometry("float", [1, 2, 3, 4])
+        assert not layout.setFloatingGeometry("float", [1, 2, 0, 4])
+        assert not layout.setFloatingGeometry("unknown", [1, 2, 3, 4])
+        assert layout.floatingWindow("float")["geometry"] == [1, 2, 3, 4]
+
+    def test_closeFloatingWindowClosesItsPanels(self):
+        layout = floatingDockLayout()
+        layout.movePanel("a", layout.groupOf("d")["id"], "center")
+        assert layout.closeFloatingWindow("float")
+        assert layout.openPanels() == ["b", "c"]
+        assert not layout.closeFloatingWindow("float")
+        # The window keeps its place, to be displayed again with its panels
+        assert layout.floatingWindowOf("a")["id"] == "float"
+
+    def test_loadFloatingWindows(self):
+        layout = DockLayout(smallLayout(), nonFloatablePanels=["c"])
+        assert layout.load({
+            "version": LAYOUT_VERSION,
+            "main": {"type": "tabs", "panels": ["a", "b"]},
+            "floating": [
+                {"id": "f1", "geometry": "garbage", "root": {"type": "tabs", "panels": ["c", "d", "a"]}},
+                {"id": "f2", "geometry": [0, 0, 100, 100], "root": {"type": "tabs", "panels": ["a"]}},
+                "garbage",
+            ],
+        })
+        checkNormalized(layout)
+        data = layout.toDict()
+        # "c" cannot float: back to its default group, "a" is already in the main window
+        assert data["floating"] == [{"id": "f1", "geometry": None, "root": layout.groupOf("d")}]
+        assert layout.groupOf("d")["panels"] == ["d"]
+        assert groups(layout) == [["a", "b", "c"]]
+
+    def test_idsAreUniqueAcrossWindows(self):
+        layout = DockLayout(smallLayout())
+        data = layout.toDict()
+        groupId = data["main"]["children"][0]["id"]
+        data["floating"] = [{"id": groupId, "root": {"type": "tabs", "id": groupId, "panels": ["d"]}}]
+        data["main"]["children"][1]["panels"] = ["c"]
+        assert layout.load(data)
+        checkNormalized(layout)
+
+    def test_jsonRoundTripWithFloatingWindows(self):
+        layout = floatingDockLayout()
+        other = DockLayout(smallLayout())
+        assert other.load(json.loads(json.dumps(layout.toDict())))
+        assert other.toDict() == layout.toDict()
+
+
+class TestClampGeometry:
+
+    screens = [[0, 0, 1920, 1080], [1920, 0, 1280, 1024]]
+
+    def test_windowInsideAScreenIsUnchanged(self):
+        assert clampGeometry([100, 100, 400, 300], self.screens) == [100, 100, 400, 300]
+        assert clampGeometry([2000, 100, 400, 300], self.screens) == [2000, 100, 400, 300]
+
+    def test_windowIsMovedInTheScreenItOverlapsTheMost(self):
+        assert clampGeometry([1700, 900, 400, 300], self.screens) == [1520, 780, 400, 300]
+        assert clampGeometry([1800, 900, 400, 300], self.screens) == [1920, 724, 400, 300]
+        assert clampGeometry([1850, -50, 400, 300], self.screens) == [1920, 0, 400, 300]
+
+    def test_windowOutsideAnyScreenGoesToTheFirstOne(self):
+        assert clampGeometry([5000, 5000, 400, 300], self.screens) == [1520, 780, 400, 300]
+
+    def test_windowIsShrunkToTheScreen(self):
+        assert clampGeometry([10, 10, 3000, 2000], self.screens) == [0, 0, 1920, 1080]
+
+    def test_noGeometryOrScreen(self):
+        assert clampGeometry(None, self.screens) is None
+        assert clampGeometry([1, 2, 3, 4], []) == [1, 2, 3, 4]

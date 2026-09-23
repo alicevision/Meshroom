@@ -23,6 +23,11 @@ Page {
     property alias icon: iconPlaceHolder.data
     property alias loading: loadingIndicator.running
     property alias loadingText: loadingLabel.text
+    /// Whether the header is displayed; a docked panel may hide it and display its title in a tab and
+    /// its headerBar elsewhere (see Docking/DockPanel.qml)
+    property bool headerVisible: true
+    /// The item holding the headerBar content, to display it elsewhere when the header is hidden
+    readonly property Item headerBarItem: headerLayout
 
     clip: true
 
@@ -37,6 +42,7 @@ Page {
 
     header: Pane {
         id: headerPane
+        visible: root.headerVisible
         topPadding: m.vPadding; bottomPadding: m.vPadding
         leftPadding: m.hPadding; rightPadding: m.hPadding
         background: Item {

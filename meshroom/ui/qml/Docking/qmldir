@@ -1,0 +1,7 @@
+module Docking
+
+DockArea 1.0 DockArea.qml
+DockGroup 1.0 DockGroup.qml
+DockManager 1.0 DockManager.qml
+DockNode 1.0 DockNode.qml
+DockPanel 1.0 DockPanel.qml

@@ -124,3 +124,12 @@ def test_invalidWorkspaceIsNotLoaded(settings):
     before = manager.layout
     assert not manager.loadWorkspace("broken")
     assert manager.layout == before
+
+
+def test_workspacesOfAnotherInstanceAreKept(settings):
+    manager = DockLayoutManager()
+    other = DockLayoutManager()
+    assert other.saveWorkspace("theirs")
+    assert manager.saveWorkspace("mine")
+    assert manager.workspaceNames == ["mine", "theirs"]
+    assert manager.loadWorkspace("theirs")

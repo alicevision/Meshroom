@@ -12,6 +12,7 @@ import GraphEditor 1.0
 import MaterialIcons 2.2
 import Utils 1.0
 import Controls 1.0
+import Docking 1.0
 
 Page {
     id: root
@@ -28,16 +29,6 @@ Page {
             // Refresh the NodeEditor
             nodeEditor.refresh();
         }
-    }
-
-    Settings {
-        id: settingsUILayout
-        category: "UILayout"
-        property alias showGraphEditor: graphEditorVisibilityCB.checked
-        property alias showImageViewer: imageViewerVisibilityCB.checked
-        property alias showViewer3D: viewer3DVisibilityCB.checked
-        property alias showImageGallery: imageGalleryVisibilityCB.checked
-        property alias showTextViewer: textViewerVisibilityCB.checked
     }
 
     Settings {
@@ -1031,35 +1022,20 @@ Page {
             }
             Menu {
                 title: "View"
-                MenuItem {
-                    id: graphEditorVisibilityCB
-                    text: "Graph Editor"
-                    checkable: true
-                    checked: true
-                }
-                MenuItem {
-                    id: imageViewerVisibilityCB
-                    text: "Image Viewer"
-                    checkable: true
-                    checked: true
-                }
-                MenuItem {
-                    id: viewer3DVisibilityCB
-                    text: "3D Viewer"
-                    checkable: true
-                    checked: true
-                }
-                MenuItem {
-                    id: imageGalleryVisibilityCB
-                    text: "Image Gallery"
-                    checkable: true
-                    checked: true
-                }
-                MenuItem {
-                    id: textViewerVisibilityCB
-                    text: "Text Viewer"
-                    checkable: true
-                    checked: false
+                // Open or close each panel
+                Repeater {
+                    model: dockManager.panelList
+                    MenuItem {
+                        readonly property bool panelOpen: _dockLayout.openPanels.indexOf(modelData.panelId) !== -1
+                        text: modelData.title
+                        checkable: true
+                        checked: panelOpen
+                        onTriggered: {
+                            _dockLayout.setPanelOpen(modelData.panelId, checked)
+                            // Clicking the item has replaced the binding
+                            checked = Qt.binding(function() { return panelOpen })
+                        }
+                    }
                 }
                 MenuSeparator {}
                 Action {
@@ -1266,425 +1242,434 @@ Page {
             model: _currentScene ? _currentScene.sortedDFSChunks : null
         }
 
-        MSplitView {
-            id: topBottomSplit
+        // The panels, laid out by the DockManager
+        DockArea {
+            id: mainDockArea
             Layout.fillHeight: true
             Layout.fillWidth: true
-
-            orientation: Qt.Vertical
+            manager: dockManager
 
             // Setup global tooltip style
             ToolTip.toolTip.background: Rectangle { color: activePalette.base; border.color: activePalette.mid }
+        }
+    }
 
-            WorkspaceView {
-                id: workspaceView
-                SplitView.fillHeight: true
-                SplitView.preferredHeight: 300
-                SplitView.minimumHeight: 80
-                currentScene: _currentScene
-                readOnly: _currentScene ? _currentScene.computing : false
+    DockManager {
+        id: dockManager
+        layoutModel: _dockLayout
+        mainArea: mainDockArea
+        panelList: workspaceView.dockPanels.concat([graphEditorDockPanel, taskManagerDockPanel, scriptEditorDockPanel, nodeEditorDockPanel])
+    }
 
-                function viewNode(node, mouse) {
-                    // 2D viewer
-                    viewer2D.tryLoadNode(node)
+    // Declaration of the panels: the DockManager reparents them into the DockArea
+    Item {
+        visible: false
 
-                    // 3D viewer
-                    // By default we only display the first 3D item, except if it has the semantic flag "3D"
-                    var alreadyDisplay = false
-                    for (var i = 0; i < node.attributes.count; i++) {
-                        var attr = node.attributes.at(i)
-                        if (attr.isOutput && attr.desc.semantic !== "image")
-                            if (!alreadyDisplay || attr.desc.semantic == "3d") {
-                                if (workspaceView.viewIn3D(attr, mouse))
-                                        alreadyDisplay = true
-                            }
-                                
+        WorkspaceView {
+            id: workspaceView
+            currentScene: _currentScene
+            readOnly: _currentScene ? _currentScene.computing : false
+
+            function viewNode(node, mouse) {
+                // 2D viewer
+                viewer2D.tryLoadNode(node)
+
+                // 3D viewer
+                // By default we only display the first 3D item, except if it has the semantic flag "3D"
+                var alreadyDisplay = false
+                for (var i = 0; i < node.attributes.count; i++) {
+                    var attr = node.attributes.at(i)
+                    if (attr.isOutput && attr.desc.semantic !== "image")
+                        if (!alreadyDisplay || attr.desc.semantic == "3d") {
+                            if (workspaceView.viewIn3D(attr, mouse))
+                                    alreadyDisplay = true
                         }
+                            
+                    }
 
-                    // Text viewer - open the first text output when the node has only text outputs
-                    if (node.hasTextOutput && !node.hasImageOutput && !node.hasSequenceOutput && !node.has3DOutput) {
-                        for (var j = 0; j < node.attributes.count; j++) {
-                            var textAttr = node.attributes.at(j)
-                            if (textAttr.isOutput && textAttr.isTextDisplayable) {
-                                workspaceView.viewInText(textAttr)
-                                break
-                            }
+                // Text viewer - open the first text output when the node has only text outputs
+                if (node.hasTextOutput && !node.hasImageOutput && !node.hasSequenceOutput && !node.has3DOutput) {
+                    for (var j = 0; j < node.attributes.count; j++) {
+                        var textAttr = node.attributes.at(j)
+                        if (textAttr.isOutput && textAttr.isTextDisplayable) {
+                            workspaceView.viewInText(textAttr)
+                            break
                         }
                     }
-                }
-
-                function viewIn2D(attribute, mouse) {
-                    settingsUILayout.showImageViewer = true
-                    workspaceView.mediaViewerTabIndex = 0
-                    workspaceView.viewer2D.tryLoadNode(attribute.node)
-                    workspaceView.viewer2D.setAttributeName(attribute.name)
-                }
-
-                function viewInText(attribute) {
-                    settingsUILayout.showTextViewer = true
-                    // Text Viewer is at index 1 when Image Viewer is also shown, else at index 0
-                    workspaceView.mediaViewerTabIndex = settingsUILayout.showImageViewer ? 1 : 0
-                    workspaceView.viewerText.source = Filepath.stringToUrl(attribute.value)
-                }
-
-                function viewIn3D(attribute, mouse) {
-
-                    if (!panel3dViewer || (!attribute.node.has3DOutput && !attribute.node.hasAttribute("useBoundingBox"))) {
-                        return false
-                    }
-                    var loaded = panel3dViewer.viewer3D.view(attribute)
-
-                    // solo media if Control modifier was held
-                    if (loaded && mouse && mouse.modifiers & Qt.ControlModifier) {
-                        panel3dViewer.viewer3D.solo(attribute)
-                    }
-                    return loaded
-                }
-
-                function viewAttributeInViewer(mouse, attribute) {
-                    /* Display the current attribute in the corresponding viewer */
-
-                    if (attribute.is2dDisplayable) {
-                        workspaceView.viewIn2D(attribute, mouse)
-                    }
-
-                    else if (attribute.is3dDisplayable) {
-                            workspaceView.viewIn3D(attribute, mouse)
-                    }
-
-                    else if (attribute.isTextDisplayable) {
-                        workspaceView.viewInText(attribute)
-                    }
-
                 }
             }
 
-            MSplitView {
-                id: bottomContainer
-                orientation: Qt.Horizontal
-                visible: settingsUILayout.showGraphEditor
-                SplitView.preferredHeight: 300
-                SplitView.minimumHeight: 80
+            function viewIn2D(attribute, mouse) {
+                _dockLayout.raisePanel("imageViewer")
+                workspaceView.viewer2D.tryLoadNode(attribute.node)
+                workspaceView.viewer2D.setAttributeName(attribute.name)
+            }
 
-                TabPanel {
-                    id: graphEditorPanel
-                    SplitView.fillWidth: true
-                    SplitView.minimumWidth: 350
+            function viewInText(attribute) {
+                _dockLayout.raisePanel("textViewer")
+                workspaceView.viewerText.source = Filepath.stringToUrl(attribute.value)
+            }
 
-                    padding: 4
-                    tabs: ["Graph Editor", "Task Manager", "Script Editor"]
+            function viewIn3D(attribute, mouse) {
 
-                    headerBar: RowLayout {
-                        MaterialToolButton {
-                            text: MaterialIcons.sync
-                            ToolTip.text: "Refresh Nodes Status"
-                            ToolTip.visible: hovered
-                            font.pointSize: 11
-                            padding: 2
-                            onClicked: {
-                                updatingStatus = true
-                                _currentScene.forceNodesStatusUpdate()
-                                updatingStatus = false
-                            }
-                            property bool updatingStatus: false
-                            enabled: !updatingStatus
-                        }
-                        MaterialToolButton {
-                            text: MaterialIcons.more_vert
-                            font.pointSize: 11
-                            padding: 2
-                            onClicked: graphEditorMenu.open()
-                            checkable: true
-                            checked: graphEditorMenu.visible
-                            Menu {
-                                id: graphEditorMenu
-                                y: parent.height
-                                x: -width + parent.width
-                                MenuItem {
-                                    text: "Clear Pending Status"
-                                    enabled: _currentScene ? !_currentScene.computingLocally : false
-                                    onTriggered: _currentScene.graph.clearSubmittedNodes(_currentScene.getSelectedNodes())
-                                }
-                                MenuItem {
-                                    text: "Force Unlock Nodes"
-                                    onTriggered: _currentScene.graph.forceUnlockNodes(_currentScene.getSelectedNodes())
-                                }
+                if (!panel3dViewer || (!attribute.node.has3DOutput && !attribute.node.hasAttribute("useBoundingBox"))) {
+                    return false
+                }
+                var loaded = panel3dViewer.viewer3D.view(attribute)
 
-                                Menu {
-                                    title: "Auto Layout Depth"
+                // solo media if Control modifier was held
+                if (loaded && mouse && mouse.modifiers & Qt.ControlModifier) {
+                    panel3dViewer.viewer3D.solo(attribute)
+                }
+                return loaded
+            }
 
-                                    MenuItem {
-                                        id: autoLayoutMinimum
-                                        text: "Minimum"
-                                        checkable: true
-                                        checked: _currentScene.layout.depthMode === 0
-                                        ToolTip.text: "Sets the Auto Layout Depth Mode to use Node's Minimum depth"
-                                        ToolTip.visible: hovered
-                                        ToolTip.delay: 200
-                                        onToggled: {
-                                            if (checked) {
-                                                _currentScene.layout.depthMode = 0;
-                                                autoLayoutMaximum.checked = false;
-                                            }
-                                            // Prevents cases where the user unchecks the currently checked option
-                                            autoLayoutMinimum.checked = true;
-                                        }
-                                    }
-                                    MenuItem {
-                                        id: autoLayoutMaximum
-                                        text: "Maximum"
-                                        checkable: true
-                                        checked: _currentScene.layout.depthMode === 1
-                                        ToolTip.text: "Sets the Auto Layout Depth Mode to use Node's Maximum depth"
-                                        ToolTip.visible: hovered
-                                        ToolTip.delay: 200
-                                        onToggled: {
-                                            if (checked) {
-                                                _currentScene.layout.depthMode = 1;
-                                                autoLayoutMinimum.checked = false;
-                                            }
-                                            // Prevents cases where the user unchecks the currently checked option
-                                            autoLayoutMaximum.checked = true;
-                                        }
-                                    }
-                                }
+            function viewAttributeInViewer(mouse, attribute) {
+                /* Display the current attribute in the corresponding viewer */
 
-                                Menu {
-                                    title: "Refresh Nodes Method"
-
-                                    MenuItem {
-                                    id: enableAutoRefresh
-                                    text: "Enable Auto-Refresh"
-                                    checkable: true
-                                    checked: _currentScene.filePollerRefresh === 0
-                                    ToolTip.text: "Check every file's status periodically"
-                                    ToolTip.visible: hovered
-                                    ToolTip.delay: 200
-                                    onToggled: {
-                                        if (checked) {
-                                            disableAutoRefresh.checked = false
-                                            minimalAutoRefresh.checked = false
-                                            _currentScene.filePollerRefreshChanged(0)
-                                        }
-                                        // Prevents cases where the user unchecks the currently checked option
-                                        enableAutoRefresh.checked = true
-                                    }
-                                }
-                                MenuItem {
-                                    id: disableAutoRefresh
-                                    text: "Disable Auto-Refresh"
-                                    checkable: true
-                                    checked: _currentScene.filePollerRefresh === 1
-                                    ToolTip.text: "No file status will be checked"
-                                    ToolTip.visible: hovered
-                                    ToolTip.delay: 200
-                                    onToggled: {
-                                        if (checked) {
-                                            enableAutoRefresh.checked = false
-                                            minimalAutoRefresh.checked = false
-                                            _currentScene.filePollerRefreshChanged(1)
-                                        }
-                                        // Prevents cases where the user unchecks the currently checked option
-                                        disableAutoRefresh.checked = true
-                                    }
-                                }
-                                MenuItem {
-                                    id: minimalAutoRefresh
-                                    text: "Enable Minimal Auto-Refresh"
-                                    checkable: true
-                                    checked: _currentScene.filePollerRefresh === 2
-                                    ToolTip.text: "Check the file status of submitted or running chunks periodically"
-                                    ToolTip.visible: hovered
-                                    ToolTip.delay: 200
-                                    onToggled: {
-                                        if (checked) {
-                                            disableAutoRefresh.checked = false
-                                            enableAutoRefresh.checked = false
-                                            _currentScene.filePollerRefreshChanged(2)
-                                        }
-                                        // Prevents cases where the user unchecks the currently checked option
-                                        minimalAutoRefresh.checked = true
-                                    }
-                                }
-                                }
-                            }
-                        }
-                        // TemplateBadge
-                        MaterialToolButton {
-
-                            readonly property string templateFilePath: {
-                                const coreGraph = _currentScene ? _currentScene.graph : null
-                                const templatePath = coreGraph ? coreGraph.templateFilepath : ""
-                                return templatePath
-                            }
-
-                            text: MaterialIcons.library_books
-                            visible: Boolean(templateFilePath)
-                            font.pointSize: 11
-                            padding: 2
-                            checked: true
-                            ToolTip.text: `Current graph is a template: ${templateFilePath}`
-                            ToolTip.visible: hovered
-                        }
-                    }
-
-                    GraphEditor {
-                        id: graphEditor
-                        anchors.fill: parent
-
-                        visible: graphEditorPanel.currentTab === 0
-
-                        uigraph: _currentScene
-                        nodeTypesModel: _nodeTypes
-
-                        onNodeDoubleClicked: function(mouse, node) {
-                            _currentScene.setActiveNode(node);
-                            workspaceView.viewNode(node, mouse);
-                        }
-                        onComputeRequest: function(nodes) {
-                            _currentScene.forceNodesStatusUpdate();
-                            computeManager.compute(nodes)
-                        }
-                        onSubmitRequest: function(nodes) {
-                            _currentScene.forceNodesStatusUpdate();
-                            computeManager.submit(nodes)
-                        }
-                        onFilesDropped: function(drop, mousePosition) {
-                            var filesByType = _currentScene.getFilesByTypeFromDrop(drop.urls)
-                            if (filesByType["meshroomScenes"].length == 1 || filesByType["meshroomTemplates"].length == 1) {
-                                ensureSaved(function() {
-                                    if (_currentScene.handleFilesUrl(filesByType, null, mousePosition)) {
-                                        if (_currentScene.graph.filepath)
-                                            MeshroomApp.addRecentProjectFile(filesByType["meshroomScenes"][0])
-                                        else if (filesByType["meshroomTemplates"].length == 1)
-                                            MeshroomApp.addRecentTemplateFile(filesByType["meshroomTemplates"][0])
-                                        else
-                                            MeshroomApp.addRecentTemplateFile(filesByType["meshroomScenes"][0])
-                                    }
-                                })
-                            } else {
-                                _currentScene.handleFilesUrl(filesByType, null, mousePosition)
-                            }
-                        }
-                    }
-
-                    TaskManager {
-                        id: taskManager
-                        anchors.fill: parent
-
-                        visible: graphEditorPanel.currentTab === 1
-
-                        uigraph: _currentScene
-                        taskManager: _currentScene ? _currentScene.taskManager : null
-                    }
-
-                    ScriptEditor {
-                        id: scriptEditor
-                        anchors.fill: parent
-                        rootApplication: root
-
-                        visible: graphEditorPanel.currentTab === 2
-                    }
+                if (attribute.is2dDisplayable) {
+                    workspaceView.viewIn2D(attribute, mouse)
                 }
 
-                NodeEditor {
-                    id: nodeEditor
-                    SplitView.preferredWidth: 500
-                    SplitView.minimumWidth: 350
+                else if (attribute.is3dDisplayable) {
+                        workspaceView.viewIn3D(attribute, mouse)
+                }
 
-                    node: _currentScene ? _currentScene.selectedNode : null
-                    property bool computing: _currentScene ? _currentScene.computing : false
-                    property var currentAttributes: []
+                else if (attribute.isTextDisplayable) {
+                    workspaceView.viewInText(attribute)
+                }
 
-                    // Make NodeEditor readOnly when computing
-                    readOnly: node ? node.locked : false
+            }
+        }
 
-                    onUpgradeRequest: {
-                        var n = _currentScene.upgradeNode(node)
-                        _currentScene.selectedNode = n
-                    }                   
+        DockPanel {
+            id: graphEditorDockPanel
+            panelId: "graphEditor"
+            title: "Graph Editor"
 
-                    onInAttributeClicked: function(srcItem, mouse, inAttributes) {                        
-                        _handleNavButtonClick(srcItem, mouse, inAttributes)                        
+            toolBar: RowLayout {
+                MaterialToolButton {
+                    text: MaterialIcons.sync
+                    ToolTip.text: "Refresh Nodes Status"
+                    ToolTip.visible: hovered
+                    font.pointSize: 11
+                    padding: 2
+                    onClicked: {
+                        updatingStatus = true
+                        _currentScene.forceNodesStatusUpdate()
+                        updatingStatus = false
                     }
-
-                    onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
-                        _handleNavButtonClick(srcItem, mouse, outAttributes)
-                    }
-
-                    // NavButtonContextMenu
+                    property bool updatingStatus: false
+                    enabled: !updatingStatus
+                }
+                MaterialToolButton {
+                    text: MaterialIcons.more_vert
+                    font.pointSize: 11
+                    padding: 2
+                    onClicked: graphEditorMenu.open()
+                    checkable: true
+                    checked: graphEditorMenu.visible
                     Menu {
-                        id: navButtonContextMenu
+                        id: graphEditorMenu
+                        y: parent.height
+                        x: -width + parent.width
+                        MenuItem {
+                            text: "Clear Pending Status"
+                            enabled: _currentScene ? !_currentScene.computingLocally : false
+                            onTriggered: _currentScene.graph.clearSubmittedNodes(_currentScene.getSelectedNodes())
+                        }
+                        MenuItem {
+                            text: "Force Unlock Nodes"
+                            onTriggered: _currentScene.graph.forceUnlockNodes(_currentScene.getSelectedNodes())
+                        }
 
-                        Repeater {
-                            model: nodeEditor.currentAttributes
+                        Menu {
+                            title: "Auto Layout Depth"
 
-                            delegate: MenuItem {
-
-                                contentItem: Text {
-                                    text: `${modelData.node.label}.${modelData.label}`
-                                    elide: Text.ElideLeft
-                                    color: Colors.sysPalette.text
+                            MenuItem {
+                                id: autoLayoutMinimum
+                                text: "Minimum"
+                                checkable: true
+                                checked: _currentScene.layout.depthMode === 0
+                                ToolTip.text: "Sets the Auto Layout Depth Mode to use Node's Minimum depth"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 200
+                                onToggled: {
+                                    if (checked) {
+                                        _currentScene.layout.depthMode = 0;
+                                        autoLayoutMaximum.checked = false;
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    autoLayoutMinimum.checked = true;
                                 }
-                                
-                                onTriggered: {
-                                    nodeEditor._selectNodesFromAttributes([nodeEditor.currentAttributes[index]])
+                            }
+                            MenuItem {
+                                id: autoLayoutMaximum
+                                text: "Maximum"
+                                checkable: true
+                                checked: _currentScene.layout.depthMode === 1
+                                ToolTip.text: "Sets the Auto Layout Depth Mode to use Node's Maximum depth"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 200
+                                onToggled: {
+                                    if (checked) {
+                                        _currentScene.layout.depthMode = 1;
+                                        autoLayoutMinimum.checked = false;
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    autoLayoutMaximum.checked = true;
                                 }
                             }
                         }
 
-                    }
+                        Menu {
+                            title: "Refresh Nodes Method"
 
-                    function _selectNodesFromAttributes(attributes) {
-                        /*
-                            Retrieve the nodes from given attributes, and select its 
-                        */
-
-                        if ( !attributes || attributes.length == 0) { return }
-
-                        graphEditor.uigraph.clearNodeSelection()
-                        
-                        const nodes = attributes.map( attr => attr.node)
-
-                        if (attributes.length == 1) {
-                            _currentScene.selectedNode = attributes[0].node
+                            MenuItem {
+                            id: enableAutoRefresh
+                            text: "Enable Auto-Refresh"
+                            checkable: true
+                            checked: _currentScene.filePollerRefresh === 0
+                            ToolTip.text: "Check every file's status periodically"
+                            ToolTip.visible: hovered
+                            ToolTip.delay: 200
+                            onToggled: {
+                                if (checked) {
+                                    disableAutoRefresh.checked = false
+                                    minimalAutoRefresh.checked = false
+                                    _currentScene.filePollerRefreshChanged(0)
+                                }
+                                // Prevents cases where the user unchecks the currently checked option
+                                enableAutoRefresh.checked = true
+                            }
                         }
-                        graphEditor.uigraph.selectNodes(nodes)
-                    } 
-
-                    function _openLinkAttributesContextMenu(srcItem, mouse, attributes) {
-                        nodeEditor.currentAttributes = attributes
-                        const srcGlobal = srcItem.mapToGlobal(0, 0)
-                        const nodeEditorGlobal = nodeEditor.mapToGlobal(0, 0)
-                        navButtonContextMenu.x = srcGlobal.x - nodeEditorGlobal.x
-                        navButtonContextMenu.y = srcGlobal.y - nodeEditorGlobal.y - 14 // TODO: Couldn't found a way to avoid padding in position. 14 = navButtonOut.paddingTop * 2
-                        navButtonContextMenu.open()
-                    }
-
-                    function _handleNavButtonClick(srcItem, mouse, attributes) {
-
-                        if (mouse.button === Qt.RightButton) {
-                            nodeEditor._openLinkAttributesContextMenu(srcItem, mouse, attributes)
-                            return
+                        MenuItem {
+                            id: disableAutoRefresh
+                            text: "Disable Auto-Refresh"
+                            checkable: true
+                            checked: _currentScene.filePollerRefresh === 1
+                            ToolTip.text: "No file status will be checked"
+                            ToolTip.visible: hovered
+                            ToolTip.delay: 200
+                            onToggled: {
+                                if (checked) {
+                                    enableAutoRefresh.checked = false
+                                    minimalAutoRefresh.checked = false
+                                    _currentScene.filePollerRefreshChanged(1)
+                                }
+                                // Prevents cases where the user unchecks the currently checked option
+                                disableAutoRefresh.checked = true
+                            }
                         }
-
-                        nodeEditor._selectNodesFromAttributes(attributes)
-
-                        if (mouse.button === Qt.MiddleButton) {
-                            graphEditor.fit()
+                        MenuItem {
+                            id: minimalAutoRefresh
+                            text: "Enable Minimal Auto-Refresh"
+                            checkable: true
+                            checked: _currentScene.filePollerRefresh === 2
+                            ToolTip.text: "Check the file status of submitted or running chunks periodically"
+                            ToolTip.visible: hovered
+                            ToolTip.delay: 200
+                            onToggled: {
+                                if (checked) {
+                                    disableAutoRefresh.checked = false
+                                    enableAutoRefresh.checked = false
+                                    _currentScene.filePollerRefreshChanged(2)
+                                }
+                                // Prevents cases where the user unchecks the currently checked option
+                                minimalAutoRefresh.checked = true
+                            }
+                        }
                         }
                     }
-
-
-                    onShowAttributeInViewer: function(attribute) {
-                        workspaceView.viewAttributeInViewer(null, attribute)
-                    }
-
-                    onAttributeDoubleClicked: function(mouse, attribute) {
-                        workspaceView.viewAttributeInViewer(mouse, attribute)                        
-                    }
-                    
                 }
+                // TemplateBadge
+                MaterialToolButton {
+
+                    readonly property string templateFilePath: {
+                        const coreGraph = _currentScene ? _currentScene.graph : null
+                        const templatePath = coreGraph ? coreGraph.templateFilepath : ""
+                        return templatePath
+                    }
+
+                    text: MaterialIcons.library_books
+                    visible: Boolean(templateFilePath)
+                    font.pointSize: 11
+                    padding: 2
+                    checked: true
+                    ToolTip.text: `Current graph is a template: ${templateFilePath}`
+                    ToolTip.visible: hovered
+                }
+            }
+
+            GraphEditor {
+                id: graphEditor
+                anchors.fill: parent
+
+
+                uigraph: _currentScene
+                nodeTypesModel: _nodeTypes
+
+                onNodeDoubleClicked: function(mouse, node) {
+                    _currentScene.setActiveNode(node);
+                    workspaceView.viewNode(node, mouse);
+                }
+                onComputeRequest: function(nodes) {
+                    _currentScene.forceNodesStatusUpdate();
+                    computeManager.compute(nodes)
+                }
+                onSubmitRequest: function(nodes) {
+                    _currentScene.forceNodesStatusUpdate();
+                    computeManager.submit(nodes)
+                }
+                onFilesDropped: function(drop, mousePosition) {
+                    var filesByType = _currentScene.getFilesByTypeFromDrop(drop.urls)
+                    if (filesByType["meshroomScenes"].length == 1 || filesByType["meshroomTemplates"].length == 1) {
+                        ensureSaved(function() {
+                            if (_currentScene.handleFilesUrl(filesByType, null, mousePosition)) {
+                                if (_currentScene.graph.filepath)
+                                    MeshroomApp.addRecentProjectFile(filesByType["meshroomScenes"][0])
+                                else if (filesByType["meshroomTemplates"].length == 1)
+                                    MeshroomApp.addRecentTemplateFile(filesByType["meshroomTemplates"][0])
+                                else
+                                    MeshroomApp.addRecentTemplateFile(filesByType["meshroomScenes"][0])
+                            }
+                        })
+                    } else {
+                        _currentScene.handleFilesUrl(filesByType, null, mousePosition)
+                    }
+                }
+            }
+        }
+
+        DockPanel {
+            id: taskManagerDockPanel
+            panelId: "taskManager"
+            title: "Task Manager"
+
+            TaskManager {
+                id: taskManager
+                anchors.fill: parent
+
+
+                uigraph: _currentScene
+                taskManager: _currentScene ? _currentScene.taskManager : null
+            }
+        }
+
+        DockPanel {
+            id: scriptEditorDockPanel
+            panelId: "scriptEditor"
+            title: "Script Editor"
+
+            ScriptEditor {
+                id: scriptEditor
+                anchors.fill: parent
+                rootApplication: root
+
+            }
+        }
+
+        DockPanel {
+            id: nodeEditorDockPanel
+            panelId: "nodeEditor"
+            title: "Node Editor"
+
+            NodeEditor {
+                id: nodeEditor
+                anchors.fill: parent
+
+                node: _currentScene ? _currentScene.selectedNode : null
+                property bool computing: _currentScene ? _currentScene.computing : false
+                property var currentAttributes: []
+
+                // Make NodeEditor readOnly when computing
+                readOnly: node ? node.locked : false
+
+                onUpgradeRequest: {
+                    var n = _currentScene.upgradeNode(node)
+                    _currentScene.selectedNode = n
+                }                   
+
+                onInAttributeClicked: function(srcItem, mouse, inAttributes) {                        
+                    _handleNavButtonClick(srcItem, mouse, inAttributes)                        
+                }
+
+                onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
+                    _handleNavButtonClick(srcItem, mouse, outAttributes)
+                }
+
+                // NavButtonContextMenu
+                Menu {
+                    id: navButtonContextMenu
+
+                    Repeater {
+                        model: nodeEditor.currentAttributes
+
+                        delegate: MenuItem {
+
+                            contentItem: Text {
+                                text: `${modelData.node.label}.${modelData.label}`
+                                elide: Text.ElideLeft
+                                color: Colors.sysPalette.text
+                            }
+                            
+                            onTriggered: {
+                                nodeEditor._selectNodesFromAttributes([nodeEditor.currentAttributes[index]])
+                            }
+                        }
+                    }
+
+                }
+
+                function _selectNodesFromAttributes(attributes) {
+                    /*
+                        Retrieve the nodes from given attributes, and select its 
+                    */
+
+                    if ( !attributes || attributes.length == 0) { return }
+
+                    graphEditor.uigraph.clearNodeSelection()
+                    
+                    const nodes = attributes.map( attr => attr.node)
+
+                    if (attributes.length == 1) {
+                        _currentScene.selectedNode = attributes[0].node
+                    }
+                    graphEditor.uigraph.selectNodes(nodes)
+                } 
+
+                function _openLinkAttributesContextMenu(srcItem, mouse, attributes) {
+                    nodeEditor.currentAttributes = attributes
+                    const srcGlobal = srcItem.mapToGlobal(0, 0)
+                    const nodeEditorGlobal = nodeEditor.mapToGlobal(0, 0)
+                    navButtonContextMenu.x = srcGlobal.x - nodeEditorGlobal.x
+                    navButtonContextMenu.y = srcGlobal.y - nodeEditorGlobal.y - 14 // TODO: Couldn't found a way to avoid padding in position. 14 = navButtonOut.paddingTop * 2
+                    navButtonContextMenu.open()
+                }
+
+                function _handleNavButtonClick(srcItem, mouse, attributes) {
+
+                    if (mouse.button === Qt.RightButton) {
+                        nodeEditor._openLinkAttributesContextMenu(srcItem, mouse, attributes)
+                        return
+                    }
+
+                    nodeEditor._selectNodesFromAttributes(attributes)
+
+                    if (mouse.button === Qt.MiddleButton) {
+                        graphEditor.fit()
+                    }
+                }
+
+
+                onShowAttributeInViewer: function(attribute) {
+                    workspaceView.viewAttributeInViewer(null, attribute)
+                }
+
+                onAttributeDoubleClicked: function(mouse, attribute) {
+                    workspaceView.viewAttributeInViewer(mouse, attribute)                        
+                }
+                
             }
         }
     }

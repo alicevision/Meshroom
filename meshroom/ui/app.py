@@ -30,6 +30,7 @@ from meshroom.ui.components.scriptEditor import ScriptEditorManager
 from meshroom.ui.components.thumbnail import ThumbnailCache
 from meshroom.ui.components.messaging import MessageController
 from meshroom.ui.components.shapes import ShapeFilesHelper, ShapeViewerHelper
+from meshroom.ui.dockLayoutManager import DockLayoutManager
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.scene import Scene
 from meshroom.ui.utils import QmlInstantEngine
@@ -317,6 +318,7 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("_messageController", self._messageController)
         self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
         self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
+        self.engine.rootContext().setContextProperty("_dockLayout", DockLayoutManager(parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
         self.engine.rootContext().setContextProperty("NodeVersionType", NodeVersionTypeEnum(parent=self))
 

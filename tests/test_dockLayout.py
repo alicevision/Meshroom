@@ -272,6 +272,18 @@ class TestLoad:
         layout.movePanel("a", layout.groupOf("c")["id"], "top")
         checkNormalized(layout)
 
+    def test_loadedIdsAreKept(self):
+        data = smallLayout()
+        for i, (node, _) in enumerate(iterNodes(data["main"])):
+            node["id"] = f"node{i + 2}"
+        # A new layout generates low ids, which must not take the place of the loaded ones
+        layout = DockLayout(smallLayout())
+        assert layout.load(data)
+        layout.movePanel("a", layout.groupOf("c")["id"], "top")
+        layout.movePanel("b", layout.groupOf("a")["id"], "right")
+        checkNormalized(layout)
+        assert layout.groupOf("c")["id"] == "node4"
+
 
 class TestLegacySettings:
 
@@ -316,8 +328,8 @@ class TestFloatingWindows:
         assert windowId
         data = layout.toDict()
         assert data["floating"] == [{"id": windowId, "geometry": [100, 50, 400, 300], "root": layout.groupOf("b")}]
-        assert layout.floatingWindowOf("b")["id"] == windowId
-        assert layout.floatingWindowOf("a") is None
+        assert layout._findGroup("b")[2]["id"] == windowId
+        assert layout._findGroup("a")[2] is None
         assert layout.isOpen("b")
         assert groups(layout) == [["a"], ["c", "d"]]
         checkNormalized(layout)
@@ -330,7 +342,7 @@ class TestFloatingWindows:
         # A non floatable panel cannot be dropped in a floating window either
         assert not layout.movePanel("c", layout.groupOf("d")["id"], "center")
         assert not layout.movePanel("c", layout.groupOf("d")["id"], "left")
-        assert layout.floatingWindowOf("c") is None
+        assert layout._findGroup("c")[2] is None
 
     def test_floatingAPanelAloneInAFloatingWindowDoesNothing(self):
         layout = floatingDockLayout()
@@ -377,7 +389,7 @@ class TestFloatingWindows:
         assert layout.openPanels() == ["b", "c"]
         assert not layout.closeFloatingWindow("float")
         # The window keeps its place, to be displayed again with its panels
-        assert layout.floatingWindowOf("a")["id"] == "float"
+        assert layout._findGroup("a")[2]["id"] == "float"
 
     def test_loadFloatingWindows(self):
         layout = DockLayout(smallLayout(), nonFloatablePanels=["c"])

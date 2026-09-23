@@ -28,6 +28,13 @@ class DockLayoutManager(QObject):
         super().__init__(parent)
         self._layout = DockLayout()
         self._restore()
+        self._clampFloatingWindows()
+
+    def _clampFloatingWindows(self):
+        """ Make sure the floating windows are visible on the current screens, which may have changed. """
+        if QGuiApplication.instance():
+            screens = [screen.availableGeometry() for screen in QGuiApplication.screens()]
+            self._layout.clampFloatingGeometries([[g.x(), g.y(), g.width(), g.height()] for g in screens])
 
     def _restore(self):
         """ Load the layout from the settings, or build it from the settings of older versions. """
@@ -92,6 +99,47 @@ class DockLayoutManager(QObject):
         # Always notify, the QML group may have a different current tab than the layout while the
         # panel is closed
         self.currentPanelChanged.emit(group["id"], panelId)
+
+    @Slot(str, result=bool)
+    def canFloat(self, panelId):
+        """ Whether a panel can be displayed in a floating window. """
+        return self._layout.canFloat(panelId)
+
+    @Slot(str, int, int, int, int, result=bool)
+    def floatPanel(self, panelId, x, y, width, height):
+        """
+        Move a panel to a new floating window with the given geometry.
+
+        Returns:
+            bool: whether the layout changed; it does not if the panel cannot float, or is already alone
+            in a floating window.
+        """
+        if not self._layout.floatPanel(panelId, [x, y, width, height]):
+            return False
+        self._clampFloatingWindows()
+        self._structureChanged()
+        return True
+
+    @Slot(str, result=bool)
+    def dockPanel(self, panelId):
+        """ Move a panel from a floating window back to the main window (see `DockLayout.dockPanel`). """
+        if not self._layout.dockPanel(panelId):
+            return False
+        self._structureChanged()
+        return True
+
+    @Slot(str, int, int, int, int)
+    def setFloatingGeometry(self, windowId, x, y, width, height):
+        """ Store the geometry of a floating window, as moved or resized by the user. """
+        if self._layout.setFloatingGeometry(windowId, [x, y, width, height]):
+            self._save()
+
+    @Slot(str)
+    def closeFloatingWindow(self, windowId):
+        """ Close the panels of a floating window, which is hidden until one of them is reopened. """
+        if self._layout.closeFloatingWindow(windowId):
+            self._save()
+            self.openPanelsChanged.emit()
 
     @Slot(str, str)
     def setCurrent(self, groupId, panelId):
@@ -161,6 +209,7 @@ class DockLayoutManager(QObject):
             if data is None or not self._layout.load(data):
                 logging.warning(f"Cannot load the workspace '{name}'.")
                 return False
+            self._clampFloatingWindows()
         self._structureChanged()
         return True
 

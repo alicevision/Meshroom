@@ -16,6 +16,9 @@ Layout:
     {
         "version": 1,
         "main": <node or None>,     # content of the main window
+        "floating": [               # floating windows
+            {"id": "node9", "geometry": [x, y, width, height] or None, "root": <node>},
+        ],
         "closed": ["textViewer"],   # panels currently closed
     }
 
@@ -33,6 +36,10 @@ VERTICAL = "vertical"
 
 # Drop zones on a tabs node: "center" adds the panel to its tabs, the other ones split the node.
 ZONES = ("center", "left", "right", "top", "bottom")
+
+# Panels that cannot be displayed in a floating window: the Qt3D scene of the 3D Viewer does not
+# survive a change of window.
+NON_FLOATABLE_PANELS = ("viewer3D",)
 
 # Layout of the Meshroom main window by default: the viewers above, the graph and the node editors below.
 DEFAULT_LAYOUT = {
@@ -71,6 +78,43 @@ def _isPositiveNumber(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0
 
 
+def _cleanGeometry(geometry):
+    """ Return a valid [x, y, width, height] geometry as integers, or None. """
+    if not isinstance(geometry, (list, tuple)) or len(geometry) != 4:
+        return None
+    if not all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) for v in geometry):
+        return None
+    if geometry[2] <= 0 or geometry[3] <= 0:
+        return None
+    return [int(v) for v in geometry]
+
+
+def clampGeometry(geometry, screens):
+    """
+    Fit a window geometry in the screen it overlaps the most, moving and shrinking it if needed. A window
+    overlapping no screen, e.g. saved while another screen was connected, goes to the first screen.
+
+    Args:
+        geometry: [x, y, width, height] of the window, or None.
+        screens: [x, y, width, height] of the available area of each screen.
+
+    Returns:
+        list: the fitted geometry, or the given one if there is no geometry or no screen.
+    """
+    if not geometry or not screens:
+        return geometry
+    x, y, width, height = geometry
+
+    def overlap(screen):
+        sx, sy, sw, sh = screen
+        return max(0, min(x + width, sx + sw) - max(x, sx)) * max(0, min(y + height, sy + sh) - max(y, sy))
+
+    # The first screen wins when the window overlaps none
+    sx, sy, sw, sh = max(screens, key=overlap)
+    width, height = min(width, sw), min(height, sh)
+    return [min(max(x, sx), sx + sw - width), min(max(y, sy), sy + sh - height), width, height]
+
+
 def iterNodes(node):
     """
     Iterate over a node and all its descendants, depth first.
@@ -107,13 +151,17 @@ class DockLayout:
     - every node has a unique id.
     """
 
-    def __init__(self, defaultLayout=DEFAULT_LAYOUT):
+    def __init__(self, defaultLayout=DEFAULT_LAYOUT, nonFloatablePanels=NON_FLOATABLE_PANELS):
         """
         Args:
             defaultLayout: the layout used by `reset`, which also defines the known panels.
+            nonFloatablePanels: ids of the panels that cannot be displayed in a floating window.
         """
         self._nextId = 1
         self._panelIds = panelsOf(defaultLayout["main"])
+        for window in defaultLayout.get("floating", []):
+            self._panelIds += panelsOf(window["root"])
+        self._nonFloatable = set(nonFloatablePanels)
         self._default = copy.deepcopy(defaultLayout)
         self._layout = None
         self.reset()
@@ -170,6 +218,18 @@ class DockLayout:
                 if node["type"] == "tabs" and panelId in node["panels"]:
                     return node
         return None
+
+    def canFloat(self, panelId):
+        return panelId in self._panelIds and panelId not in self._nonFloatable
+
+    def floatingWindow(self, windowId):
+        """ Return the floating window with the given id, or None. """
+        return next((entry for entry in self._layout["floating"] if entry["id"] == windowId), None)
+
+    def floatingWindowOf(self, panelId):
+        """ Return the floating window displaying the given panel, or None if it is in the main window. """
+        group = self.groupOf(panelId)
+        return self._windowOf(group) if group else None
 
     # --- Changes ----------------------------------------------------------------------------------
 
@@ -246,6 +306,8 @@ class DockLayout:
         target = self.node(groupId)
         if zone not in ZONES or not source or not target or target["type"] != "tabs":
             return False
+        if self._windowOf(target) and not self.canFloat(panelId):
+            return False
 
         if zone == "center":
             panels = target["panels"]
@@ -273,10 +335,97 @@ class DockLayout:
         self._layout = self._normalized(self._layout)
         return True
 
+    def floatPanel(self, panelId, geometry=None):
+        """
+        Move a panel to a new floating window. The panel is opened.
+
+        Args:
+            panelId: the panel to move.
+            geometry: [x, y, width, height] of the window, or None to let the UI decide.
+
+        Returns:
+            str: the id of the new floating window, or None if the panel cannot float or is already
+            alone in a floating window.
+        """
+        source = self.groupOf(panelId)
+        if not source or not self.canFloat(panelId):
+            return None
+        window = self._windowOf(source)
+        if window and panelsOf(window["root"]) == [panelId]:
+            return None
+        source["panels"].remove(panelId)
+        windowId = self._newId()
+        self._layout["floating"].append({
+            "id": windowId,
+            "geometry": _cleanGeometry(geometry),
+            "root": self._newTabs([panelId]),
+        })
+        self.setPanelOpen(panelId, True)
+        self._layout = self._normalized(self._layout)
+        return windowId
+
+    def dockPanel(self, panelId):
+        """
+        Move a panel from a floating window back to the main window, in the group of the panels it is
+        grouped with by default. The panel is opened and made current.
+
+        Returns:
+            bool: whether the layout changed.
+        """
+        source = self.groupOf(panelId)
+        if not source or not self._windowOf(source):
+            return False
+        source["panels"].remove(panelId)
+        self._insertHome(panelId)
+        self.groupOf(panelId)["current"] = panelId
+        self.setPanelOpen(panelId, True)
+        self._layout = self._normalized(self._layout)
+        return True
+
+    def setFloatingGeometry(self, windowId, geometry):
+        """
+        Store the geometry of a floating window, as moved or resized by the user.
+
+        Returns:
+            bool: whether the layout changed.
+        """
+        window = self.floatingWindow(windowId)
+        geometry = _cleanGeometry(geometry)
+        if not window or not geometry or window["geometry"] == geometry:
+            return False
+        window["geometry"] = geometry
+        return True
+
+    def closeFloatingWindow(self, windowId):
+        """
+        Close the panels of a floating window. The window keeps its place in the layout, to be displayed
+        again at the same place when one of its panels is reopened.
+
+        Returns:
+            bool: whether the layout changed.
+        """
+        window = self.floatingWindow(windowId)
+        if not window:
+            return False
+        changed = [self.setPanelOpen(panelId, False) for panelId in panelsOf(window["root"])]
+        return any(changed)
+
+    def clampFloatingGeometries(self, screens):
+        """ Fit each floating window in the given screens (see `clampGeometry`). """
+        for window in self._layout["floating"]:
+            window["geometry"] = clampGeometry(window["geometry"], screens)
+
     # --- Internals --------------------------------------------------------------------------------
 
     def _roots(self):
-        return [self._layout["main"]]
+        return [self._layout["main"]] + [window["root"] for window in self._layout["floating"]]
+
+    def _windowOf(self, node):
+        """ Return the floating window containing a node, or None if it is in the main window. """
+        for window in self._layout["floating"]:
+            if any(n is node for n, _ in iterNodes(window["root"])):
+                return window
+        return None
 
     def _newId(self):
         nodeId = f"node{self._nextId}"
@@ -303,7 +452,11 @@ class DockLayout:
 
     def _setRoot(self, oldRoot, newRoot):
         """ Replace a root node of the layout. """
-        self._layout["main"] = newRoot
+        if self._layout["main"] is oldRoot:
+            self._layout["main"] = newRoot
+        for window in self._layout["floating"]:
+            if window["root"] is oldRoot:
+                window["root"] = newRoot
 
     def _insertBeside(self, target, node, zone):
         """ Insert `node` on the `zone` side of `target`, splitting it or reusing its parent split. """
@@ -344,8 +497,18 @@ class DockLayout:
         layout = {
             "version": LAYOUT_VERSION,
             "main": self._cleanNode(data.get("main"), seen),
+            "floating": [],
             "closed": [],
         }
+        windows = data.get("floating")
+        for window in windows if isinstance(windows, list) else []:
+            if not isinstance(window, dict):
+                continue
+            # Non floatable panels found in a floating window go back to their default place
+            root = self._cleanNode(window.get("root"), seen, excluded=self._nonFloatable)
+            if root is not None:
+                geometry = _cleanGeometry(window.get("geometry"))
+                layout["floating"].append({"id": window.get("id"), "geometry": geometry, "root": root})
         closed = data.get("closed")
         closed = closed if isinstance(closed, list) else []
         for panelId in closed:
@@ -446,9 +609,9 @@ class DockLayout:
             self._layout["main"] = self._newTabs([panelId])
 
     def _assignIds(self):
-        """ Give an id to the nodes without one, or with an id already used by another node. """
+        """ Give an id to the nodes and floating windows without one, or with an id already used. """
         used = set()
-        for node, _ in self._iterAllNodes():
+        for node in self._layout["floating"] + [node for node, _ in self._iterAllNodes()]:
             nodeId = node.get("id")
             if not isinstance(nodeId, str) or not nodeId or nodeId in used:
                 nodeId = self._newId()

@@ -4,7 +4,7 @@
 import json
 
 from meshroom.core.plugins.metadata import PluginMetadata
-from .utils import writeFile
+from ..utils import writeFile
 
 
 class TestLoadJsonMetadata:

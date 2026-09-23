@@ -117,14 +117,18 @@ Item {
         return node.children.reduce(function(panelIds, child) { return panelIds.concat(panelsOf(child)) }, [])
     }
 
-    /// Return the DockArea of the window displaying an item
-    function areaOf(item) {
-        var window = item.Window.window
+    /// Return the DockArea of a window, or null
+    function areaOfWindow(window) {
         for (var i = 0; i < m.areas.length; ++i) {
             if (m.areas[i].Window.window === window)
                 return m.areas[i]
         }
-        return mainArea
+        return null
+    }
+
+    /// Return the DockArea of the window displaying an item
+    function areaOf(item) {
+        return areaOfWindow(item.Window.window) || mainArea
     }
 
     /// Hide a panel in the parking item of its window
@@ -198,8 +202,8 @@ Item {
         var group = panel.dockGroup
         if (layoutModel.floatPanel(panel.panelId, globalX, globalY, Math.max(group.width, 300), Math.max(group.height, 200)))
             return
-        var window = group.Window.window
-        if (window !== mainArea.Window.window) {
+        if (group.area.floating) {
+            var window = group.Window.window
             window.x = globalX
             window.y = globalY
         }
@@ -211,18 +215,14 @@ Item {
     function updateDrag(globalX, globalY) {
         if (!draggedPanel)
             return
-        var target = dropTargetAt(globalX, globalY)
+        var window = layoutModel.windowAt(globalX, globalY)
+        var target = dropTargetAt(window, globalX, globalY)
         if (!target || !dropTarget || target.group !== dropTarget.group || target.zone !== dropTarget.zone || target.index !== dropTarget.index)
             dropTarget = target
 
-        var window = layoutModel.windowAt(globalX, globalY)
-        ghostArea = null
-        for (var i = 0; i < m.areas.length; ++i) {
-            if (m.areas[i].Window.window === window) {
-                ghostArea = m.areas[i]
-                ghostPosition = ghostArea.mapFromGlobal(globalX, globalY)
-            }
-        }
+        ghostArea = window ? areaOfWindow(window) : null
+        if (ghostArea)
+            ghostPosition = ghostArea.mapFromGlobal(globalX, globalY)
     }
 
     /// Drop the dragged panel at the given global position: released out of any window, it floats
@@ -230,8 +230,8 @@ Item {
         var panel = draggedPanel
         if (!panel)
             return
-        var target = dropTargetAt(globalX, globalY)
         var window = layoutModel.windowAt(globalX, globalY)
+        var target = dropTargetAt(window, globalX, globalY)
         cancelDrag()
         if (target)
             layoutModel.movePanel(panel.panelId, target.group.node.id, target.zone, target.index)
@@ -246,9 +246,9 @@ Item {
         ghostArea = null
     }
 
-    /// Return where the dragged panel would be dropped at the given global position, or null
-    function dropTargetAt(globalX, globalY) {
-        var window = layoutModel.windowAt(globalX, globalY)
+    /// Return where the dragged panel would be dropped at the given global position, in the given window
+    /// (the top level window at that position), or null
+    function dropTargetAt(window, globalX, globalY) {
         if (!window)
             return null
         for (var i = 0; i < m.groups.length; ++i) {
@@ -265,7 +265,7 @@ Item {
     }
 
     function isDropAllowed(target) {
-        if (target.group.area !== mainArea && !layoutModel.canFloat(draggedPanel.panelId))
+        if (target.group.area.floating && !layoutModel.canFloat(draggedPanel.panelId))
             return false
         if (target.group !== draggedPanel.dockGroup)
             return true

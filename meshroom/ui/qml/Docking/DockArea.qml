@@ -16,6 +16,8 @@ Item {
     /// Root node of the layout displayed in the area, set with setRootNode()
     property var rootNode: null
     readonly property Item parking: parkingItem
+    /// Whether the area is the one of a floating window
+    readonly property bool floating: manager !== null && root !== manager.mainArea
 
     /// Display a node, destroying the ones displayed so far: their panels must have been parked
     function setRootNode(node) {

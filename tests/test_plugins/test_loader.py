@@ -7,7 +7,7 @@ import sys
 
 from meshroom.core.plugins.base import PluginType, NodeDescProviderStatus, SubmitterProviderStatus
 from meshroom.core.plugins.loader import PLUGINS_ROOT_PACKAGE, PluginLoader
-from .utils import writeFile
+from ..utils import writeFile
 
 
 def _nodeDescSource(className: str) -> str:

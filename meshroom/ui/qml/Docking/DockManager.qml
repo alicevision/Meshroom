@@ -80,7 +80,11 @@ Item {
         function onLayoutChanged() { Qt.callLater(root.rebuild) }
     }
 
-    Component.onCompleted: rebuild()
+    Component.onCompleted: {
+        rebuild()
+        bindPanels()
+    }
+    onPanelListChanged: bindPanels()
     // The floating windows have no parent (see createWindow), they have to be destroyed explicitly
     Component.onDestruction: {
         for (var windowId in m.windows)
@@ -91,6 +95,13 @@ Item {
     function unregisterArea(area) { m.areas = m.areas.filter(function(a) { return a !== area }) }
     function registerGroup(group) { m.groups.push(group) }
     function unregisterGroup(group) { m.groups = m.groups.filter(function(g) { return g !== group }) }
+
+    /// Bind the isOpen property of the panels to the layout
+    function bindPanels() {
+        panelList.forEach(function(panel) {
+            panel.isOpen = Qt.binding(function() { return root.openPanelSet[panel.panelId] === true })
+        })
+    }
 
     /// Whether a node of the layout contains an open panel, i.e. has to be displayed
     function hasOpenPanel(node) {

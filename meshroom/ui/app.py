@@ -316,7 +316,8 @@ class MeshroomApp(QApplication):
         # additional context properties
         self._messageController = MessageController(parent=self)
         self.engine.rootContext().setContextProperty("_messageController", self._messageController)
-        self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
+        self._paletteManager = PaletteManager(self.engine, parent=self)
+        self.engine.rootContext().setContextProperty("_PaletteManager", self._paletteManager)
         self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
         self.engine.rootContext().setContextProperty("_dockLayout", DockLayoutManager(parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
@@ -382,6 +383,10 @@ class MeshroomApp(QApplication):
             self.addRecentProjectFile(args.save)
 
         self.engine.load(os.path.normpath(url))
+
+        # Apply the initial theme now.
+        # Quick Controls Fusion-style palette machinery has already initialized.
+        self._paletteManager.togglePalette()
 
     def terminateManual(self):
         self.engine.clearComponentCache()

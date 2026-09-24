@@ -240,7 +240,7 @@ class PluginInstaller(PluginService):
 
         if pyprojectFile.is_file():
             # "uv sync" resolves against the plugin's "pyproject.toml"/"[tool.uv]" and
-            # creates the target environment itself. 
+            # creates the target environment itself.
             # "--no-install-project" installs only the dependencies.
             # "--no-default-groups" skips dev groups.
             # "--frozen" reuses an existing "uv.lock" without re-resolving.
@@ -270,6 +270,7 @@ class PluginInstaller(PluginService):
         """
         cmd = [uv, *args]
         progress = 0.0
+        output: list[str] = []
 
         def onLine(line: str) -> None:
             nonlocal progress
@@ -282,11 +283,13 @@ class PluginInstaller(PluginService):
 
         try:
             if self._onProgress is not None:
-                returnCode = runUvWithProgress(cmd, onLine, env)
+                returnCode = runUvWithProgress(cmd, onLine, env, output)
             else:
                 self._checkCancel()
                 returnCode = runUv(cmd, env)
         except OSError as exc:
             raise self._error("Dependencies", f"Failed to launch '{' '.join(cmd)}'.", exc)
         if returnCode != 0:
-            raise self._error("Dependencies", f"Command failed (exit code {returnCode}): {' '.join(cmd)}")
+            if output:
+                logging.error(f"UV command failed (exit code {returnCode}): {' '.join(cmd)}\n" + "\n".join(output))
+            raise self._error("Dependencies", f"UV command failed (exit code {returnCode})")

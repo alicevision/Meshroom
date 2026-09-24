@@ -11,7 +11,7 @@ from inspect import getfile
 from pathlib import Path
 from typing import Optional
 
-from meshroom.common import BaseObject
+from meshroom.common import BaseObject, Property, Variant, VariantList
 from meshroom.core import desc
 from meshroom.core.desc.attribute import ValueTypeErrors
 from meshroom.core.submitter import BaseSubmitter
@@ -57,11 +57,15 @@ class Plugin(BaseObject):
 
     Members:
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
-        version: the version of the plugin, or "unknown" if none was provided
-        publisher: the publisher of the plugin, or "unknown" if none was provided
+        version: the version of the plugin, or "Unknown" if none was provided
+        publisher: the publisher of the plugin, or "Unknown" if none was provided
+        type: the PluginType describing how the plugin was discovered
+        typeName: the name of "type", exposed as a plain string for QML bindings/comparisons
+        description: a short description of the plugin
+        authors: the list of the plugin's authors
+        requirements: a human-readable description of the plugin's runtime requirements
         rootPath: the absolute path of the plugin's root folder
         hostPath: the absolute path of the plugin's host modules (its "meshroom" folder)
-        type: the PluginType describing how the plugin was discovered
         isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team)
         env: the dictionary containing the environment variables of the plugin
         fullEnv: the dictionary containing the environment variables of the plugin and os.environ
@@ -91,47 +95,28 @@ class Plugin(BaseObject):
     def __repr__(self):
         return f"<Plugin {self.name}>"
 
-    @property
-    def name(self):
-        """ Return the name of the plugin. """
-        return self._context.metadata.name
-
-    @property
-    def version(self):
-        """ Return the version of the plugin, or "unknown" if none was provided. """
-        if self._context.metadata.version:
-            return self._context.metadata.version
-        return "unknown"
-
-    @property
-    def publisher(self):
-        """ Return the publisher of the plugin, or "unknown" if none was provided. """
-        if self._context.metadata.publisher:
-            return self._context.metadata.publisher
-        return "unknown"
-
-    @property
-    def rootPath(self):
-        """
-        Return the absolute path of the plugin's root folder, containing python modules
-        as well as any "bin"/"lib"/"lib64"/"venv" dependency folders.
-        """
-        return str(self._context.rootPath)
-
-    @property
-    def hostPath(self):
-        """ Return the absolute path of the plugin's host modules (its "meshroom" folder). """
-        return str(self._context.hostPath)
-
-    @property
-    def type(self):
-        """ Return the PluginType describing how the plugin was discovered. """
-        return self._context.type
-
-    @property
-    def isUserPlugin(self):
-        """ Return whether the plugin is a user plugin (not maintained by the core Meshroom team). """
-        return self._context.isUserPlugin
+    # The name of the plugin.
+    name = Property(str, lambda self: self._context.metadata.name, constant=True)
+    # The version of the plugin, or "Unknown" if none was provided.
+    version = Property(str, lambda self: self._context.metadata.version or "Unknown", constant=True)
+    # The publisher of the plugin, or "Unknown" if none was provided.
+    publisher = Property(str, lambda self: self._context.metadata.publisher or "Unknown", constant=True)
+    # The PluginType describing how the plugin was discovered.
+    type = Property(Variant, lambda self: self._context.type, constant=True)
+    # The name of the PluginType, exposed as a plain string for QML bindings/comparisons.
+    typeName = Property(str, lambda self: self._context.type.name, constant=True)
+    # A short description of the plugin, or an empty string if none was provided.
+    description = Property(str, lambda self: self._context.metadata.description or "", constant=True)
+    # The list of the plugin's authors.
+    authors = Property(VariantList, lambda self: self._context.metadata.authors, constant=True)
+    # A human-readable description of the plugin's runtime requirements.
+    requirements = Property(str, lambda self: self._context.metadata.requirements or "", constant=True)
+    # The absolute path of the plugin's root folder.
+    rootPath = Property(str, lambda self: str(self._context.rootPath), constant=True)
+    # The absolute path of the plugin's host modules (its "meshroom" folder).
+    hostPath = Property(str, lambda self: str(self._context.hostPath), constant=True)
+    # Whether the plugin is a user plugin (not maintained by the core Meshroom team).
+    isUserPlugin = Property(bool, lambda self: self._context.isUserPlugin, constant=True)
 
     @property
     def env(self):

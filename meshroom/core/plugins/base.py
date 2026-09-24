@@ -78,8 +78,8 @@ class Plugin(BaseObject):
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
-    def __init__(self, context: PluginContext):
-        super().__init__()
+    def __init__(self, context: PluginContext, parent: BaseObject = None):
+        super().__init__(parent)
         self._context = context
         self._nodeDescProviders: dict[str, NodeDescProvider] = {}
         self._submitterProviders: dict[str, SubmitterProvider] = {}

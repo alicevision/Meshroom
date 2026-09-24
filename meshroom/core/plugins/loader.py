@@ -135,6 +135,12 @@ class PluginLoader:
         if not metadata.version or pluginType is PluginType.REZ:
             metadata.version = pluginVersion
 
+        # Resolve metadata publisher if unset for Rez plugins:
+        # - For User plugin set "User".
+        # - For other plugin set "Team"
+        if not metadata.publisher and pluginType is PluginType.REZ:
+            metadata.publisher = "User" if isUserPlugin else "Team"
+
         # The plugin's name prefixes its modules.
         # Two plugins shipping identically named files do not collide in sys.modules.
         pluginPackage = f"{PLUGINS_ROOT_PACKAGE}.{metadata.name}"

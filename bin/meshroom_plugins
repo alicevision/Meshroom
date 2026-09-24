@@ -1,0 +1,433 @@
+#!/usr/bin/env python
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+import logging
+
+from pathlib import Path
+from typing import Optional
+from urllib.parse import urlparse
+
+import meshroom
+from meshroom.core import pluginManager
+from meshroom.core.plugins import meshroomPluginsFolder
+from meshroom.core.plugins.base import Plugin, PluginType
+from meshroom.core.plugins.record import PluginRecord
+from meshroom.core.plugins.provider import PluginProvider, getPluginProviderFromUrl
+from meshroom.core.plugins.registry import PluginRegistry
+from meshroom.core.plugins.local.service import PluginServiceError
+from meshroom.core.plugins.local.installer import PluginInstaller
+from meshroom.core.plugins.local.uninstaller import PluginUninstaller
+from meshroom.core.plugins.local.updater import PluginUpdater
+
+
+def printTable(rows: list[tuple[str, ...]]):
+    """ Print "rows" as a left-aligned table, "rows[0]" being the header, underlined with a "-" separator. """
+    colWidths = [max(len(row[i]) for row in rows) for i in range(len(rows[0]))]
+    separator = tuple("-" * width for width in colWidths)
+    for row in [rows[0], separator] + rows[1:]:
+        print("  ".join(f"{cell:<{width}}" for cell, width in zip(row, colWidths)))
+
+
+def printPluginList(plugins: list[Plugin | PluginRecord]):
+    """ Print plugins as an aligned table. """
+    rows = [("Plugin", "Version", "Publisher", "Type", "Path / URL")]
+    rows += [(plugin.name, plugin.version, plugin.publisher,
+             plugin.type.name if isinstance(plugin, Plugin) else "",
+             plugin.rootPath if isinstance(plugin, Plugin) else plugin.url) for plugin in plugins]
+    printTable(rows)
+
+
+def printProviderList(plugin: Plugin):
+    """ Print plugin's node description and submitter providers as an aligned table. """
+    rows = [("Providers", "Status", "Package", "Path")]
+    for name, nodeDescProvider in plugin.nodeDescProviders.items():
+        rows.append((name, nodeDescProvider.status.name, nodeDescProvider.absolutePackage, nodeDescProvider.path))
+    for name, submitterProvider in plugin.submitterProviders.items():
+        rows.append((name, submitterProvider.status.name, submitterProvider.absolutePackage, submitterProvider.path))
+    printTable(rows)
+
+
+def printRegistryList(registries: list[PluginRegistry]):
+    """ Print plugin registries as an aligned table. """
+    rows = [("Registry", "Plugins", "Path")]
+    rows += [(registry.name, str(len(registry.records)), registry.path) for registry in registries]
+    printTable(rows)
+
+
+def parseNameVersion(arg: str) -> tuple[str, Optional[str]]:
+    """
+    Split "arg", formatted as "name" or "name=version", into a (name, version) pair, with
+    "version" being None if "arg" has no "=version" suffix.
+    """
+    name, sep, version = arg.partition("=")
+    return name, version if sep else None
+
+
+def confirmAction(prompt: str, force: bool) -> bool:
+    """
+    Ask the user to confirm "prompt" with a yes/no answer, unless "force" bypasses it.
+
+    Args:
+        prompt: the question to display to the user.
+        force: if True, skip the prompt and return True immediately.
+
+    Returns:
+        bool: True if the user confirmed (or "force" was True), False otherwise.
+    """
+    if force:
+        return True
+    answer = input(f"{prompt} [y/n] ").strip().lower()
+    return answer in ("y", "yes")
+
+
+def requireLocalPlugin(name: str) -> Optional[Plugin]:
+    """
+    Return the installed local Plugin named "name", printing why and returning None if it is not
+    installed, or not a local plugin.
+
+    Args:
+        name: the name of the plugin to look up.
+    """
+    plugin = pluginManager.getPlugin(name)
+    if not plugin:
+        print(f"Plugin {name} is not installed.")
+        return None
+    if plugin.type != PluginType.LOCAL:
+        print(f"Plugin {name} is a {plugin.type.name} plugin, only local plugins are supported.")
+        return None
+    return plugin
+
+
+def resolveInstallSource(name: str, version: Optional[str]) -> Optional[tuple[PluginProvider, PluginRecord]]:
+    """
+    Resolve the PluginProvider and PluginRecord to install/update plugin "name" from (optionally at
+    "version"), printing why and returning None if it cannot be resolved.
+
+    Args:
+        name: the name of the plugin to resolve.
+        version: the version to check the availability of, or None to skip that check.
+    """
+    records = pluginManager.searchPlugin([name], strict=True, installed=False, available=True)
+    if not records:
+        print(f"No available plugin found for: {name}.")
+        return None
+    record = records[0]
+    provider = getPluginProviderFromUrl(record.url)
+    if not provider:
+        print(f"Plugin {name}: unsupported source '{record.url}'.")
+        return None
+    if version and not provider.isVersionAvailable(version):
+        print(f"Version {version} of plugin {name} is not available.")
+        return None
+    return provider, record
+
+
+def handleSearch(args):
+    """
+    List plugins installed on the local machine (rez, built-in, local) and/or available.
+    If neither --installed nor --available is given, both are listed.
+    """
+    showInstalled = args.installed or not args.available
+    showAvailable = args.available or not args.installed
+    names = [args.name] if args.name else None
+    plugins = pluginManager.searchPlugin(names, strict=False, installed=showInstalled, available=showAvailable)
+    if not plugins:
+        print("No plugin found.")
+        return
+    printPluginList(plugins)
+
+
+def handleInfo(args):
+    """ Display detailed information for one or more plugins. """
+    for name in args.name:
+        plugin = pluginManager.getPlugin(name)
+        if not plugin:
+            print(f"No plugin found for: {name}.")
+            continue
+        print(f" - Name: {name}\n"
+              f" - Version: {plugin.version}\n"
+              f" - Description: {plugin.description}\n"
+              f" - Authors: {', '.join(plugin.authors)}\n"
+              f" - Requirements: {plugin.requirements}\n"
+              f" - Type: {plugin.type.name}\n"
+              f" - Path: {plugin.rootPath}\n"
+              f" - User Plugin: {plugin.isUserPlugin}\n"
+              f" - # Templates: {len(plugin.templates)}\n"
+              f" - # Node descriptions: {len(plugin.nodeDescProviders)}\n"
+              f" - # Submitters: {len(plugin.submitterProviders)}\n")
+        printProviderList(plugin)
+
+
+def handleInstall(args):
+    """ Install one or more meshroom local plugins, optionally at a specific "name=version". """
+    if not pluginManager.localPluginsEnabled:
+        print("This command cannot be performed because local plugin management is disabled.")
+        return
+    if not confirmAction("Install plugin(s)?", args.force):
+        print("Aborted.")
+        return
+    for arg in args.name:
+        # Get name and version
+        name, version = parseNameVersion(arg)
+        # Check installed plugins
+        if pluginManager.getPlugin(name):
+            print(f"Plugin {name} is already installed.")
+            continue
+        # Resolve the provider and record to install from
+        resolved = resolveInstallSource(name, version)
+        if not resolved:
+            continue
+        provider, record = resolved
+        # Install plugin
+        try:
+            PluginInstaller(provider, record, version).execute()
+        except PluginServiceError as exc:
+            print(exc)
+            continue
+        print(f"Plugin {name} installed.")
+
+
+def handleUninstall(args):
+    """ Uninstall one or more meshroom local plugins. """
+    if not pluginManager.localPluginsEnabled:
+        print("This command cannot be performed because local plugin management is disabled.")
+        return
+    if not confirmAction("Uninstall plugin(s)?", args.force):
+        print("Aborted.")
+        return
+    for name in args.name:
+        plugin = requireLocalPlugin(name)
+        if not plugin:
+            continue
+        # Uninstall plugin
+        try:
+            PluginUninstaller(Path(plugin.rootPath).name).execute()
+        except PluginServiceError as exc:
+            print(exc)
+            continue
+        print(f"Plugin {name} uninstalled.")
+
+
+def handleUpdate(args):
+    """ Update one or more meshroom local plugins, optionally at a specific "name=version". """
+    if not pluginManager.localPluginsEnabled:
+        print("This command cannot be performed because local plugin management is disabled.")
+        return
+    if not confirmAction("Update plugin(s)?", args.force):
+        print("Aborted.")
+        return
+    for arg in args.name:
+        # Get name and version
+        name, version = parseNameVersion(arg)
+        plugin = requireLocalPlugin(name)
+        if not plugin:
+            continue
+        # Resolve the provider and record to update from
+        resolved = resolveInstallSource(name, version)
+        if not resolved:
+            continue
+        provider, record = resolved
+        # Update plugin
+        try:
+            PluginUpdater(provider, record, version).execute()
+        except PluginServiceError as exc:
+            print(exc)
+            continue
+        print(f"Plugin {name} updated.")
+
+
+def handleRegistryList(args):
+    """ List all registered plugin registries. """
+    if not pluginManager.localPluginsEnabled:
+        print("This command cannot be performed because local plugin management is disabled.")
+        return
+    registries = pluginManager.getPluginRegistries()
+    if not registries:
+        print("No plugin registry registered.")
+        return
+    printRegistryList(registries.values())
+
+
+def handleRegistryAdd(args):
+    """ Register a plugin registry. """
+    if not pluginManager.localPluginsEnabled:
+        print("This command cannot be performed because local plugin management is disabled.")
+        return
+    if not confirmAction("Add plugin registry?", args.force):
+        print("Aborted.")
+        return
+    # Check url ends with '.json'
+    fileName = Path(urlparse(args.url).path).name
+    if not fileName.endswith(".json") or fileName == ".json":
+        print(f"Plugin registry '{args.url}' is not a JSON file.")
+        return
+    # Check registry file already exists
+    registryPath = Path(meshroomPluginsFolder) / fileName
+    if registryPath.exists():
+        print(f"Plugin registry '{registryPath.stem}' already exists.")
+        return
+    # Download and write the registry file (and its ETag)
+    if PluginRegistry(registryPath).fetch(args.url) is None:
+        print(f"Failed to add plugin registry '{args.url}'.")
+        return
+    print(f"Plugin registry '{registryPath.stem}' added.")
+
+
+def handleRegistryRemove(args):
+    """ Unregister one or more plugin registries. """
+    if not pluginManager.localPluginsEnabled:
+        print("This command cannot be performed because local plugin management is disabled.")
+        return
+    if not confirmAction("Remove plugin registry(s)?", args.force):
+        print("Aborted.")
+        return
+    registries = pluginManager.getPluginRegistries()
+    for name in args.name:
+        # Get the registry file path from the plugin manager
+        registry = registries.get(name)
+        if not registry:
+            print(f"Plugin registry '{name}' is not registered.")
+            continue
+        registryPath = Path(registry.path)
+        if not registryPath.is_file():
+            print(f"Plugin registry file '{registryPath}' does not exist.")
+            continue
+        # Remove the registry file, and the ETag file stored alongside it
+        try:
+            registryPath.unlink()
+            registryPath.with_name(f"{registryPath.name}.etag").unlink(missing_ok=True)
+        except OSError as exc:
+            print(f"Cannot remove plugin registry file '{registryPath}': {exc}")
+            continue
+        print(f"Plugin registry '{name}' removed.")
+
+
+parser = argparse.ArgumentParser(
+    prog='meshroom_plugins',
+    description='Manage Meshroom plugins from command line.',
+    add_help=False,
+    formatter_class=argparse.RawTextHelpFormatter)
+
+# Commands
+commandsParser = parser.add_subparsers(title='commands', dest='command')
+
+# List subparser
+listParser = commandsParser.add_parser(
+    'list', help='View all plugins installed and/or available (built-in, local, path, rez).')
+listParser.add_argument('name', type=str, nargs='?', default=None, help='Name filter for the plugin to list.')
+listParser.add_argument('--installed', action='store_true', help='Show the list of plugins installed.')
+listParser.add_argument('--available', action='store_true', help='Show the list of available plugins.')
+listParser.set_defaults(func=handleSearch)
+
+# Search subparser
+searchParser = commandsParser.add_parser('search', help='Search for plugin(s) in all installed and/or available plugins.')
+searchParser.add_argument('name', type=str, help='Name of the plugin to search for.')
+searchParser.add_argument('--installed', action='store_true', help='Restrict the search to plugins installed.')
+searchParser.add_argument('--available', action='store_true', help='Restrict the search to available plugins.')
+searchParser.set_defaults(func=handleSearch)
+
+# Info subparser
+infoParser = commandsParser.add_parser('info', help='Display detailed metadata and providers list for one or more plugins.')
+infoParser.add_argument('name', type=str, nargs='+', help='Name(s) of the plugin(s) to display.')
+infoParser.set_defaults(func=handleInfo)
+
+# Install subparser
+installParser = commandsParser.add_parser('install', help='Install one or more meshroom local plugins.')
+installParser.add_argument('name', type=str, nargs='+',
+                           help='Name(s) of the plugin(s) to install, e.g. "name" or "name=version".')
+installParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
+installParser.set_defaults(func=handleInstall)
+
+# Remove subparser
+removeParser = commandsParser.add_parser('remove', help='Uninstall one or more meshroom local plugins.')
+removeParser.add_argument('name', type=str, nargs='+', help='Name(s) of the plugin(s) to uninstall.')
+removeParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
+removeParser.set_defaults(func=handleUninstall)
+
+# Update subparser
+updateParser = commandsParser.add_parser('update', help='Update one or more meshroom local plugins.')
+updateParser.add_argument('name', type=str, nargs='+',
+                          help='Name(s) of the plugin(s) to update, e.g. "name" or "name=version".')
+updateParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
+updateParser.set_defaults(func=handleUpdate)
+
+# Repair subparser
+repairParser = commandsParser.add_parser('repair', help='Clear and re-download meshroom local plugins.')
+repairParser.add_argument('name', type=str, nargs='*',
+                          help='Name(s) of the plugin(s) to repair. If omitted, all local plugins are repaired.')
+repairParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
+repairParser.set_defaults(func=handleUpdate)
+
+# Registry subparser
+registryParser = commandsParser.add_parser('registry', help='Manage the plugin registries.')
+registryCommandsParser = registryParser.add_subparsers(title='registry commands', dest='registryCommand')
+
+# Registry list subparser
+registryListParser = registryCommandsParser.add_parser('list', help='List all registered plugin registries.')
+registryListParser.set_defaults(func=handleRegistryList)
+
+# Registry add subparser
+registryAddParser = registryCommandsParser.add_parser('add', help='Register a plugin registry.')
+registryAddParser.add_argument('url', type=str, help='Url of the registry file to fetch.')
+registryAddParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
+registryAddParser.set_defaults(func=handleRegistryAdd)
+
+# Registry remove subparser
+registryRemoveParser = registryCommandsParser.add_parser('remove', help='Unregister one or more plugin registries.')
+registryRemoveParser.add_argument('name', type=str, nargs='+', help='Name(s) of the plugin registry(s) to remove.')
+registryRemoveParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
+registryRemoveParser.set_defaults(func=handleRegistryRemove)
+
+# Options
+optionsGroup = parser.add_argument_group(title="options")
+
+# Help argument
+optionsGroup.add_argument("-h", "--help", action="help", help="Show this help message and exit")
+
+# Verbose argument
+optionsGroup.add_argument('-v', '--verbose', help='Set the verbosity level for logging:\n'
+                          '  - fatal: Show only critical errors.\n'
+                          '  - error: Show errors only.\n'
+                          '  - warning: Show warnings and errors.\n'
+                          '  - info: Show standard informational messages.\n'
+                          '  - debug: Show detailed debug information.\n'
+                          '  - trace: Show all messages, including trace-level details.',
+                          default=os.environ.get('MESHROOM_VERBOSE', 'info'),
+                          choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'])
+
+# Parse arguments
+args = parser.parse_args()
+
+if args.command is None:
+    parser.print_help()
+    sys.exit(0)
+
+if args.command == 'registry' and args.registryCommand is None:
+    registryParser.print_help()
+    sys.exit(0)
+
+# Setup Meshroom
+meshroom.setupEnvironment()
+
+# Set logger level
+logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
+
+# Initialize built-in node plugins
+meshroom.core.initNodes()
+
+# Initialize built-in submitter plugins
+meshroom.core.initSubmitters()
+
+# Initialize plugins
+meshroom.core.initPlugins()
+
+# Refresh plugin registries
+# Load plugin registries records
+if pluginManager.localPluginsEnabled:
+    pluginManager.refreshPluginRegistries(updateRecords=True, useTTL=False)
+
+# Handle commands
+args.func(args)

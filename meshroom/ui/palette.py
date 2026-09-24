@@ -1,5 +1,5 @@
 from PySide6.QtCore import QObject, Qt, Slot, Property, Signal
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtGui import QPalette, QColor, QGuiApplication
 from PySide6.QtWidgets import QApplication
 
 
@@ -44,17 +44,14 @@ class PaletteManager(QObject):
         self.defaultPalette = QApplication.instance().palette()
         self.defaultPalette.setColor(QPalette.Text, QColor(50, 50, 50))
         self.defaultPalette.setColor(QPalette.HighlightedText, Qt.black)
-        self.togglePalette()
 
     @Slot()
     def togglePalette(self):
         app = QApplication.instance()
         if app.palette() == self.darkPalette:
-            app.setPalette(self.defaultPalette)
+            QGuiApplication.setPalette(self.defaultPalette)
         else:
-            app.setPalette(self.darkPalette)
-        if self.qmlEngine.rootObjects():
-            self.qmlEngine.reload()
+            QGuiApplication.setPalette(self.darkPalette)
         self.paletteChanged.emit()
 
     paletteChanged = Signal()

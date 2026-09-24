@@ -1,0 +1,3 @@
+module PluginManager
+
+PluginManagerWindow 1.0 PluginManagerWindow.qml

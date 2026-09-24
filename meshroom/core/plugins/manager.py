@@ -121,6 +121,21 @@ class PluginManager(BaseObject):
         self._addPlugin(defaultPluginName, pluginFolder, PluginType.PATH, pluginVersion=pluginVersion,
                         isUserPlugin=isUserPlugin, hasMeshroomFolder=True, registerProviders=registerProviders)
 
+    def addPluginFromLocalFolder(self, defaultPluginName: str, pluginFolder: str, registerProviders: bool = True):
+        """
+        Load a plugin located in the local plugins folder and register its valid providers.
+
+        The plugin's modules are expected in a "meshroom" folder inside "pluginFolder", and its
+        process environment is built from that folder's directory tree ("bin"/"lib"/"lib64"/"venv").
+
+        Args:
+            defaultPluginName: the default name to register the plugin under.
+            pluginFolder: the plugin's root folder.
+            registerProviders: True if all the valid providers from the plugin should be registered.
+        """
+        self._addPlugin(defaultPluginName, pluginFolder, PluginType.LOCAL, pluginVersion=None,
+                        isUserPlugin=False, hasMeshroomFolder=True, registerProviders=registerProviders)
+
     def addPluginFromBuiltInFolder(self, defaultPluginName: str, pluginFolder: str,
                                    registerProviders: bool = True):
         """

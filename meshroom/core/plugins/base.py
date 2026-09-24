@@ -25,8 +25,9 @@ class PluginType(Enum):
     Determines how a plugin is discovered and how its process environment is configured.
     """
     BUILTIN = 1  # Plugin folder using meshroom environment
-    PATH = 2  # Plugin provided by a path
-    REZ = 3  # Plugin provided by a rez package
+    LOCAL = 2  # Plugin provided by the local plugins folder
+    PATH = 3  # Plugin provided by a path
+    REZ = 4  # Plugin provided by a rez package
 
 
 @dataclass(frozen=True)

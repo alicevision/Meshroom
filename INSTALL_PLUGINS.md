@@ -4,8 +4,8 @@ Plugins are collections of nodes and templates with their own dependencies. Plug
 
 ## Required Structure
 
-- **Meshroom folder**: All plugin nodes and templates must be placed within a `./meshroom/` directory
-- **Configuration file (optional)**: `./meshroom/config.json` file allows to define the plugin's name, version and custom environment variables
+- **Meshroom folder**: All plugin nodes and templates must be placed within a `./meshroom/` directory.
+- **Metadata file (optional)**: A `./pyproject.toml` file defines the plugin's name, version, publisher and custom environment variables (see [Plugin Metadata](#plugin-metadata)).
 - **Virtual environment (optional)**: If you have specific dependencies, you can create a virtual environment named "venv" in a folder and this Python will be used when computing the node.
 
 ## Example Structure
@@ -23,14 +23,44 @@ For a plugin named "customPlugin", Meshroom expects this layout:
 │   │   │   ├── NodeD.py
 │   │   ├── customTemplate1.mg   # Ready-to-use pipeline templates
 │   │   ├── customTemplate2.mg
-│   │   ├── config.json          # Optional plugin configuration file
+│   ├── pyproject.toml           # Optional plugin metadata and dependencies
 │   ├── venv/                    # Optional virtual environment with installed dependencies
 │   └── ...                      # Custom code (any structure)
 ```
 
-## Configuration File
+## Plugin Metadata
 
-`config.json` can be written in two formats:
+The plugin's metadata is read from `pyproject.toml`, at the root of the plugin:
+- `name`, `version`, `description` and `authors` come from the standard `[project]` table.
+- `publisher`, `requirements` and `env` come from the Meshroom-specific `[tool.meshroom]` table.
+
+```toml
+[project]
+name = "customPlugin"
+version = "1.0.0"
+description = "What the plugin does."
+authors = [ {name = "Jane Doe"} ]
+dependencies = ["numpy"]
+
+[tool.meshroom]
+publisher = "myPublisher"
+requirements = "CUDA >= X.X"
+env = [
+    { key = "MY_VAR", type = "string", value = "myValue" },
+    { key = "MY_PATH", type = "path", value = "relativeOrAbsolutePath" },
+]
+```
+
+All the fields are optional:
+- **`name`**: the name of the plugin.
+- **`version`**: the version of the plugin.
+- **`publisher`**: the publisher of the plugin.
+- **`requirements`**: a human-readable description of what the plugin needs to run (e.g. hardware requirements). It is only displayed.
+- **`env`**: environment variables set when computing the plugin's nodes. A relative `path` value is resolved against the plugin root folder.
+
+### Legacy `config.json`
+
+Plugins without a `pyproject.toml` can still use a `./meshroom/config.json` file, in one of two formats:
 
 - A plain list of environment variable entries:
   ```json
@@ -39,7 +69,7 @@ For a plugin named "customPlugin", Meshroom expects this layout:
       { "key": "MY_PATH", "type": "path", "value": "relativeOrAbsolutePath" }
   ]
   ```
-- An object with optional `name`, `version`, and `env` keys, `env` using the same entry format as above:
+- An object with optional `name`, `version`, `publisher`, `authors`, `description`, `requirements` and `env` keys, `env` using the same entry format as above:
   ```json
   {
       "name": "customPlugin",
@@ -50,14 +80,22 @@ For a plugin named "customPlugin", Meshroom expects this layout:
   }
   ```
 
-## Loading the Plugin
+In `config.json`, a relative `path` value is resolved against the `meshroom` folder, not the plugin root folder.
 
-The "customPlugin" will be loaded automatically when Meshroom starts by setting the `MESHROOM_PLUGINS_PATH` environment variable:
-- On Windows:
+## Installing a Plugin
+
+A plugin can be installed in one of three ways:
+
+- **Local plugin**: install it from a plugin registry with the `meshroom_plugins` command line tool.
   ```
-  set MESHROOM_PLUGINS_PATH=/path/to/customPlugin;%MESHROOM_PLUGINS_PATH%
+  meshroom_plugins registry add https://example.com/path/to/myRegistry.json
+  meshroom_plugins install customPlugin
   ```
-- On Linux:
+- **Plugin folder**: add the plugin root folder to the `MESHROOM_PLUGINS_PATH` environment variable (`;`-separated on Windows, `:`-separated on Linux).
   ```
   export MESHROOM_PLUGINS_PATH=/path/to/customPlugin:$MESHROOM_PLUGINS_PATH
+  ```
+- **Rez package**: add a `<package>-<version>=<packageRootPath>` entry to the `MESHROOM_REZ_PLUGINS` environment variable.
+  ```
+  export MESHROOM_REZ_PLUGINS=customPlugin-1.0.0=/path/to/customPlugin/1.0.0
   ```

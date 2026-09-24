@@ -11,6 +11,7 @@ from types import ModuleType
 from pathlib import Path
 from typing import Optional
 
+from meshroom.common import BaseObject
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.plugins.base import PluginType, PluginContext, Plugin
@@ -60,7 +61,8 @@ class PluginLoader:
                    pluginType: PluginType,
                    pluginVersion: Optional[str] = None,
                    isUserPlugin: bool = False,
-                   hasMeshroomFolder: bool = True) -> Plugin:
+                   hasMeshroomFolder: bool = True,
+                   parent: BaseObject = None) -> Plugin:
         """
         Load the plugin located in "pluginFolder" and return it.
 
@@ -86,6 +88,7 @@ class PluginLoader:
             isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team).
             hasMeshroomFolder: whether "pluginFolder" directly contains the plugin's host modules,
                         instead of gathering them in a "meshroom" folder.
+            parent: the BaseObject the loaded Plugin should be parented to.
 
         Returns:
             Plugin: the loaded plugin, or None if its folders do not exist, if its name is already
@@ -150,7 +153,7 @@ class PluginLoader:
             isUserPlugin=isUserPlugin,
             env=metadata.resolveEnv(envBasePath)
         )
-        plugin = Plugin(context)
+        plugin = Plugin(context, parent)
 
         # Recursive load of host modules.
         issues = _LoadIssues()

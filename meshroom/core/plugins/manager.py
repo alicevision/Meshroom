@@ -26,8 +26,8 @@ class PluginManager(BaseObject):
                             with the name of the submitter as the key
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent: BaseObject = None):
+        super().__init__(parent)
         self._pluginLoader: PluginLoader = PluginLoader()  # plugin loader in virtual package
         self._plugins: dict[str, Plugin] = {}  # loaded plugins
         self._nodeDescProviders: dict[str, NodeDescProvider] = {}  # registered node descriptor providers
@@ -64,7 +64,8 @@ class PluginManager(BaseObject):
                                                pluginType=pluginType,
                                                pluginVersion=pluginVersion,
                                                isUserPlugin=isUserPlugin,
-                                               hasMeshroomFolder=hasMeshroomFolder)
+                                               hasMeshroomFolder=hasMeshroomFolder,
+                                               parent=self)
         if plugin:
             if self.getPlugin(plugin.name):
                 logging.warning(f"Plugin {plugin.name} is already registered.")

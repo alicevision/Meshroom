@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import re
-import tempfile
 
 try:
     # "tomllib" is stdlib from Python 3.11 onward.
@@ -16,6 +15,8 @@ except ImportError:
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+from meshroom.core.files import atomicWriteFile
 
 
 # Plugin name pattern
@@ -265,26 +266,16 @@ class PluginMetadata:
     def writeLockfile(self, path: Path) -> None:
         """
         Write this metadata as JSON to "path", stamping "createdAt" with the current UTC time.
-        The write is atomic: content is written to a temporary file in the same folder first,
-        then moved into place with os.replace().
 
         Args:
             path: the absolute path to write the metadata file to.
         """
-        folder = os.path.dirname(path)
-
-        fd, tmpPath = tempfile.mkstemp(dir=folder)
-        try:
-            with os.fdopen(fd, "w") as f:
-                json.dump({
-                    "name": self.name,
-                    "version": self.version,
-                    "publisher": self.publisher,
-                    "authors": self.authors,
-                    "env": self.env,
-                    "createdAt": datetime.now(timezone.utc).isoformat(),
-                }, f, indent=4)
-            os.replace(tmpPath, path)
-        except BaseException:
-            os.remove(tmpPath)
-            raise
+        content = json.dumps({
+            "name": self.name,
+            "version": self.version,
+            "publisher": self.publisher,
+            "authors": self.authors,
+            "env": self.env,
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+        }, indent=4)
+        atomicWriteFile(path, content)

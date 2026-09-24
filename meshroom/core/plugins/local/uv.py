@@ -107,7 +107,8 @@ def runUv(cmd: list[str], env: Optional[dict] = None) -> int:
     return process.returncode
 
 
-def runUvWithProgress(cmd: list[str], onLine: Callable[[str], None], env: Optional[dict] = None) -> int:
+def runUvWithProgress(cmd: list[str], onLine: Callable[[str], None], env: Optional[dict] = None,
+                      output: Optional[list[str]] = None) -> int:
     """
     Run the "uv" command "cmd", calling "onLine" with each line of its merged stdout/stderr as it streams.
 
@@ -117,14 +118,11 @@ def runUvWithProgress(cmd: list[str], onLine: Callable[[str], None], env: Option
         cmd: the command (the "uv" executable + arguments) to run.
         onLine: called with each output line, without its trailing newline.
         env: environment variables to set on top of the current environment, if any.
+        output: if set, each output line is appended to it.
 
     Returns:
         int: the exit code of the command.
     """
-    # "uv" is silent on a non-interactive stream while it downloads: raise its verbosity
-    # so it keeps emitting lines, which are what drives the install progress.
-    cmd = [cmd[0], "-v", *cmd[1:]]
-
     logging.info(f"Running: {' '.join(cmd)}")
 
     # Merge stderr into stdout and read line-buffered, so output streams live.
@@ -133,7 +131,10 @@ def runUvWithProgress(cmd: list[str], onLine: Callable[[str], None], env: Option
     with process:
         try:
             for line in process.stdout:
-                onLine(line.rstrip("\n"))
+                line = line.rstrip("\n")
+                if output is not None:
+                    output.append(line)
+                onLine(line)
         except BaseException:
             process.terminate()
             raise

@@ -3,8 +3,10 @@
 from meshroom.core import pluginManager
 from meshroom.core.desc.node import NodeVersionType
 from meshroom.core.plugins.base import NodeDescProviderStatus
-from ..utils import overrideOsEnvironmentVariables, registeredPlugin
+from meshroom.core.plugins.registry import PluginRegistry
+from ..utils import overrideOsEnvironmentVariables, registeredPlugin, writeFile
 
+import json
 import os
 import time
 
@@ -225,3 +227,80 @@ class TestVersionPlugins:
             nodeInput = pluginManager.getNodeDescProvider("PluginAInitNode")
             assert nodeInput
             assert nodeInput.nodeDescClass().nodeVersionType == NodeVersionType.USER
+
+
+class TestSearchPlugin:
+    def test_availableRecordShadowedByInstalledPlugin(self, tmp_path):
+        """
+        An available PluginRecord sharing its name with an installed Plugin must not be
+        returned when searching available plugins only, but the installed Plugin should
+        still take precedence when both installed and available plugins are requested.
+        """
+        folder = os.path.join(pluginsFolder, "pluginA")
+        with registeredPlugin("pluginA", folder):
+            content = {"entries": [{"name": "pluginA", "url": "https://github.com/publisher/pluginA", "versions": ["1.0"]}]}
+            path = writeFile(tmp_path / "registry.json", json.dumps(content))
+            registry = PluginRegistry(path)
+            registry.updateRecords()
+            assert registry.getRecord("pluginA") is not None
+
+            pluginManager._pluginRegistries[registry.name] = registry
+            try:
+                # Available-only: the record for "pluginA" is shadowed by the installed plugin.
+                results = pluginManager.searchPlugin(["pluginA"], installed=False, available=True)
+                assert all(result.name != "pluginA" for result in results)
+
+                # Installed + available: the record for "pluginA" is shadowed by the installed plugin.
+                results = pluginManager.searchPlugin(["pluginA"], installed=True, available=True)
+                assert len(results) == 1
+                assert results[0] is pluginManager.getPlugin("pluginA")
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+
+class TestGetUpdateRecord:
+    def _withRegistry(self, tmp_path, **entryOverrides):
+        """ Register a temporary PluginRegistry with a single entry for "pluginA", merging overrides. """
+        entry = {"name": "pluginA", "url": "https://github.com/publisher/pluginA", "versions": ["1.0"]}
+        entry.update(entryOverrides)
+        path = writeFile(tmp_path / "registry.json", json.dumps({"entries": [entry]}))
+        registry = PluginRegistry(path)
+        registry.updateRecords()
+        assert registry.getRecord("pluginA") is not None
+        pluginManager._pluginRegistries[registry.name] = registry
+        return registry
+
+    def test_updateAvailableWhenVersionDiffers(self, tmp_path):
+        """ A record sharing the plugin's name/publisher but a different version is an available update. """
+        folder = os.path.join(pluginsFolder, "pluginA")
+        with registeredPlugin("pluginA", folder):
+            plugin = pluginManager.getPlugin("pluginA")
+            registry = self._withRegistry(tmp_path, publisher=plugin.publisher, versions=["2.0"])
+            try:
+                record = pluginManager.getUpdateRecord(plugin)
+                assert record is not None
+                assert record.version == "2.0"
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+    def test_noUpdateWhenVersionMatches(self, tmp_path):
+        """ A record with the same name/publisher and the same version is not an available update. """
+        folder = os.path.join(pluginsFolder, "pluginA")
+        with registeredPlugin("pluginA", folder):
+            plugin = pluginManager.getPlugin("pluginA")
+            registry = self._withRegistry(tmp_path, publisher=plugin.publisher, versions=[plugin.version])
+            try:
+                assert pluginManager.getUpdateRecord(plugin) is None
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+    def test_noUpdateWhenPublisherDiffers(self, tmp_path):
+        """ A record with a different publisher is not considered an available update. """
+        folder = os.path.join(pluginsFolder, "pluginA")
+        with registeredPlugin("pluginA", folder):
+            plugin = pluginManager.getPlugin("pluginA")
+            registry = self._withRegistry(tmp_path, publisher=f"not-{plugin.publisher}", versions=["2.0"])
+            try:
+                assert pluginManager.getUpdateRecord(plugin) is None
+            finally:
+                del pluginManager._pluginRegistries[registry.name]

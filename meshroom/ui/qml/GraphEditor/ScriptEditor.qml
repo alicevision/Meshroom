@@ -1,3 +1,4 @@
+import QtCore
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -16,6 +17,13 @@ Item {
 
     // Defines the parent or the root Application of which this script editor is a part of
     property var rootApplication: undefined;
+
+    Settings {
+        id: scriptEditorSettings
+        category: "ScriptEditor"
+        // Display the output below the script rather than beside it
+        property bool outputBelow: false
+    }
 
     Component {
         id: clearConfirmationDialog
@@ -229,11 +237,11 @@ Item {
             MaterialToolButton {
                 font.pointSize: 13
                 // Show the layout the button switches to
-                text: GraphEditorSettings.scriptOutputBelow ? MaterialIcons.vertical_split : MaterialIcons.horizontal_split
-                ToolTip.text: GraphEditorSettings.scriptOutputBelow ? "Display the Output Beside the Script" : "Display the Output Below the Script"
+                text: scriptEditorSettings.outputBelow ? MaterialIcons.vertical_split : MaterialIcons.horizontal_split
+                ToolTip.text: scriptEditorSettings.outputBelow ? "Display the Output Beside the Script" : "Display the Output Below the Script"
 
                 onClicked: {
-                    GraphEditorSettings.scriptOutputBelow = !GraphEditorSettings.scriptOutputBelow
+                    scriptEditorSettings.outputBelow = !scriptEditorSettings.outputBelow
                 }
             }
 
@@ -252,7 +260,7 @@ Item {
             id: scriptSplitView;
             Layout.fillHeight: true;
             Layout.fillWidth: true;
-            orientation: GraphEditorSettings.scriptOutputBelow ? Qt.Vertical : Qt.Horizontal
+            orientation: scriptEditorSettings.outputBelow ? Qt.Vertical : Qt.Horizontal
 
             // Input Text Area -- Holds the input scripts to be executed
             Rectangle {

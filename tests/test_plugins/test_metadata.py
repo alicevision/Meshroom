@@ -35,6 +35,8 @@ class TestLoadJsonMetadata:
         assert metadata.version is None
         assert metadata.publisher is None
         assert metadata.authors == []
+        assert metadata.description is None
+        assert metadata.requirements is None
         assert metadata.env == content
 
     def test_fullDictFormat(self, tmp_path):
@@ -44,6 +46,8 @@ class TestLoadJsonMetadata:
             "version": "1.2.3",
             "publisher": "my-publisher",
             "authors": ["Alice", "Bob"],
+            "description": "A plugin that does things.",
+            "requirements": "CUDA >= X.X",
             "env": [{"key": "MY_VAR", "type": "string", "value": "myValue"}],
         }
         path = writeFile(tmp_path / "plugin.lock", json.dumps(content))
@@ -55,6 +59,8 @@ class TestLoadJsonMetadata:
         assert metadata.version == "1.2.3"
         assert metadata.publisher == "my-publisher"
         assert metadata.authors == ["Alice", "Bob"]
+        assert metadata.description == "A plugin that does things."
+        assert metadata.requirements == "CUDA >= X.X"
         assert metadata.env == content["env"]
 
     def test_invalidNameVersionPublisherAreIgnored(self, tmp_path):
@@ -83,6 +89,17 @@ class TestLoadJsonMetadata:
         assert metadata is not None
         assert metadata.authors == ["Alice", "Carol"]
 
+    def test_descriptionAndRequirementsMustBeStrings(self, tmp_path):
+        """ Non-string "description"/"requirements" values are dropped, not propagated. """
+        content = {"description": 42, "requirements": ["not", "a", "string"]}
+        path = writeFile(tmp_path / "plugin.lock", json.dumps(content))
+
+        metadata = PluginMetadata.loadJson(path)
+
+        assert metadata is not None
+        assert metadata.description is None
+        assert metadata.requirements is None
+
     def test_nonListEnvIsIgnored(self, tmp_path):
         """ A non-list "env" value is ignored, falling back to an empty list. """
         content = {"env": "not a list"}
@@ -107,17 +124,19 @@ class TestLoadTomlMetadata:
 
     def test_fullProject(self, tmp_path):
         """
-        "name"/"version"/"authors" come from "[project]", "publisher"/"env" from the
-        Meshroom-specific "[tool.meshroom]" table.
+        "name"/"version"/"authors"/"description" come from "[project]", "publisher"/"env"/
+        "requirements" from the Meshroom-specific "[tool.meshroom]" table.
         """
         content = (
             "[project]\n"
             "name = \"my-plugin\"\n"
             "version = \"1.2.3\"\n"
             "authors = [{ name = \"Alice\" }, \"Bob\"]\n"
+            "description = \"A plugin that does things.\"\n"
             "\n"
             "[tool.meshroom]\n"
             "publisher = \"my-publisher\"\n"
+            "requirements = \"CUDA >= X.X\"\n"
             "env = [{ key = \"MY_VAR\", type = \"string\", value = \"myValue\" }]\n"
         )
         path = writeFile(tmp_path / "pyproject.toml", content)
@@ -129,6 +148,8 @@ class TestLoadTomlMetadata:
         assert metadata.version == "1.2.3"
         assert metadata.publisher == "my-publisher"
         assert metadata.authors == ["Alice", "Bob"]
+        assert metadata.description == "A plugin that does things."
+        assert metadata.requirements == "CUDA >= X.X"
         assert metadata.env == [{"key": "MY_VAR", "type": "string", "value": "myValue"}]
 
     def test_missingTablesFallBackToDefaults(self, tmp_path):
@@ -142,6 +163,8 @@ class TestLoadTomlMetadata:
         assert metadata.version is None
         assert metadata.publisher is None
         assert metadata.authors == []
+        assert metadata.description is None
+        assert metadata.requirements is None
         assert metadata.env == []
 
 
@@ -190,10 +213,12 @@ class TestLockfile:
     def test_writeRead(self, tmp_path):
         """ A lockfile written by "writeLockfile" is read back identically by "loadJson". """
         metadata = PluginMetadata(
-            name="my-plugin", 
-            version="1.2.3", 
+            name="my-plugin",
+            version="1.2.3",
             publisher="my-publisher",
-            authors=["Alice"], 
+            authors=["Alice"],
+            description="A plugin that does things.",
+            requirements="CUDA >= X.X",
             env=[{"key": "MY_VAR", "type": "string", "value": "myValue"}],
         )
         lockfilePath = tmp_path / "plugin.lock"
@@ -206,5 +231,6 @@ class TestLockfile:
         assert reloaded.version == metadata.version
         assert reloaded.publisher == metadata.publisher
         assert reloaded.authors == metadata.authors
+        assert reloaded.description == metadata.description
+        assert reloaded.requirements == metadata.requirements
         assert reloaded.env == metadata.env
-

@@ -22,7 +22,7 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 ├── .vscode/                    # Shared VS Code debugging and workspace configurations
 ├── bin/                        # CLI entry points, packaged as executables in setup.py (meshroom_batch,
 │                               # meshroom_compute, meshroom_createChunks, meshroom_info, meshroom_newNodeType,
-│                               # meshroom_statistics, meshroom_status, meshroom_submit).
+│                               # meshroom_plugins, meshroom_statistics, meshroom_status, meshroom_submit).
 │                               # The GUI has NO bin/ script — launch it with ./start.sh (see "Run the app").
 ├── docker/                     # Dockerfiles for containerized environments (Rocky Linux, Ubuntu, etc.)
 ├── docs/                       # Documentation resources, developer guides, and illustrations
@@ -39,7 +39,7 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 │   │   ├── qml/                # QML design layouts (GraphEditor, NodeEditor, 3D/2D Viewers, RTI Viewer)
 │   │   ├── components/         # Qt helper components exposed to QML (scene3D, scriptEditor, clipboard, ...)
 │   │   └── ...                 # Python backends (app.py, graph.py, commands.py, scene.py) binding core to Qt
-│   ├── env.py                  # EnvVar registry: MESHROOM_PLUGINS_PATH / NODES_PATH / PIPELINE_TEMPLATES_PATH, etc.
+│   ├── env.py                  # EnvVar registry: MESHROOM_PLUGINS_PATH / NODES_PATH / PIPELINE_TEMPLATES_PATH / LOCAL_PLUGINS, etc.
 │   └── multiview.py            # Image-extension lists & helpers for building multiview/photogrammetry pipelines
 ├── tests/                      # Comprehensive suite of unit tests and pipeline validation tests
 ├── CHANGES.md                  # Changelog tracking features, optimizations, and API breaks

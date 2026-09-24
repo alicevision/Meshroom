@@ -16,6 +16,7 @@ from PySide6.QtWidgets import QApplication
 import meshroom
 from meshroom.core import pluginManager
 from meshroom.core.desc import NodeVersionTypeEnum
+from meshroom.core.plugins.local.taskQueue import PluginTaskQueue
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
@@ -288,6 +289,15 @@ class MeshroomApp(QApplication):
         pyside6QmlPath = os.path.join(os.path.dirname(QtCore.__file__), "Qt", "qml")
         if os.path.isdir(pyside6QmlPath):
             self.engine.addImportPath(pyside6QmlPath)
+
+        # expose the plugin manager
+        self.engine.rootContext().setContextProperty("_pluginManager", pluginManager)
+
+        # expose the queue processing the plugin installation, update and removal tasks
+        self._pluginTaskQueue = PluginTaskQueue(parent=self)
+        self.engine.rootContext().setContextProperty("_pluginTaskQueue", self._pluginTaskQueue)
+        # stop the running plugin task properly on exit
+        self.aboutToQuit.connect(self._pluginTaskQueue.shutdown)
 
         # expose available node types that can be instantiated
         self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getNodeDescProviders()[n].nodeDescClass.category} for n in sorted(pluginManager.getNodeDescProviders().keys())})

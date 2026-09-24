@@ -47,15 +47,21 @@ class PluginMetadata:
         version: the plugin's version (if provided and valid).
         publisher: the plugin's publisher (if provided and valid).
         authors: the list of the plugin's authors (if provided, valid string entries only).
+        description: a short description of the plugin (if provided and valid).
+        requirements: a human-readable description of the plugin's runtime requirements
+                      (if provided and valid).
         env: the list of environment variable entries declared in the file (if provided and valid).
     """
     def __init__(self, name: Optional[str] = None, version: Optional[str] = None,
                  publisher: Optional[str] = None, authors: Optional[list[str]] = None,
+                 description: Optional[str] = None, requirements: Optional[str] = None,
                  env: Optional[list[dict]] = None):
         self.name = name
         self.version = version
         self.publisher = publisher
         self.authors = authors if authors is not None else []
+        self.description = description
+        self.requirements = requirements
         self.env = env if env is not None else []
 
     @staticmethod
@@ -99,8 +105,10 @@ class PluginMetadata:
         return PluginMetadata(
             PluginMetadata._sanitizeName(content.get("name"), path),
             PluginMetadata._sanitizeVersion(content.get("version"), path),
-            PluginMetadata._sanitizeEntity(content.get("publisher"), path),
+            PluginMetadata._sanitizePublisher(content.get("publisher"), path),
             PluginMetadata._sanitizeAuthors(content.get("authors"), path),
+            PluginMetadata._sanitizeText(content.get("description"), "description", path),
+            PluginMetadata._sanitizeText(content.get("requirements"), "requirements", path),
             env
         )
 
@@ -108,8 +116,8 @@ class PluginMetadata:
     def loadToml(path: Path) -> Optional[PluginMetadata]:
         """
         Parse the "pyproject.toml" file at "path" into a PluginMetadata:
-        - "name"/"version"/"authors" come from the standard "[project]" table.
-        - "publisher"/"env" from the Meshroom-specific "[tool.meshroom]" table.
+        - "name"/"version"/"authors"/"description" come from the standard "[project]" table.
+        - "publisher"/"env"/"requirements" from the Meshroom-specific "[tool.meshroom]" table.
 
         Args:
             path: the absolute path of the pyproject.toml file to parse.
@@ -159,8 +167,10 @@ class PluginMetadata:
         return PluginMetadata(
             PluginMetadata._sanitizeName(project.get("name"), path),
             PluginMetadata._sanitizeVersion(project.get("version"), path),
-            PluginMetadata._sanitizeEntity(meshroom.get("publisher"), path),
+            PluginMetadata._sanitizePublisher(meshroom.get("publisher"), path),
             PluginMetadata._sanitizeAuthors(authors, path),
+            PluginMetadata._sanitizeText(project.get("description"), "description", path),
+            PluginMetadata._sanitizeText(meshroom.get("requirements"), "requirements", path),
             env
         )
 
@@ -192,19 +202,18 @@ class PluginMetadata:
         return version
 
     @staticmethod
-    def _sanitizeEntity(entity, path: Path) -> Optional[str]:
+    def _sanitizePublisher(publisher, path: Path) -> Optional[str]:
         """
-        Return "entity" (the publisher) if it only contains letters, hyphen, underscore and
-        digits.
+        Return "publisher" if it only contains letters, hyphen, underscore and digits.
         """
-        if entity is None:
+        if publisher is None:
             return None
-        if not isinstance(entity, str) or not _PLUGIN_PUBLISHER_PATTERN.match(entity):
-            logging.warning(f"Invalid 'publisher' in metadata file '{path}': {entity!r}.\n"
+        if not isinstance(publisher, str) or not _PLUGIN_PUBLISHER_PATTERN.match(publisher):
+            logging.warning(f"Invalid 'publisher' in metadata file '{path}': {publisher!r}.\n"
                             f"Publisher must only contain letters, digits, hyphen, "
                             f"and underscore. Ignoring it.")
             return None
-        return entity
+        return publisher
 
     @staticmethod
     def _sanitizeAuthors(authors, path: Path) -> list[str]:
@@ -224,6 +233,19 @@ class PluginMetadata:
             logging.warning(f"Invalid entries in 'authors' in metadata file '{path}': {authors!r}.\n"
                             f"Author entries must be strings. Ignoring invalid ones.")
         return validAuthors
+
+    @staticmethod
+    def _sanitizeText(value, fieldName: str, path: Path) -> Optional[str]:
+        """
+        Return "value" if it is a string, None otherwise.
+        """
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            logging.warning(f"'{fieldName}' in metadata file '{path}' must be a string, "
+                            f"got {type(value).__name__}. Ignoring it.")
+            return None
+        return value
 
     def resolveEnv(self, basePath: Path) -> dict[str, str]:
         """
@@ -275,6 +297,8 @@ class PluginMetadata:
             "version": self.version,
             "publisher": self.publisher,
             "authors": self.authors,
+            "description": self.description,
+            "requirements": self.requirements,
             "env": self.env,
             "createdAt": datetime.now(timezone.utc).isoformat(),
         }, indent=4)

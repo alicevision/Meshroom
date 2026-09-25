@@ -27,7 +27,7 @@ Panel {
     property int rowPadding: 14
 
     // All columns are proportional to the available width.
-    property real versionColumnRatio: 0.12
+    property real versionColumnRatio: 0.15
     property real typeColumnRatio: 0.12
     property real publisherColumnRatio: 0.18
     property real urlColumnRatio: 0.35

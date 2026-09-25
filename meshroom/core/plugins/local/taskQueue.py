@@ -6,11 +6,11 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from meshroom.common import BaseObject, ListModel, Property, Signal, Slot
+from meshroom.common import BaseObject, VariantList, ListModel, Property, Signal, Slot
 from meshroom.core.plugins import meshroomPluginsFolder
 from meshroom.core.plugins.record import PluginRecord
 from meshroom.core.plugins.provider import getPluginProviderFromUrl
-from meshroom.core.plugins.local.task import PluginTask, PluginTaskKind
+from meshroom.core.plugins.local.task import PluginTask, PluginTaskKind, PluginTaskStatus
 from meshroom.core.plugins.local.service import PluginService
 from meshroom.core.plugins.local.installer import PluginInstaller
 from meshroom.core.plugins.local.uninstaller import PluginUninstaller
@@ -24,6 +24,9 @@ class PluginTaskQueue(BaseObject):
     The tasks run one at a time, in the order they were added.
     A task can be cancelled while it is waiting or running. The finished tasks stay in the queue, for the UI
     to report their outcome, until they are cleared.
+
+    The plugins changed by a successful task are kept as pending plugins: the running session does not load
+    these changes, which only apply after a restart. A pending plugin cannot get a new task.
     """
 
     def __init__(self, pluginsPath: Path = meshroomPluginsFolder, parent: BaseObject = None):
@@ -37,10 +40,12 @@ class PluginTaskQueue(BaseObject):
         self._tasks = ListModel(parent=self)
         self._busy: bool = False
         self._runningTask: Optional[PluginTask] = None
+        self._pendingPlugins: list[str] = []
 
     # Signals
     busyChanged = Signal()
     runningTaskChanged = Signal()
+    pendingPluginsChanged = Signal()
     taskFinished = Signal(BaseObject)  # A task reached a finished status.
 
     # Properties
@@ -50,6 +55,10 @@ class PluginTaskQueue(BaseObject):
     busy = Property(bool, lambda self: self._busy, notify=busyChanged)
     # The task being run, or None.
     runningTask = Property(BaseObject, lambda self: self._runningTask, notify=runningTaskChanged)
+    # Names of the plugins changed by a successful task.
+    pendingPlugins = Property(VariantList, lambda self: self._pendingPlugins, notify=pendingPluginsChanged)
+    # Whether a restart is required to apply the changes made by the successful tasks.
+    restartRequired = Property(bool, lambda self: bool(self._pendingPlugins), notify=pendingPluginsChanged)
 
     @Slot(BaseObject, result=BaseObject)
     @Slot(BaseObject, str, result=BaseObject)
@@ -178,6 +187,9 @@ class PluginTaskQueue(BaseObject):
         if any(t.pluginName == pluginName and not t.isFinished for t in self._tasks):
             logging.warning(f"Plugin '{pluginName}' already has a task in progress, ignoring the {kind} request")
             return None
+        if pluginName in self._pendingPlugins:
+            logging.warning(f"Plugin '{pluginName}' has changes pending a restart, ignoring the {kind} request")
+            return None
 
         task = PluginTask(kind, pluginName, service, parent=self)
         task.finished.connect(lambda t=task: self._onTaskFinished(t))
@@ -186,7 +198,11 @@ class PluginTaskQueue(BaseObject):
         return task
 
     def _onTaskFinished(self, task: PluginTask) -> None:
-        """ Notify that a task is over, then move on to the next one. """
+        """ Record the change made by a successful task, notify that the task is over, then move on to the next one. """
+        if task.status == PluginTaskStatus.SUCCEEDED.name:
+            # Assign a new list, so that QML bindings see a new value
+            self._pendingPlugins = self._pendingPlugins + [task.pluginName]
+            self.pendingPluginsChanged.emit()
         self.taskFinished.emit(task)
         self._update()
 

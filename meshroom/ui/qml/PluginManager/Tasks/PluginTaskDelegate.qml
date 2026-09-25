@@ -29,7 +29,7 @@ ItemDelegate {
             case "SUCCEEDED": return "#4CAF50"
             case "FAILED": return "#F44336"
             case "CANCELLED": return '#f4A236'
-            default: return palette.mid
+            default: return palette.windowText
         }
     }
 
@@ -107,11 +107,9 @@ ItemDelegate {
         // Status / Error
         Label {
             text: (root.status === "FAILED" ? root.statusText : root.statusText.toLowerCase() + ".") 
-            color: root.status === "FAILED" ? root.statusColor : palette.text
-            opacity: 0.6
+            color: root.statusColor
             elide: Text.ElideRight
             Layout.fillWidth: true
-
             ToolTip.text: text
             ToolTip.visible: statusHover.hovered && truncated
             HoverHandler { id: statusHover }

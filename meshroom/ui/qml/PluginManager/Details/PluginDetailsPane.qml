@@ -19,6 +19,7 @@ Panel {
     property bool actionsEnabled: true  // Whether the install / update / remove buttons can be used.
     readonly property bool isExternalPlugin: !!plugin && ["REZ", "PATH", "BUILTIN"].indexOf(plugin.typeName) !== -1
     readonly property var updateRecord: root.plugin ? _pluginManager.getUpdateRecord(root.plugin) : null
+    readonly property bool isPending: root.plugin ? _pluginTaskQueue.pendingPlugins.includes(root.plugin.name) : false
 
     // Signals
     signal installRequested()
@@ -69,8 +70,9 @@ Panel {
 
             PluginTypeBadge {
                 Layout.alignment: Qt.AlignTop
+                typeName: root.plugin !== null ? (root.plugin.typeName || "") : ""
+                isPending: root.isPending
                 visible: root.plugin !== null
-                typeName: root.plugin ? (root.plugin.typeName || "") : ""
             }
         }
 
@@ -88,12 +90,12 @@ Panel {
                 text: MaterialIcons.update
                 font.family: MaterialIcons.fontFamily
                 color: "goldenrod"
-                visible: root.updateRecord !== null
+                visible: root.updateRecord !== null && !root.isPending
             }
 
             Label {
                 text: root.updateRecord ? root.updateRecord.version + " available" : ""
-                visible: root.updateRecord !== null
+                visible: root.updateRecord !== null && !root.isPending
                 color: "goldenrod"
                 elide: Text.ElideRight
             }
@@ -241,33 +243,47 @@ Panel {
                 // Float Right
                 Item {
                     Layout.fillWidth: true
+                    visible: !root.isPending
                 }
 
+                // Install Button
                 Button {
                     text: "Install"
                     enabled: root.actionsEnabled
                     palette.button: "darkgreen"
                     palette.buttonText: "white"
-                    visible: root.plugin !== null && !root.isExternalPlugin && !PluginUtils.isInstalled(root.plugin)
+                    visible: root.plugin !== null && !root.isExternalPlugin && !root.isPending && !PluginUtils.isInstalled(root.plugin)
                     onClicked: root.installRequested()
                 }
 
+                // Update Button
                 Button {
                     text: "Update"
                     enabled: root.actionsEnabled
                     palette.button: "darkgoldenrod"
                     palette.buttonText: "white"
-                    visible: root.plugin !== null && !root.isExternalPlugin && PluginUtils.isInstalled(root.plugin) && root.updateRecord !== null
+                    visible: root.plugin !== null && !root.isExternalPlugin && !root.isPending && PluginUtils.isInstalled(root.plugin) && root.updateRecord !== null
                     onClicked: root.updateRequested()
                 }
 
+                // Remove Button
                 Button {
                     text: "Remove"
                     enabled: root.actionsEnabled
                     palette.button: "darkred"
                     palette.buttonText: "white"
-                    visible: root.plugin !== null && !root.isExternalPlugin && PluginUtils.isInstalled(root.plugin)
+                    visible: root.plugin !== null && !root.isExternalPlugin && !root.isPending && PluginUtils.isInstalled(root.plugin)
                     onClicked: root.removeRequested()
+                }
+
+                // Plugin Pending Changes
+                Label {
+                    text: "Restart Meshroom to apply the changes."
+                    color: Qt.darker(palette.text, 1.175)
+                    visible: root.isPending
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
                 }
             }
         }

@@ -10,9 +10,11 @@ Rectangle {
     id: root
 
     property string typeName: ""
+    property bool isPending: false
 
     // Badge Color
     readonly property color baseColor: {
+        if (isPending) { return '#008d8d' }
         switch (root.typeName) {
             case "BUILTIN": return '#ffd000'
             case "LOCAL": return '#0044cc'
@@ -24,6 +26,7 @@ Rectangle {
 
     // Badge Text
     readonly property string text: {
+        if (isPending) { return "pending" }
         switch (root.typeName) {
             case "BUILTIN": return "built-in"
             case "LOCAL": return "installed"

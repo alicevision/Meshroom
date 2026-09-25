@@ -199,6 +199,7 @@ executables = [
     PlatformExecutable("bin/meshroom_compute"),
     PlatformExecutable("bin/meshroom_info"),
     PlatformExecutable("bin/meshroom_newNodeType"),
+    PlatformExecutable("bin/meshroom_plugins"),
     PlatformExecutable("bin/meshroom_statistics"),
     PlatformExecutable("bin/meshroom_status"),
     PlatformExecutable("bin/meshroom_submit"),

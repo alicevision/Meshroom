@@ -185,9 +185,9 @@ Dialog {
                                             {
                                                 // Status is OK
                                                 if (xhr.status === 200)
-                                                    textArea.text = MeshroomApp.markdownToHtml(xhr.responseText)
+                                                    textArea.text = xhr.responseText
                                                 else
-                                                    textArea.text = "Could not load license file. Available online at <a href='" + url + "'>"+ url + "</a>."
+                                                    textArea.text = "Could not load license file. Available online at [" + url + "](" + url + ")."
                                             }
                                         })
                         }
@@ -201,7 +201,7 @@ Dialog {
                             selectByMouse: true
                             selectByKeyboard: true
                             wrapMode: TextArea.WrapAnywhere
-                            textFormat: TextEdit.RichText
+                            textFormat: TextEdit.MarkdownText
                             onLinkActivated: function(link) { Qt.openUrlExternally(link) }
                         }
                     }

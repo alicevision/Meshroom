@@ -1,8 +1,10 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Window
 
 import Controls 1.0
+import MaterialIcons 2.2
 
 import "Details"
 import "List"
@@ -20,6 +22,8 @@ import "Tasks"
  * The window is application-modal, so that no project can be modified while plugins are managed.
  * A plugin task is only run once the current project is saved, and the window cannot be closed
  * while tasks are in progress.
+ *
+ * The changes made by the tasks only apply after a restart.
  */
 
 Window {
@@ -33,9 +37,17 @@ Window {
     modality: Qt.ApplicationModal
 
     onClosing: function(close) {
+        // Keep the manager open, as closing it would unlock the application, while:
+        // - plugin tasks are still in progress
+        // - a restart is required to apply the plugin changes
+
         if (_pluginTaskQueue.busy) {
             close.accepted = false
             tasksInProgressDialog.open()
+        }
+        else if (_pluginTaskQueue.restartRequired) {
+            close.accepted = false
+            restartDialog.open()
         }
     }
 
@@ -82,56 +94,110 @@ Window {
         helperText: "Please wait for them to finish, or cancel them, before closing the Plugin Manager."
     }
 
+    // Restart Dialog
+    MessageDialog {
+        id: restartDialog
+        title: "Restart Required"
+        preset: "Info"
+        canCopy: false
+        text: "Plugins have been changed."
+        helperText: "Restart Meshroom to apply the changes. The current project will be reopened."
+    }
+
+    // Layout
     Loader {
         anchors.fill: parent
         active: root.visible
-        sourceComponent: MSplitView {
-            id: content
-            orientation: Qt.Vertical
+        sourceComponent: ColumnLayout {
+            spacing: 0
 
-            MSplitView {
-                id: pluginsSplitView
-                orientation: Qt.Horizontal
-                SplitView.fillWidth: true
-                SplitView.preferredHeight: content.height * 0.7
-                SplitView.minimumHeight: content.height * 0.5
+            // Restart Banner
+            Pane {
+                Layout.fillWidth: true
+                visible: _pluginTaskQueue.restartRequired
+                padding: 12
+                background: Rectangle { color: Qt.darker(palette.highlight, 1.7) }
 
-                // Plugin List
-                PluginListPane {
-                    id: pluginsListPane
-                    SplitView.preferredWidth: content.width * 0.7
-                    SplitView.minimumWidth: content.width * 0.5
-                }
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 8
 
-                // Plugin Details
-                PluginDetailsPane {
-                    id: pluginDetails
-                    plugin: pluginsListPane.currentPlugin
-                    SplitView.fillWidth: true
-                    SplitView.minimumWidth: content.width * 0.3
+                    // Restart Icon
+                    Label {
+                        text: MaterialIcons.restart_alt
+                        font.family: MaterialIcons.fontFamily
+                        font.pointSize: 13
+                        color: "white"
+                    }
 
-                    actionsEnabled: _pluginManager.localPluginsEnabled
-                    onInstallRequested: root.requestTask(() => _pluginTaskQueue.install(plugin))
-                    onUpdateRequested: root.requestTask(() => _pluginTaskQueue.update(plugin.name))
-                    onRemoveRequested: root.requestTask(() => _pluginTaskQueue.remove(plugin.name))
+                    // Restart Label
+                    Label {
+                        text: "Restart Meshroom to apply the plugin changes."
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        color: "white"
+                    }
+
+                    // Restart Button
+                    Button {
+                        text: "Restart Now"
+                        enabled: !_pluginTaskQueue.busy
+                        onClicked: MeshroomApp.restart()
+                    }
                 }
             }
 
-            // Tasks
-            Loader {
-                id: bottomPaneLoader
-                active: _pluginManager.localPluginsEnabled
-                visible: active
-                SplitView.fillWidth: true
-                SplitView.preferredHeight: content.height * 0.3
-                SplitView.minimumHeight: content.height * 0.2
+            // Plugins
+            MSplitView {
+                id: content
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                orientation: Qt.Vertical
 
-                sourceComponent: PluginTaskPane {
-                    id: bottomPane
-                    tasks: _pluginTaskQueue.tasks
-                    runningTask: _pluginTaskQueue.runningTask
-                    onCancelRequested: (task) => _pluginTaskQueue.cancel(task)
-                    onClearFinishedRequested: _pluginTaskQueue.clearFinished()
+                MSplitView {
+                    id: pluginsSplitView
+                    orientation: Qt.Horizontal
+                    SplitView.fillWidth: true
+                    SplitView.preferredHeight: content.height * 0.7
+                    SplitView.minimumHeight: content.height * 0.5
+
+                    // Plugin List
+                    PluginListPane {
+                        id: pluginsListPane
+                        SplitView.preferredWidth: content.width * 0.7
+                        SplitView.minimumWidth: content.width * 0.5
+                    }
+
+                    // Plugin Details
+                    PluginDetailsPane {
+                        id: pluginDetails
+                        plugin: pluginsListPane.currentPlugin
+                        SplitView.fillWidth: true
+                        SplitView.minimumWidth: content.width * 0.3
+
+                        actionsEnabled: _pluginManager.localPluginsEnabled
+                        onInstallRequested: root.requestTask(() => _pluginTaskQueue.install(plugin))
+                        onUpdateRequested: root.requestTask(() => _pluginTaskQueue.update(plugin.name))
+                        onRemoveRequested: root.requestTask(() => _pluginTaskQueue.remove(plugin.name))
+                    }
+                }
+
+                // Tasks
+                Loader {
+                    id: bottomPaneLoader
+                    active: _pluginManager.localPluginsEnabled
+                    visible: active
+                    SplitView.fillWidth: true
+                    SplitView.preferredHeight: content.height * 0.3
+                    SplitView.minimumHeight: content.height * 0.2
+
+                    sourceComponent: PluginTaskPane {
+                        id: bottomPane
+                        tasks: _pluginTaskQueue.tasks
+                        runningTask: _pluginTaskQueue.runningTask
+                        onCancelRequested: (task) => _pluginTaskQueue.cancel(task)
+                        onClearFinishedRequested: _pluginTaskQueue.clearFinished()
+                    }
                 }
             }
         }

@@ -200,7 +200,7 @@ Dialog {
                             implicitWidth: parent.implicitWidth
                             selectByMouse: true
                             selectByKeyboard: true
-                            wrapMode: TextArea.WrapAnywhere
+                            wrapMode: TextArea.Wrap
                             textFormat: TextEdit.MarkdownText
                             onLinkActivated: function(link) { Qt.openUrlExternally(link) }
                         }

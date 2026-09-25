@@ -179,3 +179,32 @@ class TestPluginTaskQueue:
         taskA = queue._addTask(PluginTaskKind.INSTALL, "pluginA", FakeService("pluginA"))
         assert waitUntil(lambda: len(recorder.calls) == 1)
         assert recorder.calls[0] == (taskA,)
+
+    def test_pendingPlugins(self):
+        """ A successful task marks its plugin as pending, which requires a restart. """
+        queue = PluginTaskQueue()
+        assert not queue.restartRequired
+        queue._addTask(PluginTaskKind.INSTALL, "pluginA", FakeService("pluginA"))
+        queue._addTask(PluginTaskKind.REMOVE, "pluginB", FakeService("pluginB"))
+        assert waitUntil(lambda: not queue.busy)
+        assert queue.pendingPlugins == ["pluginA", "pluginB"]
+        assert queue.restartRequired
+
+    def test_noPendingPluginWhenNotSucceeded(self):
+        """ A failed or cancelled task does not mark its plugin as pending. """
+        queue = PluginTaskQueue()
+        hold = threading.Event()
+        error = PluginServiceError("fake", "pluginA", "step", "error")
+        queue._addTask(PluginTaskKind.INSTALL, "pluginA", FakeService("pluginA", fail=error))
+        queue._addTask(PluginTaskKind.INSTALL, "pluginB", FakeService("pluginB", hold=hold))
+        queue.cancelAll()
+        assert waitUntil(lambda: not queue.busy)
+        assert queue.pendingPlugins == []
+        assert not queue.restartRequired
+
+    def test_pendingPluginBlocksNewTask(self):
+        """ A pending plugin cannot get a new task until the restart. """
+        queue = PluginTaskQueue()
+        queue._addTask(PluginTaskKind.INSTALL, "pluginA", FakeService("pluginA"))
+        assert waitUntil(lambda: not queue.busy)
+        assert queue._addTask(PluginTaskKind.REMOVE, "pluginA", FakeService("pluginA")) is None

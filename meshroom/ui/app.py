@@ -721,24 +721,6 @@ class MeshroomApp(QApplication):
 
         self.recentImportedImagesFoldersChanged.emit()
 
-    @Slot(str, result=str)
-    def markdownToHtml(self, md):
-        """
-        Convert markdown to HTML.
-
-        Args:
-            md (str): the markdown text to convert
-
-        Returns:
-            str: the resulting HTML string
-        """
-        try:
-            from markdown import markdown
-        except ImportError:
-            logging.warning("Can't import markdown module, returning source markdown text.")
-            return md
-        return markdown(md)
-
     def _systemInfo(self):
         import platform
         import sys

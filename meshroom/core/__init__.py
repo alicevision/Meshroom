@@ -14,6 +14,7 @@ try:
 except Exception:
     pass
 
+from meshroom.core.plugins import meshroomPluginsFolder, meshroomPluginsInternalPrefix
 from meshroom.core.plugins.manager import PluginManager
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension, isTemplateFile
 from meshroom.core.submitter import BaseSubmitter
@@ -235,10 +236,21 @@ def initPipelines():
 
 
 def initPlugins():
+    if meshroomPluginsFolder.is_dir():
+        # Load JSON registry files
+        # Do not load registries records
+        for jsonFilePath in sorted(p for p in meshroomPluginsFolder.glob("*.json")
+                                    if not p.name.startswith(meshroomPluginsInternalPrefix)):
+            pluginManager.addPluginRegistryFile(jsonFilePath, updateRecords=False)
+        # Local plugins
+        # Using DirTreeProcessEnv
+        for subfolderPath in sorted(p for p in meshroomPluginsFolder.iterdir()
+                                     if p.is_dir() and not p.name.startswith(meshroomPluginsInternalPrefix)):
+            pluginManager.addPluginFromLocalFolder(subfolderPath.name, str(subfolderPath))
+
     # Plugin paths
     # Using DirTreeProcessEnv
-    additionalPluginsPath = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
-    pluginsFolders = [os.path.join(meshroomFolder, "plugins")] + additionalPluginsPath
+    pluginsFolders = EnvVar.getList(EnvVar.MESHROOM_PLUGINS_PATH)
     for folder in pluginsFolders:
         # Use folder name as default plugin name
         pluginManager.addPluginFromPath(Path(folder).name, folder, isUserPlugin=False)
@@ -267,6 +279,6 @@ def initPlugins():
         rezPackageNameVersion, rezPackageFolder = entry.split("=")
         rezPackageName, _, rezPackageVersion = rezPackageNameVersion.partition("-")
         pluginManager.addPluginFromRez(rezPackageName, rezPackageVersion, rezPackageFolder, isUserPlugin=True)
-    
+
     # Update pipeline templates
     pipelineTemplates.update(pluginManager.getPipelineTemplates())

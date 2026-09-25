@@ -8,12 +8,22 @@ from meshroom.core import desc, pluginManager
 from meshroom.core.plugins.base import NodeDescProvider
 
 import os
+import zipfile
 
 
 def writeFile(filePath: Path, content: str = "") -> Path:
     filePath.parent.mkdir(parents=True, exist_ok=True)
     filePath.write_text(content, encoding="utf-8")
     return filePath
+
+
+def writeZip(zipPath: Path, files: Dict[str, str]) -> Path:
+    """ Write a zip archive at "zipPath" containing "files", as {pathInArchive: content}. """
+    zipPath.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zipPath, "w") as archive:
+        for name, content in files.items():
+            archive.writestr(name, content)
+    return zipPath
 
 
 @contextmanager

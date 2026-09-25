@@ -10,6 +10,7 @@ import QtQuick.Dialogs
 
 import GraphEditor 1.0
 import MaterialIcons 2.2
+import PluginManager 1.0
 import Utils 1.0
 import Controls 1.0
 
@@ -557,6 +558,11 @@ Page {
 
     AboutDialog {
         id: aboutDialog
+    }
+
+    PluginManagerWindow {
+        id: pluginManagerWindow
+        palette: root.palette
     }
 
     DialogsFactory {
@@ -1188,6 +1194,22 @@ Page {
                 color: compatibilityIssuesButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.15)
                 border.color: Qt.darker(activePalette.window, 1.15)
             }
+        }
+
+        // Plugin manager
+        MaterialToolButton {
+            id: pluginManagerButton
+            text: MaterialIcons.extension
+            font.pointSize: 18
+            ToolTip.text: "Manage Plugins"
+            ToolTip.visible: hovered
+
+            background: Rectangle {
+                color: pluginManagerButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.15)
+                border.color: Qt.darker(activePalette.window, 1.15)
+            }
+
+            onClicked: pluginManagerWindow.show()
         }
     }
 

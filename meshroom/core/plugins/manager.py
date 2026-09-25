@@ -4,11 +4,16 @@ import logging
 import time
 
 from typing import Optional
+from pathlib import Path
 
-from meshroom.common import BaseObject
+from meshroom.common import BaseObject, Property, Slot
+from meshroom.env import EnvVar
 from meshroom.core.plugins.loader import PluginLoader
+from meshroom.core.plugins.registry import PluginRegistry
+from meshroom.core.plugins.record import PluginRecord
 from meshroom.core.plugins.base import (
-    Plugin, PluginType, NodeDescProvider, NodeDescProviderStatus, SubmitterProvider, SubmitterProviderStatus,
+    Plugin, PluginType, NodeDescProvider, NodeDescProviderStatus,
+    SubmitterProvider, SubmitterProviderStatus,
 )
 
 
@@ -26,12 +31,16 @@ class PluginManager(BaseObject):
                             with the name of the submitter as the key
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent: BaseObject = None):
+        super().__init__(parent)
         self._pluginLoader: PluginLoader = PluginLoader()  # plugin loader in virtual package
+        self._pluginRegistries: dict[str, PluginRegistry] = {}  # plugin registries
         self._plugins: dict[str, Plugin] = {}  # loaded plugins
         self._nodeDescProviders: dict[str, NodeDescProvider] = {}  # registered node descriptor providers
         self._submitterProviders: dict[str, SubmitterProvider] = {}  # registered submitter providers
+
+    # Whether local plugin management is enabled ("MESHROOM_LOCAL_PLUGINS").
+    localPluginsEnabled = Property(bool, lambda self: EnvVar.get(EnvVar.MESHROOM_LOCAL_PLUGINS), constant=True)
 
     def _addPlugin(self,
                    pluginName: str,
@@ -64,7 +73,8 @@ class PluginManager(BaseObject):
                                                pluginType=pluginType,
                                                pluginVersion=pluginVersion,
                                                isUserPlugin=isUserPlugin,
-                                               hasMeshroomFolder=hasMeshroomFolder)
+                                               hasMeshroomFolder=hasMeshroomFolder,
+                                               parent=self)
         if plugin:
             if self.getPlugin(plugin.name):
                 logging.warning(f"Plugin {plugin.name} is already registered.")
@@ -110,6 +120,21 @@ class PluginManager(BaseObject):
         """
         self._addPlugin(defaultPluginName, pluginFolder, PluginType.PATH, pluginVersion=pluginVersion,
                         isUserPlugin=isUserPlugin, hasMeshroomFolder=True, registerProviders=registerProviders)
+
+    def addPluginFromLocalFolder(self, defaultPluginName: str, pluginFolder: str, registerProviders: bool = True):
+        """
+        Load a plugin located in the local plugins folder and register its valid providers.
+
+        The plugin's modules are expected in a "meshroom" folder inside "pluginFolder", and its
+        process environment is built from that folder's directory tree ("bin"/"lib"/"lib64"/"venv").
+
+        Args:
+            defaultPluginName: the default name to register the plugin under.
+            pluginFolder: the plugin's root folder.
+            registerProviders: True if all the valid providers from the plugin should be registered.
+        """
+        self._addPlugin(defaultPluginName, pluginFolder, PluginType.LOCAL, pluginVersion=None,
+                        isUserPlugin=False, hasMeshroomFolder=True, registerProviders=registerProviders)
 
     def addPluginFromBuiltInFolder(self, defaultPluginName: str, pluginFolder: str,
                                    registerProviders: bool = True):
@@ -184,8 +209,8 @@ class PluginManager(BaseObject):
 
     def getPlugins(self) -> dict[str, Plugin]:
         """
-        Return a dictionary containing all the loaded Plugins, with {key, value} =
-        {name, Plugin}.
+        Return a dictionary containing all the loaded Plugins,
+        with {key, value} = {name, Plugin}.
         """
         return self._plugins
 
@@ -296,3 +321,131 @@ class PluginManager(BaseObject):
         if self.isSubmitterRegistered(name):
             return self._submitterProviders[name]
         return None
+
+    def getPluginRegistries(self) -> dict[str, PluginRegistry]:
+        """
+        Return a dictionary containing all the registered PluginRegistry,
+        with {key, value} = {name, PluginRegistry}.
+        """
+        return self._pluginRegistries
+
+    def addPluginRegistryFile(self, filepath: Path, updateRecords: bool = False) -> bool:
+        """
+        Register a PluginRegistry from a local "<registryName>.json" registry file.
+        The registry is skipped if a registry with the same name is already registered.
+
+        Args:
+            filepath: the path of a registry file.
+            updateRecords: load the registry's records from its file right after creating it.
+
+        Returns:
+            bool: whether the registry was read and registered successfully.
+        """
+        if not self.localPluginsEnabled:
+            logging.error(f"Cannot add plugin registry file '{filepath}', local plugin management disabled")
+            return False
+
+        # Get registry from registry file
+        registry = PluginRegistry(filepath, parent=self)
+        if registry.name in self._pluginRegistries:
+            logging.warning(f"Plugin registry '{registry.name}' is already registered")
+            return False
+
+        # Load registry records
+        if updateRecords:
+            registry.updateRecords()
+
+        # Add to plugin registries dict
+        self._pluginRegistries[registry.name] = registry
+        return True
+
+    @Slot()
+    @Slot(bool)
+    @Slot(bool, bool)
+    def refreshPluginRegistries(self, updateRecords: bool = True, useTTL: bool = True) -> None:
+        """
+        Ensure every plugin registry is up to date with its remote source, re-fetching the ones
+        that are not, and optionally reload their records from the (possibly updated) registry files.
+        A registry that is already up to date and already holds records is left untouched.
+
+        Args:
+            updateRecords: Reload the records of each refreshed registry from its registry file.
+            useTTL: Skip re-validation of registries whose TTL has not expired yet.
+        """
+        if not self.localPluginsEnabled:
+            logging.error("Cannot refresh plugin registries, local plugin management disabled")
+            return
+
+        for registry in self._pluginRegistries.values():
+            if not registry.matchesRemote(useTTL):
+                registry.fetch()
+            elif len(registry.records) > 0:
+                continue
+            if updateRecords:
+                registry.updateRecords()
+
+    @Slot(BaseObject, result=BaseObject)
+    def getUpdateRecord(self, plugin: Plugin) -> Optional[PluginRecord]:
+        """
+        Return the PluginRecord describing an available update for "plugin", if any.
+
+        An update is available when a registered PluginRecord shares "plugin"'s name and publisher,
+        and advertises a different version.
+
+        Args:
+            plugin: the installed Plugin to check for an available update.
+
+        Returns:
+            PluginRecord | None: the matching record if an update is available, None otherwise.
+        """
+        for registry in self._pluginRegistries.values():
+            record = registry.getRecord(plugin.name)
+            if record is not None and record.publisher == plugin.publisher and record.version != plugin.version:
+                return record
+        return None
+
+    @Slot(result=list)
+    @Slot(list, result=list)
+    @Slot(list, bool, result=list)
+    @Slot(list, bool, bool, result=list)
+    @Slot(list, bool, bool, bool, result=list)
+    def searchPlugin(self, names: list[str] = None, strict: bool = True,
+                     installed: bool = True, available: bool = True) -> list[Plugin | PluginRecord]:
+        """
+        Return a list containing all the plugins (installed and / or available),
+        ordered by name.
+
+        If "names" is provided, only the plugins matching one of the "names" are returned.
+        When "strict" is True, a Plugin/PluginRecord's name must be exactly equal to one of the "names".
+        When "strict" is False, a Plugin/PluginRecord is returned if its name contains any of the "names"
+        as a substring.
+
+        Args:
+            names: The plugin names (or substrings) to filter the Plugin/PluginRecord with.
+            strict: Whether to match plugin names exactly or as substrings.
+            installed: Whether to include the locally installed plugins.
+            available: Whether to include the plugins from the external sources.
+
+        Returns:
+            list: The matching Plugin / PluginRecord objects, ordered by name.
+        """
+        plugins: dict[str, Plugin | PluginRecord] = {}
+        # Available plugins
+        if available:
+            for registry in self._pluginRegistries.values():
+                for record in registry.records:
+                    if record.name in self._plugins:
+                        continue
+                    plugins[record.name] = record
+        # Installed plugins
+        if installed:
+            for plugin in self._plugins.values():
+                plugins[plugin.name] = plugin
+        # Search filter
+        if names is not None:
+            if strict:
+                plugins = {name: plugin for name, plugin in plugins.items() if name in names}
+            else:
+                plugins = {name: plugin for name, plugin in plugins.items() if any(query in name for query in names)}
+        # Sort plugins
+        return sorted(plugins.values(), key=lambda plugin: plugin.name)

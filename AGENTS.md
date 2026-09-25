@@ -22,7 +22,7 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 ├── .vscode/                    # Shared VS Code debugging and workspace configurations
 ├── bin/                        # CLI entry points, packaged as executables in setup.py (meshroom_batch,
 │                               # meshroom_compute, meshroom_createChunks, meshroom_info, meshroom_newNodeType,
-│                               # meshroom_statistics, meshroom_status, meshroom_submit).
+│                               # meshroom_plugins, meshroom_statistics, meshroom_status, meshroom_submit).
 │                               # The GUI has NO bin/ script — launch it with ./start.sh (see "Run the app").
 ├── docker/                     # Dockerfiles for containerized environments (Rocky Linux, Ubuntu, etc.)
 ├── docs/                       # Documentation resources, developer guides, and illustrations
@@ -39,7 +39,7 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 │   │   ├── qml/                # QML design layouts (GraphEditor, NodeEditor, 3D/2D Viewers, RTI Viewer)
 │   │   ├── components/         # Qt helper components exposed to QML (scene3D, scriptEditor, clipboard, ...)
 │   │   └── ...                 # Python backends (app.py, graph.py, commands.py, scene.py) binding core to Qt
-│   ├── env.py                  # EnvVar registry: MESHROOM_PLUGINS_PATH / NODES_PATH / PIPELINE_TEMPLATES_PATH, etc.
+│   ├── env.py                  # EnvVar registry: MESHROOM_PLUGINS_PATH / NODES_PATH / PIPELINE_TEMPLATES_PATH / LOCAL_PLUGINS, etc.
 │   └── multiview.py            # Image-extension lists & helpers for building multiview/photogrammetry pipelines
 ├── tests/                      # Comprehensive suite of unit tests and pipeline validation tests
 ├── CHANGES.md                  # Changelog tracking features, optimizations, and API breaks
@@ -57,7 +57,7 @@ A few distinctions are easy to confuse. Keep them straight before changing engin
 * **Graph = DAG of attributes.** A **`Graph`** (`meshroom/core/graph.py`) holds nodes connected by **`Edge`**s that link one node's *output* attribute to another node's *input* attribute. A connected input reads its value from upstream; the graph is a DAG and defines evaluation order. Each node computes a content-based **UID** (hash of its inputs) so unchanged nodes can be cached and skipped on recompute.
 * **Execution = chunks.** Work is split into **`NodeChunk`**s for parallelism (driven by the descriptor's `size`/`parallelization`). `desc.Node` subclasses implement **`processChunk(chunk)`** in Python; `desc.CommandLineNode` builds a command line from its `commandLine` template plus the chunk's range and runs the external binary. **`TaskManager`** (`meshroom/core/taskManager.py`) orchestrates execution — either **locally** (`compute`) or by **submitting** to a render farm (`submit`) via `meshroom/submitters/`.
 * **Persistence.** Graphs are saved as **`.mg`** JSON files (`meshroom/core/graphIO.py`): a versioned `header` plus a `graph` payload. On load, `nodeFactory` reconciles descriptor changes so old projects still open — a node that no longer matches its current descriptor becomes a **`CompatibilityNode`** instead of failing. Pipeline **templates** are just `.mg` files registered at startup. Output nodes are excluded from a template by default and retained only when explicitly requested, allowing `meshroom_batch -o/--output` and the UI startup `-o/--output` to configure export destinations.
-* **Discovery.** Node types and pipeline templates are loaded at import time (`meshroom/core/__init__.py`, `meshroom/core/plugins.py`) from the built-in `meshroom/nodes/` plus any plugin/template paths (see [INSTALL_PLUGINS.md](INSTALL_PLUGINS.md)).
+* **Discovery.** Node types and pipeline templates are loaded at import time (`meshroom/core/__init__.py`, `meshroom/core/plugins/`) from the built-in `meshroom/nodes/`, the local plugins folder `meshroom/plugins/` (one installed plugin per subfolder, plus `<registry>.json` plugin registry files), and any plugin/template paths (see [INSTALL_PLUGINS.md](INSTALL_PLUGINS.md)).
 * **UI bridge.** The engine is Qt-agnostic: `meshroom/common/` selects either a Qt or a headless backend for `BaseObject`, so the core runs without a UI. The `meshroom/ui/*.py` layer wraps it for Qt — `app.py` (application/entry), `graph.py` (a `UIGraph` exposing the core `Graph` as Qt models + async compute), `commands.py` (undo/redo command stack), `scene.py`. QML in `meshroom/ui/qml/` binds to these.
 
 ## Development & Verification

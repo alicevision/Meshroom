@@ -16,8 +16,12 @@ ItemDelegate {
     id: root
 
     property var pluginData: modelData
+
     // The PluginRecord describing an available update for "pluginData", or null.
     readonly property var updateRecord: PluginUtils.isInstalled(root.pluginData) ? _pluginManager.getUpdateRecord(root.pluginData) : null
+    // Whether "pluginData" was changed by a successful task, which applies after a restart.
+    readonly property bool isPending: root.pluginData ? _pluginTaskQueue.pendingPlugins.includes(root.pluginData.name) : false
+
     property int nameColumnWidth: 200
     property int versionColumnWidth: 60
     property int typeColumnWidth: 90
@@ -70,7 +74,7 @@ ItemDelegate {
             Label {
                 text: root.pluginData.version || "Unknown"
                 elide: Text.ElideRight
-                color: root.updateRecord !== null ? "goldenrod" : palette.windowText
+                color: root.updateRecord !== null && !root.isPending ? "goldenrod" : palette.windowText
             }
 
             // Update Icon
@@ -79,7 +83,7 @@ ItemDelegate {
                 font.family: MaterialIcons.fontFamily
                 font.pointSize: 12
                 color: "goldenrod"
-                visible: root.updateRecord !== null
+                visible: root.updateRecord !== null && !root.isPending
                 ToolTip.visible: updateIconHover.hovered
                 ToolTip.text: root.updateRecord ? "Update to " + root.updateRecord.version + " available" : ""
 
@@ -98,6 +102,7 @@ ItemDelegate {
             PluginTypeBadge {
                 anchors.verticalCenter: parent.verticalCenter
                 typeName: root.pluginData.typeName || ""
+                isPending: root.isPending
                 visible: root.pluginData
             }
         }

@@ -16,6 +16,8 @@ import "Tasks"
  * and, below, the queue of install / update / remove tasks.
  *
  * The task pane and the plugin actions are only available when local plugins are enabled.
+ *
+ * The window is application-modal, so that no project can be modified while plugins are managed.
  */
 
 Window {
@@ -26,6 +28,7 @@ Window {
     minimumWidth: 800
     minimumHeight: 600
     color: palette.window
+    modality: Qt.ApplicationModal
 
     Loader {
         anchors.fill: parent

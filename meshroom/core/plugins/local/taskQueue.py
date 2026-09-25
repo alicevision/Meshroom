@@ -44,8 +44,11 @@ class PluginTaskQueue(BaseObject):
     taskFinished = Signal(BaseObject)  # A task reached a finished status.
 
     # Properties
+    # The tasks of the queue, in the order they were added.
     tasks = Property(BaseObject, lambda self: self._tasks, constant=True)
+    # Whether some tasks are not finished yet.
     busy = Property(bool, lambda self: self._busy, notify=busyChanged)
+    # The task being run, or None.
     runningTask = Property(BaseObject, lambda self: self._runningTask, notify=runningTaskChanged)
 
     @Slot(BaseObject, result=BaseObject)

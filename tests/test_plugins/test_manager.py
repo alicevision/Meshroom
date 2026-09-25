@@ -4,7 +4,7 @@ from meshroom.core import pluginManager
 from meshroom.core.desc.node import NodeVersionType
 from meshroom.core.plugins.base import NodeDescProviderStatus
 from meshroom.core.plugins.registry import PluginRegistry
-from ..utils import overrideOsEnvironmentVariables, registeredPlugin, writeFile
+from ..utils import registeredPlugin, writeFile
 
 import json
 import os

@@ -3,11 +3,12 @@ import os
 import re
 import argparse
 import json
+import sys
 from enum import Enum
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
-from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings, QProcess
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlDebuggingEnabler
 from PySide6.QtQuickControls2 import QQuickStyle
@@ -238,6 +239,14 @@ class MeshroomApp(QApplication):
 
         super().__init__(inputArgs[:1] + qtArgs)
 
+        # Store how Meshroom was launched, to be able to restart it
+        self._launchVerbosity = args.verbose
+        self._launchWorkingDir = os.getcwd()
+        if meshroom.isFrozen:
+            self._launchCommand = [sys.executable]
+        else:
+            self._launchCommand = [sys.executable, os.path.abspath(sys.argv[0])]
+
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
         self.setApplicationVersion(meshroom.__version_label__)
@@ -395,6 +404,23 @@ class MeshroomApp(QApplication):
         # Apply the initial theme now.
         # Quick Controls Fusion-style palette machinery has already initialized.
         self._paletteManager.togglePalette()
+
+    @Slot()
+    def restart(self):
+        """
+        Restart Meshroom, reopening the current project if it has been saved to a file.
+        The original command line arguments are not reused, as they may import images or save a project again.
+        """
+        program, *programArgs = self._launchCommand
+        programArgs += ["--verbose", self._launchVerbosity]
+        if self._activeProject.graph.filepath:
+            programArgs.append(self._activeProject.graph.filepath)
+
+        success, _ = QProcess.startDetached(program, programArgs, self._launchWorkingDir)
+        if not success:
+            self.showMessage("Could not restart Meshroom", "error")
+            return
+        self.quit()
 
     def terminateManual(self):
         self.engine.clearComponentCache()

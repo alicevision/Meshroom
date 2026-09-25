@@ -30,7 +30,7 @@ Window {
     id: root
     title: "Plugin Manager"
     width: 1024
-    height: 600
+    height: 800
     minimumWidth: 800
     minimumHeight: 600
     color: palette.window
@@ -188,7 +188,7 @@ Window {
                     active: _pluginManager.localPluginsEnabled
                     visible: active
                     SplitView.fillWidth: true
-                    SplitView.preferredHeight: content.height * 0.3
+                    SplitView.preferredHeight: content.height * 0.35
                     SplitView.minimumHeight: content.height * 0.2
 
                     sourceComponent: PluginTaskPane {

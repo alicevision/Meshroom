@@ -17,13 +17,27 @@ RowLayout {
 
     signal editingFinished(var value)
 
-    FilterComboBox {
-        id: comboBox
-
+    Item {
         Layout.fillWidth: true
-        sourceModel: root.values
-        inputValue: root.value
-        onEditingFinished: value => root.editingFinished(value)
+        implicitWidth: comboBox.implicitWidth
+        implicitHeight: comboBox.implicitHeight
+
+        FilterComboBox {
+            id: comboBox
+            anchors.fill: parent
+            sourceModel: root.values
+            inputValue: root.value
+            onEditingFinished: value => root.editingFinished(value)
+        }
+
+        Rectangle {
+            anchors.fill: comboBox
+            color: "transparent"
+            radius: 2
+            border.width: comboBox.activeFocus ? 2 : 0
+            border.color: comboBox.palette.highlight
+            z: 10
+        }
     }
 
     MaterialLabel {

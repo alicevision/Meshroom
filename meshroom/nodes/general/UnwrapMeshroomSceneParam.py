@@ -8,7 +8,7 @@ from pathlib import Path
 from meshroom.core import desc
 
 
-class UnwrapMeshroomSceneParam(desc.CommandLineNode):
+class UnwrapMeshroomSceneParam(desc.InlineNode):
     """Unwrap the JSON file created by a GetMeshroomSceneParams node
     to expose its items to the graph.
     
@@ -96,5 +96,5 @@ class UnwrapMeshroomSceneParam(desc.CommandLineNode):
         except Exception as e:
             logging.warning(f"[UnwrapMeshroomSceneParam] Failed to set the choices: {e}")
 
-    def processChunk(self, chunk):
-        self.setOutput(chunk.node)
+    def process(self, node):
+        self.setOutput(node)

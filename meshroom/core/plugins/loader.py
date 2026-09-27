@@ -224,7 +224,7 @@ class PluginLoader:
                 continue
 
             if entryPath.is_dir():
-                if not (entryPath / "__init__.py").is_file():
+                if not (entryPath / "__init__.py").is_file() and not (entryPath / "__init__.pyc").is_file():
                     # Not itself a package: not walked, matching the one-level rule for plain
                     # subfolders elsewhere in this loader.
                     continue
@@ -251,7 +251,7 @@ class PluginLoader:
             folderPath: the folder containing the Python files to load.
             issues: the collector for the issues found while loading the plugin.
         """
-        for filePath in sorted(folderPath.glob("*.py")):
+        for filePath in sorted([*folderPath.glob("*.py"), *folderPath.glob("*.pyc")]):
             # Skip special/dunder files like __init__.py
             if filePath.stem.startswith("__"):
                 continue

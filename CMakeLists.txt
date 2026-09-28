@@ -9,6 +9,7 @@ set(ALICEVISION_ROOT "$ENV{ALICEVISION_ROOT}" CACHE STRING "AliceVision root dir
 set(QT_DIR "$ENV{QT_DIR}" CACHE STRING "Qt root directory")
 
 option(MR_BUILD_QTALICEVISION "Enable building of QtAliceVision plugin" ON)
+set(QTALICEVISION_VERSION "develop" CACHE STRING "Version of the QtAliceVision plugin (default to develop)")
 
 if(CMAKE_BUILD_TYPE MATCHES Release)
     message(STATUS "Force CMAKE_INSTALL_DO_STRIP in Release")
@@ -39,7 +40,7 @@ if(MR_BUILD_QTALICEVISION)
 set(QTALICEVISION_TARGET QtAliceVision)
 ExternalProject_Add(${QTALICEVISION_TARGET}
       GIT_REPOSITORY https://github.com/alicevision/QtAliceVision
-      GIT_TAG develop
+      GIT_TAG ${QTALICEVISION_VERSION}
       PREFIX ${BUILD_DIR}
       BUILD_IN_SOURCE 0
       BUILD_ALWAYS 0

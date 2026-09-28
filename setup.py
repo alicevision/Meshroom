@@ -39,8 +39,8 @@ class PlatformExecutable(Executable):
             initScript = os.path.join(currentDir, "setupInitScriptUnix.py")
         elif platform.system() is self.Windows:
             initScript = os.path.join(currentDir, "setupInitScriptWindows.py")
-        super(PlatformExecutable, self).__init__(script, initScript, base, targetName, icon, shortcutName,
-                                                 shortcutDir, copyright, trademarks)
+        super(PlatformExecutable, self).__init__(script=script, init_script=initScript, base=base, target_name=targetName, icon=icon, shortcut_name=shortcutName,
+                                                 shortcut_dir=shortcutDir, copyright=copyright, trademarks=trademarks)
 
 # Post-build strip for Linux
 cmdclass = {}
@@ -57,6 +57,7 @@ if platform.system() == "Linux":
             so_files = [
                 f for f in build_dir.rglob("*.so*")
                 if f.is_file() and not f.is_symlink()
+                and "numpy.libs" not in f.parts
             ]
             print(f"-- Stripping {len(so_files)} .so files in {build_dir}")
             for so in so_files:
@@ -92,7 +93,6 @@ build_exe_options = {
         "tkinter",
         "unittest",
         "email",
-        "html",
         "http.server",
         "xmlrpc",
         # Unused PySide6/Qt modules

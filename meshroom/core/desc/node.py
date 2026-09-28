@@ -27,7 +27,12 @@ if TYPE_CHECKING:
     from meshroom.core.attribute import Attribute as CoreAttribute
     from meshroom.core.node import Node as CoreNode
 
-_MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
+if getattr(sys, "frozen", False):
+    # In release mode, the "bin" path is one folder higher than the "_MESHROOM_ROOT".
+    _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT).parent / "bin" / "meshroom_compute").as_posix()
+else:
+    _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
+
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
 
 

@@ -563,6 +563,10 @@ Page {
         id: dialogsFactory
     }
 
+    DisplaySettingsDialog {
+        id: displaySettingsDialog
+    }
+
     CompatibilityManager {
         id: compatibilityManager
         uigraph: _currentScene
@@ -669,7 +673,7 @@ Page {
             id: homeButton
             text: MaterialIcons.home
 
-            font.pointSize: 18
+            font.pointSize: UISettings.headerFont
 
             background: Rectangle {
                 color: homeButton.hovered ? activePalette.highlight : Qt.darker(activePalette.window, 1.15)
@@ -1028,6 +1032,11 @@ Page {
                         y: 0
                     }
                 }
+                MenuSeparator {}
+                MenuItem {
+                    text: "Display Settings..."
+                    onTriggered: displaySettingsDialog.open()
+                }
             }
             Menu {
                 title: "View"
@@ -1203,7 +1212,7 @@ Page {
             spacing: 0
 
             MaterialToolButton {
-                font.pointSize: 8
+                font.pointSize: UISettings.smallFont
                 text: MaterialIcons.folder_open
                 ToolTip.text: "Open Cache Folder"
                 onClicked: Qt.openUrlExternally(Filepath.stringToUrl(_currentScene.graph.cacheDir))
@@ -1379,7 +1388,7 @@ Page {
                             text: MaterialIcons.sync
                             ToolTip.text: "Refresh Nodes Status"
                             ToolTip.visible: hovered
-                            font.pointSize: 11
+                            font.pointSize: UISettings.mediumFont
                             padding: 2
                             onClicked: {
                                 updatingStatus = true

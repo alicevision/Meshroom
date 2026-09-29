@@ -17,7 +17,7 @@ ENV MESHROOM_DEV=/opt/Meshroom \
 RUN dnf update -y
 RUN dnf install -y flex fontconfig freetype glib2-devel libICE
 RUN dnf install -y libX11 libXext libXi libXrender libSM
-RUN dnf install -y libXt-devel mesa-libGLU-devel mesa-libOSMesa-devel mesa-libGL-devel mesa-libEGL-devel
+RUN dnf install -y libXt-devel mesa-libGLU-devel mesa-libGL-devel mesa-libEGL-devel
 RUN dnf install -y zlib-devel systemd openssh-server
 RUN dnf install -y libxcb-devel \
                    libxkbcommon-devel \
@@ -44,4 +44,5 @@ COPY ./*requirements.txt ${MESHROOM_DEV}/
 
 # Install Meshroom requirements and freeze bundle
 WORKDIR "${MESHROOM_DEV}"
-RUN python -m pip install -r dev_requirements.txt -r requirements.txt
+RUN python3.11 -m pip install -r dev_requirements.txt -r requirements.txt
+ 

@@ -30,8 +30,10 @@ if TYPE_CHECKING:
 if getattr(sys, "frozen", False):
     # In release mode, the "bin" path is one folder higher than the "_MESHROOM_ROOT".
     _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT).parent / "bin" / "meshroom_compute").as_posix()
+    _MESHROOM_COMPUTE_EXE = (Path(_MESHROOM_ROOT).parent / "meshroom_compute").as_posix()
 else:
     _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
+    _MESHROOM_COMPUTE_EXE = None
 
 _MESHROOM_COMPUTE_DEPS = ["psutil"]
 
@@ -583,7 +585,11 @@ class Node(BaseNode):
         return self._mrNodeType
 
     def processChunkInEnvironment(self, chunk):
-        meshroomComputeCmd = f"{chunk.node.nodeDesc.pythonExecutable} {_MESHROOM_COMPUTE}" + \
+        meshroomCompute = f"{chunk.node.nodeDesc.pythonExecutable} {_MESHROOM_COMPUTE}"
+        # In release mode, if the Python executable is standard, use the binary for meshroom_compute instead
+        if chunk.node.nodeDesc.pythonExecutable == "python" and _MESHROOM_COMPUTE_EXE is not None:
+            meshroomCompute = _MESHROOM_COMPUTE_EXE
+        meshroomComputeCmd = f"{meshroomCompute}" + \
                              f" \"{chunk.node.graph.filepath}\" --node {chunk.node.name}" + \
                               " --extern --inCurrentEnv"
         if chunk.isPreprocess:

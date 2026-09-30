@@ -54,7 +54,7 @@ RUN apt-get install -y --no-install-recommends \
 	software-properties-common
 
 # Install Python3
-# RUN apt install python3-pip -y && pip3 install --upgrade pip
+# RUN apt install python3.11-pip -y && pip3 install --upgrade pip
 
 # Install Qt (to build plugins)
 WORKDIR /tmp/qt
@@ -73,4 +73,4 @@ COPY ./*requirements.txt ./setup.py ${MESHROOM_DEV}/
 
 # Install Meshroom requirements and freeze bundle
 WORKDIR "${MESHROOM_DEV}"
-RUN python -m pip install -r dev_requirements.txt -r requirements.txt
+RUN python3.11 -m pip install -r dev_requirements.txt -r requirements.txt

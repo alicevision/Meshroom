@@ -1625,7 +1625,7 @@ Item {
     }
 
     function unregisterAttributePin(attribute, pin) {
-        if (!attribute || !Object.hasOwn(attribute, 'uid')) { return }
+        if (!attribute || !Object.prototype.hasOwnProperty.call(attribute, 'uid')) { return }
 
         if (attribute.uuid in root._attributeToDelegate) {
             if (root._attributeToDelegate[attribute.uuid] !== pin) { return }

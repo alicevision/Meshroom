@@ -15,9 +15,9 @@ FloatingPane {
     readonly property bool hasImageContent: root.collection && root.collection.sceneView && root.collection.sceneView.imageLayerRef
                                           && root.collection.sceneView.imageLayerRef.source !== undefined
                                           && root.collection.sceneView.imageLayerRef.source.length > 0
-    readonly property bool hasMeshContent: root.collection && root.collection.meshModel.count > 0
-    readonly property bool hasSfmDataContent: root.collection && root.collection.sfmDataModel.count > 0
-    readonly property bool hasDepthmapContent: root.collection && root.collection.depthmapModel.count > 0
+    readonly property bool hasMeshContent: root.collection && root.collection.meshes.count > 0
+    readonly property bool hasSfmDataContent: root.collection && root.collection.sfmData.count > 0
+    readonly property bool hasDepthmapContent: root.collection && root.collection.depthmaps.count > 0
     readonly property bool hasAnyContent: hasImageContent || hasMeshContent || hasSfmDataContent || hasDepthmapContent
 
     padding: 0

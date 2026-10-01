@@ -5,81 +5,70 @@ import QtQuick.Controls
 import Utils 1.0
 
 Item {
-    
     id: root
+
     property alias collection: collection
+
+    // Current scene (_currentScene context property), or null when unavailable
+    readonly property var scene: typeof _currentScene === "undefined" ? null : _currentScene
+    // Active orbit motion, or null while looking through an SfM camera
+    readonly property var orbit: sceneView.motionInfo instanceof OrbitMotionInfo ? sceneView.motionInfo : null
+
+    // Sentinel used by SfmDataLayer.selectedCamera to mean "no camera selected" (UndefinedIndexT).
+    // Declared as "var" (not "int") since QML's int is 32-bit signed and would overflow 0xFFFFFFFF to -1.
+    readonly property var invalidCameraId: 0xFFFFFFFF
+
+    // OrbitMotionInfo view presets triggered by numpad keys
+    readonly property var numpadViews: ({
+        [Qt.Key_8]: "viewTop",
+        [Qt.Key_2]: "viewBottom",
+        [Qt.Key_5]: "viewFront",
+        [Qt.Key_7]: "viewBack",
+        [Qt.Key_4]: "viewLeft",
+        [Qt.Key_6]: "viewRight"
+    })
+
+    // LayerList receiving each supported file extension
+    readonly property var layerListByExtension: ({
+        ".abc": collection.sfmData,
+        ".usda": collection.sfmData,
+        ".sfm": collection.sfmData,
+        ".obj": collection.meshes,
+        ".glb": collection.meshes,
+        ".exr": collection.depthmaps
+    })
 
     focus: true
 
     Keys.onPressed: function(event) {
-
         const isNumpad = (event.modifiers & Qt.KeypadModifier) !== 0
 
-        if (event.key === Qt.Key_Z) {
-            
-            if (sceneView.motionInfo instanceof OrbitMotionInfo)
-            {
-                sceneView.motionInfo.setDistance(1.0)
-            }
-
-            event.accepted = true
+        let action = null
+        
+        if (event.key === Qt.Key_Z)
+        {
+            action = () => orbit.setDistance(1.0)
         }
-        else if (event.key === Qt.Key_K) {
-            if (sceneView.motionInfo instanceof OrbitMotionInfo)
-            {
-                sceneView.motionInfo.fit(sceneView.boundingBox)
-            }
-
-            event.accepted = true
+        else if (event.key === Qt.Key_K)
+        {
+            action = () => orbit.fit(sceneView.boundingBox)
         }
-        else if (event.key === Qt.Key_8 && isNumpad) {
-            if (sceneView.motionInfo instanceof OrbitMotionInfo)
-            {
-                sceneView.motionInfo.viewTop()
-            }
-
-            event.accepted = true
+        else if (isNumpad && numpadViews[event.key])
+        {
+            action = () => orbit[numpadViews[event.key]]()
         }
-        else if (event.key === Qt.Key_2 && isNumpad) {
-            if (sceneView.motionInfo instanceof OrbitMotionInfo)
-            {
-                sceneView.motionInfo.viewBottom()
-            }
 
-            event.accepted = true
+        if (!action)
+        {
+            return
         }
-        else if (event.key === Qt.Key_5 && isNumpad) {
-            if (sceneView.motionInfo instanceof OrbitMotionInfo)
-            {
-                sceneView.motionInfo.viewFront()
-            }
 
-            event.accepted = true
+        if (orbit)
+        {
+            action()
         }
-        else if (event.key === Qt.Key_7 && isNumpad) {
-            if (sceneView.motionInfo instanceof OrbitMotionInfo)
-            {
-                sceneView.motionInfo.viewBack()
-            }
 
-            event.accepted = true
-        }
-        else if (event.key === Qt.Key_4 && isNumpad) {
-            if (sceneView.motionInfo instanceof OrbitMotionInfo)
-            {
-                sceneView.motionInfo.viewLeft()
-            }
-
-            event.accepted = true
-        }
-        else if (event.key === Qt.Key_6 && isNumpad) {
-            if (sceneView.motionInfo instanceof OrbitMotionInfo)
-            {
-                sceneView.motionInfo.viewRight()
-            }
-
-            event.accepted = true
-        }
+        event.accepted = true
     }
 
     function isValidSelectedViewId(viewId)
@@ -93,10 +82,6 @@ Item {
         return normalizedViewId.length > 0 && normalizedViewId !== "-1"
     }
 
-    // Sentinel used by SfmDataLayer.selectedCamera to mean "no camera selected" (UndefinedIndexT).
-    // Declared as "var" (not "int") since QML's int is 32-bit signed and would overflow 0xFFFFFFFF to -1.
-    readonly property var invalidCameraId: 0xFFFFFFFF
-
     function isValidCameraId(cameraId)
     {
         return cameraId !== undefined && cameraId !== null && cameraId !== invalidCameraId
@@ -104,28 +89,21 @@ Item {
 
     function syncSelectedCameraToScene(layer)
     {
-        if (typeof _currentScene === "undefined" || !_currentScene)
+        if (scene && isValidCameraId(layer.selectedCamera))
         {
-            return
+            scene.selectedViewId = String(layer.selectedCamera)
         }
-
-        const cameraId = layer.selectedCamera
-        if (!isValidCameraId(cameraId))
-        {
-            return
-        }
-
-        _currentScene.selectedViewId = String(cameraId)
     }
 
     function restoreFallbackSceneState()
     {
-        sceneView.imageLayerRef.visible = false
-        sceneView.imageLayerRef.source = ""
+        imageLayer.visible = false
+        imageLayer.source = ""
         sceneView.motionInfo = fallbackMotionInfo
         sceneView.cameraInfo = fallbackCameraInfo
     }
 
+    /** Look through the camera @p viewId of @p sfmDataObject and display its image. */
     function syncSfmSceneState(sfmDataObject, viewId)
     {
         if (!sfmDataObject.hasCameraTransform(viewId))
@@ -133,63 +111,57 @@ Item {
             return
         }
 
-        const pose = sfmDataObject.getCameraTransform(viewId)
         const sfmCameraInfo = sfmDataObject.getCameraInfo(viewId)
         if (!sfmCameraInfo)
         {
             return
         }
 
-        sfmMotionInfo.pose = pose
+        sfmMotionInfo.pose = sfmDataObject.getCameraTransform(viewId)
         sceneView.motionInfo = sfmMotionInfo
         sceneView.cameraInfo = sfmCameraInfo
 
-        sceneView.imageLayerRef.setIntrinsics(sfmDataObject, viewId)
-        sceneView.imageLayerRef.source = sfmDataObject.getImagePath(viewId)
-        sceneView.imageLayerRef.visible = true
+        imageLayer.setIntrinsics(sfmDataObject, viewId)
+        imageLayer.source = sfmDataObject.getImagePath(viewId)
+        imageLayer.visible = true
     }
 
     function syncViewPoint()
     {
         const sfmDataObject = collection.selectedSfmDataObject
-        const viewId = _currentScene.selectedViewId
-        
         if (!sfmDataObject)
         {
             restoreFallbackSceneState()
             return
         }
 
-        if (!isValidSelectedViewId(viewId))
+        if (scene && isValidSelectedViewId(scene.selectedViewId))
         {
-            return
+            syncSfmSceneState(sfmDataObject, scene.selectedViewId)
         }
-
-        if (!sfmDataObject.hasCameraTransform(viewId))
-        {
-            return
-        }
-
-        syncSfmSceneState(sfmDataObject, viewId)
     }
 
-    function handlePickingShape(layer) {
-
-        if (typeof _currentScene === "undefined" || !_currentScene) {
+    /** Store the point picked on mesh @p layer as the selected survey point's observation. */
+    function handlePickingShape(layer)
+    {
+        if (!scene)
+        {
             return
         }
 
         const selectedShapeName = ShapeViewerHelper.selectedShapeName
-        if (!selectedShapeName) {
+        if (!selectedShapeName)
+        {
             return
         }
 
         const observationKey = SurveyPointViewerHelper.observationKeyForSelectedSurveyPoint(selectedShapeName)
-        if (!observationKey) {
+        if (!observationKey)
+        {
             return
         }
 
-        _currentScene.setObservationFromName(selectedShapeName, observationKey, {
+        scene.setObservationFromName(selectedShapeName, observationKey, {
             "X": layer.selection.x,
             "Y": -layer.selection.y,
             "Z": -layer.selection.z,
@@ -199,70 +171,69 @@ Item {
 
     function moveToCameraCenter(layer)
     {
-        if (layer.sfmData == null)
+        const viewId = layer.selectedCamera
+        if (!orbit || !layer.sfmData || !isValidCameraId(viewId) || !layer.sfmData.hasCameraTransform(viewId))
         {
             return
         }
 
-        var viewId = layer.selectedCamera
-
-        if (!isValidSelectedViewId(viewId))
-        {
-            return
-        }
-
-        if (!layer.sfmData.hasCameraTransform(viewId))
-        {
-            return
-        }
-
-        if (sceneView.motionInfo instanceof OrbitMotionInfo)
-        {
-            sceneView.motionInfo.setCenter(layer.sfmData.getCameraCenter(viewId))
-        }
+        orbit.setCenter(layer.sfmData.getCameraCenter(viewId))
     }
 
+    /** Dispatch a pick result: user code 0 selects (shape observation / camera), code 1 recenters the orbit. */
     function handlePickingLayerChanged()
     {
         const layer = sceneView.pickingLayer
-        const code = sceneView.userCode
-
-        if (!layer)
-        {
-            return
-        }
+        const select = sceneView.userCode == 0
 
         if (layer instanceof MeshLayer)
         {
-            if (code == 0)
+            if (select)
             {
                 handlePickingShape(layer)
             }
-            else 
+            else if (orbit)
             {
-                if (sceneView.motionInfo instanceof OrbitMotionInfo)
-                {
-                    sceneView.motionInfo.setCenter(layer.selection)
-                }
+                orbit.setCenter(layer.selection)
             }
         }
         else if (layer instanceof SfmDataLayer)
         {
-            if (code == 0)
+            if (select)
             {
                 syncSelectedCameraToScene(layer)
             }
-            else 
+            else
             {
                 moveToCameraCenter(layer)
             }
         }
     }
 
+    /** Return the selected survey point's observation in the selected view, or null. */
+    function getSelectedObservation()
+    {
+        const selectedShapeName = ShapeViewerHelper.selectedShapeName
+        if (!selectedShapeName || !scene)
+        {
+            return null
+        }
+
+        const shape = scene.graph.attribute(selectedShapeName) || scene.graph.internalAttribute(selectedShapeName)
+        if (!shape || shape.type !== "SurveyPoint")
+        {
+            return null
+        }
+
+        return shape.geometry.getObservation(scene.selectedViewId) || null
+    }
+
     SceneView {
         id: sceneView
         anchors.fill: parent
-        property var imageLayerRef: null
+
+        property var imageLayerRef: imageLayer
+
         motionInfo: fallbackMotionInfo
         cameraInfo: fallbackCameraInfo
 
@@ -288,10 +259,9 @@ Item {
             GridLayer {
                 id: gridLayer
             },
-            ImageLayer{
+            ImageLayer {
                 id: imageLayer
                 visible: true
-                Component.onCompleted: sceneView.imageLayerRef = imageLayer
             },
             SphereLayer {
                 id: sphereLayer
@@ -300,165 +270,18 @@ Item {
             }
         ]
 
-        MouseArea {
-            id: freeViewMouseArea
+        FreeViewMouseArea {
             anchors.fill: parent
-            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             enabled: collection.selectedSfmDataObject === null
-
-            property real initialX: 0
-            property real initialY: 0
-            property bool draggingLeft: false
-            property bool draggingMiddle: false
-            property bool draggingRight: false
-
-            onClicked: (mouse) => {
-
-                if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier))
-                {
-                    var code = 0;
-                    if (mouse.modifiers & Qt.ShiftModifier)
-                    {
-                        code = 1;
-                    }
-
-                    sceneView.pick(Qt.vector2d(mouse.x, mouse.y), code)
-                }
-            }
-
-            onPressed: (mouse) => {
-                root.forceActiveFocus()  // Take keyboard focus so that Keys.onPressed receives key events
-                initialX = mouse.x
-                initialY = mouse.y
-                draggingLeft = (mouse.button === Qt.LeftButton)
-                draggingMiddle = (mouse.button === Qt.MiddleButton)
-                draggingRight = (mouse.button === Qt.RightButton)
-            }
-
-            onReleased: (mouse) => {
-                if (mouse.button === Qt.RightButton)
-                {
-                    draggingRight = false
-                }
-                else if (mouse.button === Qt.LeftButton)
-                {
-                    draggingLeft = false
-                }
-                else if (mouse.button === Qt.MiddleButton)
-                {
-                    draggingMiddle = false
-                }
-
-                if (mouse.modifiers & Qt.AltModifier)
-                {
-                    sceneView.motionInfo.applyTransform()
-                }
-            }
-
-            onPositionChanged: (mouse) => {
-                const deltaX = mouse.x - initialX
-                const deltaY = mouse.y - initialY
-
-                if (draggingLeft)
-                {
-                    if (mouse.modifiers & Qt.AltModifier)
-                    {
-                        sceneView.motionInfo.relativeRotationX = deltaY * 0.5
-                        sceneView.motionInfo.relativeRotationY = deltaX * 0.5
-                    }
-                }
-                else if (draggingMiddle && (mouse.modifiers & Qt.AltModifier))
-                {
-                    sceneView.motionInfo.planeX = deltaX * 0.01
-                    sceneView.motionInfo.planeY = deltaY * 0.01
-                }
-                else if (draggingRight && (mouse.modifiers & Qt.AltModifier))
-                {
-                   sceneView.motionInfo.distance = deltaY * 0.05;
-                }
-            }
-
-            onWheel: function(wheel) {
-
-
-                if (wheel.modifiers & Qt.AltModifier)
-                {
-                    if (!(draggingLeft || draggingMiddle || draggingRight))
-                    {
-                        const zoomStep = -wheel.angleDelta.x * 0.05
-                        sceneView.motionInfo.distance = zoomStep
-                        sceneView.motionInfo.applyTransform()
-                        wheel.accepted = true
-                    }
-                }
-            }
+            sceneView: sceneView
+            focusTarget: root
         }
 
-        MouseArea {
-            id: sfmViewMouseArea
+        SfmViewMouseArea {
             anchors.fill: parent
-            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             enabled: collection.selectedSfmDataObject !== null
-            
-            property bool draggingLeft: false
-            property bool draggingMiddle: false
-            property bool draggingRight: false
-            property real initialPanX: 0
-            property real initialPanY: 0
-            property real initialX: 0
-            property real initialY: 0
-
-            onPressed: (mouse) => {
-                root.forceActiveFocus()  // Take keyboard focus so that Keys.onPressed receives key events
-                initialX = mouse.x
-                initialY = mouse.y
-                initialPanX = sceneView.cameraInfo.panX
-                initialPanY = sceneView.cameraInfo.panY
-
-                draggingLeft = (mouse.button === Qt.LeftButton)
-                draggingMiddle = (mouse.button === Qt.MiddleButton)
-                draggingRight = (mouse.button === Qt.RightButton)
-            }
-
-            onReleased: (mouse) => {
-                if (mouse.button === Qt.RightButton)
-                {
-                    draggingRight = false
-                }
-                else if (mouse.button === Qt.LeftButton)
-                {
-                    draggingLeft = false
-                }
-                else if (mouse.button === Qt.MiddleButton)
-                {
-                    draggingMiddle = false
-                }
-            }
-
-            onPositionChanged: (mouse) => {
-                
-                const deltaX = mouse.x - initialX
-                const deltaY = mouse.y - initialY
-
-                if (draggingLeft)
-                {
-                    if (mouse.modifiers & Qt.ShiftModifier)
-                    {
-                        sceneView.cameraInfo.panX = Math.max(-1.0, Math.min(1.0, initialPanX + deltaX * 0.002))
-                        sceneView.cameraInfo.panY = Math.max(-1.0, Math.min(1.0, initialPanY - deltaY * 0.002))
-                    }
-                }
-            }
-            
-            onWheel: function(wheel) {
-
-                if (wheel.modifiers & Qt.ShiftModifier)
-                {
-                    const zoomStep = wheel.angleDelta.y * 0.001
-                    sceneView.cameraInfo.zoom = Math.max(0.1, sceneView.cameraInfo.zoom + zoomStep)
-                    wheel.accepted = true
-                }
-            }
+            sceneView: sceneView
+            focusTarget: root
         }
     }
 
@@ -467,6 +290,9 @@ Item {
         sceneView: sceneView
     }
 
+    // Source: collection (SceneObjectCollection), whose selectedSfmDataObject tracks the currently
+    // selected SfM dataset layer. Reason: when that selection changes, the viewpoint (camera pose,
+    // motion info and background image) must be resynced to match the newly selected dataset.
     Connections {
         target: collection
 
@@ -476,6 +302,9 @@ Item {
         }
     }
 
+    // Source: sceneView (SceneView), whose pickingLayer/userCode report the result of a user pick in
+    // the 3D view. Reason: dispatch that pick result to the right handler, either selecting a shape
+    // observation/camera (userCode 0) or recentering the orbit on the picked point (userCode 1).
     Connections {
         target: sceneView
 
@@ -485,95 +314,64 @@ Item {
         }
     }
 
+    // Source: root.scene (the _currentScene context property), whose selectedViewId is driven by the
+    // rest of the Meshroom UI (e.g. the image gallery). Reason: propagate that externally-driven
+    // selection into the 3D view by updating every SfmDataLayer's selected camera and resyncing the
+    // viewpoint accordingly.
     Connections {
-        target: typeof _currentScene === "undefined" ? null : _currentScene
+        target: root.scene
 
         function onSelectedViewIdChanged()
         {
-            collection.setSelectedCameraForAll(_currentScene.selectedViewId)
+            // Convert the scene's "-1" string sentinel to SfmDataLayer's numeric UndefinedIndexT
+            const viewId = root.scene.selectedViewId
+            collection.setSelectedCameraForAll(isValidSelectedViewId(viewId) ? Number(viewId) : invalidCameraId)
             syncViewPoint()
         }
     }
 
-    function getSelectedShape() {
-        const selectedShapeName = ShapeViewerHelper.selectedShapeName
-        if (!selectedShapeName || typeof _currentScene === "undefined" || !_currentScene) {
-            return null
-        }
-
-        let shape = _currentScene.graph.attribute(selectedShapeName)
-        if (!shape) {
-            shape = _currentScene.graph.internalAttribute(selectedShapeName)
-        }
-
-        if (shape.type !== "SurveyPoint")
-        {
-            return null
-        }
-
-        let obs = shape.geometry.getObservation(_currentScene.selectedViewId)
-        if (!obs)
-        {
-            return null
-        }
-
-        return obs
-    }
-
+    // Source: ShapeViewerHelper (singleton), whose selectedShapeName reflects the survey point/shape
+    // selected elsewhere in the UI (e.g. attribute editor). Reason: when that selection changes, center
+    // the orbit on the corresponding picked observation so the selected point stays in view.
     Connections {
         target: ShapeViewerHelper
 
         function onSelectedShapeNameChanged()
         {
-            var obs = getSelectedShape()
-            if (obs)
+            const obs = getSelectedObservation()
+            if (obs && obs.picked && orbit)
             {
-                if (!obs.picked)
-                {
-                    return
-                }
-
-                if (sceneView.motionInfo instanceof OrbitMotionInfo)
-                {
-                    var vec = Qt.vector3d(obs.X, -obs.Y, -obs.Z)
-                    sceneView.motionInfo.setCenter(vec)
-                }
+                orbit.setCenter(Qt.vector3d(obs.X, -obs.Y, -obs.Z))
             }
         }
     }
 
-    function view(source, label = undefined) 
+    /**
+     * Add @p source to the LayerList matching its file extension (see layerListByExtension), under
+     * the optional @p label. Does nothing if the extension is not supported.
+     * Returns true (even if the extension was unsupported) so callers can treat this as "handled".
+     */
+    function view(source, label = undefined)
     {
-        switch (Filepath.extension(source)) {
-            case ".abc":
-            case ".usda":
-            case ".sfm":
-            {
-                collection.addSfmData(source, label)
-                break
-            }
-            case ".obj":
-            case ".glb":
-            {
-                collection.addMesh(source, label)
-                break
-            }
-            case ".exr":
-            {
-                collection.addDepthmap(source, label)
-            }
+        const layerList = layerListByExtension[Filepath.extension(source)]
+        if (layerList)
+        {
+            layerList.add(source, label)
         }
-            
+
         return true
     }
 
-    function viewAttribute(attribute) {
-
-        if (attribute.desc.type === "File")
+    /**
+     * View the file referenced by a computed node's File @p attribute, if any.
+     * Used when dropping/selecting a node output attribute onto the 3D viewer.
+     * Returns true if the attribute was actually viewed, false otherwise.
+     */
+    function viewAttribute(attribute)
+    {
+        if (attribute.desc.type === "File" && attribute.node.isComputed)
         {
-            var section = attribute.node.label
-
-            view(attribute.value, `${section}.${attribute.label}`)
+            return view(attribute.value, `${attribute.node.label}.${attribute.label}`)
         }
 
         return false

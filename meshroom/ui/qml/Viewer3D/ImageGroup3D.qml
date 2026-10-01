@@ -10,52 +10,8 @@ ExpandableGroup {
     id: root
 
     property var collection: null
-
-    function imageLayer() {
-        if (!root.collection || !root.collection.sceneView)
-        {
-            return null
-        }
-
-        return root.collection.sceneView.imageLayerRef
-    }
-
-    function imageLayerVisible() {
-        var layer = imageLayer()
-        return layer ? layer.visible : false
-    }
-
-    function setImageLayerVisible(value) {
-        var layer = imageLayer()
-        if (layer)
-        {
-            layer.visible = value
-        }
-    }
-
-    function imageLayerSource() {
-        var layer = imageLayer()
-        if (layer && layer.source !== undefined)
-        {
-            return layer.source
-        }
-
-        return ""
-    }
-
-    function closeImageLayer() {
-        var layer = imageLayer()
-        if (!layer)
-        {
-            return
-        }
-
-        layer.visible = false
-        if (layer.source !== undefined)
-        {
-            layer.source = ""
-        }
-    }
+    readonly property var imageLayer: collection && collection.sceneView ? collection.sceneView.imageLayerRef : null
+    readonly property string source: imageLayer && imageLayer.source !== undefined ? imageLayer.source : ""
 
     Layout.fillWidth: true
     title: "Image Layer"
@@ -67,52 +23,24 @@ ExpandableGroup {
         width: parent.width
         spacing: 4
 
-        Item {
-            width: 2
-            Layout.fillHeight: true
-        }
-
-        BusyIndicator {
-            visible: {
-                if (imageLayer())
-                {
-                    if (imageLayer().loading)
-                    {
-                        return true
-                    }
-                } 
-                return false
-            }
-            running: visible
-            padding: 0
-            implicitWidth: 12
-            implicitHeight: 12
-            Layout.alignment: Qt.AlignVCenter
-        }
-
-        MaterialToolButton {
-            visible: !imageLayer() || !imageLayer().loading
-            text: MaterialIcons.clear
-            font.pointSize: 10
-            ToolTip.text: "Close"
-            ToolTip.delay: 500
-            onClicked: {
-                root.closeImageLayer()
-                imageVisibilityButton.rowVisible = false
+        LoadingRemoveButton {
+            Layout.leftMargin: 6
+            loading: root.imageLayer ? root.imageLayer.loading === true : false
+            toolTip: "Close"
+            onRemoveRequested: {
+                root.imageLayer.visible = false
+                root.imageLayer.source = ""
             }
         }
 
         Label {
             Layout.fillWidth: true
-            text: {
-                var source = root.imageLayerSource()
-                return source ? Filepath.basename(source) : "No image"
-            }
+            text: root.source ? Filepath.basename(root.source) : "No image"
             color: palette.text
             elide: Text.ElideMiddle
             topPadding: 3
             bottomPadding: topPadding
-            ToolTip.text: root.imageLayerSource()
+            ToolTip.text: root.source
             ToolTip.visible: labelMouseArea.containsMouse && ToolTip.text.length > 0
             ToolTip.delay: 300
 
@@ -124,27 +52,14 @@ ExpandableGroup {
             }
         }
 
-        MaterialToolButton {
-            id: imageVisibilityButton
-            property bool rowVisible: root.imageLayerVisible()
-            text: rowVisible ? MaterialIcons.visibility : MaterialIcons.visibility_off
-            font.pointSize: 10
-            flat: true
-            opacity: rowVisible ? 1.0 : 0.6
-            ToolTip.text: rowVisible ? "Visible" : "Hidden"
-            onClicked: {
-                var nextValue = !rowVisible
-                root.setImageLayerVisible(nextValue)
-                rowVisible = nextValue
-            }
-
-            Connections {
-                target: root
-
-                function onCollectionChanged() {
-                    parent.rowVisible = root.imageLayerVisible()
-                }
-            }
+        ToggleIconButton {
+            enabled: root.imageLayer !== null
+            active: root.imageLayer ? root.imageLayer.visible : false
+            activeIcon: MaterialIcons.visibility
+            inactiveIcon: MaterialIcons.visibility_off
+            activeToolTip: "Visible"
+            inactiveToolTip: "Hidden"
+            onClicked: root.imageLayer.visible = !root.imageLayer.visible
         }
     }
 }

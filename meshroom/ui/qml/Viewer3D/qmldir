@@ -6,7 +6,18 @@ ImageGroup3D 1.0 ImageGroup3D.qml
 CameraGroup 1.0 CameraGroup.qml
 MeshesGroup3D 1.0 MeshesGroup3D.qml
 SfmDataGroup3D 1.0 SfmDataGroup3D.qml
+DepthmapGroup3D 1.0 DepthmapGroup3D.qml
 SceneObjectCollection 1.0 SceneObjectCollection.qml
+LayerList 1.0 LayerList.qml
+LayerListGroup 1.0 LayerListGroup.qml
+LayerRow 1.0 LayerRow.qml
+ToggleIconButton 1.0 ToggleIconButton.qml
+LoadingRemoveButton 1.0 LoadingRemoveButton.qml
+PropertySlider 1.0 PropertySlider.qml
+PropertyComboBox 1.0 PropertyComboBox.qml
+DragMouseArea 1.0 DragMouseArea.qml
+FreeViewMouseArea 1.0 FreeViewMouseArea.qml
+SfmViewMouseArea 1.0 SfmViewMouseArea.qml
 internal MeshEntry 1.0 MeshEntry.qml
 internal SfmDataEntry 1.0 SfmDataEntry.qml
 internal DepthmapEntry 1.0 DepthmapEntry.qml

@@ -2,15 +2,19 @@ import QtQml
 import meshViewer
 
 /**
-Represent a DepthmapLayer in the Scene Objects Collection
-This is only a Delegate to keep track of the DepthmapLayers
-*/
+ * LayerList entry holding a DepthmapLayer (which loads its own data, hence no dataObject).
+ * Used by SceneObjectCollection; not intended for direct use.
+ */
 QtObject {
     id: root
 
     required property string source
 
-    property DepthmapLayer depthmapLayer: DepthmapLayer {
+    readonly property var dataObject: null
+
+    readonly property DepthmapLayer layer: DepthmapLayer {
         source: root.source
     }
+
+    readonly property bool loading: layer.loading === true
 }

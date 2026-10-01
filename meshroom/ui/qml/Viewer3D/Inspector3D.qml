@@ -33,6 +33,33 @@ FloatingPane {
         anchors.fill: parent
         spacing: 4
 
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 1
+            readonly property var sceneView: root.collection ? root.collection.sceneView : null
+            readonly property var gridLayer: sceneView ? sceneView.gridLayerRef : null
+            readonly property var axisLayer: sceneView ? sceneView.axisLayerRef : null
+
+            ToggleIconButton {
+                enabled: parent.gridLayer !== null
+                active: parent.gridLayer ? parent.gridLayer.visible : false
+                activeIcon: MaterialIcons.grid_on
+                inactiveIcon: MaterialIcons.grid_off
+                activeToolTip: "Hide Grid"
+                inactiveToolTip: "Display Grid"
+                onClicked: parent.gridLayer.visible = !parent.gridLayer.visible
+            }
+
+            ToggleIconButton {
+                enabled: parent.axisLayer !== null
+                active: parent.axisLayer ? parent.axisLayer.visible : false
+                activeIcon: MaterialIcons.call_merge
+                activeToolTip: "Hide Axis"
+                inactiveToolTip: "Display Axis"
+                onClicked: parent.axisLayer.visible = !parent.axisLayer.visible
+            }
+        }
+
         CameraGroup {
             Layout.fillWidth: true
             visible: root.collection && root.collection.selectedSfmDataObject === null

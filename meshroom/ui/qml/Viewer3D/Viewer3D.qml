@@ -237,6 +237,8 @@ Item {
         anchors.fill: parent
 
         property var imageLayerRef: imageLayer
+        property var gridLayerRef: gridLayer
+        property var axisLayerRef: axisLayer
 
         motionInfo: fallbackMotionInfo
         cameraInfo: fallbackCameraInfo
@@ -259,6 +261,7 @@ Item {
 
         layers: [
             AxisLayer {
+                id: axisLayer
             },
             GridLayer {
                 id: gridLayer

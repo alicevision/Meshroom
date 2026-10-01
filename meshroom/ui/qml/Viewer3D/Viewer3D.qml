@@ -53,6 +53,10 @@ Item {
         {
             action = () => orbit.fit(sceneView.boundingBox)
         }
+        else if (isNumpad && event.key === Qt.Key_Period)
+        {
+            action = () => { fallbackCameraInfo.orthographic = !fallbackCameraInfo.orthographic }
+        }
         else if (isNumpad && numpadViews[event.key])
         {
             action = () => orbit[numpadViews[event.key]]()

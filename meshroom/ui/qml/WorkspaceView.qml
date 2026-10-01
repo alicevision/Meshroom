@@ -35,7 +35,7 @@ Item {
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
         if (panel3dViewerLoader.active) {
-            panel3dViewerLoader.item.viewer3D.load(filepath, label)
+            panel3dViewerLoader.item.viewer3D.view(filepath, undefined)
         }
     }
 
@@ -43,7 +43,7 @@ Item {
         target: currentScene
         function onGraphChanged() {
             if (panel3dViewerLoader.active) {
-                panel3dViewerLoader.item.viewer3D.clear()
+                panel3dViewerLoader.item.viewer3D.collection.clear()
             }
         }
         function onSfmChanged() { viewSfM() }
@@ -57,7 +57,7 @@ Item {
         if (!activeNode)
             return
         if (panel3dViewerLoader.active) {
-            panel3dViewerLoader.item.viewer3D.view(activeNode.attribute('output'))
+            panel3dViewerLoader.item.viewer3D.viewAttribute(activeNode.attribute('output'))
         }
     }
 
@@ -256,12 +256,12 @@ Item {
                 property alias viewer3D: c_viewer3D
 
                 MSplitView {
-                    id: c_viewer3DSplitView
+                    id: c_viewer3DRowLayout
                     anchors.fill: parent
                     orientation: Qt.Horizontal
+
                     Viewer3D {
                         id: c_viewer3D
-
                         SplitView.fillWidth: true
                         SplitView.minimumWidth: 50
 
@@ -278,7 +278,7 @@ Item {
                         Connections {
                             target: viewer2D
                             function onSync3DSelectedChanged() {
-                                Viewer3DSettings.syncWithPickedViewId = viewer2D.sync3DSelected
+                                //Viewer3DSettings.syncWithPickedViewId = viewer2D.sync3DSelected
                             }
                         }
                     }
@@ -286,13 +286,12 @@ Item {
                     // Inspector Panel
                     Inspector3D {
                         id: inspector3d
-                        SplitView.preferredWidth: 220
-                        SplitView.minimumWidth: 100
-
-                        mediaLibrary: c_viewer3D.library
-                        camera: c_viewer3D.mainCamera
-                        uigraph: currentScene
-                        onNodeActivated: _currentScene.setActiveNode(node)
+                        collection: c_viewer3D.collection
+                        visible: true
+                        height: c_viewer3DRowLayout.height
+                        SplitView.preferredWidth: 260
+                        SplitView.minimumWidth: 180
+                        SplitView.maximumWidth: 420
                     }
                 }
             }

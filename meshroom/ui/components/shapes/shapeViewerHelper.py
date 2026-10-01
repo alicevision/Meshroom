@@ -49,6 +49,8 @@ class ShapeViewerHelper(BaseObject):
         Helper function to create a shape default observation.
         """
         match shapeType:
+            case "SurveyPoint":
+                return {"X": 0.0, "Y": 0.0, "Z": 0.0, "x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5, "ex": float('nan'), "ey": float('nan'), "picked": False}
             case "Point2d":
                 return {"x": self._containerWidth * 0.5, "y": self._containerHeight * 0.5}
             case "Line2d":

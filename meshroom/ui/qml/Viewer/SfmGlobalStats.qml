@@ -1,4 +1,3 @@
-import QtCharts
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -28,264 +27,123 @@ FloatingPane {
         onWheel: {}
     }
 
+    // Colors assigned to the 6 statistical curves (Min, Max, Mean, Median, Q1, Q3)
+    readonly property var statColors: ["#4169e1", "#dc143c", "#228b22", "#ff8c00", "#9932cc", "#20b2aa"]
 
-   InteractiveChartView {
-        id: residualsPerViewChart
-        width: parent.width * 0.5
-        height: parent.height * 0.5
+    GridLayout {
+        anchors.fill: parent
+        columns: 2
 
-        title: "Residuals Per View"
-        legend.visible: false
-        antialiasing: true
+        // Residuals Per View chart
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-        ValueAxis {
-            id: residualsPerViewValueAxisX
-            labelFormat: "%i"
-            titleText: "Ordered Views"
-            min: 0
-            max: sfmDataStat.residualsPerViewMaxAxisX
-        }
-        ValueAxis {
-            id: residualsPerViewValueAxisY
-            titleText: "Reprojection Error (pix)"
-            min: 0
-            max: sfmDataStat.residualsPerViewMaxAxisY
-            tickAnchor: 0
-            tickInterval: 0.50
-            tickCount: sfmDataStat.residualsPerViewMaxAxisY * 2
-        }
-        LineSeries {
-            id: residualsMinPerViewLineSerie
-            axisX: residualsPerViewValueAxisX
-            axisY: residualsPerViewValueAxisY
-            name: "Min"
-        }
-        LineSeries {
-            id: residualsMaxPerViewLineSerie
-            axisX: residualsPerViewValueAxisX
-            axisY: residualsPerViewValueAxisY
-            name: "Max"
-        }
-        LineSeries {
-            id: residualsMeanPerViewLineSerie
-            axisX: residualsPerViewValueAxisX
-            axisY: residualsPerViewValueAxisY
-            name: "Mean"
-        }
-        LineSeries {
-            id: residualsMedianPerViewLineSerie
-            axisX: residualsPerViewValueAxisX
-            axisY: residualsPerViewValueAxisY
-            name: "Median"
-        }
-        LineSeries {
-            id: residualsFirstQuartilePerViewLineSerie
-            axisX: residualsPerViewValueAxisX
-            axisY: residualsPerViewValueAxisY
-            name: "Q1"
-        }
-        LineSeries {
-            id: residualsThirdQuartilePerViewLineSerie
-            axisX: residualsPerViewValueAxisX
-            axisY: residualsPerViewValueAxisY
-            name: "Q3"
-        }
-    }
-
-    Item {
-        id: residualsPerViewBtnContainer
-
-        Layout.fillWidth: true
-        anchors.bottom: residualsPerViewChart.bottom
-        anchors.bottomMargin: 35
-        anchors.left: residualsPerViewChart.left
-        anchors.leftMargin: residualsPerViewChart.width * 0.25
-
-        RowLayout {
-            ChartViewCheckBox {
-                id: allObservations
-                text: "ALL"
-                color: textColor
-                checkState: residualsPerViewLegend.buttonGroup.checkState
-                onClicked: {
-                    var _checked = checked;
-                    for (var i = 0; i < residualsPerViewChart.count; ++i) {
-                        residualsPerViewChart.series(i).visible = _checked
-                    }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 10
+                ChartViewCheckBox {
+                    text: "ALL"
+                    color: textColor
+                    leftPadding: 0
+                    checkState: residualsPerViewLegend.buttonGroup.checkState
+                    onClicked: residualsPerViewChart.setAllSeriesVisible(checked)
+                }
+                LineChartLegend {
+                    id: residualsPerViewLegend
+                    Layout.fillWidth: true
+                    chartView: residualsPerViewChart
                 }
             }
-
-            ChartViewLegend {
-                id: residualsPerViewLegend
-                chartView: residualsPerViewChart
+            LineChart {
+                id: residualsPerViewChart
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                textColor: root.textColor
+                title: "Residuals Per View"
+                xAxisTitle: "Ordered Views"
+                yAxisTitle: "Reprojection Error (pix)"
+                xMin: 0
+                xMax: sfmDataStat.residualsPerViewMaxAxisX
+                yMin: 0
+                yMax: sfmDataStat.residualsPerViewMaxAxisY
             }
-
-        }
-    }
-
-    InteractiveChartView {
-        id: observationsLengthsPerViewChart
-        width: parent.width * 0.5
-        height: parent.height * 0.5
-        anchors.top: parent.top
-        anchors.topMargin: (parent.height) * 0.5
-
-        title: "Observations Lengths Per View"
-        legend.visible: false
-        antialiasing: true
-
-        ValueAxis {
-            id: observationsLengthsPerViewValueAxisX
-            labelFormat: "%i"
-            titleText: "Ordered Views"
-            min: 0
-            max: sfmDataStat.observationsLengthsPerViewMaxAxisX
-        }
-        ValueAxis {
-            id: observationsLengthsPerViewValueAxisY
-            titleText: "Observations Lengths"
-            min: 0
-            max: sfmDataStat.observationsLengthsPerViewMaxAxisY
-            tickAnchor: 0
-            tickInterval: 0.50
-            tickCount: sfmDataStat.observationsLengthsPerViewMaxAxisY * 2
         }
 
-        LineSeries {
-            id: observationsLengthsMinPerViewLineSerie
-            axisX: observationsLengthsPerViewValueAxisX
-            axisY: observationsLengthsPerViewValueAxisY
-            name: "Min"
-        }
-        LineSeries {
-            id: observationsLengthsMaxPerViewLineSerie
-            axisX: observationsLengthsPerViewValueAxisX
-            axisY: observationsLengthsPerViewValueAxisY
-            name: "Max"
-        }
-        LineSeries {
-            id: observationsLengthsMeanPerViewLineSerie
-            axisX: observationsLengthsPerViewValueAxisX
-            axisY: observationsLengthsPerViewValueAxisY
-            name: "Mean"
-        }
-        LineSeries {
-            id: observationsLengthsMedianPerViewLineSerie
-            axisX: observationsLengthsPerViewValueAxisX
-            axisY: observationsLengthsPerViewValueAxisY
-            name: "Median"
-        }
-        LineSeries {
-            id: observationsLengthsFirstQuartilePerViewLineSerie
-            axisX: observationsLengthsPerViewValueAxisX
-            axisY: observationsLengthsPerViewValueAxisY
-            name: "Q1"
-        }
-        LineSeries {
-            id: observationsLengthsThirdQuartilePerViewLineSerie
-            axisX: observationsLengthsPerViewValueAxisX
-            axisY: observationsLengthsPerViewValueAxisY
-            name: "Q3"
-        }
-    }
+        // Landmarks Per View chart
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-    Item {
-        id: observationsLengthsPerViewBtnContainer
-
-        Layout.fillWidth: true
-        anchors.bottom: observationsLengthsPerViewChart.bottom
-        anchors.bottomMargin: 35
-        anchors.left: observationsLengthsPerViewChart.left
-        anchors.leftMargin: observationsLengthsPerViewChart.width * 0.25
-
-        RowLayout {
-            ChartViewCheckBox {
-                id: allModes
-                text: "ALL"
-                color: textColor
-                checkState: observationsLengthsPerViewLegend.buttonGroup.checkState
-                onClicked: {
-                    var _checked = checked;
-                    for (var i = 0; i < observationsLengthsPerViewChart.count; ++i) {
-                        observationsLengthsPerViewChart.series(i).visible = _checked
-                    }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 10
+                ChartViewCheckBox {
+                    text: "ALL"
+                    color: textColor
+                    leftPadding: 0
+                    checkState: landmarksFeatTracksPerViewLegend.buttonGroup.checkState
+                    onClicked: landmarksPerViewChart.setAllSeriesVisible(checked)
+                }
+                LineChartLegend {
+                    id: landmarksFeatTracksPerViewLegend
+                    Layout.fillWidth: true
+                    chartView: landmarksPerViewChart
                 }
             }
-
-            ChartViewLegend {
-                id: observationsLengthsPerViewLegend
-                chartView: observationsLengthsPerViewChart
+            LineChart {
+                id: landmarksPerViewChart
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                textColor: root.textColor
+                title: "Landmarks Per View"
+                xAxisTitle: "Ordered Views"
+                yAxisTitle: "Number of Landmarks"
+                xMin: 0
+                xMax: sfmDataStat.landmarksPerViewMaxAxisX
+                yMin: 0
+                yMax: sfmDataStat.landmarksPerViewMaxAxisY
             }
         }
-    }
 
-    InteractiveChartView {
-        id: landmarksPerViewChart
-        width: parent.width * 0.5
-        height: parent.height * 0.5
-        anchors.left: parent.left
-        anchors.leftMargin: (parent.width) * 0.5
-        anchors.top: parent.top
+        // Observations Lengths Per View chart
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-        title: "Landmarks Per View"
-        legend.visible: false
-        antialiasing: true
-
-        ValueAxis {
-            id: landmarksPerViewValueAxisX
-            titleText: "Ordered Views"
-            min: 0.0
-            max: sfmDataStat.landmarksPerViewMaxAxisX
-        }
-        ValueAxis {
-            id: landmarksPerViewValueAxisY
-            labelFormat: "%i"
-            titleText: "Number of Landmarks"
-            min: 0
-            max: sfmDataStat.landmarksPerViewMaxAxisY
-        }
-        LineSeries {
-            id: landmarksPerViewLineSerie
-            axisX: landmarksPerViewValueAxisX
-            axisY: landmarksPerViewValueAxisY
-            name: "Landmarks"
-        }
-        LineSeries {
-            id: tracksPerViewLineSerie
-            axisX: landmarksPerViewValueAxisX
-            axisY: landmarksPerViewValueAxisY
-            name: "Tracks"
-        }
-    }
-
-    Item {
-        id: landmarksFeatTracksPerViewBtnContainer
-
-        Layout.fillWidth: true
-        anchors.bottom: landmarksPerViewChart.bottom
-        anchors.bottomMargin: 35
-        anchors.left: landmarksPerViewChart.left
-        anchors.leftMargin: landmarksPerViewChart.width * 0.25
-
-        RowLayout {
-            ChartViewCheckBox {
-                id: allFeatures
-                text: "ALL"
-                color: textColor
-                checkState: landmarksFeatTracksPerViewLegend.buttonGroup.checkState
-                onClicked: {
-                    var _checked = checked;
-                    for (var i = 0; i < landmarksPerViewChart.count; ++i) {
-                        landmarksPerViewChart.series(i).visible = _checked
-                    }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 10
+                ChartViewCheckBox {
+                    text: "ALL"
+                    color: textColor
+                    leftPadding: 0
+                    checkState: observationsLengthsPerViewLegend.buttonGroup.checkState
+                    onClicked: observationsLengthsPerViewChart.setAllSeriesVisible(checked)
+                }
+                LineChartLegend {
+                    id: observationsLengthsPerViewLegend
+                    Layout.fillWidth: true
+                    chartView: observationsLengthsPerViewChart
                 }
             }
-
-            ChartViewLegend {
-                id: landmarksFeatTracksPerViewLegend
-                chartView: landmarksPerViewChart
+            LineChart {
+                id: observationsLengthsPerViewChart
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                textColor: root.textColor
+                title: "Observations Lengths Per View"
+                xAxisTitle: "Ordered Views"
+                yAxisTitle: "Observations Lengths"
+                xMin: 0
+                xMax: sfmDataStat.observationsLengthsPerViewMaxAxisX
+                yMin: 0
+                yMax: sfmDataStat.observationsLengthsPerViewMaxAxisY
             }
         }
+
+        // (empty fourth cell)
+        Item { Layout.fillWidth: true; Layout.fillHeight: true }
     }
 
     // Stats from the sfmData
@@ -295,20 +153,26 @@ FloatingPane {
         mTracks: root.mTracks
 
         onAxisChanged: {
-            fillLandmarksPerViewSerie(landmarksPerViewLineSerie)
-            fillTracksPerViewSerie(tracksPerViewLineSerie)
-            fillResidualsMinPerViewSerie(residualsMinPerViewLineSerie)
-            fillResidualsMaxPerViewSerie(residualsMaxPerViewLineSerie)
-            fillResidualsMeanPerViewSerie(residualsMeanPerViewLineSerie)
-            fillResidualsMedianPerViewSerie(residualsMedianPerViewLineSerie)
-            fillResidualsFirstQuartilePerViewSerie(residualsFirstQuartilePerViewLineSerie)
-            fillResidualsThirdQuartilePerViewSerie(residualsThirdQuartilePerViewLineSerie)
-            fillObservationsLengthsMinPerViewSerie(observationsLengthsMinPerViewLineSerie)
-            fillObservationsLengthsMaxPerViewSerie(observationsLengthsMaxPerViewLineSerie)
-            fillObservationsLengthsMeanPerViewSerie(observationsLengthsMeanPerViewLineSerie)
-            fillObservationsLengthsMedianPerViewSerie(observationsLengthsMedianPerViewLineSerie)
-            fillObservationsLengthsFirstQuartilePerViewSerie(observationsLengthsFirstQuartilePerViewLineSerie)
-            fillObservationsLengthsThirdQuartilePerViewSerie(observationsLengthsThirdQuartilePerViewLineSerie)
+            landmarksPerViewChart.removeAllSeries()
+            landmarksPerViewChart.addSeries("Landmarks", root.statColors[0], sfmDataStat.getLandmarksPerViewPoints())
+            landmarksPerViewChart.addSeries("Tracks", root.statColors[1], sfmDataStat.getTracksPerViewPoints())
+
+            residualsPerViewChart.removeAllSeries()
+            residualsPerViewChart.addSeries("Min",    root.statColors[0], sfmDataStat.getResidualsMinPerViewPoints())
+            residualsPerViewChart.addSeries("Max",    root.statColors[1], sfmDataStat.getResidualsMaxPerViewPoints())
+            residualsPerViewChart.addSeries("Mean",   root.statColors[2], sfmDataStat.getResidualsMeanPerViewPoints())
+            residualsPerViewChart.addSeries("Median", root.statColors[3], sfmDataStat.getResidualsMedianPerViewPoints())
+            residualsPerViewChart.addSeries("Q1",     root.statColors[4], sfmDataStat.getResidualsFirstQuartilePerViewPoints())
+            residualsPerViewChart.addSeries("Q3",     root.statColors[5], sfmDataStat.getResidualsThirdQuartilePerViewPoints())
+
+            observationsLengthsPerViewChart.removeAllSeries()
+            observationsLengthsPerViewChart.addSeries("Min",    root.statColors[0], sfmDataStat.getObservationsLengthsMinPerViewPoints())
+            observationsLengthsPerViewChart.addSeries("Max",    root.statColors[1], sfmDataStat.getObservationsLengthsMaxPerViewPoints())
+            observationsLengthsPerViewChart.addSeries("Mean",   root.statColors[2], sfmDataStat.getObservationsLengthsMeanPerViewPoints())
+            observationsLengthsPerViewChart.addSeries("Median", root.statColors[3], sfmDataStat.getObservationsLengthsMedianPerViewPoints())
+            observationsLengthsPerViewChart.addSeries("Q1",     root.statColors[4], sfmDataStat.getObservationsLengthsFirstQuartilePerViewPoints())
+            observationsLengthsPerViewChart.addSeries("Q3",     root.statColors[5], sfmDataStat.getObservationsLengthsThirdQuartilePerViewPoints())
         }
     }
 }
+

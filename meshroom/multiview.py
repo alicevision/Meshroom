@@ -54,7 +54,7 @@ imageExtensions = [
     # targa:
     '.tga', '.tpic',
     # webp:
-    'webp',
+    '.webp',
     # zfile:
     '.zfile',
     # osl:

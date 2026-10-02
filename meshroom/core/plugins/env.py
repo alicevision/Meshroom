@@ -14,15 +14,14 @@ from meshroom import _MESHROOM_ROOT
 from meshroom.core.desc.node import _MESHROOM_COMPUTE_DEPS
 
 
-def processEnvFactory(folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str = None,
+def processEnvFactory(folder: str, pluginEnv: dict[str, str], pluginName: str, pluginSubPackage: str = None,
                       envType: str = "dirtree") -> ProcessEnv:
     """
     Create the ProcessEnv matching "envType" for a plugin.
 
     Args:
         folder: the source folder for the process.
-        configEnv: the dictionary containing the environment variables defined in a configuration file
-                   for the process to run.
+        pluginEnv: the dictionary containing the environment variables for the process to run.
         pluginName: the name of the plugin object.
         pluginSubPackage: the dotted path, relative to the plugin's root, of the package containing
                           the node/submitter class this environment is built for, if any.
@@ -32,8 +31,8 @@ def processEnvFactory(folder: str, configEnv: dict[str, str], pluginName: str, p
         ProcessEnv: the created DirTreeProcessEnv or RezProcessEnv.
     """
     if envType == "dirtree":
-        return DirTreeProcessEnv(folder, configEnv, pluginName, pluginSubPackage)
-    return RezProcessEnv(folder, configEnv, pluginName, pluginSubPackage)
+        return DirTreeProcessEnv(folder, pluginEnv, pluginName, pluginSubPackage)
+    return RezProcessEnv(folder, pluginEnv, pluginName, pluginSubPackage)
 
 
 class ProcessEnvType(Enum):
@@ -48,19 +47,18 @@ class ProcessEnv(BaseObject):
 
     Args:
         folder: the source folder for the process.
-        configEnv: the dictionary containing the environment variables defined in a configuration file
-                   for the process to run.
+        pluginEnv: the dictionary containing the environment variables for the process to run.
         pluginName: the name of the plugin object.
         pluginSubPackage: (optional) the dotted path, relative to the plugin's root, of the package
                           containing the node/submitter class this environment is built for.
         envType: (optional) the type of process environment.
     """
 
-    def __init__(self, folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str = None,
+    def __init__(self, folder: str, pluginEnv: dict[str, str], pluginName: str, pluginSubPackage: str = None,
                  envType: ProcessEnvType = ProcessEnvType.DIRTREE):
         super().__init__()
         self._folder: str = folder
-        self._configEnv: dict[str, str] = configEnv
+        self._pluginEnv: dict[str, str] = pluginEnv
         self.pluginName: str = pluginName
         self.pluginSubPackage: str = pluginSubPackage
         self._processEnvType: ProcessEnvType = envType
@@ -84,8 +82,8 @@ class DirTreeProcessEnv(ProcessEnv):
     A ProcessEnv built from a plain directory tree: PYTHONPATH/LD_LIBRARY_PATH/PATH are assembled
     from the plugin's "bin"/"lib"/"lib64" folders and, if present, its "venv" virtual environment.
     """
-    def __init__(self, folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str):
-        super().__init__(folder, configEnv, pluginName, pluginSubPackage, envType=ProcessEnvType.DIRTREE)
+    def __init__(self, folder: str, pluginEnv: dict[str, str], pluginName: str, pluginSubPackage: str):
+        super().__init__(folder, pluginEnv, pluginName, pluginSubPackage, envType=ProcessEnvType.DIRTREE)
 
         # If there is a virtual environment, it is expected to be named "venv".
         # Beside the virtual environment, a standard "bin"/"lib"/"lib64" hierarchy at
@@ -129,7 +127,7 @@ class DirTreeProcessEnv(ProcessEnv):
         self._env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
         self._env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
 
-        for k, val in self._configEnv.items():
+        for k, val in self._pluginEnv.items():
             # Preserve user-defined environment variables:
             # manually set environment variable values take precedence over config file defaults.
             if k in self._env:
@@ -146,10 +144,10 @@ class RezProcessEnv(ProcessEnv):
 
     REZ_DELIMITER_PATTERN = re.compile(r"-|==|>=|>|<=|<")
 
-    def __init__(self, folder: str, configEnv: dict[str, str], pluginName: str, pluginSubPackage: str):
+    def __init__(self, folder: str, pluginEnv: dict[str, str], pluginName: str, pluginSubPackage: str):
         if not pluginName:
             raise RuntimeError("Missing name of the Rez environment needs to be provided.")
-        super().__init__(folder, configEnv, pluginName, pluginSubPackage, envType=ProcessEnvType.REZ)
+        super().__init__(folder, pluginEnv, pluginName, pluginSubPackage, envType=ProcessEnvType.REZ)
 
     def resolveRezSubrequires(self) -> list[str]:
         """

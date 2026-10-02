@@ -16,6 +16,7 @@ from PySide6.QtWidgets import QApplication
 import meshroom
 from meshroom.core import pluginManager
 from meshroom.core.desc import NodeVersionTypeEnum
+from meshroom.core.plugins.local.taskQueue import PluginTaskQueue
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
@@ -289,6 +290,15 @@ class MeshroomApp(QApplication):
         if os.path.isdir(pyside6QmlPath):
             self.engine.addImportPath(pyside6QmlPath)
 
+        # expose the plugin manager
+        self.engine.rootContext().setContextProperty("_pluginManager", pluginManager)
+
+        # expose the queue processing the plugin installation, update and removal tasks
+        self._pluginTaskQueue = PluginTaskQueue(parent=self)
+        self.engine.rootContext().setContextProperty("_pluginTaskQueue", self._pluginTaskQueue)
+        # stop the running plugin task properly on exit
+        self.aboutToQuit.connect(self._pluginTaskQueue.shutdown)
+
         # expose available node types that can be instantiated
         self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getNodeDescProviders()[n].nodeDescClass.category} for n in sorted(pluginManager.getNodeDescProviders().keys())})
 
@@ -315,7 +325,8 @@ class MeshroomApp(QApplication):
         # additional context properties
         self._messageController = MessageController(parent=self)
         self.engine.rootContext().setContextProperty("_messageController", self._messageController)
-        self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
+        self._paletteManager = PaletteManager(self.engine, parent=self)
+        self.engine.rootContext().setContextProperty("_PaletteManager", self._paletteManager)
         self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
         self.engine.rootContext().setContextProperty("NodeVersionType", NodeVersionTypeEnum(parent=self))
@@ -380,6 +391,10 @@ class MeshroomApp(QApplication):
             self.addRecentProjectFile(args.save)
 
         self.engine.load(os.path.normpath(url))
+
+        # Apply the initial theme now.
+        # Quick Controls Fusion-style palette machinery has already initialized.
+        self._paletteManager.togglePalette()
 
     def terminateManual(self):
         self.engine.clearComponentCache()

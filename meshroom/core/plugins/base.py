@@ -5,17 +5,18 @@ import logging
 import os
 import sys
 
+from dataclasses import dataclass
 from enum import Enum
 from inspect import getfile
 from pathlib import Path
 from typing import Optional
 
-from meshroom.common import BaseObject
+from meshroom.common import BaseObject, Property, Variant, VariantList
 from meshroom.core import desc
 from meshroom.core.desc.attribute import ValueTypeErrors
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension, isTemplateFile
-from meshroom.core.plugins.config import PluginConfig
+from meshroom.core.plugins.metadata import PluginMetadata
 from meshroom.core.plugins.env import ProcessEnv, processEnvFactory
 
 
@@ -24,8 +25,30 @@ class PluginType(Enum):
     Determines how a plugin is discovered and how its process environment is configured.
     """
     BUILTIN = 1  # Plugin folder using meshroom environment
-    PATH = 2  # Plugin provided by a path
-    REZ = 3  # Plugin provided by a rez package
+    LOCAL = 2  # Plugin provided by the local plugins folder
+    PATH = 3  # Plugin provided by a path
+    REZ = 4  # Plugin provided by a rez package
+
+
+@dataclass(frozen=True)
+class PluginContext:
+    """
+    Immutable data describing where a plugin was found and how it should be set up.
+
+    Members:
+        rootPath: the absolute path of the plugin's root folder
+        hostPath: the absolute path of the plugin's "meshroom" folder
+        type: the PluginType describing how the plugin was discovered
+        isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team)
+        metadata: the PluginMetadata with the plugin descriptive data
+        env: resolved plugin environment variables
+    """
+    rootPath: str
+    hostPath: str
+    type: PluginType
+    metadata: PluginMetadata
+    isUserPlugin: bool
+    env: dict[str, str]
 
 
 class Plugin(BaseObject):
@@ -35,90 +58,76 @@ class Plugin(BaseObject):
 
     Members:
         name: the name of the plugin (e.g. name of the Python module containing the node plugins)
+        version: the version of the plugin, or "Unknown" if none was provided
+        publisher: the publisher of the plugin, or "Unknown" if none was provided
+        type: the PluginType describing how the plugin was discovered
+        typeName: the name of "type", exposed as a plain string for QML bindings/comparisons
+        description: a short description of the plugin
+        authors: the list of the plugin's authors
+        requirements: a human-readable description of the plugin's runtime requirements
         rootPath: the absolute path of the plugin's root folder
-        path: the absolute path of the plugin's modules (its "meshroom" folder)
-        version: the version of the plugin, or "unknown" if none was provided
+        hostPath: the absolute path of the plugin's host modules (its "meshroom" folder)
         isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team)
-        type: the PluginType describing how the plugin was discovered and how its process
-              environment is configured
+        env: the dictionary containing the environment variables of the plugin
+        fullEnv: the dictionary containing the environment variables of the plugin and os.environ
         nodeDescProviders: dictionary mapping the name of a node descriptor provider contained in the
                      plugin to its corresponding NodeDescProvider object
         submitterProviders: dictionary mapping the name of a submitter provider contained in the
                      plugin to its corresponding SubmitterProvider object
         templates: dictionary mapping the name of templates (.mgt files) associated to the plugin
                    with their absolute paths
-        configEnv: the environment variables and their values, as described in the plugin's
-                   configuration file
-        configFullEnv: the static merge of os.environ and configEnv, with os.environ taking precedence
         processEnv: the environment required for the nodes' processes to be correctly executed
     """
 
-    def __init__(self, name: str, rootPath: str, path: str, type: PluginType,
-                 version: Optional[str] = None, isUserPlugin: bool = False,
-                 config: Optional[PluginConfig] = None):
-        super().__init__()
-
-        self._name: str = name
-        self._rootPath: str = rootPath
-        self._path: str = path
-        self._type: PluginType = type
-        self._version: str = version
-        self._isUserPlugin: bool = isUserPlugin
+    def __init__(self, context: PluginContext, parent: BaseObject = None):
+        super().__init__(parent)
+        self._context = context
         self._nodeDescProviders: dict[str, NodeDescProvider] = {}
         self._submitterProviders: dict[str, SubmitterProvider] = {}
         self._templates: dict[str, str] = {}
-        self._configEnv: dict[str, str] = {}
-
-        # Get environment variables from config
-        if config:
-            self._configEnv = config.resolveEnv(self._path, self._name)
-        # If both dictionaries have identical keys, os.environ overwrites existing values from _configEnv
-        # Python 3.9+ version: self._configFullEnv = self._configEnv | os.environ
-        self._configFullEnv: dict[str, str] = {**self._configEnv, **os.environ}
-
+        envType = "rez" if context.type is PluginType.REZ else "dirtree"
+        # Merge plugin environment variables with os.environ.
+        # If both dictionaries have identical keys, os.environ overwrites.
+        # Python 3.9+ version: self._fullEnv = self._context.env | os.environ
+        self._fullEnv = {**self._context.env, **os.environ}
+        self._processEnv = processEnvFactory(self.rootPath, self._context.env, self.name, envType=envType)
         self.loadTemplates()
 
-        envType = "rez" if type is PluginType.REZ else "dirtree"
-        self._processEnv: ProcessEnv = processEnvFactory(self._rootPath, self._configEnv, self._name,
-                                                         envType=envType)
-
     def __repr__(self):
-        return f"<Plugin {self._name}>"
+        return f"<Plugin {self.name}>"
+
+    # The name of the plugin.
+    name = Property(str, lambda self: self._context.metadata.name, constant=True)
+    # The version of the plugin, or "Unknown" if none was provided.
+    version = Property(str, lambda self: self._context.metadata.version or "Unknown", constant=True)
+    # The publisher of the plugin, or "Unknown" if none was provided.
+    publisher = Property(str, lambda self: self._context.metadata.publisher or "Unknown", constant=True)
+    # The PluginType describing how the plugin was discovered.
+    type = Property(Variant, lambda self: self._context.type, constant=True)
+    # The name of the PluginType, exposed as a plain string for QML bindings/comparisons.
+    typeName = Property(str, lambda self: self._context.type.name, constant=True)
+    # A short description of the plugin, or an empty string if none was provided.
+    description = Property(str, lambda self: self._context.metadata.description or "", constant=True)
+    # The list of the plugin's authors.
+    authors = Property(VariantList, lambda self: self._context.metadata.authors, constant=True)
+    # A human-readable description of the plugin's runtime requirements.
+    requirements = Property(str, lambda self: self._context.metadata.requirements or "", constant=True)
+    # The absolute path of the plugin's root folder.
+    rootPath = Property(str, lambda self: str(self._context.rootPath), constant=True)
+    # The absolute path of the plugin's host modules (its "meshroom" folder).
+    hostPath = Property(str, lambda self: str(self._context.hostPath), constant=True)
+    # Whether the plugin is a user plugin (not maintained by the core Meshroom team).
+    isUserPlugin = Property(bool, lambda self: self._context.isUserPlugin, constant=True)
 
     @property
-    def name(self):
-        """ Return the name of the plugin. """
-        return self._name
+    def env(self):
+        """ Return the dictionary containing the environment variables of the plugin. """
+        return self._context.env
 
     @property
-    def path(self):
-        """ Return the absolute path of the plugin's modules (its "meshroom" folder). """
-        return self._path
-
-    @property
-    def rootPath(self):
-        """
-        Return the absolute path of the plugin's root folder, containing python modules
-        as well as any "bin"/"lib"/"lib64"/"venv" dependency folders.
-        """
-        return self._rootPath
-
-    @property
-    def type(self):
-        """ Return the PluginType describing how the plugin was discovered. """
-        return self._type
-
-    @property
-    def version(self):
-        """ Return the version of the plugin, or "unknown" if none was provided. """
-        if self._version and len(self._version) > 0:
-            return self._version
-        return "unknown"
-
-    @property
-    def isUserPlugin(self):
-        """ Return whether the plugin is a user plugin (not maintained by the core Meshroom team). """
-        return self._isUserPlugin
+    def fullEnv(self):
+        """ Return the dictionary containing the environment variables of the plugin and os.environ. """
+        return self._fullEnv
 
     @property
     def nodeDescProviders(self):
@@ -145,19 +154,6 @@ class Plugin(BaseObject):
     def processEnv(self):
         """ Return the environment required to successfully execute processes. """
         return self._processEnv
-
-    @property
-    def configEnv(self):
-        """
-        Return the dictionary containing the environment variables and their values
-        provided in the plugin's configuration file.
-        """
-        return self._configEnv
-
-    @property
-    def configFullEnv(self):
-        """ Return the fusion of the os.environ dictionary with the configEnv dictionary. """
-        return self._configFullEnv
 
     def addNodeDescProvider(self, nodeDescClass: type[desc.BaseNode]) -> NodeDescProvider:
         """
@@ -244,8 +240,8 @@ class Plugin(BaseObject):
         before being filled again.
         """
         self._templates.clear()
-        for file in sorted(os.listdir(self.path)):
-            filepath = os.path.join(self.path, file)
+        for file in sorted(os.listdir(self.hostPath)):
+            filepath = os.path.join(self.hostPath, file)
             templateName = Path(file).stem
             if hasExtension(filepath, (MESHROOM_TEMPLATE_EXTENSION,)):
                 self._templates[templateName] = filepath
@@ -279,7 +275,7 @@ class NodeDescProvider(BaseObject):
         runtimeEnv: the environment dictionary for the runtime, derived from processEnv
         commandPrefix: the command prefix for the node provider's execution, derived from processEnv
         commandSuffix: the command suffix for the node provider's execution, derived from processEnv
-        configFullEnv: the plugin's full environment dictionary
+        fullEnv: the dictionary containing the environment variables of the plugin and os.environ
         timestamp: the timestamp corresponding to the last time the node description's file has been
                    modified
     """
@@ -342,13 +338,13 @@ class NodeDescProvider(BaseObject):
         if self.error:
             self.status = NodeDescProviderStatus.DESC_ERROR
 
-        # A "dirtree" env only depends on the plugin's folder/configEnv, not on the node's subpackage,
+        # A "dirtree" env only depends on the plugin's folder/env, not on the node's subpackage,
         # so it is identical for every node of the plugin: reuse plugin.processEnv (via the property's
         # fallback below) instead of rebuilding it for each node. Only a "rez" env genuinely needs its
         # own instance, since its subrequires resolution is subpackage-specific.
         self._processEnv = None
         if plugin and plugin.type is PluginType.REZ:
-            self._processEnv: ProcessEnv = processEnvFactory(plugin.rootPath, plugin.configEnv, plugin.name,
+            self._processEnv: ProcessEnv = processEnvFactory(plugin.rootPath, plugin.env, plugin.name,
                                                              pluginSubPackage=self.relativePackage, envType="rez")
         self._timestamp = os.path.getmtime(self.path)
 
@@ -475,11 +471,11 @@ class NodeDescProvider(BaseObject):
         return self.processEnv.getCommandSuffix()
 
     @property
-    def configFullEnv(self) -> dict[str, str]:
-        """ Return the plugin's full environment dictionary. """
+    def fullEnv(self) -> dict[str, str]:
+        """ Return the dictionary containing the environment variables of the plugin and os.environ. """
         if not self.plugin:
             return {}
-        return self.plugin.configFullEnv
+        return self.plugin.fullEnv
 
 
 class SubmitterProviderStatus(Enum):

@@ -42,6 +42,7 @@ def getJobEnv():
         "MESHROOM_PLUGINS_PATH": pluginFolder,
         # Disable all rez variables that could lead to using rez in the test env
         "REZ_RESOLVE": "",
+        "REZ_USED_RESOLVE": "",
         "REZ_BIN": "",
         "REZ_PACKAGES_ROOT": "",
         "REZ_REQUEST": "",

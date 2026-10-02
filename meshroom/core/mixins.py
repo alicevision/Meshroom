@@ -6,7 +6,7 @@ class Expandable(object):
         super().__init__()
 
     def _getExpanded(self) -> bool:
-        return getattr(self, "_expanded", False)
+        return bool(getattr(self, "_expanded", False))
 
     def _setExpanded(self, value: bool):
         value = bool(value)

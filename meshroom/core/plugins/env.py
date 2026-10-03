@@ -10,7 +10,7 @@ from enum import Enum
 from pathlib import Path
 
 from meshroom.common import BaseObject
-from meshroom import _MESHROOM_ROOT
+from meshroom import _MESHROOM_ROOT, isFrozen
 from meshroom.core.desc.node import _MESHROOM_COMPUTE_DEPS
 
 
@@ -124,8 +124,17 @@ class DirTreeProcessEnv(ProcessEnv):
 
         # Setup the environment dictionary
         self._env = os.environ.copy()
+        if isFrozen:
+            # The frozen lib folder contains partial copies of stdlib packages (e.g. "http" without
+            # "http.server"): it must not end up in PYTHONPATH, which takes precedence over the stdlib
+            # of the plugin's interpreter. meshroom_compute appends it to sys.path instead.
+            self._env["MESHROOM_FROZEN_LIB_PATH"] = f"{_MESHROOM_ROOT}"
+            meshroomPaths = []
+        else:
+            meshroomPaths = [f"{_MESHROOM_ROOT}"]
+        # Prefer plugin dependencies over Meshroom's while keeping Meshroom importable.
         self._env["PYTHONPATH"] = os.pathsep.join(
-            [f"{_MESHROOM_ROOT}"] + self.pythonPaths + [os.getenv('PYTHONPATH', '')])
+            self.pythonPaths + meshroomPaths + [os.getenv('PYTHONPATH', '')])
         self._env["LD_LIBRARY_PATH"] = f"{os.pathsep.join(self.libPaths)}{os.pathsep}{os.getenv('LD_LIBRARY_PATH', '')}"
         self._env["PATH"] = f"{os.pathsep.join(self.binPaths)}{os.pathsep}{os.getenv('PATH', '')}"
 

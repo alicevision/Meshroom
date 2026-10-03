@@ -17,5 +17,9 @@ VERSION_NAME=${MESHROOM_VERSION}-av${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUD
 rm -rf ./Meshroom-${VERSION_NAME}
 CID=$(docker create alicevision/meshroom:${VERSION_NAME})
 docker cp ${CID}:/opt/Meshroom_bundle ./Meshroom-${VERSION_NAME}
+
+# Retrieve the complete standalone Python runtime, including licenses and metadata.
+mkdir -p "./Meshroom-${VERSION_NAME}/python"
+docker cp "${CID}:/opt/python/." "./Meshroom-${VERSION_NAME}/python/"
 docker rm ${CID}
 

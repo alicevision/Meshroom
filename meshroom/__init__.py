@@ -170,8 +170,14 @@ def setupEnvironment(backend=Backend.STANDALONE):
         colorChartDetectionModelFolder = os.path.join(aliceVisionShareDir, "ColorChartDetectionModel")
 
         env = {
-            "PATH": aliceVisionBinDir,
+            "PATH": [aliceVisionBinDir],
         }
+
+        # The frozen lib folder only holds bytecode for the bundled interpreter: expose it so that
+        # "python" (used to run meshroom_compute for Python nodes) does not resolve to the system one.
+        pythonBinDir = os.path.join(rootDir, "python", "bin")
+        if os.path.isdir(pythonBinDir):
+            env["PATH"].append(pythonBinDir)
 
         # Only add Qt plugin/QML paths if the directories actually exist
         if os.path.isdir(qtPluginsDir):

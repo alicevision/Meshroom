@@ -5,6 +5,12 @@ import os
 import sys
 from typing import NoReturn
 
+# A frozen Meshroom bundles its own copies of stdlib modules: append its lib folder after the
+# interpreter's stdlib and site-packages (instead of prepending it through PYTHONPATH) so that
+# a plugin's environment keeps precedence over it.
+if os.getenv("MESHROOM_FROZEN_LIB_PATH"):
+    sys.path.append(os.environ["MESHROOM_FROZEN_LIB_PATH"])
+
 try:
     import meshroom
 except Exception:

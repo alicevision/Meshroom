@@ -147,8 +147,7 @@ FocusScope {
                     width: root.width
                     height: root.height
                 }
-                rotationSpeed: 16
-                trackballSize: 0.9
+                rotationSpeed: 200  // Degrees of orbit for a drag over the viewport height
 
                 camera: mainCamera
                 focus: scene3D.activeFocus

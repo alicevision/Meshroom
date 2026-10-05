@@ -35,6 +35,10 @@ FocusScope {
     /// Curves to display, add curves with model.addCurve(name, xs, ys[, color])
     property CurveViewer.CurveModel model: CurveViewer.CurveModel {}
 
+    /// Color bands drawn at the top of the curves,
+    /// add bands with bands.addBand(name, xs, colors) or bands.addBandFromValues(name, xs, values[, gradient, min, max])
+    property CurveViewer.CurveBandModel bands: CurveViewer.CurveBandModel {}
+
     readonly property alias viewer: canvas.viewer
 
     /// Height of the list header and of the X axis bar
@@ -127,6 +131,7 @@ FocusScope {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 model: root.model
+                bands: root.bands
             }
         }
     }

@@ -14,6 +14,7 @@ Item {
     clip: true
 
     property alias model: viewer.model
+    property alias bands: viewer.bands
     readonly property alias viewer: viewer
 
     function withAlpha(c, alpha) {
@@ -51,6 +52,27 @@ Item {
         }
     }
 
+    // Band names, on the left of each band
+    Repeater {
+        model: viewer.bands
+
+        delegate: Label {
+            required property int index
+            required property string bandName
+            required property bool bandVisible
+
+            x: 4
+            // Depend on bandsHeight to follow the bands stacking
+            y: viewer.bandsHeight >= 0 ? viewer.bandY(index) + (viewer.bandHeight - height) / 2 : 0
+            visible: bandVisible
+            text: bandName
+            color: palette.text
+            style: Text.Outline
+            styleColor: root.withAlpha(palette.base, 0.8)
+            font.pointSize: 7
+        }
+    }
+
     MouseArea {
         id: mouseArea
 
@@ -82,7 +104,9 @@ Item {
                 viewer.playhead = viewer.pixelToX(mouse.x)
             } else {
                 dragMode = noMode
-                viewer.currentIndex = viewer.curveAt(mouse.x, mouse.y, 6)
+                // Curves are hidden under the bands
+                if (viewer.bandAt(mouse.y) < 0)
+                    viewer.currentIndex = viewer.curveAt(mouse.x, mouse.y, 6)
             }
         }
 

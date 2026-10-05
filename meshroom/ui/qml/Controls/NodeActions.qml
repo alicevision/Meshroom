@@ -178,6 +178,8 @@ Item {
         }
 
         function getSubmitButtonState(node) {
+            if (!uigraph || !uigraph.canSubmit)
+                return NodeActions.ButtonState.DISABLED
             if (actionHeader.canStopNode)
                 return NodeActions.ButtonState.STOPPABLE
             if (!actionHeader.nodeIsLocked && node.globalStatus == "SUCCESS")
@@ -204,7 +206,7 @@ Item {
             if (!node) return
             // Update properties values
             actionHeader.canComputeNode = uigraph.canComputeNode(node)
-            actionHeader.canSubmitNode = uigraph.canSubmitNode(node)
+            actionHeader.canSubmitNode = uigraph.canSubmit && uigraph.canSubmitNode(node)
             actionHeader.canStopNode = node.canBeStopped() || node.canBeCanceled()
             actionHeader.nodeIsLocked = node.locked
             actionHeader.nodeSubmitted = isSubmittedExternally(node)
@@ -327,7 +329,7 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.delay: 1000
                 visible: actionHeader.submitButtonState != NodeActions.ButtonState.DISABLED
-                enabled: visible && (actionHeader.nodeSubmitted || !actionHeader.nodeIsLocked)  // Launchable & Stoppable, external
+                enabled: visible && uigraph.canSubmit &&(actionHeader.nodeSubmitted || !actionHeader.nodeIsLocked)  // Launchable & Stoppable, external
                 // Icon color
                 textColor: checked ? palette.highlight : palette.text
                 // Background color

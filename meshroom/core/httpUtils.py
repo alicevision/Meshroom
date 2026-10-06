@@ -49,19 +49,38 @@ def _open(url: str, timeout: float):
         raise RequestError(f"{type(exc).__name__}: {exc}") from exc
 
 
+def _contentLength(response) -> int:
+    """
+    Return the "Content-Length" of "response", or -1 if it is missing or invalid.
+
+    Args:
+        response: the open response, as returned by urllib.request.urlopen().
+
+    Returns:
+        int: the size (in bytes) of the response's body, or -1 if unknown.
+    """
+    contentLength = response.headers.get("Content-Length")
+    if contentLength is None:
+        return -1
+    try:
+        return int(contentLength)
+    except ValueError:
+        return -1
+
+
 def readWithProgress(response, onBytes: Optional[Callable[[int, int], None]]) -> bytes:
     """
     Read "response" fully in fixed-size chunks, returning the concatenated content.
-    If "onBytes" is provided, it is called after each chunk with "(bytesRead, totalBytes)".
-    """
-    total = -1
-    contentLength = response.headers.get("Content-Length")
-    if contentLength is not None:
-        try:
-            total = int(contentLength)
-        except ValueError:
-            total = -1
 
+    Args:
+        response: the open response, as returned by urllib.request.urlopen().
+        onBytes: if provided, called after each chunk with "(bytesRead, totalBytes)", "totalBytes"
+                 being -1 if unknown.
+
+    Returns:
+        bytes: the content of the response.
+    """
+    total = _contentLength(response)
     chunks = []
     bytesRead = 0
     while True:

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import hashlib
 import http.client
 import urllib.error
 import urllib.request
 
 from typing import Callable, Optional
+from pathlib import Path
 from contextlib import contextmanager
+
+from meshroom.core.files import atomicOpen
 
 # Timeout (in seconds) for network download requests.
 _HTTP_REQUEST_TIMEOUT = 10
@@ -194,3 +198,41 @@ def fetchWithProgress(url: str, onBytes: Optional[Callable[[int, int], None]] = 
     """
     with _open(url, timeout) as response:
         return readWithProgress(response, onBytes)
+
+
+def fetchToFile(url: str, destination: Path, onBytes: Optional[Callable[[int, int], None]] = None,
+                timeout: float = _HTTP_REQUEST_TIMEOUT) -> str:
+    """
+    GET "url" and stream its content into "destination", reporting progress via "onBytes".
+    The content is written to a temporary file next to "destination" first, then moved into place,
+    so "destination" is never left partially written.
+
+    Args:
+        url: the url to download.
+        destination: the file to write. Its parent folder must exist.
+        onBytes: if provided, called after each chunk with "(bytesRead, totalBytes)", "totalBytes"
+                 being -1 if unknown. Raising from it aborts the download.
+        timeout: the timeout (in seconds) of the request.
+
+    Returns:
+        str: the SHA-256 hexdigest of the downloaded content.
+
+    Raises:
+        RequestError: if the request fails.
+    """
+    destination = Path(destination)
+    sha256 = hashlib.sha256()
+    with atomicOpen(destination, "wb", prefix=f".{destination.name}.") as tmpFile, \
+            _open(url, timeout) as response:
+        total = _contentLength(response)
+        bytesRead = 0
+        while True:
+            chunk = response.read(_HTTP_CHUNK_SIZE)
+            if not chunk:
+                break
+            tmpFile.write(chunk)
+            sha256.update(chunk)
+            bytesRead += len(chunk)
+            if onBytes:
+                onBytes(bytesRead, total)
+    return sha256.hexdigest()

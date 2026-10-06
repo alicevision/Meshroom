@@ -11,9 +11,9 @@ from pathlib import Path
 
 from meshroom.env import EnvVar
 from meshroom.core.files import scratchFolder
-from meshroom.core.httpUtils import RequestError, fetchWithProgress
+from meshroom.core.httpUtils import RequestError, fetchToFile, fetchWithProgress
 from meshroom.core.plugins import meshroomPluginsFolder, meshroomPluginsInternalPrefix
-from meshroom.core.plugins.metadata import PluginMetadata
+from meshroom.core.plugins.metadata import PluginAsset, PluginMetadata
 from meshroom.core.plugins.record import PluginRecord
 from meshroom.core.plugins.provider import PluginProvider
 from meshroom.core.plugins.local.service import PluginService
@@ -23,21 +23,26 @@ from meshroom.core.plugins.local.uv import findUv, pythonForUv, parseUvProgress,
 _INSTALL_PROGRESS_DOWNLOAD = 0.4
 # The overall progress (from 0 to 1) once the plugin archive is extracted.
 _INSTALL_PROGRESS_EXTRACT = 0.5
+# The overall progress (from 0 to 1) once the plugin dependencies are installed.
+_INSTALL_PROGRESS_DEPENDENCIES = 0.9
 # The number of bytes downloaded at which the progress of a download of unknown size reaches half its range.
 _INSTALL_SIZE_SCALE = 5 * 1024 * 1024
 
 
-def downloadProgress(bytesRead: int, totalBytes: int) -> float:
+def downloadProgress(bytesRead: int, totalBytes: int, start: float = 0.0,
+                     end: float = _INSTALL_PROGRESS_DOWNLOAD) -> float:
     """
-    Return the overall progress (from 0 to _INSTALL_PROGRESS_DOWNLOAD) of a download.
+    Return the overall progress (from "start" to "end") of a download.
 
     When "totalBytes" is unknown (<= 0, e.g. GitHub archives are streamed without a "Content-Length"),
-    the progress creeps toward (without reaching) _INSTALL_PROGRESS_DOWNLOAD so it does not look stuck:
+    the progress creeps toward (without reaching) "end" so it does not look stuck:
     half the range at "_INSTALL_SIZE_SCALE" bytes, closer and closer to it as more bytes come in.
     """
     if totalBytes > 0:
-        return _INSTALL_PROGRESS_DOWNLOAD * min(bytesRead / totalBytes, 1.0)
-    return _INSTALL_PROGRESS_DOWNLOAD * bytesRead / (bytesRead + _INSTALL_SIZE_SCALE)
+        ratio = min(bytesRead / totalBytes, 1.0)
+    else:
+        ratio = bytesRead / (bytesRead + _INSTALL_SIZE_SCALE)
+    return start + (end - start) * ratio
 
 
 class PluginInstaller(PluginService):
@@ -46,6 +51,7 @@ class PluginInstaller(PluginService):
         1. Download the plugin archive.
         2. Extract it, and generate its "plugin.lock".
         3. Install its Python dependencies with "uv" into "<pluginFolder>/venv".
+        4. Download the assets declared in its metadata into the plugin folder.
 
     A plugin is only installed once all of this is done: if the installation fails or is cancelled
     after the plugin folder has been created, that folder is removed.
@@ -67,7 +73,7 @@ class PluginInstaller(PluginService):
 
     def _run(self) -> None:
         """
-        Install the plugin: download it, extract it, then install its dependencies.
+        Install the plugin: download it, extract it, install its dependencies, then download its assets.
         """
         if not EnvVar.get(EnvVar.MESHROOM_LOCAL_PLUGINS):
             raise self._error("Verification", "Local plugin management is disabled.")
@@ -83,12 +89,16 @@ class PluginInstaller(PluginService):
 
         # Extract the plugin archive / metadata in plugins folder.
         self._reportProgress("Extracting", _INSTALL_PROGRESS_DOWNLOAD)
-        pluginFolder = self._extract(content)
+        pluginFolder, metadata = self._extract(content)
 
-        # Install the plugin's dependencies.
-        self._reportProgress("Installing dependencies", _INSTALL_PROGRESS_EXTRACT)
         try:
+            # Install the plugin's dependencies.
+            self._reportProgress("Installing dependencies", _INSTALL_PROGRESS_EXTRACT)
             self._installDependencies(pluginFolder)
+
+            # Download the plugin's assets.
+            self._reportProgress("Downloading assets", _INSTALL_PROGRESS_DEPENDENCIES)
+            self._downloadAssets(pluginFolder, metadata.assets)
         except BaseException:
             # Do not leave a half-installed plugin behind.
             shutil.rmtree(pluginFolder, ignore_errors=True)
@@ -122,7 +132,7 @@ class PluginInstaller(PluginService):
         except RequestError as exc:
             raise self._error("Download", f"Failed to download '{archiveUrl}'.", exc)
 
-    def _extract(self, content: bytes) -> Path:
+    def _extract(self, content: bytes) -> tuple[Path, PluginMetadata]:
         """
         Extract the downloaded archive and move the plugin to "<pluginsPath>/<pluginName>", together
         with the "plugin.lock" generated from its metadata.
@@ -131,7 +141,7 @@ class PluginInstaller(PluginService):
             content: the content of the plugin archive.
 
         Returns:
-            Path: the plugin folder.
+            tuple[Path, PluginMetadata]: the plugin folder and the plugin's metadata.
         """
         # Check if the user canceled the service.
         self._checkCancel()
@@ -157,7 +167,7 @@ class PluginInstaller(PluginService):
                 raise self._error("Extraction", f"Failed to move the plugin to '{pluginFolder}'.", exc)
 
         logging.info(f"Plugin '{self._record.name}' extracted in '{pluginFolder}'")
-        return pluginFolder
+        return pluginFolder, metadata
 
     def _unzipArchive(self, content: bytes, destination: Path) -> Path:
         """
@@ -258,6 +268,53 @@ class PluginInstaller(PluginService):
                 self._runUv(uv, ["venv", "--python", python, str(venvFolder)])
             self._runUv(uv, ["pip", "install", "--python", str(venvFolder), "-r", str(requirementsFile)])
 
+    def _downloadAssets(self, pluginFolder: Path, assets: list[PluginAsset]) -> None:
+        """
+        Download the plugin's assets into "pluginFolder", checking their SHA-256 when it is declared.
+
+        Args:
+            pluginFolder: the folder of the plugin.
+            assets: the assets to download.
+        """
+        resolvedPluginFolder = pluginFolder.resolve()
+        # Spread the assets evenly over the assets part of the overall progress.
+        step = (1.0 - _INSTALL_PROGRESS_DEPENDENCIES) / max(len(assets), 1)
+
+        for index, asset in enumerate(assets):
+            # Check if the user canceled the service.
+            self._checkCancel()
+
+            destination = asset.resolvePath(pluginFolder)
+            # Guard against a path escaping the plugin folder (e.g. through a symbolic link).
+            if not destination.resolve().is_relative_to(resolvedPluginFolder):
+                raise self._error("Assets", f"Asset '{asset.name}' path '{asset.path}' is outside of the plugin folder.")
+            if destination.exists():
+                raise self._error("Assets", f"Asset '{asset.name}' path '{asset.path}' already exists in the plugin.")
+
+            start = _INSTALL_PROGRESS_DEPENDENCIES + index * step
+            message = f"Downloading asset '{asset.name}' ({index + 1}/{len(assets)})"
+
+            def onBytes(bytesRead: int, totalBytes: int) -> None:
+                # Raising from here aborts the download.
+                self._checkCancel()
+                self._reportProgress(message, downloadProgress(bytesRead, totalBytes, start, start + step))
+
+            logging.info(f"Downloading asset '{asset.name}' of plugin '{self._record.name}' from '{asset.url}'...")
+            self._reportProgress(message, start)
+            try:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                digest = fetchToFile(asset.url, destination, onBytes=onBytes)
+            except (RequestError, OSError) as exc:
+                raise self._error("Assets", f"Failed to download asset '{asset.name}' from '{asset.url}'.", exc)
+
+            if asset.sha256 is None:
+                logging.warning(f"Asset '{asset.name}' of plugin '{self._record.name}' has no declared 'sha256', "
+                                f"its integrity was not checked (downloaded sha256: {digest}).")
+            elif digest != asset.sha256:
+                destination.unlink()
+                raise self._error("Assets", f"Checksum mismatch for asset '{asset.name}': "
+                                            f"expected sha256 {asset.sha256}, got {digest}.")
+
     def _runUv(self, uv: str, args: list[str], env: Optional[dict] = None) -> None:
         """
         Run the "uv" executable with "args". If a progress callback is set, each line of its output
@@ -278,8 +335,8 @@ class PluginInstaller(PluginService):
             # "progress" is the progress of this command
             #  Map it to the dependencies part of the overall progress.
             progress = parseUvProgress(line, progress)
-            self._reportProgress("Installing dependencies",
-                                 _INSTALL_PROGRESS_EXTRACT + (1 - _INSTALL_PROGRESS_EXTRACT) * progress)
+            dependenciesRange = _INSTALL_PROGRESS_DEPENDENCIES - _INSTALL_PROGRESS_EXTRACT
+            self._reportProgress("Installing dependencies", _INSTALL_PROGRESS_EXTRACT + dependenciesRange * progress)
 
         try:
             if self._onProgress is not None:

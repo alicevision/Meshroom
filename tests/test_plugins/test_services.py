@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+import hashlib
 import json
 
 import pytest
@@ -14,11 +15,25 @@ from meshroom.core.plugins.local.updater import PluginUpdater
 from ..utils import writeFile, writeZip
 
 
-def writePluginZip(zipPath, version="1.0", name="myPlugin"):
-    """ Write a plugin archive whose "meshroom/config.json" declares "name" and "version". """
+def writePluginZip(zipPath, version="1.0", name="myPlugin", assets=None, files=None):
+    """
+    Write a plugin archive whose "meshroom/config.json" declares "name", "version" and "assets".
+    "files" are extra files to add to the archive, as {pathInPlugin: content}.
+    """
     # Use the legacy "config.json" rather than a "pyproject.toml", which would trigger a "uv sync"
     # of the plugin's dependencies on installation.
-    return writeZip(zipPath, {"root/meshroom/config.json": json.dumps({"name": name, "version": version})})
+    config = {"name": name, "version": version, "assets": assets or []}
+    content = {"root/meshroom/config.json": json.dumps(config)}
+    content.update({f"root/{path}": fileContent for path, fileContent in (files or {}).items()})
+    return writeZip(zipPath, content)
+
+
+def asset(url, name="weights", path="weights.pt", sha256=None):
+    """ Return an asset entry of a plugin metadata file. """
+    entry = {"name": name, "category": "model", "url": url, "path": path}
+    if sha256 is not None:
+        entry["sha256"] = sha256
+    return entry
 
 
 def installer(archive, pluginsPath, name="myPlugin"):
@@ -94,6 +109,46 @@ class TestInstaller:
         archive = writePluginZip(tmp_path / "plugin.zip")
         with pytest.raises(PluginServiceCancelled):
             installer(archive, tmp_path / "plugins").execute(isCancelled=lambda: True)
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
+
+    def test_assets(self, tmp_path):
+        """ The declared assets are downloaded into the plugin folder, checked against their sha256. """
+        assetFile = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        sha256 = hashlib.sha256(b"weights").hexdigest()
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[
+            asset(assetFile.as_uri(), path="models/sub/weights.pt", sha256=sha256),
+            asset(assetFile.as_uri(), name="rootWeights"),
+        ])
+        installer(archive, tmp_path / "plugins").execute()
+
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        assert (pluginFolder / "models" / "sub" / "weights.pt").read_text() == "weights"
+        assert (pluginFolder / "weights.pt").read_text() == "weights"
+        lockAssets = json.loads((pluginFolder / "plugin.lock").read_text())["assets"]
+        assert [entry["path"] for entry in lockAssets] == ["models/sub/weights.pt", "weights.pt"]
+
+    def test_assetChecksumMismatch(self, tmp_path):
+        """ An asset that does not match its sha256 fails the installation, and leaves nothing behind. """
+        assetFile = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[asset(assetFile.as_uri(), sha256="0" * 64)])
+        with pytest.raises(PluginServiceError):
+            installer(archive, tmp_path / "plugins").execute()
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
+
+    def test_missingAsset(self, tmp_path):
+        """ An asset that cannot be downloaded fails the installation, and leaves nothing behind. """
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[asset((tmp_path / "missing.pt").as_uri())])
+        with pytest.raises(PluginServiceError):
+            installer(archive, tmp_path / "plugins").execute()
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
+
+    def test_assetConflictsWithPluginFile(self, tmp_path):
+        """ An asset cannot overwrite a file shipped with the plugin. """
+        assetFile = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[asset(assetFile.as_uri())],
+                                 files={"weights.pt": "shipped"})
+        with pytest.raises(PluginServiceError):
+            installer(archive, tmp_path / "plugins").execute()
         assert not (tmp_path / "plugins" / "myPlugin").exists()
 
 

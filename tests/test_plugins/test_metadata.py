@@ -3,7 +3,7 @@
 
 import json
 
-from meshroom.core.plugins.metadata import PluginMetadata
+from meshroom.core.plugins.metadata import PluginAsset, PluginMetadata
 from ..utils import writeFile
 
 
@@ -168,6 +168,87 @@ class TestLoadTomlMetadata:
         assert metadata.env == []
 
 
+class TestAssets:
+
+    SHA256 = "a" * 64
+
+    def test_toml(self, tmp_path):
+        """ "[[tool.meshroom.assets]]" entries are parsed into PluginAssets. """
+        content = (
+            "[[tool.meshroom.assets]]\n"
+            "name = \"weights\"\n"
+            "category = \"model\"\n"
+            "url = \"https://example.com/weights.pt\"\n"
+            "path = \"models/weights.pt\"\n"
+            f"sha256 = \"{self.SHA256.upper()}\"\n"
+        )
+        path = writeFile(tmp_path / "pyproject.toml", content)
+
+        metadata = PluginMetadata.loadToml(path)
+
+        assert metadata.assets == [
+            PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt", self.SHA256)
+        ]
+
+    def test_json(self, tmp_path):
+        """ "assets" entries of a JSON metadata file are parsed into PluginAssets. """
+        content = {"assets": [{"name": "weights", "category": "model", "url": "https://example.com/weights.pt",
+                               "path": "models/weights.pt"}]}
+        path = writeFile(tmp_path / "config.json", json.dumps(content))
+
+        metadata = PluginMetadata.loadJson(path)
+
+        assert metadata.assets == [
+            PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt")
+        ]
+
+    def test_pathIsNormalized(self, tmp_path):
+        """ An asset path is stored normalized, with POSIX separators. """
+        content = {"assets": [{"name": "a", "category": "model", "url": "https://example.com/a.pt",
+                               "path": "./models/./a.pt"}]}
+        path = writeFile(tmp_path / "config.json", json.dumps(content))
+
+        metadata = PluginMetadata.loadJson(path)
+
+        assert [asset.path for asset in metadata.assets] == ["models/a.pt"]
+
+    def test_invalidEntriesAreIgnored(self, tmp_path):
+        """ Invalid asset entries are dropped, the valid ones are kept. """
+        valid = {"name": "valid", "category": "model", "url": "https://example.com/valid.pt", "path": "valid.pt"}
+        content = {"assets": [
+            "notATable",
+            {"category": "model", "url": "https://example.com/a.pt", "path": "a.pt"},
+            {"name": "a", "url": "https://example.com/a.pt", "path": "a.pt"},
+            {"name": "a", "category": 1, "url": "https://example.com/a.pt", "path": "a.pt"},
+            {"name": "a", "category": "model", "path": "a.pt"},
+            {"name": "a", "category": "model", "url": "https://example.com/a.pt"},
+            {"name": "-a", "category": "model", "url": "https://example.com/a.pt", "path": "a.pt"},
+            {"name": "a", "category": "model", "url": "https://example.com/a.pt", "path": "/abs/a.pt"},
+            {"name": "a", "category": "model", "url": "https://example.com/a.pt", "path": "C:/a.pt"},
+            {"name": "a", "category": "model", "url": "https://example.com/a.pt", "path": "../a.pt"},
+            {"name": "a", "category": "model", "url": "https://example.com/a.pt", "path": ""},
+            {"name": "a", "category": "model", "url": "https://example.com/a.pt", "path": "a.pt", "sha256": "notASha"},
+            valid,
+            dict(valid, path="other.pt"),
+            dict(valid, name="other"),
+        ]}
+        path = writeFile(tmp_path / "config.json", json.dumps(content))
+
+        metadata = PluginMetadata.loadJson(path)
+
+        assert metadata.assets == [PluginAsset("valid", "model", "https://example.com/valid.pt", "valid.pt")]
+
+    def test_nonListAssetsAreIgnored(self, tmp_path):
+        """ A non-list "assets" value is dropped as a whole. """
+        path = writeFile(tmp_path / "config.json", json.dumps({"assets": {"name": "a"}}))
+        assert PluginMetadata.loadJson(path).assets == []
+
+    def test_resolvePath(self, tmp_path):
+        """ An asset path is resolved relative to the plugin folder. """
+        asset = PluginAsset("a", "model", "https://example.com/a.pt", "models/a.pt")
+        assert asset.resolvePath(tmp_path) == tmp_path / "models" / "a.pt"
+
+
 class TestResolveEnv:
 
     def test_plainStringValue(self, tmp_path):
@@ -220,6 +301,7 @@ class TestLockfile:
             description="A plugin that does things.",
             requirements="CUDA >= X.X",
             env=[{"key": "MY_VAR", "type": "string", "value": "myValue"}],
+            assets=[PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt", "a" * 64)],
         )
         lockfilePath = tmp_path / "plugin.lock"
 
@@ -234,3 +316,4 @@ class TestLockfile:
         assert reloaded.description == metadata.description
         assert reloaded.requirements == metadata.requirements
         assert reloaded.env == metadata.env
+        assert reloaded.assets == metadata.assets

@@ -13,7 +13,7 @@ except ImportError:
     import tomli as tomllib
 
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Optional
 
 from meshroom.core.files import atomicWriteFile
@@ -34,6 +34,10 @@ _PLUGIN_VERSION_PATTERN = re.compile(r"^[A-Za-z0-9.+]+$")
 # Only letters, hyphen, underscore and digits are allowed.
 _PLUGIN_PUBLISHER_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
+# Plugin asset sha256 pattern.
+# SHA-256 pattern: 64 hexadecimal characters.
+_PLUGIN_SHA256_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
+
 
 class PluginMetadata:
     """
@@ -51,11 +55,12 @@ class PluginMetadata:
         requirements: a human-readable description of the plugin's runtime requirements
                       (if provided and valid).
         env: the list of environment variable entries declared in the file (if provided and valid).
+        assets: the list of external assets declared in the file (valid entries only).
     """
     def __init__(self, name: Optional[str] = None, version: Optional[str] = None,
                  publisher: Optional[str] = None, authors: Optional[list[str]] = None,
                  description: Optional[str] = None, requirements: Optional[str] = None,
-                 env: Optional[list[dict]] = None):
+                 env: Optional[list[dict]] = None, assets: Optional[list[PluginAsset]] = None):
         self.name = name
         self.version = version
         self.publisher = publisher
@@ -63,6 +68,7 @@ class PluginMetadata:
         self.description = description
         self.requirements = requirements
         self.env = env if env is not None else []
+        self.assets = assets if assets is not None else []
 
     @staticmethod
     def loadJson(path: Path) -> Optional[PluginMetadata]:
@@ -109,7 +115,8 @@ class PluginMetadata:
             PluginMetadata._sanitizeAuthors(content.get("authors"), path),
             PluginMetadata._sanitizeText(content.get("description"), "description", path),
             PluginMetadata._sanitizeText(content.get("requirements"), "requirements", path),
-            env
+            env,
+            PluginMetadata._sanitizeAssets(content.get("assets"), path)
         )
 
     @staticmethod
@@ -117,7 +124,7 @@ class PluginMetadata:
         """
         Parse the "pyproject.toml" file at "path" into a PluginMetadata:
         - "name"/"version"/"authors"/"description" come from the standard "[project]" table.
-        - "publisher"/"env"/"requirements" from the Meshroom-specific "[tool.meshroom]" table.
+        - "publisher"/"env"/"requirements"/"assets" from the Meshroom-specific "[tool.meshroom]" table.
 
         Args:
             path: the absolute path of the pyproject.toml file to parse.
@@ -171,7 +178,8 @@ class PluginMetadata:
             PluginMetadata._sanitizeAuthors(authors, path),
             PluginMetadata._sanitizeText(project.get("description"), "description", path),
             PluginMetadata._sanitizeText(meshroom.get("requirements"), "requirements", path),
-            env
+            env,
+            PluginMetadata._sanitizeAssets(meshroom.get("assets"), path)
         )
 
     @staticmethod
@@ -247,6 +255,71 @@ class PluginMetadata:
             return None
         return value
 
+    @staticmethod
+    def _sanitizeAssets(assets, path: Path) -> list[PluginAsset]:
+        """
+        Return "assets" parsed into PluginAssets, dropping invalid entries and logging a warning.
+        "assets" itself must be a list, if it is not, it is ignored entirely.
+
+        Each entry is expected to be formatted as follows:
+        { "name": "...", "category": "...", "url": "...", "path": "...", "sha256": "..." }
+        "sha256" is optional.
+        """
+        if assets is None:
+            return []
+        if not isinstance(assets, list):
+            logging.warning(f"'assets' in metadata file '{path}' must be a list, "
+                            f"got {type(assets).__name__}. Ignoring it.")
+            return []
+
+        validAssets: list[PluginAsset] = []
+        for entry in assets:
+            asset = PluginMetadata._sanitizeAsset(entry, path)
+            if asset is None:
+                continue
+            if any(asset.name == other.name for other in validAssets):
+                logging.warning(f"Duplicate asset name '{asset.name}' in metadata file '{path}'. Ignoring it.")
+                continue
+            if any(asset.path == other.path for other in validAssets):
+                logging.warning(f"Duplicate asset path '{asset.path}' in metadata file '{path}'. Ignoring it.")
+                continue
+            validAssets.append(asset)
+        return validAssets
+
+    @staticmethod
+    def _sanitizeAsset(entry, path: Path) -> Optional[PluginAsset]:
+        """
+        Return the asset "entry" parsed into a PluginAsset, or None (logging a warning) if it is invalid.
+        """
+        def invalid(reason: str) -> None:
+            logging.warning(f"Invalid entry in 'assets' in metadata file '{path}': {entry!r}.\n"
+                            f"{reason} Ignoring it.")
+
+        if not isinstance(entry, dict):
+            return invalid("Asset entries must be tables/objects.")
+        for key in ("name", "category", "url", "path"):
+            if not isinstance(entry.get(key), str) or not entry[key]:
+                return invalid(f"'{key}' must be a non-empty string.")
+
+        name = entry["name"]
+        if not _PLUGIN_NAME_PATTERN.match(name):
+            return invalid("'name' must only contain letters, digits, '.', '_' and '-', "
+                           "and start/end with a letter or digit.")
+
+        assetPath = entry["path"]
+        posixPath = PurePosixPath(assetPath)
+        if (posixPath.is_absolute() or PureWindowsPath(assetPath).drive or "\\" in assetPath
+                or ".." in posixPath.parts or not posixPath.parts):
+            return invalid("'path' must be a relative path inside the plugin folder, without '..'.")
+
+        sha256 = entry.get("sha256")
+        if sha256 is not None:
+            if not isinstance(sha256, str) or not _PLUGIN_SHA256_PATTERN.match(sha256):
+                return invalid("'sha256' must be a string of 64 hexadecimal characters.")
+            sha256 = sha256.lower()
+
+        return PluginAsset(name, entry["category"], entry["url"], posixPath.as_posix(), sha256)
+
     def resolveEnv(self, basePath: Path) -> dict[str, str]:
         """
         Resolve "env" into a dictionary of environment variable names to values.
@@ -300,6 +373,46 @@ class PluginMetadata:
             "description": self.description,
             "requirements": self.requirements,
             "env": self.env,
+            "assets": [asset.toDict() for asset in self.assets],
             "createdAt": datetime.now(timezone.utc).isoformat(),
         }, indent=4)
         atomicWriteFile(path, content)
+
+
+class PluginAsset:
+    """
+    An external file (model, weights, data...) declared by a plugin, downloaded into the plugin folder
+    when the plugin is installed.
+
+    Members:
+        name: the asset's name, unique within the plugin.
+        category: a free-form label describing the kind of asset (e.g. "model", "weights", "data").
+        url: the url to download the asset from.
+        path: the file path of the asset, relative to the plugin folder (POSIX separators).
+        sha256: the expected SHA-256 hexdigest of the asset (lowercase), or None if not provided.
+    """
+    def __init__(self, name: str, category: str, url: str, path: str, sha256: Optional[str] = None):
+        self.name = name
+        self.category = category
+        self.url = url
+        self.path = path
+        self.sha256 = sha256
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, PluginAsset) and self.toDict() == other.toDict()
+
+    def __repr__(self) -> str:
+        return f"PluginAsset({self.toDict()!r})"
+
+    def toDict(self) -> dict:
+        return {
+            "name": self.name,
+            "category": self.category,
+            "url": self.url,
+            "path": self.path,
+            "sha256": self.sha256,
+        }
+
+    def resolvePath(self, pluginFolder: Path) -> Path:
+        """ Return the absolute path of the asset within "pluginFolder". """
+        return Path(pluginFolder).joinpath(*PurePosixPath(self.path).parts)

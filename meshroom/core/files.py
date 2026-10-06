@@ -53,6 +53,32 @@ def isSafeFolderName(name) -> bool:
     return isinstance(name, str) and name not in ("", "..") and Path(name).name == name
 
 
+@contextmanager
+def atomicOpen(path: Path, mode: str = "w", prefix: str = tempfile.gettempprefix()):
+    """
+    Context manager to write "path" atomically: the yielded file writes to a temporary file in the same
+    folder, moved into place with os.replace() once the "with" block succeeds, so a reader never observes
+    a partial file. If the "with" block raises, the temporary file is removed and "path" is left untouched.
+
+    Args:
+        path: the file to write.
+        mode: the open mode, "w" (text) or "wb" (binary).
+        prefix: the prefix of the temporary file's random name, created directly under "path"'s folder.
+
+    Yields:
+        the open temporary file.
+    """
+    path = Path(path)
+    fd, tmpPath = tempfile.mkstemp(dir=path.parent, prefix=prefix)
+    try:
+        with os.fdopen(fd, mode) as f:
+            yield f
+        os.replace(tmpPath, path)
+    except BaseException:
+        os.remove(tmpPath)
+        raise
+
+
 def atomicWriteFile(path: Path, data: str | bytes, mode: str = "w",
                     prefix: str = tempfile.gettempprefix()) -> None:
     """
@@ -65,15 +91,8 @@ def atomicWriteFile(path: Path, data: str | bytes, mode: str = "w",
         mode: the open mode, "w" (text) or "wb" (binary).
         prefix: the prefix of the temporary file's random name, created directly under "path"'s folder.
     """
-    path = Path(path)
-    fd, tmpPath = tempfile.mkstemp(dir=path.parent, prefix=prefix)
-    try:
-        with os.fdopen(fd, mode) as f:
-            f.write(data)
-        os.replace(tmpPath, path)
-    except BaseException:
-        os.remove(tmpPath)
-        raise
+    with atomicOpen(path, mode, prefix) as f:
+        f.write(data)
 
 
 @contextmanager

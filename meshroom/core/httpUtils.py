@@ -30,6 +30,10 @@ def _open(url: str, timeout: float):
     """
     Open "url", translating urllib's network/HTTP errors into RequestError.
 
+    Args:
+        url: the url to open.
+        timeout: the timeout (in seconds) of the request.
+
     Yields:
         The open response, as returned by urllib.request.urlopen().
 
@@ -76,6 +80,10 @@ def etagMatch(url: str, etag: str) -> bool:
     Check whether "url"'s remote content still matches "etag", using a conditional GET with an
     "If-None-Match" header, without downloading the body.
 
+    Args:
+        url: the url to check.
+        etag: the ETag of the content previously downloaded from "url".
+
     Returns:
         bool: True if the server confirmed the content still matches (HTTP 304), False if it
         changed, or on any request failure.
@@ -93,6 +101,14 @@ def etagMatch(url: str, etag: str) -> bool:
 def fetchStatus(url: str, method: str = "GET", timeout: float = _HTTP_REQUEST_TIMEOUT) -> Optional[int]:
     """
     Open "url" without reading its body and return the resulting HTTP status code, or None.
+
+    Args:
+        url: the url to open.
+        method: the HTTP method of the request (e.g. "GET", "HEAD").
+        timeout: the timeout (in seconds) of the request.
+
+    Returns:
+        int | None: the HTTP status code, or None if the request failed without one (e.g. network error).
     """
     request = urllib.request.Request(url, method=method)
     try:
@@ -108,6 +124,10 @@ def fetch(url: str, timeout: float = _HTTP_REQUEST_TIMEOUT) -> bytes:
     """
     GET "url" fully.
 
+    Args:
+        url: the url to download.
+        timeout: the timeout (in seconds) of the request.
+
     Returns:
         bytes: the downloaded content.
 
@@ -121,6 +141,10 @@ def fetch(url: str, timeout: float = _HTTP_REQUEST_TIMEOUT) -> bytes:
 def fetchWithETag(url: str, timeout: float = _HTTP_REQUEST_TIMEOUT) -> tuple[bytes, Optional[str]]:
     """
     GET "url" fully with Etag.
+
+    Args:
+        url: the url to download.
+        timeout: the timeout (in seconds) of the request.
 
     Returns:
         tuple[bytes, str | None]: the downloaded content and the response's ETag header (if any).
@@ -136,6 +160,12 @@ def fetchWithProgress(url: str, onBytes: Optional[Callable[[int, int], None]] = 
                       timeout: float = _HTTP_REQUEST_TIMEOUT) -> bytes:
     """
     GET "url" fully, reporting progress via "onBytes" as the body streams in.
+
+    Args:
+        url: the url to download.
+        onBytes: if provided, called after each chunk with "(bytesRead, totalBytes)", "totalBytes"
+                 being -1 if unknown.
+        timeout: the timeout (in seconds) of the request.
 
     Returns:
         bytes: the downloaded content.

@@ -37,7 +37,8 @@ class PluginRegistry(BaseObject):
                     "publisher": "myRegistry",
                     "description": "What the plugin does",
                     "authors": ["Jane Doe"],
-                    "requirements": ["..."]
+                    "requirements": ["..."],
+                    "license": "MIT"
                 },
                 ...
             ]
@@ -55,7 +56,7 @@ class PluginRegistry(BaseObject):
         - "name": name of the plugin.
         - "publisher": publisher of the plugin.
         - "versions": available versions, newest first (a single "version" string is also accepted).
-        - "description", "authors", "requirements": optional plugin metadata.
+        - "description", "authors", "requirements", "license": optional plugin metadata.
     """
 
     def __init__(self, path: Path, parent: BaseObject = None):
@@ -275,6 +276,7 @@ class PluginRegistry(BaseObject):
                                         description=entry.get("description"), versions=versions,
                                         authors=entry.get("authors") or [],
                                         requirements=entry.get("requirements"),
+                                        license=entry.get("license"),
                                         parent=self.parent())
             pluginRecord = entryProvider.completeRecord(pluginRecord)
             if not pluginRecord:

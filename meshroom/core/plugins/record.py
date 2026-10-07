@@ -12,7 +12,7 @@ class PluginRecord(BaseObject):
     def __init__(self, name: str, version: str, publisher: str, url: str,
                  description: Optional[str] = None, versions: Optional[list[str]] = None,
                  authors: Optional[list[str]] = None, requirements: Optional[str] = None,
-                 parent: BaseObject = None):
+                 license: Optional[str] = None, parent: BaseObject = None):
         super().__init__(parent)
         self._name = name
         self._version = version
@@ -22,6 +22,7 @@ class PluginRecord(BaseObject):
         self._versions = versions if versions is not None else []
         self._authors = authors if authors is not None else []
         self._requirements = requirements
+        self._license = license
 
     # The name of the plugin.
     name = Property(str, lambda self: self._name, constant=True)
@@ -39,3 +40,5 @@ class PluginRecord(BaseObject):
     authors = Property(VariantList, lambda self: self._authors, constant=True)
     # A human-readable description of the plugin's runtime requirements.
     requirements = Property(str, lambda self: self._requirements, constant=True)
+    # A human-readable description of the plugin's license.
+    license = Property(str, lambda self: self._license, constant=True)

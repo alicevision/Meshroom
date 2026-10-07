@@ -108,6 +108,7 @@ class GithubPluginProvider(PluginProvider):
         return PluginRecord(name=name, version=pluginRecord.version, publisher=publisher, url=pluginRecord.url,
                             description=pluginRecord.description, versions=pluginRecord.versions,
                             authors=pluginRecord.authors, requirements=pluginRecord.requirements,
+                            license=pluginRecord.license,
                             parent=pluginRecord.parent())
 
 

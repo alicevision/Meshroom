@@ -1,0 +1,7 @@
+{
+    "name": "Meshroom Hub",
+    "description": "Meshroom Hub plugin registry",
+    "url": "https://github.com/meshroomHub/pluginRegistry",
+    "fileUrl": "https://raw.githubusercontent.com/meshroomHub/pluginRegistry/HEAD/meshroomHub.json",
+    "entries": []
+}

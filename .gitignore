@@ -19,6 +19,9 @@ Thumbs.db
 *.pyo
 __pycache__
 
+# plugins
+meshroom/plugins/
+
 # backup files
 *.json
 !*Config.json

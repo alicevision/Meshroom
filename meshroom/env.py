@@ -51,6 +51,8 @@ class EnvVar(Enum):
                                                   "For example, 'packageA=/path/to/packageA/version/root'.")
     MESHROOM_USER_REZ_PLUGINS = VarDefinition(str, "", "List of user Rez plugins, defined by the package name associated with the plugin's root path. "
                                                   "For example, 'packageA=/path/to/packageA/version/root'.")
+    MESHROOM_LOCAL_PLUGINS = VarDefinition(bool, "True", "Enable local plugin management.")
+    MESHROOM_UV_PATH = VarDefinition(str, "", "Path to the 'uv' executable used to install local plugin dependencies; falls back to 'uv' on PATH.")
     MESHROOM_TEMP_PATH = VarDefinition(str, tempfile.gettempdir(), "Path to the temporary folder.")
 
 

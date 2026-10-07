@@ -31,7 +31,7 @@ For a plugin named "customPlugin", Meshroom expects this layout:
 ## Plugin Metadata
 
 The plugin's metadata is read from `pyproject.toml`, at the root of the plugin:
-- `name`, `version`, `description` and `authors` come from the standard `[project]` table.
+- `name`, `version`, `description`, `authors` and the license come from the standard `[project]` table.
 - `publisher`, `requirements`, `env` and `assets` come from the Meshroom-specific `[tool.meshroom]` table.
 
 ```toml
@@ -40,6 +40,7 @@ name = "customPlugin"
 version = "1.0.0"
 description = "What the plugin does."
 authors = [ {name = "Jane Doe"} ]
+license = "MIT"
 dependencies = ["numpy"]
 
 [tool.meshroom]
@@ -63,8 +64,9 @@ All the fields are optional:
 - **`version`**: the version of the plugin.
 - **`publisher`**: the publisher of the plugin.
 - **`requirements`**: a human-readable description of what the plugin needs to run (e.g. hardware requirements). It is only displayed.
+- **`license`**: the license of the plugin.
 - **`env`**: environment variables set when computing the plugin's nodes. A relative `path` value is resolved against the plugin root folder.
-- **`assets`**: external files (models, weights, data...) downloaded into the plugin folder when the plugin is installed or updated as a local plugin (see [Installing a Plugin](#installing-a-plugin)). Each asset has:
+- **`assets`**: external files (models, weights, data...) downloaded into the plugin folder when the plugin is installed or updated as a local plugin. Each asset has:
   - **`name`** (required): the name of the asset, unique within the plugin.
   - **`category`** (required): a free-form label describing the kind of asset (e.g. `model`, `weights`, `data`).
   - **`url`** (required): the url to download the asset from.

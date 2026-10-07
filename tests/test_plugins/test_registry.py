@@ -62,6 +62,7 @@ class TestUpdateRecords:
             "description": "A plugin that does things.",
             "authors": ["Alice", "Bob"],
             "requirements": "CUDA >= X.X",
+            "license": "MIT",
         }]}
         path = writeFile(tmp_path / "registry.json", json.dumps(content))
 
@@ -78,16 +79,19 @@ class TestUpdateRecords:
         assert record.description == "A plugin that does things."
         assert record.authors == ["Alice", "Bob"]
         assert record.requirements == "CUDA >= X.X"
+        assert record.license == "MIT"
 
     def test_githubNameAndPublisherFromUrl(self, tmp_path):
-        """ A GitHub entry without name and publisher takes them from its url. """
-        content = {"entries": [{"url": "https://github.com/myPublisher/myRepo", "versions": ["1.0"]}]}
+        """ A GitHub entry without name and publisher takes them from its url, keeping its other fields. """
+        content = {"entries": [{"url": "https://github.com/myPublisher/myRepo", "versions": ["1.0"],
+                                "license": "MIT"}]}
         path = writeFile(tmp_path / "registry.json", json.dumps(content))
 
         registry = PluginRegistry(path)
         assert registry.updateRecords()
 
         assert [record.name for record in registry.records] == ["myRepo"]
+        assert registry.records[0].license == "MIT"
         assert registry.records[0].name == "myRepo"
         assert registry.records[0].publisher == "myPublisher"
 

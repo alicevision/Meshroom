@@ -37,6 +37,7 @@ class TestLoadJsonMetadata:
         assert metadata.authors == []
         assert metadata.description is None
         assert metadata.requirements is None
+        assert metadata.license is None
         assert metadata.env == content
 
     def test_fullDictFormat(self, tmp_path):
@@ -48,6 +49,7 @@ class TestLoadJsonMetadata:
             "authors": ["Alice", "Bob"],
             "description": "A plugin that does things.",
             "requirements": "CUDA >= X.X",
+            "license": "MIT",
             "env": [{"key": "MY_VAR", "type": "string", "value": "myValue"}],
         }
         path = writeFile(tmp_path / "plugin.lock", json.dumps(content))
@@ -61,6 +63,7 @@ class TestLoadJsonMetadata:
         assert metadata.authors == ["Alice", "Bob"]
         assert metadata.description == "A plugin that does things."
         assert metadata.requirements == "CUDA >= X.X"
+        assert metadata.license == "MIT"
         assert metadata.env == content["env"]
 
     def test_invalidNameVersionPublisherAreIgnored(self, tmp_path):
@@ -89,9 +92,9 @@ class TestLoadJsonMetadata:
         assert metadata is not None
         assert metadata.authors == ["Alice", "Carol"]
 
-    def test_descriptionAndRequirementsMustBeStrings(self, tmp_path):
-        """ Non-string "description"/"requirements" values are dropped, not propagated. """
-        content = {"description": 42, "requirements": ["not", "a", "string"]}
+    def test_descriptionRequirementsAndLicenseMustBeStrings(self, tmp_path):
+        """ Non-string "description"/"requirements"/"license" values are dropped, not propagated. """
+        content = {"description": 42, "requirements": ["not", "a", "string"], "license": {"text": "MIT"}}
         path = writeFile(tmp_path / "plugin.lock", json.dumps(content))
 
         metadata = PluginMetadata.loadJson(path)
@@ -99,6 +102,7 @@ class TestLoadJsonMetadata:
         assert metadata is not None
         assert metadata.description is None
         assert metadata.requirements is None
+        assert metadata.license is None
 
     def test_nonListEnvIsIgnored(self, tmp_path):
         """ A non-list "env" value is ignored, falling back to an empty list. """
@@ -124,7 +128,7 @@ class TestLoadTomlMetadata:
 
     def test_fullProject(self, tmp_path):
         """
-        "name"/"version"/"authors"/"description" come from "[project]", "publisher"/"env"/
+        "name"/"version"/"authors"/"description"/"license" come from "[project]", "publisher"/"env"/
         "requirements" from the Meshroom-specific "[tool.meshroom]" table.
         """
         content = (
@@ -133,6 +137,7 @@ class TestLoadTomlMetadata:
             "version = \"1.2.3\"\n"
             "authors = [{ name = \"Alice\" }, \"Bob\"]\n"
             "description = \"A plugin that does things.\"\n"
+            "license = \"MIT\"\n"
             "\n"
             "[tool.meshroom]\n"
             "publisher = \"my-publisher\"\n"
@@ -150,6 +155,7 @@ class TestLoadTomlMetadata:
         assert metadata.authors == ["Alice", "Bob"]
         assert metadata.description == "A plugin that does things."
         assert metadata.requirements == "CUDA >= X.X"
+        assert metadata.license == "MIT"
         assert metadata.env == [{"key": "MY_VAR", "type": "string", "value": "myValue"}]
 
     def test_missingTablesFallBackToDefaults(self, tmp_path):
@@ -165,7 +171,30 @@ class TestLoadTomlMetadata:
         assert metadata.authors == []
         assert metadata.description is None
         assert metadata.requirements is None
+        assert metadata.license is None
         assert metadata.env == []
+
+    def test_licenseDeclarations(self, tmp_path):
+        """
+        The license is the name declared by "license", else by the "License ::" classifiers, followed
+        by the license files of "license.file" and "license-files".
+        """
+        writeFile(tmp_path / "LICENSE", "")
+        writeFile(tmp_path / "NOTICE", "")
+        mitClassifier = "classifiers = [\"License :: OSI Approved\", \"License :: OSI Approved :: MIT License\"]\n"
+        declarations = {
+            "license = \"MIT\"\n" + mitClassifier: "MIT",
+            "license = { text = \"MIT License\\nCopyright\" }\n": "MIT License",
+            mitClassifier: "MIT License",
+            "license = { file = \"LICENSE\" }\n": "See file(s): LICENSE",
+            "license-files = [\"LICEN[CS]E*\", \"NOTICE\", \"../LICENSE\"]\n": "See file(s): LICENSE, NOTICE",
+            "license = \"MIT\"\nlicense-files = [\"LICENSE\"]\n": "MIT (see file(s): LICENSE)",
+            mitClassifier + "license = { file = \"LICENSE\" }\n": "MIT License (see file(s): LICENSE)",
+            "license = 42\nlicense-files = \"LICENSE\"\n": None,
+        }
+        for declaration, expected in declarations.items():
+            path = writeFile(tmp_path / "pyproject.toml", "[project]\n" + declaration)
+            assert PluginMetadata.loadToml(path).license == expected, declaration
 
 
 class TestAssets:
@@ -300,6 +329,7 @@ class TestLockfile:
             authors=["Alice"],
             description="A plugin that does things.",
             requirements="CUDA >= X.X",
+            license="MIT (see file(s): LICENSE)",
             env=[{"key": "MY_VAR", "type": "string", "value": "myValue"}],
             assets=[PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt", "a" * 64)],
         )
@@ -315,5 +345,6 @@ class TestLockfile:
         assert reloaded.authors == metadata.authors
         assert reloaded.description == metadata.description
         assert reloaded.requirements == metadata.requirements
+        assert reloaded.license == metadata.license
         assert reloaded.env == metadata.env
         assert reloaded.assets == metadata.assets

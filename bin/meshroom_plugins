@@ -152,6 +152,7 @@ def handleInfo(args):
               f" - Description: {plugin.description}\n"
               f" - Authors: {', '.join(plugin.authors)}\n"
               f" - Requirements: {plugin.requirements}\n"
+              f" - License: {plugin.license}\n"
               f" - Type: {plugin.type.name}\n"
               f" - Path: {plugin.rootPath}\n"
               f" - User Plugin: {plugin.isUserPlugin}\n"

@@ -5,7 +5,7 @@ import logging
 from meshroom.core import desc
 
 
-class GetParentFolder(desc.Node):
+class GetParentFolder(desc.InlineNode):
     """ Get the parent folder """
     
     category = "Other"

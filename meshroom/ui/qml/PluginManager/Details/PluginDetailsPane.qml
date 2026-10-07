@@ -215,6 +215,15 @@ Panel {
                     visible: !!(root.plugin && root.plugin.requirements)
                 }
 
+                // Plugin License
+                NoticePane {
+                    title: "License"
+                    icon: MaterialIcons.balance
+                    text: root.plugin ? (root.plugin.license || "") : ""
+                    Layout.fillWidth: true
+                    visible: !!(root.plugin && root.plugin.license)
+                }
+
                 // Spacer
                 Item { Layout.fillWidth: true }
             }

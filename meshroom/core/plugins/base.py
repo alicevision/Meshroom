@@ -65,6 +65,7 @@ class Plugin(BaseObject):
         description: a short description of the plugin
         authors: the list of the plugin's authors
         requirements: a human-readable description of the plugin's runtime requirements
+        license: a human-readable description of the plugin's license
         rootPath: the absolute path of the plugin's root folder
         hostPath: the absolute path of the plugin's host modules (its "meshroom" folder)
         isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team)
@@ -112,6 +113,8 @@ class Plugin(BaseObject):
     authors = Property(VariantList, lambda self: self._context.metadata.authors, constant=True)
     # A human-readable description of the plugin's runtime requirements.
     requirements = Property(str, lambda self: self._context.metadata.requirements or "", constant=True)
+    # A human-readable description of the plugin's license, or an empty string if none was provided.
+    license = Property(str, lambda self: self._context.metadata.license or "", constant=True)
     # The absolute path of the plugin's root folder.
     rootPath = Property(str, lambda self: str(self._context.rootPath), constant=True)
     # The absolute path of the plugin's host modules (its "meshroom" folder).

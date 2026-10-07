@@ -3,23 +3,41 @@
 __version__ = "1.0"
 
 from pathlib import Path
+from typing import List, Tuple
+import json
 
-import meshroom
+from meshroom.core.desc.validators import success
+from meshroom.core.desc.validators import error
 from meshroom import _MESHROOM_ROOT
-from meshroom.core import desc
+from meshroom.core import desc, node
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 _MESHROOM_BATCH = Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch"
 
 
-class ComputeMeshroomScene(desc.CommandLineNode):
+def isValidSceneFileValidator(node, _) -> Tuple[bool, List[str]]:
+    filePath = Path(node.scene.value)
+    errorMessages = []
+    if not filePath.exists():
+        errorMessages.append(f"{filePath} doesn't exists")
+    if filePath.suffix not in ('.mg', '.mgt'):
+        errorMessages.append(f"{filePath} should be a .mg or .mgt file")
+
+    if len(errorMessages) > 0:
+        return error(errorMessages)
+    
+    return success()
+
+class ComputeMeshroomScene(desc.CommandLineNode, desc.InputNode):
     """
     Compute or Submits a meshroom scene on the farm.
     """
 
     pythonExecutable = "python"
     category = "Utils"
-    commandLine = "{node.nodeDesc.pythonExecutable} " + str(_MESHROOM_BATCH) + " -p {node.scene.value} --save {node.scene.value}"
 
     def __getSubmitters():
         from meshroom.core import submitters
@@ -53,6 +71,9 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             label="Scene",
             description="Meshroom scene.",
             value="",
+            validators=[
+                isValidSceneFileValidator
+            ]
         ),
         desc.BoolParam(
             name="forceCompute",
@@ -90,4 +111,104 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             value="",
             enabled=len(SUBMITTERS)>0
         ),
+        desc.AnySet(
+            name="inputs",
+            label="Inputs",
+            description="All the parameters exposed in the GraphInput of the given Scene file",
+            exposed=True
+        )        
     ]
+
+    outputs = [
+        desc.AnySet(
+            name="outputs",
+            label="Outputs",
+            description="All the parameters exposed in the GraphOutput of the given Scene file",
+            exposed=True
+        )
+    ]
+
+
+    @staticmethod
+    def _clearAnySet(anySet: desc.AnySet):
+        inputAttributes = [input for input in anySet.value]
+        for input in inputAttributes:
+            anySet.removeAttribute(input)
+
+    @staticmethod
+    def _updateInputAttributes(node: node.Node, sceneFile: Path, sceneFileNode: dict):
+
+        if sceneFileNode.get('nodeType', None) != 'GraphInput':
+            logger.warning('The given scene file should contain a GraphInput')
+            return
+
+        exposedAttribute = sceneFileNode.get('inputs', {}).get('exposeds', None)
+        if not exposedAttribute:
+            logger.warning(f"{sceneFile} should have a GraphInputNode with a exposeds attribute")
+            return
+        
+        for i, attr in enumerate(exposedAttribute.get('children', [])):
+            node.inputs.insertAttribute(attr, i)
+    
+    @staticmethod
+    def _updateOutputAttributes(node: node.Node, sceneFile: Path, sceneFileNode: dict):
+
+        if sceneFileNode.get('nodeType', None) != 'GraphOutput':
+            logger.warning('The given scene file should contain a GraphOutput')
+            return
+
+        exposedAttribute = sceneFileNode.get('inputs', {}).get('exposeds', None)
+        if not exposedAttribute:
+            logger.warning(f"{sceneFile} should have a GraphOutputNode with a exposeds attribute")
+            return
+        
+        for i, attr in enumerate(exposedAttribute.get('children', [])):
+
+            if attr.get('value', None):
+                print(f"Removing {attr.get('value', None)}")
+                del attr['value']
+
+            node.outputs.insertAttribute(attr, i)    
+
+    @staticmethod
+    def _updateAttributesFromSceneFile(node, sceneFile):
+        
+        if not sceneFile.exists():
+            logger.warning(f"{sceneFile} doesn't exists")
+            return
+        
+        with open(sceneFile, 'r', encoding="utf8") as sceneFileStream:
+            sceneFileData = json.load(sceneFileStream)
+        
+        if not sceneFileData:
+            return
+        
+        for _, sceneFileNode in sceneFileData.get('graph', {}).items():
+            ComputeMeshroomScene._updateInputAttributes(node, sceneFile, sceneFileNode)
+            ComputeMeshroomScene._updateOutputAttributes(node, sceneFile, sceneFileNode)
+
+    def initialize(self, node, inputs, recursiveInputs):
+        
+        givenFile = Path(inputs[0])
+
+        if len(inputs) == 1 and givenFile.exists() and givenFile.suffix in ('.mg', '.mgt'):
+            giveFilePath = str(givenFile)
+
+            if node.scene.value == giveFilePath:
+                return
+            
+            node.scene.value = giveFilePath
+
+    def onSceneChanged(self, node):
+
+        self._clearAnySet(node.inputs)
+        self._updateAttributesFromSceneFile(node=node, 
+                                            sceneFile=Path(node.scene.value))
+
+    def buildCommandLine(self, chunk):
+        node = chunk.node
+
+        sceneInputs = " ".join([f"GraphInput:exposeds.{inputAttr.name}={inputAttr.value}" for inputAttr in node.inputs.value])
+        
+        return  f"{node.nodeDesc.pythonExecutable} " + str(_MESHROOM_BATCH) + f" -p {node.scene.value} --save {node.scene.value} --paramOverrides {sceneInputs}"
+

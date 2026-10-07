@@ -37,7 +37,7 @@ class PluginRegistry(BaseObject):
                     "publisher": "myRegistry",
                     "description": "What the plugin does",
                     "authors": ["Jane Doe"],
-                    "requirements": ["..."],
+                    "requirements": "CUDA >= X.X",
                     "license": "MIT"
                 },
                 ...
@@ -271,6 +271,11 @@ class PluginRegistry(BaseObject):
                 logging.warning(f"Invalid entry in registry file '{self._path}': unsupported plugin source '{url}'.")
                 return False
             version = versions[0] if versions else entry.get("version", "")
+            for key in ("requirements", "license"):
+                if entry.get(key) is not None and not isinstance(entry[key], str):
+                    logging.warning(f"Invalid entry '{url}' in registry file '{self._path}': "
+                                    f"'{key}' must be a string, got {type(entry[key]).__name__}.")
+                    return False
             pluginRecord = PluginRecord(name=entry.get("name", ""), version=version,
                                         publisher=entry.get("publisher", ""), url=url,
                                         description=entry.get("description"), versions=versions,

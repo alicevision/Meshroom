@@ -54,19 +54,22 @@ class PluginMetadata:
         description: a short description of the plugin (if provided and valid).
         requirements: a human-readable description of the plugin's runtime requirements
                       (if provided and valid).
+        license: a human-readable description of the plugin's license (if provided and valid).
         env: the list of environment variable entries declared in the file (if provided and valid).
         assets: the list of external assets declared in the file (valid entries only).
     """
     def __init__(self, name: Optional[str] = None, version: Optional[str] = None,
                  publisher: Optional[str] = None, authors: Optional[list[str]] = None,
                  description: Optional[str] = None, requirements: Optional[str] = None,
-                 env: Optional[list[dict]] = None, assets: Optional[list[PluginAsset]] = None):
+                 license: Optional[str] = None, env: Optional[list[dict]] = None,
+                 assets: Optional[list[PluginAsset]] = None):
         self.name = name
         self.version = version
         self.publisher = publisher
         self.authors = authors if authors is not None else []
         self.description = description
         self.requirements = requirements
+        self.license = license
         self.env = env if env is not None else []
         self.assets = assets if assets is not None else []
 
@@ -115,6 +118,7 @@ class PluginMetadata:
             PluginMetadata._sanitizeAuthors(content.get("authors"), path),
             PluginMetadata._sanitizeText(content.get("description"), "description", path),
             PluginMetadata._sanitizeText(content.get("requirements"), "requirements", path),
+            PluginMetadata._sanitizeText(content.get("license"), "license", path),
             env,
             PluginMetadata._sanitizeAssets(content.get("assets"), path)
         )
@@ -123,7 +127,7 @@ class PluginMetadata:
     def loadToml(path: Path) -> Optional[PluginMetadata]:
         """
         Parse the "pyproject.toml" file at "path" into a PluginMetadata:
-        - "name"/"version"/"authors"/"description" come from the standard "[project]" table.
+        - "name"/"version"/"authors"/"description"/"license" come from the standard "[project]" table.
         - "publisher"/"env"/"requirements"/"assets" from the Meshroom-specific "[tool.meshroom]" table.
 
         Args:
@@ -178,6 +182,7 @@ class PluginMetadata:
             PluginMetadata._sanitizeAuthors(authors, path),
             PluginMetadata._sanitizeText(project.get("description"), "description", path),
             PluginMetadata._sanitizeText(meshroom.get("requirements"), "requirements", path),
+            PluginMetadata._resolveLicense(project, path),
             env,
             PluginMetadata._sanitizeAssets(meshroom.get("assets"), path)
         )
@@ -254,6 +259,118 @@ class PluginMetadata:
                             f"got {type(value).__name__}. Ignoring it.")
             return None
         return value
+
+    @staticmethod
+    def _resolveLicense(project: dict, path: Path) -> Optional[str]:
+        """
+        Return a displayable license string from the "[project]" table of a pyproject.toml, made of
+        the name of the license followed by its files, e.g. "MIT (see file(s): LICENSE)".
+
+        The name is the first of these declarations naming a license:
+        - "license" as a string: an SPDX expression (PEP 639).
+        - "license" as a table with a "text" key (legacy PEP 621).
+        - the "License ::" entries of "classifiers".
+        The files are those of "license" as a table with a "file" key and of "license-files".
+
+        Args:
+            project: the "[project]" table of the pyproject.toml file.
+            path: the absolute path of the pyproject.toml file.
+
+        Returns:
+            str | None: the license string, or None if no license is declared.
+        """
+        declared = project.get("license")
+        name = None
+        files = []
+        if isinstance(declared, str):
+            name = declared.strip()
+        elif isinstance(declared, dict):
+            text = declared.get("text")
+            if isinstance(text, str):
+                # A full license text may be pasted here: only keep its first non-empty line.
+                lines = [line.strip() for line in text.splitlines() if line.strip()]
+                name = lines[0] if lines else None
+            if isinstance(declared.get("file"), str) and declared["file"]:
+                files.append(PurePosixPath(declared["file"]).as_posix())
+        elif declared is not None:
+            logging.warning(f"'license' in metadata file '{path}' must be a string or a table, "
+                            f"got {type(declared).__name__}. Ignoring it.")
+
+        # Classifiers are only a fallback: they would repeat the name declared by "license".
+        if not name:
+            name = ", ".join(PluginMetadata._licensesFromClassifiers(project.get("classifiers")))
+
+        files += PluginMetadata._resolveLicenseFiles(project.get("license-files"), path)
+        # Remove duplicates, keeping the declaration order.
+        files = list(dict.fromkeys(files))
+        if not files:
+            return name or None
+        filesText = f"file(s): {', '.join(files)}"
+        return f"{name} (see {filesText})" if name else f"See {filesText}"
+
+    @staticmethod
+    def _licensesFromClassifiers(classifiers) -> list[str]:
+        """
+        Return the license names declared by the "License ::" trove classifiers of "classifiers",
+        e.g. "MIT License" for "License :: OSI Approved :: MIT License".
+        """
+        if not isinstance(classifiers, list):
+            return []
+        names = []
+        for classifier in classifiers:
+            if not isinstance(classifier, str):
+                continue
+            segments = [segment.strip() for segment in classifier.split("::")]
+            if len(segments) < 2 or segments[0] != "License":
+                continue
+            name = segments[-1]
+            # "License :: OSI Approved" is a category, it does not name a license.
+            if name and name != "OSI Approved" and name not in names:
+                names.append(name)
+        return names
+
+    @staticmethod
+    def _resolveLicenseFiles(licenseFiles, path: Path) -> list[str]:
+        """
+        Return the files matching the "license-files" glob patterns of a pyproject.toml, relative to
+        its folder (POSIX separators). A pattern matching no file is returned as written.
+
+        Args:
+            licenseFiles: the "[project].license-files" value: a list of glob patterns (PEP 639), or
+                          a table with a "paths" or a "globs" list (draft form of PEP 639).
+            path: the absolute path of the pyproject.toml file.
+
+        Returns:
+            list[str]: the license files.
+        """
+        if licenseFiles is None:
+            return []
+        patterns = licenseFiles
+        if isinstance(licenseFiles, dict):
+            patterns = licenseFiles.get("paths") or licenseFiles.get("globs") or []
+        if not isinstance(patterns, list):
+            logging.warning(f"'license-files' in metadata file '{path}' must be a list, "
+                            f"got {type(licenseFiles).__name__}. Ignoring it.")
+            return []
+
+        folder = Path(path).parent
+        files = []
+        for pattern in patterns:
+            if not isinstance(pattern, str) or not pattern:
+                continue
+            posixPattern = PurePosixPath(pattern)
+            # Patterns must stay inside the plugin folder.
+            if posixPattern.is_absolute() or PureWindowsPath(pattern).drive or ".." in posixPattern.parts:
+                logging.warning(f"Invalid entry in 'license-files' in metadata file '{path}': {pattern!r}.\n"
+                                f"Patterns must be relative, without '..'. Ignoring it.")
+                continue
+            try:
+                matches = sorted(match.relative_to(folder).as_posix()
+                                 for match in folder.glob(pattern) if match.is_file())
+            except (ValueError, NotImplementedError, OSError):
+                matches = []
+            files += matches or [pattern]
+        return files
 
     @staticmethod
     def _sanitizeAssets(assets, path: Path) -> list[PluginAsset]:
@@ -372,6 +489,7 @@ class PluginMetadata:
             "authors": self.authors,
             "description": self.description,
             "requirements": self.requirements,
+            "license": self.license,
             "env": self.env,
             "assets": [asset.toDict() for asset in self.assets],
             "createdAt": datetime.now(timezone.utc).isoformat(),

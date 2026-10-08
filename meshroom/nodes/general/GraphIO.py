@@ -18,7 +18,7 @@ class GraphInput(desc.InitNode, desc.InputNode):
     ]
 
 
-class GraphOutput(desc.Node):
+class GraphOutput(desc.Node, desc.OutputNode):
     """
     """
 

@@ -46,6 +46,7 @@ else
 fi
 
 VERSION_NAME="${MESHROOM_VERSION}-av${AV_VERSION}-${OS}${OS_VERSION}-cuda${CUDA_VERSION}"
+AV_IMAGE="alicevision/alicevision:${AV_VERSION}-${OS}${OS_VERSION}-cuda${CUDA_VERSION}"
 DEPS_IMAGE="alicevision/meshroom-deps:${VERSION_NAME}"
 IMAGE="alicevision/meshroom:${VERSION_NAME}"
 

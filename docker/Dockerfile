@@ -1,11 +1,8 @@
 # syntax=docker/dockerfile:1.4
 # vim: ft=dockerfile
 
-ARG MESHROOM_VERSION
-ARG AV_VERSION
-ARG CUDA_VERSION
-ARG ROCKY_VERSION
-FROM alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}
+ARG DEPS_IMAGE
+FROM ${DEPS_IMAGE}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
@@ -15,8 +12,8 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
-    AV_INSTALL=/opt/AliceVision_install \
-    PATH="${PATH}:${MESHROOM_BUNDLE}"
+    AV_INSTALL=/opt/AliceVision_install
+ENV PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 COPY *.txt *.md *.py ${MESHROOM_DEV}/
 COPY ./docs ${MESHROOM_DEV}/docs
@@ -68,19 +65,8 @@ RUN make "-j$(nproc)" && \
 # PySide6: copy missing libQt63DQuickScene3D.so along with its dependencies to avoid runtime issues
 RUN cp ${QT_DIR}/lib/libQt63DQuickScene3D.so.${QT_VERSION} ${MESHROOM_BUNDLE}/lib/PySide6/Qt/lib/libQt63DQuickScene3D.so.6
 
-# Copy libOpenGL in the bundle: needed by QtAliceVision as a side effect of a Qt6 bug
-RUN cp /usr/lib64/libOpenGL.so.0.0.0 ${MESHROOM_BUNDLE}/lib
-RUN mv ${MESHROOM_BUNDLE}/lib/libOpenGL.so.0.0.0 ${MESHROOM_BUNDLE}/lib/libOpenGL.so.0
-
-# Enable SSH X11 forwarding, needed when the Docker image
-# is run on a remote machine
-RUN dnf install -y openssh openssh-clients openssh-server xorg-x11-xauth
-RUN systemctl enable sshd && \
-    mkdir -p /run/sshd && \
-    ssh-keygen -A
-
-RUN sed -i "s/^.*X11Forwarding.*$/X11Forwarding yes/; s/^.*X11UseLocalhost.*$/X11UseLocalhost no/; s/^.*PermitRootLogin prohibit-password/PermitRootLogin yes/; s/^.*X11UseLocalhost.*/X11UseLocalhost no/;" /etc/ssh/sshd_config
-RUN echo "root:meshroom" | chpasswd
+# Copy the system libraries listed by the deps image (BUNDLE_EXTRA_LIBS) into the bundle
+RUN for lib in ${BUNDLE_EXTRA_LIBS:-}; do cp -L "$lib" "${MESHROOM_BUNDLE}/lib/"; done
 
 WORKDIR /root
 

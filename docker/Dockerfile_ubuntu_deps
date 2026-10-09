@@ -1,7 +1,5 @@
-ARG AV_VERSION
-ARG CUDA_VERSION
-ARG UBUNTU_VERSION
-FROM alicevision/alicevision:${AV_VERSION}-ubuntu${UBUNTU_VERSION}-cuda${CUDA_VERSION}
+ARG AV_IMAGE
+FROM ${AV_IMAGE}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
@@ -56,6 +54,14 @@ RUN apt-get install -y --no-install-recommends \
 
 # Install Python3
 # RUN apt install python3.11-pip -y && pip3 install --upgrade pip
+
+# Enable SSH X11 forwarding, needed when the Docker image is run on a remote machine
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ssh xauth && \
+    systemctl enable ssh && \
+    mkdir -p /run/sshd && \
+    sed -i "s/^.*X11Forwarding.*$/X11Forwarding yes/; s/^.*X11UseLocalhost.*$/X11UseLocalhost no/; s/^.*PermitRootLogin prohibit-password/PermitRootLogin yes/; s/^.*X11UseLocalhost.*/X11UseLocalhost no/;" /etc/ssh/sshd_config && \
+    echo "root:meshroom" | chpasswd
 
 # Install Qt (to build plugins) with aqtinstall. It is installed in a throwaway
 # directory so that it does not end up in the Python environment of the image.

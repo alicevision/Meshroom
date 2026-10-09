@@ -1,3 +1,6 @@
+# syntax=docker/dockerfile:1.4
+# vim: ft=dockerfile
+
 ARG MESHROOM_VERSION
 ARG AV_VERSION
 ARG CUDA_VERSION
@@ -41,6 +44,13 @@ WORKDIR ${MESHROOM_BUILD}
 # Move the bundled installation of AliceVision into Meshroom's bundle
 RUN mkdir ${MESHROOM_BUNDLE}/aliceVision && \
     mv /opt/AliceVision_bundle/* ${MESHROOM_BUNDLE}/aliceVision
+
+# AliceVision models and data, downloaded by docker/download-models.sh
+COPY dl/aliceVision/ ${MESHROOM_BUNDLE}/aliceVision/share/aliceVision/
+# Meshroom sets the ALICEVISION_* variables from its bundle (setupEnvironment() in
+# meshroom/__init__.py) but never overrides existing ones: drop those exported by
+# the AliceVision image, which point outside of the bundle
+RUN rm -f /etc/profile.d/alicevision.sh
 
 # Build Meshroom plugins
 RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"

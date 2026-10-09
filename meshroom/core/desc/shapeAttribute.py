@@ -7,7 +7,7 @@ class Shape(GroupAttribute):
     """
     def __init__(self, geometryItems, name, label, description, commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
-        # Shape group desciption
+        # Shape group description
         items = [
             StringParam(name="userName", label="User Name", description="User shape name.", value="",
                         commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
@@ -28,6 +28,15 @@ class Shape(GroupAttribute):
         # Import within the method to prevent cyclic dependencies
         from meshroom.core.attribute import ShapeAttribute
         return ShapeAttribute
+
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.__class__.__name__,
+            "name": self.name,
+        }
+        if self.items[0].keyable:
+            serializedData["keyable"] = True
+        return serializedData
 
 class ShapeList(ListAttribute):
     """
@@ -61,6 +70,14 @@ class ShapeList(ListAttribute):
                               visible=self.visible,
                               exposed=self.exposed)
 
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.__class__.__name__,
+            "shape": self.elementDesc.shortDesc()
+        }
+        return serializedData
+
 class Point2d(Shape):
     """
     Point2d is a Shape attribute that allows to display and modify a 2d point.
@@ -68,7 +85,7 @@ class Point2d(Shape):
     def __init__(self, name, label, description, keyable=False, keyType=None,
                  commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
-        # Geometry group desciption
+        # Geometry group description
         geometryItems = [
             FloatParam(name="x", label="X", description="X coordinate.", value=-1.0, keyable=keyable, keyType=keyType,
                        commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
@@ -103,7 +120,7 @@ class Line2d(Shape):
     def __init__(self, name, label, description, keyable=False, keyType=None,
                  commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
-        # Geometry group desciption
+        # Geometry group description
         geometryItems = [
             Vec2d(name="a", label="A", description="Line A point.", x=-1.0, y=-1.0, keyable=keyable, keyType=keyType,
                   commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
@@ -138,7 +155,7 @@ class Rectangle(Shape):
     def __init__(self, name, label, description, keyable=False, keyType=None,
                  commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
-        # Geometry group desciption
+        # Geometry group description
         geometryItems = [
             Vec2d(name="center", label="Center", description="Rectangle center.", x=-1.0, y=-1.0,
                   keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
@@ -175,7 +192,7 @@ class Circle(Shape):
     def __init__(self, name, label, description, keyable=False, keyType=None,
                  commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
-        # Geometry group desciption
+        # Geometry group description
         geometryItems = [
             Vec2d(name="center", label="Center", description="Circle center.", x=-1.0, y=-1.0,
                   keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,

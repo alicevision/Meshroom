@@ -190,6 +190,16 @@ class Attribute(BaseObject):
             'invalidate':self.invalidate
         }
 
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.__class__.__name__
+        }
+        if self.value is not None and not (self.keyable and self.value == {}):
+            serializedData['value'] = self.value
+        if self.keyable:
+            serializedData["keyable"] = True
+        return serializedData
+
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
@@ -308,6 +318,14 @@ class ListAttribute(Attribute):
     def asDict(self):
         serializedData = super().asDict()
         serializedData['elementDesc'] = self._elementDesc.asDict()
+        return serializedData
+
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.__class__.__name__,
+            "elementDesc": self.elementDesc.shortDesc()
+        }
         return serializedData
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
@@ -433,6 +451,15 @@ class GroupAttribute(Attribute):
                               brackets=self.brackets,
                               visible=self.visible,
                               exposed=self.exposed)
+
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "items": {item.name: item.shortDesc() for item in self.items}
+        }
+        return serializedData
 
     items = Property(Variant, lambda self: self._items, constant=True)
     invalidate = Property(Variant, retrieveChildrenInvalidations, constant=True)
@@ -656,6 +683,10 @@ class PushButtonParam(Param):
             validators=self.validators
         )
 
+    # Override
+    def shortDesc(self) -> dict:
+        return None
+
 class ChoiceParam(Param):
     """
     ChoiceParam is an Attribute that allows to choose a value among a list of possible values.
@@ -753,6 +784,14 @@ class ChoiceParam(Param):
 
     def clone(self):
         return Attribute.clone(self)
+
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = super().shortDesc()
+        serializedData["values"] = self.values
+        if not self.exclusive:
+            serializedData["exclusive"] = False
+        return serializedData
 
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)

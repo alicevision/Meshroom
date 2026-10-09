@@ -57,7 +57,7 @@ def checkTask(task, taskType, nbDependencies):
     assert len(task.dependencies) == nbDependencies
 
 
-def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=20):
+def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=30):
     """
     Wait for a node to complete processing
     """

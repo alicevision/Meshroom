@@ -29,6 +29,15 @@ class Shape(GroupAttribute):
         from meshroom.core.attribute import ShapeAttribute
         return ShapeAttribute
 
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.__class__.__name__,
+            "name": self.name,
+        }
+        if self.items[0].keyable:
+            serializedData["keyable"] = True
+        return serializedData
+
 class ShapeList(ListAttribute):
     """
     List attribute of Shape attribute.
@@ -60,6 +69,14 @@ class ShapeList(ListAttribute):
                               enabled=self.enabled,
                               visible=self.visible,
                               exposed=self.exposed)
+
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.__class__.__name__,
+            "shape": self.elementDesc.shortDesc()
+        }
+        return serializedData
 
 class Point2d(Shape):
     """

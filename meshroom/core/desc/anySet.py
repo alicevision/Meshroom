@@ -6,15 +6,17 @@ class AnySet(GroupAttribute):
 
     def __init__(self,
                  name="Custom Attributes",
+                 items=None,
                  label=None,
                  description=None,
                  commandLineGroup="allParams",
-                 advanced=False, semantic="",
+                 advanced=False,
+                 semantic="",
                  enabled=True,
                  visible=True,
                  exposed=False):
 
-        super().__init__(items = [],
+        super().__init__(items = items if items is not None else [],
                          name=name,
                          label=label,
                          description=description,
@@ -34,5 +36,14 @@ class AnySet(GroupAttribute):
 
     def validateValue(self, value):
         return value
+
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "items": {}
+        }
+        return serializedData
 
     isCustomAttribute = Property(bool, lambda _: True, constant=True)

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class GraphIO:
     """Centralize Graph file keys and IO version."""
 
-    __version__ = "2.1"
+    __version__ = "2.2"
 
     class Keys:
         """File Keys."""
@@ -26,6 +26,7 @@ class GraphIO:
         CacheDir = "cacheDir"
         Graph = "graph"
         Template = "template"
+        NodeDescriptions = "nodeDescriptions"
 
     class Features(Enum):
         """File Features."""
@@ -75,6 +76,7 @@ class GraphSerializer:
         """
         return {
             GraphIO.Keys.Header: self.serializeHeader(),
+            GraphIO.Keys.NodeDescriptions: self.serializeNodeDescriptions(),
             GraphIO.Keys.Graph: self.serializeContent(),
         }
 
@@ -94,7 +96,6 @@ class GraphSerializer:
         header: dict[str, Any] = {}
         header[GraphIO.Keys.ReleaseVersion] = meshroom.__version__
         header[GraphIO.Keys.FileVersion] = GraphIO.__version__
-        header[GraphIO.Keys.NodesVersions] = self._getNodeTypesVersions()
         if self._graph._hasExplicitCacheDir:
             # We store the absolute but also the relative cacheDir path (to the scene file)
             # to make sure that if we move the scene+cacheDir we can still retrieve the cache
@@ -104,7 +105,19 @@ class GraphSerializer:
             }
         return header
 
-    def _getNodeTypesVersions(self) -> Dict[str, str]:
+    def serializeNodeDescriptions(self) -> dict[str, str]:
+        """Get descriptions of each node types in `nodes`"""
+        nodeDescriptions = {node.nodeType: {k: v for k, v in node.getNodeDescription().items()}
+                            for node in self.nodes if node is not None and node.getNodeDescription() is not None}
+        nodeDescriptions = {node["nodeType"]: {
+                                node["version"]: {
+                                    k: v for k, v in node.items() if k not in ["version", "nodeType"]
+                                }
+                            } for node in nodeDescriptions.values()}
+        # Sort them by name (to avoid random order changing from one save to another).
+        return dict(sorted(nodeDescriptions.items()))
+
+    def _getNodeTypesVersions(self) -> dict[str, str]:
         """Get registered versions of each node types in `nodes`, excluding CompatibilityNode instances."""
         nodeTypes = {node.nodeDesc.__class__ for node in self.nodes if isinstance(node, Node)}
         nodeTypesVersions = {
@@ -222,7 +235,7 @@ class PartialGraphSerializer(GraphSerializer):
             return attribute.getDefaultValue()
 
         if isinstance(attribute, ListAttribute):
-            # Recusively serialize each child of the ListAttribute, skipping those for which the attribute
+            # Recursively serialize each child of the ListAttribute, skipping those for which the attribute
             # serialization logic above returns None.
             return [
                 self._serializeAttribute(child)
@@ -236,7 +249,7 @@ class PartialGraphSerializer(GraphSerializer):
                 childData = child.asDict()
                 childLinkAttr = child.inputLink
 
-                # Remove connection if the sourceNode is not in the partialgraph nodes
+                # Remove connection if the sourceNode is not in the partial graph nodes
                 if childLinkAttr and childLinkAttr.node not in self.nodes:
                     childData['value'] = child.getDefaultValue()
                 serializedChildren.append(childData)

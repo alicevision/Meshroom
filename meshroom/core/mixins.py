@@ -4,6 +4,7 @@ class Expandable(object):
 
     def __init__(self):
         super().__init__()
+        self._expanded = False
 
     def _getExpanded(self) -> bool:
         return bool(getattr(self, "_expanded", False))

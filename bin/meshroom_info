@@ -144,7 +144,13 @@ def get_pipeline_info(args, templates, name):
     print(f"  template       : {header.get('template', False)}")
     print(f"  releaseVersion : {header.get('releaseVersion')}")
     print(f"  fileVersion    : {header.get('fileVersion')}")
-    nodesVersions = header.get("nodesVersions")
+    nodeDescriptions = content.get("nodeDescriptions")
+    if nodeDescriptions:
+        # Keeps only the latest version of each node type in the template
+        nodesVersions = {k: list(v.keys())[-1] for k, v in nodeDescriptions.items()}
+    else:
+        # For previous versions of Meshroom GraphIO (<2.2)
+        nodesVersions = header.get("nodesVersions")
     if nodesVersions:
         length = max(len(k) for k in nodesVersions)
         print(f"  nodeVersions")
@@ -158,7 +164,7 @@ def get_pipeline_info(args, templates, name):
 if __name__ == "__main__":
     args = parser.parse_args()
     logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
-    
+
     if args.command == "version":
         get_version(args)
     elif args.command == "nodeinfo":

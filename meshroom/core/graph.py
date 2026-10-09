@@ -13,10 +13,8 @@ from enum import Enum
 
 import meshroom
 import meshroom.core
-from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
-from meshroom.common import deprecated
-from meshroom.core import Version
-from meshroom.core import submitters
+from meshroom.common import BaseObject, DictModel, Slot, Signal, Property, deprecated
+from meshroom.core import Version, submitters, hashValue
 from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
@@ -231,6 +229,7 @@ class Graph(BaseObject):
         self._filepath: str = ""
         self._templateFilepath: str = ""
         self._fileDateVersion = 0
+        self.nodeDescriptions = {}
         self.header = {}
 
     def clear(self):
@@ -323,6 +322,7 @@ class Graph(BaseObject):
 
         self.header = graphData.get(GraphIO.Keys.Header, {})
         fileVersion = Version(self.header.get(GraphIO.Keys.FileVersion, "0.0"))
+        self.nodeDescriptions = graphData.get(GraphIO.Keys.NodeDescriptions, {})
         graphContent = self._normalizeGraphContent(graphData, fileVersion)
         isTemplate = self.header.get(GraphIO.Keys.Template, False)
         explicitCachePaths = self.header.get(GraphIO.Keys.CacheDir)
@@ -405,15 +405,19 @@ class Graph(BaseObject):
 
     def _deserializeNode(self, nodeData: dict, nodeName: str, fromGraph: "Graph"):
         # Retrieve version info from:
-        #   1. nodeData: node saved from a CompatibilityNode
-        #   2. nodesVersion in file header: node saved from a Node
-        # If unvailable, the "version" field will not be set in `nodeData`.
+        #   1. nodeData: node saved from a Node
+        #   2. nodesVersion in file header: node saved from a Node in a previous version of Meshroom GraphIO (<2.2)
+        # If unavailable, the "version" field is set to 0.0.
         if "version" not in nodeData:
             version = fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"])
-            if version:
-                nodeData["version"] = version
+            nodeData["version"] = version if version is not None else "0.0"
         inTemplate = fromGraph.header.get(GraphIO.Keys.Template, False)
-        node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate)
+        nodeDescDict = {}
+        if fromGraph.nodeDescriptions:
+            nodeDescDict = fromGraph.nodeDescriptions.get(nodeData["nodeType"], {})
+        if nodeDescDict:
+            nodeDescDict = nodeDescDict.get(nodeData["version"], {})
+        node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate, nodeDescDict=nodeDescDict)
         self._addNode(node, nodeName)
         return node
 

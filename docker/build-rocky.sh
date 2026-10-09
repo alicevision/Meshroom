@@ -11,10 +11,6 @@ test -d docker || (
     exit 1
 )
 
-test -d dl || \
-    mkdir dl
-test -f dl/qt.run || \
-    wget --no-check-certificate "https://download.qt.io/official_releases/online_installers/qt-online-installer-linux-x64-online.run" -O "dl/qt.run"
 docker/download-models.sh
 
 # DEPENDENCIES

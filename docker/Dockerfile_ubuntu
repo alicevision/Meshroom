@@ -63,7 +63,7 @@ RUN make "-j$(nproc)" && \
 		${MESHROOM_BUNDLE}/aliceVision/share/lemon \
 		${MESHROOM_BUNDLE}/aliceVision/share/libraw \
 		${MESHROOM_BUNDLE}/aliceVision/share/man/ \
-		aliceVision/share/pkgconfig
+		${MESHROOM_BUNDLE}/aliceVision/share/pkgconfig
 
 # PySide6: copy missing libQt63DQuickScene3D.so along with its dependencies to avoid runtime issues
 RUN cp ${QT_DIR}/lib/libQt63DQuickScene3D.so.6.8.3 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/lib/libQt63DQuickScene3D.so.6

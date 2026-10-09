@@ -14,7 +14,6 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     QT_CI_P=azerty1.
 
 # Install libs needed by Qt
-RUN dnf update -y
 RUN dnf install -y flex fontconfig freetype glib2-devel libICE
 RUN dnf install -y libX11 libXext libXi libXrender libSM
 RUN dnf install -y libXt-devel mesa-libGLU-devel mesa-libGL-devel mesa-libEGL-devel

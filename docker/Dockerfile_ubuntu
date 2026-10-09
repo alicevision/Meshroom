@@ -16,7 +16,6 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
     AV_INSTALL=/opt/AliceVision_install \
-    QT_DIR=/opt/Qt/6.8.3/gcc_64 \
     PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 COPY *.txt *.md *.py ${MESHROOM_DEV}/
@@ -66,7 +65,7 @@ RUN make "-j$(nproc)" && \
 		${MESHROOM_BUNDLE}/aliceVision/share/pkgconfig
 
 # PySide6: copy missing libQt63DQuickScene3D.so along with its dependencies to avoid runtime issues
-RUN cp ${QT_DIR}/lib/libQt63DQuickScene3D.so.6.8.3 ${MESHROOM_BUNDLE}/lib/PySide6/Qt/lib/libQt63DQuickScene3D.so.6
+RUN cp ${QT_DIR}/lib/libQt63DQuickScene3D.so.${QT_VERSION} ${MESHROOM_BUNDLE}/lib/PySide6/Qt/lib/libQt63DQuickScene3D.so.6
 
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine

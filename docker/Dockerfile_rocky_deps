@@ -7,11 +7,12 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
 # docker run -it --runtime=nvidia meshroom
 
+ARG QT_VERSION=6.8.3
+
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
-    QT_DIR=/opt/Qt/6.8.3/gcc_64 \
-    QT_CI_LOGIN=alicevisionjunk@gmail.com \
-    QT_CI_P=azerty1.
+    QT_VERSION=${QT_VERSION} \
+    QT_DIR=/opt/Qt/${QT_VERSION}/gcc_64
 
 # Install libs needed by Qt
 RUN dnf install -y flex fontconfig freetype glib2-devel libICE
@@ -26,15 +27,12 @@ RUN dnf install -y libxcb-devel \
                    xcb-util-renderutil
 RUN dnf install -y libglvnd-opengl
 
-# Install Qt (to build plugins)
-WORKDIR /tmp/qt
-COPY dl/qt.run /tmp/qt
-RUN chmod +x qt.run
-RUN ./qt.run --root /opt/Qt --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations \
-    --accept-licenses --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore \
-    --no-force-installations --no-default-installations --confirm-command \
-    install qt.qt6.683.linux_gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
-RUN rm qt.run
+# Install Qt (to build plugins) with aqtinstall. It is installed in a throwaway
+# directory so that it does not end up in the Python environment of the image.
+RUN python3.11 -m pip install --no-cache-dir --target /tmp/aqt aqtinstall==3.3.0 && \
+    PYTHONPATH=/tmp/aqt python3.11 -m aqt install-qt linux desktop ${QT_VERSION} linux_gcc_64 \
+        -m qtcharts qt3d --outputdir /opt/Qt && \
+    rm -rf /tmp/aqt
 
 # Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023
 RUN find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag

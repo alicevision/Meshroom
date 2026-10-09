@@ -10,6 +10,7 @@ import pytest
 from meshroom.core import desc, pluginManager
 from meshroom.core.plugins.base import NodeDescProvider
 from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
+from meshroom.core.graphIO import GraphSerializer
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
 
@@ -198,9 +199,9 @@ def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
     pluginManager.getNodeDescProviders()[nodeType] = NodeDescProvider(nodeDesc)
 
 
-def test_unknown_node_type():
+def test_desc_only_node_node_type():
     """
-    Test compatibility behavior for unknown node type.
+    Test compatibility behavior for node type whose description is no longer available.
     """
     registerNodeDesc(SampleNodeV1)
     g = Graph("")
@@ -220,7 +221,7 @@ def test_unknown_node_type():
     # SampleNodeV1 is now an unknown type
     # Check node instance type and compatibility issue type
     assert isinstance(n, CompatibilityNode)
-    assert n.issue == CompatibilityIssue.UnknownNodeType
+    assert n.issue == CompatibilityIssue.DescOnlyNodeType
     # Check if attributes are properly restored
     assert len(n.attributes) == 3
     assert n.input.isInput
@@ -232,6 +233,145 @@ def test_unknown_node_type():
     assert not n.canUpgrade
     with pytest.raises(NodeUpgradeError):
         g.upgradeNode(nodeName)
+
+
+def test_DescOnlyNodeType_preserves_types_uid_and_flow(tmp_path):
+    """
+    Test that param types, node UID and flow are preserved for node type whose description is no longer available.
+    """
+    graph = Graph("test")
+    allAttrNode_1 = graph.addNewNode("AllAttributesNode", "allAttrNode_1")
+    allAttrNode_2 = graph.addNewNode("AllAttributesNode", "allAttrNode_2")
+    colorNode_1 = graph.addNewNode("Color", "colorNode_1")
+    colorNode_2 = graph.addNewNode("Color", "colorNode_2")
+    dynamicNode_1 = graph.addNewNode("DynamicNode", "dynamicNode_1")
+    dynamicNode_2 = graph.addNewNode("DynamicNode", "dynamicNode_2")
+    nestedGroupNode_1 = graph.addNewNode("GroupAttributes", "nestedGroupNode_1")
+    nestedGroupNode_2 = graph.addNewNode("GroupAttributes", "nestedGroupNode_2")
+
+    for v in colorNode_1.rgb.value.values():
+        v.value = 1.1
+
+    for v in colorNode_2.rgb.value.values():
+        v.value = 1.2
+
+    dynamicNode_1.code.value = "print('Hello from dynamicNode_1')"
+
+    dynamicNode_1.ins.duplicateAttribute(colorNode_1.rgb)
+    dynamicNode_1.ins.duplicateAttribute(colorNode_2.rgb)
+
+    for v in dynamicNode_1.ins.rgb.value.values():
+        v.value = 1.3
+
+    dynamicNode_1.ins.duplicateAttribute(allAttrNode_1.stringParam)
+
+    dynamicNode_2.outs.duplicateAttribute(dynamicNode_1.ins.rgb, isOutput=True)
+    dynamicNode_1.outs.duplicateAttribute(colorNode_2.rgb, isOutput=True)
+
+    dynamicNode_2.outs.rgb.connectTo(dynamicNode_1.ins.rgb)
+
+    for v in dynamicNode_1.ins.rgb.value.values():
+        v.value = 1.1
+
+    allAttrNode_1.stringParam.value = "/some/path"
+    dynamicNode_1.ins.stringParam.value = "/some/other/path"
+
+    allAttrNode_1.keyableFloat.keyValues.add("0", 1.1)
+    allAttrNode_1.keyableFloat.keyValues.add("1", 2.2)
+    allAttrNode_1.keyableFloat.keyValues.add("12", 4.4)
+
+    observationRectangle = {"center": {"x": 10, "y": 15}, "size": {"width": 20, "height": 25}}
+    allAttrNode_1.keyableRectangle.geometry.setObservation("0", observationRectangle)
+    allAttrNode_1.keyableRectangle.geometry.setObservation("1", observationRectangle)
+    allAttrNode_1.keyableRectangle.geometry.setObservation("1", {"center": {"x": 30, "y": 35}})
+
+    allAttrNode_1.internalAttribute("flowInputs").extend(["0","0","0"])
+    allAttrNode_2.internalAttribute("flowInputs").extend(["0","0"])
+    dynamicNode_2.internalAttribute("flowInputs").extend(["0","0"])
+    nestedGroupNode_2.internalAttribute("flowInputs").append("0")
+
+    graph.addEdge(colorNode_1.internalAttribute("flowOutput"), allAttrNode_1.internalAttribute("flowInputs").at(0))
+    graph.addEdge(dynamicNode_1.internalAttribute("flowOutput"), allAttrNode_1.internalAttribute("flowInputs").at(1))
+    graph.addEdge(nestedGroupNode_1.internalAttribute("flowOutput"), allAttrNode_1.internalAttribute("flowInputs").at(2))
+    graph.addEdge(colorNode_2.internalAttribute("flowOutput"), allAttrNode_2.internalAttribute("flowInputs").at(0))
+    graph.addEdge(dynamicNode_2.internalAttribute("flowOutput"), allAttrNode_2.internalAttribute("flowInputs").at(1))
+    graph.addEdge(dynamicNode_1.internalAttribute("flowOutput"), dynamicNode_2.internalAttribute("flowInputs").at(0))
+    graph.addEdge(nestedGroupNode_1.internalAttribute("flowOutput"), dynamicNode_2.internalAttribute("flowInputs").at(1))
+    graph.addEdge(dynamicNode_2.internalAttribute("flowOutput"), nestedGroupNode_2.internalAttribute("flowInputs").at(0))
+
+    # Check that flowInputs are links to flowOutputs
+    assert all(att.isLink for att in allAttrNode_1.internalAttribute("flowInputs"))
+    assert all(att.isLink for att in allAttrNode_2.internalAttribute("flowInputs"))
+    assert all(att.isLink for att in dynamicNode_2.internalAttribute("flowInputs"))
+    assert all(att.isLink for att in nestedGroupNode_2.internalAttribute("flowInputs"))
+
+    allAttrNode_1_flowInputs = [att.getSerializedValue() for att in allAttrNode_1.internalAttribute("flowInputs")]
+    allAttrNode_2_flowInputs = [att.getSerializedValue() for att in allAttrNode_2.internalAttribute("flowInputs")]
+    dynamicNode_1_flowInputs = [att.getSerializedValue() for att in dynamicNode_1.internalAttribute("flowInputs")]
+    nestedGroupNode_2_flowInputs = [att.getSerializedValue() for att in nestedGroupNode_2.internalAttribute("flowInputs")]
+
+    # Change node type name to simulate missing description
+    for node in graph.nodes:
+        node._nodeType = node.nodeType + "_Missing"
+
+    for node in graph.nodes:
+        node._computeUid()
+
+    node_names = [node.name for node in graph.nodes]
+    node_uids = [node._uid for node in graph.nodes]
+
+    nodeDescriptions = GraphSerializer(graph).serializeNodeDescriptions()
+    serializedGraph = GraphSerializer(graph).serializeContent()
+
+    graphFile = os.path.join(tmp_path, "test_desc_only_node_type.mg")
+    graph.save(graphFile)
+
+    # Reload graph with only compatibilityNodes
+    graph = loadGraph(graphFile)
+
+    allAttrNode_1_ = graph.node("allAttrNode_1")
+    allAttrNode_2_ = graph.node("allAttrNode_2")
+    dynamicNode_1_ = graph.node("dynamicNode_1")
+    nestedGroupNode_2_ = graph.node("nestedGroupNode_2")
+
+    allAttrNode_1_flowInputs_ = [att.getSerializedValue() for att in allAttrNode_1_.internalAttribute("flowInputs")]
+    allAttrNode_2_flowInputs_ = [att.getSerializedValue() for att in allAttrNode_2_.internalAttribute("flowInputs")]
+    dynamicNode_1_flowInputs_ = [att.getSerializedValue() for att in dynamicNode_1_.internalAttribute("flowInputs")]
+    nestedGroupNode_2_flowInputs_ = [att.getSerializedValue() for att in nestedGroupNode_2_.internalAttribute("flowInputs")]
+
+    # Check that flowInputs are preserved after reloading the graph with only CompatibilityNodes
+    assert allAttrNode_1_flowInputs_ == allAttrNode_1_flowInputs
+    assert allAttrNode_2_flowInputs_ == allAttrNode_2_flowInputs
+    assert dynamicNode_1_flowInputs_ == dynamicNode_1_flowInputs
+    assert nestedGroupNode_2_flowInputs_ == nestedGroupNode_2_flowInputs
+
+    for node in graph.nodes:
+        node._computeUid()
+
+    for node_name, uid in zip(node_names, node_uids):
+        node = graph.node(node_name)
+        # Check that all nodes are DescOnlyNodeType CompatibilityNodes
+        assert isinstance(node, CompatibilityNode)
+        assert node.issue == CompatibilityIssue.DescOnlyNodeType
+        # Check UID is preserved
+        assert node._uid == uid
+
+    graphFile = os.path.join(tmp_path, "test_desc_only_node_type_.mg")
+    nodeDescriptions_ = GraphSerializer(graph).serializeNodeDescriptions()
+    serializedGraph_ = GraphSerializer(graph).serializeContent()
+
+    # Check that the loaded graph is identical to the original one
+    # (i.e. attribute types, node UID and flow have been successfully preserved)
+    assert nodeDescriptions_ == nodeDescriptions
+    assert serializedGraph_ == serializedGraph
+
+    # Check that the loaded graph can be successfully edited
+    allAttrNode_1_.keyableFloat.keyValues.add("8", 8.8)
+    allAttrNode_1_.keyableRectangle.geometry.setObservation("2", observationRectangle)
+    allAttrNode_1_.keyableRectangle.geometry.setObservation("2", {"size": {"width": 40, "height": 45}})
+
+    serializedGraph_ = GraphSerializer(graph).serializeContent()
+    assert serializedGraph_ != serializedGraph
 
 
 def test_description_conflict():
@@ -573,19 +713,19 @@ class TestVersionConflict:
         assert len(otherGraph.compatibilityNodes) == 1
         assert otherGraph.node(node.name).issue is CompatibilityIssue.VersionConflict
 
-    def test_loadingUnspecifiedNodeVersionAssumesCurrentVersion(self, graphSavedOnDisk):
+    def test_loadingUnspecifiedNodeVersionCreatesCompatibilityNodes(self, graphSavedOnDisk):
         graph: Graph = graphSavedOnDisk
 
         with registeredNodeTypes([SampleNodeV1]):
-            graph.addNewNode(SampleNodeV1.__name__)
+            node = graph.addNewNode(SampleNodeV1.__name__)
             graph.save()
 
             with overrideNodeTypeVersion(SampleNodeV1, "2.0"):
                 otherGraph = Graph("")
                 otherGraph.load(graph.filepath)
 
-        assert len(otherGraph.compatibilityNodes) == 0
-
+        assert len(otherGraph.compatibilityNodes) == 1
+        assert otherGraph.node(node.name).issue is CompatibilityIssue.VersionConflict
 
 class UidTestingNodeV1(desc.Node):
     inputs = [

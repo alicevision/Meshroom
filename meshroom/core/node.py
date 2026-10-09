@@ -19,9 +19,10 @@ from typing import Callable, Dict, Optional, List, Union
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
 from meshroom.core import desc, plugins, stats, hashValue, nodeVersion, Version, MrNodeType
-from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
+from meshroom.core.attribute import attributeFactory, attributeDescriptionFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.desc.attribute import Attribute as AttributeDescription
 from meshroom.core.desc.anySet import AnySet as AnySetDescription
+from meshroom.core.desc.node import InternalAttributesFactory
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 from meshroom.core.mixins import Expandable
 from meshroom.core.mtyping import PathLike
@@ -1165,6 +1166,9 @@ class BaseNode(BaseObject):
                                          dependenciesOnly=dependenciesOnly)
 
     def toDict(self):
+        pass
+
+    def getNodeDescription(self):
         pass
 
     def _computeUid(self):
@@ -2497,7 +2501,7 @@ class Node(BaseNode):
         # Special case for internal inputs : flowInputs is only serialized if it is not the default value
         internalInputs = {}
         for k, v in self._internalAttributes.objects.items():
-            if k == "flowInputs" and v.isDefault:
+            if k == "flowInputs" and v.isDefault and not v.isLink:
                 continue
             internalInputs[k] = v.getSerializedValue()
         outputs = ({k: v.getSerializedValue() for k, v in self._attributes.objects.items()
@@ -2505,6 +2509,7 @@ class Node(BaseNode):
 
         return {
             'nodeType': self.nodeType,
+            'version': nv if (nv := nodeVersion(self.nodeDesc)) is not None else "0.0",
             'position': self._position,
             'parallelization': {
                 'blockSize': self.nodeDesc.parallelization.blockSize if self.isParallelized else 0,
@@ -2515,6 +2520,15 @@ class Node(BaseNode):
             'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
             'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
             'outputs': outputs
+        }
+
+    def getNodeDescription(self):
+        # Get the node type, the node version, and the basic information about the io (name, type and default value)
+        return {
+            'nodeType': self.nodeType,
+            'version': nv if (nv := nodeVersion(self.nodeDesc)) is not None else "0.0",
+            'inputs': {k: sd for k, v in self._attributes.objects.items() if v.isInput and (sd := v.shortDesc()) is not None},
+            'outputs': {k: sd for k, v in self._attributes.objects.items() if v.isOutput and (sd := v.shortDesc()) is not None}
         }
 
     def _resetChunks(self):
@@ -2682,6 +2696,7 @@ class CompatibilityIssue(Enum):
     DescriptionConflict = 3  # mismatch between node's description attributes and serialized node data
     UidConflict = 4  # mismatch between computed UIDs and UIDs stored in serialized node data
     PluginIssue = 5  # issue when loading the associated plugin
+    DescOnlyNodeType = 6  # the node type is unknown, but its description was found in the .mg file. It cannot be instantiated
 
 
 class CompatibilityNode(BaseNode):
@@ -2690,14 +2705,17 @@ class CompatibilityNode(BaseNode):
     CompatibilityNode creates an 'empty-shell' exposing the deserialized node as-is,
     with all its inputs and precomputed outputs.
     """
-    def __init__(self, nodeType, nodeDict, position=None, issue=CompatibilityIssue.UnknownIssue, parent=None):
+    def __init__(self, nodeType, nodeDict, nodeDescDict=None, position=None, issue=CompatibilityIssue.UnknownIssue, parent=None):
         super().__init__(nodeType, position, parent)
 
         self.issue = issue
-        # Make a deepcopy of nodeDict to handle CompatibilityNode duplication
+        # Make deepcopies of nodeDict and nodeDescDict to handle CompatibilityNode duplication
         # and be able to change modified inputs (see CompatibilityNode.toDict)
         self.nodeDict = copy.deepcopy(nodeDict)
+        self.nodeDescDict = copy.deepcopy(nodeDescDict)
         version = self.nodeDict.get("version")
+        if version is None and nodeDescDict:
+            version = nodeDescDict.get("version")
         self.version = Version(version) if version else None
 
         self._inputs = self.nodeDict.get("inputs", {})
@@ -2721,6 +2739,23 @@ class CompatibilityNode(BaseNode):
         # Create internal attributes
         for attrName, value in self._internalInputs.items():
             self._addAttribute(attrName, value, isOutput=False, internalAttr=True)
+
+        if self.nodeDescDict:
+            # Add internal flowInputs to internalAttributes
+            if "flowInputs" not in self._internalAttributes.keys():
+                self._addAttribute("flowInputs", None, isOutput=False, internalAttr=True)
+            # Add internal flowOutput to internalAttributes
+            if "flowOutput" not in self._internalAttributes.keys():
+                self._addAttribute("flowOutput", None, isOutput=True, internalAttr=True)
+
+            # Add any input/output attribute present in the node description but not in the serialized node data
+            existingAttrNames = set(self._attributes.keys())
+            for attrName in self.nodeDescDict.get("inputs", {}).keys():
+                if attrName not in existingAttrNames:
+                    self._addAttribute(attrName, None, isOutput=False)
+            for attrName in self.nodeDescDict.get("outputs", {}).keys():
+                if attrName not in existingAttrNames:
+                    self._addAttribute(attrName, None, isOutput=True)
 
         # Create NodeChunks matching serialized parallelization settings
         self._chunks.setObjectList([
@@ -2754,6 +2789,7 @@ class CompatibilityNode(BaseNode):
             "value": value, "invalidate": False,
             "commandLineGroup": "incompatible"
         }
+        print(f"Generating attribute description for {attrName} with value {value}")
         if isinstance(value, bool):
             return desc.BoolParam(**params)
         if isinstance(value, int):
@@ -2837,6 +2873,69 @@ class CompatibilityNode(BaseNode):
 
         return None
 
+    @staticmethod
+    def attributeDescFromDict(nodeDescDict, name, value, isOutput, strict=True):
+        """
+        Try to find a matching attribute description in nodeDescDict for given attribute
+        'name' and 'value'.
+
+        Args:
+            nodeDescDict (dict): node description dictionary containing inputs and outputs
+            name (str): attribute's name
+            value: attribute's value
+            isOutput: whether the attribute is an output
+            strict: strict test for the match (for instance, regarding a group with some parameter changes)
+
+        Returns:
+            desc.Attribute: an attribute description from nodeDescDict if a match is found, None otherwise.
+        """
+        refAttrs = nodeDescDict["outputs"] if isOutput else nodeDescDict["inputs"]
+        if name not in refAttrs:
+            return None
+        refAttrs[name]["name"] = name
+
+        if refAttrs[name].get("type") == "AnySet":
+            # Add the children attribute descriptions from value to the node description
+            refAttrs[name]["items"] = {child["name"]: copy.deepcopy(child) for child in value["children"]}
+            # Replace the children list with a dictionary of child values
+            value = {child["name"]: child["value"] for child in value["children"] if "value" in child}
+
+        # Recursively replace the 'items' dictionary with a list of items for GroupAttributes/AnySets
+        # Define a recursive function to handle nested GroupAttributes/AnySets
+        def process_group_items(attr_dict):
+            if "items" in attr_dict:
+                if isinstance(attr_dict["items"], list):
+                    # In case of anySet, the items are stored as a list of dictionaries
+                    # Convert list of items to a dictionary with item names as keys
+                    attr_dict["items"] = {item["name"]: item for item in attr_dict["items"]}
+
+                for k in attr_dict["items"].keys():
+                    attr_dict["items"][k]["name"] = k
+                    process_group_items(attr_dict["items"][k])  # Recursively process nested GroupAttributes
+                attr_dict["items"] = list(attr_dict["items"].values())  # Keep the original order of items
+            if "elementDesc" in attr_dict:
+                process_group_items(attr_dict["elementDesc"])  # Recursively process elementDesc
+            if "shape" in attr_dict:
+                process_group_items(attr_dict["shape"])  # Recursively process shape
+
+        process_group_items(refAttrs[name])
+
+        attrDesc = attributeDescriptionFactory(refAttrs[name])
+
+        if Attribute.isLinkExpression(value):
+            return attrDesc
+
+        # If it is a GroupAttribute, all the attributes within the group should be matched
+        # individually so that links can correctly be evaluated
+        if isinstance(attrDesc, desc.GroupAttribute):
+            for k, v in value.items():
+                if CompatibilityNode.attributeDescFromName(attrDesc.items, k, v, strict) is None:
+                    return None
+            return attrDesc
+
+        # return the attribute description if the given value passes the 'matchDescription' test
+        return attrDesc if attrDesc.matchDescription(value, strict) else None
+
     def _addAttribute(self, name, val, isOutput, internalAttr=False):
         """
         Add a new attribute on this node.
@@ -2858,6 +2957,15 @@ class CompatibilityNode(BaseNode):
                 refAttrs = self.nodeDesc.outputs if isOutput else self.nodeDesc.inputs
             attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
         matchDesc = attrDesc is not None
+        if attrDesc is None and self.nodeDescDict:
+            if internalAttr:
+                internalAttrs = InternalAttributesFactory.getInternalAttributes(MrNodeType.BASENODE)
+                internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(MrNodeType.BASENODE)
+                internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(MrNodeType.BASENODE)
+                refAttrs = internalAttrs + internalFlowInputs + internalFlowOutputs
+                attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
+            else:
+                attrDesc = CompatibilityNode.attributeDescFromDict(self.nodeDescDict, name, val, isOutput)
         if attrDesc is None:
             attrDesc = CompatibilityNode.attributeDescFromValue(name, val, isOutput)
         attribute = attributeFactory(attrDesc, val, isOutput, self)
@@ -2871,6 +2979,11 @@ class CompatibilityNode(BaseNode):
     def issueDetails(self):
         if self.issue == CompatibilityIssue.UnknownNodeType:
             return f"Unknown node type: '{self.nodeType}'."
+        elif self.issue == CompatibilityIssue.DescOnlyNodeType:
+            if "version" not in self.nodeDict:
+                return f"Description for node '{self.name}' with node type '{self.nodeType}' only found in .mg."
+            version = self.nodeDict["version"]
+            return f"Description for node type '{self.nodeType}' version '{version}' only found in .mg."
         elif self.issue == CompatibilityIssue.VersionConflict:
             version = self.nodeDict["version"]
             return f"Node version '{version}' conflicts with current version '{nodeVersion(self.nodeDesc)}'."
@@ -2909,6 +3022,15 @@ class CompatibilityNode(BaseNode):
         # update position
         self.nodeDict.update({"position": self.position})
         return self.nodeDict
+
+    def getNodeDescription(self):
+        # Get the node type, the node version, and the basic information about the io (name, type and default value)
+        return {
+            'nodeType': self.nodeType,
+            'version': self.nodeDict["version"],
+            'inputs': {k: v.shortDesc() for k, v in self._attributes.objects.items() if v.isInput},
+            'outputs': {k: v.shortDesc() for k, v in self._attributes.objects.items() if v.isOutput}
+        }
 
     @property
     def canUpgrade(self):

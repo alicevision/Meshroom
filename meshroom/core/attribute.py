@@ -56,18 +56,25 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     name = descType.get('name')
     label = descType.get('label')
     description = descType.get('description')
-    elementDesc = descType.get('elementDesc')
-    items = descType.get('items')
 
-    attr = None
-    if items:
-        attr = attrClass(name=name, label=label, description=description, items=[attributeDescriptionFactory(item) for item in items])
-    elif elementDesc:
-        attr = attrClass(name=name, label=label, description=description, elementDesc=attributeDescriptionFactory(elementDesc))
-    else:
-        attr = attrClass(name=name, label=label, description=description)
+    kwargs = {'name': name, 'label': label, 'description': description}
 
-    return attr
+    if (value := descType.get('value')) is not None:
+        kwargs['value'] = value
+    if (elementDesc := descType.get('elementDesc')) is not None:
+        kwargs['elementDesc'] = attributeDescriptionFactory(elementDesc)
+    if (items := descType.get('items')) is not None:
+        kwargs['items'] = [attributeDescriptionFactory(item) for item in items]
+    if (values := descType.get('values')) is not None:
+        kwargs['values'] = values
+    if (exclusive := descType.get('exclusive')) is not None:
+        kwargs['exclusive'] = exclusive
+    if (keyable := descType.get('keyable')) is not None:
+        kwargs['keyable'] = keyable
+    if (shape := descType.get('shape')) is not None:
+        kwargs['shape'] = attributeDescriptionFactory(shape)
+
+    return attrClass(**kwargs)
 
 def attributeFactory(description: AttributeDescription, value, isOutput: bool, node, root=None, parent=None):
     """
@@ -419,6 +426,14 @@ class Attribute(BaseObject):
             "value": self.getSerializedValue()
         }
 
+        return serializedData
+
+    def shortDesc(self) -> dict:
+        serializedData = {"type": self.desc.__class__.__name__}
+        if self.getDefaultValue() is not None and not (self.keyable and self.getDefaultValue() == {}):
+            serializedData['value'] = self.getDefaultValue()
+        if self.keyable:
+            serializedData["keyable"] = True
         return serializedData
 
     def getPrimitiveValue(self, exportDefault=True):
@@ -864,6 +879,9 @@ class PushButtonParam(Attribute):
     def clicked(self):
         self.node.onAttributeClicked(self)
 
+    # Override
+    def shortDesc(self) -> dict:
+        return None
 
 class ChoiceParam(Attribute):
 
@@ -939,6 +957,14 @@ class ChoiceParam(Attribute):
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
         }
+
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = super().shortDesc()
+        serializedData["values"] = self.getValues()
+        if not self._desc.exclusive:
+            serializedData["exclusive"] = False
+        return serializedData
 
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     valuesChanged = Signal()
@@ -1237,6 +1263,14 @@ class ListAttribute(Attribute):
         serializedData['elementDesc'] = self.desc._elementDesc.asDict()
         return serializedData
 
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.desc.__class__.__name__,
+            "elementDesc": self.desc._elementDesc.shortDesc()
+        }
+        return serializedData
+
     # Override value property setter
     value = Property(Variant, Attribute._getValue, _setValue, notify=Attribute.valueChanged)
     isDefault = Property(bool, lambda self: self.value is None or len(self.value) == 0, notify=Attribute.valueChanged)
@@ -1296,7 +1330,6 @@ class GroupAttribute(Attribute, Expandable):
         if isinstance(value, dict):
             # set individual child attribute values
             for key, v in value.items():
-
                 self._value.get(key).value = v
         elif isinstance(value, (list, tuple)):
             if len(self._desc._items) != len(value):
@@ -1393,12 +1426,24 @@ class GroupAttribute(Attribute, Expandable):
         for attr in self._value:
             attr.updateInternals()
 
-    #Override
+    # Override
     def asDict(self) -> dict:
-        serialized = super().asDict()
-        serialized['items'] = [ item.asDict() for item in self.flatStaticChildren ]
+        serializedData = {
+            "name": self.name,
+            "label": self.label,
+            "type": self.desc.__class__.__name__,
+            "items": [ item.asDict() for item in self.flatStaticChildren ]
+        }
+        return serializedData
 
-        return serialized
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.desc.__class__.__name__,
+            "name": self.name,
+            "items": {item.name: item.shortDesc() for item in self._desc.items}
+        }
+        return serializedData
 
     # Override
     def _getFlatStaticChildren(self) -> list[Attribute]:
@@ -1762,6 +1807,16 @@ class ShapeAttribute(GroupAttribute):
         """
         self.geometryChanged.emit()
 
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.desc.__class__.__name__,
+            "name": self.name
+        }
+        if self.geometry.observationKeyable:
+            serializedData["keyable"] = True
+        return serializedData
+
     # Properties and signals
     # Emitted when a shape related property changed (color, visibility).
     shapeChanged = Signal()
@@ -1820,6 +1875,14 @@ class ShapeListAttribute(ListAttribute):
             if isinstance(attribute, ShapeAttribute):
                 attribute.isVisible = visible
         self.shapeListChanged.emit()
+
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.desc.__class__.__name__,
+            "shape": self._desc.elementDesc.shortDesc()
+        }
+        return serializedData
 
     # Properties and signals
     # Emitted when a shape list related property changed.
@@ -1988,6 +2051,15 @@ class AnySet(GroupAttribute):
             "expanded": self.expanded,
             "children": [attr.asDict() for attr in self._value]
         }
+
+    # Override
+    def shortDesc(self) -> dict:
+        serializedData = {
+            "type": self.desc.__class__.__name__,
+            "name": self.name,
+            "items": {}
+        }
+        return serializedData
 
     # Override
     def _getValue(self):

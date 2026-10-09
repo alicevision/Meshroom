@@ -38,18 +38,21 @@ class Size2d(Geometry):
     """
     Size2d is a Geometry attribute that allows to specify a 2d size.
     """
-    def __init__(self, name, label=None, description=None, width=None, height=None, widthRange=None, heightRange=None,
+    def __init__(self, name, items=None, label=None, description=None, width=None, height=None, widthRange=None, heightRange=None,
                  keyable=False, keyType=None, commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
-        # Geometry group desciption
-        items = [
-            FloatParam(name="width", label="Width", description="Width size.", value=width, range=widthRange,
-                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
-                       enabled=enabled, visible=visible, exposed=exposed),
-            FloatParam(name="height", label="Height", description="Height size.", value=height, range=heightRange,
-                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
-                       enabled=enabled, visible=visible, exposed=exposed)
-        ]
+        if items is not None:
+            assert all(item is not None and isinstance(item, FloatParam) for item in items), "All items must be floatParam instances"
+        else:
+            # Geometry group description
+            items = [
+                FloatParam(name="width", label="Width", description="Width size.", value=width, range=widthRange,
+                        keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
+                        enabled=enabled, visible=visible, exposed=exposed),
+                FloatParam(name="height", label="Height", description="Height size.", value=height, range=heightRange,
+                        keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
+                        enabled=enabled, visible=visible, exposed=exposed)
+            ]
         # GeometryAttribute constructor
         super(Size2d, self).__init__(items, name, label, description, commandLineGroup=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)
@@ -77,18 +80,21 @@ class Vec2d(Geometry):
     """
     Vec2d is a Geometry attribute that allows to specify a 2d vector.
     """
-    def __init__(self, name, label=None, description=None, x=None, y=None, xRange=None, yRange=None,
+    def __init__(self, name, items=None, label=None, description=None, x=None, y=None, xRange=None, yRange=None,
                  keyable=False, keyType=None, commandLineGroup="allParams", advanced=False, semantic="",
                  enabled=True, visible=True, exposed=False):
-        # Geometry group desciption
-        items = [
-            FloatParam(name="x", label="X", description="X coordinate.", value=x, range=xRange,
-                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
-                       enabled=enabled, visible=visible, exposed=exposed),
-            FloatParam(name="y", label="Y", description="Y coordinate.", value=y, range=yRange,
-                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
-                       enabled=enabled, visible=visible, exposed=exposed)
-        ]
+        if items is not None:
+            assert all(item is not None and isinstance(item, FloatParam) for item in items), "All items must be floatParam instances"
+        else:
+            # Geometry group description
+            items = [
+                FloatParam(name="x", label="X", description="X coordinate.", value=x, range=xRange,
+                        keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
+                        enabled=enabled, visible=visible, exposed=exposed),
+                FloatParam(name="y", label="Y", description="Y coordinate.", value=y, range=yRange,
+                        keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
+                        enabled=enabled, visible=visible, exposed=exposed)
+            ]
         # GeometryAttribute constructor
         super(Vec2d, self).__init__(items, name, label, description, commandLineGroup=None, advanced=advanced,
                                      semantic=semantic, enabled=enabled, visible=visible, exposed=exposed)

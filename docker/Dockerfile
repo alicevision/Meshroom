@@ -2,6 +2,16 @@
 # vim: ft=dockerfile
 
 ARG DEPS_IMAGE
+
+# Only what the build needs, so that unrelated changes in the build context do not
+# invalidate the cache. Bind-mounted below, never part of an image layer.
+FROM scratch AS sources
+COPY *.txt *.md *.py /
+COPY docs /docs
+COPY meshroom /meshroom
+COPY tests /tests
+COPY bin /bin
+
 FROM ${DEPS_IMAGE}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
@@ -15,16 +25,12 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     AV_INSTALL=/opt/AliceVision_install
 ENV PATH="${PATH}:${MESHROOM_BUNDLE}"
 
-COPY *.txt *.md *.py ${MESHROOM_DEV}/
-COPY ./docs ${MESHROOM_DEV}/docs
-COPY ./meshroom ${MESHROOM_DEV}/meshroom
-COPY ./tests ${MESHROOM_DEV}/tests
-COPY ./bin ${MESHROOM_DEV}/bin
-
 WORKDIR ${MESHROOM_DEV}
 
-# Generate the exe for Meshroom and clean-up the bundle folder
-RUN python3.11 setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
+# Generate the exe for Meshroom and clean-up the bundle folder.
+# The sources are bind-mounted (rw: build-time writes are discarded); target = ${MESHROOM_DEV}.
+RUN --mount=type=bind,from=sources,target=/opt/Meshroom,rw \
+    python3.11 setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
         find ${MESHROOM_BUNDLE} -name "*Qt6Web*" -delete && \
         find ${MESHROOM_BUNDLE} -name "*Qt6Designer*" -delete && \
         rm -rf ${MESHROOM_BUNDLE}/lib/PySide6/typesystems/ \
@@ -49,11 +55,13 @@ COPY dl/aliceVision/ ${MESHROOM_BUNDLE}/aliceVision/share/aliceVision/
 # the AliceVision image, which point outside of the bundle
 RUN rm -f /etc/profile.d/alicevision.sh
 
-# Build Meshroom plugins
-RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
-RUN make "-j$(nproc)" QtAliceVision
-RUN make "-j$(nproc)" && \
-	rm -rf "${MESHROOM_BUILD}" "${MESHROOM_DEV}" \
+# Build Meshroom plugins. Configure, build and clean up in a single RUN so that the
+# build tree never ends up in an image layer.
+RUN --mount=type=bind,from=sources,target=/opt/Meshroom,rw \
+    cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins" && \
+    make "-j$(nproc)" QtAliceVision && \
+    make "-j$(nproc)" && \
+	rm -rf "${MESHROOM_BUILD}" \
 		${MESHROOM_BUNDLE}/aliceVision/share/doc \
 		${MESHROOM_BUNDLE}/aliceVision/share/eigen3 \
 		${MESHROOM_BUNDLE}/aliceVision/share/fonts \

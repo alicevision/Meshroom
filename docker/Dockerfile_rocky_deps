@@ -1,32 +1,53 @@
+# syntax=docker/dockerfile:1.4
+# vim: ft=dockerfile
+
+# Meshroom dependencies, on top of the AliceVision image (AV_IMAGE).
+# Built by docker/build-image.sh.
+
 ARG AV_IMAGE
 FROM ${AV_IMAGE}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
-# Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
-# docker run -it --runtime=nvidia meshroom
-
 ARG QT_VERSION=6.8.3
-
-ENV MESHROOM_DEV=/opt/Meshroom \
-    MESHROOM_BUILD=/tmp/Meshroom_build \
-    QT_VERSION=${QT_VERSION} \
+ENV QT_VERSION=${QT_VERSION} \
     QT_DIR=/opt/Qt/${QT_VERSION}/gcc_64
 
-# Install libs needed by Qt
-RUN dnf install -y flex fontconfig freetype glib2-devel libICE
-RUN dnf install -y libX11 libXext libXi libXrender libSM
-RUN dnf install -y libXt-devel mesa-libGLU-devel mesa-libGL-devel mesa-libEGL-devel
-RUN dnf install -y zlib-devel systemd openssh-server
-RUN dnf install -y libxcb-devel \
-                   libxkbcommon-devel \
-                   libxkbcommon-x11-devel \
-                   xcb-util-wm xcb-util-image \
-                   xcb-util-keysyms \
-                   xcb-util-renderutil
-RUN dnf install -y libglvnd-opengl
+# Fail a RUN on any error in a pipe, not only the last command
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Enable SSH X11 forwarding, needed when the Docker image is run on a remote machine
-RUN dnf install -y openssh openssh-clients openssh-server xorg-x11-xauth && \
+# System packages: libraries needed by Qt and SSH with X11 forwarding (needed when the
+# Docker image is run on a remote machine). The cache mount avoids re-downloading
+# the packages on rebuild.
+RUN --mount=type=cache,target=/var/cache/dnf \
+    dnf install -y --setopt=keepcache=True \
+        flex \
+        fontconfig \
+        freetype \
+        glib2-devel \
+        libglvnd-opengl \
+        libICE \
+        libSM \
+        libX11 \
+        libxcb-devel \
+        libXext \
+        libXi \
+        libxkbcommon-devel \
+        libxkbcommon-x11-devel \
+        libXrender \
+        libXt-devel \
+        mesa-libEGL-devel \
+        mesa-libGL-devel \
+        mesa-libGLU-devel \
+        openssh \
+        openssh-clients \
+        openssh-server \
+        systemd \
+        xcb-util-image \
+        xcb-util-keysyms \
+        xcb-util-renderutil \
+        xcb-util-wm \
+        xorg-x11-xauth \
+        zlib-devel && \
     systemctl enable sshd && \
     mkdir -p /run/sshd && \
     ssh-keygen -A && \
@@ -39,17 +60,16 @@ ENV BUNDLE_EXTRA_LIBS="/usr/lib64/libOpenGL.so.0"
 
 # Install Qt (to build plugins) with aqtinstall. It is installed in a throwaway
 # directory so that it does not end up in the Python environment of the image.
+# Strip sections containing ".note.ABI.tag" from .so (https://github.com/Microsoft/WSL/issues/3023)
+# in the same RUN, otherwise every stripped library is stored twice in the image.
 RUN python3.11 -m pip install --no-cache-dir --target /tmp/aqt aqtinstall==3.3.0 && \
     PYTHONPATH=/tmp/aqt python3.11 -m aqt install-qt linux desktop ${QT_VERSION} linux_gcc_64 \
         -m qtcharts qt3d --outputdir /opt/Qt && \
-    rm -rf /tmp/aqt
+    rm -rf /tmp/aqt && \
+    find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
 
-# Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023
-RUN find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
-
-COPY ./*requirements.txt ${MESHROOM_DEV}/
-
-# Install Meshroom requirements and freeze bundle
-WORKDIR "${MESHROOM_DEV}"
-RUN python3.11 -m pip install -r dev_requirements.txt -r requirements.txt
- 
+# Install Meshroom requirements
+RUN --mount=type=bind,source=requirements.txt,target=/tmp/requirements.txt \
+    --mount=type=bind,source=dev_requirements.txt,target=/tmp/dev_requirements.txt \
+    --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m pip install -r /tmp/dev_requirements.txt -r /tmp/requirements.txt

@@ -63,7 +63,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # in the same RUN, otherwise every stripped library is stored twice in the image.
 RUN python3.11 -m pip install --no-cache-dir --target /tmp/aqt aqtinstall==3.3.0 && \
     PYTHONPATH=/tmp/aqt python3.11 -m aqt install-qt linux desktop ${QT_VERSION} linux_gcc_64 \
-        -m qtcharts qt3d --outputdir /opt/Qt && \
+        -m qtcharts qt3d qtshadertools --outputdir /opt/Qt && \
     rm -rf /tmp/aqt && \
     find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
 

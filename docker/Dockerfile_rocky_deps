@@ -1,7 +1,5 @@
-ARG AV_VERSION
-ARG CUDA_VERSION
-ARG ROCKY_VERSION
-FROM alicevision/alicevision:${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}
+ARG AV_IMAGE
+FROM ${AV_IMAGE}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
@@ -26,6 +24,18 @@ RUN dnf install -y libxcb-devel \
                    xcb-util-keysyms \
                    xcb-util-renderutil
 RUN dnf install -y libglvnd-opengl
+
+# Enable SSH X11 forwarding, needed when the Docker image is run on a remote machine
+RUN dnf install -y openssh openssh-clients openssh-server xorg-x11-xauth && \
+    systemctl enable sshd && \
+    mkdir -p /run/sshd && \
+    ssh-keygen -A && \
+    sed -i "s/^.*X11Forwarding.*$/X11Forwarding yes/; s/^.*X11UseLocalhost.*$/X11UseLocalhost no/; s/^.*PermitRootLogin prohibit-password/PermitRootLogin yes/; s/^.*X11UseLocalhost.*/X11UseLocalhost no/;" /etc/ssh/sshd_config && \
+    echo "root:meshroom" | chpasswd
+
+# System libraries the Meshroom image copies into its bundle.
+# libOpenGL: needed by QtAliceVision as a side effect of a Qt6 bug
+ENV BUNDLE_EXTRA_LIBS="/usr/lib64/libOpenGL.so.0"
 
 # Install Qt (to build plugins) with aqtinstall. It is installed in a throwaway
 # directory so that it does not end up in the Python environment of the image.

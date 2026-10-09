@@ -8,23 +8,16 @@ set -euo pipefail
 
 docker/download-models.sh
 
-OS_VERSION_ARG="$(echo "$OS" | tr '[:lower:]' '[:upper:]')_VERSION=${OS_VERSION}"
-
 "$CONTAINER_ENGINE" build \
     --rm \
     --progress=plain \
-    --build-arg "CUDA_VERSION=${CUDA_VERSION}" \
-    --build-arg "${OS_VERSION_ARG}" \
-    --build-arg "AV_VERSION=${AV_VERSION}" \
+    --build-arg "AV_IMAGE=${AV_IMAGE}" \
     --tag "${DEPS_IMAGE}" \
     -f "docker/Dockerfile_${OS}_deps" .
 
 "$CONTAINER_ENGINE" build \
     --rm \
     --progress=plain \
-    --build-arg "MESHROOM_VERSION=${MESHROOM_VERSION}" \
-    --build-arg "CUDA_VERSION=${CUDA_VERSION}" \
-    --build-arg "${OS_VERSION_ARG}" \
-    --build-arg "AV_VERSION=${AV_VERSION}" \
+    --build-arg "DEPS_IMAGE=${DEPS_IMAGE}" \
     --tag "${IMAGE}" \
-    -f "docker/Dockerfile_${OS}" .
+    -f docker/Dockerfile .

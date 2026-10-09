@@ -1,12 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
 
-set -e
-
-test -d docker || (
-        echo This script must be run from the top level Meshroom directory
-	exit 1
-)
+# Build all supported Meshroom images. AV_VERSION must be set.
 
 CUDA_VERSION=12.8.0 UBUNTU_VERSION=22.04 docker/build-ubuntu.sh
-
 CUDA_VERSION=12.8.0 ROCKY_VERSION=9 docker/build-rocky.sh

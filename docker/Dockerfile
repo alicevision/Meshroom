@@ -15,9 +15,10 @@ COPY bin /bin
 FROM ${DEPS_IMAGE}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
-# Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
-# docker run -it --runtime nvidia -p 2222:22 --name meshroom -v</path/to/your/data>:/data alicevision/meshroom:develop-av2.2.8.develop-ubuntu20.04-cuda11.0
-# ssh -p 2222 -X root@<docker host> /opt/Meshroom_bundle/Meshroom # Password is 'meshroom'
+# Run with GPU access (NVIDIA Container Toolkit), then start Meshroom over SSH with X11 forwarding:
+#   docker run -d --gpus all -p 2222:22 -v </path/to/your/data>:/data --name meshroom alicevision/meshroom:<tag>
+#   ssh -p 2222 -X root@<docker host> /opt/Meshroom_bundle/Meshroom    # password: meshroom
+# With podman, replace "--gpus all" by "--device nvidia.com/gpu=all".
 
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \

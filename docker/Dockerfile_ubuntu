@@ -70,9 +70,10 @@ RUN cp ${QT_DIR}/lib/libQt63DQuickScene3D.so.6.8.3 ${MESHROOM_BUNDLE}/lib/PySide
 
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine
-RUN apt install ssh xauth && \
-	systemctl enable ssh && \
-	mkdir -p /run/sshd
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ssh xauth && \
+    systemctl enable ssh && \
+    mkdir -p /run/sshd
 
 RUN sed -i "s/^.*X11Forwarding.*$/X11Forwarding yes/; s/^.*X11UseLocalhost.*$/X11UseLocalhost no/; s/^.*PermitRootLogin prohibit-password/PermitRootLogin yes/; s/^.*X11UseLocalhost.*/X11UseLocalhost no/;" /etc/ssh/sshd_config
 RUN echo "root:meshroom" | chpasswd

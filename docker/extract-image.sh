@@ -23,3 +23,5 @@ if "$CONTAINER_ENGINE" run --rm --entrypoint test "${IMAGE}" -d /opt/python; the
     mkdir -p "${DEST}/python"
     "$CONTAINER_ENGINE" cp "${CID}:/opt/python/." "${DEST}/python/"
 fi
+
+echo "Bundle extracted to: $(pwd)/${DEST#./}"

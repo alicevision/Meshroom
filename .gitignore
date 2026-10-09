@@ -30,6 +30,8 @@ __pycache__
 /build
 /dist
 /dl
+# Bundles extracted from the Docker images by docker/extract-*.sh
+/Meshroom-*
 
 # virtual environment
 /venv

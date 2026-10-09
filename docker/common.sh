@@ -16,7 +16,7 @@
 : "${CUDA_VERSION:=12.8.0}"
 
 test -e "docker/Dockerfile_${OS}_deps" || {
-    echo "This script must be run from the top level Meshroom directory" >&2
+    echo "Unsupported OS '${OS}': docker/Dockerfile_${OS}_deps not found" >&2
     exit 1
 }
 

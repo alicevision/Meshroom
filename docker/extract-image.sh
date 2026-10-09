@@ -4,6 +4,9 @@ set -euo pipefail
 # Extract the Meshroom bundle from the Meshroom image into ./Meshroom-<version>.
 # Shared by extract-rocky.sh and extract-ubuntu.sh; see docker/common.sh for the environment variables.
 
+# Work from the top level Meshroom directory, wherever the script is called from
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
 . docker/common.sh
 
 DEST="./Meshroom-${VERSION_NAME}"

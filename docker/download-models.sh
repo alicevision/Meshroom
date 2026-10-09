@@ -5,10 +5,8 @@
 # Files already present are kept.
 set -e
 
-test -d docker || (
-    echo This script must be run from the top level Meshroom directory
-    exit 1
-)
+# Work from the top level Meshroom directory, wherever the script is called from
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 DL_DIR=dl/aliceVision
 mkdir -p "${DL_DIR}"

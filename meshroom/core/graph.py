@@ -1592,8 +1592,12 @@ class Graph(BaseObject):
 
         data = self.serialize(template)
 
-        with open(path, 'w') as jsonFile:
+        # Save the graph to an intermediate file to avoid corrupted file in case of an unexpected error
+        hash8 = hashValue(data)[:8]
+        tempPath = Path(path).with_suffix(f'.{hash8}.tmp')
+        with open(tempPath, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
+        os.replace(tempPath, path)
 
         if path != self._filepath and setupProjectFile:
             self._setFilepath(path)

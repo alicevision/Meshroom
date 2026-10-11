@@ -253,28 +253,54 @@ Item {
                 return false
             }
 
+            // Tree of node categories, only computed while the menu is visible
+            property var categoriesTree
+
+            function categoryKey(title) {
+                // Key identifying a category with only its lowercase letters and digits (NFD splits accents from letters, so they get removed)
+                const key = title.normalize("NFD").toLowerCase().replace(/[^a-z0-9]/g, "")
+                // Fallback for titles without any latin letter or digit (e.g. non-latin scripts)
+                return key !== "" ? key : title.toLowerCase()
+            }
+
+            function getSubCategory(parent, title) {
+                // Get the sub-category of "parent" matching "title", creating it if needed.
+                // The first spelling encountered, with its first letter capitalized, is used as the menu title.
+                const key = categoryKey(title)
+                if (parent.menus[key] === undefined) {
+                    parent.menus[key] = { "title": title.charAt(0).toUpperCase() + title.slice(1), "menus": {}, "items": [] }
+                }
+                return parent.menus[key]
+            }
+
             function parseCategories() {
-                // Organize nodes based on their category
-                // {"category1": ["node1", "node2"], "category2": ["node3", "node4"]}
-                let categories = {}
+                // Organize nodes in a tree based on their category, where "/" separates sub-categories
+                // {"menus": {"key1": {"title": "Category1", "menus": {"key2": {...}}, "items": ["node1"]}}, "items": []}
+                let tree = { "menus": {}, "items": [] }
                 for (const [name, data] of Object.entries(root.nodeTypesModel)) {
-                    let category = data["category"]
-                    if (categories[category] === undefined) {
-                        categories[category] = []
+                    let path = data["category"].split("/").map(part => part.trim()).filter(part => part !== "")
+                    if (path.length === 0) {
+                        path = ["Other"]
                     }
-                    categories[category].push(name)
+                    let current = tree
+                    for (const part of path) {
+                        current = getSubCategory(current, part)
+                    }
+                    current.items.push(name)
                 }
 
                 // Add a "Pipelines" category, filled with the list of templates to create pipelines from the menu
                 if (MeshroomApp.pipelineTemplateNames.length > 0) {
-                    categories["Pipelines"] = MeshroomApp.pipelineTemplateNames
+                    let pipelines = getSubCategory(tree, "Pipelines")
+                    pipelines.items = pipelines.items.concat(MeshroomApp.pipelineTemplateNames)
                 }
 
-                return categories
+                return tree
             }
 
             onVisibleChanged: {
                 searchBar.clear()
+                categoriesTree = visible ? parseCategories() : undefined
                 if (visible) {
                     // When menu is shown, give focus to the TextField filter
                     searchBar.forceActiveFocus()
@@ -349,7 +375,7 @@ Item {
             // Dynamically add the menu categories
             Instantiator {
                 id: instantiator
-                model: (searchBar.text === "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
+                model: (searchBar.text === "" && newNodeMenu.categoriesTree) ? Object.values(newNodeMenu.categoriesTree.menus).sort((a, b) => a.title.localeCompare(b.title)) : undefined
                 onObjectAdded: function(index, object) {
                     // Add sub-menu under the search bar
                     newNodeMenu.insertMenu(index + 1, object)
@@ -358,20 +384,10 @@ Item {
                     newNodeMenu.removeMenu(object)
                 }
 
-                delegate: Menu {
-                    title: modelData
-                    id: newNodeSubMenu
-
-                    Instantiator {
-                        model: newNodeMenu.visible ? newNodeMenu.parseCategories()[modelData] : undefined
-                        onObjectAdded: function(index, object) {
-                            newNodeSubMenu.insertItem(index, object)
-                        }
-                        onObjectRemoved: function(index, object) {
-                            newNodeSubMenu.removeItem(object)
-                        }
-                        delegate: menuItemDelegateComponent
-                    }
+                // Each category may contain nested sub-categories
+                delegate: NodeCategoryMenu {
+                    tree: modelData
+                    itemDelegate: menuItemDelegateComponent
                 }
             }
         }

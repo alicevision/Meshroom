@@ -24,6 +24,8 @@ Menu {
         delegate: Qt.createComponent("NodeCategoryMenu.qml")
         onObjectAdded: function(index, object) {
             object.itemDelegate = root.itemDelegate
+            // Entries of nested sub-menus are created with the same delegate, set before the tree builds them
+            object.delegate = root.delegate
             object.tree = root.subCategories[index]
             root.insertMenu(index, object)
         }

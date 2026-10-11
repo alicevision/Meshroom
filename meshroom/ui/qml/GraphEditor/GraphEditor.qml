@@ -307,9 +307,51 @@ Item {
                 }
             }
 
+            function forwardKeyToSearchBar(event) {
+                // Give the focus back to the search bar so typing keeps filtering, even when the mouse hovers an item.
+                // Navigation and validation keys are left to the menu.
+                switch (event.key) {
+                    case Qt.Key_Up:
+                    case Qt.Key_Down:
+                    case Qt.Key_Left:
+                    case Qt.Key_Right:
+                    case Qt.Key_Return:
+                    case Qt.Key_Enter:
+                        return
+                }
+                searchBar.forceActiveFocus()
+            }
+
+            // Entries opening a sub-menu, forwarding the typed keys to the search bar
+            delegate: subMenuItemDelegateComponent
+
+            // Hovering a category opens its sub-menu, which takes the focus on the popup itself and ignores typed keys:
+            // give the focus back to the search bar (keyboard navigation focuses the menu items instead, so it is not affected)
+            Connections {
+                target: newNodeMenu.visible ? root.Window.window : null
+                function onActiveFocusItemChanged() {
+                    const item = root.Window.window.activeFocusItem
+                    if (item && item.toString().startsWith("QQuickPopupItem")) {
+                        searchBar.forceActiveFocus()
+                    }
+                }
+            }
+
             SearchBar {
                 id: searchBar
                 width: parent.width
+            }
+
+            Component {
+                id: subMenuItemDelegateComponent
+                MenuItem {
+                    Keys.forwardTo: [searchBar.textField]
+                    Keys.priority: Keys.AfterItem
+                    Keys.onPressed: function(event) {
+                        event.accepted = false
+                        newNodeMenu.forwardKeyToSearchBar(event)
+                    }
+                }
             }
 
             // menuItemDelegate is wrapped in a component so it can be used in both the search bar and sub-menus
@@ -328,20 +370,12 @@ Item {
                     Keys.forwardTo: [searchBar.textField]
                     Keys.onPressed: function(event) {
                         event.accepted = false
-                        switch (event.key) {
-                            case Qt.Key_Return:
-                            case Qt.Key_Enter:
-                                // Create node on validation (Enter/Return keys)
-                                newNodeMenu.createNode(modelData)
-                                event.accepted = true
-                                break
-                            case Qt.Key_Up:
-                            case Qt.Key_Down:
-                            case Qt.Key_Left:
-                            case Qt.Key_Right:
-                                break  // Ignore if arrow key was pressed to let the menu be controlled
-                            default:
-                                searchBar.forceActiveFocus()
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            // Create node on validation (Enter/Return keys)
+                            newNodeMenu.createNode(modelData)
+                            event.accepted = true
+                        } else {
+                            newNodeMenu.forwardKeyToSearchBar(event)
                         }
                     }
                     // Set the priority ordering of the keys to be Item's own Key Handling > ForwardTo
@@ -386,6 +420,7 @@ Item {
 
                 // Each category may contain nested sub-categories
                 delegate: NodeCategoryMenu {
+                    delegate: subMenuItemDelegateComponent
                     tree: modelData
                     itemDelegate: menuItemDelegateComponent
                 }

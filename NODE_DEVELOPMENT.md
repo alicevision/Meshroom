@@ -253,7 +253,7 @@ Used for UI overlays/annotations; they support `keyable` per-view values:
 | Property | Type | Description | Default |
 |----------|------|-------------|---------|
 | Class documentation | str | Detailed description of the node's purpose | "" |
-| `category` | str | Organizational category in the node library | "Other" |
+| `category` | str | Organizational category in the node library. Use `/` to create sub-categories (e.g. `"Custom/Sub Category"`) | "Other" |
 | `cpu` | Level or callable | CPU resource requirement level | Level.NORMAL |
 | `ram` | Level or callable | Memory resource requirement level | Level.NORMAL |
 | `gpu` | Level or callable | GPU resource requirement level | Level.NONE |
@@ -266,7 +266,7 @@ Used for UI overlays/annotations; they support `keyable` per-view values:
 class SampleNode(desc.Node):
     """This is the Node documentation that will be available in the Node Editor."""
 
-    category = "Custom Node Category"  # Used in the UI to group nodes in the menu
+    category = "Custom Node Category"  # Used in the UI to group nodes in the menu ("/" creates sub-menus, e.g. "Custom/Sub Category")
     size = desc.DynamicNodeSize("inputFiles")  # Size used to define the number of chunks for parallelization
 
     # Resource levels (`cpu`, `gpu`, `ram`) are used for farm scheduling on suitable hardware

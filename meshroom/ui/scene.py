@@ -197,14 +197,14 @@ class ViewpointWrapper(QObject):
     def translation(self):
         """ Get the camera translation as a 3D vector. """
         if self._T is None:
-            return None
+            return QVector3D()
         return QVector3D(self._T[0], -self._T[1], -self._T[2])
 
     @Property(type=QQuaternion, notify=sfmParamsChanged)
     def rotation(self):
         """ Get the camera rotation as a quaternion. """
         if self._R is None:
-            return None
+            return QQuaternion()
 
         rot = QMatrix3x3([
             self._R[0], -self._R[1], -self._R[2],
@@ -218,7 +218,7 @@ class ViewpointWrapper(QObject):
     def pose(self):
         """ Get the camera pose of 'viewpoint' as a 4x4 matrix. """
         if self._R is None or self._T is None:
-            return None
+            return QMatrix4x4()
 
         # convert transform matrix for Qt
         return QMatrix4x4(
@@ -236,8 +236,8 @@ class ViewpointWrapper(QObject):
     @Property(type=QVector2D, notify=uvCenterOffsetChanged)
     def uvCenterOffset(self):
         """ Get UV offset corresponding to the camera principal point. """
-        if not self.solvedIntrinsics or self._principalPointCorrected:
-            return None
+        if not self.solvedIntrinsics or self._principalPointCorrected or self.imageSize.isEmpty():
+            return QVector2D()
         pp = self.solvedIntrinsics["principalPoint"]
         # compute principal point offset in UV space
         offset = QVector2D(float(pp[0]) / self.imageSize.width(), float(pp[1]) / self.imageSize.height())
@@ -246,8 +246,9 @@ class ViewpointWrapper(QObject):
     @Property(type=float, notify=sfmParamsChanged)
     def fieldOfView(self):
         """ Get camera vertical field of view in degrees. """
-        if not self.solvedIntrinsics:
-            return None
+        # Fall back on the default 3D viewer field of view when there is no valid focal length
+        if not self.solvedIntrinsics or not float(self.solvedIntrinsics["focalLength"]):
+            return 45.0
         focalLength = self.solvedIntrinsics["focalLength"]
 
         #We assume that if the width is less than the weight
@@ -377,9 +378,9 @@ class Scene(UIGraph):
         self._views = None
         self._poses = None
         self._solvedIntrinsics = None
-        self._selectedViewId = None
+        self._selectedViewId = "-1"
         self._selectedViewpoint = None
-        self._pickedViewId = None
+        self._pickedViewId = "-1"
 
         self._currentViewPath = ""
 
@@ -1168,6 +1169,7 @@ class Scene(UIGraph):
         return len(viewpoint.metadata.value) > 2
 
     def setSelectedViewId(self, viewId):
+        viewId = str(viewId)
         if viewId == self._selectedViewId:
             return
         self._selectedViewId = viewId
@@ -1186,6 +1188,7 @@ class Scene(UIGraph):
         self.selectedViewpointChanged.emit()
 
     def setPickedViewId(self, viewId):
+        viewId = str(viewId)
         if viewId == self._pickedViewId:
             return
         self._pickedViewId = viewId

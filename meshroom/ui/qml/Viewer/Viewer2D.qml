@@ -1707,7 +1707,7 @@ FocusScope {
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true
-                            enabled: activeNode && activeNode.isComputed && _currentScene.selectedViewId !== -1
+                            enabled: activeNode && activeNode.isComputed && _currentScene.selectedViewId !== "-1"
                             checked: false
                             visible: activeNode
                             onEnabledChanged: {
@@ -1816,7 +1816,7 @@ FocusScope {
                             smooth: false
                             flat: true
                             checkable: enabled
-                            enabled: activeNode && activeNode.isComputed && _currentScene.selectedViewId >= 0
+                            enabled: activeNode && activeNode.isComputed && _currentScene.selectedViewId !== "-1"
                             onCheckedChanged: {
                                 if (checked == true) {
                                     displaySfmDataGlobalStats.checked = false

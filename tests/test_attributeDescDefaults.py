@@ -200,3 +200,16 @@ class TestOutputParamDynamicValue:
 
     def test_string_output_value_is_none(self, node):
         assert node.stringOutput.value is None
+
+
+def test_numericParamRangeDefaultsToEmptyList():
+    assert desc.IntParam(name="i", value=0).range == []
+    assert desc.FloatParam(name="f", value=0.0).range == []
+    assert desc.IntParam(name="i", value=0, range=(0, 10, 1)).range == (0, 10, 1)
+
+
+def test_size2dCloneKeepsRange():
+    size = desc.Size2d(name="s", width=1.0, height=1.0, widthRange=(0.0, 10.0, 1.0))
+    clone = size.clone()
+    assert [item.range for item in clone.items] == [item.range for item in size.items]
+    assert clone.items[1].range == []

@@ -28,7 +28,7 @@ Entity {
         states: [
             State {
                 name: "valid"
-                when: root.viewpoint !== null
+                when: root.viewpoint !== null && root.viewpoint.isReconstructed
                 PropertyChanges {
                     target: camera
                     fieldOfView: root.viewpoint.fieldOfView

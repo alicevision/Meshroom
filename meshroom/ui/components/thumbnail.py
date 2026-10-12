@@ -215,7 +215,7 @@ class ThumbnailCache(QObject):
         return False
 
     @Slot(QUrl, int, result=QUrl)
-    def thumbnail(self, imgSource: QUrl, callerID: int) -> QUrl | None:
+    def thumbnail(self, imgSource: QUrl, callerID: int) -> QUrl:
         """
         Retrieve the filepath of the thumbnail corresponding to a given image.
 
@@ -227,10 +227,10 @@ class ThumbnailCache(QObject):
             callerID: identifier for the object that requested the thumbnail
 
         Returns:
-            The location of the corresponding thumbnail if it exists, otherwise None
+            The location of the corresponding thumbnail if it exists, otherwise an empty QUrl
         """
         if not imgSource.isValid():
-            return None
+            return QUrl()
 
         if not os.path.exists(ThumbnailCache.thumbnailDir):
             return imgSource
@@ -251,7 +251,7 @@ class ThumbnailCache(QObject):
         ThumbnailCache.requests.append((imgSource, callerID))
         ThumbnailCache.workerThreads.apply_async(func=self.handleRequestsAsync)
 
-        return None
+        return QUrl()
 
     @staticmethod
     def _createEmptyThumbnail(path: str):

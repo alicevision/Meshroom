@@ -278,7 +278,7 @@ Page {
                     anchors.fill: parent
                     anchors.margins: 10
 
-                    model: [{ "name": "New Empty Project", "path": null }].concat(MeshroomApp.pipelineTemplateFiles)
+                    model: [{ "name": "New Empty Project", "path": "" }].concat(MeshroomApp.pipelineTemplateFiles)
 
                     delegate: Button {
                         id: pipelineDelegate

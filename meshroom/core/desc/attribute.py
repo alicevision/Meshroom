@@ -546,7 +546,7 @@ class IntParam(Param):
     def __init__(self, name, label=None, description=None, value=None, range=None, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True,
                  invalidate=True, semantic="", visible=True, exposed=False, validators=None):
-        self._range = range
+        self._range = range or []
 
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
@@ -585,7 +585,7 @@ class FloatParam(Param):
     def __init__(self, name, label=None, description=None, value=None, range=None, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True,
                  invalidate=True, semantic="", visible=True, exposed=False, validators=None):
-        self._range = range
+        self._range = range or []
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value,

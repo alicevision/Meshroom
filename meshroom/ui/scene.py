@@ -378,9 +378,9 @@ class Scene(UIGraph):
         self._views = None
         self._poses = None
         self._solvedIntrinsics = None
-        self._selectedViewId = None
+        self._selectedViewId = "-1"
         self._selectedViewpoint = None
-        self._pickedViewId = None
+        self._pickedViewId = "-1"
 
         self._currentViewPath = ""
 
@@ -1169,6 +1169,7 @@ class Scene(UIGraph):
         return len(viewpoint.metadata.value) > 2
 
     def setSelectedViewId(self, viewId):
+        viewId = str(viewId)
         if viewId == self._selectedViewId:
             return
         self._selectedViewId = viewId
@@ -1187,6 +1188,7 @@ class Scene(UIGraph):
         self.selectedViewpointChanged.emit()
 
     def setPickedViewId(self, viewId):
+        viewId = str(viewId)
         if viewId == self._pickedViewId:
             return
         self._pickedViewId = viewId

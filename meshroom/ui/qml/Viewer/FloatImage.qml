@@ -67,6 +67,24 @@ AliceVision.FloatImageViewer {
 
     clearBeforeLoad: false
 
+    // FloatImageViewer does not upload its texture nor build its surface again when its scene graph
+    // node is re-created in another window (e.g. the Image Viewer moved to a floating window), which
+    // leaves the image blank. Request the image again, served from the cache, once the new window has
+    // rendered a frame: doing it right away is not enough, the reload would be consumed by the new node.
+    // (A Connections is needed: the handler is not available on the FloatImageViewer type itself.)
+    Connections {
+        target: root
+        function onWindowChanged(window) {
+            if (!window)
+                return
+            var reload = function() {
+                window.afterAnimating.disconnect(reload)
+                Qt.callLater(function() { root.sourceChanged() })
+            }
+            window.afterAnimating.connect(reload)
+        }
+    }
+
     property alias containsMouse: mouseArea.containsMouse
     property alias mouseX: mouseArea.mouseX
     property alias mouseY: mouseArea.mouseY

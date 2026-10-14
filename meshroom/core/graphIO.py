@@ -1,3 +1,4 @@
+import getpass
 from enum import Enum
 from typing import Any, Dict, List, Tuple, TYPE_CHECKING, Union
 
@@ -23,6 +24,7 @@ class GraphIO:
         NodesVersions = "nodesVersions"
         ReleaseVersion = "releaseVersion"
         FileVersion = "fileVersion"
+        Username = "username"
         CacheDir = "cacheDir"
         Graph = "graph"
         Template = "template"
@@ -94,6 +96,10 @@ class GraphSerializer:
         header: dict[str, Any] = {}
         header[GraphIO.Keys.ReleaseVersion] = meshroom.__version__
         header[GraphIO.Keys.FileVersion] = GraphIO.__version__
+        try:
+            header[GraphIO.Keys.Username] = getpass.getuser()
+        except Exception:
+            header[GraphIO.Keys.Username] = ""
         header[GraphIO.Keys.NodesVersions] = self._getNodeTypesVersions()
         if self._graph._hasExplicitCacheDir:
             # We store the absolute but also the relative cacheDir path (to the scene file)

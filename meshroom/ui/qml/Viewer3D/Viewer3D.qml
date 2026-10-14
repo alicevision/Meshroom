@@ -240,6 +240,7 @@ Item {
         property var gridLayerRef: gridLayer
         property var axisLayerRef: axisLayer
         property var pointLayerRef: pointLayer
+        property var boxControlLayerRef: boxControlLayer
 
         motionInfo: fallbackMotionInfo
         cameraInfo: fallbackCameraInfo
@@ -275,6 +276,10 @@ Item {
                 id: pointLayer
                 visible: SurveyPointViewerHelper.hasSelectedNodeSurveyPoint
                 positions: SurveyPointViewerHelper.positions
+            },
+            BoxControlLayer {
+                id: boxControlLayer
+                visible: false
             }
         ]
 
@@ -291,11 +296,31 @@ Item {
             sceneView: sceneView
             focusTarget: root
         }
+
+        // Declared last to sit on top of the other mouse areas: presses outside the gizmo fall through to them
+        BoxControlMouseArea {
+            id: boxControlMouseArea
+            anchors.fill: parent
+            enabled: boxControlLayer.visible && collection.selectedSfmDataObject === null
+            sceneView: sceneView
+            boxLayer: boxControlLayer
+            focusTarget: root
+
+            onEditFinished: (type) => meshingBoundingBox.commit(type)
+        }
     }
 
     SceneObjectCollection {
         id: collection
         sceneView: sceneView
+    }
+
+    MeshingBoundingBox {
+        id: meshingBoundingBox
+        node: collection.boundingBoxNode
+        layer: boxControlLayer
+        editing: boxControlMouseArea.dragging
+        userVisible: collection.showBoundingBox
     }
 
     // Source: collection (SceneObjectCollection), whose selectedSfmDataObject tracks the currently
@@ -374,16 +399,24 @@ Item {
 
     /**
      * View the file referenced by a computed node's File @p attribute, if any.
+     * If the node has an editable bounding box (e.g. Meshing), also display it, even if the node is not computed.
      * Used when dropping/selecting a node output attribute onto the 3D viewer.
-     * Returns true if the attribute was actually viewed, false otherwise.
+     * Returns true if the attribute or the bounding box was actually viewed, false otherwise.
      */
     function viewAttribute(attribute)
     {
-        if (attribute.desc.type === "File" && attribute.node.isComputed)
+        let viewed = false
+        if (attribute.node.hasAttribute("useBoundingBox"))
         {
-            return view(attribute.value, `${attribute.node.label}.${attribute.label}`)
+            collection.boundingBoxNode = attribute.node
+            viewed = true
         }
 
-        return false
+        if (attribute.desc.type === "File" && attribute.node.isComputed)
+        {
+            viewed = view(attribute.value, `${attribute.node.label}.${attribute.label}`) || viewed
+        }
+
+        return viewed
     }
 }

@@ -60,6 +60,15 @@ FloatingPane {
                 inactiveToolTip: "Display Axis"
                 onClicked: parent.axisLayer.visible = !parent.axisLayer.visible
             }
+
+            ToggleIconButton {
+                enabled: root.collection !== null && root.collection.boundingBoxNode !== null
+                active: enabled && root.collection.showBoundingBox
+                activeIcon: MaterialIcons.check_box_outline_blank
+                activeToolTip: "Hide Bounding Box"
+                inactiveToolTip: "Display Bounding Box"
+                onClicked: root.collection.showBoundingBox = !root.collection.showBoundingBox
+            }
         }
 
         CameraGroup {

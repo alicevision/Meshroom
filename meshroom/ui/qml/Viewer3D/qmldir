@@ -19,6 +19,8 @@ PropertyComboBox 1.0 PropertyComboBox.qml
 DragMouseArea 1.0 DragMouseArea.qml
 FreeViewMouseArea 1.0 FreeViewMouseArea.qml
 SfmViewMouseArea 1.0 SfmViewMouseArea.qml
+BoxControlMouseArea 1.0 BoxControlMouseArea.qml
+MeshingBoundingBox 1.0 MeshingBoundingBox.qml
 internal MeshEntry 1.0 MeshEntry.qml
 internal SfmDataEntry 1.0 SfmDataEntry.qml
 internal DepthmapEntry 1.0 DepthmapEntry.qml

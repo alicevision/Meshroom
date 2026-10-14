@@ -400,7 +400,7 @@ class SetObservationCommand(GraphCommand):
         super().__init__(graph, parent)
         self.attrName = attribute.fullName
         self.key = key
-        self.observation = observation.toVariant()
+        self.observation = observation
         self.oldObservation = attribute.geometry.getObservation(key)
         self.setText(f"Set observation for shape attribute '{attribute.fullName}' at key: '{key}'")
 

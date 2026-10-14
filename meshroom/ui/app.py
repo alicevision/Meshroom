@@ -3,11 +3,12 @@ import os
 import re
 import argparse
 import json
+import sys
 from enum import Enum
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
-from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtCore import QUrl, QJsonValue, qInstallMessageHandler, QtMsgType, QSettings, QProcess
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlDebuggingEnabler
 from PySide6.QtQuickControls2 import QQuickStyle
@@ -16,6 +17,7 @@ from PySide6.QtWidgets import QApplication
 import meshroom
 from meshroom.core import pluginManager
 from meshroom.core.desc import NodeVersionTypeEnum
+from meshroom.core.plugins.local.taskQueue import PluginTaskQueue
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.taskManager import TaskManager
 from meshroom.common import Property, Variant, Signal, Slot
@@ -237,6 +239,14 @@ class MeshroomApp(QApplication):
 
         super().__init__(inputArgs[:1] + qtArgs)
 
+        # Store how Meshroom was launched, to be able to restart it
+        self._launchVerbosity = args.verbose
+        self._launchWorkingDir = os.getcwd()
+        if meshroom.isFrozen:
+            self._launchCommand = [sys.executable]
+        else:
+            self._launchCommand = [sys.executable, os.path.abspath(sys.argv[0])]
+
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
         self.setApplicationVersion(meshroom.__version_label__)
@@ -289,6 +299,15 @@ class MeshroomApp(QApplication):
         if os.path.isdir(pyside6QmlPath):
             self.engine.addImportPath(pyside6QmlPath)
 
+        # expose the plugin manager
+        self.engine.rootContext().setContextProperty("_pluginManager", pluginManager)
+
+        # expose the queue processing the plugin installation, update and removal tasks
+        self._pluginTaskQueue = PluginTaskQueue(parent=self)
+        self.engine.rootContext().setContextProperty("_pluginTaskQueue", self._pluginTaskQueue)
+        # stop the running plugin task properly on exit
+        self.aboutToQuit.connect(self._pluginTaskQueue.shutdown)
+
         # expose available node types that can be instantiated
         self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getNodeDescProviders()[n].nodeDescClass.category} for n in sorted(pluginManager.getNodeDescProviders().keys())})
 
@@ -315,7 +334,8 @@ class MeshroomApp(QApplication):
         # additional context properties
         self._messageController = MessageController(parent=self)
         self.engine.rootContext().setContextProperty("_messageController", self._messageController)
-        self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
+        self._paletteManager = PaletteManager(self.engine, parent=self)
+        self.engine.rootContext().setContextProperty("_PaletteManager", self._paletteManager)
         self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
         self.engine.rootContext().setContextProperty("NodeVersionType", NodeVersionTypeEnum(parent=self))
@@ -380,6 +400,27 @@ class MeshroomApp(QApplication):
             self.addRecentProjectFile(args.save)
 
         self.engine.load(os.path.normpath(url))
+
+        # Apply the initial theme now.
+        # Quick Controls Fusion-style palette machinery has already initialized.
+        self._paletteManager.togglePalette()
+
+    @Slot()
+    def restart(self):
+        """
+        Restart Meshroom, reopening the current project if it has been saved to a file.
+        The original command line arguments are not reused, as they may import images or save a project again.
+        """
+        program, *programArgs = self._launchCommand
+        programArgs += ["--verbose", self._launchVerbosity]
+        if self._activeProject.graph.filepath:
+            programArgs.append(self._activeProject.graph.filepath)
+
+        success, _ = QProcess.startDetached(program, programArgs, self._launchWorkingDir)
+        if not success:
+            self.showMessage("Could not restart Meshroom", "error")
+            return
+        self.quit()
 
     def terminateManual(self):
         self.engine.clearComponentCache()

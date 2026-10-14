@@ -7,8 +7,9 @@ from meshroom.core.files import (
     isTemplateFile,
     withExtension,
 )
+from meshroom.core import pluginManager
 from meshroom.core.graph import Graph
-from meshroom.core.plugins.base import Plugin, PluginType
+from .utils import registeredPlugin
 
 
 def write_graph_file(path, template=False):
@@ -86,17 +87,19 @@ def test_pipeline_template_discovery_supports_mgt_and_legacy_mg_metadata(tmp_pat
 
 
 def test_plugin_template_discovery_supports_mgt_and_legacy_mg_metadata(tmp_path):
-    explicit_template_file = tmp_path / f"explicit{MESHROOM_TEMPLATE_EXTENSION}"
-    legacy_template_file = tmp_path / f"legacy{MESHROOM_PROJECT_EXTENSION}"
-    project_file = tmp_path / f"project{MESHROOM_PROJECT_EXTENSION}"
+    meshroom_folder_path = tmp_path / "meshroom"
+    meshroom_folder_path.mkdir()
+    explicit_template_file = meshroom_folder_path / f"explicit{MESHROOM_TEMPLATE_EXTENSION}"
+    legacy_template_file = meshroom_folder_path / f"legacy{MESHROOM_PROJECT_EXTENSION}"
+    project_file = meshroom_folder_path / f"project{MESHROOM_PROJECT_EXTENSION}"
 
     write_graph_file(explicit_template_file, template=True)
     write_graph_file(legacy_template_file, template=True)
     write_graph_file(project_file, template=False)
 
-    plugin = Plugin("testPlugin", str(tmp_path), str(tmp_path), PluginType.BUILTIN)
-
-    assert plugin.templates == {
-        "explicit": str(explicit_template_file),
-        "legacy": str(legacy_template_file),
-    }
+    with registeredPlugin("testTemplatePlugin", str(tmp_path)):
+        plugin = pluginManager.getPlugin("testTemplatePlugin")
+        assert plugin.templates == {
+            "explicit": str(explicit_template_file),
+            "legacy": str(legacy_template_file),
+        }

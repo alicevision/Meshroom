@@ -18,7 +18,9 @@ FloatingPane {
     readonly property bool hasMeshContent: root.collection && root.collection.meshes.count > 0
     readonly property bool hasSfmDataContent: root.collection && root.collection.sfmData.count > 0
     readonly property bool hasDepthmapContent: root.collection && root.collection.depthmaps.count > 0
-    readonly property bool hasAnyContent: hasImageContent || hasMeshContent || hasSfmDataContent || hasDepthmapContent
+    readonly property bool hasPointContent: root.collection && root.collection.sceneView && root.collection.sceneView.pointLayerRef
+                                           && root.collection.sceneView.pointLayerRef.positions.length > 0
+    readonly property bool hasAnyContent: hasImageContent || hasPointContent || hasMeshContent || hasSfmDataContent || hasDepthmapContent
 
     padding: 0
 
@@ -79,6 +81,11 @@ FloatingPane {
 
                 ImageGroup3D {
                     visible: hasImageContent
+                    collection: root.collection
+                }
+
+                PointGroup3D {
+                    visible: hasPointContent
                     collection: root.collection
                 }
 

@@ -1,345 +1,310 @@
+import meshViewer
+
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
-import QtQuick.Scene3D 2.6
-import Qt3D.Core 2.6
-import Qt3D.Render 2.6
-import Qt3D.Extras 2.15
-import Qt3D.Input 2.6 as Qt3DInput // to avoid clash with Controls2 Action
-
-import Controls 1.0
-import MaterialIcons 2.2
 import Utils 1.0
 
-
-FocusScope {
+Item {
     id: root
 
-    property int renderMode: 2
-    readonly property alias library: mediaLibrary
-    readonly property alias mainCamera: mainCamera
+    property alias collection: collection
 
-    readonly property vector3d defaultCamPosition: Qt.vector3d(12.0, 10.0, -12.0)
-    readonly property vector3d defaultCamUpVector: Qt.vector3d(-0.358979, 0.861550, 0.358979) // should be accurate, consistent with camera view center
-    readonly property vector3d defaultCamViewCenter: Qt.vector3d(0.0, 0.0, 0.0)
+    // Current scene (_currentScene context property), or null when unavailable
+    readonly property var scene: typeof _currentScene === "undefined" ? null : _currentScene
+    // Active orbit motion, or null while looking through an SfM camera
+    readonly property var orbit: sceneView.motionInfo instanceof OrbitMotionInfo ? sceneView.motionInfo : null
 
-    readonly property var viewpoint: _currentScene ? _currentScene.selectedViewpoint : null
-    readonly property bool doSyncViewpointCamera: Viewer3DSettings.syncViewpointCamera && (viewpoint && viewpoint.isReconstructed)
+    // Sentinel used by SfmDataLayer.selectedCamera to mean "no camera selected" (UndefinedIndexT).
+    // Declared as "var" (not "int") since QML's int is 32-bit signed and would overflow 0xFFFFFFFF to -1.
+    readonly property var invalidCameraId: 0xFFFFFFFF
 
-    // Functions
-    function resetCameraPosition() {
-        mainCamera.position = defaultCamPosition
-        mainCamera.upVector = defaultCamUpVector
-        mainCamera.viewCenter = defaultCamViewCenter
-    }
+    // OrbitMotionInfo view presets triggered by numpad keys
+    readonly property var numpadViews: ({
+        [Qt.Key_8]: "viewTop",
+        [Qt.Key_2]: "viewBottom",
+        [Qt.Key_5]: "viewFront",
+        [Qt.Key_7]: "viewBack",
+        [Qt.Key_4]: "viewLeft",
+        [Qt.Key_6]: "viewRight"
+    })
 
-    function load(filepath, label = undefined) {
-        mediaLibrary.load(filepath, label)
-    }
+    // LayerList receiving each supported file extension
+    readonly property var layerListByExtension: ({
+        ".abc": collection.sfmData,
+        ".usda": collection.sfmData,
+        ".sfm": collection.sfmData,
+        ".obj": collection.meshes,
+        ".glb": collection.meshes,
+        ".exr": collection.depthmaps
+    })
 
-    /// View 'attribute' in the 3D Viewer. Media will be loaded if needed.
-    /// Returns whether the attribute can be visualized (matching type and extension).
-    function view(attribute) {
-        if (attribute.desc.type === "File"
-           && Viewer3DSettings.supportedExtensions.indexOf(Filepath.extension(attribute.value)) > - 1) {
-            mediaLibrary.view(attribute)
-            return true
+    focus: true
+
+    Keys.onPressed: function(event) {
+        const isNumpad = (event.modifiers & Qt.KeypadModifier) !== 0
+
+        let action = null
+        
+        if (event.key === Qt.Key_Z)
+        {
+            action = () => orbit.setDistance(1.0)
         }
-        return false
+        else if (event.key === Qt.Key_K)
+        {
+            action = () => orbit.fit(sceneView.boundingBox)
+        }
+        else if (isNumpad && numpadViews[event.key])
+        {
+            action = () => orbit[numpadViews[event.key]]()
+        }
+
+        if (!action)
+        {
+            return
+        }
+
+        if (orbit)
+        {
+            action()
+        }
+
+        event.accepted = true
     }
 
-    /// Solo (i.e display only) the given attribute.
-    function solo(attribute) {
-        mediaLibrary.solo(mediaLibrary.find(attribute))
+    function isValidSelectedViewId(viewId)
+    {
+        if (viewId === undefined || viewId === null)
+        {
+            return false
+        }
+
+        const normalizedViewId = String(viewId)
+        return normalizedViewId.length > 0 && normalizedViewId !== "-1"
     }
 
-    function clear() {
-        mediaLibrary.clear()
+    function isValidCameraId(cameraId)
+    {
+        return cameraId !== undefined && cameraId !== null && cameraId !== invalidCameraId
     }
 
-    SystemPalette { id: activePalette }
+    function syncSelectedCameraToScene(layer)
+    {
+        if (scene && isValidCameraId(layer.selectedCamera))
+        {
+            scene.selectedViewId = String(layer.selectedCamera)
+        }
+    }
 
-    Scene3D {
-        id: scene3D
+    function restoreFallbackSceneState()
+    {
+        imageLayer.visible = false
+        imageLayer.source = ""
+        sceneView.motionInfo = fallbackMotionInfo
+        sceneView.cameraInfo = fallbackCameraInfo
+    }
+
+    /** Look through the camera @p viewId of @p sfmDataObject and display its image. */
+    function syncSfmSceneState(sfmDataObject, viewId)
+    {
+        if (!sfmDataObject.hasCameraTransform(viewId))
+        {
+            return
+        }
+
+        const sfmCameraInfo = sfmDataObject.getCameraInfo(viewId)
+        if (!sfmCameraInfo)
+        {
+            return
+        }
+
+        sfmMotionInfo.pose = sfmDataObject.getCameraTransform(viewId)
+        sceneView.motionInfo = sfmMotionInfo
+        sceneView.cameraInfo = sfmCameraInfo
+
+        imageLayer.setIntrinsics(sfmDataObject, viewId)
+        imageLayer.source = sfmDataObject.getImagePath(viewId)
+        imageLayer.visible = true
+    }
+
+    function syncViewPoint()
+    {
+        const sfmDataObject = collection.selectedSfmDataObject
+        if (!sfmDataObject)
+        {
+            restoreFallbackSceneState()
+            return
+        }
+
+        if (scene && isValidSelectedViewId(scene.selectedViewId))
+        {
+            syncSfmSceneState(sfmDataObject, scene.selectedViewId)
+        }
+    }
+
+    function moveToCameraCenter(layer)
+    {
+        const viewId = layer.selectedCamera
+        if (!orbit || !layer.sfmData || !isValidCameraId(viewId) || !layer.sfmData.hasCameraTransform(viewId))
+        {
+            return
+        }
+
+        orbit.setCenter(layer.sfmData.getCameraCenter(viewId))
+    }
+
+    /** Dispatch a pick result: user code 0 selects a camera, code 1 recenters the orbit. */
+    function handlePickingLayerChanged()
+    {
+        const layer = sceneView.pickingLayer
+        const select = sceneView.userCode == 0
+
+        if (layer instanceof MeshLayer)
+        {
+            if (!select && orbit)
+            {
+                orbit.setCenter(layer.selection)
+            }
+        }
+        else if (layer instanceof SfmDataLayer)
+        {
+            if (select)
+            {
+                syncSelectedCameraToScene(layer)
+            }
+            else
+            {
+                moveToCameraCenter(layer)
+            }
+        }
+    }
+
+    SceneView {
+        id: sceneView
         anchors.fill: parent
-        cameraAspectRatioMode: Scene3D.AutomaticAspectRatio  // vs. UserAspectRatio
-        hoverEnabled: true  // If true, will trigger positionChanged events in attached MouseHandler
-        aspects: ["logic", "input"]
-        focus: true
 
-        // We cannot use directly an ExifOrientedViewer since this component is not a Loader
-        // so we redefine the transform using the ExifOrientation utility functions
-        property var orientationTag: (doSyncViewpointCamera && root.viewpoint) ? root.viewpoint.orientation.toString() : "1"
-        transform: [
-            Rotation {
-                angle: ExifOrientation.rotation(scene3D.orientationTag)
-                origin.x: scene3D.width * 0.5
-                origin.y: scene3D.height * 0.5
+        property var imageLayerRef: imageLayer
+
+        motionInfo: fallbackMotionInfo
+        cameraInfo: fallbackCameraInfo
+
+        OrbitMotionInfo {
+            id: fallbackMotionInfo
+        }
+
+        AVMotionInfo {
+            id: sfmMotionInfo
+        }
+
+        BaseCameraInfo {
+            id: fallbackCameraInfo
+
+            fov: 70.0
+            nearPlane: 0.1
+            farPlane: 10000
+        }
+
+        layers: [
+            AxisLayer {
             },
-            Scale {
-                xScale: ExifOrientation.xscale(scene3D.orientationTag)
-                origin.x: scene3D.width * 0.5
-                origin.y: scene3D.height * 0.5
+            GridLayer {
+                id: gridLayer
+            },
+            ImageLayer {
+                id: imageLayer
+                visible: true
             }
         ]
 
-        Keys.onPressed: function(event) {
-            if (event.key === Qt.Key_F) {
-                resetCameraPosition()
-            } else if (Qt.Key_1 <= event.key && event.key < Qt.Key_1 + Viewer3DSettings.renderModes.length) {
-                Viewer3DSettings.renderMode = event.key - Qt.Key_1
-            } else {
-                event.accepted = false
-            }
+        FreeViewMouseArea {
+            anchors.fill: parent
+            enabled: collection.selectedSfmDataObject === null
+            sceneView: sceneView
+            focusTarget: root
         }
 
-        Entity {
-            id: rootEntity
-
-            Camera {
-                id: mainCamera
-                projectionType: CameraLens.PerspectiveProjection
-                enabled: cameraSelector.camera == mainCamera
-                fieldOfView: 45
-                nearPlane : 0.01
-                farPlane : 10000.0
-                position: defaultCamPosition
-                upVector: defaultCamUpVector
-                viewCenter: defaultCamViewCenter
-                aspectRatio: width/height
-            }
-
-            ViewpointCamera {
-                id: viewpointCamera
-                enabled: cameraSelector.camera === camera
-                viewpoint: root.viewpoint
-                camera.aspectRatio: width/height
-            }
-
-            Entity {
-                components: [
-                    DirectionalLight{
-                        color: "white"
-                        worldDirection: Transformations3DHelper.getRotatedCameraViewVector(cameraSelector.camera.viewVector, cameraSelector.camera.upVector, directionalLightPane.lightPitchValue, directionalLightPane.lightYawValue).normalized()
-                    }
-                ]
-            }
-
-            TrackballGizmo {
-                beamRadius: 4.0/root.height
-                alpha: cameraController.moving ? 1.0 : 0.7
-                enabled: Viewer3DSettings.displayGizmo && cameraSelector.camera == mainCamera
-                xColor: Colors.red
-                yColor: Colors.green
-                zColor: Colors.blue
-                centerColor: Colors.sysPalette.highlight
-                transform: Transform {
-                    translation: mainCamera.viewCenter
-                    scale: 0.15 * mainCamera.viewCenter.minus(mainCamera.position).length()
-                }
-            }
-
-            DefaultCameraController {
-                id: cameraController
-                enabled: cameraSelector.camera == mainCamera
-
-                windowSize {
-                    width: root.width
-                    height: root.height
-                }
-                rotationSpeed: 16
-                trackballSize: 0.9
-
-                camera: mainCamera
-                focus: scene3D.activeFocus
-                onMousePressed: function(mouse) {
-                    scene3D.forceActiveFocus()
-                }
-                onMouseReleased: function(mouse, moved) {
-                    if (moving)
-                        return
-                    if (!moved && mouse.button === Qt.RightButton) {
-                        contextMenu.popup()
-                    }
-                }
-            }
-
-            components: [
-                RenderSettings {
-                    pickingSettings.pickMethod: PickingSettings.PrimitivePicking  // Enables point/edge/triangle picking
-                    pickingSettings.pickResultMode: PickingSettings.NearestPick
-                    renderPolicy: RenderSettings.Always
-
-                    activeFrameGraph: RenderSurfaceSelector {
-                        // Use the whole viewport
-                        Viewport {
-                            normalizedRect: Qt.rect(0.0, 0.0, 1.0, 1.0)
-                            CameraSelector {
-                                id: cameraSelector
-                                camera: doSyncViewpointCamera ? viewpointCamera.camera : mainCamera
-                                FrustumCulling {
-                                    ClearBuffers {
-                                        clearColor: "transparent"
-                                        buffers : ClearBuffers.ColorDepthBuffer
-                                        RenderStateSet {
-                                            renderStates: [
-                                                DepthTest { depthFunction: DepthTest.Less }
-                                            ]
-                                        }
-                                    }
-                                    LayerFilter {
-                                        filterMode: LayerFilter.DiscardAnyMatchingLayers
-                                        layers: Layer {id: drawOnFront}
-                                    }
-                                    LayerFilter {
-                                        filterMode: LayerFilter.AcceptAnyMatchingLayers
-                                        layers: [drawOnFront]
-                                        RenderStateSet {
-                                            renderStates: DepthTest { depthFunction: DepthTest.GreaterOrEqual }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                Qt3DInput.InputSettings { }
-            ]
-
-            MediaLibrary {
-                id: mediaLibrary
-                renderMode: Viewer3DSettings.renderMode
-                // Picking to set focus point (camera view center)
-                // Only activate it when the 'Control' key is pressed
-                pickingEnabled: cameraController.pickingActive
-                camera: cameraSelector.camera
-
-                // Used for TransformGizmo in BoundingBox
-                sceneCameraController: cameraController
-                frontLayerComponent: drawOnFront
-                window: root
-
-                components: [
-                    Transform {
-                        id: transform
-                    }
-                ]
-
-                onClicked: function(pick) {
-                    if (pick.button === Qt.LeftButton) {
-                        mainCamera.viewCenter = pick.worldIntersection
-                    }
-                }
-
-            }
-            Locator3D { enabled: Viewer3DSettings.displayOrigin }
-            Grid3D { enabled: Viewer3DSettings.displayGrid }
+        SfmViewMouseArea {
+            anchors.fill: parent
+            enabled: collection.selectedSfmDataObject !== null
+            sceneView: sceneView
+            focusTarget: root
         }
     }
 
-    // Image overlay when navigating reconstructed cameras
-    Loader {
-        id: imageOverlayLoader
-        anchors.fill: parent
+    SceneObjectCollection {
+        id: collection
+        sceneView: sceneView
+    }
 
-        active: doSyncViewpointCamera
-        visible: Viewer3DSettings.showViewpointImageOverlay
+    // Source: collection (SceneObjectCollection), whose selectedSfmDataObject tracks the currently
+    // selected SfM dataset layer. Reason: when that selection changes, the viewpoint (camera pose,
+    // motion info and background image) must be resynced to match the newly selected dataset.
+    Connections {
+        target: collection
 
-        sourceComponent: ImageOverlay {
-            id: imageOverlay
-            source: root.viewpoint.undistortedImageSource
-            imageRatio: root.viewpoint.orientedImageSize.width * root.viewpoint.pixelAspectRatio / root.viewpoint.orientedImageSize.height
-            uvCenterOffset: root.viewpoint.uvCenterOffset
-            showFrame: Viewer3DSettings.showViewpointImageFrame
-            imageOpacity: Viewer3DSettings.viewpointImageOverlayOpacity
+        function onSelectedSfmDataObjectChanged()
+        {
+            syncViewPoint()
         }
     }
 
-    // Media loading overlay
-    // (Scene3D is frozen while a media is being loaded)
-    Rectangle {
-        anchors.fill: parent
-        visible: mediaLibrary.loading
-        color: Qt.darker(Colors.sysPalette.mid, 1.2)
-        opacity: 0.6
-        BusyIndicator {
-            anchors.centerIn: parent
-            running: parent.visible
+    // Source: sceneView (SceneView), whose pickingLayer/userCode report the result of a user pick in
+    // the 3D view. Reason: dispatch that pick result to the right handler, either selecting a shape
+    // observation/camera (userCode 0) or recentering the orbit on the picked point (userCode 1).
+    Connections {
+        target: sceneView
+
+        function onPickingLayerChanged()
+        {
+            handlePickingLayerChanged()
         }
     }
 
-    FloatingPane {
-        visible: Viewer3DSettings.renderMode == 3
-        anchors.bottom: renderModesPanel.top
-        GridLayout {
-            columns: 2
-            rowSpacing: 0
+    // Source: root.scene (the _currentScene context property), whose selectedViewId is driven by the
+    // rest of the Meshroom UI (e.g. the image gallery). Reason: propagate that externally-driven
+    // selection into the 3D view by updating every SfmDataLayer's selected camera and resyncing the
+    // viewpoint accordingly.
+    Connections {
+        target: root.scene
 
-            RadioButton {
-                text: "SHL File"
-                autoExclusive: true
-                checked: true
-            }
-            TextField {
-                text: Viewer3DSettings.shlFile
-                selectByMouse: true
-                Layout.minimumWidth: 300
-                onEditingFinished: Viewer3DSettings.shlFile = text
-            }
-
-            RadioButton {
-                Layout.columnSpan: 2
-                autoExclusive: true
-                text: "Normals"
-                onCheckedChanged: Viewer3DSettings.displayNormals = checked
-            }
-
+        function onSelectedViewIdChanged()
+        {
+            // Convert the scene's "-1" string sentinel to SfmDataLayer's numeric UndefinedIndexT
+            const viewId = root.scene.selectedViewId
+            collection.setSelectedCameraForAll(isValidSelectedViewId(viewId) ? Number(viewId) : invalidCameraId)
+            syncViewPoint()
         }
     }
 
-    // Rendering modes
-    FloatingPane {
-        id: renderModesPanel
-        anchors.bottom: parent.bottom
-        padding: 4
-        Row {
-            Repeater {
-                model: Viewer3DSettings.renderModes
-
-                delegate: MaterialToolButton {
-                    text: modelData["icon"]
-                    ToolTip.text: modelData["name"] + " (" + (index+1) + ")"
-                    font.pointSize: 11
-                    onClicked: Viewer3DSettings.renderMode = index
-                    checked: Viewer3DSettings.renderMode === index
-                    checkable: !checked  // Hack to disabled check on toggle
-                }
-            }
+    /**
+     * Add @p source to the LayerList matching its file extension (see layerListByExtension), under
+     * the optional @p label. Does nothing if the extension is not supported.
+     * Returns true if the file was loaded, false if its extension is not supported.
+     */
+    function view(source, label = undefined)
+    {
+        const layerList = layerListByExtension[Filepath.extension(source)]
+        if (!layerList)
+        {
+            return false
         }
+
+        layerList.add(source, label)
+        
+        return true
     }
 
-    // Directional light controller
-    DirectionalLightPane {
-        id: directionalLightPane
-        anchors {
-            bottom: parent.bottom
-            right: parent.right
-            margins: 2
+    /**
+     * View the file referenced by a computed node's File @p attribute, if any.
+     * Used when dropping/selecting a node output attribute onto the 3D viewer.
+     * Returns true if the attribute was actually viewed, false otherwise.
+     */
+    function viewAttribute(attribute)
+    {
+        if (attribute.desc.type === "File" && attribute.node.isComputed)
+        {
+            return view(attribute.value, `${attribute.node.label}.${attribute.label}`)
         }
-        visible: Viewer3DSettings.displayLightController
-    }
 
-    // Menu
-    Menu {
-        id: contextMenu
-
-        MenuItem {
-            text: "Fit All"
-            onTriggered: mainCamera.viewAll()
-        }
-        MenuItem {
-            text: "Reset View"
-            onTriggered: resetCameraPosition()
-        }
+        return false
     }
 }

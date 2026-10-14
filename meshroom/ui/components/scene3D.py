@@ -1,5 +1,5 @@
 import struct
-from math import acos, pi, sqrt, atan2, cos, sin, asin
+from math import pi, atan2, cos, sin, asin, degrees, radians, tan
 
 from PySide6.QtCore import QObject, Slot, QSize, Signal, QPointF, QByteArray
 from PySide6.Qt3DCore import Qt3DCore
@@ -96,58 +96,181 @@ class Scene3DHelper(QObject):
             geo.addAttribute(normalAttr)
 
 
-class TrackballController(QObject):
+class TurntableCameraController(QObject):
     """
-    Trackball-like camera controller.
-    Based on the C++ version from https://github.com/cjmdaixi/Qt3DTrackball
+    Turntable-like camera controller.
+
+    The camera orbits around its view center: horizontal mouse moves yaw it around the world
+    up axis, vertical ones pitch it around its own right axis. No rotation is ever applied
+    around the view axis, so the camera never rolls and the horizon - hence the ground grid -
+    always stays level.
+
+    Panning and zooming are expressed in pixels as well, so that every manipulation is
+    frame rate independent and keeps the point grabbed by the cursor under the cursor.
     """
+
+    # World up axis, around which the camera yaws: the 3D viewer scene is Y-up.
+    upAxis = QVector3D(0.0, 1.0, 0.0)
+    # Keep the camera away from the poles: an up vector perfectly aligned
+    # with the view direction would make the view matrix degenerate.
+    maxElevation = 89.9
+    # Distance to the view center is multiplied by this factor for each zoom step
+    # (one mouse wheel notch). Being multiplicative, zooming in then back out by
+    # the same number of steps restores the initial distance exactly.
+    zoomFactor = 0.8
+    # Zoom steps applied by a drag over the whole viewport height.
+    dragZoomSteps = 8.0
+    # Never keep less than this fraction of the distance to the view center in a single zoom:
+    # getting arbitrarily close would make the following translations collapse to zero.
+    minZoomRatio = 0.1
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._windowSize = QSize()
         self._camera = None
-        self._trackballSize = 1.0
-        self._rotationSpeed = 5.0
-
-    def projectToTrackball(self, screenCoords):
-        sx = screenCoords.x()
-        sy = self._windowSize.height() - screenCoords.y()
-        p2d = QVector2D(sx / self._windowSize.width() - 0.5, sy / self._windowSize.height() - 0.5)
-        z = 0.0
-        r2 = pow(self._trackballSize, 2)
-        lengthSquared = p2d.lengthSquared()
-        if lengthSquared <= r2 * 0.5:
-            z = sqrt(r2 - lengthSquared)
-        else:
-            z = r2 * 0.5 / p2d.length()
-        return QVector3D(p2d.x(), p2d.y(), z)
+        self._rotationSpeed = 200.0
+        self._zoomToCursor = True
 
     @staticmethod
-    def clamp(x):
-        return max(-1, min(x, 1))
+    def clamp(x, minValue=-1.0, maxValue=1.0):
+        return max(minValue, min(x, maxValue))
 
-    def createRotation(self, firstPoint, nextPoint):
-        lastPos3D = self.projectToTrackball(firstPoint).normalized()
-        currentPos3D = self.projectToTrackball(nextPoint).normalized()
-        angle = acos(self.clamp(QVector3D.dotProduct(currentPos3D, lastPos3D)))
-        direction = QVector3D.crossProduct(currentPos3D, lastPos3D)
-        return angle, direction
+    def orbitOffset(self):
+        """
+        Offset from the view center to the camera, and its length.
+        Returns (None, 0.0) when the controller has nothing usable to manipulate.
+        """
+        if self._camera is None or self._windowSize.isEmpty():
+            return None, 0.0
+        offset = self._camera.position() - self._camera.viewCenter()
+        distance = offset.length()
+        if distance < 1e-6:
+            return None, 0.0
+        return offset, distance
 
-    @Slot(QPointF, QPointF, float)
-    def rotate(self, lastPosition, currentPosition, dt):
-        angle, direction = self.createRotation(lastPosition, currentPosition)
-        rotatedAxis = self._camera.transform().rotation().rotatedVector(direction)
-        angle *= self._rotationSpeed * dt
-        self._camera.rotateAboutViewCenter(QQuaternion.fromAxisAndAngle(rotatedAxis, angle * pi * 180))
+    def screenAxes(self, viewDirection):
+        """ Camera right and up axes, orthonormalized against the given view direction. """
+        right = QVector3D.crossProduct(viewDirection, self._camera.upVector()).normalized()
+        return right, QVector3D.crossProduct(right, viewDirection).normalized()
+
+    def worldPerPixel(self, distance):
+        """ World size, in the plane passing through the view center, covered by one viewport pixel. """
+        return 2.0 * distance * tan(radians(self._camera.fieldOfView()) * 0.5) / self._windowSize.height()
+
+    def pitchAxis(self, viewDirection):
+        """ Screen-horizontal axis to pitch around: orthogonal to both the view direction and the up axis. """
+        axis = QVector3D.crossProduct(viewDirection, self.upAxis)
+        if axis.length() < 1e-6:
+            # Looking straight up or down: fall back on the camera's own right axis.
+            axis = self._camera.transform().rotation().rotatedVector(QVector3D(1.0, 0.0, 0.0))
+        return axis.normalized()
+
+    def levelledUpVector(self, viewDirection):
+        """ Roll-free up vector: the up axis made orthogonal to the given view direction. """
+        up = self.upAxis - viewDirection * QVector3D.dotProduct(self.upAxis, viewDirection)
+        return up.normalized()
+
+    @Slot(QPointF, QPointF)
+    def rotate(self, lastPosition, currentPosition):
+        """
+        Orbit the camera around its view center, following the mouse drag
+        from 'lastPosition' to 'currentPosition' (both in pixels).
+        """
+        offset, distance = self.orbitOffset()
+        if offset is None:
+            return
+
+        # Normalize both drags by the window height, so that the same pixel distance
+        # always yields the same rotation whatever the viewport aspect ratio:
+        # dragging over the viewport height rotates the camera by 'rotationSpeed' degrees.
+        dx = (currentPosition.x() - lastPosition.x()) / self._windowSize.height()
+        dy = (currentPosition.y() - lastPosition.y()) / self._windowSize.height()
+
+        viewCenter = self._camera.viewCenter()
+        direction = offset / distance  # From the view center to the camera
+
+        # Horizontal drag: yaw around the world up axis.
+        yaw = QQuaternion.fromAxisAndAngle(self.upAxis, -dx * self._rotationSpeed)
+
+        # Vertical drag: raise/lower the camera, without ever crossing the poles.
+        elevation = degrees(asin(self.clamp(QVector3D.dotProduct(direction, self.upAxis))))
+        deltaElevation = self.clamp(elevation + dy * self._rotationSpeed,
+                                    -self.maxElevation, self.maxElevation) - elevation
+        pitch = QQuaternion.fromAxisAndAngle(self.pitchAxis(-direction), -deltaElevation)
+
+        direction = yaw.rotatedVector(pitch.rotatedVector(direction))
+        self._camera.setPosition(viewCenter + direction * distance)
+        self._camera.setUpVector(self.levelledUpVector(-direction))
+
+    @Slot(QPointF, QPointF)
+    def pan(self, lastPosition, currentPosition):
+        """
+        Translate the camera and its view center in the view plane, following the mouse drag
+        from 'lastPosition' to 'currentPosition' (both in pixels). The scene follows the cursor:
+        whatever lies in the view center plane stays under it for the whole drag.
+        """
+        offset, distance = self.orbitOffset()
+        if offset is None:
+            return
+
+        scale = self.worldPerPixel(distance)
+        right, up = self.screenAxes((-offset).normalized())
+        # Move the camera opposite to the drag, so that the scene moves along with it.
+        translation = (right * -(currentPosition.x() - lastPosition.x())
+                       + up * (currentPosition.y() - lastPosition.y())) * scale
+
+        self._camera.setPosition(self._camera.position() + translation)
+        self._camera.setViewCenter(self._camera.viewCenter() + translation)
+
+    @Slot(float, QPointF)
+    def zoom(self, steps, cursorPosition):
+        """
+        Dolly the camera by 'steps' zoom steps: positive steps move it closer to its view center.
+        When 'zoomToCursor' is set, the view center also slides towards the point under
+        'cursorPosition' (in pixels), keeping that point still while the view scales around it.
+        """
+        offset, distance = self.orbitOffset()
+        if offset is None or steps == 0.0:
+            return
+
+        ratio = max(pow(self.zoomFactor, steps), self.minZoomRatio)
+        viewCenter = self._camera.viewCenter()
+        if self._zoomToCursor:
+            viewCenter = viewCenter + self.cursorOffset(cursorPosition, distance) * (1.0 - ratio)
+
+        self._camera.setViewCenter(viewCenter)
+        self._camera.setPosition(viewCenter + offset * ratio)
+
+    @Slot(QPointF, QPointF, QPointF)
+    def zoomByDrag(self, anchorPosition, lastPosition, currentPosition):
+        """
+        Zoom by a horizontal drag from 'lastPosition' to 'currentPosition' (dragging right zooms in),
+        towards the point under 'anchorPosition', where the drag started (all in pixels).
+        """
+        if self._windowSize.isEmpty():
+            return
+        dx = (currentPosition.x() - lastPosition.x()) / self._windowSize.height()
+        self.zoom(dx * self.dragZoomSteps, anchorPosition)
+
+    def cursorOffset(self, cursorPosition, distance):
+        """ World offset, in the view center plane, from the view center to the point under the cursor. """
+        offset, _ = self.orbitOffset()
+        if offset is None:
+            return QVector3D()
+        scale = self.worldPerPixel(distance)
+        right, up = self.screenAxes((-offset).normalized())
+        # Viewport y points down, world up points the other way.
+        return (right * (cursorPosition.x() - self._windowSize.width() * 0.5)
+                - up * (cursorPosition.y() - self._windowSize.height() * 0.5)) * scale
 
     windowSizeChanged = Signal()
     windowSize = makeProperty(QSize, '_windowSize', windowSizeChanged)
     cameraChanged = Signal()
     camera = makeProperty(QObject, '_camera', cameraChanged)
-    trackballSizeChanged = Signal()
-    trackballSize = makeProperty(float, '_trackballSize', trackballSizeChanged)
     rotationSpeedChanged = Signal()
     rotationSpeed = makeProperty(float, '_rotationSpeed', rotationSpeedChanged)
+    zoomToCursorChanged = Signal()
+    zoomToCursor = makeProperty(bool, '_zoomToCursor', zoomToCursorChanged)
 
 
 class Transformations3DHelper(QObject):

@@ -14,7 +14,7 @@ GroupBox {
     property int sidePadding: 6
     property alias labelBackground: labelBg
     property alias toolBarContent: toolBar.data
-    property bool expanded: expandButton.checked
+    property alias expanded: expandButton.checked
 
     padding: 2
     leftPadding: sidePadding

@@ -403,6 +403,20 @@ class Transformations3DHelper(QObject):
 
         return U.toEulerAngles()
 
+    @Slot(QVector3D, QVector3D, float, result=QVector3D)
+    def rotateEulerLocal(self, rotation, axis, angle):
+        """
+        Apply a rotation around a local axis to an orientation given as Euler angles.
+        Args:
+            rotation (QVector3D): initial orientation, Euler angles in degrees
+            axis (QVector3D): rotation axis, in the local frame of the initial orientation
+            angle (float): rotation angle in degrees
+        Returns:
+            QVector3D: resulting orientation, Euler angles in degrees
+        """
+        quaternion = QQuaternion.fromEulerAngles(rotation.x(), rotation.y(), rotation.z()) * QQuaternion.fromAxisAndAngle(axis, angle)
+        return quaternion.toEulerAngles()
+
     @Slot(QVector3D, QVector3D, float, float, result=QVector3D)
     def getRotatedCameraViewVector(self, camereViewVector, cameraUpVector, pitch, yaw):
         """

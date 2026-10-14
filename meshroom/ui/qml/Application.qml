@@ -1372,7 +1372,7 @@ Page {
                     SplitView.minimumWidth: 350
 
                     padding: 4
-                    tabs: ["Graph Editor", "Task Manager", "Script Editor"]
+                    tabs: ["Graph Editor", "Task Manager", "Script Editor", "Curve Editor"]
 
                     headerBar: RowLayout {
                         MaterialToolButton {
@@ -1584,6 +1584,21 @@ Page {
                         rootApplication: root
 
                         visible: graphEditorPanel.currentTab === 2
+                    }
+
+                    // Loaded by URL: a missing curveViewer plugin (QtAliceVision) only disables this tab
+                    Loader {
+                        id: curveEditorLoader
+                        anchors.fill: parent
+
+                        visible: graphEditorPanel.currentTab === 3
+                        source: "CurveEditor/CurveEditor.qml"
+
+                        Label {
+                            anchors.centerIn: parent
+                            visible: curveEditorLoader.status === Loader.Error
+                            text: "Curve Editor unavailable: missing curveViewer plugin from QtAliceVision."
+                        }
                     }
                 }
 

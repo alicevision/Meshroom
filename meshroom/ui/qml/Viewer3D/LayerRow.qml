@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import meshViewer
 import "Inspector3DUtils.js" as Inspector3DUtils
 
 import MaterialIcons 2.2
@@ -35,6 +36,9 @@ MouseArea {
     readonly property var entryLayer: entry ? entry.layer : null
     readonly property bool loading: entry ? entry.loading : false
     readonly property bool isCurrent: ListView.isCurrentItem
+    // Active orbit motion of the target SceneView, or null while looking through an SfM camera
+    readonly property var orbit: layerList && layerList.sceneView && layerList.sceneView.motionInfo instanceof OrbitMotionInfo
+                                 ? layerList.sceneView.motionInfo : null
 
     hoverEnabled: true
     height: content.implicitHeight
@@ -71,6 +75,21 @@ MouseArea {
                 font.weight: root.isCurrent ? Font.DemiBold : Font.Normal
                 topPadding: 3
                 bottomPadding: topPadding
+            }
+
+            MaterialToolButton {
+                enabled: root.entryLayer !== null && !root.loading && root.orbit !== null
+                text: MaterialIcons.center_focus_strong
+                font.pointSize: 10
+                flat: true
+                ToolTip.text: "Fit Camera to Layer"
+                onClicked: {
+                    const boundingBox = root.entryLayer.boundingBox()
+                    if (boundingBox.valid)
+                    {
+                        root.orbit.fit(boundingBox)
+                    }
+                }
             }
 
             ToggleIconButton {

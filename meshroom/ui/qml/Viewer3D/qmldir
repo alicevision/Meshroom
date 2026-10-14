@@ -3,6 +3,7 @@ module Viewer3D
 Viewer3D 1.0 Viewer3D.qml
 Inspector3D 1.0 Inspector3D.qml
 ImageGroup3D 1.0 ImageGroup3D.qml
+PointGroup3D 1.0 PointGroup3D.qml
 CameraGroup 1.0 CameraGroup.qml
 MeshesGroup3D 1.0 MeshesGroup3D.qml
 SfmDataGroup3D 1.0 SfmDataGroup3D.qml

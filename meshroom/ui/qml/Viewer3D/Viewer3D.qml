@@ -145,6 +145,34 @@ Item {
         }
     }
 
+    /** Store the point picked on mesh @p layer as the selected survey point's observation. */
+    function handlePickingShape(layer)
+    {
+        if (!scene)
+        {
+            return
+        }
+
+        const selectedShapeName = ShapeViewerHelper.selectedShapeName
+        if (!selectedShapeName)
+        {
+            return
+        }
+
+        const observationKey = SurveyPointViewerHelper.observationKeyForSelectedSurveyPoint(selectedShapeName)
+        if (!observationKey)
+        {
+            return
+        }
+
+        scene.setObservationFromName(selectedShapeName, observationKey, {
+            "X": layer.selection.x,
+            "Y": -layer.selection.y,
+            "Z": -layer.selection.z,
+            "picked": true
+        })
+    }
+
     function moveToCameraCenter(layer)
     {
         const viewId = layer.selectedCamera
@@ -156,7 +184,7 @@ Item {
         orbit.setCenter(layer.sfmData.getCameraCenter(viewId))
     }
 
-    /** Dispatch a pick result: user code 0 selects a camera, code 1 recenters the orbit. */
+    /** Dispatch a pick result: user code 0 selects (shape observation / camera), code 1 recenters the orbit. */
     function handlePickingLayerChanged()
     {
         const layer = sceneView.pickingLayer
@@ -164,7 +192,11 @@ Item {
 
         if (layer instanceof MeshLayer)
         {
-            if (!select && orbit)
+            if (select)
+            {
+                handlePickingShape(layer)
+            }
+            else if (orbit)
             {
                 orbit.setCenter(layer.selection)
             }
@@ -182,6 +214,24 @@ Item {
         }
     }
 
+    /** Return the selected survey point's observation in the selected view, or null. */
+    function getSelectedObservation()
+    {
+        const selectedShapeName = ShapeViewerHelper.selectedShapeName
+        if (!selectedShapeName || !scene)
+        {
+            return null
+        }
+
+        const shape = scene.graph.attribute(selectedShapeName) || scene.graph.internalAttribute(selectedShapeName)
+        if (!shape || shape.type !== "SurveyPoint")
+        {
+            return null
+        }
+
+        return shape.geometry.getObservation(scene.selectedViewId) || null
+    }
+
     SceneView {
         id: sceneView
         anchors.fill: parent
@@ -189,6 +239,7 @@ Item {
         property var imageLayerRef: imageLayer
         property var gridLayerRef: gridLayer
         property var axisLayerRef: axisLayer
+        property var pointLayerRef: pointLayer
 
         motionInfo: fallbackMotionInfo
         cameraInfo: fallbackCameraInfo
@@ -219,6 +270,11 @@ Item {
             ImageLayer {
                 id: imageLayer
                 visible: true
+            },
+            PointLayer {
+                id: pointLayer
+                visible: SurveyPointViewerHelper.hasSelectedNodeSurveyPoint
+                positions: SurveyPointViewerHelper.positions
             }
         ]
 
@@ -279,6 +335,22 @@ Item {
             const viewId = root.scene.selectedViewId
             collection.setSelectedCameraForAll(isValidSelectedViewId(viewId) ? Number(viewId) : invalidCameraId)
             syncViewPoint()
+        }
+    }
+
+    // Source: ShapeViewerHelper (singleton), whose selectedShapeName reflects the survey point/shape
+    // selected elsewhere in the UI (e.g. attribute editor). Reason: when that selection changes, center
+    // the orbit on the corresponding picked observation so the selected point stays in view.
+    Connections {
+        target: ShapeViewerHelper
+
+        function onSelectedShapeNameChanged()
+        {
+            const obs = getSelectedObservation()
+            if (obs && obs.picked && orbit)
+            {
+                orbit.setCenter(Qt.vector3d(obs.X, -obs.Y, -obs.Z))
+            }
         }
     }
 

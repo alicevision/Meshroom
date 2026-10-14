@@ -380,7 +380,7 @@ class Transformations3DHelper(QObject):
         posMat = QMatrix4x4()
         posMat.translate(translation)
 
-        quaternion = QQuaternion.fromEulerAngles(rotation)
+        quaternion = QQuaternion.fromEulerAngles(rotation.x(), rotation.y(), rotation.z())
         rotMat = self.quaternionToRotationMatrix(quaternion)
 
         scaleMat = QMatrix4x4()
@@ -397,7 +397,7 @@ class Transformations3DHelper(QObject):
         """
         M = QQuaternion.fromAxisAndAngle(QVector3D(1, 0, 0), 180.0)
 
-        quaternion = QQuaternion.fromEulerAngles(rotation)
+        quaternion = QQuaternion.fromEulerAngles(rotation.x(), rotation.y(), rotation.z())
 
         U = M * quaternion * M
 

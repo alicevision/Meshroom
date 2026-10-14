@@ -1,15 +1,31 @@
 import QtQuick
 
+import meshViewer
+
 /**
  * Free camera interactions on @p sceneView:
  * Alt + left/middle/right drag to rotate/pan/zoom, Alt + wheel to zoom,
  * Ctrl + click to pick (Ctrl + Shift + click to pick with user code 1).
+ * When the camera is orthographic, zooming changes its orthographicWidth (Maya-like)
+ * instead of the orbit distance.
  */
 DragMouseArea {
     id: root
 
     property var sceneView: null
     readonly property var motionInfo: sceneView ? sceneView.motionInfo : null
+    readonly property var cameraInfo: sceneView ? sceneView.cameraInfo : null
+    /** True when the current camera is a BaseCameraInfo in orthographic mode. */
+    readonly property bool isOrtho: cameraInfo instanceof BaseCameraInfo && cameraInfo.orthographic
+    /** Orthographic width captured when the drag started. */
+    property real initialOrthoWidth: 0
+
+    onPressed: (mouse) => {
+        if (isOrtho)
+        {
+            initialOrthoWidth = cameraInfo.orthographicWidth
+        }
+    }
 
     onClicked: (mouse) => {
         if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier))
@@ -47,7 +63,15 @@ DragMouseArea {
         }
         else if (draggingRight)
         {
-            motionInfo.distance = deltaY * 0.05
+            if (isOrtho)
+            {
+                // Multiplicative zoom keeps the width positive
+                cameraInfo.orthographicWidth = initialOrthoWidth * Math.exp(deltaY * 0.005)
+            }
+            else
+            {
+                motionInfo.distance = deltaY * 0.05
+            }
         }
     }
 
@@ -55,8 +79,15 @@ DragMouseArea {
         if ((wheel.modifiers & Qt.AltModifier) && !dragging)
         {
             // Qt reports the vertical wheel on the x axis while Alt is pressed
-            motionInfo.distance = -wheel.angleDelta.x * 0.05
-            motionInfo.applyTransform()
+            if (isOrtho)
+            {
+                cameraInfo.orthographicWidth *= Math.exp(-wheel.angleDelta.x * 0.001)
+            }
+            else
+            {
+                motionInfo.distance = -wheel.angleDelta.x * 0.05
+                motionInfo.applyTransform()
+            }
             wheel.accepted = true
         }
     }

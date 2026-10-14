@@ -63,7 +63,7 @@ RUN chmod +x qt.run
 RUN ./qt.run --root /opt/Qt --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations \
     --accept-licenses --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore \
     --no-force-installations --no-default-installations --confirm-command \
-    install qt.qt6.683.linux_gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
+    install qt.qt6.683.linux_gcc_64 qt.qt6.683.addons.qt3d
 RUN rm qt.run
 
 # Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023

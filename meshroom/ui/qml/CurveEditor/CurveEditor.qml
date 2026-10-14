@@ -14,6 +14,12 @@ import CurveViewer 1.0 as CurveViewer
  *  - X axis bar: Left drag: move the playhead, Shift+Left drag: select the fit interval,
  *    double click on the interval: clear it
  *
+ * Keyboard (only when the editor has the focus):
+ *  - Home: fit all visible curves, F: fit the current curve
+ *  - H: hide the current curve, Shift+H: hide the other curves, Alt+H: show all curves
+ *  - Delete/X: remove the current curve
+ *  - Alt+R: clear the fit interval
+ *
  * Fit computations are restricted to the fit interval when it is enabled.
  *
  * Requires the curveViewer plugin from QtAliceVision.
@@ -31,6 +37,57 @@ FocusScope {
 
     /// Height of the X axis bar
     property real headerHeight: 26
+
+    function fitAll() {
+        viewer.fitAll()
+    }
+
+    function removeCurrent() {
+        if (viewer.currentIndex >= 0)
+            model.removeCurve(viewer.currentIndex)
+    }
+
+    function hideOthers() {
+        const current = viewer.currentIndex
+        for (let row = 0; row < model.count; ++row) {
+            if (row !== current)
+                model.setVisible(row, false)
+        }
+    }
+
+    // Shortcuts are handled here instead of using Shortcut items:
+    // Shortcut contexts are window wide, while these keys must only act when the editor has the focus.
+    Keys.onPressed: function(event) {
+        const alt = event.modifiers & Qt.AltModifier
+        const shift = event.modifiers & Qt.ShiftModifier
+        const ctrl = event.modifiers & Qt.ControlModifier
+        if (ctrl) {
+            return
+        }
+
+        event.accepted = true
+        if (event.key === Qt.Key_Home) {
+            fitAll()
+        } else if (event.key === Qt.Key_F && !alt && !shift) {
+            if (viewer.currentIndex >= 0)
+                viewer.fitCurve(viewer.currentIndex)
+            else
+                fitAll()
+        } else if (event.key === Qt.Key_H && alt) {
+            model.setAllVisible(true)
+        } else if (event.key === Qt.Key_H && shift) {
+            hideOthers()
+        } else if (event.key === Qt.Key_H) {
+            if (viewer.currentIndex >= 0)
+                model.setVisible(viewer.currentIndex, false)
+        } else if ((event.key === Qt.Key_Delete || event.key === Qt.Key_X) && !alt && !shift) {
+            removeCurrent()
+        } else if (event.key === Qt.Key_R && alt) {
+            viewer.rangeEnabled = false
+        } else {
+            event.accepted = false
+        }
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -53,6 +110,17 @@ FocusScope {
             Layout.fillWidth: true
             Layout.fillHeight: true
             model: root.model
+        }
+    }
+
+    // Give the focus to the editor on any click inside it, without consuming the event
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
+        scrollGestureEnabled: false
+        onPressed: function(mouse) {
+            root.forceActiveFocus()
+            mouse.accepted = false
         }
     }
 }

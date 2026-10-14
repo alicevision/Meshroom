@@ -44,6 +44,9 @@ FocusScope {
     /// Height of the list header and of the X axis bar
     property real headerHeight: 26
 
+    /// Extensions (with their leading dot, case insensitive) of the SfMData files that can be dropped on the editor
+    property var acceptedExtensions: [".abc", ".sfm", ".usda"]
+
     function fitAll() {
         viewer.fitAll()
     }
@@ -130,6 +133,40 @@ FocusScope {
                 model: root.model
                 bands: root.bands
             }
+        }
+    }
+
+    // Load the camera trajectories of the dropped SfMData files
+    DropArea {
+        id: dropArea
+
+        anchors.fill: parent
+        enabled: root.acceptedExtensions.length > 0
+
+        function acceptedUrls(urls) {
+            return urls.filter(url => root.model.isAcceptedFile(url, root.acceptedExtensions))
+        }
+
+        onEntered: function(drag) {
+            drag.accepted = drag.hasUrls && acceptedUrls(drag.urls).length > 0
+        }
+
+        onDropped: function(drop) {
+            const urls = acceptedUrls(drop.urls)
+            if (urls.length === 0)
+                return
+            drop.accept()
+            for (const url of urls)
+                root.model.loadFromSfmData(url)
+            root.fitAll()
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            visible: dropArea.containsDrag
+            color: Qt.rgba(palette.highlight.r, palette.highlight.g, palette.highlight.b, 0.15)
+            border.color: palette.highlight
+            border.width: 2
         }
     }
 

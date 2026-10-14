@@ -1,6 +1,7 @@
 from meshroom.ui.scene import Scene
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, Slot
 from meshroom.core.attribute import GroupAttribute, ListAttribute
+from meshroom.core.node import Status
 from shiboken6 import isValid
 from .shapeFile import ShapeFile
 
@@ -46,6 +47,12 @@ class ShapeFilesHelper(BaseObject):
         self.nodeShapeFilesChanged.emit()
 
     @Slot()
+    def _onNodeStatusChanged(self):
+        """Callback when the current node status changes: reload shape files once computed."""
+        if self._currentNode is not None and self._currentNode.getGlobalStatus() == Status.SUCCESS:
+            self._loadShapeFiles()
+
+    @Slot()
     def _onSelectedViewIdChanged(self):
         """Callback when the active project selected view id changes."""
         for shapeFile in self._shapeFiles:
@@ -54,10 +61,11 @@ class ShapeFilesHelper(BaseObject):
     @Slot()
     def _onSelectedNodeChanged(self):
         """Callback when the active project selected node changes."""
-        # disconnect internalFolderChanged signal
+        # disconnect internalFolderChanged and globalStatusChanged signals
         if self._currentNode is not None:
             try:
                 self._currentNode.internalFolderChanged.disconnect(self._loadShapeFiles)
+                self._currentNode.globalStatusChanged.disconnect(self._onNodeStatusChanged)
             except RuntimeError:
                 # Signal was already disconnected or never connected
                 pass
@@ -71,9 +79,10 @@ class ShapeFilesHelper(BaseObject):
             return
         # update current node
         self._currentNode = self._activeProject.selectedNode
-        # connect internalFolderChanged signal
+        # connect internalFolderChanged and globalStatusChanged signals
         try:
             self._currentNode.internalFolderChanged.connect(self._loadShapeFiles)
+            self._currentNode.globalStatusChanged.connect(self._onNodeStatusChanged)
         except RuntimeError:
             # Signal was already disconnected or never connected
             pass

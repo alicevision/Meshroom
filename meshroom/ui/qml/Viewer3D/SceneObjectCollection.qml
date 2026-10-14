@@ -19,6 +19,10 @@ QtObject {
     property var sceneView: null
     /** SfmDataObject the viewer is looking through, or null for the free camera. */
     property var selectedSfmDataObject: null
+    /** Node whose "boundingBox" attribute is edited in the viewer (e.g. Meshing), or null. */
+    property var boundingBoxNode: null
+    /** Whether the user wants the bounding box of boundingBoxNode displayed. */
+    property bool showBoundingBox: true
 
     readonly property LayerList meshes: LayerList {
         sceneView: root.sceneView
@@ -54,6 +58,7 @@ QtObject {
     /** Remove all entries from the collection. */
     function clear() {
         selectedSfmDataObject = null
+        boundingBoxNode = null
         meshes.clear()
         sfmData.clear()
         depthmaps.clear()

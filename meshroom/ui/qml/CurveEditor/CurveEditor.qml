@@ -1,11 +1,13 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
+import Controls 1.0
 import CurveViewer 1.0 as CurveViewer
 
 /**
  * CurveEditor displays curves like Blender's graph editor:
- * an X axis bar with the playhead on top of the curves view.
+ * a list of curves on the left, an X axis bar with the playhead on top and the curves view.
  *
  * Mouse:
  *  - Wheel: zoom, Ctrl+Wheel: horizontal pan, Shift+Wheel: vertical pan
@@ -35,7 +37,7 @@ FocusScope {
 
     readonly property alias viewer: canvas.viewer
 
-    /// Height of the X axis bar
+    /// Height of the list header and of the X axis bar
     property real headerHeight: 26
 
     function fitAll() {
@@ -94,22 +96,35 @@ FocusScope {
         color: palette.window
     }
 
-    ColumnLayout {
+    MSplitView {
         anchors.fill: parent
-        spacing: 0
 
-        CurveTimeBar {
-            Layout.fillWidth: true
-            Layout.preferredHeight: root.headerHeight
+        CurveList {
+            SplitView.preferredWidth: 280
+            SplitView.minimumWidth: 160
+            model: root.model
             viewer: root.viewer
+            headerHeight: root.headerHeight
         }
 
-        CurveCanvas {
-            id: canvas
+        ColumnLayout {
+            SplitView.fillWidth: true
+            SplitView.minimumWidth: 100
+            spacing: 0
 
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            model: root.model
+            CurveTimeBar {
+                Layout.fillWidth: true
+                Layout.preferredHeight: root.headerHeight
+                viewer: root.viewer
+            }
+
+            CurveCanvas {
+                id: canvas
+
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                model: root.model
+            }
         }
     }
 

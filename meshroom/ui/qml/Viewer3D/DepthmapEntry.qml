@@ -17,4 +17,6 @@ QtObject {
     }
 
     readonly property bool loading: layer.loading === true
+    /** Non-empty if the last load failed. */
+    readonly property string errorString: layer.errorString || ""
 }

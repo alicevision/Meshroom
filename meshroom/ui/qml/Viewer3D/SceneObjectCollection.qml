@@ -11,6 +11,8 @@ import QtQuick
  *   // Then:
  *   collection.meshes.add("file:///path/to/mesh.obj")
  *   collection.sfmData.add("file:///path/to/sfm.abc")
+ *   // Removed when the attribute or its node changes:
+ *   collection.sfmData.add(attribute.value, "SfM", attribute)
  */
 QtObject {
     id: root

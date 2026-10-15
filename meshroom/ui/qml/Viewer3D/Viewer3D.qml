@@ -363,6 +363,20 @@ Item {
         }
     }
 
+    // Source: collection.boundingBoxNode, the node whose bounding box is edited in the viewer.
+    // Reason: stop displaying the bounding box of a node removed from the graph.
+    Connections {
+        target: collection.boundingBoxNode
+
+        function onAliveChanged()
+        {
+            if (!collection.boundingBoxNode.alive)
+            {
+                collection.boundingBoxNode = null
+            }
+        }
+    }
+
     // Source: imageLayer (ImageLayer), whose errorString is set when its image fails to load.
     // Reason: the image layer is unique, so it is hidden rather than removed on failure.
     Connections {
@@ -396,10 +410,11 @@ Item {
 
     /**
      * Add @p source to the LayerList matching its file extension (see layerListByExtension), under
-     * the optional @p label. Does nothing if the extension is not supported.
+     * the optional @p label. If @p source was read from @p attribute, the layer is removed when that
+     * attribute or its node changes. Does nothing if the extension is not supported.
      * Returns true if the file was loaded, false if its extension is not supported.
      */
-    function view(source, label = undefined)
+    function view(source, label = undefined, attribute = undefined)
     {
         const layerList = layerListByExtension[Filepath.extension(source)]
         if (!layerList)
@@ -407,7 +422,7 @@ Item {
             return false
         }
 
-        layerList.add(source, label)
+        layerList.add(source, label, attribute)
         
         return true
     }
@@ -429,7 +444,7 @@ Item {
 
         if (attribute.desc.type === "File" && attribute.node.isComputed)
         {
-            viewed = view(attribute.value, `${attribute.node.label}.${attribute.label}`) || viewed
+            viewed = view(attribute.value, `${attribute.node.label}.${attribute.label}`, attribute) || viewed
         }
 
         return viewed

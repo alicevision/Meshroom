@@ -363,6 +363,21 @@ Item {
         }
     }
 
+    // Source: imageLayer (ImageLayer), whose errorString is set when its image fails to load.
+    // Reason: the image layer is unique, so it is hidden rather than removed on failure.
+    Connections {
+        target: imageLayer
+
+        function onErrorStringChanged()
+        {
+            if (imageLayer.errorString)
+            {
+                console.warn(`Viewer3D: failed to load image "${imageLayer.source}": ${imageLayer.errorString}`)
+                imageLayer.visible = false
+            }
+        }
+    }
+
     // Source: ShapeViewerHelper (singleton), whose selectedShapeName reflects the survey point/shape
     // selected elsewhere in the UI (e.g. attribute editor). Reason: when that selection changes, center
     // the orbit on the corresponding picked observation so the selected point stays in view.

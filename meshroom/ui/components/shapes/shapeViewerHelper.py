@@ -67,6 +67,9 @@ class ShapeViewerHelper(BaseObject):
             except RuntimeError:
                 # Signal was already disconnected or the attribute was destroyed
                 pass
+        if shape is not previousShape:
+            # A newly selected shape never starts in ShapeList multi-add mode
+            self._listPlacement = False
         self._selectedShape = shape
         if shape is not None:
             if shape.type != "ShapeList":

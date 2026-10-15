@@ -2287,9 +2287,10 @@ class BaseNode(BaseObject):
     def has3DOutputAttribute(self):
         """
         Return True if at least one attribute is a File that can be loaded in the 3D Viewer,
-        False otherwise.
+        False otherwise. Init nodes have no computed outputs, so their inputs are considered too.
         """
-        return next((attr for attr in self._attributes if attr.enabled and attr.isOutput and attr.is3dDisplayable), None) is not None
+        return next((attr for attr in self._attributes
+                     if attr.enabled and (attr.isOutput or self.isInitNode) and attr.is3dDisplayable), None) is not None
 
     def hasTextOutputAttribute(self) -> bool:
         """

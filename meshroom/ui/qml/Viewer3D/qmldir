@@ -24,3 +24,4 @@ MeshingBoundingBox 1.0 MeshingBoundingBox.qml
 internal MeshEntry 1.0 MeshEntry.qml
 internal SfmDataEntry 1.0 SfmDataEntry.qml
 internal DepthmapEntry 1.0 DepthmapEntry.qml
+internal AttributeWatcher 1.0 AttributeWatcher.qml

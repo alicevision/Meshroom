@@ -1,6 +1,8 @@
 from PySide6.QtCore import QObject
+from shiboken6 import isValid
 
 from meshroom.common import BaseObject, Property, Variant, Signal, Slot
+from meshroom.core.attribute import ListAttribute
 
 
 class ShapeViewerHelper(BaseObject):
@@ -40,7 +42,7 @@ class ShapeViewerHelper(BaseObject):
         Set the selected shape name.
         Selecting another shape (or none) cancels the current placement.
         """
-        if self._selectedShape is not None and shapeName != self._selectedShape.fullName:
+        if self._selectedShape is not None and (not self._isSelectedShapeAlive() or shapeName != self._selectedShape.fullName):
             self._setSelectedShape(None)
             self._listPlacement = False
         self._selectedShapeName = shapeName
@@ -54,16 +56,40 @@ class ShapeViewerHelper(BaseObject):
         Args:
             shape: the ShapeAttribute or ShapeListAttribute to track, or None.
         """
-        if self._selectedShape is not None and self._selectedShape.type != "ShapeList":
+        previousShape = self._selectedShape
+        # Note: connections of a destroyed attribute are already gone
+        if previousShape is not None and isValid(previousShape):
             try:
-                self._selectedShape.geometry.observationsChanged.disconnect(self.placementChanged)
+                if previousShape.type != "ShapeList":
+                    previousShape.geometry.observationsChanged.disconnect(self.placementChanged)
+                if isinstance(previousShape.root, ListAttribute):
+                    previousShape.root.valueChanged.disconnect(self._onSelectedShapeParentChanged)
             except RuntimeError:
                 # Signal was already disconnected or the attribute was destroyed
                 pass
         self._selectedShape = shape
-        if shape is not None and shape.type != "ShapeList":
-            shape.geometry.observationsChanged.connect(self.placementChanged)
+        if shape is not None:
+            if shape.type != "ShapeList":
+                shape.geometry.observationsChanged.connect(self.placementChanged)
+            # List element: cancel the selection if it is removed from its list
+            if isinstance(shape.root, ListAttribute):
+                shape.root.valueChanged.connect(self._onSelectedShapeParentChanged)
         self.placementChanged.emit()
+
+    def _isSelectedShapeAlive(self) -> bool:
+        """Whether the selected shape still exists and, for a list element, still belongs to its list."""
+        shape = self._selectedShape
+        if shape is None or not isValid(shape):
+            return False
+        parent = shape.root
+        if isinstance(parent, ListAttribute):
+            return isValid(parent) and any(element is shape for element in parent.value)
+        return True
+
+    def _onSelectedShapeParentChanged(self):
+        """Callback when the selected list element parent list changes."""
+        if not self._isSelectedShapeAlive():
+            self.cancelPlacement()
 
     def _hasCurrentObservation(self, shape) -> bool:
         """Whether the given shape has an observation for the current view."""
@@ -74,7 +100,7 @@ class ShapeViewerHelper(BaseObject):
 
     def _isPlacing(self) -> bool:
         """Whether the 2d Viewer is waiting for a click to place the selected shape."""
-        if self._selectedShape is None:
+        if not self._isSelectedShapeAlive():
             return False
         if self._selectedShape.type == "ShapeList":
             return self._listPlacement
@@ -166,9 +192,9 @@ class ShapeViewerHelper(BaseObject):
         Set the selected shape observation for the current view at the given image position.
         For a ShapeList, append a new element with its observation (single undo step).
         """
-        shape = self._selectedShape
-        if shape is None:
+        if not self._isSelectedShapeAlive():
             return
+        shape = self._selectedShape
         viewId = self._activeProject.selectedViewId
         if shape.type == "ShapeList":
             with self._activeProject.groupedGraphModification("Add Shape"):

@@ -9,6 +9,8 @@ import QtQuick
  *
  * Entries must expose `source`, `layer`, `dataObject`, `loading` and `errorString`.
  * An entry whose file fails to load (non-empty `errorString`) is removed from the list.
+ * An entry added with its source attribute is also removed when that attribute or its node
+ * changes (see AttributeWatcher).
  */
 QtObject {
     id: root
@@ -24,10 +26,17 @@ QtObject {
     /** Incremented whenever an entry is created or destroyed, so that bindings using entryAt() re-evaluate. */
     property int revision: 0
 
+    /** Attribute each source was added from, if any (kept out of the ListModel, which holds plain values). */
+    property var attributeBySource: ({})
+
     signal entryRemoved(var entry)
 
-    /** Append an entry. No-op if @p source is already in the list. @p label is optional. */
-    function add(source, label) {
+    /**
+     * Append an entry. No-op if @p source is already in the list.
+     * @p label is optional. @p attribute is the optional attribute @p source was read from:
+     * the entry is removed when that attribute or its node changes.
+     */
+    function add(source, label, attribute) {
         // Coerce to String: @p source may be a QUrl (e.g. from drag-and-drop) or a plain
         // string (e.g. from an attribute value); the ListModel role type must stay consistent.
         source = String(source)
@@ -38,6 +47,11 @@ QtObject {
             {
                 return
             }
+        }
+
+        if (attribute)
+        {
+            attributeBySource[source] = attribute
         }
 
         model.append({ "source": source, "label": label !== undefined ? label : "" })
@@ -82,11 +96,29 @@ QtObject {
 
     function clear() {
         model.clear()
+        attributeBySource = {}
     }
 
     /** Return the entry at @p index, or null if not instantiated (yet). */
     function entryAt(index) {
         return instantiator.objectAt(index)
+    }
+
+    readonly property Component attributeWatcher: Component {
+        AttributeWatcher {}
+    }
+
+    /** Remove @p entry when the attribute it was added from changes. */
+    function watchEntryAttribute(entry) {
+        const attribute = attributeBySource[entry.source]
+        if (!attribute)
+        {
+            return
+        }
+
+        // Parented to the entry: the watcher and its connections are destroyed along with it
+        const watcher = attributeWatcher.createObject(entry, { "attribute": attribute, "source": entry.source })
+        watcher.invalidated.connect(() => removeSourceLater(entry.source))
     }
 
     property Instantiator instantiator: Instantiator {
@@ -96,11 +128,13 @@ QtObject {
 
         onObjectAdded: (index, object) => {
             object.errorStringChanged.connect(() => root.handleEntryError(object))
+            root.watchEntryAttribute(object)
             root.sceneView.appendLayer(object.layer)
             root.revision++
         }
 
         onObjectRemoved: (index, object) => {
+            delete root.attributeBySource[object.source]
             root.sceneView.removeLayer(object.layer)
             root.revision++
             root.entryRemoved(object)

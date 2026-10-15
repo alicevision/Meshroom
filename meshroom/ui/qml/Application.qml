@@ -1290,10 +1290,11 @@ Page {
 
                     // 3D viewer
                     // By default we only display the first 3D item, except if it has the semantic flag "3D"
+                    // Init nodes are not computed: their inputs are displayed like outputs
                     var alreadyDisplay = false
                     for (var i = 0; i < node.attributes.count; i++) {
                         var attr = node.attributes.at(i)
-                        if (attr.isOutput && attr.desc.semantic !== "image")
+                        if ((attr.isOutput || node.isInitNode) && attr.desc.semantic !== "image")
                             if (!alreadyDisplay || attr.desc.semantic == "3d") {
                                 if (workspaceView.viewIn3D(attr, mouse))
                                         alreadyDisplay = true

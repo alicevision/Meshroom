@@ -87,9 +87,15 @@ class ShapeViewerHelper(BaseObject):
         return True
 
     def _onSelectedShapeParentChanged(self):
-        """Callback when the selected list element parent list changes."""
+        """
+        Callback when the selected list element parent list changes.
+        Cancel the selection if the element was removed, otherwise follow its new index.
+        """
         if not self._isSelectedShapeAlive():
             self.cancelPlacement()
+        elif self._selectedShape.fullName != self._selectedShapeName:
+            self._selectedShapeName = self._selectedShape.fullName
+            self.selectedShapeNameChanged.emit()
 
     def _hasCurrentObservation(self, shape) -> bool:
         """Whether the given shape has an observation for the current view."""
@@ -158,7 +164,6 @@ class ShapeViewerHelper(BaseObject):
         """Cancel the current placement and clear the selection."""
         self.selectedShapeName = ""
 
-    @Slot(str, float, float, float, float, result=Variant)
     def getObservationAt(self, shapeType: str, x: float, y: float, visibleWidth: float, visibleHeight: float) -> Variant:
         """
         Create a shape observation at the given image position, sized relative to the visible viewport.
@@ -220,6 +225,5 @@ class ShapeViewerHelper(BaseObject):
     containerScale = Property(float, _getContainerScale, _setContainerScale, notify=containerScaleChanged)
 
     placementChanged = Signal()
-    selectedShape = Property(Variant, lambda self: self._selectedShape, notify=placementChanged)
     isListPlacement = Property(bool, lambda self: self._listPlacement, notify=placementChanged)
     isPlacing = Property(bool, _isPlacing, notify=placementChanged)

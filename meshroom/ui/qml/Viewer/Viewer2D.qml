@@ -1919,7 +1919,13 @@ FocusScope {
                 visible: ShapeViewerHelper.isPlacing
                 padding: 4
                 font.pointSize: 8
-                text: ShapeViewerHelper.isListPlacement ? "Left click to add shapes, right click to finish" : "Left click to add shape, right click to cancel"
+                text: {
+                    if (ShapeViewerHelper.isListPlacement)
+                        return "Left click to add shapes, right click to finish"
+                    if (ShapeViewerHelper.isRepositioning)
+                        return "Left click to move shape, right click to cancel"
+                    return "Left click to add shape, right click to cancel"
+                }
                 background: Rectangle {
                     color: Qt.rgba(palette.window.r, palette.window.g, palette.window.b, 0.7)
                     radius: 2

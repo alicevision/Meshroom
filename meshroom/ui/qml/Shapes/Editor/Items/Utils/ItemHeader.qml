@@ -123,11 +123,19 @@ Pane {
                         ShapeViewerHelper.selectShape(model)
                     }
 
-                    // Double tap: show hidden shape and select
-                    if(tapCount === 2 && !model.isVisible)
+                    if(tapCount === 2)
                     {
-                        model.isVisible = true
-                        ShapeViewerHelper.selectShape(model)
+                        if(!model.isVisible)
+                        {
+                            // Double tap on hidden shape: show and select
+                            model.isVisible = true
+                            ShapeViewerHelper.selectShape(model)
+                        }
+                        else
+                        {
+                            // Double tap on visible shape: move it on next click in the 2d Viewer
+                            ShapeViewerHelper.startReposition(model)
+                        }
                     }
                 }
                 else

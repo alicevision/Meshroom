@@ -7,7 +7,8 @@ import QtQuick
  * and the entry's layer is appended to / removed from @p sceneView individually, so existing
  * layers and their GPU resources are never disturbed.
  *
- * Entries must expose `layer`, `dataObject` and `loading`.
+ * Entries must expose `source`, `layer`, `dataObject`, `loading` and `errorString`.
+ * An entry whose file fails to load (non-empty `errorString`) is removed from the list.
  */
 QtObject {
     id: root
@@ -46,6 +47,30 @@ QtObject {
         model.remove(index)
     }
 
+    /** Remove the entry loaded from @p source, if any. */
+    function removeSource(source) {
+        for (var i = 0; i < model.count; ++i)
+        {
+            if (model.get(i).source === source)
+            {
+                model.remove(i)
+                return
+            }
+        }
+    }
+
+    /** Remove @p entry if its file failed to load. */
+    function handleEntryError(entry) {
+        if (!entry.errorString)
+        {
+            return
+        }
+
+        console.warn(`Viewer3D: failed to load ${typeName} "${entry.source}": ${entry.errorString}`)
+        // Deferred: the entry must not be destroyed while it is emitting the change signal
+        Qt.callLater(removeSource, entry.source)
+    }
+
     function clear() {
         model.clear()
     }
@@ -61,6 +86,7 @@ QtObject {
         delegate: root.delegate
 
         onObjectAdded: (index, object) => {
+            object.errorStringChanged.connect(() => root.handleEntryError(object))
             root.sceneView.appendLayer(object.layer)
             root.revision++
         }

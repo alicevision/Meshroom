@@ -19,4 +19,6 @@ QtObject {
     }
 
     readonly property bool loading: dataObject.loading === true
+    /** Non-empty if the last load failed. */
+    readonly property string errorString: dataObject.errorString || ""
 }

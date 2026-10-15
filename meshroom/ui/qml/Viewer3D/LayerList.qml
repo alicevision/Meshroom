@@ -59,6 +59,16 @@ QtObject {
         }
     }
 
+    /**
+     * Remove the entry loaded from @p source on the next event loop iteration, so that an entry is
+     * never destroyed while it is emitting a signal.
+     */
+    function removeSourceLater(source) {
+        // A new closure per call: Qt.callLater coalesces calls to the same function, which would
+        // only remove the last of several sources invalidated within the same frame
+        Qt.callLater(() => removeSource(source))
+    }
+
     /** Remove @p entry if its file failed to load. */
     function handleEntryError(entry) {
         if (!entry.errorString)
@@ -67,8 +77,7 @@ QtObject {
         }
 
         console.warn(`Viewer3D: failed to load ${typeName} "${entry.source}": ${entry.errorString}`)
-        // Deferred: the entry must not be destroyed while it is emitting the change signal
-        Qt.callLater(removeSource, entry.source)
+        removeSourceLater(entry.source)
     }
 
     function clear() {

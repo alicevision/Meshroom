@@ -6,6 +6,7 @@ scripts directly, without any cache file.
     import meshroom.subgraph
     outputs = meshroom.subgraph.run("/path/to/turntable.mgt", {"asset": "/path/asset.usd"})
     outputs = meshroom.subgraph.run("/path/to/comp.mgt", frames=(1001, 1100))
+    outputs = meshroom.subgraph.run("/path/to/project.mg", {"shotName": "sh010"}, node="SubGraph_1")
 
 Meshroom (and its dependencies, such as psutil) must be importable: add its folder to PYTHONPATH, and
 the folders of the plugins providing the live nodes to MESHROOM_NODES_PATH / MESHROOM_PLUGINS_PATH.
@@ -15,7 +16,7 @@ from typing import Optional, Sequence, Union
 
 from meshroom.core.subgraph import Loop, SubGraphError, SubGraphPlan, contextNames, run as _run
 
-__all__ = ["run", "load", "Loop", "SubGraphError", "contextNames", "ensureNodes"]
+__all__ = ["run", "load", "nodeSubGraph", "Loop", "SubGraphError", "contextNames", "ensureNodes"]
 
 _nodesLoaded = False
 
@@ -38,9 +39,24 @@ def load(source) -> SubGraphPlan:
     return SubGraphPlan.cached(source)
 
 
+def nodeSubGraph(projectPath: str, nodeName: str):
+    """
+    The subgraph of a SubGraph / LiveSubGraph node of a project (.mg): its embedded subgraph, else its template.
+    """
+    from meshroom.core.subgraph import readGraphData
+    graphData = readGraphData(projectPath)
+    if nodeName not in graphData:
+        raise SubGraphError(f"No node '{nodeName}' in {projectPath}.")
+    nodeInputs = graphData[nodeName].get("inputs") or {}
+    source = nodeInputs.get("subGraph") or nodeInputs.get("template")
+    if not source:
+        raise SubGraphError(f"The node '{nodeName}' has no subgraph.")
+    return source
+
+
 def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         frames: Optional[Union[Sequence[int], tuple]] = None, step: int = 1, iterations: Optional[int] = None,
-        variables: Optional[dict] = None, logger: Optional[logging.Logger] = None) -> dict:
+        variables: Optional[dict] = None, logger: Optional[logging.Logger] = None, node: Optional[str] = None) -> dict:
     """
     Run a subgraph in the current interpreter and return the values of its GraphOutput ports.
 
@@ -52,11 +68,14 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         frames: a tuple (first, last) to run it once per frame (every `step` frames), or a list of frames.
         iterations: run it N times, the outputs feeding the inputs of the same name.
         variables: values shared by the nodes (ctx.variables).
+        node: with a project file (.mg) as source, the name of the SubGraph node whose subgraph is run.
 
     Raises:
         SubGraphError: an error in a node (its name is in the message).
     """
     ensureNodes()
+    if node:
+        source = nodeSubGraph(source, node)
     if frames is not None and iterations is not None:
         raise ValueError("Use either frames or iterations.")
     if frames is not None:

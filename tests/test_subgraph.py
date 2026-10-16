@@ -649,3 +649,12 @@ def test_graphInputLoopOutputs():
     variables = {}
     run(record.toDict(), loop=Loop("frameRange", first=10, last=12).subset(0, 1), variables=variables)
     assert variables["records"] == [(0, 10, 12)]
+
+
+def test_runNodeOfProject(tmp_path):
+    import meshroom.subgraph
+    projectPath = str(tmp_path / "project.mg")
+    project = Graph("project")
+    project.addNewNode("SubGraph", subGraph=json.dumps(addOneGraph().toDict()))
+    project.save(projectPath)
+    assert meshroom.subgraph.run(projectPath, {"x": 1}, node="SubGraph_1") == {"x": 2}

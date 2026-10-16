@@ -731,6 +731,12 @@ class UIGraph(QObject):
 
     @Slot(QUrl)
     def saveAsTemplate(self, url):
+        if len(self._subGraphStack):
+            # Inside a subgraph: save the subgraph shown (e.g. to run it from a software or reference it)
+            localFile = withExtension(url if isinstance(url, str) else url.toLocalFile(), MESHROOM_TEMPLATE_EXTENSION)
+            self._graph.save(localFile, setupProjectFile=False, template=True)
+            self.parent().showMessage(f"Subgraph saved as template: {localFile}", "ok")
+            return
         self._saveAs(url, setupProjectFile=False, template=True, extension=MESHROOM_TEMPLATE_EXTENSION)
 
     def _saveAs(self, url, setupProjectFile=True, template=False, extension=MESHROOM_PROJECT_EXTENSION):

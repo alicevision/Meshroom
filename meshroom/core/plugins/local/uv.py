@@ -28,8 +28,6 @@ def findUv() -> Optional[str]:
     Resolution order:
         1. The "MESHROOM_UV_PATH" environment variable, if it points to an existing file.
         2. An "uv" executable found on PATH.
-        3. An "uv" executable sitting next to the current interpreter/executable
-           (covers frozen builds shipping their own copy).
 
     Returns:
         str | None: the absolute path to the "uv" executable, or None if none was found.
@@ -38,16 +36,7 @@ def findUv() -> Optional[str]:
     if fromEnv and os.path.isfile(fromEnv):
         return fromEnv
 
-    fromPath = shutil.which("uv")
-    if fromPath:
-        return fromPath
-
-    exeName = "uv.exe" if sys.platform == "win32" else "uv"
-    bundled = os.path.join(os.path.dirname(sys.executable), exeName)
-    if os.path.isfile(bundled):
-        return bundled
-
-    return None
+    return shutil.which("uv")
 
 
 def pythonForUv() -> str:

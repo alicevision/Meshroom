@@ -54,6 +54,8 @@ class SubGraph(desc.Node):
     or once per frame of a frame range, split in tasks of several frames on a farm.
     """
     category = "SubGraph"
+    # In a loop of a parent subgraph, it runs at each step (its nodes can read the frame)
+    runsEachStep = True
     size = FrameLoopSize()
     parallelization = FrameLoopParallelization()
 

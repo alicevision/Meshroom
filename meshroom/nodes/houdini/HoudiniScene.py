@@ -15,6 +15,7 @@ class HoudiniScene(desc.LiveNode):
     """
     category = "Houdini"
     context = "houdini"
+    runsEachStep = False
 
     inputs = [
         desc.File(

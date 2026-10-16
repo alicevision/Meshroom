@@ -393,6 +393,40 @@ def _runNode(node, ctx: RunContext, inputs: dict, plan: SubGraphPlan):
     # Init nodes, backdrops: nothing to run
 
 
+def stepNodes(graph, order: list, plan: SubGraphPlan, loopMode: str) -> set:
+    """
+    The names of the nodes run again at each step of a loop (the others only run at the first step): the
+    nodes reading the loop state (the iteration / frame outputs of GraphInput, its ports in a count loop
+    where they get the outputs of the previous step), the nodes declaring `runsEachStep = True` (live nodes
+    by default: they can read ctx.frame; a nested SubGraph), and all the nodes after them.
+    """
+    from meshroom.core import desc
+    stepOutputs = {"iteration", "frame"} | ({"ports"} if loopMode == "count" else set())
+    names = {node.name for node in order}
+    varying = set()
+    for node in order:
+        nodeDesc = node.nodeDesc
+        if node.name == plan.graphInput:
+            varying.add(node.name)
+        elif getattr(nodeDesc, "runsEachStep", isinstance(nodeDesc, desc.LiveNode)):
+            varying.add(node.name)
+    downstream = {name: [] for name in names}
+    for edge in graph.edges:
+        src, dst = edge.src.node, edge.dst.node
+        if src.name not in names or dst.name not in names or not edge.src.isOutput:
+            continue
+        if src.name == plan.graphInput and _topAttributeName(edge.src) not in stepOutputs:
+            continue
+        downstream[src.name].append(dst.name)
+    stack = list(varying)
+    while stack:
+        for name in downstream[stack.pop()]:
+            if name not in varying:
+                varying.add(name)
+                stack.append(name)
+    return varying
+
+
 def runGraph(graph, plan: SubGraphPlan, ctx: RunContext, inputs: Optional[dict] = None) -> dict:
     """
     Run a subgraph Graph in an opened context, with its loop: the values of its GraphOutput ports (of the
@@ -401,7 +435,8 @@ def runGraph(graph, plan: SubGraphPlan, ctx: RunContext, inputs: Optional[dict] 
     inputs = dict(inputs or {})
     outputs: dict = {}
     order = executionOrder(graph, ctx)
-    for iteration, frame in ctx.loop.steps():
+    eachStep = stepNodes(graph, order, plan, ctx.loop.mode)
+    for stepIndex, (iteration, frame) in enumerate(ctx.loop.steps()):
         if ctx.loop.mode == "none" and ctx.parent is not None:
             # A nested subgraph without its own loop sees the iteration and frame of its parent
             iteration, frame = ctx.parent.iteration, ctx.parent.frame
@@ -409,6 +444,9 @@ def runGraph(graph, plan: SubGraphPlan, ctx: RunContext, inputs: Optional[dict] 
         if ctx.loop.mode != "none":
             ctx.context.beginStep(iteration, frame)
         for node in order:
+            if stepIndex > 0 and node.name not in eachStep:
+                # Not depending on the loop: already run at the first step
+                continue
             ctx.checkCancelled()
             ctx.nodeName = node.name
             start = time.perf_counter()

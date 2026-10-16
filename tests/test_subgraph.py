@@ -790,3 +790,16 @@ def test_enteredGraphInputShowsNodeValues():
     content = node.subGraph.value
     stack.exit(inner)
     assert node.subGraph.value == content
+
+
+def test_loopRunsOnceWhatDoesNotDependOnIt(fakeHou):
+    """ In a frame loop, the pipeline node and the scene run once; the nodes reading the frame at each frame. """
+    graph = houdiniSceneGraph()
+    graphInput = graph.addNewNode("GraphInput")
+    graph.addEdge(graphInput.frame, graph.node("BatchSetParm_2").value)
+    run(graph.toDict(), loop=Loop("frameRange", first=1001, last=1003), ownsSession=True)
+    assert TaskShotScene.runs == 1
+    assert fakeHou.loaded == ["/shots/sh010.hip", "clear"]
+    assert fakeHou.parms["/obj/geo1/ry"].value == 1003
+    # The save at the end of each frame (HoudiniSave, live node)
+    assert fakeHou.saved == ["/shots/sh010.hip"] * 3

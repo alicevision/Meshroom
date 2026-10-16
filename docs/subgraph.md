@@ -73,6 +73,8 @@ That interpreter must be able to import Meshroom and its dependencies (e.g. `psu
 | count | `Iterations` runs; the outputs of an iteration feed the inputs of the same name of the next one (a feedback, e.g. a fractal) |
 | frameRange | runs once per frame from `First Frame` to `Last Frame` every `Frame Step`; `Frames Per Task` splits the range in tasks (farm), 0 for one task |
 
+In a loop, a node runs again at each step only if it depends on the loop: it reads the `iteration` / `frame` of `GraphInput` (or its ports in a count loop), it is a live node (they can read `ctx.frame`; `HoudiniScene` is not), a nested `SubGraph`, or it comes after one of them. The others (e.g. a pipeline node giving the scene, a node setting the frame range) run once, at the first step.
+
 The nodes read the loop state from the outputs of `GraphInput` (live nodes also with `ctx.iteration`, `ctx.frame`); the current frame of Houdini / Maya / Nuke follows the frame loop. A nested `SubGraph` without its own loop sees the frame of its parent.
 
 ## User interface

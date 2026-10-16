@@ -609,6 +609,9 @@ class LiveNode(BaseNode):
 
     # Contexts the node can run in (see meshroom.core.subgraph.contexts), "any" for all of them
     context = "any"
+    # Whether the node runs again at each step of a loop of its subgraph (it can read ctx.frame); False for a
+    # node only depending on its inputs (it then runs again only if one of them depends on the loop)
+    runsEachStep = True
 
     def __init__(self):
         super(LiveNode, self).__init__()

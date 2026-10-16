@@ -22,6 +22,48 @@ Item {
 
     property var _attributeToDelegate: ({})
 
+    // Edges selected in the graph editor (click on an edge, or a box over edges):
+    // {destination attribute full name: true}. Delete removes them.
+    property var selectedEdges: ({})
+    readonly property bool hasSelectedEdges: Object.keys(selectedEdges).length > 0
+    function selectEdges(names, mode) {
+        // mode: "replace", "add" or "toggle"
+        var selection = mode === "replace" ? {} : Object.assign({}, selectedEdges)
+        names.forEach(function(name) {
+            if (mode === "toggle" && selection[name])
+                delete selection[name]
+            else
+                selection[name] = true
+        })
+        selectedEdges = selection
+    }
+    function clearEdgeSelection() {
+        if (hasSelectedEdges)
+            selectedEdges = {}
+    }
+    // The selected edges that still exist (an edge selected before an undo or a reconnection may be gone)
+    function validSelectedEdges() {
+        var names = []
+        if (!root.graph)
+            return names
+        for (var i = 0; i < root.graph.edges.count; i++) {
+            var edge = root.graph.edges.at(i)
+            if (root.selectedEdges[edge.dst.fullName])
+                names.push(edge.dst.fullName)
+        }
+        return names
+    }
+    // Selecting nodes unselects the edges (Delete then acts on the nodes)
+    Connections {
+        target: uigraph ? uigraph.nodeSelection : null
+        // Only when nodes get selected (clearing the node selection, e.g. a click on the graph, keeps the edges)
+        function onSelectionChanged() {
+            if (uigraph.nodeSelection.hasSelection)
+                root.clearEdgeSelection()
+        }
+    }
+    onGraphChanged: clearEdgeSelection()
+
     // Signals
     signal workspaceMoved()
     signal workspaceClicked()
@@ -118,6 +160,10 @@ Item {
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             fit()
+        } else if (event.key === Qt.Key_Delete && root.validSelectedEdges().length > 0) {
+            // The selected edges first (the nodes stay)
+            uigraph.removeEdgesTo(root.validSelectedEdges())
+            root.clearEdgeSelection()
         } else if (event.key === Qt.Key_Delete) {
             if (event.modifiers === Qt.AltModifier) {
                 uigraph.removeNodesFrom(uigraph.getSelectedNodes())
@@ -184,9 +230,20 @@ Item {
             workspaceMoved()
         }
 
+        // Box selection of edges: right button drag on an empty area
+        property point edgeBoxStart
+        property bool edgeBoxActive: false
+        // The last right press made a box (no menu on its release)
+        property bool edgeBoxWasUsed: false
+
         onPressed: function(mouse) {
             if (mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier) {
                 uigraph.clearNodeSelection()
+                root.clearEdgeSelection()
+            }
+            if (mouse.button == Qt.RightButton || mouse.button == Qt.LeftButton) {
+                edgeBoxStart = Qt.point(mouse.x, mouse.y)
+                edgeBoxActive = false
             }
             if (mouse.button == Qt.LeftButton && (mouse.modifiers == Qt.NoModifier || mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))) {
                 nodeSelectionBox.startSelection(mouse)
@@ -200,22 +257,87 @@ Item {
             }
         }
 
-        onReleased: {
+        onReleased: function(mouse) {
+            edgeBoxWasUsed = edgeBoxActive
+            if (edgeBoxActive) {
+                selectEdgesInBox(mouse.modifiers)
+                edgeBoxActive = false
+            }
             removingEdges = false
             edgeSelectionLine.endSelection()
+            var nodeBox = nodeSelectionBox.active && mouse.button == Qt.LeftButton
             nodeSelectionBox.endSelection()
+            // A selection box (left button) around no node selects the edges it crosses
+            if (nodeBox && !uigraph.nodeSelection.hasSelection &&
+                Math.abs(mouse.x - edgeBoxStart.x) + Math.abs(mouse.y - edgeBoxStart.y) > 6) {
+                edgeBox.setEnd(mouse.x, mouse.y)
+                selectEdgesInBox(mouse.modifiers)
+            }
             drag.target = null
             root.forceActiveFocus()
             workspaceClicked()
         }
 
-        onPositionChanged: {
+        onPositionChanged: function(mouse) {
             if (drag.active)
                 workspaceMoved()
+            if ((mouse.buttons & Qt.RightButton) && !edgeBoxActive &&
+                Math.abs(mouse.x - edgeBoxStart.x) + Math.abs(mouse.y - edgeBoxStart.y) > 6) {
+                edgeBox.setEnd(mouse.x, mouse.y)
+                edgeBoxActive = true
+            }
+            if (edgeBoxActive)
+                edgeBox.setEnd(mouse.x, mouse.y)
+        }
+
+        onCanceled: {
+            edgeBoxActive = false
+            edgeBoxWasUsed = false
+        }
+
+        // Select the edges crossing the box (Shift: add, Ctrl: toggle)
+        function selectEdgesInBox(modifiers) {
+            var a = mapToItem(draggable, Math.min(edgeBoxStart.x, edgeBox.endX), Math.min(edgeBoxStart.y, edgeBox.endY))
+            var b = mapToItem(draggable, Math.max(edgeBoxStart.x, edgeBox.endX), Math.max(edgeBoxStart.y, edgeBox.endY))
+            var corners = [Qt.point(a.x, a.y), Qt.point(b.x, a.y), Qt.point(b.x, b.y), Qt.point(a.x, b.y)]
+            var inside = function(x, y) { return x >= a.x && x <= b.x && y >= a.y && y <= b.y }
+            var names = []
+            for (var i = 0; i < edgesRepeater.count; i++) {
+                var item = edgesRepeater.itemAt(i)
+                if (!item || !item.visible || !item.edge)
+                    continue
+                var hit = inside(item.point1x, item.point1y) || inside(item.point2x, item.point2y)
+                for (var k = 0; k < 4 && !hit; k++)
+                    hit = item.intersectsSegment(corners[k], corners[(k + 1) % 4])
+                if (hit)
+                    names.push(item.edge.dst.fullName)
+            }
+            root.selectEdges(names, (modifiers & Qt.ControlModifier) ? "toggle" : (modifiers & Qt.ShiftModifier) ? "add" : "replace")
+        }
+
+        // Box of the edge selection
+        Rectangle {
+            id: edgeBox
+            property real endX: 0
+            property real endY: 0
+            function setEnd(x, y) {
+                endX = x
+                endY = y
+            }
+            visible: mouseArea.edgeBoxActive
+            x: Math.min(mouseArea.edgeBoxStart.x, endX)
+            y: Math.min(mouseArea.edgeBoxStart.y, endY)
+            width: Math.abs(endX - mouseArea.edgeBoxStart.x)
+            height: Math.abs(endY - mouseArea.edgeBoxStart.y)
+            z: 10
+            color: Qt.rgba(1, 0.65, 0.2, 0.08)
+            border.color: "#F5A623"
+            border.width: 1
         }
 
         onClicked: function(mouse) {
-            if (mouse.button == Qt.RightButton) {
+            // No menu at the end of an edge selection box
+            if (mouse.button == Qt.RightButton && !edgeBoxWasUsed) {
                 // Store mouse click position in 'draggable' coordinates as new node spawn position
                 newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
                 newNodeMenu.popup()
@@ -597,12 +719,13 @@ Item {
                     loopSize: forLoop ? loopSource.value.count : 0
 
                     iteration: forLoop ? loopSource.value.indexOf(edge.src) : 0
-                    color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
+                    readonly property bool edgeSelected: !!edge && !!edge.dst && !!root.selectedEdges[edge.dst.fullName]
+                    color: edge.dst === root.edgeAboutToBeRemoved ? "red" : edgeSelected ? "#F5A623" : inFocus ? activePalette.highlight : activePalette.text
                     thickness: {
                         if (forLoop) {
                             return (inFocus) ? 4 : 3
                         }
-                        return (inFocus) ? 2 : 1
+                        return (inFocus || edgeSelected) ? 2 : 1
                     }
                     point1x: isValidEdge ? src.globalX + src.outputAnchorPos.x : 0
                     point1y: isValidEdge ? src.globalY + src.outputAnchorPos.y : 0
@@ -614,6 +737,11 @@ Item {
                         if (event.button) {
                             if (canEdit && (event.modifiers & Qt.AltModifier)) {
                                 uigraph.removeEdge(edge)
+                            } else if (event.button == Qt.LeftButton) {
+                                // Select the edge (Shift: add, Ctrl: toggle); Delete removes the selected edges
+                                root.selectEdges([edge.dst.fullName], (event.modifiers & Qt.ControlModifier) ? "toggle" :
+                                                                       (event.modifiers & Qt.ShiftModifier) ? "add" : "replace")
+                                root.forceActiveFocus()
                             } else if (event.button == Qt.RightButton) {
                                 edgeMenu.currentEdge = edge
                                 edgeMenu.forLoop = forLoop
@@ -1008,6 +1136,7 @@ Item {
 
                             onPressed: function(mouse) {
                                 nodeRepeater.updateSelectionOnClick = true
+                                root.clearEdgeSelection()
                                 nodeRepeater.ongoingDrag = true
 
                                 let selectionMode = ItemSelectionModel.NoUpdate
@@ -1148,6 +1277,7 @@ Item {
 
                             onPressed: function(mouse) {
                                 nodeRepeater.updateSelectionOnClick = true
+                                root.clearEdgeSelection()
                                 nodeRepeater.ongoingDrag = true
 
                                 ctrlHeld = (mouse.modifiers & Qt.ControlModifier) !== 0

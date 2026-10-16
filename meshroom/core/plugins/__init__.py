@@ -31,3 +31,6 @@ meshroomPluginsFolder = getLocalPluginsFolder()
 # (e.g. a backup folder or a temporary file) not an installed plugin or a registry file.
 # initPlugins() should skips such entries.
 meshroomPluginsInternalPrefix = "__"
+
+# The registries shipped with Meshroom, copied into "meshroomPluginsFolder" on first run.
+meshroomRegistriesFolder = Path(meshroomFolder) / "core" / "plugins" / "registries"

@@ -245,6 +245,8 @@ def initPlugins():
                 pluginManager.addPluginRegistryFile(jsonFilePath, updateRecords=False)
         # Local plugins
         # Using DirTreeProcessEnv
+        # Loaded even if local plugin management is disabled:
+        # it only prevents installing, updating and uninstalling plugins.
         for subfolderPath in sorted(p for p in meshroomPluginsFolder.iterdir()
                                      if p.is_dir() and not p.name.startswith(meshroomPluginsInternalPrefix)):
             pluginManager.addPluginFromLocalFolder(subfolderPath.name, str(subfolderPath))

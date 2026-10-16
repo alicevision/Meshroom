@@ -119,7 +119,7 @@ class SubGraph(desc.Node):
                 chunk.logger.info(f"Frames: {loop.frames}")
             inputs = {child.name: child.value for child in node.ins.value}
             outputs = run(plan, inputs, context=node.context.value, loop=loop, logger=chunk.logger,
-                          variables={"nodeName": node.name})
+                          variables={"nodeName": node.name}, ownsSession=True)
             for child in node.outs.value:
                 if child.name in outputs:
                     child.value = _storable(outputs[child.name])

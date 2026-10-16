@@ -320,3 +320,157 @@ def test_subGraphNodeCompute(graphSavedOnDisk):
     node.restoreLogger()
     assert node.chunks[0].status.status == Status.SUCCESS
     assert port(node, "outs", "x").value == 14
+
+
+# ---------------------------------------------------------------------------
+# Houdini (with a fake hou module)
+# ---------------------------------------------------------------------------
+
+class FakeParm:
+    def __init__(self, value=None):
+        self.value, self.expression, self.locked = value, None, False
+
+    def set(self, value):
+        self.value = value
+
+    def setExpression(self, expression, language=None):
+        self.expression = expression
+
+    def isLocked(self):
+        return self.locked
+
+    def lock(self, locked):
+        self.locked = locked
+
+    def deleteAllKeyframes(self):
+        self.expression = None
+
+    def eval(self):
+        return self.value
+
+    def evalAtFrame(self, frame):
+        return self.value.replace("$F4", f"{frame:04d}")
+
+
+class FakeRop:
+    def __init__(self, hou):
+        self.hou, self.renders = hou, []
+        self.parms = {"vm_picture": FakeParm("/render/beauty.$F4.exr")}
+
+    def path(self):
+        return "/out/mantra1"
+
+    def parm(self, name):
+        return self.parms.get(name)
+
+    def render(self, **kwargs):
+        self.renders.append(kwargs.get("frame_range"))
+
+    def errors(self):
+        return ()
+
+
+class FakeHou:
+    """ The parts of the hou module used by the Houdini live nodes. """
+
+    class exprLanguage:
+        Hscript = "hscript"
+
+    def __init__(self):
+        hou = self
+        self.frames, self.loaded = [], []
+        self.parms = {"/obj/geo1/tx": FakeParm(0), "/obj/geo1/ry": FakeParm(0)}
+        self.tuples = {}
+        self.rop = FakeRop(self)
+
+        class HipFile:
+            current = "/scenes/untitled.hip"
+
+            def path(self):
+                return self.current
+
+            def load(self, path, **kwargs):
+                hou.loaded.append(path)
+                self.current = path
+
+            def save(self, path=None):
+                self.current = path or self.current
+
+            def clear(self, **kwargs):
+                hou.loaded.append("clear")
+
+        self.hipFile = HipFile()
+
+    def parm(self, path):
+        return self.parms.get(path)
+
+    def parmTuple(self, path):
+        return self.tuples.setdefault(path, FakeParm())
+
+    def node(self, path):
+        return self.rop if path == "/out/mantra1" else None
+
+    def setFrame(self, frame):
+        self.frames.append(frame)
+
+
+@pytest.fixture
+def fakeHou(monkeypatch):
+    import sys
+    from meshroom.nodes.houdini.HoudiniOpenScene import HoudiniOpenScene
+    from meshroom.nodes.houdini.HoudiniRender import HoudiniRender
+    from meshroom.nodes.houdini.HoudiniSetParms import HoudiniSetParms
+    nodeDescs = [HoudiniOpenScene, HoudiniRender, HoudiniSetParms]
+    for nodeDesc in nodeDescs:
+        registerNodeDesc(nodeDesc)
+    hou = FakeHou()
+    monkeypatch.setitem(sys.modules, "hou", hou)
+    yield hou
+    for nodeDesc in nodeDescs:
+        unregisterNodeDesc(nodeDesc)
+
+
+def test_houdiniChain(fakeHou):
+    graph = Graph("")
+    graphInput = graph.addNewNode("GraphInput", portSpec="hip, offset")
+    openScene = graph.addNewNode("HoudiniOpenScene")
+    setParms = graph.addNewNode("HoudiniSetParms", parms="/obj/geo1/ry := $F * 2\n/obj/geo1/t = (1, 2, 3)",
+                                parmPath="/obj/geo1/tx")
+    render = graph.addNewNode("HoudiniRender")
+    graphOutput = graph.addNewNode("GraphOutput", portSpec="image")
+    graph.addEdge(port(graphInput, "ports", "hip"), openScene.hipFile)
+    graph.addEdge(port(graphInput, "ports", "offset"), setParms.value)
+    graph.addEdge(openScene.sceneOut, setParms.scene)
+    graph.addEdge(setParms.sceneOut, render.scene)
+    graph.addEdge(render.outputFile, port(graphOutput, "ports", "image"))
+
+    import meshroom.subgraph
+    outputs = meshroom.subgraph.run(graph.toDict(), {"hip": "/scenes/shot.hip", "offset": 5}, frames=(1, 3))
+    assert outputs == {"image": "/render/beauty.0003.exr"}
+    # The scene is opened once (then it is the current scene), the frame follows the loop
+    assert fakeHou.loaded == ["/scenes/shot.hip"]
+    assert fakeHou.frames == [1, 2, 3]
+    assert fakeHou.rop.renders == [(1, 1), (2, 2), (3, 3)]
+    assert fakeHou.parms["/obj/geo1/tx"].value == 5
+    assert fakeHou.parms["/obj/geo1/ry"].expression == "$F * 2"
+    assert fakeHou.tuples["/obj/geo1/t"].value == (1, 2, 3)
+
+
+def test_houdiniSessionOwnership(fakeHou):
+    graph = Graph("")
+    graph.addNewNode("HoudiniOpenScene", hipFile="/scenes/shot.hip")
+    # From a script or the shell of Houdini: the scene stays open
+    run(graph.toDict())
+    assert fakeHou.loaded == ["/scenes/shot.hip"]
+    # For a task of Meshroom: the session is cleaned at the end
+    run(graph.toDict(), ownsSession=True)
+    assert fakeHou.loaded == ["/scenes/shot.hip", "clear"]
+
+
+def test_flowDependencies():
+    """ A flow connection runs a node after another one, without passing a value. """
+    plan = SubGraphPlan({
+        "LiveAdd_1": {"nodeType": "LiveAdd", "inputs": {}, "internalInputs": {"flowIn": "{LiveAdd_2.flowOut}"}},
+        "LiveAdd_2": {"nodeType": "LiveAdd", "inputs": {}},
+    })
+    assert [node.name for node in plan.order] == ["LiveAdd_2", "LiveAdd_1"]

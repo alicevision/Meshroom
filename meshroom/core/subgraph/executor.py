@@ -137,8 +137,8 @@ class PlanNode:
         self.nodeDesc = nodeDesc
         self.inputs = inputs
         self.internalInputs = internalInputs
-        # Names of the nodes this one reads (links)
-        self.dependencies = sorted({link[0] for link in _links(inputs)})
+        # Links of the inputs, and of the internal flow inputs (to run a node after another one)
+        self.dependencies = sorted({link[0] for link in _links(inputs) + _links(internalInputs)})
 
 
 def _links(value) -> List[Tuple[str, str]]:
@@ -342,6 +342,8 @@ def runPlan(plan: SubGraphPlan, ctx: RunContext, inputs: Optional[dict] = None) 
             # A nested subgraph without its own loop sees the iteration and frame of its parent
             iteration, frame = ctx.parent.iteration, ctx.parent.frame
         ctx.iteration, ctx.frame = iteration, frame
+        if ctx.loop.mode != "none":
+            ctx.context.beginStep(iteration, frame)
         outputs = _runOnce(plan, ctx, inputs)
         if ctx.loop.mode == "count":
             # Feedback: the outputs feed the inputs of the same name of the next iteration
@@ -385,7 +387,8 @@ def resolveContextName(plan: SubGraphPlan, context: Optional[str] = None) -> str
 
 def run(source, inputs: Optional[dict] = None, context: Optional[str] = None, loop: Optional[Loop] = None,
         variables: Optional[dict] = None, logger: Optional[logging.Logger] = None,
-        cancel: Optional[Callable[[], bool]] = None, contextObject: Optional[LiveContext] = None) -> dict:
+        cancel: Optional[Callable[[], bool]] = None, contextObject: Optional[LiveContext] = None,
+        ownsSession: bool = False) -> dict:
     """
     Run a subgraph (a template path, a JSON string or a serialized graph dict) in the current interpreter
     and return the values of its GraphOutput ports.
@@ -396,6 +399,8 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None, lo
         loop: how many times to run it (see Loop); once by default.
         variables: values shared by the nodes of the run (ctx.variables).
         contextObject: an already opened context (nested runs); it is then not closed.
+        ownsSession: whether the session of the software is used only for this run (a task of Meshroom or of
+                     a farm), so that it can be cleaned when closed.
 
     Raises:
         SubGraphError: an error in a node (its name is in the message).
@@ -405,7 +410,7 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None, lo
     ownContext = contextObject is None
     if ownContext:
         context = resolveContextName(plan, context)
-        contextObject = createContext(context)
+        contextObject = createContext(context, ownsSession)
         if not contextObject.isAvailable():
             raise SubGraphError(f"The '{context}' context is not available in this interpreter "
                                 f"(run it with: {' '.join(contextObject.interpreter()) or '?'}).")

@@ -4,6 +4,7 @@ running a subgraph (SubGraph) and the synchronization of their ports.
 """
 import functools
 import json
+import re
 import logging
 import os
 from typing import Dict, Optional
@@ -59,11 +60,22 @@ def subGraphSourceParams() -> list:
 
 
 # Loop modes shown in the user interface ("frames" is still read: projects saved before the rename)
-LOOP_MODES = ("none", "count", "frameRange")
+LOOP_MODES = ("none", "count", "frameRange", "itemList")
 
 
 def isFrameLoop(mode) -> bool:
     return mode in ("frameRange", "frames")
+
+
+def isItemLoop(mode) -> bool:
+    return mode in ("itemList", "items")
+
+
+def parseItems(text) -> list:
+    """ The items of an item list: separated by commas or new lines, spaces around them removed. """
+    if isinstance(text, (list, tuple)):
+        return [str(item).strip() for item in text if str(item).strip()]
+    return [item.strip() for item in re.split(r"[,\n]", text or "") if item.strip()]
 
 
 def contextParam() -> desc.ChoiceParam:
@@ -87,7 +99,8 @@ def loopParams(withFarmSplit: bool = False) -> list:
             description="How the subgraph is repeated:\n"
                         " - none: once.\n"
                         " - count: a number of iterations, the outputs feeding the inputs of the same name.\n"
-                        " - frameRange: once per frame of a frame range.",
+                        " - frameRange: once per frame of a frame range.\n"
+                        " - itemList: once per item of a list (e.g. shots), the item given by GraphInput.",
             value="none",
             values=list(LOOP_MODES),
         ),
@@ -115,6 +128,13 @@ def loopParams(withFarmSplit: bool = False) -> list:
             range=None,
             enabled=lambda node: isFrameLoop(node.loopMode.value),
         ),
+        desc.StringParam(
+            name="items",
+            label="Items",
+            description="Items of the item loop, separated by commas (or new lines): 'mr_001, mr_002, mr_003'.",
+            value="",
+            enabled=lambda node: isItemLoop(node.loopMode.value),
+        ),
         desc.IntParam(
             name="frameStep",
             label="Frame Step",
@@ -127,11 +147,11 @@ def loopParams(withFarmSplit: bool = False) -> list:
     if withFarmSplit:
         params.append(desc.IntParam(
             name="framesPerTask",
-            label="Frames Per Task",
-            description="Frames run by each task (on several machines of a farm); 0: all the frames in one task.",
+            label="Frames / Items Per Task",
+            description="Frames (or items) run by each task (on several machines of a farm); 0: all in one task.",
             value=0,
             range=(0, 100, 1),
-            enabled=lambda node: isFrameLoop(node.loopMode.value),
+            enabled=lambda node: isFrameLoop(node.loopMode.value) or isItemLoop(node.loopMode.value),
         ))
     return params
 
@@ -139,12 +159,14 @@ def loopParams(withFarmSplit: bool = False) -> list:
 def loopFromValues(values: dict) -> Loop:
     """ The Loop described by the loop attributes values {name: value}. """
     return Loop(values.get("loopMode") or "none", values.get("iterations", 1), values.get("frameFirst", 1),
-                values.get("frameLast", 1), values.get("frameStep", 1))
+                values.get("frameLast", 1), values.get("frameStep", 1), items=parseItems(values.get("items", "")))
+
+
+LOOP_ATTRIBUTES = ("loopMode", "iterations", "frameFirst", "frameLast", "frameStep", "items")
 
 
 def loopFromNode(node) -> Loop:
-    return loopFromValues({name: node.attribute(name).value for name in
-                           ("loopMode", "iterations", "frameFirst", "frameLast", "frameStep")})
+    return loopFromValues({name: node.attribute(name).value for name in LOOP_ATTRIBUTES if node.hasAttribute(name)})
 
 
 def graphSource(subGraph: str, template: str):

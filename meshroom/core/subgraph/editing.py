@@ -53,6 +53,7 @@ def showNodeValues(graphInput, node):
     loop = loopFromNode(node)
     frames = loop.frames
     values = {"iteration": 0,
+              "item": loop.items[0] if loop.items else None,
               "frame": frames[0] if frames else None,
               "frameStart": loop.first if isFrameLoop(node.loopMode.value) else None,
               "frameEnd": loop.last if isFrameLoop(node.loopMode.value) else None}

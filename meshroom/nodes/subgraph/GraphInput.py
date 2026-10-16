@@ -1,7 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
-from meshroom.core.subgraph.nodes import isFrameLoop, portSpecParam, syncSpecPorts, watchSpecPorts
+from meshroom.core.subgraph.nodes import isFrameLoop, isItemLoop, portSpecParam, syncSpecPorts, watchSpecPorts
 from meshroom.core.subgraph.ports import parsePortSpec
 
 
@@ -10,7 +10,8 @@ class GraphInput(desc.LiveNode):
     Entry of a subgraph: its ports output the values given to the subgraph (the inputs of the SubGraph
     node, or of meshroom.subgraph.run). Add a port by connecting its "Ports" to an input, rename it or
     change its label like any AnySet child; the inputs of the SubGraph node follow.
-    It also outputs the loop state: the iteration (count loop), the frame and the frame range (frame range loop).
+    It also outputs the loop state: the iteration (count loop), the frame and the frame range (frame range loop),
+    the item and its index (item loop).
     A subgraph has at most one GraphInput node.
     """
     category = "SubGraph"
@@ -39,8 +40,14 @@ class GraphInput(desc.LiveNode):
         desc.LiveValue(
             name="iteration",
             label="Iteration",
-            description="Iteration of the count loop (0 for the first one).",
-            enabled=lambda node: node.loopMode.value == "count",
+            description="Iteration of the count loop, or index of the item of the item loop (0 for the first one).",
+            enabled=lambda node: node.loopMode.value == "count" or isItemLoop(node.loopMode.value),
+        ),
+        desc.LiveValue(
+            name="item",
+            label="Item",
+            description="Current item of the item loop.",
+            enabled=lambda node: isItemLoop(node.loopMode.value),
         ),
         desc.LiveValue(
             name="frame",
@@ -91,6 +98,7 @@ class GraphInput(desc.LiveNode):
             "ports": ports,
             "iteration": ctx.iteration,
             "frame": ctx.frame,
+            "item": ctx.item,
             "frameStart": ctx.loop.first if isFrames else None,
             "frameEnd": ctx.loop.last if isFrames else None,
         }

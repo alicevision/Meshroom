@@ -7,18 +7,18 @@ import shlex
 
 from meshroom.core import desc
 from meshroom.core.subgraph import activeRunContext, contextClass, resolveContextName, run
-from meshroom.core.subgraph.nodes import (contextParam, isFrameLoop, loopFromNode, loopParams, makeLocal, nodePlan,
+from meshroom.core.subgraph.nodes import (contextParam, isFrameLoop, isItemLoop, loopFromNode, loopParams, makeLocal, nodePlan,
                                           subGraphSourceParams, syncSubGraphPorts, watchSubGraphPorts, defaultSubGraph)
 from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class FrameLoopSize:
-    """ Size of a SubGraph node: its number of frames in a frame loop, else 1. """
+    """ Size of a SubGraph node: its number of frames (items) in a frame (item) loop, else 1. """
 
     def __call__(self, node):
-        if not isFrameLoop(node.loopMode.value):
+        if not (isFrameLoop(node.loopMode.value) or isItemLoop(node.loopMode.value)):
             return 1
-        return max(1, len(loopFromNode(node).frames))
+        return max(1, loopFromNode(node).size)
 
 
 class FrameLoopParallelization(desc.Parallelization):
@@ -26,7 +26,8 @@ class FrameLoopParallelization(desc.Parallelization):
 
     def getSizes(self, node):
         size = max(1, node.size)
-        perTask = node.framesPerTask.value if isFrameLoop(node.loopMode.value) else 0
+        splittable = isFrameLoop(node.loopMode.value) or isItemLoop(node.loopMode.value)
+        perTask = node.framesPerTask.value if splittable else 0
         blockSize = perTask if perTask > 0 else size
         return blockSize, size, int(math.ceil(size / float(blockSize)))
 
@@ -50,8 +51,9 @@ class SubGraph(desc.Node):
     The subgraph is embedded in the node, or read from a template (.mgt). Its GraphInput ports are the
     inputs of the node (`ins`), its GraphOutput ports its outputs (`outs`).
 
-    Loops: the subgraph can run a number of iterations (the outputs feeding the inputs of the same name)
-    or once per frame of a frame range, split in tasks of several frames on a farm.
+    Loops: the subgraph can run a number of iterations (the outputs feeding the inputs of the same name),
+    once per frame of a frame range or once per item of a list, split in tasks of several frames / items on
+    a farm.
     """
     category = "SubGraph"
     # In a loop of a parent subgraph, it runs at each step (its nodes can read the frame)
@@ -158,10 +160,10 @@ class SubGraph(desc.Node):
             if plan is None:
                 raise RuntimeError("The node has no subgraph (no embedded subgraph nor template).")
             loop = loopFromNode(node)
-            if loop.mode == "frames":
-                # The frames of this task
+            if loop.mode in ("frames", "items"):
+                # The frames / items of this task
                 loop = loop.subset(chunk.range.start, chunk.range.end)
-                chunk.logger.info(f"Frames: {loop.frames}")
+                chunk.logger.info(f"Frames: {loop.frames}" if loop.mode == "frames" else f"Items: {loop.items}")
             inputs = {child.name: child.value for child in node.ins.value}
             # Inside the run of another subgraph: the session of that run is used, values stay Python objects
             nested = activeRunContext() is not None

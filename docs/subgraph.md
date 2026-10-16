@@ -72,6 +72,7 @@ That interpreter must be able to import Meshroom and its dependencies (e.g. `psu
 | none | runs once |
 | count | `Iterations` runs; the outputs of an iteration feed the inputs of the same name of the next one (a feedback, e.g. a fractal) |
 | frameRange | runs once per frame from `First Frame` to `Last Frame` every `Frame Step`; `Frames Per Task` splits the range in tasks (farm), 0 for one task |
+| itemList | runs once per item of `Items` (separated by commas or new lines: `mr_001, mr_002`); the item is the `Item` output of `GraphInput` (`ctx.item`), its index `Iteration`; `Frames / Items Per Task` splits the list in tasks |
 
 In a loop, a node runs again at each step only if it depends on the loop: it reads the `iteration` / `frame` of `GraphInput` (or its ports in a count loop), it is a live node (they can read `ctx.frame`; `HoudiniScene` is not), a nested `SubGraph`, or it comes after one of them. The others (e.g. a pipeline node giving the scene, a node setting the frame range) run once, at the first step.
 
@@ -93,6 +94,7 @@ import meshroom.subgraph
 outputs = meshroom.subgraph.run("/path/houdiniRender.mgt")                       # a template
 outputs = meshroom.subgraph.run("/path/project.mg", node="SubGraph_1")           # the subgraph of a project node
 outputs = meshroom.subgraph.run("/path/houdiniRender.mgt", frames=(1001, 1010))  # a frame loop
+outputs = meshroom.subgraph.run("/path/setup.mgt", items="mr_001, mr_002")      # an item loop
 outputs = meshroom.subgraph.run("/path/houdiniRender.mgt", set={"HoudiniSetParms_1.parmPath": "/obj/geo2/tx"})
 outputs = meshroom.subgraph.run("/path/feedback.mgt", {"value": 1}, iterations=5)  # GraphInput ports
 ```

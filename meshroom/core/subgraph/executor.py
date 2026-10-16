@@ -32,17 +32,21 @@ class Loop:
     - mode "count": `iterations` times; the outputs of an iteration feed the inputs of the same name of
       the next one (e.g. a feedback for a fractal);
     - mode "frames": once per frame from `first` to `last` (included) every `step` frames; independent
-      iterations, which can be split between several machines (each runs a sub-range).
+      iterations, which can be split between several machines (each runs a sub-range);
+    - mode "items": once per item of a list (e.g. shots, assets, layers); independent iterations too, the
+      current item is ctx.item (and the "item" output of GraphInput).
     """
 
-    MODES = ("none", "count", "frames")
+    MODES = ("none", "count", "frames", "items")
+    # Names of the modes in the user interface
+    ALIASES = {"frameRange": "frames", "itemList": "items"}
 
     def __init__(self, mode: str = "none", iterations: int = 1, first: int = 1, last: int = 1, step: int = 1,
-                 frames: Optional[List[int]] = None):
-        # "frameRange": the name of the frame loop in the user interface
-        mode = "frames" if mode == "frameRange" else mode
+                 frames: Optional[List[int]] = None, items: Optional[List] = None):
+        mode = self.ALIASES.get(mode, mode)
         if mode not in self.MODES:
-            raise ValueError(f"Unknown loop mode '{mode}' (none, count, frameRange).")
+            raise ValueError(f"Unknown loop mode '{mode}' (none, count, frameRange, itemList).")
+        self.items = list(items) if items is not None else []
         self.mode = mode
         self.iterations = max(0, int(iterations))
         self.first, self.last, self.step = int(first), int(last), max(1, int(step))
@@ -58,8 +62,19 @@ class Loop:
             return list(self._frames)
         return list(range(self.first, self.last + 1, self.step))
 
+    @property
+    def size(self) -> int:
+        """ The number of independent steps that can be split between tasks (frames or items), else 1. """
+        if self.mode == "frames":
+            return len(self.frames)
+        if self.mode == "items":
+            return len(self.items)
+        return 1
+
     def subset(self, start: int, end: int) -> "Loop":
-        """ The same frame loop restricted to its frames [start:end] (by index). """
+        """ The same frame / item loop restricted to its frames / items [start:end] (by index). """
+        if self.mode == "items":
+            return Loop("items", items=self.items[start:end])
         return Loop("frames", first=self.first, last=self.last, step=self.step, frames=self.frames[start:end])
 
     def steps(self) -> List[Tuple[int, Optional[int]]]:
@@ -68,13 +83,21 @@ class Loop:
             return [(i, None) for i in range(self.iterations)]
         if self.mode == "frames":
             return list(enumerate(self.frames))
+        if self.mode == "items":
+            return [(i, None) for i in range(len(self.items))]
         return [(0, None)]
+
+    def itemAt(self, iteration: int):
+        """ The item of an iteration of an item loop (None for the other modes). """
+        return self.items[iteration] if self.mode == "items" and 0 <= iteration < len(self.items) else None
 
     def asDict(self) -> dict:
         data = {"mode": self.mode, "iterations": self.iterations, "first": self.first, "last": self.last,
                 "step": self.step}
         if self._frames is not None:
             data["frames"] = list(self._frames)
+        if self.mode == "items":
+            data["items"] = list(self.items)
         return data
 
     @classmethod
@@ -96,6 +119,8 @@ class RunContext:
         self.loop = loop
         self.iteration = 0
         self.frame: Optional[int] = None
+        # Current item of an item loop
+        self.item = None
         self.variables = variables if variables is not None else {}
         self.logger = logger or logging.getLogger("meshroom.subgraph")
         self._cancel = cancel
@@ -401,7 +426,7 @@ def stepNodes(graph, order: list, plan: SubGraphPlan, loopMode: str) -> set:
     by default: they can read ctx.frame; a nested SubGraph), and all the nodes after them.
     """
     from meshroom.core import desc
-    stepOutputs = {"iteration", "frame"} | ({"ports"} if loopMode == "count" else set())
+    stepOutputs = {"iteration", "frame", "item"} | ({"ports"} if loopMode == "count" else set())
     names = {node.name for node in order}
     varying = set()
     for node in order:
@@ -437,10 +462,11 @@ def runGraph(graph, plan: SubGraphPlan, ctx: RunContext, inputs: Optional[dict] 
     order = executionOrder(graph, ctx)
     eachStep = stepNodes(graph, order, plan, ctx.loop.mode)
     for stepIndex, (iteration, frame) in enumerate(ctx.loop.steps()):
+        item = ctx.loop.itemAt(iteration)
         if ctx.loop.mode == "none" and ctx.parent is not None:
-            # A nested subgraph without its own loop sees the iteration and frame of its parent
-            iteration, frame = ctx.parent.iteration, ctx.parent.frame
-        ctx.iteration, ctx.frame = iteration, frame
+            # A nested subgraph without its own loop sees the iteration, frame and item of its parent
+            iteration, frame, item = ctx.parent.iteration, ctx.parent.frame, ctx.parent.item
+        ctx.iteration, ctx.frame, ctx.item = iteration, frame, item
         if ctx.loop.mode != "none":
             ctx.context.beginStep(iteration, frame)
         for node in order:

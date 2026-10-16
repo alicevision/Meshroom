@@ -7,6 +7,7 @@ computing the scene path in Meshroom (a pipeline node) are not run.
     import meshroom.subgraph
     outputs = meshroom.subgraph.run("/path/to/turntable.mgt", {"asset": "/path/asset.usd"})
     outputs = meshroom.subgraph.run("/path/to/comp.mgt", frames=(1001, 1100))
+    outputs = meshroom.subgraph.run("/path/to/setup.mgt", items="mr_001, mr_002, mr_003")
     outputs = meshroom.subgraph.run("/path/to/project.mg", node="SubGraph_1")
     outputs = meshroom.subgraph.run("/path/to/setup.mgt", set={"HoudiniSetFrameRange_1.frameRange.start": 1001})
 
@@ -69,16 +70,16 @@ def _projectNode(projectPath: str, nodeName: str):
     # Values typed on the node; a connected input ("{Node.attr}") has no value outside of Meshroom
     values = {name: value for name, value in anySetValues(nodeInputs.get("ins")).items()
               if not (isinstance(value, str) and value.startswith("{") and value.endswith("}"))}
+    from meshroom.core.subgraph.nodes import LOOP_ATTRIBUTES
     loop = loopFromValues({"loopMode": "none", "iterations": 1, "frameFirst": 1001, "frameLast": 1001, "frameStep": 1,
-                           **{name: nodeInputs[name] for name in ("loopMode", "iterations", "frameFirst", "frameLast",
-                                                                  "frameStep") if name in nodeInputs}})
+                           **{name: nodeInputs[name] for name in LOOP_ATTRIBUTES if name in nodeInputs}})
     return source, values, loop
 
 
 def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         frames: Optional[Union[Sequence[int], tuple]] = None, step: int = 1, iterations: Optional[int] = None,
         variables: Optional[dict] = None, logger: Optional[logging.Logger] = None, node: Optional[str] = None,
-        set: Optional[dict] = None) -> dict:
+        set: Optional[dict] = None, items: Optional[Sequence] = None) -> dict:
     """
     Run a subgraph in the current interpreter and return the values of its GraphOutput ports.
 
@@ -89,6 +90,7 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
                  software itself, its session is used as it is (nothing is opened or closed).
         frames: a tuple (first, last) to run it once per frame (every `step` frames), or a list of frames.
         iterations: run it N times, the outputs feeding the inputs of the same name.
+        items: run it once per item of a list (or of a text separated by commas): ctx.item, "item" of GraphInput.
         variables: values shared by the nodes (ctx.variables).
         node: with a project file (.mg) as source, the name of the SubGraph node whose subgraph is run; its
               input values (not connected) and its loop are used unless `inputs` / `frames` / `iterations`
@@ -104,10 +106,13 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
     if node:
         source, nodeInputs, nodeLoop = _projectNode(source, node)
         inputs = {**nodeInputs, **(inputs or {})}
-    if frames is not None and iterations is not None:
-        raise ValueError("Use either frames or iterations.")
-    if frames is None and iterations is None and nodeLoop is not None:
+    if sum(value is not None for value in (frames, iterations, items)) > 1:
+        raise ValueError("Use only one of frames, iterations, items.")
+    if frames is None and iterations is None and items is None and nodeLoop is not None:
         loop = nodeLoop
+    elif items is not None:
+        from meshroom.core.subgraph.nodes import parseItems
+        loop = Loop("items", items=parseItems(items))
     elif frames is not None:
         if isinstance(frames, tuple) and len(frames) == 2:
             loop = Loop("frames", first=frames[0], last=frames[1], step=step)

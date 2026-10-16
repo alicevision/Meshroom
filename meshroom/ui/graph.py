@@ -582,8 +582,8 @@ class UIGraph(QObject):
         else:
             return None
         loop = loopFromNode(node)
-        if loop.mode == "frames":
-            # A preview: the first frame only
+        if loop.mode in ("frames", "items"):
+            # A preview: the first frame / item only
             loop = loop.subset(0, 1)
         inputs = {child.name: child.value for child in node.ins.value}
         return graphData, inputs, node.context.value, loop.asDict(), node.name

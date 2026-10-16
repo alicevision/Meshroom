@@ -814,3 +814,27 @@ def test_runNodeOfProjectUsesItsValuesAndLoop(tmp_path):
     project.save(projectPath)
     assert meshroom.subgraph.run(projectPath, node="SubGraph_1") == {"x": 13}
     assert meshroom.subgraph.run(projectPath, {"x": 0}, node="SubGraph_1", iterations=1) == {"x": 1}
+
+
+def test_itemLoop(tmp_path):
+    import meshroom.subgraph
+    graph = Graph("")
+    graphInput = graph.addNewNode("GraphInput")
+    record = graph.addNewNode("LiveRecord")
+    graphOutput = graph.addNewNode("GraphOutput", portSpec="last")
+    graph.addEdge(graphInput.item, record.value)
+    graph.addEdge(record.out, port(graphOutput, "ports", "last"))
+    variables = {}
+    assert meshroom.subgraph.run(graph.toDict(), items="mr_001, mr_002,\nmr_003", variables=variables) == {"last": "mr_003"}
+    assert variables["records"] == [(0, None, "mr_001"), (1, None, "mr_002"), (2, None, "mr_003")]
+
+    # SubGraph node: split in tasks of 2 items
+    project = Graph("project")
+    node = project.addNewNode("SubGraph", subGraph=json.dumps(graph.toDict()), loopMode="itemList",
+                              items="a, b, c", framesPerTask=2)
+    node.createChunks()
+    from meshroom.core.subgraph.nodes import loopFromNode
+    assert [loopFromNode(node).subset(c.range.start, c.range.end).items for c in node.chunks] == [["a", "b"], ["c"]]
+    projectPath = str(tmp_path / "project.mg")
+    project.save(projectPath)
+    assert meshroom.subgraph.run(projectPath, node="SubGraph_1") == {"last": "c"}

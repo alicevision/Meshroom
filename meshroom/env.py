@@ -13,9 +13,24 @@ from dataclasses import dataclass
 from enum import Enum
 import sys
 import tempfile
-from typing import Any, List, Type
+from typing import Any, List, Optional, Type
 
 meshroomFolder = os.path.dirname(__file__)
+
+
+def getInstallFolder() -> Optional[str]:
+    """
+    Return the Meshroom installation folder, or None if unknown.
+
+    In release (frozen build), this is the folder of the executable. Otherwise, it is the
+    "MESHROOM_INSTALL_DIR" environment variable, if set.
+    Not to be confused with "_MESHROOM_ROOT", the folder containing the "meshroom" package
+    ("<installFolder>/lib" in release).
+    """
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.environ.get("MESHROOM_INSTALL_DIR") or None
+
 
 @dataclass
 class VarDefinition:

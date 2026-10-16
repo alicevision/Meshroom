@@ -71,8 +71,9 @@ def _projectNode(projectPath: str, nodeName: str):
     values = {name: value for name, value in anySetValues(nodeInputs.get("ins")).items()
               if not (isinstance(value, str) and value.startswith("{") and value.endswith("}"))}
     from meshroom.core.subgraph.nodes import LOOP_ATTRIBUTES
-    loop = loopFromValues({"loopMode": "none", "iterations": 1, "frameFirst": 1001, "frameLast": 1001, "frameStep": 1,
-                           **{name: nodeInputs[name] for name in LOOP_ATTRIBUTES if name in nodeInputs}})
+    loop = loopFromValues({"loopMode": "none", "iterations": 1, "frameStep": 1,
+                           **{name: nodeInputs[name] for name in LOOP_ATTRIBUTES + ("frameFirst", "frameLast")
+                              if name in nodeInputs}})
     return source, values, loop
 
 

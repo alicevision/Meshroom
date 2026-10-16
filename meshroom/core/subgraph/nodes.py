@@ -112,22 +112,7 @@ def loopParams(withFarmSplit: bool = False) -> list:
             range=(0, 100, 1),
             enabled=lambda node: node.loopMode.value == "count",
         ),
-        desc.IntParam(
-            name="frameFirst",
-            label="First Frame",
-            description="First frame of the frame loop.",
-            value=1001,
-            range=None,
-            enabled=lambda node: isFrameLoop(node.loopMode.value),
-        ),
-        desc.IntParam(
-            name="frameLast",
-            label="Last Frame",
-            description="Last frame of the frame loop (included).",
-            value=1001,
-            range=None,
-            enabled=lambda node: isFrameLoop(node.loopMode.value),
-        ),
+        frameRangeGroup(isOutput=False),
         desc.StringParam(
             name="items",
             label="Items",
@@ -156,17 +141,48 @@ def loopParams(withFarmSplit: bool = False) -> list:
     return params
 
 
+def frameRangeGroup(isOutput: bool):
+    """
+    The frame range of a frame loop: a "frameRange" group with "start" and "stop" (as HoudiniSetFrameRange),
+    so that the one of GraphInput connects at once to a node with the same group.
+    """
+    enabled = lambda node: isFrameLoop(node.loopMode.value)  # noqa: E731
+    return desc.GroupAttribute(
+        name="frameRange",
+        label="Frame Range",
+        description="First and last frame (included) of the frame loop.",
+        exposed=True,
+        enabled=enabled,
+        items=[
+            desc.IntParam(name="start", label="Start", description="First frame.",
+                          value=None if isOutput else 1001, range=None, enabled=enabled),
+            desc.IntParam(name="stop", label="Stop", description="Last frame (included).",
+                          value=None if isOutput else 1001, range=None, enabled=enabled),
+        ],
+    )
+
+
 def loopFromValues(values: dict) -> Loop:
-    """ The Loop described by the loop attributes values {name: value}. """
-    return Loop(values.get("loopMode") or "none", values.get("iterations", 1), values.get("frameFirst", 1),
-                values.get("frameLast", 1), values.get("frameStep", 1), items=parseItems(values.get("items", "")))
+    """ The Loop described by the loop attributes values {name: value} (frameRange: {"start", "stop"}). """
+    frameRange = values.get("frameRange") or {}
+    # frameFirst / frameLast: projects saved before the frame range group
+    first = frameRange.get("start", values.get("frameFirst", 1001))
+    last = frameRange.get("stop", values.get("frameLast", first))
+    return Loop(values.get("loopMode") or "none", values.get("iterations", 1), first, last,
+                values.get("frameStep", 1), items=parseItems(values.get("items", "")))
 
 
-LOOP_ATTRIBUTES = ("loopMode", "iterations", "frameFirst", "frameLast", "frameStep", "items")
+LOOP_ATTRIBUTES = ("loopMode", "iterations", "frameRange", "frameStep", "items")
 
 
 def loopFromNode(node) -> Loop:
-    return loopFromValues({name: node.attribute(name).value for name in LOOP_ATTRIBUTES if node.hasAttribute(name)})
+    values = {}
+    for name in LOOP_ATTRIBUTES:
+        if node.hasAttribute(name):
+            attribute = node.attribute(name)
+            values[name] = ({child.name: child.value for child in attribute.value} if name == "frameRange"
+                            else attribute.value)
+    return loopFromValues(values)
 
 
 def graphSource(subGraph: str, template: str):

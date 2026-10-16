@@ -12,7 +12,7 @@ Typical uses:
 | Node | Role |
 |------|------|
 | `SubGraph` | Runs a subgraph as a task (local or farm). Its inputs `ins` are the ports of the `GraphInput` node of the subgraph, its outputs `outs` those of its `GraphOutput` node. |
-| `GraphInput` | Entry of the subgraph: one output per port, plus the loop state (`iteration` in a count loop; `frame`, `frameStart`, `frameEnd` in a frame range loop). At most one per subgraph. |
+| `GraphInput` | Entry of the subgraph: one output per port, plus the loop state (`iteration` in a count loop; `frame` and the `frameRange` group (`start`, `stop`, as in HoudiniSetFrameRange) in a frame range loop). At most one per subgraph. |
 | `GraphOutput` | Exit of the subgraph: one input per port. At most one per subgraph, optional. |
 | `LiveScript` | Python code run in the context: reads `ins`, `ctx`, `session`; fills `outs`. |
 | `HoudiniScene` | The Houdini scene, the value that prevails: in a Meshroom task, opens `Scene File` (e.g. given by a pipeline node); in a Houdini session, the open scene (`Scene File` is not read). |
@@ -71,7 +71,7 @@ That interpreter must be able to import Meshroom and its dependencies (e.g. `psu
 |------|-----------|
 | none | runs once |
 | count | `Iterations` runs; the outputs of an iteration feed the inputs of the same name of the next one (a feedback, e.g. a fractal) |
-| frameRange | runs once per frame from `First Frame` to `Last Frame` every `Frame Step`; `Frames Per Task` splits the range in tasks (farm), 0 for one task |
+| frameRange | runs once per frame of `Frame Range` (`start` to `stop`, included) every `Frame Step`; `Frames Per Task` splits the range in tasks (farm), 0 for one task |
 | itemList | runs once per item of `Items` (separated by commas or new lines: `mr_001, mr_002`); the item is the `Item` output of `GraphInput` (`ctx.item`), its index `Iteration`; `Frames / Items Per Task` splits the list in tasks |
 
 In a loop, a node runs again at each step only if it depends on the loop: it reads the `iteration` / `frame` of `GraphInput` (or its ports in a count loop), it is a live node (they can read `ctx.frame`; `HoudiniScene` is not), a nested `SubGraph`, or it comes after one of them. The others (e.g. a pipeline node giving the scene, a node setting the frame range) run once, at the first step.

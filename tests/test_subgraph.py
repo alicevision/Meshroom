@@ -321,7 +321,7 @@ def test_subGraphNodePorts(tmp_path):
 def test_subGraphNodeFrameChunks():
     graph = Graph("")
     node = graph.addNewNode("SubGraph", subGraph=json.dumps(addOneGraph().toDict()), loopMode="frames",
-                            frameFirst=1001, frameLast=1010, framesPerTask=4)
+                            frameRange={"start": 1001, "stop": 1010}, framesPerTask=4)
     node.createChunks()
     ranges = [(chunk.range.start, chunk.range.end) for chunk in node.chunks]
     frames = [Loop("frames", first=1001, last=1010).subset(start, end).frames for start, end in ranges]
@@ -712,18 +712,18 @@ def test_portsAddedOnTemplateNodeMakeItLocal(tmp_path):
 def test_graphInputLoopOutputs():
     from meshroom.core.subgraph.editing import SubGraphStack
     project = Graph("project")
-    node = project.addNewNode("SubGraph", loopMode="frameRange", frameFirst=10, frameLast=12)
+    node = project.addNewNode("SubGraph", loopMode="frameRange", frameRange={"start": 10, "stop": 12})
     stack = SubGraphStack()
     inner = stack.enter(project, node)
     graphInput = inner.node("GraphInput_1")
-    assert graphInput.frame.enabled and graphInput.frameStart.enabled
+    assert graphInput.frame.enabled and graphInput.frameRange.enabled
     assert not graphInput.iteration.enabled
     stack.exit(inner)
 
     record = Graph("")
     gi = record.addNewNode("GraphInput")
     rec = record.addNewNode("LiveRecord")
-    record.addEdge(gi.frameEnd, rec.value)
+    record.addEdge(gi.frameRange.value.get("stop"), rec.value)
     variables = {}
     run(record.toDict(), loop=Loop("frameRange", first=10, last=12).subset(0, 1), variables=variables)
     assert variables["records"] == [(0, 10, 12)]
@@ -779,13 +779,14 @@ def test_enteredGraphInputShowsNodeValues():
     from meshroom.core.subgraph.editing import SubGraphStack
     project = Graph("project")
     upstream = project.addNewNode("Ls", input="/folder")
-    node = project.addNewNode("SubGraph", loopMode="frameRange", frameFirst=1001, frameLast=1002)
+    node = project.addNewNode("SubGraph", loopMode="frameRange", frameRange={"start": 1001, "stop": 1002})
     child = connectToAnySet(project, upstream.input, node.ins)
     stack = SubGraphStack()
     inner = stack.enter(project, node)
     graphInput = inner.node("GraphInput_1")
     assert port(graphInput, "ports", child.name).value == "/folder"
-    assert (graphInput.frame.value, graphInput.frameStart.value, graphInput.frameEnd.value) == (1001, 1001, 1002)
+    assert (graphInput.frame.value, graphInput.frameRange.value.get("start").value,
+            graphInput.frameRange.value.get("stop").value) == (1001, 1001, 1002)
     # Shown only: leaving without other change does not change the subgraph
     content = node.subGraph.value
     stack.exit(inner)
@@ -838,3 +839,35 @@ def test_itemLoop(tmp_path):
     projectPath = str(tmp_path / "project.mg")
     project.save(projectPath)
     assert meshroom.subgraph.run(projectPath, node="SubGraph_1") == {"last": "c"}
+
+
+class TaskFrameRange(desc.Node):
+    """ A task node with a frame range group, like HoudiniSetFrameRange. """
+    __test__ = False
+    seen = []
+    inputs = [
+        desc.GroupAttribute(name="frameRange", label="Frame Range", description="", exposed=True, items=[
+            desc.IntParam(name="start", label="start frame", description="", value=1, range=(1, 999999, 1)),
+            desc.IntParam(name="stop", label="stop frame", description="", value=2, range=(1, 999999, 1)),
+        ]),
+    ]
+    outputs = []
+
+    def process(self, node):
+        TaskFrameRange.seen.append((node.frameRange.start.value, node.frameRange.stop.value))
+
+
+def test_frameRangeGroupConnectsToTheSameGroup():
+    registerNodeDesc(TaskFrameRange)
+    try:
+        TaskFrameRange.seen = []
+        graph = Graph("")
+        graphInput = graph.addNewNode("GraphInput")
+        task = graph.addNewNode("TaskFrameRange")
+        assert task.frameRange.validateIncomingConnection(graphInput.frameRange)
+        graph.addEdge(graphInput.frameRange, task.frameRange)
+        run(graph.toDict(), loop=Loop("frameRange", first=1001, last=1003))
+        # The frame range does not depend on the frame: run once
+        assert TaskFrameRange.seen == [(1001, 1003)]
+    finally:
+        unregisterNodeDesc(TaskFrameRange)

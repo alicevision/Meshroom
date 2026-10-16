@@ -1,7 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
-from meshroom.core.subgraph.nodes import isFrameLoop, isItemLoop, portSpecParam, syncSpecPorts, watchSpecPorts
+from meshroom.core.subgraph.nodes import frameRangeGroup, isFrameLoop, isItemLoop, portSpecParam, syncSpecPorts, watchSpecPorts
 from meshroom.core.subgraph.ports import parsePortSpec
 
 
@@ -55,18 +55,8 @@ class GraphInput(desc.LiveNode):
             description="Current frame of the frame range loop.",
             enabled=lambda node: isFrameLoop(node.loopMode.value),
         ),
-        desc.LiveValue(
-            name="frameStart",
-            label="Frame Start",
-            description="First frame of the frame range.",
-            enabled=lambda node: isFrameLoop(node.loopMode.value),
-        ),
-        desc.LiveValue(
-            name="frameEnd",
-            label="Frame End",
-            description="Last frame of the frame range.",
-            enabled=lambda node: isFrameLoop(node.loopMode.value),
-        ),
+        # The frame range of the loop, as the frameRange group of HoudiniSetFrameRange (start, stop)
+        frameRangeGroup(isOutput=True),
     ]
 
     @classmethod
@@ -99,8 +89,7 @@ class GraphInput(desc.LiveNode):
             "iteration": ctx.iteration,
             "frame": ctx.frame,
             "item": ctx.item,
-            "frameStart": ctx.loop.first if isFrames else None,
-            "frameEnd": ctx.loop.last if isFrames else None,
+            "frameRange": {"start": ctx.loop.first if isFrames else None, "stop": ctx.loop.last if isFrames else None},
         }
 
     def execute(self, ctx, inputs: dict) -> dict:

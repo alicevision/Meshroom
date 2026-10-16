@@ -55,11 +55,13 @@ def showNodeValues(graphInput, node):
     values = {"iteration": 0,
               "item": loop.items[0] if loop.items else None,
               "frame": frames[0] if frames else None,
-              "frameStart": loop.first if isFrameLoop(node.loopMode.value) else None,
-              "frameEnd": loop.last if isFrameLoop(node.loopMode.value) else None}
+              }
     for name, value in values.items():
         if graphInput.hasAttribute(name):
             graphInput.attribute(name).value = value
+    if graphInput.hasAttribute("frameRange") and isFrameLoop(node.loopMode.value):
+        for child in graphInput.frameRange.value:
+            child.value = {"start": loop.first, "stop": loop.last}.get(child.name)
 
 
 class SubGraphLevel:

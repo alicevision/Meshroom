@@ -37,6 +37,30 @@ def buildSubGraph(node, parent=None) -> Graph:
     return graph
 
 
+def showNodeValues(graphInput, node):
+    """
+    Show on a GraphInput node, while its subgraph is edited, the values it gets from the node running the
+    subgraph: its ports get the values of the inputs of the node, its loop outputs the first step of the loop
+    (they are only shown: the outputs are not saved with the subgraph, a run sets them again).
+    """
+    if graphInput.hasAttribute("loopMode"):
+        graphInput.loopMode.value = node.loopMode.value
+    nodeInputs = {child.name: child for child in node.ins.value}
+    for port in graphInput.ports.value:
+        if port.name in nodeInputs and nodeInputs[port.name].value is not None:
+            port.value = nodeInputs[port.name].value
+    from .nodes import isFrameLoop, loopFromNode
+    loop = loopFromNode(node)
+    frames = loop.frames
+    values = {"iteration": 0,
+              "frame": frames[0] if frames else None,
+              "frameStart": loop.first if isFrameLoop(node.loopMode.value) else None,
+              "frameEnd": loop.last if isFrameLoop(node.loopMode.value) else None}
+    for name, value in values.items():
+        if graphInput.hasAttribute(name):
+            graphInput.attribute(name).value = value
+
+
 class SubGraphLevel:
     """ A subgraph being edited: the graph containing its node, the node, and the subgraph content when entered. """
 
@@ -75,10 +99,9 @@ class SubGraphStack:
         if node.subGraph.isLink or node.template.isLink:
             raise ValueError(f"The subgraph of '{node.name}' comes from a connection: it cannot be edited.")
         graph = buildSubGraph(node, parent)
-        # The GraphInput nodes show the outputs of the loop of the node (iteration, frame...)
         for innerNode in graph.nodes:
-            if getattr(innerNode.nodeDesc, "subGraphRole", "") == "input" and innerNode.hasAttribute("loopMode"):
-                innerNode.loopMode.value = node.loopMode.value
+            if getattr(innerNode.nodeDesc, "subGraphRole", "") == "input":
+                showNodeValues(innerNode, node)
         self.levels.append(SubGraphLevel(currentGraph, node, serializeSubGraph(graph)))
         return graph
 

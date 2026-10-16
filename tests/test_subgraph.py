@@ -773,3 +773,20 @@ def test_subGraphStartedLikeItsTaskNodes(fakeHou):
     assert node.nodeDesc.getPythonExecutable(chunk) == "hython"
     from meshroom.core import pluginManager
     assert node.nodeDesc.getProcessProvider(chunk) is pluginManager.getNodeDescProvider("BatchSetParm")
+
+
+def test_enteredGraphInputShowsNodeValues():
+    from meshroom.core.subgraph.editing import SubGraphStack
+    project = Graph("project")
+    upstream = project.addNewNode("Ls", input="/folder")
+    node = project.addNewNode("SubGraph", loopMode="frameRange", frameFirst=1001, frameLast=1002)
+    child = connectToAnySet(project, upstream.input, node.ins)
+    stack = SubGraphStack()
+    inner = stack.enter(project, node)
+    graphInput = inner.node("GraphInput_1")
+    assert port(graphInput, "ports", child.name).value == "/folder"
+    assert (graphInput.frame.value, graphInput.frameStart.value, graphInput.frameEnd.value) == (1001, 1001, 1002)
+    # Shown only: leaving without other change does not change the subgraph
+    content = node.subGraph.value
+    stack.exit(inner)
+    assert node.subGraph.value == content

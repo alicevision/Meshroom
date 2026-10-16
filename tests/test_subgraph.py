@@ -736,3 +736,18 @@ def test_runNodeOfProject(tmp_path):
     project.addNewNode("SubGraph", subGraph=json.dumps(addOneGraph().toDict()))
     project.save(projectPath)
     assert meshroom.subgraph.run(projectPath, {"x": 1}, node="SubGraph_1") == {"x": 2}
+
+
+def test_houdiniSessionReadsInputOfSkippedNode(fakeHou):
+    """ A value typed in the pipeline node (the shot name) is read in memory, without running the node. """
+    import meshroom.subgraph
+    graph = houdiniSceneGraph()
+    shotScene = graph.node("TaskShotScene_1")
+    script = graph.addNewNode("LiveScript", inSpec="shot", outSpec="shot", code="outs['shot'] = ins['shot']")
+    graphOutput = graph.addNewNode("GraphOutput", portSpec="shot")
+    graph.addEdge(shotScene.shot, port(script, "ins", "shot"))
+    graph.addEdge(port(script, "outs", "shot"), port(graphOutput, "ports", "shot"))
+    assert meshroom.subgraph.run(graph.toDict()) == {"shot": "sh010"}
+    assert TaskShotScene.runs == 0
+    assert meshroom.subgraph.run(graph.toDict(), set={"TaskShotScene_1.shot": "sh020"}) == {"shot": "sh020"}
+    assert TaskShotScene.runs == 0

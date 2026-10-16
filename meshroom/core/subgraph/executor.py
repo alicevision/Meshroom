@@ -319,13 +319,20 @@ def executionOrder(graph, ctx: RunContext) -> list:
     """
     nodes = [node for node in graph.nodes if node.nodeDesc is not None]
     upstream = {node.name: [] for node in nodes}
+    # Links from input attributes (a value typed in a node, e.g. a shot name): read without running the node
+    readsInputOf = {node.name: set() for node in nodes}
     hasDownstream = set()
     for edge in graph.edges:
         src, dst = edge.src.node, edge.dst.node
         if src is dst or dst.name not in upstream or src.name not in upstream:
             continue
+        if not edge.src.isOutput:
+            readsInputOf[dst.name].add(src.name)
+            continue
         upstream[dst.name].append((src, _topAttributeName(edge.dst)))
         hasDownstream.add(src.name)
+    for name, sources in readsInputOf.items():
+        hasDownstream.update(sources)
     goals = [node for node in nodes if node.name not in hasDownstream
              or getattr(node.nodeDesc, "subGraphRole", "") == "output"]
 
@@ -339,8 +346,10 @@ def executionOrder(graph, ctx: RunContext) -> list:
         ignored = _ignoredInputs(node, ctx)
         stack.extend(src for src, attributeName in upstream[node.name] if attributeName not in ignored)
 
-    # Topological order of the needed nodes (stable: by name among the ready ones)
-    remaining = {name: {src.name for src, _ in upstream[name] if src.name in needed} for name in needed}
+    # Topological order of the needed nodes (stable: by name among the ready ones); a node reading an input
+    # of a needed node runs after it, in case that node changes it
+    remaining = {name: {src.name for src, _ in upstream[name] if src.name in needed} | (readsInputOf[name] & needed)
+                 for name in needed}
     order = []
     while remaining:
         ready = sorted(name for name, sources in remaining.items() if not sources)

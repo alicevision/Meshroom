@@ -541,6 +541,10 @@ class UIGraph(QObject):
         except (ValueError, SubGraphError) as e:
             self.parent().showMessage(str(e), "error")
             return False
+        except Exception as e:
+            logging.exception(f"Cannot enter the subgraph of {node.name}")
+            self.parent().showMessage(f"Cannot enter the subgraph of {node.name}: {e}", "error")
+            return False
         self._showGraph(inner)
         return True
 
@@ -600,7 +604,8 @@ class UIGraph(QObject):
         if loop.mode in ("frames", "items"):
             # A preview: the first frame / item only
             loop = loop.subset(0, 1)
-        inputs = {child.name: child.value for child in node.ins.value}
+        from meshroom.core.subgraph.executor import plainValue
+        inputs = {child.name: plainValue(child) for child in node.ins.value}
         return graphData, inputs, node.context.value, loop.asDict(), node.name
 
     @Slot()

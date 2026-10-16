@@ -7,6 +7,7 @@ SubGraphStack keeps the path from the project graph to the shown subgraph, witho
 (the UI keeps one, see meshroom/ui/graph.py).
 """
 import json
+import logging
 from typing import List, Optional
 
 from meshroom.core.graph import Graph
@@ -37,6 +38,29 @@ def buildSubGraph(node, parent=None) -> Graph:
     return graph
 
 
+def _upgradePortTypes(graphInput, node):
+    """
+    Give the ports of a GraphInput the types of the matching inputs of its node when they only hold any value
+    (LiveValue): e.g. a frame range group port saved by a former version, which could not be connected to a group.
+    """
+    from meshroom.core.desc.serialization import describeAttribute
+    from .ports import DEFAULT_PORT_TYPE, PORT_TYPES, anySetPorts, syncAnySet
+    nodePorts = {}
+    for child, port in zip(node.ins.value, anySetPorts(node.ins)):
+        # The description of the connected attribute is the most accurate one (choices, ranges...)
+        source = child.inputLink if child.isLink else None
+        if source is not None and type(source.desc).__name__ == port[1] and port[1] not in PORT_TYPES:
+            port = (port[0], port[1], port[2], describeAttribute(source.desc))
+        nodePorts[port[0]] = port
+    ports = []
+    for port in anySetPorts(graphInput.ports):
+        nodePort = nodePorts.get(port[0])
+        upgrade = port[1] == DEFAULT_PORT_TYPE and nodePort is not None and nodePort[1] != DEFAULT_PORT_TYPE
+        ports.append((port[0], nodePort[1], port[2], nodePort[3]) if upgrade else port)
+    if ports != anySetPorts(graphInput.ports):
+        syncAnySet(graphInput.ports, ports)
+
+
 def showNodeValues(graphInput, node):
     """
     Show on a GraphInput node, while its subgraph is edited, the values it gets from the node running the
@@ -45,10 +69,14 @@ def showNodeValues(graphInput, node):
     """
     if graphInput.hasAttribute("loopMode"):
         graphInput.loopMode.value = node.loopMode.value
-    nodeInputs = {child.name: child for child in node.ins.value}
+    from .executor import plainValue, setPlainValue
+    nodeInputs = {child.name: plainValue(child) for child in node.ins.value}
     for port in graphInput.ports.value:
-        if port.name in nodeInputs and nodeInputs[port.name].value is not None:
-            port.value = nodeInputs[port.name].value
+        if nodeInputs.get(port.name) is not None:
+            try:
+                setPlainValue(port, nodeInputs[port.name])
+            except Exception as e:  # only shown: a value that does not fit the port is not shown
+                logging.warning(f"[SubGraph] Value of '{port.name}' not shown on {graphInput.name}: {e}")
     from .nodes import isFrameLoop, loopFromNode
     loop = loopFromNode(node)
     frames = loop.frames
@@ -106,6 +134,7 @@ class SubGraphStack:
         graph = buildSubGraph(node, parent)
         for innerNode in graph.nodes:
             if getattr(innerNode.nodeDesc, "subGraphRole", "") == "input":
+                _upgradePortTypes(innerNode, node)
                 showNodeValues(innerNode, node)
         self.levels.append(SubGraphLevel(currentGraph, node, serializeSubGraph(graph)))
         return graph
@@ -160,9 +189,14 @@ def _replaceLinks(value, mapping: dict):
 
 
 def _portType(attribute) -> str:
-    from .ports import PORT_TYPES, DEFAULT_PORT_TYPE
-    typeName = type(attribute.desc).__name__
-    return typeName if typeName in PORT_TYPES else DEFAULT_PORT_TYPE
+    return type(attribute.desc).__name__
+
+
+def _portDescription(attribute):
+    """ The full description of the port matching an attribute, for the types that are not simple ones. """
+    from meshroom.core.desc.serialization import describeAttribute
+    from .ports import PORT_TYPES
+    return None if _portType(attribute) in PORT_TYPES else describeAttribute(attribute.desc)
 
 
 def _uniquePortName(name: str, used: set) -> str:
@@ -227,19 +261,21 @@ def collapseIntoSubGraph(graph: Graph, nodes, position=None):
     snapshot = snapshotNodes(graph, nodes)
 
     usedInputs, usedOutputs = set(), set()
-    inputPorts, outputPorts = {}, {}       # src fullName -> (port name, type, label)
+    inputPorts, outputPorts = {}, {}       # src fullName -> (port name, type, label, description)
     incoming, outgoing = [], []            # (src attribute, port name) / (port name, dst attribute)
     for edge in list(graph.edges):
         srcInside, dstInside = edge.src.node.name in names, edge.dst.node.name in names
         if dstInside and not srcInside:
             key = edge.src.fullName
             if key not in inputPorts:
-                inputPorts[key] = (_uniquePortName(edge.src.name, usedInputs), _portType(edge.src), edge.src.label)
+                inputPorts[key] = (_uniquePortName(edge.src.name, usedInputs), _portType(edge.src), edge.src.label,
+                                   _portDescription(edge.src))
                 incoming.append((edge.src, inputPorts[key][0]))
         elif srcInside and not dstInside:
             key = edge.src.fullName
             if key not in outputPorts:
-                outputPorts[key] = (_uniquePortName(edge.src.name, usedOutputs), _portType(edge.src), edge.src.label)
+                outputPorts[key] = (_uniquePortName(edge.src.name, usedOutputs), _portType(edge.src), edge.src.label,
+                                    _portDescription(edge.src))
             outgoing.append((outputPorts[key][0], edge.dst))
 
     # The nodes, with the links coming from other nodes going to the GraphInput ports
@@ -260,7 +296,8 @@ def collapseIntoSubGraph(graph: Graph, nodes, position=None):
                                  "inputs": {"portSpec": formatPortSpec(inputPorts.values())}}
     graphData["GraphOutput_1"] = {"nodeType": "GraphOutput", "position": [max(xs) + spacing, int(sum(ys) / len(ys))],
                                   "inputs": {"portSpec": formatPortSpec(outputPorts.values()), "ports": {"children": [
-                                      {"name": port[0], "label": port[2], "type": port[1], "value": "{" + key + "}"}
+                                      dict({"name": port[0], "label": port[2], "type": port[1], "value": "{" + key + "}"},
+                                           **({"desc": port[3]} if port[3] else {}))
                                       for key, port in outputPorts.items()]}}}
     content = json.dumps({GraphIO.Keys.Header: {GraphIO.Keys.FileVersion: GraphIO.__version__, GraphIO.Keys.Template: True},
                           GraphIO.Keys.Graph: graphData}, indent=1)

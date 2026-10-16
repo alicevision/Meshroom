@@ -583,7 +583,7 @@ class RemoveAnySetAttributeCommand(GraphCommand):
         assert isinstance(anySetAttribute, AnySet)
         self.anySetAttrName = anySetAttribute.fullName
         self.index = list(anySetAttribute.value).index(attribute)
-        self.value = attribute.asDict()
+        self.value = anySetAttribute._childAsDict(attribute)
         self.edges = self._connectedEdgeNames(attribute)
         self.setText(f"Remove {attribute.fullName}")
 

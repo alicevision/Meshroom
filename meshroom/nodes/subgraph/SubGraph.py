@@ -7,6 +7,7 @@ import shlex
 
 from meshroom.core import desc
 from meshroom.core.subgraph import activeRunContext, contextClass, resolveContextName, run
+from meshroom.core.subgraph.executor import plainValue, setPlainValue
 from meshroom.core.subgraph.nodes import (contextParam, isFrameLoop, isItemLoop, loopFromNode, loopParams, makeLocal, nodePlan,
                                           subGraphSourceParams, syncSubGraphPorts, watchSubGraphPorts, defaultSubGraph)
 from meshroom.core.utils import VERBOSE_LEVEL
@@ -168,7 +169,7 @@ class SubGraph(desc.Node):
                 # The frames / items of this task
                 loop = loop.subset(chunk.range.start, chunk.range.end)
                 chunk.logger.info(f"Frames: {loop.frames}" if loop.mode == "frames" else f"Items: {loop.items}")
-            inputs = {child.name: child.value for child in node.ins.value}
+            inputs = {child.name: plainValue(child) for child in node.ins.value}
             # Inside the run of another subgraph: the session of that run is used, values stay Python objects
             nested = activeRunContext() is not None
             outputs = run(plan, inputs, context=node.context.value, loop=loop, logger=chunk.logger,
@@ -176,6 +177,6 @@ class SubGraph(desc.Node):
                           cacheDir=os.path.join(node.internalFolder, "subgraph"))
             for child in node.outs.value:
                 if child.name in outputs:
-                    child.value = outputs[child.name] if nested else _storable(outputs[child.name])
+                    setPlainValue(child, outputs[child.name] if nested else _storable(outputs[child.name]))
         finally:
             chunk.logManager.end()

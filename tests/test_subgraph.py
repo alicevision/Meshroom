@@ -136,10 +136,15 @@ def addOneGraph():
 
 def test_parsePortSpec():
     assert parsePortSpec("a, b:IntParam\nc;d:Unknown, 1bad, a") == [
-        ("a", "LiveValue", "a"), ("b", "IntParam", "b"), ("c", "LiveValue", "c"), ("d", "LiveValue", "d")]
+        ("a", "LiveValue", "a", None), ("b", "IntParam", "b", None), ("c", "LiveValue", "c", None),
+        ("d", "LiveValue", "d", None)]
     assert parsePortSpec(None) == []
+    # A type that is not a simple one needs its full description, else it holds any value
     spec = formatPortSpec([("a", "LiveValue", "Shot Name"), ("b", "ChoiceParam")])
-    assert parsePortSpec(spec) == [("a", "LiveValue", "Shot Name"), ("b", "LiveValue", "b")]
+    assert parsePortSpec(spec) == [("a", "LiveValue", "Shot Name", None), ("b", "LiveValue", "b", None)]
+    choice = {"type": "ChoiceParam", "name": "b", "values": ["abc", "usd"], "exclusive": False, "value": ["abc"]}
+    ports = [("b", "ChoiceParam", "Formats", choice)]
+    assert parsePortSpec(formatPortSpec(ports)) == ports
 
 
 def test_anySetValues():
@@ -1060,3 +1065,120 @@ def test_subFrameStep():
     graphOutput = graph.addNewNode("GraphOutput", portSpec="step")
     graph.addEdge(graphInput.frameStep, port(graphOutput, "ports", "step"))
     assert run(graph.toDict(), loop=loop.subset(1, 3)) == {"step": 0.25}
+
+
+class TaskExportCamera(desc.Node):
+    """ A task node with inputs of complex types, like MayaExportCamera. """
+    __test__ = False
+    seen = []
+    inputs = [
+        desc.GroupAttribute(name="frameRange", label="Frame Range", description="", exposed=True, items=[
+            desc.IntParam(name="start", label="start frame", description="", value=1, range=(1, 999999, 1)),
+            desc.IntParam(name="stop", label="stop frame", description="", value=2, range=(1, 999999, 1)),
+        ]),
+        desc.FloatParam(name="frameStep", label="Step Frame", description="", value=1.0, range=(0.01, 10.0, 0.01)),
+        desc.ChoiceParam(name="formats", label="Formats", description="", value=["abc"],
+                         values=["abc", "usd", "fbx"], exclusive=False),
+        desc.ChoiceParam(name="destination", label="Destination", description="", value="common/camera",
+                         values=["common/camera", "lighting/camera"]),
+    ]
+    outputs = []
+
+    def process(self, node):
+        TaskExportCamera.seen.append((node.frameRange.start.value, node.frameRange.stop.value, node.frameStep.value,
+                                      list(node.formats.value), node.destination.value))
+
+
+def test_complexTypePorts(tmp_path):
+    from meshroom.core.subgraph.editing import SubGraphStack
+    registerNodeDesc(TaskExportCamera)
+    try:
+        TaskExportCamera.seen = []
+        project = Graph("project")
+        source = project.addNewNode("TaskExportCamera", frameStep=0.5, formats=["abc", "usd"], destination="lighting/camera")
+        source.frameRange.start.value = 1001
+        source.frameRange.stop.value = 1003
+        node = project.addNewNode("SubGraph")
+        names = ["frameRange", "frameStep", "formats", "destination"]
+        for name in names:
+            connectToAnySet(project, source.attribute(name), node.ins)
+        assert type(port(node, "ins", "frameRange").desc).__name__ == "GroupAttribute"
+
+        # The ports keep their types in the subgraph: they connect to the attributes of the same type
+        stack = SubGraphStack()
+        inner = stack.enter(project, node)
+        graphInput = inner.node("GraphInput_1")
+        types = {"frameRange": "GroupAttribute", "frameStep": "FloatParam",
+                 "formats": "ChoiceParam", "destination": "ChoiceParam"}
+        assert {c.name: type(c.desc).__name__ for c in graphInput.ports.value} == types
+        assert port(graphInput, "ports", "frameRange").value.get("start").value == 1001
+        task = inner.addNewNode("TaskExportCamera")
+        for name in names:
+            inner.addEdge(port(graphInput, "ports", name), task.attribute(name))
+        stack.exit(inner)
+
+        # Saved and reloaded: the ports, their connections and the subgraph are kept
+        projectPath = str(tmp_path / "project.mg")
+        project.save(projectPath)
+        project = loadGraph(projectPath)
+        node = project.node("SubGraph_1")
+        assert {c.name: type(c.desc).__name__ for c in node.ins.value} == types
+        assert all(c.isLink for c in node.ins.value)
+        inner = SubGraphStack().enter(project, node)
+        assert inner.node("TaskExportCamera_1").frameRange.inputLink.node.nodeType == "GraphInput"
+
+        # The node runs the subgraph with the values of its inputs
+        from meshroom.core.subgraph.executor import plainValue
+        inputs = {child.name: plainValue(child) for child in node.ins.value}
+        run(node.subGraph.value, inputs)
+        assert TaskExportCamera.seen == [(1001, 1003, 0.5, ["abc", "usd"], "lighting/camera")]
+    finally:
+        unregisterNodeDesc(TaskExportCamera)
+
+
+def test_attributeDescriptionSerialization():
+    from meshroom.core.desc.serialization import buildAttributeDesc, describeAttribute
+    files = desc.ListAttribute(name="files", elementDesc=desc.File(name="file", value=""))
+    for attributeDesc in TaskExportCamera.inputs + [files]:
+        data = describeAttribute(attributeDesc)
+        assert describeAttribute(buildAttributeDesc(data)) == data
+    # A type that cannot be rebuilt holds any value
+    assert type(buildAttributeDesc({"type": "Nope", "name": "x"})).__name__ == "LiveValue"
+
+
+def test_portsSavedByFormerVersionAreUpgraded(tmp_path):
+    """ Children saved without description, GraphInput ports saved as LiveValue: rebuilt with their types. """
+    from meshroom.core.subgraph.editing import SubGraphStack
+    registerNodeDesc(TaskExportCamera)
+    try:
+        project = Graph("project")
+        source = project.addNewNode("TaskExportCamera")
+        node = project.addNewNode("SubGraph")
+        for name in ("frameRange", "formats"):
+            connectToAnySet(project, source.attribute(name), node.ins)
+        projectPath = str(tmp_path / "project.mg")
+        project.save(projectPath)
+        with open(projectPath) as f:
+            data = json.load(f)
+        nodeData = data["graph"]["SubGraph_1"]
+        for child in nodeData["inputs"]["ins"]["children"]:
+            child.pop("desc", None)
+        subGraph = json.loads(nodeData["inputs"]["subGraph"])
+        subGraph["graph"]["GraphInput_1"]["inputs"]["portSpec"] = formatPortSpec([("frameRange",), ("formats",)])
+        nodeData["inputs"]["subGraph"] = json.dumps(subGraph)
+        nodeData.pop("uid", None)
+        with open(projectPath, "w") as f:
+            json.dump(data, f)
+
+        project = loadGraph(projectPath)
+        node = project.node("SubGraph_1")
+        assert all(child.isLink for child in node.ins.value)
+        inner = SubGraphStack().enter(project, node)
+        graphInput = inner.node("GraphInput_1")
+        assert {c.name: type(c.desc).__name__ for c in graphInput.ports.value} == {
+            "frameRange": "GroupAttribute", "formats": "ChoiceParam"}
+        assert port(graphInput, "ports", "formats").desc.exclusive is False
+        task = inner.addNewNode("TaskExportCamera")
+        inner.addEdge(port(graphInput, "ports", "frameRange"), task.frameRange)
+    finally:
+        unregisterNodeDesc(TaskExportCamera)

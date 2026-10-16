@@ -2779,6 +2779,10 @@ class CompatibilityNode(BaseNode):
             else:
                 return desc.StringParam(**params)
         # List/GroupAttribute: recursively build descriptions
+        elif isinstance(value, dict) and isinstance(value.get("children"), list):
+            # A serialized AnySet: its children are restored from their own description
+            return desc.AnySet(name=attrName, label=attrName, description="Incompatible parameter",
+                               commandLineGroup="incompatible")
         elif isinstance(value, (list, dict)):
             del params["value"]
             del params["invalidate"]
@@ -2823,6 +2827,10 @@ class CompatibilityNode(BaseNode):
         #
         # If it is a serialized link expression (no proper value to set/evaluate)
         if Attribute.isLinkExpression(value):
+            return attrDesc
+
+        # An AnySet holds any children, described in its serialized value
+        if isinstance(attrDesc, desc.AnySet):
             return attrDesc
 
         # If it is a GroupAttribute, all the attributes within the group should be matched

@@ -5,15 +5,17 @@ and the matching attributes of the nodes that run it (SubGraph).
 The ports are the children of AnySet attributes, edited in the user interface like any AnySet child
 (connect to add one, rename, change its label, reorder, remove). They are also written in a hidden string
 attribute (the "port spec"), so that templates (which do not save output attributes) keep them: a JSON list
-of {"name", "type", "label"}. A plain list of names, each optionally followed by a type
+of {"name", "type", "label"}, plus "desc" (the full description: choices, items of a group...) for the types
+that are not simple ones. A plain list of names, each optionally followed by a type
 ("image, mask, count:IntParam"), is read too.
 
-The type of a port is an attribute type; the default one, LiveValue, holds any value.
+The type of a port is any attribute type (a frame range group, a choice...), the one of the attribute connected
+to it; the default one, LiveValue, holds any value.
 """
 import json
 import logging
 import re
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 # Attribute types of the ports (desc class names)
 PORT_TYPES = ("LiveValue", "IntParam", "FloatParam", "StringParam", "BoolParam", "File")
@@ -21,28 +23,31 @@ DEFAULT_PORT_TYPE = "LiveValue"
 
 _PORT_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
-# A port: (name, type, label)
-Port = Tuple[str, str, str]
+# A port: (name, type, label, full description or None). The full description (see
+# meshroom.core.desc.serialization) is kept for the types that are not simple (groups, choices, lists...)
+Port = Tuple[str, str, str, Optional[dict]]
 
 
-def _port(name: str, portType: str = "", label: str = "") -> Port:
+def _port(name: str, portType: str = "", label: str = "", description: Optional[dict] = None) -> Port:
     portType = portType or DEFAULT_PORT_TYPE
-    if portType not in PORT_TYPES:
+    if portType not in PORT_TYPES and not description:
         portType = DEFAULT_PORT_TYPE
-    return name, portType, label or name
+    if portType in PORT_TYPES:
+        description = None
+    return name, portType, label or name, description
 
 
 def parsePortSpec(spec) -> List[Port]:
     """
-    The (name, type, label) of the ports of a port spec (see the module documentation).
-    Invalid or duplicated names are skipped, unknown types replaced by LiveValue.
+    The (name, type, label, description) of the ports of a port spec (see the module documentation).
+    Invalid or duplicated names are skipped, unknown types without description replaced by LiveValue.
     """
     if not isinstance(spec, str) or not spec.strip():
         return []
     items = []
     if spec.lstrip().startswith("["):
         try:
-            items = [(item.get("name", ""), item.get("type", ""), item.get("label", ""))
+            items = [(item.get("name", ""), item.get("type", ""), item.get("label", ""), item.get("desc"))
                      for item in json.loads(spec) if isinstance(item, dict)]
         except ValueError:
             logging.warning(f"[SubGraph] Invalid port spec: {spec}")
@@ -50,26 +55,32 @@ def parsePortSpec(spec) -> List[Port]:
     else:
         for item in re.split(r"[,\n;]", spec):
             name, _, portType = item.strip().partition(":")
-            items.append((name.strip(), portType.strip(), ""))
+            items.append((name.strip(), portType.strip(), "", None))
     ports = []
     names = set()
-    for name, portType, label in items:
+    for name, portType, label, description in items:
         if not name:
             continue
         if not _PORT_NAME.match(name) or name in names:
             logging.warning(f"[SubGraph] Invalid or duplicated port name '{name}' skipped.")
             continue
         names.add(name)
-        ports.append(_port(name, portType, label))
+        ports.append(_port(name, portType, label, description))
     return ports
 
 
 def formatPortSpec(ports: Iterable[tuple]) -> str:
-    """ The port spec (JSON) of a list of (name, type[, label]); empty without ports. """
+    """ The port spec (JSON) of a list of (name, type[, label[, description]]); empty without ports. """
     ports = [_port(*port) for port in ports]
     if not ports:
         return ""
-    return json.dumps([{"name": name, "type": portType, "label": label} for name, portType, label in ports])
+    data = []
+    for name, portType, label, description in ports:
+        item = {"name": name, "type": portType, "label": label}
+        if description:
+            item["desc"] = description
+        data.append(item)
+    return json.dumps(data)
 
 
 def anySetValues(serialized) -> dict:
@@ -87,36 +98,76 @@ def anySetValues(serialized) -> dict:
 
 
 def anySetPorts(anySet) -> List[Port]:
-    """ The (name, type, label) of the children of an AnySet attribute (LiveValue for other types). """
-    return [_port(child.name, type(child.desc).__name__, child.label) for child in anySet.value]
+    """ The ports of the children of an AnySet attribute (with the full description of the complex types). """
+    from meshroom.core.desc.serialization import describeAttribute
+    ports = []
+    for child in anySet.value:
+        portType = type(child.desc).__name__
+        description = None if portType in PORT_TYPES else describeAttribute(child.desc)
+        ports.append(_port(child.name, portType, child.label, description))
+    return ports
+
+
+def _insertChild(anySet, port: Port, index: int):
+    """ Insert a child attribute for a port in an AnySet (any type, from its full description). """
+    from meshroom.core.attribute import attributeFactory
+    from meshroom.core.desc.serialization import buildAttributeDesc
+    name, portType, label, description = port
+    if description:
+        attributeDesc = buildAttributeDesc(description, name=name, label=label)
+    else:
+        attributeDesc = buildAttributeDesc({"type": portType, "value": None}, name=name, label=label)
+    child = attributeFactory(attributeDesc, value=None, isOutput=anySet.isOutput, node=anySet.node, root=anySet)
+    if child.isOutput:
+        child._isOutput = True
+        child._desc._isDynamicValue = True
+    anySet._value.insert(index, child)
+    anySet.flatStaticChildrenChanged.emit()
+    return child
 
 
 def syncAnySet(anySet, ports: Iterable[tuple]) -> bool:
     """
-    Make the children of an AnySet attribute match a list of (name, type[, label]): remove the children
-    that are not in the list (and their connections), add the missing ones, update the labels and the
-    order. A child of the same name is kept with its connections, whatever its type.
-    Returns whether something changed.
+    Make the children of an AnySet attribute match a list of ports (name, type[, label[, description]]):
+    remove the children that are not in the list (and their connections), add the missing ones, recreate
+    the ones whose type changed (keeping their connections when they are still valid), update the labels
+    and the order. Returns whether something changed.
     """
     ports = [_port(*port) for port in ports]
-    wanted = {name: label for name, _, label in ports}
+    wanted = {port[0]: port for port in ports}
     changed = False
     graph = anySet.node.graph if anySet.node else None
+
+    def connectedEdges(child):
+        if graph is None:
+            return []
+        return [edge for edge in list(graph.edges) if edge.src is child or edge.dst is child]
+
     for child in list(anySet.value):
-        if child.name in wanted:
+        port = wanted.get(child.name)
+        if port is not None and (type(child.desc).__name__ == port[1] or port[1] == DEFAULT_PORT_TYPE):
             continue
-        if graph is not None:
-            for edge in list(graph.edges):
-                if edge.src is child or edge.dst is child:
-                    graph.removeEdge(edge.dst)
+        # Removed port, or a port whose type changed (e.g. a group recreated as LiveValue by a former version)
+        edges = [(edge.src, edge.dst) for edge in connectedEdges(child)]
+        for edge in connectedEdges(child):
+            graph.removeEdge(edge.dst)
+        index = list(anySet.value).index(child)
         anySet.removeAttribute(child)
         changed = True
+        if port is not None:
+            newChild = _insertChild(anySet, port, index)
+            for src, dst in edges:
+                src, dst = (newChild, dst) if src is child else (src, newChild)
+                try:
+                    graph.addEdge(src, dst)
+                except Exception as e:
+                    logging.warning(f"[SubGraph] Connection {src.fullName} -> {dst.fullName} not restored: {e}")
     existing = {child.name: child for child in anySet.value}
-    for index, (name, portType, label) in enumerate(ports):
+    for index, port in enumerate(ports):
+        name, _, label, _ = port
         child = existing.get(name)
         if child is None:
-            anySet.insertAttribute({"name": name, "label": label, "type": portType, "value": None},
-                                   min(index, len(anySet.value)))
+            _insertChild(anySet, port, min(index, len(anySet.value)))
             changed = True
             continue
         if child.label != label:

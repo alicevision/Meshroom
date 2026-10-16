@@ -1903,9 +1903,39 @@ class AnySet(GroupAttribute):
         self._value.move(fromIndex, toIndex)
         self.flatStaticChildrenChanged.emit()
 
+    # Child types fully described by their type name; the others (groups, choices, lists...) are serialized
+    # with their full description (see meshroom.core.desc.serialization)
+    _simpleChildTypes = ("LiveValue", "IntParam", "FloatParam", "StringParam", "BoolParam", "File", "ColorParam")
+
+    def _childAsDict(self, attribute: Attribute) -> dict:
+        """ The serialized form of a child attribute, with its full description when its type needs it. """
+        from meshroom.core.desc.serialization import describeAttribute
+        serialized = attribute.asDict()
+        if type(attribute.desc).__name__ not in self._simpleChildTypes:
+            serialized["desc"] = describeAttribute(attribute.desc)
+        return serialized
+
+    @staticmethod
+    def _childDescription(serializedAttribute: dict) -> AttributeDescription | None:
+        """
+        The description of a serialized child attribute: from its full description if it has one, else from its
+        type (a type that cannot be rebuilt gives a LiveValue instead of failing).
+        """
+        from meshroom.core.desc.serialization import buildAttributeDesc
+        attrDescType = serializedAttribute.get("type", None)
+        attributeClass = getattr(desc, attrDescType, None) if attrDescType else None
+        if attributeClass is None or not issubclass(attributeClass, AttributeDescription):
+            return None
+        name, label = serializedAttribute.get("name"), serializedAttribute.get("label")
+        if isinstance(serializedAttribute.get("desc"), dict):
+            return buildAttributeDesc(serializedAttribute["desc"], name=name, label=label)
+        # Saved without description: rebuilt from its type (and the items of a group, the element of a list)
+        return buildAttributeDesc({key: value for key, value in serializedAttribute.items() if key != "value"},
+                                  name=name, label=label)
+
     def insertAttribute(self, serializedAttribute: dict, index: int) -> Attribute | None:
         """Restore a serialized child attribute at the requested position."""
-        attributeDesc = attributeDescriptionFactory(serializedAttribute)
+        attributeDesc = self._childDescription(serializedAttribute)
         if attributeDesc is None:
             return None
 
@@ -1961,17 +1991,12 @@ class AnySet(GroupAttribute):
             serializedValue = attrChildValue.get('value', None)
 
             if not childAttr:
-                attrDescType = attrChildValue.get('type', None)
-
-                if not attrDescType:
-                    continue
-
-                attributeClass = getattr(desc, attrDescType, None)
-                if attributeClass is None or not issubclass(attributeClass, AttributeDescription):
+                attributeDesc = self._childDescription(attrChildValue)
+                if attributeDesc is None:
                     continue
 
                 childAttr = attributeFactory(
-                    description = attributeDescriptionFactory(attrChildValue),
+                    description = attributeDesc,
                     value = serializedValue,
                     isOutput = self.isOutput,
                     node = self.node,
@@ -1987,7 +2012,7 @@ class AnySet(GroupAttribute):
     def getSerializedValue(self):
         return {
             "expanded": self.expanded,
-            "children": [attr.asDict() for attr in self._value]
+            "children": [self._childAsDict(attr) for attr in self._value]
         }
 
     # Override

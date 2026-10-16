@@ -203,6 +203,9 @@ def _topAttributeName(attribute) -> str:
 def _plainValue(attribute):
     """ The value of an attribute as plain Python values (dicts for groups and AnySets, lists for lists). """
     from meshroom.core.attribute import GroupAttribute, ListAttribute
+    if attribute.isLink and attribute.inputLink is not None:
+        # A connected group gives the values of its source (its children are not connected themselves)
+        return _plainValue(attribute.inputLink)
     if isinstance(attribute, GroupAttribute):
         return {child.name: _plainValue(child) for child in attribute.value}
     if isinstance(attribute, ListAttribute):
@@ -219,6 +222,11 @@ def _setPlainValue(attribute, value):
                 _setPlainValue(child, value[child.name])
         return
     attribute.value = value
+
+
+# Public names, for the nodes and the user interface
+plainValue = _plainValue
+setPlainValue = _setPlainValue
 
 
 def findAttribute(graph, path: str):

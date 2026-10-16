@@ -44,7 +44,7 @@ A new `SubGraph` node contains a `GraphInput` and a `GraphOutput` node (they can
 - on the node: connect an attribute to `Inputs` (or `Outputs` to an input), or add one with the **+** button of `Inputs` / `Outputs` in the attribute editor, and the port appears on the `GraphInput` (or `GraphOutput`) of the subgraph — created if it was removed;
 - in the subgraph: connect the `Ports` of `GraphInput` / `GraphOutput`, and the node gets the matching `Inputs` / `Outputs` when leaving it.
 
-Connections to the ports of the node are kept. Changing the ports of a node that references a template copies the template into the node (the template file is not changed).
+A port has the type of the attribute connected to it, whatever it is (a `Frame Range` group, a multiple choice such as `Formats`, a list...): in the subgraph, it connects to the attributes of the same type, and the values go through as they are. Connections to the ports of the node are kept. Changing the ports of a node that references a template copies the template into the node (the template file is not changed).
 
 ### Where the subgraph is stored
 

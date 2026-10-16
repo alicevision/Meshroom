@@ -25,7 +25,8 @@ def portSpecParam(name: str = "portSpec", label: str = "Ports", value: str = "")
         label=label,
         description="Ports, kept in sync with the children of the matching AnySet attribute (edit those).\n"
                     "Also accepts names separated by commas, each optionally followed by a type: 'image, count:IntParam'.\n"
-                    f"Types: {', '.join(PORT_TYPES)} (LiveValue by default: any value).",
+                    f"Types: {', '.join(PORT_TYPES)} (LiveValue by default: any value); other types (groups, "
+                    "choices...) are written with their full description.",
         value=value,
         invalidate=False,
         advanced=True,

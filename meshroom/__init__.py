@@ -40,6 +40,7 @@ _MESHROOM_ROOT = Path(__file__).parent.parent.resolve()
 
 # Internal imports after the definition of the version
 from .common import init, Backend, strtobool
+from .env import getInstallFolder
 
 # sys.frozen is initialized by cx_Freeze and identifies a release package
 isFrozen = getattr(sys, "frozen", False)
@@ -149,7 +150,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
         os.environ[var] = os.pathsep.join(paths)
 
     # setup root directory (override possible by setting "MESHROOM_INSTALL_DIR" environment variable)
-    rootDir = os.path.dirname(sys.executable) if isFrozen else os.environ.get("MESHROOM_INSTALL_DIR", None)
+    rootDir = getInstallFolder()
     logging.debug(f"isFrozen={isFrozen}")
     logging.debug(f"sys.executable={sys.executable}")
     logging.debug(f"rootDir={rootDir}")

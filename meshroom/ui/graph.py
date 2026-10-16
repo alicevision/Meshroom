@@ -436,6 +436,8 @@ class UIGraph(QObject):
         self._selectedChunk = None
         self._nodeSelection: QItemSelectionModel = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
+        # Full names of the "linkedVec2" attributes shown as x / y fields (see setVec2Split)
+        self._splitVec2 = set()
 
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
@@ -1368,6 +1370,24 @@ class UIGraph(QObject):
     @Slot(Attribute, "QVariant")
     def setAttribute(self, attribute, value):
         self.push(commands.SetAttributeCommand(self._graph, attribute, value))
+
+    @Slot(Attribute, float, float)
+    def setVec2Attribute(self, attribute, x, y):
+        """ Set both components of a 2D attribute ({x, y}) in a single undoable step. """
+        self.setAttribute(attribute, {"x": x, "y": y})
+
+    @Slot(Attribute, result=bool)
+    def isVec2Split(self, attribute):
+        """ Whether a "linkedVec2" attribute was split into x / y fields by the user (for the session). """
+        return attribute.fullName in self._splitVec2
+
+    @Slot(Attribute, bool)
+    def setVec2Split(self, attribute, split):
+        """ Show a "linkedVec2" attribute as x / y fields, or as a single value. A display preference: not undoable. """
+        if split:
+            self._splitVec2.add(attribute.fullName)
+        else:
+            self._splitVec2.discard(attribute.fullName)
 
     @Slot(Attribute)
     def resetAttribute(self, attribute):

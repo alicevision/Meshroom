@@ -220,6 +220,11 @@ Convenient groups for 2D geometry, built from `GroupAttribute` and `FloatParam`:
 | `Size2d` | `width`, `height` (float) | `Size2d(name="sz", ..., width=1920, height=1080)` |
 | `Vec2d` | `x`, `y` (float) | `Vec2d(name="vec", ..., x=0.0, y=1.0)` |
 
+In the Node Editor, a `Vec2d` is edited with x and y fields (sliders when `xRange` / `yRange` are given),
+set together as one undoable change. With `semantic="linkedVec2"`, it is edited as a single value by
+default (x = y, e.g. a uniform scale) and a "split" checkbox shows x and y apart; values that differ are
+always shown apart.
+
 
 ### Attribute Properties
 

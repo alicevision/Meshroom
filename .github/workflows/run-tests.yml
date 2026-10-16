@@ -96,7 +96,7 @@ jobs:
 
       - name: Run tests for plugins (Python 3.9)
         run: |
-          pytest tests/test_plugins.py
+          pytest tests/test_plugins/
       
       # ── meshroom_compute smoke test (Python 3.7) ─────────────
       # Verifies that the CLI entry-point works on the minimum supported version.
@@ -120,5 +120,5 @@ jobs:
       - name: Run tests for plugins (Python 3.7)
         if: runner.os == 'Windows'
         run: |
-          pytest tests/test_plugins.py
+          pytest tests/test_plugins/
           pytest tests/test_attributes.py

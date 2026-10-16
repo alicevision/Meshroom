@@ -139,6 +139,34 @@ For compatibility with existing nodes, omit `outputAttributes` to expose the inp
 
 Only attributes declared in `outputAttributes` can be set through these targeted forms.
 
+### 5. LiveNode (inside a subgraph)
+
+A `desc.LiveNode` runs in memory inside a subgraph (see [docs/subgraph.md](docs/subgraph.md)): no chunks, no cache folder, no status file. Its `execute(ctx, inputs)` receives the values of its inputs — any Python object for those connected to other live nodes — and returns the values of its outputs. A chain of live nodes runs in one process and one context (Python, Houdini, Maya, Nuke), opened once for the whole chain. Live nodes are only run by a `SubGraph` node, a `LiveSubGraph` node, or `meshroom.subgraph.run`.
+
+Use `desc.LiveValue` for inputs and outputs carrying any value (it connects to any attribute). Set `context` to the context(s) the node needs (`"any"` by default).
+
+```python
+from meshroom.core import desc
+
+
+class HoudiniCountPoints(desc.LiveNode):
+    context = "houdini"
+
+    inputs = [
+        desc.StringParam(name="sop", label="SOP", description="Path of a SOP node.", value="/obj/geo1/OUT"),
+        desc.LiveValue(name="scene", label="Scene", description="Connect the previous Houdini node to run after it."),
+    ]
+    outputs = [
+        desc.LiveValue(name="count", label="Count", description="Number of points."),
+    ]
+
+    def execute(self, ctx, inputs):
+        hou = ctx.context.session
+        return {"count": len(hou.node(inputs["sop"]).geometry().points())}
+```
+
+`ctx` gives the loop state (`ctx.iteration`, `ctx.frame`), the values shared by the nodes of the run (`ctx.variables`), `ctx.logger` and `ctx.checkCancelled()`.
+
 
 ## Attribute Types Available in Meshroom Nodes
 
@@ -156,6 +184,7 @@ Meshroom provides several attribute types you can use in a node’s `inputs` and
 | `ChoiceParam` | Single or multiple selection from a list. | `values=[...]`, `exclusive` |
 | `ColorParam` | RGBA color. | `value` (list/tuple) |
 | `PushButtonParam` | Action button in UI; no stored value. | N/A |
+| `LiveValue` | Any Python value passed between live nodes; connects to any attribute. | `value` (JSON value) |
 
 ### Compound Containers
 

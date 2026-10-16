@@ -1,0 +1,80 @@
+{
+    "header": {
+        "releaseVersion": "2026.1.0+develop",
+        "fileVersion": "2.1",
+        "nodesVersions": {
+            "GraphInput": "1.0",
+            "GraphOutput": "1.0",
+            "HoudiniOpenScene": "1.0",
+            "HoudiniRender": "1.0",
+            "HoudiniSetParms": "1.0"
+        },
+        "template": true
+    },
+    "graph": {
+        "GraphInput_1": {
+            "nodeType": "GraphInput",
+            "position": [
+                0,
+                0
+            ],
+            "inputs": {
+                "portSpec": "hipFile, scale"
+            }
+        },
+        "GraphOutput_1": {
+            "nodeType": "GraphOutput",
+            "position": [
+                800,
+                0
+            ],
+            "inputs": {
+                "portSpec": "image",
+                "ports": {
+                    "expanded": false,
+                    "children": [
+                        {
+                            "name": "image",
+                            "label": "image",
+                            "type": "LiveValue",
+                            "value": "{HoudiniRender_1.outputFile}"
+                        }
+                    ]
+                }
+            }
+        },
+        "HoudiniOpenScene_1": {
+            "nodeType": "HoudiniOpenScene",
+            "position": [
+                200,
+                0
+            ],
+            "inputs": {
+                "hipFile": "{GraphInput_1.ports.hipFile}"
+            }
+        },
+        "HoudiniRender_1": {
+            "nodeType": "HoudiniRender",
+            "position": [
+                600,
+                0
+            ],
+            "inputs": {
+                "scene": "{HoudiniSetParms_1.sceneOut}"
+            }
+        },
+        "HoudiniSetParms_1": {
+            "nodeType": "HoudiniSetParms",
+            "position": [
+                400,
+                0
+            ],
+            "inputs": {
+                "scene": "{HoudiniOpenScene_1.sceneOut}",
+                "parms": "# One per line: path/parm = value, or path/parm := expression\n/obj/geo1/xform1/ry := $F * 3",
+                "parmPath": "/obj/geo1/xform1/scale",
+                "value": "{GraphInput_1.ports.scale}"
+            }
+        }
+    }
+}

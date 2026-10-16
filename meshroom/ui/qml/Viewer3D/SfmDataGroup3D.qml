@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MaterialIcons 2.2
+import Utils 1.0
 
 LayerListGroup {
     id: root
@@ -23,6 +24,42 @@ LayerListGroup {
             readonly property var sfmData: entry ? entry.dataObject : null
 
             spacing: 3
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: 6
+                rowSpacing: 0
+
+                Label { text: "Views"; font.pointSize: 9; color: palette.mid }
+                Label { text: advanced.sfmData ? advanced.sfmData.viewCount : 0; font.pointSize: 9 }
+
+                Label { text: "Reconstructed"; font.pointSize: 9; color: palette.mid }
+                Label { text: advanced.sfmData ? advanced.sfmData.cameraCount : 0; font.pointSize: 9 }
+
+                Label { text: "Intrinsics"; font.pointSize: 9; color: palette.mid }
+                Label { text: advanced.sfmData ? advanced.sfmData.intrinsicCount : 0; font.pointSize: 9 }
+
+                Label { text: "Landmarks"; font.pointSize: 9; color: palette.mid }
+                Label { text: advanced.sfmData ? advanced.sfmData.pointCount : 0; font.pointSize: 9 }
+
+                Label { text: "Path"; font.pointSize: 9; color: palette.mid }
+                Label {
+                    id: pathLabel
+                    Layout.fillWidth: true
+                    // Attribute values are plain paths, which toLocalFile() turns into "" once stored as a QUrl:
+                    // fall back to the entry's source string
+                    text: advanced.sfmData ? (Filepath.urlToString(advanced.sfmData.source) || advanced.entry.source) : ""
+                    font.pointSize: 9
+                    elide: Text.ElideMiddle
+
+                    // Show the full path on hover, only when it is elided
+                    HoverHandler { id: pathHover }
+                    ToolTip.visible: pathHover.hovered && pathLabel.truncated
+                    ToolTip.text: pathLabel.text
+                    ToolTip.delay: 500
+                }
+            }
 
             PropertySlider {
                 Layout.fillWidth: true

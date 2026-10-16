@@ -762,3 +762,14 @@ def test_houdiniSessionSceneFile(fakeHou):
     meshroom.subgraph.run(graph.toDict())
     assert TaskShotScene.runs == 1
     assert fakeHou.loaded == ["/shots/sh010.hip"] and fakeHou.saved == []
+
+
+def test_subGraphStartedLikeItsTaskNodes(fakeHou):
+    """ A Houdini subgraph task is started with the interpreter and environment of its Houdini task nodes. """
+    from types import SimpleNamespace
+    project = Graph("project")
+    node = project.addNewNode("SubGraph", subGraph=json.dumps(houdiniSceneGraph().serialize(asTemplate=True)))
+    chunk = SimpleNamespace(node=node)
+    assert node.nodeDesc.getPythonExecutable(chunk) == "hython"
+    from meshroom.core import pluginManager
+    assert node.nodeDesc.getProcessProvider(chunk) is pluginManager.getNodeDescProvider("BatchSetParm")

@@ -29,6 +29,9 @@ def ensureNodes():
     if _nodesLoaded:
         return
     import meshroom.core
+    from meshroom.core.subgraph.contexts import HoudiniContext
+    # In Houdini: its USD modules first, before plugins import another USD
+    HoudiniContext.preloadHostUsd()
     if meshroom.core.pluginManager.getNodeDescProvider("GraphInput") is None:
         meshroom.core.initNodes()
         meshroom.core.initPlugins()

@@ -170,6 +170,28 @@ class HoudiniContext(LiveContext):
         if frame is not None:
             self.session.setFrame(frame)
 
+    @staticmethod
+    def preloadHostUsd():
+        """
+        In a Houdini process, import the USD Python modules (pxr) of Houdini before the node types are loaded,
+        so that a plugin importing pxr gets the one of Houdini and not another USD found in PYTHONPATH (two USD
+        libraries in one process make Houdini abort). Does nothing outside of Houdini or if pxr is imported.
+        """
+        import sys
+        hfs = os.environ.get("HFS")
+        if "hou" not in sys.modules or "pxr" in sys.modules or not hfs:
+            return
+        pythonLibs = os.path.join(hfs, "houdini", f"python{sys.version_info[0]}.{sys.version_info[1]}libs")
+        if not os.path.isdir(os.path.join(pythonLibs, "pxr")):
+            return
+        if pythonLibs in sys.path:
+            sys.path.remove(pythonLibs)
+        sys.path.insert(0, pythonLibs)
+        try:
+            importlib.import_module("pxr.Tf")
+        except ImportError as e:
+            logging.warning(f"[SubGraph] Cannot preload the USD modules of Houdini: {e}")
+
 
 def _samePath(a, b) -> bool:
     return bool(a) and bool(b) and os.path.normcase(os.path.abspath(str(a))) == os.path.normcase(os.path.abspath(str(b)))

@@ -106,14 +106,47 @@ class SubGraph(desc.Node):
     def onMakeLocalClicked(cls, node):
         makeLocal(node)
 
+    @staticmethod
+    def _environmentNode(node):
+        """
+        (nodeDesc, provider) of the first task node of the subgraph that needs the context of the subgraph
+        (e.g. a Houdini node of a pipeline plugin, with pythonExecutable = "hython"), None if there is none:
+        the subgraph task is then started like that node would be (same interpreter, same environment).
+        """
+        from meshroom.core import pluginManager
+        from meshroom.core.subgraph import contextOf
+        plan = nodePlan(node)
+        if plan is None:
+            return None
+        contextName = resolveContextName(plan, node.context.value)
+        for name in sorted(plan.nodeDescs):
+            nodeDesc = plan.nodeDescs[name]
+            if contextName in contextOf(nodeDesc) and getattr(nodeDesc, "pythonExecutable", None):
+                provider = pluginManager.getNodeDescProvider(plan.graphData[name]["nodeType"])
+                if provider is not None:
+                    return nodeDesc, provider
+        return None
+
     def getPythonExecutable(self, chunk) -> str:
-        """ The interpreter of the context when it cannot run in Python (e.g. hython for Houdini). """
+        """
+        The interpreter of the context: the one of a task node of the subgraph needing that context (as it
+        would be started on its own), else the interpreter of the context (MESHROOM_HYTHON...) when the
+        context cannot run in Python.
+        """
+        found = self._environmentNode(chunk.node)
+        if found is not None:
+            return found[0].pythonExecutable
         plan = nodePlan(chunk.node)
         if plan is not None:
             context = contextClass(resolveContextName(plan, chunk.node.context.value))
             if not context.isAvailable() and context.interpreter():
                 return " ".join(shlex.quote(arg) for arg in context.interpreter())
         return self.pythonExecutable
+
+    def getProcessProvider(self, chunk):
+        """ The process environment of a task node of the subgraph needing its context (see getPythonExecutable). """
+        found = self._environmentNode(chunk.node)
+        return found[1] if found is not None else super().getProcessProvider(chunk)
 
     def processChunk(self, chunk):
         node = chunk.node

@@ -236,14 +236,20 @@ def initPipelines():
 
 
 def initPlugins():
+    # Whether local plugin management is enabled
+    localPluginsEnabled = EnvVar.get(EnvVar.MESHROOM_LOCAL_PLUGINS)
+
     if meshroomPluginsFolder.is_dir():
         # Load JSON registry files
         # Do not load registries records
-        for jsonFilePath in sorted(p for p in meshroomPluginsFolder.glob("*.json")
-                                    if not p.name.startswith(meshroomPluginsInternalPrefix)):
-            pluginManager.addPluginRegistryFile(jsonFilePath, updateRecords=False)
+        if localPluginsEnabled:
+            for jsonFilePath in sorted(p for p in meshroomPluginsFolder.glob("*.json")
+                                        if not p.name.startswith(meshroomPluginsInternalPrefix)):
+                pluginManager.addPluginRegistryFile(jsonFilePath, updateRecords=False)
         # Local plugins
         # Using DirTreeProcessEnv
+        # Loaded even if local plugin management is disabled:
+        # it only prevents installing, updating and uninstalling plugins.
         for subfolderPath in sorted(p for p in meshroomPluginsFolder.iterdir()
                                      if p.is_dir() and not p.name.startswith(meshroomPluginsInternalPrefix)):
             pluginManager.addPluginFromLocalFolder(subfolderPath.name, str(subfolderPath))

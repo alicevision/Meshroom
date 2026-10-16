@@ -436,6 +436,8 @@ class UIGraph(QObject):
         self._selectedChunk = None
         self._nodeSelection: QItemSelectionModel = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
+        # Full names of the "linkedColor" attributes shown as separate channels (see setRgbaSplit)
+        self._splitColors = set()
 
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
@@ -1368,6 +1370,24 @@ class UIGraph(QObject):
     @Slot(Attribute, "QVariant")
     def setAttribute(self, attribute, value):
         self.push(commands.SetAttributeCommand(self._graph, attribute, value))
+
+    @Slot(Attribute, float, float, float, float)
+    def setRgbaAttribute(self, attribute, r, g, b, a):
+        """ Set the 4 components of a color attribute ({r, g, b, a}) in a single undoable step. """
+        self.setAttribute(attribute, {"r": r, "g": g, "b": b, "a": a})
+
+    @Slot(Attribute, result=bool)
+    def isRgbaSplit(self, attribute):
+        """ Whether a "linkedColor" attribute was split into channels by the user (for the session). """
+        return attribute.fullName in self._splitColors
+
+    @Slot(Attribute, bool)
+    def setRgbaSplit(self, attribute, split):
+        """ Show a "linkedColor" attribute as separate channels, or as a single value. A display preference: not undoable. """
+        if split:
+            self._splitColors.add(attribute.fullName)
+        else:
+            self._splitColors.discard(attribute.fullName)
 
     @Slot(Attribute)
     def resetAttribute(self, attribute):

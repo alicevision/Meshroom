@@ -136,15 +136,32 @@ FocusScope {
         anchors.fill: parent
         property double factor: 1.2
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        // Whether the current press cancelled a shape placement
+        // (used to skip the context menu on the matching release)
+        property bool placementCancelled: false
 
+        // Note: this MouseArea lies below the image. While placing a shape, the ShapeViewer
+        // MouseArea covers the image and accepts presses on it (except Shift+Left, passed through
+        // for panning), so a non-pan press reaching this handler happened outside the image.
         onPressed: function(mouse) {
             imgContainer.forceActiveFocus()
-            if (mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
+            const isPan = mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier)
+            if (isPan)
                 drag.target = imgContainer  // Start drag
+            else if (ShapeViewerHelper.isPlacing) {
+                // Click outside the image: cancel shape placement
+                ShapeViewerHelper.cancelPlacement()
+                placementCancelled = true
+            }
         }
 
         onReleased: function(mouse) {
             drag.target = undefined  // Stop drag
+            // The press cancelled a placement: consume the release so a right click does not also open the context menu
+            if (placementCancelled) {
+                placementCancelled = false
+                return
+            }
             if (mouse.button & Qt.RightButton) {
                 var menu = contextMenu.createObject(root)
                 menu.x = mouse.x
@@ -886,7 +903,8 @@ FocusScope {
                             setSource("../Shapes/Viewer/ShapeViewer.qml", {
                                 "containerWidth": Qt.binding(function() { return imgContainer.width }),
                                 "containerHeight": Qt.binding(function() { return imgContainer.height }),
-                                "containerScale": Qt.binding(function() { return imgContainer.scale })
+                                "containerScale": Qt.binding(function() { return imgContainer.scale }),
+                                "viewport": imgLayout
                             })
                         } else {
                             // forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -1890,6 +1908,27 @@ FocusScope {
                     visible: root.enableSequencePlayer
                     enabled: root.enableSequencePlayer
                     isOutputSequence: root.displayedNode && root.displayedNode.hasSequenceOutput
+                }
+            }
+
+            // Shape placement hint (outside imgContainer so it is neither scaled nor rotated)
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: (imagePathToolbar.visible ? imagePathToolbar.height : 0) + 4
+                visible: ShapeViewerHelper.isPlacing
+                padding: 4
+                font.pointSize: 8
+                text: {
+                    if (ShapeViewerHelper.isListPlacement)
+                        return "Left click to add shapes, right click to finish"
+                    if (ShapeViewerHelper.isRepositioning)
+                        return "Left click to move shape, right click to cancel"
+                    return "Left click to add shape, right click to cancel"
+                }
+                background: Rectangle {
+                    color: Qt.rgba(palette.window.r, palette.window.g, palette.window.b, 0.7)
+                    radius: 2
                 }
             }
         }

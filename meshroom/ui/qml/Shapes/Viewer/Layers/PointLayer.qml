@@ -38,16 +38,28 @@ BaseLayer {
             PathLine { x: pointLayer.observation.x; y: pointLayer.observation.y + pointSize }
         }
 
-        // Selection area
+        // Selection and drag area: press selects, drag moves the point directly
         MouseArea  {
             x: handleCenter.x - pointSize
             y: handleCenter.y - pointSize
             width: pointSize * 2
             height: pointSize * 2
             acceptedButtons: Qt.LeftButton
-            cursorShape: pointLayer.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: selectionRequested()
-            enabled: pointLayer.editable && !pointLayer.selected
+            cursorShape: pointLayer.editable ? Qt.SizeAllCursor : Qt.ArrowCursor
+            enabled: pointLayer.editable
+            drag.target: draggableShape
+            drag.smoothed: false  // Follow the cursor exactly, without losing the drag threshold distance
+            onPressed: selectionRequested()
+            onReleased: {
+                // Moved beyond the drag threshold: commit the new position
+                // Note: the layer is rebuilt on observation change, which resets the drag offset
+                if (draggableShape.x !== 0 || draggableShape.y !== 0) {
+                    _currentScene.setObservationFromName(pointLayer.name, _currentScene.selectedViewId, {
+                        x: handleCenter.x + draggableShape.x,
+                        y: handleCenter.y + draggableShape.y
+                    })
+                }
+            }
         }
 
         // Handle for point center

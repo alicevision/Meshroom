@@ -45,7 +45,8 @@ Pane {
     // Background
     background: Rectangle { 
         radius: 3
-        border.color: palette.highlight
+        // White border while waiting for a click in the 2d Viewer to place the shape
+        border.color: (isAttributeSelected && ShapeViewerHelper.isPlacing) ? "white" : palette.highlight
         border.width: {
             if(isAttributeSelected)
                 return 2
@@ -112,23 +113,47 @@ Pane {
                 itemHeaderMenu.popup()
 
             // Left mouse button
-            if(button === Qt.LeftButton && isShape && isAttributeEnabled && isAttributeInitialized)
+            if(button === Qt.LeftButton && isAttribute && isAttributeEnabled)
             {
-                // Single tap
-                if(tapCount === 1 && model.isVisible)
+                if(isShape)
                 {
-                    ShapeViewerHelper.selectedShapeName = model.fullName
-                }
+                    // Single tap: select (placement starts if no observation for the current view)
+                    if(tapCount === 1 && model.isVisible)
+                    {
+                        ShapeViewerHelper.selectShape(model)
+                    }
 
-                // Double tap
-                if(tapCount === 2 && !model.isVisible)
+                    if(tapCount === 2)
+                    {
+                        if(!model.isVisible)
+                        {
+                            // Double tap on hidden shape: show and select
+                            model.isVisible = true
+                            ShapeViewerHelper.selectShape(model)
+                        }
+                        else
+                        {
+                            // Double tap on visible shape: move it on next click in the 2d Viewer
+                            ShapeViewerHelper.startReposition(model)
+                        }
+                    }
+                }
+                else
                 {
-                    
-                    ShapeViewerHelper.selectedShapeName = model.fullName
-                    model.isVisible = true
+                    // ShapeList: single tap selects, double tap starts multi-add placement
+                    if(tapCount === 1)
+                    {
+                        ShapeViewerHelper.selectedShapeName = model.fullName
+                    }
+
+                    if(tapCount === 2)
+                    {
+                        model.isVisible = true
+                        ShapeViewerHelper.startListPlacement(model)
+                    }
                 }
             }
-            else
+            else if(button === Qt.LeftButton)
             {
                 flickAnimation.start()
             }
@@ -316,7 +341,7 @@ Pane {
                             // add key
                             _currentScene.setObservation(model, _currentScene.selectedViewId, 
                                                           ShapeViewerHelper.getDefaultObservation(model.type))
-                            ShapeViewerHelper.selectedShapeName = model.fullName
+                            ShapeViewerHelper.selectShape(model)
                         }
                     }
                     ToolTip.text: isAttributeInitialized ? "Reset Shape" : "Set Shape"
@@ -399,7 +424,7 @@ Pane {
                                 // add key
                                 _currentScene.setObservation(model, _currentScene.selectedViewId, 
                                                                ShapeViewerHelper.getDefaultObservation(model.type))
-                                ShapeViewerHelper.selectedShapeName = model.fullName
+                                ShapeViewerHelper.selectShape(model)
                             }
                         }
                         ToolTip.text: checked ? "Remove current key" : "Set current key"

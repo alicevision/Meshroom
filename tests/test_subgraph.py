@@ -751,3 +751,14 @@ def test_houdiniSessionReadsInputOfSkippedNode(fakeHou):
     assert TaskShotScene.runs == 0
     assert meshroom.subgraph.run(graph.toDict(), set={"TaskShotScene_1.shot": "sh020"}) == {"shot": "sh020"}
     assert TaskShotScene.runs == 0
+
+
+def test_houdiniSessionSceneFile(fakeHou):
+    """ "In Houdini Session: sceneFile": the pipeline node runs in the session and its scene is opened. """
+    import meshroom.subgraph
+    fakeHou.hipFile.current = "/shots/current.hip"
+    graph = houdiniSceneGraph()
+    graph.node("HoudiniScene_1").inSession.value = "sceneFile"
+    meshroom.subgraph.run(graph.toDict())
+    assert TaskShotScene.runs == 1
+    assert fakeHou.loaded == ["/shots/sh010.hip"] and fakeHou.saved == []

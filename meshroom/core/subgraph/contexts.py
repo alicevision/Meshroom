@@ -136,7 +136,8 @@ class HoudiniContext(LiveContext):
         if _samePath(self.session.hipFile.path(), path):
             return
         self._flushPendingSave()
-        (self._realLoad or self.session.hipFile.load)(path, suppress_save_prompt=True, ignore_load_warnings=True)
+        # In a user session, Houdini asks whether to save the changes of the open scene
+        (self._realLoad or self.session.hipFile.load)(path, suppress_save_prompt=self.ownsSession, ignore_load_warnings=True)
 
     def saveScene(self, path: Optional[str] = None):
         """ Save the scene now (to `path`, else to the pending save path, else to its current file). """

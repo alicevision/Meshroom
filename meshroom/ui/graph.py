@@ -436,6 +436,8 @@ class UIGraph(QObject):
         self._selectedChunk = None
         self._nodeSelection: QItemSelectionModel = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
+        # Values of the attributes being edited interactively, before the edit (see beginInteractiveEdit)
+        self._interactiveEdits = {}
 
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
@@ -1368,6 +1370,43 @@ class UIGraph(QObject):
     @Slot(Attribute, "QVariant")
     def setAttribute(self, attribute, value):
         self.push(commands.SetAttributeCommand(self._graph, attribute, value))
+
+    @Slot(Attribute)
+    def beginInteractiveEdit(self, attribute):
+        """
+        Start an interactive edit (e.g. dragging a point of a curve): the following changes made with
+        `setValueInteractively` update the graph live without filling the undo stack, and
+        `endInteractiveEdit` records them as a single undoable change.
+        """
+        # A connected attribute takes its value from its link: it cannot be edited
+        if attribute.isLink:
+            return
+        self._interactiveEdits.setdefault(attribute.fullName, attribute.getSerializedValue())
+
+    @Slot(Attribute, "QVariant")
+    def setValueInteractively(self, attribute, value):
+        if attribute.fullName in self._interactiveEdits:
+            attribute.value = value
+
+    @Slot(Attribute)
+    def endInteractiveEdit(self, attribute):
+        """ Record the changes of an attribute since beginInteractiveEdit as one undoable change. """
+        if attribute.fullName not in self._interactiveEdits:
+            return
+        previous = self._interactiveEdits.pop(attribute.fullName)
+        final = attribute.getSerializedValue()
+        if final == previous:
+            return
+        # Recorded without setting the previous value back first: the attribute keeps its value
+        command = commands.SetAttributeCommand(self._graph, attribute, final)
+        command.oldValue = previous
+        self.push(command)
+
+    @Slot("QVariantList", float, float, int, result="QVariantList")
+    def sampleCurve(self, points, x0, x1, count):
+        """ Values of a curve (meshroom.core.curves) at `count` regular x from x0 to x1, to draw it. """
+        from meshroom.core import curves
+        return curves.sample(points, x0, x1, count)
 
     @Slot(Attribute)
     def resetAttribute(self, attribute):

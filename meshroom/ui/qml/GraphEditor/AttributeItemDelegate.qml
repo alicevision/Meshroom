@@ -464,6 +464,8 @@ RowLayout {
                 case "AnySet":
                     return groupAttributeComponent
                 case "StringParam":
+                    if (attribute.desc.semantic === "curves" && !attribute.isLink)
+                        return curvesComponent
                     if (attribute.desc.semantic.includes('multiline'))
                         return textAreaComponent
                     return textFieldComponent
@@ -656,6 +658,14 @@ RowLayout {
                             _currentScene.setAttribute(root.attribute, formattedValue)
                     }
                 }
+            }
+        }
+
+        Component {
+            id: curvesComponent
+            AttributeControls.CurveEditor {
+                attribute: root.attribute
+                editable: root.editable
             }
         }
 

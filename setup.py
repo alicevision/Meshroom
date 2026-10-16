@@ -5,6 +5,7 @@ import subprocess
 import setuptools  # for bdist
 from cx_Freeze import setup, Executable
 from cx_Freeze.command.build_exe import build_exe
+from uv import find_uv_bin
 import meshroom
 
 currentDir = os.path.dirname(os.path.abspath(__file__))
@@ -71,6 +72,9 @@ if platform.system() == "Linux":
 
     cmdclass = {"build_exe": build_exe_and_strip}
 
+# Bundle the "uv" executable used to install local plugins' dependencies
+uvPath = pathlib.Path(find_uv_bin())
+
 build_exe_options = {
     # include dynamically loaded plugins
     "packages": ["meshroom.nodes", "meshroom.submitters"],
@@ -87,7 +91,8 @@ build_exe_options = {
         "cmath",
         "numpy"
     ],
-    "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md", "bin"],
+    "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md", "bin",
+                      (str(uvPath), f"bin/{uvPath.name}")],
     "excludes": [
         # Python stdlib bloat
         "tkinter",

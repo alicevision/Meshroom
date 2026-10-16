@@ -1,6 +1,7 @@
 # packaging
 cx_Freeze==8.7.1; python_version >= "3.10"
 cx_Freeze==6.15.16; python_version < "3.10"
+uv==0.10.9
 
 # Python binding packaging
 numpy==1.*

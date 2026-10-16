@@ -163,6 +163,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
         aliceVisionBinDir = os.path.join(aliceVisionDir, "bin")
         aliceVisionShareDir = os.path.join(aliceVisionDir, "share", "aliceVision")
         qtPluginsDir = os.path.join(rootDir, "qtPlugins")
+        uvPath = os.path.join(rootDir, "bin", "uv.exe" if sys.platform == "win32" else "uv")
         sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
         voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.SIFT.tree")
         sphereDetectionModel = os.path.join(aliceVisionShareDir, "sphereDetection_Mask-RCNN.onnx")
@@ -191,6 +192,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
             addToEnvPath(key, value, 0)
 
         variables = {
+            "MESHROOM_UV_PATH": uvPath,
             "ALICEVISION_ROOT": aliceVisionDir,
             "ALICEVISION_SENSOR_DB": sensorDBPath,
             "ALICEVISION_VOCTREE": voctreePath,

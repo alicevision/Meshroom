@@ -57,6 +57,14 @@ class GraphInput(desc.LiveNode):
         ),
         # The frame range of the loop, as the frameRange group of HoudiniSetFrameRange (start, stop)
         frameRangeGroup(isOutput=True),
+        desc.FloatParam(
+            name="frameStep",
+            label="Frame Step",
+            description="Step between the frames of the frame range loop (a fraction of frame for sub-frames).",
+            value=None,
+            range=None,
+            enabled=lambda node: isFrameLoop(node.loopMode.value),
+        ),
     ]
 
     @classmethod
@@ -90,6 +98,7 @@ class GraphInput(desc.LiveNode):
             "frame": ctx.frame,
             "item": ctx.item,
             "frameRange": {"start": ctx.loop.first if isFrames else None, "stop": ctx.loop.last if isFrames else None},
+            "frameStep": ctx.loop.step if isFrames else None,
         }
 
     def execute(self, ctx, inputs: dict) -> dict:

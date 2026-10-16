@@ -12,7 +12,7 @@ Typical uses:
 | Node | Role |
 |------|------|
 | `SubGraph` | Runs a subgraph as a task (local or farm). Its inputs `ins` are the ports of the `GraphInput` node of the subgraph, its outputs `outs` those of its `GraphOutput` node. |
-| `GraphInput` | Entry of the subgraph: one output per port, plus the loop state (`iteration` in a count loop; `frame` and the `frameRange` group (`start`, `stop`, as in HoudiniSetFrameRange) in a frame range loop). At most one per subgraph. |
+| `GraphInput` | Entry of the subgraph: one output per port, plus the loop state (`iteration` in a count loop; `frame`, the `frameRange` group (`start`, `stop`, as in HoudiniSetFrameRange) and `frameStep` in a frame range loop). At most one per subgraph. |
 | `GraphOutput` | Exit of the subgraph: one input per port. At most one per subgraph, optional. |
 | `LiveScript` | Python code run in the context: reads `ins`, `ctx`, `session`; fills `outs`. |
 | `HoudiniScene`, `MayaScene`, `NukeScene` | The scene, the value that prevails: in a Meshroom task, opens `Scene File` (e.g. given by a pipeline node); in a session of the software, the open scene (`Scene File` is not read), unless `In ... Session` is `sceneFile`. |

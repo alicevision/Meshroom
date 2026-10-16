@@ -1053,3 +1053,10 @@ def test_subFrameStep():
     assert Loop.fromDict(loop.subset(1, 3).asDict()).frames == [1001.25, 1001.5]
     with pytest.raises(ValueError):
         Loop("frameRange", first=1, last=2, step=0)
+
+    # The step is an output of GraphInput, also in a task of a farm (subset of the frames)
+    graph = Graph("")
+    graphInput = graph.addNewNode("GraphInput")
+    graphOutput = graph.addNewNode("GraphOutput", portSpec="step")
+    graph.addEdge(graphInput.frameStep, port(graphOutput, "ports", "step"))
+    assert run(graph.toDict(), loop=loop.subset(1, 3)) == {"step": 0.25}

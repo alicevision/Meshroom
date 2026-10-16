@@ -59,6 +59,8 @@ def showNodeValues(graphInput, node):
     for name, value in values.items():
         if graphInput.hasAttribute(name):
             graphInput.attribute(name).value = value
+    if graphInput.hasAttribute("frameStep") and isFrameLoop(node.loopMode.value):
+        graphInput.frameStep.value = loop.step
     if graphInput.hasAttribute("frameRange") and isFrameLoop(node.loopMode.value):
         for child in graphInput.frameRange.value:
             child.value = {"start": loop.first, "stop": loop.last}.get(child.name)

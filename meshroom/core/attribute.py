@@ -670,7 +670,8 @@ class Attribute(BaseObject):
         Returns:
             True if the connection is valid, False otherwise.
         """
-        return self.baseType == connectingAttribute.baseType
+        # A LiveValue (any value of a live node) connects to and from any attribute
+        return self.baseType == connectingAttribute.baseType or "LiveValue" in (self.baseType, connectingAttribute.baseType)
 
     def connectTo(self, dstAttribute: Attribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
         """
@@ -2014,6 +2015,21 @@ class AnySet(GroupAttribute):
     # Override
     def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
         """Accept connections of any type."""
+        return True
+
+    # Override: the children of an AnySet are part of its value (its default value has none), so that they
+    # are saved, with their connections, in the templates
+    isDefault = Property(bool, lambda self: len(self._value) == 0, notify=Attribute.valueChanged)
+
+
+class LiveValue(Attribute):
+    """ A value of any type passed between live nodes (see desc.LiveValue). """
+
+    def __init__(self, node, attributeDesc: desc.LiveValue, isOutput: bool, root=None, parent=None):
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+
+    # Override
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
         return True
 
 

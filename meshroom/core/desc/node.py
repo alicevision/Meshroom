@@ -71,6 +71,7 @@ class MrNodeType(enum.Enum):
     COMMANDLINE = enum.auto()
     INIT = enum.auto()
     BACKDROP = enum.auto()
+    LIVE = enum.auto()
 
 
 class InternalAttributesFactory:
@@ -196,6 +197,7 @@ class InternalAttributesFactory:
             MrNodeType.COMMANDLINE: cls.INVALIDATION + cls.BASIC,
             MrNodeType.INIT: cls.BASIC,
             MrNodeType.BACKDROP: cls.BASIC + cls.RESIZABLE,
+            MrNodeType.LIVE: cls.BASIC,
         }
 
         return paramMap.get(mrNodeType)
@@ -376,6 +378,15 @@ class BaseNode(object):
     def onNodeCreated(cls, node):
         """
         Called after a node instance created from this node descriptor has been added to a Graph.
+        """
+        pass
+
+    @classmethod
+    def initDynamicAttributes(cls, node):
+        """
+        Called when a node instance has created its attributes from this descriptor, before its links are
+        resolved (also while a graph is loaded): add the children of its AnySet attributes that depend on
+        its input values, so that links to them can be resolved.
         """
         pass
 
@@ -572,6 +583,57 @@ class BackdropNode(BaseNode):
         pass
 
 
+class LiveNode(BaseNode):
+    """
+    Node run in memory inside a subgraph (see meshroom.core.subgraph): no chunks, no cache folder, no
+    status. Its `execute` receives the values of its inputs, any Python object for those connected to
+    other live nodes, and returns the values of its outputs. A chain of live nodes runs in one process and
+    one context (Python, a software session...), as fast as running their scripts one after the other.
+
+    Live nodes are only run inside a SubGraph node (or by meshroom.core.subgraph.run): they are not
+    computed on their own.
+    """
+    _mrNodeType: MrNodeType = MrNodeType.LIVE
+    internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+    internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
+    internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
+
+    # Contexts the node can run in (see meshroom.core.subgraph.contexts), "any" for all of them
+    context = "any"
+
+    def __init__(self):
+        super(LiveNode, self).__init__()
+
+    def getMrNodeType(self):
+        return self._mrNodeType
+
+    @classmethod
+    def contexts(cls):
+        """ The names of the contexts the node can run in. """
+        return (cls.context,) if isinstance(cls.context, str) else tuple(cls.context)
+
+    def execute(self, ctx, inputs: dict) -> dict:
+        """
+        Run the node.
+
+        Args:
+            ctx: the meshroom.core.subgraph.RunContext: `ctx.context` (the session of the software),
+                 `ctx.iteration`, `ctx.frame`, `ctx.loop`, `ctx.variables` (shared by the nodes of the run),
+                 `ctx.logger`, `ctx.checkCancelled()`.
+            inputs: {input name: value}; a connected input gets the value returned by the upstream node.
+
+        Returns:
+            {output name: value}
+        """
+        return {}
+
+    def processChunk(self, chunk):
+        pass
+
+    def process(self, node):
+        pass
+
+
 class Node(BaseNode):
     pythonExecutable = "python"
     _mrNodeType: MrNodeType = MrNodeType.NODE
@@ -582,8 +644,12 @@ class Node(BaseNode):
     def getMrNodeType(self):
         return self._mrNodeType
 
+    def getPythonExecutable(self, chunk) -> str:
+        """ The Python interpreter running meshroom_compute for a chunk (pythonExecutable by default). """
+        return self.pythonExecutable
+
     def processChunkInEnvironment(self, chunk):
-        meshroomComputeCmd = f"{chunk.node.nodeDesc.pythonExecutable} {_MESHROOM_COMPUTE}" + \
+        meshroomComputeCmd = f"{self.getPythonExecutable(chunk)} {_MESHROOM_COMPUTE}" + \
                              f" \"{chunk.node.graph.filepath}\" --node {chunk.node.name}" + \
                               " --extern --inCurrentEnv"
         if chunk.isPreprocess:

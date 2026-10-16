@@ -1378,7 +1378,7 @@ class BaseNode(BaseObject):
         """
         # Ambiguous case for NONE, which could be used for compatibility nodes if we do not have
         # any information about the node descriptor.
-        return self.getMrNodeType() != MrNodeType.INIT and self.getMrNodeType() != MrNodeType.BACKDROP
+        return self.getMrNodeType() not in (MrNodeType.INIT, MrNodeType.BACKDROP, MrNodeType.LIVE)
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -2432,6 +2432,9 @@ class Node(BaseNode):
             if attrDesc.name not in existingAttrNames:
                 self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
                                                               isOutput=True, node=self))
+
+        # Dynamic children of AnySet attributes depending on the input values (see desc.BaseNode)
+        self.nodeDesc.initDynamicAttributes(self)
 
         # Declare events for specific output attributes
         for attr in self._attributes:

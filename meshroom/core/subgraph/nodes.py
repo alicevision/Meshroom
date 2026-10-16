@@ -120,12 +120,13 @@ def loopParams(withFarmSplit: bool = False) -> list:
             value="",
             enabled=lambda node: isItemLoop(node.loopMode.value),
         ),
-        desc.IntParam(
+        desc.FloatParam(
             name="frameStep",
             label="Frame Step",
-            description="Step between the frames of the frame loop.",
-            value=1,
-            range=(1, 10, 1),
+            description="Step between the frames of the frame loop; a fraction of frame for sub-frames (e.g. 0.1\n"
+                        "for a cache with 10 samples per frame).",
+            value=1.0,
+            range=(0.01, 10.0, 0.01),
             enabled=lambda node: isFrameLoop(node.loopMode.value),
         ),
     ]

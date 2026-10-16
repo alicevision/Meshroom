@@ -78,7 +78,7 @@ def _projectNode(projectPath: str, nodeName: str):
 
 
 def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
-        frames: Optional[Union[Sequence[int], tuple]] = None, step: int = 1, iterations: Optional[int] = None,
+        frames: Optional[Union[Sequence[int], tuple]] = None, step: float = 1, iterations: Optional[int] = None,
         variables: Optional[dict] = None, logger: Optional[logging.Logger] = None, node: Optional[str] = None,
         set: Optional[dict] = None, items: Optional[Sequence] = None) -> dict:
     """
@@ -89,7 +89,8 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         inputs: values of its GraphInput ports {port name: value}, any Python objects.
         context: "houdini", "maya", "nuke", "python"...; by default the one needed by its nodes. From the
                  software itself, its session is used as it is (nothing is opened or closed).
-        frames: a tuple (first, last) to run it once per frame (every `step` frames), or a list of frames.
+        frames: a tuple (first, last) to run it once per frame (every `step` frames, e.g. 0.1 for sub-frames),
+                or a list of frames.
         iterations: run it N times, the outputs feeding the inputs of the same name.
         items: run it once per item of a list (or of a text separated by commas): ctx.item, "item" of GraphInput.
         variables: values shared by the nodes (ctx.variables).

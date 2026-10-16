@@ -25,6 +25,12 @@ class Cancelled(Exception):
     pass
 
 
+def _frameNumber(frame):
+    """ A frame as an int when it is a whole frame, else a float (sub-frame). """
+    frame = float(frame)
+    return int(frame) if frame.is_integer() else frame
+
+
 class Loop:
     """
     How a subgraph is repeated:
@@ -49,9 +55,14 @@ class Loop:
         self.items = list(items) if items is not None else []
         self.mode = mode
         self.iterations = max(0, int(iterations))
-        self.first, self.last, self.step = int(first), int(last), max(1, int(step))
+        # The step can be a fraction of frame (e.g. 0.1 for a cache with sub-frames)
+        step = float(step)
+        if step <= 0:
+            raise ValueError(f"The step of a frame loop must be positive ({step}).")
+        self.first, self.last = int(first), int(last)
+        self.step = int(step) if step.is_integer() else step
         # Explicit frames of a frame loop (a part of the range, run by one task of the farm)
-        self._frames = [int(frame) for frame in frames] if frames is not None else None
+        self._frames = [_frameNumber(frame) for frame in frames] if frames is not None else None
 
     @property
     def frames(self) -> List[int]:
@@ -60,7 +71,11 @@ class Loop:
             return []
         if self._frames is not None:
             return list(self._frames)
-        return list(range(self.first, self.last + 1, self.step))
+        if isinstance(self.step, int):
+            return list(range(self.first, self.last + 1, self.step))
+        # Sub-frames: computed from the first frame (no accumulated error), rounded to 1e-6
+        count = int((self.last - self.first) / self.step + 1e-9) + 1
+        return [_frameNumber(round(self.first + index * self.step, 6)) for index in range(count)]
 
     @property
     def size(self) -> int:

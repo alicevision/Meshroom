@@ -71,7 +71,7 @@ That interpreter must be able to import Meshroom and its dependencies (e.g. `psu
 |------|-----------|
 | none | runs once |
 | count | `Iterations` runs; the outputs of an iteration feed the inputs of the same name of the next one (a feedback, e.g. a fractal) |
-| frameRange | runs once per frame of `Frame Range` (`start` to `stop`, included) every `Frame Step`; `Frames Per Task` splits the range in tasks (farm), 0 for one task |
+| frameRange | runs once per frame of `Frame Range` (`start` to `stop`, included) every `Frame Step` (a fraction of frame for sub-frames, e.g. 0.1); `Frames Per Task` splits the range in tasks (farm), 0 for one task |
 | itemList | runs once per item of `Items` (separated by commas or new lines: `mr_001, mr_002`); the item is the `Item` output of `GraphInput` (`ctx.item`), its index `Iteration`; `Frames / Items Per Task` splits the list in tasks |
 
 In a loop, a node runs again at each step only if it depends on the loop: it reads the `iteration` / `frame` of `GraphInput` (or its ports in a count loop), it is a live node (they can read `ctx.frame`; `HoudiniScene` is not), a nested `SubGraph`, or it comes after one of them. The others (e.g. a pipeline node giving the scene, a node setting the frame range) run once, at the first step.

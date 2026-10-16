@@ -1042,3 +1042,14 @@ def test_collapseIntoSubGraph():
     restoreNodes(project, snapshot)
     assert add1.name == "LiveAdd_2" and project.node("LiveAdd_2").a.inputLink is upstream.sum
     assert port(after, "ins", "v").inputLink is project.node("LiveAdd_3").sum
+
+
+def test_subFrameStep():
+    loop = Loop("frameRange", first=1001, last=1002, step=0.25)
+    assert loop.frames == [1001, 1001.25, 1001.5, 1001.75, 1002]
+    tenth = Loop("frameRange", first=1, last=2, step=0.1).frames
+    assert len(tenth) == 11 and tenth[1] == 1.1 and tenth[-1] == 2
+    assert Loop("frameRange", first=1, last=5, step=2.0).frames == [1, 3, 5]
+    assert Loop.fromDict(loop.subset(1, 3).asDict()).frames == [1001.25, 1001.5]
+    with pytest.raises(ValueError):
+        Loop("frameRange", first=1, last=2, step=0)

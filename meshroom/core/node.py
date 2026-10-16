@@ -2058,7 +2058,7 @@ class BaseNode(BaseObject):
         if len(allChunks):
             return allChunks[0].getExecModeName()
         else:
-            return ExecMode.NONE
+            return ExecMode.NONE.name
 
     def _getJobName(self):
         execMode = self._nodeStatus.execMode

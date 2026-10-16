@@ -147,6 +147,15 @@ Item {
             uigraph.alignVertically()
         } else if (event.key === Qt.Key_H && event.modifiers === Qt.ShiftModifier) {
             uigraph.alignHorizontally()
+        } else if (event.key === Qt.Key_L && event.modifiers === Qt.NoModifier) {
+            // Layout following the connections: the selected nodes, or the whole graph
+            var sizes = {}
+            for (var i = 0; i < nodeRepeater.count; ++i) {
+                var item = nodeRepeater.getItemAt(i)
+                if (item && item.node)
+                    sizes[item.node.name] = [item.width, item.height]
+            }
+            uigraph.layoutNodes(sizes)
         } else if (event.key === Qt.Key_Tab) {
             event.accepted = true
             if (mouseArea.containsMouse) {

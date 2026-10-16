@@ -162,6 +162,21 @@ class InternalAttributesFactory:
         ),
     ]
 
+    # State of the graph editor saved with the node
+    EDGES = [
+        StringParam(
+            name="hiddenInputs",
+            label="Hidden Inputs",
+            description="Names of the inputs whose edges are hidden in the graph editor (key H), "
+                        "comma-separated (e.g. \"input,inputs[2]\").",
+            value="",
+            invalidate=False,
+            # Not shown in the attribute editor
+            enabled=False,
+            visible=False,
+        ),
+    ]
+
     FLOW_IN = [
         ListAttribute(
             name="flowInputs",
@@ -191,10 +206,10 @@ class InternalAttributesFactory:
     def getInternalAttributes(cls, mrNodeType: MrNodeType) -> List[Attribute]:
         paramMap = {
             MrNodeType.NONE: cls.BASIC,
-            MrNodeType.BASENODE: cls.INVALIDATION + cls.BASIC,
-            MrNodeType.NODE: cls.INVALIDATION + cls.BASIC,
-            MrNodeType.COMMANDLINE: cls.INVALIDATION + cls.BASIC,
-            MrNodeType.INIT: cls.BASIC,
+            MrNodeType.BASENODE: cls.INVALIDATION + cls.BASIC + cls.EDGES,
+            MrNodeType.NODE: cls.INVALIDATION + cls.BASIC + cls.EDGES,
+            MrNodeType.COMMANDLINE: cls.INVALIDATION + cls.BASIC + cls.EDGES,
+            MrNodeType.INIT: cls.BASIC + cls.EDGES,
             MrNodeType.BACKDROP: cls.BASIC + cls.RESIZABLE,
         }
 

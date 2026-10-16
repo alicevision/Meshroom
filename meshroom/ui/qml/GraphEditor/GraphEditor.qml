@@ -22,8 +22,38 @@ Item {
 
     property var _attributeToDelegate: ({})
 
+    /// The visible pin of an attribute: its own, or that of its first visible parent group
+    function pinOf(attribute) {
+        if (!attribute)
+            return null
+        let pin = root._attributeToDelegate[attribute.uuid]
+        if (pin && pin.visible)
+            return pin
+        let group = attribute.root
+        while (group) {
+            let groupPin = root._attributeToDelegate[group.uuid]
+            if (groupPin && groupPin.visible)
+                return groupPin
+            group = group.root
+        }
+        return pin || null
+    }
+
+    /// The other ends of the hidden edges leaving an output, one per line (tooltip of its stub)
+    function hiddenTargetsText(srcAttribute) {
+        var lines = []
+        if (!root.graph)
+            return ""
+        for (var i = 0; i < root.graph.edges.count; i++) {
+            var edge = root.graph.edges.at(i)
+            if (edge.src === srcAttribute && uigraph.isEdgeHidden(edge.dst))
+                lines.push("\u2192 " + edge.dst.node.label + "." + edge.dst.label)
+        }
+        return lines.join("\n")
+    }
+
     // Edges selected in the graph editor (click on an edge, or a box over edges):
-    // {destination attribute full name: true}. Delete removes them.
+    // {destination attribute full name: true}. Delete removes them, H hides them.
     property var selectedEdges: ({})
     readonly property bool hasSelectedEdges: Object.keys(selectedEdges).length > 0
     function selectEdges(names, mode) {
@@ -193,6 +223,15 @@ Item {
             uigraph.alignVertically()
         } else if (event.key === Qt.Key_H && event.modifiers === Qt.ShiftModifier) {
             uigraph.alignHorizontally()
+        } else if (event.key === Qt.Key_H && event.modifiers === Qt.NoModifier) {
+            // Hide the selected edges (or the input edges of the selected nodes), or show them if they are hidden:
+            // a hidden edge leaves a stub on both pins, its tooltip giving the other end
+            if (root.validSelectedEdges().length > 0) {
+                uigraph.toggleHiddenEdges(root.validSelectedEdges())
+                root.clearEdgeSelection()
+            } else {
+                uigraph.toggleHiddenInputEdgesOfSelectedNodes()
+            }
         } else if (event.key === Qt.Key_Tab) {
             event.accepted = true
             if (mouseArea.containsMouse) {
@@ -704,7 +743,14 @@ Item {
                         return getAttributePin(edge.dst, root._attributeToDelegate)
                         }
                     property bool isValidEdge: src != null && dst != null
-                    visible: isValidEdge && src.visible && dst.visible
+                    // Hidden with H: replaced by stubs on its pins
+                    readonly property bool hidden: {
+                        if (!edge || !edge.dst || !edge.dst.node.hasInternalAttribute("hiddenInputs"))
+                            return false
+                        edge.dst.node.internalAttribute("hiddenInputs").value  // Re-evaluated when it changes
+                        return uigraph.isEdgeHidden(edge.dst)
+                    }
+                    visible: isValidEdge && src.visible && dst.visible && !hidden
 
                     property var loopSource: edge.src && edge.src.root && edge.src.root.value ? edge.src.root : null
                     property bool forLoop: src != null && dst != null &&
@@ -749,6 +795,120 @@ Item {
                                 edgeMenu.x = spawnPosition.x
                                 edgeMenu.y = spawnPosition.y
                                 edgeMenu.open()
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Menu of the stubs of hidden edges
+            Menu {
+                id: stubMenu
+                property var names: []
+                function openFor(names, item) {
+                    stubMenu.names = names
+                    parent = item
+                    popup()
+                }
+                MenuItem {
+                    text: stubMenu.names.length > 1 ? "Show the Edges" : "Show the Edge"
+                    onTriggered: uigraph.toggleHiddenEdges(stubMenu.names)
+                }
+            }
+
+            // Stubs of the hidden edges (H): a pill next to each pin, colored as the node at the other end;
+            // its tooltip gives the other end, a click selects the edge(s), a double-click shows them again
+            Repeater {
+                model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
+                delegate: Item {
+                    id: stub
+                    readonly property var edge: object
+                    readonly property bool hidden: {
+                        if (!edge || !edge.dst || !edge.dst.node.hasInternalAttribute("hiddenInputs"))
+                            return false
+                        edge.dst.node.internalAttribute("hiddenInputs").value
+                        return uigraph.isEdgeHidden(edge.dst)
+                    }
+                    readonly property var srcPin: { root._attributeToDelegate; return hidden ? root.pinOf(edge.src) : null }
+                    readonly property var dstPin: { root._attributeToDelegate; return hidden ? root.pinOf(edge.dst) : null }
+                    readonly property bool selected: hidden && !!root.selectedEdges[edge.dst.fullName]
+                    visible: hidden && !!srcPin && !!dstPin && srcPin.visible && dstPin.visible
+
+                    function nodeColor(node) { return node.color !== "" ? node.color : "#8A8A8A" }
+                    // The hidden edges leaving the same output (destination full names)
+                    function hiddenFromSource() {
+                        var names = []
+                        for (var i = 0; i < root.graph.edges.count; i++) {
+                            var e = root.graph.edges.at(i)
+                            if (e.src === stub.edge.src && uigraph.isEdgeHidden(e.dst))
+                                names.push(e.dst.fullName)
+                        }
+                        return names
+                    }
+
+                    // At the input: the source
+                    Rectangle {
+                        x: stub.dstPin ? stub.dstPin.globalX + stub.dstPin.inputAnchorPos.x - width - 6 : 0
+                        y: stub.dstPin ? stub.dstPin.globalY + stub.dstPin.inputAnchorPos.y - height / 2 : 0
+                        width: 16
+                        height: 8
+                        radius: 4
+                        color: stub.edge ? stub.nodeColor(stub.edge.src.node) : "grey"
+                        border.color: stub.selected ? "#F5A623" : (dstStubMouse.containsMouse ? "white" : Qt.rgba(0, 0, 0, 0.5))
+                        border.width: stub.selected || dstStubMouse.containsMouse ? 2 : 1
+                        MouseArea {
+                            id: dstStubMouse
+                            anchors.fill: parent
+                            anchors.margins: -3
+                            hoverEnabled: true
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onDoubleClicked: uigraph.toggleHiddenEdges([stub.edge.dst.fullName])
+                            onPressed: function(mouse) {
+                                if (mouse.button === Qt.RightButton)
+                                    stubMenu.openFor([stub.edge.dst.fullName], dstStubMouse)
+                            }
+                            ToolTip.visible: containsMouse
+                            ToolTip.delay: 300
+                            ToolTip.text: stub.edge ? "\u2190 " + stub.edge.src.node.label + "." + stub.edge.src.label +
+                                                      "\n(hidden edge: double-click to show it)" : ""
+                            onClicked: function(mouse) {
+                                if (mouse.button !== Qt.LeftButton)
+                                    return
+                                root.selectEdges([stub.edge.dst.fullName], (mouse.modifiers & Qt.ShiftModifier) ? "add" : "replace")
+                                root.forceActiveFocus()
+                            }
+                        }
+                    }
+                    // At the output: the destinations
+                    Rectangle {
+                        x: stub.srcPin ? stub.srcPin.globalX + stub.srcPin.outputAnchorPos.x + 6 : 0
+                        y: stub.srcPin ? stub.srcPin.globalY + stub.srcPin.outputAnchorPos.y - height / 2 : 0
+                        width: 16
+                        height: 8
+                        radius: 4
+                        color: stub.edge ? stub.nodeColor(stub.edge.dst.node) : "grey"
+                        border.color: stub.selected ? "#F5A623" : (srcStubMouse.containsMouse ? "white" : Qt.rgba(0, 0, 0, 0.5))
+                        border.width: stub.selected || srcStubMouse.containsMouse ? 2 : 1
+                        MouseArea {
+                            id: srcStubMouse
+                            anchors.fill: parent
+                            anchors.margins: -3
+                            hoverEnabled: true
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onDoubleClicked: uigraph.toggleHiddenEdges(stub.hiddenFromSource())
+                            onPressed: function(mouse) {
+                                if (mouse.button === Qt.RightButton)
+                                    stubMenu.openFor(stub.hiddenFromSource(), srcStubMouse)
+                            }
+                            ToolTip.visible: containsMouse
+                            ToolTip.delay: 300
+                            ToolTip.text: containsMouse && stub.edge ? root.hiddenTargetsText(stub.edge.src) +
+                                                                      "\n(hidden edges: double-click to show them)" : ""
+                            onClicked: function(mouse) {
+                                if (mouse.button !== Qt.LeftButton)
+                                    return
+                                root.selectEdges(stub.hiddenFromSource(), (mouse.modifiers & Qt.ShiftModifier) ? "add" : "replace")
+                                root.forceActiveFocus()
                             }
                         }
                     }

@@ -436,6 +436,9 @@ class UIGraph(QObject):
         self._selectedChunk = None
         self._nodeSelection: QItemSelectionModel = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
+        # Names of the selected nodes in selection order (the first one is the source of connectSelectedNodes)
+        self._selectionOrder = []
+        self._nodeSelection.selectionChanged.connect(self._updateSelectionOrder)
 
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
@@ -474,6 +477,7 @@ class UIGraph(QObject):
                 self._undoStack.clear()
 
         self._nodeSelection.setModel(self._graph.nodes)
+        self._selectionOrder = []
         self.graphChanged.emit()
 
     def onGraphUpdated(self):
@@ -1138,6 +1142,61 @@ class UIGraph(QObject):
             for i, selectedNode in enumerate(selectedNodes):
                 x = startX + i * (nodeWidth + nodePadding)
                 self.moveNode(selectedNode, Position(x, meanY))
+
+    def _updateSelectionOrder(self, *args):
+        """ Keep the selected node names in selection order: the new ones are appended. """
+        selected = [node.name for node in self.iterSelectedNodes()]
+        selectedSet = set(selected)
+        order = [name for name in self._selectionOrder if name in selectedSet]
+        order += [name for name in selected if name not in order]
+        self._selectionOrder = order
+
+    @staticmethod
+    def _mainOutput(node):
+        """ The output used when connecting a node: its first output, else its flow output. """
+        outputs = [attr for attr in node.attributes if attr.isOutput]
+        if outputs:
+            return outputs[0]
+        return node.internalAttribute("flowOutput") if node.hasInternalAttribute("flowOutput") else None
+
+    @staticmethod
+    def _inputToConnect(node, source):
+        """ The input of `node` to connect `source` to: the first compatible free input, else the first compatible one. """
+        candidates = [attr for attr in node.attributes
+                      if not attr.isOutput and attr.desc.visible and attr.validateIncomingConnection(source)]
+        for attr in candidates:
+            if not attr.isLink:
+                return attr
+        return candidates[0] if candidates else None
+
+    def _createsCycle(self, source: Node, target: Node) -> bool:
+        """ Whether connecting `source` into `target` would create a cycle. """
+        if source is target:
+            return True
+        return target in self._graph.getInputNodes(source, recursive=True, dependenciesOnly=False)
+
+    @Slot()
+    def connectSelectedNodes(self):
+        """
+        Connect the output of the first selected node to an input of each of the other selected nodes:
+        their first free compatible input (else their first compatible input). One undoable change.
+        """
+        self._updateSelectionOrder()
+        nodes = [self._graph.node(name) for name in self._selectionOrder]
+        nodes = [node for node in nodes if node is not None]
+        if len(nodes) < 2:
+            return
+        source, targets = nodes[0], nodes[1:]
+        output = self._mainOutput(source)
+        if output is None:
+            return
+        with self.groupedGraphModification(f"Connect {source.label}"):
+            for target in targets:
+                if target.locked or self._createsCycle(source, target):
+                    continue
+                attr = self._inputToConnect(target, output)
+                if attr is not None and not (attr.isLink and attr.inputLink is output):
+                    self.addEdge(output, attr)
 
     @Slot()
     def alignVertically(self):

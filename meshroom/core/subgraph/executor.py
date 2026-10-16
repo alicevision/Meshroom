@@ -57,8 +57,10 @@ class Loop:
 
     def __init__(self, mode: str = "none", iterations: int = 1, first: int = 1, last: int = 1, step: int = 1,
                  frames: Optional[List[int]] = None):
+        # "frameRange": the name of the frame loop in the user interface
+        mode = "frames" if mode == "frameRange" else mode
         if mode not in self.MODES:
-            raise ValueError(f"Unknown loop mode '{mode}' (none, count, frames).")
+            raise ValueError(f"Unknown loop mode '{mode}' (none, count, frameRange).")
         self.mode = mode
         self.iterations = max(0, int(iterations))
         self.first, self.last, self.step = int(first), int(last), max(1, int(step))
@@ -248,21 +250,21 @@ class SubGraphPlan:
         return order
 
     @property
-    def inputPortTypes(self) -> List[Tuple[str, str]]:
-        """ The (name, type) of the input ports of the subgraph (those of its GraphInput node). """
+    def inputPortTypes(self) -> List[Tuple[str, str, str]]:
+        """ The (name, type, label) of the input ports of the subgraph (those of its GraphInput node). """
         return self.graphInput.nodeDesc.ports(self.graphInput.inputs) if self.graphInput else []
 
     @property
-    def outputPortTypes(self) -> List[Tuple[str, str]]:
+    def outputPortTypes(self) -> List[Tuple[str, str, str]]:
         return self.graphOutput.nodeDesc.ports(self.graphOutput.inputs) if self.graphOutput else []
 
     @property
     def inputPorts(self) -> List[str]:
-        return [name for name, _ in self.inputPortTypes]
+        return [port[0] for port in self.inputPortTypes]
 
     @property
     def outputPorts(self) -> List[str]:
-        return [name for name, _ in self.outputPortTypes]
+        return [port[0] for port in self.outputPortTypes]
 
     def contextNames(self) -> List[str]:
         """ The contexts required by the nodes: those of the nodes that can only run in one context. """

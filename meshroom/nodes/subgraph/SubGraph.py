@@ -6,8 +6,8 @@ import shlex
 
 from meshroom.core import desc
 from meshroom.core.subgraph import contextClass, resolveContextName, run
-from meshroom.core.subgraph.nodes import (contextParam, loopFromNode, loopParams, makeLocal, nodePlan,
-                                          subGraphSourceParams, syncSubGraphPorts)
+from meshroom.core.subgraph.nodes import (contextParam, isFrameLoop, loopFromNode, loopParams, makeLocal, nodePlan,
+                                          subGraphSourceParams, syncSubGraphPorts, watchSubGraphPorts, defaultSubGraph)
 from meshroom.core.utils import VERBOSE_LEVEL
 
 
@@ -15,7 +15,7 @@ class FrameLoopSize:
     """ Size of a SubGraph node: its number of frames in a frame loop, else 1. """
 
     def __call__(self, node):
-        if node.loopMode.value != "frames":
+        if not isFrameLoop(node.loopMode.value):
             return 1
         return max(1, len(loopFromNode(node).frames))
 
@@ -25,7 +25,7 @@ class FrameLoopParallelization(desc.Parallelization):
 
     def getSizes(self, node):
         size = max(1, node.size)
-        perTask = node.framesPerTask.value if node.loopMode.value == "frames" else 0
+        perTask = node.framesPerTask.value if isFrameLoop(node.loopMode.value) else 0
         blockSize = perTask if perTask > 0 else size
         return blockSize, size, int(math.ceil(size / float(blockSize)))
 
@@ -83,6 +83,14 @@ class SubGraph(desc.Node):
     @classmethod
     def initDynamicAttributes(cls, node):
         syncSubGraphPorts(node)
+        # Ports added / renamed on the node (e.g. by connecting an input) go into the subgraph
+        watchSubGraphPorts(node)
+
+    @classmethod
+    def onNodeCreated(cls, node):
+        # A new node starts with a GraphInput and a GraphOutput (they can be removed)
+        if not node.subGraph.value and not node.template.value and not node.subGraph.isLink and not node.template.isLink:
+            node.subGraph.value = defaultSubGraph()
 
     @classmethod
     def onSubGraphChanged(cls, node):

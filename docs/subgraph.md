@@ -12,13 +12,21 @@ Typical uses:
 | Node | Role |
 |------|------|
 | `SubGraph` | Runs a subgraph as a task (local or farm). Its inputs `ins` are the ports of the `GraphInput` node of the subgraph, its outputs `outs` those of its `GraphOutput` node. |
-| `GraphInput` | Entry of the subgraph: one output per port (`Ports`: `image, mask, count:IntParam`), plus `iteration` and `frame`. At most one per subgraph, optional. |
+| `GraphInput` | Entry of the subgraph: one output per port, plus the loop state (`iteration` in a count loop; `frame`, `frameStart`, `frameEnd` in a frame range loop). At most one per subgraph. |
 | `GraphOutput` | Exit of the subgraph: one input per port. At most one per subgraph, optional. |
 | `LiveSubGraph` | A subgraph inside a subgraph, run in the same session, with its own loop. |
 | `LiveScript` | Python code run in the context: reads `ins`, `ctx`, `session`; fills `outs`. |
 | `HoudiniOpenScene`, `HoudiniSetParms`, `HoudiniRender`, `HoudiniSaveScene` | Houdini operations (context `houdini`). |
 
 A subgraph only contains live nodes (`desc.LiveNode`, see [NODE_DEVELOPMENT.md](../NODE_DEVELOPMENT.md)); any value goes through their connections (an image buffer, a `hou.Node`, a list...). Nodes without connections between them can be ordered with flow connections.
+
+### Ports
+
+A new `SubGraph` node contains a `GraphInput` and a `GraphOutput` node (they can be removed). Ports are added, renamed (name and label), reordered or removed like any AnySet child, on either side:
+- on the node: connect an attribute to `Inputs` (or `Outputs` to an input), and the port appears on the `GraphInput` (or `GraphOutput`) of the subgraph — created if it was removed;
+- in the subgraph: connect the `Ports` of `GraphInput` / `GraphOutput`, and the node gets the matching `Inputs` / `Outputs` when leaving it.
+
+Connections to the ports of the node are kept. Changing the ports of a node that references a template copies the template into the node (the template file is not changed).
 
 ### Where the subgraph is stored
 
@@ -45,7 +53,7 @@ That interpreter must be able to import Meshroom and its dependencies (e.g. `psu
 |------|-----------|
 | none | runs once |
 | count | `Iterations` runs; the outputs of an iteration feed the inputs of the same name of the next one (a feedback, e.g. a fractal) |
-| frames | runs once per frame from `First Frame` to `Last Frame` every `Frame Step`; `Frames Per Task` splits the range in tasks (farm), 0 for one task |
+| frameRange | runs once per frame from `First Frame` to `Last Frame` every `Frame Step`; `Frames Per Task` splits the range in tasks (farm), 0 for one task |
 
 The live nodes read `ctx.iteration` and `ctx.frame` (also outputs of `GraphInput`); the current frame of Houdini / Maya / Nuke follows the frame loop. A `LiveSubGraph` without its own loop sees the frame of its parent.
 

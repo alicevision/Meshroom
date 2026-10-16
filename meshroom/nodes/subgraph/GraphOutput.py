@@ -1,14 +1,15 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
-from meshroom.core.subgraph.nodes import portSpecParam, syncSpecPorts
+from meshroom.core.subgraph.nodes import portSpecParam, syncSpecPorts, watchSpecPorts
 from meshroom.core.subgraph.ports import anySetValues, parsePortSpec
 
 
 class GraphOutput(desc.LiveNode):
     """
     Exit of a subgraph: the values connected to its ports are the outputs of the subgraph (the outputs
-    of the SubGraph node, or the result of meshroom.subgraph.run). A subgraph has at most one GraphOutput node.
+    of the SubGraph node, or the result of meshroom.subgraph.run). Add a port by connecting an output to its
+    "Ports"; the outputs of the SubGraph node follow. A subgraph has at most one GraphOutput node.
     """
     category = "SubGraph"
     subGraphRole = "output"
@@ -27,16 +28,16 @@ class GraphOutput(desc.LiveNode):
 
     @classmethod
     def ports(cls, inputs: dict):
-        """ The (name, type) of the ports, from the serialized or resolved input values. """
+        """ The (name, type, label) of the ports, from the serialized or resolved input values. """
         return parsePortSpec(inputs.get("portSpec", ""))
 
     @classmethod
     def portNames(cls, inputs: dict):
-        return [name for name, _ in cls.ports(inputs)]
+        return [port[0] for port in cls.ports(inputs)]
 
     @classmethod
     def initDynamicAttributes(cls, node):
-        syncSpecPorts(node, "portSpec", "ports")
+        watchSpecPorts(node, "portSpec", "ports")
 
     @classmethod
     def onPortSpecChanged(cls, node):

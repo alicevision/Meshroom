@@ -127,9 +127,10 @@ def addOneGraph():
 
 def test_parsePortSpec():
     assert parsePortSpec("a, b:IntParam\nc;d:Unknown, 1bad, a") == [
-        ("a", "LiveValue"), ("b", "IntParam"), ("c", "LiveValue"), ("d", "LiveValue")]
+        ("a", "LiveValue", "a"), ("b", "IntParam", "b"), ("c", "LiveValue", "c"), ("d", "LiveValue", "d")]
     assert parsePortSpec(None) == []
-    assert formatPortSpec([("a", "LiveValue"), ("b", "IntParam")]) == "a, b:IntParam"
+    spec = formatPortSpec([("a", "LiveValue", "Shot Name"), ("b", "ChoiceParam")])
+    assert parsePortSpec(spec) == [("a", "LiveValue", "Shot Name"), ("b", "LiveValue", "b")]
 
 
 def test_anySetValues():
@@ -512,7 +513,8 @@ def test_editNestedAndTemplateSubGraph(tmp_path):
     outer = project.addNewNode("SubGraph")
     stack = SubGraphStack()
     level1 = stack.enter(project, outer)
-    assert len(level1.nodes) == 0
+    # A new SubGraph node starts with a GraphInput and a GraphOutput
+    assert sorted(n.nodeType for n in level1.nodes) == ["GraphInput", "GraphOutput"]
     nested = level1.addNewNode("LiveSubGraph", template=templatePath)
     level2 = stack.enter(level1, nested)
     assert stack.names() == [outer.name, nested.name]
@@ -562,3 +564,88 @@ def test_runLiveInInterpreter(monkeypatch):
     graph.node("LiveScript_1").code.value = "raise RuntimeError('boom')"
     with pytest.raises(SubGraphError, match="LiveScript_1: RuntimeError: boom"):
         runLive(graph.serialize(asTemplate=True), {"x": 5}, context="python")
+
+
+# ---------------------------------------------------------------------------
+# Ports edited on the node or in the subgraph
+# ---------------------------------------------------------------------------
+
+def connectToAnySet(graph, src, anySet):
+    """ What the user interface does when an attribute is connected to an AnySet (ConnectAnySetCommand). """
+    child = anySet.duplicateAttribute(src, isOutput=anySet.isOutput)
+    if anySet.isOutput:
+        graph.addEdge(child, src)
+    else:
+        graph.addEdge(src, child)
+    return child
+
+
+def test_portsAddedOnTheNodeGoIntoTheSubGraph():
+    from meshroom.core.subgraph.editing import SubGraphStack
+    project = Graph("project")
+    upstream = project.addNewNode("Ls", input="/folder")
+    node = project.addNewNode("SubGraph")
+    child = connectToAnySet(project, upstream.input, node.ins)
+    child.root.renameAttribute(child, child.name, "Shot Folder")
+
+    stack = SubGraphStack()
+    inner = stack.enter(project, node)
+    graphInput = inner.node("GraphInput_1")
+    assert [(c.name, c.label) for c in graphInput.ports.value] == [(child.name, "Shot Folder")]
+
+    # The label changed in the subgraph comes back on the node, the connection stays
+    port(graphInput, "ports", child.name).root.renameAttribute(port(graphInput, "ports", child.name), child.name, "Folder")
+    stack.exit(inner)
+    newChild = port(node, "ins", child.name)
+    assert newChild.label == "Folder"
+    assert newChild.isLink and newChild.inputLink is upstream.input
+
+
+def test_portsAddedInTheSubGraph():
+    from meshroom.core.subgraph.editing import SubGraphStack
+    project = Graph("project")
+    node = project.addNewNode("SubGraph")
+    stack = SubGraphStack()
+    inner = stack.enter(project, node)
+    add = inner.addNewNode("LiveAdd")
+    connectToAnySet(inner, add.a, inner.node("GraphInput_1").ports)
+    connectToAnySet(inner, add.sum, inner.node("GraphOutput_1").ports)
+    stack.exit(inner)
+    assert [c.name for c in node.ins.value] == ["a"]
+    assert [c.name for c in node.outs.value] == ["sum"]
+    # The ports are in the saved subgraph (template form, without the outputs)
+    port(node, "ins", "a").value = 4
+    assert run(node.subGraph.value, {"a": 4}) == {"sum": 4}
+
+
+def test_portsAddedOnTemplateNodeMakeItLocal(tmp_path):
+    templatePath = str(tmp_path / "addOne.mgt")
+    addOneGraph().save(templatePath, template=True)
+    project = Graph("project")
+    upstream = project.addNewNode("Ls", input="/folder")
+    node = project.addNewNode("SubGraph", template=templatePath)
+    connectToAnySet(project, upstream.input, node.ins)
+    assert node.template.value == ""
+    assert sorted(c.name for c in node.ins.value) == ["input", "x"]
+    with open(templatePath) as f:
+        assert '"input"' not in f.read()
+
+
+def test_graphInputLoopOutputs():
+    from meshroom.core.subgraph.editing import SubGraphStack
+    project = Graph("project")
+    node = project.addNewNode("SubGraph", loopMode="frameRange", frameFirst=10, frameLast=12)
+    stack = SubGraphStack()
+    inner = stack.enter(project, node)
+    graphInput = inner.node("GraphInput_1")
+    assert graphInput.frame.enabled and graphInput.frameStart.enabled
+    assert not graphInput.iteration.enabled
+    stack.exit(inner)
+
+    record = Graph("")
+    gi = record.addNewNode("GraphInput")
+    rec = record.addNewNode("LiveRecord")
+    record.addEdge(gi.frameEnd, rec.value)
+    variables = {}
+    run(record.toDict(), loop=Loop("frameRange", first=10, last=12).subset(0, 1), variables=variables)
+    assert variables["records"] == [(0, 10, 12)]

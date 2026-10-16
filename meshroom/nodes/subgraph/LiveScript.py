@@ -1,7 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
-from meshroom.core.subgraph.nodes import portSpecParam, syncSpecPorts
+from meshroom.core.subgraph.nodes import portSpecParam, syncSpecPorts, watchSpecPorts
 from meshroom.core.subgraph.ports import anySetValues
 
 
@@ -42,8 +42,8 @@ class LiveScript(desc.LiveNode):
 
     @classmethod
     def initDynamicAttributes(cls, node):
-        syncSpecPorts(node, "inSpec", "ins")
-        syncSpecPorts(node, "outSpec", "outs")
+        watchSpecPorts(node, "inSpec", "ins")
+        watchSpecPorts(node, "outSpec", "outs")
 
     @classmethod
     def onInSpecChanged(cls, node):

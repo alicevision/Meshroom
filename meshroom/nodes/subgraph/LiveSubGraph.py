@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 from meshroom.core.subgraph import SubGraphError, SubGraphPlan, runPlan
 from meshroom.core.subgraph.nodes import (contextParam, graphSource, loopFromValues, loopParams, makeLocal,
-                                          subGraphSourceParams, syncSubGraphPorts)
+                                          subGraphSourceParams, syncSubGraphPorts, watchSubGraphPorts, defaultSubGraph)
 from meshroom.core.subgraph.ports import anySetValues
 
 
@@ -36,6 +36,14 @@ class LiveSubGraph(desc.LiveNode):
     @classmethod
     def initDynamicAttributes(cls, node):
         syncSubGraphPorts(node)
+        # Ports added / renamed on the node (e.g. by connecting an input) go into the subgraph
+        watchSubGraphPorts(node)
+
+    @classmethod
+    def onNodeCreated(cls, node):
+        # A new node starts with a GraphInput and a GraphOutput (they can be removed)
+        if not node.subGraph.value and not node.template.value and not node.subGraph.isLink and not node.template.isLink:
+            node.subGraph.value = defaultSubGraph()
 
     @classmethod
     def onSubGraphChanged(cls, node):

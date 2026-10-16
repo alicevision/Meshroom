@@ -75,6 +75,10 @@ class SubGraphStack:
         if node.subGraph.isLink or node.template.isLink:
             raise ValueError(f"The subgraph of '{node.name}' comes from a connection: it cannot be edited.")
         graph = buildSubGraph(node, parent)
+        # The GraphInput nodes show the outputs of the loop of the node (iteration, frame...)
+        for innerNode in graph.nodes:
+            if getattr(innerNode.nodeDesc, "subGraphRole", "") == "input" and innerNode.hasAttribute("loopMode"):
+                innerNode.loopMode.value = node.loopMode.value
         self.levels.append(SubGraphLevel(currentGraph, node, serializeSubGraph(graph)))
         return graph
 

@@ -832,11 +832,11 @@ class LiveValue(Attribute):
     connected can hold a JSON value typed in the graph (None by default).
     """
     def __init__(self, name, label=None, description=None, value=None, advanced=False, enabled=True,
-                 visible=True, exposed=True, semantic=""):
+                 visible=True, exposed=True, semantic="", invalidate=True, commandLineGroup="", validators=None):
         super().__init__(name=name, label=label, description=description,
-                         value=value, invalidate=True, commandLineGroup="",
+                         value=value, invalidate=invalidate, commandLineGroup=commandLineGroup,
                          advanced=advanced, semantic=semantic, enabled=enabled,
-                         visible=visible, exposed=exposed)
+                         visible=visible, exposed=exposed, validators=validators)
 
     def getInstanceType(self):
         # Import within the method to prevent cyclic dependencies

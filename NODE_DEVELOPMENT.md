@@ -211,6 +211,19 @@ class ParameterTypesSample(desc.Node):
             f.write(f"{node.boolParam.value},{node.intParam.value},{node.floatParam.value},{node.stringParam.value},{node.fileParam.value},{node.choiceParam.value},{node.colorParam.value},{len(node.fileList.value)},{node.inputGroup.groupBool.value},{node.inputGroup.groupInt.value},{node.inputGroup.groupString.value},{node.inputGroup.groupFile.value}\n")
 ```
 
+### Curves
+
+A `StringParam` with `semantic="curves"` holds a set of curves as JSON `{"name": [[x, y], ...], ...}` and is
+edited with a curve editor in the Node Editor: one button per curve, click to add a point, drag it,
+double-click to remove it, zoom and pan, x / y fields of the selected point, and a resizable window. The
+curves go smoothly through their points (monotone cubic interpolation, no overshoot) and continue in
+straight lines; evaluate them with `meshroom.core.curves` (`parseCurves`, `Curve`, `evaluate`, `sample`).
+
+```python
+desc.StringParam(name="curves", label="Curves", description="", semantic="curves",
+                 value='{"master": [[0, 0], [1, 1]], "red": [[0, 0], [1, 1]]}')
+```
+
 ### Geometry Helpers
 
 Convenient groups for 2D geometry, built from `GroupAttribute` and `FloatParam`:

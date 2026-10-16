@@ -76,16 +76,121 @@ def _importable(moduleName: str) -> bool:
         return False
 
 
-class HoudiniContext(LiveContext):
+class SceneContext(LiveContext):
+    """
+    Base of the contexts of software working on a scene file (Houdini, Maya, Nuke).
+
+    During a run, the nodes written to load and save the scene themselves (each node of a pipeline plugin
+    loads the scene, changes it, saves it) share the session: loading the scene already open does nothing,
+    and their saves are grouped in one save, at the end of a Meshroom task or at a "Save" node (none in a
+    session of the software, unless the Save node asks for it). The scene is saved before another scene is
+    loaded in a Meshroom task. Subclasses replace the load / save functions of the software with `_patch`
+    (in `_installGuard`) and give `currentScene`, `_load`, `_save`, `_clear`.
+    """
+
+    def open(self):
+        super().open()
+        # Scene requested by the saves of the nodes, saved at the end (or before loading another scene)
+        self.pendingSave = None
+        self._patches = []
+        self._originals = {}
+        self._installGuard()
+
+    # To implement by the software contexts
+
+    def currentScene(self) -> str:
+        """ The path of the open scene ("" if it has none). """
+        return ""
+
+    def _installGuard(self):
+        pass
+
+    def _load(self, path: str):
+        """ Load a scene (with the real function of the software). """
+        raise NotImplementedError()
+
+    def _save(self, path: str):
+        """ Save the scene to a path (with the real function of the software). """
+        raise NotImplementedError()
+
+    def _clear(self):
+        """ Leave the session empty (a session owned by the run, at its end). """
+        pass
+
+    # Common behaviour
+
+    def _patch(self, owner, name: str, makeWrapper):
+        """ Replace owner.name by makeWrapper(original) during the run (restored when the context closes). """
+        original = getattr(owner, name)
+        try:
+            setattr(owner, name, makeWrapper(original))
+        except (AttributeError, TypeError) as e:
+            logging.warning(f"[SubGraph] Cannot intercept {name} ({e}): each node loads and saves the scene.")
+            return
+        self._originals[name] = original
+        self._patches.append((owner, name, original))
+
+    def _original(self, name: str, default=None):
+        return self._originals.get(name, default)
+
+    def isOpenScene(self, path) -> bool:
+        return _samePath(self.currentScene(), path)
+
+    def skipLoad(self, path) -> bool:
+        """ For the load wrappers: whether loading `path` is skipped (open scene); else the pending save is done. """
+        if self.isOpenScene(path):
+            logging.info(f"[SubGraph] {path} is the open scene: not loaded again.")
+            return True
+        self._flushPendingSave()
+        return False
+
+    def deferSave(self, path=None):
+        """ For the save wrappers: remember the save, done once later. """
+        self.pendingSave = path or self.currentScene()
+        logging.info(f"[SubGraph] Save of {self.pendingSave} grouped at the end of the subgraph.")
+
+    def loadScene(self, path: str):
+        """ Load a scene, unless it is the open one (the pending save is done first in a Meshroom task). """
+        if self.isOpenScene(path):
+            return
+        self._flushPendingSave()
+        self._load(path)
+
+    def saveScene(self, path: Optional[str] = None):
+        """ Save the scene now (to `path`, else to the pending save path, else to its current file). """
+        path = path or self.pendingSave or self.currentScene()
+        self._save(path)
+        self.pendingSave = None
+
+    def discardPendingSave(self):
+        self.pendingSave = None
+
+    def _flushPendingSave(self):
+        if self.pendingSave and self.ownsSession:
+            self.saveScene(self.pendingSave)
+        elif self.pendingSave:
+            logging.warning(f"[SubGraph] The changes of {self.pendingSave} are not saved (session of the software).")
+            self.pendingSave = None
+
+    def close(self):
+        try:
+            if self.isOpen and self.session is not None:
+                self._flushPendingSave()
+        finally:
+            for owner, name, original in reversed(self._patches):
+                setattr(owner, name, original)
+            self._patches = []
+            if self.ownsSession and self.session is not None:
+                self._clear()
+            super().close()
+
+
+class HoudiniContext(SceneContext):
     """
     Houdini: `ctx.context.session` is the hou module. Available in hython and in a Houdini session; from
-    Meshroom or a farm, the subgraph runs in hython (MESHROOM_HYTHON to change the command). The current
-    frame of Houdini follows the frame loops.
-
-    During a run, the task nodes written to open and save the scene themselves (hou.hipFile.load / save in
-    each node) share the session: loading the scene already open does nothing, and the saves are grouped
-    in one save at the end of a Meshroom task (none from a Houdini session, unless a HoudiniSave node asks
-    for it). The scene is saved before another scene is loaded in a Meshroom task.
+    Meshroom or a farm, the subgraph runs in hython (the interpreter of the Houdini nodes of the subgraph,
+    else MESHROOM_HYTHON). The current frame follows the frame loops. Scene: hou.hipFile.load / save are
+    intercepted during a run (see SceneContext).
     """
     interpreterVariable = "MESHROOM_HYTHON"
     defaultInterpreter = "hython"
@@ -96,75 +201,40 @@ class HoudiniContext(LiveContext):
 
     def open(self):
         import hou
-        super().open()
         self.session = hou
-        # Scene requested by the saves of the nodes, saved at the end (or before loading another scene)
-        self.pendingSave = None
-        self._realLoad = self._realSave = None
-        self._installSceneGuard()
+        super().open()
 
-    def _installSceneGuard(self):
-        """ Replace hou.hipFile.load / save during the run (see the class documentation). """
-        hipFile = self.session.hipFile
-        realLoad, realSave = hipFile.load, hipFile.save
+    def currentScene(self) -> str:
+        return self.session.hipFile.path()
 
-        def load(file_name, *args, **kwargs):
-            if _samePath(hipFile.path(), file_name):
-                logging.info(f"[SubGraph] {file_name} is the open scene: not loaded again.")
-                return None
-            self._flushPendingSave()
-            return realLoad(file_name, *args, **kwargs)
+    def _installGuard(self):
+        context = self
 
-        def save(file_name=None, *args, **kwargs):
-            self.pendingSave = file_name or hipFile.path()
-            logging.info(f"[SubGraph] Save of {self.pendingSave} grouped at the end of the subgraph.")
+        def loadWrapper(original):
+            def load(file_name, *args, **kwargs):
+                if context.skipLoad(file_name):
+                    return None
+                return original(file_name, *args, **kwargs)
+            return load
 
-        try:
-            hipFile.load, hipFile.save = load, save
-        except (AttributeError, TypeError) as e:
-            logging.warning(f"[SubGraph] Cannot intercept hou.hipFile.load / save ({e}): each node loads and saves the scene.")
-            return
-        self._realLoad, self._realSave = realLoad, realSave
+        def saveWrapper(original):
+            def save(file_name=None, *args, **kwargs):
+                context.deferSave(file_name)
+            return save
 
-    def _removeSceneGuard(self):
-        if self._realLoad is not None:
-            hipFile = self.session.hipFile
-            hipFile.load, hipFile.save = self._realLoad, self._realSave
+        self._patch(self.session.hipFile, "load", loadWrapper)
+        self._patch(self.session.hipFile, "save", saveWrapper)
 
-    def loadScene(self, path: str):
-        """ Load a scene, unless it is the open one (the pending save is done first in a Meshroom task). """
-        if _samePath(self.session.hipFile.path(), path):
-            return
-        self._flushPendingSave()
+    def _load(self, path):
         # In a user session, Houdini asks whether to save the changes of the open scene
-        (self._realLoad or self.session.hipFile.load)(path, suppress_save_prompt=self.ownsSession, ignore_load_warnings=True)
+        load = self._original("load", self.session.hipFile.load)
+        load(path, suppress_save_prompt=self.ownsSession, ignore_load_warnings=True)
 
-    def saveScene(self, path: Optional[str] = None):
-        """ Save the scene now (to `path`, else to the pending save path, else to its current file). """
-        path = path or self.pendingSave or self.session.hipFile.path()
-        (self._realSave or self.session.hipFile.save)(path)
-        self.pendingSave = None
+    def _save(self, path):
+        self._original("save", self.session.hipFile.save)(path)
 
-    def discardPendingSave(self):
-        self.pendingSave = None
-
-    def _flushPendingSave(self):
-        if self.pendingSave and self.ownsSession:
-            self.saveScene(self.pendingSave)
-        elif self.pendingSave:
-            logging.warning(f"[SubGraph] The changes of {self.pendingSave} are not saved (Houdini session).")
-            self.pendingSave = None
-
-    def close(self):
-        try:
-            if self.isOpen and self.session is not None:
-                self._flushPendingSave()
-        finally:
-            self._removeSceneGuard()
-            if self.ownsSession and self.session is not None:
-                # Leave the hython session empty
-                self.session.hipFile.clear(suppress_save_prompt=True)
-            super().close()
+    def _clear(self):
+        self.session.hipFile.clear(suppress_save_prompt=True)
 
     def beginStep(self, iteration, frame):
         if frame is not None:
@@ -197,10 +267,12 @@ def _samePath(a, b) -> bool:
     return bool(a) and bool(b) and os.path.normcase(os.path.abspath(str(a))) == os.path.normcase(os.path.abspath(str(b)))
 
 
-class MayaContext(LiveContext):
+class MayaContext(SceneContext):
     """
     Maya: `ctx.context.session` is the maya.cmds module. Available in mayapy (initialized as standalone)
-    and in a Maya session (MESHROOM_MAYAPY to change the command).
+    and in a Maya session (the interpreter of the Maya nodes of the subgraph, else MESHROOM_MAYAPY).
+    The current time follows the frame loops. Scene: cmds.file(open=...) / cmds.file(save=...) are
+    intercepted during a run (see SceneContext).
     """
     interpreterVariable = "MESHROOM_MAYAPY"
     defaultInterpreter = "mayapy"
@@ -211,7 +283,6 @@ class MayaContext(LiveContext):
 
     def open(self):
         import maya.cmds as cmds
-        super().open()
         self._initialized = False
         if not hasattr(cmds, "about"):
             # mayapy: initialize Maya
@@ -219,22 +290,57 @@ class MayaContext(LiveContext):
             maya.standalone.initialize(name="python")
             self._initialized = True
         self.session = cmds
+        super().open()
+
+    def currentScene(self) -> str:
+        return self._original("file", self.session.file)(query=True, sceneName=True) or ""
+
+    def _installGuard(self):
+        context = self
+
+        def fileWrapper(original):
+            def file(*args, **kwargs):
+                query = kwargs.get("query") or kwargs.get("q")
+                if not query and (kwargs.get("open") or kwargs.get("o")) and args:
+                    if context.skipLoad(args[0]):
+                        return args[0]
+                elif not query and (kwargs.get("save") or kwargs.get("s")):
+                    context.deferSave()
+                    return context.currentScene()
+                return original(*args, **kwargs)
+            return file
+
+        self._patch(self.session, "file", fileWrapper)
+
+    def _load(self, path):
+        self._original("file", self.session.file)(path, open=True, force=True)
+
+    def _save(self, path):
+        file = self._original("file", self.session.file)
+        if not _samePath(self.currentScene(), path):
+            file(rename=path)
+        file(save=True, force=True, type="mayaAscii" if str(path).lower().endswith(".ma") else "mayaBinary")
+
+    def _clear(self):
+        self._original("file", self.session.file)(new=True, force=True)
 
     def close(self):
+        super().close()
         if self.ownsSession and self._initialized:
             import maya.standalone
             maya.standalone.uninitialize()
-        super().close()
 
     def beginStep(self, iteration, frame):
         if frame is not None:
             self.session.currentTime(frame, edit=True)
 
 
-class NukeContext(LiveContext):
+class NukeContext(SceneContext):
     """
-    Nuke: `ctx.context.session` is the nuke module. Available in a Nuke session and with "nuke -t"
-    (MESHROOM_NUKE to change the command).
+    Nuke: `ctx.context.session` is the nuke module. Available in a Nuke session and with "nuke -t" (the
+    interpreter of the Nuke nodes of the subgraph, else MESHROOM_NUKE). The current frame follows the
+    frame loops. Script: nuke.scriptOpen / scriptSave / scriptSaveAs are intercepted during a run (see
+    SceneContext).
     """
     interpreterVariable = "MESHROOM_NUKE"
     defaultInterpreter = "nuke -t"
@@ -245,13 +351,51 @@ class NukeContext(LiveContext):
 
     def open(self):
         import nuke
-        super().open()
         self.session = nuke
+        super().open()
 
-    def close(self):
-        if self.ownsSession and self.session is not None:
+    def currentScene(self) -> str:
+        try:
+            return self.session.scriptName()
+        except RuntimeError:
+            # Untitled script
+            return ""
+
+    def _installGuard(self):
+        context = self
+
+        def openWrapper(original):
+            def scriptOpen(filename, *args, **kwargs):
+                if context.skipLoad(filename):
+                    return None
+                return original(filename, *args, **kwargs)
+            return scriptOpen
+
+        def saveWrapper(original):
+            def scriptSave(filename=None, *args, **kwargs):
+                context.deferSave(filename or None)
+                return True
+            return scriptSave
+
+        def saveAsWrapper(original):
+            def scriptSaveAs(filename=None, *args, **kwargs):
+                context.deferSave(filename or None)
+            return scriptSaveAs
+
+        self._patch(self.session, "scriptOpen", openWrapper)
+        self._patch(self.session, "scriptSave", saveWrapper)
+        self._patch(self.session, "scriptSaveAs", saveAsWrapper)
+
+    def _load(self, path):
+        if self.ownsSession:
             self.session.scriptClear()
-        super().close()
+        self._original("scriptOpen", self.session.scriptOpen)(path)
+
+    def _save(self, path):
+        self._original("scriptSaveAs", self.session.scriptSaveAs)(path, 1)
+
+    def _clear(self):
+        self.session.scriptClear()
 
     def beginStep(self, iteration, frame):
         if frame is not None:

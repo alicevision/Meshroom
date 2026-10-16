@@ -33,7 +33,7 @@ Rectangle {
             visible: root.inSubGraph
             font.pointSize: 10
             padding: 2
-            ToolTip.text: "Leave the Subgraph (Ctrl+Backspace)"
+            ToolTip.text: "Leave the Subgraph (U)"
             ToolTip.visible: hovered
             onClicked: uigraph.exitSubGraph()
         }

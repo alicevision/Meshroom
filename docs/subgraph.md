@@ -15,8 +15,8 @@ Typical uses:
 | `GraphInput` | Entry of the subgraph: one output per port, plus the loop state (`iteration` in a count loop; `frame` and the `frameRange` group (`start`, `stop`, as in HoudiniSetFrameRange) in a frame range loop). At most one per subgraph. |
 | `GraphOutput` | Exit of the subgraph: one input per port. At most one per subgraph, optional. |
 | `LiveScript` | Python code run in the context: reads `ins`, `ctx`, `session`; fills `outs`. |
-| `HoudiniScene` | The Houdini scene, the value that prevails: in a Meshroom task, opens `Scene File` (e.g. given by a pipeline node); in a Houdini session, the open scene (`Scene File` is not read). |
-| `HoudiniSave` | Saves the scene once. In a Houdini session, only if `Save In Houdini Session` is on. |
+| `HoudiniScene`, `MayaScene`, `NukeScene` | The scene, the value that prevails: in a Meshroom task, opens `Scene File` (e.g. given by a pipeline node); in a session of the software, the open scene (`Scene File` is not read), unless `In ... Session` is `sceneFile`. |
+| `HoudiniSave`, `MayaSave`, `NukeSave` | Saves the scene once. In a session of the software, only if `Save In ... Session` is on. |
 | `HoudiniSetParms`, `HoudiniRender` | Houdini operations written as live nodes. |
 
 ### Any node in a subgraph
@@ -31,7 +31,7 @@ Nodes without connections between them can be ordered with flow connections.
 
 **Only what is needed runs**: the nodes without downstream node (and the GraphOutput), and what they read. A node can ignore an input in a context (`desc.BaseNode.ignoredInputs`): `HoudiniScene` ignores its `Scene File` in a Houdini session, so a pipeline node computing the scene path (e.g. `GetCgScene`) is only run in Meshroom and on the farm.
 
-**Scene loads and saves** (Houdini): the task nodes written to load and save the scene themselves keep working as is. During a subgraph, loading the scene already open does nothing, and their saves are grouped into one save at the end of a Meshroom task (or at `HoudiniSave`); nothing is saved in a Houdini session unless `HoudiniSave` asks for it.
+**Scene loads and saves** (Houdini, Maya, Nuke): the task nodes written to load and save the scene themselves keep working as is (`hou.hipFile.load` / `save`, `cmds.file(open=...)` / `cmds.file(save=...)`, `nuke.scriptOpen` / `scriptSave` / `scriptSaveAs`). During a subgraph, loading the scene already open does nothing, and their saves are grouped into one save at the end of a Meshroom task (or at `HoudiniSave`); nothing is saved in a Houdini session unless `HoudiniSave` asks for it.
 
 Typical Houdini subgraph:
 ```
@@ -41,7 +41,7 @@ GetCgScene -> HoudiniScene -> HoudiniSetFrameRange -> HoudiniUpdateValue -> Houd
 ### Ports
 
 A new `SubGraph` node contains a `GraphInput` and a `GraphOutput` node (they can be removed). Ports are added, renamed (name and label), reordered or removed like any AnySet child, on either side:
-- on the node: connect an attribute to `Inputs` (or `Outputs` to an input), and the port appears on the `GraphInput` (or `GraphOutput`) of the subgraph — created if it was removed;
+- on the node: connect an attribute to `Inputs` (or `Outputs` to an input), or add one with the **+** button of `Inputs` / `Outputs` in the attribute editor, and the port appears on the `GraphInput` (or `GraphOutput`) of the subgraph — created if it was removed;
 - in the subgraph: connect the `Ports` of `GraphInput` / `GraphOutput`, and the node gets the matching `Inputs` / `Outputs` when leaving it.
 
 Connections to the ports of the node are kept. Changing the ports of a node that references a template copies the template into the node (the template file is not changed).
@@ -80,8 +80,8 @@ The nodes read the loop state from the outputs of `GraphInput` (live nodes also 
 
 ## User interface
 
-- **Double-click** a `SubGraph` node (or select it and press **Ctrl+Enter**) to show its subgraph.
-- The **breadcrumb** at the top of the Graph Editor shows the path from the project; click an element (or **Ctrl+Backspace**) to go back. Leaving writes the subgraph back in its node; the ports of the node follow its `GraphInput` / `GraphOutput`.
+- **Double-click** a `SubGraph` node (or select it and press **I**) to show its subgraph; **U** goes up one level.
+- The **breadcrumb** at the top of the Graph Editor shows the path from the project; click an element (or press **U**) to go back. Leaving writes the subgraph back in its node; the ports of the node follow its `GraphInput` / `GraphOutput`.
 - **Run Live** (play button of the bar) runs the subgraph now with the inputs of its node: in Meshroom for Python, else in the interpreter of its context. A frame loop runs its first frame only. The duration and the outputs are shown in the bar.
 - Saving, computing or submitting from a subgraph acts on the project (the subgraphs are written back first). The undo history is cleared when entering or leaving a subgraph.
 

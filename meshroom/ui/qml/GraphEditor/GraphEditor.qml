@@ -147,6 +147,13 @@ Item {
             uigraph.alignVertically()
         } else if (event.key === Qt.Key_H && event.modifiers === Qt.ShiftModifier) {
             uigraph.alignHorizontally()
+        } else if (event.key === Qt.Key_I && event.modifiers === Qt.NoModifier
+                   && uigraph.selectedNode && uigraph.isSubGraphNode(uigraph.selectedNode)) {
+            // Enter the selected SubGraph node
+            uigraph.enterSubGraph(uigraph.selectedNode)
+        } else if (event.key === Qt.Key_U && event.modifiers === Qt.NoModifier && uigraph.isInSubGraph) {
+            // Up: leave the current subgraph
+            uigraph.exitSubGraph()
         } else if (event.key === Qt.Key_Backspace && event.modifiers === Qt.ControlModifier) {
             // Leave the current subgraph
             uigraph.exitSubGraph()

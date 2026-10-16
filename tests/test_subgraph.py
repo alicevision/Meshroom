@@ -871,3 +871,148 @@ def test_frameRangeGroupConnectsToTheSameGroup():
         assert TaskFrameRange.seen == [(1001, 1003)]
     finally:
         unregisterNodeDesc(TaskFrameRange)
+
+
+# ---------------------------------------------------------------------------
+# Maya and Nuke (fake modules): same scene logic as Houdini
+# ---------------------------------------------------------------------------
+
+class FakeCmds:
+    """ The parts of maya.cmds used by the Maya context. """
+
+    def __init__(self):
+        self.scene, self.opened, self.saved, self.times = "", [], [], []
+
+    def about(self, **kwargs):
+        return "2025"
+
+    def file(self, *args, **kwargs):
+        if kwargs.get("query"):
+            return self.scene
+        if kwargs.get("open"):
+            self.opened.append(args[0])
+            self.scene = args[0]
+        elif kwargs.get("rename"):
+            self.scene = kwargs["rename"]
+        elif kwargs.get("save"):
+            self.saved.append(self.scene)
+        elif kwargs.get("new"):
+            self.opened.append("new")
+        return self.scene
+
+    def currentTime(self, frame, edit=True):
+        self.times.append(frame)
+
+
+class FakeNuke:
+    """ The parts of the nuke module used by the Nuke context. """
+
+    def __init__(self):
+        self.script, self.opened, self.saved, self.frames = "", [], [], []
+
+    def scriptName(self):
+        if not self.script:
+            raise RuntimeError("no script")
+        return self.script
+
+    def scriptOpen(self, filename):
+        self.opened.append(filename)
+        self.script = filename
+
+    def scriptSave(self, filename=None):
+        self.saved.append(filename or self.script)
+
+    def scriptSaveAs(self, filename=None, overwrite=0):
+        self.script = filename
+        self.saved.append(filename)
+
+    def scriptClear(self):
+        self.opened.append("clear")
+
+    def frame(self, frame):
+        self.frames.append(frame)
+
+
+class MayaBatch(desc.Node):
+    """ A Maya task node written as usual: opens the scene, changes it, saves it. """
+    __test__ = False
+    pythonExecutable = "mayapy"
+    inputs = [desc.File(name="scene", label="Scene", description="", value="")]
+    outputs = [desc.File(name="output", label="Output", description="", value=None)]
+
+    def process(self, node):
+        from maya import cmds
+        cmds.file(node.scene.value, open=True, force=True)
+        cmds.file(save=True, force=True)
+        node.output.value = node.scene.value
+
+
+class NukeBatch(desc.Node):
+    """ A Nuke task node written as usual: opens the script, changes it, saves it. """
+    __test__ = False
+    pythonExecutable = "nuke -t"
+    inputs = [desc.File(name="scene", label="Scene", description="", value="")]
+    outputs = [desc.File(name="output", label="Output", description="", value=None)]
+
+    def process(self, node):
+        import nuke
+        nuke.scriptOpen(node.scene.value)
+        nuke.scriptSave()
+        node.output.value = node.scene.value
+
+
+@pytest.fixture
+def fakeMayaNuke(monkeypatch):
+    import sys
+    import types
+    from meshroom.nodes.maya.MayaScene import MayaScene
+    from meshroom.nodes.maya.MayaSave import MayaSave
+    from meshroom.nodes.nuke.NukeScene import NukeScene
+    from meshroom.nodes.nuke.NukeSave import NukeSave
+    nodeDescs = [MayaScene, MayaSave, NukeScene, NukeSave, MayaBatch, NukeBatch]
+    for nodeDesc in nodeDescs:
+        registerNodeDesc(nodeDesc)
+    cmds, nuke = FakeCmds(), FakeNuke()
+    maya = types.ModuleType("maya")
+    maya.cmds = cmds
+    monkeypatch.setitem(sys.modules, "maya", maya)
+    monkeypatch.setitem(sys.modules, "maya.cmds", cmds)
+    monkeypatch.setitem(sys.modules, "nuke", nuke)
+    yield cmds, nuke
+    for nodeDesc in nodeDescs:
+        unregisterNodeDesc(nodeDesc)
+
+
+def softwareGraph(software: str):
+    """ TaskShotScene -> <Software>Scene -> batch node x2 -> <Software>Save """
+    TaskShotScene.runs = 0
+    graph = Graph("")
+    shotScene = graph.addNewNode("TaskShotScene", shot="sh010")
+    scene = graph.addNewNode(f"{software}Scene")
+    first = graph.addNewNode(f"{software}Batch")
+    second = graph.addNewNode(f"{software}Batch")
+    save = graph.addNewNode(f"{software}Save")
+    graph.addEdge(shotScene.scene, scene.hipFile)
+    graph.addEdge(scene.scene, first.scene)
+    graph.addEdge(first.output, second.scene)
+    graph.addEdge(second.output, save.scene)
+    return graph
+
+
+def test_mayaAndNukeTasks(fakeMayaNuke):
+    cmds, nuke = fakeMayaNuke
+    run(softwareGraph("Maya").toDict(), ownsSession=True)
+    assert cmds.opened == ["/shots/sh010.hip", "new"] and cmds.saved == ["/shots/sh010.hip"]
+    run(softwareGraph("Nuke").toDict(), ownsSession=True)
+    assert nuke.opened == ["clear", "/shots/sh010.hip", "clear"] and nuke.saved == ["/shots/sh010.hip"]
+    assert TaskShotScene.runs == 1
+
+
+def test_mayaAndNukeSessions(fakeMayaNuke):
+    import meshroom.subgraph
+    cmds, nuke = fakeMayaNuke
+    cmds.scene, nuke.script = "/shots/open.ma", "/shots/open.nk"
+    meshroom.subgraph.run(softwareGraph("Maya").toDict())
+    meshroom.subgraph.run(softwareGraph("Nuke").toDict())
+    assert TaskShotScene.runs == 0
+    assert cmds.opened == [] and cmds.saved == [] and nuke.opened == [] and nuke.saved == []

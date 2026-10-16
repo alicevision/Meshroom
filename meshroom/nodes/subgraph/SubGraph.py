@@ -61,13 +61,17 @@ class SubGraph(desc.Node):
     size = FrameLoopSize()
     parallelization = FrameLoopParallelization()
 
-    inputs = subGraphSourceParams() + [contextParam()] + loopParams(withFarmSplit=True) + [
+    # The inputs first, the template last
+    inputs = [
         desc.AnySet(
             name="ins",
             label="Inputs",
-            description="Values given to the GraphInput ports of the subgraph.",
+            description="Values given to the GraphInput ports of the subgraph (add one by connecting an attribute,\n"
+                        "or with the + button).",
             exposed=True,
         ),
+        contextParam(),
+    ] + loopParams(withFarmSplit=True) + [
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
@@ -75,7 +79,7 @@ class SubGraph(desc.Node):
             values=VERBOSE_LEVEL,
             value="info",
         ),
-    ]
+    ] + subGraphSourceParams()
 
     outputs = [
         desc.AnySet(

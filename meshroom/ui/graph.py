@@ -1616,6 +1616,13 @@ class UIGraph(QObject):
             return
         self.push(commands.RemoveAnySetAttributeCommand(self._graph, attribute))
 
+    @Slot(Attribute, str, str, str)
+    def addAnySetAttribute(self, anySet, name, label, attributeType):
+        """ Add a child to an AnySet attribute (name made unique), e.g. an input of a SubGraph node. """
+        if not isinstance(anySet, AnySet) or not name:
+            return
+        self.push(commands.AddAnySetAttributeCommand(self._graph, anySet, name, label, attributeType))
+
     @Slot(Attribute, str, str)
     def renameAnySetAttribute(self, attribute, name, label):
         if not isinstance(attribute.root, AnySet):

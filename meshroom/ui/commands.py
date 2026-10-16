@@ -625,6 +625,38 @@ class RemoveAnySetAttributeCommand(GraphCommand):
         return True
 
 
+class AddAnySetAttributeCommand(GraphCommand):
+    """ Add a child attribute to an AnySet (e.g. an input of a SubGraph node added by hand). """
+
+    def __init__(self, graph, anySetAttribute, name, label, attributeType, parent=None):
+        super().__init__(graph, parent)
+        assert isinstance(anySetAttribute, AnySet)
+        self.anySetAttrName = anySetAttribute.fullName
+        existing = set(anySetAttribute.value.keys())
+        uniqueName, index = name, 1
+        while uniqueName in existing:
+            uniqueName, index = f"{name}_{index}", index + 1
+        self.value = {"name": uniqueName, "label": label or uniqueName, "type": attributeType, "value": None}
+        self.setText(f"Add {self.anySetAttrName}.{uniqueName}")
+
+    def redoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        if anySetAttribute is None:
+            return False
+        return anySetAttribute.insertAttribute(self.value, len(anySetAttribute.value)) is not None
+
+    def undoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        attribute = self.graph.attribute(f"{self.anySetAttrName}.{self.value['name']}")
+        if anySetAttribute is None or attribute is None:
+            return False
+        for edge in list(self.graph.edges.values()):
+            if edge.src is attribute or edge.dst is attribute:
+                self.graph.removeEdge(edge.dst)
+        anySetAttribute.removeAttribute(attribute)
+        return True
+
+
 class RenameAnySetAttributeCommand(GraphCommand):
     def __init__(self, graph, attribute, name, label, parent=None):
         super().__init__(graph, parent)

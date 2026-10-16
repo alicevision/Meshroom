@@ -42,6 +42,8 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 │   │   └── ...                 # Python backends (app.py, graph.py, commands.py, scene.py) binding core to Qt
 │   ├── env.py                  # EnvVar registry: MESHROOM_PLUGINS_PATH / NODES_PATH / PIPELINE_TEMPLATES_PATH / LOCAL_PLUGINS, etc.
 │   └── multiview.py            # Image-extension lists & helpers for building multiview/photogrammetry pipelines
+├── plugins/                    # Runtime local plugins folder (git-ignored): registries + installed plugins; seeded
+│                               # from meshroom/core/plugins/registries/ on first run. Created next to the executables in release.
 ├── tests/                      # Comprehensive suite of unit tests and pipeline validation tests
 ├── CHANGES.md                  # Changelog tracking features, optimizations, and API breaks
 ├── CMakeLists.txt              # Build system file for compiling external modules/packaging

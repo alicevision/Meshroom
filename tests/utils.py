@@ -45,6 +45,17 @@ def registeredNodeTypes(nodeDescs: List[desc.Node]):
 
 
 @contextmanager
+def unregisteredNodeTypes(nodeDescs: List[desc.Node]):
+    for nodeDesc in nodeDescs:
+        registerNodeDesc(nodeDesc)
+
+    yield
+
+    for nodeDesc in nodeDescs:
+        unregisterNodeDesc(nodeDesc)
+
+
+@contextmanager
 def registeredPlugin(pluginName: str, pluginFolder: str, isUserPlugin: bool = False):
     pluginManager.addPluginFromPath(pluginName, pluginFolder, isUserPlugin=isUserPlugin)
 

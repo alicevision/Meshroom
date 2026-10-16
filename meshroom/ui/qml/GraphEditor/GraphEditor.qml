@@ -147,6 +147,13 @@ Item {
             uigraph.alignVertically()
         } else if (event.key === Qt.Key_H && event.modifiers === Qt.ShiftModifier) {
             uigraph.alignHorizontally()
+        } else if (event.key === Qt.Key_Backspace && event.modifiers === Qt.ControlModifier) {
+            // Leave the current subgraph
+            uigraph.exitSubGraph()
+        } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && event.modifiers === Qt.ControlModifier) {
+            // Enter the selected SubGraph node
+            if (uigraph.selectedNode)
+                uigraph.enterSubGraph(uigraph.selectedNode)
         } else if (event.key === Qt.Key_Tab) {
             event.accepted = true
             if (mouseArea.containsMouse) {
@@ -1693,5 +1700,15 @@ Item {
         // Recenter
         draggable.x = bbox.x * draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
         draggable.y = bbox.y * draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
+    }
+
+    // Subgraph navigation (breadcrumb) and Run Live
+    SubGraphBar {
+        id: subGraphBar
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        z: 10
+        uigraph: root.uigraph
     }
 }

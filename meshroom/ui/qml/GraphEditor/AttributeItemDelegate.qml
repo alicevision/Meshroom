@@ -463,6 +463,9 @@ RowLayout {
                     return groupAttributeComponent
                 case "AnySet":
                     return groupAttributeComponent
+                case "Vec2d":
+                    // Values per key (e.g. per view) keep the group editor
+                    return root.attribute.keyable ? groupAttributeComponent : vec2Component
                 case "StringParam":
                     if (attribute.desc.semantic.includes('multiline'))
                         return textAreaComponent
@@ -656,6 +659,14 @@ RowLayout {
                             _currentScene.setAttribute(root.attribute, formattedValue)
                     }
                 }
+            }
+        }
+
+        Component {
+            id: vec2Component
+            AttributeControls.Vec2Field {
+                attribute: root.attribute
+                editable: root.editable
             }
         }
 

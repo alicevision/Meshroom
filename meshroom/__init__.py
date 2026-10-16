@@ -40,6 +40,7 @@ _MESHROOM_ROOT = Path(__file__).parent.parent.resolve()
 
 # Internal imports after the definition of the version
 from .common import init, Backend, strtobool
+from .env import getInstallFolder
 
 # sys.frozen is initialized by cx_Freeze and identifies a release package
 isFrozen = getattr(sys, "frozen", False)
@@ -149,7 +150,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
         os.environ[var] = os.pathsep.join(paths)
 
     # setup root directory (override possible by setting "MESHROOM_INSTALL_DIR" environment variable)
-    rootDir = os.path.dirname(sys.executable) if isFrozen else os.environ.get("MESHROOM_INSTALL_DIR", None)
+    rootDir = getInstallFolder()
     logging.debug(f"isFrozen={isFrozen}")
     logging.debug(f"sys.executable={sys.executable}")
     logging.debug(f"rootDir={rootDir}")
@@ -162,7 +163,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
         aliceVisionBinDir = os.path.join(aliceVisionDir, "bin")
         aliceVisionShareDir = os.path.join(aliceVisionDir, "share", "aliceVision")
         qtPluginsDir = os.path.join(rootDir, "qtPlugins")
-        pluginsDir = os.path.join(rootDir, "plugins")
+        uvPath = os.path.join(rootDir, "bin", "uv.exe" if sys.platform == "win32" else "uv")
         sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
         voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.SIFT.tree")
         sphereDetectionModel = os.path.join(aliceVisionShareDir, "sphereDetection_Mask-RCNN.onnx")
@@ -190,13 +191,8 @@ def setupEnvironment(backend=Backend.STANDALONE):
             logging.debug(f"Add to {key}: {value}")
             addToEnvPath(key, value, 0)
 
-        # Add all available plugins
-        if os.path.exists(pluginsDir):
-            subfolders = [f.path for f in os.scandir(pluginsDir) if f.is_dir()]
-            for plugin in subfolders:
-                addToEnvPath("MESHROOM_PLUGINS_PATH", plugin, 0)
-
         variables = {
+            "MESHROOM_UV_PATH": uvPath,
             "ALICEVISION_ROOT": aliceVisionDir,
             "ALICEVISION_SENSOR_DB": sensorDBPath,
             "ALICEVISION_VOCTREE": voctreePath,

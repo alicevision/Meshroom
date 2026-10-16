@@ -1,0 +1,8 @@
+[project]
+name = "mrGeneral"
+version = "meshroom"
+description = "Base nodes for Meshroom, node-based visual programming toolbox."
+authors = [ {name = "Meshroom Contributors"} ]
+
+[tool.meshroom]
+publisher = "meshroomHub"

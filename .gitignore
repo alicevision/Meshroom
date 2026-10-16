@@ -19,10 +19,14 @@ Thumbs.db
 *.pyo
 __pycache__
 
+# plugins
+/plugins/
+
 # backup files
 *.json
 !*Config.json
 !.vscode/launch.json
+!/meshroom/core/plugins/registries/*.json
 
 # datas or personal files
 /data

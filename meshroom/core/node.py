@@ -1878,6 +1878,9 @@ class BaseNode(BaseObject):
 
     def updateOutputAttr(self):
         if not self.nodeDesc:
+            # For DescOnlyNodeType Compatibility Node
+            if self.nodeDescDict:
+                self.loadOutputAttr()
             return
         if not self.nodeDesc.hasDynamicOutputAttribute:
             return
@@ -3083,6 +3086,44 @@ class CompatibilityNode(BaseNode):
         node.upgradeInternalAttributeValues(intAttrValues)
 
         return node
+
+    # Override
+    def loadOutputAttr(self):
+        """ Load output attributes with dynamic values from a values file. """
+
+        if self.nodeDescDict is None or self._uid is None:
+            return
+
+        descOutputs = self.nodeDescDict.get("outputs", {})
+        dynamicAttrs = [name for name, attrDesc in descOutputs.items()
+                            if attrDesc.get("type") and (attrDesc["type"]=="AnySet" or attrDesc.get("value") is None)]
+
+        if not dynamicAttrs:
+            return
+
+        valuesFile = self.valuesFile
+        if not os.path.exists(valuesFile):
+            logging.warning(f"No output attr file: {valuesFile}")
+            return
+
+        # Open json file and parse
+        with open(valuesFile, "r") as jsonFile:
+            data = json.load(jsonFile)
+
+        for name in dynamicAttrs:
+            attr = self._attributes.get(name)
+            if attr is None:
+                continue
+
+            if name not in data:
+                logging.warning(f"CompatibilityNode: missing dynamic output value: {self.name}.{name} in valuesFile: {valuesFile}")
+                continue
+
+            value = data[name]
+            if hasattr(attr, "_populateFromDynamicValue") and attr._populateFromDynamicValue is not None:
+                attr._populateFromDynamicValue(value)
+            else:
+                attr.value = value
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)

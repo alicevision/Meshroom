@@ -147,6 +147,9 @@ Item {
             uigraph.alignVertically()
         } else if (event.key === Qt.Key_H && event.modifiers === Qt.ShiftModifier) {
             uigraph.alignHorizontally()
+        } else if (event.key === Qt.Key_G && event.modifiers === Qt.ControlModifier) {
+            // Put the selected nodes in a SubGraph
+            uigraph.groupSelectedIntoSubGraph()
         } else if (event.key === Qt.Key_I && event.modifiers === Qt.NoModifier
                    && uigraph.selectedNode && uigraph.isSubGraphNode(uigraph.selectedNode)) {
             // Enter the selected SubGraph node
@@ -1477,6 +1480,13 @@ Item {
                 text: MaterialIcons.linear_scale
                 ToolTip.text: "Auto-Layout"
                 onClicked: uigraph.layout.reset()
+            }
+            // Put the selected nodes in a SubGraph
+            MaterialToolButton {
+                text: MaterialIcons.account_tree
+                ToolTip.text: "Put Selected Nodes in a SubGraph (Ctrl+G)"
+                enabled: uigraph ? uigraph.nodeSelection.hasSelection : false
+                onClicked: uigraph.groupSelectedIntoSubGraph()
             }
             // Add Backdrop
             MaterialToolButton {

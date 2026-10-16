@@ -625,6 +625,30 @@ class RemoveAnySetAttributeCommand(GraphCommand):
         return True
 
 
+class CollapseIntoSubGraphCommand(GraphCommand):
+    """ Replace nodes by a SubGraph node containing them (see meshroom.core.subgraph.editing). """
+
+    def __init__(self, graph, nodes, parent=None):
+        super().__init__(graph, parent)
+        self.nodeNames = [node.name for node in nodes]
+        self.subGraphName = None
+        self.snapshot = None
+        self.setText(f"Put {len(self.nodeNames)} Node(s) in a SubGraph")
+
+    def redoImpl(self):
+        from meshroom.core.subgraph.editing import collapseIntoSubGraph
+        nodes = [self.graph.node(name) for name in self.nodeNames if self.graph.node(name) is not None]
+        subGraphNode, self.snapshot = collapseIntoSubGraph(self.graph, nodes)
+        self.subGraphName = subGraphNode.name
+        return subGraphNode
+
+    def undoImpl(self):
+        from meshroom.core.subgraph.editing import restoreNodes
+        if self.subGraphName and self.graph.node(self.subGraphName) is not None:
+            self.graph.removeNode(self.subGraphName)
+        restoreNodes(self.graph, self.snapshot)
+
+
 class AddAnySetAttributeCommand(GraphCommand):
     """ Add a child attribute to an AnySet (e.g. an input of a SubGraph node added by hand). """
 

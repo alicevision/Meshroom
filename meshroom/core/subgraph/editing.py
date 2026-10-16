@@ -144,3 +144,132 @@ class SubGraphStack:
             self._write(level, graph)
             graph = level.outerGraph
         return graph
+
+
+def _replaceLinks(value, mapping: dict):
+    """ A serialized value with its link expressions ("{Node.attr}") replaced according to `mapping`. """
+    if isinstance(value, str):
+        return mapping.get(value, value)
+    if isinstance(value, dict):
+        return {key: _replaceLinks(item, mapping) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_replaceLinks(item, mapping) for item in value]
+    return value
+
+
+def _portType(attribute) -> str:
+    from .ports import PORT_TYPES, DEFAULT_PORT_TYPE
+    typeName = type(attribute.desc).__name__
+    return typeName if typeName in PORT_TYPES else DEFAULT_PORT_TYPE
+
+
+def _uniquePortName(name: str, used: set) -> str:
+    unique, index = name, 1
+    while unique in used:
+        unique, index = f"{name}_{index}", index + 1
+    used.add(unique)
+    return unique
+
+
+def snapshotNodes(graph: Graph, nodes) -> dict:
+    """
+    What is needed to put nodes back in a graph after they were removed (see restoreNodes): their serialized
+    form in an order where each node comes after the nodes it reads, and their connections to other nodes.
+    """
+    names = {node.name for node in nodes}
+    remaining = {node.name: {edge.src.node.name for edge in graph.nodeInEdges(node) if edge.src.node.name in names}
+                 for node in nodes}
+    order = []
+    while remaining:
+        ready = sorted(name for name, sources in remaining.items() if not sources) or sorted(remaining)[:1]
+        for name in ready:
+            order.append(name)
+            del remaining[name]
+        for sources in remaining.values():
+            sources.difference_update(ready)
+    outEdges = [(edge.src.fullName, edge.dst.fullName) for edge in graph.edges
+                if edge.src.node.name in names and edge.dst.node.name not in names]
+    return {"nodes": [(name, graph.node(name).toDict()) for name in order], "outEdges": outEdges}
+
+
+def restoreNodes(graph: Graph, snapshot: dict):
+    """ Put back nodes removed from a graph (see snapshotNodes), with their connections. """
+    from meshroom.core.graph import GraphModification
+    from meshroom.core.nodeFactory import nodeFactory
+    with GraphModification(graph):
+        for name, nodeData in snapshot["nodes"]:
+            graph.addNode(nodeFactory(nodeData, name), name)
+        for srcName, dstName in snapshot["outEdges"]:
+            src, dst = graph.anyAttribute(srcName), graph.anyAttribute(dstName)
+            if src is not None and dst is not None:
+                graph.addEdge(src, dst)
+
+
+def collapseIntoSubGraph(graph: Graph, nodes, position=None):
+    """
+    Replace nodes of a graph by a SubGraph node containing them. The connections from other nodes become
+    inputs of the SubGraph node (ports of its GraphInput), the connections to other nodes its outputs (ports of
+    its GraphOutput); the connections between the nodes stay inside.
+
+    Returns:
+        (the SubGraph node, a snapshot of the replaced nodes to put them back, see restoreNodes)
+    """
+    from meshroom.core.graphIO import GraphIO
+    from meshroom.core.node import Position
+    from .ports import formatPortSpec
+
+    nodes = [node for node in nodes if node.nodeType not in ("Backdrop",)]
+    if not nodes:
+        raise ValueError("No node to put in a subgraph.")
+    names = {node.name for node in nodes}
+    snapshot = snapshotNodes(graph, nodes)
+
+    usedInputs, usedOutputs = set(), set()
+    inputPorts, outputPorts = {}, {}       # src fullName -> (port name, type, label)
+    incoming, outgoing = [], []            # (src attribute, port name) / (port name, dst attribute)
+    for edge in list(graph.edges):
+        srcInside, dstInside = edge.src.node.name in names, edge.dst.node.name in names
+        if dstInside and not srcInside:
+            key = edge.src.fullName
+            if key not in inputPorts:
+                inputPorts[key] = (_uniquePortName(edge.src.name, usedInputs), _portType(edge.src), edge.src.label)
+                incoming.append((edge.src, inputPorts[key][0]))
+        elif srcInside and not dstInside:
+            key = edge.src.fullName
+            if key not in outputPorts:
+                outputPorts[key] = (_uniquePortName(edge.src.name, usedOutputs), _portType(edge.src), edge.src.label)
+            outgoing.append((outputPorts[key][0], edge.dst))
+
+    # The nodes, with the links coming from other nodes going to the GraphInput ports
+    mapping = {"{" + key + "}": "{GraphInput_1.ports." + port[0] + "}" for key, port in inputPorts.items()}
+    graphData = {}
+    for name, nodeData in snapshot["nodes"]:
+        nodeData = dict(nodeData)
+        for key in ("inputs", "internalInputs"):
+            if key in nodeData:
+                nodeData[key] = _replaceLinks(nodeData[key], mapping)
+        nodeData.pop("outputs", None)
+        nodeData.pop("uid", None)
+        graphData[name] = nodeData
+    xs = [node.position.x for node in nodes]
+    ys = [node.position.y for node in nodes]
+    spacing = 300
+    graphData["GraphInput_1"] = {"nodeType": "GraphInput", "position": [min(xs) - spacing, int(sum(ys) / len(ys))],
+                                 "inputs": {"portSpec": formatPortSpec(inputPorts.values())}}
+    graphData["GraphOutput_1"] = {"nodeType": "GraphOutput", "position": [max(xs) + spacing, int(sum(ys) / len(ys))],
+                                  "inputs": {"portSpec": formatPortSpec(outputPorts.values()), "ports": {"children": [
+                                      {"name": port[0], "label": port[2], "type": port[1], "value": "{" + key + "}"}
+                                      for key, port in outputPorts.items()]}}}
+    content = json.dumps({GraphIO.Keys.Header: {GraphIO.Keys.FileVersion: GraphIO.__version__, GraphIO.Keys.Template: True},
+                          GraphIO.Keys.Graph: graphData}, indent=1)
+
+    for node in nodes:
+        graph.removeNode(node.name)
+    if position is None:
+        position = Position(int(sum(xs) / len(xs)), int(sum(ys) / len(ys)))
+    subGraphNode = graph.addNewNode("SubGraph", position=position, subGraph=content)
+    for src, portName in incoming:
+        graph.addEdge(src, subGraphNode.ins.value.get(portName))
+    for portName, dst in outgoing:
+        graph.addEdge(subGraphNode.outs.value.get(portName), dst)
+    return subGraphNode, snapshot

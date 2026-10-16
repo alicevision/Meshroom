@@ -545,6 +545,21 @@ class UIGraph(QObject):
         return True
 
     @Slot()
+    def groupSelectedIntoSubGraph(self):
+        """ Put the selected nodes in a new SubGraph node (their outside connections become its inputs / outputs). """
+        nodes = [node for node in self.getSelectedNodes() if node.nodeType != "Backdrop"]
+        if not nodes:
+            self.parent().showMessage("Select the nodes to put in a SubGraph.", "warning")
+            return
+        if any(node.locked for node in nodes):
+            self.parent().showMessage("Locked nodes cannot be put in a SubGraph.", "warning")
+            return
+        subGraphNode = self.push(commands.CollapseIntoSubGraphCommand(self._graph, nodes))
+        if subGraphNode:
+            self.selectNodes([subGraphNode])
+            self.selectedNode = subGraphNode
+
+    @Slot()
     def exitSubGraph(self):
         """ Leave the current subgraph, written back in its node, and select its node. """
         if not len(self._subGraphStack):

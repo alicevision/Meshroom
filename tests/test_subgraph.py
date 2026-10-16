@@ -1016,3 +1016,29 @@ def test_mayaAndNukeSessions(fakeMayaNuke):
     meshroom.subgraph.run(softwareGraph("Nuke").toDict())
     assert TaskShotScene.runs == 0
     assert cmds.opened == [] and cmds.saved == [] and nuke.opened == [] and nuke.saved == []
+
+
+def test_collapseIntoSubGraph():
+    from meshroom.core.subgraph.editing import collapseIntoSubGraph, restoreNodes
+    project = Graph("project")
+    upstream = project.addNewNode("LiveAdd", a=2, b=3)
+    add1 = project.addNewNode("LiveAdd", b=1)
+    add2 = project.addNewNode("LiveAdd", b=10)
+    after = project.addNewNode("LiveScript", inSpec="v", code="")
+    project.addEdge(upstream.sum, add1.a)
+    project.addEdge(add1.sum, add2.a)
+    project.addEdge(add2.sum, port(after, "ins", "v"))
+
+    node, snapshot = collapseIntoSubGraph(project, [add1, add2])
+    assert sorted(n.name for n in project.nodes) == ["LiveAdd_1", "LiveScript_1", "SubGraph_1"]
+    assert [c.name for c in node.ins.value] == ["sum"] and [c.name for c in node.outs.value] == ["sum"]
+    assert port(node, "ins", "sum").inputLink is upstream.sum
+    assert port(after, "ins", "v").inputLink is port(node, "outs", "sum")
+    # The subgraph runs as the nodes did: input + 1 + 10
+    assert run(node.subGraph.value, {"sum": 5}) == {"sum": 16}
+
+    # Undo: the nodes and their connections come back
+    project.removeNode(node.name)
+    restoreNodes(project, snapshot)
+    assert add1.name == "LiveAdd_2" and project.node("LiveAdd_2").a.inputLink is upstream.sum
+    assert port(after, "ins", "v").inputLink is project.node("LiveAdd_3").sum

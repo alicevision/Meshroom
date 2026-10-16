@@ -80,6 +80,7 @@ The nodes read the loop state from the outputs of `GraphInput` (live nodes also 
 
 ## User interface
 
+- **Ctrl+G** (or the subgraph button of the bottom-left toolbar of the Graph Editor) puts the selected nodes in a new `SubGraph` node: their connections from other nodes become its inputs, their connections to other nodes its outputs (undoable).
 - **Double-click** a `SubGraph` node (or select it and press **I**) to show its subgraph; **U** goes up one level.
 - The **breadcrumb** at the top of the Graph Editor shows the path from the project; click an element (or press **U**) to go back. Leaving writes the subgraph back in its node; the ports of the node follow its `GraphInput` / `GraphOutput`.
 - **Run Live** (play button of the bar) runs the subgraph now with the inputs of its node: in Meshroom for Python, else in the interpreter of its context. A frame loop runs its first frame only. The duration and the outputs are shown in the bar.

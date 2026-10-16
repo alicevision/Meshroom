@@ -310,6 +310,10 @@ def _inputValues(node: PlanNode, results: Dict[str, Dict[str, Any]]) -> dict:
     for attrDesc in node.nodeDesc.inputs:
         if attrDesc.name in node.inputs:
             values[attrDesc.name] = _resolve(node.inputs[attrDesc.name], results)
+            default = _defaultValue(attrDesc)
+            if isinstance(default, dict) and isinstance(values[attrDesc.name], dict) and not _isAnySet(attrDesc):
+                # A group saved with only some of its values (template): the others are the defaults
+                values[attrDesc.name] = {**default, **values[attrDesc.name]}
         else:
             values[attrDesc.name] = _defaultValue(attrDesc)
     # Inputs that are not in the descriptor (e.g. dynamic ports of an AnySet) are kept as they are
@@ -317,6 +321,11 @@ def _inputValues(node: PlanNode, results: Dict[str, Dict[str, Any]]) -> dict:
         if name not in values:
             values[name] = _resolve(value, results)
     return values
+
+
+def _isAnySet(attrDesc) -> bool:
+    from meshroom.core import desc
+    return isinstance(attrDesc, desc.AnySet)
 
 
 def _defaultValue(attrDesc):

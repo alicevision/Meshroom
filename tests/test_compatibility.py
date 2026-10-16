@@ -490,6 +490,41 @@ def test_outputValueAfterDefaultOutputChange(tmp_path):
     unregisterNodeDesc(OutputTemplateNodeV1)
 
 
+def test_saveAsTemplateKeepsCompatibilityNodeData(tmp_path):
+    """
+    Test that saving a graph as a template does not alter the data of its CompatibilityNodes,
+    so that saving the project afterwards keeps their outputs, internal attributes and connections.
+    """
+    registerNodeDesc(SampleNodeV1)
+    registerNodeDesc(SampleNodeV2)
+
+    g = Graph("")
+    nodeA = g.addNewNode("SampleNodeV1", input="/dev/null", paramA="foo")
+    nodeB = g.addNewNode("SampleNodeV2")
+    g.addEdge(nodeA.output, nodeB.attribute("in"))
+    nodeA.internalAttribute("comment").value = "note on A"
+    graphFile = os.path.join(tmp_path, "project.mg")
+    g.save(graphFile)
+
+    unregisterNodeDesc(SampleNodeV1)
+
+    try:
+        g = loadGraph(graphFile)
+        assert isinstance(g.node(nodeA.name), CompatibilityNode)
+        serializedBefore = copy.deepcopy(g.serialize()["graph"][nodeA.name])
+
+        g.save(os.path.join(tmp_path, "template.mg"), setupProjectFile=False, template=True)
+        assert g.serialize()["graph"][nodeA.name] == serializedBefore
+
+        # Save the project again and reload it
+        g.save(graphFile)
+        g = loadGraph(graphFile)
+        assert g.node(nodeA.name).internalInputs["comment"] == "note on A"
+        assert g.node(nodeB.name).attribute("in").isLink
+    finally:
+        unregisterNodeDesc(SampleNodeV2)
+
+
 class TestGraphLoadingWithStrictCompatibility:
 
     def test_failsOnUnknownNodeType(self, graphSavedOnDisk):

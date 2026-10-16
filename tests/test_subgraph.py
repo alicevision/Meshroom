@@ -474,3 +474,91 @@ def test_flowDependencies():
         "LiveAdd_2": {"nodeType": "LiveAdd", "inputs": {}},
     })
     assert [node.name for node in plan.order] == ["LiveAdd_2", "LiveAdd_1"]
+
+
+# ---------------------------------------------------------------------------
+# Editing (enter / leave a subgraph)
+# ---------------------------------------------------------------------------
+
+def test_editEmbeddedSubGraph():
+    from meshroom.core.subgraph.editing import SubGraphStack
+    project = Graph("project")
+    node = project.addNewNode("SubGraph", subGraph=json.dumps(addOneGraph().toDict()))
+    stack = SubGraphStack()
+    inner = stack.enter(project, node)
+    assert stack.names() == [node.name]
+    assert sorted(n.name for n in inner.nodes) == ["GraphInput_1", "GraphOutput_1", "LiveAdd_1"]
+
+    # Leaving without changes keeps the node as it is
+    content = node.subGraph.value
+    assert stack.exit(inner) is project
+    assert node.subGraph.value == content
+
+    # A new port in the subgraph becomes an input of the node
+    inner = stack.enter(project, node)
+    inner.node("GraphInput_1").portSpec.value = "x, y"
+    assert stack.commitAll(inner) is project
+    assert [c.name for c in node.ins.value] == ["x", "y"]
+    stack.exit(inner)
+    assert len(stack) == 0
+    assert run(node.subGraph.value, {"x": 1}) == {"x": 2}
+
+
+def test_editNestedAndTemplateSubGraph(tmp_path):
+    from meshroom.core.subgraph.editing import SubGraphStack
+    templatePath = str(tmp_path / "addOne.mgt")
+    addOneGraph().save(templatePath, template=True)
+    project = Graph("project")
+    outer = project.addNewNode("SubGraph")
+    stack = SubGraphStack()
+    level1 = stack.enter(project, outer)
+    assert len(level1.nodes) == 0
+    nested = level1.addNewNode("LiveSubGraph", template=templatePath)
+    level2 = stack.enter(level1, nested)
+    assert stack.names() == [outer.name, nested.name]
+    level2.node("LiveAdd_1").b.value = 100
+
+    # Saving the project writes every level back: the template file, then the embedded subgraph
+    assert stack.commitAll(level2) is project
+    assert run(templatePath, {"x": 1}) == {"x": 101}
+    assert "LiveSubGraph_1" in json.loads(outer.subGraph.value)["graph"]
+    assert stack.exit(level2) is level1
+    assert stack.exit(level1) is project
+
+
+# ---------------------------------------------------------------------------
+# Run Live (in the interpreter of the context)
+# ---------------------------------------------------------------------------
+
+def scriptGraph():
+    graph = Graph("")
+    graphInput = graph.addNewNode("GraphInput", portSpec="x")
+    script = graph.addNewNode("LiveScript", inSpec="x", outSpec="y", code="outs['y'] = ins['x'] * 3")
+    graphOutput = graph.addNewNode("GraphOutput", portSpec="y, obj")
+    graph.addEdge(port(graphInput, "ports", "x"), port(script, "ins", "x"))
+    graph.addEdge(port(script, "outs", "y"), port(graphOutput, "ports", "y"))
+    return graph
+
+
+def test_runLiveInProcess():
+    from meshroom.core.subgraph.runner import runLive
+    result = runLive(scriptGraph().serialize(asTemplate=True), {"x": 2})
+    assert result["outputs"] == {"y": 6, "obj": None}
+    assert result["interpreter"] == ""
+
+
+def test_runLiveInInterpreter(monkeypatch):
+    """ A context not available here runs in its interpreter (here another Python). """
+    import sys
+    from meshroom.core.subgraph.contexts import PythonContext
+    from meshroom.core.subgraph.runner import runLive
+    monkeypatch.setattr(PythonContext, "isAvailable", classmethod(lambda cls: False))
+    monkeypatch.setattr(PythonContext, "interpreter", classmethod(lambda cls: [sys.executable]))
+    result = runLive(scriptGraph().serialize(asTemplate=True), {"x": 5}, context="python")
+    assert result["outputs"] == {"y": 15, "obj": None}
+    assert result["interpreter"] == sys.executable
+
+    graph = scriptGraph()
+    graph.node("LiveScript_1").code.value = "raise RuntimeError('boom')"
+    with pytest.raises(SubGraphError, match="LiveScript_1: RuntimeError: boom"):
+        runLive(graph.serialize(asTemplate=True), {"x": 5}, context="python")

@@ -530,7 +530,7 @@ class UIGraph(QObject):
 
     @Slot(QObject, result=bool)
     def enterSubGraph(self, node) -> bool:
-        """ Show the subgraph of a SubGraph / LiveSubGraph node. Returns whether it was entered. """
+        """ Show the subgraph of a SubGraph node. Returns whether it was entered. """
         if not isSubGraphNode(node):
             return False
         if self.isComputingLocally():

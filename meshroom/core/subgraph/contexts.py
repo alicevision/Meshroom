@@ -14,6 +14,7 @@ other in the same interpreter. A context class registered under a name (e.g. "py
   software itself (its Python shell), the context uses the running session and closes nothing.
 """
 import importlib
+import logging
 import os
 import shlex
 from typing import Dict, List, Optional, Type
@@ -80,6 +81,11 @@ class HoudiniContext(LiveContext):
     Houdini: `ctx.context.session` is the hou module. Available in hython and in a Houdini session; from
     Meshroom or a farm, the subgraph runs in hython (MESHROOM_HYTHON to change the command). The current
     frame of Houdini follows the frame loops.
+
+    During a run, the task nodes written to open and save the scene themselves (hou.hipFile.load / save in
+    each node) share the session: loading the scene already open does nothing, and the saves are grouped
+    in one save at the end of a Meshroom task (none from a Houdini session, unless a HoudiniSave node asks
+    for it). The scene is saved before another scene is loaded in a Meshroom task.
     """
     interpreterVariable = "MESHROOM_HYTHON"
     defaultInterpreter = "hython"
@@ -92,16 +98,80 @@ class HoudiniContext(LiveContext):
         import hou
         super().open()
         self.session = hou
+        # Scene requested by the saves of the nodes, saved at the end (or before loading another scene)
+        self.pendingSave = None
+        self._realLoad = self._realSave = None
+        self._installSceneGuard()
+
+    def _installSceneGuard(self):
+        """ Replace hou.hipFile.load / save during the run (see the class documentation). """
+        hipFile = self.session.hipFile
+        realLoad, realSave = hipFile.load, hipFile.save
+
+        def load(file_name, *args, **kwargs):
+            if _samePath(hipFile.path(), file_name):
+                logging.info(f"[SubGraph] {file_name} is the open scene: not loaded again.")
+                return None
+            self._flushPendingSave()
+            return realLoad(file_name, *args, **kwargs)
+
+        def save(file_name=None, *args, **kwargs):
+            self.pendingSave = file_name or hipFile.path()
+            logging.info(f"[SubGraph] Save of {self.pendingSave} grouped at the end of the subgraph.")
+
+        try:
+            hipFile.load, hipFile.save = load, save
+        except (AttributeError, TypeError) as e:
+            logging.warning(f"[SubGraph] Cannot intercept hou.hipFile.load / save ({e}): each node loads and saves the scene.")
+            return
+        self._realLoad, self._realSave = realLoad, realSave
+
+    def _removeSceneGuard(self):
+        if self._realLoad is not None:
+            hipFile = self.session.hipFile
+            hipFile.load, hipFile.save = self._realLoad, self._realSave
+
+    def loadScene(self, path: str):
+        """ Load a scene, unless it is the open one (the pending save is done first in a Meshroom task). """
+        if _samePath(self.session.hipFile.path(), path):
+            return
+        self._flushPendingSave()
+        (self._realLoad or self.session.hipFile.load)(path, suppress_save_prompt=True, ignore_load_warnings=True)
+
+    def saveScene(self, path: Optional[str] = None):
+        """ Save the scene now (to `path`, else to the pending save path, else to its current file). """
+        path = path or self.pendingSave or self.session.hipFile.path()
+        (self._realSave or self.session.hipFile.save)(path)
+        self.pendingSave = None
+
+    def discardPendingSave(self):
+        self.pendingSave = None
+
+    def _flushPendingSave(self):
+        if self.pendingSave and self.ownsSession:
+            self.saveScene(self.pendingSave)
+        elif self.pendingSave:
+            logging.warning(f"[SubGraph] The changes of {self.pendingSave} are not saved (Houdini session).")
+            self.pendingSave = None
 
     def close(self):
-        if self.ownsSession and self.session is not None:
-            # Leave the hython session empty, without saving
-            self.session.hipFile.clear(suppress_save_prompt=True)
-        super().close()
+        try:
+            if self.isOpen and self.session is not None:
+                self._flushPendingSave()
+        finally:
+            self._removeSceneGuard()
+            if self.ownsSession and self.session is not None:
+                # Leave the hython session empty
+                self.session.hipFile.clear(suppress_save_prompt=True)
+            super().close()
 
     def beginStep(self, iteration, frame):
         if frame is not None:
             self.session.setFrame(frame)
+
+
+def _samePath(a, b) -> bool:
+    return bool(a) and bool(b) and os.path.normcase(os.path.abspath(str(a))) == os.path.normcase(os.path.abspath(str(b)))
 
 
 class MayaContext(LiveContext):

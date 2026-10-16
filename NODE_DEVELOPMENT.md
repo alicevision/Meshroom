@@ -141,7 +141,7 @@ Only attributes declared in `outputAttributes` can be set through these targeted
 
 ### 5. LiveNode (inside a subgraph)
 
-A `desc.LiveNode` runs in memory inside a subgraph (see [docs/subgraph.md](docs/subgraph.md)): no chunks, no cache folder, no status file. Its `execute(ctx, inputs)` receives the values of its inputs — any Python object for those connected to other live nodes — and returns the values of its outputs. A chain of live nodes runs in one process and one context (Python, Houdini, Maya, Nuke), opened once for the whole chain. Live nodes are only run by a `SubGraph` node, a `LiveSubGraph` node, or `meshroom.subgraph.run`.
+A `desc.LiveNode` runs in memory inside a subgraph (see [docs/subgraph.md](docs/subgraph.md)): no chunks, no cache folder, no status file. Its `execute(ctx, inputs)` receives the values of its inputs — any Python object for those connected to other live nodes — and returns the values of its outputs. A chain of live nodes runs in one process and one context (Python, Houdini, Maya, Nuke), opened once for the whole chain. Live nodes are only run inside a `SubGraph` node or by `meshroom.subgraph.run`; task nodes (`desc.Node`) can also be put in a subgraph, see [docs/subgraph.md](docs/subgraph.md).
 
 Use `desc.LiveValue` for inputs and outputs carrying any value (it connects to any attribute). Set `context` to the context(s) the node needs (`"any"` by default).
 

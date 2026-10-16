@@ -5,8 +5,8 @@
         "nodesVersions": {
             "GraphInput": "1.0",
             "GraphOutput": "1.0",
-            "HoudiniOpenScene": "1.0",
             "HoudiniRender": "1.0",
+            "HoudiniScene": "1.0",
             "HoudiniSetParms": "1.0"
         },
         "template": true
@@ -25,7 +25,7 @@
         "GraphOutput_1": {
             "nodeType": "GraphOutput",
             "position": [
-                800,
+                880,
                 0
             ],
             "inputs": {
@@ -43,34 +43,34 @@
                 }
             }
         },
-        "HoudiniOpenScene_1": {
-            "nodeType": "HoudiniOpenScene",
-            "position": [
-                200,
-                0
-            ],
-            "inputs": {
-                "hipFile": "{GraphInput_1.ports.hipFile}"
-            }
-        },
         "HoudiniRender_1": {
             "nodeType": "HoudiniRender",
             "position": [
-                600,
+                660,
                 0
             ],
             "inputs": {
                 "scene": "{HoudiniSetParms_1.sceneOut}"
             }
         },
-        "HoudiniSetParms_1": {
-            "nodeType": "HoudiniSetParms",
+        "HoudiniScene_1": {
+            "nodeType": "HoudiniScene",
             "position": [
-                400,
+                220,
                 0
             ],
             "inputs": {
-                "scene": "{HoudiniOpenScene_1.sceneOut}",
+                "hipFile": "{GraphInput_1.ports.hipFile}"
+            }
+        },
+        "HoudiniSetParms_1": {
+            "nodeType": "HoudiniSetParms",
+            "position": [
+                440,
+                0
+            ],
+            "inputs": {
+                "scene": "{HoudiniScene_1.scene}",
                 "parms": "# One per line: path/parm = value, or path/parm := expression\n/obj/geo1/xform1/ry := $F * 3",
                 "parmPath": "/obj/geo1/xform1/scale",
                 "value": "{GraphInput_1.ports.scale}"

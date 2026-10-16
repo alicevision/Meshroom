@@ -7,7 +7,7 @@ import MaterialIcons 2.2
 /**
  * Bar on top of the Graph Editor to navigate in the subgraphs (breadcrumb from the project graph to the
  * entered subgraph) and to run a subgraph live (Run Live).
- * Visible inside a subgraph, or when a SubGraph / LiveSubGraph node is selected.
+ * Visible inside a subgraph, or when a SubGraph node is selected.
  */
 Rectangle {
     id: root

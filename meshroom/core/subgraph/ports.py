@@ -1,6 +1,6 @@
 """
 Ports of the subgraphs: the named values entering and leaving a subgraph (GraphInput / GraphOutput nodes)
-and the matching attributes of the nodes that run it (SubGraph, LiveSubGraph).
+and the matching attributes of the nodes that run it (SubGraph).
 
 The ports are the children of AnySet attributes, edited in the user interface like any AnySet child
 (connect to add one, rename, change its label, reorder, remove). They are also written in a hidden string

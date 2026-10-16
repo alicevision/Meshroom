@@ -1,6 +1,6 @@
 """
 Shared parts of the subgraph node descriptors (meshroom/nodes/subgraph): the attributes of the nodes
-running a subgraph (SubGraph, LiveSubGraph) and the synchronization of their ports.
+running a subgraph (SubGraph) and the synchronization of their ports.
 """
 import functools
 import json

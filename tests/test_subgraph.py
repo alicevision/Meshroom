@@ -13,7 +13,6 @@ from meshroom.core.subgraph.ports import anySetValues, formatPortSpec, parsePort
 from meshroom.nodes.subgraph.GraphInput import GraphInput
 from meshroom.nodes.subgraph.GraphOutput import GraphOutput
 from meshroom.nodes.subgraph.LiveScript import LiveScript
-from meshroom.nodes.subgraph.LiveSubGraph import LiveSubGraph
 from meshroom.nodes.subgraph.SubGraph import SubGraph
 
 from .utils import registerNodeDesc, unregisterNodeDesc
@@ -84,14 +83,24 @@ class FakeDccContext(LiveContext):
         FakeDccContext.events.append("close")
 
 
-class NotLive(desc.Node):
+class TaskShotScene(desc.Node):
+    """ A task node computing a value (like a pipeline node giving the scene of a shot). """
     __test__ = False
-    inputs = []
-    outputs = []
+    runs = 0
+    inputs = [
+        desc.StringParam(name="shot", label="Shot", description="", value="sh010"),
+    ]
+    outputs = [
+        desc.File(name="scene", label="Scene", description="", value=None),
+    ]
+
+    def process(self, node):
+        TaskShotScene.runs += 1
+        node.scene.value = f"/shots/{node.shot.value}.hip"
 
 
-_NODE_DESCS = [GraphInput, GraphOutput, LiveScript, LiveSubGraph, SubGraph, LiveAdd, LiveRecord, LiveFail,
-               LiveDccOnly, NotLive]
+_NODE_DESCS = [GraphInput, GraphOutput, LiveScript, SubGraph, LiveAdd, LiveRecord, LiveFail, LiveDccOnly,
+               TaskShotScene]
 
 
 def setup_module():
@@ -207,11 +216,26 @@ def test_frameLoop():
     assert Loop.fromDict(loop.asDict()).frames == [5, 6, 7, 8]
 
 
+def test_taskNodesRunInTheSubGraph():
+    """ A task node runs in the process of the subgraph; its outputs go to the next nodes in memory. """
+    TaskShotScene.runs = 0
+    graph = Graph("")
+    shotScene = graph.addNewNode("TaskShotScene", shot="sh020")
+    script = graph.addNewNode("LiveScript", inSpec="scene", outSpec="upper", code="outs['upper'] = ins['scene'].upper()")
+    graphOutput = graph.addNewNode("GraphOutput", portSpec="upper")
+    graph.addEdge(shotScene.scene, port(script, "ins", "scene"))
+    graph.addEdge(port(script, "outs", "upper"), port(graphOutput, "ports", "upper"))
+    assert run(graph.toDict()) == {"upper": "/SHOTS/SH020.HIP"}
+    assert TaskShotScene.runs == 1
+    # A value set at launch, without declaring a port
+    assert run(graph.toDict(), overrides={"TaskShotScene_1.shot": "sh030"}) == {"upper": "/SHOTS/SH030.HIP"}
+
+
 def test_nestedSubGraph():
     inner = addOneGraph().toDict()
     graph = Graph("")
     graphInput = graph.addNewNode("GraphInput", portSpec="x")
-    nested = graph.addNewNode("LiveSubGraph", subGraph=json.dumps(inner), loopMode="count", iterations=3)
+    nested = graph.addNewNode("SubGraph", subGraph=json.dumps(inner), loopMode="count", iterations=3)
     graphOutput = graph.addNewNode("GraphOutput", portSpec="x")
     # The ports of the nested subgraph are its attributes
     assert [c.name for c in nested.ins.value] == ["x"]
@@ -229,7 +253,7 @@ def test_nestedSubGraphSeesParentFrame():
     record = inner.addNewNode("LiveRecord")
     inner.addEdge(innerInput.frame, record.value)
     graph = Graph("")
-    graph.addNewNode("LiveSubGraph", subGraph=json.dumps(inner.toDict()))
+    graph.addNewNode("SubGraph", subGraph=json.dumps(inner.toDict()))
     variables = {}
     run(graph.toDict(), loop=Loop("frames", first=10, last=11), variables=variables)
     assert [frame for _, frame, _ in variables["records"]] == [10, 11]
@@ -255,15 +279,11 @@ def test_errors():
     with pytest.raises(SubGraphError, match="LiveFail_1: ValueError: broken"):
         run(graph.toDict())
 
-    with pytest.raises(SubGraphError, match="not a live node"):
-        SubGraphPlan({"NotLive_1": {"nodeType": "NotLive", "inputs": {}}})
+    with pytest.raises(SubGraphError, match="Unknown node type 'Missing'"):
+        SubGraphPlan({"Missing_1": {"nodeType": "Missing", "inputs": {}}})
 
-    with pytest.raises(SubGraphError, match="unknown node 'Missing_1'"):
-        SubGraphPlan({"LiveAdd_1": {"nodeType": "LiveAdd", "inputs": {"a": "{Missing_1.sum}"}}})
-
-    with pytest.raises(SubGraphError, match="Cycle"):
-        SubGraphPlan({"LiveAdd_1": {"nodeType": "LiveAdd", "inputs": {"a": "{LiveAdd_2.sum}"}},
-                      "LiveAdd_2": {"nodeType": "LiveAdd", "inputs": {"a": "{LiveAdd_1.sum}"}}})
+    with pytest.raises(SubGraphError, match="No attribute 'LiveAdd_1.nope'"):
+        run(addOneGraph().toDict(), {"x": 1}, overrides={"LiveAdd_1.nope": 1})
 
     with pytest.raises(SubGraphError, match="at most one GraphInput"):
         SubGraphPlan({"GraphInput_1": {"nodeType": "GraphInput", "inputs": {}},
@@ -379,7 +399,7 @@ class FakeHou:
 
     def __init__(self):
         hou = self
-        self.frames, self.loaded = [], []
+        self.frames, self.loaded, self.saved = [], [], []
         self.parms = {"/obj/geo1/tx": FakeParm(0), "/obj/geo1/ry": FakeParm(0)}
         self.tuples = {}
         self.rop = FakeRop(self)
@@ -396,6 +416,7 @@ class FakeHou:
 
             def save(self, path=None):
                 self.current = path or self.current
+                hou.saved.append(self.current)
 
             def clear(self, **kwargs):
                 hou.loaded.append("clear")
@@ -418,10 +439,11 @@ class FakeHou:
 @pytest.fixture
 def fakeHou(monkeypatch):
     import sys
-    from meshroom.nodes.houdini.HoudiniOpenScene import HoudiniOpenScene
+    from meshroom.nodes.houdini.HoudiniScene import HoudiniScene
+    from meshroom.nodes.houdini.HoudiniSave import HoudiniSave
     from meshroom.nodes.houdini.HoudiniRender import HoudiniRender
     from meshroom.nodes.houdini.HoudiniSetParms import HoudiniSetParms
-    nodeDescs = [HoudiniOpenScene, HoudiniRender, HoudiniSetParms]
+    nodeDescs = [HoudiniScene, HoudiniSave, HoudiniRender, HoudiniSetParms, BatchSetParm]
     for nodeDesc in nodeDescs:
         registerNodeDesc(nodeDesc)
     hou = FakeHou()
@@ -434,22 +456,22 @@ def fakeHou(monkeypatch):
 def test_houdiniChain(fakeHou):
     graph = Graph("")
     graphInput = graph.addNewNode("GraphInput", portSpec="hip, offset")
-    openScene = graph.addNewNode("HoudiniOpenScene")
+    openScene = graph.addNewNode("HoudiniScene")
     setParms = graph.addNewNode("HoudiniSetParms", parms="/obj/geo1/ry := $F * 2\n/obj/geo1/t = (1, 2, 3)",
                                 parmPath="/obj/geo1/tx")
     render = graph.addNewNode("HoudiniRender")
     graphOutput = graph.addNewNode("GraphOutput", portSpec="image")
     graph.addEdge(port(graphInput, "ports", "hip"), openScene.hipFile)
     graph.addEdge(port(graphInput, "ports", "offset"), setParms.value)
-    graph.addEdge(openScene.sceneOut, setParms.scene)
+    graph.addEdge(openScene.scene, setParms.scene)
     graph.addEdge(setParms.sceneOut, render.scene)
     graph.addEdge(render.outputFile, port(graphOutput, "ports", "image"))
 
-    import meshroom.subgraph
-    outputs = meshroom.subgraph.run(graph.toDict(), {"hip": "/scenes/shot.hip", "offset": 5}, frames=(1, 3))
+    # A Meshroom task: the scene is opened once (then it is the current scene), the frame follows the loop
+    outputs = run(graph.toDict(), {"hip": "/scenes/shot.hip", "offset": 5}, loop=Loop("frames", first=1, last=3),
+                  ownsSession=True)
     assert outputs == {"image": "/render/beauty.0003.exr"}
-    # The scene is opened once (then it is the current scene), the frame follows the loop
-    assert fakeHou.loaded == ["/scenes/shot.hip"]
+    assert fakeHou.loaded == ["/scenes/shot.hip", "clear"]
     assert fakeHou.frames == [1, 2, 3]
     assert fakeHou.rop.renders == [(1, 1), (2, 2), (3, 3)]
     assert fakeHou.parms["/obj/geo1/tx"].value == 5
@@ -457,24 +479,80 @@ def test_houdiniChain(fakeHou):
     assert fakeHou.tuples["/obj/geo1/t"].value == (1, 2, 3)
 
 
-def test_houdiniSessionOwnership(fakeHou):
+class BatchSetParm(desc.Node):
+    """ A Houdini task node written as usual: it loads the scene, changes it, saves it. """
+    __test__ = False
+    pythonExecutable = "hython"
+    inputs = [
+        desc.File(name="scene", label="Scene", description="", value=""),
+        desc.StringParam(name="parmPath", label="Parm", description="", value="/obj/geo1/tx"),
+        desc.FloatParam(name="value", label="Value", description="", value=1.0),
+    ]
+    outputs = [
+        desc.File(name="output", label="Output", description="", value=None),
+    ]
+
+    def process(self, node):
+        import hou
+        hou.hipFile.load(node.scene.value, suppress_save_prompt=True)
+        hou.parm(node.parmPath.value).set(node.value.value)
+        hou.hipFile.save(node.scene.value)
+        node.output.value = node.scene.value
+
+
+def houdiniSceneGraph():
+    """ TaskShotScene -> HoudiniScene -> BatchSetParm (tx) -> BatchSetParm (ry) -> HoudiniSave """
+    TaskShotScene.runs = 0
     graph = Graph("")
-    graph.addNewNode("HoudiniOpenScene", hipFile="/scenes/shot.hip")
-    # From a script or the shell of Houdini: the scene stays open
-    run(graph.toDict())
-    assert fakeHou.loaded == ["/scenes/shot.hip"]
-    # For a task of Meshroom: the session is cleaned at the end
-    run(graph.toDict(), ownsSession=True)
-    assert fakeHou.loaded == ["/scenes/shot.hip", "clear"]
+    shotScene = graph.addNewNode("TaskShotScene", shot="sh010")
+    scene = graph.addNewNode("HoudiniScene")
+    tx = graph.addNewNode("BatchSetParm", parmPath="/obj/geo1/tx", value=2.0)
+    ry = graph.addNewNode("BatchSetParm", parmPath="/obj/geo1/ry", value=45.0)
+    save = graph.addNewNode("HoudiniSave")
+    graph.addEdge(shotScene.scene, scene.hipFile)
+    graph.addEdge(scene.scene, tx.scene)
+    graph.addEdge(tx.output, ry.scene)
+    graph.addEdge(ry.output, save.scene)
+    return graph
+
+
+def test_houdiniMeshroomTask(fakeHou):
+    """ In a Meshroom task: the pipeline node gives the scene, opened once, saved once at the end. """
+    assert run(houdiniSceneGraph().toDict(), ownsSession=True) == {}
+    assert TaskShotScene.runs == 1
+    assert fakeHou.loaded == ["/shots/sh010.hip", "clear"]
+    assert fakeHou.saved == ["/shots/sh010.hip"]
+    assert fakeHou.parms["/obj/geo1/tx"].value == 2.0 and fakeHou.parms["/obj/geo1/ry"].value == 45.0
+    # The real load / save are back after the run
+    assert fakeHou.hipFile.load.__name__ == "load" and "HipFile" in type(fakeHou.hipFile).__name__
+
+
+def test_houdiniSession(fakeHou):
+    """ In a Houdini session: the open scene prevails, the pipeline node is not run, nothing is saved. """
+    import meshroom.subgraph
+    fakeHou.hipFile.current = "/shots/current.hip"
+    meshroom.subgraph.run(houdiniSceneGraph().toDict())
+    assert TaskShotScene.runs == 0
+    assert fakeHou.loaded == [] and fakeHou.saved == []
+    assert fakeHou.parms["/obj/geo1/tx"].value == 2.0 and fakeHou.parms["/obj/geo1/ry"].value == 45.0
+
+    # Save In Houdini Session: saved once
+    graph = houdiniSceneGraph()
+    graph.node("HoudiniSave_1").saveInSession.value = True
+    meshroom.subgraph.run(graph.toDict())
+    assert fakeHou.saved == ["/shots/current.hip"]
 
 
 def test_flowDependencies():
     """ A flow connection runs a node after another one, without passing a value. """
-    plan = SubGraphPlan({
-        "LiveAdd_1": {"nodeType": "LiveAdd", "inputs": {}, "internalInputs": {"flowIn": "{LiveAdd_2.flowOut}"}},
+    from meshroom.core.subgraph.contexts import createContext
+    from meshroom.core.subgraph.executor import RunContext, executionOrder
+    graph = SubGraphPlan({
+        "LiveAdd_1": {"nodeType": "LiveAdd", "inputs": {}, "internalInputs": {"flowInputs": ["{LiveAdd_2.flowOutput}"]}},
         "LiveAdd_2": {"nodeType": "LiveAdd", "inputs": {}},
-    })
-    assert [node.name for node in plan.order] == ["LiveAdd_2", "LiveAdd_1"]
+    }).build()
+    order = executionOrder(graph, RunContext(createContext("python"), Loop()))
+    assert [node.name for node in order] == ["LiveAdd_2", "LiveAdd_1"]
 
 
 # ---------------------------------------------------------------------------
@@ -515,7 +593,7 @@ def test_editNestedAndTemplateSubGraph(tmp_path):
     level1 = stack.enter(project, outer)
     # A new SubGraph node starts with a GraphInput and a GraphOutput
     assert sorted(n.nodeType for n in level1.nodes) == ["GraphInput", "GraphOutput"]
-    nested = level1.addNewNode("LiveSubGraph", template=templatePath)
+    nested = level1.addNewNode("SubGraph", template=templatePath)
     level2 = stack.enter(level1, nested)
     assert stack.names() == [outer.name, nested.name]
     level2.node("LiveAdd_1").b.value = 100
@@ -523,7 +601,7 @@ def test_editNestedAndTemplateSubGraph(tmp_path):
     # Saving the project writes every level back: the template file, then the embedded subgraph
     assert stack.commitAll(level2) is project
     assert run(templatePath, {"x": 1}) == {"x": 101}
-    assert "LiveSubGraph_1" in json.loads(outer.subGraph.value)["graph"]
+    assert "SubGraph_1" in json.loads(outer.subGraph.value)["graph"]
     assert stack.exit(level2) is level1
     assert stack.exit(level1) is project
 

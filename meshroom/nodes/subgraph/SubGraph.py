@@ -2,10 +2,11 @@ __version__ = "1.0"
 
 import json
 import math
+import os
 import shlex
 
 from meshroom.core import desc
-from meshroom.core.subgraph import contextClass, resolveContextName, run
+from meshroom.core.subgraph import activeRunContext, contextClass, resolveContextName, run
 from meshroom.core.subgraph.nodes import (contextParam, isFrameLoop, loopFromNode, loopParams, makeLocal, nodePlan,
                                           subGraphSourceParams, syncSubGraphPorts, watchSubGraphPorts, defaultSubGraph)
 from meshroom.core.utils import VERBOSE_LEVEL
@@ -41,9 +42,10 @@ def _storable(value):
 
 class SubGraph(desc.Node):
     """
-    Runs a subgraph of live nodes as one task: the software of its context (Python, Houdini...) is opened
-    once, the live nodes run one after the other in memory, then it is closed. Double-click the node to
-    edit its subgraph.
+    Runs a subgraph as one task: the software of its context (Python, Houdini...) is opened once, the
+    nodes of the subgraph (live nodes and task nodes) run one after the other in this session, the values
+    going from node to node in memory, then it is closed. Inside another subgraph, it runs in the session
+    of its parent. Double-click the node to edit its subgraph.
 
     The subgraph is embedded in the node, or read from a template (.mgt). Its GraphInput ports are the
     inputs of the node (`ins`), its GraphOutput ports its outputs (`outs`).
@@ -126,10 +128,13 @@ class SubGraph(desc.Node):
                 loop = loop.subset(chunk.range.start, chunk.range.end)
                 chunk.logger.info(f"Frames: {loop.frames}")
             inputs = {child.name: child.value for child in node.ins.value}
+            # Inside the run of another subgraph: the session of that run is used, values stay Python objects
+            nested = activeRunContext() is not None
             outputs = run(plan, inputs, context=node.context.value, loop=loop, logger=chunk.logger,
-                          variables={"nodeName": node.name}, ownsSession=True)
+                          variables=None if nested else {"nodeName": node.name}, ownsSession=True,
+                          cacheDir=os.path.join(node.internalFolder, "subgraph"))
             for child in node.outs.value:
                 if child.name in outputs:
-                    child.value = _storable(outputs[child.name])
+                    child.value = outputs[child.name] if nested else _storable(outputs[child.name])
         finally:
             chunk.logManager.end()

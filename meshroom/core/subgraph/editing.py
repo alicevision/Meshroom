@@ -1,5 +1,5 @@
 """
-Editing of subgraphs: entering a node running a subgraph (SubGraph, LiveSubGraph) shows its subgraph as
+Editing of subgraphs: entering a node running a subgraph (SubGraph) shows its subgraph as
 a graph of its own; leaving it writes the subgraph back in the node (embedded subgraph), or in its
 template file when the node only references a template.
 
@@ -15,7 +15,7 @@ from meshroom.core.graphIO import GraphIO
 from .executor import readGraphData
 from .nodes import nodeGraphSource
 
-SUBGRAPH_NODE_TYPES = ("SubGraph", "LiveSubGraph")
+SUBGRAPH_NODE_TYPES = ("SubGraph",)
 
 
 def isSubGraphNode(node) -> bool:

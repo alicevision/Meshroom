@@ -1,6 +1,6 @@
 # Subgraphs
 
-A **subgraph** is a chain of **live nodes** run as **one task**, in one software session (its *context*), in memory, without cache files between the nodes. It looks like a standard Meshroom node (`SubGraph`): on a farm it takes one machine (or one machine per group of frames), whatever the number of nodes it contains.
+A **subgraph** is a chain of nodes run as **one task**, in one software session (its *context*), the values going from node to node in memory. It looks like a standard Meshroom node (`SubGraph`): on a farm it takes one machine (or one machine per group of frames), whatever the number of nodes it contains.
 
 Typical uses:
 - compositing: a graph of image operations is one task per frame range, not one task per operation;
@@ -14,11 +14,29 @@ Typical uses:
 | `SubGraph` | Runs a subgraph as a task (local or farm). Its inputs `ins` are the ports of the `GraphInput` node of the subgraph, its outputs `outs` those of its `GraphOutput` node. |
 | `GraphInput` | Entry of the subgraph: one output per port, plus the loop state (`iteration` in a count loop; `frame`, `frameStart`, `frameEnd` in a frame range loop). At most one per subgraph. |
 | `GraphOutput` | Exit of the subgraph: one input per port. At most one per subgraph, optional. |
-| `LiveSubGraph` | A subgraph inside a subgraph, run in the same session, with its own loop. |
 | `LiveScript` | Python code run in the context: reads `ins`, `ctx`, `session`; fills `outs`. |
-| `HoudiniOpenScene`, `HoudiniSetParms`, `HoudiniRender`, `HoudiniSaveScene` | Houdini operations (context `houdini`). |
+| `HoudiniScene` | The Houdini scene, the value that prevails: in a Meshroom task, opens `Scene File` (e.g. given by a pipeline node); in a Houdini session, the open scene (`Scene File` is not read). |
+| `HoudiniSave` | Saves the scene once. In a Houdini session, only if `Save In Houdini Session` is on. |
+| `HoudiniSetParms`, `HoudiniRender` | Houdini operations written as live nodes. |
 
-A subgraph only contains live nodes (`desc.LiveNode`, see [NODE_DEVELOPMENT.md](../NODE_DEVELOPMENT.md)); any value goes through their connections (an image buffer, a `hou.Node`, a list...). Nodes without connections between them can be ordered with flow connections.
+### Any node in a subgraph
+
+A subgraph can contain **any node**, and a node behaves according to where it is: at the top of a project it is a task (its own process, its own farm job); in a subgraph it runs in the process and the session of the subgraph, after the nodes it reads, and its outputs go to the next nodes in memory.
+- **Task nodes** (`desc.Node`, e.g. the Houdini nodes of a pipeline plugin with `pythonExecutable = "hython"`): their `process` / `processChunk` is called as is. The context is deduced from their interpreter (hython: Houdini, mayapy: Maya, nuke: Nuke).
+- **Command line nodes**: their program runs at their turn, in the same task.
+- **Live nodes** (`desc.LiveNode`, see [NODE_DEVELOPMENT.md](../NODE_DEVELOPMENT.md)): their `execute` gets and returns any Python object (an image buffer, a `hou.Node`...).
+- **A SubGraph** in a subgraph runs in the session of its parent, with its own loop.
+
+Nodes without connections between them can be ordered with flow connections.
+
+**Only what is needed runs**: the nodes without downstream node (and the GraphOutput), and what they read. A node can ignore an input in a context (`desc.BaseNode.ignoredInputs`): `HoudiniScene` ignores its `Scene File` in a Houdini session, so a pipeline node computing the scene path (e.g. `GetCgScene`) is only run in Meshroom and on the farm.
+
+**Scene loads and saves** (Houdini): the task nodes written to load and save the scene themselves keep working as is. During a subgraph, loading the scene already open does nothing, and their saves are grouped into one save at the end of a Meshroom task (or at `HoudiniSave`); nothing is saved in a Houdini session unless `HoudiniSave` asks for it.
+
+Typical Houdini subgraph:
+```
+GetCgScene -> HoudiniScene -> HoudiniSetFrameRange -> HoudiniUpdateValue -> HoudiniPythonNode -> HoudiniSave
+```
 
 ### Ports
 
@@ -55,11 +73,11 @@ That interpreter must be able to import Meshroom and its dependencies (e.g. `psu
 | count | `Iterations` runs; the outputs of an iteration feed the inputs of the same name of the next one (a feedback, e.g. a fractal) |
 | frameRange | runs once per frame from `First Frame` to `Last Frame` every `Frame Step`; `Frames Per Task` splits the range in tasks (farm), 0 for one task |
 
-The live nodes read `ctx.iteration` and `ctx.frame` (also outputs of `GraphInput`); the current frame of Houdini / Maya / Nuke follows the frame loop. A `LiveSubGraph` without its own loop sees the frame of its parent.
+The nodes read the loop state from the outputs of `GraphInput` (live nodes also with `ctx.iteration`, `ctx.frame`); the current frame of Houdini / Maya / Nuke follows the frame loop. A nested `SubGraph` without its own loop sees the frame of its parent.
 
 ## User interface
 
-- **Double-click** a `SubGraph` / `LiveSubGraph` node (or select it and press **Ctrl+Enter**) to show its subgraph.
+- **Double-click** a `SubGraph` node (or select it and press **Ctrl+Enter**) to show its subgraph.
 - The **breadcrumb** at the top of the Graph Editor shows the path from the project; click an element (or **Ctrl+Backspace**) to go back. Leaving writes the subgraph back in its node; the ports of the node follow its `GraphInput` / `GraphOutput`.
 - **Run Live** (play button of the bar) runs the subgraph now with the inputs of its node: in Meshroom for Python, else in the interpreter of its context. A frame loop runs its first frame only. The duration and the outputs are shown in the bar.
 - Saving, computing or submitting from a subgraph acts on the project (the subgraphs are written back first). The undo history is cleared when entering or leaving a subgraph.
@@ -70,17 +88,19 @@ The live nodes read `ctx.iteration` and `ctx.frame` (also outputs of `GraphInput
 # Houdini Python shell (Meshroom in PYTHONPATH, MESHROOM_NODES_PATH / MESHROOM_PLUGINS_PATH for other nodes)
 import meshroom.subgraph
 
-outputs = meshroom.subgraph.run("/path/houdiniRender.mgt", {"hipFile": hou.hipFile.path(), "scale": 2.0})
-outputs = meshroom.subgraph.run("/path/houdiniRender.mgt", {"scale": 2.0}, frames=(1001, 1010))
-outputs = meshroom.subgraph.run("/path/feedback.mgt", {"value": 1}, iterations=5)
+outputs = meshroom.subgraph.run("/path/houdiniRender.mgt")                       # a template
+outputs = meshroom.subgraph.run("/path/project.mg", node="SubGraph_1")           # the subgraph of a project node
+outputs = meshroom.subgraph.run("/path/houdiniRender.mgt", frames=(1001, 1010))  # a frame loop
+outputs = meshroom.subgraph.run("/path/houdiniRender.mgt", set={"HoudiniSetParms_1.parmPath": "/obj/geo2/tx"})
+outputs = meshroom.subgraph.run("/path/feedback.mgt", {"value": 1}, iterations=5)  # GraphInput ports
 ```
 
-The session of the software is used as it is: `HoudiniOpenScene` does not reload the scene if it is already the current one, and nothing is closed at the end. To run a template many times, load it once with `plan = meshroom.subgraph.load(path)` and pass `plan` to `run`.
+The session of the software is used as it is and prevails: `HoudiniScene` gives the open scene (the nodes computing the scene path for Meshroom are not run), loading the open scene does nothing, nothing is saved unless `HoudiniSave` asks for it, and nothing is closed at the end. `set` changes attribute values without declaring ports. After the first call (loading the node types), a run costs about a millisecond per node plus the work of the nodes.
 
 ## Examples
 
 - [subgraph/pythonFeedback.mgt](subgraph/pythonFeedback.mgt): a `LiveScript` in a count loop (no software needed).
-- [subgraph/houdiniRender.mgt](subgraph/houdiniRender.mgt): open a scene, set parameters, render the frame of the loop.
+- [subgraph/houdiniRender.mgt](subgraph/houdiniRender.mgt): the scene (`HoudiniScene`), parameters, render of the frame of the loop.
 
 ## Writing a context
 

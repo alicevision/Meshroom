@@ -1,12 +1,14 @@
 """
 Run Meshroom subgraphs from the Python shell of a software (Houdini, Maya, Nuke) or any Python script,
-in the current session: the live nodes run one after the other in memory, as fast as running their
-scripts directly, without any cache file.
+in the current session: the nodes run one after the other in this session, the values going from node to
+node in memory. The session prevails: e.g. a HoudiniScene node gives the open scene, and the nodes only
+computing the scene path in Meshroom (a pipeline node) are not run.
 
     import meshroom.subgraph
     outputs = meshroom.subgraph.run("/path/to/turntable.mgt", {"asset": "/path/asset.usd"})
     outputs = meshroom.subgraph.run("/path/to/comp.mgt", frames=(1001, 1100))
-    outputs = meshroom.subgraph.run("/path/to/project.mg", {"shotName": "sh010"}, node="SubGraph_1")
+    outputs = meshroom.subgraph.run("/path/to/project.mg", node="SubGraph_1")
+    outputs = meshroom.subgraph.run("/path/to/setup.mgt", set={"HoudiniSetFrameRange_1.frameRange.start": 1001})
 
 Meshroom (and its dependencies, such as psutil) must be importable: add its folder to PYTHONPATH, and
 the folders of the plugins providing the live nodes to MESHROOM_NODES_PATH / MESHROOM_PLUGINS_PATH.
@@ -41,7 +43,7 @@ def load(source) -> SubGraphPlan:
 
 def nodeSubGraph(projectPath: str, nodeName: str):
     """
-    The subgraph of a SubGraph / LiveSubGraph node of a project (.mg): its embedded subgraph, else its template.
+    The subgraph of a SubGraph node of a project (.mg): its embedded subgraph, else its template.
     """
     from meshroom.core.subgraph import readGraphData
     graphData = readGraphData(projectPath)
@@ -56,7 +58,8 @@ def nodeSubGraph(projectPath: str, nodeName: str):
 
 def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         frames: Optional[Union[Sequence[int], tuple]] = None, step: int = 1, iterations: Optional[int] = None,
-        variables: Optional[dict] = None, logger: Optional[logging.Logger] = None, node: Optional[str] = None) -> dict:
+        variables: Optional[dict] = None, logger: Optional[logging.Logger] = None, node: Optional[str] = None,
+        set: Optional[dict] = None) -> dict:
     """
     Run a subgraph in the current interpreter and return the values of its GraphOutput ports.
 
@@ -69,6 +72,8 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         iterations: run it N times, the outputs feeding the inputs of the same name.
         variables: values shared by the nodes (ctx.variables).
         node: with a project file (.mg) as source, the name of the SubGraph node whose subgraph is run.
+        set: values of attributes of the nodes, set before running: {"Node_1.attribute": value} (or
+             "Node_1.group.child"), without declaring ports.
 
     Raises:
         SubGraphError: an error in a node (its name is in the message).
@@ -87,4 +92,4 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         loop = Loop("count", iterations=iterations)
     else:
         loop = Loop()
-    return _run(source, inputs, context=context, loop=loop, variables=variables, logger=logger)
+    return _run(source, inputs, context=context, loop=loop, variables=variables, logger=logger, overrides=set)

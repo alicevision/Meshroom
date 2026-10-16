@@ -1,29 +1,11 @@
-"""
-Execution of the subgraphs: chains of live nodes (desc.LiveNode) run in memory, in topological order,
-in one context (see contexts.py), without chunks, cache folders or files between the nodes.
-
-A subgraph is read from its serialized form (the "graph" of a .mg / .mgt file, or of the "subGraph"
-attribute of a SubGraph node), not from a core Graph: no Qt object is built and the descriptors are only
-instantiated, so that running a template from the Python shell of a software costs about the same as
-running the scripts of its nodes one after the other.
-
-Values between nodes are any Python objects (an image buffer, a hou.Node...). A node input connected to
-the output of another node gets the value that node returned; otherwise its value stored in the graph, or
-the default value of its descriptor.
-
-GraphInput / GraphOutput nodes (at most one of each) are the interface of the subgraph: the values given
-to `run` come out of the GraphInput ports, and the values entering the GraphOutput ports are returned.
-
-Loops (see Loop): the whole subgraph is run several times, either a number of iterations (the outputs of
-an iteration feeding the inputs of the same name of the next one) or once per frame of a frame range.
-The live nodes read the loop state with ctx.iteration, ctx.frame, ctx.loop.
-"""
 import json
 import logging
 import os
 import re
+import tempfile
+import threading
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from .contexts import LiveContext, createContext
 
@@ -130,31 +112,6 @@ class RunContext:
         return RunContext(self.context, loop, self.variables, self.logger, self._cancel, parent=self)
 
 
-class PlanNode:
-    """ A node of a subgraph ready to run: its descriptor instance and its serialized inputs. """
-
-    def __init__(self, name: str, nodeType: str, nodeDesc, inputs: dict, internalInputs: dict):
-        self.name = name
-        self.nodeType = nodeType
-        self.nodeDesc = nodeDesc
-        self.inputs = inputs
-        self.internalInputs = internalInputs
-        # Links of the inputs, and of the internal flow inputs (to run a node after another one)
-        self.dependencies = sorted({link[0] for link in _links(inputs) + _links(internalInputs)})
-
-
-def _links(value) -> List[Tuple[str, str]]:
-    """ The (node, attribute) links found in a serialized value (nested in groups / lists too). """
-    if isinstance(value, str):
-        match = _LINK.match(value)
-        return [(match.group("node"), match.group("attribute"))] if match else []
-    if isinstance(value, dict):
-        return [link for item in value.values() for link in _links(item)]
-    if isinstance(value, (list, tuple)):
-        return [link for item in value for link in _links(item)]
-    return []
-
-
 def _nodeDescFor(nodeType: str):
     import meshroom.core
     provider = meshroom.core.pluginManager.getNodeDescProvider(nodeType)
@@ -181,29 +138,85 @@ def readGraphData(source) -> dict:
     return source.get("graph", source) if ("graph" in source or "header" in source) else source
 
 
+def contextOf(nodeDesc) -> Tuple[str, ...]:
+    """
+    The contexts a node can run in: its `context` (live nodes), else deduced from the interpreter of a task
+    node (hython: houdini, mayapy: maya, nuke: nuke), else "any".
+    """
+    context = getattr(nodeDesc, "context", None)
+    if context:
+        return (context,) if isinstance(context, str) else tuple(context)
+    executable = os.path.basename(str(getattr(nodeDesc, "pythonExecutable", "") or "")).lower()
+    for name, context in (("hython", "houdini"), ("mayapy", "maya"), ("nuke", "nuke")):
+        if name in executable:
+            return (context,)
+    return ("any",)
+
+
+def _topAttributeName(attribute) -> str:
+    """ The name of the top-level attribute of an attribute (itself, or the group / list containing it). """
+    while attribute.root is not None:
+        attribute = attribute.root
+    return attribute.name
+
+
+def _plainValue(attribute):
+    """ The value of an attribute as plain Python values (dicts for groups and AnySets, lists for lists). """
+    from meshroom.core.attribute import GroupAttribute, ListAttribute
+    if isinstance(attribute, GroupAttribute):
+        return {child.name: _plainValue(child) for child in attribute.value}
+    if isinstance(attribute, ListAttribute):
+        return [_plainValue(child) for child in attribute.value]
+    return attribute.value
+
+
+def _setPlainValue(attribute, value):
+    """ Set an output attribute from a plain value (a dict sets the children of a group / AnySet). """
+    from meshroom.core.attribute import GroupAttribute
+    if isinstance(attribute, GroupAttribute) and isinstance(value, dict):
+        for child in attribute.value:
+            if child.name in value:
+                _setPlainValue(child, value[child.name])
+        return
+    attribute.value = value
+
+
+def findAttribute(graph, path: str):
+    """ The attribute "Node.attribute" or "Node.group.child" of a graph; raises SubGraphError if missing. """
+    nodeName, _, attributePath = path.partition(".")
+    node = graph.node(nodeName)
+    if node is None or not attributePath:
+        raise SubGraphError(f"No attribute '{path}' (unknown node or attribute).")
+    names = attributePath.split(".")
+    if not node.hasAttribute(names[0]):
+        raise SubGraphError(f"No attribute '{path}'.")
+    attribute = node.attribute(names[0])
+    for name in names[1:]:
+        children = attribute.value
+        attribute = children.get(name) if hasattr(children, "get") and name in children.keys() else None
+        if attribute is None:
+            raise SubGraphError(f"No attribute '{path}'.")
+    return attribute
+
+
 _PLANS: Dict[tuple, "SubGraphPlan"] = {}
 
 
 class SubGraphPlan:
-    """ The nodes of a subgraph in execution order (see the module documentation). """
+    """
+    A subgraph ready to run: its serialized nodes, read once. A Graph is built from it for each run
+    (see `build`), so that the values set by a run do not stay for the next one.
+    """
 
     def __init__(self, graphData: dict):
-        self.nodes: Dict[str, PlanNode] = {}
-        for name, data in graphData.items():
-            if not isinstance(data, dict) or "nodeType" not in data:
+        self.graphData = {name: data for name, data in graphData.items() if isinstance(data, dict) and "nodeType" in data}
+        self.nodeDescs = {}
+        for name, data in self.graphData.items():
+            if data["nodeType"] in ("Backdrop",):
                 continue
-            nodeType = data["nodeType"]
-            if nodeType in ("Backdrop",):
-                continue
-            nodeDesc = _nodeDescFor(nodeType)
-            from meshroom.core import desc
-            if not isinstance(nodeDesc, desc.LiveNode):
-                raise SubGraphError(f"'{nodeType}' is not a live node: only live nodes can be in a subgraph.", name)
-            self.nodes[name] = PlanNode(name, nodeType, nodeDesc, data.get("inputs", {}) or {},
-                                        data.get("internalInputs", {}) or {})
-        self.order = self._sort()
-        inputs = [n for n in self.nodes.values() if getattr(n.nodeDesc, "subGraphRole", "") == "input"]
-        outputs = [n for n in self.nodes.values() if getattr(n.nodeDesc, "subGraphRole", "") == "output"]
+            self.nodeDescs[name] = _nodeDescFor(data["nodeType"])
+        inputs = [name for name, nodeDesc in self.nodeDescs.items() if getattr(nodeDesc, "subGraphRole", "") == "input"]
+        outputs = [name for name, nodeDesc in self.nodeDescs.items() if getattr(nodeDesc, "subGraphRole", "") == "output"]
         if len(inputs) > 1 or len(outputs) > 1:
             raise SubGraphError("A subgraph has at most one GraphInput and one GraphOutput node.")
         self.graphInput = inputs[0] if inputs else None
@@ -217,8 +230,10 @@ class SubGraphPlan:
     def cached(cls, source) -> "SubGraphPlan":
         """
         The plan of a subgraph, reused while its source does not change (a template file is read again
-        when it is modified): nested subgraphs run at each iteration of a loop are only read once.
+        when it is modified).
         """
+        if isinstance(source, SubGraphPlan):
+            return source
         if isinstance(source, str) and not source.lstrip().startswith("{") and os.path.isfile(source):
             key = ("file", os.path.abspath(source), os.path.getmtime(source))
         else:
@@ -230,33 +245,19 @@ class SubGraphPlan:
             plan = _PLANS[key] = cls.load(source)
         return plan
 
-    def _sort(self) -> List[PlanNode]:
-        """ Topological order (Kahn); raises on a cycle or a link to a missing node. """
-        for node in self.nodes.values():
-            for dependency in node.dependencies:
-                if dependency not in self.nodes:
-                    raise SubGraphError(f"Link to an unknown node '{dependency}'.", node.name)
-        remaining = {name: set(node.dependencies) for name, node in self.nodes.items()}
-        order = []
-        while remaining:
-            ready = sorted(name for name, dependencies in remaining.items() if not dependencies)
-            if not ready:
-                raise SubGraphError(f"Cycle between the nodes: {', '.join(sorted(remaining))}.")
-            for name in ready:
-                order.append(self.nodes[name])
-                del remaining[name]
-            for dependencies in remaining.values():
-                dependencies.difference_update(ready)
-        return order
+    def _ports(self, nodeName: Optional[str]) -> List[Tuple[str, str, str]]:
+        if not nodeName:
+            return []
+        return self.nodeDescs[nodeName].ports(self.graphData[nodeName].get("inputs") or {})
 
     @property
     def inputPortTypes(self) -> List[Tuple[str, str, str]]:
         """ The (name, type, label) of the input ports of the subgraph (those of its GraphInput node). """
-        return self.graphInput.nodeDesc.ports(self.graphInput.inputs) if self.graphInput else []
+        return self._ports(self.graphInput)
 
     @property
     def outputPortTypes(self) -> List[Tuple[str, str, str]]:
-        return self.graphOutput.nodeDesc.ports(self.graphOutput.inputs) if self.graphOutput else []
+        return self._ports(self.graphOutput)
 
     @property
     def inputPorts(self) -> List[str]:
@@ -269,120 +270,151 @@ class SubGraphPlan:
     def contextNames(self) -> List[str]:
         """ The contexts required by the nodes: those of the nodes that can only run in one context. """
         names = set()
-        for node in self.order:
-            contexts = node.nodeDesc.contexts()
+        for nodeDesc in self.nodeDescs.values():
+            contexts = contextOf(nodeDesc)
             if len(contexts) == 1 and contexts[0] != "any":
                 names.add(contexts[0])
         return sorted(names)
 
     def checkContext(self, contextName: str):
         """ Raise a SubGraphError if a node cannot run in that context. """
-        for node in self.order:
-            contexts = node.nodeDesc.contexts()
+        for name, nodeDesc in self.nodeDescs.items():
+            contexts = contextOf(nodeDesc)
             if "any" not in contexts and contextName not in contexts:
-                raise SubGraphError(f"'{node.nodeType}' cannot run in the '{contextName}' context "
-                                    f"(only: {', '.join(contexts)}).", node.name)
+                raise SubGraphError(f"'{self.graphData[name]['nodeType']}' cannot run in the '{contextName}' context "
+                                    f"(only: {', '.join(contexts)}).", name)
+
+    def build(self, cacheDir: Optional[str] = None):
+        """ A new Graph with the nodes of the subgraph (its cache folder: `cacheDir`, else a temporary one). """
+        from meshroom.core.graph import Graph
+        from meshroom.core.graphIO import GraphIO
+        graph = Graph("subGraph")
+        graph._deserialize({GraphIO.Keys.Header: {GraphIO.Keys.FileVersion: GraphIO.__version__,
+                                                  GraphIO.Keys.Template: True},
+                            GraphIO.Keys.Graph: json.loads(json.dumps(self.graphData))})
+        graph.cacheDir = cacheDir or _temporaryCacheDir()
+        return graph
 
 
-def _resolve(value, results: Dict[str, Dict[str, Any]]):
-    """ A serialized input value with its links replaced by the values computed by the upstream nodes. """
-    if isinstance(value, str):
-        match = _LINK.match(value)
-        if not match:
-            return value
-        nodeName, attribute = match.group("node"), match.group("attribute")
-        outputs = results.get(nodeName, {})
-        if attribute in outputs:
-            return outputs[attribute]
-        # A child of an output group ("outputs.port")
-        head, _, tail = attribute.partition(".")
-        if head in outputs and isinstance(outputs[head], dict) and tail in outputs[head]:
-            return outputs[head][tail]
-        raise SubGraphError(f"No value for the link to '{nodeName}.{attribute}'.")
-    if isinstance(value, dict):
-        return {key: _resolve(item, results) for key, item in value.items()}
-    if isinstance(value, list):
-        return [_resolve(item, results) for item in value]
-    return value
+_TEMPORARY_CACHE_DIR = None
 
 
-def _inputValues(node: PlanNode, results: Dict[str, Dict[str, Any]]) -> dict:
-    """ The input values of a node: its serialized values (links resolved) over its descriptor defaults. """
-    values = {}
-    for attrDesc in node.nodeDesc.inputs:
-        if attrDesc.name in node.inputs:
-            values[attrDesc.name] = _resolve(node.inputs[attrDesc.name], results)
-            default = _defaultValue(attrDesc)
-            if isinstance(default, dict) and isinstance(values[attrDesc.name], dict) and not _isAnySet(attrDesc):
-                # A group saved with only some of its values (template): the others are the defaults
-                values[attrDesc.name] = {**default, **values[attrDesc.name]}
-        else:
-            values[attrDesc.name] = _defaultValue(attrDesc)
-    # Inputs that are not in the descriptor (e.g. dynamic ports of an AnySet) are kept as they are
-    for name, value in node.inputs.items():
-        if name not in values:
-            values[name] = _resolve(value, results)
-    return values
+def _temporaryCacheDir() -> str:
+    """ The cache folder of the subgraphs run outside of a Meshroom task (one per process). """
+    global _TEMPORARY_CACHE_DIR
+    if _TEMPORARY_CACHE_DIR is None:
+        _TEMPORARY_CACHE_DIR = tempfile.mkdtemp(prefix="meshroomSubGraph")
+    return _TEMPORARY_CACHE_DIR
 
 
-def _isAnySet(attrDesc) -> bool:
-    from meshroom.core import desc
-    return isinstance(attrDesc, desc.AnySet)
+def _ignoredInputs(node, ctx: RunContext) -> set:
+    ignoredInputs = getattr(node.nodeDesc, "ignoredInputs", None)
+    return set(ignoredInputs(node, ctx) or ()) if callable(ignoredInputs) else set()
 
 
-def _defaultValue(attrDesc):
-    from meshroom.core import desc
-    if isinstance(attrDesc, desc.GroupAttribute) and not isinstance(attrDesc, desc.AnySet):
-        return {item.name: _defaultValue(item) for item in attrDesc.items}
-    if isinstance(attrDesc, desc.ListAttribute):
-        return []
-    value = attrDesc.value
-    return None if callable(value) else value
-
-
-def runPlan(plan: SubGraphPlan, ctx: RunContext, inputs: Optional[dict] = None) -> dict:
+def executionOrder(graph, ctx: RunContext) -> list:
     """
-    Run a subgraph in an opened context, with its loop: the values of its GraphOutput ports (of the last
-    iteration). `inputs` are the values of its GraphInput ports.
+    The nodes to run, in order: the nodes without downstream node (and the GraphOutput), and the nodes
+    they read, except through the inputs they ignore in this run (see desc.BaseNode.ignoredInputs).
+    """
+    nodes = [node for node in graph.nodes if node.nodeDesc is not None]
+    upstream = {node.name: [] for node in nodes}
+    hasDownstream = set()
+    for edge in graph.edges:
+        src, dst = edge.src.node, edge.dst.node
+        if src is dst or dst.name not in upstream or src.name not in upstream:
+            continue
+        upstream[dst.name].append((src, _topAttributeName(edge.dst)))
+        hasDownstream.add(src.name)
+    goals = [node for node in nodes if node.name not in hasDownstream
+             or getattr(node.nodeDesc, "subGraphRole", "") == "output"]
+
+    needed = set()
+    stack = list(goals)
+    while stack:
+        node = stack.pop()
+        if node.name in needed:
+            continue
+        needed.add(node.name)
+        ignored = _ignoredInputs(node, ctx)
+        stack.extend(src for src, attributeName in upstream[node.name] if attributeName not in ignored)
+
+    # Topological order of the needed nodes (stable: by name among the ready ones)
+    remaining = {name: {src.name for src, _ in upstream[name] if src.name in needed} for name in needed}
+    order = []
+    while remaining:
+        ready = sorted(name for name, sources in remaining.items() if not sources)
+        if not ready:
+            raise SubGraphError(f"Cycle between the nodes: {', '.join(sorted(remaining))}.")
+        for name in ready:
+            order.append(graph.node(name))
+            del remaining[name]
+        for sources in remaining.values():
+            sources.difference_update(ready)
+    return order
+
+
+def _runTaskNode(node, ctx: RunContext):
+    """ Run the chunks of a task node in this process (see the module documentation). """
+    os.makedirs(node.internalFolder, exist_ok=True)
+    if not node.getChunks() or not node._chunksCreated:
+        node.createChunks()
+    nodeDesc = node.nodeDesc
+    nodeDesc.preprocess(node)
+    for chunk in node.getChunks():
+        ctx.checkCancelled()
+        nodeDesc.processChunk(chunk)
+    nodeDesc.postprocess(node)
+
+
+def _runNode(node, ctx: RunContext, inputs: dict, plan: SubGraphPlan):
+    from meshroom.core import desc
+    nodeDesc = node.nodeDesc
+    if isinstance(nodeDesc, desc.LiveNode):
+        values = {attribute.name: _plainValue(attribute) for attribute in node.attributes if not attribute.isOutput}
+        if node.name == plan.graphInput:
+            produced = nodeDesc.executeInput(ctx, values, inputs)
+        else:
+            produced = nodeDesc.execute(ctx, values)
+        for name, value in (produced or {}).items():
+            if node.hasAttribute(name):
+                _setPlainValue(node.attribute(name), value)
+    elif isinstance(nodeDesc, (desc.Node, desc.CommandLineNode)):
+        _runTaskNode(node, ctx)
+    # Init nodes, backdrops: nothing to run
+
+
+def runGraph(graph, plan: SubGraphPlan, ctx: RunContext, inputs: Optional[dict] = None) -> dict:
+    """
+    Run a subgraph Graph in an opened context, with its loop: the values of its GraphOutput ports (of the
+    last iteration). `inputs` are the values of its GraphInput ports.
     """
     inputs = dict(inputs or {})
     outputs: dict = {}
-    steps = ctx.loop.steps()
-    for iteration, frame in steps:
+    order = executionOrder(graph, ctx)
+    for iteration, frame in ctx.loop.steps():
         if ctx.loop.mode == "none" and ctx.parent is not None:
             # A nested subgraph without its own loop sees the iteration and frame of its parent
             iteration, frame = ctx.parent.iteration, ctx.parent.frame
         ctx.iteration, ctx.frame = iteration, frame
         if ctx.loop.mode != "none":
             ctx.context.beginStep(iteration, frame)
-        outputs = _runOnce(plan, ctx, inputs)
+        for node in order:
+            ctx.checkCancelled()
+            ctx.nodeName = node.name
+            start = time.perf_counter()
+            try:
+                _runNode(node, ctx, inputs, plan)
+            except (SubGraphError, Cancelled):
+                raise
+            except Exception as e:
+                raise SubGraphError(f"{type(e).__name__}: {e}", node.name) from e
+            ctx.logger.debug("[SubGraph] %s (%s) in %.1f ms", node.name, node.nodeType, (time.perf_counter() - start) * 1000)
+        if plan.graphOutput:
+            outputs = _plainValue(graph.node(plan.graphOutput).attribute("ports"))
         if ctx.loop.mode == "count":
             # Feedback: the outputs feed the inputs of the same name of the next iteration
             inputs.update({name: value for name, value in outputs.items() if name in plan.inputPorts or name in inputs})
-    return outputs
-
-
-def _runOnce(plan: SubGraphPlan, ctx: RunContext, inputs: dict) -> dict:
-    results: Dict[str, Dict[str, Any]] = {}
-    outputs: dict = {}
-    for node in plan.order:
-        ctx.checkCancelled()
-        ctx.nodeName = node.name
-        values = _inputValues(node, results)
-        start = time.perf_counter()
-        try:
-            if node is plan.graphInput:
-                produced = node.nodeDesc.executeInput(ctx, values, inputs)
-            else:
-                produced = node.nodeDesc.execute(ctx, values)
-        except (SubGraphError, Cancelled):
-            raise
-        except Exception as e:
-            raise SubGraphError(f"{type(e).__name__}: {e}", node.name) from e
-        ctx.logger.debug("[SubGraph] %s (%s) in %.1f ms", node.name, node.nodeType, (time.perf_counter() - start) * 1000)
-        results[node.name] = produced or {}
-        if node is plan.graphOutput:
-            outputs = dict(node.nodeDesc.collectOutputs(values))
     return outputs
 
 
@@ -396,28 +428,43 @@ def resolveContextName(plan: SubGraphPlan, context: Optional[str] = None) -> str
     return required[0] if required else "python"
 
 
+_ACTIVE = threading.local()
+
+
+def activeRunContext() -> Optional[RunContext]:
+    """ The run context of the subgraph being run in this thread (None outside of a run). """
+    stack = getattr(_ACTIVE, "stack", None)
+    return stack[-1] if stack else None
+
+
 def run(source, inputs: Optional[dict] = None, context: Optional[str] = None, loop: Optional[Loop] = None,
         variables: Optional[dict] = None, logger: Optional[logging.Logger] = None,
         cancel: Optional[Callable[[], bool]] = None, contextObject: Optional[LiveContext] = None,
-        ownsSession: bool = False) -> dict:
+        ownsSession: bool = False, overrides: Optional[dict] = None, cacheDir: Optional[str] = None) -> dict:
     """
-    Run a subgraph (a template path, a JSON string or a serialized graph dict) in the current interpreter
-    and return the values of its GraphOutput ports.
+    Run a subgraph (a template path, a JSON string, a serialized graph dict or a SubGraphPlan) in the
+    current interpreter and return the values of its GraphOutput ports.
 
     Args:
         inputs: values of its GraphInput ports {port name: value}.
         context: name of the context (see contexts.py); by default the one required by the nodes, else "python".
         loop: how many times to run it (see Loop); once by default.
         variables: values shared by the nodes of the run (ctx.variables).
-        contextObject: an already opened context (nested runs); it is then not closed.
+        contextObject: an already opened context; it is then not closed. Inside the run of another subgraph
+                       (a nested SubGraph node), the context of that run is used.
         ownsSession: whether the session of the software is used only for this run (a task of Meshroom or of
                      a farm), so that it can be cleaned when closed.
+        overrides: {"Node.attribute": value} set before running ("Node.group.child" for a child).
+        cacheDir: cache folder of the task nodes of the subgraph (a temporary folder by default).
 
     Raises:
         SubGraphError: an error in a node (its name is in the message).
     """
-    plan = source if isinstance(source, SubGraphPlan) else SubGraphPlan.cached(source)
+    plan = SubGraphPlan.cached(source)
     loop = loop or Loop()
+    parent = activeRunContext()
+    if contextObject is None and parent is not None:
+        contextObject = parent.context
     ownContext = contextObject is None
     if ownContext:
         context = resolveContextName(plan, context)
@@ -426,10 +473,24 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None, lo
             raise SubGraphError(f"The '{context}' context is not available in this interpreter "
                                 f"(run it with: {' '.join(contextObject.interpreter()) or '?'}).")
         contextObject.open()
+    stack = getattr(_ACTIVE, "stack", None)
+    if stack is None:
+        stack = _ACTIVE.stack = []
     try:
         plan.checkContext(contextObject.name)
-        ctx = RunContext(contextObject, loop, variables, logger, cancel)
-        return runPlan(plan, ctx, inputs)
+        if parent is not None:
+            ctx = RunContext(contextObject, loop, parent.variables if variables is None else variables,
+                             logger or parent.logger, cancel or parent._cancel, parent=parent)
+        else:
+            ctx = RunContext(contextObject, loop, variables, logger, cancel)
+        graph = plan.build(cacheDir)
+        for path, value in (overrides or {}).items():
+            findAttribute(graph, path).value = value
+        stack.append(ctx)
+        try:
+            return runGraph(graph, plan, ctx, inputs)
+        finally:
+            stack.pop()
     finally:
         if ownContext:
             contextObject.close()

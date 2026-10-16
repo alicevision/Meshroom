@@ -106,6 +106,7 @@ A plugin can be installed in one of three ways:
   meshroom_plugins registry add https://example.com/path/to/myRegistry.json
   meshroom_plugins install customPlugin
   ```
+  Local plugins and registry files live in the `plugins` folder of the Meshroom installation: the repository root when running from sources, next to the Meshroom executable in a release. Set `MESHROOM_LOCAL_PLUGINS_PATH` to use another folder. Any plugin folder copied there is loaded as a local plugin.
 - **Plugin folder**: add the plugin root folder to the `MESHROOM_PLUGINS_PATH` environment variable (`;`-separated on Windows, `:`-separated on Linux).
   ```
   export MESHROOM_PLUGINS_PATH=/path/to/customPlugin:$MESHROOM_PLUGINS_PATH

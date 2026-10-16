@@ -22,6 +22,78 @@ Item {
 
     property var _attributeToDelegate: ({})
 
+    /// The visible pin of an attribute: its own, or that of its first visible parent group
+    function pinOf(attribute) {
+        if (!attribute)
+            return null
+        let pin = root._attributeToDelegate[attribute.uuid]
+        if (pin && pin.visible)
+            return pin
+        let group = attribute.root
+        while (group) {
+            let groupPin = root._attributeToDelegate[group.uuid]
+            if (groupPin && groupPin.visible)
+                return groupPin
+            group = group.root
+        }
+        return pin || null
+    }
+
+    /// The other ends of the hidden edges leaving an output, one per line (tooltip of its stub)
+    function hiddenTargetsText(srcAttribute) {
+        var lines = []
+        if (!root.graph)
+            return ""
+        for (var i = 0; i < root.graph.edges.count; i++) {
+            var edge = root.graph.edges.at(i)
+            if (edge.src === srcAttribute && uigraph.isEdgeHidden(edge.dst))
+                lines.push("\u2192 " + edge.dst.node.label + "." + edge.dst.label)
+        }
+        return lines.join("\n")
+    }
+
+    // Edges selected in the graph editor (click on an edge, or a box over edges):
+    // {destination attribute full name: true}. Delete removes them, H hides them.
+    property var selectedEdges: ({})
+    readonly property bool hasSelectedEdges: Object.keys(selectedEdges).length > 0
+    function selectEdges(names, mode) {
+        // mode: "replace", "add" or "toggle"
+        var selection = mode === "replace" ? {} : Object.assign({}, selectedEdges)
+        names.forEach(function(name) {
+            if (mode === "toggle" && selection[name])
+                delete selection[name]
+            else
+                selection[name] = true
+        })
+        selectedEdges = selection
+    }
+    function clearEdgeSelection() {
+        if (hasSelectedEdges)
+            selectedEdges = {}
+    }
+    // The selected edges that still exist (an edge selected before an undo or a reconnection may be gone)
+    function validSelectedEdges() {
+        var names = []
+        if (!root.graph)
+            return names
+        for (var i = 0; i < root.graph.edges.count; i++) {
+            var edge = root.graph.edges.at(i)
+            if (root.selectedEdges[edge.dst.fullName])
+                names.push(edge.dst.fullName)
+        }
+        return names
+    }
+    // Selecting nodes unselects the edges (Delete then acts on the nodes)
+    Connections {
+        target: uigraph ? uigraph.nodeSelection : null
+        // Only when nodes get selected (clearing the node selection, e.g. a click on the graph, keeps the edges)
+        function onSelectionChanged() {
+            if (uigraph.nodeSelection.hasSelection)
+                root.clearEdgeSelection()
+        }
+    }
+    onGraphChanged: clearEdgeSelection()
+
     // Signals
     signal workspaceMoved()
     signal workspaceClicked()
@@ -118,6 +190,10 @@ Item {
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             fit()
+        } else if (event.key === Qt.Key_Delete && root.validSelectedEdges().length > 0) {
+            // The selected edges first (the nodes stay)
+            uigraph.removeEdgesTo(root.validSelectedEdges())
+            root.clearEdgeSelection()
         } else if (event.key === Qt.Key_Delete) {
             if (event.modifiers === Qt.AltModifier) {
                 uigraph.removeNodesFrom(uigraph.getSelectedNodes())
@@ -147,6 +223,15 @@ Item {
             uigraph.alignVertically()
         } else if (event.key === Qt.Key_H && event.modifiers === Qt.ShiftModifier) {
             uigraph.alignHorizontally()
+        } else if (event.key === Qt.Key_H && event.modifiers === Qt.NoModifier) {
+            // Hide the selected edges (or the input edges of the selected nodes), or show them if they are hidden:
+            // a hidden edge leaves a stub on both pins, its tooltip giving the other end
+            if (root.validSelectedEdges().length > 0) {
+                uigraph.toggleHiddenEdges(root.validSelectedEdges())
+                root.clearEdgeSelection()
+            } else {
+                uigraph.toggleHiddenInputEdgesOfSelectedNodes()
+            }
         } else if (event.key === Qt.Key_Tab) {
             event.accepted = true
             if (mouseArea.containsMouse) {
@@ -184,9 +269,20 @@ Item {
             workspaceMoved()
         }
 
+        // Box selection of edges: right button drag on an empty area
+        property point edgeBoxStart
+        property bool edgeBoxActive: false
+        // The last right press made a box (no menu on its release)
+        property bool edgeBoxWasUsed: false
+
         onPressed: function(mouse) {
             if (mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier) {
                 uigraph.clearNodeSelection()
+                root.clearEdgeSelection()
+            }
+            if (mouse.button == Qt.RightButton || mouse.button == Qt.LeftButton) {
+                edgeBoxStart = Qt.point(mouse.x, mouse.y)
+                edgeBoxActive = false
             }
             if (mouse.button == Qt.LeftButton && (mouse.modifiers == Qt.NoModifier || mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))) {
                 nodeSelectionBox.startSelection(mouse)
@@ -200,22 +296,87 @@ Item {
             }
         }
 
-        onReleased: {
+        onReleased: function(mouse) {
+            edgeBoxWasUsed = edgeBoxActive
+            if (edgeBoxActive) {
+                selectEdgesInBox(mouse.modifiers)
+                edgeBoxActive = false
+            }
             removingEdges = false
             edgeSelectionLine.endSelection()
+            var nodeBox = nodeSelectionBox.active && mouse.button == Qt.LeftButton
             nodeSelectionBox.endSelection()
+            // A selection box (left button) around no node selects the edges it crosses
+            if (nodeBox && !uigraph.nodeSelection.hasSelection &&
+                Math.abs(mouse.x - edgeBoxStart.x) + Math.abs(mouse.y - edgeBoxStart.y) > 6) {
+                edgeBox.setEnd(mouse.x, mouse.y)
+                selectEdgesInBox(mouse.modifiers)
+            }
             drag.target = null
             root.forceActiveFocus()
             workspaceClicked()
         }
 
-        onPositionChanged: {
+        onPositionChanged: function(mouse) {
             if (drag.active)
                 workspaceMoved()
+            if ((mouse.buttons & Qt.RightButton) && !edgeBoxActive &&
+                Math.abs(mouse.x - edgeBoxStart.x) + Math.abs(mouse.y - edgeBoxStart.y) > 6) {
+                edgeBox.setEnd(mouse.x, mouse.y)
+                edgeBoxActive = true
+            }
+            if (edgeBoxActive)
+                edgeBox.setEnd(mouse.x, mouse.y)
+        }
+
+        onCanceled: {
+            edgeBoxActive = false
+            edgeBoxWasUsed = false
+        }
+
+        // Select the edges crossing the box (Shift: add, Ctrl: toggle)
+        function selectEdgesInBox(modifiers) {
+            var a = mapToItem(draggable, Math.min(edgeBoxStart.x, edgeBox.endX), Math.min(edgeBoxStart.y, edgeBox.endY))
+            var b = mapToItem(draggable, Math.max(edgeBoxStart.x, edgeBox.endX), Math.max(edgeBoxStart.y, edgeBox.endY))
+            var corners = [Qt.point(a.x, a.y), Qt.point(b.x, a.y), Qt.point(b.x, b.y), Qt.point(a.x, b.y)]
+            var inside = function(x, y) { return x >= a.x && x <= b.x && y >= a.y && y <= b.y }
+            var names = []
+            for (var i = 0; i < edgesRepeater.count; i++) {
+                var item = edgesRepeater.itemAt(i)
+                if (!item || !item.visible || !item.edge)
+                    continue
+                var hit = inside(item.point1x, item.point1y) || inside(item.point2x, item.point2y)
+                for (var k = 0; k < 4 && !hit; k++)
+                    hit = item.intersectsSegment(corners[k], corners[(k + 1) % 4])
+                if (hit)
+                    names.push(item.edge.dst.fullName)
+            }
+            root.selectEdges(names, (modifiers & Qt.ControlModifier) ? "toggle" : (modifiers & Qt.ShiftModifier) ? "add" : "replace")
+        }
+
+        // Box of the edge selection
+        Rectangle {
+            id: edgeBox
+            property real endX: 0
+            property real endY: 0
+            function setEnd(x, y) {
+                endX = x
+                endY = y
+            }
+            visible: mouseArea.edgeBoxActive
+            x: Math.min(mouseArea.edgeBoxStart.x, endX)
+            y: Math.min(mouseArea.edgeBoxStart.y, endY)
+            width: Math.abs(endX - mouseArea.edgeBoxStart.x)
+            height: Math.abs(endY - mouseArea.edgeBoxStart.y)
+            z: 10
+            color: Qt.rgba(1, 0.65, 0.2, 0.08)
+            border.color: "#F5A623"
+            border.width: 1
         }
 
         onClicked: function(mouse) {
-            if (mouse.button == Qt.RightButton) {
+            // No menu at the end of an edge selection box
+            if (mouse.button == Qt.RightButton && !edgeBoxWasUsed) {
                 // Store mouse click position in 'draggable' coordinates as new node spawn position
                 newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
                 newNodeMenu.popup()
@@ -582,7 +743,14 @@ Item {
                         return getAttributePin(edge.dst, root._attributeToDelegate)
                         }
                     property bool isValidEdge: src != null && dst != null
-                    visible: isValidEdge && src.visible && dst.visible
+                    // Hidden with H: replaced by stubs on its pins
+                    readonly property bool hidden: {
+                        if (!edge || !edge.dst || !edge.dst.node.hasInternalAttribute("hiddenInputs"))
+                            return false
+                        edge.dst.node.internalAttribute("hiddenInputs").value  // Re-evaluated when it changes
+                        return uigraph.isEdgeHidden(edge.dst)
+                    }
+                    visible: isValidEdge && src.visible && dst.visible && !hidden
 
                     property var loopSource: edge.src && edge.src.root && edge.src.root.value ? edge.src.root : null
                     property bool forLoop: src != null && dst != null &&
@@ -597,12 +765,13 @@ Item {
                     loopSize: forLoop ? loopSource.value.count : 0
 
                     iteration: forLoop ? loopSource.value.indexOf(edge.src) : 0
-                    color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
+                    readonly property bool edgeSelected: !!edge && !!edge.dst && !!root.selectedEdges[edge.dst.fullName]
+                    color: edge.dst === root.edgeAboutToBeRemoved ? "red" : edgeSelected ? "#F5A623" : inFocus ? activePalette.highlight : activePalette.text
                     thickness: {
                         if (forLoop) {
                             return (inFocus) ? 4 : 3
                         }
-                        return (inFocus) ? 2 : 1
+                        return (inFocus || edgeSelected) ? 2 : 1
                     }
                     point1x: isValidEdge ? src.globalX + src.outputAnchorPos.x : 0
                     point1y: isValidEdge ? src.globalY + src.outputAnchorPos.y : 0
@@ -614,6 +783,11 @@ Item {
                         if (event.button) {
                             if (canEdit && (event.modifiers & Qt.AltModifier)) {
                                 uigraph.removeEdge(edge)
+                            } else if (event.button == Qt.LeftButton) {
+                                // Select the edge (Shift: add, Ctrl: toggle); Delete removes the selected edges
+                                root.selectEdges([edge.dst.fullName], (event.modifiers & Qt.ControlModifier) ? "toggle" :
+                                                                       (event.modifiers & Qt.ShiftModifier) ? "add" : "replace")
+                                root.forceActiveFocus()
                             } else if (event.button == Qt.RightButton) {
                                 edgeMenu.currentEdge = edge
                                 edgeMenu.forLoop = forLoop
@@ -621,6 +795,120 @@ Item {
                                 edgeMenu.x = spawnPosition.x
                                 edgeMenu.y = spawnPosition.y
                                 edgeMenu.open()
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Menu of the stubs of hidden edges
+            Menu {
+                id: stubMenu
+                property var names: []
+                function openFor(names, item) {
+                    stubMenu.names = names
+                    parent = item
+                    popup()
+                }
+                MenuItem {
+                    text: stubMenu.names.length > 1 ? "Show the Edges" : "Show the Edge"
+                    onTriggered: uigraph.toggleHiddenEdges(stubMenu.names)
+                }
+            }
+
+            // Stubs of the hidden edges (H): a pill next to each pin, colored as the node at the other end;
+            // its tooltip gives the other end, a click selects the edge(s), a double-click shows them again
+            Repeater {
+                model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
+                delegate: Item {
+                    id: stub
+                    readonly property var edge: object
+                    readonly property bool hidden: {
+                        if (!edge || !edge.dst || !edge.dst.node.hasInternalAttribute("hiddenInputs"))
+                            return false
+                        edge.dst.node.internalAttribute("hiddenInputs").value
+                        return uigraph.isEdgeHidden(edge.dst)
+                    }
+                    readonly property var srcPin: { root._attributeToDelegate; return hidden ? root.pinOf(edge.src) : null }
+                    readonly property var dstPin: { root._attributeToDelegate; return hidden ? root.pinOf(edge.dst) : null }
+                    readonly property bool selected: hidden && !!root.selectedEdges[edge.dst.fullName]
+                    visible: hidden && !!srcPin && !!dstPin && srcPin.visible && dstPin.visible
+
+                    function nodeColor(node) { return node.color !== "" ? node.color : "#8A8A8A" }
+                    // The hidden edges leaving the same output (destination full names)
+                    function hiddenFromSource() {
+                        var names = []
+                        for (var i = 0; i < root.graph.edges.count; i++) {
+                            var e = root.graph.edges.at(i)
+                            if (e.src === stub.edge.src && uigraph.isEdgeHidden(e.dst))
+                                names.push(e.dst.fullName)
+                        }
+                        return names
+                    }
+
+                    // At the input: the source
+                    Rectangle {
+                        x: stub.dstPin ? stub.dstPin.globalX + stub.dstPin.inputAnchorPos.x - width - 6 : 0
+                        y: stub.dstPin ? stub.dstPin.globalY + stub.dstPin.inputAnchorPos.y - height / 2 : 0
+                        width: 16
+                        height: 8
+                        radius: 4
+                        color: stub.edge ? stub.nodeColor(stub.edge.src.node) : "grey"
+                        border.color: stub.selected ? "#F5A623" : (dstStubMouse.containsMouse ? "white" : Qt.rgba(0, 0, 0, 0.5))
+                        border.width: stub.selected || dstStubMouse.containsMouse ? 2 : 1
+                        MouseArea {
+                            id: dstStubMouse
+                            anchors.fill: parent
+                            anchors.margins: -3
+                            hoverEnabled: true
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onDoubleClicked: uigraph.toggleHiddenEdges([stub.edge.dst.fullName])
+                            onPressed: function(mouse) {
+                                if (mouse.button === Qt.RightButton)
+                                    stubMenu.openFor([stub.edge.dst.fullName], dstStubMouse)
+                            }
+                            ToolTip.visible: containsMouse
+                            ToolTip.delay: 300
+                            ToolTip.text: stub.edge ? "\u2190 " + stub.edge.src.node.label + "." + stub.edge.src.label +
+                                                      "\n(hidden edge: double-click to show it)" : ""
+                            onClicked: function(mouse) {
+                                if (mouse.button !== Qt.LeftButton)
+                                    return
+                                root.selectEdges([stub.edge.dst.fullName], (mouse.modifiers & Qt.ShiftModifier) ? "add" : "replace")
+                                root.forceActiveFocus()
+                            }
+                        }
+                    }
+                    // At the output: the destinations
+                    Rectangle {
+                        x: stub.srcPin ? stub.srcPin.globalX + stub.srcPin.outputAnchorPos.x + 6 : 0
+                        y: stub.srcPin ? stub.srcPin.globalY + stub.srcPin.outputAnchorPos.y - height / 2 : 0
+                        width: 16
+                        height: 8
+                        radius: 4
+                        color: stub.edge ? stub.nodeColor(stub.edge.dst.node) : "grey"
+                        border.color: stub.selected ? "#F5A623" : (srcStubMouse.containsMouse ? "white" : Qt.rgba(0, 0, 0, 0.5))
+                        border.width: stub.selected || srcStubMouse.containsMouse ? 2 : 1
+                        MouseArea {
+                            id: srcStubMouse
+                            anchors.fill: parent
+                            anchors.margins: -3
+                            hoverEnabled: true
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onDoubleClicked: uigraph.toggleHiddenEdges(stub.hiddenFromSource())
+                            onPressed: function(mouse) {
+                                if (mouse.button === Qt.RightButton)
+                                    stubMenu.openFor(stub.hiddenFromSource(), srcStubMouse)
+                            }
+                            ToolTip.visible: containsMouse
+                            ToolTip.delay: 300
+                            ToolTip.text: containsMouse && stub.edge ? root.hiddenTargetsText(stub.edge.src) +
+                                                                      "\n(hidden edges: double-click to show them)" : ""
+                            onClicked: function(mouse) {
+                                if (mouse.button !== Qt.LeftButton)
+                                    return
+                                root.selectEdges(stub.hiddenFromSource(), (mouse.modifiers & Qt.ShiftModifier) ? "add" : "replace")
+                                root.forceActiveFocus()
                             }
                         }
                     }
@@ -1008,6 +1296,7 @@ Item {
 
                             onPressed: function(mouse) {
                                 nodeRepeater.updateSelectionOnClick = true
+                                root.clearEdgeSelection()
                                 nodeRepeater.ongoingDrag = true
 
                                 let selectionMode = ItemSelectionModel.NoUpdate
@@ -1148,6 +1437,7 @@ Item {
 
                             onPressed: function(mouse) {
                                 nodeRepeater.updateSelectionOnClick = true
+                                root.clearEdgeSelection()
                                 nodeRepeater.ongoingDrag = true
 
                                 ctrlHeld = (mouse.modifiers & Qt.ControlModifier) !== 0

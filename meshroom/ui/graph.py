@@ -36,7 +36,7 @@ from meshroom.core.taskManager import TaskManager
 from meshroom.core.submitter import jobManager
 
 from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, BackdropNode, Position
-from meshroom.core import submitters, MrNodeType
+from meshroom.core import hiddenEdges, submitters, MrNodeType
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
 
@@ -1335,6 +1335,52 @@ class UIGraph(QObject):
                 return
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
+    def _edgesTo(self, dstNames):
+        """ The edges whose destination attribute full name is in `dstNames`. """
+        names = set(dstNames)
+        return [edge for edge in self._graph.edges if edge.dst.fullName in names]
+
+    @Slot("QVariantList")
+    def removeEdgesTo(self, dstNames):
+        """ Remove the edges going to the given destination attributes (full names), as one undoable step. """
+        edges = [edge for edge in self._edgesTo(dstNames) if not edge.dst.node.locked]
+        if not edges:
+            return
+        with self.groupedGraphModification("Remove Edges"):
+            for edge in edges:
+                self.removeEdge(edge)
+
+    @Slot(QObject, result=bool)
+    def isEdgeHidden(self, dstAttribute):
+        """ Whether the edge going to the input `dstAttribute` is hidden (see meshroom.core.hiddenEdges). """
+        return hiddenEdges.isHidden(dstAttribute)
+
+    @Slot("QVariantList")
+    def toggleHiddenEdges(self, dstNames):
+        """
+        Hide the given edges (destination attribute full names), or show them if they are all hidden.
+        Saved with the graph, one undoable change.
+        """
+        edges = [edge for edge in self._edgesTo(dstNames) if edge.dst.node.hasInternalAttribute(hiddenEdges.HIDDEN_INPUTS)]
+        if not edges:
+            return
+        hide = not all(hiddenEdges.isHidden(edge.dst) for edge in edges)
+        byNode = {}
+        for edge in edges:
+            byNode.setdefault(edge.dst.node, []).append(hiddenEdges.relativeName(edge.dst))
+        with self.groupedGraphModification("Hide Edges" if hide else "Show Edges"):
+            for node, names in byNode.items():
+                attribute = node.internalAttribute(hiddenEdges.HIDDEN_INPUTS)
+                value = hiddenEdges.withNames(attribute.value, names, hide)
+                if value != attribute.value:
+                    self.setAttribute(attribute, value)
+
+    @Slot()
+    def toggleHiddenInputEdgesOfSelectedNodes(self):
+        """ Hide the input edges of the selected nodes (or show them if they are all hidden). """
+        selected = set(self.getSelectedNodes())
+        self.toggleHiddenEdges([edge.dst.fullName for edge in self._graph.edges if edge.dst.node in selected])
+
     @Slot(list)
     def deleteEdgesByIndices(self, indices):
         with self.groupedGraphModification("Remove Edges"):
@@ -1446,7 +1492,19 @@ class UIGraph(QObject):
 
     @Slot(Attribute)
     def removeAttribute(self, attribute):
-        self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
+        listAttribute = attribute.root
+        names = hiddenEdges.hiddenNames(attribute.node) if isinstance(listAttribute, ListAttribute) else []
+        if not names or listAttribute.isOutput:
+            self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
+            return
+        # Hidden edges: those of the next elements move down with them
+        hidden = attribute.node.internalAttribute(hiddenEdges.HIDDEN_INPUTS)
+        newValue = hiddenEdges.afterListRemoval(hidden.value, hiddenEdges.relativeName(listAttribute),
+                                                listAttribute.index(attribute))
+        with self.groupedGraphModification(f"Remove {attribute.fullName}"):
+            self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
+            if newValue != hidden.value:
+                self.setAttribute(hidden, newValue)
 
     @Slot(Attribute)
     def removeAnySetAttribute(self, attribute):

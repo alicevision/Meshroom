@@ -48,7 +48,17 @@ def nodeSubGraph(projectPath: str, nodeName: str):
     """
     The subgraph of a SubGraph node of a project (.mg): its embedded subgraph, else its template.
     """
+    return _projectNode(projectPath, nodeName)[0]
+
+
+def _projectNode(projectPath: str, nodeName: str):
+    """
+    (subgraph source, input values, loop) of a SubGraph node of a project: its embedded subgraph (else its
+    template), the values of its inputs that are not connections, and its loop settings.
+    """
     from meshroom.core.subgraph import readGraphData
+    from meshroom.core.subgraph.nodes import loopFromValues
+    from meshroom.core.subgraph.ports import anySetValues
     graphData = readGraphData(projectPath)
     if nodeName not in graphData:
         raise SubGraphError(f"No node '{nodeName}' in {projectPath}.")
@@ -56,7 +66,13 @@ def nodeSubGraph(projectPath: str, nodeName: str):
     source = nodeInputs.get("subGraph") or nodeInputs.get("template")
     if not source:
         raise SubGraphError(f"The node '{nodeName}' has no subgraph.")
-    return source
+    # Values typed on the node; a connected input ("{Node.attr}") has no value outside of Meshroom
+    values = {name: value for name, value in anySetValues(nodeInputs.get("ins")).items()
+              if not (isinstance(value, str) and value.startswith("{") and value.endswith("}"))}
+    loop = loopFromValues({"loopMode": "none", "iterations": 1, "frameFirst": 1001, "frameLast": 1001, "frameStep": 1,
+                           **{name: nodeInputs[name] for name in ("loopMode", "iterations", "frameFirst", "frameLast",
+                                                                  "frameStep") if name in nodeInputs}})
+    return source, values, loop
 
 
 def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
@@ -74,7 +90,9 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         frames: a tuple (first, last) to run it once per frame (every `step` frames), or a list of frames.
         iterations: run it N times, the outputs feeding the inputs of the same name.
         variables: values shared by the nodes (ctx.variables).
-        node: with a project file (.mg) as source, the name of the SubGraph node whose subgraph is run.
+        node: with a project file (.mg) as source, the name of the SubGraph node whose subgraph is run; its
+              input values (not connected) and its loop are used unless `inputs` / `frames` / `iterations`
+              are given.
         set: values of attributes of the nodes, set before running: {"Node_1.attribute": value} (or
              "Node_1.group.child"), without declaring ports.
 
@@ -82,11 +100,15 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         SubGraphError: an error in a node (its name is in the message).
     """
     ensureNodes()
+    nodeLoop = None
     if node:
-        source = nodeSubGraph(source, node)
+        source, nodeInputs, nodeLoop = _projectNode(source, node)
+        inputs = {**nodeInputs, **(inputs or {})}
     if frames is not None and iterations is not None:
         raise ValueError("Use either frames or iterations.")
-    if frames is not None:
+    if frames is None and iterations is None and nodeLoop is not None:
+        loop = nodeLoop
+    elif frames is not None:
         if isinstance(frames, tuple) and len(frames) == 2:
             loop = Loop("frames", first=frames[0], last=frames[1], step=step)
         else:

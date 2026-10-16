@@ -803,3 +803,14 @@ def test_loopRunsOnceWhatDoesNotDependOnIt(fakeHou):
     assert fakeHou.parms["/obj/geo1/ry"].value == 1003
     # The save at the end of each frame (HoudiniSave, live node)
     assert fakeHou.saved == ["/shots/sh010.hip"] * 3
+
+
+def test_runNodeOfProjectUsesItsValuesAndLoop(tmp_path):
+    import meshroom.subgraph
+    projectPath = str(tmp_path / "project.mg")
+    project = Graph("project")
+    node = project.addNewNode("SubGraph", subGraph=json.dumps(addOneGraph().toDict()), loopMode="count", iterations=3)
+    port(node, "ins", "x").value = 10
+    project.save(projectPath)
+    assert meshroom.subgraph.run(projectPath, node="SubGraph_1") == {"x": 13}
+    assert meshroom.subgraph.run(projectPath, {"x": 0}, node="SubGraph_1", iterations=1) == {"x": 1}

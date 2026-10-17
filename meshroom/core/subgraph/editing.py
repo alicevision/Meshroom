@@ -59,12 +59,24 @@ def _repairPorts(graphInput, node):
         with _PortSync(node):
             syncAnySet(node.ins, nodePorts)
     nodePorts = {port[0]: port for port in nodePorts}
+    # Ports not connected on the node: the description of the attributes they are connected to in the subgraph
+    graph = graphInput.graph
+    for child, port in zip(list(graphInput.ports.value), anySetPorts(graphInput.ports)):
+        source = nodePorts.get(port[0])
+        if source is not None and source[1] != DEFAULT_PORT_TYPE and node.ins.value.get(port[0]).isLink:
+            continue
+        destinations = [edge.dst for edge in graph.edges if edge.src is child] if graph is not None else []
+        for destination in destinations:
+            destinationType = type(destination.desc).__name__
+            if destinationType != DEFAULT_PORT_TYPE and destinationType in (port[1], DEFAULT_PORT_TYPE):
+                nodePorts[port[0]] = (port[0], destinationType, port[2], describeAttribute(destination.desc))
+                break
     ports = []
     for port in anySetPorts(graphInput.ports):
         nodePort = nodePorts.get(port[0])
         upgrade = nodePort is not None and (
             (port[1] == DEFAULT_PORT_TYPE and nodePort[1] != DEFAULT_PORT_TYPE)
-            or (port[1] == nodePort[1] and port[1] not in PORT_TYPES and not sameDescription(port[3], nodePort[3])))
+            or (port[1] == nodePort[1] != DEFAULT_PORT_TYPE and nodePort[3] and not sameDescription(port[3], nodePort[3])))
         ports.append((port[0], nodePort[1], port[2], nodePort[3]) if upgrade else port)
     if ports != anySetPorts(graphInput.ports):
         syncAnySet(graphInput.ports, ports)
@@ -141,11 +153,15 @@ class SubGraphStack:
         if node.subGraph.isLink or node.template.isLink:
             raise ValueError(f"The subgraph of '{node.name}' comes from a connection: it cannot be edited.")
         graph = buildSubGraph(node, parent)
-        for innerNode in graph.nodes:
-            if getattr(innerNode.nodeDesc, "subGraphRole", "") == "input":
-                _repairPorts(innerNode, node)
-                showNodeValues(innerNode, node)
-        self.levels.append(SubGraphLevel(currentGraph, node, serializeSubGraph(graph)))
+        graphInputs = [innerNode for innerNode in graph.nodes if getattr(innerNode.nodeDesc, "subGraphRole", "") == "input"]
+        for graphInput in graphInputs:
+            showNodeValues(graphInput, node)
+        # Before repairing the ports: a repair is written back when leaving (the shown values are not)
+        initialContent = serializeSubGraph(graph)
+        for graphInput in graphInputs:
+            _repairPorts(graphInput, node)
+            showNodeValues(graphInput, node)
+        self.levels.append(SubGraphLevel(currentGraph, node, initialContent))
         return graph
 
     @staticmethod

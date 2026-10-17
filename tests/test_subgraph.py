@@ -1189,3 +1189,49 @@ def test_portsSavedByFormerVersionAreUpgraded(tmp_path):
         inner.addEdge(port(graphInput, "ports", "formats"), task.formats)
     finally:
         unregisterNodeDesc(TaskExportCamera)
+
+
+def test_portsConnectedInTheSubGraphKeepTheirChoices():
+    """ Inputs of a node of the subgraph connected to the GraphInput: the node gets the same choices, defaults... """
+    from meshroom.core.subgraph.editing import SubGraphStack
+    registerNodeDesc(TaskExportCamera)
+    try:
+        project = Graph("project")
+        node = project.addNewNode("SubGraph")
+        stack = SubGraphStack()
+        inner = stack.enter(project, node)
+        task = inner.addNewNode("TaskExportCamera")
+        graphInput = inner.node("GraphInput_1")
+        for name in ("frameRange", "frameStep", "formats", "destination"):
+            connectToAnySet(inner, task.attribute(name), graphInput.ports)
+        stack.exit(inner)
+
+        formats, destination, frameStep = (port(node, "ins", name) for name in ("formats", "destination", "frameStep"))
+        assert formats.desc.exclusive is False and formats.desc.values == ["abc", "usd", "fbx"]
+        assert formats.value == ["abc"]
+        assert destination.desc.values == ["common/camera", "lighting/camera"]
+        assert destination.value == "common/camera"
+        assert frameStep.value == 1.0 and list(frameStep.desc.range) == [0.01, 10.0, 0.01]
+        assert port(node, "ins", "frameRange").value.get("start").value == 1
+
+        # Ports whose choices were lost (former version) get them back from the attributes they are connected to
+        inner = stack.enter(project, node)
+        graphInput = inner.node("GraphInput_1")
+        from meshroom.core.subgraph.ports import syncAnySet
+        lost = ("formats", "ChoiceParam", "Formats",
+                {"type": "ChoiceParam", "name": "formats", "values": [], "exclusive": True})
+        lostStep = ("frameStep", "FloatParam", "Step Frame", {"type": "FloatParam", "name": "frameStep"})
+        ports = [(c.name, type(c.desc).__name__, c.label) for c in graphInput.ports.value
+                 if c.name not in ("formats", "frameStep")]
+        syncAnySet(graphInput.ports, ports + [lost, lostStep])
+        for name in ("formats", "frameStep"):
+            inner.addEdge(port(graphInput, "ports", name), inner.node("TaskExportCamera_1").attribute(name))
+        stack.exit(inner)
+        assert port(node, "ins", "frameStep").value == 0  # the "0" of the former versions
+        inner = stack.enter(project, node)
+        assert port(inner.node("GraphInput_1"), "ports", "formats").desc.values == ["abc", "usd", "fbx"]
+        stack.exit(inner)
+        assert port(node, "ins", "formats").desc.exclusive is False
+        assert port(node, "ins", "frameStep").value == 1.0
+    finally:
+        unregisterNodeDesc(TaskExportCamera)

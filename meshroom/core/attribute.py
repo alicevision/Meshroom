@@ -437,6 +437,9 @@ class Attribute(BaseObject):
             return self._keyValues.getJson()
         # ChoiceParam with multiple values should be combined
         if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
+            if self.value is None:
+                # No value yet (e.g. connected to a port of a subgraph, set when it runs)
+                return ""
             # Ensure value is a list as expected
             try:
                 assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
@@ -897,6 +900,9 @@ class ChoiceParam(Attribute):
 
     # Override
     def validateValue(self, value):
+        if value is None:
+            # No value (e.g. a port of a subgraph before it runs), not the text "None"
+            return None
         if self._desc.exclusive:
             return self._conformValue(value)
         if isinstance(value, str):

@@ -32,7 +32,7 @@ def _port(name: str, portType: str = "", label: str = "", description: Optional[
     portType = portType or DEFAULT_PORT_TYPE
     if portType not in PORT_TYPES and not description:
         portType = DEFAULT_PORT_TYPE
-    if portType in PORT_TYPES:
+    if portType == DEFAULT_PORT_TYPE:
         description = None
     return name, portType, label or name, description
 
@@ -103,7 +103,8 @@ def anySetPorts(anySet) -> List[Port]:
     ports = []
     for child in anySet.value:
         portType = type(child.desc).__name__
-        description = None if portType in PORT_TYPES else describeAttribute(child.desc)
+        # Also for the simple types: their default value and range
+        description = None if portType == DEFAULT_PORT_TYPE else describeAttribute(child.desc)
         ports.append(_port(child.name, portType, child.label, description))
     return ports
 

@@ -141,6 +141,11 @@ class SceneContext(LiveContext):
         if self.isOpenScene(path):
             logging.info(f"[SubGraph] {path} is the open scene: not loaded again.")
             return True
+        if not self.ownsSession and self.currentScene():
+            # In the session of the software (its shell, a tool): the open scene prevails, it is never replaced
+            # (unsaved changes would be lost), e.g. by a node loading the last version saved on disk
+            logging.warning(f"[SubGraph] {path} not loaded: the open scene ({self.currentScene()}) is used.")
+            return True
         self._flushPendingSave()
         return False
 
@@ -311,6 +316,27 @@ class MayaContext(SceneContext):
             return file
 
         self._patch(self.session, "file", fileWrapper)
+
+        # Maya is initialized (a Maya session, or mayapy initialized by `open`): the nodes written for mayapy
+        # initialize / uninitialize it themselves, which fails in a Maya session ("can not be called inside
+        # of Maya") or would end the session for the next nodes
+        try:
+            import maya.standalone as standalone
+        except ImportError:
+            return
+
+        def initializeWrapper(original):
+            def initialize(*args, **kwargs):
+                logging.info("[SubGraph] maya.standalone.initialize: Maya is already initialized.")
+            return initialize
+
+        def uninitializeWrapper(original):
+            def uninitialize(*args, **kwargs):
+                logging.info("[SubGraph] maya.standalone.uninitialize: done at the end of the subgraph.")
+            return uninitialize
+
+        self._patch(standalone, "initialize", initializeWrapper)
+        self._patch(standalone, "uninitialize", uninitializeWrapper)
 
     def _load(self, path):
         self._original("file", self.session.file)(path, open=True, force=True)

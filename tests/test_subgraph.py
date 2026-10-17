@@ -946,9 +946,13 @@ class MayaBatch(desc.Node):
     outputs = [desc.File(name="output", label="Output", description="", value=None)]
 
     def process(self, node):
+        # Written for mayapy, like the nodes of the pipeline plugins
+        import maya.standalone
+        maya.standalone.initialize(name="python")
         from maya import cmds
         cmds.file(node.scene.value, open=True, force=True)
         cmds.file(save=True, force=True)
+        maya.standalone.uninitialize()
         node.output.value = node.scene.value
 
 
@@ -980,8 +984,19 @@ def fakeMayaNuke(monkeypatch):
     cmds, nuke = FakeCmds(), FakeNuke()
     maya = types.ModuleType("maya")
     maya.cmds = cmds
+    standalone = types.ModuleType("maya.standalone")
+
+    def initialize(name="python"):
+        raise RuntimeError("maya.standalone.initialize() can not be call inside of Maya.")
+
+    def uninitialize():
+        raise RuntimeError("Maya uninitialized during the subgraph")
+
+    standalone.initialize, standalone.uninitialize = initialize, uninitialize
+    maya.standalone = standalone
     monkeypatch.setitem(sys.modules, "maya", maya)
     monkeypatch.setitem(sys.modules, "maya.cmds", cmds)
+    monkeypatch.setitem(sys.modules, "maya.standalone", standalone)
     monkeypatch.setitem(sys.modules, "nuke", nuke)
     yield cmds, nuke
     for nodeDesc in nodeDescs:
@@ -1021,6 +1036,11 @@ def test_mayaAndNukeSessions(fakeMayaNuke):
     meshroom.subgraph.run(softwareGraph("Nuke").toDict())
     assert TaskShotScene.runs == 0
     assert cmds.opened == [] and cmds.saved == [] and nuke.opened == [] and nuke.saved == []
+    # The nodes initializing maya.standalone themselves ran (restored after the run)
+    import maya.standalone
+    assert maya.standalone.initialize.__name__ == "initialize"
+    with pytest.raises(RuntimeError):
+        maya.standalone.initialize()
 
 
 def test_collapseIntoSubGraph():
@@ -1235,3 +1255,17 @@ def test_portsConnectedInTheSubGraphKeepTheirChoices():
         assert port(node, "ins", "frameStep").value == 1.0
     finally:
         unregisterNodeDesc(TaskExportCamera)
+
+
+def test_sessionSceneIsNeverReplacedByANode(fakeMayaNuke):
+    """ In a Maya session, a task node opening another scene (e.g. the last version on disk) keeps the open one. """
+    import meshroom.subgraph
+    cmds, _ = fakeMayaNuke
+    cmds.scene = "/shots/open.ma"
+    graph = Graph("")
+    graph.addNewNode("MayaBatch", scene="/shots/sh010-v002.ma")
+    meshroom.subgraph.run(graph.toDict())
+    assert cmds.opened == [] and cmds.scene == "/shots/open.ma"
+    # In a Meshroom task the node opens it
+    run(graph.toDict(), ownsSession=True)
+    assert cmds.opened[0] == "/shots/sh010-v002.ma"

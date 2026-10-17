@@ -38,24 +38,33 @@ def buildSubGraph(node, parent=None) -> Graph:
     return graph
 
 
-def _upgradePortTypes(graphInput, node):
+def _repairPorts(graphInput, node):
     """
-    Give the ports of a GraphInput the types of the matching inputs of its node when they only hold any value
-    (LiveValue): e.g. a frame range group port saved by a former version, which could not be connected to a group.
+    Give the inputs of a node running a subgraph, and the ports of its GraphInput, the description of the
+    attributes connected to the node (types, choices, group items): those saved by a former version could have
+    lost them (a frame range group or choices holding any value, a multiple choice become a single one...).
     """
     from meshroom.core.desc.serialization import describeAttribute
-    from .ports import DEFAULT_PORT_TYPE, PORT_TYPES, anySetPorts, syncAnySet
-    nodePorts = {}
-    for child, port in zip(node.ins.value, anySetPorts(node.ins)):
-        # The description of the connected attribute is the most accurate one (choices, ranges...)
+    from .nodes import _PortSync
+    from .ports import DEFAULT_PORT_TYPE, PORT_TYPES, anySetPorts, sameDescription, syncAnySet
+    nodePorts = []
+    for child, port in zip(list(node.ins.value), anySetPorts(node.ins)):
+        # The description of the connected attribute is the most accurate one
         source = child.inputLink if child.isLink else None
-        if source is not None and type(source.desc).__name__ == port[1] and port[1] not in PORT_TYPES:
-            port = (port[0], port[1], port[2], describeAttribute(source.desc))
-        nodePorts[port[0]] = port
+        sourceType = type(source.desc).__name__ if source is not None else ""
+        if sourceType and sourceType not in PORT_TYPES and sourceType in (port[1], DEFAULT_PORT_TYPE):
+            port = (port[0], sourceType, port[2], describeAttribute(source.desc))
+        nodePorts.append(port)
+    if nodePorts != anySetPorts(node.ins):
+        with _PortSync(node):
+            syncAnySet(node.ins, nodePorts)
+    nodePorts = {port[0]: port for port in nodePorts}
     ports = []
     for port in anySetPorts(graphInput.ports):
         nodePort = nodePorts.get(port[0])
-        upgrade = port[1] == DEFAULT_PORT_TYPE and nodePort is not None and nodePort[1] != DEFAULT_PORT_TYPE
+        upgrade = nodePort is not None and (
+            (port[1] == DEFAULT_PORT_TYPE and nodePort[1] != DEFAULT_PORT_TYPE)
+            or (port[1] == nodePort[1] and port[1] not in PORT_TYPES and not sameDescription(port[3], nodePort[3])))
         ports.append((port[0], nodePort[1], port[2], nodePort[3]) if upgrade else port)
     if ports != anySetPorts(graphInput.ports):
         syncAnySet(graphInput.ports, ports)
@@ -134,7 +143,7 @@ class SubGraphStack:
         graph = buildSubGraph(node, parent)
         for innerNode in graph.nodes:
             if getattr(innerNode.nodeDesc, "subGraphRole", "") == "input":
-                _upgradePortTypes(innerNode, node)
+                _repairPorts(innerNode, node)
                 showNodeValues(innerNode, node)
         self.levels.append(SubGraphLevel(currentGraph, node, serializeSubGraph(graph)))
         return graph

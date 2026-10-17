@@ -1164,7 +1164,10 @@ def test_portsSavedByFormerVersionAreUpgraded(tmp_path):
         for child in nodeData["inputs"]["ins"]["children"]:
             child.pop("desc", None)
         subGraph = json.loads(nodeData["inputs"]["subGraph"])
-        subGraph["graph"]["GraphInput_1"]["inputs"]["portSpec"] = formatPortSpec([("frameRange",), ("formats",)])
+        # Former versions: a group holding any value, a multiple choice without its choices
+        lostChoices = {"type": "ChoiceParam", "name": "formats", "values": [], "exclusive": True}
+        subGraph["graph"]["GraphInput_1"]["inputs"]["portSpec"] = formatPortSpec(
+            [("frameRange",), ("formats", "ChoiceParam", "Formats", lostChoices)])
         nodeData["inputs"]["subGraph"] = json.dumps(subGraph)
         nodeData.pop("uid", None)
         with open(projectPath, "w") as f:
@@ -1177,8 +1180,12 @@ def test_portsSavedByFormerVersionAreUpgraded(tmp_path):
         graphInput = inner.node("GraphInput_1")
         assert {c.name: type(c.desc).__name__ for c in graphInput.ports.value} == {
             "frameRange": "GroupAttribute", "formats": "ChoiceParam"}
-        assert port(graphInput, "ports", "formats").desc.exclusive is False
+        for formats in (port(graphInput, "ports", "formats"), port(node, "ins", "formats")):
+            assert formats.desc.exclusive is False and formats.desc.values == ["abc", "usd", "fbx"]
+        assert port(node, "ins", "formats").isLink
+        assert port(graphInput, "ports", "formats").value == ["abc"]
         task = inner.addNewNode("TaskExportCamera")
         inner.addEdge(port(graphInput, "ports", "frameRange"), task.frameRange)
+        inner.addEdge(port(graphInput, "ports", "formats"), task.formats)
     finally:
         unregisterNodeDesc(TaskExportCamera)

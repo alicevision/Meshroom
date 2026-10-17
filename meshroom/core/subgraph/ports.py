@@ -108,6 +108,22 @@ def anySetPorts(anySet) -> List[Port]:
     return ports
 
 
+def sameDescription(first: Optional[dict], second: Optional[dict]) -> bool:
+    """ Whether two full descriptions of ports match, whatever their names and labels. """
+    def strip(data):
+        return {key: value for key, value in (data or {}).items() if key not in ("name", "label")}
+    return strip(first) == strip(second)
+
+
+def _needsNewChild(child, port: Port) -> bool:
+    """ Whether the child of an AnySet must be recreated to match a port: other type, or other description. """
+    from meshroom.core.desc.serialization import describeAttribute
+    portType, description = port[1], port[3]
+    if type(child.desc).__name__ != portType:
+        return portType != DEFAULT_PORT_TYPE
+    return bool(description) and not sameDescription(description, describeAttribute(child.desc))
+
+
 def _insertChild(anySet, port: Port, index: int):
     """ Insert a child attribute for a port in an AnySet (any type, from its full description). """
     from meshroom.core.attribute import attributeFactory
@@ -130,7 +146,7 @@ def syncAnySet(anySet, ports: Iterable[tuple]) -> bool:
     """
     Make the children of an AnySet attribute match a list of ports (name, type[, label[, description]]):
     remove the children that are not in the list (and their connections), add the missing ones, recreate
-    the ones whose type changed (keeping their connections when they are still valid), update the labels
+    the ones whose type or description changed (keeping their connections when they are still valid), update the labels
     and the order. Returns whether something changed.
     """
     ports = [_port(*port) for port in ports]
@@ -145,10 +161,12 @@ def syncAnySet(anySet, ports: Iterable[tuple]) -> bool:
 
     for child in list(anySet.value):
         port = wanted.get(child.name)
-        if port is not None and (type(child.desc).__name__ == port[1] or port[1] == DEFAULT_PORT_TYPE):
+        if port is not None and not _needsNewChild(child, port):
             continue
-        # Removed port, or a port whose type changed (e.g. a group recreated as LiveValue by a former version)
+        # Removed port, or a port whose type or description changed (e.g. choices lost by a former version)
         edges = [(edge.src, edge.dst) for edge in connectedEdges(child)]
+        # A connection not applied yet (while loading, "{Node.attribute}") is kept as such
+        linkExpression = getattr(child, "_linkExpression", None)
         for edge in connectedEdges(child):
             graph.removeEdge(edge.dst)
         index = list(anySet.value).index(child)
@@ -156,6 +174,8 @@ def syncAnySet(anySet, ports: Iterable[tuple]) -> bool:
         changed = True
         if port is not None:
             newChild = _insertChild(anySet, port, index)
+            if linkExpression and not edges:
+                newChild._linkExpression = linkExpression
             for src, dst in edges:
                 src, dst = (newChild, dst) if src is child else (src, newChild)
                 try:

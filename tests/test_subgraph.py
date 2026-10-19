@@ -1287,7 +1287,7 @@ def test_runLiveInTheEnvironmentOfItsNodes(monkeypatch):
     """ Run Live starts the interpreter of a task node of the subgraph, in the process environment of its plugin. """
     import subprocess
     from meshroom.core import pluginManager
-    from meshroom.core.subgraph.runner import runLive
+    from meshroom.core.subgraph.runner import EVENT_MARK, runLive
     registerNodeDesc(FakeDccTask)
     try:
         monkeypatch.setattr(FakeDccContext, "isAvailable", classmethod(lambda cls: False))
@@ -1297,17 +1297,25 @@ def test_runLiveInTheEnvironmentOfItsNodes(monkeypatch):
         monkeypatch.setattr(type(provider), "processEnv", property(lambda self: processEnv))
         calls = []
 
-        def fakeRun(command, **kwargs):
-            calls.append((command, kwargs))
-            resultPath = command.rstrip("'").split()[-1]
-            with open(resultPath, "w") as f:
-                json.dump({"outputs": {}, "elapsed": 0.1}, f)
-            return subprocess.CompletedProcess(command, 0, "", "")
+        class FakePopen:
+            """ The process of the subgraph: reports a node status, then writes its result. """
 
-        monkeypatch.setattr(subprocess, "run", fakeRun)
+            def __init__(self, command, **kwargs):
+                calls.append((command, kwargs))
+                resultPath = command.rstrip("'").split()[-1]
+                with open(resultPath, "w") as f:
+                    json.dump({"outputs": {}, "elapsed": 0.1}, f)
+                self.stdout = iter(["some output\n", EVENT_MARK + json.dumps(["FakeDccTask_1", "SUCCESS", "Done"]) + "\n"])
+
+            def wait(self):
+                return 0
+
+        monkeypatch.setattr(subprocess, "Popen", FakePopen)
         graph = Graph("")
         graph.addNewNode("FakeDccTask")
-        result = runLive(graph.serialize(asTemplate=True))
+        events = []
+        result = runLive(graph.serialize(asTemplate=True), onNode=lambda *event: events.append(event))
+        assert events == [("FakeDccTask_1", "SUCCESS", "Done")] and result["nodes"] == {"FakeDccTask_1": "SUCCESS"}
         command, kwargs = calls[0]
         assert command.startswith("rez env fakedcc -c 'fakedcc-python ") and command.endswith("'")
         assert kwargs["shell"] is True
@@ -1360,3 +1368,21 @@ def test_inputValuesKeptWhenEnteringAndLeaving():
     syncAnySet(node.ins, [(ports[0][0], ports[0][1], ports[0][2], description)])
     assert port(node, "ins", "shot").desc.description == "Another description"
     assert port(node, "ins", "shot").value == "sh020"
+
+
+def test_nodeStatusesReported():
+    """ The statuses of the nodes are reported as they run (shown on the nodes by Run Live). """
+    events = []
+    assert run(addOneGraph().toDict(), {"x": 1}, onNode=lambda *event: events.append(event[:2])) == {"x": 2}
+    assert events == [("GraphInput_1", "RUNNING"), ("GraphInput_1", "SUCCESS"), ("LiveAdd_1", "RUNNING"),
+                      ("LiveAdd_1", "SUCCESS"), ("GraphOutput_1", "RUNNING"), ("GraphOutput_1", "SUCCESS")]
+
+    graph = addOneGraph()
+    graph.addNewNode("LiveFail")
+    events = []
+    with pytest.raises(SubGraphError):
+        run(graph.toDict(), {"x": 1}, onNode=lambda *event: events.append(event))
+    statuses = {name: status for name, status, _ in events}
+    assert statuses["LiveFail_1"] == "ERROR"
+    message = next(message for name, status, message in events if status == "ERROR")
+    assert "broken" in message

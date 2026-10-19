@@ -1008,6 +1008,7 @@ Item {
 
                             node: object
                             width: uigraph.layout.nodeWidth
+                            liveGraph: uigraph
 
                             mainSelected: uigraph.selectedNode === node
                             hovered: uigraph.hoveredNode === node

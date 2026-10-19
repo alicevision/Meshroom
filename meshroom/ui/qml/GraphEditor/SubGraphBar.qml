@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MaterialIcons 2.2
+import Utils 1.0
 
 /**
  * Bar on top of the Graph Editor to navigate in the subgraphs (breadcrumb from the project graph to the
@@ -76,7 +77,8 @@ Rectangle {
             text: uigraph ? uigraph.liveStatus : ""
             elide: Text.ElideRight
             Layout.maximumWidth: root.width * 0.5
-            opacity: 0.8
+            color: !uigraph || uigraph.liveRunning ? palette.text : (uigraph.liveSuccess ? Colors.green : Colors.red)
+            opacity: 0.9
             ToolTip.text: text
             ToolTip.visible: statusArea.containsMouse && text
             MouseArea {

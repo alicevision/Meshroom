@@ -129,7 +129,7 @@ class RunContext:
 
     def __init__(self, context: LiveContext, loop: Loop, variables: Optional[dict] = None,
                  logger: Optional[logging.Logger] = None, cancel: Optional[Callable[[], bool]] = None,
-                 parent: Optional["RunContext"] = None):
+                 parent: Optional["RunContext"] = None, onNode: Optional[Callable[[str, str, str], None]] = None):
         self.context = context
         self.loop = loop
         self.iteration = 0
@@ -142,6 +142,17 @@ class RunContext:
         # Run context of the enclosing subgraph (nested subgraphs), None at the top
         self.parent = parent
         self.nodeName = ""
+        # Called with (node name, status, message) as the nodes of the subgraph run (see NodeStatus)
+        self.onNode = onNode
+
+    def report(self, nodeName: str, status: str, message: str = ""):
+        """ Report the status of a node of the subgraph (only for the top subgraph, never failing the run). """
+        if self.onNode is None or self.parent is not None:
+            return
+        try:
+            self.onNode(nodeName, status, message)
+        except Exception as e:  # a display problem must not stop the run
+            logging.debug(f"[SubGraph] Node status not reported: {e}")
 
     def checkCancelled(self):
         if self._cancel is not None and self._cancel():
@@ -150,6 +161,17 @@ class RunContext:
     def child(self, loop: Loop) -> "RunContext":
         """ The run context of a nested subgraph: the same session, its own loop, the shared variables. """
         return RunContext(self.context, loop, self.variables, self.logger, self._cancel, parent=self)
+
+
+class NodeStatus:
+    """ Statuses of the nodes of a run (RunContext.report): shown on the nodes by the user interface. """
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+    # Not run because a node before it failed
+    UPSTREAM_ERROR = "UPSTREAM_ERROR"
+    # Not run: not needed for the outputs in this context
+    SKIPPED = "SKIPPED"
 
 
 def _nodeDescFor(nodeType: str):
@@ -500,6 +522,12 @@ def runGraph(graph, plan: SubGraphPlan, ctx: RunContext, inputs: Optional[dict] 
     outputs: dict = {}
     order = executionOrder(graph, ctx)
     eachStep = stepNodes(graph, order, plan, ctx.loop.mode)
+    planned = {node.name for node in order}
+    for node in graph.nodes:
+        if node.name not in planned and node.nodeType != "Backdrop":
+            ctx.report(node.name, NodeStatus.SKIPPED, "Not run: not needed for the outputs here "
+                                                      "(e.g. the scene comes from the session of the software).")
+    durations = {}
     for stepIndex, (iteration, frame) in enumerate(ctx.loop.steps()):
         item = ctx.loop.itemAt(iteration)
         if ctx.loop.mode == "none" and ctx.parent is not None:
@@ -508,26 +536,43 @@ def runGraph(graph, plan: SubGraphPlan, ctx: RunContext, inputs: Optional[dict] 
         ctx.iteration, ctx.frame, ctx.item = iteration, frame, item
         if ctx.loop.mode != "none":
             ctx.context.beginStep(iteration, frame)
-        for node in order:
+        for index, node in enumerate(order):
             if stepIndex > 0 and node.name not in eachStep:
                 # Not depending on the loop: already run at the first step
                 continue
             ctx.checkCancelled()
             ctx.nodeName = node.name
+            ctx.report(node.name, NodeStatus.RUNNING)
             start = time.perf_counter()
             try:
                 _runNode(node, ctx, inputs, plan)
-            except (SubGraphError, Cancelled):
+            except (SubGraphError, Cancelled) as e:
+                _reportFailure(ctx, order[index:], node.name, str(e))
                 raise
             except Exception as e:
+                _reportFailure(ctx, order[index:], node.name, f"{type(e).__name__}: {e}")
                 raise SubGraphError(f"{type(e).__name__}: {e}", node.name) from e
-            ctx.logger.debug("[SubGraph] %s (%s) in %.1f ms", node.name, node.nodeType, (time.perf_counter() - start) * 1000)
+            elapsed = time.perf_counter() - start
+            durations[node.name] = durations.get(node.name, 0.0) + elapsed
+            ctx.report(node.name, NodeStatus.SUCCESS, _durationText(durations[node.name]))
+            ctx.logger.debug("[SubGraph] %s (%s) in %.1f ms", node.name, node.nodeType, elapsed * 1000)
         if plan.graphOutput:
             outputs = _plainValue(graph.node(plan.graphOutput).attribute("ports"))
         if ctx.loop.mode == "count":
             # Feedback: the outputs feed the inputs of the same name of the next iteration
             inputs.update({name: value for name, value in outputs.items() if name in plan.inputPorts or name in inputs})
     return outputs
+
+
+def _durationText(seconds: float) -> str:
+    return f"Done in {seconds * 1000:.0f} ms" if seconds < 1 else f"Done in {seconds:.2f} s"
+
+
+def _reportFailure(ctx: RunContext, remaining: list, nodeName: str, message: str):
+    """ Report a failed node, and the nodes that were still to run after it. """
+    ctx.report(nodeName, NodeStatus.ERROR, message)
+    for node in remaining[1:]:
+        ctx.report(node.name, NodeStatus.UPSTREAM_ERROR, f"Not run: '{nodeName}' failed.")
 
 
 def resolveContextName(plan: SubGraphPlan, context: Optional[str] = None) -> str:
@@ -552,7 +597,8 @@ def activeRunContext() -> Optional[RunContext]:
 def run(source, inputs: Optional[dict] = None, context: Optional[str] = None, loop: Optional[Loop] = None,
         variables: Optional[dict] = None, logger: Optional[logging.Logger] = None,
         cancel: Optional[Callable[[], bool]] = None, contextObject: Optional[LiveContext] = None,
-        ownsSession: bool = False, overrides: Optional[dict] = None, cacheDir: Optional[str] = None) -> dict:
+        ownsSession: bool = False, overrides: Optional[dict] = None, cacheDir: Optional[str] = None,
+        onNode: Optional[Callable[[str, str, str], None]] = None) -> dict:
     """
     Run a subgraph (a template path, a JSON string, a serialized graph dict or a SubGraphPlan) in the
     current interpreter and return the values of its GraphOutput ports.
@@ -568,6 +614,7 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None, lo
                      a farm), so that it can be cleaned when closed.
         overrides: {"Node.attribute": value} set before running ("Node.group.child" for a child).
         cacheDir: cache folder of the task nodes of the subgraph (a temporary folder by default).
+        onNode: called with (node name, status, message) as its nodes run (see NodeStatus).
 
     Raises:
         SubGraphError: an error in a node (its name is in the message).
@@ -594,7 +641,7 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None, lo
             ctx = RunContext(contextObject, loop, parent.variables if variables is None else variables,
                              logger or parent.logger, cancel or parent._cancel, parent=parent)
         else:
-            ctx = RunContext(contextObject, loop, variables, logger, cancel)
+            ctx = RunContext(contextObject, loop, variables, logger, cancel, onNode=onNode)
         graph = plan.build(cacheDir)
         for path, value in (overrides or {}).items():
             findAttribute(graph, path).value = value

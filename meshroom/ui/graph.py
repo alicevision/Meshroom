@@ -442,7 +442,12 @@ class UIGraph(QObject):
         self._subGraphStack = SubGraphStack()
         self._liveRunning = False
         self._liveStatus = ""
+        self._liveSuccess = True
+        # Run Live: {node name: (status, message)} of the nodes of the shown graph (see executor.NodeStatus)
+        self._liveNodeStatuses = {}
+        self._liveStatusRevision = 0
         self.liveRunDone.connect(self._onLiveRunDone)
+        self.liveNodeEvent.connect(self._onLiveNodeEvent)
 
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
@@ -504,6 +509,8 @@ class UIGraph(QObject):
             self._layout.reset()
             self._undoStack.clear()
         self._nodeSelection.setModel(self._graph.nodes)
+        # The Run Live statuses are those of the nodes of the graph shown before
+        self._setLiveNodeStatuses({})
         self.graphChanged.emit()
         self.subGraphChanged.emit()
 
@@ -623,23 +630,82 @@ class UIGraph(QObject):
             return
         graphData, inputs, context, loopData, label = source
         self._liveRunning = True
+        self._liveSuccess = True
         self._liveStatus = f"{label}: running..."
         self.liveStatusChanged.emit()
+        # The statuses of the nodes are shown on the subgraph when it is entered, else on the SubGraph node
+        inside = bool(len(self._subGraphStack))
+        self._setLiveNodeStatuses({} if inside else {label: ("RUNNING", "Run Live...")})
+
+        def onNode(nodeName, status, message):
+            if inside:
+                # Emitted from the worker thread: queued to the thread of the user interface
+                self.liveNodeEvent.emit(nodeName, status, message)
 
         def work():
             from meshroom.core.subgraph.runner import runLive
             try:
-                result = runLive(graphData, inputs, context, loopData)
-                where = f" in {result['interpreter']}" if result.get("interpreter") else ""
-                outputs = ", ".join(f"{name} = {value!r}"[:200] for name, value in result["outputs"].items())
-                self.liveRunDone.emit(f"{label}: done in {result['elapsed']:.2f} s{where}. {outputs}", True)
+                result = runLive(graphData, inputs, context, loopData, onNode=onNode)
+                self.liveRunDone.emit(self._liveSummary(label, result), True)
+                if not inside:
+                    self.liveNodeEvent.emit(label, "SUCCESS", f"Run Live: done in {result['elapsed']:.2f} s")
             except Exception as e:
-                self.liveRunDone.emit(f"{label}: {e}", False)
+                failed = getattr(e, "nodeName", "")
+                message = str(e)
+                if failed and not message.startswith(f"{failed}:"):
+                    message = f"{failed}: {message}"
+                self.liveRunDone.emit(f"{label}: failed at {message}" if failed else f"{label}: {message}", False)
+                if not inside:
+                    self.liveNodeEvent.emit(label, "ERROR", message)
 
         Thread(target=work, daemon=True).start()
 
+    @staticmethod
+    def _liveSummary(label: str, result: dict) -> str:
+        """ The message of a successful Run Live: duration, where it ran, nodes run / skipped, outputs. """
+        nodes = result.get("nodes") or {}
+        ran = [name for name, status in nodes.items() if status == "SUCCESS"]
+        skipped = [name for name, status in nodes.items() if status == "SKIPPED"]
+        parts = [f"{label}: OK in {result['elapsed']:.2f} s"]
+        if result.get("interpreter"):
+            parts.append(f"in {result['interpreter']}")
+        text = " ".join(parts) + "."
+        if nodes:
+            text += f" {len(ran)} node(s) run"
+            if skipped:
+                text += f", {len(skipped)} not needed here ({', '.join(skipped)})"
+            text += "."
+        outputs = ", ".join(f"{name} = {value!r}"[:200] for name, value in result["outputs"].items())
+        if outputs:
+            text += f" Outputs: {outputs}"
+        return text
+
+    def _setLiveNodeStatuses(self, statuses: dict):
+        self._liveNodeStatuses = statuses
+        self._liveStatusRevision += 1
+        self.liveNodeStatusesChanged.emit()
+
+    def _onLiveNodeEvent(self, nodeName: str, status: str, message: str):
+        self._liveNodeStatuses[nodeName] = (status, message)
+        self._liveStatusRevision += 1
+        self.liveNodeStatusesChanged.emit()
+
+    @Slot(str, result=str)
+    def liveNodeStatus(self, nodeName: str) -> str:
+        """ The Run Live status of a node of the shown graph ("" if none): RUNNING, SUCCESS, ERROR... """
+        return self._liveNodeStatuses.get(nodeName, ("", ""))[0]
+
+    @Slot(str, result=str)
+    def liveNodeMessage(self, nodeName: str) -> str:
+        return self._liveNodeStatuses.get(nodeName, ("", ""))[1]
+
+    @Slot()
+    def clearLiveStatuses(self):
+        self._setLiveNodeStatuses({})
+
     def _onLiveRunDone(self, message: str, success: bool):
         self._liveRunning = False
+        self._liveSuccess = success
         self._liveStatus = message
         self.liveStatusChanged.emit()
         (logging.info if success else logging.error)(f"[Run Live] {message}")
@@ -1875,9 +1941,13 @@ class UIGraph(QObject):
     subGraphPath = Property("QVariantList", lambda self: self._subGraphStack.names(), notify=subGraphChanged)
     isInSubGraph = Property(bool, lambda self: len(self._subGraphStack) > 0, notify=subGraphChanged)
     liveRunDone = Signal(str, bool)
+    liveNodeEvent = Signal(str, str, str)
+    liveNodeStatusesChanged = Signal()
+    liveStatusRevision = Property(int, lambda self: self._liveStatusRevision, notify=liveNodeStatusesChanged)
     liveStatusChanged = Signal()
     liveRunning = Property(bool, lambda self: self._liveRunning, notify=liveStatusChanged)
     liveStatus = Property(str, lambda self: self._liveStatus, notify=liveStatusChanged)
+    liveSuccess = Property(bool, lambda self: self._liveSuccess, notify=liveStatusChanged)
 
     computeStatusChanged = Signal()
     computing = Property(bool, isComputing, notify=computeStatusChanged)

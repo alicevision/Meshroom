@@ -15,7 +15,8 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import Optional
+from collections import deque
+from typing import Callable, Optional
 
 
 def _storable(value):
@@ -26,6 +27,31 @@ def _storable(value):
         return str(value)
 
 
+# Prefix of the lines giving the status of a node in the output of the process running a subgraph
+EVENT_MARK = "@@MESHROOM_SUBGRAPH_NODE@@"
+
+
+def _runProcess(command, shell: bool, env, onNode, logger) -> tuple:
+    """
+    Run the process of a subgraph, calling onNode with the statuses of the nodes it reports as they run.
+    Returns (exit code, the last lines of its other output).
+    """
+    lines = deque(maxlen=60)
+    process = subprocess.Popen(command, shell=shell, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                               text=True, errors="replace")
+    for line in process.stdout:
+        line = line.rstrip("\n")
+        if line.startswith(EVENT_MARK):
+            try:
+                onNode(*json.loads(line[len(EVENT_MARK):]))
+            except ValueError:
+                pass
+            continue
+        lines.append(line)
+        logger.debug(line)
+    return process.wait(), "\n".join(lines)
+
+
 def runRequest(requestPath: str, resultPath: str) -> int:
     """ Run the subgraph described in a request file and write the result file. Returns the exit code. """
     import meshroom.subgraph
@@ -33,11 +59,16 @@ def runRequest(requestPath: str, resultPath: str) -> int:
 
     with open(requestPath, "r", encoding="utf-8") as f:
         request = json.load(f)
+
+    def onNode(nodeName, status, message):
+        # Read by the process that started this one, as the nodes run (see _runProcess)
+        print(EVENT_MARK + json.dumps([nodeName, status, message]), flush=True)
+
     start = time.perf_counter()
     try:
         meshroom.subgraph.ensureNodes()
         outputs = run(request["graph"], request.get("inputs") or {}, context=request.get("context"),
-                      loop=Loop.fromDict(request.get("loop")), ownsSession=True)
+                      loop=Loop.fromDict(request.get("loop")), ownsSession=True, onNode=onNode)
         result = {"outputs": {name: _storable(value) for name, value in outputs.items()},
                   "elapsed": time.perf_counter() - start}
         code = 0
@@ -50,11 +81,25 @@ def runRequest(requestPath: str, resultPath: str) -> int:
 
 
 def runLive(graphData: dict, inputs: Optional[dict] = None, context: Optional[str] = None, loopData: Optional[dict] = None,
-            logger: Optional[logging.Logger] = None) -> dict:
+            logger: Optional[logging.Logger] = None, onNode: Optional[Callable[[str, str, str], None]] = None) -> dict:
     """
     Run a subgraph here when its context is available, else in the interpreter of its context.
-    Returns {"outputs", "elapsed", "interpreter"} or raises SubGraphError.
+    `onNode` is called with (node name, status, message) as its nodes run (see executor.NodeStatus).
+    Returns {"outputs", "elapsed", "interpreter", "nodes": {node name: status}} or raises SubGraphError.
     """
+    statuses = {}
+
+    def report(nodeName, status, message=""):
+        statuses[nodeName] = status
+        if onNode is not None:
+            onNode(nodeName, status, message)
+
+    result = _runLive(graphData, inputs, context, loopData, logger or logging.getLogger("meshroom.subgraph"), report)
+    result["nodes"] = statuses
+    return result
+
+
+def _runLive(graphData, inputs, context, loopData, logger, report) -> dict:
     from .contexts import contextClass
     from .executor import Loop, SubGraphError, SubGraphPlan, environmentNode, resolveContextName, run
 
@@ -63,7 +108,7 @@ def runLive(graphData: dict, inputs: Optional[dict] = None, context: Optional[st
     contextType = contextClass(contextName)
     if contextType.isAvailable():
         start = time.perf_counter()
-        outputs = run(plan, inputs, context=contextName, loop=Loop.fromDict(loopData), logger=logger)
+        outputs = run(plan, inputs, context=contextName, loop=Loop.fromDict(loopData), logger=logger, onNode=report)
         return {"outputs": outputs, "elapsed": time.perf_counter() - start, "interpreter": ""}
 
     # The interpreter: the one set for the context (MESHROOM_HYTHON...), else the one of a task node of the
@@ -84,24 +129,25 @@ def runLive(graphData: dict, inputs: Optional[dict] = None, context: Optional[st
             command = (provider.commandPrefix + " ".join(shlex.quote(arg) for arg in interpreter + arguments)
                        + provider.commandSuffix)
             env = provider.runtimeEnv if provider.processEnv else None
-            (logger or logging).info(f"[SubGraph] {command}")
-            process = subprocess.run(command, shell=True, capture_output=True, text=True, env=env)
+            logger.info(f"[SubGraph] {command}")
+            code, output = _runProcess(command, True, env, report, logger)
         else:
             command = interpreter + arguments
-            (logger or logging).info(f"[SubGraph] {' '.join(command)}")
+            logger.info(f"[SubGraph] {' '.join(command)}")
             try:
-                process = subprocess.run(command, capture_output=True, text=True)
+                code, output = _runProcess(command, False, None, report, logger)
             except FileNotFoundError:
                 raise SubGraphError(
                     f"'{interpreter[0]}' not found: no node of the subgraph gives the environment of the '{contextName}' "
                     f"context; set {contextType.interpreterVariable} (e.g. \"rez env houdini -- hython\").")
         if not os.path.isfile(resultPath):
-            raise SubGraphError(f"'{' '.join(interpreter)}' failed (exit code {process.returncode}):\n"
-                                f"{(process.stderr or process.stdout)[-2000:]}")
+            raise SubGraphError(f"'{' '.join(interpreter)}' failed (exit code {code}):\n{output[-2000:]}")
         with open(resultPath, "r", encoding="utf-8") as f:
             result = json.load(f)
     if "error" in result:
-        raise SubGraphError(result["error"])
+        error = SubGraphError(result["error"])
+        error.nodeName = result.get("nodeName", "")
+        raise error
     result["interpreter"] = " ".join(interpreter)
     return result
 

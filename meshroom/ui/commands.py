@@ -791,12 +791,14 @@ class UpgradeNodeCommand(GraphCommand):
         self.nodeDict = node.toDict()
         self.nodeName = node.getName()
         self.compatibilityIssue = None
+        self.nodeDescDict = None
         self.setText(f"Upgrade Node {self.nodeName}")
 
     def redoImpl(self):
         if not (node := self.graph.node(self.nodeName)).canUpgrade:
             return False
         self.compatibilityIssue = node.issue
+        self.nodeDescDict = node.nodeDescDict
         return self.graph.upgradeNode(self.nodeName)
 
     def undoImpl(self):
@@ -806,7 +808,7 @@ class UpgradeNodeCommand(GraphCommand):
 
         # recreate compatibility node
         with GraphModification(self.graph):
-            node = nodeFactory(self.nodeDict, name=self.nodeName, expectedUid=expectedUid)
+            node = nodeFactory(self.nodeDict, name=self.nodeName, expectedUid=expectedUid, nodeDescDict=self.nodeDescDict)
             self.graph.replaceNode(self.nodeName, node)
 
 

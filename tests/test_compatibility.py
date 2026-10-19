@@ -203,6 +203,35 @@ def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
     pluginManager.getNodeDescProviders()[nodeType] = NodeDescProvider(nodeDesc)
 
 
+def simulateMissingNodeTypes(graphFile: str, nodeNames: list, keepNodeDescriptions: bool = True):
+    """
+    Rename the node type of the given nodes in a saved graph file, so that their node type
+    is not registered anymore when the file is loaded.
+
+    Args:
+        graphFile: The path of the saved graph file to modify.
+        nodeNames: The names of the nodes whose node type should be missing.
+        keepNodeDescriptions: Whether the serialized node descriptions should be kept in the file (DescOnlyNodeType)
+                              or removed to simulate a file saved without them (UnknownNodeType).
+    """
+    with open(graphFile) as f:
+        graphData = json.load(f)
+
+    nodeDescriptions = graphData.get(GraphIO.Keys.NodeDescriptions, {})
+    for nodeName in nodeNames:
+        nodeData = graphData[GraphIO.Keys.Graph][nodeName]
+        nodeType = nodeData["nodeType"]
+        nodeData["nodeType"] = f"{nodeType}_Missing"
+        if nodeType in nodeDescriptions:
+            nodeDescriptions[f"{nodeType}_Missing"] = nodeDescriptions.pop(nodeType)
+
+    if not keepNodeDescriptions:
+        graphData.pop(GraphIO.Keys.NodeDescriptions, None)
+
+    with open(graphFile, "w") as f:
+        json.dump(graphData, f)
+
+
 def test_desc_only_node_node_type():
     """
     Test compatibility behavior for node type whose description is no longer available.
@@ -758,6 +787,94 @@ class TestGraphTemplateLoading:
             replaceNodeTypeDesc(SampleNodeV1.__name__, SampleNodeV2)
 
             loadGraph(graph.filepath, strictCompatibility=True)
+
+    def test_loadsDescOnlyNodeTypes(self, graphSavedOnDisk):
+        """
+        Templates do not serialize outputs nor inputs with default values: these attributes must be
+        created from the serialized node descriptions, including GroupAttributes and AnySets.
+        """
+        graph: Graph = graphSavedOnDisk
+        allAttrNode = graph.addNewNode("AllAttributesNode")
+        dynamicNode = graph.addNewNode("DynamicNode")
+        groupNode = graph.addNewNode("GroupAttributes")
+
+        dynamicNode.ins.duplicateAttribute(allAttrNode.stringParam)
+        dynamicNode.ins.duplicateAttribute(allAttrNode.intParam)
+        dynamicNode.ins.stringParam.value = "someString"
+        dynamicNode.ins.intParam.value = 11
+        expectedInsChildren = [(child.name, child.desc.type, child.value) for child in dynamicNode.ins.value]
+
+        graph.save(template=True)
+        simulateMissingNodeTypes(graph.filepath, [dynamicNode.name, groupNode.name])
+
+        loadedGraph = loadGraph(graph.filepath)
+
+        loadedDynamicNode = loadedGraph.node(dynamicNode.name)
+        assert isinstance(loadedDynamicNode, CompatibilityNode)
+        assert loadedDynamicNode.issue == CompatibilityIssue.DescOnlyNodeType
+        # Non-default AnySet input serialized in the template
+        assert [(child.name, child.desc.type, child.value)
+                for child in loadedDynamicNode.ins.value] == expectedInsChildren
+        # Default input and AnySet output, only available through the node description
+        assert loadedDynamicNode.hasAttribute("code")
+        assert isinstance(loadedDynamicNode.outs, AnySet)
+
+        loadedGroupNode = loadedGraph.node(groupNode.name)
+        assert isinstance(loadedGroupNode, CompatibilityNode)
+        assert loadedGroupNode.issue == CompatibilityIssue.DescOnlyNodeType
+        # Default GroupAttribute input and GroupAttribute output, only available through the node description
+        assert loadedGroupNode.hasAttribute("firstGroup")
+        assert loadedGroupNode.hasAttribute("outputGroup")
+
+    def test_loadsUnknownNodeTypeWithAnySet(self, graphSavedOnDisk):
+        """ A template saved without node descriptions can be loaded with an AnySet holding children of different types. """
+        graph: Graph = graphSavedOnDisk
+        allAttrNode = graph.addNewNode("AllAttributesNode")
+        dynamicNode = graph.addNewNode("DynamicNode")
+
+        dynamicNode.ins.duplicateAttribute(allAttrNode.stringParam)
+        dynamicNode.ins.duplicateAttribute(allAttrNode.intParam)
+        dynamicNode.ins.duplicateAttribute(allAttrNode.boolParam)
+        dynamicNode.ins.stringParam.value = "someString"
+        dynamicNode.ins.intParam.value = 11
+        dynamicNode.ins.boolParam.value = True
+        expectedInsChildren = [(child.name, child.desc.type, child.value) for child in dynamicNode.ins.value]
+
+        graph.save(template=True)
+        simulateMissingNodeTypes(graph.filepath, [dynamicNode.name], keepNodeDescriptions=False)
+
+        loadedGraph = loadGraph(graph.filepath)
+
+        loadedDynamicNode = loadedGraph.node(dynamicNode.name)
+        assert isinstance(loadedDynamicNode, CompatibilityNode)
+        assert loadedDynamicNode.issue == CompatibilityIssue.UnknownNodeType
+        assert [(child.name, child.desc.type, child.value)
+                for child in loadedDynamicNode.ins.value] == expectedInsChildren
+
+    def test_nodeWithoutVersionIsUpgraded(self, graphSavedOnDisk):
+        """
+        A node saved in a template without any version information is considered to be in version "0.0":
+        if its node type is versioned, it conflicts with it and is automatically upgraded, keeping its values.
+        """
+        with registeredNodeTypes([SampleNodeV1]):
+            graph: Graph = graphSavedOnDisk
+            node = graph.addNewNode(SampleNodeV1.__name__, paramA="foo")
+            graph.save(template=True)
+
+            # Simulate a template saved without any version information for the node
+            with open(graph.filepath) as f:
+                graphData = json.load(f)
+            graphData[GraphIO.Keys.Graph][node.name].pop("version", None)
+            graphData[GraphIO.Keys.Header].pop(GraphIO.Keys.NodesVersions, None)
+            with open(graph.filepath, "w") as f:
+                json.dump(graphData, f)
+
+            with overrideNodeTypeVersion(SampleNodeV1, "2.0"):
+                loadedGraph = loadGraph(graph.filepath)
+
+        loadedNode = loadedGraph.node(node.name)
+        assert isinstance(loadedNode, Node)
+        assert loadedNode.paramA.value == "foo"
 
 
 class TestVersionConflict:

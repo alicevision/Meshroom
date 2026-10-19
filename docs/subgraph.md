@@ -83,7 +83,7 @@ The nodes read the loop state from the outputs of `GraphInput` (live nodes also 
 - **Ctrl+G** (or the subgraph button of the bottom-left toolbar of the Graph Editor) puts the selected nodes in a new `SubGraph` node: their connections from other nodes become its inputs, their connections to other nodes its outputs (undoable).
 - **Double-click** a `SubGraph` node (or select it and press **I**) to show its subgraph; **U** goes up one level.
 - The **breadcrumb** at the top of the Graph Editor shows the path from the project; click an element (or press **U**) to go back. Leaving writes the subgraph back in its node; the ports of the node follow its `GraphInput` / `GraphOutput`.
-- **Run Live** (play button of the bar) runs the subgraph now with the inputs of its node: in Meshroom for Python, else in the interpreter of its context. A frame loop runs its first frame only. The duration and the outputs are shown in the bar.
+- **Run Live** (play button of the bar) runs the subgraph now with the inputs of its node: in Meshroom for Python, else in the interpreter of its context, started like the `SubGraph` task (the interpreter of a task node of the subgraph needing the context, in the process environment of its plugin, e.g. its `rez env`), unless `MESHROOM_HYTHON` / `MESHROOM_MAYAPY` / `MESHROOM_NUKE` is set. A frame loop runs its first frame only. The duration and the outputs are shown in the bar.
 - Saving, computing or submitting from a subgraph acts on the project (the subgraphs are written back first). The undo history is cleared when entering or leaving a subgraph.
 
 ## From a software

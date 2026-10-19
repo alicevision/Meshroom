@@ -117,24 +117,12 @@ class SubGraph(desc.Node):
 
     @staticmethod
     def _environmentNode(node):
-        """
-        (nodeDesc, provider) of the first task node of the subgraph that needs the context of the subgraph
-        (e.g. a Houdini node of a pipeline plugin, with pythonExecutable = "hython"), None if there is none:
-        the subgraph task is then started like that node would be (same interpreter, same environment).
-        """
-        from meshroom.core import pluginManager
-        from meshroom.core.subgraph import contextOf
+        """ (nodeDesc, provider) of the task node of the subgraph giving its environment (see executor.environmentNode). """
+        from meshroom.core.subgraph.executor import environmentNode
         plan = nodePlan(node)
         if plan is None:
             return None
-        contextName = resolveContextName(plan, node.context.value)
-        for name in sorted(plan.nodeDescs):
-            nodeDesc = plan.nodeDescs[name]
-            if contextName in contextOf(nodeDesc) and getattr(nodeDesc, "pythonExecutable", None):
-                provider = pluginManager.getNodeDescProvider(plan.graphData[name]["nodeType"])
-                if provider is not None:
-                    return nodeDesc, provider
-        return None
+        return environmentNode(plan, resolveContextName(plan, node.context.value))
 
     def getPythonExecutable(self, chunk) -> str:
         """

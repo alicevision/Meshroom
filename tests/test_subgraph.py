@@ -1269,3 +1269,48 @@ def test_sessionSceneIsNeverReplacedByANode(fakeMayaNuke):
     # In a Meshroom task the node opens it
     run(graph.toDict(), ownsSession=True)
     assert cmds.opened[0] == "/shots/sh010-v002.ma"
+
+
+class FakeDccTask(desc.Node):
+    """ A task node of a plugin needing the fakeDcc context (like a Houdini node with pythonExecutable = "hython"). """
+    __test__ = False
+    context = "fakeDcc"
+    pythonExecutable = "fakedcc-python"
+    inputs = []
+    outputs = []
+
+    def process(self, node):
+        pass
+
+
+def test_runLiveInTheEnvironmentOfItsNodes(monkeypatch):
+    """ Run Live starts the interpreter of a task node of the subgraph, in the process environment of its plugin. """
+    import subprocess
+    from meshroom.core import pluginManager
+    from meshroom.core.subgraph.runner import runLive
+    registerNodeDesc(FakeDccTask)
+    try:
+        monkeypatch.setattr(FakeDccContext, "isAvailable", classmethod(lambda cls: False))
+        provider = pluginManager.getNodeDescProvider("FakeDccTask")
+        processEnv = type("Env", (), {"getCommandPrefix": lambda self: "rez env fakedcc -c '",
+                                      "getCommandSuffix": lambda self: "'", "getEnvDict": lambda self: None})()
+        monkeypatch.setattr(type(provider), "processEnv", property(lambda self: processEnv))
+        calls = []
+
+        def fakeRun(command, **kwargs):
+            calls.append((command, kwargs))
+            resultPath = command.rstrip("'").split()[-1]
+            with open(resultPath, "w") as f:
+                json.dump({"outputs": {}, "elapsed": 0.1}, f)
+            return subprocess.CompletedProcess(command, 0, "", "")
+
+        monkeypatch.setattr(subprocess, "run", fakeRun)
+        graph = Graph("")
+        graph.addNewNode("FakeDccTask")
+        result = runLive(graph.serialize(asTemplate=True))
+        command, kwargs = calls[0]
+        assert command.startswith("rez env fakedcc -c 'fakedcc-python ") and command.endswith("'")
+        assert kwargs["shell"] is True
+        assert result["interpreter"] == "fakedcc-python"
+    finally:
+        unregisterNodeDesc(FakeDccTask)

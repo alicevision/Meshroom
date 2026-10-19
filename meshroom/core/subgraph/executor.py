@@ -193,6 +193,22 @@ def contextOf(nodeDesc) -> Tuple[str, ...]:
     return ("any",)
 
 
+def environmentNode(plan, contextName: str):
+    """
+    (nodeDesc, provider) of the first task node of a subgraph needing a context (e.g. a Houdini node of a
+    pipeline plugin, with pythonExecutable = "hython"), None if there is none: the subgraph is started in
+    another process like that node would be (its interpreter, the process environment of its plugin).
+    """
+    from meshroom.core import pluginManager
+    for name in sorted(plan.nodeDescs):
+        nodeDesc = plan.nodeDescs[name]
+        if contextName in contextOf(nodeDesc) and getattr(nodeDesc, "pythonExecutable", None):
+            provider = pluginManager.getNodeDescProvider(plan.graphData[name]["nodeType"])
+            if provider is not None:
+                return nodeDesc, provider
+    return None
+
+
 def _topAttributeName(attribute) -> str:
     """ The name of the top-level attribute of an attribute (itself, or the group / list containing it). """
     while attribute.root is not None:

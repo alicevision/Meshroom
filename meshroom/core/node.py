@@ -1885,7 +1885,7 @@ class BaseNode(BaseObject):
         if not self.nodeDesc.hasDynamicOutputAttribute:
             return
         # logging.warning(f"updateOutputAttr: {self.name}, status: {self.globalStatus}")
-        if Status.SUCCESS in [c._status.status for c in self.getChunks()]:
+        if Status.SUCCESS in [c._status.status for c in self.getChunks()] or self.isCompatibilityNode:
             self.loadOutputAttr()
         else:
             self.resetOutputAttr()

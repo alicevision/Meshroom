@@ -1386,3 +1386,10 @@ def test_nodeStatusesReported():
     assert statuses["LiveFail_1"] == "ERROR"
     message = next(message for name, status, message in events if status == "ERROR")
     assert "broken" in message
+
+
+def test_runFromSoftwareReportsNodes():
+    import meshroom.subgraph
+    events = []
+    meshroom.subgraph.run(addOneGraph().toDict(), {"x": 1}, onNode=lambda *event: events.append(event[:2]))
+    assert ("LiveAdd_1", "SUCCESS") in events

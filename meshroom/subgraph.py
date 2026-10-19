@@ -80,7 +80,7 @@ def _projectNode(projectPath: str, nodeName: str):
 def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         frames: Optional[Union[Sequence[int], tuple]] = None, step: float = 1, iterations: Optional[int] = None,
         variables: Optional[dict] = None, logger: Optional[logging.Logger] = None, node: Optional[str] = None,
-        set: Optional[dict] = None, items: Optional[Sequence] = None) -> dict:
+        set: Optional[dict] = None, items: Optional[Sequence] = None, onNode=None) -> dict:
     """
     Run a subgraph in the current interpreter and return the values of its GraphOutput ports.
 
@@ -99,6 +99,9 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
               are given.
         set: values of attributes of the nodes, set before running: {"Node_1.attribute": value} (or
              "Node_1.group.child"), without declaring ports.
+        onNode: called with (node name, status, message) as the nodes run: RUNNING, SUCCESS (message: its
+                duration), ERROR (message: the error), UPSTREAM_ERROR (not run after an error), SKIPPED (not
+                needed in this context).
 
     Raises:
         SubGraphError: an error in a node (its name is in the message).
@@ -124,4 +127,5 @@ def run(source, inputs: Optional[dict] = None, context: Optional[str] = None,
         loop = Loop("count", iterations=iterations)
     else:
         loop = Loop()
-    return _run(source, inputs, context=context, loop=loop, variables=variables, logger=logger, overrides=set)
+    return _run(source, inputs, context=context, loop=loop, variables=variables, logger=logger, overrides=set,
+                onNode=onNode)

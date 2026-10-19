@@ -9,10 +9,11 @@ from typing import Type
 import pytest
 
 from meshroom.core import desc, pluginManager
+from meshroom.core.attribute import AnySet
 from meshroom.core.desc.validators import NotEmptyValidator
 from meshroom.core.plugins.base import NodeDescProvider
 from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
-from meshroom.core.graphIO import GraphSerializer
+from meshroom.core.graphIO import GraphIO, GraphSerializer
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node, Status
 from meshroom.core.nodeFactory import nodeFactory
@@ -630,6 +631,67 @@ def test_outputValueAfterDefaultOutputChange(tmp_path):
     assert n.output.value.endswith("/file.cba")
 
     unregisterNodeDesc(OutputTemplateNodeV1)
+
+
+def test_unknownNodeTypeWithAnysetLoadsWithoutNodeDescriptions(tmp_path):
+    """
+    Test that a graph containing an unknown node type with an AnySet holding children of different types
+    can be loaded when the node descriptions are not serialized in the .mg file (i.e. files saved before
+    node descriptions were serialized), and that the AnySet children and their values are preserved.
+    """
+    graph = Graph("test")
+    allAttrNode = graph.addNewNode("AllAttributesNode")
+    dynamicNode = graph.addNewNode("DynamicNode")
+    lsNode = graph.addNewNode("Ls")
+
+    # The AnySet children have different types: inferring the type of all the children from the first one fails
+    dynamicNode.ins.duplicateAttribute(allAttrNode.stringParam)
+    dynamicNode.ins.duplicateAttribute(allAttrNode.intParam)
+    dynamicNode.ins.duplicateAttribute(allAttrNode.boolParam)
+    dynamicNode.ins.duplicateAttribute(allAttrNode.floatParam)
+    dynamicNode.ins.stringParam.value = "someString"
+    dynamicNode.ins.intParam.value = 11
+    dynamicNode.ins.boolParam.value = True
+    dynamicNode.ins.floatParam.value = 0.5
+    dynamicNode.outs.duplicateAttribute(lsNode.input, isOutput=True)
+    dynamicNode.outs.input.connectTo(lsNode.input)
+
+    expectedInsChildren = [(child.name, child.desc.type, child.value) for child in dynamicNode.ins.value]
+    assert len({childType for _, childType, _ in expectedInsChildren}) == 4
+
+    graphFile = os.path.join(tmp_path, "test_unknown_node_type_anyset.mg")
+    graph.save(graphFile)
+
+    # Simulate an unknown node type in a file saved without the node descriptions
+    with open(graphFile) as f:
+        graphData = json.load(f)
+    graphData.pop(GraphIO.Keys.NodeDescriptions, None)
+    graphData[GraphIO.Keys.Graph][dynamicNode.name]["nodeType"] = "DynamicNode_Missing"
+    serializedNode = copy.deepcopy(graphData[GraphIO.Keys.Graph][dynamicNode.name])
+    with open(graphFile, "w") as f:
+        json.dump(graphData, f)
+
+    graph = loadGraph(graphFile)
+
+    node = graph.node(dynamicNode.name)
+    assert isinstance(node, CompatibilityNode)
+    # No node description has been serialized: the node type is fully unknown
+    assert node.issue == CompatibilityIssue.UnknownNodeType
+    assert not node.canUpgrade
+
+    # Check that the AnySet and its children have been restored with their own types and values
+    assert isinstance(node.ins, AnySet)
+    assert [(child.name, child.desc.type, child.value) for child in node.ins.value] == expectedInsChildren
+    assert isinstance(node.outs, AnySet)
+    assert [child.name for child in node.outs.value] == ["input"]
+
+    # Check that the edge from the AnySet's child is restored
+    assert graph.node(lsNode.name).input.isLink
+
+    # Check that the AnySets are serialized back identically
+    nodeDict = node.toDict()
+    assert nodeDict["inputs"]["ins"] == serializedNode["inputs"]["ins"]
+    assert nodeDict["outputs"]["outs"] == serializedNode["outputs"]["outs"]
 
 
 class TestGraphLoadingWithStrictCompatibility:

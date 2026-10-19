@@ -4,15 +4,18 @@ import tempfile
 import os
 
 import copy
+import json
 from typing import Type
 import pytest
 
 from meshroom.core import desc, pluginManager
+from meshroom.core.desc.validators import NotEmptyValidator
 from meshroom.core.plugins.base import NodeDescProvider
 from meshroom.core.exception import GraphCompatibilityError, NodeUpgradeError
 from meshroom.core.graphIO import GraphSerializer
 from meshroom.core.graph import Graph, loadGraph
-from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
+from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node, Status
+from meshroom.core.nodeFactory import nodeFactory
 
 from .utils import registeredNodeTypes, overrideNodeTypeVersion, registerNodeDesc, unregisterNodeDesc
 
@@ -879,3 +882,129 @@ class TestUidConflict:
 
             loadedGraph = loadGraph(graph.filepath)
             assert len(loadedGraph.compatibilityNodes) == 1
+
+
+class ValidatedNodeV1(desc.Node):
+    """ Node with a mandatory input, validated by a NotEmptyValidator. """
+    inputs = [
+        desc.StringParam(name="value", label="Value", description="", value="",
+                         validators=[NotEmptyValidator()]),
+    ]
+    outputs = [
+        desc.File(name="output", label="Output", description="", value="{nodeCacheFolder}"),
+    ]
+
+
+class ValidatedNodeV2(desc.Node):
+    """
+    Changes from V1:
+        * 'extra' has been added, which makes V1 serialized data a description conflict.
+          'value' still matches, so the CompatibilityNode keeps the validator.
+    """
+    inputs = [
+        desc.StringParam(name="value", label="Value", description="", value="",
+                         validators=[NotEmptyValidator()]),
+        desc.StringParam(name="extra", label="Extra", description="", value="", invalidate=False),
+    ]
+    outputs = [
+        desc.File(name="output", label="Output", description="", value="{nodeCacheFolder}"),
+    ]
+
+
+class TestCompatibilityNodeNotifications:
+    """ Status and validation changes of a CompatibilityNode must be notified to the listeners (e.g. the UI). """
+
+    @staticmethod
+    def writeNodeStatus(node, status="SUCCESS"):
+        """ Write a nodeStatus file in the internal folder of `node`. """
+        os.makedirs(node.internalFolder, exist_ok=True)
+        with open(os.path.join(node.internalFolder, "nodeStatus"), "w") as f:
+            json.dump({"nodeName": node.name, "status": status, "execMode": "LOCAL"}, f)
+
+    @pytest.fixture
+    def compatibilityGraph(self, tmp_path):
+        """
+        Yield a (graph, nodeName) tuple where the graph has been reloaded from a file and
+        contains one CompatibilityNode (description conflict) that can be upgraded.
+        """
+        with registeredNodeTypes([ValidatedNodeV1, ValidatedNodeV2]):
+            graph = Graph("")
+            nodeName = graph.addNewNode(ValidatedNodeV1.__name__).name
+            graphFile = str(tmp_path / "test_compatibility_node.mg")
+            graph.save(graphFile)
+
+            # ValidatedNodeV1 now refers to the V2 description
+            replaceNodeTypeDesc(ValidatedNodeV1.__name__, ValidatedNodeV2)
+            yield loadGraph(graphFile), nodeName
+
+    def test_updateStatusFromCacheEmitsGlobalStatusChanged(self, compatibilityGraph):
+        """ A status loaded from the cache must be notified, as the node chunks are not connected. """
+        graph, nodeName = compatibilityGraph
+        node = graph.node(nodeName)
+        assert isinstance(node, CompatibilityNode)
+        assert node.issue == CompatibilityIssue.DescriptionConflict
+        assert node.getGlobalStatus() == Status.NONE
+
+        emitted = []
+        node.globalStatusChanged.connect(lambda: emitted.append(node.getGlobalStatus()))
+
+        self.writeNodeStatus(node, "SUCCESS")
+        node.updateStatusFromCache()
+
+        assert node.getGlobalStatus() == Status.SUCCESS
+        assert emitted == [Status.SUCCESS]
+
+        # Status has not changed: no new notification
+        node.updateStatusFromCache()
+        assert emitted == [Status.SUCCESS]
+
+        # Status file removed: back to NONE, and notified
+        os.remove(os.path.join(node.internalFolder, "nodeStatus"))
+        node.updateStatusFromCache()
+        assert node.getGlobalStatus() == Status.NONE
+        assert emitted == [Status.SUCCESS, Status.NONE]
+
+    def test_updateStatusFromCacheEmitsHasInvalidAttributeChanged(self, compatibilityGraph):
+        """ The validation state must be notified, as _onAttributeChanged ignores CompatibilityNodes. """
+        graph, nodeName = compatibilityGraph
+        node = graph.node(nodeName)
+        assert isinstance(node, CompatibilityNode)
+        # The validator of the current description is kept on the CompatibilityNode attribute
+        assert node._hasInvalidAttribute()
+
+        emitted = []
+        node.hasInvalidAttributeChanged.connect(lambda: emitted.append(True))
+        node.updateStatusFromCache()
+        assert len(emitted) == 1
+
+    def test_replaceNodeNotifiesStatusAndValidation(self, compatibilityGraph):
+        """
+        Upgrade a CompatibilityNode and recreate it as the undo of the upgrade does:
+        the restored node is added to a live graph, and its status and validation must be notified.
+        """
+        graph, nodeName = compatibilityGraph
+        compatNode = graph.node(nodeName)
+        self.writeNodeStatus(compatNode, "SUCCESS")
+        nodeDict = copy.deepcopy(compatNode.toDict())
+
+        upgradedNode = graph.upgradeNode(nodeName)
+        assert isinstance(upgradedNode, Node)
+
+        restoredNode = nodeFactory(nodeDict, name=nodeName)
+        assert isinstance(restoredNode, CompatibilityNode)
+
+        statusEmitted = []
+        validationEmitted = []
+        restoredNode.globalStatusChanged.connect(lambda: statusEmitted.append(True))
+        restoredNode.hasInvalidAttributeChanged.connect(lambda: validationEmitted.append(True))
+
+        graph.replaceNode(nodeName, restoredNode)
+
+        assert graph.node(nodeName) is restoredNode
+        assert restoredNode.internalFolder == compatNode.internalFolder
+        assert restoredNode.getGlobalStatus() == Status.SUCCESS
+        assert statusEmitted
+        assert validationEmitted
+        assert restoredNode._hasInvalidAttribute()
+
+

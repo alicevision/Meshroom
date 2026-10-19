@@ -2817,6 +2817,12 @@ class CompatibilityNode(BaseNode):
                 return desc.File(**params)
             else:
                 return desc.StringParam(**params)
+        # Serialized AnySet: its children are self-describing (each one carries its own type), so an empty
+        # AnySet description is enough, the AnySet attribute rebuilds its children from the serialized value.
+        # Generic inference cannot handle it, as its children may hold values of different types.
+        elif CompatibilityNode._isSerializedAnySet(value):
+            return desc.AnySet(name=attrName, label=attrName, description="Incompatible parameter",
+                               commandLineGroup="incompatible")
         # List/GroupAttribute: recursively build descriptions
         elif isinstance(value, (list, dict)):
             del params["value"]
@@ -2837,6 +2843,16 @@ class CompatibilityNode(BaseNode):
             return attrDesc
         # Handle any other type of parameters as Strings
         return desc.StringParam(**params)
+
+    @staticmethod
+    def _isSerializedAnySet(value) -> bool:
+        """
+        Return whether 'value' has the shape of a serialized AnySet, i.e. a dict holding a "children" list
+        in which every child is a dict providing at least its "name" and "type".
+        """
+        if not isinstance(value, dict) or not isinstance(value.get("children"), list):
+            return False
+        return all(isinstance(child, dict) and "name" in child and "type" in child for child in value["children"])
 
     @staticmethod
     def attributeDescFromName(refAttributes, name, value, strict=True):

@@ -1393,3 +1393,19 @@ def test_runFromSoftwareReportsNodes():
     events = []
     meshroom.subgraph.run(addOneGraph().toDict(), {"x": 1}, onNode=lambda *event: events.append(event[:2]))
     assert ("LiveAdd_1", "SUCCESS") in events
+
+
+def test_pluginsLoadedWhenTheirVariablesAreSetLater(monkeypatch):
+    """ From a software: plugin variables set after a first run (e.g. by a script) load the plugins. """
+    import meshroom.core
+    import meshroom.subgraph
+    calls = []
+    monkeypatch.setattr(meshroom.core, "initPlugins", lambda: calls.append("plugins"))
+    monkeypatch.setattr(meshroom.core, "initNodes", lambda: calls.append("nodes"))
+    monkeypatch.setattr(meshroom.subgraph, "_nodesLoaded", True)
+    monkeypatch.setattr(meshroom.subgraph, "_loadedPluginVariables", ("",) * 5)
+    monkeypatch.setenv("MESHROOM_USER_REZ_PLUGINS", "mr_batch_plugin=/path")
+    meshroom.subgraph.ensureNodes()
+    assert calls == ["nodes", "plugins"]
+    meshroom.subgraph.ensureNodes()
+    assert calls == ["nodes", "plugins"]

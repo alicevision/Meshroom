@@ -22,12 +22,26 @@ from meshroom.core.subgraph import Loop, SubGraphError, SubGraphPlan, contextNam
 __all__ = ["run", "load", "nodeSubGraph", "Loop", "SubGraphError", "contextNames", "ensureNodes"]
 
 _nodesLoaded = False
+# The variables giving the plugins, when they were loaded: plugins set after (e.g. by a script of the software)
+# are loaded at the next call
+_PLUGIN_VARIABLES = ("MESHROOM_PLUGINS_PATH", "MESHROOM_USER_PLUGINS_PATH", "MESHROOM_REZ_PLUGINS",
+                     "MESHROOM_USER_REZ_PLUGINS", "MESHROOM_NODES_PATH")
+_loadedPluginVariables = None
+
+
+def _pluginVariables() -> tuple:
+    import os
+    return tuple(os.environ.get(name, "") for name in _PLUGIN_VARIABLES)
 
 
 def ensureNodes():
-    """ Load the node types (built-in nodes and plugins) once, if they are not loaded yet. """
-    global _nodesLoaded
-    if _nodesLoaded:
+    """
+    Load the node types (built-in nodes and plugins) if they are not loaded yet, and the plugins again when
+    the variables giving them changed since (MESHROOM_USER_REZ_PLUGINS...).
+    """
+    global _nodesLoaded, _loadedPluginVariables
+    variables = _pluginVariables()
+    if _nodesLoaded and variables == _loadedPluginVariables:
         return
     import meshroom.core
     from meshroom.core.subgraph.contexts import HoudiniContext
@@ -36,7 +50,14 @@ def ensureNodes():
     if meshroom.core.pluginManager.getNodeDescProvider("GraphInput") is None:
         meshroom.core.initNodes()
         meshroom.core.initPlugins()
+    elif variables != _loadedPluginVariables and any(variables):
+        # Nodes already loaded (by Meshroom, or before the plugin variables were set): load the plugins
+        if _loadedPluginVariables is not None:
+            logging.info("[SubGraph] The plugin variables changed: loading the plugins.")
+        meshroom.core.initNodes()
+        meshroom.core.initPlugins()
     _nodesLoaded = True
+    _loadedPluginVariables = variables
 
 
 def load(source) -> SubGraphPlan:

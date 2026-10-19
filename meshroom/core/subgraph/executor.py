@@ -178,6 +178,12 @@ def _nodeDescFor(nodeType: str):
     import meshroom.core
     provider = meshroom.core.pluginManager.getNodeDescProvider(nodeType)
     if provider is None:
+        import os
+        if not any(os.environ.get(name) for name in ("MESHROOM_PLUGINS_PATH", "MESHROOM_USER_PLUGINS_PATH",
+                                                     "MESHROOM_REZ_PLUGINS", "MESHROOM_USER_REZ_PLUGINS")):
+            raise SubGraphError(f"Unknown node type '{nodeType}': no plugin is declared in this environment "
+                                f"(MESHROOM_USER_REZ_PLUGINS, MESHROOM_PLUGINS_PATH... are not set; they come from the "
+                                f"meshroom rez package).")
         raise SubGraphError(f"Unknown node type '{nodeType}' (is its plugin loaded?).")
     return provider.nodeDescClass()
 

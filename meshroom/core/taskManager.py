@@ -318,6 +318,7 @@ class TaskManager(BaseObject):
 
         self.updateNodes()
         self._cancelledChunks = []
+        allReady = True  # Dependencies are only checked when the computation is not forced
 
         if forceCompute:
             nodes, edges = graph.dfsOnFinish(startNodes=toNodes)

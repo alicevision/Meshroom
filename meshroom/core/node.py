@@ -1904,7 +1904,6 @@ class BaseNode(BaseObject):
     def loadOutputAttr(self):
         """ Load output attributes with dynamic values from a values.json file.
         """
-
         # This does not apply to non dynamic output
         if not self.nodeDesc.hasDynamicOutputAttribute:
             return
@@ -1919,7 +1918,7 @@ class BaseNode(BaseObject):
         with open(valuesFile) as jsonFile:
             data = json.load(jsonFile)
 
-        # loop over all output attributes in the node description
+        # Loop over all output attributes in the node description
         for output in self.nodeDesc.outputs:
             # Only consider dynamic values
             if hasADynamicValue(output):
@@ -3124,6 +3123,16 @@ class CompatibilityNode(BaseNode):
                 attr._populateFromDynamicValue(value)
             else:
                 attr.value = value
+
+    # Override
+    def updateStatusFromCache(self):
+        """ Update the status from the cache and notify the listeners if the global status has changed. """
+        previousStatus = self.getGlobalStatus()
+        super().updateStatusFromCache()
+        if self.getGlobalStatus() != previousStatus:
+            self.globalStatusChanged.emit()
+        # Compatibility nodes do not trigger descriptor callbacks, but their validation state must still be notified
+        self.hasInvalidAttributeChanged.emit()
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)

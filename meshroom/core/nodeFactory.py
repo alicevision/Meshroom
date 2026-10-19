@@ -97,7 +97,8 @@ class _NodeCreator:
         if self.nodeDesc is None:
             if meshroom.core.pluginManager.getPluginFromNodeDesc(self.nodeType) is not None:
                 return CompatibilityIssue.PluginIssue
-            if self.nodeDescDict is not None:
+            # An empty description means that none was serialized for this node type in the .mg file
+            if self.nodeDescDict:
                 return CompatibilityIssue.DescOnlyNodeType
             return CompatibilityIssue.UnknownNodeType
 

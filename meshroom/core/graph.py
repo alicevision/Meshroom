@@ -792,14 +792,7 @@ class Graph(BaseObject):
             nodeName (str): the name of the CompatibilityNode to upgrade
 
         Returns:
-            - the upgraded (newly created) node
-            - a dictionary containing the incoming edges removed by this operation:
-                {dstAttr.fullName, srcAttr.fullName}
-            - a dictionary containing the outgoing edges removed by this operation:
-                {dstAttr.fullName, srcAttr.fullName}
-            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
-                prior to the removal of all edges:
-                {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
+            the upgraded (newly created) node
         """
         node = self.node(nodeName)
         if not isinstance(node, CompatibilityNode):

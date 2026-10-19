@@ -168,6 +168,9 @@ def syncAnySet(anySet, ports: Iterable[tuple]) -> bool:
         edges = [(edge.src, edge.dst) for edge in connectedEdges(child)]
         # A connection not applied yet (while loading, "{Node.attribute}") is kept as such
         linkExpression = getattr(child, "_linkExpression", None)
+        # A value typed on the child (not its default) is kept by the recreated child
+        from .executor import plainValue
+        typedValue = plainValue(child) if not edges and not linkExpression and not child.isDefault else None
         for edge in connectedEdges(child):
             graph.removeEdge(edge.dst)
         index = list(anySet.value).index(child)
@@ -177,6 +180,12 @@ def syncAnySet(anySet, ports: Iterable[tuple]) -> bool:
             newChild = _insertChild(anySet, port, index)
             if linkExpression and not edges:
                 newChild._linkExpression = linkExpression
+            if typedValue is not None:
+                from .executor import setPlainValue
+                try:
+                    setPlainValue(newChild, typedValue)
+                except Exception as e:
+                    logging.warning(f"[SubGraph] Value of '{newChild.fullName}' not kept ({e}).")
             for src, dst in edges:
                 src, dst = (newChild, dst) if src is child else (src, newChild)
                 try:

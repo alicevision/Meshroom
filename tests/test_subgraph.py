@@ -1329,3 +1329,34 @@ def test_subGraphWithUnknownNodesIsNotEntered():
     with pytest.raises(ValueError, match="Missing_1 \\(MissingPluginNode\\)"):
         SubGraphStack().enter(project, node)
     assert node.subGraph.value == content
+
+
+def test_inputValuesKeptWhenEnteringAndLeaving():
+    """ The values typed on the inputs of the node stay when its subgraph is entered and left. """
+    from meshroom.core.subgraph.editing import SubGraphStack
+    registerNodeDesc(TaskShotScene)
+    project = Graph("project")
+    node = project.addNewNode("SubGraph")
+    stack = SubGraphStack()
+    inner = stack.enter(project, node)
+    task = inner.addNewNode("TaskShotScene")
+    connectToAnySet(inner, task.shot, inner.node("GraphInput_1").ports)
+    stack.exit(inner)
+    port(node, "ins", "shot").value = "sh020"
+    # A port saved by a former version (without description): repaired when entering, its value kept
+    data = json.loads(node.subGraph.value)
+    data["graph"]["GraphInput_1"]["inputs"]["portSpec"] = formatPortSpec([("shot", "StringParam", "Shot")])
+    node.subGraph.value = json.dumps(data)
+    port(node, "ins", "shot").value = "sh020"
+    for _ in range(2):
+        inner = stack.enter(project, node)
+        assert port(inner.node("GraphInput_1"), "ports", "shot").value == "sh020"
+        stack.exit(inner)
+        assert port(node, "ins", "shot").value == "sh020"
+    # The port recreated with another description (e.g. repaired from the attribute it is connected to)
+    from meshroom.core.subgraph.ports import anySetPorts, syncAnySet
+    ports = anySetPorts(node.ins)
+    description = dict(ports[0][3], description="Another description")
+    syncAnySet(node.ins, [(ports[0][0], ports[0][1], ports[0][2], description)])
+    assert port(node, "ins", "shot").desc.description == "Another description"
+    assert port(node, "ins", "shot").value == "sh020"

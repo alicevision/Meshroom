@@ -153,6 +153,12 @@ class SubGraphStack:
         if node.subGraph.isLink or node.template.isLink:
             raise ValueError(f"The subgraph of '{node.name}' comes from a connection: it cannot be edited.")
         graph = buildSubGraph(node, parent)
+        # Nodes of unknown types (their plugin is not loaded): their connections cannot be restored, and
+        # writing the subgraph back would lose them
+        unknown = sorted(f"{n.name} ({n.nodeType})" for n in graph.nodes if n.isCompatibilityNode)
+        if unknown:
+            raise ValueError(f"The subgraph of '{node.name}' has nodes whose type is not loaded (plugin missing in this "
+                             f"environment): {', '.join(unknown)}. It is not opened, so that it is not modified.")
         graphInputs = [innerNode for innerNode in graph.nodes if getattr(innerNode.nodeDesc, "subGraphRole", "") == "input"]
         for graphInput in graphInputs:
             showNodeValues(graphInput, node)

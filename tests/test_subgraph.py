@@ -1314,3 +1314,18 @@ def test_runLiveInTheEnvironmentOfItsNodes(monkeypatch):
         assert result["interpreter"] == "fakedcc-python"
     finally:
         unregisterNodeDesc(FakeDccTask)
+
+
+def test_subGraphWithUnknownNodesIsNotEntered():
+    """ A subgraph whose nodes come from a plugin not loaded is not opened (writing it back would lose its links). """
+    from meshroom.core.subgraph.editing import SubGraphStack
+    project = Graph("project")
+    node = project.addNewNode("SubGraph")
+    data = json.loads(node.subGraph.value)
+    data["graph"]["Missing_1"] = {"nodeType": "MissingPluginNode", "position": [0, 0],
+                                  "inputs": {"scene": "{GraphInput_1.ports.x}"}}
+    node.subGraph.value = json.dumps(data)
+    content = node.subGraph.value
+    with pytest.raises(ValueError, match="Missing_1 \\(MissingPluginNode\\)"):
+        SubGraphStack().enter(project, node)
+    assert node.subGraph.value == content

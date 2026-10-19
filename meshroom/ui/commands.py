@@ -792,6 +792,10 @@ class UpgradeNodeCommand(GraphCommand):
         self.nodeName = node.getName()
         self.compatibilityIssue = None
         self.nodeDescDict = None
+        # Outgoing edges of the CompatibilityNode and ListAttribute entries they were connected to:
+        # some may not exist on the upgraded node, and would be lost on undo if they were not kept here
+        self.outEdges = {}
+        self.outListAttributes = {}
         self.setText(f"Upgrade Node {self.nodeName}")
 
     def redoImpl(self):
@@ -799,7 +803,9 @@ class UpgradeNodeCommand(GraphCommand):
             return False
         self.compatibilityIssue = node.issue
         self.nodeDescDict = node.nodeDescDict
-        return self.graph.upgradeNode(self.nodeName)
+        upgradedNode = node.upgrade()
+        self.outEdges, self.outListAttributes = self.graph.replaceNode(self.nodeName, upgradedNode)
+        return upgradedNode
 
     def undoImpl(self):
         expectedUid = None
@@ -809,7 +815,7 @@ class UpgradeNodeCommand(GraphCommand):
         # recreate compatibility node
         with GraphModification(self.graph):
             node = nodeFactory(self.nodeDict, name=self.nodeName, expectedUid=expectedUid, nodeDescDict=self.nodeDescDict)
-            self.graph.replaceNode(self.nodeName, node)
+            self.graph.replaceNode(self.nodeName, node, self.outEdges, self.outListAttributes)
 
 
 class EnableGraphUpdateCommand(GraphCommand):

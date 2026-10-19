@@ -184,6 +184,7 @@ class TaskThread(QThread):
         else:
             self._manager._nodesToProcess = []
             self._state = State.DEAD
+            self._manager.computeFinished.emit()
 
     # Signals and properties
     createChunksSignal = Signal(BaseObject)
@@ -252,6 +253,7 @@ class TaskManager(BaseObject):
         self._nodesToProcess = []
         self._cancelledChunks = []
         self._thread._state = State.DEAD
+        self.computeFinished.emit()
 
     @Slot()
     def pauseProcess(self):
@@ -625,3 +627,8 @@ class TaskManager(BaseObject):
     nodes = Property(BaseObject, lambda self: self._nodes, constant=True)
     chunksCreated = Signal(BaseObject)
     restartRequested = Signal()
+    # Emitted when a local computation ends: its nodes are processed, have failed, or were stopped (Stop button).
+    # Not emitted when the computation restarts after one of its nodes was stopped.
+    # Emitted from the computing thread when it ends by itself: slots run in the thread of their QObject, and plain
+    # callables in the TaskManager's (the main thread), unless connected with Qt.DirectConnection.
+    computeFinished = Signal()

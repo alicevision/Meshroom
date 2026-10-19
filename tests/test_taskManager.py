@@ -74,3 +74,55 @@ def test_computeWithForceCompute():
     finally:
         taskManager.join()
         shutil.rmtree(folder, ignore_errors=True)
+
+
+@pytest.mark.skipif(not PYSIDE_BACKEND, reason="Runs in a subprocess with the PySide backend")
+def test_computeFinishedSignal():
+    from PySide6.QtCore import QCoreApplication, QThread
+    from meshroom.core.graph import Graph
+    from meshroom.core.taskManager import TaskManager
+    from tests.utils import registeredNodeTypes
+
+    app = QCoreApplication.instance() or QCoreApplication([])
+    folder = tempfile.mkdtemp()
+    taskManager = TaskManager()
+    finished = []
+    # A plain callable, without receiver object: still called in the main thread
+    taskManager.computeFinished.connect(lambda: finished.append(QThread.currentThread()))
+
+    def waitFor(condition):
+        deadline = time.monotonic() + 30
+        while not condition():
+            assert time.monotonic() < deadline
+            app.processEvents()
+            time.sleep(0.01)
+    try:
+        with registeredNodeTypes([CountRuns]):
+            graph = Graph("")
+            countRuns = graph.addNewNode("CountRuns")
+            # A process running until it is stopped: 'cat' waits for a writer on a FIFO
+            blocked = graph.addNewNode("AppendText")
+            fifo = os.path.join(folder, "blocking.fifo")
+            os.mkfifo(fifo)
+            blocked.input.value = fifo
+            graph.save(os.path.join(folder, "project.mg"))
+
+            # A computation which ends by itself
+            taskManager.compute(graph, [countRuns])
+            waitFor(lambda: finished)
+            assert countRuns.globalStatus == "SUCCESS" and finished == [app.thread()]
+
+            # A computation stopped as the Stop button does (UIGraph.stopExecution)
+            taskManager.compute(graph, [blocked])
+            waitFor(lambda: blocked.chunksCreated and blocked.chunks[0].isRunning()
+                    and getattr(blocked.chunks[0], "subprocess", None) is not None)
+            taskManager.requestBlockRestart()
+            graph.stopExecution()
+            taskManager.join()
+            waitFor(lambda: len(finished) == 2)
+            assert finished[1] == app.thread()
+            taskManager.clear()  # As UIGraph.clear: the TaskManager watches the nodes
+            graph.clear()
+    finally:
+        taskManager.join()
+        shutil.rmtree(folder, ignore_errors=True)

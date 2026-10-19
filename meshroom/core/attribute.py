@@ -2095,6 +2095,12 @@ class AnySet(GroupAttribute):
         """Accept connections of any type."""
         return True
 
+    # Override
+    # An AnySet's description has no predefined items: all its children are user-defined, so it is only
+    # at its default value when it is empty. Children created from serialized data get their serialized value
+    # as their default value, so checking whether all the children are at their default value is not relevant.
+    isDefault = Property(bool, lambda self: self._value.count == 0, notify=Attribute.flatStaticChildrenChanged)
+
 
 class Flow(Attribute):
     """

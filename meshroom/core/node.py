@@ -2916,7 +2916,7 @@ class CompatibilityNode(BaseNode):
             return None
         refAttrs[name]["name"] = name
 
-        if refAttrs[name].get("type") == "AnySet":
+        if refAttrs[name].get("type") == "AnySet" and value is not None:
             # Add the children attribute descriptions from value to the node description
             refAttrs[name]["items"] = {child["name"]: copy.deepcopy(child) for child in value["children"]}
             # Replace the children list with a dictionary of child values
@@ -2943,6 +2943,11 @@ class CompatibilityNode(BaseNode):
         process_group_items(refAttrs[name])
 
         attrDesc = attributeDescriptionFactory(refAttrs[name])
+
+        # No serialized value to match (e.g. outputs or default-valued inputs in templates): the attribute only
+        # exists in the node description, which is used as is
+        if value is None:
+            return attrDesc
 
         if Attribute.isLinkExpression(value):
             return attrDesc

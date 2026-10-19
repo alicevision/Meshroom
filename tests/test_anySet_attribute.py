@@ -312,6 +312,37 @@ def test_anyset_expanded_state_restored_after_load(tmp_path):
     assert loadedDynamicNode.outs.expanded is False
 
 
+def test_anyset_children_preserved_when_resaving_loaded_template(tmp_path):
+    """AnySet children survive a template save/load cycle, and a second one after the template has been loaded."""
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.stringParam)
+    dynamicNode.ins.duplicateAttribute(srcNode.intParam)
+    dynamicNode.ins.stringParam.value = "someString"
+    dynamicNode.ins.intParam.value = 11
+    expectedChildren = [(attribute.name, attribute.desc.type, attribute.value) for attribute in dynamicNode.ins.value]
+
+    templateFile = str(tmp_path / "template.mg")
+    graph.save(templateFile, template=True)
+
+    loadedGraph = loadGraph(templateFile)
+    loadedDynamicNode = loadedGraph.node(dynamicNode.name)
+    assert [(attribute.name, attribute.desc.type, attribute.value)
+            for attribute in loadedDynamicNode.ins.value] == expectedChildren
+
+    # Save the loaded graph as a template again, without any modification
+    resavedTemplateFile = str(tmp_path / "resavedTemplate.mg")
+    loadedGraph.save(resavedTemplateFile, template=True)
+
+    reloadedGraph = loadGraph(resavedTemplateFile)
+    reloadedDynamicNode = reloadedGraph.node(dynamicNode.name)
+    assert [(attribute.name, attribute.desc.type, attribute.value)
+            for attribute in reloadedDynamicNode.ins.value] == expectedChildren
+
+
 def test_legacy_dict_anyset_serialization_still_loads(tmp_path):
     import json
     from meshroom.core.graph import loadGraph

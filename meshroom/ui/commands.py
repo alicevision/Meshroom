@@ -791,13 +791,18 @@ class UpgradeNodeCommand(GraphCommand):
         self.nodeDict = node.toDict()
         self.nodeName = node.getName()
         self.compatibilityIssue = None
+        self.lostOutEdges = {}  # outgoing edges the upgraded node could not restore, re-created on undo
         self.setText(f"Upgrade Node {self.nodeName}")
 
     def redoImpl(self):
         if not (node := self.graph.node(self.nodeName)).canUpgrade:
             return False
         self.compatibilityIssue = node.issue
-        return self.graph.upgradeNode(self.nodeName)
+        outEdges = {edge.dst.fullName: edge.src.fullName for edge in self.graph.nodeOutEdges(node)}
+        upgradedNode = self.graph.upgradeNode(self.nodeName)
+        keptEdges = {edge.dst.fullName for edge in self.graph.nodeOutEdges(upgradedNode)}
+        self.lostOutEdges = {dst: src for dst, src in outEdges.items() if dst not in keptEdges}
+        return upgradedNode
 
     def undoImpl(self):
         expectedUid = None
@@ -808,6 +813,8 @@ class UpgradeNodeCommand(GraphCommand):
         with GraphModification(self.graph):
             node = nodeFactory(self.nodeDict, name=self.nodeName, expectedUid=expectedUid)
             self.graph.replaceNode(self.nodeName, node)
+            # The entries of ListAttributes were kept by the upgrade: only the edges are missing
+            self.graph._restoreOutEdges(self.lostOutEdges, {})
 
 
 class EnableGraphUpdateCommand(GraphCommand):

@@ -1008,3 +1008,189 @@ class TestCompatibilityNodeNotifications:
         assert restoredNode._hasInvalidAttribute()
 
 
+class ConnectedNodeV1(desc.Node):
+    """ Node with a File input, a list of Files, and two outputs. """
+    inputs = [
+        desc.File(name="input", label="Input", description="", value=""),
+        desc.ListAttribute(
+            name="files", label="Files", description="",
+            elementDesc=desc.File(name="file", label="File", description="", value=""),
+        ),
+    ]
+    outputs = [
+        desc.File(name="output", label="Output", description="", value="{nodeCacheFolder}"),
+        desc.File(name="removedOutput", label="Removed Output", description="",
+                  value="{nodeCacheFolder}/removed"),
+    ]
+
+
+class ConnectedNodeV2(desc.Node):
+    """
+    Changes from V1:
+        * 'extra' has been added (description conflict): every connection can be restored on upgrade.
+    """
+    inputs = [
+        desc.File(name="input", label="Input", description="", value=""),
+        desc.ListAttribute(
+            name="files", label="Files", description="",
+            elementDesc=desc.File(name="file", label="File", description="", value=""),
+        ),
+        desc.StringParam(name="extra", label="Extra", description="", value="", invalidate=False),
+    ]
+    outputs = [
+        desc.File(name="output", label="Output", description="", value="{nodeCacheFolder}"),
+        desc.File(name="removedOutput", label="Removed Output", description="",
+                  value="{nodeCacheFolder}/removed"),
+    ]
+
+
+class ConnectedNodeV3(desc.Node):
+    """
+    Changes from V1:
+        * 'removedOutput' has been removed: connections starting from it cannot be restored on upgrade.
+    """
+    inputs = [
+        desc.File(name="input", label="Input", description="", value=""),
+        desc.ListAttribute(
+            name="files", label="Files", description="",
+            elementDesc=desc.File(name="file", label="File", description="", value=""),
+        ),
+    ]
+    outputs = [
+        desc.File(name="output", label="Output", description="", value="{nodeCacheFolder}"),
+    ]
+
+
+class TestUpgradeConnections:
+    """ Upgrading a CompatibilityNode, and the equivalent of undoing the upgrade, must preserve all the connections. """
+
+    @pytest.fixture
+    def connectedGraphFactory(self, tmp_path):
+        """
+        Yield a function that creates a graph "up -> mid -> down", saves it, replaces the description of
+        the "mid" node type with the given one and reloads the graph (making "mid" a CompatibilityNode).
+        The function returns the (graph, midNodeName) tuple.
+        """
+        nodeDescs = [UidTestingNodeV1, UidTestingNodeV3, ConnectedNodeV1, ConnectedNodeV2, ConnectedNodeV3]
+        with registeredNodeTypes(nodeDescs):
+            def create(targetDesc):
+                graph = Graph("")
+                up = graph.addNewNode(UidTestingNodeV1.__name__)
+                mid = graph.addNewNode(ConnectedNodeV1.__name__)
+                down = graph.addNewNode(UidTestingNodeV3.__name__)
+
+                # Connections arriving to "mid": on a simple attribute, and on a list element
+                mid.files.append("")
+                up.output.connectTo(mid.input)
+                up.output.connectTo(mid.files.at(0))
+
+                # Connections starting from "mid": on simple attribute, and on list elements
+                down.param.append("")
+                down.param.append("")
+                mid.output.connectTo(down.input)
+                mid.output.connectTo(down.param.at(0))
+                mid.removedOutput.connectTo(down.param.at(1))
+
+                # Flow connections arriving to and starting from "mid"
+                mid.internalAttribute("flowInputs").append("0")
+                down.internalAttribute("flowInputs").append("0")
+                graph.addEdge(up.internalAttribute("flowOutput"), mid.internalAttribute("flowInputs").at(0))
+                graph.addEdge(mid.internalAttribute("flowOutput"), down.internalAttribute("flowInputs").at(0))
+
+                graphFile = str(tmp_path / "test_connected_graph.mg")
+                graph.save(graphFile)
+
+                replaceNodeTypeDesc(ConnectedNodeV1.__name__, targetDesc)
+                return loadGraph(graphFile), mid.name
+
+            yield create
+
+    @staticmethod
+    def edgeNames(graph):
+        """ Return the set of (srcFullName, dstFullName) for all the edges of `graph`. """
+        return {(edge.src.fullName, edge.dst.fullName) for edge in graph.edges}
+
+    @staticmethod
+    def upgrade(graph, nodeName):
+        """
+        Upgrade the CompatibilityNode `nodeName` and return what is needed to undo the upgrade.
+        Mirrors the redo of the UpgradeNodeCommand (UI): the CompatibilityNode is serialized
+        beforehand, along with its issue and its node description, and the outgoing edges that
+        are removed with it are kept.
+        """
+        node = graph.node(nodeName)
+        nodeDict = copy.deepcopy(node.toDict())
+        nodeDescDict = copy.deepcopy(node.nodeDescDict)
+        outEdges, outListAttributes = graph.replaceNode(nodeName, node.upgrade())
+        return nodeDict, nodeDescDict, node.issue, outEdges, outListAttributes
+
+    @staticmethod
+    def undoUpgrade(graph, nodeName, snapshot):
+        """
+        Recreate the CompatibilityNode `nodeName` in place of the upgraded node.
+        Mirrors the undo of the UpgradeNodeCommand (UI).
+        """
+        nodeDict, nodeDescDict, issue, outEdges, outListAttributes = snapshot
+        expectedUid = graph.node(nodeName)._uid if issue == CompatibilityIssue.UidConflict else None
+        restoredNode = nodeFactory(nodeDict, name=nodeName, expectedUid=expectedUid, nodeDescDict=nodeDescDict)
+        graph.replaceNode(nodeName, restoredNode, outEdges, outListAttributes)
+
+    def test_upgradePreservesConnections(self, connectedGraphFactory):
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        assert isinstance(graph.node(nodeName), CompatibilityNode)
+        edgesBefore = self.edgeNames(graph)
+        # 2 incoming + 3 outgoing + 2 flow connections
+        assert len(edgesBefore) == 7
+
+        self.upgrade(graph, nodeName)
+
+        assert isinstance(graph.node(nodeName), Node)
+        assert self.edgeNames(graph) == edgesBefore
+
+    def test_undoUpgradeRestoresCompatibilityNodeAndConnections(self, connectedGraphFactory):
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        edgesBefore = self.edgeNames(graph)
+
+        snapshot = self.upgrade(graph, nodeName)
+        assert isinstance(graph.node(nodeName), Node)
+
+        self.undoUpgrade(graph, nodeName, snapshot)
+
+        assert isinstance(graph.node(nodeName), CompatibilityNode)
+        assert self.edgeNames(graph) == edgesBefore
+
+    def test_repeatedUpgradeAndUndoPreserveConnections(self, connectedGraphFactory):
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        edgesBefore = self.edgeNames(graph)
+
+        for _ in range(2):
+            snapshot = self.upgrade(graph, nodeName)
+            assert isinstance(graph.node(nodeName), Node)
+            assert self.edgeNames(graph) == edgesBefore
+
+            self.undoUpgrade(graph, nodeName, snapshot)
+            assert isinstance(graph.node(nodeName), CompatibilityNode)
+            assert self.edgeNames(graph) == edgesBefore
+
+    def test_undoUpgradeRestoresConnectionsLostDuringUpgrade(self, connectedGraphFactory):
+        """
+        'removedOutput' does not exist in the upgraded node: its connection cannot be restored by the upgrade,
+        but the undo must bring it back along with the CompatibilityNode.
+        """
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV3)
+        edgesBefore = self.edgeNames(graph)
+        lostEdges = {edge for edge in edgesBefore if edge[0] == f"{nodeName}.removedOutput"}
+        assert len(lostEdges) == 1
+        # The list the lost edge was connected to: the entry is neither kept empty by the upgrade nor duplicated by the undo
+        listName = next(iter(lostEdges))[1].split("[")[0]
+        assert len(graph.attribute(listName)) == 2
+
+        snapshot = self.upgrade(graph, nodeName)
+        assert self.edgeNames(graph) == edgesBefore - lostEdges
+        assert len(graph.attribute(listName)) == 1
+
+        self.undoUpgrade(graph, nodeName, snapshot)
+
+        assert isinstance(graph.node(nodeName), CompatibilityNode)
+        assert self.edgeNames(graph) == edgesBefore
+        assert len(graph.attribute(listName)) == 2

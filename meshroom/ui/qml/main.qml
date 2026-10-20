@@ -18,7 +18,7 @@ ApplicationWindow {
     property bool isClosing: false
 
     title: {
-        var t = (_currentScene && _currentScene.graph && _currentScene.graph.filepath) ? _currentScene.graph.filepath : "Untitled"
+        var t = (_currentScene && _currentScene.graph && _currentScene.projectGraph.filepath) ? _currentScene.projectGraph.filepath : "Untitled"
         if (_currentScene && !_currentScene.undoStack.clean)
             t += "*"
         t += " - " + Qt.application.name + " " + Qt.application.version
@@ -97,9 +97,9 @@ ApplicationWindow {
                 currentItem.imagesFolder = Filepath.stringToUrl(Filepath.dirname(currentItem.workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source))
             }
 
-            if (_currentScene.graph && _currentScene.graph.filepath) {
+            if (_currentScene.graph && _currentScene.projectGraph.filepath) {
                 // If the opened project has been saved, the dialog will open in the same folder
-                folder = Filepath.stringToUrl(Filepath.dirname(_currentScene.graph.filepath))
+                folder = Filepath.stringToUrl(Filepath.dirname(_currentScene.projectGraph.filepath))
             } else {
                 // If the currently opened project has not been saved, the dialog will open in the same
                 // folder as the most recent project if it exists; otherwise, it will not be set
@@ -130,7 +130,7 @@ ApplicationWindow {
                 mainStack.push("Application.qml")
             }
             if (_currentScene.load(currentFile)) {
-                if (_currentScene.graph.filepath)
+                if (_currentScene.projectGraph.filepath)
                     MeshroomApp.addRecentProjectFile(currentFile.toString())
                 else
                     MeshroomApp.addRecentTemplateFile(currentFile.toString())

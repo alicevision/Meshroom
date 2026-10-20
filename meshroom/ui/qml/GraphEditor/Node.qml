@@ -57,6 +57,21 @@ Item {
     property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
     property bool hasWarnings: false
 
+    // Run Live of a subgraph (UIGraph): status of this node, shown on its outline
+    property var liveGraph: null
+    readonly property string liveStatus: {
+        if (!liveGraph || !node)
+            return ""
+        liveGraph.liveStatusRevision  // Re-evaluate the binding when the statuses change
+        return liveGraph.liveNodeStatus(node.name)
+    }
+    readonly property string liveMessage: {
+        if (!liveGraph || !node || liveStatus === "")
+            return ""
+        liveGraph.liveStatusRevision
+        return liveGraph.liveNodeMessage(node.name)
+    }
+
     Item {
         id: m
         property bool displayParams: false
@@ -337,6 +352,33 @@ Item {
             root.released(mouse);
             // End shake detection
             root.endShaking();
+        }
+
+        // Run Live status: orange while running, green when done, red on error (dark red: not run after an
+        // error), grey when not needed in this context
+        Rectangle {
+            readonly property int outlineWidth: 2
+            anchors.fill: nodeContent
+            anchors.margins: -(4 + outlineWidth)
+            visible: root.liveStatus !== ""
+            border.width: outlineWidth
+            border.color: {
+                switch (root.liveStatus) {
+                    case "SUCCESS": return Colors.green
+                    case "RUNNING": return Colors.orange
+                    case "ERROR": return Colors.red
+                    case "UPSTREAM_ERROR": return Qt.darker(Colors.red, 1.8)
+                    case "SKIPPED": return Colors.lightgrey
+                }
+                return "transparent"
+            }
+            opacity: root.liveStatus === "SKIPPED" ? 0.5 : 0.85
+            radius: background.radius + 4 + outlineWidth
+            color: "transparent"
+
+            ToolTip.visible: root.hovered && root.liveMessage !== ""
+            ToolTip.text: root.liveMessage
+            ToolTip.delay: 300
         }
 
         // Selection border

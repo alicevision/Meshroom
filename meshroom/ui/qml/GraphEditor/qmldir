@@ -15,3 +15,4 @@ singleton GraphEditorSettings 1.0 GraphEditorSettings.qml
 TaskManager 1.0 TaskManager.qml
 ScriptEditor 1.0 ScriptEditor.qml
 NodeFileBrowser 1.0 NodeFileBrowser.qml
+SubGraphBar 1.0 SubGraphBar.qml

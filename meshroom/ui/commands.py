@@ -583,7 +583,7 @@ class RemoveAnySetAttributeCommand(GraphCommand):
         assert isinstance(anySetAttribute, AnySet)
         self.anySetAttrName = anySetAttribute.fullName
         self.index = list(anySetAttribute.value).index(attribute)
-        self.value = attribute.asDict()
+        self.value = anySetAttribute._childAsDict(attribute)
         self.edges = self._connectedEdgeNames(attribute)
         self.setText(f"Remove {attribute.fullName}")
 
@@ -622,6 +622,62 @@ class RemoveAnySetAttributeCommand(GraphCommand):
             dstAttr = self.graph.anyAttribute(dstName)
             if srcAttr is not None and dstAttr is not None:
                 self.graph.addEdge(srcAttr, dstAttr)
+        return True
+
+
+class CollapseIntoSubGraphCommand(GraphCommand):
+    """ Replace nodes by a SubGraph node containing them (see meshroom.core.subgraph.editing). """
+
+    def __init__(self, graph, nodes, parent=None):
+        super().__init__(graph, parent)
+        self.nodeNames = [node.name for node in nodes]
+        self.subGraphName = None
+        self.snapshot = None
+        self.setText(f"Put {len(self.nodeNames)} Node(s) in a SubGraph")
+
+    def redoImpl(self):
+        from meshroom.core.subgraph.editing import collapseIntoSubGraph
+        nodes = [self.graph.node(name) for name in self.nodeNames if self.graph.node(name) is not None]
+        subGraphNode, self.snapshot = collapseIntoSubGraph(self.graph, nodes)
+        self.subGraphName = subGraphNode.name
+        return subGraphNode
+
+    def undoImpl(self):
+        from meshroom.core.subgraph.editing import restoreNodes
+        if self.subGraphName and self.graph.node(self.subGraphName) is not None:
+            self.graph.removeNode(self.subGraphName)
+        restoreNodes(self.graph, self.snapshot)
+
+
+class AddAnySetAttributeCommand(GraphCommand):
+    """ Add a child attribute to an AnySet (e.g. an input of a SubGraph node added by hand). """
+
+    def __init__(self, graph, anySetAttribute, name, label, attributeType, parent=None):
+        super().__init__(graph, parent)
+        assert isinstance(anySetAttribute, AnySet)
+        self.anySetAttrName = anySetAttribute.fullName
+        existing = set(anySetAttribute.value.keys())
+        uniqueName, index = name, 1
+        while uniqueName in existing:
+            uniqueName, index = f"{name}_{index}", index + 1
+        self.value = {"name": uniqueName, "label": label or uniqueName, "type": attributeType, "value": None}
+        self.setText(f"Add {self.anySetAttrName}.{uniqueName}")
+
+    def redoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        if anySetAttribute is None:
+            return False
+        return anySetAttribute.insertAttribute(self.value, len(anySetAttribute.value)) is not None
+
+    def undoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        attribute = self.graph.attribute(f"{self.anySetAttrName}.{self.value['name']}")
+        if anySetAttribute is None or attribute is None:
+            return False
+        for edge in list(self.graph.edges.values()):
+            if edge.src is attribute or edge.dst is attribute:
+                self.graph.removeEdge(edge.dst)
+        anySetAttribute.removeAttribute(attribute)
         return True
 
 

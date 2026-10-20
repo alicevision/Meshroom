@@ -148,6 +148,71 @@ RowLayout {
         }
     }
 
+    Component {
+        id: addAnySetAttributeDialogComp
+        Dialog {
+            id: addDialog
+
+            property var targetAnySet: null
+
+            title: "Add Attribute"
+            modal: true
+            parent: Overlay.overlay
+            contentWidth: 280
+            anchors.centerIn: parent
+            standardButtons: Dialog.Ok | Dialog.Cancel
+            closePolicy: Popup.CloseOnEscape
+
+            GridLayout {
+                columns: 2
+                columnSpacing: 8
+                rowSpacing: 8
+                width: addDialog.contentWidth
+
+                Label { text: "Name"; Layout.alignment: Qt.AlignRight | Qt.AlignVCenter }
+                TextField {
+                    id: addNameField
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    selectByMouse: true
+                    placeholderText: "shotName"
+                    validator: RegularExpressionValidator { regularExpression: /^[A-Za-z_][A-Za-z0-9_]*$/ }
+                    onAccepted: addDialog.accept()
+                }
+
+                Label { text: "Label"; Layout.alignment: Qt.AlignRight | Qt.AlignVCenter }
+                TextField {
+                    id: addLabelField
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    selectByMouse: true
+                    placeholderText: addNameField.text
+                    onAccepted: addDialog.accept()
+                }
+
+                Label { text: "Type"; Layout.alignment: Qt.AlignRight | Qt.AlignVCenter }
+                ComboBox {
+                    id: addTypeField
+                    Layout.fillWidth: true
+                    // Any value (LiveValue) or a typed value, shown with its usual editor
+                    model: ["LiveValue", "StringParam", "File", "IntParam", "FloatParam", "BoolParam"]
+                }
+            }
+
+            onOpened: addNameField.forceActiveFocus()
+
+            onAccepted: {
+                if (targetAnySet && addNameField.acceptableInput) {
+                    var label = addLabelField.text.trim() !== "" ? addLabelField.text.trim() : addNameField.text.trim()
+                    _currentScene.addAnySetAttribute(targetAnySet, addNameField.text.trim(), label, addTypeField.currentText)
+                }
+                destroy()
+            }
+
+            onRejected: destroy()
+        }
+    }
+
     spacing: 2
 
     Pane {
@@ -815,6 +880,21 @@ RowLayout {
                                 groupItem.expanded = !groupItem.expanded
                             }
                             onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
+                        }
+                    }
+
+                    // Add a child by hand to an AnySet (e.g. an input of a SubGraph node)
+                    MaterialToolButton {
+                        id: addAnySetButton
+                        visible: attribute.type === "AnySet" && !root.readOnly
+                        text: MaterialIcons.add
+                        font.pointSize: 9
+                        padding: 2
+                        ToolTip.text: "Add an attribute"
+                        ToolTip.visible: hovered
+                        onClicked: {
+                            var dialog = addAnySetAttributeDialogComp.createObject(Overlay.overlay, { "targetAnySet": attribute })
+                            dialog.open()
                         }
                     }
                 }

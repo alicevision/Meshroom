@@ -437,6 +437,9 @@ class Attribute(BaseObject):
             return self._keyValues.getJson()
         # ChoiceParam with multiple values should be combined
         if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
+            if self.value is None:
+                # No value (e.g. a value set when its node runs)
+                return ""
             # Ensure value is a list as expected
             try:
                 assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
@@ -670,7 +673,8 @@ class Attribute(BaseObject):
         Returns:
             True if the connection is valid, False otherwise.
         """
-        return self.baseType == connectingAttribute.baseType
+        # A LiveValue (any value of a live node) connects to and from any attribute
+        return self.baseType == connectingAttribute.baseType or "LiveValue" in (self.baseType, connectingAttribute.baseType)
 
     def connectTo(self, dstAttribute: Attribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
         """
@@ -896,6 +900,9 @@ class ChoiceParam(Attribute):
 
     # Override
     def validateValue(self, value):
+        if value is None:
+            # No value (e.g. a value set when its node runs), not the text "None"
+            return None
         if self._desc.exclusive:
             return self._conformValue(value)
         if isinstance(value, str):
@@ -1902,9 +1909,39 @@ class AnySet(GroupAttribute):
         self._value.move(fromIndex, toIndex)
         self.flatStaticChildrenChanged.emit()
 
+    # Child types fully described by their type name; the others (groups, choices, lists...) are serialized
+    # with their full description (see meshroom.core.desc.serialization)
+    _simpleChildTypes = ("LiveValue", "IntParam", "FloatParam", "StringParam", "BoolParam", "File", "ColorParam")
+
+    def _childAsDict(self, attribute: Attribute) -> dict:
+        """ The serialized form of a child attribute, with its full description when its type needs it. """
+        from meshroom.core.desc.serialization import describeAttribute
+        serialized = attribute.asDict()
+        if type(attribute.desc).__name__ not in self._simpleChildTypes:
+            serialized["desc"] = describeAttribute(attribute.desc)
+        return serialized
+
+    @staticmethod
+    def _childDescription(serializedAttribute: dict) -> AttributeDescription | None:
+        """
+        The description of a serialized child attribute: from its full description if it has one, else from its
+        type (and the items of a group, the element of a list). None if it cannot be rebuilt.
+        """
+        from meshroom.core.desc.serialization import buildAttributeDesc
+        attrDescType = serializedAttribute.get("type", None)
+        attributeClass = getattr(desc, attrDescType, None) if attrDescType else None
+        if not isinstance(attributeClass, type) or not issubclass(attributeClass, AttributeDescription):
+            return None
+        name, label = serializedAttribute.get("name"), serializedAttribute.get("label")
+        if isinstance(serializedAttribute.get("desc"), dict):
+            return buildAttributeDesc(serializedAttribute["desc"], name=name, label=label)
+        # Saved without description: rebuilt from its type
+        return buildAttributeDesc({key: value for key, value in serializedAttribute.items() if key != "value"},
+                                  name=name, label=label)
+
     def insertAttribute(self, serializedAttribute: dict, index: int) -> Attribute | None:
         """Restore a serialized child attribute at the requested position."""
-        attributeDesc = attributeDescriptionFactory(serializedAttribute)
+        attributeDesc = self._childDescription(serializedAttribute)
         if attributeDesc is None:
             return None
 
@@ -1960,17 +1997,12 @@ class AnySet(GroupAttribute):
             serializedValue = attrChildValue.get('value', None)
 
             if not childAttr:
-                attrDescType = attrChildValue.get('type', None)
-
-                if not attrDescType:
-                    continue
-
-                attributeClass = getattr(desc, attrDescType, None)
-                if attributeClass is None or not issubclass(attributeClass, AttributeDescription):
+                attributeDesc = self._childDescription(attrChildValue)
+                if attributeDesc is None:
                     continue
 
                 childAttr = attributeFactory(
-                    description = attributeDescriptionFactory(attrChildValue),
+                    description = attributeDesc,
                     value = serializedValue,
                     isOutput = self.isOutput,
                     node = self.node,
@@ -1986,7 +2018,7 @@ class AnySet(GroupAttribute):
     def getSerializedValue(self):
         return {
             "expanded": self.expanded,
-            "children": [attr.asDict() for attr in self._value]
+            "children": [self._childAsDict(attr) for attr in self._value]
         }
 
     # Override
@@ -2015,6 +2047,29 @@ class AnySet(GroupAttribute):
     def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
         """Accept connections of any type."""
         return True
+
+    # Override: the children of an AnySet are part of its value (its default value has none), so that they are
+    # saved, with their connections, in the templates
+    isDefault = Property(bool, lambda self: len(self._value) == 0, notify=Attribute.valueChanged)
+
+
+class LiveValue(Attribute):
+    """ A value of any type passed between live nodes (see desc.LiveValue). """
+
+    def __init__(self, node, attributeDesc: desc.LiveValue, isOutput: bool, root=None, parent=None):
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+
+    # Override
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        return True
+
+    # Override
+    def uid(self):
+        # Any JSON value (lists of mixed types, dicts): hashed from its JSON text
+        if self.isOutput or self.isLink or self.keyable:
+            return super().uid()
+        import json
+        return hashValue(json.dumps(self._value, sort_keys=True, default=str))
 
 
 class Flow(Attribute):

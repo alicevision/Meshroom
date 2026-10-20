@@ -369,3 +369,71 @@ def test_clone_attributes():
 
     for attribute in node.attributes:
         assert(attribute.desc.clone() is not None)  # Check clone doesn't raise
+
+
+# ---------------------------------------------------------------------------
+# Children of any type: full description saved with the child
+# ---------------------------------------------------------------------------
+
+def test_anyset_children_of_any_type_restored_after_load(tmp_path):
+    """ Choices, groups with their defaults, numeric ranges and lists survive a save/load cycle. """
+    from meshroom.core import desc
+    from meshroom.core.graph import loadGraph
+    from .utils import registeredNodeTypes
+
+    class NodeWithSpecialParams(desc.Node):
+        inputs = [
+            desc.ChoiceParam(name="formats", label="Formats", description="", value=["abc"], values=["abc", "fbx", "usd"],
+                             exclusive=False),
+            desc.GroupAttribute(name="frameRange", label="Frame Range", description="", items=[
+                desc.IntParam(name="start", label="Start", description="", value=1001, range=(0, 5000, 1)),
+                desc.IntParam(name="stop", label="Stop", description="", value=1100, range=(0, 5000, 1)),
+            ]),
+            desc.ListAttribute(name="names", label="Names", description="",
+                               elementDesc=desc.StringParam(name="name", label="Name", description="", value="")),
+        ]
+
+    with registeredNodeTypes([NodeWithSpecialParams]):
+        graph, dynamicNode = initGraphAndNode()
+        source = graph.addNewNode("NodeWithSpecialParams")
+        for name in ("formats", "frameRange", "names"):
+            dynamicNode.ins.duplicateAttribute(source.attribute(name))
+        dynamicNode.ins.formats.value = ["fbx", "usd"]
+
+        graphFile = str(tmp_path / "graph.mg")
+        graph.save(graphFile)
+        loaded = loadGraph(graphFile).node(dynamicNode.name)
+
+    formats = loaded.ins.value.get("formats")
+    assert list(formats.desc.values) == ["abc", "fbx", "usd"] and not formats.desc.exclusive
+    assert formats.value == ["fbx", "usd"]
+    frameRange = loaded.ins.value.get("frameRange")
+    assert frameRange.value.get("start").value == 1001
+    assert list(frameRange.value.get("stop").desc.range) == [0, 5000, 1]
+    assert type(loaded.ins.value.get("names").desc).__name__ == "ListAttribute"
+
+
+def test_anyset_children_saved_in_templates():
+    """ An AnySet with children is not a default value: its children are kept in a template. """
+    graph, dynamicNode = initGraphAndNode()
+    source = graph.addNewNode("Ls", input="/fakeDirectory")
+    dynamicNode.ins.duplicateAttribute(source.input)
+    nodeData = graph.serialize(asTemplate=True)["graph"][dynamicNode.name]
+    assert [child["name"] for child in anyset_children(nodeData["inputs"]["ins"])] == ["input"]
+
+
+def test_anyset_children_of_unknown_node_type_restored(tmp_path):
+    """ A node of an unknown type keeps the children of its AnySet attributes (compatibility node). """
+    import json
+    from meshroom.core.graph import loadGraph
+    graph, dynamicNode = initGraphAndNode()
+    source = graph.addNewNode("Ls", input="/fakeDirectory")
+    dynamicNode.ins.duplicateAttribute(source.input)
+    dynamicNode.ins.input.value = "/somePath"
+    data = graph.serialize()
+    data["graph"][dynamicNode.name]["nodeType"] = "UnknownDynamicNode"
+    graphFile = tmp_path / "graph.mg"
+    graphFile.write_text(json.dumps(data))
+    loaded = loadGraph(str(graphFile)).node(dynamicNode.name)
+    assert loaded.isCompatibilityNode
+    assert loaded.attribute("ins").value.get("input").value == "/somePath"

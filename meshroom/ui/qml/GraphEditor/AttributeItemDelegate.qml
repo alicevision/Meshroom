@@ -459,6 +459,44 @@ RowLayout {
                         enabled: root.editable
                         onClicked: _currentScene.appendAttribute(attribute, undefined)
                     }
+                    ToolButton {
+                        visible: attribute.baseType === "GroupAttribute"
+                        text: MaterialIcons.open_in_new
+                        font.family: MaterialIcons.fontFamily
+                        font.pointSize: 11
+                        padding: 2
+                        ToolTip.text: "Open as Table"
+                        ToolTip.visible: hovered
+                        onClicked: {
+                            if (tableWindowLoader.active)
+                                tableWindowLoader.item.requestActivate()
+                            else
+                                tableWindowLoader.active = true
+                        }
+
+                        // The table's window only exists while it is open
+                        Loader {
+                            id: tableWindowLoader
+                            active: false
+                            sourceComponent: Window {
+                                title: attribute.node.label + " - " + attribute.label
+                                width: 800
+                                height: 400
+                                visible: true
+                                palette: root.palette
+                                color: palette.window
+                                // Destroying the window from its own handler is unsafe: unload it afterwards
+                                onClosing: Qt.callLater(() => tableWindowLoader.active = false)
+
+                                AttributeControls.ListAttributeTable {
+                                    anchors.fill: parent
+                                    anchors.margins: 4
+                                    attribute: root.attribute
+                                    editable: root.editable
+                                }
+                            }
+                        }
+                    }
                 }
                 ListView {
                     id: lv

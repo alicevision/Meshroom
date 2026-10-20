@@ -115,10 +115,7 @@ Loader {
             onTriggered: (text, start, end, length, clipboard) => {
                 const before = text.substr(0, start)
                 const after = text.substr(end, length)
-                const updatedValue = before + clipboardText + after
-                setTextFieldAttribute(updatedValue)
-                // Set the cursor at the end of the added text
-                textField.cursorPosition = before.length + clipboard.length
+                setTextFieldAttribute(before + clipboard + after)
             }
         }
     }

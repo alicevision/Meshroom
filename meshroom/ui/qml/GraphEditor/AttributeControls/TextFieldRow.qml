@@ -105,7 +105,10 @@ RowLayout {
                         if (clipboardText.length === 0) {
                             return
                         }
-                        triggered(textField.text, textField.selectionStart, textField.selectionEnd, textField.text.length, clipboardText)
+                        const start = textField.selectionStart
+                        root.triggered(textField.text, start, textField.selectionEnd, textField.text.length, clipboardText)
+                        // Set the cursor at the end of the pasted text
+                        textField.cursorPosition = start + clipboardText.length
                     }
                 }
             }

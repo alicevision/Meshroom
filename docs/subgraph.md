@@ -77,6 +77,19 @@ registerContext("blender", BlenderContext)
 
 The nodes reach it with `ctx.context` (`ctx.context.session`). `ownsSession` is True when the run is a task of Meshroom or of a farm (the session can be cleaned in `close`), False from a script or the shell of the software.
 
+#### Where a subgraph needing another software runs
+
+When its context is not available in the Python of Meshroom (e.g. no `bpy` module), a `SubGraph` task (and Run Live) runs in another interpreter, chosen in this order:
+1. the interpreter set in the environment variable of the context (`interpreterVariable`);
+2. the interpreter of a task node of the subgraph needing that context (its `pythonExecutable`), in the process environment of its plugin (its command prefix / suffix, e.g. a `rez env`): the subgraph starts like that node would on its own (`desc.Node.getPythonExecutable` / `getProcessProvider`);
+3. the default interpreter of the context (`defaultInterpreter`).
+
+That interpreter must be able to import Meshroom and its dependencies (e.g. `psutil`): the `PYTHONPATH` of Meshroom is passed to it; with another Python version, add a matching `site-packages` folder.
+
+#### Software working on scene files
+
+`SceneContext` is the base of the contexts of software working on a scene file. The task nodes written to load and save the scene themselves keep working as they are: during a run, loading the scene already open does nothing, and their saves are grouped into one save at the end of a Meshroom task (or when another scene is loaded). In the session of the software (its shell), a node never replaces the open scene and nothing is saved, unless a node asks for it (`saveScene`). A subclass gives `currentScene`, `_load`, `_save`, `_clear`, and replaces the load / save functions of the software during the run with `_patch` in `_installGuard`, calling `skipLoad` / `deferSave`.
+
 ### Loops
 
 | Loop | Behaviour |

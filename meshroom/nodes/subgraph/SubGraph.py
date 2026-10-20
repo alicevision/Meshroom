@@ -3,9 +3,10 @@ __version__ = "1.0"
 import json
 import math
 import os
+import shlex
 
 from meshroom.core import desc
-from meshroom.core.subgraph import activeRunContext, run
+from meshroom.core.subgraph import activeRunContext, contextClass, resolveContextName, run
 from meshroom.core.subgraph.executor import plainValue, setPlainValue
 from meshroom.core.subgraph.nodes import (contextParam, isFrameLoop, isItemLoop, loopFromNode, loopParams, makeLocal, nodePlan,
                                           subGraphSourceParams, syncSubGraphPorts, watchSubGraphPorts, defaultSubGraph)
@@ -113,6 +114,35 @@ class SubGraph(desc.Node):
     @classmethod
     def onMakeLocalClicked(cls, node):
         makeLocal(node)
+
+    @staticmethod
+    def _environmentNode(node):
+        """ (nodeDesc, provider) of the task node of the subgraph giving its environment (see executor.environmentNode). """
+        from meshroom.core.subgraph.executor import environmentNode
+        plan = nodePlan(node)
+        if plan is None:
+            return None
+        return environmentNode(plan, resolveContextName(plan, node.context.value))
+
+    def getPythonExecutable(self, chunk) -> str:
+        """
+        The interpreter of the context: the one of a task node of the subgraph needing that context (as it
+        would be started on its own), else the interpreter of the context when it cannot run in this Python.
+        """
+        found = self._environmentNode(chunk.node)
+        if found is not None:
+            return found[0].pythonExecutable
+        plan = nodePlan(chunk.node)
+        if plan is not None:
+            context = contextClass(resolveContextName(plan, chunk.node.context.value))
+            if not context.isAvailable() and context.interpreter():
+                return " ".join(shlex.quote(arg) for arg in context.interpreter())
+        return self.pythonExecutable
+
+    def getProcessProvider(self, chunk):
+        """ The process environment of a task node of the subgraph needing its context (see getPythonExecutable). """
+        found = self._environmentNode(chunk.node)
+        return found[1] if found is not None else super().getProcessProvider(chunk)
 
     def processChunk(self, chunk):
         node = chunk.node

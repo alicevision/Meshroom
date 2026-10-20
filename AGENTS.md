@@ -33,7 +33,7 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 │   ├── core/                   # Engine logic (Graph, Node, Attribute, execution, (de)serialization)
 │   │   ├── desc/               # Node/attribute DESCRIPTORS: desc.Node, desc.CommandLineNode, desc.*Param
 │   │   │                       #   (imported as `from meshroom.core import desc`)
-│   │   └── subgraph/           # Subgraphs: executor, contexts (registry, Python), ports, editing (enter/leave,
+│   │   └── subgraph/           # Subgraphs: executor, contexts (registry, Python, SceneContext), ports, editing (enter/leave,
 │   │                           #   collapse), runner (Run Live in another interpreter) — docs/subgraph.md
 │   ├── nodes/                  # Concrete node types, grouped by category (e.g. general/, subgraph/)
 │   ├── submitters/             # Built-in render-farm submitters (drive meshroom_submit; e.g. localFarm)

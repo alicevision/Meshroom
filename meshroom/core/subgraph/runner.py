@@ -10,6 +10,7 @@ The request holds {"graph", "inputs", "context", "loop"}; the result {"outputs",
 import json
 import logging
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -100,7 +101,7 @@ def runLive(graphData: dict, inputs: Optional[dict] = None, context: Optional[st
 
 def _runLive(graphData, inputs, context, loopData, logger, report) -> dict:
     from .contexts import contextClass
-    from .executor import Loop, SubGraphError, SubGraphPlan, resolveContextName, run
+    from .executor import Loop, SubGraphError, SubGraphPlan, environmentNode, resolveContextName, run
 
     plan = SubGraphPlan(graphData.get("graph", graphData))
     contextName = resolveContextName(plan, context)
@@ -110,8 +111,11 @@ def _runLive(graphData, inputs, context, loopData, logger, report) -> dict:
         outputs = run(plan, inputs, context=contextName, loop=Loop.fromDict(loopData), logger=logger, onNode=report)
         return {"outputs": outputs, "elapsed": time.perf_counter() - start, "interpreter": ""}
 
-    # The interpreter of the context (its environment variable, else its default command)
-    interpreter = contextType.interpreter()
+    # The interpreter: the one set for the context (its environment variable), else the one of a task node of
+    # the subgraph needing the context, in the process environment of its plugin (as the SubGraph task), else
+    # the default one of the context
+    environment = None if os.environ.get(contextType.interpreterVariable or "") else environmentNode(plan, contextName)
+    interpreter = shlex.split(environment[0].pythonExecutable) if environment else contextType.interpreter()
     if not interpreter:
         raise SubGraphError(f"The '{contextName}' context is not available and has no interpreter.")
     with tempfile.TemporaryDirectory(prefix="meshroomSubGraph") as folder:
@@ -119,13 +123,23 @@ def _runLive(graphData, inputs, context, loopData, logger, report) -> dict:
         with open(requestPath, "w", encoding="utf-8") as f:
             json.dump({"graph": graphData, "inputs": inputs or {}, "context": contextName, "loop": loopData}, f,
                       default=str)
-        command = interpreter + [os.path.abspath(__file__), requestPath, resultPath]
-        logger.info(f"[SubGraph] {' '.join(command)}")
+        arguments = [os.path.abspath(__file__), requestPath, resultPath]
+        env = None
+        if environment:
+            # As the task nodes started in the environment of their plugin (desc.Node.executeChunkCommandLine):
+            # the command prefix / suffix around the command, split into arguments (no shell)
+            provider = environment[1]
+            command = shlex.split(provider.commandPrefix + " ".join(shlex.quote(arg) for arg in interpreter + arguments)
+                                  + provider.commandSuffix)
+            env = provider.runtimeEnv if provider.processEnv else None
+        else:
+            command = interpreter + arguments
+        logger.info(f"[SubGraph] {shlex.join(command)}")
         try:
-            code, output = _runProcess(command, None, report, logger)
+            code, output = _runProcess(command, env, report, logger)
         except FileNotFoundError:
             hint = f"; set {contextType.interpreterVariable}" if contextType.interpreterVariable else ""
-            raise SubGraphError(f"'{interpreter[0]}' not found: the interpreter of the '{contextName}' context{hint}.")
+            raise SubGraphError(f"'{command[0]}' not found: the interpreter of the '{contextName}' context{hint}.")
         if not os.path.isfile(resultPath):
             raise SubGraphError(f"'{' '.join(interpreter)}' failed (exit code {code}):\n{output[-2000:]}")
         with open(resultPath, "r", encoding="utf-8") as f:

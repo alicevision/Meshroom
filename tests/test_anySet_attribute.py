@@ -63,7 +63,7 @@ def test_dynamic_attribute_validates_any_connection():
 
 
 # ---------------------------------------------------------------------------
-# Dynamic input creation tests (via Node.addDynamicInput / removeDynamicInput)
+# Dynamic input creation tests
 # ---------------------------------------------------------------------------
 
 def test_add_dynamic_input_creates_sibling_attribute():
@@ -91,6 +91,7 @@ def test_add_dynamic_input_creates_sibling_attribute():
     assert(input_1 is not None)
     assert(dstNode.ins.input_1 is not None)
     assert(isinstance(dstNode.ins.input_1, Attribute))
+
 
 def test_remove_dynamic_input():
     """Removing a dynamic input deletes the attribute from the node."""
@@ -393,6 +394,34 @@ def test_legacy_list_anyset_serialization_still_loads(tmp_path):
     assert [attribute.name for attribute in loadedDynamicNode.ins.value] == [
         attribute["name"] for attribute in anyset_children(serializedIns)
     ]
+
+
+def test_legacy_group_anyset_child_with_value_still_loads(tmp_path):
+    """GroupAttribute children used to be serialized with both their items and their value."""
+    import json
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+
+    groupAttr = dynamicNode.ins.duplicateAttribute(srcNode.paramGroup, isOutput=False)
+    groupAttr.value.get("groupInt").value = 12
+
+    graphData = graph.serialize()
+    serializedGroup = anyset_child(graphData["graph"][dynamicNode.name]["inputs"]["ins"], groupAttr.name)
+    assert "value" not in serializedGroup
+    serializedGroup["value"] = groupAttr.getSerializedValue()
+
+    graphFile = tmp_path / "legacy_group_anyset.mg"
+    graphFile.write_text(json.dumps(graphData), encoding="utf-8")
+
+    loadedGraph = loadGraph(str(graphFile))
+    loadedGroup = loadedGraph.node(dynamicNode.name).ins.value.get(groupAttr.name)
+
+    assert loadedGroup.desc.type == "GroupAttribute"
+    assert [attribute.name for attribute in loadedGroup.value] == [attribute.name for attribute in groupAttr.value]
+    assert loadedGroup.value.get("groupInt").value == 12
+
 
 def test_clone_attributes():
     graph = Graph("test")

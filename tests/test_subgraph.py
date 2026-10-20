@@ -825,3 +825,41 @@ def test_pluginsLoadedWhenTheirVariablesAreSetLater(monkeypatch):
     assert calls == ["nodes", "plugins"]
     meshroom.subgraph.ensureNodes()
     assert calls == ["nodes", "plugins"]
+
+
+# ---------------------------------------------------------------------------
+# Run Live (in the interpreter of the context)
+# ---------------------------------------------------------------------------
+
+def scriptGraph():
+    graph = Graph("")
+    graphInput = graph.addNewNode("GraphInput", portSpec="x")
+    script = graph.addNewNode("LiveScript", inSpec="x", outSpec="y", code="outs['y'] = ins['x'] * 3")
+    graphOutput = graph.addNewNode("GraphOutput", portSpec="y, obj")
+    graph.addEdge(port(graphInput, "ports", "x"), port(script, "ins", "x"))
+    graph.addEdge(port(script, "outs", "y"), port(graphOutput, "ports", "y"))
+    return graph
+
+
+def test_runLiveInProcess():
+    from meshroom.core.subgraph.runner import runLive
+    result = runLive(scriptGraph().serialize(asTemplate=True), {"x": 2})
+    assert result["outputs"] == {"y": 6, "obj": None}
+    assert result["interpreter"] == ""
+
+
+def test_runLiveInInterpreter(monkeypatch):
+    """ A context not available here runs in its interpreter (here another Python). """
+    import sys
+    from meshroom.core.subgraph.contexts import PythonContext
+    from meshroom.core.subgraph.runner import runLive
+    monkeypatch.setattr(PythonContext, "isAvailable", classmethod(lambda cls: False))
+    monkeypatch.setattr(PythonContext, "interpreter", classmethod(lambda cls: [sys.executable]))
+    result = runLive(scriptGraph().serialize(asTemplate=True), {"x": 5}, context="python")
+    assert result["outputs"] == {"y": 15, "obj": None}
+    assert result["interpreter"] == sys.executable
+
+    graph = scriptGraph()
+    graph.node("LiveScript_1").code.value = "raise RuntimeError('boom')"
+    with pytest.raises(SubGraphError, match="LiveScript_1: RuntimeError: boom"):
+        runLive(graph.serialize(asTemplate=True), {"x": 5}, context="python")

@@ -88,6 +88,15 @@ The nodes reach it with `ctx.context` (`ctx.context.session`). `ownsSession` is 
 
 In a loop, a node runs again at each step only if it depends on the loop: it reads the `iteration` / `frame` / `item` of `GraphInput` (or its ports in a count loop), it is a live node with `runsEachStep` (the default: they can read `ctx.frame`), a nested `SubGraph`, or it comes after one of them. The others run once, at the first step. The context follows the frame loop (`LiveContext.beginStep`). A nested `SubGraph` without its own loop sees the frame of its parent.
 
+## User interface
+
+- **Ctrl+G** (or the subgraph button of the bottom-left toolbar of the Graph Editor) puts the selected nodes in a new `SubGraph` node: their connections from other nodes become its inputs, their connections to other nodes its outputs (undoable).
+- **Double-click** a `SubGraph` node (or select it and press **I**) to show its subgraph; **U** goes up one level.
+- The **breadcrumb** at the top of the Graph Editor shows the path from the project; click an element (or press **U**) to go back. Leaving writes the subgraph back in its node; the ports of the node follow its `GraphInput` / `GraphOutput`. A subgraph whose nodes come from a plugin that is not loaded is not opened (writing it back would lose them).
+- The **+** button of `Inputs` / `Outputs` in the attribute editor adds a port by hand (any value, or a typed value shown with its usual editor).
+- **Run Live** (play button of the bar) runs the subgraph now with the inputs of its node: in Meshroom when its context is available here, else in the interpreter of its context (`meshroom/core/subgraph/runner.py`). A frame loop runs its first frame only. The bar shows the result (duration, where it ran, the nodes run and those not needed in this context, the outputs, or the node that failed and its error), and the outline of each node of the subgraph its status: orange while it runs, green when done (its duration in the tooltip), red when it failed (the error in the tooltip), dark red when not run after an error, grey when not needed in this context. Run from the project graph, the status is shown on the SubGraph node.
+- Saving, computing or submitting from a subgraph acts on the project (the subgraphs are written back first); the title, the save and the cache folder are those of the project. The undo history is cleared when entering or leaving a subgraph (the unsaved changes stay flagged).
+
 ## From a script
 
 ```python

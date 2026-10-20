@@ -20,7 +20,7 @@ Page {
     property alias unsavedDialog: unsavedDialog
     property alias workspaceView: workspaceView
 
-    readonly property var scenefile: _currentScene ? _currentScene.graph.filepath : "";
+    readonly property var scenefile: _currentScene ? _currentScene.projectGraph.filepath : "";
 
     onScenefileChanged: {
         // Check if we are not currently saving and emit the currentProjectChanged signal
@@ -251,11 +251,11 @@ Page {
         // Evaluate if graph computation can be submitted externally
         property bool canSubmit: _currentScene ?
                                  _currentScene.canSubmit                 // current setup allows to compute externally
-                                 && _currentScene.graph.filepath :       // graph is saved on disk
+                                 && _currentScene.projectGraph.filepath :       // graph is saved on disk
                                  false
 
         function compute(nodes, force) {
-            if (!force && !_currentScene.graph.filepath) {
+            if (!force && !_currentScene.projectGraph.filepath) {
                 unsavedComputeDialog.selectedNodes = nodes;
                 unsavedComputeDialog.open();
             }
@@ -457,7 +457,7 @@ Page {
                     text: "Reload File"
 
                     onClicked: {
-                        _currentScene.load(_currentScene.graph.filepath)
+                        _currentScene.load(_currentScene.projectGraph.filepath)
                         fileModifiedDialog.close()
                     }
                 }
@@ -474,12 +474,12 @@ Page {
 
         property var _callback: undefined
 
-        title: (_currentScene ? Filepath.basename(_currentScene.graph.filepath) : "") || "Unsaved Project"
+        title: (_currentScene ? Filepath.basename(_currentScene.projectGraph.filepath) : "") || "Unsaved Project"
         preset: "Info"
         canCopy: false
-        text: _currentScene && _currentScene.graph.filepath ? "Current project has unsaved modifications."
+        text: _currentScene && _currentScene.projectGraph.filepath ? "Current project has unsaved modifications."
                                              : "Current project has not been saved."
-        helperText: _currentScene && _currentScene.graph.filepath ? "Would you like to save those changes?"
+        helperText: _currentScene && _currentScene.projectGraph.filepath ? "Would you like to save those changes?"
                                                    : "Would you like to save this project?"
 
         standardButtons: Dialog.Save | Dialog.Cancel | Dialog.Discard
@@ -495,7 +495,7 @@ Page {
 
         onAccepted: {
             // Save current file
-            if (saveAction.enabled && _currentScene.graph.filepath) {
+            if (saveAction.enabled && _currentScene.projectGraph.filepath) {
                 saveAction.trigger()
                 fireCallback()
             }
@@ -792,14 +792,14 @@ Page {
                     id: saveAction
                     text: "Save"
                     shortcut: "Ctrl+S"
-                    enabled: _currentScene ? (_currentScene.graph && !_currentScene.graph.filepath) || !_currentScene.undoStack.clean : false
+                    enabled: _currentScene ? (_currentScene.graph && !_currentScene.projectGraph.filepath) || !_currentScene.undoStack.clean : false
                     onTriggered: {
-                        if (_currentScene.graph.filepath) {
+                        if (_currentScene.projectGraph.filepath) {
                             // Get current time date
-                            var date = _currentScene.graph.getFileDateVersionFromPath(_currentScene.graph.filepath)
+                            var date = _currentScene.projectGraph.getFileDateVersionFromPath(_currentScene.projectGraph.filepath)
 
                             // Check if the file has been modified by another instance
-                            if (_currentScene.graph.fileDateVersion !== date) {
+                            if (_currentScene.projectGraph.fileDateVersion !== date) {
                                 fileModifiedDialog.open()
                             } else
                                 _currentScene.save()
@@ -822,10 +822,10 @@ Page {
                     id: saveNewVersionAction
                     text: "Save New Version"
                     shortcut: "Ctrl+Alt+S"
-                    enabled: _currentScene && _currentScene.graph && _currentScene.graph.filepath
+                    enabled: _currentScene && _currentScene.graph && _currentScene.projectGraph.filepath
                     onTriggered: {
                         _currentScene.saveAsNewVersion()
-                        MeshroomApp.addRecentProjectFile(_currentScene.graph.filepath)
+                        MeshroomApp.addRecentProjectFile(_currentScene.projectGraph.filepath)
                     }
                 }
                 Menu {
@@ -1206,13 +1206,13 @@ Page {
                 font.pointSize: 8
                 text: MaterialIcons.folder_open
                 ToolTip.text: "Open Cache Folder"
-                onClicked: Qt.openUrlExternally(Filepath.stringToUrl(_currentScene.graph.cacheDir))
+                onClicked: Qt.openUrlExternally(Filepath.stringToUrl(_currentScene.projectGraph.cacheDir))
             }
 
             TextField {
                 readOnly: true
                 selectByMouse: true
-                text: _currentScene ? _currentScene.graph.cacheDir : "Unknown"
+                text: _currentScene ? _currentScene.projectGraph.cacheDir : "Unknown"
                 color: Qt.darker(palette.text, 1.2)
                 background: Item {}
             }
@@ -1513,7 +1513,7 @@ Page {
                         MaterialToolButton {
 
                             readonly property string templateFilePath: {
-                                const coreGraph = _currentScene ? _currentScene.graph : null
+                                const coreGraph = _currentScene ? _currentScene.projectGraph : null
                                 const templatePath = coreGraph ? coreGraph.templateFilepath : ""
                                 return templatePath
                             }
@@ -1557,7 +1557,7 @@ Page {
                             if (filesByType["meshroomScenes"].length == 1 || filesByType["meshroomTemplates"].length == 1) {
                                 ensureSaved(function() {
                                     if (_currentScene.handleFilesUrl(filesByType, null, mousePosition)) {
-                                        if (_currentScene.graph.filepath)
+                                        if (_currentScene.projectGraph.filepath)
                                             MeshroomApp.addRecentProjectFile(filesByType["meshroomScenes"][0])
                                         else if (filesByType["meshroomTemplates"].length == 1)
                                             MeshroomApp.addRecentTemplateFile(filesByType["meshroomTemplates"][0])

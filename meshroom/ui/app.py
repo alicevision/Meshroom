@@ -331,7 +331,7 @@ class MeshroomApp(QApplication):
         if args.project:
             args.project = os.path.abspath(args.project)
             self._activeProject.load(args.project)
-            if self._activeProject.graph.filepath:
+            if self._activeProject.projectGraph.filepath:
                 self.addRecentProjectFile(args.project)
             else:
                 self.addRecentTemplateFile(args.project)

@@ -512,7 +512,7 @@ class Scene(UIGraph):
         localFile = self._urlToLocalFile(url)
         loaded = self._loadWithErrorReport(self._initFromTemplateWithOutputNodes, localFile)
         if loaded:
-            self.graph.setTemplateFilepath(localFile)
+            self.rootGraph.setTemplateFilepath(localFile)
         return loaded
 
     @staticmethod
@@ -528,7 +528,7 @@ class Scene(UIGraph):
         try:
             loadFunction(filepath)
             # warn about pre-release projects being automatically upgraded
-            if Version(self._graph.fileReleaseVersion).major == "0":
+            if Version(self.rootGraph.fileReleaseVersion).major == "0":
                 self.warning.emit(Message(
                     "Automatic project upgrade",
                     "This project was created with an older version of Meshroom and has been automatically upgraded.\n"

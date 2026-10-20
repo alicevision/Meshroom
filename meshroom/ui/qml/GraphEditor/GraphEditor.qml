@@ -408,7 +408,7 @@ Item {
             id: templateBackgroundStripes
 
             anchors.fill: parent
-            visible: Boolean(root.graph && root.graph.templateFilepath)
+            visible: Boolean(uigraph && uigraph.projectGraph && uigraph.projectGraph.templateFilepath)
             opacity: 0.03
 
             readonly property color stripeColor: activePalette.highlight

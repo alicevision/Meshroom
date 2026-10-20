@@ -90,7 +90,7 @@ Item {
                     if (drop["meshroomScenes"].length == 1 || drop["meshroomTemplates"].length == 1) {
                         ensureSaved(function() {
                             if (currentScene.handleFilesUrl(drop, cameraInit)) {
-                                if (currentScene.graph.filepath)
+                                if (currentScene.projectGraph.filepath)
                                     MeshroomApp.addRecentProjectFile(drop["meshroomScenes"][0])
                                 else if (drop["meshroomTemplates"].length == 1)
                                     MeshroomApp.addRecentTemplateFile(drop["meshroomTemplates"][0])

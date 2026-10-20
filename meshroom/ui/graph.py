@@ -498,8 +498,12 @@ class UIGraph(QObject):
         self._graph.updated.disconnect(self.onGraphUpdated)
         self._graph.statusUpdated.disconnect(self.updateChunkMonitor)
         self._sortedDFSChunks.clear()
-        # The commands of the undo stack refer to the nodes of the graph shown when they were done
+        # The commands of the undo stack refer to the nodes of the graph shown when they were done. Clearing them marks
+        # the stack clean: the unsaved changes of the project stay flagged
+        modified = not self._undoStack.isClean()
         self._undoStack.clear()
+        if modified:
+            self._undoStack.resetClean()
         self._graph = g
         self._graph.updated.connect(self.onGraphUpdated)
         self._graph.statusUpdated.connect(self.updateChunkMonitor)
@@ -524,6 +528,11 @@ class UIGraph(QObject):
         self._showGraph(root)
         for graph in inner:
             graph.deleteLater()
+
+    @property
+    def rootGraph(self) -> Graph:
+        """ The project graph (the graph shown, or the outermost one when a subgraph is entered). """
+        return self._subGraphStack.rootGraph if len(self._subGraphStack) else self._graph
 
     def _projectGraph(self) -> Graph:
         """ The project graph, with the entered subgraphs written back in their nodes. """
@@ -1932,13 +1941,17 @@ class UIGraph(QObject):
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
+    # The project graph (the outermost one when a subgraph is entered): file path, cache folder, template...
+    projectGraph = Property(Graph, lambda self: self.rootGraph, notify=graphChanged)
     taskManager = Property(TaskManager, lambda self: self._taskManager, constant=True)
     nodes = Property(QObject, lambda self: self._graph.nodes, notify=graphChanged)
     layout = Property(GraphLayout, lambda self: self._layout, constant=True)
 
     subGraphChanged = Signal()
     # Names of the entered SubGraph nodes, from the project graph
-    subGraphPath = Property("QVariantList", lambda self: self._subGraphStack.names(), notify=subGraphChanged)
+    # Labels of the entered SubGraph nodes, from the outermost one
+    subGraphPath = Property("QVariantList", lambda self: [level.node.label for level in self._subGraphStack.levels],
+                            notify=subGraphChanged)
     isInSubGraph = Property(bool, lambda self: len(self._subGraphStack) > 0, notify=subGraphChanged)
     liveRunDone = Signal(str, bool)
     liveNodeEvent = Signal(str, str, str)

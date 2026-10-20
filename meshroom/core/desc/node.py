@@ -653,8 +653,19 @@ class Node(BaseNode):
     def getMrNodeType(self):
         return self._mrNodeType
 
+    def getPythonExecutable(self, chunk) -> str:
+        """ The Python interpreter running meshroom_compute for a chunk (pythonExecutable by default). """
+        return self.pythonExecutable
+
+    def getProcessProvider(self, chunk):
+        """
+        The node descriptor provider whose process environment (runtime environment, command prefix and
+        suffix) runs meshroom_compute for a chunk: the one of the node by default.
+        """
+        return chunk.node.nodeDesc.provider
+
     def processChunkInEnvironment(self, chunk):
-        meshroomComputeCmd = f"{chunk.node.nodeDesc.pythonExecutable} {_MESHROOM_COMPUTE}" + \
+        meshroomComputeCmd = f"{self.getPythonExecutable(chunk)} {_MESHROOM_COMPUTE}" + \
                              f" \"{chunk.node.graph.filepath}\" --node {chunk.node.name}" + \
                               " --extern --inCurrentEnv"
         if chunk.isPreprocess:
@@ -664,9 +675,10 @@ class Node(BaseNode):
         elif len(chunk.node.getChunks()) >= 1:
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
 
-        runtimeEnv = chunk.node.nodeDesc.provider.runtimeEnv
-        cmdPrefix = chunk.node.nodeDesc.provider.commandPrefix
-        cmdSuffix = chunk.node.nodeDesc.provider.commandSuffix
+        provider = self.getProcessProvider(chunk)
+        runtimeEnv = provider.runtimeEnv
+        cmdPrefix = provider.commandPrefix
+        cmdSuffix = provider.commandSuffix
         self.executeChunkCommandLine(chunk, cmdPrefix + meshroomComputeCmd + cmdSuffix,
                                      env=runtimeEnv)
 

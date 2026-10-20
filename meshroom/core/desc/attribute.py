@@ -452,7 +452,10 @@ class Param(Attribute):
 
     #Override
     def clone(self):
+        # The range of the numeric parameters (IntParam, FloatParam) is kept
+        extra = {"range": self._range} if hasattr(self, "_range") else {}
         return self.__class__(
+                **extra,
                 name=self.name,
                 label=self.label,
                 description=self.description,
@@ -752,7 +755,24 @@ class ChoiceParam(Param):
         return "", ValueTypeErrors.NONE
 
     def clone(self):
-        return Attribute.clone(self)
+        return self.__class__(
+                name=self.name,
+                label=self.label,
+                description=self.description,
+                value=self.value,
+                values=list(self._values),
+                exclusive=self._exclusive,
+                saveValuesOverride=self._saveValuesOverride,
+                commandLineGroup=self.commandLineGroup,
+                joinChar=self._joinChar,
+                advanced=self.advanced,
+                enabled=self.enabled,
+                invalidate=self.invalidate,
+                semantic=self.semantic,
+                visible=self.visible,
+                exposed=self.exposed,
+                validators=self.validators
+            )
 
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
@@ -824,6 +844,32 @@ class ColorParam(Param):
 
     def clone(self):
         return Attribute.clone(self)
+
+
+class LiveValue(Attribute):
+    """
+    A value of any type passed between live nodes (see desc.LiveNode): an image, a software object, a number...
+    It connects to any other attribute (and any attribute connects to it). An input that is not connected can
+    hold a JSON value typed in the graph (None by default).
+    """
+    def __init__(self, name, label=None, description=None, value=None, advanced=False, enabled=True,
+                 visible=True, exposed=True, semantic="", invalidate=True, commandLineGroup="", validators=None):
+        super().__init__(name=name, label=label, description=description,
+                         value=value, invalidate=invalidate, commandLineGroup=commandLineGroup,
+                         advanced=advanced, semantic=semantic, enabled=enabled,
+                         visible=visible, exposed=exposed, validators=validators)
+
+    def getInstanceType(self):
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import LiveValue
+        return LiveValue
+
+    def validateValue(self, value):
+        return value
+
+    def checkValueTypes(self):
+        return "", ValueTypeErrors.NONE
+
 
 class Flow(Attribute):
     """

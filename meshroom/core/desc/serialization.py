@@ -1,0 +1,86 @@
+"""
+Full serialization of attribute descriptions (type, value, choices, range, children...), to recreate an
+attribute of any type from data: e.g. the children of an AnySet, which can be groups (a frame range),
+choices (formats) or lists. Callables (enabled / visible lambdas) are not kept.
+"""
+import inspect
+import logging
+from typing import Optional
+
+from meshroom.core import desc
+
+_COMMON = ("label", "description", "advanced", "semantic", "exposed")
+
+
+def describeAttribute(attributeDesc) -> dict:
+    """ A JSON-compatible description of an attribute description (see buildAttributeDesc). """
+    data = {"type": type(attributeDesc).__name__, "name": attributeDesc.name}
+    for key in _COMMON:
+        value = getattr(attributeDesc, "_" + key, None)
+        if value not in (None, "", False):
+            data[key] = value
+    if isinstance(attributeDesc, desc.GroupAttribute) and not isinstance(attributeDesc, desc.AnySet):
+        data["items"] = [describeAttribute(item) for item in attributeDesc._items]
+    elif isinstance(attributeDesc, desc.ListAttribute):
+        data["elementDesc"] = describeAttribute(attributeDesc._elementDesc)
+    else:
+        value = attributeDesc._value
+        if not callable(value):
+            data["value"] = value
+    if isinstance(attributeDesc, desc.ChoiceParam):
+        data["values"] = list(attributeDesc._values)
+        data["exclusive"] = attributeDesc._exclusive
+    if isinstance(attributeDesc, (desc.IntParam, desc.FloatParam)) and attributeDesc._range:
+        data["range"] = list(attributeDesc._range)
+    return data
+
+
+def _accepted(attributeClass, kwargs: dict) -> dict:
+    """ The arguments the constructor of an attribute class accepts (e.g. no value for a Flow). """
+    parameters = inspect.signature(attributeClass.__init__).parameters
+    if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in parameters.values()):
+        return kwargs
+    return {key: value for key, value in kwargs.items() if key in parameters}
+
+
+def buildAttributeDesc(data: dict, name: str = None, label: str = None) -> Optional[desc.Attribute]:
+    """
+    An attribute description from describeAttribute data (name / label replaced if given).
+
+    Returns:
+        The description, or None (with a warning) for an unknown type or invalid data.
+    """
+    data = dict(data)
+    typeName = data.get("type")
+    attributeClass = getattr(desc, typeName, None) if typeName else None
+    name = name or data.get("name")
+    kwargs = {key: data[key] for key in _COMMON if key in data}
+    if label:
+        kwargs["label"] = label
+    try:
+        if attributeClass is None or not isinstance(attributeClass, type) or not issubclass(attributeClass, desc.Attribute):
+            raise ValueError(f"unknown attribute type '{typeName}'")
+        if issubclass(attributeClass, desc.GroupAttribute) and not issubclass(attributeClass, desc.AnySet):
+            items = [buildAttributeDesc(item) for item in data.get("items", [])]
+            if any(item is None for item in items):
+                raise ValueError("invalid group item")
+            return attributeClass(items=items, name=name, **kwargs)
+        if issubclass(attributeClass, desc.ListAttribute):
+            elementDesc = buildAttributeDesc(data["elementDesc"])
+            if elementDesc is None:
+                raise ValueError("invalid list element")
+            return attributeClass(elementDesc=elementDesc, name=name, **kwargs)
+        if issubclass(attributeClass, desc.ChoiceParam):
+            kwargs.update(values=data.get("values", []), exclusive=data.get("exclusive", True))
+        if issubclass(attributeClass, (desc.IntParam, desc.FloatParam)) and data.get("range"):
+            kwargs["range"] = tuple(data["range"])
+        if "value" in data:
+            kwargs["value"] = data["value"]
+        attributeDesc = attributeClass(name=name, **_accepted(attributeClass, kwargs))
+        if issubclass(attributeClass, desc.ChoiceParam) and not attributeDesc._values and attributeDesc._value is None:
+            # Choices unknown (saved without them): any text
+            attributeDesc._valueType = str
+        return attributeDesc
+    except Exception as e:
+        logging.warning(f"Attribute '{name}' of type '{typeName}' cannot be recreated: {e}")
+        return None

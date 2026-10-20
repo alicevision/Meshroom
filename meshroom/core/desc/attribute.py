@@ -452,7 +452,10 @@ class Param(Attribute):
 
     #Override
     def clone(self):
+        # The range of the numeric parameters (IntParam, FloatParam) is kept
+        extra = {"range": self._range} if hasattr(self, "_range") else {}
         return self.__class__(
+                **extra,
                 name=self.name,
                 label=self.label,
                 description=self.description,
@@ -752,7 +755,24 @@ class ChoiceParam(Param):
         return "", ValueTypeErrors.NONE
 
     def clone(self):
-        return Attribute.clone(self)
+        return self.__class__(
+                name=self.name,
+                label=self.label,
+                description=self.description,
+                value=self.value,
+                values=list(self._values),
+                exclusive=self._exclusive,
+                saveValuesOverride=self._saveValuesOverride,
+                commandLineGroup=self.commandLineGroup,
+                joinChar=self._joinChar,
+                advanced=self.advanced,
+                enabled=self.enabled,
+                invalidate=self.invalidate,
+                semantic=self.semantic,
+                visible=self.visible,
+                exposed=self.exposed,
+                validators=self.validators
+            )
 
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)

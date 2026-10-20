@@ -382,6 +382,24 @@ class BaseNode(object):
         pass
 
     @classmethod
+    def ignoredInputs(cls, node, ctx) -> tuple:
+        """
+        The inputs the node does not read when it runs in a subgraph with the run context `ctx` (see
+        meshroom.core.subgraph): the nodes only feeding them are not run. E.g. a node giving the scene of a
+        software ignores the path computed by Meshroom when it runs in an open session of that software.
+        """
+        return ()
+
+    @classmethod
+    def initDynamicAttributes(cls, node):
+        """
+        Called when a node instance has created its attributes from this descriptor, before its links are
+        resolved (also while a graph is loaded): add the children of its AnySet attributes that depend on
+        its input values, so that links to them can be resolved.
+        """
+        pass
+
+    @classmethod
     def update(cls, node):
         """ Method call before node's internal update on invalidation.
 

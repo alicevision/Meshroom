@@ -2433,6 +2433,9 @@ class Node(BaseNode):
                 self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
                                                               isOutput=True, node=self))
 
+        # Dynamic children of AnySet attributes depending on the input values (see desc.BaseNode)
+        self.nodeDesc.initDynamicAttributes(self)
+
         # Declare events for specific output attributes
         for attr in self._attributes:
             if attr.isOutput and attr.desc.semantic == "image":

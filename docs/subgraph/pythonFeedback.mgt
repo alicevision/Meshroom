@@ -1,0 +1,68 @@
+{
+    "header": {
+        "releaseVersion": "2026.1.0+develop",
+        "fileVersion": "2.1",
+        "nodesVersions": {
+            "GraphInput": "1.0",
+            "GraphOutput": "1.0",
+            "LiveScript": "1.0"
+        },
+        "template": true
+    },
+    "graph": {
+        "GraphInput_1": {
+            "nodeType": "GraphInput",
+            "position": [
+                0,
+                0
+            ],
+            "inputs": {
+                "portSpec": "value"
+            }
+        },
+        "GraphOutput_1": {
+            "nodeType": "GraphOutput",
+            "position": [
+                400,
+                0
+            ],
+            "inputs": {
+                "portSpec": "value",
+                "ports": {
+                    "expanded": false,
+                    "children": [
+                        {
+                            "name": "value",
+                            "label": "value",
+                            "type": "LiveValue",
+                            "value": "{LiveScript_1.outs.value}"
+                        }
+                    ]
+                }
+            }
+        },
+        "LiveScript_1": {
+            "nodeType": "LiveScript",
+            "position": [
+                200,
+                0
+            ],
+            "inputs": {
+                "code": "# Runs once per iteration: the output 'value' feeds the input 'value' of the next one\nouts['value'] = ins['value'] * 2 + ctx.iteration\nctx.logger.info(f'iteration {ctx.iteration}: {outs[\"value\"]}')",
+                "inSpec": "value",
+                "outSpec": "value",
+                "ins": {
+                    "expanded": false,
+                    "children": [
+                        {
+                            "name": "value",
+                            "label": "value",
+                            "type": "LiveValue",
+                            "value": "{GraphInput_1.ports.value}"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

@@ -6,7 +6,7 @@ from meshroom.core.exception import UnknownNodeTypeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.plugins.base import NodeDescProviderStatus
 
-from .utils import registerNodeDesc, unregisterNodeDesc
+from .utils import registerNodeDesc, unregisterNodeDesc, unregisteredNodeTypes
 
 
 class NodeWithDynamicOutputs(desc.Node):
@@ -143,8 +143,11 @@ class TestNodesWithDynamicOutputs:
         unregisterNodeDesc(NodeWithDynamicOutputs)
 
     def test_processWithDynamicOutputs(self, graphSavedOnDisk):
+        registerNodeDesc(NodeWithDynamicOutputs)
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(NodeWithDynamicOutputs.__name__)
+
+        graph.save()
 
         # Execute the node to compute dynamic outputs
         node.process(inCurrentEnv=True)
@@ -155,7 +158,20 @@ class TestNodesWithDynamicOutputs:
         assert node.intOutput.value == 2
         assert node.floatOutput.value == 10.0
 
+        #  Reload graph in the context of compatibilityNode
+        with unregisteredNodeTypes([NodeWithDynamicOutputs]):
+            reloadedGraph = loadGraph(graph.filepath)
+            reloadedNode = next(n for n in reloadedGraph.nodes if n.name == node.name)
+            reloadedNode.loadOutputAttr()
+
+            assert reloadedNode.boolOutput.value
+            assert reloadedNode.fileOutput.value == "testFile.ext"
+            assert reloadedNode.stringOutput.value == "TESTSTRING"
+            assert reloadedNode.intOutput.value == 2
+            assert reloadedNode.floatOutput.value == 10.0
+
     def test_processWithDynamicOutputsNonDefaultInputs(self, graphSavedOnDisk):
+        registerNodeDesc(NodeWithDynamicOutputs)
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(NodeWithDynamicOutputs.__name__)
 
@@ -164,6 +180,8 @@ class TestNodesWithDynamicOutputs:
         node.stringInput.value = "anotherTestString"
         node.intInput.value = 10
         node.floatInput.value = 3.5
+
+        graph.save()
 
         # Execute the node to compute dynamic outputs
         node.process(inCurrentEnv=True)
@@ -174,7 +192,20 @@ class TestNodesWithDynamicOutputs:
         assert node.intOutput.value == 11
         assert node.floatOutput.value == 7.0
 
+        #  Reload graph in the context of compatibilityNode
+        with unregisteredNodeTypes([NodeWithDynamicOutputs]):
+            reloadedGraph = loadGraph(graph.filepath)
+            reloadedNode = next(n for n in reloadedGraph.nodes if n.name == node.name)
+            reloadedNode.loadOutputAttr()
+
+            assert not reloadedNode.boolOutput.value
+            assert reloadedNode.fileOutput.value == "anotherTestFile.ext"
+            assert reloadedNode.stringOutput.value == "ANOTHERTESTSTRING"
+            assert reloadedNode.intOutput.value == 11
+            assert reloadedNode.floatOutput.value == 7.0
+
     def test_loadGraphWithUncomputedDynamicOutputs(self, graphSavedOnDisk):
+        registerNodeDesc(NodeWithDynamicOutputs)
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(NodeWithDynamicOutputs.__name__)
         graph.save()
@@ -189,7 +220,21 @@ class TestNodesWithDynamicOutputs:
         assert loadedNode.intOutput.value is None
         assert loadedNode.floatOutput.value is None
 
+        #  Reload graph in the context of compatibilityNode
+        with unregisteredNodeTypes([NodeWithDynamicOutputs]):
+            reloadedGraph = loadGraph(graph.filepath)
+            reloadedNode = next(n for n in reloadedGraph.nodes if n.name == node.name)
+            reloadedNode.loadOutputAttr()
+
+            assert reloadedNode
+            assert reloadedNode.boolOutput.value is None
+            assert reloadedNode.fileOutput.value is None
+            assert reloadedNode.stringOutput.value is None
+            assert reloadedNode.intOutput.value is None
+            assert reloadedNode.floatOutput.value is None
+
     def test_loadGraphWithComputedDynamicOutputs(self, graphSavedOnDisk):
+        registerNodeDesc(NodeWithDynamicOutputs)
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(NodeWithDynamicOutputs.__name__)
         name = node.name
@@ -216,6 +261,20 @@ class TestNodesWithDynamicOutputs:
         assert loadedNode.stringOutput.value == "TESTSTRING"
         assert loadedNode.intOutput.value == 2
         assert loadedNode.floatOutput.value == 10.0
+
+        #  Reload graph in the context of compatibilityNode
+        with unregisteredNodeTypes([NodeWithDynamicOutputs]):
+            reloadedGraph = loadGraph(graph.filepath)
+            reloadedNode = next(n for n in reloadedGraph.nodes if n.name == node.name)
+            reloadedNode.loadOutputAttr()
+
+            # Check that the dynamic outputs have been correctly deserialized
+            assert reloadedNode
+            assert reloadedNode.boolOutput.value
+            assert reloadedNode.fileOutput.value == "testFile.ext"
+            assert reloadedNode.stringOutput.value == "TESTSTRING"
+            assert reloadedNode.intOutput.value == 2
+            assert reloadedNode.floatOutput.value == 10.0
 
 
 class TestInitNodeWithDynamicOutputs:
@@ -268,11 +327,14 @@ class TestDynamicListOutputs:
         assert listOutputDesc.isDynamicValue
 
     def test_processWithDynamicListOutput(self, graphSavedOnDisk):
+        registerNodeDesc(NodeWithDynamicListOutput)
         """Process a node that sets a dynamic output ListAttribute during processChunk."""
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(NodeWithDynamicListOutput.__name__)
 
         node.listInput.value = ["hello", "world"]
+
+        graph.save()
 
         # Execute the node
         node.process(inCurrentEnv=True)
@@ -286,8 +348,20 @@ class TestDynamicListOutputs:
         outputValues = [attr.value for attr in node.listOutput.value]
         assert outputValues == ["HELLO", "WORLD"]
 
+        #  Reload graph in the context of compatibilityNode
+        with unregisteredNodeTypes([NodeWithDynamicListOutput]):
+            reloadedGraph = loadGraph(graph.filepath)
+            reloadedNode = next(n for n in reloadedGraph.nodes if n.name == node.name)
+
+            assert reloadedNode.listOutput.getPrimitiveValue() == ["HELLO", "WORLD"]
+
+            reloadedNode.loadOutputAttr()
+            outputValues = [attr.value for attr in reloadedNode.listOutput.value]
+            assert outputValues == ["HELLO", "WORLD"]
+
     def test_loadGraphWithComputedDynamicListOutput(self, graphSavedOnDisk):
         """Check that dynamic list output values are persisted and reloaded correctly."""
+        registerNodeDesc(NodeWithDynamicListOutput)
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(NodeWithDynamicListOutput.__name__)
         name = node.name
@@ -309,8 +383,19 @@ class TestDynamicListOutputs:
         loadedOutputValues = [attr.value for attr in loadedNode.listOutput.value]
         assert loadedOutputValues == ["FOO", "BAR", "BAZ"]
 
+        #  Reload graph in the context of compatibilityNode
+        with unregisteredNodeTypes([NodeWithDynamicListOutput]):
+            reloadedGraph = loadGraph(graph.filepath)
+            reloadedNode = next(n for n in reloadedGraph.nodes if n.name == node.name)
+            reloadedNode.loadOutputAttr()
+
+            assert reloadedNode.listOutput.getPrimitiveValue() == ["FOO", "BAR", "BAZ"]
+            reloadedOutputValues = [attr.value for attr in reloadedNode.listOutput.value]
+            assert reloadedOutputValues == ["FOO", "BAR", "BAZ"]
+
     def test_loadGraphWithUncomputedDynamicListOutput(self, graphSavedOnDisk):
         """Check that an uncomputed dynamic list output is empty after loading."""
+        registerNodeDesc(NodeWithDynamicListOutput)
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode(NodeWithDynamicListOutput.__name__)
         graph.save()
@@ -321,3 +406,11 @@ class TestDynamicListOutputs:
         assert loadedNode
         # Uncomputed dynamic list output should be empty
         assert len(loadedNode.listOutput) == 0
+
+        #  Reload graph in the context of compatibilityNode
+        with unregisteredNodeTypes([NodeWithDynamicListOutput]):
+            reloadedGraph = loadGraph(graph.filepath)
+            reloadedNode = next(n for n in reloadedGraph.nodes if n.name == node.name)
+            reloadedNode.loadOutputAttr()
+
+            assert len(reloadedNode.listOutput) == 0

@@ -1,3 +1,5 @@
+__version__ = "1.0"
+
 from meshroom.core import desc
 from meshroom.core.desc import Level
 
@@ -230,6 +232,13 @@ class AllAttributesNode(desc.Node):
             value=1.0,
             range=(0.0, 2.0, 0.01),
             keyable=True,
+        ),
+        desc.Rectangle(
+            name="keyableRectangle",
+            label="Keyable Rectangle",
+            description="A keyable rectangle.",
+            keyable=True,
+            keyType="viewId"
         ),
     ]
 

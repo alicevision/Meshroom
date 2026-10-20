@@ -63,7 +63,7 @@ def test_dynamic_attribute_validates_any_connection():
 
 
 # ---------------------------------------------------------------------------
-# Dynamic input creation tests (via Node.addDynamicInput / removeDynamicInput)
+# Dynamic input creation tests
 # ---------------------------------------------------------------------------
 
 def test_add_dynamic_input_creates_sibling_attribute():
@@ -91,6 +91,7 @@ def test_add_dynamic_input_creates_sibling_attribute():
     assert(input_1 is not None)
     assert(dstNode.ins.input_1 is not None)
     assert(isinstance(dstNode.ins.input_1, Attribute))
+
 
 def test_remove_dynamic_input():
     """Removing a dynamic input deletes the attribute from the node."""
@@ -312,6 +313,37 @@ def test_anyset_expanded_state_restored_after_load(tmp_path):
     assert loadedDynamicNode.outs.expanded is False
 
 
+def test_anyset_children_preserved_when_resaving_loaded_template(tmp_path):
+    """AnySet children survive a template save/load cycle, and a second one after the template has been loaded."""
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.stringParam)
+    dynamicNode.ins.duplicateAttribute(srcNode.intParam)
+    dynamicNode.ins.stringParam.value = "someString"
+    dynamicNode.ins.intParam.value = 11
+    expectedChildren = [(attribute.name, attribute.desc.type, attribute.value) for attribute in dynamicNode.ins.value]
+
+    templateFile = str(tmp_path / "template.mg")
+    graph.save(templateFile, template=True)
+
+    loadedGraph = loadGraph(templateFile)
+    loadedDynamicNode = loadedGraph.node(dynamicNode.name)
+    assert [(attribute.name, attribute.desc.type, attribute.value)
+            for attribute in loadedDynamicNode.ins.value] == expectedChildren
+
+    # Save the loaded graph as a template again, without any modification
+    resavedTemplateFile = str(tmp_path / "resavedTemplate.mg")
+    loadedGraph.save(resavedTemplateFile, template=True)
+
+    reloadedGraph = loadGraph(resavedTemplateFile)
+    reloadedDynamicNode = reloadedGraph.node(dynamicNode.name)
+    assert [(attribute.name, attribute.desc.type, attribute.value)
+            for attribute in reloadedDynamicNode.ins.value] == expectedChildren
+
+
 def test_legacy_dict_anyset_serialization_still_loads(tmp_path):
     import json
     from meshroom.core.graph import loadGraph
@@ -362,6 +394,34 @@ def test_legacy_list_anyset_serialization_still_loads(tmp_path):
     assert [attribute.name for attribute in loadedDynamicNode.ins.value] == [
         attribute["name"] for attribute in anyset_children(serializedIns)
     ]
+
+
+def test_legacy_group_anyset_child_with_value_still_loads(tmp_path):
+    """GroupAttribute children used to be serialized with both their items and their value."""
+    import json
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+
+    groupAttr = dynamicNode.ins.duplicateAttribute(srcNode.paramGroup, isOutput=False)
+    groupAttr.value.get("groupInt").value = 12
+
+    graphData = graph.serialize()
+    serializedGroup = anyset_child(graphData["graph"][dynamicNode.name]["inputs"]["ins"], groupAttr.name)
+    assert "value" not in serializedGroup
+    serializedGroup["value"] = groupAttr.getSerializedValue()
+
+    graphFile = tmp_path / "legacy_group_anyset.mg"
+    graphFile.write_text(json.dumps(graphData), encoding="utf-8")
+
+    loadedGraph = loadGraph(str(graphFile))
+    loadedGroup = loadedGraph.node(dynamicNode.name).ins.value.get(groupAttr.name)
+
+    assert loadedGroup.desc.type == "GroupAttribute"
+    assert [attribute.name for attribute in loadedGroup.value] == [attribute.name for attribute in groupAttr.value]
+    assert loadedGroup.value.get("groupInt").value == 12
+
 
 def test_clone_attributes():
     graph = Graph("test")

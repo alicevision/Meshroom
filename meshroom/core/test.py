@@ -39,7 +39,8 @@ def checkTemplateVersions(path: str, nodesAlreadyLoaded: bool = False) -> bool:
 
             inputs = nodeData.get("inputs", {})
             internalInputs = nodeData.get("internalInputs", {})
-            version = nodesVersions.get(nodeType, None)
+            # Versions are stored in each node since file version 2.2, and in the header for older files
+            version = nodeData.get("version", nodesVersions.get(nodeType, None))
 
             compatibilityIssue = None
 

@@ -13,10 +13,8 @@ from enum import Enum
 
 import meshroom
 import meshroom.core
-from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
-from meshroom.common import deprecated
-from meshroom.core import Version
-from meshroom.core import submitters
+from meshroom.common import BaseObject, DictModel, Slot, Signal, Property, deprecated
+from meshroom.core import Version, submitters, hashValue
 from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
@@ -231,6 +229,7 @@ class Graph(BaseObject):
         self._filepath: str = ""
         self._templateFilepath: str = ""
         self._fileDateVersion = 0
+        self.nodeDescriptions = {}
         self.header = {}
 
     def clear(self):
@@ -323,6 +322,7 @@ class Graph(BaseObject):
 
         self.header = graphData.get(GraphIO.Keys.Header, {})
         fileVersion = Version(self.header.get(GraphIO.Keys.FileVersion, "0.0"))
+        self.nodeDescriptions = graphData.get(GraphIO.Keys.NodeDescriptions, {})
         graphContent = self._normalizeGraphContent(graphData, fileVersion)
         isTemplate = self.header.get(GraphIO.Keys.Template, False)
         explicitCachePaths = self.header.get(GraphIO.Keys.CacheDir)
@@ -405,15 +405,19 @@ class Graph(BaseObject):
 
     def _deserializeNode(self, nodeData: dict, nodeName: str, fromGraph: "Graph"):
         # Retrieve version info from:
-        #   1. nodeData: node saved from a CompatibilityNode
-        #   2. nodesVersion in file header: node saved from a Node
-        # If unvailable, the "version" field will not be set in `nodeData`.
+        #   1. nodeData: node saved from a Node
+        #   2. nodesVersion in file header: node saved from a Node in a previous version of Meshroom GraphIO (<2.2)
+        # If unavailable, the "version" field is set to 0.0.
         if "version" not in nodeData:
             version = fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"])
-            if version:
-                nodeData["version"] = version
+            nodeData["version"] = version if version is not None else "0.0"
         inTemplate = fromGraph.header.get(GraphIO.Keys.Template, False)
-        node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate)
+        nodeDescDict = {}
+        if fromGraph.nodeDescriptions:
+            nodeDescDict = fromGraph.nodeDescriptions.get(nodeData["nodeType"], {})
+        if nodeDescDict:
+            nodeDescDict = nodeDescDict.get(nodeData["version"], {})
+        node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate, nodeDescDict=nodeDescDict)
         self._addNode(node, nodeName)
         return node
 
@@ -788,14 +792,7 @@ class Graph(BaseObject):
             nodeName (str): the name of the CompatibilityNode to upgrade
 
         Returns:
-            - the upgraded (newly created) node
-            - a dictionary containing the incoming edges removed by this operation:
-                {dstAttr.fullName, srcAttr.fullName}
-            - a dictionary containing the outgoing edges removed by this operation:
-                {dstAttr.fullName, srcAttr.fullName}
-            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute
-                prior to the removal of all edges:
-                {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
+            the upgraded (newly created) node
         """
         node = self.node(nodeName)
         if not isinstance(node, CompatibilityNode):
@@ -805,18 +802,36 @@ class Graph(BaseObject):
         return upgradedNode
 
     @changeTopology
-    def replaceNode(self, nodeName: str, newNode: BaseNode):
+    def replaceNode(self, nodeName: str, newNode: BaseNode, outEdges: Optional[Dict[str, str]] = None,
+                    outListAttributes: Optional[Dict[str, tuple]] = None):
         """
         Replace the node idenfitied by `nodeName` with `newNode`, while restoring compatible edges.
+
+        By default, the outgoing edges to restore are the ones of the node that is replaced. Some of them may not be
+        restorable on `newNode` (e.g. the source attribute does not exist), and would then be lost for good.
+        `outEdges` and `outListAttributes` allow to restore a different set of outgoing edges, for instance the ones
+        returned by a previous call to this method, when reverting a replacement.
 
         Args:
             nodeName: The name of the Node to replace.
             newNode: The Node instance to replace it with.
+            outEdges: (optional) The outgoing edges to restore on `newNode` instead of the ones of the replaced node.
+                {dstAttr.fullName, srcAttr.fullName}
+            outListAttributes: (optional) The values, indices and keys of the attributes that were connected to a
+                ListAttribute, to use along with `outEdges`.
+                {dstAttr.fullName, (dstAttr.root.fullName, dstAttr.index, dstAttr.value)}
+
+        Returns:
+            The outgoing edges and the ListAttribute entries removed with the replaced node, as a
+            (outEdges, outListAttributes) tuple, with the same format as the parameters.
         """
         with GraphModification(self):
-            _, outEdges, outListAttributes = self.removeNode(nodeName)
+            _, removedOutEdges, removedOutListAttributes = self.removeNode(nodeName)
             self.addNode(newNode, nodeName)
-            self._restoreOutEdges(outEdges, outListAttributes)
+            if outEdges is None:
+                outEdges, outListAttributes = removedOutEdges, removedOutListAttributes
+            self._restoreOutEdges(outEdges, outListAttributes or {})
+        return removedOutEdges, removedOutListAttributes
 
     def _restoreOutEdges(self, outEdges: Dict[str, str], outListAttributes):
         """
@@ -839,14 +854,18 @@ class Graph(BaseObject):
                 listAttr.insert(index, value)
 
         for dstName, srcName in outEdges.items():
-            # Re-create the entries in ListAttributes that were completely removed during the call to "removeNode"
-            if dstName in outListAttributes:
-                _recreateTargetListAttributeChildren(*outListAttributes[dstName])
             try:
                 srcAttr = self.anyAttribute(srcName)
+                if srcAttr is None:
+                    # Do not re-create the ListAttribute entry either, it would be left empty and unconnected
+                    logging.warning(f"Failed to restore edge {srcName} (missing) -> {dstName}")
+                    continue
+                # Re-create the entries in ListAttributes that were completely removed during the call to "removeNode"
+                if dstName in outListAttributes:
+                    _recreateTargetListAttributeChildren(*outListAttributes[dstName])
                 dstAttr = self.anyAttribute(dstName)
-                if srcAttr is None or dstAttr is None:
-                    logging.warning(f"Failed to restore edge {srcName}{' (missing)' if srcAttr is None else ''} -> {dstName}{' (missing)' if dstAttr is None else ''}")
+                if dstAttr is None:
+                    logging.warning(f"Failed to restore edge {srcName} -> {dstName} (missing)")
                     continue
                 self.addEdge(srcAttr, dstAttr)
             except (KeyError, ValueError) as err:
@@ -1588,8 +1607,12 @@ class Graph(BaseObject):
 
         data = self.serialize(template)
 
-        with open(path, 'w') as jsonFile:
+        # Save the graph to an intermediate file to avoid corrupted file in case of an unexpected error
+        hash8 = hashValue(data)[:8]
+        tempPath = Path(path).with_suffix(f'.{hash8}.tmp')
+        with open(tempPath, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
+        os.replace(tempPath, path)
 
         if path != self._filepath and setupProjectFile:
             self._setFilepath(path)

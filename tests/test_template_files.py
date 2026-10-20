@@ -100,3 +100,36 @@ def test_plugin_template_discovery_supports_mgt_and_legacy_mg_metadata(tmp_path)
         "explicit": str(explicit_template_file),
         "legacy": str(legacy_template_file),
     }
+
+
+def save_versioned_template(path):
+    graph = Graph("Template")
+    node = graph.addNewNode("AllAttributesNode")
+    graph.save(path, setupProjectFile=False, template=True)
+    return json.loads(path.read_text()), node.name
+
+
+def test_template_version_check_reads_node_versions(tmp_path):
+    from meshroom.core.test import checkTemplateVersions
+
+    template_file = tmp_path / f"template{MESHROOM_TEMPLATE_EXTENSION}"
+    file_data, node_name = save_versioned_template(template_file)
+    assert "nodesVersions" not in file_data["header"]
+    assert checkTemplateVersions(str(template_file), nodesAlreadyLoaded=True)
+
+    file_data["graph"][node_name]["version"] = "2.0"
+    template_file.write_text(json.dumps(file_data))
+    assert not checkTemplateVersions(str(template_file), nodesAlreadyLoaded=True)
+
+
+def test_template_version_check_falls_back_to_legacy_header(tmp_path):
+    from meshroom.core.test import checkTemplateVersions
+
+    template_file = tmp_path / f"template{MESHROOM_TEMPLATE_EXTENSION}"
+    file_data, node_name = save_versioned_template(template_file)
+    del file_data["graph"][node_name]["version"]
+    file_data["header"]["fileVersion"] = "2.1"
+    file_data["header"]["nodesVersions"] = {"AllAttributesNode": "2.0"}
+    template_file.write_text(json.dumps(file_data))
+
+    assert not checkTemplateVersions(str(template_file), nodesAlreadyLoaded=True)

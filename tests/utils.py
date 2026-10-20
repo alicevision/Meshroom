@@ -36,12 +36,27 @@ def registeredNodeTypes(nodeDescs: List[desc.Node]):
             nodeDescProvider = NodeDescProvider(nodeDesc)
             pluginManager._nodeDescProviders[nodeType] = nodeDescProvider
 
-    yield
+    try:
+        yield
 
+    finally:
+        for nodeDesc in nodeDescs:
+            nodeType = nodeDesc.__name__
+            if pluginManager.isNodeDescRegistered(nodeType):
+                del pluginManager._nodeDescProviders[nodeType]
+
+
+@contextmanager
+def unregisteredNodeTypes(nodeDescs: List[desc.Node]):
     for nodeDesc in nodeDescs:
-        nodeType = nodeDesc.__name__
-        if pluginManager.isNodeDescRegistered(nodeType):
-            del pluginManager._nodeDescProviders[nodeType]
+        registerNodeDesc(nodeDesc)
+
+    try:
+        yield
+
+    finally:
+        for nodeDesc in nodeDescs:
+            unregisterNodeDesc(nodeDesc)
 
 
 @contextmanager

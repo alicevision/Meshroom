@@ -3,6 +3,8 @@ import os
 from textwrap import dedent
 from pathlib import Path
 
+import pytest
+
 from meshroom.core import desc, cacheFolderName
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityIssue, CompatibilityNode
@@ -221,6 +223,29 @@ class TestImportGraphContent:
 
 
 class TestGraphSave:
+    @staticmethod
+    def _saveSceneThenModify(tmp_path):
+        """
+        Save a scene with a single node, then add a second node without saving it.
+
+        Returns:
+            tuple: the graph, the scene path, the saved file content and the saved node name.
+        """
+        graph = Graph("")
+        nodeA = graph.addNewNode(SimpleNode.__name__)
+        scenePath = os.path.join(tmp_path, "scene.mg")
+        graph.save(scenePath)
+        graph.addNewNode(SimpleNode.__name__)
+        return graph, scenePath, Path(scenePath).read_text(), nodeA.name
+
+    @staticmethod
+    def _assertSceneIsIntact(graph, scenePath, originalContent, nodeName):
+        assert Path(scenePath).read_text() == originalContent
+        assertPathsAreEqual(graph.filepath, scenePath)
+        assert not graph._saving
+        loadedGraph = loadGraph(scenePath)
+        assert [node.name for node in loadedGraph.nodes] == [nodeName]
+
     def test_generateNextPath(self, graphSavedOnDisk):
         graph: Graph = graphSavedOnDisk
         root = os.path.dirname(graph._filepath)
@@ -256,6 +281,36 @@ class TestGraphSave:
             graph.saveAsNewVersion()
             newScenePath = os.path.join(tmp_path, "scene1.mg")
             assert os.path.exists(newScenePath)
+
+    def test_saveFailureDuringWriteKeepsExistingFile(self, tmp_path, monkeypatch):
+        with registeredNodeTypes([SimpleNode]):
+            graph, scenePath, originalContent, nodeName = self._saveSceneThenModify(tmp_path)
+
+            # Simulate an interruption after part of the data has been written
+            def failingDump(data, jsonFile, **kwargs):
+                jsonFile.write('{"header": ')
+                raise OSError("Simulated write failure")
+
+            monkeypatch.setattr("meshroom.core.graph.json.dump", failingDump)
+            with pytest.raises(OSError, match="Simulated write failure"):
+                graph.save()
+            monkeypatch.undo()
+
+            self._assertSceneIsIntact(graph, scenePath, originalContent, nodeName)
+
+    def test_saveFailureDuringReplaceKeepsExistingFile(self, tmp_path, monkeypatch):
+        with registeredNodeTypes([SimpleNode]):
+            graph, scenePath, originalContent, nodeName = self._saveSceneThenModify(tmp_path)
+
+            def failingReplace(src, dst):
+                raise OSError("Simulated replace failure")
+
+            monkeypatch.setattr("meshroom.core.graph.os.replace", failingReplace)
+            with pytest.raises(OSError, match="Simulated replace failure"):
+                graph.save()
+            monkeypatch.undo()
+
+            self._assertSceneIsIntact(graph, scenePath, originalContent, nodeName)
 
     def test_cacheDir(self, graphSavedOnDisk, tmp_path):
         """ Check features related to the cacheDir

@@ -37,6 +37,8 @@ from meshroom.core.submitter import jobManager
 
 from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, BackdropNode, Position
 from meshroom.core import submitters, MrNodeType
+from meshroom.core.subgraph import SubGraphError
+from meshroom.core.subgraph.editing import SubGraphStack, isSubGraphNode
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
 
@@ -436,6 +438,16 @@ class UIGraph(QObject):
         self._selectedChunk = None
         self._nodeSelection: QItemSelectionModel = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
+        # Subgraphs entered from the project graph (see meshroom.core.subgraph.editing)
+        self._subGraphStack = SubGraphStack()
+        self._liveRunning = False
+        self._liveStatus = ""
+        self._liveSuccess = True
+        # Run Live: {node name: (status, message)} of the nodes of the shown graph (see executor.NodeStatus)
+        self._liveNodeStatuses = {}
+        self._liveStatusRevision = 0
+        self.liveRunDone.connect(self._onLiveRunDone)
+        self.liveNodeEvent.connect(self._onLiveNodeEvent)
 
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
@@ -443,6 +455,7 @@ class UIGraph(QObject):
 
     def setGraph(self, g):
         """ Set the internal graph. """
+        self._dropSubGraphs()
         if self._graph:
             self.stopExecution()
             # Clear all the locally submitted nodes at once before the graph gets changed, as it will not receive further updates
@@ -475,6 +488,228 @@ class UIGraph(QObject):
 
         self._nodeSelection.setModel(self._graph.nodes)
         self.graphChanged.emit()
+
+    # Subgraphs
+
+    def _showGraph(self, g: Graph):
+        """ Show another graph of the project (entering / leaving a subgraph), without clearing the current one. """
+        self.clearNodeHover()
+        self.clearNodeSelection()
+        self._graph.updated.disconnect(self.onGraphUpdated)
+        self._graph.statusUpdated.disconnect(self.updateChunkMonitor)
+        self._sortedDFSChunks.clear()
+        # The commands of the undo stack refer to the nodes of the graph shown when they were done
+        self._undoStack.clear()
+        self._graph = g
+        self._graph.updated.connect(self.onGraphUpdated)
+        self._graph.statusUpdated.connect(self.updateChunkMonitor)
+        self.updateChunks()
+        bbox = self._layout.positionBoundingBox()
+        if len(self._graph.nodes) and bbox[2] == 0 and bbox[3] == 0:
+            self._layout.reset()
+            self._undoStack.clear()
+        self._nodeSelection.setModel(self._graph.nodes)
+        # The Run Live statuses are those of the nodes of the graph shown before
+        self._setLiveNodeStatuses({})
+        self.graphChanged.emit()
+        self.subGraphChanged.emit()
+
+    def _dropSubGraphs(self):
+        """ Leave all the subgraphs without writing them back (another project is loaded). """
+        if not len(self._subGraphStack):
+            return
+        root = self._subGraphStack.rootGraph
+        inner = [self._graph] + [level.outerGraph for level in self._subGraphStack.levels[1:]]
+        self._subGraphStack.levels.clear()
+        self._showGraph(root)
+        for graph in inner:
+            graph.deleteLater()
+
+    def _projectGraph(self) -> Graph:
+        """ The project graph, with the entered subgraphs written back in their nodes. """
+        if len(self._subGraphStack):
+            return self._subGraphStack.commitAll(self._graph)
+        return self._graph
+
+    @Slot(QObject, result=bool)
+    def isSubGraphNode(self, node) -> bool:
+        return isSubGraphNode(node)
+
+    @Slot(QObject, result=bool)
+    def enterSubGraph(self, node) -> bool:
+        """ Show the subgraph of a SubGraph node. Returns whether it was entered. """
+        if not isSubGraphNode(node):
+            return False
+        if self.isComputingLocally():
+            self.parent().showMessage("Subgraphs cannot be edited while computing.", "warning")
+            return False
+        try:
+            inner = self._subGraphStack.enter(self._graph, node, parent=self)
+        except (ValueError, SubGraphError) as e:
+            self.parent().showMessage(str(e), "error")
+            return False
+        except Exception as e:
+            logging.exception(f"Cannot enter the subgraph of {node.name}")
+            self.parent().showMessage(f"Cannot enter the subgraph of {node.name}: {e}", "error")
+            return False
+        self._showGraph(inner)
+        return True
+
+    @Slot()
+    def groupSelectedIntoSubGraph(self):
+        """ Put the selected nodes in a new SubGraph node (their outside connections become its inputs / outputs). """
+        nodes = [node for node in self.getSelectedNodes() if node.nodeType != "Backdrop"]
+        if not nodes:
+            self.parent().showMessage("Select the nodes to put in a SubGraph.", "warning")
+            return
+        if any(node.locked for node in nodes):
+            self.parent().showMessage("Locked nodes cannot be put in a SubGraph.", "warning")
+            return
+        subGraphNode = self.push(commands.CollapseIntoSubGraphCommand(self._graph, nodes))
+        if subGraphNode:
+            self.selectNodes([subGraphNode])
+            self.selectedNode = subGraphNode
+
+    @Slot()
+    def exitSubGraph(self):
+        """ Leave the current subgraph, written back in its node, and select its node. """
+        if not len(self._subGraphStack):
+            return
+        node = self._subGraphStack.levels[-1].node
+        inner = self._graph
+        try:
+            outer = self._subGraphStack.exit(inner)
+        except Exception as e:
+            self.parent().showMessage(f"The subgraph could not be written back: {e}", "error")
+            raise
+        self._showGraph(outer)
+        inner.deleteLater()
+        self.selectNodes([node])
+        self.selectedNode = node
+
+    @Slot(int)
+    def exitSubGraphTo(self, depth: int):
+        """ Leave subgraphs until `depth` levels are entered (0: the project graph). """
+        while len(self._subGraphStack) > max(0, depth):
+            self.exitSubGraph()
+
+    def _liveSource(self, node=None):
+        """ (graph data, inputs, context, loop data, label) of what Run Live runs, None if nothing. """
+        from meshroom.core.subgraph.executor import readGraphData
+        from meshroom.core.subgraph.nodes import loopFromNode, nodeGraphSource
+        if len(self._subGraphStack):
+            node = self._subGraphStack.levels[-1].node
+            graphData = self._graph.serialize(asTemplate=True)
+        elif isSubGraphNode(node):
+            source = nodeGraphSource(node)
+            if source is None:
+                return None
+            graphData = readGraphData(source)
+        else:
+            return None
+        loop = loopFromNode(node)
+        if loop.mode in ("frames", "items"):
+            # A preview: the first frame / item only
+            loop = loop.subset(0, 1)
+        from meshroom.core.subgraph.executor import plainValue
+        inputs = {child.name: plainValue(child) for child in node.ins.value}
+        return graphData, inputs, node.context.value, loop.asDict(), node.name
+
+    @Slot()
+    @Slot(QObject)
+    def runLive(self, node=None):
+        """
+        Run the current subgraph (or the subgraph of a node) now, in the interpreter of its context, with
+        the inputs of its node: the first frame of a frame loop, all the iterations of a count loop.
+        """
+        if self._liveRunning:
+            return
+        source = self._liveSource(node or self._selectedNode)
+        if source is None:
+            self.parent().showMessage("Run Live: enter a subgraph or select a SubGraph node.", "warning")
+            return
+        graphData, inputs, context, loopData, label = source
+        self._liveRunning = True
+        self._liveSuccess = True
+        self._liveStatus = f"{label}: running..."
+        self.liveStatusChanged.emit()
+        # The statuses of the nodes are shown on the subgraph when it is entered, else on the SubGraph node
+        inside = bool(len(self._subGraphStack))
+        self._setLiveNodeStatuses({} if inside else {label: ("RUNNING", "Run Live...")})
+
+        def onNode(nodeName, status, message):
+            if inside:
+                # Emitted from the worker thread: queued to the thread of the user interface
+                self.liveNodeEvent.emit(nodeName, status, message)
+
+        def work():
+            from meshroom.core.subgraph.runner import runLive
+            try:
+                result = runLive(graphData, inputs, context, loopData, onNode=onNode)
+                self.liveRunDone.emit(self._liveSummary(label, result), True)
+                if not inside:
+                    self.liveNodeEvent.emit(label, "SUCCESS", f"Run Live: done in {result['elapsed']:.2f} s")
+            except Exception as e:
+                failed = getattr(e, "nodeName", "")
+                message = str(e)
+                if failed and not message.startswith(f"{failed}:"):
+                    message = f"{failed}: {message}"
+                self.liveRunDone.emit(f"{label}: failed at {message}" if failed else f"{label}: {message}", False)
+                if not inside:
+                    self.liveNodeEvent.emit(label, "ERROR", message)
+
+        Thread(target=work, daemon=True).start()
+
+    @staticmethod
+    def _liveSummary(label: str, result: dict) -> str:
+        """ The message of a successful Run Live: duration, where it ran, nodes run / skipped, outputs. """
+        nodes = result.get("nodes") or {}
+        ran = [name for name, status in nodes.items() if status == "SUCCESS"]
+        skipped = [name for name, status in nodes.items() if status == "SKIPPED"]
+        parts = [f"{label}: OK in {result['elapsed']:.2f} s"]
+        if result.get("interpreter"):
+            parts.append(f"in {result['interpreter']}")
+        text = " ".join(parts) + "."
+        if nodes:
+            text += f" {len(ran)} node(s) run"
+            if skipped:
+                text += f", {len(skipped)} not needed here ({', '.join(skipped)})"
+            text += "."
+        outputs = ", ".join(f"{name} = {value!r}"[:200] for name, value in result["outputs"].items())
+        if outputs:
+            text += f" Outputs: {outputs}"
+        return text
+
+    def _setLiveNodeStatuses(self, statuses: dict):
+        self._liveNodeStatuses = statuses
+        self._liveStatusRevision += 1
+        self.liveNodeStatusesChanged.emit()
+
+    def _onLiveNodeEvent(self, nodeName: str, status: str, message: str):
+        self._liveNodeStatuses[nodeName] = (status, message)
+        self._liveStatusRevision += 1
+        self.liveNodeStatusesChanged.emit()
+
+    @Slot(str, result=str)
+    def liveNodeStatus(self, nodeName: str) -> str:
+        """ The Run Live status of a node of the shown graph ("" if none): RUNNING, SUCCESS, ERROR... """
+        return self._liveNodeStatuses.get(nodeName, ("", ""))[0]
+
+    @Slot(str, result=str)
+    def liveNodeMessage(self, nodeName: str) -> str:
+        return self._liveNodeStatuses.get(nodeName, ("", ""))[1]
+
+    @Slot()
+    def clearLiveStatuses(self):
+        self._setLiveNodeStatuses({})
+
+    def _onLiveRunDone(self, message: str, success: bool):
+        self._liveRunning = False
+        self._liveSuccess = success
+        self._liveStatus = message
+        self.liveStatusChanged.emit()
+        (logging.info if success else logging.error)(f"[Run Live] {message}")
+        self.parent().showMessage(f"Run Live: {message}", "ok" if success else "error")
 
     def onGraphUpdated(self):
         """ Callback to any kind of attribute modification. """
@@ -582,6 +817,12 @@ class UIGraph(QObject):
 
     @Slot(QUrl)
     def saveAsTemplate(self, url):
+        if len(self._subGraphStack):
+            # Inside a subgraph: save the subgraph shown (e.g. to run it from a software or reference it)
+            localFile = withExtension(url if isinstance(url, str) else url.toLocalFile(), MESHROOM_TEMPLATE_EXTENSION)
+            self._graph.save(localFile, setupProjectFile=False, template=True)
+            self.parent().showMessage(f"Subgraph saved as template: {localFile}", "ok")
+            return
         self._saveAs(url, setupProjectFile=False, template=True, extension=MESHROOM_TEMPLATE_EXTENSION)
 
     def _saveAs(self, url, setupProjectFile=True, template=False, extension=MESHROOM_PROJECT_EXTENSION):
@@ -591,7 +832,7 @@ class UIGraph(QObject):
         else:
             localFile = url.toLocalFile()
         localFile = withExtension(localFile, extension)
-        self._graph.save(localFile, setupProjectFile=setupProjectFile, template=template)
+        self._projectGraph().save(localFile, setupProjectFile=setupProjectFile, template=template)
         self._undoStack.setClean()
         # saving file on disk impacts cache folder location
         # => force re-evaluation of monitored status files paths
@@ -604,12 +845,12 @@ class UIGraph(QObject):
 
     @Slot()
     def save(self):
-        self._graph.save()
+        self._projectGraph().save()
         self._undoStack.setClean()
 
     @Slot()
     def saveAsNewVersion(self):
-        self._graph.saveAsNewVersion()
+        self._projectGraph().saveAsNewVersion()
         self._undoStack.setClean()
 
     @Slot()
@@ -624,6 +865,10 @@ class UIGraph(QObject):
     @Slot(list)
     def execute(self, nodes: Optional[Union[list[Node], Node]] = None):
         nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
+        if len(self._subGraphStack):
+            # Live nodes are run by the node containing them: compute it, from the project graph
+            nodes = [self._subGraphStack.levels[0].node]
+            self.exitSubGraphTo(0)
         self.save()  # always save the graph before computing
         self._taskManager.compute(self._graph, nodes)
         self.updateLockedUndoStack()  # explicitly call the update while it is already computing
@@ -889,9 +1134,12 @@ class UIGraph(QObject):
         Notes:
             Default submitter is specified using the MESHROOM_DEFAULT_SUBMITTER environment variable.
         """
+        nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
+        if len(self._subGraphStack):
+            nodes = [self._subGraphStack.levels[0].node]
+            self.exitSubGraphTo(0)
         self.save()  # graph must be saved before being submitted
         self._undoStack.clear()  # the undo stack must be cleared
-        nodes = [nodes] if not isinstance(nodes, Iterable) and nodes else nodes
         mrDefaultSubmitter = os.environ.get('MESHROOM_DEFAULT_SUBMITTER', '')
         chosenSubmitter = self.parent()._defaultSubmitterName or mrDefaultSubmitter
         self.parent().showMessage(f"Submit job on farm through {chosenSubmitter}")
@@ -1454,6 +1702,13 @@ class UIGraph(QObject):
             return
         self.push(commands.RemoveAnySetAttributeCommand(self._graph, attribute))
 
+    @Slot(Attribute, str, str, str)
+    def addAnySetAttribute(self, anySet, name, label, attributeType):
+        """ Add a child to an AnySet attribute (name made unique), e.g. an input of a SubGraph node. """
+        if not isinstance(anySet, AnySet) or not name:
+            return
+        self.push(commands.AddAnySetAttributeCommand(self._graph, anySet, name, label, attributeType))
+
     @Slot(Attribute, str, str)
     def renameAnySetAttribute(self, attribute, name, label):
         if not isinstance(attribute.root, AnySet):
@@ -1680,6 +1935,19 @@ class UIGraph(QObject):
     taskManager = Property(TaskManager, lambda self: self._taskManager, constant=True)
     nodes = Property(QObject, lambda self: self._graph.nodes, notify=graphChanged)
     layout = Property(GraphLayout, lambda self: self._layout, constant=True)
+
+    subGraphChanged = Signal()
+    # Names of the entered SubGraph nodes, from the project graph
+    subGraphPath = Property("QVariantList", lambda self: self._subGraphStack.names(), notify=subGraphChanged)
+    isInSubGraph = Property(bool, lambda self: len(self._subGraphStack) > 0, notify=subGraphChanged)
+    liveRunDone = Signal(str, bool)
+    liveNodeEvent = Signal(str, str, str)
+    liveNodeStatusesChanged = Signal()
+    liveStatusRevision = Property(int, lambda self: self._liveStatusRevision, notify=liveNodeStatusesChanged)
+    liveStatusChanged = Signal()
+    liveRunning = Property(bool, lambda self: self._liveRunning, notify=liveStatusChanged)
+    liveStatus = Property(str, lambda self: self._liveStatus, notify=liveStatusChanged)
+    liveSuccess = Property(bool, lambda self: self._liveSuccess, notify=liveStatusChanged)
 
     computeStatusChanged = Signal()
     computing = Property(bool, isComputing, notify=computeStatusChanged)

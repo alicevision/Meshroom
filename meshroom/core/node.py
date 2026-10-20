@@ -1378,7 +1378,7 @@ class BaseNode(BaseObject):
         """
         # Ambiguous case for NONE, which could be used for compatibility nodes if we do not have
         # any information about the node descriptor.
-        return self.getMrNodeType() != MrNodeType.INIT and self.getMrNodeType() != MrNodeType.BACKDROP
+        return self.getMrNodeType() not in (MrNodeType.INIT, MrNodeType.BACKDROP, MrNodeType.LIVE)
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -2433,6 +2433,9 @@ class Node(BaseNode):
                 self._internalAttributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
                                                               isOutput=True, node=self))
 
+        # Dynamic children of AnySet attributes depending on the input values (see desc.BaseNode)
+        self.nodeDesc.initDynamicAttributes(self)
+
         # Declare events for specific output attributes
         for attr in self._attributes:
             if attr.isOutput and attr.desc.semantic == "image":
@@ -2776,6 +2779,10 @@ class CompatibilityNode(BaseNode):
             else:
                 return desc.StringParam(**params)
         # List/GroupAttribute: recursively build descriptions
+        elif isinstance(value, dict) and isinstance(value.get("children"), list):
+            # A serialized AnySet: its children are restored from their own description
+            return desc.AnySet(name=attrName, label=attrName, description="Incompatible parameter",
+                               commandLineGroup="incompatible")
         elif isinstance(value, (list, dict)):
             del params["value"]
             del params["invalidate"]
@@ -2820,6 +2827,10 @@ class CompatibilityNode(BaseNode):
         #
         # If it is a serialized link expression (no proper value to set/evaluate)
         if Attribute.isLinkExpression(value):
+            return attrDesc
+
+        # An AnySet holds any children, described in its serialized value
+        if isinstance(attrDesc, desc.AnySet):
             return attrDesc
 
         # If it is a GroupAttribute, all the attributes within the group should be matched

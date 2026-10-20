@@ -140,6 +140,32 @@ For compatibility with existing nodes, omit `outputAttributes` to expose the inp
 Only attributes declared in `outputAttributes` can be set through these targeted forms.
 
 
+### 5. LiveNode
+
+A `desc.LiveNode` runs in memory inside a subgraph (see [docs/subgraph.md](docs/subgraph.md)): no chunks, no cache folder, no status file, it is not computed on its own. Its `execute(ctx, inputs)` receives the values of its inputs — any Python object for those connected to other live nodes — and returns the values of its outputs, so that a chain of live nodes runs in one process and one context (Python, or the session of a software), opened once for the whole chain. Live nodes are only run inside a `SubGraph` node or by `meshroom.subgraph.run`; task nodes (`desc.Node`) can also be put in a subgraph.
+
+Use `desc.LiveValue` for inputs and outputs carrying any value (it connects to any attribute). Set `context` to the context(s) the node needs (`"any"` by default).
+
+```python
+from meshroom.core import desc
+
+
+class Scale(desc.LiveNode):
+    inputs = [
+        desc.LiveValue(name="values", label="Values", description="A list of numbers."),
+        desc.FloatParam(name="factor", label="Factor", description="Scale factor.", value=2.0, range=(0.0, 10.0, 0.1)),
+    ]
+    outputs = [
+        desc.LiveValue(name="scaled", label="Scaled", description="The scaled numbers."),
+    ]
+
+    def execute(self, ctx, inputs):
+        return {"scaled": [value * inputs["factor"] for value in inputs["values"]]}
+```
+
+`ctx` gives the loop state (`ctx.iteration`, `ctx.frame`), the values shared by the nodes of the run (`ctx.variables`), `ctx.logger` and `ctx.checkCancelled()`.
+
+
 ## Attribute Types Available in Meshroom Nodes
 
 Meshroom provides several attribute types you can use in a node’s `inputs` and `outputs`. They are defined in `meshroom.core.desc` and organized into basic parameters, compound containers, geometry helpers, and shape annotations.
@@ -156,6 +182,7 @@ Meshroom provides several attribute types you can use in a node’s `inputs` and
 | `ChoiceParam` | Single or multiple selection from a list. | `values=[...]`, `exclusive` |
 | `ColorParam` | RGBA color. | `value` (list/tuple) |
 | `PushButtonParam` | Action button in UI; no stored value. | N/A |
+| `LiveValue` | Any Python value passed between live nodes; connects to any attribute. | `value` (JSON value) |
 
 ### Compound Containers
 

@@ -437,6 +437,9 @@ class Attribute(BaseObject):
             return self._keyValues.getJson()
         # ChoiceParam with multiple values should be combined
         if isinstance(self._desc, desc.ChoiceParam) and not self._desc.exclusive:
+            if self.value is None:
+                # No value (e.g. a value set when its node runs)
+                return ""
             # Ensure value is a list as expected
             try:
                 assert (isinstance(self.value, Sequence) and not isinstance(self.value, str))
@@ -670,7 +673,8 @@ class Attribute(BaseObject):
         Returns:
             True if the connection is valid, False otherwise.
         """
-        return self.baseType == connectingAttribute.baseType
+        # A LiveValue (any value of a live node) connects to and from any attribute
+        return self.baseType == connectingAttribute.baseType or "LiveValue" in (self.baseType, connectingAttribute.baseType)
 
     def connectTo(self, dstAttribute: Attribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
         """
@@ -896,6 +900,9 @@ class ChoiceParam(Attribute):
 
     # Override
     def validateValue(self, value):
+        if value is None:
+            # No value (e.g. a value set when its node runs), not the text "None"
+            return None
         if self._desc.exclusive:
             return self._conformValue(value)
         if isinstance(value, str):
@@ -1904,7 +1911,7 @@ class AnySet(GroupAttribute):
 
     # Child types fully described by their type name; the others (groups, choices, lists...) are serialized
     # with their full description (see meshroom.core.desc.serialization)
-    _simpleChildTypes = ("IntParam", "FloatParam", "StringParam", "BoolParam", "File", "ColorParam")
+    _simpleChildTypes = ("LiveValue", "IntParam", "FloatParam", "StringParam", "BoolParam", "File", "ColorParam")
 
     def _childAsDict(self, attribute: Attribute) -> dict:
         """ The serialized form of a child attribute, with its full description when its type needs it. """
@@ -2044,6 +2051,25 @@ class AnySet(GroupAttribute):
     # Override: the children of an AnySet are part of its value (its default value has none), so that they are
     # saved, with their connections, in the templates
     isDefault = Property(bool, lambda self: len(self._value) == 0, notify=Attribute.valueChanged)
+
+
+class LiveValue(Attribute):
+    """ A value of any type passed between live nodes (see desc.LiveValue). """
+
+    def __init__(self, node, attributeDesc: desc.LiveValue, isOutput: bool, root=None, parent=None):
+        super().__init__(node, attributeDesc, isOutput, root, parent)
+
+    # Override
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        return True
+
+    # Override
+    def uid(self):
+        # Any JSON value (lists of mixed types, dicts): hashed from its JSON text
+        if self.isOutput or self.isLink or self.keyable:
+            return super().uid()
+        import json
+        return hashValue(json.dumps(self._value, sort_keys=True, default=str))
 
 
 class Flow(Attribute):

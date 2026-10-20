@@ -845,6 +845,32 @@ class ColorParam(Param):
     def clone(self):
         return Attribute.clone(self)
 
+
+class LiveValue(Attribute):
+    """
+    A value of any type passed between live nodes (see desc.LiveNode): an image, a software object, a number...
+    It connects to any other attribute (and any attribute connects to it). An input that is not connected can
+    hold a JSON value typed in the graph (None by default).
+    """
+    def __init__(self, name, label=None, description=None, value=None, advanced=False, enabled=True,
+                 visible=True, exposed=True, semantic="", invalidate=True, commandLineGroup="", validators=None):
+        super().__init__(name=name, label=label, description=description,
+                         value=value, invalidate=invalidate, commandLineGroup=commandLineGroup,
+                         advanced=advanced, semantic=semantic, enabled=enabled,
+                         visible=visible, exposed=exposed, validators=validators)
+
+    def getInstanceType(self):
+        # Import within the method to prevent cyclic dependencies
+        from meshroom.core.attribute import LiveValue
+        return LiveValue
+
+    def validateValue(self, value):
+        return value
+
+    def checkValueTypes(self):
+        return "", ValueTypeErrors.NONE
+
+
 class Flow(Attribute):
     """
     An Attribute that holds no data but can be connected to create dependencies between nodes.

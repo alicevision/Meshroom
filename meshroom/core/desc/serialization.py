@@ -5,7 +5,6 @@ choices (formats) or lists. Callables (enabled / visible lambdas) are not kept.
 """
 import inspect
 import logging
-from typing import Optional
 
 from meshroom.core import desc
 
@@ -43,15 +42,15 @@ def _accepted(attributeClass, kwargs: dict) -> dict:
     return {key: value for key, value in kwargs.items() if key in parameters}
 
 
-def buildAttributeDesc(data: dict, name: str = None, label: str = None) -> Optional[desc.Attribute]:
+def buildAttributeDesc(data: dict, name: str = None, label: str = None) -> desc.Attribute:
     """
     An attribute description from describeAttribute data (name / label replaced if given).
 
     Returns:
-        The description, or None (with a warning) for an unknown type or invalid data.
+        The description; a LiveValue (any value, with a warning) for an unknown type or invalid data.
     """
     data = dict(data)
-    typeName = data.get("type")
+    typeName = data.get("type", "LiveValue")
     attributeClass = getattr(desc, typeName, None) if typeName else None
     name = name or data.get("name")
     kwargs = {key: data[key] for key in _COMMON if key in data}
@@ -62,14 +61,9 @@ def buildAttributeDesc(data: dict, name: str = None, label: str = None) -> Optio
             raise ValueError(f"unknown attribute type '{typeName}'")
         if issubclass(attributeClass, desc.GroupAttribute) and not issubclass(attributeClass, desc.AnySet):
             items = [buildAttributeDesc(item) for item in data.get("items", [])]
-            if any(item is None for item in items):
-                raise ValueError("invalid group item")
             return attributeClass(items=items, name=name, **kwargs)
         if issubclass(attributeClass, desc.ListAttribute):
-            elementDesc = buildAttributeDesc(data["elementDesc"])
-            if elementDesc is None:
-                raise ValueError("invalid list element")
-            return attributeClass(elementDesc=elementDesc, name=name, **kwargs)
+            return attributeClass(elementDesc=buildAttributeDesc(data["elementDesc"]), name=name, **kwargs)
         if issubclass(attributeClass, desc.ChoiceParam):
             kwargs.update(values=data.get("values", []), exclusive=data.get("exclusive", True))
         if issubclass(attributeClass, (desc.IntParam, desc.FloatParam)) and data.get("range"):
@@ -82,5 +76,5 @@ def buildAttributeDesc(data: dict, name: str = None, label: str = None) -> Optio
             attributeDesc._valueType = str
         return attributeDesc
     except Exception as e:
-        logging.warning(f"Attribute '{name}' of type '{typeName}' cannot be recreated: {e}")
-        return None
+        logging.warning(f"Attribute '{name}' of type '{typeName}' recreated as LiveValue: {e}")
+        return desc.LiveValue(name=name, label=kwargs.get("label"), description=kwargs.get("description"))

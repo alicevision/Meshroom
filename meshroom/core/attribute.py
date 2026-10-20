@@ -66,18 +66,27 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
 
     kwargs = {'name': name, 'label': label, 'description': description}
 
-    if value is not None:
+    # GroupAttribute descriptions have no default value: their value is defined by their items.
+    # Groups serialized with an older version still hold a "value" that must not reach the constructor,
+    # the runtime value is restored separately when the attribute is created.
+    if value is not None and not issubclass(attrClass, desc.GroupAttribute):
         kwargs['value'] = value
+
     if elementDesc is not None:
         kwargs['elementDesc'] = attributeDescriptionFactory(elementDesc)
+
     if items is not None:
         kwargs['items'] = [attributeDescriptionFactory(item) for item in items]
+
     if values is not None:
         kwargs['values'] = values
+
     if exclusive is not None:
         kwargs['exclusive'] = exclusive
+
     if keyable is not None:
         kwargs['keyable'] = keyable
+
     if shape is not None:
         kwargs['shape'] = attributeDescriptionFactory(shape)
 

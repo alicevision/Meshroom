@@ -413,270 +413,24 @@ RowLayout {
         }
     }
 
-    function setTextFieldAttribute(value) {
-        // editingFinished called even when TextField is readonly
-        if (!editable)
-            return
-        switch (attribute.type) {
-            case "IntParam":
-            case "FloatParam":
-                // We do not set a number because we want to keep the invalid expression
-                if(attribute.keyable)
-                    _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, Number(value))
-                else
-                    _currentScene.setAttribute(root.attribute, Number(value))
-                break
-            case "File":
-                _currentScene.setAttribute(root.attribute, value)
-                break
-            default:
-                _currentScene.setAttribute(root.attribute, value.trim())
-                break
-        }
-    }
-
-
-    Loader {
-        Layout.fillWidth: true
+    AttributeControls.AttributeValueEditor {
         id: inputField
+        Layout.fillWidth: true
+        attribute: root.attribute
+        editable: root.editable
 
+        // Containers are displayed by this delegate, other attributes by the value editor
         sourceComponent: {
-            // PushButtonParam always has value == undefined, so it needs to be excluded from this check
-            if (attribute.type != "PushButtonParam" && attribute.type != "Flow" && !attribute.keyable && attribute.value === undefined) {
-                return notComputedComponent
-            }
+            if (!attribute.keyable && attribute.value === undefined)
+                return valueComponent
             switch (attribute.type) {
-                case "PushButtonParam":
-                    return pushButtonComponent
-                case "ChoiceParam":
-                    return attribute.desc.exclusive ? choiceComponent : choiceMultiComponent
-                case "IntParam": return sliderComponent
-                case "FloatParam":
-                    if (attribute.desc.semantic === 'color/hue')
-                        return colorHueComponent
-                    return sliderComponent
-                case "BoolParam":
-                    return checkboxComponent
                 case "ListAttribute":
                     return listAttributeComponent
                 case "GroupAttribute":
-                    return groupAttributeComponent
                 case "AnySet":
                     return groupAttributeComponent
-                case "StringParam":
-                    if (attribute.desc.semantic.includes('multiline'))
-                        return textAreaComponent
-                    return textFieldComponent
-                case "ColorParam":
-                    return colorComponent
-                case "Flow":
-                    return flowComponent
                 default:
-                    return textFieldComponent
-            }
-        }
-
-        Component {
-            id: notComputedComponent
-            AttributeControls.NotComputed {}
-        }
-
-        Component {
-            id: pushButtonComponent
-            Button {
-                text: attribute.label
-                enabled: root.editable
-                onClicked: {
-                    attribute.clicked()
-                }
-            }
-        }
-
-        Component {
-            id: flowComponent
-            // Flow has no data to display; connection state is shown via the attribute pin
-            Item {}
-        }
-
-        Component {
-            id: textFieldComponent
-            AttributeControls.TextFieldRow {
-                text: attribute.value
-                mandatory: attribute.isMandatory
-                attribute: root.attribute
-                editable: root.editable
-                onEditingFinished: (text) => setTextFieldAttribute(text)
-                onAccepted: (parameterLabel, text) => {
-                    setTextFieldAttribute(text)
-                    parameterLabel.forceActiveFocus()
-                }
-                onDestruction: (activeFocus, text) => {
-                    if (activeFocus)
-                        setTextFieldAttribute(text)
-                }
-                onDropped: (hasUrls, hasText, urlText, text) => {
-                    if (hasUrls)
-                        setTextFieldAttribute(urlText)
-                    else if (hasText)
-                        setTextFieldAttribute(text)
-                }
-                onTriggered: (text, start, end, length, clipboard) => {
-                    const before = text.substr(0, start)
-                    const after = text.substr(end, length)
-                    const updatedValue = before + clipboardText + after
-                    setTextFieldAttribute(updatedValue)
-                    // Set the cursor at the end of the added text
-                    textField.cursorPosition = before.length + clipboard.length
-                }
-            }
-        }
-
-        Component {
-            id: textAreaComponent
-            AttributeControls.TextAreaFlick {
-                label: attribute.value
-                isLarge: attribute.desc.semantic.includes("large")
-                editable: root.editable
-                onEditingFinished: (text) => setTextFieldAttribute(text)
-                onDestruction: (activeFocus, text) => {
-                    if (activeFocus)
-                        setTextFieldAttribute(text)
-                }
-                onDropped: (hasUrls, hasText, urlText, text) => {
-                    if (hasUrls)
-                        setTextFieldAttribute(urlText)
-                    else if (hasText)
-                        setTextFieldAttribute(text)
-                }
-            }
-        }
-
-        Component {
-            id: colorComponent
-            AttributeControls.Color {
-                id: colorControl
-                value: root.attribute.value
-                editable: root.editable
-                onClicked: (checked, previousColor, colorTextValue) =>{
-                    if (checked) {
-                        if (colorTextValue == "") {
-                            if (previousColor !== "")
-                                _currentScene.setAttribute(root.attribute, previousColor)
-                            else
-                                _currentScene.setAttribute(root.attribute, "#0000FF")
-                        }
-                        else
-                            _currentScene.setAttribute(root.attribute, colorTextValue)
-                    } else {
-                        colorControl.previousColor = root.attribute.value
-                        _currentScene.setAttribute(root.attribute, "")
-                    }
-                }
-                onEditingFinished: (text) => setTextFieldAttribute(text)
-                onAccepted: (text) => setTextFieldAttribute(text)
-                onDestruction: (activeFocus, text) => {
-                    if (activeFocus)
-                        setTextFieldAttribute(text)
-                }
-            }
-        }
-
-        Component {
-            id: choiceComponent
-
-            AttributeControls.Choice {
-                value: root.attribute.value
-                values: root.attribute.values
-                enabled: root.editable
-
-                onEditingFinished: (value) => {
-                    _currentScene.setAttribute(root.attribute, value)
-                }
-            }
-        }
-
-        Component {
-            id: choiceMultiComponent
-
-            AttributeControls.ChoiceMulti {
-                value: root.attribute.value
-                values: root.attribute.values
-                enabled: root.editable
-                customValueColor: Colors.orange
-
-                onToggled: (value, checked) => {
-                    var currentValue = root.attribute.value;
-                    if (!checked) {
-                        currentValue.splice(currentValue.indexOf(value), 1);
-                    } else {
-                        currentValue.push(value);
-                    }
-                    _currentScene.setAttribute(attribute, currentValue);
-                }
-            }
-        }
-
-        Component {
-            id: sliderComponent
-            AttributeControls.SliderField {
-                checked: root.attribute.keyable
-                                ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
-                                : root.attribute.value
-                type: root.attribute.type
-                length: (root.attribute.desc.range && root.attribute.desc.range.length) || 0
-                start: (root.attribute.desc.range && root.attribute.desc.range[0]) || 0
-                end: (root.attribute.desc.range && root.attribute.desc.range[1]) || 0
-                step: (root.attribute.desc.range && root.attribute.desc.range[2]) || 0
-                editable: root.editable
-                onEditingFinished: (hasExprError, evaluatedValue, text, displayValue) => {
-                    if (!hasExprError) {
-                        setTextFieldAttribute(evaluatedValue)
-                        // Restore binding
-                        text = Qt.binding(function() { return String(displayValue); })
-                    }
-                }
-                onAccepted: (hasExprError, evaluatedValue, text, displayValue) => {
-                    if (!hasExprError) {
-                        setTextFieldAttribute(evaluatedValue)
-                        // Restore binding
-                        text = Qt.binding(function() { return String(displayValue); })
-                    }
-                }
-                Component.onDestruction: (activeFocus, hasExprError, displayValue) =>  {
-                    if (activeFocus) {
-                        if (!hasExprError)
-                            setTextFieldAttribute(evaluatedValue)
-                    }
-                }
-                onPressedChanged: (pressed, formattedValue) => {
-                    if (!pressed) {
-                        if (root.attribute.keyable)
-                            _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, formattedValue)
-                        else
-                            _currentScene.setAttribute(root.attribute, formattedValue)
-                    }
-                }
-            }
-        }
-
-        Component {
-            id: checkboxComponent
-            AttributeControls.CheckBoxRow {
-                editable: root.editable
-                checked: root.attribute.keyable
-                                ? root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
-                                : root.attribute.value
-                onToggled: {
-                    if(root.attribute.keyable)
-                    {
-                        const value = root.attribute.keyValues.getValueAtKeyOrDefault(_currentScene.selectedViewId)
-                        _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, !value)
-                    }
-                    else
-                    {
-                        _currentScene.setAttribute(root.attribute, !root.attribute.value)
-                    }
-                }
+                    return valueComponent
             }
         }
 
@@ -852,24 +606,6 @@ RowLayout {
                             root.showInViewer(attr)
                         }
                     )
-                }
-            }
-        }
-
-        Component {
-            id: colorHueComponent
-            AttributeControls.ColorHue {
-                value: root.attribute.value
-                editable: root.editable
-                onEditingFinished: (text) => setTextFieldAttribute(text)
-                onAccepted: (text) => setTextFieldAttribute(text)
-                onDestruction: (activeFocus, text) => {
-                    if (activeFocus)
-                        setTextFieldAttribute(text)
-                }
-                onPressedChanged: (pressed, formattedValue) => {
-                    if (!pressed)
-                        _currentScene.setAttribute(root.attribute, formattedValue)
                 }
             }
         }

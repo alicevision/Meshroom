@@ -6,7 +6,6 @@ RowLayout {
     id: root
     required property string text
     required property bool mandatory
-    required property var attribute
     property bool editable
     signal editingFinished(var text)
     signal accepted(var parameterLabel, var text)

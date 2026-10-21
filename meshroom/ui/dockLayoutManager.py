@@ -228,7 +228,7 @@ class DockLayoutManager(QObject):
     def hasWorkspace(self, name):
         """ Whether a workspace with this name exists, the default one included. """
         name = name.strip()
-        return name.lower() == self.defaultWorkspaceName.lower() or name in self._workspaceNames
+        return name.lower() == self.defaultWorkspaceName.lower() or name in self._workspaces()
 
     @Slot(int, int, result=QObject)
     def windowAt(self, x, y):
@@ -240,7 +240,6 @@ class DockLayoutManager(QObject):
     layout = Property("QVariantMap", lambda self: self._layout.toDict(), notify=layoutChanged)
     openPanelsChanged = Signal()
     openPanels = Property("QVariantList", lambda self: self._layout.openPanels(), notify=openPanelsChanged)
-    panelIds = Property("QVariantList", lambda self: self._layout.panelIds, constant=True)
     # Emitted with the ids of a group and of the panel that became its current tab
     currentPanelChanged = Signal(str, str)
     workspacesChanged = Signal()

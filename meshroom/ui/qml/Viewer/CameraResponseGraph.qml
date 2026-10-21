@@ -2,8 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QtCharts
-
 import Charts 1.0
 import Controls 1.0
 import DataObjects 1.0
@@ -34,101 +32,57 @@ FloatingPane {
     // Note: We need to use csvData.getNbColumns() slot instead of the csvData.nbColumns property to avoid a crash on linux.
     property bool crfReady: csvData && csvData.ready && (csvData.getNbColumns() >= 4)
     onCrfReadyChanged: {
+        responseChart.removeAllSeries()
         if (crfReady) {
-            redCurve.clear()
-            greenCurve.clear()
-            blueCurve.clear()
-            csvData.getColumn(1).fillChartSerie(redCurve)
-            csvData.getColumn(2).fillChartSerie(greenCurve)
-            csvData.getColumn(3).fillChartSerie(blueCurve)
-        } else {
-            redCurve.clear()
-            greenCurve.clear()
-            blueCurve.clear()
+            var xCol = csvData.getColumn(0).content
+            var curveColors = ["red", "green", "blue"]
+            for (var ci = 1; ci <= 3; ci++) {
+                var col = csvData.getColumn(ci)
+                var points = []
+                for (var i = 0; i < col.content.length; i++) {
+                    points.push({ x: parseFloat(xCol[i]), y: parseFloat(col.content[i]) })
+                }
+                responseChart.addSeries(col.title, curveColors[ci - 1], points)
+            }
         }
     }
-    Item {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.horizontalCenterOffset: -responseChart.width/2
-        anchors.verticalCenterOffset: -responseChart.height/2
 
-        InteractiveChartView {
-            id: responseChart
-            width: root.width > 400 ? 400 : (root.width < 350 ? 350 : root.width)
-            height: width * 0.75
+    ColumnLayout {
+        anchors.fill: parent
 
-            title: "Camera Response Function (CRF)"
-            legend.visible: false
-            antialiasing: true
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: 10
 
-            ValueAxis {
-                id: valueAxisX
-                labelFormat: "%i"
-                titleText: "Camera Brightness"
-                min: crfReady ? csvData.getColumn(0).getFirst() : 0
-                max: crfReady ? csvData.getColumn(0).getLast() : 1
-            }
-            ValueAxis {
-                id: valueAxisY
-                titleText: "Normalized Radiance"
-                min: 0.0
-                max: 1.0
+            ChartViewCheckBox {
+                text: "ALL"
+                color: root.textColor
+                checkState: crfLegend.buttonGroup.checkState
+                leftPadding: 0
+                onClicked: responseChart.setAllSeriesVisible(checked)
             }
 
-            // We cannot use a Repeater with these Components so we need to instantiate them one by one
-            LineSeries {
-                // Red curve
-                id: redCurve
-                axisX: valueAxisX
-                axisY: valueAxisY
-                name: crfReady ? csvData.getColumn(1).title : ""
-                color: name.toLowerCase()
-            }
-            LineSeries {
-                // Green curve
-                id: greenCurve
-                axisX: valueAxisX
-                axisY: valueAxisY
-                name: crfReady ? csvData.getColumn(2).title : ""
-                color: name.toLowerCase()
-            }
-            LineSeries {
-                // Blue curve
-                id: blueCurve
-                axisX: valueAxisX
-                axisY: valueAxisY
-                name: crfReady ? csvData.getColumn(3).title : ""
-                color: name.toLowerCase()
+            LineChartLegend {
+                id: crfLegend
+                Layout.fillWidth: true
+                chartView: responseChart
             }
         }
 
-        Item {
-            id: btnContainer
+        LineChart {
+            id: responseChart
 
-            anchors.bottom: responseChart.bottom
-            anchors.bottomMargin: 35
-            anchors.left: responseChart.left
-            anchors.leftMargin: responseChart.width * 0.15
+            Layout.fillWidth: true
+            Layout.preferredHeight: width * 0.75
 
-            RowLayout {
-                ChartViewCheckBox {
-                    text: "ALL"
-                    color: textColor
-                    checkState: legend.buttonGroup.checkState
-                    onClicked: {
-                        const _checked = checked
-                        for (let i = 0; i < responseChart.count; ++i) {
-                            responseChart.series(i).visible = _checked
-                        }
-                    }
-                }
-
-                ChartViewLegend {
-                    id: legend
-                    chartView: responseChart
-                }
-            }
+            textColor: root.textColor
+            title: "Camera Response Function (CRF)"
+            xAxisTitle: "Camera Brightness"
+            yAxisTitle: "Normalized Radiance"
+            xMin: crfReady ? parseFloat(csvData.getColumn(0).getFirst()) : 0
+            xMax: crfReady ? parseFloat(csvData.getColumn(0).getLast()) : 1
+            yMin: 0.0
+            yMax: 1.0
         }
     }
 }

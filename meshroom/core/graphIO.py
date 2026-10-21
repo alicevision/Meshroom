@@ -172,7 +172,7 @@ class TemplateGraphSerializer(GraphSerializer):
                 del nodeData["internalInputs"][attrName]
 
         # If all the internal attributes are set to their default values, remove the entry
-        if len(nodeData["internalInputs"]) == 0:
+        if "internalInputs" in nodeData and len(nodeData["internalInputs"]) == 0:
             del nodeData["internalInputs"]
 
         nodeData.pop("outputs", None)

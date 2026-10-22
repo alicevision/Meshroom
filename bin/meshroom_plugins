@@ -163,7 +163,7 @@ def handleInfo(args):
 
 
 def handleInstall(args):
-    """ Install one or more meshroom local plugins, optionally at a specific "name=version". """
+    """ Install one or more Meshroom local plugins, optionally at a specific "name=version". """
     if not pluginManager.localPluginsEnabled:
         print("This command cannot be performed because local plugin management is disabled.")
         return
@@ -192,7 +192,7 @@ def handleInstall(args):
 
 
 def handleUninstall(args):
-    """ Uninstall one or more meshroom local plugins. """
+    """ Uninstall one or more Meshroom local plugins. """
     if not pluginManager.localPluginsEnabled:
         print("This command cannot be performed because local plugin management is disabled.")
         return
@@ -213,7 +213,7 @@ def handleUninstall(args):
 
 
 def handleUpdate(args):
-    """ Update one or more meshroom local plugins, optionally at a specific "name=version". """
+    """ Update one or more Meshroom local plugins, optionally at a specific "name=version". """
     if not pluginManager.localPluginsEnabled:
         print("This command cannot be performed because local plugin management is disabled.")
         return
@@ -336,31 +336,24 @@ infoParser.add_argument('name', type=str, nargs='+', help='Name(s) of the plugin
 infoParser.set_defaults(func=handleInfo)
 
 # Install subparser
-installParser = commandsParser.add_parser('install', help='Install one or more meshroom local plugins.')
+installParser = commandsParser.add_parser('install', help='Install one or more Meshroom local plugins.')
 installParser.add_argument('name', type=str, nargs='+',
                            help='Name(s) of the plugin(s) to install, e.g. "name" or "name=version".')
 installParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
 installParser.set_defaults(func=handleInstall)
 
 # Remove subparser
-removeParser = commandsParser.add_parser('remove', help='Uninstall one or more meshroom local plugins.')
+removeParser = commandsParser.add_parser('remove', help='Uninstall one or more Meshroom local plugins.')
 removeParser.add_argument('name', type=str, nargs='+', help='Name(s) of the plugin(s) to uninstall.')
 removeParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
 removeParser.set_defaults(func=handleUninstall)
 
 # Update subparser
-updateParser = commandsParser.add_parser('update', help='Update one or more meshroom local plugins.')
+updateParser = commandsParser.add_parser('update', help='Update one or more Meshroom local plugins.')
 updateParser.add_argument('name', type=str, nargs='+',
                           help='Name(s) of the plugin(s) to update, e.g. "name" or "name=version".')
 updateParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
 updateParser.set_defaults(func=handleUpdate)
-
-# Repair subparser
-repairParser = commandsParser.add_parser('repair', help='Clear and re-download meshroom local plugins.')
-repairParser.add_argument('name', type=str, nargs='*',
-                          help='Name(s) of the plugin(s) to repair. If omitted, all local plugins are repaired.')
-repairParser.add_argument('-f', '--force', action='store_true', help='Skip the confirmation prompt.')
-repairParser.set_defaults(func=handleUpdate)
 
 # Registry subparser
 registryParser = commandsParser.add_parser('registry', help='Manage the plugin registries.')

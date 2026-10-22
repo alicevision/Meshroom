@@ -1,11 +1,9 @@
-from __future__ import annotations
-
 import hashlib
 import http.client
 import urllib.error
 import urllib.request
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 from pathlib import Path
 from contextlib import contextmanager
 
@@ -161,7 +159,7 @@ def fetch(url: str, timeout: float = _HTTP_REQUEST_TIMEOUT) -> bytes:
         return response.read()
 
 
-def fetchWithETag(url: str, timeout: float = _HTTP_REQUEST_TIMEOUT) -> tuple[bytes, Optional[str]]:
+def fetchWithETag(url: str, timeout: float = _HTTP_REQUEST_TIMEOUT) -> Tuple[bytes, Optional[str]]:
     """
     GET "url" fully with Etag.
 

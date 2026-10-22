@@ -1,12 +1,10 @@
-from __future__ import annotations
-
 import io
 import logging
 import os
 import shutil
 import zipfile
 
-from typing import Optional
+from typing import List, Optional, Tuple
 from pathlib import Path
 
 from meshroom.env import EnvVar
@@ -132,7 +130,7 @@ class PluginInstaller(PluginService):
         except RequestError as exc:
             raise self._error("Download", f"Failed to download '{archiveUrl}'.", exc)
 
-    def _extract(self, content: bytes) -> tuple[Path, PluginMetadata]:
+    def _extract(self, content: bytes) -> Tuple[Path, PluginMetadata]:
         """
         Extract the downloaded archive and move the plugin to "<pluginsPath>/<pluginName>", together
         with the "plugin.lock" generated from its metadata.
@@ -268,7 +266,7 @@ class PluginInstaller(PluginService):
                 self._runUv(uv, ["venv", "--python", python, str(venvFolder)])
             self._runUv(uv, ["pip", "install", "--python", str(venvFolder), "-r", str(requirementsFile)])
 
-    def _downloadAssets(self, pluginFolder: Path, assets: list[PluginAsset]) -> None:
+    def _downloadAssets(self, pluginFolder: Path, assets: List[PluginAsset]) -> None:
         """
         Download the plugin's assets into "pluginFolder", checking their SHA-256 when it is declared.
 
@@ -315,7 +313,7 @@ class PluginInstaller(PluginService):
                 raise self._error("Assets", f"Checksum mismatch for asset '{asset.name}': "
                                             f"expected sha256 {asset.sha256}, got {digest}.")
 
-    def _runUv(self, uv: str, args: list[str], env: Optional[dict] = None) -> None:
+    def _runUv(self, uv: str, args: List[str], env: Optional[dict] = None) -> None:
         """
         Run the "uv" executable with "args". If a progress callback is set, each line of its output
         is logged and reported as it streams. Otherwise the command is simply run to completion.
@@ -327,7 +325,7 @@ class PluginInstaller(PluginService):
         """
         cmd = [uv, *args]
         progress = 0.0
-        output: list[str] = []
+        output: List[str] = []
 
         def onLine(line: str) -> None:
             nonlocal progress

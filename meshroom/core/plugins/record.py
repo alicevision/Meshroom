@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import Optional
+from typing import List, Optional
 
 from meshroom.common import BaseObject, Property, VariantList
 
@@ -10,8 +8,8 @@ class PluginRecord(BaseObject):
     A plugin View Model describing an unloaded / external plugin that is not (yet) installed.
     """
     def __init__(self, name: str, version: str, publisher: str, url: str,
-                 description: Optional[str] = None, versions: Optional[list[str]] = None,
-                 authors: Optional[list[str]] = None, requirements: Optional[str] = None,
+                 description: Optional[str] = None, versions: Optional[List[str]] = None,
+                 authors: Optional[List[str]] = None, requirements: Optional[str] = None,
                  license: Optional[str] = None, parent: BaseObject = None):
         super().__init__(parent)
         self._name = name

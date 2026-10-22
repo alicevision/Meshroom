@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import os
 import re
@@ -7,7 +5,7 @@ import shutil
 import subprocess
 import sys
 
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 import meshroom
 from meshroom.env import EnvVar
@@ -88,7 +86,7 @@ def parseUvProgress(line: str, progress: float) -> float:
     return progress + (nextValue - progress) * 0.05  # Fraction of the way to the next marker.
 
 
-def runUv(cmd: list[str], env: Optional[dict] = None) -> int:
+def runUv(cmd: List[str], env: Optional[dict] = None) -> int:
     """
     Run the "uv" command "cmd".
 
@@ -107,8 +105,8 @@ def runUv(cmd: list[str], env: Optional[dict] = None) -> int:
     return process.returncode
 
 
-def runUvWithProgress(cmd: list[str], onLine: Callable[[str], None], env: Optional[dict] = None,
-                      output: Optional[list[str]] = None) -> int:
+def runUvWithProgress(cmd: List[str], onLine: Callable[[str], None], env: Optional[dict] = None,
+                      output: Optional[List[str]] = None) -> int:
     """
     Run the "uv" command "cmd", calling "onLine" with each line of its merged stdout/stderr as it streams.
 

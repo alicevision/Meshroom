@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import importlib
 import importlib.machinery
 import importlib.util
@@ -9,7 +7,7 @@ import traceback
 
 from types import ModuleType
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from meshroom.common import BaseObject
 from meshroom.core import desc
@@ -28,9 +26,9 @@ class _LoadIssues:
     """
 
     def __init__(self):
-        self.loading: list[str] = []
-        self.nodeDescProviders: list[str] = []
-        self.submitterProviders: list[str] = []
+        self.loading: List[str] = []
+        self.nodeDescProviders: List[str] = []
+        self.submitterProviders: List[str] = []
 
     def log(self, pluginName: str):
         """ Log one consolidated message per issue type found while loading the plugin "pluginName". """
@@ -42,7 +40,7 @@ class _LoadIssues:
             logging.error(self._format(pluginName, self.submitterProviders))
 
     @staticmethod
-    def _format(pluginName: str, messages: list[str]) -> str:
+    def _format(pluginName: str, messages: List[str]) -> str:
         """ Format "messages" into a single, bulleted message for the plugin "pluginName". """
         return f"Plugin '{pluginName}' loading issue:" + "".join(f"\n{message}" for message in messages)
 
@@ -297,7 +295,7 @@ class PluginLoader:
             self._collectProviders(plugin, module, issues)
 
     def _execModule(self, moduleName: str, filePath: Path, issues: _LoadIssues,
-                    submoduleSearchLocations: list[str] = None) -> ModuleType:
+                    submoduleSearchLocations: List[str] = None) -> ModuleType:
         """
         Load the Python file "filePath" as the module "moduleName" and register it in sys.modules.
 

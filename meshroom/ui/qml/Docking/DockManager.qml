@@ -131,6 +131,23 @@ Item {
         return areaOfWindow(item.Window.window) || mainArea
     }
 
+    /// Return the DockArea of the window at the given global position, or null
+    function areaAt(globalX, globalY) {
+        var found = null
+        for (var i = 0; i < m.areas.length; ++i) {
+            var area = m.areas[i]
+            var window = area.Window.window
+            if (!window || !window.visible || globalX < window.x || globalY < window.y || globalX >= window.x + window.width || globalY >= window.y + window.height)
+                continue
+            // shortcut: overlapping floating windows are not ordered, the first one found wins; ask the window system if users stack them
+            // Floating windows are transient for the main window, hence above it
+            if (area.floating)
+                return area
+            found = area
+        }
+        return found
+    }
+
     /// Hide a panel in the parking item of its window
     function park(panel) {
         panel.parkToolBar()
@@ -215,12 +232,12 @@ Item {
     function updateDrag(globalX, globalY) {
         if (!draggedPanel)
             return
-        var window = layoutModel.windowAt(globalX, globalY)
-        var target = dropTargetAt(window, globalX, globalY)
+        var area = areaAt(globalX, globalY)
+        var target = dropTargetAt(area, globalX, globalY)
         if (!target || !dropTarget || target.group !== dropTarget.group || target.zone !== dropTarget.zone || target.index !== dropTarget.index)
             dropTarget = target
 
-        ghostArea = window ? areaOfWindow(window) : null
+        ghostArea = area
         if (ghostArea)
             ghostPosition = ghostArea.mapFromGlobal(globalX, globalY)
     }
@@ -230,12 +247,12 @@ Item {
         var panel = draggedPanel
         if (!panel)
             return
-        var window = layoutModel.windowAt(globalX, globalY)
-        var target = dropTargetAt(window, globalX, globalY)
+        var area = areaAt(globalX, globalY)
+        var target = dropTargetAt(area, globalX, globalY)
         cancelDrag()
         if (target)
             layoutModel.movePanel(panel.panelId, target.group.node.id, target.zone, target.index)
-        else if (!window)
+        else if (!area)
             // Keep the tab under the cursor, as if it had been torn off
             floatPanel(panel, globalX - 40, globalY - 14)
     }
@@ -246,14 +263,14 @@ Item {
         ghostArea = null
     }
 
-    /// Return where the dragged panel would be dropped at the given global position, in the given window
-    /// (the top level window at that position), or null
-    function dropTargetAt(window, globalX, globalY) {
-        if (!window)
+    /// Return where the dragged panel would be dropped at the given global position, in the given area
+    /// (the one of the window at that position), or null
+    function dropTargetAt(area, globalX, globalY) {
+        if (!area)
             return null
         for (var i = 0; i < m.groups.length; ++i) {
             var group = m.groups[i]
-            if (group.retired || !group.visible || group.Window.window !== window)
+            if (group.retired || !group.visible || group.area !== area)
                 continue
             var position = group.mapFromGlobal(globalX, globalY)
             if (position.x < 0 || position.y < 0 || position.x >= group.width || position.y >= group.height)

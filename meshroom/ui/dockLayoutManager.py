@@ -1,7 +1,7 @@
 import json
 import logging
 
-from PySide6.QtCore import QObject, QPoint, QSettings, Signal, Slot, Property
+from PySide6.QtCore import QObject, QSettings, Signal, Slot, Property
 from PySide6.QtGui import QGuiApplication
 
 from meshroom.ui.dockLayout import DockLayout, LEGACY_VISIBILITY_SETTINGS, applyLegacySettings
@@ -229,11 +229,6 @@ class DockLayoutManager(QObject):
         """ Whether a workspace with this name exists, the default one included. """
         name = name.strip()
         return name.lower() == self.defaultWorkspaceName.lower() or name in self._workspaces()
-
-    @Slot(int, int, result=QObject)
-    def windowAt(self, x, y):
-        """ Return the top level window at the given global position, or None. """
-        return QGuiApplication.topLevelAt(QPoint(x, y))
 
     layoutChanged = Signal()
     # Current layout: changes when panels are moved, not when they are opened, closed or resized

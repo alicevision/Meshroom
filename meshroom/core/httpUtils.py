@@ -3,7 +3,7 @@ import http.client
 import urllib.error
 import urllib.request
 
-from typing import Callable, Optional, Tuple
+from typing import Callable, Iterator, Optional, Tuple
 from pathlib import Path
 from contextlib import contextmanager
 
@@ -70,30 +70,29 @@ def _contentLength(response) -> int:
         return -1
 
 
-def readWithProgress(response, onBytes: Optional[Callable[[int, int], None]]) -> bytes:
+def _readChunks(response, onBytes: Optional[Callable[[int, int], None]]) -> Iterator[bytes]:
     """
-    Read "response" fully in fixed-size chunks, returning the concatenated content.
+    Read "response" fully in fixed-size chunks, yielding each chunk.
 
     Args:
         response: the open response, as returned by urllib.request.urlopen().
-        onBytes: if provided, called after each chunk with "(bytesRead, totalBytes)", "totalBytes"
-                 being -1 if unknown.
+        onBytes: if provided, called after each chunk has been consumed with "(bytesRead, totalBytes)",
+                 "totalBytes" being -1 if unknown.
 
-    Returns:
-        bytes: the content of the response.
+    Yields:
+        bytes: the next chunk of the response's body.
     """
     total = _contentLength(response)
-    chunks = []
     bytesRead = 0
     while True:
         chunk = response.read(_HTTP_CHUNK_SIZE)
         if not chunk:
             break
-        chunks.append(chunk)
+        yield chunk
+        # Resumed once the caller has consumed the chunk (e.g. written it to a file).
         bytesRead += len(chunk)
         if onBytes:
             onBytes(bytesRead, total)
-    return b"".join(chunks)
 
 
 def etagMatch(url: str, etag: str) -> bool:
@@ -141,24 +140,6 @@ def fetchStatus(url: str, method: str = "GET", timeout: float = _HTTP_REQUEST_TI
         return None
 
 
-def fetch(url: str, timeout: float = _HTTP_REQUEST_TIMEOUT) -> bytes:
-    """
-    GET "url" fully.
-
-    Args:
-        url: the url to download.
-        timeout: the timeout (in seconds) of the request.
-
-    Returns:
-        bytes: the downloaded content.
-
-    Raises:
-        RequestError: if the request fails.
-    """
-    with _open(url, timeout) as response:
-        return response.read()
-
-
 def fetchWithETag(url: str, timeout: float = _HTTP_REQUEST_TIMEOUT) -> Tuple[bytes, Optional[str]]:
     """
     GET "url" fully with Etag.
@@ -195,7 +176,7 @@ def fetchWithProgress(url: str, onBytes: Optional[Callable[[int, int], None]] = 
         RequestError: if the request fails.
     """
     with _open(url, timeout) as response:
-        return readWithProgress(response, onBytes)
+        return b"".join(_readChunks(response, onBytes))
 
 
 def fetchToFile(url: str, destination: Path, onBytes: Optional[Callable[[int, int], None]] = None,
@@ -222,15 +203,7 @@ def fetchToFile(url: str, destination: Path, onBytes: Optional[Callable[[int, in
     sha256 = hashlib.sha256()
     with atomicOpen(destination, "wb", prefix=f".{destination.name}.") as tmpFile, \
             _open(url, timeout) as response:
-        total = _contentLength(response)
-        bytesRead = 0
-        while True:
-            chunk = response.read(_HTTP_CHUNK_SIZE)
-            if not chunk:
-                break
+        for chunk in _readChunks(response, onBytes):
             tmpFile.write(chunk)
             sha256.update(chunk)
-            bytesRead += len(chunk)
-            if onBytes:
-                onBytes(bytesRead, total)
     return sha256.hexdigest()

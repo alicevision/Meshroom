@@ -257,7 +257,18 @@ FocusScope {
 
     function getViewpoint(viewId) {
         // Get viewpoint from cameraInit with matching id
-        // This requires to loop over all viewpoints
+        let viewpoints = _currentScene.viewpoints
+        // Plain integer ids (short enough to be exact as JS numbers) compare the same in Python and with JS '==':
+        // use the cached lookup of the scene
+        if ((typeof viewId === "string" || typeof viewId === "number") && /^(0|-?[1-9][0-9]{0,14})$/.test(String(viewId))) {
+            // Keep the binding dependencies of the linear search below: the list, its size and the viewIds
+            viewpoints.count
+            _currentScene.viewpointLookupRevision
+            let vp = _currentScene.getViewpointById(viewpoints, String(viewId))
+            return vp ? vp : undefined
+        }
+
+        // Other ids keep the JS loose comparison: this requires to loop over all viewpoints
         for (var i = 0; i < _currentScene.viewpoints.count; i++) {
             var vp = _currentScene.viewpoints.at(i)
             if (vp.childAttribute("viewId").value == viewId) {

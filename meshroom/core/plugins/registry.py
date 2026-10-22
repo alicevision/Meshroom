@@ -205,7 +205,7 @@ class PluginRegistry(BaseObject):
             dict | None: the parsed registry document, or None.
         """
         try:
-            with open(self._path, "r") as f:
+            with open(self._path, "r", encoding="utf-8") as f:
                 registry = json.load(f)
         except (OSError, json.JSONDecodeError) as exc:
             logging.warning(f"Unable to load plugin registry from '{self._path}':\n{exc}")

@@ -37,9 +37,8 @@ VERTICAL = "vertical"
 # Drop zones on a tabs node: "center" adds the panel to its tabs, the other ones split the node.
 ZONES = ("center", "left", "right", "top", "bottom")
 
-# Panels that cannot be displayed in a floating window: the Qt3D scene of the 3D Viewer does not
-# survive a change of window.
-NON_FLOATABLE_PANELS = ("viewer3D",)
+# Panels that cannot be displayed in a floating window.
+NON_FLOATABLE_PANELS = ()
 
 # Layout of the Meshroom main window by default: the viewers above, the graph and the node editors below.
 DEFAULT_LAYOUT = {

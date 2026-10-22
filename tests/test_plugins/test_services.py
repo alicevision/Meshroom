@@ -165,11 +165,12 @@ class TestUninstaller:
         with pytest.raises(PluginServiceError):
             PluginUninstaller("myPlugin", tmp_path / "plugins").execute()
 
-    def test_invalidName(self, tmp_path):
+    @pytest.mark.parametrize("name", ["..", ".", "", "a/b"])
+    def test_invalidName(self, tmp_path, name):
         """ A name that is not a plain folder name is rejected, and nothing is removed. """
         writeFile(tmp_path / "plugins" / "file.txt")
         with pytest.raises(PluginServiceError):
-            PluginUninstaller("..", tmp_path / "plugins").execute()
+            PluginUninstaller(name, tmp_path / "plugins").execute()
         assert (tmp_path / "plugins" / "file.txt").is_file()
 
 

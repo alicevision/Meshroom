@@ -1289,7 +1289,7 @@ Page {
                 var alreadyDisplay = false
                 for (var i = 0; i < node.attributes.count; i++) {
                     var attr = node.attributes.at(i)
-                    if (attr.isOutput && attr.desc.semantic !== "image")
+                    if ((attr.isOutput || node.isInitNode) && attr.desc.semantic !== "image")
                         if (!alreadyDisplay || attr.desc.semantic == "3d") {
                             if (workspaceView.viewIn3D(attr, mouse))
                                     alreadyDisplay = true
@@ -1325,12 +1325,9 @@ Page {
                 if (!panel3dViewer || (!attribute.node.has3DOutput && !attribute.node.hasAttribute("useBoundingBox"))) {
                     return false
                 }
-                var loaded = panel3dViewer.viewer3D.view(attribute)
+                var loaded = panel3dViewer.viewer3D.viewAttribute(attribute)
 
-                // solo media if Control modifier was held
-                if (loaded && mouse && mouse.modifiers & Qt.ControlModifier) {
-                    panel3dViewer.viewer3D.solo(attribute)
-                }
+                
                 return loaded
             }
 
@@ -1342,7 +1339,7 @@ Page {
                 }
 
                 else if (attribute.is3dDisplayable) {
-                        workspaceView.viewIn3D(attribute, mouse)
+                    workspaceView.viewIn3D(attribute, mouse)
                 }
 
                 else if (attribute.isTextDisplayable) {

@@ -165,6 +165,48 @@ class TestInputNode:
         assert node.input.value == inputs[0]
 
 
+class InitNodeWithFile(desc.InitNode):
+    inputs = [
+        desc.File(name="input", label="Input", description="", value=""),
+    ]
+
+
+class NodeWithFileInput(desc.Node):
+    inputs = [
+        desc.File(name="input", label="Input", description="", value=""),
+    ]
+
+
+class TestInitNode3DDisplay:
+
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(InitNodeWithFile)
+        registerNodeDesc(NodeWithFileInput)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(InitNodeWithFile)
+        unregisterNodeDesc(NodeWithFileInput)
+
+    def test_initNodeInputIs3DDisplayable(self):
+        g = Graph("")
+        node = g.addNewNode("InitNodeWithFile")
+        assert not node.has3DOutput
+
+        node.input.value = "/path/to/mesh.obj"
+        assert node.has3DOutput
+
+        node.input.value = "/path/to/file.txt"
+        assert not node.has3DOutput
+
+    def test_regularNodeInputIsNot3DDisplayable(self):
+        g = Graph("")
+        node = g.addNewNode("NodeWithFileInput")
+        node.input.value = "/path/to/mesh.obj"
+        assert not node.has3DOutput
+
+
 class TestOutputNode:
     loadedPlugins = pluginManager.getPlugins()
 

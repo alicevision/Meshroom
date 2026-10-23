@@ -90,12 +90,12 @@ Panel {
                 text: MaterialIcons.update
                 font.family: MaterialIcons.fontFamily
                 color: "goldenrod"
-                visible: root.updateRecord !== null && !root.isPending
+                visible: !!root.updateRecord && !root.isPending
             }
 
             Label {
                 text: root.updateRecord ? root.updateRecord.version + " available" : ""
-                visible: root.updateRecord !== null && !root.isPending
+                visible: !!root.updateRecord && !root.isPending
                 color: "goldenrod"
                 elide: Text.ElideRight
             }
@@ -271,7 +271,7 @@ Panel {
                     enabled: root.actionsEnabled
                     palette.button: "darkgoldenrod"
                     palette.buttonText: "white"
-                    visible: root.plugin !== null && !root.isExternalPlugin && !root.isPending && PluginUtils.isInstalled(root.plugin) && root.updateRecord !== null
+                    visible: !!root.plugin && !root.isExternalPlugin && !root.isPending && PluginUtils.isInstalled(root.plugin) && !!root.updateRecord
                     onClicked: root.updateRequested()
                 }
 

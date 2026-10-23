@@ -74,7 +74,7 @@ ItemDelegate {
             Label {
                 text: root.pluginData.version || "Unknown"
                 elide: Text.ElideRight
-                color: root.updateRecord !== null && !root.isPending ? "goldenrod" : palette.windowText
+                color: !!root.updateRecord && !root.isPending ? "goldenrod" : palette.windowText
             }
 
             // Update Icon
@@ -83,7 +83,7 @@ ItemDelegate {
                 font.family: MaterialIcons.fontFamily
                 font.pointSize: 12
                 color: "goldenrod"
-                visible: root.updateRecord !== null && !root.isPending
+                visible: !!root.updateRecord && !root.isPending
                 ToolTip.visible: updateIconHover.hovered
                 ToolTip.text: root.updateRecord ? "Update to " + root.updateRecord.version + " available" : ""
 

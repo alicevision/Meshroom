@@ -1,40 +1,13 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-test -z "$MESHROOM_VERSION" && MESHROOM_VERSION="$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)"
-test -z "$AV_VERSION" && echo "AliceVision version not specified, set AV_VERSION in the environment" && exit 1
-test -z "$CUDA_VERSION" && CUDA_VERSION=12.1.1
-test -z "$ROCKY_VERSION" && ROCKY_VERSION=9
+# Build the Rocky Linux Meshroom images (deps + meshroom).
+# See docker/common.sh for the environment variables.
 
-test -d docker || (
-    echo This script must be run from the top level Meshroom directory
-    exit 1
-)
+# Work from the top level Meshroom directory, wherever the script is called from
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-test -d dl || \
-    mkdir dl
-test -f dl/qt.run || \
-    wget --no-check-certificate "https://download.qt.io/official_releases/online_installers/qt-online-installer-linux-x64-online.run" -O "dl/qt.run"
-docker/download-models.sh
+export OS=rocky
+export OS_VERSION="${ROCKY_VERSION:-9}"
 
-# DEPENDENCIES
-docker build \
-    --rm \
-    --progress=plain \
-    --build-arg "CUDA_VERSION=${CUDA_VERSION}" \
-    --build-arg "ROCKY_VERSION=${ROCKY_VERSION}" \
-    --build-arg "AV_VERSION=${AV_VERSION}" \
-    --tag "alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}" \
-    -f docker/Dockerfile_rocky_deps .
-
-# Meshroom
-docker build \
-    --rm \
-    --progress=plain \
-    --build-arg "MESHROOM_VERSION=${MESHROOM_VERSION}" \
-    --build-arg "CUDA_VERSION=${CUDA_VERSION}" \
-    --build-arg "ROCKY_VERSION=${ROCKY_VERSION}" \
-    --build-arg "AV_VERSION=${AV_VERSION}" \
-    --tag "alicevision/meshroom:${MESHROOM_VERSION}-av${AV_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}" \
-    -f docker/Dockerfile_rocky .
-
+exec docker/build-image.sh

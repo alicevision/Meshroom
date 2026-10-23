@@ -1,76 +1,74 @@
-ARG AV_VERSION
-ARG CUDA_VERSION
-ARG UBUNTU_VERSION
-FROM alicevision/alicevision:${AV_VERSION}-ubuntu${UBUNTU_VERSION}-cuda${CUDA_VERSION}
+# syntax=docker/dockerfile:1.4
+# vim: ft=dockerfile
+
+# Meshroom dependencies, on top of the AliceVision image (AV_IMAGE).
+# Built by docker/build-image.sh.
+
+ARG AV_IMAGE
+FROM ${AV_IMAGE}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
-# Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
-# docker run -it --runtime=nvidia meshroom
+ARG QT_VERSION=6.8.3
+ENV QT_VERSION=${QT_VERSION} \
+    QT_DIR=/opt/Qt/${QT_VERSION}/gcc_64
 
-ENV MESHROOM_DEV=/opt/Meshroom \
-    MESHROOM_BUILD=/tmp/Meshroom_build \
-    QT_DIR=/opt/Qt/6.8.3/gcc_64 \
-    QT_CI_LOGIN=alicevisionjunk@gmail.com \
-    QT_CI_P=azerty1.
+# Fail a RUN on any error in a pipe, not only the last command
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install libs needed by Qt
-RUN apt-get update && \
-	DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
+# System packages: libraries needed by Qt and SSH with X11 forwarding (needed when the
+# Docker image is run on a remote machine). The cache mounts avoid re-downloading the
+# packages on rebuild; docker-clean (shipped by the Ubuntu base image) would delete them.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         flex \
         fontconfig \
-        libfreetype6 \
-        libglib2.0-0 \ 
-        libice6 \
-        libx11-6 \
-        libxcb1 \
-        libxext6 \
-        libxi6 \
-        libxrender1 \
-        libsm6
-
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
-        libxt-dev \
-        libosmesa-dev \
-        libgl-dev \
         libegl-dev \
+        libfreetype6 \
+        libgl-dev \
+        libglib2.0-0 \
         libglu-dev \
-        libxkbcommon-x11-0 \
-        libz-dev \
-        systemd \
-        ssh
-
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
-        libxcb1-dev \
+        libice6 \
+        libosmesa-dev \
+        libsm6 \
+        libx11-6 \
         libxcb-icccm4 \
+        libxcb-image0 \
+        libxcb-keysyms1 \
         libxcb-render-util0 \
         libxcb-shape0 \
-        libxcb-keysyms1 \
-        libxcb-image0 \
-        libxkbcommon-dev
+        libxcb1 \
+        libxcb1-dev \
+        libxext6 \
+        libxi6 \
+        libxkbcommon-dev \
+        libxkbcommon-x11-0 \
+        libxrender1 \
+        libxt-dev \
+        libz-dev \
+        software-properties-common \
+        ssh \
+        systemd \
+        xauth && \
+    systemctl enable ssh && \
+    mkdir -p /run/sshd && \
+    sed -i "s/^.*X11Forwarding.*$/X11Forwarding yes/; s/^.*X11UseLocalhost.*$/X11UseLocalhost no/; s/^.*PermitRootLogin prohibit-password/PermitRootLogin yes/; s/^.*X11UseLocalhost.*/X11UseLocalhost no/;" /etc/ssh/sshd_config && \
+    echo "root:meshroom" | chpasswd
 
-RUN apt-get install -y --no-install-recommends \
-	software-properties-common
+# Install Qt (to build plugins) with aqtinstall. It is installed in a throwaway
+# directory so that it does not end up in the Python environment of the image.
+# Strip sections containing ".note.ABI.tag" from .so (https://github.com/Microsoft/WSL/issues/3023)
+# in the same RUN, otherwise every stripped library is stored twice in the image.
+RUN python3.11 -m pip install --no-cache-dir --target /tmp/aqt aqtinstall==3.3.0 && \
+    PYTHONPATH=/tmp/aqt python3.11 -m aqt install-qt linux desktop ${QT_VERSION} linux_gcc_64 \
+        -m qtcharts qt3d qtshadertools --outputdir /opt/Qt && \
+    rm -rf /tmp/aqt && \
+    find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
 
-# Install Python3
-# RUN apt install python3.11-pip -y && pip3 install --upgrade pip
-
-# Install Qt (to build plugins)
-WORKDIR /tmp/qt
-COPY dl/qt.run /tmp/qt
-RUN chmod +x qt.run
-RUN ./qt.run --root /opt/Qt --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations \
-    --accept-licenses --default-answer --platform minimal --auto-answer installationErrorWithCancel=Ignore \
-    --no-force-installations --no-default-installations --confirm-command \
-    install qt.qt6.683.linux_gcc_64 qt.qt6.683.addons.qtcharts qt.qt6.683.addons.qt3d
-RUN rm qt.run
-
-# Strip sections containing ".note.ABI.tag" from .so: https://github.com/Microsoft/WSL/issues/3023
-RUN find ${QT_DIR}/lib/ -name '*.so' | xargs strip --remove-section=.note.ABI-tag
-
-COPY ./*requirements.txt ./setup.py ${MESHROOM_DEV}/
-
-# Install Meshroom requirements and freeze bundle
-WORKDIR "${MESHROOM_DEV}"
-RUN python3.11 -m pip install -r dev_requirements.txt -r requirements.txt
+# Install Meshroom requirements
+RUN --mount=type=bind,source=requirements.txt,target=/tmp/requirements.txt \
+    --mount=type=bind,source=dev_requirements.txt,target=/tmp/dev_requirements.txt \
+    --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m pip install -r /tmp/dev_requirements.txt -r /tmp/requirements.txt

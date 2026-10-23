@@ -6,7 +6,7 @@ import time
 from typing import Optional
 from pathlib import Path
 
-from meshroom.common import BaseObject, Property, Slot
+from meshroom.common import BaseObject, Property, Slot, Variant
 from meshroom.env import EnvVar
 from meshroom.core.plugins.loader import PluginLoader
 from meshroom.core.plugins.registry import PluginRegistry
@@ -384,7 +384,7 @@ class PluginManager(BaseObject):
             if updateRecords:
                 registry.updateRecords()
 
-    @Slot(BaseObject, result=BaseObject)
+    @Slot(BaseObject, result=Variant)
     def getUpdateRecord(self, plugin: Plugin) -> Optional[PluginRecord]:
         """
         Return the PluginRecord describing an available update for "plugin", if any.

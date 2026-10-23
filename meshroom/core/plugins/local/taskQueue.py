@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from meshroom.common import BaseObject, VariantList, ListModel, Property, Signal, Slot
+from meshroom.common import BaseObject, VariantList, ListModel, Property, Signal, Slot, Variant
 from meshroom.core.plugins import meshroomPluginsFolder
 from meshroom.core.plugins.record import PluginRecord
 from meshroom.core.plugins.provider import getPluginProviderFromUrl
@@ -60,8 +60,8 @@ class PluginTaskQueue(BaseObject):
     # Whether a restart is required to apply the changes made by the successful tasks.
     restartRequired = Property(bool, lambda self: bool(self._pendingPlugins), notify=pendingPluginsChanged)
 
-    @Slot(BaseObject, result=BaseObject)
-    @Slot(BaseObject, str, result=BaseObject)
+    @Slot(BaseObject, result=Variant)
+    @Slot(BaseObject, str, result=Variant)
     def install(self, record: PluginRecord, version: str = "") -> Optional[PluginTask]:
         """
         Add the task installing the plugin described by "record".
@@ -80,8 +80,8 @@ class PluginTaskQueue(BaseObject):
         return self._addTask(PluginTaskKind.INSTALL, record.name,
                              PluginInstaller(provider, record, version or None, self._pluginsPath))
 
-    @Slot(str, result=BaseObject)
-    @Slot(str, str, result=BaseObject)
+    @Slot(str, result=Variant)
+    @Slot(str, str, result=Variant)
     def update(self, pluginName: str, version: str = "") -> Optional[PluginTask]:
         """
         Add the task updating an installed plugin, with the version described by the record
@@ -111,7 +111,7 @@ class PluginTaskQueue(BaseObject):
         return self._addTask(PluginTaskKind.UPDATE, pluginName,
                              PluginUpdater(provider, record, version or None, self._pluginsPath))
 
-    @Slot(str, result=BaseObject)
+    @Slot(str, result=Variant)
     def remove(self, pluginName: str) -> Optional[PluginTask]:
         """
         Add the task removing an installed plugin.

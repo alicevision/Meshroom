@@ -62,158 +62,111 @@ Item {
         text: "Progress"
     }
 
-    RowLayout {
+    ColumnLayout {
         anchors.fill: parent
+        spacing: 0
 
-        ColumnLayout {
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            width: childrenRect.width
-            spacing: 8
+        // TODO : enable/disable buttons depending on selectedChunk
+        // TODO : Also handle case where uigraph.selectedNode and selectedNode.chunksCreated==false
 
-            // TODO : enable/disable buttons depending on selectedChunk
-            // TODO : Also handle case where uigraph.selectedNode and selectedNode.chunksCreated==false
+        // Task / Job toolbar
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: toolbarRow.implicitHeight + 4
+            color: root.headBgColor
 
-            // Task toolbar
-            Rectangle {
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: taskColumn.height + 8
-                color: "transparent"
-                border.color: Colors.darkpurple
-                border.width: 2
-                radius: 8
+            RowLayout {
+                id: toolbarRow
+                anchors.fill: parent
+                anchors.leftMargin: 4
+                anchors.rightMargin: 4
+                spacing: 2
 
-                ColumnLayout {
-                    id: taskColumn
-                    anchors.centerIn: parent
-                    spacing: 2
+                Label {
+                    text: qsTr("Task")
+                    font.bold: true
+                    color: Colors.sysPalette.mid
+                    Layout.rightMargin: 2
+                }
 
-                    MaterialToolButton {
-                        ToolTip.text: "Stop Task"
-                        Layout.alignment: Qt.AlignHCenter
-                        enabled: selectedChunk !== null || root.uigraph.selectedNode !== null
-                        text: MaterialIcons.stop_circle
-                        font.pointSize: 15
-                        onClicked: {
-                            if (selectedChunk !== null) {
-                                root.uigraph.stopTask(selectedChunk)
-                            } else {
-                                root.uigraph.stopNode(root.uigraph.selectedNode)
-                            }
-                        }
-                    }
-
-                    MaterialToolButton {
-                        ToolTip.text: "Restart Task"
-                        Layout.alignment: Qt.AlignHCenter
-                        enabled: selectedChunk !== null
-                        text: MaterialIcons.replay_circle_filled
-                        font.pointSize: 15
-                        onClicked: {
-                            uigraph.restartTask(selectedChunk)
-                        }
-                    }
-
-                    MaterialToolButton {
-                        ToolTip.text: "Skip Task"
-                        Layout.alignment: Qt.AlignHCenter
-                        enabled: selectedChunk !== null
-                        text: MaterialIcons.skip_next
-                        font.pointSize: 15
-                        onClicked: {
-                            uigraph.skipTask(selectedChunk)
-                        }
-                    }
-
-                    Item {
-                        Layout.preferredWidth: 40
-                        Layout.preferredHeight: 50
-                        
-                        Text {
-                            text: "TASK"
-                            anchors.centerIn: parent
-                            color: Colors.sysPalette.text
-                            font.pixelSize: 11
-                            font.bold: true
-                            rotation: -90
-                            transformOrigin: Item.Center
+                MaterialToolButton {
+                    ToolTip.text: "Stop Task"
+                    enabled: selectedChunk !== null || root.uigraph.selectedNode !== null
+                    text: MaterialIcons.stop_circle
+                    font.pointSize: 15
+                    onClicked: {
+                        if (selectedChunk !== null) {
+                            root.uigraph.stopTask(selectedChunk)
+                        } else {
+                            root.uigraph.stopNode(root.uigraph.selectedNode)
                         }
                     }
                 }
-            }
-            
-            // Job toolbar
-            Rectangle {
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: jobColumn.height + 8
-                color: "transparent"
-                border.color: Colors.darkpurple
-                border.width: 2
-                radius: 8
 
-                ColumnLayout {
-                    id: jobColumn
-                    anchors.centerIn: parent
-                    spacing: 2
-
-                    MaterialToolButton {
-                        ToolTip.text: "Pause Job"
-                        Layout.alignment: Qt.AlignHCenter
-                        enabled: root.uigraph.selectedNode !== null
-                        text: MaterialIcons.pause_circle_filled
-                        font.pointSize: 15
-                        onClicked: {
-                            uigraph.pauseJob(uigraph.selectedNode)
-                        }
-                    }
-
-                    MaterialToolButton {
-                        ToolTip.text: "Resume Job"
-                        Layout.alignment: Qt.AlignHCenter
-                        enabled: root.uigraph.selectedNode !== null
-                        text: MaterialIcons.play_circle_filled
-                        font.pointSize: 15
-                        onClicked: {
-                            uigraph.resumeJob(uigraph.selectedNode)
-                        }
-                    }
-
-                    MaterialToolButton {
-                        ToolTip.text: "Interrupt Job"
-                        Layout.alignment: Qt.AlignHCenter
-                        enabled: root.uigraph.selectedNode !== null
-                        text: MaterialIcons.stop_circle
-                        font.pointSize: 15
-                        onClicked: {
-                            uigraph.interruptJob(uigraph.selectedNode)
-                        }
-                    }
-                    
-                    MaterialToolButton {
-                        ToolTip.text: "Restart All Error Tasks"
-                        Layout.alignment: Qt.AlignHCenter
-                        enabled: root.uigraph.selectedNode !== null
-                        text: MaterialIcons.replay_circle_filled
-                        font.pointSize: 15
-                        onClicked: {
-                            uigraph.restartJobErrorTasks(uigraph.selectedNode)
-                        }
-                    }
-                    
-                    Item {
-                        Layout.preferredWidth: 40
-                        Layout.preferredHeight: 40
-                        
-                        Text {
-                            text: "JOB"
-                            anchors.centerIn: parent
-                            color: Colors.sysPalette.text
-                            font.pixelSize: 11
-                            font.bold: true
-                            rotation: -90
-                            transformOrigin: Item.Center
-                        }
-                    }
+                MaterialToolButton {
+                    ToolTip.text: "Restart Task"
+                    enabled: selectedChunk !== null
+                    text: MaterialIcons.replay_circle_filled
+                    font.pointSize: 15
+                    onClicked: uigraph.restartTask(selectedChunk)
                 }
+
+                MaterialToolButton {
+                    ToolTip.text: "Skip Task"
+                    enabled: selectedChunk !== null
+                    text: MaterialIcons.skip_next
+                    font.pointSize: 15
+                    onClicked: uigraph.skipTask(selectedChunk)
+                }
+
+                Rectangle {
+                    Layout.preferredWidth: 1
+                    Layout.preferredHeight: 20
+                    Layout.leftMargin: 6
+                    Layout.rightMargin: 6
+                    color: Colors.sysPalette.mid
+                }
+
+                Label {
+                    text: qsTr("Job")
+                    font.bold: true
+                    color: Colors.sysPalette.mid
+                    Layout.rightMargin: 2
+                }
+
+                MaterialToolButton {
+                    ToolTip.text: "Pause Job"
+                    enabled: root.uigraph.selectedNode !== null
+                    text: MaterialIcons.pause_circle_filled
+                    font.pointSize: 15
+                    onClicked: uigraph.pauseJob(uigraph.selectedNode)
+                }
+
+                MaterialToolButton {
+                    ToolTip.text: "Resume Job"
+                    enabled: root.uigraph.selectedNode !== null
+                    text: MaterialIcons.play_circle_filled
+                    font.pointSize: 15
+                    onClicked: uigraph.resumeJob(uigraph.selectedNode)
+                }
+
+                MaterialToolButton {
+                    ToolTip.text: "Interrupt Job"
+                    enabled: root.uigraph.selectedNode !== null
+                    text: MaterialIcons.stop_circle
+                    font.pointSize: 15
+                    onClicked: uigraph.interruptJob(uigraph.selectedNode)
+                }
+
+                MaterialToolButton {
+                    ToolTip.text: "Restart All Error Tasks"
+                    enabled: root.uigraph.selectedNode !== null
+                    text: MaterialIcons.replay_circle_filled
+                    font.pointSize: 15
+                    onClicked: uigraph.restartJobErrorTasks(uigraph.selectedNode)
+                }
+
+                Item { Layout.fillWidth: true }
             }
         }
 

@@ -3048,7 +3048,9 @@ class CompatibilityNode(BaseNode):
         self.nodeDict.update({"inputs": self.inputs})
         # update position
         self.nodeDict.update({"position": self.position})
-        return self.nodeDict
+        # Return a copy: serializers modify the returned dict (e.g. template serialization
+        # removes outputs and uid), which must not alter the node's own data
+        return copy.deepcopy(self.nodeDict)
 
     def getNodeDescription(self):
         # Get the node type, the node version, and the basic information about the io (name, type and default value)

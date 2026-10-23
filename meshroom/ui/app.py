@@ -335,7 +335,7 @@ class MeshroomApp(QApplication):
         # additional context properties
         self._messageController = MessageController(parent=self)
         self.engine.rootContext().setContextProperty("_messageController", self._messageController)
-        self._paletteManager = PaletteManager(self.engine, parent=self)
+        self._paletteManager = PaletteManager(parent=self)
         self.engine.rootContext().setContextProperty("_PaletteManager", self._paletteManager)
         self.engine.rootContext().setContextProperty("ScriptEditorManager", ScriptEditorManager(parent=self))
         self.engine.rootContext().setContextProperty("_dockLayout", DockLayoutManager(parent=self))

@@ -38,6 +38,9 @@ Rectangle {
     // Shape container scale ratio
     property real scaleRatio: 1.0
 
+    // Handle is being dragged
+    readonly property bool active: dragHandler.active
+
     // Handle does not have a true size
     // Width and height should always be 0
     width: 0

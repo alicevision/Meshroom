@@ -27,8 +27,10 @@ BaseLayer {
     property real lineDistance: Math.max(1.0, Math.sqrt(Math.pow(handleA.x - handleB.x, 2) +
                                                         Math.pow(handleA.y - handleB.y, 2)))
 
-    // Commit the move of the line
+    // Commit the move of the line (and of the other selected shapes)
     function commitMove() {
+        if (commitSelectionMove())
+            return
         _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
             a: {
                 x: handleA.x + draggableLine.x,

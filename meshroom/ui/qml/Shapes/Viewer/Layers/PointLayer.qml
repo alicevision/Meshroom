@@ -23,8 +23,10 @@ BaseLayer {
     property real pointSize: Math.max(1.0, 12.0 * scaleRatio)
     property real pointHalfSize: pointSize * 0.5
 
-    // Commit the move of the point
+    // Commit the move of the point (and of the other selected shapes)
     function commitMove() {
+        if (commitSelectionMove())
+            return
         _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
             x: handleCenter.x + draggableShape.x,
             y: handleCenter.y + draggableShape.y

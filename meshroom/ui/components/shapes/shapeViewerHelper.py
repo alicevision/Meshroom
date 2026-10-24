@@ -1,3 +1,5 @@
+import math
+
 from PySide6.QtCore import QObject, QPointF
 from shiboken6 import isValid
 
@@ -10,7 +12,7 @@ class ShapeViewerHelper(BaseObject):
     Manages interactions with the qml ShapeViewer (2d Viewer).
     - Handle shape selection (a list of shape names, ready for multiple selection).
     - Handle shape observation initialization.
-    - Handle shape placement (click-to-place or click-to-move observation in the 2d Viewer).
+    - Handle shape placement (click-to-place, drag-to-define or click-to-move observation in the 2d Viewer).
     - Handle the move of a multiple selection (shared drag offset, then a single translation).
     """
 
@@ -283,6 +285,42 @@ class ShapeViewerHelper(BaseObject):
         return None
 
     @staticmethod
+    def getDragObservation(shapeType: str, x0: float, y0: float, x1: float, y1: float) -> Variant:
+        """
+        Create a shape observation defined by a drag from (x0, y0) to (x1, y1).
+        - Point2d: at the end position.
+        - Line2d: from the start to the end position.
+        - Circle: the largest circle inside the dragged rectangle, in the corner of the start position.
+        - Rectangle: the dragged rectangle.
+
+        Args:
+            shapeType: the shape type (Point2d, Line2d, Circle, Rectangle).
+            x0, y0: the drag start position in image coordinates.
+            x1, y1: the drag end position in image coordinates.
+
+        Returns:
+            The observation dict, or None for an unknown shape type or an empty circle/rectangle.
+        """
+        dx, dy = x1 - x0, y1 - y0
+        match shapeType:
+            case "Point2d":
+                return {"x": x1, "y": y1}
+            case "Line2d":
+                return {"a": {"x": x0, "y": y0}, "b": {"x": x1, "y": y1}}
+            case "Circle":
+                radius = min(abs(dx), abs(dy)) * 0.5
+                if radius <= 0:
+                    return None
+                return {"center": {"x": x0 + math.copysign(radius, dx), "y": y0 + math.copysign(radius, dy)},
+                        "radius": radius}
+            case "Rectangle":
+                if dx == 0 or dy == 0:
+                    return None
+                return {"center": {"x": (x0 + x1) * 0.5, "y": (y0 + y1) * 0.5},
+                        "size": {"width": abs(dx), "height": abs(dy)}}
+        return None
+
+    @staticmethod
     def getMovedObservation(shapeType: str, observation: dict, x: float, y: float) -> dict:
         """
         Translate a shape observation so that its center lands on the given image position.
@@ -449,6 +487,26 @@ class ShapeViewerHelper(BaseObject):
             observation = self.getObservationAt(shapeType, x, y, visibleWidth, visibleHeight)
         self._placeSelectedShape(observation)
 
+    @Slot(float, float, float, float, result=Variant)
+    def getPlacementDragObservation(self, x0: float, y0: float, x1: float, y1: float) -> Variant:
+        """Observation of the shape to place defined by a drag from (x0, y0) to (x1, y1), used for the drag preview."""
+        return self.getDragObservation(self._getPlacementShapeType(), x0, y0, x1, y1)
+
+    @Slot(float, float, float, float, float, float)
+    def placeSelectedShapeFromDrag(self, x0: float, y0: float, x1: float, y1: float,
+                                   visibleWidth: float, visibleHeight: float):
+        """
+        Place the selected shape with the geometry defined by a drag from (x0, y0) to (x1, y1) in image coordinates.
+        An empty circle or rectangle falls back to a default shape at the drag start position.
+        """
+        shapeType = self._getPlacementShapeType()
+        if not shapeType:
+            return
+        observation = self.getDragObservation(shapeType, x0, y0, x1, y1)
+        if observation is None:
+            observation = self.getObservationAt(shapeType, x0, y0, visibleWidth, visibleHeight)
+        self._placeSelectedShape(observation)
+
     # Properties and signals
     selectedShapeNamesChanged = Signal()
     selectedShapeNames = Property("QVariantList", _getSelectedShapeNames, _setSelectedShapeNames,
@@ -472,3 +530,4 @@ class ShapeViewerHelper(BaseObject):
     isListPlacement = Property(bool, lambda self: self._listPlacement, _setListPlacement, notify=placementChanged)
     isRepositioning = Property(bool, lambda self: self._repositioning, notify=placementChanged)
     isPlacing = Property(bool, _isPlacing, notify=placementChanged)
+    placementShapeType = Property(str, _getPlacementShapeType, notify=placementChanged)

@@ -17,10 +17,19 @@ import "Utils" as LayerUtils
 */
 BaseLayer {
     id: pointLayer
+    moveTarget: draggableShape
 
     // Point size and half size
     property real pointSize: Math.max(1.0, 12.0 * scaleRatio)
     property real pointHalfSize: pointSize * 0.5
+
+    // Commit the move of the point
+    function commitMove() {
+        _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
+            x: handleCenter.x + draggableShape.x,
+            y: handleCenter.y + draggableShape.y
+        })
+    }
 
     // Point shape
     Shape {
@@ -38,16 +47,14 @@ BaseLayer {
             PathLine { x: pointLayer.observation.x; y: pointLayer.observation.y + pointSize }
         }
 
-        // Selection area
-        MouseArea  {
+        // Selection and move area
+        LayerUtils.MoveArea {
             x: handleCenter.x - pointSize
             y: handleCenter.y - pointSize
             width: pointSize * 2
             height: pointSize * 2
-            acceptedButtons: Qt.LeftButton
-            cursorShape: pointLayer.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: selectionRequested()
-            enabled: pointLayer.editable && !pointLayer.selected
+            shapeLayer: pointLayer
+            onMoved: pointLayer.commitMove()
         }
 
         // Handle for point center
@@ -60,12 +67,7 @@ BaseLayer {
             target: draggableShape
             cursorShape: Qt.SizeAllCursor
             visible: pointLayer.editable && pointLayer.selected
-            onMoved: {
-                _currentScene.setObservationFromName(pointLayer.name, _currentScene.selectedViewId, { 
-                    x: handleCenter.x + draggableShape.x, 
-                    y: handleCenter.y + draggableShape.y
-                })
-            }
+            onMoved: pointLayer.commitMove()
         }
 
         // Point name

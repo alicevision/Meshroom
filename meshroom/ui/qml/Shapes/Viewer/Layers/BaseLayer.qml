@@ -38,6 +38,9 @@ Item {
     // Shape default color 
     readonly property color defaultColor: "#3366cc"
 
+    // Item moved by the shape move drags (set by each layer)
+    property Item moveTarget: null
+
     // Request selection
     // Take the focus so that the 2d Viewer receives key events (e.g. Delete)
     function selectionRequested() {

@@ -128,6 +128,17 @@ FocusScope {
         } else if (event.key === Qt.Key_1) {
             root.zoomPixelSize()
             event.accepted = true
+        } else if (event.key === Qt.Key_Delete && ShapeViewerHelper.selectedShapeNames.length > 0) {
+            // Remove the selected shapes (static) or their current keyframe (keyable)
+            ShapeViewerHelper.removeSelectedShapeObservation()
+            event.accepted = true
+        } else if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
+            ShapeViewerHelper.selectAllShapes()
+            event.accepted = true
+        } else if (event.key === Qt.Key_Escape && (ShapeViewerHelper.selectedShapeNames.length > 0 || ShapeViewerHelper.isPlacing)) {
+            // Clear the shape selection, which also cancels a placement
+            ShapeViewerHelper.cancelPlacement()
+            event.accepted = true
         }
     }
 
@@ -136,15 +147,32 @@ FocusScope {
         anchors.fill: parent
         property double factor: 1.2
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        // Whether the current press cancelled a shape placement
+        // (used to skip the context menu on the matching release)
+        property bool placementCancelled: false
 
+        // Note: this MouseArea lies below the image. While placing a shape, the ShapeViewer
+        // MouseArea covers the image and accepts presses on it (except Shift+Left, passed through
+        // for panning), so a non-pan press reaching this handler happened outside the image.
         onPressed: function(mouse) {
             imgContainer.forceActiveFocus()
-            if (mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
+            const isPan = mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier)
+            if (isPan)
                 drag.target = imgContainer  // Start drag
+            else if (ShapeViewerHelper.isPlacing && !ShapeViewerHelper.isListPlacement) {
+                // Click outside the image: cancel shape placement (ShapeList multi-add mode is stopped from its toolbar button)
+                ShapeViewerHelper.cancelPlacement()
+                placementCancelled = true
+            }
         }
 
         onReleased: function(mouse) {
             drag.target = undefined  // Stop drag
+            // The press cancelled a placement: consume the release so a right click does not also open the context menu
+            if (placementCancelled) {
+                placementCancelled = false
+                return
+            }
             if (mouse.button & Qt.RightButton) {
                 var menu = contextMenu.createObject(root)
                 menu.x = mouse.x
@@ -155,19 +183,7 @@ FocusScope {
         }
 
         onDoubleClicked: function(mouse) {
-            if (Math.abs(imgContainer.scale - 1.0) > 0.001) {
-                // Not at 100%: save current state and zoom to 100% keeping cursor position
-                root.previousZoomScale = imgContainer.scale
-                root.previousZoomX = imgContainer.x
-                root.previousZoomY = imgContainer.y
-                zoomPixelSize(mouse.x, mouse.y)
-            } else if (root.previousZoomScale > 0) {
-                // Already at 100%: restore previous zoom state
-                imgContainer.scale = root.previousZoomScale
-                imgContainer.x = root.previousZoomX
-                imgContainer.y = root.previousZoomY
-                root.previousZoomScale = -1.0
-            }
+            root.toggleZoomPixelSize(mouse.x, mouse.y)
         }
 
         onWheel: function(wheel) {
@@ -212,6 +228,23 @@ FocusScope {
         imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale
 
         return true
+    }
+
+    // Zoom to 100% keeping the given position, or restore the previous zoom if already at 100%
+    function toggleZoomPixelSize(mouseX, mouseY) {
+        if (Math.abs(imgContainer.scale - 1.0) > 0.001) {
+            // Not at 100%: save current state and zoom to 100% keeping cursor position
+            root.previousZoomScale = imgContainer.scale
+            root.previousZoomX = imgContainer.x
+            root.previousZoomY = imgContainer.y
+            zoomPixelSize(mouseX, mouseY)
+        } else if (root.previousZoomScale > 0) {
+            // Already at 100%: restore previous zoom state
+            imgContainer.scale = root.previousZoomScale
+            imgContainer.x = root.previousZoomX
+            imgContainer.y = root.previousZoomY
+            root.previousZoomScale = -1.0
+        }
     }
 
     function zoomPixelSize(mouseX, mouseY) {
@@ -873,6 +906,7 @@ FocusScope {
                 // ShapeViewer: display shapes and texts from current node shape attributes and json files
                 // Note: use a Loader 
                 ExifOrientedViewer {
+                    id: shapeViewerLoader
                     anchors.centerIn: parent
                     width: imgContainer.width
                     height: imgContainer.height
@@ -881,12 +915,22 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     active: _currentScene ? (_currentScene.selectedNode ? _currentScene.selectedNode.hasDisplayableShape : false) : false
 
+                    // The ShapeViewer selection area takes the double clicks on the image
+                    Connections {
+                        target: shapeViewerLoader.item
+                        function onEmptyDoubleClicked(position) {
+                            const point = imgLayout.mapToItem(root, position.x, position.y)
+                            root.toggleZoomPixelSize(point.x, point.y)
+                        }
+                    }
+
                     onActiveChanged: {
                         if (active) {
                             setSource("../Shapes/Viewer/ShapeViewer.qml", {
                                 "containerWidth": Qt.binding(function() { return imgContainer.width }),
                                 "containerHeight": Qt.binding(function() { return imgContainer.height }),
-                                "containerScale": Qt.binding(function() { return imgContainer.scale })
+                                "containerScale": Qt.binding(function() { return imgContainer.scale }),
+                                "viewport": imgLayout
                             })
                         } else {
                             // forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -1672,6 +1716,19 @@ FocusScope {
                                 if (enabled == false)
                                     checked = false
                             }
+                        }
+
+                        MaterialToolButton {
+                            id: enableAddingShape
+                            ToolTip.text: "Add Shapes To The Selected List"
+                            text: MaterialIcons.add_location
+                            font.pointSize: 11
+                            padding: 0
+                            Layout.minimumWidth: 0
+                            enabled: ShapeViewerHelper.isShapeListSelected
+                            // Not checkable: the checked state follows the multi-add mode, which can also be started from the shape list
+                            checked: ShapeViewerHelper.isListPlacement
+                            onClicked: ShapeViewerHelper.isListPlacement = !ShapeViewerHelper.isListPlacement
                         }
 
                         MaterialToolButton {

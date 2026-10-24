@@ -352,6 +352,11 @@ class ShapeViewerHelper(BaseObject):
                 names.append(shape.fullName)
         self.selectedShapeNames = names
 
+    @Slot()
+    def selectAllShapes(self):
+        """Select all the editable shapes displayed in the 2d Viewer."""
+        self.selectedShapeNames = [shape.fullName for shape in self._getDisplayedShapes()]
+
     def _placeSelectedShape(self, observation: dict):
         """
         Set the given observation to the selected shape for the current view.

@@ -148,8 +148,8 @@ FocusScope {
             const isPan = mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier)
             if (isPan)
                 drag.target = imgContainer  // Start drag
-            else if (ShapeViewerHelper.isPlacing) {
-                // Click outside the image: cancel shape placement
+            else if (ShapeViewerHelper.isPlacing && !ShapeViewerHelper.isListPlacement) {
+                // Click outside the image: cancel shape placement (ShapeList multi-add mode is stopped from its toolbar button)
                 ShapeViewerHelper.cancelPlacement()
                 placementCancelled = true
             }
@@ -1690,6 +1690,19 @@ FocusScope {
                                 if (enabled == false)
                                     checked = false
                             }
+                        }
+
+                        MaterialToolButton {
+                            id: enableAddingShape
+                            ToolTip.text: "Add Shapes To The Selected List"
+                            text: MaterialIcons.add_location
+                            font.pointSize: 11
+                            padding: 0
+                            Layout.minimumWidth: 0
+                            enabled: ShapeViewerHelper.isShapeListSelected
+                            // Not checkable: the checked state follows the multi-add mode, which can also be started from the shape list
+                            checked: ShapeViewerHelper.isListPlacement
+                            onClicked: ShapeViewerHelper.isListPlacement = !ShapeViewerHelper.isListPlacement
                         }
 
                         MaterialToolButton {

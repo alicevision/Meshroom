@@ -69,11 +69,12 @@ Item {
     }
 
     // Shape placement: left click adds the selected shape observation, right click cancels
+    // (except in ShapeList multi-add mode, stopped from the 2d Viewer toolbar button)
     // Note: declared last to be above the shape layers
     MouseArea {
         anchors.fill: parent
         enabled: ShapeViewerHelper.isPlacing
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: ShapeViewerHelper.isListPlacement ? Qt.LeftButton : Qt.LeftButton | Qt.RightButton
         cursorShape: Qt.CrossCursor
         onPressed: function(mouse) {
             // Let Shift+Left reach Viewer2D for panning

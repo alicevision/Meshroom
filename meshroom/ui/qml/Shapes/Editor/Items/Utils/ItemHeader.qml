@@ -113,19 +113,36 @@ Pane {
                 itemHeaderMenu.popup()
 
             // Left mouse button
-            if(button === Qt.LeftButton && isShape && isAttributeEnabled)
+            if(button === Qt.LeftButton && isAttribute && isAttributeEnabled)
             {
-                // Single tap: select (placement starts if no observation for the current view)
-                if(tapCount === 1 && model.isVisible)
+                if(isShape)
                 {
-                    ShapeViewerHelper.selectShape(model)
-                }
+                    // Single tap: select (placement starts if no observation for the current view)
+                    if(tapCount === 1 && model.isVisible)
+                    {
+                        ShapeViewerHelper.selectShape(model)
+                    }
 
-                // Double tap on hidden shape: show and select
-                if(tapCount === 2 && !model.isVisible)
+                    // Double tap on hidden shape: show and select
+                    if(tapCount === 2 && !model.isVisible)
+                    {
+                        model.isVisible = true
+                        ShapeViewerHelper.selectShape(model)
+                    }
+                }
+                else
                 {
-                    model.isVisible = true
-                    ShapeViewerHelper.selectShape(model)
+                    // ShapeList: single tap selects, double tap starts multi-add placement
+                    if(tapCount === 1)
+                    {
+                        ShapeViewerHelper.selectShape(model)
+                    }
+
+                    if(tapCount === 2)
+                    {
+                        model.isVisible = true
+                        ShapeViewerHelper.startListPlacement(model)
+                    }
                 }
             }
             else if(button === Qt.LeftButton)

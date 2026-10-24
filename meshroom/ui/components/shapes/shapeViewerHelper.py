@@ -2,7 +2,7 @@ from PySide6.QtCore import QObject
 from shiboken6 import isValid
 
 from meshroom.common import BaseObject, Property, Variant, Signal, Slot
-from meshroom.core.attribute import ListAttribute
+from meshroom.core.attribute import ListAttribute, ShapeListAttribute
 
 
 class ShapeViewerHelper(BaseObject):
@@ -17,7 +17,8 @@ class ShapeViewerHelper(BaseObject):
         super().__init__(parent)
         self._activeProject = activeProject
         self._selectedShapeNames = []  # Selected shape full names
-        self._selectedShape = None  # ShapeAttribute | None
+        self._selectedShape = None  # ShapeAttribute | ShapeListAttribute | None
+        self._listPlacement = False  # ShapeList multi-add mode
         self._containerWidth = 0.0
         self._containerHeight = 0.0
         self._containerScale = 0.0
@@ -54,21 +55,26 @@ class ShapeViewerHelper(BaseObject):
         Set the selected shape object and track its observations to update the placement state.
 
         Args:
-            shape: the ShapeAttribute to track, or None.
+            shape: the ShapeAttribute or ShapeListAttribute to track, or None.
         """
         previousShape = self._selectedShape
         # Note: connections of a destroyed attribute are already gone
         if previousShape is not None and isValid(previousShape):
             try:
-                previousShape.geometry.observationsChanged.disconnect(self.placementChanged)
+                if not isinstance(previousShape, ShapeListAttribute):
+                    previousShape.geometry.observationsChanged.disconnect(self.placementChanged)
                 if isinstance(previousShape.root, ListAttribute):
                     previousShape.root.valueChanged.disconnect(self._onSelectedShapeParentChanged)
             except RuntimeError:
                 # Signal was already disconnected or the attribute was destroyed
                 pass
+        if shape is not previousShape:
+            # A newly selected shape never starts in multi-add mode
+            self._listPlacement = False
         self._selectedShape = shape
         if shape is not None:
-            shape.geometry.observationsChanged.connect(self.placementChanged)
+            if not isinstance(shape, ShapeListAttribute):
+                shape.geometry.observationsChanged.connect(self.placementChanged)
             # List element: cancel the selection if it is removed from its list
             if isinstance(shape.root, ListAttribute):
                 shape.root.valueChanged.connect(self._onSelectedShapeParentChanged)
@@ -102,17 +108,31 @@ class ShapeViewerHelper(BaseObject):
             return geometry.hasObservation(self._activeProject.selectedViewId)
         return not geometry.isDefault
 
+    def _isShapeListSelected(self) -> bool:
+        return self._isSelectedShapeAlive() and isinstance(self._selectedShape, ShapeListAttribute)
+
+    def _setListPlacement(self, enabled: bool):
+        """Enable or disable the multi-add placement mode, only available when a ShapeList is selected."""
+        enabled = enabled and self._isShapeListSelected()
+        if enabled == self._listPlacement:
+            return
+        self._listPlacement = enabled
+        self.placementChanged.emit()
+
     def _isPlacing(self) -> bool:
         """Whether the 2d Viewer is waiting for a click to place the selected shape."""
         if not self._isSelectedShapeAlive():
             return False
+        if isinstance(self._selectedShape, ShapeListAttribute):
+            return self._listPlacement
         return not self._hasCurrentObservation(self._selectedShape)
 
     def _getPlacementShapeType(self) -> str:
-        """The type of the shape to place, or an empty string if not placing."""
+        """The type of the shape to place (the element type for a ShapeList), or an empty string if not placing."""
         if not self._isPlacing():
             return ""
-        return self._selectedShape.type
+        shape = self._selectedShape
+        return shape.desc.elementDesc.type if isinstance(shape, ShapeListAttribute) else shape.type
 
     def _setContainerWidth(self, width: float):
         self._containerWidth = width
@@ -154,6 +174,12 @@ class ShapeViewerHelper(BaseObject):
         self._setSelectedShape(shape)
         self.selectedShapeNames = [shape.fullName]
 
+    @Slot(QObject)
+    def startListPlacement(self, listAttribute):
+        """Select the given ShapeList and start the multi-add placement mode."""
+        self.selectShape(listAttribute)
+        self._setListPlacement(True)
+
     @Slot()
     def clearSelection(self):
         """Clear the selection, which also cancels the current placement."""
@@ -192,10 +218,20 @@ class ShapeViewerHelper(BaseObject):
         return None
 
     def _placeSelectedShape(self, observation: dict):
-        """Set the given observation to the selected shape for the current view."""
+        """
+        Set the given observation to the selected shape for the current view.
+        For a ShapeList, append a new element with this observation (single undo step).
+        """
         if observation is None or not self._isSelectedShapeAlive():
             return
-        self._activeProject.setObservation(self._selectedShape, self._activeProject.selectedViewId, observation)
+        shape = self._selectedShape
+        viewId = self._activeProject.selectedViewId
+        if isinstance(shape, ShapeListAttribute):
+            with self._activeProject.groupedGraphModification("Add Shape"):
+                self._activeProject.appendAttribute(shape, None)
+                self._activeProject.setObservation(shape.at(len(shape) - 1), viewId, observation)
+        else:
+            self._activeProject.setObservation(shape, viewId, observation)
 
     @Slot(float, float, float, float)
     def placeSelectedShapeAt(self, x: float, y: float, visibleWidth: float, visibleHeight: float):
@@ -220,4 +256,6 @@ class ShapeViewerHelper(BaseObject):
     containerScale = Property(float, _getContainerScale, _setContainerScale, notify=containerScaleChanged)
 
     placementChanged = Signal()
+    isShapeListSelected = Property(bool, _isShapeListSelected, notify=placementChanged)
+    isListPlacement = Property(bool, lambda self: self._listPlacement, _setListPlacement, notify=placementChanged)
     isPlacing = Property(bool, _isPlacing, notify=placementChanged)

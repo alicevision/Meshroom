@@ -119,20 +119,50 @@ Item {
         border.width: shapeViewer.scaleRatio
     }
 
-    // Shape placement: left click adds the selected shape observation, right click cancels
-    // (except in ShapeList multi-add mode, stopped from the 2d Viewer toolbar button)
+    // Preview of the shape being defined by a drag in placement mode
+    ShapeViewerLayer {
+        id: dragPreview
+        visible: placementArea.dragging
+        type: ShapeViewerHelper.placementShapeType
+        properties: ({})
+        observation: null
+        scaleRatio: shapeViewer.scaleRatio
+    }
+
+    // Shape placement, right click cancels (except in ShapeList multi-add mode, stopped from the 2d Viewer toolbar button)
+    // - left click adds the selected shape observation with a default size
+    // - left drag defines the shape geometry from the press to the release position
     // Note: declared last to be above the shape layers
     MouseArea {
+        id: placementArea
         anchors.fill: parent
         enabled: ShapeViewerHelper.isPlacing
         acceptedButtons: ShapeViewerHelper.isListPlacement ? Qt.LeftButton : Qt.LeftButton | Qt.RightButton
         cursorShape: Qt.CrossCursor
+        property point pressPosition
+        property bool dragging: false
+
         onPressed: function(mouse) {
             // Let Shift+Left reach Viewer2D for panning
-            if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ShiftModifier))
+            if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ShiftModifier)) {
                 mouse.accepted = false
+                return
+            }
+            pressPosition = Qt.point(mouse.x, mouse.y)
+            dragging = false
         }
-        onClicked: function(mouse) {
+        onPositionChanged: function(mouse) {
+            if (!(mouse.buttons & Qt.LeftButton))
+                return
+            // Drag threshold in screen pixels
+            if (!dragging && Math.max(Math.abs(mouse.x - pressPosition.x), Math.abs(mouse.y - pressPosition.y))
+                             * shapeViewer.containerScale < Qt.styleHints.startDragDistance)
+                return
+            dragPreview.observation = ShapeViewerHelper.getPlacementDragObservation(pressPosition.x, pressPosition.y,
+                                                                                    mouse.x, mouse.y)
+            dragging = true
+        }
+        onReleased: function(mouse) {
             if (mouse.button === Qt.RightButton) {
                 ShapeViewerHelper.cancelPlacement()
                 return
@@ -140,7 +170,14 @@ Item {
             // Visible viewport expressed in image coordinates (handles zoom and EXIF rotation)
             const visible = viewport ? shapeViewer.mapFromItem(viewport, 0, 0, viewport.width, viewport.height)
                                      : Qt.rect(0, 0, containerWidth, containerHeight)
-            ShapeViewerHelper.placeSelectedShapeAt(mouse.x, mouse.y, visible.width, visible.height)
+            if (dragging) {
+                dragging = false
+                ShapeViewerHelper.placeSelectedShapeFromDrag(pressPosition.x, pressPosition.y, mouse.x, mouse.y,
+                                                             visible.width, visible.height)
+            } else {
+                ShapeViewerHelper.placeSelectedShapeAt(mouse.x, mouse.y, visible.width, visible.height)
+            }
         }
+        onCanceled: { dragging = false }
     }
 }

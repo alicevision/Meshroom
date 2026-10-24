@@ -60,6 +60,6 @@ Item {
     TapHandler {
         acceptedButtons: Qt.LeftButton
         gesturePolicy: TapHandler.WithinBounds
-        onTapped: { ShapeViewerHelper.selectedShapeName = "" }
+        onTapped: { ShapeViewerHelper.clearSelection() }
     }
 }

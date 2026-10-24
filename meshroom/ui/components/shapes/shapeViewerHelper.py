@@ -4,19 +4,19 @@ from meshroom.common import BaseObject, Property, Variant, Signal, Slot
 class ShapeViewerHelper(BaseObject):
     """
     Manages interactions with the qml ShapeViewer (2d Viewer).
-    - Handle shape selection.
+    - Handle shape selection (a list of shape names, ready for multiple selection).
     - Handle shape observation initialization.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._selectedShapeName = ""
+        self._selectedShapeNames = []  # Selected shape full names
         self._containerWidth = 0.0
         self._containerHeight = 0.0
         self._containerScale = 0.0
 
-    def _getSelectedShapeName(self) -> str:
-        return self._selectedShapeName
+    def _getSelectedShapeNames(self) -> list:
+        return self._selectedShapeNames
 
     def _getContainerWidth(self) -> float:
         return self._containerWidth
@@ -27,9 +27,9 @@ class ShapeViewerHelper(BaseObject):
     def _getContainerScale(self) -> float:
         return self._containerScale
 
-    def _setSelectedShapeName(self, shapeName: str):
-        self._selectedShapeName = shapeName
-        self.selectedShapeNameChanged.emit()
+    def _setSelectedShapeNames(self, shapeNames: list):
+        self._selectedShapeNames = list(shapeNames)
+        self.selectedShapeNamesChanged.emit()
 
     def _setContainerWidth(self, width: float):
         self._containerWidth = width
@@ -62,9 +62,15 @@ class ShapeViewerHelper(BaseObject):
                         "size": {"width": self._containerWidth * 0.2, "height": self._containerHeight * 0.2}}
         return None
 
+    @Slot()
+    def clearSelection(self):
+        """Clear the selection."""
+        self.selectedShapeNames = []
+
     # Properties and signals
-    selectedShapeNameChanged = Signal()
-    selectedShapeName = Property(str, _getSelectedShapeName, _setSelectedShapeName, notify=selectedShapeNameChanged)
+    selectedShapeNamesChanged = Signal()
+    selectedShapeNames = Property("QVariantList", _getSelectedShapeNames, _setSelectedShapeNames,
+                                  notify=selectedShapeNamesChanged)
 
     containerWidthChanged = Signal()
     containerWidth = Property(float, _getContainerWidth, _setContainerWidth, notify=containerWidthChanged)

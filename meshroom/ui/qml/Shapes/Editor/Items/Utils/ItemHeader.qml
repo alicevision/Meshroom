@@ -32,7 +32,7 @@ Pane {
     property bool isExpanded: false
 
     // Read-only properties
-    readonly property bool isAttributeSelected: isAttribute ? (ShapeViewerHelper.selectedShapeName === model.fullName) : false
+    readonly property bool isAttributeSelected: isAttribute ? (ShapeViewerHelper.selectedShapeNames.indexOf(model.fullName) >= 0) : false
     readonly property bool isAttributeInitialized: isAttribute ? (isShape ? !model.geometry.isDefault : !model.isDefault) : false
     readonly property bool isAttributeEnabled: isAttribute ? (model.enabled && !model.isLink && !isLinkChild) : false
 
@@ -88,7 +88,7 @@ Pane {
             enabled: isAttributeEnabled && isAttributeInitialized
             onTriggered: {
                 _currentScene.resetAttribute(model)
-                ShapeViewerHelper.selectedShapeName = ""
+                ShapeViewerHelper.clearSelection()
                 isExpanded = false
             }
         }
@@ -117,14 +117,14 @@ Pane {
                 // Single tap
                 if(tapCount === 1 && model.isVisible)
                 {
-                    ShapeViewerHelper.selectedShapeName = model.fullName
+                    ShapeViewerHelper.selectedShapeNames = [model.fullName]
                 }
 
                 // Double tap
                 if(tapCount === 2 && !model.isVisible)
                 {
                     
-                    ShapeViewerHelper.selectedShapeName = model.fullName
+                    ShapeViewerHelper.selectedShapeNames = [model.fullName]
                     model.isVisible = true
                 }
             }
@@ -309,14 +309,14 @@ Pane {
                         {
                             // remove key
                             _currentScene.removeObservation(model, _currentScene.selectedViewId)
-                            ShapeViewerHelper.selectedShapeName = ""
+                            ShapeViewerHelper.clearSelection()
                         }
                         else
                         {
                             // add key
                             _currentScene.setObservation(model, _currentScene.selectedViewId, 
                                                           ShapeViewerHelper.getDefaultObservation(model.type))
-                            ShapeViewerHelper.selectedShapeName = model.fullName
+                            ShapeViewerHelper.selectedShapeNames = [model.fullName]
                         }
                     }
                     ToolTip.text: isAttributeInitialized ? "Reset Shape" : "Set Shape"
@@ -392,14 +392,14 @@ Pane {
                             {
                                 // remove key
                                 _currentScene.removeObservation(model, _currentScene.selectedViewId)
-                                ShapeViewerHelper.selectedShapeName = ""
+                                ShapeViewerHelper.clearSelection()
                             }
                             else
                             {
                                 // add key
                                 _currentScene.setObservation(model, _currentScene.selectedViewId, 
                                                                ShapeViewerHelper.getDefaultObservation(model.type))
-                                ShapeViewerHelper.selectedShapeName = model.fullName
+                                ShapeViewerHelper.selectedShapeNames = [model.fullName]
                             }
                         }
                         ToolTip.text: checked ? "Remove current key" : "Set current key"

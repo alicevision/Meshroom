@@ -33,14 +33,14 @@ Item {
     property real scaleRatio: 1.0
 
     // Shape is selected
-    property bool selected: ShapeViewerHelper.selectedShapeName === name
+    property bool selected: ShapeViewerHelper.selectedShapeNames.indexOf(name) >= 0
 
     // Shape default color 
     readonly property color defaultColor: "#3366cc"
 
     // Request selection
     function selectionRequested() {
-        ShapeViewerHelper.selectedShapeName = name
+        ShapeViewerHelper.selectedShapeNames = [name]
     }
 
     // Helper function to get scaled handle size

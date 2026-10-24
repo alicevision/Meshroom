@@ -4,6 +4,7 @@ from contextlib import contextmanager
 
 from PySide6.QtGui import QUndoCommand, QUndoStack
 from PySide6.QtCore import Property, Signal
+from PySide6.QtQml import QJSValue
 
 from meshroom.core.attribute import Attribute, Flow, ListAttribute, AnySet
 from meshroom.core.exception import CyclicDependencyError,InvalidEdgeError
@@ -400,7 +401,7 @@ class SetObservationCommand(GraphCommand):
         super().__init__(graph, parent)
         self.attrName = attribute.fullName
         self.key = key
-        self.observation = observation.toVariant()
+        self.observation = observation.toVariant() if isinstance(observation, QJSValue) else observation
         self.oldObservation = attribute.geometry.getObservation(key)
         self.setText(f"Set observation for shape attribute '{attribute.fullName}' at key: '{key}'")
 

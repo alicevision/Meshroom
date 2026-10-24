@@ -76,6 +76,7 @@ BaseLayer {
             x: circleLayer.observation.center.x || 0
             y: circleLayer.observation.center.y || 0
             size: getScaledHandleSize()
+            scaleRatio: circleLayer.scaleRatio
             target: draggableShape
             cursorShape: Qt.SizeAllCursor
             visible: circleLayer.editable && circleLayer.selected
@@ -95,6 +96,7 @@ BaseLayer {
             x: circleLayer.observation.center.x + circleLayer.observation.radius || 0
             y: circleLayer.observation.center.y || 0
             size: getScaledHandleSize()
+            scaleRatio: circleLayer.scaleRatio
             cursorShape: Qt.SizeBDiagCursor
             visible: circleLayer.editable && circleLayer.selected
             onMoved: {

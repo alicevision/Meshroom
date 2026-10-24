@@ -70,6 +70,7 @@ BaseLayer {
             x: lineLayer.observation.a.x || 0
             y: lineLayer.observation.a.y || 0
             size: getScaledHandleSize()
+            scaleRatio: lineLayer.scaleRatio
             cursorShape: Qt.SizeAllCursor
             visible: lineLayer.editable && lineLayer.selected
             onMoved: {
@@ -88,6 +89,7 @@ BaseLayer {
             x: lineLayer.observation.b.x || 0
             y: lineLayer.observation.b.y || 0
             size: getScaledHandleSize()
+            scaleRatio: lineLayer.scaleRatio
             cursorShape: Qt.SizeAllCursor
             visible: lineLayer.editable && lineLayer.selected
             onMoved: {
@@ -106,6 +108,7 @@ BaseLayer {
             x: lineCenter.x
             y: lineCenter.y
             size: getScaledHandleSize()
+            scaleRatio: lineLayer.scaleRatio
             target: draggableLine
             cursorShape: Qt.SizeAllCursor
             visible: lineLayer.editable && lineLayer.selected

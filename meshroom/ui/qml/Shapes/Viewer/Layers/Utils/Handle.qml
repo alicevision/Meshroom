@@ -9,6 +9,7 @@ import QtQuick
 * @param xAxisEnabled - the handle x-axis is draggable
 * @param yAxisEnabled - the handle y-axis is draggable
 * @param cursorShape - the handle cursor shape
+* @param scaleRatio - the shape container scale ratio (scroll zoom)
 */
 Rectangle {
     id: root
@@ -31,6 +32,9 @@ Rectangle {
     // Handle cursor shape
     property alias cursorShape : dragHandler.cursorShape
 
+    // Shape container scale ratio
+    property real scaleRatio: 1.0
+
     // Handle does not have a true size
     // Width and height should always be 0
     width: 0
@@ -49,6 +53,8 @@ Rectangle {
         id: dragHandler
         cursorShape: Qt.SizeBDiagCursor
         grabPermissions: PointerHandler.CanTakeOverFromAnything 
+        // The drag threshold is compared in the parent (image) coordinates: keep it constant on screen whatever the zoom
+        dragThreshold: Qt.styleHints.startDragDistance * root.scaleRatio
         xAxis.enabled: root.xAxisEnabled
         yAxis.enabled: root.yAxisEnabled
         margin: root.size * 2 // Handle interaction area

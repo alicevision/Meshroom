@@ -56,6 +56,7 @@ BaseLayer {
             x: pointLayer.observation.x || 0
             y: pointLayer.observation.y || 0
             size: getScaledHandleSize()
+            scaleRatio: pointLayer.scaleRatio
             target: draggableShape
             cursorShape: Qt.SizeAllCursor
             visible: pointLayer.editable && pointLayer.selected

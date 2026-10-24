@@ -72,6 +72,7 @@ BaseLayer {
             x: rectangleLayer.observation.center.x || 0
             y: rectangleLayer.observation.center.y || 0
             size: getScaledHandleSize()
+            scaleRatio: rectangleLayer.scaleRatio
             target: draggableRectangle
             cursorShape: Qt.SizeAllCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
@@ -91,6 +92,7 @@ BaseLayer {
             x: rectangleLayer.observation.center.x + (rectangleLayer.observation.size.width * 0.5)  || 0
             y: handleCenter.y  || 0
             size: getScaledHandleSize()
+            scaleRatio: rectangleLayer.scaleRatio
             yAxisEnabled: false
             cursorShape: Qt.SizeHorCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
@@ -110,6 +112,7 @@ BaseLayer {
             x: rectangleLayer.observation.center.x || 0
             y: rectangleLayer.observation.center.y - (rectangleLayer.observation.size.height * 0.5)  || 0
             size: getScaledHandleSize()
+            scaleRatio: rectangleLayer.scaleRatio
             xAxisEnabled: false
             cursorShape: Qt.SizeVerCursor
             visible: rectangleLayer.editable && rectangleLayer.selected

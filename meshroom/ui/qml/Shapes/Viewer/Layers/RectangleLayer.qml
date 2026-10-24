@@ -17,12 +17,23 @@ import "Utils" as LayerUtils
 */
 BaseLayer {
     id: rectangleLayer
+    moveTarget: draggableRectangle
 
     // Rectangle width from handleWidth position
     property real rectangleWidth: Math.max(1.0, Math.abs(handleCenter.x- handleWidth.x) * 2)
 
     // Rectangle height from handleHeight position
     property real rectangleHeight: Math.max(1.0, Math.abs(handleCenter.y - handleHeight.y) * 2)
+
+    // Commit the move of the rectangle
+    function commitMove() {
+        _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
+            center: {
+                x: handleCenter.x + draggableRectangle.x,
+                y: handleCenter.y + draggableRectangle.y
+            }
+        })
+    }
 
     // Rectangle shape
     Shape {
@@ -54,16 +65,14 @@ BaseLayer {
             PathLine { x: handleHeight.x; y: handleHeight.y }
         }
 
-        // Selection area
-        MouseArea  {
+        // Selection and move area
+        LayerUtils.MoveArea {
             x: handleCenter.x - rectangleWidth * 0.5
             y: handleCenter.y - rectangleHeight * 0.5
             width: rectangleWidth
             height: rectangleHeight
-            acceptedButtons: Qt.LeftButton
-            cursorShape: rectangleLayer.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: selectionRequested()
-            enabled: rectangleLayer.editable && !rectangleLayer.selected
+            shapeLayer: rectangleLayer
+            onMoved: rectangleLayer.commitMove()
         }
 
         // Handle for rectangle center
@@ -76,14 +85,7 @@ BaseLayer {
             target: draggableRectangle
             cursorShape: Qt.SizeAllCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
-            onMoved: {
-                _currentScene.setObservationFromName(rectangleLayer.name, _currentScene.selectedViewId, { 
-                    center: {
-                        x: handleCenter.x + draggableRectangle.x,
-                        y: handleCenter.y + draggableRectangle.y,
-                    }
-                })
-            }
+            onMoved: rectangleLayer.commitMove()
         }
 
         // Handle for rectangle width
